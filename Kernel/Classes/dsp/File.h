@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.18 $
-   $Date: 2003/09/22 09:59:55 $
-   $Author: wvanstra $ */
+   $Revision: 1.19 $
+   $Date: 2003/09/25 03:17:09 $
+   $Author: hknight $ */
 
 
 #ifndef __File_h
@@ -97,7 +97,7 @@ namespace dsp {
     /*! Called by open_file for some file types, to determine that the
     header ndat matches the file size.  Requires 'info' parameters
     nchan, npol, and ndim as well as header_bytes to be correctly set */
-    virtual int64 fstat_file_ndat();
+    virtual int64 fstat_file_ndat(uint64 tailer_bytes=0);
 
     /** @name Derived Class Defined
      *  These attributes must be set by the open_file method of the

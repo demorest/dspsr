@@ -206,21 +206,21 @@ int64 dsp::File::seek_bytes (uint64 bytes)
   return retval - header_bytes;
 }
 
-/* Do an fstat on the current file descriptro to see if purported ndat is correct */
-int64 dsp::File::fstat_file_ndat(){
+/* Do an fstat on the current file descriptor to see if purported ndat is correct */
+int64 dsp::File::fstat_file_ndat(uint64 tailer_bytes){
   struct stat file_stats;
 
   int ret = fstat(fd, &file_stats);
 
   if( ret!=0 )
     throw Error(FailedCall,"dsp::File::fstat_file_ndat()",
-		"fstat on file '%s' failed.  Return value=%d\n",ret);
+		"fstat on file failed.  Return value=%d\n",ret);
 
   int64 actual_file_sz = file_stats.st_size;
 
   int64 bytes_per_samp = info.get_nchan()*info.get_npol()*info.get_ndim()*info.get_nbit()/8;
   
-  return (actual_file_sz - header_bytes)/bytes_per_samp;
+  return (actual_file_sz - header_bytes - tailer_bytes)/bytes_per_samp;
 }
 
 
