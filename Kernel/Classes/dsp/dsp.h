@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/dsp.h,v $
-   $Revision: 1.2 $
-   $Date: 2003/09/22 05:30:39 $
+   $Revision: 1.3 $
+   $Date: 2003/09/22 10:02:05 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_h
@@ -40,6 +40,27 @@
   The auxilliary classes perform operations on arrays of data, such as
   multiplying a frequency response matrix by a spectrum field vector
   (e.g. the dsp::Response class).
+
+  \section backend Adding a new File Format
+
+  When adding a new file format, the following steps should be followed:
+  <UL>
+
+  <LI> Create a new subdirectory of baseband, say baseband/backend,
+  and create all new files here.
+
+  <LI> Inherit dsp::File or one of its derived classes, implement the
+  header-parsing code, and add the new class to File_registry.C using
+  preprocessor directives.
+
+  <LI> Inherit dsp::Unpacker or one of its derived classes, implement
+  the bit-unpacking code, and add the new class to Unpacker_registry.C
+  using preprocessor directives.
+
+  <LI> Define the appropriate preprocessor directives within an
+  optional section of Makefile.backends.
+
+  </UL>
 
  */
 

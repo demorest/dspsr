@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2003/05/13 15:06:00 $
+   $Revision: 1.2 $
+   $Date: 2003/09/22 10:02:59 $
    $Author: wvanstra $ */
 
 #ifndef __SubByteTwoBitCorrection_h
@@ -12,7 +12,10 @@
 
 namespace dsp {
   
-  //! Converts SubByte data from 2-bit digitized to floating point values
+  //! Converts BitSeries data from two-bit digitized to floating-point values
+  /*! Use this class when the the digitized bits from different
+    convertors are mixed within each byte. */
+
   class SubByteTwoBitCorrection: public TwoBitCorrection {
 
   public:
