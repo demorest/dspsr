@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/09/20 07:15:59 $
-   $Author: hknight $ */
+   $Revision: 1.18 $
+   $Date: 2003/09/22 09:59:55 $
+   $Author: wvanstra $ */
 
 
 #ifndef __File_h
@@ -23,6 +23,18 @@ namespace dsp {
   class PseudoFile;
 
   //! Loads BitSeries data from file
+  /*! This class is used in conjunction with the Unpacker class in
+    order to add new file formats to the baseband/dsp library.
+    Inherit either dsp::File or one of its derived classes and
+    implement the two pure virtual methods:
+
+    <UL>
+    <LI> bool is_valid()
+    <LI> void open_file(const char* filename)
+    </UL>
+
+    then register the new class in File_registry.C
+  */
   class File : public Seekable
   {
     friend class MultiFile;
@@ -45,7 +57,9 @@ namespace dsp {
     //! Destructor
     virtual ~File ();
 
-    //! Return true if filename appears to refer to a file in a valid format
+    //! Return true if filename contains data in the recognized format
+    /*! Derived classes must define the conditions under which they can
+      be used to parse the given data file */
     virtual bool is_valid (const char* filename) const = 0;
 
     //! Open the file
@@ -74,7 +88,9 @@ namespace dsp {
 
   protected:
     
-    //! Called by the wrapper-function, open
+    //! Open the file specified by filename for reading
+    /*! Derived classes must open the file for reading and set the File::fd,
+      File::header_bytes, Input::info, and Input::resolution attributes. */
     virtual void open_file (const char* filename) = 0;  
 
     //! Return ndat given the file and header sizes, nchan, npol, and ndim
@@ -83,12 +99,19 @@ namespace dsp {
     nchan, npol, and ndim as well as header_bytes to be correctly set */
     virtual int64 fstat_file_ndat();
 
+    /** @name Derived Class Defined
+     *  These attributes must be set by the open_file method of the
+     *  derived class.  */
+    //@{
+    
     //! The file descriptor
     int fd;
     
-    //! Size of the header in bytes
+    //! The size of the header in bytes
     int header_bytes;
-    
+
+    //@}
+
     //! The name of the currently opened file, set by open()
     string current_filename;
 

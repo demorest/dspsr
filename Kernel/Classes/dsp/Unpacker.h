@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/18 05:45:45 $
-   $Author: cwest $ */
+   $Revision: 1.7 $
+   $Date: 2003/09/22 10:01:20 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Unpacker_h
@@ -18,8 +18,17 @@
 namespace dsp {
 
   //! Abstract base class of Transformations that convert n-bit to float
-  /*! 
+  /*! This class is used in conjunction with the File class in
+    order to add new file formats to the baseband/dsp library.
+    Inherit either dsp::Unpacker or one of its derived classes and
+    implement the two pure virtual methods:
 
+    <UL>
+    <LI> bool matches(const Observation* observation)
+    <LI> void unpack()
+    </UL>
+
+    then register the new class in Unpacker_registry.C.
   */
   class Unpacker : public Transformation <const BitSeries, TimeSeries> {
 
@@ -41,9 +50,13 @@ namespace dsp {
     virtual void transformation ();
     
     //! The unpacking routine
+    /*! This method must unpack the data from the BitSeries Input into
+      the TimeSeries output. */
     virtual void unpack () = 0;
 
-    //! Return true if Unpacker sub-class can convert the Observation
+    //! Return true if the derived class can convert the Observation
+    /*! Derived classes must define the conditions under which they can
+      be used to parse the given data. */
     virtual bool matches (const Observation* observation) = 0;
 
     //! Specialize the Unpacker for the Observation
