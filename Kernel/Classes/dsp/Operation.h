@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.23 $
-   $Date: 2004/04/08 05:32:04 $
+   $Revision: 1.24 $
+   $Date: 2004/06/17 09:50:59 $
    $Author: hknight $ */
 
 #ifndef __Operation_h
@@ -83,6 +83,9 @@ namespace dsp {
 
     //! Perform operation on data.  Defined by derived classes
     virtual void operation () = 0;
+
+    //! Set the name!
+    virtual void set_name(string _name){ name = _name; }
 
     //! Operation name
     string name;

@@ -1,7 +1,7 @@
 //-*-C++-*-
 
-#ifndef __Plotter_h
-#define __Plotter_h
+#ifndef __dsp_Plotter_h
+#define __dsp_Plotter_h
 
 #include <string>
 #include <vector>
@@ -79,7 +79,7 @@ namespace dsp {
 
 template<class DataType>
 dsp::Plotter<DataType>::Plotter() : BasicPlotter<DataType>() {
-  name = "Plotter";
+  Operation::set_name("Plotter");
 
   cpgopen_response = "101/xs";
   dev = -1;
@@ -90,7 +90,7 @@ dsp::Plotter<DataType>::Plotter() : BasicPlotter<DataType>() {
 
   just_do_basics = false;
 
-  mutated = true;
+  BasicPlotter<DataType>::mutated = true;
 }
 
 template<class DataType>
@@ -116,7 +116,7 @@ bool dsp::Plotter<DataType>::plot(){
   if(Ready::verbose || Operation::verbose)
     fprintf(stderr,"In dsp::Plotter::plot()\n\n\n\n\n\n\n\n");
 
-  if( !EnsureReadiness() ){
+  if( !this->EnsureReadiness() ){
     fprintf(stderr,"dsp::Plotter::plot() failed to ensure readiness\n");
     return false;
   }
@@ -126,33 +126,33 @@ bool dsp::Plotter<DataType>::plot(){
     return false;
   }
 
-  if( !set_plotdatas() ){
+  if( !this->set_plotdatas() ){
     fprintf(stderr,"dsp::Plotter::plot() failed to set plotdatas\n");
     return false;
   }
-  if( plotdatas.size()==0 ){
+  if( BasicPlotter<DataType>::plotdatas.size()==0 ){
     fprintf(stderr,"Error!  No plotdatas specified\n");
     return false;
   }
-  if( !set_params() ){
+  if( !this->set_params() ){
     fprintf(stderr,"dsp::Plotter::plot() failed to set params\n");
     return false;
   }  
 
-  user_char = '\0';
-  while( !(user_char=='q' || user_char=='Q') ){
-    fprintf(stderr,"\nContinued in loop as user_char='%c'\n",user_char);
+  BasicPlotter<DataType>::user_char = '\0';
+  while( !(BasicPlotter<DataType>::user_char=='q' || BasicPlotter<DataType>::user_char=='Q') ){
+    fprintf(stderr,"\nContinued in loop as user_char='%c'\n",BasicPlotter<DataType>::user_char);
     
-    if( mutated ){
+    if( BasicPlotter<DataType>::mutated ){
       plot_background();
-      for( unsigned iplotdata=0; iplotdata<plotdatas.size(); iplotdata++){
+      for( unsigned iplotdata=0; iplotdata<BasicPlotter<DataType>::plotdatas.size(); iplotdata++){
 	cpgsci(1);
-	if( plotdatas.size() > 1 )
-	  set_colour_index(iplotdata);
+	if( BasicPlotter<DataType>::plotdatas.size() > 1 )
+	  this->set_colour_index(iplotdata);
 	if( Ready::verbose || Operation::verbose )
 	  fprintf(stderr,"dsp::Plotter::plot() calling plotdatas[%d]->plot()\n",
 		  iplotdata);
-	plotdatas[iplotdata]->plot(params.back());
+	BasicPlotter<DataType>::plotdatas[iplotdata]->plot(BasicPlotter<DataType>::params.back());
       }
     }
 
@@ -185,85 +185,92 @@ bool dsp::Plotter<DataType>::user_input(){
   float xref;       // Used to store secondary x co-ord of cursor upon e.g. completion of zoom box
   float yref;       // Used to store secondary y co-ord of cursor upon e.g. completion of zoom box
  
-  if(cpgcurs(&x,&y,&user_char)==0){
+#if defined ( __GNUC__ ) && ( __GNUC__ >= 3 ) && ( __GNUC_MINOR__ >= 4 )
+  char& user_char_copy = BasicPlotter<DataType>::user_char;
+#else
+  char& user_char_copy = user_char;
+#endif
+
+  if(cpgcurs(&x,&y,&user_char_copy)==0){
     cerr<<"Error in cpgcurs\n";
     return false;
   }
 
   if(Ready::verbose || Operation::verbose)
-    cerr<<"After cpgcurs user_char is '"<<user_char<<"'\n\n";
+    cerr<<"After cpgcurs user_char is '"<<BasicPlotter<DataType>::user_char<<"'\n\n";
 
-  if(user_char=='z' || user_char=='A'){
+  if(BasicPlotter<DataType>::user_char=='z' || BasicPlotter<DataType>::user_char=='A'){
     if(Ready::verbose || Operation::verbose)
 	cerr<<"Detected a 'z' at x='"<<x<<"' and y='"<<y<<"'\n";
     xref=x;
     yref=y;
-    cpgband(2, 0, xref, yref, &x, &y, &user_char);
-      
+
+    cpgband(2, 0, xref, yref, &x, &y, &user_char_copy);
+
     if(x<xref){ float tmp=x; x=xref; xref=tmp; }
     if(y<yref){ float tmp=y; y=yref; yref=tmp; }
 
-    params.push_back( plot::PlotParams(xref, x, yref, y, params.back()) );
+    BasicPlotter<DataType>::params.push_back( plot::PlotParams(xref, x, yref, y, BasicPlotter<DataType>::params.back()) );
 
-    mutated = true;
+    BasicPlotter<DataType>::mutated = true;
     return true;
   }
 
-  if(user_char=='n' || user_char=='d' ){
+  if(BasicPlotter<DataType>::user_char=='n' || BasicPlotter<DataType>::user_char=='d' ){
     highlight(x,y);
-    params.push_back( params.back() );
-    params.back().incr();
+    BasicPlotter<DataType>::params.push_back( BasicPlotter<DataType>::params.back() );
+    BasicPlotter<DataType>::params.back().incr();
     
-    mutated = true;
+    BasicPlotter<DataType>::mutated = true;
     return true;
   }
   
-  if(user_char=='u' && params.size()>1){
-    params.pop_back();
+  if(BasicPlotter<DataType>::user_char=='u' && BasicPlotter<DataType>::params.size()>1){
+    BasicPlotter<DataType>::params.pop_back();
 
-    mutated = true;
+    BasicPlotter<DataType>::mutated = true;
     return true;
   }
     
-  if(user_char=='r'){
-    params.push_back(plot::PlotParams(x,
-				x+params.back().get_xmax()-params.back().get_xmin(),
-				params.back().get_ymin(),
-				params.back().get_ymax(),
-				params.back()));
-    mutated = true;
+  if(BasicPlotter<DataType>::user_char=='r'){
+    BasicPlotter<DataType>::params.push_back(plot::PlotParams(x,
+				x+BasicPlotter<DataType>::params.back().get_xmax()-BasicPlotter<DataType>::params.back().get_xmin(),
+				BasicPlotter<DataType>::params.back().get_ymin(),
+				BasicPlotter<DataType>::params.back().get_ymax(),
+				BasicPlotter<DataType>::params.back()));
+    BasicPlotter<DataType>::mutated = true;
     return true;
   }
     
-  if(user_char=='l'){
-    params.push_back(plot::PlotParams(x-(params.back().get_xmax()-params.back().get_xmin()),
+  if(BasicPlotter<DataType>::user_char=='l'){
+    BasicPlotter<DataType>::params.push_back(plot::PlotParams(x-(BasicPlotter<DataType>::params.back().get_xmax()-BasicPlotter<DataType>::params.back().get_xmin()),
 				x,
-				params.back().get_ymin(),
-				params.back().get_ymax(),
-				params.back()));
-    mutated = true;
+				BasicPlotter<DataType>::params.back().get_ymin(),
+				BasicPlotter<DataType>::params.back().get_ymax(),
+				BasicPlotter<DataType>::params.back()));
+    BasicPlotter<DataType>::mutated = true;
     return true;
   }
 
-  if(user_char=='o'){
-    params.erase(params.begin()+1,params.end());
-    mutated = true;
+  if(BasicPlotter<DataType>::user_char=='o'){
+    BasicPlotter<DataType>::params.erase(BasicPlotter<DataType>::params.begin()+1,BasicPlotter<DataType>::params.end());
+    BasicPlotter<DataType>::mutated = true;
     return true;
   }
 
-  if(user_char=='b'){
-    params.back().switch_block_new_data();
-    mutated = false;
+  if(BasicPlotter<DataType>::user_char=='b'){
+    BasicPlotter<DataType>::params.back().switch_block_new_data();
+    BasicPlotter<DataType>::mutated = false;
     return true;
   }
 
-  if(user_char=='c'){
+  if(BasicPlotter<DataType>::user_char=='c'){
     fprintf(stderr,"x=%f\ty=%f\n",x,y);
-    mutated = false;
+    BasicPlotter<DataType>::mutated = false;
     return true;
   }
 
-  if(user_char=='p'){
+  if(BasicPlotter<DataType>::user_char=='p'){
     string response = string("dsp_Plotter") + string(".cps/cps");;
     
     fprintf(stderr,"Will ps to '%s'\n",response.c_str());
@@ -276,10 +283,10 @@ bool dsp::Plotter<DataType>::user_input(){
     }
   
     plot_background();
-    for( unsigned iplotdata=0; iplotdata<plotdatas.size(); iplotdata++){
+    for( unsigned iplotdata=0; iplotdata<BasicPlotter<DataType>::plotdatas.size(); iplotdata++){
       cpgsci(1);
       //set_colour_index(iplotdata);
-      plotdatas[iplotdata]->plot(params.back());
+      BasicPlotter<DataType>::plotdatas[iplotdata]->plot(BasicPlotter<DataType>::params.back());
     }
    
     cpgclos();
@@ -288,17 +295,17 @@ bool dsp::Plotter<DataType>::user_input(){
     if(Ready::verbose || Operation::verbose)
       fprintf(stderr,"Out of replot for ps file\n");
 
-    mutated = false;
+    BasicPlotter<DataType>::mutated = false;
     return true;
   }
 
-  if( user_char=='q' || user_char=='Q' ){
+  if( BasicPlotter<DataType>::user_char=='q' || BasicPlotter<DataType>::user_char=='Q' ){
     return true;
   }
 
   if(Ready::verbose || Operation::verbose)
-    fprintf(stderr,"You typed '%c'\n",user_char);
-  mutated = false;
+    fprintf(stderr,"You typed '%c'\n",BasicPlotter<DataType>::user_char);
+  BasicPlotter<DataType>::mutated = false;
 
   if(Ready::verbose || Operation::verbose)
     fprintf(stderr,"Returning at end of dsp::Plotter::user_input()\n");
@@ -317,7 +324,7 @@ bool dsp::Plotter<DataType>::plot_background(){
     
   cpgpanl(1, 1);  
   
-  plot::PlotParams* last_params = &params.back();
+  plot::PlotParams* last_params = &BasicPlotter<DataType>::params.back();
 
   /*
   // Draw lower 'reminder' boxes
@@ -373,9 +380,9 @@ bool dsp::Plotter<DataType>::plot_background(){
   
   string title = base_title + "  (plot " + make_string(last_params->get_plot_in_hierachy()) + ")";
 
-  if( inputs[0]->get_domain().substr(0,7)=="Fourier" && xlabel == "Time (s)" )
+  if( BasicPlotter<DataType>::inputs[0]->get_domain().substr(0,7)=="Fourier" && xlabel == "Time (s)" )
     xlabel = "Frequency (Hz)";
-  else if( inputs[0]->get_domain()=="Time" && xlabel == "Frequency (Hz)" ) 
+  else if( BasicPlotter<DataType>::inputs[0]->get_domain()=="Time" && xlabel == "Frequency (Hz)" ) 
     xlabel = "Time (s)";
 
   cpglab(xlabel.c_str(),ylabel.c_str(),title.c_str());
@@ -387,21 +394,28 @@ template<class DataType>
 bool dsp::Plotter<DataType>::highlight(float& x, float& y){
   if(Ready::verbose || Operation::verbose)
     fprintf(stderr,"Detected a '%c' at x=%f and y=%f\n",
-	    user_char,x,y);
+	    BasicPlotter<DataType>::user_char,x,y);
 
   const bool MAKE_GOOD = true;
   const bool MAKE_BAD = false;
 
   bool direction = MAKE_GOOD; /* to satisfy compiler */
-  if( user_char=='n')
+  if( BasicPlotter<DataType>::user_char=='n')
     direction = MAKE_BAD;
-  if( user_char=='d')
+  if( BasicPlotter<DataType>::user_char=='d')
     direction = MAKE_GOOD;
 
   // 1. work out which zone is to be nullified
   float xref=x;
   float yref=y;
-  cpgband(2, 0, xref, yref, &x, &y, &user_char);
+
+#if defined ( __GNUC__ ) && ( __GNUC__ >= 3 ) && ( __GNUC_MINOR__ >= 4 )
+  char& user_char2 = BasicPlotter<DataType>::user_char;
+#else
+  char& user_char2 = user_char;
+#endif
+
+  cpgband(2, 0, xref, yref, &x, &y, &user_char2);
 
   if(x<xref){ float tmp=x; x=xref; xref=tmp; }
   if(y<yref){ float tmp=y; y=yref; yref=tmp; }
@@ -409,15 +423,15 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
   /* so xref=min & x=max */
   int status_to_left,status_to_right,orig_data_status;
 
-  for(int dataset=0;dataset< int(plotdatas.size()); dataset++){
+  for(int dataset=0;dataset< int(BasicPlotter<DataType>::plotdatas.size()); dataset++){
     if(Ready::verbose || Operation::verbose)
       fprintf(stderr,"Working with dataset %d/%d\n",
-	      dataset+1,plotdatas.size());
+	      dataset+1,BasicPlotter<DataType>::plotdatas.size());
 
-    orig_data_status = plotdatas[dataset]->get_data_is_good();
+    orig_data_status = BasicPlotter<DataType>::plotdatas[dataset]->get_data_is_good();
 
     /* do the lhs split */
-    status_to_left   = plotdatas[dataset]->get_data_is_good();
+    status_to_left   = BasicPlotter<DataType>::plotdatas[dataset]->get_data_is_good();
 
     if(direction==MAKE_BAD)
       status_to_right = false;
@@ -429,19 +443,19 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
 	      dataset,xref);
 
     // if successful, newie will come out before xpos
-    void* ans = plotdatas[dataset]->split(xref,status_to_left,status_to_right);
+    void* ans = BasicPlotter<DataType>::plotdatas[dataset]->split(xref,status_to_left,status_to_right);
     if(Ready::verbose || Operation::verbose)
       fprintf(stderr,"Got ans=%p\n",ans);
     exit(0);
 
-    Reference::To<DataType> newie( dynamic_cast<DataType*>(plotdatas[dataset]->split(xref,status_to_left,status_to_right).ptr()) );
+    Reference::To<DataType> newie( dynamic_cast<DataType*>(BasicPlotter<DataType>::plotdatas[dataset]->split(xref,status_to_left,status_to_right).ptr()) );
     if(Ready::verbose || Operation::verbose)
       fprintf(stderr,"dsp::Plotter::highlight():: out of split with newie.ptr()=%p\n",newie.ptr());
 
     if( newie.ptr() ){
       if( Operation::verbose )
 	fprintf(stderr,"Successfully out of plotdatas[%d]->split() with newie=%p\n",dataset,newie.get());
-      plotdatas.insert(plotdatas.begin()+dataset,newie->clone());
+      BasicPlotter<DataType>::plotdatas.insert(BasicPlotter<DataType>::plotdatas.begin()+dataset,newie->clone());
       if(Ready::verbose || Operation::verbose)
 	fprintf(stderr,"highlight:: have inserted newie before dataset %d\n",
 	      dataset);
@@ -449,7 +463,7 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
     }
 
     /* do the rhs split */
-    status_to_left = plotdatas[dataset]->get_data_is_good();
+    status_to_left = BasicPlotter<DataType>::plotdatas[dataset]->get_data_is_good();
     status_to_right = orig_data_status;
     
     if( newie )
@@ -457,11 +471,11 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
 
     if(Ready::verbose || Operation::verbose)
       fprintf(stderr,"calling split 2nd time with rhs limit=%f and plotdatas.size()=%d and dataset=%d\n",
-	      x,plotdatas.size(),dataset);
-    newie = dynamic_cast<DataType*>( plotdatas[dataset]->split(x,status_to_left,status_to_right).ptr() );
+	      x,BasicPlotter<DataType>::plotdatas.size(),dataset);
+    newie = dynamic_cast<DataType*>( BasicPlotter<DataType>::plotdatas[dataset]->split(x,status_to_left,status_to_right).ptr() );
 
     if( newie.ptr() ){
-      plotdatas.insert(plotdatas.begin()+dataset,newie->clone());
+      BasicPlotter<DataType>::plotdatas.insert(BasicPlotter<DataType>::plotdatas.begin()+dataset,newie->clone());
       if(Ready::verbose || Operation::verbose)
 	fprintf(stderr,"inserted before dataset %d\n",dataset);
       dataset++;
@@ -471,9 +485,9 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
   if(Ready::verbose || Operation::verbose)
     fprintf(stderr,"Ready to merge\n");
 
-  for( int idataset=0; idataset< int(plotdatas.size()-1); idataset++){
-    if( plotdatas[idataset]->merge(*plotdatas[idataset+1]) ){
-      plotdatas.erase(plotdatas.begin()+idataset+1);
+  for( int idataset=0; idataset< int(BasicPlotter<DataType>::plotdatas.size()-1); idataset++){
+    if( BasicPlotter<DataType>::plotdatas[idataset]->merge(*BasicPlotter<DataType>::plotdatas[idataset+1]) ){
+      BasicPlotter<DataType>::plotdatas.erase(BasicPlotter<DataType>::plotdatas.begin()+idataset+1);
       if(Ready::verbose || Operation::verbose)
 	fprintf(stderr,"erased dataset %d\n",idataset+1);
       idataset--;
