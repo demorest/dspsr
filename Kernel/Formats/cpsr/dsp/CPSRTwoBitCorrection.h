@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/07/10 07:08:34 $
+   $Revision: 1.3 $
+   $Date: 2002/07/11 16:04:16 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
@@ -23,7 +23,7 @@ namespace dsp {
     //! Null constructor
     CPSRTwoBitCorrection (const char* name = "CPSRTwoBitCorrection",
 			  Behaviour type = outofplace) :
-      TwoBitCorrection (name, type) { values = 0; }
+      TwoBitCorrection (name, type) { values = 0; nchannel = 4; }
 
     ~CPSRTwoBitCorrection () { destroy(); }
 
