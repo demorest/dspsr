@@ -31,6 +31,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>    s2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>      pmdaq;
 #endif
 
+#if DSP_PuMa
+#include "dsp/PuMaTwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::PuMaTwoBitCorrection>  puma;
+#endif
+
 #include "Error.h"
 
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
