@@ -409,9 +409,6 @@ void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
   if (pulsar_ephemeris.ptr() == ephemeris)
     return;
 
-  //  Reference::To<const psrephem> grrr(ephemeris);
-  //pulsar_ephemeris = grrr;
-
   pulsar_ephemeris = ephemeris;
   built = false;
 }
