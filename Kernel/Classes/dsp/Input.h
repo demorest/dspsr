@@ -1,12 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/01/09 12:52:59 $
-   $Author: wvanstra $ */
+   $Revision: 1.20 $
+   $Date: 2003/01/27 23:42:18 $
+   $Author: hknight $ */
 
 #ifndef __Input_h
 #define __Input_h
+
+#include "MJD.h"
 
 #include "dsp/Operation.h"
 #include "dsp/Observation.h"
@@ -43,6 +45,9 @@ namespace dsp {
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
+
+    //! Seek to a close sample to the specified MJD
+    virtual void seek(MJD mjd);
     
     //! Return the number of time samples to load on each load_block
     virtual uint64 get_block_size () const { return block_size; }

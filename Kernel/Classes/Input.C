@@ -3,6 +3,7 @@
 #include "dsp/Input.h"
 #include "dsp/BitSeries.h"
 
+#include "MJD.h"
 #include "environ.h"
 
 #include "Error.h"
@@ -151,6 +152,37 @@ void dsp::Input::seek (int64 offset, int whence)
 
   // ensure that the load_size attribute is properly set
   set_load_size ();
+}
+
+//! Seek to a close sample to the specified MJD
+void dsp::Input::seek(MJD mjd){
+  if( mjd+1.0/info.get_rate() < info.get_start_time() )
+    throw Error(InvalidParam,"dsp::Input::seek()",
+		"The given MJD (%s) is before the start time of the input data (%s)  (Difference is %s)",
+		mjd.printall(),info.get_start_time().printall(),
+		(info.get_start_time()-mjd).printall());
+
+  if( mjd-1.0/info.get_rate() > info.get_end_time() )
+    throw Error(InvalidParam,"dsp::Input::seek()",
+		"The given MJD (%s) is after the end time of the input data (%s)  (Difference is %f seconds)",
+		mjd.printall(),info.get_start_time().printall(),
+		(mjd-info.get_start_time()).in_seconds());
+  
+  double seek_samples = (mjd-info.get_start_time()).in_seconds()*info.get_rate();
+  uint64 actual_seek = 0;
+
+  if( seek_samples<0.0 )
+    actual_seek = 0;
+  else if( uint64(seek_samples) > info.get_ndat() )
+    actual_seek = info.get_ndat();
+  else
+    actual_seek = uint64(seek_samples);
+
+  if( verbose )
+    fprintf(stderr,"dsp::Input::seek(MJD) will seek %f = "UI64" samples\n",
+	    seek_samples, actual_seek);
+
+  seek( actual_seek, SEEK_SET);
 }
 
 /*! This method also ensures that the load_size attribute is properly set. */
