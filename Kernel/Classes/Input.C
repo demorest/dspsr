@@ -17,6 +17,10 @@ void dsp::Input::load (Timeseries* data)
   if (!data)
     throw_str ("Input::load invalid data reference");
 
+  string reason;
+  if (!info.state_is_valid (reason))
+    throw_str ("Input::load invalid state: "+reason);
+
   if (verbose)
     cerr << "Input::load block_size=" << block_size << endl;
 
@@ -27,11 +31,20 @@ void dsp::Input::load (Timeseries* data)
   // note that data->start_time was set in the above call to operator=
   data->change_start_time (next_sample);
 
+  if (verbose)
+    cerr << "Input::load resize data" << endl;
+
   data->resize (block_size);
 
   load_time.start();
 
+  if (verbose)
+    cerr << "Input::load call load_data" << endl;
+
   load_data (data);
+
+  if (verbose)
+    cerr << "Input::load load_data returns" << endl;
 
   load_time.stop();
 }
