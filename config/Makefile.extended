@@ -495,6 +495,8 @@ endif # install_yes != install
 # explicit make rules in the user's make file.
 ##########################################################################
 
+ifdef LIBRARY
+
 ONELIB := $(LIBDIR)/$(LIBRARY)
 
 LOBJS := $(call src2obj,$(LIB_SRCS))
@@ -504,12 +506,16 @@ $(ONELIB) : $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
 	$(RANLIB) $@
 
+endif
+
 
 ##########################################################################
 # Explicit rule to make one dynamic shared object from the DSONAME macro
 # Additional libraries must be added to the LIBRARIES macro and given
 # explicit make rules in the user's make file.
 ##########################################################################
+
+ifdef DSO_NAME
 
 DSOLIB := $(DSODIR)/$(DSO_NAME)
 DSOBJS := $(call src2obj,$(DSO_SRCS))
@@ -519,6 +525,7 @@ $(DSOLIB) : $(DSO_OBJS)
 	@mkdir -p $(dir $(DSOLIB))
 	$(DSO) $@ $(DSO_OBJS) $(DSO_FLAGS)
 
+endif
 
 ##########################################################################
 # Special cases:  for certain targets, the whole makedepend system should
