@@ -2,11 +2,11 @@
 
 /*! Each byte is interpreted as follows:
 
-  MSB: m4 m2 m3 m1 l4 l2 l3 l1 :LSB
+  MSB: l3 l1 l2 l0 m3 m1 m2 m0 :LSB
 
   Where each two bit timesample is given by its most significant bit, mX,
   and least significant bit, lX, and each byte contains four time samples:
-  m1l1, m2l2, m3l3, m4l4.
+  m0l0, m1l1, m2l2, m3l3.
 
   \param byte the byte pattern containing four time samples
   \param sample the sample to extract from the byte 
@@ -15,8 +15,8 @@ unsigned dsp::S2TwoBitTable::twobit (unsigned byte, unsigned sample) const
 {
   unsigned char shifts[4] = { 0, 2, 1, 3 };
 
-  unsigned char lsb = 0x01;
-  unsigned char msb = 0x02;
+  unsigned lsb = (byte >> (shifts[sample]+4)) & 0x01;
+  unsigned msb = (byte >> shifts[sample]) & 0x01;
 
-  return ((byte>>shifts[sample]) & lsb) | ((byte>>(shifts[sample]+3)) & msb);
+  return lsb | (msb << 1);
 }
