@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/12/04 01:09:35 $
-   $Author: hknight $ */
+   $Revision: 1.9 $
+   $Date: 2003/05/17 09:55:15 $
+   $Author: pulsar $ */
 
 
 #ifndef __Seekable_h
@@ -39,6 +39,9 @@ namespace dsp {
     virtual uint64 get_current_sample(){ return current_sample; }
 
   protected:
+
+    //! set end_of_data
+    void set_eod(bool _eod){ end_of_data = _eod; }
     
     //! Load next block of data into BitSeries
     virtual void load_data (BitSeries* data);
