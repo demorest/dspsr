@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.36 $
-   $Date: 2002/12/04 01:19:53 $
+   $Revision: 1.37 $
+   $Date: 2002/12/04 01:36:16 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -140,11 +140,6 @@ namespace dsp {
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
     //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double get_bandwidth () const { return bandwidth; }
-
-    //! Returns the DM to which the data has been dedispersed
-    double get_dispersion_measure () const { return dispersion_measure; }
-    //! Set the record of what DM the data is dedispersed
-    void set_dispersion_measure (double dm) { dispersion_measure = dm; }
 
     //! Set the start time of the leading edge of the first time sample
     void set_start_time (MJD _start_time) { start_time = _start_time; }
