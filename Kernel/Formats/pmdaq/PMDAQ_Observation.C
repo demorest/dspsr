@@ -97,12 +97,12 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
   //
   // NDIM
   //
-  set_state (Detected);    
+  set_state (Signal::Intensity);
 
   //
   // call this only after setting frequency and telescope
   //
-  set_default_feedtype ();
+  set_default_basis ();
 
   // //////////////////////////////////////////////////////////////////////
   //
