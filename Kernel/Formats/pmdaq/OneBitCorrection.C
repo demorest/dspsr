@@ -94,7 +94,7 @@ void dsp::OneBitCorrection::unpack ()
   unsigned masks[NN];
   
   for( unsigned i=0; i<NN; i++)
-    masks[i] = unsigned(pow(unsigned(2),unsigned(i)));
+    masks[i] = unsigned(1) << i;
   
   const register unsigned nskip = MM*n_freq/32;    
   
