@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.60 $
-   $Date: 2003/09/09 07:26:54 $
+   $Revision: 1.61 $
+   $Date: 2003/09/27 08:39:36 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -303,7 +303,7 @@ namespace dsp {
 
   protected:
 
-    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string(), file2obs() and string2obs() appropriately! */
+    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string(), file2obs() and string2obs() appropriately!  You'll probably have to add version control too! */
     
     //! Number of time samples in container
     uint64 ndat;
