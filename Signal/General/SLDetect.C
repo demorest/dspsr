@@ -58,23 +58,11 @@ void dsp::SLDetect::transformation ()
 
       // When in_ptr=dend, we are on our last timesample to SLD
       register const float* dend = in_ptr + input->get_ndim()*input->get_ndat(); 
-
-      if(verbose)
-	fprintf(stderr,"For calculating dend ndim=%d ndat="I64"\n",
-		input->get_ndim(),input->get_ndat());
-
-      if(verbose){
-	cerr << "in_ptr="<<in_ptr<<"\n";
-	cerr << "out_ptr="<<out_ptr<<"\n";
-	cerr << "dend="<<dend<<"\n";
-	cerr << "dend-in_ptr="<<dend-in_ptr<<"\n";
       /* See ~hknight/h_code/test2Aug02.C to see the test I
 	 ran to find the quickest way of doing the squaring.
 	 Not that this is the fastest though- but it's hopefully
 	 less confusing.
       */
-      }  
-
       if( input->get_state()==Signal::Nyquist ){
 	if(verbose)
 	  fprintf(stderr,"SLDetect case is an %s transformation on Nyquist data\n",
