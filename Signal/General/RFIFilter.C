@@ -16,7 +16,7 @@ dsp::RFIFilter::RFIFilter ()
   duty_cycle = 1.0;
 
   maximum_block_size = 8*1024;
-  median_window = 11;
+  median_window = 51;
 }
 
 dsp::RFIFilter::~RFIFilter ()
@@ -111,26 +111,37 @@ void dsp::RFIFilter::calculate (Response* bp)
 
   fft::median_smooth (spectrum, median_window);
 
-  double valsq = 0.0;
+  double variance = 0.0;
   for (ichan=0; ichan < nchan_bp; ichan++) {
     spectrum[ichan] -= (p0ptr[ichan]+p1ptr[ichan]);
     spectrum[ichan] *= spectrum[ichan];
-    valsq += spectrum[ichan];
+    // p0ptr[ichan] = spectrum[ichan];
+    variance += spectrum[ichan];
   }
 
-  valsq /= nchan_bp;
-  double rms = sqrt(valsq);
-
-  cerr << "rms = " << rms << endl;
+  variance /= nchan_bp;
 
   resize (1, 1, nchan_bp, 2);
 
+  bool zapped = true;
+  unsigned round = 1;
+
+  while (zapped)  {
+
+  float cutoff = 16.0 * variance;
+  cerr << "round " << round << " cutoff = " << cutoff << endl;
+
+  zapped = false;
+  round ++;
   float* ptr = get_datptr(0,0);
 
   for (ichan=0; ichan < nchan_bp; ichan++) {
-    if (spectrum[ichan] > 16.0*valsq) {
+    if (spectrum[ichan] > cutoff ||
+        (ichan && fabs(spectrum[ichan]-spectrum[ichan-1]) > 2*cutoff)) {
       cerr << "ichan=" << ichan << endl;
-      p0ptr[ichan] = p1ptr[ichan] = *ptr = 0.0;
+      variance -= spectrum[ichan]/nchan_bp;
+      spectrum[ichan] = p0ptr[ichan] = p1ptr[ichan] = *ptr = 0.0;
+      zapped = true; 
     }
     else
       *ptr = 1;
@@ -140,7 +151,7 @@ void dsp::RFIFilter::calculate (Response* bp)
     *ptr = 0;
     ptr ++;
   }
-
+  }
     
   calculated = true;
 }
@@ -161,9 +172,18 @@ void dsp::RFIFilter::match (const Response* response)
 
   }
 
-  complex<float> one (1.0, 0.0);
-  vector< complex<float> > phasors (response->get_nchan()*response->get_ndat(),
-				    one);
+  unsigned required = response->get_nchan() * response->get_ndat();
+  unsigned expand = required / get_ndat();
+
+  cerr << "expand by " << expand << endl;
+
+  vector< complex<float> > phasors (required);
+
+  float* data = get_datptr(0,0);
+
+  for (unsigned idat=0; idat < get_ndat(); idat++)
+    for (unsigned ip=0; ip < expand; ip++)
+      phasors[idat*expand+ip] = data[idat];
 
   set (phasors);
 
