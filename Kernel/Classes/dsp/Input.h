@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.28 $
-   $Date: 2004/06/13 07:40:39 $
-   $Author: hknight $ */
+   $Revision: 1.29 $
+   $Date: 2004/10/15 12:10:59 $
+   $Author: wvanstra $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -83,7 +83,7 @@ namespace dsp {
     void set_total_samples (uint64 s) { info.set_ndat(s); }
 
     //! Get the information about the data source
-    virtual operator const Observation* () const { return &info; }
+    operator const Observation* () const { return get_info(); }
 
     //! Get the information about the data source
     virtual Observation* get_info () { return &info; }
