@@ -50,6 +50,9 @@ void dsp::Fold::prepare ()
 //! Prepare for folding the given Observation
 void dsp::Fold::prepare (const Observation* observation)
 {
+  if( folding_period )
+    return;
+
   string jpulsar = observation->get_source();
 
   if (jpulsar.length() == 0)
@@ -77,8 +80,9 @@ void dsp::Fold::prepare (const Observation* observation)
     Reference::To<psrephem> ephemeris = new psrephem;
 
     if (ephemeris->create (jpulsar, 0) < 0)
-      throw Error (FailedCall, "dsp::Fold::prepare",
-		   "error psrephem::create ("+jpulsar+")");
+      throw Error(FailedCall,"dsp::Fold::prepare",
+		  "Failed to create ephemeris for jpulsar '%s'",
+		  jpulsar.c_str());
 
     pulsar_ephemeris = ephemeris;
   }
@@ -116,7 +120,7 @@ void dsp::Fold::prepare (const Observation* observation)
     cerr << "dsp::Fold::prepare creating polyco" << endl;
 
   Reference::To<polyco> polly = new polyco;
-
+  
   Tempo::set_polyco ( *polly, *pulsar_ephemeris, time, time,
 		      nspan, ncoef, 8, observation->get_telescope_code() );
 
@@ -231,7 +235,7 @@ unsigned dsp::Fold::choose_nbin ()
 
     if (requested_nbin > sensible_nbin) {
       cerr << "dsp::Fold::choose_nbin WARNING Requested nbin=" 
-	   << requested_nbin << " > maximum nbin=" << sensible_nbin << "."
+	   << requested_nbin << " > sensible nbin=" << sensible_nbin << "."
 	"  Where:\n"
 	"  sampling period     = " << sampling_period*1e3 << " ms and\n"
 	"  requested bin width = " << folding_period/requested_nbin*1e3 << 
@@ -242,7 +246,6 @@ unsigned dsp::Fold::choose_nbin ()
 
   }
   else {
-
     // the Fold::set_nbin method has not been called.  choose away ...
 
     if (maximum_nbin && sensible_nbin > maximum_nbin) {
@@ -332,10 +335,7 @@ void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
 
 const psrephem* dsp::Fold::get_pulsar_ephemeris () const
 {
-  if( !pulsar_ephemeris )
-    return NULL;
-
-  return pulsar_ephemeris;
+  return pulsar_ephemeris.ptr();
 }
 
 void dsp::Fold::set_input (TimeSeries* _input)
