@@ -94,6 +94,9 @@ typedef struct {
 } COMPLEX;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int str2byte( char *arg );
 long str2long( char *arg );
@@ -123,3 +126,7 @@ void ffd_missing( int DEBUG );
 void ffd_prompt();
 int ffd_tmfe_multiplex();
 int ffd_tmfe_level_set( int channel_lower, int channel_upper );
+
+#ifdef __cplusplus
+}
+#endif
