@@ -228,7 +228,7 @@ endef
 $(LOGIN_ARCH)/%.sdep: Makefile
 	@echo source depend: $*
 	@echo "$*.OBJS := $(call eval_srcs,$*)" > ${LOGIN_ARCH}/$*.sdep;
-	@echo "${BINDIR}/$*: $$($*.OBJS)" >> ${LOGIN_ARCH}/$*.sdep;
+	@echo '${BINDIR}/$*: $$($*.OBJS)' >> ${LOGIN_ARCH}/$*.sdep;
 
 
 
@@ -390,7 +390,7 @@ clean:
 	$(RM) $(LOGIN_ARCH)/*.o
 
 depend:
-	@$(RM) $(LOGIN_ARCH)/*.dep $(LOGIN_ARCH)/*.ldep
+	@$(RM) $(LOGIN_ARCH)/*dep 
 	@$(MAKE) -s nothing
 
 nothing:
