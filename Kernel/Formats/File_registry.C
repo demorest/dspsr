@@ -53,6 +53,8 @@ static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
 static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> coherentfb;
 #include "dsp/BitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile>  bitseries_file;
+#include "dsp/MultiBitSeriesFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile>  multibitseries_file;
 
 #if DSP_S2
 #include "dsp/S2File.h"
