@@ -193,6 +193,12 @@ void dsp::PolyPhaseFilterbank::load_coefficients (string CoefficientFile)
   filterbank = new FilterBank<float> (CoefficientFile);
 }
 
+void 
+dsp::PolyPhaseFilterbank::load_complex_coefficients (string CoefficientFile)
+{
+  C_filterbank = new FilterBank< complex<float> > (CoefficientFile);
+}
+
 
 //! Perform the convolution transformation on the input TimeSeries
 void dsp::PolyPhaseFilterbank::transformation ()
@@ -208,6 +214,8 @@ void dsp::PolyPhaseFilterbank::transformation ()
 		 "Complex input and no complex polyphase filterbank loaded");
 
   unsigned nsamp_fft = nchan;
+
+  cerr << "dsp::PolyPhaseFilterbank::transformation nchan=" << nchan << endl;
 
   // prepare the output TimeSeries
   output->Observation::operator= (*input);
@@ -227,7 +235,7 @@ void dsp::PolyPhaseFilterbank::transformation ()
 
   output->rescale (scalefac);
   
-  if (verbose) cerr << "dsp::Filterbank::transformation"
+  if (verbose) cerr << "dsp::PolyPhaseFilterbank::transformation"
 		 " scale=" << output->get_scale() << endl;
 
   // output data will have new sampling rate
@@ -274,11 +282,14 @@ void dsp::PolyPhaseFilterbank::transformation ()
     } 
     else {
 
+      cerr<< "cast to complex blitz::Array" << endl;
       blitz::Array<complex<float>,1> A ((complex<float>*) data,
 					blitz::shape(ndat),
 					blitz::neverDeleteData);
 
-      result = C_filterbank->filter (A);
+      cerr<< "filter" << endl;
+
+      result.reference( C_filterbank->filter (A) );
 
     }
 
