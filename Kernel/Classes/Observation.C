@@ -25,6 +25,7 @@ void dsp::Observation::init ()
   nchan = 1;
   npol = 1;
   ndim = 1;
+  nbit = 0;
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -133,7 +134,6 @@ bool dsp::Observation::get_detected () const
   return (state != Signal::Nyquist && state != Signal::Analytic);
 }
 
-
 /* this returns a flag that is true if the Observations may be combined 
    It doesn't check the start times- you have to do that yourself!
 */
@@ -169,6 +169,10 @@ bool dsp::Observation::combinable (const Observation & obs) const
   if (ndim != obs.ndim){
     cerr << "dsp::Observation::combinable different ndim:"
 	 << ndim << " and " << obs.ndim << endl;
+  can_combine = false; }
+  if (nbit != obs.nbit){
+    cerr << "dsp::Observation::combinable different nbit:"
+	 << nbit << " and " << obs.nbit << endl;
   can_combine = false; }
   if (type != obs.type){
     cerr << "dsp::Observation::combinable different type:"
@@ -289,30 +293,31 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   if (this == &in_obs)
     return *this;
 
-  centre_frequency = in_obs.centre_frequency;
-  bandwidth   = in_obs.bandwidth;
-  nchan       = in_obs.nchan;
-  npol        = in_obs.npol;
-  ndat        = in_obs.ndat;
-  ndim        = in_obs.ndim;
-  state       = in_obs.state;
-  basis       = in_obs.basis;
+  set_centre_frequency ( in_obs.get_centre_frequency() );
+  set_bandwidth   ( in_obs.get_bandwidth() );
+  set_nchan       ( in_obs.get_nchan() );
+  set_npol        ( in_obs.get_npol() );
+  set_ndat        ( in_obs.get_ndat() );
+  set_ndim        ( in_obs.get_ndim() );
+  set_nbit        ( in_obs.get_nbit() );
+  set_state       ( in_obs.get_state() );
+  set_basis       ( in_obs.get_basis() );
 
-  start_time  = in_obs.start_time;
+  set_start_time  ( in_obs.get_start_time() );
 
-  rate        = in_obs.rate;
-  scale       = in_obs.scale;
-  swap        = in_obs.swap;
-  dc_centred  = in_obs.dc_centred;
+  set_rate        ( in_obs.get_rate() );
+  set_scale       ( in_obs.get_scale() );
+  set_swap        ( in_obs.get_swap() );
+  set_dc_centred  ( in_obs.get_dc_centred() );
 
-  telescope   = in_obs.telescope;
+  set_telescope   ( in_obs.get_telescope() );
 
-  source      = in_obs.source;
-  identifier  = in_obs.identifier;
-  machine     = in_obs.machine;
-  mode        = in_obs.mode;
+  set_source      ( in_obs.get_source() );
+  set_identifier  ( in_obs.get_identifier() );
+  set_machine     ( in_obs.get_machine() );
+  set_mode        ( in_obs.get_mode() );
 
-  coordinates = in_obs.coordinates;
+  set_coordinates ( in_obs.get_coordinates() );
 
   return *this;
 }
@@ -370,7 +375,7 @@ bool dsp::Observation::retrieve(string& ss){
   sprintf(dummy,"NCHAN\t%d\n",nchan); ss += dummy;
   sprintf(dummy,"NPOL\t%d\n",npol); ss += dummy;
   sprintf(dummy,"NDIM\t%d\n",ndim); ss += dummy;
-  //sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
+  sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
   sprintf(dummy,"TYPE\t%s\n",Signal::source_string(type)); ss += dummy;
   sprintf(dummy,"STATE\t%s\n",Signal::state_string(state)); ss += dummy;
   sprintf(dummy,"BASIS\t%s\n",Signal::basis_string(basis)); ss += dummy;

@@ -9,7 +9,6 @@
 //! Null constructor
 dsp::BitSeries::BitSeries ()
 {
-  nbit = 0;
   data = 0;
   size = 0;
   input_sample = -1;
@@ -29,12 +28,12 @@ dsp::BitSeries::~BitSeries ()
   \post There is no guarantee that the data already contained in BitSeries
   will be preserved after a call to resize.
 */
-void dsp::BitSeries::resize (uint64 nsamples)
+void dsp::BitSeries::resize (int64 nsamples)
 {
-  uint64 require = nbytes (nsamples);
+  int64 require = nbytes (nsamples);
 
   if (require < 0)
-    throw_str ("BitSeries::resize invalid size="UI64, require);
+    throw_str ("BitSeries::resize invalid size="I64, require);
 
   if (!require || require > size) {
     if (data) delete [] data; data = 0;
@@ -62,8 +61,6 @@ dsp::BitSeries::operator = (const BitSeries& basicseries)
     return *this;
 
   Observation::operator = (basicseries);
-  nbit = basicseries.nbit;
-
   resize (basicseries.ndat);
 
   const unsigned char* from = basicseries.get_rawptr();
@@ -74,25 +71,15 @@ dsp::BitSeries::operator = (const BitSeries& basicseries)
   return *this;
 }
 
-bool dsp::BitSeries::combinable (const BitSeries & obs) const
-{
-  if (nbit != obs.nbit) {
-    cerr << "dsp::BitSeries::combinable different nbit:"
-	 << nbit << " and " << obs.nbit << endl;
-    return false;
-  }
-
-  return Observation::combinable (obs);
-}
 
 //! Return pointer to the specified data block
-unsigned char* dsp::BitSeries::get_datptr (uint64 sample)
+unsigned char* dsp::BitSeries::get_datptr(uint64 sample)
 {
   return data + nbytes(sample);
 }
 
 //! Return pointer to the specified data block
-const unsigned char* dsp::BitSeries::get_datptr (uint64 sample) const
+const unsigned char* dsp::BitSeries::get_datptr(uint64 sample) const
 {
   return data + nbytes(sample);
 }
