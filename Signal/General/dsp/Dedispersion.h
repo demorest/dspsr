@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/09/17 11:20:22 $
+   $Revision: 1.3 $
+   $Date: 2002/09/18 13:59:38 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -19,6 +19,12 @@ namespace dsp {
   class Dedispersion: public Response {
 
   public:
+
+    //! Verbose flag
+    static bool verbose;
+
+    //! Conversion factor between dispersion measure, DM, and dispersion, D
+    static const double dm_dispersion;
 
     //! Null constructor
     Dedispersion ();
@@ -48,13 +54,13 @@ namespace dsp {
     //! Return the bandwidth of signal in MHz
     double get_bandwidth () const { return bandwidth; }
 
-    //! Set the dispersion measure (in \f${\rm pc cm}^{-3}\f$)
+    //! Set the dispersion measure in \f${\rm pc\,cm}^{-3}\f$
     void set_dispersion_measure (double dm);
 
-    //! Get the dispersion measure (in \f${\rm pc cm}^{-3}\f$)
+    //! Get the dispersion measure in \f${\rm pc\,cm}^{-3}\f$
     double get_dispersion_measure () const { return dispersion_measure; }
 
-    //! Set the Doppler shift due to the Earths' motion
+    //! Set the Doppler shift due to the Earth's motion
     void set_Doppler_shift (double Doppler_shift);
 
     //! Return the doppler shift due to the Earth's motion
@@ -66,11 +72,31 @@ namespace dsp {
     //! Get the flag to add fractional inter-channel delay
     bool get_fractional_delay () const { return fractional_delay; }
 
+    //! Set the frequency resolution in each channel of the kernel
+    void set_frequency_resolution (unsigned nfft);
+
+    //! Get the frequency resolution in each channel of the kernel
+    unsigned get_frequency_resolution () const { return ndat; }
+
+    //! Return the smearing time, given the centre frequency and bandwidth
+    double smearing_time (double centre_frequency, double bandwidth) const;
+
+    //! Return the smearing time in seconds
+    double smearing_time () const {
+      return smearing_time (centre_frequency, bandwidth);
+    }
+
+    //! Return the number of complex samples of smearing in the specified half
+    unsigned smearing_samples (int half = -1) const;
+
+    //! Return the optimal frequency resolution
+    unsigned optimal_frequency_resolution ();
+
     //! Compute the phases for a dedispersion kernel
-    void build (vector<float>& phases,
-		double centrefreq, double bw, 
-		float dm, double doppler,
-		unsigned npts, unsigned nchan, bool dmcorr);
+    static void build (vector<float>& phases,
+		       double centrefreq, double bw, 
+		       float dm, double doppler,
+		       unsigned npts, unsigned nchan, bool dmcorr);
 
   protected:
 
@@ -95,6 +121,9 @@ namespace dsp {
 
     //! Flag to add fractional inter-channel delay
     bool fractional_delay;
+
+    //! Flag set when set_frequency_resolution() method is called
+    bool frequency_resolution_set;
 
     //! Flag that the response and bandpass attributes reflect the state
     bool built;
