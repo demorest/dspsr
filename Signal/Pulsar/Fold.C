@@ -674,18 +674,16 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   double double_nbin = double (folding_nbin);
   double phase_per_sample = sampling_interval / pfold;
 
-  for (idat=idat_start; idat < idat_end; idat++) {
+  bool bad_data = false;
 
-    bool bad_data = false;
+  for (idat=idat_start; idat < idat_end; idat++) {
 
     if (ndatperweight && idat >= idat_nextweight) {
 
       iweight ++;
 
-#ifdef DEBUG
       if (verbose)
 	cerr << "dsp::Fold::fold iweight=" << iweight;
-#endif
 
       if (weights[iweight] == 0) {
 
@@ -693,16 +691,18 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
         discarded_weights ++;
 	bad_weights ++;
 
-#ifdef DEBUG
 	if (verbose)
 	  cerr << " bad=" << bad_weights << endl;
-#endif
+
+      }
+      else {
+
+        bad_data = false;
+        if (verbose)
+	  cerr << endl;
+
       }
 
-#ifdef DEBUG
-      else if (verbose)
-	cerr << endl;
-#endif
 
       idat_nextweight += ndatperweight;
 
