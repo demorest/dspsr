@@ -13,8 +13,8 @@ dsp::SMROTwoBitCorrection::SMROTwoBitCorrection ()
   : SubByteTwoBitCorrection ("SMROTwoBitCorrection")
 {
   //threshold = 1.5;
-  //table = new TwoBitTable (TwoBitTable::SignMagnitude);
-  table = new TwoBitTable (TwoBitTable::OffsetBinary);
+  table = new TwoBitTable (TwoBitTable::SignMagnitude);
+  //  table = new TwoBitTable (TwoBitTable::OffsetBinary);
   table->set_flip(true);
 }
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROTwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/06/09 02:02:41 $
+   $Revision: 1.2 $
+   $Date: 2005/01/17 03:14:43 $
    $Author: cwest $ */
 
 #ifndef __SMROTwoBitCorrection_h
@@ -25,7 +25,7 @@ namespace dsp {
 
     //! Over-ride the TwoBitCorrection default
     virtual unsigned get_ndig () const;
-
+    
     //! Over-ride the TwoBitCorrection default
     virtual unsigned get_ndig_per_byte () const;
 
