@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.9 $
-   $Date: 2003/11/01 06:39:00 $
+   $Revision: 1.10 $
+   $Date: 2003/12/10 06:19:32 $
    $Author: hknight $ */
 
 
@@ -52,6 +52,10 @@ namespace dsp {
 
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const char* archive_class_name);
+    
+    //! Convenience function
+    void set_archive_class (string archive_class_name)
+    { set_archive_class(archive_class_name.c_str()); }
 
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
