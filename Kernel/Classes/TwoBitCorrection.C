@@ -1,6 +1,10 @@
+#include <iostream>
+
 #include <assert.h>
+#include <math.h>
 
 #include "TwoBitCorrection.h"
+#include "genutil.h"
 
 // #define _DEBUG 1
 
@@ -73,14 +77,9 @@ void dsp::TwoBitCorrection::allocate ()
        << endl;
 #endif
 
-  if (n_range < 2) {
-    fprintf (stderr, 
-	     "TwoBitCorrection::allocate invalid cutoff_sigma: %f\n",
-	     cutoff_sigma);
-    fprintf (stderr, "TwoBitCorrection::allocate nmin:%d  nmax:%d\n", 
-	     n_min, n_max); 
-    throw (string("TwoBitCorrection::allocate invalid"));
-  }
+  if (n_range < 2)
+    throw_str ("TwoBitCorrection::allocate invalid cutoff_sigma=%f"
+		" nbin=%d nmax=%d", cutoff_sigma, n_min, n_max); 
 
   destroy ();
 
@@ -153,10 +152,10 @@ void dsp::TwoBitCorrection::zero_histogram ()
 
 double dsp::TwoBitCorrection::get_histogram_mean (int channel)
 {
-  if (channel < 0 || channel >= nchannel) {
-    fprintf (stderr, "tbc_hist:: invalid channelnel # %d\n", channel);
-    throw (string("TwoBitCorrection::get_mean"));
-  }
+  if (channel < 0 || channel >= nchannel)
+    throw_str ("TwoBitCorrection::get_histogram_mean"
+		" invalid channel=%d", channel);
+
   double ones = 0.0;
   double pts  = 0.0;
 
