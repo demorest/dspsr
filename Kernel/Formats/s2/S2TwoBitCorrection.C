@@ -68,10 +68,18 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
     break;
     
+  case Telescope::Hobart:
+    if (verbose)
+      cerr << "dsp::S2TwoBitCorrection::match Hobart (AT)" << endl;
+    table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
+    break;
+
   default:
     throw Error (InvalidParam, "S2TwoBitCorrection::match",
 		 "unknown telescope = %c", telescope );
   }
+  
+   
 }
 
 
