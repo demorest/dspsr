@@ -1,11 +1,10 @@
-#include <string>
-
-#include "psr_cpp.h"
-
-#include "dsp/Operation.h"
 #include "dsp/Transformation.h"
 
+bool dsp::TransformationBase::check_state = true;
+
 dsp::TransformationBase::TransformationBase(const char* _name)
-  : Operation(_name){ }
+  : Operation(_name)
+{ 
+}
 
 dsp::TransformationBase::~TransformationBase(){ }

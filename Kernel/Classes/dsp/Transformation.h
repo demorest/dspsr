@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.28 $
-   $Date: 2005/03/17 06:58:30 $
-   $Author: hknight $ */
+   $Revision: 1.29 $
+   $Date: 2005/03/29 11:48:36 $
+   $Author: wvanstra $ */
 
 #ifndef __Transformation_h
 #define __Transformation_h
@@ -47,6 +47,9 @@ namespace dsp {
     virtual void* vget_output() = 0;
     virtual string get_input_typestring() = 0;
     virtual string get_output_typestring() = 0;
+
+    // check that input and output states are valid
+    static bool check_state;
   };
 
   //! Defines the interface by which Transformations are performed on data
@@ -320,7 +323,7 @@ void dsp::Transformation<In, Out>::checks(){
 		 input.get(),input->get_ndat());
 
   string reason;
-  if (!input->state_is_valid (reason))
+  if (check_state && !input->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid input state: " + reason);
 
@@ -563,7 +566,7 @@ dsp::Transformation<In,Out>::post_transformation_stuff(int64 surplus_samples,int
 				  double(surplus_samples)/rate_in);
   
   string reason;
-  if ( type!=inplace && !output->state_is_valid (reason))
+  if ( check_state && type!=inplace && !output->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid output state: " + reason);
   
