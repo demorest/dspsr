@@ -176,7 +176,8 @@ unsigned long dsp::TwoBitCorrection::get_histogram_total (int channel) const
    which are mostly found in Section 6.
    ********************************************************************** */
 
-void dsp::TwoBitCorrection::build (int nsamp, float sigma)
+void dsp::TwoBitCorrection::build (int nsamp, float sigma,
+				   TwoBitTable::Type type, bool huge)
 {
   if (verbose) cerr << "TwoBitCorrection::build:: "
 		    << " nsamp=" << nsamp
@@ -191,23 +192,78 @@ void dsp::TwoBitCorrection::build (int nsamp, float sigma)
   set_twobit_limits ();
   allocate ();
 
-  float* dls_lut = dls_lookup;
-  float lo=0, hi=0;
+  generate (dls_lookup, 0, n_min, n_max, nsample, type, huge);
+}
 
-  for (int n_in=n_min; n_in <= n_max; n_in++)  {
+void dsp::TwoBitCorrection::generate (float* dls, float* spc, 
+				      int n_min, int n_max, int n_tot,
+				      TwoBitTable::Type type, bool huge)
+{
+  static float root_pi = sqrt(M_PI);
+  static float root2   = sqrt(2.0);
 
-    get_output_levels (n_in, lo, hi);
+  for (int nlo=n_min; nlo <= n_max; nlo++)  {
+  
+    /* Refering to JA98, nlo is the number of samples between x2 and x4, 
+       and p_in is the left-hand side of Eq.44 */
+    float p_in = (float) nlo / (float) n_tot;
 
-    for (unsigned char val=0; val<4; val++)  {
-      if (get_hi(val))
-	*dls_lut = get_sign(val) * hi;
-      else
-	*dls_lut = get_sign(val) * lo;
-      dls_lut ++;
+    float lo, hi, A;
+    output_levels (p_in, lo, hi, A);
+
+    if (huge) {
+      /* Generate the 256 sets of four output floating point values
+	 corresponding to each byte */
+      dsp::TwoBitTable::generate (dls, type, lo, hi);
+      dls += 256 * 4;
+    }
+    else {
+      // Generate the four output levels corresponding to each 2-bit number
+      dsp::TwoBitTable::four_vals (dls, type, lo, hi);
+      dls += 4;
+    }
+
+    if (spc) {
+      *spc = A;
+      spc ++;
     }
   }
 }
 
+/*!  Given the fraction of digitized samples in the low voltage state,
+  this method returns the optimal values for low and high output
+  voltage states, as well as the fractional scattered power
+
+  \param p_in fraction of low voltage state samples
+  \retval lo the low voltage output state
+  \retval hi the hi voltage output state
+  \retval A the fractional scattered power
+*/
+void dsp::TwoBitCorrection::output_levels (float p_in, 
+					   float& lo, float& hi, float& A) 
+{
+  static float root_pi = sqrt(M_PI);
+  static float root2   = sqrt(2.0);
+
+  /* Refering to JA98, p_in is the left-hand side of Eq.44, the
+     fraction of samples between x2 and x4 */
+
+  /* The inverse error function of p_in gives alpha, equal to the 
+     "t/(root2 * sigma)" in brackets on the right-hand side of Eq.45 */
+  float alpha = ierf (p_in);
+  float expon = exp (-alpha*alpha);
+
+  // Equation 41 (-y2, y3)
+  lo = root2/alpha * sqrt(1.0 - (2.0*alpha/root_pi)*(expon/p_in));
+
+  // Equation 40 (-y1, y4)
+  hi = root2/alpha * sqrt(1.0 + (2.0*alpha/root_pi)*(expon/(1.0-p_in)));
+
+  // Equation 43
+  float halfrootnum = lo*(1-expon) + hi*expon;
+  float num = 2.0 * halfrootnum * halfrootnum;
+  A = num / ( M_PI * ((lo*lo-hi*hi)*p_in + hi*hi) );
+}
 
 /*! Return the average number of samples that lay within the
      thresholds, x2 and x4, where -x2 = x4 = 0.9674 of the noise
@@ -216,56 +272,6 @@ void dsp::TwoBitCorrection::build (int nsamp, float sigma)
 float dsp::TwoBitCorrection::get_optimal_fraction_low () const
 {
   return erf (optimal_threshold / sqrt(2.0));
-}
-
-/*!  Given the number of digitized samples in the low voltage state,
-  this method returns the optimal values for low and high output
-  voltage states.
-
-  \pre the nsample attribute must be set before calling this method
-  \param nlo number of low voltage state samples (out of nsample)
-  \retval lo the low voltage output state
-  \retval hi the hi voltage output state
-*/
-void dsp::TwoBitCorrection::get_output_levels (int nlo, float& lo, float& hi) 
-{
-  static float root_pi = sqrt(M_PI);
-  static float root2   = sqrt(2.0);
-
-  if (nsample < 1)
-    throw_str ("TwoBitCorrection::get_output_levels"
-	       " invalid nsample=%d", nsample);
-
-  if (nlo < 0 || nlo > nsample)
-    throw_str ("TwoBitCorrection::get_output_levels"
-	       " invalid nlo=%d", nlo);
-
-  /* Refering to JA98, nlo is the number of samples between x2 and x4, 
-     and p_in is the left-hand side of Eq.44 */
-  float p_in = (float) nlo / (float) nsample;
-
-  /* The inverse error function of p_in gives alpha, equal to the 
-     "t/(root2 * sigma)" in brackets on the right-hand side of Eq.45 */
-  float alpha = ierf (p_in);
-  float expon = exp (-alpha*alpha);
-
-  // Equation 41 (-y2, y3)
-  lo = 2.0/(root2*alpha) * sqrt(1.0 - (2.0*alpha/root_pi)*(expon/p_in));
-
-  // Equation 40 (-y1, y4)
-  hi = 2.0/(root2*alpha) * sqrt(1.0 + (2.0*alpha/root_pi)*(expon/(1.0-p_in)));
-}
-
-bool dsp::TwoBitCorrection::get_hi (unsigned char val)
-{
-  bool hi [4] = { 1, 0, 0, 1 };
-  return hi[val];
-}
-
-float dsp::TwoBitCorrection::get_sign (unsigned char val)
-{
-  float sign [4] = { -1.0, -1.0, 1.0, 1.0 };
-  return sign[val];
 }
 
 //! Calculate the mean voltage and power from Bit_Stream data

@@ -1,15 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/07/15 06:34:54 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2002/08/07 12:26:57 $
+   $Author: pulsar $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
 #include <vector>
 
+#include "TwoBitTable.h"
 #include "Operation.h"
 #include "environ.h"
 
@@ -44,19 +45,11 @@ namespace dsp {
     //virtual void initialize (const string& descriptor);
 
     //! Build the dynamic level setting lookup table
-    virtual void build (int nsample, float cutoff_sigma = 3.0);
-
-    //! Get the low and hi output levels
-    virtual void get_output_levels (int nlo, float& lo, float& hi);
+    virtual void build (int nsample, float cutoff_sigma,
+			TwoBitTable::Type type, bool huge);
 
     //! Get the optimal fraction of low voltage levels
     virtual float get_optimal_fraction_low () const;
-
-    //! Return true if val corresponds to a digitized high voltage state
-    virtual bool get_hi (unsigned char val);
-
-    //! Return the sign of the digitized voltage state
-    virtual float get_sign (unsigned char val);
 
     //! Calculate the sum and sum-squared from each channel of digitized data
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
@@ -91,6 +84,14 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     static TwoBitCorrection* create (const Timeseries& input,
 				     int nsample=0, float cutoff_sigma=3.0);
+
+    //! Return the high and low output voltage values
+    static void output_levels (float p_in, float& lo, float& hi, float& A);
+
+    //! Generate dynamic level setting and scattered power correction lookup
+    static void generate (float* dls, float* spc,
+			  int n_min, int n_max, int n_tot,
+			  TwoBitTable::Type type, bool huge);
 
   protected:
 
