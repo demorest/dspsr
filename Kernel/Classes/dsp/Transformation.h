@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.22 $
-   $Date: 2004/11/20 00:58:44 $
+   $Revision: 1.23 $
+   $Date: 2004/11/21 10:52:18 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -317,7 +317,7 @@ void dsp::Transformation<In,Out>::rounding_stuff(dsp::TimeSeries* ts_out){
     uint64 old_ndat = ts_out->get_ndat();
     ts_out->set_ndat( ts_out->get_ndat() - ts_out->get_ndat()%rounding );
     if( verbose )
-      fprintf(stderr,"Transformation %s has wiped "UI64" samps\n",
+      fprintf(stderr,"Transformation %s rounding_stuff() has wiped "UI64" samps\n",
 	      get_name().c_str(),
 	      old_ndat - ts_out->get_ndat());
   }
@@ -346,6 +346,7 @@ void dsp::Transformation<In,Out>::deprepend_data(dsp::TimeSeries* ts_out,int64 s
     fprintf(stderr,"TRANS (%s): time_in=%f time_out=%f time_surplus=%f so input_samps_lost=nint64(%f*%f)\n",
 	    get_name().c_str(), time_in, time_out, time_surplus,
 	    (time_in-time_surplus)-time_out, rate_in);
+
   input_samps_lost = nint64( ((time_in-time_surplus)-time_out)*rate_in );
 }
 
@@ -361,6 +362,15 @@ int64 dsp::Transformation<In,Out>::seek_over_surplus_samps(){
   double secs_surplus = (end_of_processed_data - ts_in->get_start_time()).in_seconds();
   int64 samps_surplus = nint64(secs_surplus * ts_in->get_rate());
   
+  if( verbose ){
+    MJD st("52644.176409458518541");
+    fprintf(stderr,"TRANS (%s) seek_over_surplus_samps() got eopd=%f start_time=%f so samps_surplus="I64"\n",
+	    get_name().c_str(),
+	    (end_of_processed_data-st).in_seconds(),
+	    (ts_in->get_start_time()-st).in_seconds(),
+	    samps_surplus);
+  }
+
   if( samps_surplus < 0 )
     throw Error(InvalidState,"dsp::Transformation::seek_over_surplus_samps()",
 		"Your last processing call ended at MJD %s.  This is %f seconds ("I64" samps) before current input starts",
@@ -393,6 +403,18 @@ void dsp::Transformation<In, Out>::workout_end_of_processed_data(MJD input_start
     return;
 
   end_of_processed_data = input_start_time + obs_out->get_duration() - time_prepended + time_surplus;
+
+  if( verbose ){
+    MJD st("52644.176409458518541");
+    fprintf(stderr,"TRANS (%s) setting eopd to %f + %f - %f + %f = %f\n",
+	    get_name().c_str(),
+	    (input_start_time-st).in_seconds(),
+	    obs_out->get_duration(),
+	    time_prepended,
+	    time_surplus,
+	    (end_of_processed_data-st).in_seconds());
+  }
+
 }
 
 //! Makes sure the input isn't changed by the seeking over of surplus samples
@@ -408,10 +430,11 @@ void dsp::Transformation<In, Out>::seek_back_over_surplus_samps(int64 surplus_sa
 template <class In, class Out>
 void dsp::Transformation<In, Out>::operation ()
 {
-  if( verbose )
-    fprintf(stderr,"TRANS (%s) at start of operation\n",get_name().c_str());
-
   dsp::Observation* obs_in = (dsp::Observation*)dynamic_cast<const dsp::Observation*>(get_input());
+
+  if( verbose )
+    if( obs_in )
+      fprintf(stderr,"TRANS (%s) at start of operation input ndat="UI64"\n",get_name().c_str(),obs_in->get_ndat());
 
   checks();
 
@@ -419,7 +442,7 @@ void dsp::Transformation<In, Out>::operation ()
   double rate_in = get_rate_in(obs_in);
 
   // Used by workout_end_of_processed_data() only
-  // input_start_time is the latest start time for dsp::BandCombiner
+  // input_start_time is the earliest start time for dsp::BandCombiner
   MJD input_start_time = get_input_start_time(obs_in); 
 
   dsp::TimeSeries* ts_out = dynamic_cast<dsp::TimeSeries*>(get_output());
@@ -439,6 +462,9 @@ void dsp::Transformation<In, Out>::operation ()
   }
 
   transformation ();
+  if( verbose && ts_out )
+    fprintf(stderr,"TRANS (%s) after transformation() got ndat="UI64"\n",
+	    get_name().c_str(),ts_out->get_ndat());
 
   seek_back_over_surplus_samps(surplus_samples);
 
@@ -462,7 +488,9 @@ void dsp::Transformation<In, Out>::operation ()
   set_valid_data_is_saved();
 
   if( verbose )
-    fprintf(stderr,"TRANS (%s) at end of operation\n",get_name().c_str());
+    if( ts_out )
+      fprintf(stderr,"TRANS (%s) at end of operation ndat="UI64"\n",
+	      get_name().c_str(),ts_out->get_ndat());
 }
 
 

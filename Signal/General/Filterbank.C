@@ -18,9 +18,12 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 
 void dsp::Filterbank::transformation ()
 {
+  MJD st("52644.176409458518541");
+
   if (verbose)
-    fprintf(stderr,"In dsp::Filterbank::transformation() with input ndat="UI64" output ndim=%d\n",
-	    get_input()->get_ndat(),get_output()->get_ndim());
+    fprintf(stderr,"In dsp::Filterbank::transformation() with input ndat="UI64" output ndim=%d (st=%f)\n",
+	    get_input()->get_ndat(),get_output()->get_ndim(),
+	    (get_input()->get_start_time()-st).in_seconds());
 
   if (nchan < 2)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
@@ -210,6 +213,10 @@ void dsp::Filterbank::transformation ()
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
 
+  if( verbose )
+    fprintf(stderr,"dsp::Filterbank::transformation() have changed start time by %d samps\n",
+	    nfilt_pos);
+
   // enable the Response to record its effect on the output Timeseries
   if (response)
     response->mark (output);
@@ -372,8 +379,9 @@ void dsp::Filterbank::transformation ()
   } // for each big fft (ipart)
 
   if (verbose)
-    fprintf(stderr,"Returning from dsp::Filterbank::transformation() with output ndat="UI64"\n",
-	    get_output()->get_ndat());
+    fprintf(stderr,"Returning from dsp::Filterbank::transformation() with output ndat="UI64" st=%f\n",
+	    get_output()->get_ndat(),
+	    (get_output()->get_start_time()-st).in_seconds());
 }
 
 #if 0
