@@ -1,3 +1,4 @@
+#define MPI 1
 #include "Observation.h"
 #include "stdmpi.h"
 #include "portable_mpi.h"
@@ -23,7 +24,7 @@ int mpiPack_size (const dsp::Observation& obs, MPI_Comm comm, int* size)
   total_size += temp_size;  // npol
   total_size += temp_size;  // nbit
 
-  mpiPack_size (start_time, comm, &temp_size);
+  mpiPack_size (obs.get_start_time(), comm, &temp_size);
   total_size += temp_size;
 
   MPI_Pack_size (1, MPI_CHAR, comm, &temp_size);
@@ -81,7 +82,7 @@ int mpiPack (const dsp::Observation& obs,
 
   // use mpiPack (MJD)
 
-  mpiPack (start_time, outbuf, outcount, pos, comm);
+  mpiPack (obs.get_start_time(), outbuf, outcount, pos, comm);
 
   char tempc;
   tempc = obs.get_state();
@@ -101,78 +102,88 @@ int mpiPack (const dsp::Observation& obs,
 
   // use mpiPack (string)
 
-  mpiPack (source, outbuf, outcount, pos, comm);
-  mpiPack (identifier, outbuf, outcount, pos, comm);
-  mpiPack (mode, outbuf, outcount, pos, comm);
-  mpiPack (machine, outbuf, outcount, pos, comm);
+  mpiPack (obs.get_source(), outbuf, outcount, pos, comm);
+  mpiPack (obs.get_identifier(), outbuf, outcount, pos, comm);
+  mpiPack (obs.get_mode(), outbuf, outcount, pos, comm);
+  mpiPack (obs.get_machine(), outbuf, outcount, pos, comm);
 
   return 0;
 }
 
-int observation::MpiUnpack (void* inbuf, int insize, int* pos, 
-			    MPI_Comm comm)
+int mpiUnpack (void* inbuf, int insize, int* pos, dsp::Observation* obs,
+               MPI_Comm comm)
 {
   int64 ndat;
 
   MPI_Unpack (inbuf, insize, pos, &ndat, 1, MPI_Int64,  comm);
-  obs.set_ndat (ndat);
+  obs->set_ndat (ndat);
 
   double temp, temp2;
 
   MPI_Unpack (inbuf, insize, pos, &temp, 1, MPI_DOUBLE, comm);
-  obs.set_centre_frequency (temp);
+  obs->set_centre_frequency (temp);
 
   MPI_Unpack (inbuf, insize, pos, &temp, 1, MPI_DOUBLE, comm);
-  obs.set_bandwidth (temp);
+  obs->set_bandwidth (temp);
 
   MPI_Unpack (inbuf, insize, pos, &temp, 1, MPI_DOUBLE, comm);
-  obs.set_rate (temp);
+  obs->set_rate (temp);
 
   MPI_Unpack (inbuf, insize, pos, &temp, 1, MPI_DOUBLE, comm);
-  obs.set_scale (temp);
+  obs->set_scale (temp);
 
   MPI_Unpack (inbuf, insize, pos, &temp, 1, MPI_DOUBLE, comm);
   MPI_Unpack (inbuf, insize, pos, &temp2, 1, MPI_DOUBLE, comm);
   sky_coord position;
   position.setRadians(temp, temp2);
-  obs.set_position (position);
+  obs->set_position (position);
 
   int tempi;
 
   MPI_Unpack (inbuf, insize, pos, &tempi, 1, MPI_INT, comm);
-  obs.set_nchan (tempi);
+  obs->set_nchan (tempi);
 
   MPI_Unpack (inbuf, insize, pos, &tempi, 1, MPI_INT, comm);
-  obs.set_npol (tempi);
+  obs->set_npol (tempi);
 
   MPI_Unpack (inbuf, insize, pos, &tempi, 1, MPI_INT, comm);
-  obs.set_nbit (tempi);
+  obs->set_nbit (tempi);
 
   // use mpiUnpack (MJD)
-  mpiUnpack (inbuf, insize, pos, &start_time, comm);
+  MJD tempmjd;
+  mpiUnpack (inbuf, insize, pos, &tempmjd, comm);
+  obs->set_start_time (tempmjd);
 
   char tempc;
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs.set_state (tempc);
+  obs->set_state ((dsp::Observation::State) tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs.set_feedtype (tempc);
+  obs->set_feedtype ((dsp::Observation::Feed) tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs.set_swap (tempc);
+  obs->set_swap (tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs.set_dc_centred (tempc);
+  obs->set_dc_centred (tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs.set_telescope (tempc);
+  obs->set_telescope (tempc);
 
   // use mpiUnpack (string)
 
-  mpiUnpack (inbuf, insize, pos, &pulsar, comm);
-  mpiUnpack (inbuf, insize, pos, &identifier, comm);
-  mpiUnpack (inbuf, insize, pos, &mode, comm);
-  mpiUnpack (inbuf, insize, pos, &machine, comm);
+  string tempstr;
+  mpiUnpack (inbuf, insize, pos, &tempstr, comm);
+  obs->set_source (tempstr);
+
+  mpiUnpack (inbuf, insize, pos, &tempstr, comm);
+  obs->set_identifier (tempstr);
+
+  mpiUnpack (inbuf, insize, pos, &tempstr, comm);
+  obs->set_mode (tempstr);
+
+  mpiUnpack (inbuf, insize, pos, &tempstr, comm);
+  obs->set_machine (tempstr);
 
   return 0;
 }
