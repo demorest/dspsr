@@ -398,6 +398,9 @@ void dsp::TwoBitCorrection::unpack ()
       
   }  // for each polarization
 
+  output->seek (input->get_request_offset());
+  output->set_ndat (input->get_request_ndat());
+
 }
 
 void dsp::TwoBitCorrection::poln_unpack (float* data,
