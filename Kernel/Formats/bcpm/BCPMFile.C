@@ -19,12 +19,17 @@
 #include "genutil.h"
 #include "environ.h"
 #include "machine_endian.h"
-#include "f772c.h"
 
 #include "bpphdr.h"
 
 #include "dsp/BCPMExtension.h"
 #include "dsp/BCPMFile.h"
+
+//#include "f772c.h"
+#ifndef F772C_H
+#define F772C_H
+#define F772C(x) x##_
+#endif
 
 extern "C" {
   void F772C(indexx)(int* n,float* arrin, int* indx);
