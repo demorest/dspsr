@@ -203,16 +203,16 @@ $(LOGIN_ARCH)/%.o: %.f $(LOGIN_ARCH)/.exists
 # this macro creates the source code that defines the variables declared
 # in MakeInfo.h
 ##########################################################################
-define MakeInfo
-echo "char* MakeInfo_user = \"$${USER}\";" > MakeInfo.c
-echo "char* MakeInfo_date = \"`date`\";" >> MakeInfo.c
-endef
 
-##########################################################################
-# this macro returns MakeInfo.C if MakeInfo.h is in the source
-##########################################################################
-define eval_MakeInfo
-if [ ! -z "`grep MakeInfo\.h $*.[cC]`" ]; then echo "MakeInfo.c"; fi
+MakeInfo.c = $(LOGIN_ARCH)/MakeInfo.c
+MakeInfo.o = $(LOGIN_ARCH)/MakeInfo.o
+
+define MakeInfo
+if [ ! -z "`grep MakeInfo\.h $*.[cC]`" ]; then \
+  echo "char* MakeInfo_user = \"$${USER}\";" > $(MakeInfo.c); \
+  echo "char* MakeInfo_date = \"`date`\";" >> $(MakeInfo.c); \
+  $(CC) -c -o $(MakeInfo.o) $(MakeInfo.c); \
+fi
 endef
 
 ##########################################################################
@@ -242,6 +242,7 @@ fi
 endef
 
 define eval_LDFLAGS
+if [ ! -z "`grep MakeInfo\.h $*.[cC]`" ]; then echo $(MakeInfo.o); fi; \
 if [ "$($*.LDFLAGS)" = "NONE" ]; then echo ""; \
 elif [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
 else echo $($*.LDFLAGS); fi
@@ -249,16 +250,14 @@ endef
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries) $(LIBDIR)/$(LIBRARY)
 	@$(MakeInfo)
-	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS)) \
-		$(shell $(eval_MakeInfo))
-	@rm -f MakeInfo.c
+	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	@rm -f $(MakeInfo.c) $(MakeInfo.o)
 	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(libraries) $(LIBDIR)/$(LIBRARY)
 	@$(MakeInfo)
-	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS)) \
-		$(shell $(eval_MakeInfo))
-	@rm -f MakeInfo.c
+	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	@rm -f $(MakeInfo.c) $(MakeInfo.o)
 	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries) $(LIBDIR)/$(LIBRARY)
