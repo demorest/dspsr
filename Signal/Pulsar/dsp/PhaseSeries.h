@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.12 $
-   $Date: 2004/04/21 09:53:13 $
-   $Author: hknight $ */
+   $Revision: 1.13 $
+   $Date: 2005/03/29 11:48:22 $
+   $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
@@ -25,17 +25,20 @@ namespace dsp {
 
   public:
 
-    //! Null constructor
+    //! Default constructor
     PhaseSeries ();
+
+    //! Copy constructor
+    PhaseSeries (const PhaseSeries&);
+
+    //! Assigment operator
+    PhaseSeries& operator = (const PhaseSeries&);
 
     //! Destructor
     ~PhaseSeries ();
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (int64 nsamples);
-
-    //! Set this equal to prof
-    PhaseSeries& operator = (const PhaseSeries& prof);
 
     //! Add prof to this
     PhaseSeries& operator += (const PhaseSeries& prof);

@@ -13,6 +13,11 @@ dsp::PhaseSeries::PhaseSeries () : TimeSeries()
   reference_phase = 0;
 }
 
+dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
+{
+  operator= (profile);
+}
+
 dsp::PhaseSeries::~PhaseSeries () { }
 
 //! Set the number of phase bins into which data will be PhaseSeriesed
@@ -160,7 +165,12 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   if (this == &prof)
     return *this;
 
+  if (verbose)
+    cerr << "dsp::PhaseSeries::operator = call TimeSeries::operator =" << endl;
   TimeSeries::operator = (prof);
+
+  if (verbose)
+    cerr << "dsp::PhaseSeries::operator = copy attributes" << endl;
 
   integration_length = prof.integration_length;
   end_time           = prof.end_time;
