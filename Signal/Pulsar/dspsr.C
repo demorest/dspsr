@@ -40,7 +40,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:Oop:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:C:d:D:e:E:f:F:hiIjM:n:N:Oop:P:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -49,6 +49,7 @@ void usage ()
     "File handling options:\n"
     " -a archive     set the output archive class name\n"
     " -A             produce a single archive with multiple Integrations\n"
+    " -C offset      Adjust clock by offset seconds\n"
     " -e ext         set the output archive filename extension\n"
     " -E filename    set the output archive filename (including extension)\n"
     " -j             join files into contiguous observation\n"
@@ -193,6 +194,9 @@ int main (int argc, char** argv)
   // number of seconds to process from data
   double total_seconds = 0.0;
 
+  // number of seconds to adjust clocks by
+  double offset_clock = 0.0;
+
 #if ACTIVATE_MKL
   // If true, a dsp::IncoherentFilterbank is used rather than a dsp::Filterbank
   bool use_incoherent_filterbank = false;
@@ -252,6 +256,10 @@ int main (int argc, char** argv)
 
     case 'b':
       nbin = atoi (optarg);
+      break;
+
+    case 'C':
+      offset_clock = atof (optarg);
       break;
 
     case 'D':
@@ -850,6 +858,10 @@ int main (int argc, char** argv)
                           << active_operations[iop]->get_name() << endl;
 
         active_operations[iop]->operate ();
+        if(iop==0 && offset_clock!=0.0){
+            voltages->change_start_time(offset_clock*voltages->get_rate());
+        }
+
 
         if (verbose) cerr << "dspsr: " << active_operations[iop]->get_name() 
                           << " done" << endl;
