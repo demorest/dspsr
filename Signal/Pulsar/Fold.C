@@ -250,7 +250,7 @@ unsigned dsp::Fold::choose_nbin ()
   if (verbose)
     cerr << "dsp::Fold::choose_nbin folding_period=" << folding_period << endl;
 
-  if (folding_period == 0.0)
+  if (folding_period <= 0.0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
 		 "no folding period or polyco set");
 
@@ -418,7 +418,7 @@ void dsp::Fold::transformation ()
   if (!built)
     prepare ();
 
-  if (folding_period == 0 && !folding_polyco)
+  if (folding_period <= 0 && !folding_polyco)
     throw Error (InvalidState, "dsp::Fold::transformation",
 		 "no folding period or polyco set");
 
@@ -477,7 +477,7 @@ void dsp::Fold::transformation ()
 
   output->integration_length += integrated;
   
-  if (folding_period)
+  if (folding_period >= 0.0)
     output->set_folding_period( folding_period );
   else
     output->set_pulsar_ephemeris( pulsar_ephemeris, folding_polyco );
@@ -575,7 +575,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   // Calculate phase gradient across this section of data
   //
 
-  if (folding_period != 0) {
+  if( folding_period > 0.0 && (folding_period_source==info->get_source() || folding_period_source==string()) ){
 
     pfold = folding_period;
     phi   = fmod (start_time.in_seconds(), folding_period) / folding_period;
