@@ -34,7 +34,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
 
   dspR->set_name( profiles->get_machine() );
   
-  dspR->set_software( reducing_program );
+  dspR->set_software( archive_software );
 
   for (unsigned i = 0; i < operations.size(); i++) {
 
