@@ -35,6 +35,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 #endif
 
+#if DSP_CPSR2_8bit
+#include "dsp/CPSR2_8bitUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2_8bitUnpacker> cpsr2_8bit;
+#endif
+
 #if DSP_Maxim
 #include "dsp/MaximUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::MaximUnpacker> maxim;

@@ -38,6 +38,17 @@ endif
 
 ##############################################################################
 #
+# CPSR2_8bit specific code (currently in baseband/CPSR2_8bit)
+#
+ifeq ($(CPSR2_8bit),yes)
+
+CPPFLAGS += -DDSP_CPSR2_8bit=1
+BACKENDS += CPSR2_8bit
+LBACKENDS += -ldsp_CPSR2_8bit
+endif
+
+##############################################################################
+#
 # CPSR2 specific code
 #
 ifeq ($(CPSR2_4bit),yes)
@@ -47,7 +58,6 @@ CLASSES += CPSR2FourBitUnpacker
 BACKENDS += CPSR2_4bit
 
 endif
-
 
 ##############################################################################
 #

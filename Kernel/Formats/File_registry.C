@@ -26,10 +26,10 @@ Registry::List<dsp::File> dsp::File::registry;
 #if DSP_CPSR2
 #include "dsp/CPSR2File.h"
 static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
-//#endif
+#endif
 
-//Tej's new Eight bit File Format:
-//#if DSP_CPSR2
+//Tej's new CPSR2 8 bit File Format:
+#if DSP_CPSR2_8bit
 #include "dsp/EightBitFile.h"
 static Registry::List<dsp::File>::Enter<dsp::EightBitFile> register_eightbitcpsr2;
 #endif
@@ -47,11 +47,10 @@ static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
-/*#if DSP_Maxim
+#if DSP_Maxim
 #include "dsp/MaximFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
-#endif
-*/
+endif
 
 #if DSP_SMRO
 #include "dsp/SMROFile.h"
