@@ -149,15 +149,6 @@ LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
 LPSRCHIVE = -lpsrchive -fPIC -Wl,--export-dynamic -ldl
 
-ifeq ($(has_CFITS),yes)
-LPSRCHIVE += -lfitsutil $(LCFITSIO)
-endif  # PSRFITS
-
-PSRTIMER = yes
-ifeq (${PSRTIMER},yes)
-LPSRCHIVE += -larchive
-endif
-
 LPSRCHIVE += -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
 
 
