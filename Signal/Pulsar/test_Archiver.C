@@ -287,7 +287,10 @@ int main (int argc, char** argv)
 		voltages->get_ndat());
 	
 	// combined_voltages just has the null weightings so far, so using this TimeSeries method is ok.
-	combined_voltages->hack_together(voltages,buddy_voltages);
+	throw Error(InvalidState,"main()",
+		    "hack_together now deprecated.  If anyone still uses this code please yell out.");
+
+	//combined_voltages->hack_together(voltages,buddy_voltages);
       }
 
       if( pulsar_name!=string("") )
