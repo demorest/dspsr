@@ -74,6 +74,7 @@ int main (int argc, char** argv)
   if (verbose)
     cerr << "Creating TestInput instance" << endl;
   dsp::TestInput test;
+  test.set_block_size (block_size);
 
   if (verbose)
     cerr << "Creating MPIRoot instances" << endl;
@@ -124,7 +125,9 @@ int main (int argc, char** argv)
       // note that TestInput::runtest knows only the Input base class
       test.runtest (mpi_a, mpi_b);
 
-      if (test.get_errors() != 0) {
+      if (test.get_errors() == 0)
+        cerr << "test_MPIRoot successful completion.  no errors." << endl;
+      else {
         cerr << "test_MPIRoot test failed" << endl;
         retval = -1;
       }
