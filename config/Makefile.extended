@@ -240,7 +240,7 @@ $(LOGIN_ARCH)/%.sdep: Makefile
 # updated, the executable will be considered out of date and re-made.
 ##########################################################################
 
-LIB_DEPS := $(EXECUTABLES:%=./$(LOGIN_ARCH)/%.ldep)
+LIB_DEPS := $(patsubst %,./$(LOGIN_ARCH)/%.ldep,$(TESTEXECS) $(EXECUTABLES))
 
 $(LOGIN_ARCH)/%.ldep:
 	@echo "${BINDIR}/$*: $(call eval_libs,$*)" > $@;
