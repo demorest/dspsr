@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/06/16 21:46:31 $
+   $Revision: 1.15 $
+   $Date: 2003/06/17 15:47:55 $
    $Author: wvanstra $ */
 
 #ifndef __Convolution_h
@@ -71,8 +71,17 @@ namespace dsp {
     //! Set the passband integrator
     virtual void set_passband (Response* passband);
 
+    //! Return true if the response attribute has been set
+    bool has_response () const;
+
     //! Return a pointer to the frequency response function
     virtual const Response* get_response() const;
+
+    //! Return true if the passband attribute has been set
+    bool has_passband () const;
+
+    //! Return a pointer to the integrated passband
+    virtual const Response* get_passband() const;
 
   protected:
 
