@@ -61,6 +61,11 @@ SWINBURNE_REPOSITORY := pulsar.swin.edu.au:/psr/cvsroot
 ##########################################################################
 
 ##########################################################################
+# Blitz++
+BLITZ := ${PSRPKGS}/${LOGIN_ARCH}/lib/libblitz.a
+LBLITZ := -lblitz
+
+##########################################################################
 # MPI
 LMPI = -L/usr/local/mpi/lib -lmpich $(LSOCK)
 IMPI = -I/usr/local/mpi/include
@@ -125,6 +130,7 @@ endif
 
 exists = $(if $(wildcard $(1)),yes,no)
 
+has_BLITZ := $(call exists,$(BLITZ))
 has_CFITS := $(call exists,$(CFITSDIR))
 has_MPI   := $(call exists,$(MPIDIR))
 has_QT    := $(call exists,$(QTDIR))
