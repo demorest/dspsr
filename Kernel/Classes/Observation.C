@@ -52,17 +52,73 @@ void dsp::Observation::init ()
   domain = "Time";  /* cf 'Fourier' */
 }
 
-double dsp::Observation::get_highest_frequency(){
-  double highest_frequency = get_centre_frequency(0);
-  for( unsigned i=1; i<nchan; i++)
-    highest_frequency = max(highest_frequency,get_centre_frequency(i));
+double dsp::Observation::get_highest_frequency(double max_freq, unsigned chanstart,unsigned chanend){
+  chanend = min(nchan,chanend);
+
+  double sign_change = 1;
+
+  if( get_centre_frequency()<0.0 )
+    sign_change = -1;
+
+  unsigned j=chanstart;
+  while( j<chanend && sign_change*get_centre_frequency(j)>max_freq ){
+    //fprintf(stderr,"dsp::Observation::get_highest_frequency() Chan %d at %f is higher than %f\n",
+    //    j,sign_change*get_centre_frequency(j),max_freq);
+    j++;
+  }
+
+  if( j==chanend )
+    throw Error(InvalidParam,"dsp::Observation::get_highest_frequency()",
+		"Your max_freq of %f is higher than all the centre frequencies available",
+		max_freq);
+
+  double highest_frequency = sign_change*get_centre_frequency(j);
+
+  for( unsigned i=j; i<chanend; i++){
+    if( sign_change*get_centre_frequency(i)>max_freq ){
+      //      fprintf(stderr,"dsp::Observation::get_highest_frequency() Chan %d at %f is higher than %f\n",
+      //    i,sign_change*get_centre_frequency(i),max_freq);
+    }
+    else{
+      highest_frequency = max(highest_frequency,sign_change*get_centre_frequency(i));
+    }
+  }
+
   return highest_frequency;
 }
 
-double dsp::Observation::get_lowest_frequency(){
-  double lowest_frequency = get_centre_frequency(0);
-  for( unsigned i=1; i<nchan; i++)
-    lowest_frequency = min(lowest_frequency,get_centre_frequency(i));
+double dsp::Observation::get_lowest_frequency(double min_freq, unsigned chanstart,unsigned chanend){
+  chanend = min(nchan,chanend);
+
+  double sign_change = 1;
+
+  if( get_centre_frequency()<0.0 )
+    sign_change = -1;
+
+  unsigned j=chanstart;
+  while( j<chanend && sign_change*get_centre_frequency(j)<min_freq ){
+    //    fprintf(stderr,"dsp::Observation::get_lowest_frequency() Chan %d at %f is lower than %f\n",
+    //    j,sign_change*get_centre_frequency(j),min_freq);
+    j++;
+  }
+
+  if( j==chanend )
+    throw Error(InvalidParam,"dsp::Observation::get_lowest_frequency()",
+		"Your min_freq of %f is lower than all the centre frequencies available",
+		min_freq);
+
+  double lowest_frequency = sign_change*get_centre_frequency(0);
+
+  for( unsigned i=j; i<chanend; i++){
+    if( sign_change*get_centre_frequency(i)<min_freq ){
+      //fprintf(stderr,"dsp::Observation::get_lowest_frequency() Chan %d at %f is lower than %f\n",
+      //    i,sign_change*get_centre_frequency(i),min_freq);
+    }
+    else{
+      lowest_frequency = min(lowest_frequency,sign_change*get_centre_frequency(i));
+    }
+  }
+
   return lowest_frequency;
 }
 
@@ -349,6 +405,8 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_identifier  ( in_obs.get_identifier() );
   set_machine     ( in_obs.get_machine() );
   set_mode        ( in_obs.get_mode() );
+
+  set_domain( in_obs.get_domain() );
 
   return *this;
 }

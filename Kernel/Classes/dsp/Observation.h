@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.39 $
-   $Date: 2002/12/04 15:09:43 $
-   $Author: wvanstra $ */
+   $Revision: 1.40 $
+   $Date: 2002/12/06 19:40:21 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -132,7 +132,16 @@ namespace dsp {
     //! Set the centre frequency of the band-limited signal in MHz
     void set_centre_frequency (double cf) { centre_frequency = cf; }
     //! Return the centre frequency of the band-limited signal in MHz
-    double get_centre_frequency () const { return centre_frequency; }
+    double get_centre_frequency () const{ return centre_frequency; }
+
+    //! Returns the centre frequency of the specified channel in MHz
+    double get_centre_frequency (unsigned ichan) const;
+
+    //! Return the centre frequency of the highest frequency channel below the maximum stated in MHz
+    double get_highest_frequency(double max_freq=1.0e9, unsigned chanstart=0,unsigned chanend=99999);
+
+    //! Return the centre frequency of the lowest frequency channel in MHz
+    double get_lowest_frequency(double min_freq=0.0, unsigned chanstart=0,unsigned chanend=99999);
 
     //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
@@ -198,7 +207,7 @@ namespace dsp {
     string get_mode () const { return mode; }
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
-    string get_domain(){ return domain; }
+    string get_domain() const { return domain; }
 
     //! Whether data is in 'Time' or 'Fourier' domain 
     void set_domain(string _domain){ domain = _domain; }
@@ -220,9 +229,6 @@ namespace dsp {
 
     //! Returns a string describing the state of the data
     string get_state_as_string () const;
-
-    //! Returns the centre frequency of the specified channel in MHz
-    double get_centre_frequency (unsigned ichan) const;
 
     //! Returns the centre frequency of the first channel in MHz
     double get_base_frequency () const;

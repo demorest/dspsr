@@ -24,20 +24,15 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
 
 int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 {
-  char * hdr_name = new char [ strlen(filename)+5];
 
-  if (hdr_name == NULL) {
-    fprintf(stderr,"dsp::PMDAQFile::get_header - Error newing hdr_name of %d chars\n", strlen(filename)+5);
-    return -1;
-  }
-  strcpy(hdr_name,filename);
+  string hdr_name = string(filename) + ".hdr";
 
-  int fd = ::open (hdr_name, O_RDONLY);
+  int fd = ::open (hdr_name.c_str(), O_RDONLY);
 
   if (fd < 0) {
     if (verbose)
       fprintf (stderr, "PMDAQFile::get_header - failed open(%s): %s", 
-	       hdr_name, strerror(errno));
+	       hdr_name.c_str(), strerror(errno));
     return -1;
   }
 
@@ -59,14 +54,26 @@ static char pmdaq_header [PMDAQ_HEADER_SIZE];
 
 bool dsp::PMDAQFile::is_valid (const char* filename) const
 {
-  if (get_header (pmdaq_header, filename) < 0)
+  if (get_header (pmdaq_header, filename) < 0){
+    fprintf(stderr,"false 1\n");
     return false;
+  }
 
   // verify that the buffer read contains a valid PMDAQ header
   // First three chars should be "PMD"
   // But is that good enough?
 
-  if (strncmp(&pmdaq_header[4],"PMD",3)!=0) return false;
+  cout << "The 3 chars are: ";
+  cout << char(pmdaq_header[4]) << pmdaq_header[5] << pmdaq_header[6] << endl;
+
+  fprintf(stderr,"3 chars are '%c' '%c' '%c'\n",
+	  pmdaq_header[4],pmdaq_header[5],pmdaq_header[6]);
+
+  if (strncmp(&pmdaq_header[4],"PMD",3)!=0){
+    fprintf(stderr,"false 2\n");
+    return false;
+  }
+
   if (verbose) printf("File %s is valid PMDAQ data!\n",filename);
   return true;
 }
@@ -88,22 +95,13 @@ void dsp::PMDAQFile::open_file (const char* filename)
 
   // Open the data file, which is filename, + .dat
 
-  char * data_name = new char [ strlen(filename)+1];
+  string data_name = string(filename) + ".dat";
 
-  if (data_name == NULL) {
-    throw_str("dsp::PMDAQFile::open - Error newing data_name of %d chars\n", strlen(filename)+1);
-  }
-
-  strcpy(data_name,filename);
-  data_name[strlen(filename)-3]='d';
-  data_name[strlen(filename)-2]='a';
-  data_name[strlen(filename)-1]='t';
-
-  fd = ::open (data_name, O_RDONLY);
+  fd = ::open (data_name.c_str(), O_RDONLY);
 
   if (fd < 0)
     throw_str ("PMDAQFile::open - failed open(%s): %s", 
-	       data_name, strerror(errno));
+	       data_name.c_str(), strerror(errno));
 
   absolute_position = 0;
 
@@ -120,6 +118,8 @@ void dsp::PMDAQFile::open_file (const char* filename)
 
 int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 {
+  verbose = true;
+
   int part_chunk_of_48k;
   int last_chunk_of_48k;
 
@@ -153,7 +153,12 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
   }
 
   part_chunk_of_48k = 0;
-  if ((position >= HEADER_BYTES) && (position < HEADER_BYTES+DATA_BYTES)) {
+  
+  if( verbose )
+    fprintf(stderr,"position=%d HEADER_BYTES=%d DATA_BYTES=%d\n",
+	    position,HEADER_BYTES,DATA_BYTES);
+
+  if ((position > HEADER_BYTES) && (position < HEADER_BYTES+DATA_BYTES)) {
     // Determine how many bytes to load in first chunk.
     if ((int64)bytes> (HEADER_BYTES+DATA_BYTES-position))
       part_chunk_of_48k = HEADER_BYTES + DATA_BYTES - position;
@@ -165,6 +170,9 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
   // Load what you can and bomb if you fail if part_chunk_of_48k is non-zero
 
   if (part_chunk_of_48k !=0 ) {
+    if( verbose )
+      fprintf(stderr,"Going to read %d samps from buffer\n",
+	      part_chunk_of_48k);
     retval = read (fd, buffer, part_chunk_of_48k);
 
     if (retval < 0 ) {
@@ -194,16 +202,16 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 
   for (int i=0;i<nblocks;i++){
 
-    if (verbose) cerr << "dsp::PMDAQFile::load_bytes skipping mini header " << endl;
+    //if (verbose) cerr << "dsp::PMDAQFile::load_bytes skipping mini header " << endl;
     // Skip mini header
     retval = lseek (fd, HEADER_BYTES, SEEK_CUR);
     if (retval != HEADER_BYTES+absolute_position ) {
       cerr << "dsp::PMDAQFile::load_bytes Error seeking past header retval=\n"
-	   << retval << " absolute_position " << absolute_position << endl;;
+	   << retval << " absolute_position " << absolute_position << " HEADER_BYTES=" << HEADER_BYTES << endl;
       end_of_data = true;
       return (loaded_bytes);
     }
-    if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipped header " << endl; 
+    //if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipped header " << endl; 
     absolute_position += HEADER_BYTES;
 
     // Load data, and deal with failures
@@ -235,7 +243,7 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
       end_of_data = true;
       return (loaded_bytes);
     }
-    if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipped trailer " << endl; 
+    //if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipped trailer " << endl; 
     absolute_position += TRAILER_BYTES;
 
   }
