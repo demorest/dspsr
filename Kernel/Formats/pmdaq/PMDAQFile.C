@@ -29,8 +29,9 @@ int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
   int pos = str_filename.find_first_of(".",0);
   string hdr_name = str_filename.substr(0,pos) + ".hdr";
 
-  cerr << "dsp::PMDAQFile::get_header looks for header called " <<
-    hdr_name << endl;
+  if(verbose)
+    cerr << "dsp::PMDAQFile::get_header looks for header called " <<
+      hdr_name << endl;
 
   int fd = ::open (hdr_name.c_str(), O_RDONLY);
 
