@@ -86,18 +86,20 @@ void dsp::Fold::prepare (const Observation* observation)
   // Preference 2a: Correct ephemeris already generated
   pulsar_ephemeris = choose_ephemeris (jpulsar);
 
-  fprintf(stderr,"dsp::Fold::prepare ephemeris already generated\n");
-
   // Preference 2b: Generate correct ephemeris
-  if (!pulsar_ephemeris){
-    fprintf(stderr,"dsp::Fold::prepare ephemeris generating ephemeris\n");
-    Reference::To<MatchingEphemeris> mephem = new MatchingEphemeris(jpulsar.c_str(), 0);
+  if (!pulsar_ephemeris) {
+
+    if (verbose) cerr << "dsp::Fold::prepare generating ephemeris" << endl;
+
+    Reference::To<MatchingEphemeris> mephem;
+    mephem = new MatchingEphemeris(jpulsar.c_str(), 0);
     add_pulsar_ephemeris( mephem );
     pulsar_ephemeris = mephem;
+
   }
 
-  fprintf(stderr,"dsp::Fold::prepare got pulsar_ephemeris->get_psrname='%s'\n",
-	  pulsar_ephemeris->psrname().c_str());
+  if (verbose) cerr << "dsp::Fold::prepare pulsar_ephemeris psrname='"
+	  << pulsar_ephemeris->psrname() << "'\n";
 
 #if 0
 
@@ -133,10 +135,6 @@ void dsp::Fold::prepare (const Observation* observation)
 
   // Preference 2: Generate correct polyco from ephemeris and add it to the list of polycos to choose from
   folding_polyco = get_folding_polyco(pulsar_ephemeris,observation);
-
-  fprintf(stderr,"dsp::Fold got folding_polyco with name '%s'\n",
-	  folding_polyco->get_psrname().c_str());
-  //exit(0);
 
 #if 0
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
@@ -637,14 +635,21 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
   }
 
+  // total number of bad weights encountered
+  unsigned bad_weights = 0;
+  // total number of weights tested
+  unsigned n_weights = 1;
+
   double double_nbin = double (folding_nbin);
   double phase_per_sample = sampling_interval / pfold;
 
   for (idat=idat_start; idat < idat_end; idat++) {
 
     if (ndatperweight && idat >= datendweight) {
+
       iweight ++;
       datendweight += ndatperweight;
+      n_weights ++;
 
       if (weights[iweight] == 0)
         discarded_weights ++;
@@ -661,12 +666,18 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
     assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
 
-    if (!ndatperweight || weights[iweight] != 0) {
+    if (ndatperweight && weights[iweight] == 0)
+      bad_weights ++;
+    else {
       hits[ibin]++;
       ndat_folded ++;
     }
 
   }
+
+  if (bad_weights)
+    cerr << "dsp::Fold::fold " << bad_weights
+         << "/" << n_weights << " bad weights" << endl;
 
   // /////////////////////////////////////////////////////////////////////////
   //
@@ -706,7 +717,9 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 	timep ++;
       }
       
-    }
-  }
+    } // for each idat
+
+  } // for each block
 
 }
+
