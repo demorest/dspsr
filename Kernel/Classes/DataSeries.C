@@ -241,9 +241,14 @@ dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
 dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
 {
   Observation::swap_data( ts );
-  std::swap(buffer,ts.buffer);
-  std::swap(size,ts.size);
-  std::swap(subsize,ts.subsize);
+  unsigned char* tmp = buffer; buffer = ts.buffer; ts.buffer = tmp;
+  //  std::swap(buffer,ts.buffer);
+  
+  uint64 tmp2 = size; size = ts.size; ts.size = tmp2;
+  //  std::swap(size,ts.size);
+
+  uint64 tmp3 = subsize; subsize = ts.subsize; ts.subsize = tmp3;
+  //  std::swap(subsize,ts.subsize);
 
   return *this;
 }

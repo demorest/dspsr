@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.13 $
-   $Date: 2004/03/30 04:58:40 $
+   $Revision: 1.14 $
+   $Date: 2004/06/13 07:40:38 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -152,6 +152,7 @@ void dsp::Transformation<In, Out>::operation ()
       TimeSeries* in = (TimeSeries*)input.ptr();
       TimeSeries* out = (TimeSeries*)output.ptr();
 
+      //Reference::To<TimeSeries> tmp(new TimeSeries(*in)); in->operator=(*out); out->operator=(*tmp);
       in->swap_data( *out );
       if( free_scratch_space )
 	out->resize(0);

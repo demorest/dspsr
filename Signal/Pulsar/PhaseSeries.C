@@ -94,7 +94,6 @@ void dsp::PhaseSeries::zero ()
   TimeSeries::zero ();
 }
 
-
 bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
 				int64 istart, int64 fold_ndat)
 {
@@ -123,6 +122,8 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
       cerr << "PhaseSeries::mixable reset" << endl;
 
     Observation::operator = (obs);
+    if( verbose )
+      fprintf(stderr,"dsp::PhaseSeries::mixable() has acquired rate=%f\n",get_rate());
 
     end_time = obsEnd;
     start_time = obsStart;

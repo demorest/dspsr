@@ -306,7 +306,7 @@ void dsp::TimeSeries::zero ()
 //! If it is equal to little->get_ndat(), it may/may not be full.
 uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
 {
-  //  if( verbose )
+  if( verbose )
     fprintf(stderr,"In dsp::TimeSeries::append()\n");
 
   uint64 ncontain = get_ndat() * get_ndim();
@@ -399,7 +399,8 @@ void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
 dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts)
 {
   DataSeries::swap_data( ts );
-  std::swap(data,ts.data);
+  float* tmp = data; data = ts.data; ts.data = tmp;
+  //std::swap(data,ts.data);
 
   return *this;
 }

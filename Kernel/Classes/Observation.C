@@ -467,7 +467,7 @@ void dsp::Observation::set_default_basis ()
 
 string dsp::Observation::get_default_id (const MJD& mjd, const Observation* obs)
 {
-  static char id [15];
+  char id [15];
   utc_t startutc = UTC_INIT;
 
   mjd.UTC (&startutc, NULL);

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.27 $
-   $Date: 2004/02/09 23:28:55 $
-   $Author: cwest $ */
+   $Revision: 1.28 $
+   $Date: 2004/06/13 07:40:39 $
+   $Author: hknight $ */
 
 
 
@@ -145,6 +145,9 @@ namespace dsp {
 
     //! The transformation folds the data into the profile
     virtual void transformation ();
+
+    //! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
+    void workout_idat_start(const Observation* input);
 
     //! Used by the MultiFold class
     void set_idat_start(uint64 _idat_start){ idat_start = _idat_start; }

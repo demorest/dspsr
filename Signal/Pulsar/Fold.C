@@ -451,6 +451,8 @@ void dsp::Fold::transformation ()
 		 "input and output are not PhaseSeries::mixable");
   }
 
+  workout_idat_start(input);
+
   unsigned blocks = input->get_nchan() * input->get_npol();
 
   uint64 block_size = input->get_datptr (0,1) - input->get_datptr (0,0);
@@ -678,6 +680,8 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   // Calculate the integrated total
   //
   integration_length = double(ndat_folded) * sampling_interval;
+  //  fprintf(stderr,"dsp::Fold::Fold has integration_length = %f * %f = %f\n",
+  //  double(ndat_folded), sampling_interval, integration_length);
   if (verbose)
     cerr << "dsp::Folding::fold " << integration_length << " seconds" << endl;
 
@@ -717,4 +721,23 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
 }
 
-
+//! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
+void dsp::Fold::workout_idat_start(const Observation* input){
+  /*
+  if( output->get_integration_length()==0 ){
+    idat_start = 0;
+    return;
+  }
+  
+  double secs_overlap = (end_time - input->get_start_time()).in_seconds();
+  
+  if( secs_overlap < 0 )
+    throw Error(InvalidState,"dsp::Fold::workout_idat_start()",
+		"The latest gulp of data start %f seconds after the current folded data ends.  If this is not a bug you will have to edit the code to fix it.",
+		fabs(secs_overlap) );
+  
+  uint64 samps_overlap = nuint64(secs_overlap * input->get_rate());
+  
+  idat_start = samps_overlap;
+  */
+}
