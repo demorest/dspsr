@@ -305,17 +305,6 @@ int dsp::MPIRoot::next_destination ()
 
   wait (ready_request, true);
 
-  bool post_another_request = false;
-
-  for (int inode=0; inode<mpi_size; inode++)
-    if (!eod_sent[inode])
-      post_another_request = true;
-
-  if (post_another_request)
-    request_ready();
-  else
-    end_of_data = true;
-
   return status.MPI_SOURCE;
 }
 
@@ -393,7 +382,15 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
     if (verbose)
       cerr << "dsp::MPIRoot::send_data sending end of data" << endl;
     eod_sent[dest] = true;
+
+    end_of_data = true;
+    for (int inode=0; inode<mpi_size; inode++)
+      if (!eod_sent[inode])
+        end_of_data = false;
   }
+
+  if (!end_of_data)
+    request_ready();
 
   if (nbytes > data_size)
     throw Error (InvalidParam, "dsp::MPIRoot::send_data",

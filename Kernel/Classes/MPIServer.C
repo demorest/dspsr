@@ -38,7 +38,7 @@ void dsp::MPIServer::serve ()
       throw Error (InvalidState, "dsp::MPIServer::serve", "input not set");
 
     // count the number of inputs with data
-    if (!root[ir]->input->eod())
+    if (!root[ir]->eod())
       have_data ++;
   }
 
@@ -62,13 +62,26 @@ void dsp::MPIServer::serve ()
 
   while (have_data) {
 
+    have_data = 0;
     for (ir=0; ir < root.size(); ir++) {
+
       // reference the ready_request attributes of each MPIRoot
       ready[ir] = root[ir]->ready_request;
+
+      // count the number of inputs with data
+      if (!root[ir]->eod())
+        have_data ++;
+
+    }
+
+    if (!have_data) {
+      if (MPIRoot::verbose)
+        cerr << "dsp::MPIServer::serve end of data" << endl;
+      break;
     }
 
     int index = 0;
-    int mpi_err = MPI_Waitany( root.size(), requests, &index, &status);
+    int mpi_err = MPI_Waitany( root.size(), requests, &index, &status );
     
     if (index == MPI_UNDEFINED)
       throw Error (InvalidState, "dsp::MPIServer::server",
@@ -79,9 +92,8 @@ void dsp::MPIServer::serve ()
     root[index]->check_error (status.MPI_ERROR, "MPI_Waitany status", method);
     root[index]->check_status (status, method);
 
-    // post the next ready-to-receive request
+    // reset the ready-to-receive request handle
     root[index]->ready_request = MPI_REQUEST_NULL;
-    root[index]->request_ready ();
 
     int dest = status.MPI_SOURCE;
 
@@ -95,7 +107,6 @@ void dsp::MPIServer::serve ()
 	cerr << "dsp::MPIServer::serve end of data[" << index << "]" << endl;
 
       root[index]->send_data (0, dest);
-      have_data --;
 
     }
     else {
