@@ -42,6 +42,11 @@ void dsp::BitSeries::resize (int64 nsamples)
 		 "invalid size="I64, require);
 
   if (!require || require > size) {
+
+    if (verbose)
+      cerr << "dsp::BitSeries::resize current size = " << size << " bytes"
+          " -- required size = " << require << " bytes" << endl;
+ 
     if (data) delete data; data = 0;
     size = 0;
     //! data has been deleted. input sample is no longer valid
