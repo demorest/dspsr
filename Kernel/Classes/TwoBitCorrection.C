@@ -153,8 +153,11 @@ void dsp::TwoBitCorrection::transformation ()
 		 "input not 2-bit digitized");
 
   // build the two-bit lookup table
-  if (!built)
+  if (!built){
+    if( verbose )
+      fprintf(stderr,"dsp::TwoBitCorrection::transformation() calling build()\n");
     build ();
+  }
 
   // set the Observation information
   output->Observation::operator=(*input);
@@ -170,6 +173,9 @@ void dsp::TwoBitCorrection::transformation ()
 
   if (weighted_output)
     weighted_output -> neutral_weights ();
+
+  if( verbose )
+    fprintf(stderr,"dsp::TwoBitCorrection::transformation() calling unpack()\n");
 
   // unpack the data
   unpack ();
@@ -503,11 +509,13 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     throw Error (InvalidState, "dsp::TwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be == 1", ndig);
 
-  if (verbose)
-    cerr << "dsp::TwoBitCorrection::dig_unpack out=" << output_data <<
-      " in=" << input_data << " ndat=" << ndat <<
-      "\n   digitizer=" << digitizer << " weights=" << weights <<
-      " nweights=" << nweights << endl;
+  if (verbose){
+    cerr << "dsp::TwoBitCorrection::dig_unpack out=" << output_data << endl;
+    fprintf(stderr,"input_data=%p\n",input_data);
+    fprintf(stderr,"ndat="UI64"\n",ndat);
+    cerr <<   "\n   digitizer=" << digitizer << " weights=" << weights << endl;
+    cerr <<   " nweights=" << nweights << endl;
+  }
 
   // 4 floating-point samples per byte
   const unsigned samples_per_byte = TwoBitTable::vals_per_byte;
