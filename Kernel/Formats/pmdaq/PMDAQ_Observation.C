@@ -75,8 +75,18 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
     throw_str("PMDAQ_Observation - failed to read frequency of channel one\n");
   }
 
+  if( nchan==512 && fabs(chan_incr) > 2.9 ){
+    fprintf(stderr,"WARNING: PMDAQ_Observation has read in that nchan=512 and chan_incr=%f which seems strange.  Taking the guess that chan_incr should be -0.5\n",
+	    chan_incr);
+    chan_incr = -0.5;
+  }
+
   set_centre_frequency (freq_channel_one - 0.5 * chan_incr + get_nchan()/2 * 
 			chan_incr);
+
+  //  fprintf(stderr,"PMDAQ_Obs: cf=%f - 0.5*%f + %d/2 * %f = %f\n",
+  //  freq_channel_one, chan_incr, get_nchan(), chan_incr, centre_frequency);
+  //exit(0);
 
   // //////////////////////////////////////////////////////////////////////
   //
