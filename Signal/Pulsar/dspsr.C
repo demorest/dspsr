@@ -16,6 +16,7 @@
 #include "dsp/Dedispersion.h"
 #include "dsp/RFIFilter.h"
 
+#include "dsp/AutoCorrelation.h"
 #include "dsp/Filterbank.h"
 #include "dsp/Detection.h"
 #include "dsp/SubFold.h"
@@ -43,7 +44,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjm:M:n:N:Oop:P:R:sS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIl:jm:M:n:N:Oop:P:RsS:t:T:vVx:";
 
 void usage ()
 {
@@ -92,6 +93,7 @@ void usage ()
     "Detection options:\n"
     " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
     " -n ndim        ndim of detected TimeSeries [4]\n"
+    " -l nlag        form lag spectrum of detected data\n"
     "\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins \n"
@@ -155,6 +157,7 @@ int main (int argc, char** argv)
   int ndim = 4;
   int nchan = 1;
   int npol = 4;
+  int nlag = 0;
   int set_nfft = 0;
 
   int nbin = 0;
@@ -165,7 +168,7 @@ int main (int argc, char** argv)
   // the ephemerides from which to choose when creating a folding polyco
   vector< psrephem* > ephemerides;
 
-  int ffts = 16;
+  int ffts = 1;
   int fres = 0;
 
   // perform coherent dedispersion during filterbank construction
@@ -237,6 +240,8 @@ int main (int argc, char** argv)
   // Filter used for RFI mitigation in the frequency domain
   dsp::RFIFilter* rfi_filter = 0;
 
+  //
+  bool persistent = false;
 
   int c;
   int scanned;
@@ -280,12 +285,12 @@ int main (int argc, char** argv)
       archive_class = optarg;
       break;
 
-    case 'b':
-      nbin = atoi (optarg);
-      break;
-
     case 'B':
       bandwidth = atof (optarg);
+      break;
+
+    case 'b':
+      nbin = atoi (optarg);
       break;
 
     case 'C':
@@ -367,6 +372,10 @@ int main (int argc, char** argv)
 
     case 'j':
       join_files = true;
+      break;
+
+    case 'l':
+      nlag = atoi (optarg);
       break;
 
     case 'm':
@@ -660,8 +669,14 @@ int main (int argc, char** argv)
     dsp::Detection* detect = new dsp::Detection;
     
     if (npol == 4) {
-      detect->set_output_state (Signal::Coherence);
-      detect->set_output_ndim (ndim);
+      if (!nlag) {
+	detect->set_output_state (Signal::Coherence);
+	detect->set_output_ndim (ndim);
+      }
+      else {
+	detect->set_output_state (Signal::Stokes);
+	detect->set_output_ndim (1);
+      }
     }
     else if (npol == 2)
       detect->set_output_state (Signal::PPQQ);
@@ -677,6 +692,21 @@ int main (int argc, char** argv)
     
     operations.push_back (detect);
   }
+
+  if (nlag)  {
+
+    if (verbose)
+      cerr << "Creating AutoCorrelation instance" << endl;
+    dsp::AutoCorrelation* autocorrelate = new dsp::AutoCorrelation;
+
+    autocorrelate->set_nlag (nlag);
+    autocorrelate->set_input (convolve);
+    autocorrelate->set_output (convolve);
+
+    operations.push_back (autocorrelate);
+
+  }
+
 
   if (verbose)
     cerr << "Creating Archiver instance" << endl;
@@ -875,12 +905,12 @@ int main (int argc, char** argv)
       if (total_seconds)
 	manager->get_input()->set_total_seconds (seek_seconds + total_seconds);
 
-      manager->set_block_size ( block_size );
-      manager->set_overlap ( overlap );
+      manager->get_input()->set_block_size ( block_size );
+      manager->get_input()->set_overlap ( overlap );
 
       unsigned ndat_good = block_size - overlap;
       nblocks_tot = manager->get_input()->get_total_samples() / ndat_good;
-      if (manager->get_total_samples() % ndat_good)
+      if (manager->get_input()->get_total_samples() % ndat_good)
 	nblocks_tot ++;
 
       cerr << "processing ";
@@ -905,7 +935,7 @@ int main (int argc, char** argv)
 
       if (mpi_size > 1) {
     
-	mpi_data -> copy (manager);
+	mpi_data -> copy (manager->get_input());
 	mpi_data -> prepare ();
 
 	mpi_data -> set_Input ( manager->get_input() );
@@ -937,7 +967,9 @@ int main (int argc, char** argv)
     int block=0;
     int last_percent = -1;
 
-    while (!manager->eod()) {
+    bool still_going = true;
+
+    while (!manager->get_input()->eod() && still_going) {
 
       for (unsigned iop=0; iop < active_operations.size(); iop++) try {
 
@@ -954,6 +986,16 @@ int main (int argc, char** argv)
       }
       catch (Error& error)  {
 
+	if (!persistent) {
+
+	  cerr << "dspsr: " << active_operations[iop]->get_name() << " error\n"
+	       << error << endl;
+
+	  still_going = false;
+	  break;
+
+	}
+	  
         cerr << error << endl;
         cerr << "dspsr: removing " << active_operations[iop]->get_name() 
              << " from operations" << endl;
