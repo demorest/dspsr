@@ -193,8 +193,11 @@ void dsp::Convolution::transformation ()
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
-  if (weighted_output)
+  if (weighted_output) {
     weighted_output->convolve_weights (nsamp_fft, nsamp_good);
+    if (input->get_state() == Signal::Nyquist)
+      weighted_output->scrunch_weights (2);
+  }
 
   // valid time samples convolved
   if (input.get() == output.get())
