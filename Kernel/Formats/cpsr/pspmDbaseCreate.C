@@ -1,0 +1,34 @@
+#include <iostream>
+#include "pspmDbase.h"
+
+int usage ()
+{
+  cerr <<
+    "pspmDbaseCreate - makes CPSR header log file in 'log.txt'\n"
+    "\n"
+    "first argument should be wildcarded path to headers, such as in:\n"
+    "pspmDbaseCreate \"/caltech/cpsr.data/search/header/*/*.cpsr\""
+       << endl;
+  return -1;
+}
+
+int main (int argc, char** argv)
+{ try {
+
+  if (argc<2 || string(argv[1])=="-h") {
+    return usage ();
+  }
+
+  pspmDbase::server dbase;
+  dbase.create(argv[1]);
+
+  cerr << "pspmDbaseCreate " << dbase.entries.size() << " entries" << endl;
+
+  dbase.unload ("log.txt");
+  return 0;
+}
+ catch (string err) {
+   cerr << "pspmDbaseCreate error: '" << err << "'" << endl;
+   return -1;
+ }
+}

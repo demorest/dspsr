@@ -1,0 +1,232 @@
+#include <stdio.h>
+
+// CPSR hdr and unpacking routines
+#define cpsr 1
+#include "pspm_search_header.h"
+
+// #define _DEBUG 1
+
+/*
+ * CPSR Sideband modes copied from pspm.h
+ */
+#define UNKNOWN_SIDEBAND	0
+#define	SSB_LOWER		1
+#define	SSB_UPPER		2
+#define	DSB_SKYFREQ		3
+#define	DSB_REVERSED		4
+
+#include "pspmDbase.h"
+#include "genutil.h"
+#include "dirutil.h"
+#include "pspm++.h"
+
+void ascii_dump (const PSPM_SEARCH_HEADER* hdr);
+
+pspmDbase::entry::entry ()
+{
+  scan = num = tape = file = -1;
+  ttelid = ndigchan = nbit = -1;
+  ndat = -1;
+  frequency = bandwidth = tsamp = 0;
+}
+
+// create from PSPM_SEARCH_HEADER
+void pspmDbase::entry::create (void* vhdr)
+{
+  PSPM_SEARCH_HEADER* hdr = (PSPM_SEARCH_HEADER*) vhdr;
+#if _DEBUG
+  ascii_dump (hdr);
+#endif
+
+  // set the field values
+
+  scan      = hdr->scan_num;
+  num       = hdr->tape_file_number;
+  tape      = hdr->tape_num;
+  file      = hdr->tape_file_number;
+  
+  start     = PSPMstart_time (hdr);
+  
+  ttelid    = hdr->observatory;
+  name      = hdr->psr_name;
+  frequency = hdr->rf_freq;
+  bandwidth = hdr->bw;
+  if ((hdr->SIDEBAND == SSB_LOWER) || (hdr->SIDEBAND == DSB_REVERSED))
+    bandwidth *= -1.0;
+  
+  tsamp     = hdr->samp_rate;
+  ndigchan  = hdr->num_chans;
+  nbit      = hdr->bit_mode;
+  
+  int64 fsize;
+  if (hdr->ll_file_size == 0)
+    // old style - pre-August 1999
+    fsize = hdr->file_size;
+  else
+    fsize = hdr->ll_file_size;
+  
+  ndat = fsize/(ndigchan*nbit);        // number of time samples
+  
+}
+
+
+// load from ascii string
+static char buffer[256];
+static char mjdstr[32];
+static char src[32];
+
+void pspmDbase::entry::load (const char* str) 
+{
+  int scan = sscanf (str,
+		     "%d %d %d %d"
+		     " %s %s"
+		     " %lf %lf %lf"
+		     " %d %d %d "I64,
+		     &scan, &num, &tape, &file,
+		     mjdstr, src, 
+		     &frequency, &bandwidth, &tsamp,
+		     &ttelid, &ndigchan, &nbit, &ndat);
+
+  if (scan != 13)
+    throw_str ("pspmDbase::entry::load error parsing '%s'", str);
+
+  start.Construct(mjdstr);
+  name = src;
+}
+
+// unload ascii string
+void pspmDbase::entry::unload (string& str)
+{
+  int scan = sprintf (buffer,
+		      "%d %d %d %d"
+		      " %s %s"
+		      " %lf %lf %lf"
+		      " %d %d %d "I64,
+		      scan, num, tape, file,
+		      start.printdays(15).c_str(), name.c_str(), 
+		      frequency, bandwidth, tsamp,
+		      ttelid, ndigchan, nbit, ndat);
+  str = buffer;
+};
+
+
+// server::create - uses dirglob to expand wild-card-style
+// list of files containing CPSR headers 
+// (such as /caltech/cpsr.data/search/header/*/*.cpsr on orion)
+void pspmDbase::server::create (const char* glob)
+{
+  internal = true;
+  entries.clear();
+
+  vector<string> filenames;
+  dirglob (&filenames, glob);
+
+  entry next;
+
+  for (unsigned ifile=0; ifile<filenames.size(); ifile++) {
+    PSPM_SEARCH_HEADER* hdr = pspm_read (filenames[ifile].c_str());
+
+    try { next.create(hdr); }
+    catch (...) { continue; }
+
+    entries.push_back(next);
+  }
+}
+
+// loads ascii version from file
+void pspmDbase::server::load (const char* dbase_filename)
+{
+  if (!internal)
+    fprintf (stderr, "pspmDbase::server::load only internal implemented\n");
+  internal = true;
+
+  FILE* fptr = fopen (dbase_filename, "r");
+  if (!fptr)
+    throw_str ("pspmDbase::server::load error fopen(%s)\n", dbase_filename);
+
+  entries.clear();
+  entry next;
+
+  while ( fgets (buffer, 256, fptr) ) {
+    try { next.load(buffer); }
+    catch (...) { continue; }
+    entries.push_back(next);
+  }
+  fclose (fptr);
+}
+
+// unloads ascii version to file
+void pspmDbase::server::unload (const char* dbase_filename)
+{
+  if (!internal)
+    return;
+
+  FILE* fptr = fopen (dbase_filename, "w");
+  if (!fptr)
+    throw_str ("pspmDbase::server::unload error fopen(%s)\n", dbase_filename);
+
+  string out;
+  for (unsigned ie=0; ie<entries.size(); ie++) {
+    entries[ie].unload(out);
+    fprintf (fptr, "%s\n", out.c_str());
+  }
+  fclose (fptr);
+}
+
+
+void ascii_dump (const PSPM_SEARCH_HEADER* hdr)
+{
+
+  fprintf (stderr, "File size:       %ld\n", hdr->file_size);
+  fprintf (stderr, "Large File Size: "I64"\n", hdr->ll_file_size);
+  fprintf (stderr, "Large Offset:    "I64"\n", hdr->ll_file_offset);
+  fprintf (stderr, "MJD in hdr    %40.38Lf\n", hdr->mjd_start);
+
+  fprintf (stderr, "tick offset:     %30.28lf\n\n", hdr->tick_offset);
+  fprintf (stderr, "tape_num:        %d\n", hdr->tape_num);
+  fprintf (stderr, "tape_file_number:%d\n", hdr->tape_file_number);
+  fprintf (stderr, "scan_num:        %d\n", hdr->scan_num);
+  fprintf (stderr, "scan_file_number %d\n", hdr->scan_file_number);
+  fprintf (stderr, "file_size        %d\n\n", hdr->file_size);
+
+  fprintf (stderr, "LMST in hdr   %lf\n", hdr->pasmon_lmst);
+
+  fprintf (stderr, "Pulsar:          %s\n",  hdr->psr_name);
+  fprintf (stderr, "Date:            %s\n",  hdr->date);
+  fprintf (stderr, "Start Time:      %s\n",  hdr->start_time);
+
+  fprintf (stderr, "pasmon_daynumber:%d\n",  hdr->pasmon_daynumber);
+  fprintf (stderr, "pasmon_ast:      %d\n",  hdr->pasmon_ast);
+ 
+  fprintf (stderr, "Centre Freq:     %lf\n", hdr->rf_freq);
+  fprintf (stderr, "Sampling Period: %lf\n", hdr->samp_rate);
+  fprintf (stderr, "Bandwidth:       %lf\n", hdr->bw);
+  fprintf (stderr, "SIDEBAND:        %d:",  hdr->SIDEBAND);
+  switch (hdr->SIDEBAND) 
+    {
+    case UNKNOWN_SIDEBAND:
+      fprintf (stderr, "Unknown (assume USB)\n");
+      break;
+    case SSB_LOWER:
+      fprintf (stderr, "SSB Lower\n");
+      break;
+    case SSB_UPPER:
+      fprintf (stderr, "SSB Upper\n");
+      break;
+    case DSB_SKYFREQ:
+      fprintf (stderr, "DSB Sky frequency order\n");
+      break;
+    case DSB_REVERSED:
+      fprintf (stderr, "DSB Sky reversed frequency order\n");
+      break;
+    default:
+      fprintf (stderr, "Internal error\n");
+      break;
+    }
+  
+  fprintf (stderr, "Telescope:       %d\n",  hdr->observatory);
+  fprintf (stderr, "Channels:        %ld\n", hdr->num_chans);
+  fprintf (stderr, "Bit Mode:        %ld\n", hdr->bit_mode);
+  
+  fflush (stderr);
+}
