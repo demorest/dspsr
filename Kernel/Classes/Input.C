@@ -115,9 +115,6 @@ void dsp::Input::load (BitSeries* data)
   // set the Observation information
   data->Observation::operator=(info);
 
-  //fprintf(stderr,"in dsp::Input::load() and have set data->ndat="UI64"\n",
-  // data->get_ndat());
-
   // set the time as expected will result from the next call to load_data
   // note that data->start_time was set in the above call to operator=
   data->change_start_time (load_sample);
@@ -126,14 +123,11 @@ void dsp::Input::load (BitSeries* data)
     cerr << "dsp::Input::load [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
-  //fprintf(stderr,"in dsp::Input::load() and calling data->resize("UI64")\n",
-  //  load_size);
   data->resize (load_size);
-  //fprintf(stderr,"in dsp::Input::load() and called data->resize("UI64") to give data->get_ndat()="UI64"\n",
-  //  load_size,data->get_ndat());
 
   if (verbose)
-    cerr << "dsp::Input::load call load_data" << endl;
+    cerr << "dsp::Input::load call load_data Bit_Stream::ndat=" 
+         << data->get_ndat () << endl;
 
   load_data (data);
 
