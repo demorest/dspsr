@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.31 $
-   $Date: 2002/11/12 00:20:56 $
-   $Author: wvanstra $ */
+   $Revision: 1.32 $
+   $Date: 2002/11/12 04:51:35 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -197,6 +197,12 @@ namespace dsp {
     //! Set the record of what DM the data is dedispersed
     void set_dispersion_measure (double dm) { dispersion_measure = dm; }
 
+    //! Whether data is in 'Time' or 'Fourier' domain 
+    string get_domain(){ return domain; }
+
+    //! Whether data is in 'Time' or 'Fourier' domain 
+    void set_domain(string _domain){ domain = _domain; }
+
     //! Change the state and correct other attributes accordingly
     virtual void change_state (Signal::State new_state);
 
@@ -250,9 +256,6 @@ namespace dsp {
     
     //! Writes of all information contained in this class into the fptr at the current file offset
     bool retrieve(FILE* fptr);
-
-    //! Set all attributes to null default
-    void init ();
 
   protected:
 
@@ -322,6 +325,11 @@ namespace dsp {
     //! The DM TimeSeries has been dedispersed to
     double dispersion_measure;
 
+    //! Whether data is in 'Time' or 'Fourier' domain 
+    string domain;
+
+    //! Set all attributes to null default
+    void init ();
   };
 
 }

@@ -4,6 +4,7 @@
 #include "dsp/IOManager.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Detection.h"
+#include "dsp/Unpacker.h"
 
 #include "string_utils.h"
 #include "dirutil.h"

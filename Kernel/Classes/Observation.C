@@ -45,6 +45,8 @@ void dsp::Observation::init ()
   identifier = mode = machine = "";
   coordinates = sky_coord();
   dispersion_measure = 0.0;
+
+  domain = "Time";  /* cf 'Fourier' */
 }
 
 

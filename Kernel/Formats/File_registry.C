@@ -4,7 +4,7 @@
 #include "dsp/CPSRFile.h"
 #include "dsp/S2File.h"
 #include "dsp/PMDAQFile.h"
-#include "dsp/DigiFile.h"
+//#include "dsp/DigiFile.h"
 
 Registry::List<dsp::File> dsp::File::registry;
 
@@ -13,7 +13,7 @@ static Registry::List<dsp::File>::Enter<dsp::CPSRFile>  cpsr;
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> pmdaq;
 static Registry::List<dsp::File>::Enter<dsp::S2File>    s2;
 
-static Registry::List<dsp::File>::Enter<dsp::DigiFile> digifile;
+//static Registry::List<dsp::File>::Enter<dsp::DigiFile> digifile;
 
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::File* dsp::File::create (const char* filename)
