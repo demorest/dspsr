@@ -214,7 +214,13 @@ void dsp::Archiver::set (Pulsar::Passband* pband) try {
   unsigned npol = passband->get_npol ();
   unsigned nband = passband->get_nchan ();
   unsigned nchan = passband->get_ndat ();
-  
+
+  if (npol==0 || nband==0 || nchan==0) {
+    if (verbose)
+      cerr << "dsp::Archiver::set Pulsar::Passband empty passband" << endl;
+    return;
+  }
+
   dsp::Response copy (*passband);
   copy.naturalize ();
   
