@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/07/31 06:54:09 $
+   $Revision: 1.20 $
+   $Date: 2003/08/13 14:22:56 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -22,6 +22,9 @@ namespace dsp {
 
     //! Conversion factor between dispersion measure, DM, and dispersion, D
     static const double dm_dispersion;
+
+    //! Fractional smearing added to ensure that cyclical convolution is reduced
+    static float smearing_buffer;
 
     //! Null constructor
     Dedispersion ();

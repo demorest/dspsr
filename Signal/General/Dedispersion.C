@@ -15,6 +15,8 @@
 */
 const double dsp::Dedispersion::dm_dispersion = 2.41e-4;
 
+float dsp::Dedispersion::smearing_buffer = 0.1;
+
 dsp::Dedispersion::Dedispersion ()
 {
   centre_frequency = -1.0;
@@ -326,11 +328,12 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   // to the cyclical convolution effect is minimized
   if (psrdisp_compatible) {
      cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
-       "   increasing smearing time by 5 instead of 10 percent" << endl;
+       "   increasing smearing time by 5 instead of " 
+          << smearing_buffer*100.0 << " percent" << endl;
     tsmear *= 1.05;
   }
   else
-    tsmear *= 1.1;
+    tsmear *= (1.0 + smearing_buffer);
   
   // smear across one channel in number of time samples.
   unsigned nsmear = unsigned (ceil(tsmear * sampling_rate));
