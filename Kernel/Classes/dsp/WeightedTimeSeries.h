@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.3 $
-   $Date: 2003/11/26 15:26:21 $
+   $Revision: 1.4 $
+   $Date: 2003/11/26 16:38:13 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -26,6 +26,9 @@ namespace dsp {
 
     //! Add each value in data to this
     virtual WeightedTimeSeries& operator += (const WeightedTimeSeries& data);
+
+    //! Copy the configuration of another TimeSeries instance
+    virtual void copy_configuration (const TimeSeries* copy);
 
     //! Set the number of time samples per weight
     /*! Set ndat_per_weight to zero to effect no weighting of data */
@@ -73,10 +76,10 @@ namespace dsp {
     //! Get the weights array for the specfied polarization and frequency
     const unsigned* get_weights (unsigned ichan=0, unsigned ipol=0) const;
 
-  protected:
-
     //! Flag all weights in corrupted transforms
     void convolve_weights (unsigned nfft, unsigned nkeep);
+
+  protected:
 
     //! Number of polarizations with independent weights
     unsigned npol_weight;
@@ -86,6 +89,12 @@ namespace dsp {
 
     //! The number of time samples per weight
     unsigned ndat_per_weight;
+
+    //! Copy the weights from copy
+    void copy_weights (const WeightedTimeSeries& copy);
+
+    //! Resize the weights array
+    void resize_weights ();
 
   private:
     //! The weights buffer
@@ -98,16 +107,6 @@ namespace dsp {
     uint64 weight_subsize;
   };
 
-  // zaps data with zeroes
-  void convolve_tweights (unsigned* weights,
-			  unsigned long nwts,
-			  unsigned testwts, unsigned restwts);
-  
-  // returns the number of weights left in the array
-  unsigned long scrunch_tweights (unsigned* weights,
-				  unsigned long nwts,
-				  unsigned scrunch_factor);
-  
 }
 
 #endif
