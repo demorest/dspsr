@@ -14,7 +14,7 @@
 #include "string_utils.h"
 #include "dirutil.h"
 
-static char* args = "c:n:s:t:vVw:";
+static char* args = "c:hn:s:t:vVw:";
 
 void usage ()
 {
@@ -58,6 +58,10 @@ int main (int argc, char** argv)
         return -1;
       }
       break;
+
+    case 'h':
+      usage ();
+      return 0;
 
     case 'n':
       scanned = sscanf (optarg, "%u", &tbc_nsample);
@@ -128,7 +132,7 @@ int main (int argc, char** argv)
   if (display) {
     cpgbeg (0, "?", 0, 0);
     cpgask(1);
-    cpgsvp (0.05, 0.95, 0.0, 0.8);
+    cpgsvp (0.05, 0.95, 0.0, 0.95);
     cpgsch (2.0);
   }
 
@@ -174,10 +178,15 @@ int main (int argc, char** argv)
 
     plotter->set_data (correct);
 
+    cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
+    cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
+
     // set the number of samples to load
     double samples = manager->get_info()->get_rate() * time_per_plot + 0.5;
     uint64 block_size = uint64(samples);
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
+
+    cerr << samples << " samples per " << time_per_plot << " s plot" << endl;
 
     manager->set_block_size (block_size);
 
@@ -207,6 +216,7 @@ int main (int argc, char** argv)
         plotter->plot();
       }
 
+      float bottom = 0.52;
 
       for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol) {
 
@@ -239,22 +249,22 @@ int main (int argc, char** argv)
 	float max = 0.0;
 	float buf = 0.0;
 
-	float bottom = ipol * 0.5;
-
 	// plot the mean
 
 	minmaxval (npoints, mean, &min, &max);
 	buf = (max-min) * 0.05;
 
 	cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
-	cpgsvp (0.1, 0.7, bottom+0.05, bottom+0.25);
+	cpgsvp (0.1, 0.63, bottom, bottom+0.20);
 	cpgsci(1);
-	cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
 
-	if (ipol==0)
-	  cpglab("Seconds from start of file", "mean 0", "");
-	else
-	  cpglab("", "mean 1", "");
+	if (ipol==1) {
+	  cpglab("Seconds from start of file", "", "");
+          cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
+        }
+        else
+          cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
+        cpgmtxt("L",3.5,.5,.5,"mean");
 
 	cpgsci(5);
 	cpgpt(npoints, xaxis, mean, -1);
@@ -266,18 +276,15 @@ int main (int argc, char** argv)
 	buf = (max-min) * 0.05;
 
 	cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
-	cpgsvp (0.1, 0.7, bottom+0.25, bottom+0.45);
+	cpgsvp (0.1, 0.63, bottom+0.20, bottom+0.40);
 	cpgsci(1);
-	cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
+	cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
+        cpgmtxt("L",3.5,.5,.5,"rms");
 
-	if (ipol==0)
-	  cpglab("", "rms 0", "");
-	else
-	  cpglab("", "rms 1", "");
-
-	cpgsci(5);
+	cpgsci(6);
 	cpgpt(npoints, xaxis, rms, -1);
 
+        bottom = 0.08;
       }
 
       current_time += time_per_plot;
