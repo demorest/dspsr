@@ -203,7 +203,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   // set_model must be called after the Integration::MJD has been set
   if( phase->get_pulsar_ephemeris() ){
     archive-> set_model ( *(phase->get_folding_polyco()) );
-    archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()) );
+    archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()), false );
   }
 
   archive-> set_filename (get_filename (phase));
