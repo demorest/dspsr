@@ -47,10 +47,24 @@ void dsp::Observation::init ()
   identifier = mode = machine = "";
   coordinates = sky_coord();
   dispersion_measure = 0.0;
+  between_channel_dm = 0.0;
 
   domain = "Time";  /* cf 'Fourier' */
 }
 
+double dsp::Observation::get_highest_frequency(){
+  double highest_frequency = get_centre_frequency(0);
+  for( unsigned i=1; i<nchan; i++)
+    highest_frequency = max(highest_frequency,get_centre_frequency(i));
+  return highest_frequency;
+}
+
+double dsp::Observation::get_lowest_frequency(){
+  double lowest_frequency = get_centre_frequency(0);
+  for( unsigned i=1; i<nchan; i++)
+    lowest_frequency = min(lowest_frequency,get_centre_frequency(i));
+  return lowest_frequency;
+}
 
 void dsp::Observation::set_state (Signal::State _state)
 {

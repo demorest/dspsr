@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.37 $
-   $Date: 2002/12/04 01:36:16 $
+   $Revision: 1.38 $
+   $Date: 2002/12/04 14:48:17 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -136,6 +136,12 @@ namespace dsp {
     //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (unsigned ichan) const;
 
+    //! Return the centre frequency of the highest frequency channel
+    double get_highest_frequency();
+
+    //! Return the centre frequency of the lowest frequency channel
+    double get_lowest_frequency();
+
     //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
     //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
@@ -192,8 +198,17 @@ namespace dsp {
     //! Set the record of what DM the data is dedispersed (in-channel dispersion)
     void set_dispersion_measure (double dm) { dispersion_measure = dm; }
 
-    //! Add on extra DM units to the dispersion measure
+    //! Add on extra DM units to the dispersion measure (in-channel smearing)
     void change_dispersion_measure(double dm) { dispersion_measure += dm; }
+
+    //! Returns the DM to which the data has been dedispersed (between-channel dispersion)
+    double get_between_channel_dm () const { return between_channel_dm; }
+
+    //! Set the record of what DM the data is dedispersed (between-channel dispersion)
+    void set_between_channel_dm (double dm) { between_channel_dm = dm; }
+
+    //! Add on extra DM units to the dispersion measure (between-channel smearing)
+    void change_between_channel_dm(double dm) { between_channel_dm += dm; }
 
     //! Set the observation mode
     void set_mode (string _mode) { mode = _mode; }
@@ -333,8 +348,11 @@ namespace dsp {
     //! Coordinates of the source
     sky_coord coordinates;
 
-    //! The DM TimeSeries has been dedispersed to
+    //! The DM TimeSeries has been dedispersed to (in-channel smearing)
     double dispersion_measure;
+
+    //! The DM the channels have been shifted by
+    double between_channel_dm;
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     string domain;
