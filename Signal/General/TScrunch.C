@@ -94,15 +94,14 @@ void dsp::TScrunch::transformation ()
 #endif
       */      
 
-	      for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
+      for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
 	unsigned stop = j + sfactor;
 	
 	out[iscrunching] = in[j]; 	++j;
 	
 	for( ; j<stop; ++j)
 	  out[iscrunching] += in[j];
-	  }
-            
+      }
     } // for each ipol
   } // for each ichan
 
