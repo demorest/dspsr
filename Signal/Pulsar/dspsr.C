@@ -40,7 +40,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:hiIjm:M:n:N:Oop:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjm:M:n:N:Oop:P:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -53,11 +53,14 @@ void usage ()
     " -M metafile    load filenames from metafile\n"
     " -O             run in backward-compatibility psrdisp mode\n"
     " -S seek        start processing at t=seek seconds\n"
-    " -t gulps       stop processing after this many gulps\n"
     " -T total       process only t=total seconds\n"
+    " -g ffts        perform this many forward FFTs per block [16]\n"
+    " -t gulps       stop processing after this many gulps\n"
     "\n"
     "Source options:\n"
     " -N name        set the source name\n"
+    " -B bandwidth   set the bandwidth\n"
+    " -f frequency   set the centre frequency\n"
     " -c period      fold with constant period\n"
     "\n"
     "Clock/Time options:\n"
@@ -70,7 +73,6 @@ void usage ()
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
     "Filterbank options:\n"
-    " -f ffts        perform this many forward FFTs per gulp [16]\n"
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
@@ -218,7 +220,8 @@ int main (int argc, char** argv)
 
   // bandwidth
   double bandwidth = 0.0;
-
+  // centre_frequency
+  double centre_frequency = 0.0;
   // Pulsar name
   string pulsar_name;
   // Folding period
@@ -331,6 +334,10 @@ int main (int argc, char** argv)
     }
     
     case 'f':
+      centre_frequency = atof (optarg);
+      break;
+
+    case 'g':
       ffts = atoi (optarg);
       break;
       
@@ -739,6 +746,13 @@ int main (int argc, char** argv)
               " old=" << manager->get_info()->get_bandwidth() <<
               " new=" << bandwidth << endl;
       manager->get_info()->set_bandwidth (bandwidth);
+    }
+
+    if (centre_frequency != 0) {
+      cerr << "dspsr: over-riding centre_frequency"
+              " old=" << manager->get_info()->get_centre_frequency() <<
+              " new=" << centre_frequency << endl;
+      manager->get_info()->set_centre_frequency (centre_frequency);
     }
 
     // Make sure the source name used to construct kernel is set correctly
