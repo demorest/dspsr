@@ -5,13 +5,12 @@
 
 #include <string>
 
-#include "Printable.h"
+#include "psr_cpp.h"
 #include "Reference.h"
 
 namespace dsp{
 
   // Printable has a 'name' attribute
-  //  class dspExtension : public Printable {
   class dspExtension : public Reference::Able {
 
   public:
@@ -29,7 +28,10 @@ namespace dsp{
     virtual dspExtension* new_extension() const = 0;
 
     //! If true, then you can only have one of this type of dspExtension per Observation instantiation
-    bool must_only_have_one() const { return can_only_have_one; }
+    virtual bool must_only_have_one() const { return can_only_have_one; }
+
+    //! Dump out to a string
+    virtual string dump_string() const = 0;
 
     //! Delete this if dspExtension inherits from Printable
     string get_name() const { return name; }

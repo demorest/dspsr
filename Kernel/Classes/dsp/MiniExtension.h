@@ -28,10 +28,10 @@ namespace dsp {
     virtual void copy(const MiniExtension& m);
 
     //! Return a new copy-constructed instance identical to this instance
-    dspExtension* clone() const;
+    MiniExtension* clone() const;
 
     //! Return a new null-constructed instance
-    dspExtension* new_extension() const{ return new MiniExtension; }
+    MiniExtension* new_extension() const{ return new MiniExtension; }
 
     //! Returns a pointer to the MiniPlan
     MiniPlan* get_miniplan(){ return miniplan.ptr(); }
@@ -47,6 +47,9 @@ namespace dsp {
 
     //! Sets the subsize
     void set_subsize(uint64 _subsize){ subsize = _subsize; }
+
+    //! Dump out to a string
+    virtual string dump_string() const;
 
   protected:
 
