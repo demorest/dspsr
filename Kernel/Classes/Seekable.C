@@ -96,6 +96,7 @@ void dsp::Seekable::load_data (Timeseries* data)
   current_sample += read_size;
 
   data->set_ndat (recycled + read_size);
+  set_input_sample (data, next_sample);
 
   if (overlap > read_size)
     next_sample -= (overlap - read_size);
