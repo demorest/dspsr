@@ -30,6 +30,18 @@ void dsp::Filterbank::operation ()
 
   // number of complex values in the result of the first fft
   unsigned n_fft = nchan * freq_res;
+
+  //! Complex samples dropped from beginning of cyclical convolution result
+  unsigned nfilt_pos = 0;
+
+  //! Complex samples dropped from end of cyclical convolution result
+  unsigned nfilt_neg = 0;
+
+  if (response) {
+    nfilt_pos = response->get_impulse_pos ();
+    nfilt_neg = response->get_impulse_neg ();
+  }
+
   // number of complex samples invalid in result of small ffts
   unsigned n_filt = nfilt_pos + nfilt_neg;
 
@@ -73,7 +85,7 @@ void dsp::Filterbank::operation ()
   int nsamp_step = nsamp_fft - nsamp_overlap;
 
   // matrix convolution
-  bool cross_filt = false;
+  bool matrix_convolution = false;
 
   if (response) {
 
@@ -87,13 +99,14 @@ void dsp::Filterbank::operation ()
       throw_str ("Filterbank::operation response.ndat=%d != %d",
 		 response->get_ndat(), n_fft);
 
-    cross_filt = (response->get_npol() == 4);
+    // if the response has 8 dimensions, then perform matrix convolution
+    matrix_convolution = (response->get_ndim() == 8);
 
     if (verbose)
       fprintf (stderr, "Filterbank::operation with %s convolution\n",
-	       (cross_filt)?"matrix":"complex");
+	       (matrix_convolution)?"matrix":"complex");
 
-    if (cross_filt && input->get_npol() != 2)
+    if (matrix_convolution && input->get_npol() != 2)
 	throw_str ("Filterbank::operation cross-filter and input.npol != 2");
   }
 
@@ -102,7 +115,7 @@ void dsp::Filterbank::operation ()
       throw_str ("Filterbank::operation bandpass.ndat=%d != nfft=%d",
 		 bandpass->get_ndat(), n_fft);
 
-    if (cross_filt && bandpass->get_npol() != 4)
+    if (matrix_convolution && bandpass->get_npol() != 4)
       throw_str ("Filterbank::operation with matrix convolution "
 		 "bandpass.npol=%d != 4", bandpass->get_npol());
   }
@@ -171,14 +184,14 @@ void dsp::Filterbank::operation ()
   if (apodization)
     scratch_needed += bigfftsize;
 
-  if (cross_filt)
+  if (matrix_convolution)
     scratch_needed += bigfftsize;
 
   // divide up the scratch space
   float* complex_spectrum[2];
   complex_spectrum[0] = float_workingspace (scratch_needed);
   complex_spectrum[1] = complex_spectrum[0];
-  if (cross_filt)
+  if (matrix_convolution)
     complex_spectrum[1] += bigfftsize;
 
   float* complex_time = complex_spectrum[1] + bigfftsize;
@@ -189,7 +202,7 @@ void dsp::Filterbank::operation ()
   int tres_skip = (time_res - 1) * 2;
 
   unsigned cross_pol = 1;
-  if (cross_filt)
+  if (matrix_convolution)
     cross_pol = 2;
 
   if (verbose)
@@ -233,7 +246,7 @@ void dsp::Filterbank::operation ()
 	tres_offset = itres * tres_step;
 
 	for (jpol=0; jpol<cross_pol; jpol++) {
-	  if (cross_filt)
+	  if (matrix_convolution)
 	    ipol = jpol;
 	  
 	  time_dom_ptr = const_cast<float*>(input->get_datptr (0, ipol));
@@ -252,7 +265,7 @@ void dsp::Filterbank::operation ()
 
 	}
 
-	if (cross_filt) {
+	if (matrix_convolution) {
 
 	  if (bandpass && itres==0)
 	    bandpass->integrate (complex_spectrum[0], complex_spectrum[1]);
@@ -273,7 +286,7 @@ void dsp::Filterbank::operation ()
 	}
 	
 	for (jpol=0; jpol<cross_pol; jpol++) {
-	  if (cross_filt)
+	  if (matrix_convolution)
 	    ipol = jpol;
 	  
 	  freq_dom_ptr = complex_spectrum[ipol];

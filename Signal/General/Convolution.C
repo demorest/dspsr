@@ -11,7 +11,6 @@
 dsp::Convolution::Convolution (const char* _name, Behaviour _type)
   : Operation (_name, _type)
 {
-  nfilt_pos = nfilt_neg = 0;
 }
 
 dsp::Convolution::~Convolution ()
@@ -84,8 +83,15 @@ void dsp::Convolution::operation ()
 	       response->get_nchan(), nchan);
 
   // number of points after first fft
-  int n_fft = response->get_ndat();
-  int n_overlap = nfilt_pos + nfilt_neg;
+  unsigned n_fft = response->get_ndat();
+
+  //! Complex samples dropped from beginning of cyclical convolution result
+  unsigned nfilt_pos = response->get_impulse_pos ();
+
+  //! Complex samples dropped from end of cyclical convolution result
+  unsigned nfilt_neg = response->get_impulse_neg ();
+
+  unsigned n_overlap = nfilt_pos + nfilt_neg;
 
   if (verbose)
     cerr << "Convolution::operation filt=" << n_fft 
@@ -93,15 +99,15 @@ void dsp::Convolution::operation ()
 
   // 2 arrays needed: one for each of the forward and backward FFT results
   // 2 floats per complex number
-  int pts_reqd = n_fft * 2 * 2;
+  unsigned pts_reqd = n_fft * 2 * 2;
 
   if (matrix_convolution)
     // need space for one more complex spectrum
     pts_reqd += n_fft * 2;
 
   // number of time samples in forward fft and overlap region
-  int nsamp_fft = 0;
-  int nsamp_overlap = 0;
+  unsigned nsamp_fft = 0;
+  unsigned nsamp_overlap = 0;
 
   if (input->get_state() == Timeseries::Nyquist) {
     nsamp_fft = n_fft * 2;
@@ -122,7 +128,7 @@ void dsp::Convolution::operation ()
   fflush (stderr);
 #endif
 
-  int nsamp_good = nsamp_fft-nsamp_overlap;   // valid time samples per FFT
+  unsigned nsamp_good = nsamp_fft-nsamp_overlap;   // valid time samples per FFT
   if (nsamp_good < 0)
     throw_str ("Convolution::operation invalid nfft=%d nfilt=%d",
 	       nsamp_fft, n_overlap);

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/09/17 11:18:48 $
+   $Revision: 1.3 $
+   $Date: 2002/09/18 13:50:10 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -25,10 +25,30 @@ namespace dsp {
     //! null constructor
     Response();
 
-    //! construct frequency response from complex phasors
+    //! Get the size of the positive half of the impulse response
+    /*! Get the number of complex time samples in the t>0 half of the
+      corresponding impulse response function */
+    unsigned get_impulse_pos () const { return impulse_pos; }
+
+    //! Get the size of the negative half of the impulse response
+    /*! Get the number of complex time samples in the t<0 half of the
+      corresponding impulse response function */
+    unsigned get_impulse_neg () const { return impulse_neg; }
+
+    //! Set the size of the positive half of the impulse response
+    /*! Set the number of complex time samples in the t>0 half of the
+      corresponding impulse response function */
+    void set_impulse_pos (unsigned _impulse_pos) { impulse_pos =_impulse_pos; }
+
+    //! Set the size of the negative half of the impulse response
+    /*! Set the number of complex time samples in the t<0 half of the
+      corresponding impulse response function */
+    void set_impulse_neg (unsigned _impulse_neg) { impulse_neg =_impulse_neg; }
+
+    //! Construct frequency response from complex phasors
     void set (const vector<complex<float> >& phasors);
 
-    //! construct frequency response from jones matrices
+    //! Construct frequency response from jones matrices
     void set (const vector<Jones<float> >& jones);
 
     //! Multiply spectrum by complex frequency response
@@ -53,6 +73,12 @@ namespace dsp {
 
     //! Swap halves of bandpass(es)
     void swap (bool each_chan = true);
+
+    //! Complex time samples in t>0 half of corresponding impulse response
+    unsigned impulse_pos;
+
+    //! Complex time samples in t<0 half of corresponding impulse response
+    unsigned impulse_neg;
 
     //! Toggled every time Response::swap(false) is called (default: false)
     bool whole_swapped;

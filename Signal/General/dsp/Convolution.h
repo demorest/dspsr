@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/08/20 05:08:47 $
+   $Revision: 1.7 $
+   $Date: 2002/09/18 13:51:01 $
    $Author: wvanstra $ */
 
 #ifndef __Convolution_h
@@ -83,11 +83,6 @@ namespace dsp {
     //! Integrated bandpass
     Reference::To<Response> bandpass;
 
-    //! Complex samples dropped from beginning of cyclical convolution result
-    int nfilt_pos;
-
-    //! Complex samples dropped from end of cyclical convolution result
-    int nfilt_neg;
   };
   
 }

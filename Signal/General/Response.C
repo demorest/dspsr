@@ -13,7 +13,13 @@
 
 dsp::Response::Response ()
 {
+  impulse_pos = impulse_neg = 0;
+
   whole_swapped = chan_swapped = chan_shifted = false;
+
+  npol = 1;
+  ndim = 2;
+  nchan = 1;
 }
 
 /*! The ordering of frequency channels in the response function depends 
