@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/pspmXfer.h,v $
-   $Revision: 1.2 $
-   $Date: 2001/08/02 10:56:22 $
+   $Revision: 1.3 $
+   $Date: 2001/08/05 18:01:06 $
    $Author: wvanstra $ */
 
 #ifndef __pspmXfer_h
@@ -43,7 +43,10 @@ class pspmXfer {
 
   // special mode for xfering only one type of file. only works when xref
   int  obstype;       // 0=pulsar 1=cal
-  bool keep;          // wether to keep or leave obstype, if specified
+  // same like above, but for a source name
+  string source;
+  // wether to keep or leave either of above, if specified
+  bool keep;
 
   pspmXfer ();
 
