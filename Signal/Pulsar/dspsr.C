@@ -22,31 +22,34 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:b:f:F:hjM:n:N:PsS:t:T:vV";
+static char* args = "2:a:b:f:F:hjM:n:N:p:PsS:t:T:vV";
 
 void usage ()
 {
   cout << "dspsr - test baseband/dsp pulsar processing\n"
     "Usage: dspsr [" << args << "] file1 [file2 ...] \n"
-    " -a archive     set the archive class name\n"
-    " -b nbin        fold pulse profile into nbin phase bins\n"
-    "\n"
-    "Filterbank options:\n"
-    " -F nchan       create an nchan-channel filterbank\n"
-    " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
-    " -F nchan:D     perform simultaneous coherent dedispersion\n"
+    "File handling options:\n"
+    " -a archive     set the output archive class name\n"
+    " -j             join files into contiguous observation\n"
+    " -M metafile    load filenames from metafile\n"
+    " -s             generate an archive for each single pulse\n"
+    " -S seek        Start processing at t=seek seconds\n"
+    " -T total       Process only t=total seconds\n"
     "\n"
     "Two-bit unpacking options:\n"
     " -2n<nsample>   number of samples used in estimating undigitized power\n"
     " -2c<cutoff>    cutoff threshold for impulsive interference excision\n"
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
-    "File handling options:\n"
-    " -j             join files into contiguous observation\n"
-    " -M metafile    load filenames from metafile\n"
-    " -s             generate an archive for each single pulse\n"
-    " -S seek        Start processing at t=seek seconds\n"
-    " -T total       Process only t=total seconds\n"
+    "Filterbank options:\n"
+    " -F nchan       create an nchan-channel filterbank\n"
+    " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
+    " -F nchan:D     perform simultaneous coherent dedispersion\n"
+    "\n"
+    "Folding options:\n"
+    " -b nbin        fold pulse profile into nbin phase bins\n"
+    " -p phase       reference phase of pulse profile bin zero\n"
+    "\n"
        << endl;
 }
 
@@ -60,7 +63,10 @@ int main (int argc, char** argv)
   int blocks = 0;
   int ndim = 4;
   int nchan = 1;
+
   int nbin = 0;
+  double reference_phase = 0.0;
+
   int ffts = 16;
   int fres = 0;
 
@@ -186,6 +192,15 @@ int main (int argc, char** argv)
 
     case 'P':
       dsp::psrdisp_compatible = true;
+      break;
+
+    case 'p':
+      scanned = sscanf (optarg, "%lf", &reference_phase);
+      if (scanned != 1) {
+        cerr << "dspsr: Error parsing " << optarg << " as reference phase"
+	     << endl;
+	return -1;
+      }
       break;
 
     case 'S':
@@ -350,6 +365,9 @@ int main (int argc, char** argv)
 
   if (nbin)
     fold->set_nbin (nbin);
+
+  if (reference_phase)
+    fold->set_reference_phase (reference_phase);
 
   fold->set_input (convolve);
   fold->set_output (profiles);
