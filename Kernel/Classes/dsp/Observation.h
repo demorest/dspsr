@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.65 $
-   $Date: 2004/03/18 03:06:55 $
+   $Revision: 1.66 $
+   $Date: 2004/04/21 09:52:18 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -229,7 +229,7 @@ namespace dsp {
     void get_minmax_frequencies (double& min, double& max) const;
 
     //! Change the start time by the number of time samples specified
-    void change_start_time (int64 ndat);
+    void change_start_time (int64 _ndat);
 
     //! Returns the number of samples 'latter' follows 'this' by.  (Positive means 'latter' starts later.)
     int64 samps_diff(const Observation* latter) const
@@ -248,7 +248,7 @@ namespace dsp {
 
     //! Return the size in bytes of ndat time samples
     uint64 get_nbytes () const
-      { return get_nbytes (ndat); }
+      { return get_nbytes (get_ndat()); }
 
     uint64 verbose_nbytes (uint64 nsamples) const;
     
@@ -327,9 +327,6 @@ namespace dsp {
 
     /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
     
-    //! Number of time samples in container
-    uint64 ndat;
-
     //! Tempo telescope code
     char telescope;
 
@@ -347,9 +344,6 @@ namespace dsp {
 
     //! Number of polarizations
     unsigned npol;
-
-    //! Dimension of each datum
-    unsigned ndim;
 
     //! Number of bits per value
     unsigned nbit;
@@ -412,6 +406,18 @@ namespace dsp {
 
     //! Old pre-Header version of file2obs()
     void old_file2obs(int fd);
+
+  private:
+
+    //! Number of time samples in container
+    //! This is private so that classes that inherit from Observation that have nbit%8 != 0
+    //! can enforce resizes/set_ndat's so that ndat*ndim is always an integer number of bytes
+    uint64 ndat;
+
+    //! Dimension of each datum
+    //! This is private so that classes that inherit from Observation that have nbit%8 != 0
+    //! can enforce set_ndim's so that ndat*ndim is always an integer number of bytes
+    unsigned ndim;
 
   };
 

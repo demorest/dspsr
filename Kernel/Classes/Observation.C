@@ -30,10 +30,10 @@ dsp::Observation::Observation ()
 
 void dsp::Observation::init ()
 {
-  ndat = 0;
+  set_ndat( 0 );
   nchan = 1;
   npol = 1;
-  ndim = 1;
+  set_ndim( 1 );
   nbit = 0;
 
   type = Signal::Pulsar;
@@ -135,15 +135,15 @@ void dsp::Observation::set_state (Signal::State _state)
   state = _state;
 
   if (state == Signal::Nyquist)
-    ndim = 1;
+    set_ndim(1);
   else if (state == Signal::Analytic)
-    ndim = 2;
+    set_ndim(2);
   else if (state == Signal::Intensity){
-    ndim = 1;
+    set_ndim(1);
     npol = 1;
   }
   else if (state == Signal::PPQQ){
-    ndim = 1;
+    set_ndim(1);
     npol = 2;
   }
   else if (state == Signal::Coherence){
@@ -153,7 +153,7 @@ void dsp::Observation::set_state (Signal::State _state)
     /* best not to muck with kludges */
   }
   else if (state == Signal::Invariant){
-    ndim = 1;
+    set_ndim(1);
     npol = 1;
   }
 }
@@ -260,10 +260,10 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
 
-  if (ndim != obs.ndim) {
+  if (get_ndim() != obs.get_ndim()) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different ndim:"
-	   << ndim << " and " << obs.ndim << endl;
+	   << get_ndim() << " and " << obs.get_ndim() << endl;
     can_combine = false;
   }
 
@@ -419,7 +419,7 @@ bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_fail
     fprintf(stderr,"difference                       =%.9f\n",fabs(difference));
     fprintf(stderr,"difference needed to be less than %.9f\n",0.9/rate);    
     fprintf(stderr,"ndat="UI64" and rate=%f.  obs.ndat="UI64" obs.rate=%f\n",
-	    ndat,rate,obs.ndat,obs.rate);
+	    get_ndat(),rate,obs.get_ndat(),obs.rate);
   } 
 
   if( verbose )
@@ -587,9 +587,9 @@ void dsp::Observation::change_state (Signal::State new_state)
     /* Observation was originally single-sideband, Nyquist-sampled.
        Now it is complex, quadrature sampled */
     state = Signal::Analytic;
-    ndat /= 2;         // number of complex samples
+    set_ndat( get_ndat() / 2 );         // number of complex samples
     rate /= 2.0;       // samples are now complex at half the rate
-    ndim = 2;          // the dimension of each datum is now 2 [re+im]
+    set_ndim(2);          // the dimension of each datum is now 2 [re+im]
   }
 
   state = new_state;
@@ -625,14 +625,14 @@ Reference::To<Header> dsp::Observation::obs2Header(Header* hdr) const{
     h->set_version( get_version() );
   }
 
-  h->add_token("NDAT",ndat);
+  h->add_token("NDAT",get_ndat());
   h->add_token("TELESCOPE",telescope);
   h->add_token("SOURCE",source);
   h->add_token("CENTRE_FREQUENCY",centre_frequency);
   h->add_token("BANDWIDTH",bandwidth);
   h->add_token("NCHAN",nchan);
   h->add_token("NPOL",npol);
-  h->add_token("NDIM",ndim);
+  h->add_token("NDIM",get_ndim());
   h->add_token("NBIT",nbit);
   h->add_token("TYPE",Signal::Source2string(type));
   h->add_token("STATE",Signal::State2string(state));
@@ -668,14 +668,14 @@ bool dsp::Observation::obs2string(string& info_string) const{
   char loony[256];
 
   sprintf(dummy,"dsp::Observation_data\n"); ss+= dummy;
-  sprintf(loony,"NDAT\t%s\n",ui64.c_str()); sprintf(dummy,loony,ndat); ss += dummy;
+  sprintf(loony,"NDAT\t%s\n",ui64.c_str()); sprintf(dummy,loony,get_ndat()); ss += dummy;
   sprintf(dummy,"TELESCOPE\t%c\n",telescope); ss += dummy;
   sprintf(dummy,"SOURCE\t%s\n",source.c_str()); ss += dummy;
   sprintf(dummy,"CENTRE_FREQUENCY\t%.16f\n",centre_frequency); ss += dummy;
   sprintf(dummy,"BANDWIDTH\t%.16f\n",bandwidth); ss += dummy;
   sprintf(dummy,"NCHAN\t%d\n",nchan); ss += dummy;
   sprintf(dummy,"NPOL\t%d\n",npol); ss += dummy;
-  sprintf(dummy,"NDIM\t%d\n",ndim); ss += dummy;
+  sprintf(dummy,"NDIM\t%d\n",get_ndim()); ss += dummy;
   sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
   sprintf(dummy,"TYPE\t%s\n",Signal::Source2string(type).c_str()); ss += dummy;
   sprintf(dummy,"STATE\t%s\n",Signal::State2string(state).c_str()); ss += dummy;
@@ -764,19 +764,13 @@ float dsp::Observation::get_version(int fd){
 
 //! Opposite of obs2file
 void dsp::Observation::file2obs(int fd, int64 offset, int whence){
-  //fprintf(stderr,"file2obs1\n");
-
   file_seek( fd, offset, whence);
 
-  //fprintf(stderr,"file2obs2\n");
-
   if( get_version(fd) < 2.0 ){
-    //fprintf(stderr,"file2obs3\n");
     old_file2obs(fd);
     return;
   }    
 
-  //fprintf(stderr,"file2obs4\n");
   Reference::To<Header> hdr(new Header(fd) );
 
   Header2obs(hdr);
@@ -784,14 +778,14 @@ void dsp::Observation::file2obs(int fd, int64 offset, int whence){
 
 //! Initializes the Observation from a parsed-Header
 void dsp::Observation::Header2obs(Reference::To<Header> h){
-  ndat = h->retrieve_token<uint64>("NDAT");
+  set_ndat( h->retrieve_token<uint64>("NDAT") );
   telescope = h->retrieve_token<char>("TELESCOPE");
   source = h->retrieve_token<string>("SOURCE");
   centre_frequency = h->retrieve_token<double>("CENTRE_FREQUENCY");
   bandwidth = h->retrieve_token<double>("BANDWIDTH");
   nchan = h->retrieve_token<unsigned>("NCHAN");
   npol = h->retrieve_token<unsigned>("NPOL");
-  ndim = h->retrieve_token<unsigned>("NDIM");
+  set_ndim( h->retrieve_token<unsigned>("NDIM") );
   nbit = h->retrieve_token<unsigned>("NBIT");
   type = Signal::string2Source( h->retrieve_token<string>("TYPE") );
   state = Signal::string2State( h->retrieve_token<string>("STATE") );
@@ -843,7 +837,10 @@ void dsp::Observation::old_file2obs(int fd){
   ui64.replace(0,1,"%16");
   sprintf(moron,"NDAT\t%s\n",ui64.c_str());
 
-  int ret = fscanf(fptr,moron,&ndat); if(verbose) fprintf(stderr,"Got ndat="UI64"\n",ndat); 
+  uint64 dumbo = 0;
+  unsigned retardo = 0;
+
+  int ret = fscanf(fptr,moron,&dumbo); set_ndat(dumbo); if(verbose) fprintf(stderr,"Got ndat="UI64"\n",get_ndat()); 
   if( ret!=1 )
     throw Error(FailedCall,"dsp::Observation::old_file2obs()",
 		"Failed to fscanf ndat");
@@ -854,7 +851,7 @@ void dsp::Observation::old_file2obs(int fd){
   fscanf(fptr,"BANDWIDTH\t%lf\n",&bandwidth);  if(verbose) fprintf(stderr,"Got bandwidth=%f\n",bandwidth); 
   fscanf(fptr,"NCHAN\t%d\n",&nchan);  if(verbose) fprintf(stderr,"Got nchan=%d\n",nchan); 
   fscanf(fptr,"NPOL\t%d\n",&npol);  if(verbose) fprintf(stderr,"Got npol=%d\n",npol); 
-  fscanf(fptr,"NDIM\t%d\n",&ndim);  if(verbose) fprintf(stderr,"Got ndim=%d\n",ndim); 
+  fscanf(fptr,"NDIM\t%d\n",&retardo); set_ndim(retardo); if(verbose) fprintf(stderr,"Got ndim=%d\n",get_ndim()); 
   fscanf(fptr,"NBIT\t%d\n",&nbit);  if(verbose) fprintf(stderr,"Got nbit=%d\n",nbit); 
   retrieve_cstring(fptr,"TYPE\t",dummy); type = Signal::string2Source(dummy);  if(verbose) fprintf(stderr,"Got type=%s\n",Signal::Source2string(type).c_str()); 
   retrieve_cstring(fptr,"STATE\t",dummy); state = Signal::string2State(dummy);  if(verbose) fprintf(stderr,"Got state=%s\n",Signal::State2string(state).c_str()); 
