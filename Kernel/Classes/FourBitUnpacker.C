@@ -7,7 +7,6 @@
 
 #include "Error.h"
 
-static long numtsamps = 0;
 
 //! Null constructor
 dsp::FourBitUnpacker::FourBitUnpacker (const char* _name) : Unpacker (_name)
@@ -107,7 +106,7 @@ void dsp::FourBitUnpacker::simple_unpack (
   int nchan = output->get_nchan();
   unsigned bytes = input->get_ndat()*nchan/samples_per_byte;
   int tsamp = 0;
-  // float *thr = output->get_thresh();
+  float *thr = output->get_thresh();
  
   if (verbose){
     fprintf(stderr,"input_data=%p\n",input_data);
@@ -130,7 +129,6 @@ void dsp::FourBitUnpacker::simple_unpack (
     input_data_ptr += 1;
   }
   
-  numtsamps = numtsamps + input->get_ndat();  
 }
 
 int64 dsp::FourBitUnpacker::stats(vector<double>& _sum, vector<double>& _sumsq) {

@@ -1,10 +1,4 @@
 //-*-C++-*-
-
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.69 $
-   $Date: 2004/10/18 09:26:56 $
-   $Author: hknight $ */
-
 #ifndef __Observation_h
 #define __Observation_h
 
@@ -75,6 +69,11 @@ namespace dsp {
     //! Return the number of channels into which the band is divided
     unsigned get_nchan () const { return nchan; }
 
+    //! digitizer thresholds 
+    virtual void set_thresh () { thresh = new float [1] ; thresh[0] = 0.0;}
+    //! get a pointer to the thresholds: mean and sigma for each channel
+    float * get_thresh () {return thresh;}
+    
     //! Set the number of polarizations
     virtual void set_npol (unsigned _npol) { npol = _npol; }
     //! Return the number of polarizations
@@ -344,6 +343,9 @@ namespace dsp {
 
     //! Number of frequency channels across bandwidth
     unsigned nchan;
+
+    //! Pointer to the digitizer thresholds
+    float * thresh;
 
     //! Number of polarizations
     unsigned npol;
