@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.21 $
-   $Date: 2003/05/07 05:49:21 $
-   $Author: hknight $ */
+   $Revision: 1.22 $
+   $Date: 2003/05/14 04:13:41 $
+   $Author: pulsar $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -102,6 +102,10 @@ namespace dsp {
 
     //! Time sample resolution of the data source
     unsigned resolution;
+
+    virtual void set_eod(bool _eod)
+    { throw Error(FailedCall,"dsp::Input::set_eod()",
+		  "This method is overloaded in Seekable, but not anything else, and you've called it from something else"); }
 
   private:
 

@@ -51,6 +51,8 @@ void dsp::Input::set_output (BitSeries* data)
  */
 void dsp::Input::load (BitSeries* data)
 {
+  //if( verbose ) fprintf(stderr,"in dsp::Input::load() with load_size="UI64"\n",load_size);
+
   if (verbose)
     cerr << "dsp::Input::load (BitSeries* = " << data << ")" << endl;
 
@@ -76,6 +78,9 @@ void dsp::Input::load (BitSeries* data)
   // set the Observation information
   data->Observation::operator=(info);
 
+  //fprintf(stderr,"in dsp::Input::load() and have set data->ndat="UI64"\n",
+  // data->get_ndat());
+
   // set the time as expected will result from the next call to load_data
   // note that data->start_time was set in the above call to operator=
   data->change_start_time (load_sample);
@@ -84,7 +89,11 @@ void dsp::Input::load (BitSeries* data)
     cerr << "dsp::Input::load [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
+  //fprintf(stderr,"in dsp::Input::load() and calling data->resize("UI64")\n",
+  //  load_size);
   data->resize (load_size);
+  //fprintf(stderr,"in dsp::Input::load() and called data->resize("UI64") to give data->get_ndat()="UI64"\n",
+  //  load_size,data->get_ndat());
 
   if (verbose)
     cerr << "dsp::Input::load call load_data" << endl;
@@ -144,6 +153,9 @@ void dsp::Input::seek (int64 offset, int whence)
     if (offset < -int64(info.get_ndat()))
       throw Error (InvalidRange, "dsp::Input::seek", "SEEK_END -ve offset");
 
+    if( offset != 0 )
+      set_eod( false );
+
     next_sample = info.get_ndat() + offset;
     break;
 
@@ -155,8 +167,10 @@ void dsp::Input::seek (int64 offset, int whence)
   resolution_offset = next_sample % resolution;
   load_sample = next_sample - resolution_offset;
 
+  //  fprintf(stderr,"dsp::Input::seek calling set_load_size()\n");
   // ensure that the load_size attribute is properly set
   set_load_size ();
+  //fprintf(stderr,"Returning from dsp::Input::seek()\n");
 }
 
 //! Seek to a close sample to the specified MJD
@@ -203,10 +217,29 @@ void dsp::Input::set_block_size (uint64 size)
   the next time sample requested by Input::seek. */
 void dsp::Input::set_load_size ()
 {
+  if(verbose)
+    fprintf(stderr,"In dsp::Input::set_load_size() with load_size="UI64".  block_size="UI64" and resolution_offset="UI64"\n",
+	    load_size,block_size,uint64(resolution_offset));
   load_size = block_size + resolution_offset;
 
+  //  fprintf(stderr,"In dsp::Input::set_load_size() [1] with load_size="UI64"\n",
+  //  load_size);
+  
   uint64 remainder = load_size % resolution;
 
-  if (remainder)
+  //fprintf(stderr,"In dsp::Input::set_load_size() [2] with load_size="UI64" and remainder="UI64"\n",
+  //  load_size,remainder);
+
+  if (remainder){
+    //fprintf(stderr,"In dsp::Input::set_load_size() [3] load_size will be load_size + resolution - remainder = "UI64" + "UI64" - "UI64"\n",
+    //    load_size,uint64(resolution),remainder);
     load_size += resolution - remainder;
+  }
+
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::Input::set_load_size() with load_size()="UI64"\n",
+	  load_size);
 }
+
+
+
