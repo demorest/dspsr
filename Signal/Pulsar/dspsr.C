@@ -1,0 +1,439 @@
+#include <iostream>
+#include <unistd.h>
+
+#include "dsp/IOManager.h"
+#include "dsp/MultiFile.h"
+
+#include "dsp/Unpacker.h"
+#include "dsp/TwoBitCorrection.h"
+#include "dsp/WeightedTimeSeries.h"
+
+#include "dsp/Dedispersion.h"
+#include "dsp/Filterbank.h"
+#include "dsp/Detection.h"
+#include "dsp/SubFold.h"
+#include "dsp/PhaseSeries.h"
+
+#include "dsp/Archiver.h"
+#include "Pulsar/TimerArchive.h"
+
+#include "string_utils.h"
+#include "dirutil.h"
+#include "Error.h"
+
+static char* args = "b:f:F:jM:n:N:st:vV";
+
+void usage ()
+{
+  cout << "dspsr - test baseband/dsp pulsar processing\n"
+    "Usage: dspsr [" << args << "] file1 [file2 ...] \n"
+    " -b nbin        fold pulse profile into nbin phase bins\n"
+    "\n"
+    "Filterbank options:\n"
+    " -F nchan       create an nchan-channel filterbank\n"
+    " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
+    " -F nchan:D     perform simultaneous coherent dedispersion\n"
+    "\n"
+    " -j             join files into contiguous observation\n"
+    " -M metafile    load filenames from metafile\n"
+    " -s             generate an archive for each single pulse\n"
+       << endl;
+}
+
+int main (int argc, char** argv) 
+
+{ try {
+
+  char* metafile = 0;
+  bool verbose = false;
+
+  // number of time samples loaded from file at a time
+  int blocks = 0;
+  int ndim = 4;
+  int nchan = 1;
+  int nbin = 1024;
+  int ffts = 16;
+  int fres = 0;
+
+  bool simultaneous = false;
+  bool single_pulse = false;
+  bool join_files = false;
+
+  unsigned tbc_nsample = 0;
+  float tbc_cutoff = 0.0;
+  float tbc_threshold = 0.0;
+
+  int c;
+  int scanned;
+
+  while ((c = getopt(argc, argv, args)) != -1)
+    switch (c) {
+
+      // two-bit correction parameters
+    case '2':
+
+      scanned = sscanf (optarg, "n%u", &tbc_nsample);
+      if (scanned != 1)
+	scanned = sscanf (optarg, "c%f", &tbc_cutoff);
+      if (scanned != 1)
+	scanned = sscanf (optarg, "t%f", &tbc_threshold);
+
+      if (scanned != 1) {
+	cerr << "dspsr: error parsing " << optarg << " as"
+	  " two-bit correction nsample, threshold, or cutoff" << endl;
+	return -1;
+      }
+      break;
+
+    case 'V':
+      Pulsar::Archive::set_verbosity (3);
+      dsp::Observation::verbose = true;
+      dsp::Operation::verbose = true;
+      dsp::Archiver::verbose = true;
+      dsp::Shape::verbose = true;
+      Error::verbose = true;
+    case 'v':
+      verbose = true;
+      break;
+
+    case 'b':
+      nbin = atoi (optarg);
+      break;
+
+    case 'F': {
+      char* pfr = strchr (optarg, ':');
+      if (pfr) {
+	*pfr = '\0';
+	pfr++;
+	if (*pfr == 'D' || *pfr == 'd') {
+	  // FLAG that says "set the spectral resolution of the filterbank
+	  // to match that required by coherent dedispersion
+	  simultaneous = true;
+	}
+	else {
+	  if (sscanf (pfr, "%d", &fres) < 1) {
+	    fprintf (stderr,
+		     "Error parsing %s as filterbank frequency resolution\n",
+		     optarg);
+	    return -1;
+	  }
+	}
+      }
+      if (sscanf (optarg, "%d", &nchan) < 1) {
+	fprintf(stderr,
+		"Cannot parse '%s' as number of filterbank channels\n",
+		optarg);
+	return -1;
+      }
+      break;
+    }
+
+    case 'f':
+      ffts = atoi (optarg);
+      break;
+
+    case 'j':
+      join_files = true;
+      break;
+
+    case 'M':
+      metafile = optarg;
+      break;
+
+    case 'n':
+      ndim = atoi (optarg);
+      break;
+
+    case 's':
+      single_pulse = true;
+      break;
+
+    case 't':
+      blocks = atoi (optarg);
+      break;
+
+    default:
+      cerr << "invalid param '" << c << "'" << endl;
+    }
+
+  vector <string> filenames;
+
+  if (metafile)
+    stringfload (&filenames, metafile);
+  else 
+    for (int ai=optind; ai<argc; ai++)
+      dirglob (&filenames, argv[ai]);
+
+  if (filenames.size() == 0) {
+    usage ();
+    return 0;
+  }
+
+  if (join_files && filenames.size() == 1) {
+    cerr << "Only one file specified.  Ignoring -j (join files)" << endl;
+    join_files = false;
+  }
+
+  if (verbose)
+    cerr << "Creating WeightedTimeSeries instance" << endl;
+  dsp::TimeSeries* voltages = new dsp::WeightedTimeSeries;
+
+  if (verbose)
+    cerr << "Creating PhaseSeries instance" << endl;
+  dsp::PhaseSeries*  profiles = new dsp::PhaseSeries;
+
+  vector<dsp::Operation*> operations;
+
+  if (verbose)
+    cerr << "Creating IOManager instance" << endl;
+
+  dsp::IOManager* manager = new dsp::IOManager;
+
+  manager->set_output (voltages);
+
+  operations.push_back (manager);
+
+  if (verbose)
+    cerr << "Creating Dedispersion instance" << endl;
+  dsp::Dedispersion* kernel = new dsp::Dedispersion;
+
+  if (verbose)
+    cerr << "Creating Response (passband) instance" << endl;
+  dsp::Response* passband = new dsp::Response;
+
+  if (fres)
+    kernel->set_frequency_resolution (fres);
+
+  dsp::TimeSeries* convolve = voltages;
+
+  if (nchan > 1) {
+
+    // output filterbank data
+    convolve = new dsp::WeightedTimeSeries;
+
+    if (verbose)
+      cerr << "Creating Filterbank instance" << endl;
+
+    // software filterbank constructor
+    dsp::Filterbank* filterbank = new dsp::Filterbank;
+    filterbank->set_input (voltages);
+    filterbank->set_output (convolve);
+    filterbank->set_nchan (nchan);
+
+    if (simultaneous) {
+      filterbank->set_response (kernel);
+      filterbank->set_bandpass (passband);
+    }
+
+    operations.push_back (filterbank);
+  }
+
+  if (nchan == 1 || !simultaneous) {
+
+    if (verbose)
+      cerr << "Creating Convolution instance" << endl;
+
+    dsp::Convolution* convolution = new dsp::Convolution;
+
+    convolution->set_response (kernel);
+    convolution->set_bandpass (passband);
+
+    convolution->set_input  (convolve);  
+    convolution->set_output (convolve);  // inplace
+
+    operations.push_back (convolution);
+  }
+
+  if (verbose)
+    cerr << "Creating Detection instance" << endl;
+  dsp::Detection* detect = new dsp::Detection;
+
+  detect->set_output_state (Signal::Coherence);
+  detect->set_output_ndim (ndim);
+  detect->set_input (convolve);
+  detect->set_output (convolve);
+
+  operations.push_back (detect);
+
+  if (verbose)
+    cerr << "Creating Archiver instance" << endl;
+  dsp::Archiver* archiver = new dsp::Archiver;
+
+  if (verbose)
+    cerr << "Creating TimerArchiveAgent instance" << endl;
+  Pulsar::Archive::Agent* agent = new Pulsar::TimerArchive::Agent;
+
+  archiver->set_agent (agent);
+
+  if (verbose)
+    cerr << "Creating Fold instance" << endl;
+  dsp::Fold* fold;
+
+  if (single_pulse) {
+    dsp::SubFold* subfold = new dsp::SubFold;
+    subfold -> set_subint_turns (1);
+    subfold -> set_unloader (archiver);
+
+    fold = subfold;
+  }
+  else
+    fold = new dsp::Fold;
+
+  fold->set_nbin (nbin);
+  fold->set_input (convolve);
+  fold->set_output (profiles);
+
+  operations.push_back (fold);
+
+  dsp::Operation::record_time = true;
+
+  if (join_files) {
+
+      if (verbose)
+	  cerr << "Opening Multfile" << endl;
+      dsp::MultiFile* multifile = new dsp::MultiFile;
+      multifile->open (filenames);
+
+      manager->set_input (multifile);
+
+      // kludge to make the following loop operate only once
+      filenames.resize(1);
+  }
+
+  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
+
+    if (!join_files) {
+      if (verbose)
+        cerr << "opening data file " << filenames[ifile] << endl;
+
+      manager->open (filenames[ifile]);
+
+      if (verbose)
+        cerr << "data file " << filenames[ifile] << " opened" << endl;
+    }
+
+    // In the case of unpacking two-bit data, set the corresponding parameters
+
+    dsp::TwoBitCorrection* tbc;
+    tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+
+    if ( tbc && tbc_nsample )
+      tbc -> set_nsample ( tbc_nsample );
+
+    if ( tbc && tbc_threshold )
+      tbc -> set_threshold ( tbc_threshold );
+
+    if ( tbc && tbc_cutoff )
+      tbc -> set_cutoff_sigma ( tbc_cutoff );
+
+
+
+    fold->prepare ( manager->get_info() );
+
+    double dm = fold->get_pulsar_ephemeris() -> get_dm();
+
+    kernel->set_dispersion_measure (dm);
+    kernel->match ( manager->get_info(), nchan);
+
+    unsigned nfft = kernel->get_ndat();
+    unsigned nfilt = kernel->get_impulse_pos() + kernel->get_impulse_neg();
+
+    unsigned real_complex = 2 / manager->get_info()->get_ndim();
+
+    unsigned block_size = ((nfft-nfilt) * ffts + nfilt) * nchan * real_complex;
+    unsigned overlap = nfilt * nchan * real_complex;
+
+    unsigned fft_size = nfft * nchan * real_complex;
+
+    cerr << "FFTsize=" << fft_size << endl;
+    cerr << "Blocksz=" << block_size << endl;
+    cerr << "Overlap=" << overlap << endl;
+
+    manager->set_block_size ( block_size );
+    manager->set_overlap ( overlap );
+
+    unsigned ndat_good = block_size - overlap;
+    unsigned nblocks_tot = manager->get_total_samples() / ndat_good;
+    if (manager->get_total_samples() % ndat_good)
+      nblocks_tot ++;
+
+    cerr << "processing ";
+    if (blocks)
+      cerr << blocks << " out of ";
+    cerr << nblocks_tot << " blocks of " << block_size << " time samples\n";
+    if (blocks)
+      nblocks_tot = blocks;
+
+    fprintf (stderr, "(nfft:%d  ngood:%d  ffts/job:%d  jobs:%d)\n",
+             nfft, nfft-nfilt, ffts, nblocks_tot);
+    if (nchan > 1)
+    fprintf (stderr, "(nchan:%d -- Resolution:: spectral:%d  temporal:%d)\n",
+             nchan, fres, 1);
+
+    int block=0;
+    int last_percent = -1;
+    while (!manager->eod()) {
+
+      try {
+        for (unsigned iop=0; iop < operations.size(); iop++)
+	  operations[iop]->operate ();
+      }
+      catch (Error& error)  {
+        cerr << error << endl;
+        cerr << "dspsr: Exiting data reduction loop." << endl;
+        break;
+      }
+
+
+      block++;
+
+      int percent = int (100.0*float(block)/float(nblocks_tot));
+
+      if (percent > last_percent) {
+        cerr << "Finished " << percent << "%\r";
+        last_percent = percent;
+      }
+
+      if (blocks && block==blocks)
+	break;
+
+    }
+
+    if (verbose)
+	cerr << "end of data" << endl;
+
+    fprintf (stderr, "%25s %25s\n", "Operation", "Time Spent");
+    for (unsigned iop=0; iop < operations.size(); iop++)
+      fprintf (stderr, "%25s %25.2g\n", operations[iop]->get_name().c_str(),
+	       (float) operations[iop]->get_total_time());
+
+    if (verbose)
+      cerr << "Creating archive" << endl;
+    archiver->unload (profiles);
+
+
+  }
+  catch (string& error) {
+    cerr << error << endl;
+  }
+
+  
+  return 0;
+}
+
+catch (Error& error) {
+  cerr << "Error thrown: " << error << endl;
+  return -1;
+}
+
+catch (string& error) {
+  cerr << "exception thrown: " << error << endl;
+  return -1;
+}
+
+catch (...) {
+  cerr << "unknown exception thrown." << endl;
+  return -1;
+}
+
+}
