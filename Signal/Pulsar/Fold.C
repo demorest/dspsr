@@ -208,6 +208,9 @@ void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
 
 const psrephem* dsp::Fold::get_pulsar_ephemeris () const
 {
+  if( !pulsar_ephemeris )
+    return NULL;
+
   return pulsar_ephemeris;
 }
 
