@@ -116,9 +116,12 @@ int main (int argc, char** argv)
       input_large->operate();
 
       // test that Input produces the expected output
-      if (data_large->get_ndat() != large_block)
+      if (data_large->get_ndat() != large_block) {
+	if (input_large->eod())
+	  break;
 	cerr << "ERROR: Input::block_size=" << large_block 
 	     << " != BitSeries::ndat=" << data_large->get_ndat() << endl;
+      }
 
       if (data_large->get_request_ndat() != large_block)
 	cerr << "ERROR: large Input::block_size=" << large_block 
