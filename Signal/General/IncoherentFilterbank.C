@@ -23,9 +23,11 @@ dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,T
   nchan = 0;
   state = Signal::Intensity;
   unroll_level = 16;
+
+  wsave_size = 0;
 }
 
-dsp::IncoherentFilterbank::~IncoherentFilterbank(){ }
+dsp::IncoherentFilterbank::~IncoherentFilterbank(){ free_plan(); }
 
 void dsp::IncoherentFilterbank::transformation(){
   //
@@ -61,8 +63,11 @@ void dsp::IncoherentFilterbank::transformation(){
   // Set up the output
   //
   
+  // The multiplicative factor in going real->complex
+  int real2complex = 2/input->get_ndim();
+
   // Number of floats in the forward FFT
-  int nsamp_fft = nchan * 2/input->get_ndim();
+  int nsamp_fft = nchan * real2complex;
 
   // Number of forward FFTs
   int npart = input->get_ndat()/nsamp_fft;
@@ -93,24 +98,14 @@ void dsp::IncoherentFilterbank::transformation(){
   output->set_nchan( nchan );
   output->set_npol( output_npol );
   output->rescale( nchan );
-  output->set_rate( input->get_rate()/(nchan*2/input->get_ndim()));
+  output->set_rate( input->get_rate()/(nchan*real2complex));
+  // First channel corresponds to DC which is centred at the edge of the band
   output->set_dc_centred( true );
 
-  // // By resizing to one buffer, hopefully we verify that the output is contiguous, just in case there are relics of old code
-  // output->resize( npart, 1);
   output->resize( npart );
-  //if( !output->full() )
-  //throw Error(InvalidState,"dsp::IncoherentFilterbank::transformation()",
-  //	"After the call to resize, the chpol pairs didn't come out as contiguous.  This is possibly because you have previously used the outptu TimeSeries for some other data.  You should really fix this routine."); 
 
- 
-  //
-  // Set up wsave
-  //
-  if( !wsave.get() || wsave->size() != 2*nchan*2/input->get_ndim()+4 ){
-    fprintf(stderr,"Acquiring plan\n");
-    acquire_plan();
-  }  
+  // Set up wsave 
+  acquire_plan();
 
   //
   // Do the work (destroys input array!)
@@ -154,11 +149,12 @@ void dsp::IncoherentFilterbank::form_stokesI(){
     
     // (2) FFT	
     fft_timer.start();
-    scfft1dc(scratch0.get(), nsamp_fft, 1, &((*wsave)[0])); 
-    scfft1dc(scratch1.get(), nsamp_fft, 1, &((*wsave)[0])); 
+    scfft1dc(scratch0.get(), nsamp_fft, 1, wsave.get() ); 
+    scfft1dc(scratch1.get(), nsamp_fft, 1, wsave.get() ); 
     fft_timer.stop();
 
     // (3) SLD and add polarisations back
+    // MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0
     register const float* real0 = scratch0.get();
     register const float* imag0 = real0 + nsamp_fft/2+1;
     
@@ -210,11 +206,12 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
       memcpy(scratch.get(),in+ipart*stride,n_memcpy);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scratch.get(), nsamp_fft, 1, &((*wsave)[0])); 
+      scfft1dc(scratch.get(), nsamp_fft, 1, wsave.get() ); 
       fft_timer.stop();
       // (3) SLD back
+      // MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0
       register const float* real = scratch.get();
-      register const float* imag = real + nsamp_fft+1;
+      register const float* imag = real + nsamp_fft/2+1;
       
       for( unsigned i=0; i<nchan; ++i)
 	det[i] = real[i]*real[i] + imag[i]*imag[i];
@@ -243,157 +240,80 @@ void dsp::IncoherentFilterbank::form_undetected(){
   const int nsamp_fft = nchan * 2/input->get_ndim();
 
   // Number of forward FFTs
-  const int npart = input->get_ndat()/nsamp_fft;
+  const unsigned npart = input->get_ndat()/nsamp_fft;
 
-  const size_t n_memcpy = nsamp_fft*sizeof(float);
-  register const unsigned stride = nsamp_fft; 
+  // Number of floats out per forward FFT
+  // ( MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0 )
+  register const int floats_out = nsamp_fft+2;
 
-  auto_ptr<float> scratch(new float[nsamp_fft+2]);
+  auto_ptr<float> scratch(new float[floats_out*npart]);
 
-  fft_loop_timer.start();
   for( unsigned ipol=0; ipol<2; ipol++){
-    float* store = input->get_datptr(0,ipol);
-    register float* scr = scratch.get();
-  
-    for( int ipart=0; ipart<npart; ++ipart, store+=stride ){
-      // (1) memcpy to scratch	
-      memcpy(scr,store,n_memcpy);
+
+    fft_loop_timer.start();
+    float* in = input->get_datptr(0,ipol);
+
+    for( unsigned ipart=0; ipart<npart; ++ipart){
+      // (1) memcpy to scratch
+      register float* scr = scratch.get() +ipart*floats_out;
+      memcpy(scr,in+ipart*nsamp_fft,nsamp_fft);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scr, nsamp_fft, 1, &((*wsave)[0])); 
+      scfft1dc(scr, nsamp_fft, 1, wsave.get() ); 
       fft_timer.stop();
-      // (3) copy back
-      memcpy(store,scr,n_memcpy);
     }
-  }
-  fft_loop_timer.stop();
+    fft_loop_timer.stop();
 
-  /* (4) Convert to a TimeSeries */
-  /*conversion_timer.start();
-  for( unsigned ipol=0; ipol<2; ipol++){
-    for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
-      float* from = input->get_datptr(0,ipol);
-      float* to = output->get_datptr(ichan,ipol);
-      
-      register unsigned from_i = 0;
-      register unsigned input_stride = nchan;
-      register unsigned npt = 2*npart;
-      
-      for( unsigned ipt=0; ipt<npt; ++ipt, from_i += input_stride )
-	to[ipt] = from[from_i];
-    }
-  }
-  conversion_timer.stop();*/
+    // (3) Do the conversion back to a TimeSeries
+    conversion_timer.start();
 
-  conversion_timer.start();
-
-  for( unsigned ipol=0; ipol<2; ipol++){
+    // For each set of output channels...
     for( unsigned ichan=0; ichan<output->get_nchan(); ichan+=unroll_level){
-      float* from_re = input->get_datptr(0,ipol);
-      float* from_im = input->get_datptr(0,ipol)+nchan/2+1;
-
-      vector<float*> to(unroll_level);
+      register float* from_re = scratch.get();
+      
+      float** to = new float*[unroll_level];
       for( unsigned i=0; i<unroll_level; i++)
 	to[i] = output->get_datptr(ichan+i,ipol);
-
-      /*float* to0  = output->get_datptr(ichan,ipol);
-      float* to1  = output->get_datptr(ichan+1,ipol);
-      float* to2  = output->get_datptr(ichan+2,ipol);
-      float* to3  = output->get_datptr(ichan+3,ipol);
-      float* to4  = output->get_datptr(ichan+4,ipol);
-      float* to5  = output->get_datptr(ichan+5,ipol);
-      float* to6  = output->get_datptr(ichan+6,ipol);
-      float* to7  = output->get_datptr(ichan+7,ipol);
-      float* to8  = output->get_datptr(ichan+8,ipol);
-      float* to9  = output->get_datptr(ichan+9,ipol);
-      float* to10 = output->get_datptr(ichan+10,ipol);
-      float* to11 = output->get_datptr(ichan+11,ipol);
-      float* to12 = output->get_datptr(ichan+12,ipol);
-      float* to13 = output->get_datptr(ichan+13,ipol);
-      float* to14 = output->get_datptr(ichan+14,ipol);
-      float* to15 = output->get_datptr(ichan+15,ipol);*/
-
-      register unsigned from_i = 0;
-      register unsigned input_stride = 2*nchan;  // Data is complex
-      register const unsigned npt = npart;
-      register const unsigned unroll = unroll_level; 
       
-      for( unsigned ipt=0; ipt<npt; ipt+=2, from_i += input_stride ){
-	for( unsigned ito=0; ito<unroll; ++ito){
-	  to[ito][ipt] = from_re[from_i];
-	  to[ito][ipt+1] = from_im[from_i];
+      register unsigned from_i = 0;
+      register const unsigned imag_offset = nsamp_fft/2+1;
+      register const unsigned nfloats = npart*2;
+
+      // For each set of complex values out...
+      for( unsigned i=0; i<nfloats; i+=2, from_i += floats_out ){
+	// For each output channel in the group copy the imaginary and real bits over...
+	for( unsigned ito=0; ito<unroll_level; ++ito){
+	  to[ito][i] = from_re[from_i+ito];
+	  to[ito][i+1] = from_re[from_i+ito+imag_offset];
 	}
-
-	/*to0[ipt]   = from_re[from_i];
-	to0[ipt+1] = from_im[from_i];
-	to1[ipt]   = from_re[from_i+1];
-	to1[ipt+1] = from_im[from_i+1];
-	to2[ipt]   = from_re[from_i+2];
-	to2[ipt+1] = from_im[from_i+2];
-	to3[ipt]   = from_re[from_i+3];
-	to3[ipt+1] = from_im[from_i+3];
-	to4[ipt]   = from_re[from_i+4];
-	to4[ipt+1] = from_im[from_i+4];
-	to5[ipt]   = from_re[from_i+5];
-	to5[ipt+1] = from_im[from_i+5];
-	to6[ipt]   = from_re[from_i+6];
-	to6[ipt+1] = from_im[from_i+6];
-	to7[ipt]   = from_re[from_i+7];
-	to7[ipt+1] = from_im[from_i+7];
-	to8[ipt]   = from_re[from_i+8];
-	to8[ipt+1] = from_im[from_i+8];
-	to9[ipt]   = from_re[from_i+9];
-	to9[ipt+1] = from_im[from_i+9];
-	to10[ipt]   = from_re[from_i+10];
-	to10[ipt+1] = from_im[from_i+10];
-	to11[ipt]   = from_re[from_i+11];
-	to11[ipt+1] = from_im[from_i+11];
-	to12[ipt]   = from_re[from_i+12];
-	to12[ipt+1] = from_im[from_i+12];
-	to13[ipt]   = from_re[from_i+13];
-	to13[ipt+1] = from_im[from_i+13];
-	to14[ipt]   = from_re[from_i+14];
-	to14[ipt+1] = from_im[from_i+14];
-	to15[ipt]   = from_re[from_i+15];
-	to15[ipt+1] = from_im[from_i+15];*/
       }
+
+      delete [] to;
     }
+    conversion_timer.stop();
+
   }
-  conversion_timer.stop();
 
-  /* old way- for if you were using scfft1d instead of scfft1dc
-  // (4) Convert the BitSeries to a TimeSeries
-  Reference::To<dsp::BitSeries> bs(new dsp::BitSeries);
-  bs->Observation::operator=( *input );
-  bs->set_state( Signal::Analytic );
-  bs->set_ndim( 2 );
-  bs->set_nchan( nchan );
-  bs->set_npol( 2 );
-  bs->rescale( nchan );
-  bs->set_rate( input->get_rate()/(nchan*2/input->get_ndim()));
-  bs->set_dc_centred( true );
-  // should really change start time
-  bs->attach( (unsigned char*)input->get_datptr(0,0) );
-
-  Reference::To<dsp::ChannelOrder> order(new dsp::ChannelOrder);
-  order->set_input( bs );
-  order->set_output( output );
-  order->set_rapid_variable( dsp::ChannelOrder::Channel );
-
-  order->operate();
-
-  output->attach( (float*)bs->get_rawptr() );*/
 }
 
 void dsp::IncoherentFilterbank::acquire_plan(){
-  sink(wsave);
-  auto_ptr<vector<float> > temp(new vector<float>(2*nchan*2/input->get_ndim()+4));
-  wsave = temp;
-  //fprintf(stderr,"wsave.get()=%p (*(wsave.get())).size()=%d, wsave->size()=%d\n",
-  //  wsave.get(),(*(wsave.get())).size(),wsave->size());
+  int real2complex = 2/input->get_ndim();
+  
+  // The size of wsave required by MKL is 2n+4
+  uint64 magic_size = 2*input->get_nchan()*real2complex + 4;
 
-  //fprintf(stderr,"Acquiring wsave with n=%d\n",2*nchan*2/input->get_ndim());
-  scfft1dc(input->get_datptr(0,0),nchan*2/input->get_ndim(),0, &((*wsave)[0]));
-  //fprintf(stderr,"wsave acquired\n");
+  if( wsave_size == magic_size ){
+    // wsave is already the correct size!
+    return;
+  }
+
+  auto_ptr<float> temp(new float[magic_size]);
+  wsave = temp;
+
+  if( verbose )
+    fprintf(stderr,"Acquiring wsave with n=%d\n",nchan*real2complex);
+  scfft1dc(input->get_datptr(0,0),nchan*real2complex,0,wsave.get() );
+  if( verbose )
+    fprintf(stderr,"wsave acquired\n");
 }
 

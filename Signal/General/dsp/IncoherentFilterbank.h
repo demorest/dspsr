@@ -18,7 +18,7 @@
 /*
 NOTE: This transformation DESTROYS your input data
 
-NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces nchan+1 channels.  I have chosen to throw away the last (Nyquist) channel, to be consistent with dsp::Observation::get_base_frequency().  I don't actually understand it myself.  HSK 16/1/03
+NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces nchan+1 channels.  I have chosen to throw away the last (Nyquist) channel, to be consistent with dsp::Observation::get_base_frequency().  HSK
 
 */
 
@@ -37,10 +37,10 @@ namespace dsp{
     virtual ~IncoherentFilterbank();
   
     //! Inquire transform size of current plan (zero=no plan)
-    unsigned get_plansize(){ if(!wsave.get()) return 0; return (wsave->size()-4)/2; }
+    uint64 get_plansize(){ return wsave_size; }
 
     //! Free up the memory used by the current plan
-    void free_plan(){ sink(wsave); }
+    void free_plan(){ sink(wsave); wsave_size = 0; }
     
     //! Set the number of channels
     void set_nchan(unsigned _nchan){ nchan = _nchan; }
@@ -77,7 +77,10 @@ namespace dsp{
     unsigned nchan;
 
     //! Memory used by MKL to store transform coefficients (ie the plan)
-    auto_ptr<vector<float> > wsave; 
+    auto_ptr<float> wsave; 
+    
+    //! The size of the memory allocated to wsave;
+    uint64 wsave_size;
 
     //! The output's state (ie the number of polarisations)
     Signal::State state;
