@@ -93,7 +93,12 @@ void dsp::Input::load (BitSeries* data)
 
   data->input_sample = load_sample;
   data->request_offset = resolution_offset;
-  data->request_ndat = block_size;
+
+  uint64 available = data->get_ndat() - resolution_offset;
+  if (available < block_size)
+    data->request_ndat = available;
+  else
+    data->request_ndat = block_size;
 
   seek (block_size - overlap, SEEK_CUR);
 
