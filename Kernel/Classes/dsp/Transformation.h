@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.16 $
-   $Date: 2004/10/25 02:32:22 $
+   $Revision: 1.17 $
+   $Date: 2004/10/25 07:51:56 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -455,10 +455,10 @@ void dsp::Transformation<In, Out>::operation ()
 
   seek_back_over_surplus_samps(surplus_samples);
 
+  rounding_stuff(ts_out);
+
   deprepend_data(ts_out,samples_prepended,time_in,rate_in,
 		 double(surplus_samples)/rate_in);
-
-  rounding_stuff(ts_out);
 
   workout_end_of_processed_data(input_start_time,double(samples_prepended)/rate_in,
 				double(surplus_samples)/rate_in);
