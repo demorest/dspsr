@@ -14,15 +14,19 @@
 #include "string_utils.h"
 #include "dirutil.h"
 
-static char* args = "c:n:t:vV";
+static char* args = "c:n:s:t:vVw:";
 
 void usage ()
 {
   cout << "digistat - plots digitizer statistics\n"
     "Usage: digistat [" << args << "] file1 [file2 ...] \n"
+    "Unpacking parameters:\n"
     " -n <nsample>   number of samples used in estimating undigitized power\n"
     " -c <cutoff>    cutoff threshold for impulsive interference excision\n"
     " -t <threshold> sampling threshold at record time\n"
+    "Display paramters:\n"
+    " -s <seconds>   total amount of data in each plot\n"
+    " -w <seconds>   amount of data averaged into each point in plot\n"
        << endl;
 }
 
@@ -38,10 +42,22 @@ int main (int argc, char** argv)
   float tbc_cutoff = 0.0;
   float tbc_threshold = 0.0;
 
+  float time_per_plot = 1.0;
+  float time_per_point = 1e-3;
+
   int c;
   int scanned;
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
+
+    case 'c':
+      scanned = sscanf (optarg, "%f", &tbc_cutoff);
+      if (scanned != 1) {
+        cerr << "dspsr: error parsing " << optarg << " as"
+          " dynamic output level assignment cutoff" << endl;
+        return -1;
+      }
+      break;
 
     case 'n':
       scanned = sscanf (optarg, "%u", &tbc_nsample);
@@ -52,11 +68,11 @@ int main (int argc, char** argv)
       }
       break;
 
-    case 'c':
-      scanned = sscanf (optarg, "%f", &tbc_cutoff);
+    case 's':
+      scanned = sscanf (optarg, "%f", &time_per_plot);
       if (scanned != 1) {
         cerr << "dspsr: error parsing " << optarg << " as"
-          " dynamic output level assignment cutoff" << endl;
+          " time per plot" << endl;
         return -1;
       }
       break;
@@ -76,9 +92,25 @@ int main (int argc, char** argv)
       verbose = true;
       break;
 
+    case 'w':
+      scanned = sscanf (optarg, "%f", &time_per_point);
+      if (scanned != 1) {
+        cerr << "dspsr: error parsing " << optarg << " as"
+          " time per point" << endl;
+        return -1;
+      }
+      break;
+
+
     default:
       cerr << "invalid param '" << c << "'" << endl;
     }
+
+  if (time_per_point > 0.5 * time_per_plot) {
+    cerr << "digistat: Cannot plot less than two points at a time\n"
+      " -w <point> must be less than half of -s <plot>\n" << endl;
+    return -1;
+  }
 
   vector <string> filenames;
 
@@ -106,7 +138,6 @@ int main (int argc, char** argv)
   // interface manages the creation of data loading and converting classes
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
 
-  manager->set_block_size (512*tbc_nsample);
   manager->set_output (voltages);
 
   // plots two-bit digitization statistics
@@ -143,6 +174,28 @@ int main (int argc, char** argv)
 
     plotter->set_data (correct);
 
+    // set the number of samples to load
+    double samples = manager->get_info()->get_rate() * time_per_plot + 0.5;
+    uint64 block_size = uint64(samples);
+    time_per_plot = double(block_size) / manager->get_info()->get_rate();
+
+    manager->set_block_size (block_size);
+
+    // set the number of samples to average
+    samples = manager->get_info()->get_rate() * time_per_point + 0.5;
+    uint64 point_size = uint64(samples);
+    time_per_point = double(point_size) / manager->get_info()->get_rate();
+
+    uint64 npoints = block_size / point_size;
+    if (block_size % point_size)
+      npoints ++;
+
+    float* xaxis = new float[npoints];
+    float* mean  = new float[npoints];
+    float* rms   = new float[npoints];
+
+    double current_time = 0.0;
+
     while (!manager->eod()) {
 
       correct->zero_histogram ();
@@ -154,10 +207,80 @@ int main (int argc, char** argv)
         plotter->plot();
       }
 
-      for (unsigned ipol=0; ipol<voltages->get_npol(); ipol++)  {
-        float mean = voltages->mean(0, ipol);
-        cerr << "mean[" << ipol << "]=" << mean << endl;
+
+      for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol) {
+
+	float* data = voltages->get_datptr (0, ipol);
+	uint64 ndat = voltages->get_ndat();
+	uint64 idat = 0;
+
+	for (unsigned ipt=0; ipt<npoints; ipt++) {
+
+	  xaxis[ipt] = current_time + double(ipt)*time_per_point;
+
+	  mean[ipt] = 0;
+	  rms [ipt] = 0;
+	  unsigned count = 0;
+
+	  for (int jdat=0; jdat<point_size && idat<ndat; jdat++)  {
+	    float sample = data[idat]; idat ++;
+	    mean[ipt] += sample;
+	    rms [ipt] += sample*sample;
+	    count ++;
+	  }
+
+	  mean[ipt] /= count;
+	  rms[ipt]  /= count;
+	  rms[ipt]  = sqrt(rms[ipt] - mean[ipt]*mean[ipt]);
+
+	}
+
+	float min = 0.0;
+	float max = 0.0;
+	float buf = 0.0;
+
+	float bottom = ipol * 0.5;
+
+	// plot the mean
+
+	minmaxval (npoints, mean, &min, &max);
+	buf = (max-min) * 0.05;
+
+	cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
+	cpgsvp (0.1, 0.7, bottom+0.05, bottom+0.25);
+	cpgsci(1);
+	cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
+
+	if (ipol==0)
+	  cpglab("Seconds from start of file", "mean 0", "");
+	else
+	  cpglab("", "mean 1", "");
+
+	cpgsci(5);
+	cpgpt(npoints, xaxis, mean, -1);
+
+
+	// plot the rms
+
+	minmaxval (npoints, rms, &min, &max);
+	buf = (max-min) * 0.05;
+
+	cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
+	cpgsvp (0.1, 0.7, bottom+0.25, bottom+0.45);
+	cpgsci(1);
+	cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
+
+	if (ipol==0)
+	  cpglab("", "rms 0", "");
+	else
+	  cpglab("", "rms 1", "");
+
+	cpgsci(5);
+	cpgpt(npoints, xaxis, rms, -1);
+
       }
+
+      current_time += time_per_plot;
 
     }
 
