@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/08/14 18:19:01 $
-   $Author: hknight $ */
+   $Revision: 1.7 $
+   $Date: 2002/08/15 09:06:40 $
+   $Author: wvanstra $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -70,8 +70,6 @@ namespace dsp {
 
     //! Perform operation on data.  Defined by sub-classes
     virtual void operation () = 0;
-    //! operation() sets this to true if it fails 
-    bool operation_failed;
 
     //! Only the Loader class should over-ride this method
     /*! The Loader class need not have an input Timeseries, and also
