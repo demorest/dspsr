@@ -27,10 +27,13 @@ void dsp::Operation::prepare ()
 
 void dsp::Operation::operate ()
 {
+  if (verbose)
+    cerr << "Operation::operate["+name+"]" << endl;
+
   if (!input)
     throw_str ("Operation::operate["+name+"] no input");
 
-  if (!input->get_ndat())
+  if (input->get_ndat() < 1)
     throw_str ("Operation::operate["+name+"] empty input");
 
   string reason;
@@ -98,6 +101,11 @@ const dsp::Timeseries* dsp::Operation::get_input () const
 dsp::Timeseries* dsp::Operation::get_output () const
 {
   return output;
+}
+
+double dsp::Operation::get_total_time () const
+{
+  return optime.get_total();
 }
 
 //! Return pointer to a memory resource shared by operations

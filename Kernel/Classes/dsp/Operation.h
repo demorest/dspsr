@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/09/23 05:03:49 $
-   $Author: hknight $ */
+   $Revision: 1.10 $
+   $Date: 2002/10/07 15:52:25 $
+   $Author: wvanstra $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -62,9 +62,12 @@ namespace dsp {
     //! Return pointer to the container into which output data will be written
     virtual Timeseries* get_output () const;
 
-    Behaviour get_type(){ return type; }
+    Behaviour get_type() { return type; }
 
-    string get_name(){ return name; }
+    string get_name() { return name; }
+
+    //! Return the total time spent on this Operation in seconds
+    double get_total_time () const;
 
   protected:
 
