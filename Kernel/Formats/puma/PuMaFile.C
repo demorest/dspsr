@@ -3,6 +3,10 @@
 #include "Error.h"
 #include "string_utils.h"
 
+#if !defined(MALIGN_DOUBLE)
+#define NO_MALIGN_DOUBLE
+#endif
+
 #include "libpuma.h"
 
 #include <fcntl.h>
@@ -271,8 +275,6 @@ void dsp::PuMaFile::parse (const void* header)
   info.set_dispersion_measure (0);
   info.set_between_channel_dm (0);
 
-  if (verbose)
-    info.obs2file (stderr);
 }
   
 

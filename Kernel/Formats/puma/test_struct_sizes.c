@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+#if !defined(MALIGN_DOUBLE)
+#define NO_MALIGN_DOUBLE 1
+#endif
+
 #include "libpuma.h"
 
 int main ()
