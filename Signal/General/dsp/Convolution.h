@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/12/03 17:18:14 $
+   $Revision: 1.12 $
+   $Date: 2002/12/04 15:09:15 $
    $Author: wvanstra $ */
 
 #ifndef __Convolution_h
@@ -36,12 +36,11 @@ namespace dsp {
     
     Referring to Figure 13.1.3 in Numerical Recipes,
     \f$m_+\f$=response->get_impulse_pos() and
-    \f$m_-\f$=response->get_impulse_neg(), so that the duration of
-    g(t) is given by M=\f$m_+ + m_-\f$, the number of complex time
-    samples in the result of each backward FFT that are polluted by
-    the cyclical convolution transformation.  The impulse response,
-    g(t), may be assymetric around t=0.  Convolution::nfilt_pos and
-    Convolution::nfilt_neg complex samples are dropped from the
+    \f$m_-\f$=response->get_impulse_neg(), so that the duration,
+    M=\f$m_+ + m_-\f$, of g(t) corresponds to the number of complex
+    time samples in the result of each backward FFT that are polluted
+    by the cyclical convolution transformation.  Consequently,
+    \f$m_+\f$ and \f$m_-\f$ complex samples are dropped from the
     beginning and end, respectively, of the result of each backward
     FFT; neighbouring FFTs will overlap by the appropriate number of
     points to make up for this loss.  */

@@ -139,10 +139,22 @@ void dsp::Dedispersion::build ()
   if (built)
     return;
 
-  // signal in the upper half of the band arrives sooner (t<0)
-  impulse_neg = smearing_samples (-1);
-  // signal in the lower half of the band arrives later (t>0)
+  // The signal at sky frequencies lower than the centre frequency
+  // arrives later.  So the finite impulse response (FIR) of the
+  // dispersion relation, d(t), should have non-zero values for t>0 up
+  // to the smearing time in the lower half of the band.  However,
+  // this class represents the inverse, or dedispersion, frequency
+  // response function, the FIR of which is given by h(t)=d^*(-t).
+  // Therefore, h(t) has non-zero values for t>0 up to the smearing
+  // time in the upper half of the band.
+
+  // Noting that the first impulse_pos complex time samples are
+  // discarded from each cyclical convolution result, it may also be
+  // helpful to note that each time sample depends upon the preceding
+  // impulse_pos points.
+
   impulse_pos = smearing_samples (1);
+  impulse_neg = smearing_samples (-1);
 
   if (!frequency_resolution_set)
     set_optimal_ndat ();
