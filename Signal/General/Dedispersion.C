@@ -4,19 +4,19 @@
 #include "dsp/Observation.h"
 #include "Error.h"
 
-/*! See Section 3 of Backer, Hama, van Hook and Foster 1993. ApJ 404, 636-642
+/*! Although the value:
+
   \f$ DM\,({\rm pc\,cm^{-3}})=2.410331(2)\times10^{-4}D\,({\rm s\,MHz^{2}}) \f$
+
+  has been derived from "fundamental and primary physical and
+  astronomical constants" (section 3 of Backer, Hama, van Hook and
+  Foster 1993. ApJ 404, 636-642), the rounded value is in standard 
+  use by pulsar astronomers (page 129 of Manchester and Taylor 1977).
 */
-double dsp::Dedispersion::dm_dispersion = 2.410331e-4;
+const double dsp::Dedispersion::dm_dispersion = 2.41e-4;
 
 dsp::Dedispersion::Dedispersion ()
 {
-  if (psrdisp_compatible) {
-    cerr << "dsp::Dedispersion psrdisp compatibility\n"
-      "   using old dm/dispersion constant" << endl;
-    dm_dispersion = 2.410000e-4;
-  }
-
   centre_frequency = -1.0;
   bandwidth = 0.0;
   dispersion_measure = 0.0;

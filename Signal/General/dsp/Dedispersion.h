@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.18 $
-   $Date: 2003/07/28 14:16:52 $
+   $Revision: 1.19 $
+   $Date: 2003/07/31 06:54:09 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -21,7 +21,7 @@ namespace dsp {
   public:
 
     //! Conversion factor between dispersion measure, DM, and dispersion, D
-    static double dm_dispersion;
+    static const double dm_dispersion;
 
     //! Null constructor
     Dedispersion ();
