@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/09/17 11:19:40 $
+   $Revision: 1.12 $
+   $Date: 2002/09/19 07:59:56 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -12,7 +12,7 @@
 
 #include "MJD.h"
 #include "sky_coord.h"
-#include "ReferenceAble.h"
+#include "Reference.h"
 
 /*! \mainpage 
  

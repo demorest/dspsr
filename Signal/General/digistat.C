@@ -6,7 +6,7 @@
 #include "TwoBitStatsPlotter.h"
 #include "DataManager.h"
 #include "TwoBitCorrection.h"
-#include "Loader.h"
+#include "Input.h"
 #include "Timeseries.h"
 
 #include "string_utils.h"
@@ -80,8 +80,8 @@ int main (int argc, char** argv)
   // plots two-bit digitization statistics
   dsp::TwoBitStatsPlotter plotter;
 
-  // raw baseband data loader
-  Reference::To<dsp::Loader> loader;
+  // raw baseband data input
+  Reference::To<dsp::Input> input;
 
   // voltage converter
   Reference::To<dsp::TwoBitCorrection> correct;
@@ -96,14 +96,13 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
-    // create a new file loader, appropriate to the backend
-    loader = manager.get_loader();
+    // create a new file input, appropriate to the backend
+    input = manager.get_input();
 
-    loader->set_block_size (512*512);
-    loader->set_output (&raw);
+    input->set_block_size (512*512);
 
     if (verbose)
-      cerr << "loader initialized" << endl;
+      cerr << "input initialized" << endl;
 
     // create a new unpacker, appropriate to the backend
     correct = dynamic_cast<dsp::TwoBitCorrection*>(manager.get_converter());
@@ -120,11 +119,11 @@ int main (int argc, char** argv)
 
     plotter.set_data (correct);
 
-    while (!loader->eod()) {
+    while (!input->eod()) {
 
       correct->zero_histogram ();
       
-      loader->operate ();
+      input->load (&raw);
 
       correct->operate ();
 

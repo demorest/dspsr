@@ -21,13 +21,12 @@ dsp::Operation::~Operation ()
 
 void dsp::Operation::operate ()
 {
-  //! The Loader classes do not require an input Timeseries
-  if (!is_Loader()) {
-    if (!input)
-      throw_str ("Operation::operate no input");
-    if (!input->get_ndat())
-      throw_str ("Operation::operate empty input");
-  }
+  if (!input)
+    throw_str ("Operation::operate no input");
+
+  if (!input->get_ndat())
+    throw_str ("Operation::operate empty input");
+
   if (!output)
     throw_str ("Operation::operate no output");
 
@@ -41,19 +40,16 @@ void dsp::Operation::operate ()
     optime.stop();
   
   /*! If an operation is performed on a Timeseries, then the data no
-    longer represents that which was set by a Loader operation.  Reset
-    the loader_sample attribute of the output so that the Loader knows
-    that the data has been changed since the last load */
-  if (!is_Loader ())
-    output -> loader_sample = -1;
+    longer represents that which was loaded by an Input sub-class.
+    Reset the input_sample attribute of the output so that the
+    Input::recycle_data method knows that the data has been modified
+    since the last call to Input::load */
+  output -> input_sample = -1;
 }
 
 //! Set the container from which input data will be read
 void dsp::Operation::set_input (const Timeseries* _input)
 {
-  if (is_Loader())
-    throw_str ("Operation::set_input " + name + " has no input");
-
   input = _input;
 
   if (type == inplace)
