@@ -105,7 +105,15 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
   unsigned nchan = phase->get_nchan();
   unsigned ndim = phase->get_ndim();
 
-  integration-> resize (npol*ndim, nchan);
+  if ( integration->get_npol() != npol*ndim)
+    throw Error (InvalidParam, "dsp::Archiver::set (Pulsar::Integration)",
+                 "Integration.npol=%d != PhaseSeries.npol=%d", 
+                 integration->get_npol(), npol*ndim);
+
+  if ( integration->get_nchan() != nchan)
+    throw Error (InvalidParam, "dsp::Archiver::set (Pulsar::Integration)",
+                 "Integration.nchan=%d != PhaseSeries.nchan=%d", 
+                 integration->get_nchan(), nchan);
 
   integration-> set_mid_time ( phase->get_mid_time() );
   integration-> set_duration ( phase->get_integration_length() );
