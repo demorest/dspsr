@@ -45,17 +45,20 @@ void dsp::S2File::open_file (const char* filename,PseudoFile* _info)
 {
   load_S2info(filename);
 
+  tci_fd   s2file;
+  tci_hdr  header;
+
+  if (tci_file_open (filename, &s2file, &header, 'r') != 0)
+    throw Error (FailedCall, "dsp::S2File::open",
+		 "tci_file_open (%s)", filename);
+
+  fd = s2file.fd;
+
   if( _info ){
     info = *_info;
     header_bytes = _info->header_bytes;
   }
   else{
-    tci_fd   s2file;
-    tci_hdr  header;
-    
-    if (tci_file_open (filename, &s2file, &header, 'r') != 0)
-      throw Error (FailedCall, "dsp::S2File::open",
-		   "tci_file_open (%s)", filename);
     
     for (int c=0; c<TCI_TIME_STRLEN-1; c++)
       if (!isdigit(header.hdr_time[c]))
@@ -138,7 +141,6 @@ void dsp::S2File::open_file (const char* filename,PseudoFile* _info)
       cerr << "dsp::S2File::open " << s2file.fsz * 2 << " bytes = "
 	   << info.get_ndat() << " time samples" << endl;
     
-    fd = s2file.fd;
     header_bytes = s2file.base;
   }
   
