@@ -387,7 +387,7 @@ test: $(RUNTESTS)
 install: $(INSTALL_INCS) $(INSTALL_SHXS) $(INSTALL_LIBS) $(INSTALL_BINS)
 
 clean:
-	$(RM) $(LOGIN_ARCH)/*.o
+	$(RM) $(LOGIN_ARCH)/*.o $(CLEAN)
 
 depend:
 	@$(RM) $(LOGIN_ARCH)/*dep 
@@ -397,7 +397,7 @@ nothing:
 	@echo nothing > /dev/null
 
 veryclean:
-	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS)
+	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS) $(CLEAN)
 
 cvsck:
 	@-cvs status | grep atus | grep -v Up
