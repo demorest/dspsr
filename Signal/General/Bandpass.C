@@ -38,6 +38,7 @@ void dsp::Bandpass::transformation ()
   nchan = nsamp_fft;
   
   float *scrap=0 ;
+  
   scrap = new float [npol*2*nchan];
   
   register float *op = scrap;
@@ -48,12 +49,12 @@ void dsp::Bandpass::transformation ()
     if (verbose) 
       cerr << endl << "poln " << ipol << endl;
     
-    ptr_base = (input->get_datptr(ipol,0)) ;
+    ptr_base = (input->get_datptr(0,ipol)) ;
     
     if (verbose)
       cerr << "Pointer to data " << ptr_base << endl;
 
-    for (int chan = 0; chan < nchan;chan++) {
+    for (unsigned int chan = 0; chan < nchan;chan++) {
       ptr = ptr_base + chan;
       if (verbose)
        cerr << "Incremented pointer" <<	ptr << " ..value " << *ptr << endl;
@@ -63,11 +64,6 @@ void dsp::Bandpass::transformation ()
       *op=0;
       op++;
       
-
-      if (verbose) {
-	fprintf(stderr,"Channel %d\r",chan);
-	fflush(stderr);
-      }
     }
   }	
   if (verbose)
@@ -78,13 +74,16 @@ void dsp::Bandpass::transformation ()
   // Need to with define bandpass within calling function
 
   float * outp;
+  fftw_complex *in;
+  fftw_complex *out;
+  
   outp = new float [2*nchan];
   
   if (verbose)
     cerr << "dsp::Bandpass::npoints in BP is " << nchan << endl;
 
-  rfftw_plan p;
-  p = rfftw_create_plan(nchan,FFTW_FORWARD,FFTW_ESTIMATE);
+  fftw_plan p;
+  p = fftw_create_plan(nchan,FFTW_FORWARD,FFTW_ESTIMATE);
 
   if (verbose)
     cerr << "allocated scrap buffer" << endl;
@@ -93,18 +92,25 @@ void dsp::Bandpass::transformation ()
   if (verbose)
     cerr << "allocated output buffer" << endl;
 
-
+  int ipol=1;
   for (int ipol=0;ipol<npol;ipol++) {
 
-    if (verbose)
+    in = (fftw_complex*) &scrap[ipol*nchan*2];
+    out = (fftw_complex*) outp;
+
+    if (verbose){
       cerr << "FFT " << nchan << " points" << " polarisation " << ipol << endl;
-    rfftw_one (p,&scrap[ipol*nchan*2],outp);
+      cerr << "in: "<< in << " out: " << out << endl;
+    }
+    
+    fftw_one (p,in,out);
     if (verbose)
       cerr << "dsp::Bandpass::integrating (calling Response::integrate)" << endl;
-    output->integrate (outp,ipol,0);
+    output->integrate ((float *) out,ipol,0);
     if (verbose)
       cerr << "dsp::Bandpass::Finished integrating " << endl;
   }
+  
   if (verbose)
     cerr << "dsp::Bandpass::deleting scrap buffer" << endl;
 
