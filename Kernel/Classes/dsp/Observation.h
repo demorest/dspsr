@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.21 $
-   $Date: 2002/10/16 06:22:11 $
-   $Author: hknight $ */
+   $Revision: 1.22 $
+   $Date: 2002/10/16 16:23:25 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -241,13 +241,6 @@ namespace dsp {
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
 
-    //! Returns a CPSR2 header format string of everything
-    //! Size should be CPSR2_HEADER_SIZE
-    virtual string get_cpsr2_header();
-
-    //! Returns true if data has been digitised by DigiPack
-    bool IsDigi(){ return isdigi; }
-
   protected:
 
     //! Number of time samples in container
@@ -315,9 +308,6 @@ namespace dsp {
 
     //! The DM Timeseries has been dedispersed to
     double dispersion_measure;
-
-    //! Whether Timeseries has been digitised by DigiPack
-    bool isdigi;
 
     //! Set all attributes to null default
     void init ();
