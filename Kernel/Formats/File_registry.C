@@ -33,6 +33,11 @@ static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
+#if DSP_VSIB
+#include "dsp/VSIBFile.h"
+static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;
+#endif
+
 #if DSP_PMDAQ
 #include "dsp/PMDAQFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;

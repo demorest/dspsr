@@ -34,6 +34,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 #endif
 
+#if DSP_VSIB
+#include "dsp/VSIBTwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
+#endif
+
 #if DSP_S2
 #include "dsp/S2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>    s2;

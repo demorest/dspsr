@@ -69,3 +69,16 @@ BACKENDS += PuMa
 INCFLAGS += -I${DEVEL_INSTALL}/include
 LBACKENDS += -ldsp_PuMa -L${DEVEL_INSTALL}/lib -lpuma -lputils
 endif
+
+##############################################################################
+#
+# Uncomment the following line to compile VSIB specific code
+#
+#VSIB:=yes
+
+ifeq ($(VSIB),yes)
+BACKENDS += VSIB
+INCFLAGS += -I${DEVEL_INSTALL}/include
+LBACKENDS += -ldsp_VSIB -L${DEVEL_INSTALL}/lib 
+endif
+
