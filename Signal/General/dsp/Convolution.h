@@ -1,19 +1,21 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/07/01 16:37:58 $
+   $Revision: 1.5 $
+   $Date: 2002/07/31 15:41:49 $
    $Author: pulsar $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
 
 #include "Operation.h"
+#include "window.h"
+#include "filter.h"
 
 namespace dsp {
   
-  class window;
-  class filter;
+  //class window;
+  //class filter;
 
   //! Convolves a Timeseries with a frequency response function
   /*! This class implements the overlap-save method of discrete
@@ -52,10 +54,10 @@ namespace dsp {
     Convolution (const char* name = "Convolution", Behaviour type = anyplace);
 
     //! Return a descriptive string
-    virtual const string descriptor () const;
+    //virtual const string descriptor () const;
 
     //! Initialize from a descriptor string as output by above
-    virtual void initialize (const string& descriptor);
+    //virtual void initialize (const string& descriptor);
 
     //! Set the frequency response function
     virtual void set_response (filter* response);
@@ -72,13 +74,13 @@ namespace dsp {
     virtual void operation ();
 
     //! Frequency response (convolution kernel)
-    filter* response;
+    Reference::To<filter> response;
 
     //! Apodizing function (time domain window)
-    window* apodizing;
+    Reference::To<window> apodizing;
 
     //! Integrated bandpass
-    filter* bandpass;
+    Reference::To<filter> bandpass;
 
     //! Complex samples dropped from beginning of cyclical convolution result
     int nfilt_pos;

@@ -18,6 +18,24 @@ dsp::Convolution::Convolution (const char* _name, Behaviour _type)
   nfilt_pos = nfilt_neg = 0;
 }
 
+//! Set the frequency response function
+void dsp::Convolution::set_response (filter* _response)
+{
+  response = _response;
+}
+
+//! Set the apodizing function
+void dsp::Convolution::set_apodizing (window* _function)
+{
+  apodizing = _function; 
+}
+
+//! Set the bandpass integrator
+void dsp::Convolution::set_bandpass (filter* _bandpass)
+{
+  bandpass = _bandpass; 
+}
+
 /*!
   \pre input Timeseries must contain phase coherent (undetected) data
   \post output Timeseries will contain complex (observation::Analytic) data
