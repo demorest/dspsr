@@ -182,18 +182,25 @@ void dsp::File::set_total_samples ()
 int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 {
   if (verbose)
-    cerr << "dsp::File::load_bytes nbytes=" << bytes << endl;
+    cerr << "dsp::File::load_bytes() nbytes=" << bytes << endl;
 
-  uint64 old_pos = uint64(lseek(fd,0,SEEK_CUR));
+  int64 old_pos = lseek(fd,0,SEEK_CUR);
 
   ssize_t bytes_read = read (fd, buffer, bytes);
  
   if (bytes_read < 0)
     perror ("dsp::File::load_bytes read error");
 
-  if( uint64(lseek(fd,0,SEEK_CUR)) >= get_info()->get_nbytes()+uint64(header_bytes) ){
-    bytes_read = get_info()->get_nbytes()+uint64(header_bytes) - old_pos;
-    lseek(fd,get_info()->get_nbytes()+uint64(header_bytes),SEEK_SET);
+  int64 new_pos = lseek(fd,0,SEEK_CUR);
+  uint64 end_pos = get_info()->get_nbytes() + uint64(header_bytes);
+
+  if( verbose )
+    fprintf(stderr,"dsp::File::load_bytes() ::read() returned "I64" old_pos="I64" new_pos="I64" end_pos="UI64"\n",
+	    int64(bytes_read), old_pos, new_pos, end_pos);
+
+  if( uint64(new_pos) >= end_pos ){
+    bytes_read = end_pos - old_pos;
+    lseek(fd,end_pos,SEEK_SET);
     end_of_data = true;
   }
   else
@@ -207,7 +214,7 @@ int64 dsp::File::seek_bytes (uint64 bytes)
 {
   if (verbose)
     cerr << "dsp::File::seek_bytes nbytes=" << bytes << endl;
-
+  
   if (fd < 0) {
     fprintf (stderr, "dsp::File::seek_bytes invalid fd\n");
     return -1;
@@ -247,6 +254,12 @@ int64 dsp::File::fstat_file_ndat(uint64 tailer_bytes){
   return (actual_file_sz - header_bytes - tailer_bytes)/bytes_per_samp;
 }
 
+//! Over-ride this function to pad data via HoleyFile
+int64 dsp::File::pad_bytes(unsigned char* buffer, int64 bytes){
+  throw Error(InvalidState,"dsp::File::pad_bytes()",
+	      "This class (%s) doesn't have a pad_bytes() function",get_name().c_str());
+  return -1;
+}
 
 
 
