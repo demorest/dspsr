@@ -108,7 +108,6 @@ void parse_it(int argc, char** argv,
     }
   }
   
-  if( files.empty() )
   for (int ai=optind; ai<argc; ai++)
     dirglob (&files, argv[ai]);
   
