@@ -260,18 +260,13 @@ PSPM_SEARCH_HEADER* pspm_read (int fd)
       perror ("pspm_read::Couldn't read header");
       return NULL;
     }
-    if (bread < to_read) {
-      fprintf (stderr, "pspm_read::read only %d/%d of header\n", bread,
-	       header_size);
-    }
     to_read -= bread;
     buf += bread;
     retries --;
   }
-  if (to_read && !retries) {
-    fprintf (stderr, "pspm_read::could not read PSPM header\n");
+  if (to_read && !retries)
     return NULL;
-  }
+
   PSPMfromBigEndian (static_header);
 
   return static_header;
