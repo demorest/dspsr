@@ -16,15 +16,39 @@ bool dsp::TwoBitCorrection::keep_histogram = true;
 dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
   : Operation (_name, _type)
 {
-  nchannel  = -1;
+  // Sub-classes must define these three variables
+  nchannel = -1;
+  type = TwoBitTable::Unset;
+  channels_per_byte = -1;
 
-  histograms = NULL;
-  dls_lookup = NULL;
-
+  // Sub-classes may define these
   nsample = 512;
   cutoff_sigma = 3.0;
+
+  // These are set in set_limits()
   n_min = 0;
   n_max = 0;
+  built = false;
+}
+
+//! Set the number of time samples used to estimate undigitized power
+void dsp::TwoBitCorrection::set_nsample (int _nsample)
+{
+  built = (nsample == _nsample);
+  nsample = _nsample;
+}
+
+//! Set the cut off power for impulsive interference excision
+void dsp::TwoBitCorrection::set_cutoff_sigma (float _cutoff_sigma)
+{
+  built = (cutoff_sigma == _cutoff_sigma);
+  cutoff_sigma = _cutoff_sigma;
+}
+
+void dsp::TwoBitCorrection::set_type (TwoBitTable::Type _type)
+{
+  built = (type == _type);
+  type = _type;
 }
 
 //! Initialize and resize the output before calling unpack
@@ -32,6 +56,10 @@ void dsp::TwoBitCorrection::operation ()
 {
   if (input->get_nbit() != 2)
     throw_str ("TwoBitCorrection::operation input not 2-bit digitized");
+
+  // build the two-bit lookup table
+  if (!built)
+    build ();
 
   // set the Observation information
   output->Observation::operator=(*input);
@@ -46,56 +74,8 @@ void dsp::TwoBitCorrection::operation ()
   unpack ();
 }
 
-void dsp::TwoBitCorrection::destroy ()
-{
-  if (dls_lookup != NULL) delete [] dls_lookup; dls_lookup = NULL;
-  if (histograms != NULL) delete [] histograms; histograms = NULL;
-}
 
-//
-// this function allocates arrays of the appropriate size
-// the following data members must be initialized before calling this
-// function:
-// nsample, n_min, n_max, maxstates, nchannel
-//
-void dsp::TwoBitCorrection::allocate (bool huge)
-{
-  if (verbose) cerr << "TwoBitCorrection::allocate enter\n";
-
-  int n_range = n_max - n_min + 1;
-
-#ifdef _DEBUG
-  cerr << "TwoBitCorrection::allocate"
-       << "\n range     = " << n_range
-       << "\n maxstates = " << maxstates
-       << "\n nsample  = " << nsample
-       << "\n nchannel  = " << nchannel
-       << endl;
-#endif
-
-  if (n_range < 2)
-    throw_str ("TwoBitCorrection::allocate invalid cutoff_sigma=%f"
-		" nbin=%d nmax=%d", cutoff_sigma, n_min, n_max); 
-
-  destroy ();
-
-  int size = 4;
-  if (huge)
-    size *= 256;
-
-  if (verbose) cerr << "TwoBitCorrection::allocate allocate buffers\n";
-  dls_lookup = new float [n_range * size];
-  assert (dls_lookup != 0);
-
-  histograms = new unsigned long [nsample * nchannel];
-  assert (histograms != 0);
-
-  zero_histogram ();
-
-  if (verbose) cerr << "TwoBitCorrection::allocate exits\n";
-}
-
-void dsp::TwoBitCorrection::set_twobit_limits ()
+void dsp::TwoBitCorrection::set_limits ()
 {
   float fraction_ones = get_optimal_fraction_low();
 
@@ -106,35 +86,32 @@ void dsp::TwoBitCorrection::set_twobit_limits ()
   n_min = int (n_ave - (cutoff_sigma * n_sigma));
   n_max = int (n_ave + (cutoff_sigma * n_sigma));
 
-  //fprintf (stderr, "TwoBitCorrection::set_twobit_limits n_min:%d n_max:%d\n",
+  //fprintf (stderr, "TwoBitCorrection::set_limits n_min:%d n_max:%d\n",
   //n_min, n_max);
 
   if (n_max >= nsample) {
     if (verbose)
-      cerr << "TwoBitCorrection::set_twobit_limits resetting nmax:"
+      cerr << "TwoBitCorrection::set_limits resetting nmax:"
 	   << n_max << " to nsample-2:" << nsample-1 << endl;
     n_max = nsample-1;
   }
 
   if (n_min < 1) {
     if (verbose)
-      cerr << "TwoBitCorrection::set_twobit_limits resetting nmin:"
+      cerr << "TwoBitCorrection::set_limits resetting nmin:"
 	   << n_min << " to one:1" << endl;
     n_min = 1;
   }
 
-  if (verbose) cerr << "TwoBitCorrection::set_twobit_limits nmin:"
+  if (verbose) cerr << "TwoBitCorrection::set_limits nmin:"
 		    << n_min << " and nmax:" << n_max << endl;
 }
 
 void dsp::TwoBitCorrection::zero_histogram ()
 {
-  if (!histograms)
-    return;
-
-  int nbins = nsample * nchannel;
-  for (int ibin=0; ibin<nbins; ibin++)
-    histograms [ibin] = 0;
+  for (unsigned ichan=0; ichan < histograms.size(); ichan++)
+    for (unsigned ibin=0; ibin<histograms[ichan].size(); ibin++)
+      histograms[ichan][ibin] = 0;
 }
 
 double dsp::TwoBitCorrection::get_histogram_mean (int channel) const
@@ -146,9 +123,8 @@ double dsp::TwoBitCorrection::get_histogram_mean (int channel) const
   double ones = 0.0;
   double pts  = 0.0;
 
-  unsigned long* hist = histograms + channel*nsample;
   for (int ival=0; ival<nsample; ival++) {
-    double samples = double (hist[ival]);
+    double samples = double (histograms[channel][ival]);
     ones += samples * double (ival);
     pts  += samples * double (nsample);
   }
@@ -158,10 +134,9 @@ double dsp::TwoBitCorrection::get_histogram_mean (int channel) const
 unsigned long dsp::TwoBitCorrection::get_histogram_total (int channel) const
 {
   unsigned long nweights = 0;
-  unsigned long* hist = histograms + channel*nsample;
 
   for (int iwt=0; iwt<nsample; iwt++)
-    nweights += hist[iwt];
+    nweights += histograms[channel][iwt];
 
   return nweights;
 }
@@ -180,23 +155,51 @@ unsigned long dsp::TwoBitCorrection::get_histogram_total (int channel) const
    which are mostly found in Section 6.
    ********************************************************************** */
 
-void dsp::TwoBitCorrection::build (int nsamp, float sigma,
-				   TwoBitTable::Type type, bool huge)
+void dsp::TwoBitCorrection::build ()
 {
+  if (built)
+    return;
+
   if (verbose) cerr << "TwoBitCorrection::build:: "
-		    << " nsamp=" << nsamp
-		    << " cutoff=" << sigma << "sigma\n";
+		    << " nsamp=" << nsample
+		    << " cutoff=" << cutoff_sigma << "sigma\n";
 
   if (nchannel<1)
     throw_str ("TwoBitCorrection::build invalid nchannel=%d", nchannel);
 
-  nsample = nsamp;
-  cutoff_sigma = sigma;
+  if (channels_per_byte<1)
+    throw_str ("TwoBitCorrection::build invalid channels_per_byte=%d",
+	       channels_per_byte);
+ 
+  if (type == TwoBitTable::Unset)
+    throw_str ("TwoBitCorrection::build invalid digitization convention");
 
-  set_twobit_limits ();
-  allocate (huge);
+  set_limits ();
 
-  generate (dls_lookup, 0, n_min, n_max, nsample, type, huge);
+  int n_range = n_max - n_min + 1;
+
+  bool huge = (channels_per_byte == 1);
+
+  int size = 4;
+  if (huge)
+    size *= 256;
+
+  if (verbose) cerr << "TwoBitCorrection::build allocate buffers\n";
+  dls_lookup.resize (n_range * size);
+
+  generate (dls_lookup.begin(), 0, n_min, n_max, nsample, type, huge);
+
+
+  histograms.resize (nchannel);
+  for (int ichan=0; ichan < nchannel; ichan++)
+    histograms[ichan].resize(nsample);
+
+  zero_histogram ();
+
+  built = true;
+
+  if (verbose) cerr << "TwoBitCorrection::build exits\n";
+
 }
 
 void dsp::TwoBitCorrection::generate (float* dls, float* spc, 

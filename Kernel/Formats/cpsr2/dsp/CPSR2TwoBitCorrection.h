@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2TwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/08/07 12:25:54 $
-   $Author: pulsar $ */
+   $Revision: 1.3 $
+   $Date: 2002/08/15 09:05:27 $
+   $Author: wvanstra $ */
 
 #ifndef __CPSR2TwoBitCorrection_h
 #define __CPSR2TwoBitCorrection_h
@@ -25,7 +25,7 @@ namespace dsp {
     //! Constructor
     CPSR2TwoBitCorrection (unsigned nsample = 512, float cutoff_sigma = 3.0);
 
-    ~CPSR2TwoBitCorrection () { destroy(); }
+    ~CPSR2TwoBitCorrection () { }
 
     //! Build the dynamic level setting lookup table and temporary space
     void build (int nsample, float cutoff_sigma);
@@ -38,11 +38,8 @@ namespace dsp {
     //! Unpacking interface
     void unpack ();
 
-    //! Delete allocated resources
-    void destroy ();
-
-    TwoBitTable* table;
-
+    void poln_unpack (float* data, const unsigned char* raw, 
+		      uint64 ndat, unsigned long* hist, unsigned gap);
   };
   
 }

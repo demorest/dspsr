@@ -8,8 +8,13 @@ dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection (int _nsample,
   : TwoBitCorrection ("CPSRTwoBitCorrection", outofplace)
 {
   values = 0;
+
   nchannel = 4;
-  build (_nsample, _cutoff_sigma);
+  type = TwoBitTable::OffsetBinary;
+  channels_per_byte = 4;
+
+  nsample = _nsample;
+  cutoff_sigma = _cutoff_sigma;
 }
 
 void dsp::CPSRTwoBitCorrection::unpack ()
@@ -85,7 +90,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
   // although I and Q are switched here, the histogram is queried as expected
   unsigned long*  hist = 0;
   if (keep_histogram)
-    hist = histograms + channel * nsample;
+    hist = histograms[channel].begin();
 
   //fprintf (stderr, "tbc: chan: %d\n", newchan);
   int nsuccess = 0;
@@ -136,7 +141,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
     }
 
     else {
-      float* corrected = dls_lookup + (n_in-n_min) * 4;
+      float* corrected = dls_lookup.begin() + (n_in-n_min) * 4;
       for (pt=0; pt<points; pt++) {
 	*datptr = corrected [values[pt]];
 	datptr += 2;
@@ -156,16 +161,16 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 
 }
 
-void dsp::CPSRTwoBitCorrection::build (int nsamp, float sigma)
+void dsp::CPSRTwoBitCorrection::build ()
 {
   // delete the old space
   CPSRTwoBitCorrection::destroy();
 
   // setup the lookup table
-  TwoBitCorrection::build (nsamp, sigma, TwoBitTable::OffsetBinary, false);
+  TwoBitCorrection::build ();
 
   // create the new space
-  values = new unsigned char [nsamp];
+  values = new unsigned char [nsample];
 }
 
 void dsp::CPSRTwoBitCorrection::destroy ()

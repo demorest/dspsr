@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/08/10 06:09:23 $
-   $Author: pulsar $ */
+   $Revision: 1.11 $
+   $Date: 2002/08/15 09:05:27 $
+   $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
@@ -16,7 +16,7 @@
 
 namespace dsp {
   
-  //! Converts a Timeseries from 2-bit digitized to floating point values
+  //! Converts a Timeseries from two-bit digitized to floating-point values
   /*! The conversion routines are implemented by the TwoBitCorrection
     sub-classes, which perform the dynamic level-setting technique
     described by Jenet & Anderson (1998, PASP, 110, 1467; hereafter
@@ -25,7 +25,7 @@ namespace dsp {
 
   public:
 
-    //! Optimal fraction of total power for 2-bit sampling threshold
+    //! Optimal fraction of total power for two-bit sampling threshold
     static const double optimal_threshold;
 
     //! Maintain a diagnostic histogram of digitizer statistics
@@ -33,10 +33,10 @@ namespace dsp {
 
     //! Null constructor
     TwoBitCorrection (const char* name = "TwoBitCorrection",
-		   Behaviour type = outofplace);
+		      Behaviour type = outofplace);
 
     //! Virtual destructor
-    virtual ~TwoBitCorrection () { destroy(); }
+    virtual ~TwoBitCorrection () { }
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
@@ -44,24 +44,36 @@ namespace dsp {
     //! Initialize from a descriptor string as output by above
     //virtual void initialize (const string& descriptor);
 
-    //! Build the dynamic level setting lookup table
-    virtual void build (int nsample, float cutoff_sigma,
-			TwoBitTable::Type type, bool huge);
+    //! Set the number of time samples used to estimate undigitized power
+    void set_nsample (int nsample);
+
+    //! Get the number of time samples used to estimate undigitized power
+    int get_nsample () const { return nsample; }
+
+    //! Set the cut off power for impulsive interference excision
+    void set_cutoff_sigma (float cutoff_sigma);
+    
+    //! Get the cut off power for impulsive interference excision
+    float get_cutoff_sigma() const { return cutoff_sigma; }
+
+    //! Get the number of digitizer channels
+    int get_nchannel () const { return nchannel; }
+
+    //! Set the digitization convention
+    void set_type (TwoBitTable::Type type);
+
+    //! Get the digitization convention
+    TwoBitTable::Type get_type () const { return type; }
+
+    //
+    //
+    //
 
     //! Get the optimal fraction of low voltage levels
     virtual float get_optimal_fraction_low () const;
 
     //! Calculate the sum and sum-squared from each channel of digitized data
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
-
-    //! Get the number of digitizer channels
-    int get_nchannel () const { return nchannel; }
-
-    //! Get the number of samples used to estimate undigitized power
-    int get_nsample () const { return nsample; }
-
-    //! Get the cut off power for impulsive interference excision
-    float get_cutoff_sigma() const { return cutoff_sigma; }
 
     //! Get the minumum number of ones in nsample points
     int get_nmin() const { return n_min; }
@@ -98,17 +110,20 @@ namespace dsp {
     //! Perform the bit conversion operation on the input Timeseries
     virtual void operation ();
 
+    //! Build the two-bit correction look-up table and allocate histograms
+    virtual void build ();
+
     //! Unpacking algorithm is defined by sub-classes
     virtual void unpack () = 0;
+
+    //! Digitization convention
+    TwoBitTable::Type type;
 
     //! Number of digitizer channels
     int nchannel;
 
-    //! Histograms of number of ones in nsample points
-    unsigned long* histograms;
-
-    //! Values used in Dynamic Level Setting
-    float* dls_lookup;
+    //! Number of digitizer channels packed into each byte
+    int channels_per_byte;
 
     //! Number of samples used to estimate undigitized power
     int nsample;
@@ -122,14 +137,20 @@ namespace dsp {
     //! Maximum number of ones in nsample points
     int n_max;
 
+    //! Lookup table and histogram dimensions reflect the attributes
+    bool built;
+
+    //! Histograms of number of ones in nsample points
+    vector< vector< unsigned long > > histograms;
+
+    //! Values used in Dynamic Level Setting
+    vector< float > dls_lookup;
+
     //! Set limits using current attributes
-    void set_twobit_limits ();
+    void set_limits ();
 
-    //! Destroy allocated resources
-    void destroy ();
+    
 
-    //! Allocate resources
-    void allocate (bool huge);
   };
   
 }
@@ -138,10 +159,9 @@ template <typename T>
 void dsp::TwoBitCorrection::get_histogram (vector<T>& data, int chan) const
 {
   data.resize (nsample);
-  unsigned long* hist = histograms + chan * nsample;
 
   for (int i=0; i<nsample; i++)
-    data[i] = T(hist[i]);
+    data[i] = T(histograms[chan][i]);
 }
 
 #endif
