@@ -92,7 +92,6 @@ void dsp::Fold::prepare ()
 #endif
 
   built = true;
-  IsPrepared = true;
 } 
 
 polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
