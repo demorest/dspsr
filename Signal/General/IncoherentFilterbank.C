@@ -20,7 +20,7 @@ extern "C" {
   void scfft1dc(float* data, int nfft, int isign, float* wsave);
 }
 
-dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank", outofplace){
+dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank", outofplace,true){
   nchan = 0;
   state = Signal::Intensity;
   unroll_level = 16;
