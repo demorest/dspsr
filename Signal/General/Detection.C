@@ -10,6 +10,7 @@
 #include "Error.h"
 #include "genutil.h"
 #include "cross_detect.h"
+#include "stokes_detect.h"
 
 //! Constructor
 dsp::Detection::Detection () 
@@ -27,18 +28,18 @@ void dsp::Detection::set_output_state (Signal::State _state)
   case Signal::PPQQ:       // Square-law detected, two polarizations
     ndim = 1;
   case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
-    break;
   case Signal::Stokes:     // Stokes I,Q,U,V
-    throw Error (InvalidParam, "dsp::Detection::set_output_state",
-		 "Stokes output not implemented");
+    break;
   default:
     throw Error (InvalidParam, "dsp::Detection::set_output_state",
 		 "invalid state=%s", Signal::state_string (_state));
   }
 
   state = _state;
-  fprintf(stderr,"dsp::Detection::set_output_state() have set state to be '%s'\n",
-	  Signal::state_string(state));
+
+  if (verbose)
+    cerr << "dsp::Detection::set_output_state to " 
+	 << Signal::state_string(state) << endl;
 
 }
 
@@ -66,38 +67,38 @@ void dsp::Detection::transformation ()
     return;
   }
 
-  // Case 1. Coherency products -> Total intensity
-  if( state==Signal::Intensity && get_input()->get_state()==Signal::Coherence )
-    redetect();
-  // Case 2. PPQQ -> Total intensity
-  else if( state==Signal::Intensity && get_input()->get_state()==Signal::PPQQ )
-    redetect();
-  // Case 3. Analytic -> Coherency products
-  else if( state==Signal::Coherence && get_input()->get_state()==Signal::Analytic )
-    polarimetry();
-  // Case 4. Analytic -> PPQQ
-  else if( state==Signal::PPQQ && get_input()->get_state()==Signal::Analytic )
-    square_law();
-  // Case 5. Analytic -> Total Intensity
-  else if( state==Signal::Intensity && get_input()->get_state()==Signal::Analytic )
-    form_stokes_I();
-  // Case 6. Nyquist -> Coherency
-  else if( state==Signal::Coherence && get_input()->get_state()==Signal::Nyquist )
-    polarimetry();
-  // Case 7. Nyquist -> PPQQ
-  else if( state==Signal::PPQQ && get_input()->get_state()==Signal::Nyquist )
-    square_law();
-  // Case 8. Nyquist -> Total Intensity
-  else if( state==Signal::Intensity && get_input()->get_state()==Signal::Nyquist )
-    form_stokes_I();
-  else
-    throw Error(InvalidState,"dsp::Detection::transformation()",
-		"dsp::Detection can only go (Coherency products|PPQQ)->I or (Nyquist|Analytic)->(Coherency products|PPQQ|I) You have an input state of '%s' and an output state of '%s'",
-		State2string(get_input()->get_state()).c_str(),
-		State2string(state).c_str());
+  bool understood = true;
 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::Detection::transformation() with output ndat="UI64"\n",get_output()->get_ndat());
+  if( get_input()->get_detected() && state==Signal::Intensity )
+    redetect ();
+
+  else if( !get_input()->get_detected() ) {
+
+    if (state==Signal::Coherence || state==Signal::Stokes)
+      polarimetry();
+
+    else if (state==Signal::PPQQ)
+      square_law();
+
+    else if (state==Signal::Intensity)
+      form_stokes_I();
+
+    else
+      understood = false;
+
+  }
+  else
+    understood = false;
+
+  if (!understood)
+    throw Error (InvalidState, "dsp::Detection::transformation",
+		 "dsp::Detection cannot convert from " 
+		 + State2string(get_input()->get_state()) + " to "
+		 + State2string(state));
+
+  if (verbose)
+    cerr << "dsp::Detection::transformation output ndat=" 
+	 << get_output()->get_ndat() << endl;
 }
 
 void dsp::Detection::resize_output ()
@@ -252,8 +253,14 @@ void dsp::Detection::polarimetry ()
     }
     vector<float*> r = get_result_pointers(ichan);
 
-    if( input_ndim == 2 ){ // ie Analytic
-      cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+    if (input_ndim == 2) {
+
+      // ie Analytic
+      if (state == Signal::Stokes)
+	stokes_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+      else
+	cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+
     }
     else{ // ie Nyquist ndim==1
       float*& pp = r[0];
