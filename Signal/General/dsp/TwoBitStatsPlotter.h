@@ -1,14 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/07/15 06:35:28 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2002/08/05 19:50:06 $
+   $Author: pulsar $ */
 
 #ifndef __TwoBitStatsPlotter_h
 #define __TwoBitStatsPlotter_h
 
 #include <vector>
+
+#include "ReferenceTo.h"
 
 namespace dsp {
   
@@ -33,6 +35,9 @@ namespace dsp {
 
     //! Set the plot colour used for each digitizer channel
     void set_colours (const vector<int>& colours);
+
+    //! Get the colour used to plot the theoretical distribution
+    int get_theory_colour () { return theory_colour; };
 
     //! Plot the data in the currently open viewport
     void plot ();
@@ -82,7 +87,7 @@ namespace dsp {
     float vpymax;
 
     //! Data to be plotted
-    const TwoBitCorrection* data;
+    Reference::To<const TwoBitCorrection> data;
 
     //!
     void calculate_theory ();
@@ -91,8 +96,6 @@ namespace dsp {
     void pglabel ();
 
     void pgplot (int poln);
-
-    int  get_theory_colour () { return theory_colour; };
 
     void set_theory_colour ();
 

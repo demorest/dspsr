@@ -4,7 +4,7 @@
 #include <sys/time.h>
 
 #include "TwoBitHistory.h"
-#include "TwoBitPlotter.h"
+#include "TwoBitStatsPlotter.h"
 
 namespace dsp {
 
@@ -17,6 +17,8 @@ namespace dsp {
     
     TwoBitHistoryPlotter () { nchan = -1; keep_minutes = 150; }
     
+    virtual ~TwoBitHistoryPlotter() {}
+
     //! Reset the history
     void reset () { nchan = -1; }
     
@@ -30,7 +32,7 @@ namespace dsp {
   protected:
     
     //! Two-bit digitization histogram plotter
-    TwoBitPlotter stat;
+    TwoBitStatsPlotter stat;
     
     //! Time of the first call to log_stats
     timeval start;
