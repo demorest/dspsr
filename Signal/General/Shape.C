@@ -2,6 +2,7 @@
 
 #include "dsp/Shape.h"
 #include "genutil.h"
+#include "Error.h"
 
 bool dsp::Shape::verbose = false;
 
@@ -166,8 +167,15 @@ void dsp::Shape::scrunch_to (unsigned new_ndat)
 // restriction: ndat % npt must equal zero
 void dsp::Shape::rotate (int rotbin)
 {
+  if (verbose)
+    cerr << "dsp::Shape::rotate ("<< rotbin <<")" << endl;
+
   unsigned pts = nchan * ndat * ndim;
-  unsigned nrot = abs(rotbin);
+  unsigned nrot = abs(rotbin) * ndim;
+
+  if (nrot > pts)
+    throw Error (InvalidParam, "dsp::Shape::rotate",
+		 "abs(rotbin=%d) > nchan=%d*ndat=%d", rotbin, nchan, ndat);
 
   float temp = 0;
 
