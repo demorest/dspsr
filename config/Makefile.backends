@@ -78,7 +78,17 @@ endif
 
 ifeq ($(VSIB),yes)
 BACKENDS += VSIB
-INCFLAGS += -I${DEVEL_INSTALL}/include
-LBACKENDS += -ldsp_VSIB -L${DEVEL_INSTALL}/lib 
+LBACKENDS += -ldsp_VSIB
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile Spigot specific code
+#
+#SPIGOT:=yes
+
+ifeq ($(SPIGOT),yes)
+BACKENDS += Spigot
+LBACKENDS += -ldsp_Spigot $(LCFITSIO)
 endif
 

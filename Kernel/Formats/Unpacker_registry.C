@@ -39,6 +39,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
 #endif
 
+#if DSP_Spigot
+#include "dsp/ACFUnpack.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
+#endif
+
 #if DSP_S2
 #include "dsp/S2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>    s2;

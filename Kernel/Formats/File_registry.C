@@ -53,6 +53,11 @@ static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
 static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
 #endif
 
+#if DSP_Spigot
+#include "dsp/SpigotFile.h"
+static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
+#endif
+
 // these are defined in libdsp.a
 #include "dsp/CoherentFBFile.h"
 static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> coherentfb;
