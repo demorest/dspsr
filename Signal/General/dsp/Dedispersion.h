@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/01/07 16:25:12 $
+   $Revision: 1.15 $
+   $Date: 2003/01/10 16:41:47 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -44,6 +44,9 @@ namespace dsp {
 
     //! Set the flag for a bin-centred spectrum
     virtual void set_dc_centred (bool dc_centred);
+
+    //! Set the number of channels into which the band will be divided
+    virtual void set_nchan (unsigned nchan);
 
     //! Set the centre frequency of the band-limited signal in MHz
     void set_centre_frequency (double centre_frequency);
@@ -99,13 +102,13 @@ namespace dsp {
     //! Return the number of complex samples of smearing in the specified half
     unsigned smearing_samples (int half = -1) const;
 
+    //! Build the dedispersion frequency response kernel
+    virtual void build ();
+
     //! Compute the phases for a dedispersion kernel
     void build (vector<float>& phases, unsigned npts, unsigned nchan);
 
   protected:
-
-    //! Build the dedispersion frequency response kernel
-    virtual void build ();
 
     //! Centre frequency of the band-limited signal in MHz
     double centre_frequency;

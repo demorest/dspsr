@@ -85,6 +85,15 @@ void dsp::Dedispersion::set_dc_centred (bool _dc_centred)
   dc_centred = _dc_centred;
 }
 
+//! Set the blah
+void dsp::Dedispersion::set_nchan (unsigned _nchan)
+{
+  if (nchan != _nchan)
+    built = false;
+
+  nchan = _nchan;
+}
+
 //! Set the flag to add fractional inter-channel delay
 void dsp::Dedispersion::set_fractional_delay (bool _fractional_delay)
 {
