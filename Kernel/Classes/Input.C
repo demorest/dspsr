@@ -46,11 +46,17 @@ void dsp::Input::set_output (BitSeries* data)
   }
 }
 
-
 /*! Set the Observation attributes of data and load the next block of data
  */
 void dsp::Input::load (BitSeries* data)
 {
+  if( data!=output.ptr() ){
+    if( timekeeper )
+      timekeeper->setup_done();
+    if (record_time)
+      optime.start();
+  }
+
   //if( verbose ) fprintf(stderr,"in dsp::Input::load() with load_size="UI64"\n",load_size);
 
   if (verbose)
@@ -109,10 +115,19 @@ void dsp::Input::load (BitSeries* data)
   else
     data->request_ndat = block_size;
 
-  seek (block_size - overlap, SEEK_CUR);
+  if( verbose )
+    fprintf(stderr,"dsp::Input::load() calling seek("I64")\n",
+	    int64(data->get_ndat()) - int64(overlap));
+  seek( int64(data->get_ndat()) - int64(overlap), SEEK_CUR);
+  //seek (block_size - overlap, SEEK_CUR);
 
   if (verbose)
     cerr << "dsp::Input::load exit with load_sample="<< load_sample <<endl;
+
+  if( data!=output.ptr() ){
+    if (record_time)
+      optime.stop();
+  }
 }
 
 /*! 
@@ -142,7 +157,8 @@ void dsp::Input::seek (int64 offset, int whence)
 
   case SEEK_CUR:
     if (offset < -(int64)next_sample)
-      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_CUR -ve offset");
+      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_CUR -ve offset offset="I64" and next_sample="I64,
+		   offset,(int64)next_sample);
     next_sample += offset;
     break;
 
@@ -165,7 +181,10 @@ void dsp::Input::seek (int64 offset, int whence)
 
   // calculate the extra samples required owing to resolution
   resolution_offset = next_sample % resolution;
+
+  //  fprintf(stderr,"dsp::Input::seek(): before: load_sample="UI64"\n",load_sample);
   load_sample = next_sample - resolution_offset;
+  //fprintf(stderr,"dsp::Input::seek(): after: load_sample="UI64"\n",load_sample);
 
   //  fprintf(stderr,"dsp::Input::seek calling set_load_size()\n");
   // ensure that the load_size attribute is properly set
@@ -240,6 +259,9 @@ void dsp::Input::set_load_size ()
     fprintf(stderr,"Returning from dsp::Input::set_load_size() with load_size()="UI64"\n",
 	  load_size);
 }
+
+
+
 
 
 
