@@ -1,5 +1,5 @@
 #include "dsp/Filterbank.h"
-#include "dsp/TimeSeries.h"
+#include "dsp/WeightedTimeSeries.h"
 
 #include "fftm.h"
 #include "dsp/Response.h"
@@ -124,7 +124,7 @@ void dsp::Filterbank::transformation ()
   }
 
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
-  // this may be in addition to any overlap necessary due to deconvolution.
+  // this may be in addition to any overlap necessary due to convolution.
   // nsamp_step is analogous to ngood in Convolution::transformation
   int nsamp_tres = nchan / time_res;
   if (nsamp_tres < 1)
@@ -148,6 +148,13 @@ void dsp::Filterbank::transformation ()
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
+
+  WeightedTimeSeries* weighted_output;
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
+  if (weighted_output) {
+    weighted_output->convolve_weights (nsamp_fft, nsamp_step);
+    weighted_output->scrunch_weights (nsamp_fft / (freq_res * time_res));
+  }
 
   // output data will be complex
   output->set_state (Signal::Analytic);
@@ -177,8 +184,8 @@ void dsp::Filterbank::transformation ()
 
   output->rescale (scalefac);
   
-  if (verbose)
-    cerr << "dsp::Filterbank::transformation scale="<< output->get_scale() <<endl;
+  if (verbose) cerr << "dsp::Filterbank::transformation scale="
+                    << output->get_scale() <<endl;
 
   // output data will have new sampling rate
   // NOTE: that nsamp_fft already contains the extra factor of two required
@@ -186,13 +193,13 @@ void dsp::Filterbank::transformation ()
   double ratechange = double(freq_res * time_res) / double (nsamp_fft);
   output->set_rate (input->get_rate() * ratechange);
 
-  // complex to complex FFT produces a band swapped result
-  if (input->get_state() == Signal::Analytic)
-    output->set_swap (true);
-
   // if freq_res is even, then each sub-band will be centred on a frequency
   // that lies on a spectral bin *edge* - not the centre of the spectral bin
   output->set_dc_centred (freq_res%2);
+
+  // complex to complex FFT produces a band swapped result
+  if (input->get_state() == Signal::Analytic)
+    output->set_swap (true);
 
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
@@ -260,9 +267,6 @@ void dsp::Filterbank::transformation ()
   float* data_from = NULL;
 
   for (ipart=0; ipart<npart; ipart++) {
-    if( verbose )
-      fprintf(stderr,"dsp::Filterbank working with park %d/%d\n",
-	      ipart+1,npart);
 
     in_offset = ipart * in_step;
     out_offset = ipart * out_step;
