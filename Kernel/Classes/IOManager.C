@@ -108,6 +108,8 @@ void dsp::IOManager::open (const char* id)
   } catch (Error& error) {
     throw error += "IOManager::open";
   }
+
+  info = *( input->get_info() );
 }
 
 
