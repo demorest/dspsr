@@ -71,16 +71,26 @@ void dsp::CPSR2TwoBitCorrection::poln_unpack (float* data,
 					      unsigned long* hist,
 					      unsigned gap)
 {
+  // four two-bit samples per byte in this unpacking scheme
+  const unsigned samples_per_byte = 4;
+
+  // number of unique bit combinations in an 8-bit byte
+  const unsigned unique_bytes = 1<<8;
+
+  // four floating-point samples for each unique byte
+  const unsigned lookup_block_size = samples_per_byte * unique_bytes;
+
+
   static unsigned char* lu_nlo = 0;
 
   if (!lu_nlo) {
-    lu_nlo = new unsigned char [256];
+    lu_nlo = new unsigned char [unique_bytes];
     TwoBitTable* table = new TwoBitTable (TwoBitTable::OffsetBinary);
 
     const float* fourvals = 0;
     float lo_valsq = table->get_lo_val() * table->get_lo_val();
 
-    for (unsigned byte = 0; byte < 256; byte++) {
+    for (unsigned byte = 0; byte < unique_bytes; byte++) {
 
       lu_nlo[byte] = 0;
       fourvals = table->get_four_vals (byte);
@@ -98,11 +108,6 @@ void dsp::CPSR2TwoBitCorrection::poln_unpack (float* data,
 
   assert (n_weights*nsample >= ndat);
 
-  // four two-bit samples per byte in this unpacking scheme
-  const unsigned samples_per_byte = 4;
-
-  // four floating-point samples for each of 256 possible bytes in each block
-  const unsigned lookup_block_size = samples_per_byte * 256;
 
   unsigned long bytes_left = ndat / samples_per_byte;
   unsigned long bytes_per_weight = nsample / samples_per_byte;
