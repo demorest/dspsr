@@ -354,7 +354,7 @@ namespace dsp {
     void add(dspExtension* extension);
 
     //! Removes a dspExtension
-    Reference::To<dspExtension> remove(string ext_name);
+    Reference::To<dspExtension> remove_extension(string ext_name);
 
     //! Returns the number of dspExtensions currently stored
     void get_nextensions();
