@@ -103,8 +103,9 @@ void dsp::SLDetect::transformation ()
     output->set_state( Signal::Intensity );
   }
 
-  fprintf(stderr,"\n\nNear end of SLDetection, state is '%s'\n",
-	  output->get_state_as_string().c_str());
+  if( verbose )
+    fprintf(stderr,"\n\nNear end of SLDetection, state is '%s'\n",
+	    output->get_state_as_string().c_str());
 
   // Bad:
   //  output->resize( output->get_ndat() );
@@ -113,7 +114,7 @@ void dsp::SLDetect::transformation ()
   //      necessarily equal ndat
   // output->set_subsize( (output->get_ndat()*output->get_nbit())/8 );
   
-    if(verbose)
+  if(verbose)
     fprintf(stderr,"after sld output has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d state=%s\n",
 	    output->get_ndim(), output->get_ndat(), output->get_npol(), output->get_nchan(),output->get_nbit(),
 	    output->get_state_as_string().c_str());
