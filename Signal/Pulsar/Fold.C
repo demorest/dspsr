@@ -223,6 +223,12 @@ void dsp::Fold::operation ()
 	input->get_ndat());
 
   profile->integration_length += double(input->get_ndat())*sampling_interval;
+  
+  if (folding_period)
+    profile->set_folding_period( folding_period );
+  else
+    profile->set_folding_polyco( folding_polyco );
+
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
