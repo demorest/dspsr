@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.25 $
-   $Date: 2003/10/24 11:22:20 $
-   $Author: wvanstra $ */
+   $Revision: 1.26 $
+   $Date: 2004/05/16 02:58:41 $
+   $Author: sord $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
@@ -36,6 +36,9 @@ namespace dsp {
 
     //! Maintain a diagnostic histogram of digitizer statistics
     static bool keep_histogram;
+
+    //! two bit correct, set to false to turn off the Jenet and Anderson correction
+    static bool change_levels;
 
     //! Null constructor
     TwoBitCorrection (const char* name = "TwoBitCorrection");

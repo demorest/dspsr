@@ -15,6 +15,7 @@
 const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
 
 bool dsp::TwoBitCorrection::keep_histogram = true;
+bool dsp::TwoBitCorrection::change_levels = true;
 
 //! Null constructor
 dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
@@ -393,11 +394,13 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
     float p_in = (float) nlo / (float) n_tot;
 
     float lo, hi, A;
-    output_levels (p_in, lo, hi, A);
+    if (change_levels) {
+      output_levels (p_in, lo, hi, A);
 
-    table->set_lo_val (lo);
-    table->set_hi_val (hi);
-
+      table->set_lo_val (lo);
+      table->set_hi_val (hi);
+    }
+    
     if (huge) {
       /* Generate the 256 sets of four output floating point values
 	 corresponding to each byte */
@@ -409,10 +412,11 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
       table->four_vals (dls);
       dls += TwoBitTable::vals_per_byte;
     }
-
-    if (spc) {
-      *spc = A;
-      spc ++;
+    if (change_levels) {
+      if (spc) {
+        *spc = A;
+        spc ++;
+      }
     }
   }
 }
