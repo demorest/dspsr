@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/07/31 15:43:24 $
-   $Author: pulsar $ */
+   $Revision: 1.3 $
+   $Date: 2002/08/20 05:16:18 $
+   $Author: wvanstra $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
@@ -30,22 +30,22 @@ namespace dsp {
     //virtual void initialize (const string& descriptor);
 
     //! Set the number of channels into which the input will be divided
-    void set_nchan (int _nchan) { nchan = _nchan; }
+    void set_nchan (unsigned _nchan) { nchan = _nchan; }
 
     //! Get the number of channels into which the input will be divided
-    int get_nchan () const { return nchan; }
+    unsigned get_nchan () const { return nchan; }
 
     //! Set the frequency resolution factor
-    void set_freq_res (int _freq_res) { freq_res = _freq_res; }
+    void set_freq_res (unsigned _freq_res) { freq_res = _freq_res; }
 
     //! Get the frequency resolution factor
-    int get_freq_res () const { return freq_res; } 
+    unsigned get_freq_res () const { return freq_res; } 
 
     //! Set the time resolution factor
-    void set_time_res (int _time_res) { time_res = _time_res; }
+    void set_time_res (unsigned _time_res) { time_res = _time_res; }
 
     //! Get the time resolution factor
-    int get_time_res () const { return time_res; } 
+    unsigned get_time_res () const { return time_res; } 
 
   protected:
 
@@ -53,13 +53,13 @@ namespace dsp {
     virtual void operation ();
 
     //! Number of channels into which the input will be divided
-    int nchan;
+    unsigned nchan;
 
     //! Time resolution factor
-    int time_res;
+    unsigned time_res;
 
     //! Frequency resolution factor
-    int freq_res;
+    unsigned freq_res;
 
   };
   

@@ -2,8 +2,8 @@
 #include "Timeseries.h"
 
 #include "fftm.h"
-#include "filter.h"
-#include "window.h"
+#include "Response.h"
+#include "Apodization.h"
 
 #include "genutil.h"
 
@@ -15,6 +15,7 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
   time_res = 1;
   freq_res = 1;
 }
+
 
 void dsp::Filterbank::operation ()
 {
@@ -28,14 +29,14 @@ void dsp::Filterbank::operation ()
     throw_str ("Filterbank::operation number of channels=%d < 2", nchan);
 
   // number of complex values in the result of the first fft
-  int n_fft = nchan * freq_res;
+  unsigned n_fft = nchan * freq_res;
   // number of complex samples invalid in result of small ffts
-  int n_filt = nfilt_pos + nfilt_neg;
+  unsigned n_filt = nfilt_pos + nfilt_neg;
 
   // number of time samples in first fft
-  int nsamp_fft = 0;
+  unsigned nsamp_fft = 0;
   // number of time samples by which big ffts overlap
-  int nsamp_overlap = 0;
+  unsigned nsamp_overlap = 0;
 
   if (input->get_state() == Observation::Nyquist) {
     nsamp_fft = 2 * n_fft;
@@ -51,21 +52,21 @@ void dsp::Filterbank::operation ()
     throw_str ("Filterbank::operation invalid input data state\n");
 
   // if given, test the validity of the window function
-  if (apodizing) {
+  if (apodization) {
 
-    if (apodizing->get_ndat() != nsamp_fft)
-      throw_str ("Filterbank::operation invalid apodizing function ndat=%d"
-		 " (nfft=%d)", apodizing->get_ndat(), nsamp_fft);
+    if (apodization->get_ndat() != nsamp_fft)
+      throw_str ("Filterbank::operation invalid apodization function ndat=%d"
+		 " (nfft=%d)", apodization->get_ndat(), nsamp_fft);
 
     if (input->get_state() == Observation::Analytic 
-	&& apodizing->get_ndim() != 2)
+	&& apodization->get_ndim() != 2)
       throw_str ("Filterbank::operation Analytic signal"
-		 " Real apodizing function.");
+		 " Real apodization function.");
 
     if (input->get_state() == Observation::Nyquist 
-	&& apodizing->get_ndim() != 1)
+	&& apodization->get_ndim() != 1)
       throw_str ("Filterbank::operation Nyquist signal."
-		 " Complex apodizing function.");
+		 " Complex apodization function.");
   }
 
   // number of timesamples between start of each big fft
@@ -114,12 +115,13 @@ void dsp::Filterbank::operation ()
     throw_str ("Filterbank::operation time resolution:%d > no.channels:%d\n",
 	       time_res, nchan);
 
+  unsigned ndat = input->get_ndat();
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
-  int npart = (input->get_ndat()-(nchan-nsamp_tres)-nsamp_overlap)/nsamp_step;
+  unsigned npart = (ndat-(nchan-nsamp_tres)-nsamp_overlap)/nsamp_step;
   // points kept from each small fft
-  int nkeep = freq_res - n_filt;
+  unsigned nkeep = freq_res - n_filt;
 
   if (npart == 0)
     throw_str ("Filterbank::operation input.ndat="I64" to small (nfft=%d",
@@ -147,6 +149,8 @@ void dsp::Filterbank::operation ()
   output->rescale (scalefac);
 
   // output data will have new sampling rate
+  // NOTE: that nsamp_fft already contains the extra factor of two required
+  // when the input Timeseries is Nyquist (real) sampled
   double ratechange = double(freq_res * time_res) / double (nsamp_fft);
   output->set_rate (input->get_rate() * ratechange);
 
@@ -157,12 +161,14 @@ void dsp::Filterbank::operation ()
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
 
+
+
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan * freq_res * 2;
   // also need space to hold backward FFTs
   unsigned scratch_needed = bigfftsize + 2 * freq_res;
 
-  if (apodizing)
+  if (apodization)
     scratch_needed += bigfftsize;
 
   if (cross_filt)
@@ -182,7 +188,7 @@ void dsp::Filterbank::operation ()
   // of next point (complex)
   int tres_skip = (time_res - 1) * 2;
 
-  int cross_pol = 1;
+  unsigned cross_pol = 1;
   if (cross_filt)
     cross_pol = 2;
 
@@ -202,7 +208,9 @@ void dsp::Filterbank::operation ()
   unsigned long tres_step = nsamp_tres * input->get_ndim();
 
   // counters
-  int ipt, itres, ipol, jpol, ichan, ipart;
+  unsigned ipt, itres, ipol, jpol, ichan, ipart;
+
+  unsigned npol = input->get_npol();
 
   // offsets into input and output
   unsigned long in_offset, tres_offset, out_offset;
@@ -218,7 +226,7 @@ void dsp::Filterbank::operation ()
     in_offset = ipart * in_step;
     out_offset = ipart * out_step;
 
-    for (ipol=0; ipol<input->get_npol(); ipol++) {
+    for (ipol=0; ipol < npol; ipol++) {
 
       for (itres=0; itres < time_res; itres ++) {
 
@@ -231,8 +239,8 @@ void dsp::Filterbank::operation ()
 	  time_dom_ptr = const_cast<float*>(input->get_datptr (0, ipol));
 	  time_dom_ptr += in_offset + tres_offset;
 	  
-	  if (apodizing) {
-	    apodizing -> operate (time_dom_ptr, windowed_time_domain);
+	  if (apodization) {
+	    apodization -> operate (time_dom_ptr, windowed_time_domain);
 	    time_dom_ptr = windowed_time_domain;
 	  }
 
@@ -257,10 +265,10 @@ void dsp::Filterbank::operation ()
 	else {
 
 	  if (bandpass && itres==0)
-	    bandpass->integrate (ipol, complex_spectrum[ipol]);
+	    bandpass->integrate (complex_spectrum[ipol], ipol);
 
 	  if (response)
-	    response->operate (ipol, complex_spectrum[ipol]);
+	    response->operate (complex_spectrum[ipol], ipol);
 
 	}
 	
@@ -291,7 +299,7 @@ void dsp::Filterbank::operation ()
 
 	    freq_dom_ptr += freq_res*2;
 
-	    data_into = output->get_datptr (ichan, ipol) + out_offset + itres*2;
+	    data_into = output->get_datptr (ichan, ipol) + out_offset+itres*2;
 	    data_from = complex_time + nfilt_pos*2;  // complex nos.
 
 	    for (ipt=0; ipt < nkeep; ipt++) {

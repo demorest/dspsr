@@ -1,8 +1,8 @@
 #include "Convolution.h"
 #include "Timeseries.h"
 
-#include "filter.h"
-#include "window.h"
+#include "Response.h"
+#include "Apodization.h"
 #include "fftm.h"
 #include "genutil.h"
 
@@ -11,27 +11,27 @@
 dsp::Convolution::Convolution (const char* _name, Behaviour _type)
   : Operation (_name, _type)
 {
-  response = 0;
-  apodizing = 0;
-  bandpass = 0;
-
   nfilt_pos = nfilt_neg = 0;
 }
 
+dsp::Convolution::~Convolution ()
+{
+}
+
 //! Set the frequency response function
-void dsp::Convolution::set_response (filter* _response)
+void dsp::Convolution::set_response (Response* _response)
 {
   response = _response;
 }
 
-//! Set the apodizing function
-void dsp::Convolution::set_apodizing (window* _function)
+//! Set the apodization function
+void dsp::Convolution::set_apodization (Apodization* _function)
 {
-  apodizing = _function; 
+  apodization = _function; 
 }
 
 //! Set the bandpass integrator
-void dsp::Convolution::set_bandpass (filter* _bandpass)
+void dsp::Convolution::set_bandpass (Response* _bandpass)
 {
   bandpass = _bandpass; 
 }
@@ -53,41 +53,42 @@ void dsp::Convolution::operation ()
 {
   if (!response) {
     if (verbose)
-      cerr << "Convolution::operate no frequency response" << endl;
+      cerr << "Convolution::operation no frequency response" << endl;
     return;
   }
 
+  response->match (input);
+
+  if (bandpass)
+    bandpass->match (input);
+
   // response must have at least two points in it
-  if (response->get_ndat() < 2 * response->get_nsub())
-    throw_str ("Convolution::operate invalid response size");
+  if (response->get_ndat() < 2)
+    throw_str ("Convolution::operation invalid response size");
 
-  // number of points in response must be an even multiple of sub-divisions
-  if (response->get_ndat() % response->get_nsub())
-    throw_str ("Convolution::operate invalid number of response channels");
-
-  // if the response has 4 dimensions, then perform matrix convolution
-  bool matrix_convolution = response->get_npol() == 4;
+  // if the response has 8 dimensions, then perform matrix convolution
+  bool matrix_convolution = response->get_ndim() == 8;
 
   Timeseries::State state = input->get_state();
-  int npol  = input->get_npol();
-  int nchan = input->get_nchan();
-  int ndim  = input->get_ndim();
+  unsigned npol  = input->get_npol();
+  unsigned nchan = input->get_nchan();
+  unsigned ndim  = input->get_ndim();
 
   // if matrix convolution, then there must be two polns
   if (matrix_convolution && npol != 2)
-    throw_str ("Convolution::operate matrix response and input.npol != 2");
+    throw_str ("Convolution::operation matrix response and input.npol != 2");
 
   // response must contain a unique kernel for each channel
-  if (response->get_nsub() != nchan)
-    throw_str ("Convolution::operate invalid response nsub=%d != nchan=%d",
-	       response->get_nsub(), nchan);
+  if (response->get_nchan() != nchan)
+    throw_str ("Convolution::operation invalid response nsub=%d != nchan=%d",
+	       response->get_nchan(), nchan);
 
   // number of points after first fft
-  int n_fft = response->get_ndat()/response->get_nsub();
+  int n_fft = response->get_ndat();
   int n_overlap = nfilt_pos + nfilt_neg;
 
   if (verbose)
-    cerr << "Convolution::operate filt=" << n_fft 
+    cerr << "Convolution::operation filt=" << n_fft 
 	 << " smear=" << n_overlap << endl;
 
   // 2 arrays needed: one for each of the forward and backward FFT results
@@ -112,7 +113,7 @@ void dsp::Convolution::operation ()
     nsamp_overlap = n_overlap;
   }
   else
-    throw_str ("Convolution::operate Invalid state:" + input->get_state_str());
+    throw_str ("Convolution::operation Invalid state:" + input->get_state_str());
 
 #ifdef DEBUG
   fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
@@ -122,22 +123,22 @@ void dsp::Convolution::operation ()
 
   int nsamp_good = nsamp_fft-nsamp_overlap;   // valid time samples per FFT
   if (nsamp_good < 0)
-    throw_str ("Convolution::operate invalid nfft=%d nfilt=%d",
+    throw_str ("Convolution::operation invalid nfft=%d nfilt=%d",
 	       nsamp_fft, n_overlap);
 
   // number of FFTs for this data block
-  unsigned long nparts = (input->get_ndat()-nsamp_overlap)/nsamp_good;
-  if (nparts == 0)
-    throw_str ("Convolution::operate invalid ndat="I64" nfilt=%d ngood=%d",
+  unsigned long npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
+  if (npart == 0)
+    throw_str ("Convolution::operation invalid ndat="I64" nfilt=%d ngood=%d",
 	       input->get_ndat(), nsamp_overlap, nsamp_good);
 
-  float* complex_spectrum[2];
-  complex_spectrum[0] = float_workingspace (pts_reqd);
-  complex_spectrum[1] = complex_spectrum[0];
+  float* spectrum[2];
+  spectrum[0] = float_workingspace (pts_reqd);
+  spectrum[1] = spectrum[0];
   if (matrix_convolution)
-    complex_spectrum[1] += n_fft * 2;
+    spectrum[1] += n_fft * 2;
 
-  float* complex_time  = complex_spectrum[1] + n_fft * 2;
+  float* complex_time  = spectrum[1] + n_fft * 2;
 
   if (input->get_state() == Timeseries::Nyquist)
     complex_time += 2;
@@ -148,7 +149,7 @@ void dsp::Convolution::operation ()
   // valid time samples convolved
   // if output == input, this should not result in lost data as npart*ngood
   // should be smaller than input.ndat
-  output->resize (nparts * nsamp_good);
+  output->resize (npart * nsamp_good);
 
   // output data is complex
   // notice that nsamp_good is the number of input time samples.
@@ -163,34 +164,23 @@ void dsp::Convolution::operation ()
     // after performing forward and backward FFTs the data will be scaled
     output->rescale (double(nsamp_fft) * double(n_fft));
 
-  int nbytes_good = nsamp_good * ndim * sizeof(float);
+  unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
   
-  int cross_pol = 1;
+  unsigned cross_pol = 1;
   if (matrix_convolution)
     cross_pol = 2;
  
-  dsp::filter filt;
-  dsp::filter bpass;
-
   // temporary things that should not go in and out of scope
   float* ptr = 0;
-  int ipol=0, jpol=0;
-  unsigned long ipart=0;
+  unsigned jpol=0;
 
   unsigned long offset;
   // number of floats to step between each FFT
   unsigned long step = nsamp_good * ndim;
 
-  for (int ichan=0; ichan < nchan; ichan++) {
-
-    // these quickly point to the subsets that apply to each channel
-    filt.external (*response, ichan);
-    if (bandpass)
-      bpass.external (*bandpass, ichan);
-    
-    for (ipol=0; ipol<npol; ipol++)  {
-      
-      for (ipart=0; ipart<nparts; ipart++)  {
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+    for (unsigned ipol=0; ipol < npol; ipol++)
+      for (unsigned ipart=0; ipart < npart; ipart++)  {
 	
 	offset = ipart * step;
 		
@@ -201,34 +191,34 @@ void dsp::Convolution::operation ()
 	  
 	  ptr = const_cast<float*>(input->get_datptr (ichan, ipol)) + offset;
 	  
-	  if (apodizing) {
-	    apodizing -> operate (ptr, complex_time);
+	  if (apodization) {
+	    apodization -> operate (ptr, complex_time);
 	    ptr = complex_time;
 	  }
 	  
 	  if (state == Timeseries::Nyquist)
-	    fft::frc1d (nsamp_fft, complex_spectrum[ipol], ptr);
+	    fft::frc1d (nsamp_fft, spectrum[ipol], ptr);
 
 	  else if (state == Timeseries::Analytic)
-	    fft::fcc1d (nsamp_fft, complex_spectrum[ipol], ptr);
+	    fft::fcc1d (nsamp_fft, spectrum[ipol], ptr);
 	  
 	}
 	
 	if (matrix_convolution) {
 
-	  filt.operate (complex_spectrum[0], complex_spectrum[1]);
+	  response->operate (spectrum[0], spectrum[1], ichan);
 
 	  if (bandpass)
-	    bpass.integrate (complex_spectrum[0], complex_spectrum[1]);
+	    bandpass->integrate (spectrum[0], spectrum[1], ichan);
 
 	}
 	
 	else {
 
-	  filt.operate (ipol, complex_spectrum[ipol]);
+	  response->operate (spectrum[ipol], ipol, ichan);
 
 	  if (bandpass)
-	    bpass.integrate (ipol, complex_spectrum[ipol]);
+	    bandpass->integrate (spectrum[ipol], ipol, ichan);
 
 	}
 	
@@ -243,7 +233,7 @@ void dsp::Convolution::operation ()
 	  fflush (stderr);
 #endif
 	  // fft back to the complex time domain
-	  fft::bcc1d (n_fft, complex_time, complex_spectrum[ipol]);
+	  fft::bcc1d (n_fft, complex_time, spectrum[ipol]);
 	  
 	  // copy the good (complex) data back into the time stream
 	  ptr = output -> get_datptr (ichan, ipol) + offset;
@@ -251,7 +241,6 @@ void dsp::Convolution::operation ()
 
 	}  // for each poln, if matrix convolution
       }  // for each part of the time series
-    }  // for each poln, if simple convolution
-  }  // for each channel of filterbank
-
+  // for each poln
+  // for each channel
 }
