@@ -48,44 +48,49 @@ void dsp::Detection::transformation ()
 
   checks();
 
+  bool inplace = (input.get() == output.get());
+
   if( state==input->get_state() ) {
-    if( input.get()==output.get() ) {
-      if (verbose)
-	cerr << "dsp::Detection::transformation inplace and no state change" << endl;
+    if( !inplace ) {
+      if (verbose) cerr << "dsp::Detection::transformation inplace and no state change" << endl;
     }
     else {
-      if (verbose)
-	cerr << "dsp::Detection::transformation no state change- just copying input" << endl;
+      if (verbose) cerr << "dsp::Detection::transformation no state change- just copying input" << endl;
       output->operator=( *input );
     }
 
     return;
   }
 
-  if( get_input()->get_detected() ){
+  // Case 1. Coherency products -> Total intensity
+  if( state==Signal::Intensity && get_input()->get_state()==Signal::Coherence )
     redetect();
-    return;
-  }
-
-  bool inplace = (input.get() == output.get());
-  if (verbose)
-    cerr << "dsp::Detection::transformation inplace" << endl;
-
-  if (!inplace)
-    resize_output ();
-
-  if (state == Signal::Intensity || state == Signal::PPQQ)
-    square_law ();
-
-  else if (state == Signal::Stokes || state == Signal::Coherence)
-    polarimetry ();
-
+  // Case 2. PPQQ -> Total intensity
+  else if( state==Signal::Intensity && get_input()->get_state()==Signal::PPQQ )
+    redetect();
+  // Case 3. Analytic -> Coherency products
+  else if( state==Signal::Coherence && get_input()->get_state()==Signal::Analytic )
+    polarimetry();
+  // Case 4. Analytic -> PPQQ
+  else if( state==Signal::PPQQ && get_input()->get_state()==Signal::Analytic )
+    square_law();
+  // Case 5. Analytic -> Total Intensity
+  else if( state==Signal::Intensity && get_input()->get_state()==Signal::Analytic )
+    form_stokes_I();
+  // Case 6. Nyquist -> Coherency
+  else if( state==Signal::Coherence && get_input()->get_state()==Signal::Nyquist )
+    form_stokes_I();
+  // Case 7. Nyquist -> PPQQ
+  else if( state==Signal::PPQQ && get_input()->get_state()==Signal::Nyquist )
+    square_law();
+  // Case 8. Nyquist -> Total Intensity
+  else if( state==Signal::Intensity && get_input()->get_state()==Signal::Nyquist )
+    form_stokes_I();
   else
-    throw Error (InvalidState, "dsp::Detection::transformation",
-		 "unknown output state=%s", Signal::state_string (state));
-		  
-  if (inplace)
-    resize_output ();
+    throw Error(InvalidState,"dsp::Detection::transformation()",
+		"dsp::Detection can only go (Coherency products|PPQQ)->I or (Nyquist|Analytic)->(Coherency products|PPQQ|I) You have an input state of '%s' and an output state of '%s'",
+		State2string(get_input()->get_state()).c_str(),
+		State2string(state).c_str());
 
   if( verbose )
     fprintf(stderr,"Returning from dsp::Detection::transformation() with output ndat="UI64"\n",get_output()->get_ndat());
@@ -106,32 +111,16 @@ void dsp::Detection::resize_output ()
       cerr << "dsp::Detection::resize_output state: "
 	   << Signal::state_string(state) << " ndim=" << ndim << endl;
   }
+  else if(state==Signal::PPQQ)
+    output_npol = 2;
+  else if(state==Signal::Intensity )
+    output_npol = 1;
 
-  output->Observation::operator=(*input);
-
-  output->set_state (state);
-  output->set_ndim (output_ndim);
-  output->set_npol (output_npol);
+  get_output()->copy_configuration( get_input() );
 
   uint64 output_ndat = input->get_ndat();
-  output->resize (output_ndat);
 
-  /*
-  if (state == Signal::Stokes || state == Signal::Coherence) {
-    // double-check the basic assumption of the polarimetry() method
-
-    unsigned block_size = output_ndim * output_ndat;
-    
-    for (unsigned ichan=0; ichan < output->get_nchan(); ichan ++) {
-      float* base = output->get_datptr (ichan, 0);
-      
-      for (unsigned ipol=1; ipol<output_npol; ipol++)
-	if (output->get_datptr (ichan, ipol) != base + ipol*block_size)
-	  throw Error (InvalidState, "dsp::Detection::resize_output",
-		       "pointer mis-match");
-    }
-  }
-  */
+  get_output()->resize (output_ndat);
 }
 
 void dsp::Detection::square_law ()
@@ -139,52 +128,91 @@ void dsp::Detection::square_law ()
   if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
  
-  if( state==Signal::Intensity && input->get_state()==Signal::PPQQ ){
-    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-    pscrunch->set_input( input );
-    pscrunch->set_output( output );
+  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
+  sld->set_input( input );
+  sld->set_output( output ); 
+  sld->operate();  
+}
 
+void dsp::Detection::form_stokes_I(){
+  if( verbose ) fprintf(stderr,"In dsp::Detection::form_stokes_I()\n");
+ 
+  if( get_input() == get_output() ){
+    square_law();
+    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
+    pscrunch->set_input( get_output() );
+    pscrunch->set_output( get_output() );
     pscrunch->operate();
     return;
   }
 
-  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
-  sld->set_input( input );
-  sld->set_output( output );
-  
-  sld->operate();
-  
-  if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
-    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-    pscrunch->set_input( output );
-    pscrunch->set_output( output );
-    
-    pscrunch->operate();
+  unsigned input_ndim = get_input()->get_ndim();
+
+  get_output()->copy_configuration( get_input() );
+
+  if( !get_output()->get_preserve_seeked_data() || get_output()->get_samps_offset()==0 ) {
+    get_output()->set_npol( 1 );
+    get_output()->set_ndim( 1 );
+    get_output()->set_state( Signal::Intensity );
   }
+
+  get_output()->resize( get_input()->get_ndat() );
+
+  if( input_ndim==1 ){ // Signal::Nyquist
+    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
+      float* pol0 = get_input()->get_datptr(ichan,0);
+      float* pol1 = get_input()->get_datptr(ichan,1);    
+      float* out = get_output()->get_datptr(ichan,0);
+      
+      uint64 ndat = get_input()->get_ndat();
+      
+      for( uint64 i=0; i<ndat; i++)
+	out[i] = SQR(pol0[i]) + SQR(pol1[i]); 
+    }
+  }
+  else{ // Signal::Analytic
+    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
+      float* pol0 = get_input()->get_datptr(ichan,0);
+      float* pol1 = get_input()->get_datptr(ichan,1);    
+      float* out = get_output()->get_datptr(ichan,0);
+      
+      uint64 ndat = get_input()->get_ndat();
+      
+      for( uint64 i=0; i<ndat; i++)
+	out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
+    }
+  }
+
   
 }
-
+  
 void dsp::Detection::polarimetry ()
 {
   if (verbose)
     cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
 
+  unsigned input_npol = get_input()->get_npol();
+  unsigned input_ndim = get_input()->get_ndim();
+
+  if ( get_input() != get_output() )
+    resize_output ();    
+
   uint64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
-  // necessary conditions of this form of detection
-  unsigned input_npol = 2;
-  unsigned input_ndim = 2;
-
   bool inplace = (input.get() == output.get());
-
+  if( verbose )
+    fprintf(stderr,"dsp::Detection::polarimetry () inplace=%d\n",inplace);
+  
   unsigned required_space = 0;
   unsigned copy_bytes = 0;
 
   float* copyp  = NULL;
   float* copyq = NULL;
 
-  if (inplace && ndim != 2) {
+  if (inplace && ndim != 2) { // Insanity
+    //    fprintf(stderr,"BADPLACE 1!!!\n\n\n\n\n");
+
     // only when ndim==2 is this transformation really inplace.
     // so when ndim==1or4, a copy of the data must be made
     
@@ -204,15 +232,11 @@ void dsp::Detection::polarimetry ()
       copyq = copyp + input_ndim * ndat;
   }
 
-  // pointers to the results
-  float* r[4];
-
   for (unsigned ichan=0; ichan<nchan; ichan++) {
-
     const float* p = input->get_datptr (ichan, 0);
     const float* q = input->get_datptr (ichan, 1);
-
     if (inplace && ndim != 2) {
+      //      fprintf(stderr,"BADPLACE 2!!!\n\n\n\n\n");
       memcpy (copyp, p, copy_bytes);
       p = copyp;
 
@@ -221,29 +245,72 @@ void dsp::Detection::polarimetry ()
 	q = copyq;
       }
     }
+    vector<float*> r = get_result_pointers(ichan);
 
-    r[0] = output->get_datptr (ichan, 0);
+    if( input_ndim == 2 ){ // ie Analytic
+      cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+    }
+    else{ // ie Nyquist ndim==1
+      float*& pp = r[0];
+      float*& qq = r[1];
+      float*& Rpq= r[2];
+      float*& Ipq= r[3];
 
-    switch (ndim) {
-    case 1:
+      for (unsigned j=0; j<ndat; j++)  {
+	float p_r = *p; p++;
+	float q_r = *q; q++;
+	
+	*pp  = SQR(p_r);  pp ++;    /*  p* p      */
+	*qq  = SQR(q_r);  qq ++;    /*  q* q      */
+	*Rpq = p_r * q_r; Rpq ++;   /*  Re[p* q]  */
+	*Ipq = 0.0;       Ipq ++;   /*  Im[p* q]  */
+      }
+    }
+  }
+
+  if ( get_input() == get_output() )
+    resize_output ();
+
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::Detection::polarimetry()\n");
+}
+
+vector<float*> dsp::Detection::get_result_pointers(unsigned ichan){
+  vector<float*> r(4);
+  uint64 ndat = get_input()->get_ndat();
+  bool inplace = (get_input()==get_output());
+
+  r[0] = get_output()->get_datptr(ichan,0);
+
+  switch (ndim) {
+  case 1:
+    if( inplace ){ // Insanity
+      r[1] = r[0] + ndat;
+      r[2] = r[1] + ndat;
+      r[3] = r[2] + ndat;
+    }
+    else{
       r[1] = get_output()->get_datptr(ichan,1);
       r[2] = get_output()->get_datptr(ichan,2);
       r[3] = get_output()->get_datptr(ichan,3);
-      break;
-    case 2:
-      r[1] = r[0] + 1;
-      r[2] = get_output()->get_datptr(ichan,1);
-      r[3] = r[2] + 1;
-      break;
-    case 4:
-      r[1] = r[0] + 1;
-      r[2] = r[1] + 1;
-      r[3] = r[2] + 1;
-     break;
     }
-
-    cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+    break;
+  case 2:
+    r[1] = r[0] + 1;
+    if( inplace ) // Insanity
+      r[2] = r[0] + ndat * 2;
+    else
+      r[2] = get_output()->get_datptr(ichan,1);
+    r[3] = r[2] + 1;
+    break;
+  case 4:
+    r[1] = r[0] + 1;
+    r[2] = r[1] + 1;
+    r[3] = r[2] + 1;
+    break;
   }
+  
+  return r;
 }
 
 void dsp::Detection::redetect(){
@@ -255,31 +322,27 @@ void dsp::Detection::redetect(){
 }
 
 void dsp::Detection::checks(){
-  if( get_input()->get_detected() &&  state != Signal::Intensity )
+  if( get_input()->get_detected() && state != Signal::Intensity )
     throw Error(InvalidState,"dsp::Detection::checks()",
 		"Sorry, but this class currently can only redetect data to Stokes I (You had input='%s' and output='%s')",
 		State2string(get_input()->get_state()).c_str(),
 		State2string(state).c_str());
+
+  if( get_input()->get_state()==Signal::Nyquist && get_input()->get_machine()=="CPSR2" )
+    fprintf(stderr,"\n\ndsp::Detection::checks(): input state is Nyquist from CPSR2... continuing... but have you forgotten to add an -F option to form a filterbank or to deconvolve?\n\n");
   
   if (state == Signal::Stokes || state == Signal::Coherence) {
-    if (input->get_npol() != 2)
+    if (get_input()->get_npol() != 2)
       throw Error (InvalidState, "dsp::Detection::transformation",
 		   "invalid npol=%d for %s formation",
 		   input->get_npol(), Signal::state_string(state));
     
-    if (input->get_state() != Signal::Analytic){
-      if( get_input()->get_state()==Signal::Nyquist )
-	throw Error (InvalidState, "dsp::Detection::transformation",
-		   "invalid state=%s for %s formation- have you forgotten to add a -F option to form a filterbank or to deconvolve?",
-		   input->get_state_as_string().c_str(),
+    if (get_input()->get_state() != Signal::Analytic && get_input()->get_state() != Signal::Nyquist)
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid state=%s for %s formation",
+		   get_input()->get_state_as_string().c_str(),
 		   Signal::state_string(state));
-      else
-	throw Error (InvalidState, "dsp::Detection::transformation",
-		     "invalid state=%s for %s formation",
-		     input->get_state_as_string().c_str(),
-		     Signal::state_string(state));
-    }
-
+    
     // Signal::Coherence product and Signal::Stokes parameter
     // formation can be performed in three ways, corresponding to
     // ndim = 1,2,4
@@ -291,3 +354,96 @@ void dsp::Detection::checks(){
   }    
   
 }
+
+    /*    fprintf(stderr,"YO5.1 ndat="UI64" output ndat="UI64" output sz="UI64" ndim=%d out->nchan=%d out->npol=%d out=>ndim=%d samps_offset="I64"\n",
+	    ndat,output->get_ndat(),output->hack_get_size(),ndim,
+	    output->get_nchan(),output->get_npol(),output->get_ndim(),
+	    output->get_samps_offset());
+    fprintf(stderr,"offset 0="I64"\n",
+	    int64(r[0]-output->get_datptr(ichan,0)));
+    fprintf(stderr,"offset 1="I64"\n",
+	    int64(r[1]-output->get_datptr(ichan,0)));
+    fprintf(stderr,"offset 2="I64"\n",
+	    int64(r[2]-output->get_datptr(ichan,0)));
+    fprintf(stderr,"offset 3="I64"\n",
+	    int64(r[3]-output->get_datptr(ichan,0)));
+    fprintf(stderr,"datptr=%p\n",
+	    output->get_datptr(ichan,0));
+    fprintf(stderr,"input ndat="UI64" nchan=%d npol=%d ndim=%d\n",
+	    input->get_ndat(),input->get_nchan(),input->get_npol(),input->get_ndim());
+    fprintf(stderr,"input sz="UI64" buffer=%p data=%p\n",
+	    input->hack_get_size(),input->hack_get_buffer(),
+	    input->hack_get_data());
+    fprintf(stderr,"p is at "I64" q is at "I64"\n",
+	    int64(p-((float*)input->hack_get_buffer())),
+	    int64(q-((float*)input->hack_get_buffer())));
+    fprintf(stderr,"subsize="UI64" datptr0 "I64" datptr1 "I64"\n",
+	    input->hack_get_subsize(),
+	    int64(input->get_datptr(ichan,0)-input->hack_get_data()),
+	    int64(input->get_datptr(ichan,1)-input->hack_get_data()));
+    fprintf(stderr,"*q=%f (%p)\n",*q,q);
+    */
+
+
+
+
+
+
+
+
+
+    /*
+    bool falsehood = false;
+    if( falsehood ){
+      float p_r;
+      float p_i;
+      float q_r;
+      float q_i;
+      
+      //      float* p = *p;
+      //float* q = *q;
+
+      unsigned span = ndim;
+      
+      float* pp = r[0];
+      float* qq = r[1];
+      float* Rpq = r[2];
+      float* Ipq = r[3];
+      
+      for (unsigned j=0; j<unsigned(ndat); j++)  {
+	//fprintf(stderr,"hi j=%d\n",j);
+	//fprintf(stderr,"hi-3\n");
+	p_r = *p;
+	//fprintf(stderr,"hi-3.1\n");
+	p++;
+	//fprintf(stderr,"hi-2\n");
+	p_i = *p;
+	//fprintf(stderr,"hi-2.1\n");
+	p++;
+	//fprintf(stderr,"hi-1\n");
+	//fprintf(stderr,"q=%p\n",q);
+	//fprintf(stderr,"hi-1.01\n");
+	//fprintf(stderr,"*q=%f\n",*q);
+	//fprintf(stderr,"hi-1.02\n");
+	q_r = *q;
+	//fprintf(stderr,"hi-1.1\n");
+	q++;
+	//fprintf(stderr,"hi0\n");
+	q_i = *q;
+	//fprintf(stderr,"hi0.1\n");
+	q++;
+	
+	//fprintf(stderr,"hi1\n");*/
+    //	*pp  = p_r * p_r + p_i * p_i;  pp += span;    /*  p* p      */
+	//fprintf(stderr,"hi2\n");
+	//*qq  = q_r * q_r + q_i * q_i;  qq += span;    /*  q* q      */
+	//fprintf(stderr,"hi3\n");
+	//*Rpq = p_r * q_r + p_i * q_i;  Rpq += span;   /*  Re[p* q]  */
+	//fprintf(stderr,"hi4\n");
+	//*Ipq = p_r * q_i - p_i * q_r;  Ipq += span;   /*  Im[p* q]  */
+	//fprintf(stderr,"hi5\n");
+    //}
+
+    //    }
+
+    //    fprintf(stderr,"YO5.2\n");
