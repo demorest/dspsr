@@ -4,7 +4,7 @@
 #include <cpgplot.h>
 
 #include "TwoBitStatsPlotter.h"
-#include "DataManager.h"
+#include "IOManager.h"
 #include "TwoBitCorrection.h"
 #include "Input.h"
 #include "Timeseries.h"
@@ -73,7 +73,7 @@ int main (int argc, char** argv)
   dsp::Timeseries voltage;
 
   // interface manages the creation of data loading and converting classes
-  dsp::DataManager manager;
+  dsp::IOManager manager;
 
   // plots two-bit digitization statistics
   dsp::TwoBitStatsPlotter plotter;

@@ -1,13 +1,13 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/09/25 06:32:10 $
+   $Revision: 1.2 $
+   $Date: 2002/09/25 06:35:24 $
    $Author: ahotan $ */
 
 
-#ifndef __DataManager_h
-#define __DataManager_h
+#ifndef __IOManager_h
+#define __IOManager_h
 
 #include "Input.h"
 
@@ -19,7 +19,7 @@ namespace dsp {
   /*! This class defines a common interface to backend-specific file
     formats by constructing the appropriate header-loading and
     data-unpacking routines.  */
-  class DataManager : public Input {
+  class IOManager : public Input {
 
   public:
     
@@ -27,10 +27,10 @@ namespace dsp {
     static bool verbose;
     
     //! Constructor
-    DataManager ();
+    IOManager ();
     
     //! Destructor
-    virtual ~DataManager ();
+    virtual ~IOManager ();
     
     //! Prepare the appropriate Input and conversion Operation
     virtual void open (const char* id);
@@ -110,4 +110,4 @@ namespace dsp {
 
 }
 
-#endif // !defined(__DataManager_h)
+#endif // !defined(__IOManager_h)

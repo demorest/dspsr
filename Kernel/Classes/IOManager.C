@@ -1,4 +1,4 @@
-#include "DataManager.h"
+#include "IOManager.h"
 #include "Timeseries.h"
 
 #include "CPSRFile.h"
@@ -6,24 +6,24 @@
 
 #include "genutil.h"
 
-void dsp::DataManager::init()
+void dsp::IOManager::init()
 {
   block_size = overlap = 0;
   nsample = 512;
 }
 
 //! Constructor
-dsp::DataManager::DataManager ()
+dsp::IOManager::IOManager ()
 {
   init();
 }
 
-dsp::DataManager::~DataManager()
+dsp::IOManager::~IOManager()
 {
 }
 
 //! Set the container from which input data will be read
-void dsp::DataManager::set_raw (Timeseries* _raw)
+void dsp::IOManager::set_raw (Timeseries* _raw)
 {
   raw = _raw;
 
@@ -32,7 +32,7 @@ void dsp::DataManager::set_raw (Timeseries* _raw)
 }
 
 //! Set the Input operator (should not normally need to be used)
-void dsp::DataManager::set_input (Input* _input)
+void dsp::IOManager::set_input (Input* _input)
 {
   input = _input;
 
@@ -43,7 +43,7 @@ void dsp::DataManager::set_input (Input* _input)
 }
 
 //! Set the conversion Operation (should not normally need to be used)
-void dsp::DataManager::set_converter (Operation* _converter)
+void dsp::IOManager::set_converter (Operation* _converter)
 {
   converter = _converter;
 
@@ -56,7 +56,7 @@ void dsp::DataManager::set_converter (Operation* _converter)
 }
 
     //! Set the number of time samples to load on each call to load_data
-void dsp::DataManager::set_block_size (uint64 _block_size) 
+void dsp::IOManager::set_block_size (uint64 _block_size) 
 { 
   block_size = _block_size;
   if (input)
@@ -64,7 +64,7 @@ void dsp::DataManager::set_block_size (uint64 _block_size)
 }
     
 //! Set the number of time samples by which consecutive blocks overlap
-void dsp::DataManager::set_overlap (uint64 _overlap) 
+void dsp::IOManager::set_overlap (uint64 _overlap) 
 { 
   overlap = _overlap;
   if (input)
@@ -73,7 +73,7 @@ void dsp::DataManager::set_overlap (uint64 _overlap)
     
 
 //! Set the number of samples used to estimate undigitized power
-void dsp::DataManager::set_nsample (int _nsample)
+void dsp::IOManager::set_nsample (int _nsample)
 { 
   nsample = _nsample;
 
@@ -83,7 +83,7 @@ void dsp::DataManager::set_nsample (int _nsample)
 }
 
 //! The operation loads the next block of data and converts it to float_Stream
-void dsp::DataManager::load (Timeseries* data)
+void dsp::IOManager::load (Timeseries* data)
 {
   if (!input || !converter)
     return;
@@ -97,9 +97,9 @@ void dsp::DataManager::load (Timeseries* data)
   converter->operate();
 }
 
-void dsp::DataManager::load_data (Timeseries* data)
+void dsp::IOManager::load_data (Timeseries* data)
 {
-  throw string ("DataManager::load_data run-time error");
+  throw string ("IOManager::load_data run-time error");
 }
 
 //! Prepare the appropriate Input and converter Operation
@@ -115,7 +115,7 @@ void dsp::DataManager::load_data (Timeseries* data)
 
   \pre This function is not fully implemented.
 */
-void dsp::DataManager::open (const char* id) 
+void dsp::IOManager::open (const char* id) 
 {
   File* loader = new CPSRFile;
   loader->open(id);
@@ -128,7 +128,7 @@ void dsp::DataManager::open (const char* id)
 }
 
 //! End of data
-bool dsp::DataManager::eod()
+bool dsp::IOManager::eod()
 {
   if (!input)
     return true;
@@ -137,7 +137,7 @@ bool dsp::DataManager::eod()
 }
     
 //! Seek to the specified time sample
-void dsp::DataManager::seek (int64 offset, int whence = 0)
+void dsp::IOManager::seek (int64 offset, int whence = 0)
 {
   if (!input)
     return;
