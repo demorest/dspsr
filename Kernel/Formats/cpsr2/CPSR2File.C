@@ -8,6 +8,7 @@
 #include "dsp/CPSR2_Observation.h"
 #include "Error.h"
 
+#include "ascii_header.h"
 #include "cpsr2_header.h"
 #include "yamasaki_verify.h"
 #include "genutil.h"
