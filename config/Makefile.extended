@@ -90,15 +90,14 @@ LIBRARIES += ${LIBRARY}
 LIBS:=${LIBRARIES:%=$(LIBDIR)/%}
 
 ##########################################################################
-# The following lines create the TESTBINS macro,
+# The following lines create the RUNTESTS macro,
 # upon which the "test" target depends...
 # TESTS and TESTEXECS macros are previously defined in the user Makefile
 ##########################################################################
 TEXECS := ${patsubst %.c,%,${patsubst %.f,%,${patsubst %.C,%,${TESTS}}}}
 TESTEXECS += $(TEXECS)
 
-# define bin path executables
-TESTBINS:=$(TESTEXECS:%=$(BINDIR)/%)
+RUNTESTS:=$(TESTEXECS:%=%.runtest)
 
 ##########################################################################
 # Flags specified to makedepend
@@ -254,7 +253,7 @@ moc_%.C: %.h
 ##########################################################################
 # Rule to make the standard targets "phony".  eg. no file 'all'
 ##########################################################################
-.PHONY: ${TARGETS} %.srcs error
+.PHONY: ${TARGETS} error %.srcs %.runtest
 
 ##########################################################################
 # Check for any errors
@@ -291,9 +290,7 @@ include: $(INCS)
 
 libs: $(LIBS) include
 
-test: $(TESTBINS)
-	@if [ -z "$(TESTBINS)" ]; then echo No tests to perform; \
-	else for test in "$(TESTBINS)"; do ($$test || exit 1); done; fi;
+test: $(RUNTESTS)
 
 install: $(INSTALL_INCS) $(INSTALL_LIBS) $(INSTALL_BINS)
 
@@ -311,6 +308,19 @@ ifneq ($(install_yes),install)
 ###  STATIC PATTERN RULES and EXPLICIT RULES (must follow default targets)
 ##########################################################################
 ##########################################################################
+
+##########################################################################
+# Static pattern rule to run a test with arguments as specified in the
+# user's Makefile
+##########################################################################
+$(RUNTESTS) : %.runtest : $(BINDIR)/%
+	@($< $($*.args) || (echo $< Failed && exit 1))
+	@echo "************************************************************"
+	@echo ""
+	@echo $< $($*.args)
+	@echo TEST COMPLETED SUCCESSFULLY
+	@echo ""
+	@echo "************************************************************"
 
 ##########################################################################
 # Static pattern rule to copy include files in pwd to include/ directory
