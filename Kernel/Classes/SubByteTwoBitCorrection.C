@@ -1,3 +1,5 @@
+// #define _DEBUG 1
+
 #include "dsp/SubByteTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 
@@ -45,6 +47,9 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
 					       unsigned* weights,
 					       unsigned nweights)
 {
+  if (verbose)
+    cerr << "dsp::SubByteTwoBitCorrection::dig_unpack" << endl;
+
   if (!values)
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
 		 "not built");
