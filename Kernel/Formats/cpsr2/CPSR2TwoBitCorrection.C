@@ -2,9 +2,6 @@
 #include "Observation.h"
 #include "TwoBitTable.h"
 
-// Register the CPSR2TwoBitCorrection class with the Unpacker::registry
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> entry;
-
 bool dsp::CPSR2TwoBitCorrection::matches (const Observation* observation)
 {
   return observation->get_machine() == "CPSR2";
