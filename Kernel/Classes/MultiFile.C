@@ -44,6 +44,8 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
     }
   }
 
+  loader->open( new_filenames.front() );
+
   ensure_contiguity();
 
   setup();
