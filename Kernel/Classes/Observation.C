@@ -436,8 +436,10 @@ void dsp::Observation::set_default_basis ()
     // Parkes has linear feeds for multibeam, H-OH, and 50cm
     basis = Signal::Linear;
     // above 2 GHz, can assume that the Galileo receiver is used
-    if (centre_frequency > 2000.0)
-      basis = Signal::Circular;
+    // if (centre_frequency > 2000.0)
+    //  basis = Signal::Circular;
+    // with the advent of the 1050 the above assumption is no longer valid
+
   }
   else if (telescope == Telescope::ATCA)
     basis = Signal::Circular;
