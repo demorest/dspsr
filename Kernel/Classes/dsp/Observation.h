@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.50 $
-   $Date: 2003/05/18 11:32:16 $
-   $Author: pulsar $ */
+   $Revision: 1.51 $
+   $Date: 2003/06/04 04:04:04 $
+   $Author: cwest $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -384,7 +384,7 @@ namespace dsp {
 
 }
 
-#ifdef MPI
+#ifdef ACTIVATE_MPI
 
 #include <mpi.h>
 

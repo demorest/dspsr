@@ -1,4 +1,4 @@
-#define MPI 1
+#define ACTIVATE_MPI 1
 #include "dsp/Observation.h"
 #include "stdmpi.h"
 #include "portable_mpi.h"

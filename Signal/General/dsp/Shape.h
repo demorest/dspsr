@@ -1,14 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.6 $
-   $Date: 2003/01/11 07:19:51 $
-   $Author: pulsar $ */
+   $Revision: 1.7 $
+   $Date: 2003/06/04 04:04:04 $
+   $Author: cwest $ */
 
 #ifndef __Shape_h
 #define __Shape_h
 
-#ifdef MPI
+#ifdef ACTIVATE_MPI
 #include <mpi.h>
 #endif
 
@@ -116,7 +116,7 @@ namespace dsp {
 
 // these are declared outside of the namespace, to simplify their
 // use in the stdmpi templates
-#ifdef MPI
+#ifdef ACTIVATE_MPI
 int mpiPack_size (const dsp::Shape&,
 		  MPI_Comm comm, int* size);
 int mpiPack      (const dsp::Shape&, void* outbuf,

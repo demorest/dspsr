@@ -4,7 +4,7 @@
 #define __MPIRoot_h
 
 #include <mpi.h>
-#define MPI 1
+#define ACTIVATE_MPI 1
 #include "dsp/Input.h"
 
 namespace dsp {
