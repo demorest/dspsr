@@ -415,6 +415,10 @@ bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_fail
 	    ndat,rate,obs.ndat,obs.rate);
   } 
 
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::Observation::contiguous() with %d\n",
+	    ret);
+
   return ret;
 }
 
