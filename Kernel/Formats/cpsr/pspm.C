@@ -131,7 +131,7 @@ MJD PSPMstart_time (const PSPM_SEARCH_HEADER* header)
     // old style - pre-August 1999
     // MODIFY THE MJD BY THE SCAN FILE NUMBER
     double seconds_per_file = (32768.0 * 32768.0) * header->samp_rate / 1e6;
-    start_time += seconds_per_file * double(header->scan_file_number);
+    start_time += seconds_per_file * double(header->scan_file_number - 1);
   }
   else
     start_time += (double(header->ll_file_offset) / 1e6) * header->samp_rate;
