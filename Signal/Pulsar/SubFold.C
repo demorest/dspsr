@@ -270,6 +270,21 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
 	" > input ndat=" << input_ndat << endl;
 
     idat_end = input_ndat;
+
+  }
+  else if (idat_end < input_ndat) {
+
+    // The current input TimeSeries extends more than the current
+    // sub-integration.  The more_data flag indicates that the input
+    // TimeSeries should be used again.
+
+    if (verbose)
+      cerr << "dsp::SubFold::bound input data ends "
+           << (input_end-fold_end).in_seconds()*1e3 <<
+        " ms after current sub-integration" << endl;
+
+    more_data = true;
+
   }
 
   ndat_fold = idat_end - idat_start;
@@ -291,22 +306,7 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
       cerr << "dsp::SubFold::bound end of sub-integration" << endl;
 
     subint_full = true;
-    set_boundaries (input_end + 1.0/sampling_rate);
-
-    if (idat_end < input_ndat) {
-
-      // The current input TimeSeries extends more than the current
-      // sub-integration.  The more_data flag indicates that the input
-      // TimeSeries should be used again.
-      
-      if (verbose)
-	cerr << "dsp::SubFold::bound input data ends "
-	     << (input_end-fold_end).in_seconds()*1e3 <<
-	  " ms after current sub-integration" << endl; 
-      
-      more_data = true;
-
-    }
+    set_boundaries (fold_end + 0.5/sampling_rate);
 
   }
 
