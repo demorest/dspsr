@@ -1,3 +1,5 @@
+#include "polyco.h"
+
 #include "dsp/Archiver.h"
 #include "dsp/PhaseSeries.h"
 
@@ -46,10 +48,18 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   set (archive-> get_Integration(0), phase);
 
   // set_model must be called after the Integration::MJD has been set
-  archive-> set_model ( *(phase->get_folding_polyco()) );
+  if( !phase->get_folding_polyco() ){
+    fprintf(stderr,"using no polyco whatsoever\n");
+    //archive->set_model( polyco(phase->get_mid_time(),
+    //		       phase->get_dispersion_measure(),
+    //		       1.0/phase->get_folding_period(),
+    //		       phase->get_telescope()) );
+  }
+  else{
+    archive-> set_model ( *(phase->get_folding_polyco()) );
+  }
 
   archive-> set_filename (phase->get_default_id () + ".ar");
-
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Archive";
