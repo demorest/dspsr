@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/09 15:55:27 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/11/18 05:45:45 $
+   $Author: cwest $ */
 
 
 #ifndef __Unpacker_h
@@ -32,6 +32,10 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);
 
+    // Declare friends with Registry entries
+    friend class Registry::Entry<Unpacker>;
+
+
    protected:
     //! The operation unpacks n-bit into floating point TimeSeries
     virtual void transformation ();
@@ -48,8 +52,6 @@ namespace dsp {
     //! List of registered sub-classes
     static Registry::List<Unpacker> registry;
 
-    // Declare friends with Registry entries
-    friend class Registry::Entry<Unpacker>;
 
   };
 
