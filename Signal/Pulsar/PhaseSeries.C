@@ -86,7 +86,7 @@ void dsp::PhaseSeries::zero ()
 }
 
 
-bool dsp::PhaseSeries::mixable (const Observation& obs, int nbin,
+bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
 				int64 istart, int64 fold_ndat)
 {
   MJD obsStart = obs.get_start_time() + double (istart) / obs.get_rate();
@@ -129,7 +129,7 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, int nbin,
   }
 
   if (get_nbin() != nbin) {
-    cerr << "PhaseSeries::mixable nbin="<<get_nbin()<<" != "<<nbin<<endl;
+    cerr << "PhaseSeries::mixable nbin=" << get_nbin() <<" != "<< nbin <<endl;
     return false;
   }
 
@@ -164,7 +164,8 @@ dsp::PhaseSeries&
 dsp::PhaseSeries::operator += (const PhaseSeries& prof)
 {
   if (!mixable (prof, prof.get_nbin()))
-    throw_str ("PhaseSeries::operator+= !mixable");
+    throw Error (InvalidParam, "PhaseSeries::operator+=",
+		 "PhaseSeries !mixable");
 
   TimeSeries::operator += (prof);
 

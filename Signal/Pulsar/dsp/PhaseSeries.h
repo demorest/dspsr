@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/08/05 10:44:55 $
+   $Revision: 1.9 $
+   $Date: 2003/08/22 15:49:16 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -58,7 +58,7 @@ namespace dsp {
     virtual MJD get_end_time () const { return end_time; }
 
     //! Get the number of phase bins
-    int get_nbin () const { return ndat; }
+    unsigned get_nbin () const { return ndat; }
 
     //! Get the hit for the given bin
     unsigned get_hit (unsigned ibin) const { return hits[ibin]; }
@@ -93,7 +93,7 @@ namespace dsp {
     MJD end_time;
 
     //! Return true when Observation can be integrated (and prepare for it)
-    bool mixable (const Observation& obs, int nbin,
+    bool mixable (const Observation& obs, unsigned nbin,
 		  int64 istart=0, int64 fold_ndat=0);
 
   };
