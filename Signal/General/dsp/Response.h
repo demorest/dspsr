@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/08/20 04:58:16 $
+   $Revision: 1.2 $
+   $Date: 2002/09/17 11:18:48 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -46,7 +46,7 @@ namespace dsp {
     //! Match the frequency response to the input Timeseries
     virtual void match (const Timeseries* input, unsigned nchan=0);
 
-    //! Re-organized frequency bins to reflect natural ordering (DC->Nyq)
+    //! Re-organize frequency bins to reflect natural ordering (DC->Nyq)
     void naturalize ();
 
   protected:
