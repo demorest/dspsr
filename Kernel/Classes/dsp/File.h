@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.22 $
-   $Date: 2003/10/05 06:17:07 $
+   $Revision: 1.23 $
+   $Date: 2003/10/25 06:47:08 $
    $Author: hknight $ */
 
 
@@ -39,6 +39,7 @@ namespace dsp {
   {
     friend class MultiFile;
     friend class HoleyFile;
+    friend class RingBuffer;
     
   public:
     
