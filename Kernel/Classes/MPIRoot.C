@@ -153,7 +153,7 @@ void dsp::MPIRoot::set_block_size (uint64 _size)
 
   if (!end_of_data && resize_required)  {
     size_pack_buffer ();
-    if (mpi_rank != mpi_root)
+    if (ready && mpi_rank != mpi_root)
       request_data();
   }
 }
@@ -406,9 +406,19 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
 
 void dsp::MPIRoot::request_data ()
 {
+  ensure_receptive ("dsp::MPIRoot::request_data");
+
+  if (data_request != MPI_REQUEST_NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::request_data",
+                 "data_request already pending");
+
   // post receive data request
   MPI_Irecv (pack_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag, comm, 
              &data_request);
+
+  if (ready_request != MPI_REQUEST_NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::request_data",
+                 "ready_request already pending");
 
   // post send ready-to-receive request
   MPI_Isend (&ready, 1, MPI_INT, mpi_root, mpi_tag, comm, &ready_request);
@@ -417,6 +427,8 @@ void dsp::MPIRoot::request_data ()
 
 int dsp::MPIRoot::receive_data ()
 {
+  ensure_receptive ("dsp::MPIRoot::receive_data");
+
   if (verbose)
     cerr << "dsp::MPIRoot::receive_data" << endl;
 
@@ -455,6 +467,8 @@ int dsp::MPIRoot::receive_data ()
 
 void dsp::MPIRoot::load_data (BitSeries* data)
 {
+  ensure_receptive ("dsp::MPIRoot::load_data");
+
   if (pack_buf == NULL)
     throw Error (InvalidState, "dsp::MPIRoot::load_data", 
 		 "buffer not prepared.  call bcast_setup first.");
@@ -544,3 +558,13 @@ void dsp::MPIRoot::ensure_root (const char* method) const
     throw Error (InvalidState, method, "mpi_rank=%d != mpi_root=%d",
 		 mpi_rank, mpi_root);
 }
+
+void dsp::MPIRoot::ensure_receptive (const char* method) const
+{
+  if (mpi_rank == mpi_root)
+    throw Error (InvalidState, method, "mpi_rank=%d == mpi_root=%d",
+                 mpi_rank, mpi_root);
+  if (end_of_data)
+    throw Error (InvalidState, method, "end of data");
+}
+

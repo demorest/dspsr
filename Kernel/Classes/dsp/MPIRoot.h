@@ -149,6 +149,9 @@ namespace dsp {
     //! ensure that this instance is the root and that mpi_size > 1
     void ensure_root (const char* method) const;
 
+    //! ensure that this instance is not the root and that eof = false
+    void ensure_receptive (const char* method) const;
+
     //! throw an Error exception if mpi_err != MPI_SUCCESS
     void check_error (int mpi_err, const char* call, const char* method);
 
