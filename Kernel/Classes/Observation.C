@@ -220,7 +220,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
     cerr << "dsp::Observation::combinable different feeds:"
 	 << basis << " and " << obs.basis << endl;
   can_combine = false; }
-  if( fabs(rate-obs.rate) > eps ){
+  if( fabs(rate-obs.rate)/rate > 0.01 ){ /* ie must be within 1% */
     cerr << "dsp::Observation::combinable different rate:"
 	 << rate << " and " << obs.rate << endl;
   can_combine = false; }
@@ -248,6 +248,8 @@ bool dsp::Observation::combinable (const Observation & obs) const
     cerr << "dsp::Observation::combinable different machine:"
 	 << machine << " and " << obs.machine << endl;
   can_combine = false; }
+
+  cerr << "Exiting from combinable() with rate="<<rate<<"and obs.rate="<<obs.rate<<endl;
 
   return can_combine;
 }

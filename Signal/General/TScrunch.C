@@ -141,6 +141,11 @@ void dsp::TScrunch::operation ()
 
   /* make sure output has correct parameters */
   output->rescale( double(output_ndat) / double(input->get_ndat()) );
+
+  if( verbose )
+    fprintf(stderr,"TScrunch:: input->rate=%f\tinput=>ndat="I64"\toutput_ndat="I64"\n",
+	    input->get_rate(), input->get_ndat(), output_ndat);
+
   output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output_ndat)) );
   
   // This is usually very bad but should work (and is needed) in both the inplace and outofplace situations:
