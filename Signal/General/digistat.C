@@ -22,7 +22,9 @@ void usage ()
 }
 
 int main (int argc, char** argv) 
-{
+
+{ try {
+
   char* metafile = 0;
   bool display = false;
   bool verbose = false;
@@ -66,9 +68,11 @@ int main (int argc, char** argv)
 
   // raw baseband data container
   dsp::Timeseries raw;
+  raw.is_static();
 
   // converted voltages container
   dsp::Timeseries voltage;
+  voltage.is_static();
 
   // interface manages the creation of data loading and converting classes
   dsp::DataManager manager;
@@ -89,26 +93,39 @@ int main (int argc, char** argv)
 
     manager.open (filenames[ifile]);
 
+    if (verbose)
+      cerr << "data file " << filenames[ifile] << " opened" << endl;
+
     // create a new file loader, appropriate to the backend
     loader = manager.get_loader();
 
     loader->set_block_size (512*512);
     loader->set_output (&raw);
 
+    if (verbose)
+      cerr << "loader initialized" << endl;
+
     // create a new unpacker, appropriate to the backend
     correct = dynamic_cast<dsp::TwoBitCorrection*>(manager.get_converter());
+    if (!correct) {
+      cerr << "converter is not a TwoBitCorrection subclass" << endl;
+      continue;
+    }
 
     correct->set_input (&raw);
     correct->set_output (&voltage);
 
+    if (verbose)
+      cerr << "converter initialized" << endl;
+
     plotter.set_data (correct);
 
-    // loop
     while (!loader->eod()) {
 
       correct->zero_histogram ();
       
       loader->operate ();
+
       correct->operate ();
 
       cpgpage();
@@ -116,7 +133,8 @@ int main (int argc, char** argv)
 
     }
 
-    cerr << "end of data file " << filenames[ifile] << endl;
+    if (verbose)
+      cerr << "end of data file " << filenames[ifile] << endl;
 
   }
   catch (string& error) {
@@ -130,3 +148,19 @@ int main (int argc, char** argv)
 }
 
 
+catch (Reference::invalid& error) {
+  cerr << "Invalid Reference exception thrown" << endl;
+  return -1;
+}
+
+catch (string& error) {
+  cerr << "exception thrown: " << error << endl;
+  return -1;
+}
+
+catch (...) {
+  cerr << "exception thrown: " << endl;
+  return -1;
+}
+
+}
