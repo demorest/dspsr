@@ -9,6 +9,7 @@
 #include "OneBitCorrection.h"
 #include "TimeSeries.h"
 #include "Error.h"
+#include "RealTimer.h"
 
 #include "genutil.h"
 
@@ -76,20 +77,20 @@ void dsp::OneBitCorrection::unpack ()
     cerr << "dsp::OneBitCorrection::unpack ndat="
 	 << ndat << " n_freq=" << n_freq << endl;
   
-  const uint32 * rawptr = (const uint32 *) input->get_rawptr();
-
 #define MM 512
 #define NN 16
-   
+
   /*
 
     NN is the number of channels we do in one go- it should be a power of two between 1 and 32 as there are 32 channels in a uint32
 
     MM is the number of timesamples we do at any one time- when you have to write out to one of the output datptrs you may as well write several in one go as you have to copy a block of memory anyway.
 
-    How the algorithm works is you want to output MM timesamples into each of NN output arrays.  For each timesample all NN channels are in one uint32, so you boolean 'and' ('&' operator) NN masks for that uint32.  Each time you do a boolean 'and' you'll either get zero (0.0) or non-zero (1.0).  You do one mask at a time for the MM values of one channel though.
+    How the algorithm works is you want to output MM timesamples into each of NN output arrays.  For each timesample all NN channels are in one uint32, so you bitwise 'and' ('&' operator) NN masks for that uint32.  Each time you do a bitwise 'and' you'll either get zero (0.0) or non-zero (1.0).  You do one mask at a time for the MM values of one channel though.
 
    */
+
+  const uint32 * rawptr = (const uint32 *) input->get_rawptr();
    
   unsigned masks[NN];
   
@@ -99,35 +100,33 @@ void dsp::OneBitCorrection::unpack ()
   const register unsigned nskip = MM*n_freq/32;    
   
   for (unsigned ichan=0; ichan < n_freq; ichan+=NN) {
-    register const unsigned shift = ichan % 32;
+    register const uint32 shift = ichan % 32;
     
     const uint32* from = rawptr + ichan / 32;
     
-      register float* intos[NN];
-      for( unsigned i=0; i<NN; i++)
-	intos[i] = output->get_datptr(ichan+i,0);
+    register float* intos[NN];
+    for( unsigned i=0; i<NN; i++)
+      intos[i] = output->get_datptr(ichan+i,0);
+    
+    register uint32 dat[MM];
+    register const unsigned jump = n_freq/32;
+    
+    for (uint64 idat=0; idat < ndat; idat+=MM) {
+      unsigned k = 0;
+      for( unsigned j=0; j<MM; ++j, k+=jump)
+	dat[j] = from[k] >> shift;
       
-      register uint32 dat[MM];
-      register const unsigned jump = n_freq/32;
-      
-      for (uint64 idat=0; idat < ndat; idat+=MM) {
-	unsigned k = 0;
-	for( unsigned j=0; j<MM; ++j, k+=jump)
-	  dat[j] = from[k] >> shift;
-	
-	for( unsigned i=0; i<NN; ++i){
-	  register float* fptr = intos[i]+idat;
-	  
-	  for( unsigned j=0; j<MM; ++j){
-	    if( dat[j] & masks[i] )  fptr[j] = 1.0;
-	    else	             fptr[j] = 0.0;
-	  }
+      for( unsigned i=0; i<NN; ++i){
+	register float* fptr = intos[i]+idat;	  
+	for( unsigned j=0; j<MM; ++j){
+	  if( dat[j] & masks[i] )  fptr[j] = 1.0;
+	  else	                   fptr[j] = 0.0;
 	}
-	
-	from += nskip;
       }
+      from += nskip;
+    }
   }
-  
+
   if( verbose )
     fprintf(stderr,"Bye from OneBitCorrection\n");
 }
