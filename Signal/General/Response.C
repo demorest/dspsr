@@ -68,8 +68,11 @@ void dsp::Response::match (const Observation* input, unsigned channels)
     if ( input->get_dc_centred() && !chan_shifted ) {
       if (verbose)
 	cerr << "dsp::Response::match rotate half channel" << endl;
-      naturalize ();
-      rotate (-ndat/2);
+
+      if ( chan_swapped )
+        swap (true);
+
+      rotate (-int(ndat/2));
       chan_shifted = true;
     }
 
