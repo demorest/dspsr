@@ -16,7 +16,6 @@ void dsp::Shape::init ()
   borrowed = false;
 }
 
-
 void dsp::Shape::destroy ()
 {
   if (!borrowed && buffer!=NULL) delete [] buffer; buffer = NULL;
@@ -29,6 +28,35 @@ dsp::Shape::Shape(void) {
 
 dsp::Shape::~Shape(void) {
   destroy ();
+}
+
+//! Copy constructor
+dsp::Shape::Shape (const Shape& copy)
+{
+  init ();
+  Shape::operator = (copy);
+}
+
+//! Assignment operator
+const dsp::Shape& dsp::Shape::operator = (const Shape& copy)
+{
+  if (&copy == this)
+    return *this;
+
+  resize (copy.npol, copy.nchan, copy.ndat, copy.ndim);
+
+  unsigned pts = ndim * ndat * nchan;
+
+  for (unsigned ipol=0; ipol < npol; ipol++) {
+    float* buf = buffer + offset * ipol;
+    float* dbuf = copy.buffer + copy.offset * ipol;
+    for (unsigned ipt=0; ipt<pts; ipt++) {
+      *buf = *dbuf;
+      buf++; dbuf++;
+    }
+  }
+
+  return *this;
 }
 
 const dsp::Shape& dsp::Shape::operator /= (float factor)
@@ -181,10 +209,13 @@ void dsp::Shape::rotate (int rotbin)
 
   unsigned pts = nchan * ndat * ndim;
   unsigned nrot = abs(rotbin) * ndim;
+  unsigned nstep = pts / nrot - 1;
 
   if (nrot > pts)
     throw Error (InvalidParam, "dsp::Shape::rotate",
 		 "abs(rotbin=%d) > nchan=%d*ndat=%d", rotbin, nchan, ndat);
+
+  rotbin *= ndim;
 
   float temp = 0;
 
@@ -198,25 +229,20 @@ void dsp::Shape::rotate (int rotbin)
     for (unsigned irot=0; irot<nrot; irot++) {
 
       temp = buf[irot];
-
-      for (unsigned ipt=0; ipt<pts-nrot; ipt+=nrot) {
+      int ipt = 0;
+  
+      for (unsigned istep=0; istep<nstep; istep++) {
 	
-	p1 = buf + (irot + ipt) % pts;
-	p2 = buf + (rotbin + irot + ipt + pts) % pts;
+	p1 = buf + (irot + ipt + pts) % pts;
+	p2 = buf + (irot + ipt + rotbin + pts) % pts;
 
-	if (rotbin < 0) {
-	  float temp2 = *p2;
-	  *p2 = temp;
-	  temp = temp2;
-	}
-	else
-	  *p1 = *p2;
+	*p1 = *p2;
+
+        ipt += rotbin;
+
       }
 
-      if (rotbin < 0)
-	buf[irot] = temp;
-      else
-	*p2 = temp;
+      *p2 = temp;
 
     }
   }

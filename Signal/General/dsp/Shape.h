@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.7 $
-   $Date: 2003/06/04 04:04:04 $
-   $Author: cwest $ */
+   $Revision: 1.8 $
+   $Date: 2003/12/11 18:36:03 $
+   $Author: wvanstra $ */
 
 #ifndef __Shape_h
 #define __Shape_h
@@ -22,8 +22,14 @@ namespace dsp {
   public:
     static bool verbose;
 
+    //! Default constructor
     Shape ();
+    //! Destructor
     virtual ~Shape ();
+    //! Copy constructor
+    Shape (const Shape&);
+    //! Assignment operator
+    const Shape& operator = (const Shape&);
 
     //! Set the dimensions of the data
     virtual void resize (unsigned npol, unsigned nchan,
@@ -98,7 +104,7 @@ namespace dsp {
     //! Dimension of each datum
     unsigned ndim;
 
-    //! Flag that datum are borrowed from another Shape
+    //! Flag that data are borrowed from another Shape
     bool borrowed;
 
     void init ();
