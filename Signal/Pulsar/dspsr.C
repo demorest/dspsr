@@ -27,7 +27,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:Ab:d:f:F:hjM:n:N:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:f:F:hjM:n:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -40,6 +40,7 @@ void usage ()
     " -M metafile    load filenames from metafile\n"
     " -s             generate single pulse Integrations\n"
     " -S seek        Start processing at t=seek seconds\n"
+    " -t gulps       Stop processing after this many gulps\n"
     " -T total       Process only t=total seconds\n"
     "\n"
     "Two-bit unpacking options:\n"
@@ -48,6 +49,7 @@ void usage ()
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
     "Filterbank options:\n"
+    " -f ffts        Perform this many forward FFTs per gulp [16]\n"
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
@@ -57,6 +59,7 @@ void usage ()
     "\n"
     "Detection options:\n"
     " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
+    " -n ndim        ndim of detected TimeSeries [4]\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins\n"
     " -p phase       reference phase of pulse profile bin zero\n"
