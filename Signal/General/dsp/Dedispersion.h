@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/01/10 16:41:47 $
+   $Revision: 1.16 $
+   $Date: 2003/01/11 07:09:44 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -87,6 +87,17 @@ namespace dsp {
     //! Get the frequency resolution in each channel of the kernel
     unsigned get_frequency_resolution () const { return ndat; }
 
+    //! Return the smearing across the entire band time in seconds
+    double get_smearing_time () const {
+      return smearing_time (centre_frequency, bandwidth);
+    }
+
+    //! Return the smearing time across the worst sub-band in seconds
+    double get_effective_smearing_time () const;
+
+    //! Return the effective number of smearing samples
+    unsigned get_effective_smearing_samples () const;
+
     //! Return the dispersion delay between freq1 and freq2
     /*! If freq2 is higher than freq1, delay_time is positive */
     double delay_time (double freq1, double freq2) const;
@@ -94,21 +105,13 @@ namespace dsp {
     //! Return the smearing time, given the centre frequency and bandwidth
     double smearing_time (double centre_frequency, double bandwidth) const;
 
-    //! Return the smearing time in seconds
-    double smearing_time () const {
-      return smearing_time (centre_frequency, bandwidth);
-    }
-
-    //! Return the number of complex samples of smearing in the specified half
-    unsigned smearing_samples (int half = -1) const;
-
-    //! Build the dedispersion frequency response kernel
-    virtual void build ();
-
     //! Compute the phases for a dedispersion kernel
     void build (vector<float>& phases, unsigned npts, unsigned nchan);
 
   protected:
+
+    //! Build the dedispersion frequency response kernel
+    virtual void build ();
 
     //! Centre frequency of the band-limited signal in MHz
     double centre_frequency;
@@ -130,6 +133,12 @@ namespace dsp {
 
     //! Flag that the response and bandpass attributes reflect the state
     bool built;
+
+    //! Return the effective smearing time in seconds (worker function)
+    double smearing_time (int half) const;
+
+    //! Return the number of complex samples of smearing (worker function)
+    unsigned smearing_samples (int half) const;
 
   };
   

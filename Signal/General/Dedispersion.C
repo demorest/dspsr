@@ -231,7 +231,18 @@ double dsp::Dedispersion::delay_time (double freq1, double freq2) const
   return dispersion * ( 1.0/sqr(freq1) - 1.0/sqr(freq2) );
 }
 
-unsigned dsp::Dedispersion::smearing_samples (int half) const
+double dsp::Dedispersion::get_effective_smearing_time () const
+{
+  return smearing_time (0);
+}
+
+//! Return the effective number of smearing samples
+unsigned dsp::Dedispersion::get_effective_smearing_samples () const
+{
+  return smearing_samples (0);
+}
+
+double dsp::Dedispersion::smearing_time (int half) const
 {
   // Calculate the smearing time over the band (or the sub-band with
   // the lowest centre frequency) in seconds.  This will determine the
@@ -241,29 +252,46 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   if (nchan>1)
     band = "worst channel";
 
-  string side = "upper";
-  if (half < 0)
-    side = "lower";
+  string side;
+  if (half == 1)
+    side = "upper half of the ";
+  else if (half == -1)
+    side = "lower half of the ";
+  else if (half != 0)
+    throw Error (InvalidParam, "dsp::Dedispersion::smearing_time",
+		 "invalid half=%d", half);
 
   double abs_bw = fabs (bandwidth);
   double ch_abs_bw = abs_bw / double(nchan);
   double lower_ch_cfreq = centre_frequency - (abs_bw - ch_abs_bw) / 2.0;
 
-  // the sampling rate of the resulting complex time samples
-  double sampling_rate = ch_abs_bw * 1e6;
-
-  // calculate the smearing in the specified half of the band
-  ch_abs_bw /= 2.0;
-  lower_ch_cfreq += double(half) * ch_abs_bw;
-    
+  // calculate the smearing (in the specified half of the band)
+  if (half) {
+    ch_abs_bw /= 2.0;
+    lower_ch_cfreq += double(half) * ch_abs_bw;
+  }
   double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
   
   if (verbose)
-    cerr << "dsp::Dedispersion::smearing_samples\n"
-      "  smearing time in the " << side 
-	 << " half of the " << band << ": " << float(tsmear*1e3) << " ms"
-      " (" << int(tsmear * sampling_rate) << " pts).\n";
-  
+    cerr << "dsp::Dedispersion::smearing_time in the " << side << band << ": "
+	 << float(tsmear*1e3) << " ms" << endl;
+
+  return tsmear;
+}
+ 
+unsigned dsp::Dedispersion::smearing_samples (int half) const
+{
+
+  double tsmear = smearing_time (half);
+
+  // the sampling rate of the resulting complex time samples
+  double ch_abs_bw = fabs (bandwidth) / double (nchan);
+  double sampling_rate = ch_abs_bw * 1e6;
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::smearing_samples = "
+	 << int(tsmear * sampling_rate) << endl;
+
   // add another ten percent, just to be sure that the pollution due
   // to the cyclical convolution effect is minimized
   tsmear *= 1.1;
