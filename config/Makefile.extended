@@ -1,19 +1,15 @@
 ##########################################################################
 ##########################################################################
-
-###  SETUP STANDARD CONVENTIONS
-
-# define those files recognized by make
+# Define those files recognized by make
 .SUFFIXES:
 .SUFFIXES: .o .c .C .f .h .dep .odep
 
+# Ensure that the proper shell is used
 SHELL = /bin/sh
-
 ##########################################################################
 ##########################################################################
 
 ###  MACRO DEFINITIONS
-
 ##########################################################################
 ##########################################################################
 
@@ -121,8 +117,7 @@ include $(make_install)
 ##########################################################################
 ##########################################################################
 
-###  RULE DEFINITIONS
-
+###  IMPLICIT RULE DEFINITIONS
 ##########################################################################
 ##########################################################################
 
@@ -131,28 +126,21 @@ include $(make_install)
 ##########################################################################
 /usr/include/cxx/%:
 
-%.h:
-	@$(GREP) $@ ${LOGIN_ARCH}/*.dep|$(AWK) -F: '{print "rm -rf "$$1}'|sh
-
 ##########################################################################
 # Rules to make the header file dependency list in the appropriate 
 # architecture specific subdirectory.
 # The recommendation comes from the GNU make 3.77 docucmentation:
 # "Writing Rules" chapter; "Generating Dependencies Automatically" section
-#
-# These are double colon rules so that a null rule can be executed
-# when the .dep targets become out of date wrt the $(LOGIN_ARCH) subdir
-# upon which they also depend.
 ##########################################################################
-mdtemp :=${LOGIN_ARCH}/.mdtemp
-
 $(LOGIN_ARCH)/%.dep: %.c
-	$(header_depend.action)
+	$(header_depend)
 
 $(LOGIN_ARCH)/%.dep: %.C
-	$(header_depend.action)
+	$(header_depend)
 
-define header_depend.action
+mdtemp :=${LOGIN_ARCH}/.mdtemp
+
+define header_depend
 @$(RM) $(mdtemp); touch $(mdtemp)
 @echo makedepend $<
 @$(MAKEDEPEND) $(mdtemp) ${MDFLAGS} ${CPPFLAGS} $<
@@ -160,7 +148,20 @@ define header_depend.action
 endef
 
 ##########################################################################
-# Rule to make the source file dependency list in the appropriate
+# Implicit rule to clean up .dep files that reference header files have 
+# been moved or no longer exist where previously found.  This should make
+# it so that one never need type 'make depend' ever again.
+##########################################################################
+%.h:
+	@echo Removing outdated header dependencies
+	@$(remove_outdated_deps)
+
+define remove_outdated_deps
+$(GREP) $@ ${LOGIN_ARCH}/*.dep | $(AWK) -F: '{print "rm -rf "$$1}' | sh
+endef
+
+##########################################################################
+# Implicit rule to make the source file dependency list in the appropriate
 # architecture specific subdirectory.  These files depend on the Makefile,
 # as their information is changed only when the link information changes.
 ##########################################################################
@@ -168,6 +169,9 @@ $(LOGIN_ARCH)/%.sdep: %.srcs Makefile
 	@echo source depend: $*
 
 SRC2OBJ := sed -e 's/\.c/\.o/g' -e 's/\.C/\.o/g' -e 's/\.f/\.o/g'
+
+# This implicit rule is actually a phony target, as it does not create
+# a file of the same name
 %.srcs:
 	@srcdep_file=$(@:%.srcs=${LOGIN_ARCH}/%.sdep); \
 	OBJS=`echo "$($@:%=${LOGIN_ARCH}/%)" | $(SRC2OBJ)`; \
@@ -175,8 +179,8 @@ SRC2OBJ := sed -e 's/\.c/\.o/g' -e 's/\.C/\.o/g' -e 's/\.f/\.o/g'
 	echo "$(@:%.srcs=${BINDIR}/%): $$OBJS" >> $$srcdep_file;
 
 ##########################################################################
-# Rules to make an object code file in the appropriate architecture
-# specific subdirectory. 
+# Implicit rules to make an object code file in the appropriate 
+# architecture-dependent subdirectory. 
 ##########################################################################
 
 $(LOGIN_ARCH)/%.o: %.c
@@ -194,54 +198,38 @@ $(LOGIN_ARCH)/%.o: %.f
 # object files listed in the exec.OBJS macro.  This macro is defined in
 # ${LOGIN_ARCH}/exec.odep included by Makefile.extended when the
 # exec.srcs macro is defined in the user's makefile.
+#
+# The file is linked with LDFLAGS, or exec.LDFLAGS, if defined.
 ##########################################################################
 
-lib_dir_fl := $(filter -L%,$(LDFLAGS))
-lib_dirs  := $(lib_dir_fl:-L=)
-all_libs  := $(foreach dir,$(lib_dirs),$(wildcard $(dir)/*.a))
-lflags    := $(filter -l%,$(LDFLAGS))
-libraries := $(lflags:-l%=$(LIBDIR)/%.a)
+#lib_dir_fl := $(filter -L%,$(LDFLAGS))
+#lib_dirs  := $(lib_dir_fl:-L=)
+#all_libs  := $(foreach dir,$(lib_dirs),$(wildcard $(dir)/*.a))
+#lflags    := $(filter -l%,$(LDFLAGS))
+#libraries := $(lflags:-l%=$(LIBDIR)/%.a)
+
+define check_exec
+if [ ! -x $@ ]; then \
+echo "Cleaning up failed compilation: $@"; ($(RM) $@ && exit 1); \
+fi
+endef
+
+define eval_LDFLAGS
+if [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
+else echo $($*.LDFLAGS); fi
+endef
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(LIBS)
-	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(LDFLAGS)
-	@if [ ! -x $@ ]; then \
-           echo "Cleaning up failed compilation: $@"; \
-           ($(RM) $@ && exit 1); \
-         fi;
+	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(LIBS)
-	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(LDFLAGS)
-	@if [ ! -x $@ ]; then \
-           echo "Cleaning up failed compilation: $@"; \
-           ($(RM) $@ && exit 1); \
-         fi;
+	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(LIBS)
-	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(LDFLAGS)
-	@if [ ! -x $@ ]; then \
-           echo "Cleaning up failed compilation: $@"; \
-           ($(RM) $@ && exit 1); \
-         fi;
-
-##########################################################################
-# The following rules convert targets like "exec", "object.o", 
-# and "library.a" to an equivalent target in the appropriate 
-# architecture-dependent subdirectory.
-##########################################################################
-
-%:$(BINDIR)/%
-	@if [ -x $(BINDIR)/$@ ]; then \
-	  echo make: $(BINDIR)/$@ is up to date; \
-	else \
-	  $(RM) $(BINDIR)/$@; \
-	  echo "Please run: 'make $@' again"; \
-	fi;
-
-%.a:$(LIBDIR)/%.a
-	@echo nothing > /dev/null
-
-%.o:$(LOGIN_ARCH)/%.o
-	@echo nothing > /dev/null
+	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	@$(check_exec)
 
 ##########################################################################
 # Rules to copy libraries and executables from the user's local "working
@@ -287,13 +275,13 @@ endif
 
 ifneq ($(RETURN_ERROR),)
 
-# ###################################
-# force all targets to result in the
-# above action
 error:
 	@echo ERROR: $(ERROR)
 	@exit $(RETURN_ERROR)
 
+# ###################################
+# force all targets to result in the
+# above action
 $(MAKECMDGOALS):error
 
 else
@@ -318,10 +306,6 @@ test: $(TESTBINS)
 	@if [ -z "$(TESTBINS)" ]; then echo No tests to perform.; \
 	else for test in $(TESTBINS); do ($$test || exit 1); done; fi;
 
-depend:
-	@$(RM) $(DEPS) $(SRC_DEPS)
-	@echo Dependencies will be updated next make
-
 clean:
 	$(RM) $(LOGIN_ARCH)/*.o
 
@@ -332,6 +316,18 @@ endif # install_yes != install
 
 ##########################################################################
 ##########################################################################
+
+##########################################################################
+# These static pattern rules allow one to type 'make exec' or 'make lib.a'
+# to create the target in the appropriate architecture-dependent
+# subdirectory.
+##########################################################################
+
+$(TESTEXECS) $(EXECUTABLES) : % : $(BINDIR)/%
+	@echo $< is up to date
+
+$(LIBRARIES) : %.a : $(LIBDIR)/%.a
+	@echo $< is up to date
 
 ##########################################################################
 # Explicit rule to fetch a source code file from the cvs repository if it 
@@ -368,13 +364,13 @@ $(ONELIB) : $(LIB_OBJS)
 ##########################################################################
 autodepend:=yes
 ifneq (${strip $(MAKECMDGOALS)},)
-ifneq ($(filter include depend clean veryclean,$(MAKECMDGOALS)),)
+ifneq ($(filter include clean veryclean,$(MAKECMDGOALS)),)
 autodepend:=no
-endif # MAKECMDGOALS contains include, depend, clean or veryclean
+endif # MAKECMDGOALS contains include, clean or veryclean
 endif # MAKECMDGOALS != ""
 
 #############################################################################
-# If autodepend is not disabled, include the .dep and .odep files
+# If autodepend is not disabled, include the .dep and .sdep files
 #############################################################################
 ifeq ($(autodepend),yes)
 
