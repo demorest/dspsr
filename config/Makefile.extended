@@ -149,8 +149,16 @@ SHXS:=${SCRIPTS:%=$(SHXDIR)/%}
 # LIBRARY and LIBRARIES macros are previously defined in the user Makefile
 ##########################################################################
 LIBRARIES += ${LIBRARY} 
-ALL_LIBS := ${LIBRARIES} ${DSO_NAME}
+ALL_LIBS := ${LIBRARIES}
 LIBS:=${ALL_LIBS:%=$(LIBDIR)/%}
+
+##########################################################################
+# The following lines create the DSOLIB macro,
+# upon which the "dso" target depends.
+# The DSO_NAME macro is previously defined in the user Makefile
+##########################################################################
+
+DSOLIB := $(DSODIR)/$(DSO_NAME)
 
 ##########################################################################
 # The following lines create the RUNTESTS macro,
@@ -394,11 +402,13 @@ else
 ##########################################################################
 ##########################################################################
 
-all: libs $(BINS) scripts
+all: libs dso $(BINS) scripts
 
 include: $(INCS)
 
 libs: include $(LIBS)
+
+dso: $(DSOLIB)
 
 scripts: $(SHXS)
 
@@ -521,7 +531,6 @@ endif
 
 ifdef DSO_NAME
 
-DSOLIB := $(DSODIR)/$(DSO_NAME)
 DSOBJS := $(call src2obj,$(DSO_SRCS))
 DSO_OBJS := $(DSOBJS:%=$(LOGIN_ARCH)/%)
 

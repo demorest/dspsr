@@ -7,7 +7,8 @@
 ##########################################################################
 # the standard targets
 ##########################################################################
-TARGETS := include depend libs scripts all test install clean veryclean cvsck
+TARGETS := include depend libs dso scripts all test install \
+	clean veryclean cvsck
 
 ##########################################################################
 # the standard macro definitions
