@@ -80,17 +80,17 @@ namespace dsp {
     //! timesample but in different chan/pol groups.  This is called by CoherentFBWriter 
     virtual uint64 get_subsize(){ return subsize; }
 
+    //! Returns the number of samples in a data sub-division
+    //! Note that this assumes that ndat*ndim corresponds to an integer number of bytes
+    //! resize() and set_ndat() should enforce this
+    virtual uint64 subsize_samples();
+
   protected:
     
     //! Returns a uchar pointer to the first piece of data
     virtual unsigned char* get_data();
     //! Returns a uchar pointer to the first piece of data
     virtual const unsigned char* const_get_data() const;
-
-    //! Returns the number of samples in a data sub-division
-    //! Note that this assumes that ndat*ndim corresponds to an integer number of bytes
-    //! resize() and set_ndat() should enforce this
-    uint64 subsize_samples();
 
     //! The data buffer
     unsigned char* buffer;
