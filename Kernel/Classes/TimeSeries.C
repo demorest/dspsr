@@ -416,6 +416,9 @@ void dsp::TimeSeries::hack_together(vector<TimeSeries*> bands){
 //! If it is equal to little->get_ndat(), it may/may not be full.
 uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
 {
+  if( verbose )
+    fprintf(stderr,"In dsp::TimeSeries::append()\n");
+
   uint64 ncontain = get_ndat() * get_ndim();
   uint64 ncopy = little->get_ndat() * little->get_ndim();
 
@@ -442,10 +445,17 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
 
   set_ndat (get_ndat() + ncopy/little->get_ndim());
 
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::TimeSeries::append() with "UI64"\n",
+	    ncopy / uint64(ndim));
+	    
   return ncopy / uint64(ndim);
 }
 
 uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsigned ipol){
+  if( verbose )
+    fprintf(stderr,"In dsp::TimeSeries::append()\n");
+
   uint64 ncontain = get_ndat() * get_ndim();
   uint64 ncopy = little->get_ndat() * little->get_ndim();
   
@@ -471,6 +481,10 @@ uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsi
   memcpy (to, from, ncopy*sizeof(float));
   
   set_ndat (get_ndat() + ncopy/little->get_ndim());
+
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::TimeSeries::append() with "UI64"\n",
+	    ncopy / uint64(ndim));
 
   return ncopy / uint64(ndim);
 }			       
