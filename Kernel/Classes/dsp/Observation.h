@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.62 $
-   $Date: 2003/11/04 01:47:10 $
+   $Revision: 1.63 $
+   $Date: 2003/11/06 01:53:40 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -145,7 +145,8 @@ namespace dsp {
     //! Return true if frequency channels are out of order (band swappped)
     bool get_swap () const { return swap; }
 
-    //! Set true if centre channel is centred on centre frequency i.e.
+    //! Set true if centre channel is centred on centre frequency
+    //! i.e. to get centre frequency of first channel:
     //!double dsp::Observation::get_base_frequency (){
     //!  if (dc_centred) return centre_frequency - 0.5*bandwidth;
     //!  else return centre_frequency - 0.5*bandwidth + 0.5*bandwidth/double(nchan);
