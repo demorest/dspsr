@@ -17,8 +17,9 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   unsigned npol = phase->get_npol();
   unsigned nchan = phase->get_nchan();
   unsigned nbin = phase->get_nbin();
+  unsigned ndim = phase->get_ndim();
 
-  archive-> resize (1, npol, nchan, nbin);
+  archive-> resize (1, npol*ndim, nchan, nbin);
 
   /*! Install the given ephemeris and calls update_model
   archive-> set_ephemeris (const psrephem& ephemeris);
@@ -42,10 +43,6 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_ism_rm_corrected (false);
   archive-> set_parallactic_corrected (false);
 
-  if (verbose)
-    cerr << "Archiver::set Pulsar::Archive call set Pulsar::Integration" 
-	 << endl;
-  
   set (archive-> get_Integration(0), phase);
 
   // set_model must be called after the Integration::MJD has been set
@@ -58,7 +55,7 @@ catch (Error& error) {
 
 void dsp::Archiver::set (Pulsar::Integration* integration,
 			 const PhaseSeries* phase)
-{
+{ try {
   if (verbose)
     cerr << "Archiver::set Pulsar::Integration" << endl;
 
@@ -66,7 +63,7 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
   unsigned nchan = phase->get_nchan();
   unsigned ndim = phase->get_ndim();
 
-  integration-> resize (npol, nchan);
+  integration-> resize (npol*ndim, nchan);
 
   integration-> set_mid_time ( phase->get_mid_time() );
   integration-> set_duration ( phase->get_integration_length() );
@@ -92,12 +89,16 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
 		     phase, ichan, ipol, idim);
       }
 }
+catch (Error& error) {
+  throw error += "Archiver::set Pulsar::Integration";
+}
+}
 
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
 				 const PhaseSeries* phase,
 				 unsigned ichan, unsigned ipol, unsigned idim)
-{
+{ try {
   if (verbose)
     cerr << "Archiver::set Pulsar::Profile"
       " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << endl;
@@ -125,7 +126,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
       *to = 0.0;
     }
     else
-      *to = *from / double(phase->get_hit(ibin));
+      *to = *from / float(phase->get_hit(ibin));
 
     to ++;
     from += ndim;
@@ -135,4 +136,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
     cerr << "Archiver::set Pulsar::Profile Warning: " << zeroes 
 	 << " bins with zero hits!" << endl;
 }
+catch (Error& error) {
+  throw error += "Archiver::set Pulsar::Profile";
+}}
 
