@@ -124,12 +124,17 @@ DEPS := ${DEP_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
 ##########################################################################
 
 ifdef NAMESPACE
-#OLDINC := ${INCLUDES:%=$(INCDIR)/%} 
 INCDIR := $(INCDIR)/$(NAMESPACE)
 INSTALL_INCDIR := $(INSTALL_INCDIR)/$(NAMESPACE)
 endif
 
-INCS:=${INCLUDES:%=$(INCDIR)/%}
+SUBINCS := $(filter $(SUBINCDIR)/%,$(INCLUDES))
+BASINCS := $(filter-out $(SUBINCDIR)/%,$(INCLUDES))
+INCLUDES := $(patsubst $(SUBINCDIR)/%,%,$(INCLUDES))
+
+SUBINCS := ${SUBINCS:%=$(INCDIR)/%}
+BASINCS := ${BASINCS:%=$(INCDIR)/%}
+INCS := $(SUBINCS) $(BASINCS)
 
 ##########################################################################
 # The following lines create the SHXS macro,
@@ -204,10 +209,15 @@ $(LOGIN_ARCH)/%.dep: %.c $(LOGIN_ARCH)/.exists
 $(LOGIN_ARCH)/%.dep: %.C $(LOGIN_ARCH)/.exists
 	$(header_depend)
 
+ifneq ($(DEBUG),yes)
+MAKEDEPEND_OUT := 2> /dev/null
+MAKEDEPEND := -$(MAKEDEPEND)
+endif
+
 define header_depend
 @touch $@.tmp
 @echo makedepend $<
-@-$(MAKEDEPEND) $@.tmp ${MDFLAGS} ${CPPFLAGS} $< 2> /dev/null
+@$(MAKEDEPEND) $@.tmp ${MDFLAGS} ${CPPFLAGS} $< $(MAKEDEPEND_OUT)
 @sed 's/$*\.o/$(LOGIN_ARCH)\/$*\.o/g' $@.tmp > $@
 @$(RM) $@.tmp
 endef
@@ -413,16 +423,6 @@ veryclean:
 cvsck:
 	@-cvs status | grep atus | grep -v Up
 
-#ifdef NAMESPACE
-
-# clean out the old includes
-#include: rmoldinc
-
-#rmoldinc:
-#	@rm -f $(OLDINC)
-
-#endif
-
 ##########################################################################
 ##########################################################################
 
@@ -448,7 +448,10 @@ $(RUNTESTS) : %.runtest : $(BINDIR)/%
 ##########################################################################
 # Static pattern rule to copy include files in pwd to include/ directory
 ##########################################################################
-$(INCS) : $(INCDIR)/% : ./%
+$(BASINCS) : $(INCDIR)/% : ./%
+	@$(copy_header)
+
+$(SUBINCS) : $(INCDIR)/$(SUBINCDIR)/% : ./%
 	@$(copy_header)
 
 ##########################################################################
