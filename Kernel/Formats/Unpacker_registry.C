@@ -24,7 +24,12 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
 #include "dsp/MiniUnpack.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> register_miniunpack;
 
-#include "backends.h"
+#include "dsp/backends.h"
+
+#if DSP_CPSR2_4bit
+#include "dsp/CPSR2FourBitUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2FourBitUnpacker> cpsr2_4bit;
+#endif
 
 #if DSP_CPSR2
 #include "dsp/CPSR2TwoBitCorrection.h"
