@@ -8,7 +8,7 @@
 #define cpsr 1
 #include "pspm_search_header.h"
 
-#define TAPES_LOG "/psr/cpsrdata/cpsrtapes.xfer"
+#define TAPES_LOG "cpsrdata/cpsrtapes.xfer"
 #define DLT_LOCK "/tmp/DLT.lock"
 
 class MJD;

@@ -17,6 +17,8 @@
 class fptm_obs {
 
  public:
+  static string logfilename;
+
   MJD start;
   int obstype;
   double duration;
