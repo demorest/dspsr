@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.7 $
-   $Date: 2003/01/10 23:47:00 $
-   $Author: pulsar $ */
+   $Revision: 1.8 $
+   $Date: 2003/08/25 12:55:17 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Detection_h
@@ -59,7 +59,7 @@ namespace dsp {
     //! Perform simple square-law detection
     void square_law ();
 
-    //! Perform simple square-law detection
+    //! Polarization detection (Stokes parameters or Coherency products)
     void polarimetry ();
 
     //! Set the state of the output TimeSeries
