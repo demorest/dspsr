@@ -2,6 +2,7 @@
 
 #include "dsp/Dedispersion.h"
 #include "dsp/Observation.h"
+#include "Error.h"
 
 /*! 
   \f$ DM\,({\rm pc\,cm^{-3}})=2.410000\times 10^{-4}D\,({\rm s\,MHz^{2}}) \f$
@@ -128,7 +129,7 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
   Response::match (input, channels);
 }
 
-void dsp::Response::mark (Observation* output)
+void dsp::Dedispersion::mark (Observation* output)
 {
   output->set_dispersion_measure (dispersion_measure);
 }
@@ -242,7 +243,7 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   tsmear *= 1.1;
   
   // smear across one channel in number of time samples.
-  unsigned nsmear = unsigned (tsmear * sampling_rate);
+  unsigned nsmear = unsigned (ceil(tsmear * sampling_rate));
   
   // recalculate the smearing time simply for display of new value
   tsmear = double (nsmear) / sampling_rate;
