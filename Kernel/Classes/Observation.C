@@ -44,9 +44,6 @@ void dsp::Observation::init ()
   ndim = -1;
   nbit = -1;
 
-  centre_frequency = 0;
-  bandwidth = 0;
-
   type = Signal::Pulsar;
   state = Signal::Intensity;
   basis = Signal::Linear;
@@ -192,6 +189,15 @@ bool dsp::Observation::combinable (const Observation & obs)
     if (state != obs.state)
       cerr << "dsp::Observation::combinable different state:"
 	   << state << " and " << obs.state << endl;
+    if (source != obs.source)
+      cerr << "dsp::Observation::combinable different source:"
+	   << source << " and " << obs.source << endl;
+    if (swap != obs.swap)
+      cerr << "dsp::Observation::combinable different swap:"
+	   << swap << " and " << obs.swap << endl;
+    if (dc_centred != obs.dc_centred)
+      cerr << "dsp::Observation::combinable different dc_centred:"
+	   << dc_centred << " and " << obs.dc_centred << endl;
     if (basis != obs.basis)
       cerr << "dsp::Observation::combinable different feeds:"
 	   << basis << " and " << obs.basis << endl;
@@ -205,7 +211,8 @@ bool dsp::Observation::combinable (const Observation & obs)
 	   (state == obs.state) &&
 	   (source == obs.source) &&
 	   (swap  == obs.swap) &&
-	   (dc_centred == obs.dc_centred) );
+	   (dc_centred == obs.dc_centred) &&
+	   (basis == obs.basis ));
 }
 
 void dsp::Observation::set_telescope (char _telescope)
