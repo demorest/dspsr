@@ -6,6 +6,7 @@ dsp::PhaseSeries::PhaseSeries ()
 {
   integration_length = 0;
   folding_period = 0;
+  reference_phase = 0;
 }
 
 dsp::PhaseSeries::~PhaseSeries () { }
@@ -55,13 +56,14 @@ MJD dsp::PhaseSeries::get_mid_time () const
   MJD midtime = 0.5 * (start_time + end_time);
 
   if (folding_polyco) {
-    // truncate midtime to the nearest pulse phase zero
-    Phase phase = folding_polyco->phase(midtime).Floor();
+    // truncate midtime to the nearest pulse phase = reference_phase
+    Phase phase = folding_polyco->phase(midtime).Floor() + reference_phase;
     midtime = folding_polyco->iphase(phase);
   }
 
   if (folding_period) {
-    double phase = fmod (midtime.in_seconds(), folding_period)/folding_period;
+    double phase = reference_phase + 
+      fmod (midtime.in_seconds(), folding_period)/folding_period;
     midtime -= phase * folding_period;
   }
 

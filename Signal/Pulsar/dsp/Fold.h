@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/07/28 09:58:53 $
+   $Revision: 1.17 $
+   $Date: 2003/07/29 13:28:38 $
    $Author: wvanstra $ */
 
 
@@ -82,6 +82,11 @@ namespace dsp {
     //! Get the ephemeris with which to create the phase model
     const psrephem* get_pulsar_ephemeris () const;
 
+    //! Set the reference phase (phase of bin zero)
+    void set_reference_phase (double phase) { reference_phase = phase; }
+    //! Get the reference phase (phase of bin zero)
+    double get_reference_phase () const { return reference_phase; }
+
     //! Overload Transformation::set_input to set weighted_input
     void set_input (TimeSeries* input);
 
@@ -130,6 +135,9 @@ namespace dsp {
 
     //! Number of phase bins set using set_nbin
     unsigned requested_nbin;
+
+    //! Reference phase (phase of bin zero)
+    double reference_phase;
 
     //! Number of polynomial coefficients in model
     unsigned ncoef;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/10 15:41:54 $
+   $Revision: 1.7 $
+   $Date: 2003/07/29 13:28:38 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -36,6 +36,11 @@ namespace dsp {
 
     //! Add prof to this
     PhaseSeries& operator += (const PhaseSeries& prof);
+
+    //! Set the reference phase (phase of bin zero)
+    void set_reference_phase (double phase) { reference_phase = phase; }
+    //! Get the reference phase (phase of bin zero)
+    double get_reference_phase () const { return reference_phase; }
 
     //! Set the period at which to fold data (in seconds)
     void set_folding_period (double folding_period);
@@ -71,6 +76,9 @@ namespace dsp {
 
     //! Phase polynomial(s) with which PSR is folded
     Reference::To<const polyco> folding_polyco;
+
+    //! Reference phase (phase of bin zero)
+    double reference_phase;
 
     //! Number of time samples integrated into each phase bin
     vector<unsigned> hits;

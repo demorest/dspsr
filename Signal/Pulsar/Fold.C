@@ -20,6 +20,8 @@ dsp::Fold::Fold ()
   requested_nbin = 0;
   folding_nbin = 0;
 
+  reference_phase = 0.0;
+
   ncoef = 15;
   nspan = 120;
 
@@ -347,6 +349,12 @@ void dsp::Fold::transformation ()
   if (folding_nbin == 0)
     choose_nbin ();
 
+  if ( output->integration_length &&
+       output->get_reference_phase() != get_reference_phase() )
+    throw Error (InvalidState, "dsp::Fold::transformation",
+		 "output reference phase=%lf != reference phase=%lf",
+		 output->get_reference_phase() != get_reference_phase() );
+
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
@@ -462,7 +470,8 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   if (folding_period != 0) {
 
     pfold = folding_period;
-    phi   = fmod (start_time.in_seconds(), folding_period) / folding_period;
+    phi   = reference_phase + 
+      fmod (start_time.in_seconds(), folding_period) / folding_period;
     while (phi<0.0) phi += 1.0;
 
     if (verbose)
@@ -473,8 +482,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
     // find the period and phase at the mid time of the first sample
     pfold = folding_polyco->period(start_time);
-    phi = folding_polyco->phase(start_time).fracturns();
-    if (phi<0.0) phi += 1.0;
+    phi = reference_phase + folding_polyco->phase(start_time).fracturns();
     
     if (verbose)
       cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
@@ -522,9 +530,11 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
       datendweight += ndatperweight;
     }
 
+    while (phi >= nphi) phi -= nphi;
+    while (phi < 0) phi += nphi;
+
     ibin = unsigned(phi);
     phi += binspersample;
-    if (phi >= nphi) phi -= nphi;
 
     assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
