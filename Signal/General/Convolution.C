@@ -85,10 +85,10 @@ void dsp::Convolution::operation ()
   // number of points after first fft
   unsigned n_fft = response->get_ndat();
 
-  //! Complex samples dropped from beginning of cyclical convolution result
+  //! Complex samples dropped from end of cyclical convolution result
   unsigned nfilt_pos = response->get_impulse_pos ();
 
-  //! Complex samples dropped from end of cyclical convolution result
+  //! Complex samples dropped from beginning of cyclical convolution result
   unsigned nfilt_neg = response->get_impulse_neg ();
 
   unsigned n_overlap = nfilt_pos + nfilt_neg;
@@ -170,7 +170,7 @@ void dsp::Convolution::operation ()
   output->change_state (Timeseries::Analytic);
 
   // nfilt_pos complex points were dropped from the start of the first FFT
-  output->change_start_time (nfilt_pos);
+  output->change_start_time (nfilt_neg);
 
   // data will be scaled by the FFT
   if (fft::get_normalization() == fft::nfft)
@@ -250,7 +250,7 @@ void dsp::Convolution::operation ()
 	  
 	  // copy the good (complex) data back into the time stream
 	  ptr = output -> get_datptr (ichan, ipol) + offset;
-	  memcpy (ptr, complex_time + nfilt_pos*2, nbytes_good);
+	  memcpy (ptr, complex_time + nfilt_neg*2, nbytes_good);
 
 	}  // for each poln, if matrix convolution
       }  // for each part of the time series
