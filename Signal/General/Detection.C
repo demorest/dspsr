@@ -56,7 +56,8 @@ void dsp::Detection::transformation ()
 	 << Signal::state_string(state) << endl;
 
   if (input->get_nbit() != sizeof(float) * 8)
-    throw_str ("Detection::transformation input not floating point");
+    throw Error(InvalidState,"Detection::transformation()",
+		"input not floating point (nbit=%d)",input->get_nbit());
 
   if( input.get()==output.get() && state==input->get_state() ){
     if( verbose )
@@ -149,14 +150,24 @@ void dsp::Detection::square_law ()
 {
   if (verbose)
     cerr << "Detection::square_law" << endl;
-  auto_ptr<dsp::SLDetect> sld(new dsp::SLDetect);
-  sld->set_input( input );
-  sld->set_output( output );
-  
-  sld->operate();
+ 
+  if( state==Signal::Intensity && input->get_state()==Signal::PPQQ ){
+    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
+    pscrunch->set_input( input );
+    pscrunch->set_output( output );
 
-  if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
-    auto_ptr<dsp::PScrunch> pscrunch(new dsp::PScrunch);
+    pscrunch->operate();
+    return;
+  }
+
+ Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
+ sld->set_input( input );
+ sld->set_output( output );
+ 
+ sld->operate();
+ 
+ if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
+    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
     pscrunch->set_input( output );
     pscrunch->set_output( output );
 
