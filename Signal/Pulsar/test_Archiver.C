@@ -34,6 +34,7 @@ int main (int argc, char** argv)
 
   char* metafile = 0;
   bool verbose = false;
+  bool debug = false;
 
   // number of time samples loaded from file at a time
   int block_size = 512*1024;
@@ -51,6 +52,7 @@ int main (int argc, char** argv)
       dsp::Operation::verbose = true;
       dsp::Input::verbose = true;
       dsp::Archiver::verbose = true;
+      debug = true;
     case 'v':
       verbose = true;
       break;
@@ -146,26 +148,34 @@ int main (int argc, char** argv)
 
       manager.load (&voltages);
 
-      cerr << "check voltages " << voltages.get_state_as_string() 
-           << " block " << block << endl;
-      voltages.check();
-      
+      if (debug) {
+	cerr << "check " << voltages.get_state_as_string() 
+	     << " voltages block " << block << endl;
+	voltages.check();
+      }
+
       if (!voltages.get_detected())  {
         detect.operate ();
-        cerr << "check voltages " << voltages.get_state_as_string()
-             << " block " << block << endl;
-        voltages.check();
+
+	if (debug) {
+	  cerr << "check " << voltages.get_state_as_string()
+	       << " voltages block " << block << endl;
+	  voltages.check();
+	}
       }
 
       fold.operate ();
 
-      cerr << "check profiles " << profiles.get_state_as_string()
-           << " block " << block << endl;
-
       block++;
 
-      cerr << "+/-" << block*block_size << endl;
-      profiles.check(-block*block_size, block*block_size);
+      if (debug) {
+	float range = block*block_size / nbin;
+	
+	cerr << "check " << profiles.get_state_as_string()
+	     << " profiles block " << block << " +/-" << range << endl;
+	profiles.check (-range, range);
+      }
+
 
       cerr << "finished " << block << " blocks\r";
       if (block == blocks) break;
