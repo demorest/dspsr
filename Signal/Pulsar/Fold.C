@@ -265,6 +265,13 @@ unsigned dsp::Fold::choose_nbin ()
   return folding_nbin;
 }
 
+//! Set the reference phase (phase of bin zero)
+void dsp::Fold::set_reference_phase (double phase)
+{
+  // ensure that phase runs from 0 to 1
+  phase -= floor (phase);
+  reference_phase = phase;
+}
 
 //! Set the period at which to fold data (in seconds)
 void dsp::Fold::set_folding_period (double _folding_period)
@@ -488,9 +495,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   if (folding_period != 0) {
 
     pfold = folding_period;
-    phi   = reference_phase + 
-      fmod (start_time.in_seconds(), folding_period) / folding_period;
-    while (phi<0.0) phi += 1.0;
+    phi   = fmod (start_time.in_seconds(), folding_period) / folding_period;
 
     if (verbose)
       cerr << "dsp::Fold::fold CAL period=" << pfold << endl;
@@ -500,16 +505,15 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
     // find the period and phase at the mid time of the first sample
     pfold = folding_polyco->period(start_time);
-    phi = reference_phase + folding_polyco->phase(start_time).fracturns();
+    phi   = folding_polyco->phase(start_time).fracturns();
     
     if (verbose)
       cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
 
   }
 
-  double nphi = double (folding_nbin);
-  double binspersample = nphi * sampling_interval / pfold;
-  phi *= nphi;
+  // adjust to reference phase
+  phi -= reference_phase;
 
   if (verbose)
     cerr << "dsp::Fold::fold phase=" << phi << endl;
@@ -541,6 +545,9 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
     datendweight = (iweight + 1) * ndatperweight;
   }
 
+  double double_nbin = double (folding_nbin);
+  double phase_per_sample = sampling_interval / pfold;
+
   for (idat=idat_start; idat < idat_end; idat++) {
 
     if (idat >= datendweight) {
@@ -548,11 +555,12 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
       datendweight += ndatperweight;
     }
 
-    while (phi >= nphi) phi -= nphi;
-    while (phi < 0) phi += nphi;
+    // ensure that phi runs from 0 to 1
+    phi -= floor (phi);
 
-    ibin = unsigned(phi);
-    phi += binspersample;
+    ibin = unsigned (phi * double_nbin);
+
+    phi += phase_per_sample;
 
     assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
