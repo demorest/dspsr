@@ -76,7 +76,7 @@ LO3D = -lGL $(LXMU) $(LX11)
 # PGPLOT, C-wrappers, Motif/PGPLOT
 LPGPLOT = -lpgplot $(LX11) $(LF77)
 LCPGPLOT= -lcpgplot $(LPGPLOT)
-LXMPGPLOT = -L/usr/local/pgplot -lXmPgplot $(LMOTIF) $(LCPGPLOT)
+LXMPGPLOT = -lXmPgplot $(LMOTIF) $(LCPGPLOT)
 
 LX11 = -lX11
 LXMU = -lXmu
