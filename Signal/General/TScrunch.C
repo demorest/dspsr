@@ -62,6 +62,11 @@ void dsp::TScrunch::transformation ()
 
   unsigned sfactor = get_sfactor();
 
+  if( input->get_ndat() < uint64(sfactor) )
+    throw Error(InvalidState,"dsp::TScrunch::transformation()",
+		"Your ndat ("UI64") is less than the scrunch factor (%d) so you won't get any samples out!",
+		input->get_ndat(),sfactor);
+
   if( !input->get_detected() )
     throw_str ("dsp::TScrunch: invalid input state: " + input->get_state_as_string());
 
@@ -69,6 +74,9 @@ void dsp::TScrunch::transformation ()
 
   if( input.get() != output.get() ){
     output->Observation::operator=( *input );
+    fprintf(stderr,"resizing to "UI64" / %d = "UI64"\n",
+	    input->get_ndat(), sfactor,
+	    uint64(input->get_ndat()/ sfactor));
     output->resize( input->get_ndat()/sfactor );
   }
 
