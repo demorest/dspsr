@@ -1,0 +1,69 @@
+//-*-C++-*-
+
+/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitUnpacker.h,v $
+   $Revision: 1.1 $
+   $Date: 2004/08/14 05:46:58 $
+   $Author: sord $ */
+
+#ifndef __FourBitUnpacker_h
+#define __FourBitUnpacker_h
+
+#include <vector>
+
+#include "dsp/Unpacker.h"
+
+#include "environ.h"
+
+namespace dsp {
+
+  class FourBitTable;
+  //! Converts BitSeries data from four-bit digitized to floating-point values
+  /*! The conversion method is a simple shift and OR operation. It also assumes that there 
+    is only one polarisation in the data  */
+
+  class FourBitUnpacker: public Unpacker {
+
+  public:
+
+    //! Null constructor
+    FourBitUnpacker (const char* name = "FourBitUnpacker");
+
+    //! Virtual destructor
+    virtual ~FourBitUnpacker ();
+
+    //! Set the digitisation convention
+    void set_table (FourBitTable* table);
+
+    //! Get the digitisation convention
+    const FourBitTable* get_table () const;
+
+    //! Return a pointer to a new instance of the appropriate sub-class
+    static FourBitUnpacker* create (const BitSeries& input);
+
+    //! return the stats from nsample samples
+    int64 stats (vector<double>& mean, vector<double>& var);
+
+    //! Number of samples for stats
+    unsigned nsamples;
+			     
+  protected:
+
+
+    //! The four bit table generator  
+    Reference::To<FourBitTable> table;
+    
+    //! Perform the bit conversion transformation on the input TimeSeries
+    virtual void transformation ();
+
+    //! Unpacking algorithm may be re-defined by sub-classes
+    virtual void unpack ();
+
+    //! Simple unpacker
+    void simple_unpack( float * out, const unsigned char * in, uint64 ndat);
+
+    //! What ipol to unpack into
+    unsigned get_output_ipol ();
+	
+  };
+}
+#endif
