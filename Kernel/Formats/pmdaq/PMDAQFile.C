@@ -7,6 +7,7 @@
 
 #include "genutil.h"
 #include "Error.h"
+#include "environ.h"
 
 #include "dsp/PMDAQFile.h"
 #include "dsp/PMDAQ_Observation.h"
@@ -20,6 +21,8 @@
 dsp::PMDAQFile::PMDAQFile (const char* filename) 
   : File ("PMDAQ")
 {
+  using_second_band = false;
+
   if (filename)
     open (filename);
 }
@@ -108,16 +111,27 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 	    info.get_ndat());
 }
 
+// If user has requested channels that lie in the second observing band on disk, modify the bandwidth and centre frequency of output
+void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
+  if( !data->has_two_filters() || !using_second_band )
+    return;
+  
+  info.set_centre_frequency( data->get_second_centre_frequency() );
+  info.set_bandwidth( data->get_second_bandwidth() );
+}
+
 void dsp::PMDAQFile::open_file (const char* filename)
 {  
   if (get_header (pmdaq_header, filename) < 0)
     throw_str ("PMDAQFile::open - failed get_header(%s): %s",
 	       filename, strerror(errno));
   
-  PMDAQ_Observation data (pmdaq_header);
+  PMDAQ_Observation data(pmdaq_header);
   
   info = data;
    
+  modify_info(&data);
+
   work_out_ndat(filename);
 
   // Open the data file, which is now just filename.

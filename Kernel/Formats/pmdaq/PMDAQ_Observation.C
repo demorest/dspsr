@@ -6,6 +6,8 @@
 #include "genutil.h"
 #include "coord.h"
 
+// See /psr/cvshome/hknight/soft_swin/search/sc_td/sc_pmhead.inc for more details on header format
+
 dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 {
   if (header == NULL)
@@ -51,49 +53,49 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   // //////////////////////////////////////////////////////////////////////
   //
-  // FREQS, NCHAN ETC.
+  // nchan(s), centre_frequency(s), bandwidth(s) 
   //
-  double freq_channel_one;
-  double chan_incr;
+  unsigned nfilters = read_header<unsigned>(header,206,2);
 
-  nscanned = sscanf(&header[208],"%8lf",&chan_incr);
-  if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read channel increment\n");
+  double chanbw1 = read_header<double>(header,208,8);
+  double chanbw2 = read_header<double>(header,216,8);
+
+  unsigned nchan1 = read_header<unsigned>(header,224,4);
+  unsigned nchan2 = read_header<unsigned>(header,228,4);
+
+  double freq_chan1_1 = read_header<double>(header,232,12);
+  double freq_chan1_2 = read_header<double>(header,244,12);
+
+  if( nfilters==1 ){
+    set_nchan( nchan1 );
+
+    if( nchan==512 && fabs(chanbw1) > 2.9 ){
+      fprintf(stderr,"WARNING: PMDAQ_Observation has read in that nchan=512 and chanbw1=%f which seems strange.  Taking the guess that chanbw1 should be -0.5\n",
+	      chanbw1);
+      chanbw1 = -0.5;
+    }
+
+    set_centre_frequency (freq_chan1_1 - 0.5 * chanbw1 + get_nchan()/2 * chanbw1);
+
+    set_bandwidth (chanbw1 * get_nchan());
+
+    second_centre_frequency = 0;
+    second_bandwidth = 0;
+    freq1_channels = get_nchan();
+    freq2_channels = 0;
   }
+  else{
+    set_nchan( nchan1 + nchan2 );
 
-  unsigned dummy_nchan;
+    freq1_channels = nchan1;
+    freq2_channels = nchan2;
+    
+    set_centre_frequency( freq_chan1_1 - 0.5 * chanbw1 + nchan1/2 * chanbw1 );
+    second_centre_frequency = freq_chan1_2 - 0.5 * chanbw2 + nchan2/2 * chanbw2;
 
-  nscanned = sscanf(&header[224],"%d",&dummy_nchan);
-  if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read number of channels\n");
+    set_bandwidth (chanbw1 * nchan1); 
+    second_bandwidth = chanbw2 * nchan2; 
   }
-  set_nchan ( dummy_nchan );
-  cerr << "Number of channels is " << get_nchan() << endl;
-
-  nscanned = sscanf(&header[232],"%12lf",&freq_channel_one);
-  if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read frequency of channel one\n");
-  }
-
-  if( nchan==512 && fabs(chan_incr) > 2.9 ){
-    fprintf(stderr,"WARNING: PMDAQ_Observation has read in that nchan=512 and chan_incr=%f which seems strange.  Taking the guess that chan_incr should be -0.5\n",
-	    chan_incr);
-    chan_incr = -0.5;
-  }
-
-  set_centre_frequency (freq_channel_one - 0.5 * chan_incr + get_nchan()/2 * 
-			chan_incr);
-
-  //  fprintf(stderr,"PMDAQ_Obs: cf=%f - 0.5*%f + %d/2 * %f = %f\n",
-  //  freq_channel_one, chan_incr, get_nchan(), chan_incr, centre_frequency);
-  //exit(0);
-
-  // //////////////////////////////////////////////////////////////////////
-  //
-  // BW
-  //
-
-  set_bandwidth (chan_incr * get_nchan());   
 
   // //////////////////////////////////////////////////////////////////////
   //
