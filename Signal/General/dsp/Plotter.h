@@ -285,7 +285,8 @@ bool dsp::Plotter<DataType>::user_input(){
     cpgclos();
     cpgslct(dev);
 
-    fprintf(stderr,"Out of replot for ps file\n");
+    if(Ready::verbose || Operation::verbose)
+      fprintf(stderr,"Out of replot for ps file\n");
 
     mutated = false;
     return true;
@@ -295,7 +296,8 @@ bool dsp::Plotter<DataType>::user_input(){
     return true;
   }
 
-  fprintf(stderr,"You typed '%c'\n",user_char);
+  if(Ready::verbose || Operation::verbose)
+    fprintf(stderr,"You typed '%c'\n",user_char);
   mutated = false;
 
   if(Ready::verbose || Operation::verbose)
@@ -422,61 +424,63 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
     else
       status_to_right = true;
 
-    fprintf(stderr,
-	    "dataset %d: calling split 1st time with lhs limit=%f\n",
-	    dataset,xref);
+    if(Ready::verbose || Operation::verbose)
+      fprintf(stderr,"dataset %d: calling split 1st time with lhs limit=%f\n",
+	      dataset,xref);
 
     // if successful, newie will come out before xpos
     void* ans = plotdatas[dataset]->split(xref,status_to_left,status_to_right);
-    fprintf(stderr,"Got ans=%p\n",ans);
+    if(Ready::verbose || Operation::verbose)
+      fprintf(stderr,"Got ans=%p\n",ans);
     exit(0);
 
-    auto_ptr<DataType> newie( dynamic_cast<DataType*>(plotdatas[dataset]->split(xref,status_to_left,status_to_right)) );
-    fprintf(stderr,"dsp::Plotter::highlight():: out of split with newie.get()=%p\n",newie.get());
+    Reference::To<DataType> newie( dynamic_cast<DataType*>(plotdatas[dataset]->split(xref,status_to_left,status_to_right).ptr()) );
+    if(Ready::verbose || Operation::verbose)
+      fprintf(stderr,"dsp::Plotter::highlight():: out of split with newie.ptr()=%p\n",newie.ptr());
 
-    if( newie.get() ){
+    if( newie.ptr() ){
       if( Operation::verbose )
 	fprintf(stderr,"Successfully out of plotdatas[%d]->split() with newie=%p\n",dataset,newie.get());
       plotdatas.insert(plotdatas.begin()+dataset,newie->clone());
-      fprintf(stderr,
-	      "highlight:: have inserted newie before dataset %d\n",
+      if(Ready::verbose || Operation::verbose)
+	fprintf(stderr,"highlight:: have inserted newie before dataset %d\n",
 	      dataset);
       dataset++;
     }
-    fprintf(stderr,"yo1\n");
 
     /* do the rhs split */
     status_to_left = plotdatas[dataset]->get_data_is_good();
     status_to_right = orig_data_status;
     
-    if( newie.get() ){
-      sink(newie);
-      auto_ptr<DataType> temp;
-      newie = temp;
-    }
+    if( newie )
+      newie = new DataType;
 
-    fprintf(stderr,"calling split 2nd time with rhs limit=%f and plotdatas.size()=%d and dataset=%d\n",
-	    x,plotdatas.size(),dataset);
-    auto_ptr<DataType> temp( dynamic_cast<DataType*>(plotdatas[dataset]->split(x,status_to_left,status_to_right)) );
-    newie = temp;
+    if(Ready::verbose || Operation::verbose)
+      fprintf(stderr,"calling split 2nd time with rhs limit=%f and plotdatas.size()=%d and dataset=%d\n",
+	      x,plotdatas.size(),dataset);
+    newie = dynamic_cast<DataType*>( plotdatas[dataset]->split(x,status_to_left,status_to_right).ptr() );
 
-    if( newie.get() ){
+    if( newie.ptr() ){
       plotdatas.insert(plotdatas.begin()+dataset,newie->clone());
-      fprintf(stderr,"inserted before dataset %d\n",dataset);
+      if(Ready::verbose || Operation::verbose)
+	fprintf(stderr,"inserted before dataset %d\n",dataset);
       dataset++;
     }
   }
 
-  fprintf(stderr,"Ready to merge\n");
+  if(Ready::verbose || Operation::verbose)
+    fprintf(stderr,"Ready to merge\n");
 
   for( int idataset=0; idataset< int(plotdatas.size()-1); idataset++){
     if( plotdatas[idataset]->merge(*plotdatas[idataset+1]) ){
       plotdatas.erase(plotdatas.begin()+idataset+1);
-      fprintf(stderr,"erased dataset %d\n",idataset+1);
+      if(Ready::verbose || Operation::verbose)
+	fprintf(stderr,"erased dataset %d\n",idataset+1);
       idataset--;
     }
     else
-      fprintf(stderr,"datasets %d and %d not merged\n",idataset,idataset+1);
+      if(Ready::verbose || Operation::verbose)
+	fprintf(stderr,"datasets %d and %d not merged\n",idataset,idataset+1);
   }
 
   return true;
