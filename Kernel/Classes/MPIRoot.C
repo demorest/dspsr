@@ -434,8 +434,6 @@ void dsp::MPIRoot::request_data ()
 {
   ensure_receptive ("dsp::MPIRoot::request_data");
 
-  cerr << "*" << endl;
-  
   if (data_request != MPI_REQUEST_NULL)
     throw Error (InvalidState, "dsp::MPIRoot::request_data",
                  "data_request already pending");
