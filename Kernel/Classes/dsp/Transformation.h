@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.7 $
-   $Date: 2003/03/13 23:17:00 $
+   $Revision: 1.8 $
+   $Date: 2003/07/01 05:14:07 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -85,6 +85,12 @@ void dsp::Transformation<In, Out>::operation ()
   if (verbose)
     cerr << "Transformation["+name+"]::operate" << endl;
 
+  // If inplace is true, then the input and output should be of the same type....
+  if( type==inplace && !input.ptr() && output.ptr() )
+    input = (In*)output.get();
+  if( type==inplace && !output.ptr() && input.ptr() )
+    output = (Out*)input.get();
+
   if (!input)
     throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
 		 "no input");
@@ -99,14 +105,14 @@ void dsp::Transformation<In, Out>::operation ()
     throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
 		 "invalid input state: " + reason);
 
-  if (!inplace && !output)
+  if ( type!=inplace && !output)
     throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
 		 "no output");
 
   //! call the pure virtual method defined by sub-classes
   transformation ();
 
-  if (!inplace && !output->state_is_valid (reason))
+  if ( type!=inplace && !output->state_is_valid (reason))
     throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
 		 "invalid output state: " + reason);
 }
