@@ -13,7 +13,7 @@
 
 bool dsp::Bandpass::verbose = false;
 
-dsp::Bandpass::Bandpass ( const char * _name, Behaviour _type ) : Transformation<TimeSeries,Response> (_name, _type)
+dsp::Bandpass::Bandpass (const char *_name, Behaviour _type )  : Transformation<TimeSeries,Response> (_name, _type)
 {
   nchan = 256;
 }
@@ -36,6 +36,8 @@ void dsp::Bandpass::transformation ()
   }
 
   nsamp_fft = input->get_ndat ();
+
+
   nchan = nsamp_fft;
   
 
@@ -58,9 +60,9 @@ void dsp::Bandpass::transformation ()
 
     for (unsigned int chan = 0; chan < nchan;chan++) {
       ptr = ptr_base + chan;
-      if (verbose)
+   /*   if (verbose)
        cerr << "Incremented pointer" <<	ptr << " ..value " << *ptr << endl;
-      
+     */ 
       *op = *ptr;
       op++;
       *op=0;
@@ -80,9 +82,10 @@ void dsp::Bandpass::transformation ()
   fftw_complex *out;
   
   outp = new float [2*nchan];
-  
+  /*  
   if (verbose)
     cerr << "dsp::Bandpass::npoints in BP is " << nchan << endl;
+  */
 
   fftw_plan p;
   p = fftw_create_plan(nchan,FFTW_FORWARD,FFTW_ESTIMATE);

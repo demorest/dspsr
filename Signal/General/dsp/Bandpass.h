@@ -24,7 +24,7 @@ namespace dsp {
 
   public:
     //! Null constructor
-    Bandpass (const char* name = "Bandpass", Behaviour type = anyplace);
+    Bandpass (const char * _name = "Bandpass", Behaviour _type= outofplace);
     //! Set the number of channels
     void set_nchan (unsigned _nchan) { nchan = _nchan; }
 
