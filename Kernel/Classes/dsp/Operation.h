@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/07/02 08:04:09 $
-   $Author: pulsar $ */
+   $Revision: 1.4 $
+   $Date: 2002/07/15 09:34:46 $
+   $Author: wvanstra $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -37,16 +37,16 @@ namespace dsp {
     Operation (const char* name, Behaviour type);
 
     //! Virtual destructor
-    virtual ~Operation ();
+    virtual ~Operation () {}
 
     //! Call this method to operate on input Timeseries
     virtual void operate ();
 
     //! Return a string that describes the operation
-    virtual const string descriptor () const = 0;
+    //virtual const string descriptor () const = 0;
 
     //! Initialize from a descriptor string as output by above
-    virtual void initialize (const string& descriptor) = 0;
+    //virtual void initialize (const string& descriptor) = 0;
 
     //! Set the container from which input data will be read
     virtual void set_input (const Timeseries* input);
