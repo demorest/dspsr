@@ -32,7 +32,7 @@ void dsp::Seekable::reset ()
 {
   end_of_data = false;
   current_sample = 0;
-  Input::seek (0);
+  seek (0);
   last_load_ndat = 0;
 }
 
