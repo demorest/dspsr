@@ -8,7 +8,7 @@
 #include "tci_file.h"
 #include "genutil.h"
 
-#define _DEBUG
+// #define _DEBUG
 
 dsp::S2File::S2File (const char* filename)
   : File ("S2")
@@ -53,13 +53,13 @@ void dsp::S2File::open_file (const char* filename)
   str2utc (&utc, header.hdr_time);  
   info.set_start_time (utc);
 
-
-#ifdef _DEBUG
-  char buffer [50];
-  fprintf (stderr, "dsp::S2File::open source_start_time: %s->%s->%s \n",
-	   header.hdr_time, utc2str(buffer, utc, "yyyy-ddd-hh:mm:ss"),
-	   info.get_start_time().printall());
-#endif
+  if (verbose) {
+    char buffer [50];
+    cerr << "dsp::S2File::open source_start_time"
+      "\n  " << header.hdr_time << 
+      "\n  " << utc2str(buffer, utc, "yyyy-ddd-hh:mm:ss") <<
+      "\n  " << info.get_start_time().printall() << endl;
+  }
   
   info.set_mode (header.hdr_s2mode);
   
@@ -77,9 +77,9 @@ void dsp::S2File::open_file (const char* filename)
 
   info.set_npol (2);
   
-  if ( extra_hdr.source.length() < 1 ){
-    info.set_source (extra_hdr.source.c_str());
-  } 
+  if ( extra_hdr.source.length() > 1)
+    info.set_source (extra_hdr.source);
+
   else if (strlen(header.hdr_usr_field2) < 8)
     cerr << "dsp::S2File::open Warning: TCI header field2 ("
 	 << header.hdr_usr_field2 << ") lacks source" << endl;
@@ -132,6 +132,12 @@ void dsp::S2File::open_file (const char* filename)
 
 void dsp::S2File::load_S2info (const char *filename)
 {
+  extra_hdr.source = "";
+  extra_hdr.telid = 0;
+  extra_hdr.freq = 0.0;
+  extra_hdr.calperiod = 0.0;
+  extra_hdr.tapeid = "";
+
   FILE *S2Info;
   static char* linebuf= new char[40];
   char* whitespace = "\n\t ";
