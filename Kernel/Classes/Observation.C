@@ -18,11 +18,7 @@
 #include "string_utils.h"
 #include "Error.h"
 #include "Reference.h"
-#include "Phase.h"
-#include "poly.h"
-#include "polyco.h"
-#include "tempo++.h"
-#include "psrephem.h"
+
 #include "environ.h"
 
 #include "dsp/Observation.h"
@@ -424,6 +420,10 @@ bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_fail
 	    obs.get_start_time().in_seconds());
     fprintf(stderr,"difference                       =%.9f\n",fabs(difference));
     fprintf(stderr,"difference needed to be less than %.9f\n",0.9/rate);    
+    fprintf(stderr,"get_end_time() is at %f samples; obs.get_start_time() is at %f samples\n",
+	    float(get_ndat()),
+	    (obs.get_start_time()-get_start_time()).in_seconds()*get_rate());
+
     fprintf(stderr,"ndat="UI64" and rate=%f.  obs.ndat="UI64" obs.rate=%f\n",
 	    get_ndat(),rate,obs.get_ndat(),obs.rate);
   } 
@@ -900,37 +900,3 @@ void dsp::Observation::old_file2obs(int fd){
 
 }
 
-//! Returns the phase of a particular sample at the centre frequency
-//! (Uses the given polyco)
-Phase dsp::Observation::samp2phase(Reference::To<polyco> p,uint64 samp){
-  if( !p )
-    throw Error(InvalidParam,"dsp::Observation::samp2phase()",
-                "Polyco pointer supplied was null!");
-
-  return p->phase( get_start_time() + double(samp)/get_rate(),
-                   get_centre_frequency());
-}
-
-//! Returns the phase of a particular sample at the centre frequency
-//! Only call this if it is a one-off call as it generates a polyco every time you call it
-//! (Throws an Error if a polyco can't be generated from the sourcename)
-Phase dsp::Observation::samp2phase(uint64 samp){
-  static const int nspan = 60;
-  static const int ncoef = 15;
-
-  Reference::To<psrephem> eph(new psrephem);
-
-  if( eph->create(get_source()) < 0 )
-    throw Error(InvalidState,"dsp::Observation::samp2phase(uint64)",
-                "Could not create ephemeris for source '%s'",
-                get_source().c_str());
-
-  Reference::To<polyco> p(new polyco);
-
-  MJD time = get_start_time();
-
-  Tempo::set_polyco( *p, *eph, time, time, nspan,ncoef, 8,
-                     get_telescope_code());
-
-  return samp2phase(p,samp);
-}
