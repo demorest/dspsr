@@ -51,6 +51,9 @@ namespace dsp {
     void set_ylabel(string _ylabel){ ylabel = _ylabel; }    
     string get_ylabel(){ return ylabel; }
 
+    void set_just_do_basics(bool _just_do_basics){ just_do_basics = _just_do_basics; }    
+    bool get_just_do_basics(){ return just_do_basics; } 
+
   protected:
     
     virtual bool open_plotwindow();
@@ -67,6 +70,9 @@ namespace dsp {
     string xlabel;
     string ylabel;
 
+    //! When set to true, a call to plot() just does BasicPlotter::plot()
+    bool just_do_basics;
+
   };
 
 }
@@ -81,6 +87,8 @@ dsp::Plotter<DataType>::Plotter() : BasicPlotter<DataType>() {
   base_title = " ";
   xlabel = "Time (s)";
   ylabel = "Intensity";
+
+  just_do_basics = false;
 
   mutated = true;
 }
@@ -102,6 +110,9 @@ bool dsp::Plotter<DataType>::open_plotwindow(){
 
 template<class DataType>
 bool dsp::Plotter<DataType>::plot(){
+  if( just_do_basics )
+    return dsp::BasicPlotter<DataType>::plot();
+
   if(Ready::verbose || Operation::verbose)
     fprintf(stderr,"In dsp::Plotter::plot()\n\n\n\n\n\n\n\n");
 
