@@ -74,6 +74,14 @@ const dsp::Shape& dsp::Shape::operator += (const dsp::Shape& ds)
 void dsp::Shape::resize (unsigned _npol, unsigned _nchan,
 			 unsigned _ndat, unsigned _ndim)
 {
+  if (verbose)
+    cerr <<
+      "dsp::Shape::resize\n"
+      "  npol=" << _npol <<
+      "  nchan=" << _nchan <<
+      "  ndat=" << _ndat <<
+      "  ndim=" << _ndim << endl;
+
   npol = _npol;
   nchan = _nchan;
   ndat = _ndat;

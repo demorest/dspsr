@@ -103,6 +103,10 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
  */
 void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 {
+  if (verbose)
+    cerr << "dsp::Dedispersion::match input.nchan=" << input->get_nchan()
+	 << " channels=" << channels << endl;
+  
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
 

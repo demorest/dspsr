@@ -47,19 +47,27 @@ dsp::Response::Response ()
  */
 void dsp::Response::match (const Observation* input, unsigned channels)
 {
+  if (verbose)
+    cerr << "dsp::Response::match input.nchan=" << input->get_nchan()
+	 << " channels=" << channels << endl;
+
   if ( input->get_nchan() == 1 ) {
 
     // if the input Observation is single-channel, complex sampled
     // data, then the first forward FFT performed on this data will
     // result in a swapped spectrum
-    if ( input->get_state() == Signal::Analytic && !whole_swapped )
+    if ( input->get_state() == Signal::Analytic && !whole_swapped ) {
+      if (verbose)
+	cerr << "dsp::Response::match swap whole" << endl;
       swap (false);
-    
+    }
   }      
   else  {
 
     // if the filterbank channels are centred on DC
     if ( input->get_dc_centred() && !chan_shifted ) {
+      if (verbose)
+	cerr << "dsp::Response::match rotate half channel" << endl;
       naturalize ();
       rotate (-ndat/2);
       chan_shifted = true;
@@ -67,13 +75,20 @@ void dsp::Response::match (const Observation* input, unsigned channels)
 
     // if the input Observation is multi-channel, complex sampled data,
     // then each FFT performed will result in little swapped spectra
-    if ( input->get_state() == Signal::Analytic && !chan_swapped )
+    if ( input->get_state() == Signal::Analytic && !chan_swapped ) {
+      if (verbose)
+	cerr << "dsp::Response::match swap channels (nchan=" << nchan << ")"
+	     << endl;
       swap (true);
+    }
 
     // the ordering of the filterbank channels may be swapped
-    if ( input->get_swap() && !whole_swapped )
+    if ( input->get_swap() && !whole_swapped ) {
+      if (verbose)
+	cerr << "dsp::Response::match swap whole (nchan=" << nchan << ")"
+	     << endl;
       swap (false);
-
+    }
   }
 }
 
