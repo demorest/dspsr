@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/dsp.h,v $
-   $Revision: 1.1 $
-   $Date: 2003/07/28 13:40:46 $
+   $Revision: 1.2 $
+   $Date: 2003/09/22 05:30:39 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_h
@@ -46,7 +46,11 @@
 //! Contains all Baseband Data Reduction Library classes
 namespace dsp {
 
+  //! Set true to enable backward compatibility features
   extern bool psrdisp_compatible;
+
+  //! The baseband/dsp version number
+  extern const float version;
 
 }
 
