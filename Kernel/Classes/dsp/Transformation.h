@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/11/11 12:24:04 $
+   $Revision: 1.4 $
+   $Date: 2002/11/12 00:20:30 $
    $Author: wvanstra $ */
 
 #ifndef __Transformation_h
@@ -82,8 +82,7 @@ void dsp::Transformation<In, Out>::operation ()
 		 "no input");
 
   if (input->get_ndat() < 1)
-    throw Error (InvalidState, "dsp::Transformation["+name+"]::operation",
-		 "empty input");
+    return;
 
   string reason;
   if (!input->state_is_valid (reason))
@@ -93,6 +92,10 @@ void dsp::Transformation<In, Out>::operation ()
   if (!inplace && !output)
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operation",
 		 "no output");
+
+  if (verbose)
+    cerr << "dsp::Transformation["+name+"]::operation call transformation"
+	 << endl;
 
   //! call the pure virtual method defined by sub-classes
   transformation ();
