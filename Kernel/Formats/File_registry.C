@@ -8,6 +8,10 @@
 
 Registry::List<dsp::File> dsp::File::registry;
 
+//DO_NOT change the order without testing all file types
+//S2 should remain last as it doesn't do proper "is_valid()" tests
+//Ensure that anything you add does do proper "is_valid()" tests
+
 static Registry::List<dsp::File>::Enter<dsp::CPSR2File> cpsr2;
 static Registry::List<dsp::File>::Enter<dsp::CPSRFile>  cpsr;
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> pmdaq;
