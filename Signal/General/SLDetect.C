@@ -16,7 +16,8 @@ dsp::SLDetect::SLDetect (Behaviour _type)
 void dsp::SLDetect::transformation ()
 {
   if( verbose ){
-    fprintf(stderr,"\nIn %s::transformation()\n",get_name().c_str());
+    fprintf(stderr,"\nIn %s::transformation() (%s)\n",
+	    get_name().c_str(),(get_input()==get_output())?"inplace":"outofplace");
     fprintf(stderr,"In SLDetect::Operation input has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d\n",
 	    input->get_ndim(), input->get_ndat(), input->get_npol(), input->get_nchan(),input->get_nbit());    
   }
@@ -34,7 +35,8 @@ void dsp::SLDetect::transformation ()
        Things that are different from input are state, subsize
        These can be set correctly by simply setting state to detected
        and resizing output */
-    output->Observation::operator=( *input );
+
+    output->copy_configuration( input );
     if( input->get_npol()==2 )
       output->set_state( Signal::PPQQ );
     else if( input->get_npol()==1 ){
@@ -42,11 +44,18 @@ void dsp::SLDetect::transformation ()
 	      "ie setting output->state to Signal::Intensity\n");
       output->set_state( Signal::Intensity );
     }
-
+    else throw Error(InvalidState,"dsp::SLDetect::operate()",
+		     "Input npol not one or two (It is %d)",
+		     get_input()->get_npol());
+    
     uint64 new_output_ndat = input->get_ndat();
 
     /* this will wipe existing data if space has not been preallocated */
+    fprintf(stderr,"SLD: going to call output->resize("UI64")\n",
+	    new_output_ndat);
     output->resize( new_output_ndat );
+    fprintf(stderr,"SLD: out of call to output->resize("UI64")\n",
+	    new_output_ndat);
   }
 
   for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
