@@ -21,7 +21,7 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
 {
   // Sub-classes may re-define these
   nsample = 512;
-  cutoff_sigma = 3.0;
+  cutoff_sigma = 4.0;
   threshold = optimal_threshold;
 
   // Sub-classes must define this or set_table must be called
@@ -190,11 +190,22 @@ void dsp::TwoBitCorrection::set_limits ()
 
   float fraction_ones = get_fraction_low();
 
-  float n_ave = float(nsample) * fraction_ones;
-  // the root mean square deviation
-  float n_sigma = sqrt( float(nsample) );
+  // expectation value of the binomial distribution, JA98, Eqn. A6
+  // cf. http://mathworld.wolfram.com/BinomialDistribution.html, Eqn. 9
+  float nlo_mean = float(nsample) * fraction_ones;
 
-  n_max = unsigned (n_ave + (cutoff_sigma * n_sigma));
+  // variance of the binomial distribution, JA98, Eqn. A6
+  // cf. http://mathworld.wolfram.com/BinomialDistribution.html, Eqn. 14
+  float nlo_variance = nlo_mean * (1.0 - fraction_ones);
+
+  // the root mean square deviation
+  float nlo_sigma = sqrt( nlo_variance );
+
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::set_limits nlo_mean=" << nlo_mean
+         << " nlo_sigma=" << nlo_sigma << endl;
+
+  n_max = unsigned (nlo_mean + (cutoff_sigma * nlo_sigma));
 
   if (n_max >= nsample) {
     if (verbose)
@@ -203,14 +214,14 @@ void dsp::TwoBitCorrection::set_limits ()
     n_max = nsample-1;
   }
 
-  if (cutoff_sigma * n_sigma >= n_ave+1.0) {
+  if (cutoff_sigma * nlo_sigma >= nlo_mean+1.0) {
     if (verbose)
       cerr << "dsp::TwoBitCorrection::set_limits resetting nmin:"
 	   << n_min << " to one:1" << endl;
     n_min = 1;
   }
   else 
-    n_min = unsigned (n_ave - (cutoff_sigma * n_sigma));
+    n_min = unsigned (nlo_mean - (cutoff_sigma * nlo_sigma));
   
   if (verbose) cerr << "dsp::TwoBitCorrection::set_limits nmin:"
 		    << n_min << " and nmax:" << n_max << endl;
