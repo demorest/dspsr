@@ -203,9 +203,14 @@ $(LOGIN_ARCH)/%.o: %.f
 # The file is linked with LDFLAGS, or exec.LDFLAGS, if defined.
 ##########################################################################
 
+# filter out the paths specified by the user
 libdirs := $(subst -L,,$(filter -L%,$(LDFLAGS)))
-all_libs := $(foreach dir,$(libdirs),$(wildcard $(dir)/*.a))
+# filter out the static archives specified by the user
 lfilt := ${patsubst -l%,\%lib%.a,$(filter -l%,$(LDFLAGS))}
+# find existing archive files
+ex_libs := $(foreach dir,$(libdirs),$(shell echo $(dir)/*.a 2> /dev/null))
+# the library in this module takes preference over existing libs
+all_libs := $(LIBDIR)/$(LIBRARY) $(ex_libs)
 libraries := $(foreach l,$(lfilt),$(firstword $(filter $l,$(all_libs))))
 
 define check_exec
@@ -263,7 +268,7 @@ endif
 
 ifneq (${strip $(SOFT_ERROR)},)
 RETURN_ERROR := 0
-ERROR := (SOFT) $(SOFT_ERROR)
+ERROR := "(SOFT)" $(SOFT_ERROR)
 endif
 
 ifneq ($(RETURN_ERROR),)
