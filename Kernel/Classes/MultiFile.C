@@ -44,8 +44,6 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
     }
   }
 
-  loader->open( new_filenames.front() );
-
   ensure_contiguity();
 
   setup();
@@ -64,7 +62,10 @@ void dsp::MultiFile::setup ()
   // MultiFile must reflect the time sample resolution of the underlying device
   resolution = loader->resolution;
 
-  set_loader (0);
+  loader->open (files.front());
+
+  current_index = 0;
+  current_filename = files.front().filename;
 
   reset();
 }
