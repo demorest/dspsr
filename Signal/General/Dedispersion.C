@@ -235,7 +235,7 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   double sampling_rate = ch_abs_bw * 1e6;
 
   if (verbose)
-    cerr << "Smearing across the " << band
+    cerr << "dsp::Dedispersion::smearing_samples time across the " << band
 	 << ": " << smearing_time (lower_ch_cfreq, ch_abs_bw)*1e3
 	 << " ms" << endl;
 
@@ -246,10 +246,10 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
   
   if (verbose)
-    cerr << "Smear time in the " << side << " half of the " << band << ": "
-	 << tsmear*1e3 << " ms"
+    cerr << "dsp::Dedispersion::smearing_samples time in the " << side 
+	 << " half of the " << band << ": " << tsmear*1e3 << " ms"
       " (" << int(tsmear * sampling_rate) << " pts).\n";
-
+  
   // add another ten percent, just to be sure that the pollution due
   // to the cyclical convolution effect is minimized
   tsmear *= 1.1;
@@ -260,8 +260,8 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   // recalculate the smearing time simply for display of new value
   tsmear = double (nsmear) / sampling_rate;
   if (verbose) 
-    cerr << "Effective smear time: " << tsmear*1e3 << " ms"
-      " (" << nsmear << " pts)." << endl;
+    cerr << "dsp::Dedispersion::smearing_samples effective smear time: "
+	 << tsmear*1e3 << " ms (" << nsmear << " pts)." << endl;
 
   return nsmear;
 }
