@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.63 $
-   $Date: 2003/11/06 01:53:40 $
+   $Revision: 1.64 $
+   $Date: 2004/01/19 05:42:31 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 
+#include "Header.h"
 #include "Error.h"
 #include "Reference.h"
 #include "sky_coord.h"
@@ -43,6 +44,9 @@ namespace dsp {
 
     //! Swaps the 2 Observations.  Returns '*this'
     Observation& swap_data(Observation& obs);
+
+    //! Print the Observation out
+    virtual void print(){ cout << obs2string() << endl; }
     
     //! Set the type of receiver feeds
     void set_basis (Signal::Basis _basis) { basis = _basis; }
@@ -291,21 +295,33 @@ namespace dsp {
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
 
-    //! Returns all information contained in this class into the string info_string
-    bool obs2string(string& info_string) const;
+    //! Returns all information contained in this class into the return value
+    string obs2string() const;
     
-    //! Writes of all information contained in this class into the fptr at the current file offset.  Does no seeking etc.
-    bool obs2file(FILE* fptr);
+    //! Converts the class information into a Header
+    Reference::To<Header> obs2Header() const;
+
+    //! Writes all information contained in this class into the specified filename
+    void obs2file(string filename, int64 offset) const;
+    
+    //! Writes all information contained in this class into the file descriptor
+    void obs2file(int fd, int64 offset,int whence=SEEK_SET) const;
 
     //! Opposite of obs2file
-    bool file2obs(FILE* fptr);
+    void file2obs(string filename, int64 offset=0);
+
+    //! Opposite of obs2file
+    void file2obs(int fd, int64 offset, int whence=SEEK_SET);
+
+    //! Initializes the Observation from a parsed-Header
+    void Header2obs(Reference::To<Header> hdr);
 
     //! Set all attributes to null default
     virtual void init ();
 
   protected:
 
-    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string(), file2obs() and string2obs() appropriately!  You'll probably have to add version control too! */
+    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
     
     //! Number of time samples in container
     uint64 ndat;
@@ -382,7 +398,16 @@ namespace dsp {
     //! The last format the data was stored as ("raw","CoherentFB","Digi" etc)
     string last_ondisk_format;
 
-    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string() and file2obs() appropriately! */
+    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
+
+    //! Worker function for file2obs that seeks through to correct place in file
+    virtual void file_seek(int fd, int64 offset,int whence);
+  
+    //! Determines the version of the dsp::Observation printout
+    float get_version(int fd);
+
+    //! Old pre-Header version of file2obs()
+    void old_file2obs(int fd);
 
   };
 

@@ -1,5 +1,10 @@
 #include <stdio.h>
 #include <math.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include <string>
 
@@ -9,10 +14,12 @@
 #include "angle.h"
 #include "MJD.h"
 #include "Types.h"
-
+#include "Header.h"
 #include "genutil.h"
+#include "dirutil.h"
 #include "string_utils.h"
 #include "Error.h"
+#include "Reference.h"
 
 bool dsp::Observation::verbose = false;
 
@@ -598,8 +605,56 @@ uint64 dsp::Observation::get_offset(){
   return get_nbytes(uint64(time_offset*rate));
 }
 
+//! Returns all information contained in this class into the return value
+string dsp::Observation::obs2string() const {
+  Reference::To<Header> header(obs2Header());
+  return header->write_string();
+}
+
+//! Returns a Header that stores the info in the class
+Reference::To<Header> dsp::Observation::obs2Header() const{
+  Reference::To<Header> h(new Header);
+
+  h->set_size( 4096 );
+  h->set_id("dsp::Observation_data");
+  h->set_version( 2.0 );
+
+  h->add_token("NDAT",ndat);
+  h->add_token("TELESCOPE",telescope);
+  h->add_token("SOURCE",source);
+  h->add_token("CENTRE_FREQUENCY",centre_frequency);
+  h->add_token("BANDWIDTH",bandwidth);
+  h->add_token("NCHAN",nchan);
+  h->add_token("NPOL",npol);
+  h->add_token("NDIM",ndim);
+  h->add_token("NBIT",nbit);
+  h->add_token("TYPE",Signal::Source2string(type));
+  h->add_token("STATE",Signal::State2string(state));
+  h->add_token("BASIS",Signal::Basis2string(basis));
+  h->add_token("RATE",rate);
+  h->add_token("START_TIME",start_time.printdays(15));
+  h->add_token("SCALE",scale);
+  h->add_token("SWAP",swap?"true":"false");
+  h->add_token("DC_CENTRED",dc_centred?"true":"false");
+  h->add_token("IDENTIFIER",identifier);
+  h->add_token("MODE",mode);
+  h->add_token("MACHINE",machine);
+
+  // COORDINATES is stored as RAJ and DECJ
+  h->add_token("RAJ",coordinates.ra().getHMS());
+  h->add_token("DECJ",coordinates.dec().getDMS());
+
+  h->add_token("DISPERSION_MEASURE",dispersion_measure);
+  h->add_token("BETWEEN_CHANNEL_DM",between_channel_dm);
+  h->add_token("DOMAIN",domain);
+  h->add_token("LAST_ONDISK_FORMAT",last_ondisk_format);
+
+  return h;
+}
+
+  /*
 //! Returns all information contained in this class into the string info_string
-bool dsp::Observation::obs2string(string& ss) const{
+bool dsp::Observation::obs2string(string& info_string) const{
   string ui64(UI64);
   ui64.replace(0,1,"%16");
 
@@ -628,7 +683,7 @@ bool dsp::Observation::obs2string(string& ss) const{
   sprintf(dummy,"MODE\t%s\n",mode.c_str()); ss += dummy;
   sprintf(dummy,"MACHINE\t%s\n",machine.c_str()); ss += dummy;
 
-  /* COORDINATES is stored as RAJ and DECJ */
+  // COORDINATES is stored as RAJ and DECJ
   sprintf(dummy,"RAJ\t%s\n",coordinates.ra().getHMS().c_str()); ss += dummy;
   sprintf(dummy,"DECJ\t%s\n",coordinates.dec().getDMS().c_str()); ss += dummy;
   
@@ -639,44 +694,136 @@ bool dsp::Observation::obs2string(string& ss) const{
 
   return true;
 }
-    
-//! Writes all information contained in this class into the fptr at the current file offset
-bool dsp::Observation::obs2file(FILE* fptr){
-  string ss;
-  if( !obs2string(ss) ){
-    fprintf(stderr,"dsp::Observation::retrieve() failed to write to fptr because string version failed\n");
-    fclose(fptr);
-    return false;
-  }
+  */
 
-  fprintf(fptr,"%s",ss.c_str());
+//! Writes all information contained in this class into the specified filename
+void dsp::Observation::obs2file(string filename, int64 offset) const{
+  int fd = ::open(filename.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 
-  return true;
+  obs2file(fd,offset, SEEK_SET);
+
+  ::close(fd);
 }
 
-//! The file pointer must be appropriately seeked
-bool dsp::Observation::file2obs(FILE* fptr){
+//! Writes all information contained in this class into the file descriptor
+void dsp::Observation::obs2file(int fd, int64 offset, int whence) const{
+  Reference::To<Header> header(obs2Header());
+
+  header->Printable::write(fd,offset,whence);
+}
+
+//! Opposite of obs2file
+void dsp::Observation::file2obs(string filename, int64 offset){
+  if( !file_exists(filename.c_str()) )
+    throw Error(InvalidParam,"dsp::Observation::file2obs()",
+		"File '%s' does not exist",filename.c_str());
+
+  int fd = ::open(filename.c_str(), O_RDONLY);
+
+  file2obs(fd,offset,SEEK_SET);
+
+  ::close(fd);
+}
+
+//! Worker function for file2obs that seeks through to correct place in file
+void dsp::Observation::file_seek(int fd,int64 offset,int whence){
+  if( fd<0 )
+    throw Error(InvalidParam,"dsp::Observation::file_seek()",
+                "Invalid file descriptor passed in");
+
+  int64 seeked = ::lseek( fd, offset, whence );
+
+  if( whence==SEEK_SET && seeked != offset )
+    throw Error(FailedCall,"dsp::Observation::file_seek()",
+                "Return value from seek was '"UI64"'.  cf requested seek="UI64,
+		seeked, offset);
+}
+
+//! Determines the version of the dsp::Observation printout
+float dsp::Observation::get_version(int fd){
+  string firstline = read_line(fd);
+
+  if( firstline == "dsp::Observation_data" ) // Pre-Header days of dsp::Observation
+    return 1.0;  
+  
+  float version = Header::parse_version(firstline);
+
+  // Rewind the file descriptor by the first line and the newline character
+  ::lseek(fd,-int64(firstline.size()+1),SEEK_CUR);
+
+  return version;
+}
+
+//! Opposite of obs2file
+void dsp::Observation::file2obs(int fd, int64 offset, int whence){
+  file_seek( fd, offset, whence);
+
+  if( get_version(fd) < 2.0 ){
+    old_file2obs(fd);
+    return;
+  }    
+
+  Reference::To<Header> hdr(new Header(fd) );
+
+  Header2obs(hdr);
+}
+
+//! Initializes the Observation from a parsed-Header
+void dsp::Observation::Header2obs(Reference::To<Header> h){
+  ndat = h->retrieve_token<uint64>("NDAT");
+  telescope = h->retrieve_token<char>("TELESCOPE");
+  source = h->retrieve_token<string>("SOURCE");
+  centre_frequency = h->retrieve_token<double>("CENTRE_FREQUENCY");
+  bandwidth = h->retrieve_token<double>("BANDWIDTH");
+  nchan = h->retrieve_token<unsigned>("NCHAN");
+  npol = h->retrieve_token<unsigned>("NPOL");
+  ndim = h->retrieve_token<unsigned>("NDIM");
+  nbit = h->retrieve_token<unsigned>("NBIT");
+  type = Signal::string2Source( h->retrieve_token<string>("TYPE") );
+  state = Signal::string2State( h->retrieve_token<string>("STATE") );
+  basis = Signal::string2Basis( h->retrieve_token<string>("BASIS") );
+  rate = h->retrieve_token<double>("RATE") ;
+  start_time = MJD( h->retrieve_token<string>("START_TIME") );
+  scale = h->retrieve_token<double>("SCALE");
+  swap = h->retrieve_token<string>("SWAP")=="true" ? true : false;
+  dc_centred = h->retrieve_token<string>("DC_CENTRED")=="true" ? true : false;
+  identifier = h->retrieve_token<string>("IDENTIFIER");
+  mode = h->retrieve_token<string>("MODE");
+  machine = h->retrieve_token<string>("MACHINE");
+
+  // COORDINATES are stored as RAJ and DECJ
+  string raj = h->retrieve_token<string>("RAJ");
+  string decj = h->retrieve_token<string>("DECJ");
+  coordinates.setHMSDMS(raj.c_str(),decj.c_str());
+
+  dispersion_measure = h->retrieve_token<double>("DISPERSION_MEASURE");
+  between_channel_dm = h->retrieve_token<double>("BETWEEN_CHANNEL_DM");
+  domain = h->retrieve_token<string>("DOMAIN");
+  last_ondisk_format = h->retrieve_token<string>("LAST_ONDISK_FORMAT");
+}
+
+//! Old pre-Header version of file2obs()
+void dsp::Observation::old_file2obs(int fd){
   if( verbose )
     fprintf(stderr,"In dsp::Observation::file2obs()\n");
 
-  if( !fptr ){
-    cerr << "dsp::Observation::file2obs() returning false as fptr=NULL\n";
-    return false;
-  }
+  FILE* fptr = fdopen( fd, "r");
+
+  if( !fptr )
+    throw Error(FailedCall,"dsp::Observation::old_file2obs()",
+		"Could not derive a valid file pointer");
 
   char dummy[1024];
   char moron[1024];
 
   int scanned = fscanf(fptr,"%s\n",dummy);
-  if( scanned!=1 ){
-    cerr << "dsp::Observation::file2obs() returning false as could not read first line\n";
-    return false;
-  }
+  if( scanned!=1 )
+    throw Error(FailedCall,"dsp::Observation::old_file2obs()",
+		"could not read first line");
 
-  if( string(dummy)!=string("dsp::Observation_data") ){
-    cerr << "dsp::Observation::file2obs() returning false as first line is not 'dsp::Observation_data'.  It is '" << string(dummy) << "'\n";
-    return false;
-  }
+  if( string(dummy)!=string("dsp::Observation_data") )
+    throw Error(InvalidState,"dsp::Observation::old_file2obs()",
+		"first line is not 'dsp::Observation_data'.  It is '%s'",dummy);
 
   string ui64(UI64);
   ui64.replace(0,1,"%16");
@@ -684,8 +831,8 @@ bool dsp::Observation::file2obs(FILE* fptr){
 
   int ret = fscanf(fptr,moron,&ndat); if(verbose) fprintf(stderr,"Got ndat="UI64"\n",ndat); 
   if( ret!=1 )
-    throw Error(FailedCall,"dsp::Observation::file2obs()",
-		"Failed to fscanf ndat\n");
+    throw Error(FailedCall,"dsp::Observation::old_file2obs()",
+		"Failed to fscanf ndat");
 
   fscanf(fptr,"TELESCOPE\t%c\n",&telescope);  if(verbose) fprintf(stderr,"Got telescope=%c\n",telescope); 
   retrieve_cstring(fptr,"SOURCE\t",dummy); source = dummy;  if(verbose) fprintf(stderr,"Got source=%s\n",source.c_str()); 
@@ -728,15 +875,17 @@ bool dsp::Observation::file2obs(FILE* fptr){
   retrieve_cstring(fptr,"DOMAIN\t",dummy); domain = dummy; if(verbose) fprintf(stderr,"Got domain=%s\n",domain.c_str());
   retrieve_cstring(fptr,"LAST_ONDISK_FORMAT\t",dummy); last_ondisk_format = dummy; if(verbose) fprintf(stderr,"Got last_ondisk_format=%s\n",last_ondisk_format.c_str());
 
-
-  string ss;
-  if( !obs2string(ss) )
-    throw Error(InvalidState,"dsp::Observation::file2string()",
-		"Couldn't obs2string!\n");
-
   if( verbose )
-    fprintf(stderr,"Data got in:\n%s\n",ss.c_str());
+    fprintf(stderr,"Data got in:\n%s\n",obs2string().c_str());
 
-  return true;
 }
+
+
+
+
+
+
+
+
+
 
