@@ -64,16 +64,17 @@ OTHER_SRCS += $(sort $(filter-out %.srcs,$(subst \", ,$(SRCS_CLEAN))))
 ##########################################################################
 all_srcs := ${LIB_SRCS} ${PROGRAMS} ${TESTS} ${OTHER_SRCS}
 ALL_SRCS := ${filter-out moc_%.C, ${all_srcs}}
-ALL_C_SRCS := ${filter %.C, $(ALL_SRCS)}
-ALL_c_SRCS := ${filter %.c, $(ALL_SRCS)}
-ALL_f_SRCS := ${filter %.f, $(ALL_SRCS)}
 
 ##########################################################################
 # The following lines create the DEPS macro, upon which the Makefile 
 # depends. (unless MAKEDEP=no)  Dependencies are built only for C/C++ code
 ##########################################################################
-DEPS := ${ALL_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
-	${ALL_c_SRCS:%.c=./$(LOGIN_ARCH)/%.dep}
+DEP_SRCS := ${filter-out $(NOMD_SRCS), $(ALL_SRCS)}
+DEP_C_SRCS := ${filter %.C, $(DEP_SRCS)}
+DEP_c_SRCS := ${filter %.c, $(DEP_SRCS)}
+
+DEPS := ${DEP_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
+	${DEP_c_SRCS:%.c=./$(LOGIN_ARCH)/%.dep}
 
 ##########################################################################
 # The following lines create the INCS macro,
