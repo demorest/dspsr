@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/09/19 07:59:56 $
+   $Revision: 1.2 $
+   $Date: 2002/11/01 18:41:00 $
    $Author: wvanstra $ */
 
 
@@ -15,6 +15,8 @@
 
 namespace dsp {
 
+  class File;
+
   //! Loads Timeseries data from multiple files
   class MultiFile : public Seekable
   {
@@ -26,6 +28,9 @@ namespace dsp {
     //! Destructor
     virtual ~MultiFile () { }
     
+    //! Load a number of files and treat them as one logical observation
+    void load (vector<string>& filenames);
+
   protected:
     
     //! Load bytes from file
@@ -34,23 +39,11 @@ namespace dsp {
     //! Adjust the file pointer
     virtual int64 seek_bytes (uint64 bytes);
 
-    //! Current file as set by seek_bytes
-    int index;
+    //! File instances
+    vector< Reference::To<File> > files;
 
-    //! Offset number of bytes of data into current file
-    uint64 offset;
-
-    //! File descriptors of open data files
-    vector<int> fds;
-
-    //! Bytes of data in each file
-    vector<uint64> data_bytes;
-
-    //! Bytes in header of each file
-    vector<uint64> header_bytes;
-
-    //! Names of data files
-    vector<string> fnames;
+    //! Current File in use
+    unsigned index;
 
     //! Return the index of the file containing the offset_from_obs_start byte
     /*! offsets do no include header_bytes */
