@@ -15,24 +15,31 @@
 #include "dsp/PhaseSeries.h"
 
 #include "dsp/Archiver.h"
-#include "Pulsar/TimerArchive.h"
+
+#include "Pulsar/Archive.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "b:f:F:jM:n:N:st:vV";
+static char* args = "2:a:b:f:F:jM:n:N:st:vV";
 
 void usage ()
 {
   cout << "dspsr - test baseband/dsp pulsar processing\n"
     "Usage: dspsr [" << args << "] file1 [file2 ...] \n"
+    " -a archive     set the archive class name\n"
     " -b nbin        fold pulse profile into nbin phase bins\n"
     "\n"
     "Filterbank options:\n"
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
+    "\n"
+    "Two-bit unpacking options:\n"
+    " -2n<nsample>   number of samples used in estimating undigitized power\n"
+    " -2c<cutoff>    cutoff threshold for impulsive interference excision\n"
+    " -2t<threshold> sampling threshold at record time\n"
     "\n"
     " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
@@ -66,6 +73,8 @@ int main (int argc, char** argv)
   int c;
   int scanned;
 
+  string archive_class = "TimerArchive";
+
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
 
@@ -73,17 +82,29 @@ int main (int argc, char** argv)
     case '2':
 
       scanned = sscanf (optarg, "n%u", &tbc_nsample);
-      if (scanned != 1)
-	scanned = sscanf (optarg, "c%f", &tbc_cutoff);
-      if (scanned != 1)
-	scanned = sscanf (optarg, "t%f", &tbc_threshold);
-
-      if (scanned != 1) {
-	cerr << "dspsr: error parsing " << optarg << " as"
-	  " two-bit correction nsample, threshold, or cutoff" << endl;
-	return -1;
+      if (scanned == 1)  {
+        cerr << "dspsr: Using " << tbc_nsample 
+             << " samples to estimate undigitized power" << endl;
+        break;
       }
-      break;
+
+      scanned = sscanf (optarg, "c%f", &tbc_cutoff);
+      if (scanned == 1)  {
+        cerr << "dspsr: Setting impulsive interference excision threshold "
+                "to " << tbc_cutoff << endl;
+        break;
+      }
+
+      scanned = sscanf (optarg, "t%f", &tbc_threshold);
+      if (scanned == 1) {
+        cerr << "dspsr: Setting two-bit sampling threshold to "
+             << tbc_threshold << endl;
+        break;
+      }
+
+      cerr << "dspsr: error parsing " << optarg << " as"
+	  " two-bit correction nsample, threshold, or cutoff" << endl;
+      return -1;
 
     case 'V':
       Pulsar::Archive::set_verbosity (3);
@@ -91,7 +112,6 @@ int main (int argc, char** argv)
       dsp::Operation::verbose = true;
       dsp::Archiver::verbose = true;
       dsp::Shape::verbose = true;
-      Error::verbose = true;
     case 'v':
       verbose = true;
       break;
@@ -180,7 +200,7 @@ int main (int argc, char** argv)
 
   if (verbose)
     cerr << "Creating PhaseSeries instance" << endl;
-  dsp::PhaseSeries*  profiles = new dsp::PhaseSeries;
+  dsp::PhaseSeries* profiles = new dsp::PhaseSeries;
 
   vector<dsp::Operation*> operations;
 
@@ -260,10 +280,9 @@ int main (int argc, char** argv)
   dsp::Archiver* archiver = new dsp::Archiver;
 
   if (verbose)
-    cerr << "Creating TimerArchiveAgent instance" << endl;
-  Pulsar::Archive::Agent* agent = new Pulsar::TimerArchive::Agent;
+    cerr << "Setting Archiver Archive class name to " << archive_class << endl;
 
-  archiver->set_agent (agent);
+  archiver->set_archive_class (archive_class.c_str());
 
   if (verbose)
     cerr << "Creating Fold instance" << endl;
