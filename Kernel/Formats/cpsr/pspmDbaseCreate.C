@@ -4,10 +4,10 @@
 int usage ()
 {
   cerr <<
-    "pspmDbaseCreate - makes CPSR header log file in 'log.txt'\n"
+    "\npspmDbaseCreate - makes CPSR header log file in 'log.txt'\n"
     "\n"
-    "first argument should be wildcarded path to headers, such as in:\n"
-    "pspmDbaseCreate \"/caltech/cpsr.data/search/header/*/*.cpsr\""
+    "first argument should be wildcarded path to headers, such as in:\n\n"
+    "pspmDbaseCreate \"/caltech/cpsr.data/search/header/*/*.cpsr\"\n"
        << endl;
   return -1;
 }
@@ -30,7 +30,7 @@ int main (int argc, char** argv)
 
   cerr << "pspmDbaseCreate " << dbase.entries.size() << " entries" << endl;
 
-  dbase.unload ("log.txt");
+  dbase.unload ("hdrlog.txt");
   return 0;
 }
  catch (string err) {
