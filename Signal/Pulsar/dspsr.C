@@ -116,6 +116,10 @@ int main (int argc, char** argv)
       verbose = true;
       break;
 
+    case 'a':
+      archive_class = optarg;
+      break;
+
     case 'b':
       nbin = atoi (optarg);
       break;
