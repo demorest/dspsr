@@ -64,7 +64,7 @@ void dsp::AutoCorrelation::transformation ()
     output->resize (npart);
 
   // get_output()->check_sanity();
-  double scale = input->get_scale ();
+  //  double scale = input->get_scale ();
 
   // cerr << "scale=" << scale << endl;
 
