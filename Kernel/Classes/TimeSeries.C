@@ -2,6 +2,7 @@
 
 #include "environ.h"
 #include "genutil.h"
+#include "fsleep.h"
 
 #include "Error.h"
 
@@ -24,10 +25,12 @@ dsp::TimeSeries::~TimeSeries(){
   subsize = 0;
 }
 
-void dsp::TimeSeries::set_nbit (unsigned)
+void dsp::TimeSeries::set_nbit (unsigned _nbit)
 {
   if (verbose)
     cerr << "dsp::TimeSeries::set_nbit ignored" << endl;
+  //fprintf(stderr,"\nnbit was going to change: %d->%d (this=%p)\n",
+  //  nbit,_nbit,this);
 }
 
 //! Allocate the space required to store nsamples time samples.
@@ -50,6 +53,9 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 
   uint64 require = ndim * nsamples * npol * nchan;
 
+  if( verbose )
+    cerr << "dsp::TimeSeries::resize() has got require="<<require<<endl;
+
   if (!require || require > size) {
     if (data.get()){
       sink(data);
@@ -59,18 +65,36 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     size = subsize = 0;
   }
 
+  //cerr << "hi1\n";
+
   ndat = nsamples;
+
+  //cerr << "hi2\n";
 
   if (!require)
     return;
 
+  //cerr << "hi3\n";
+
   if (size == 0) {
+    //    fsleep(5.0);
+    //cerr << "hi3.1 with require="<<require<<"\n";
+    //float* blab = new float[38];
+    //cerr << "hi3.1.1\n";
     auto_ptr<float> temp(new float[require]);
+    //cerr << "hi3.2\n";
     data = temp;
+    //cerr << "hi3.3\n";
     size = require;
+    //cerr << "hi3.4\n";
+    //cerr << "blab="<<blab<<endl;
   }
 
+  //cerr << "hi4\n";
+
   subsize = ndim * nsamples;
+
+  //cerr << "hi5\n";
 }
 
 //! Return pointer to the specified data block
@@ -148,11 +172,12 @@ void dsp::TimeSeries::zero ()
     }
 }
 
-//! return value is whether timeseries can still be appended to
-bool dsp::TimeSeries::append (const dsp::TimeSeries* little)
+//! return value is number of timesamples actually appended.
+//! If it is zero, then none were and we assume 'this' is full
+//! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
+//! If it is equal to little->get_ndat(), it may/may not be full.
+uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
 {
-  bool ret = true;
-
   uint64 ncontain = get_ndat() * get_ndim();
   uint64 ncopy = little->get_ndat() * little->get_ndim();
 
@@ -163,15 +188,12 @@ bool dsp::TimeSeries::append (const dsp::TimeSeries* little)
   }
 
   if( ncontain==subsize )
-    throw Error (InvalidRange, "dsp::TimeSeries::append",
-		 "Capacity="UI64" is already totally full- none of ndat="UI64" can be appended at all",
-		 subsize, ncopy + ncontain);
+    return 0;
 
   if ( subsize <= ncontain + ncopy ){
     ncopy = subsize - ncontain;
     fprintf(stderr,"dsp::TimeSeries::append()- this append will fill up the timeseries from ndat="UI64" with ncopy="UI64" to ndat="UI64".\n",
 	    get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
-    ret = false;
   }
 
   if ( get_ndat() == 0 ) {
@@ -180,10 +202,9 @@ bool dsp::TimeSeries::append (const dsp::TimeSeries* little)
   }    
 
   else if( !contiguous(*little) )
-    throw Error (InvalidState, "dsp::TimeSeries::append",
+    throw Error (InvalidState, "dsp::TimeSeries::append()",
 		 "next TimeSeries is not contiguous");
   
-
   for( unsigned ichan=0; ichan<nchan; ichan++) {
     for( unsigned ipol=0; ipol<npol; ipol++) {
 
@@ -196,7 +217,7 @@ bool dsp::TimeSeries::append (const dsp::TimeSeries* little)
 
   set_ndat (get_ndat() + ncopy/little->get_ndim());
 
-  return ret;
+  return ncopy / uint64(ndim);
 }
 
 void dsp::TimeSeries::check (float min, float max)
@@ -237,4 +258,142 @@ void dsp::TimeSeries::attach(auto_ptr<float> _data){
 
   sink(data);
   data = _data;
+}
+
+bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){
+  unsigned char* fr_min = (unsigned char*)tseries->get_datptr(0,0);
+  unsigned char* fr_max = (unsigned char*)(tseries->get_datptr(tseries->get_nchan()-1,tseries->get_npol()-1)+tseries->get_ndat());
+  if( fr>=fr_min && fr<fr_max)
+    return true;
+  fprintf(stderr,"fr_min=%p fr_max=%p fr=%p\n",
+	  fr_min,fr_max,fr);
+  return false;
+}
+
+bool to_range(unsigned char* too,const dsp::TimeSeries* thiz){
+  unsigned char* too_min = (unsigned char*)thiz->get_datptr(0,0);
+  unsigned char* too_max = (unsigned char*)(thiz->get_datptr(thiz->get_nchan()-1,thiz->get_npol()-1)+thiz->get_ndat());
+  if( too>=too_min && too<too_max)
+    return true;
+  fprintf(stderr,"too_min=%p too_max=%p too=%p\n",
+	  too_min,too_max,too);
+  return false;
+}
+
+//! Copy from the back of 'tseries' into the front of 'this'
+void dsp::TimeSeries::copy_from_back(TimeSeries* tseries, uint64 nsamples)
+{
+  if( !tseries )
+    throw Error(InvalidState,"dsp::TimeSeries::copy_from_back()",
+		"Null timeseries given as input");
+
+  if( tseries->get_ndat() < nsamples )
+    throw Error(InvalidParam,"dsp::TimeSeries::copy_from_back()",
+		"Cannot copy "UI64" samples from back of a "UI64" length TimeSeries",
+		nsamples,tseries->get_ndat());
+
+  if( !combinable(*tseries) )
+    throw Error(InvalidState,"dsp::TimeSeries::copy_from_back()",
+		"TimeSeries not combinable");
+
+  fprintf(stderr,"dsp::TimeSeries::copy_from_back(): this: "UI64"/"UI64" nsamples="UI64"\n",
+	  ndat,subsize,nsamples);
+  fprintf(stderr,"dsp::TimeSeries::copy_from_back(): tseries: "UI64"/"UI64"\n",
+	  tseries->ndat,tseries->subsize);
+
+  uint64 bytes_forward = tseries->get_ndat()*ndim*nbit/8;
+  uint64 copy_bytes = nsamples*ndim*nbit/8;
+
+  fprintf(stderr,"dsp::TimeSeries::copy_from_back(): bytes_forward="UI64"*%d*%d/8 = "UI64" copy_bytes="UI64"\n",
+	  tseries->get_ndat(),ndim,nbit,bytes_forward,copy_bytes);
+
+  for( unsigned ichan=0; ichan<nchan; ichan++){
+    for( unsigned ipol=0; ipol<npol; ipol++){
+      unsigned char* from = ((unsigned char*)tseries->get_datptr(ichan,ipol)) + bytes_forward - copy_bytes;
+
+      unsigned char* to = (unsigned char*)get_datptr(ichan,ipol);
+      //fprintf(stderr,"dsp::TimeSeries::copy_from_back(): ichan=%d ipol=%d ndat="UI64" to=%p\n",
+      //      ichan,ipol,ndat,to);
+
+      if( !from_range(from+copy_bytes-1,tseries) || !to_range(to+copy_bytes-1,this) ){
+	fprintf(stderr,"Error: ichan=%d ipol=%d from=%p to=%p\n",
+		ichan,ipol,from,to);
+	exit(-1);
+      }
+
+      memcpy(to,from,copy_bytes);
+    }
+  }
+}
+
+//! Copy from the front of 'tseries' into the front of 'this'
+void dsp::TimeSeries::copy_from_front(TimeSeries* tseries, uint64 nsamples)
+{
+  if( !tseries )
+    throw Error(InvalidState,"dsp::TimeSeries::copy_from_front()",
+		"Null timeseries given as input");
+
+  if( tseries->get_ndat() < nsamples )
+    throw Error(InvalidParam,"dsp::TimeSeries::copy_from_front()",
+		"Cannot copy "UI64" samples from front of a "UI64" length TimeSeries",
+		nsamples,tseries->get_ndat());
+
+  if( !combinable(*tseries) )
+    throw Error(InvalidState,"dsp::TimeSeries::copy_from_back()",
+		"TimeSeries not combinable");
+
+  uint64 copy_bytes = nsamples*ndim*nbit/8;
+
+  for( unsigned ichan=0; ichan<nchan; ichan++){
+    for( unsigned ipol=0; ipol<npol; ipol++){
+      const unsigned char* from = (const unsigned char*)tseries->get_datptr(ichan,ipol);
+      unsigned char* to = (unsigned char*)get_datptr(ichan,ipol);
+
+      memcpy(to,from,copy_bytes);
+    }
+  }
+}
+
+void dsp::TimeSeries::rotate_backwards_onto(TimeSeries* ts){
+  if( !ts )
+    throw Error(InvalidState,"dsp::TimeSeries::rotate_backwards_onto()",
+		"Null timeseries given as input");
+  
+  if( ts->get_ndat() > ndat )
+    throw Error(InvalidState,"dsp::TimeSeries::rotate_backwards_onto()",
+		"You must supply a TimeSeries that has fewer timesamples in it than 'this'");
+
+  if( !ts->contiguous(*this) )
+    throw Error (InvalidState, "dsp::TimeSeries::rotate_backwards_onto()",
+		 "TimeSeries'es are not contiguous");   
+
+  vector<float> storage( (ndat - ts->ndat)*ndim );
+  fprintf(stderr,"dsp::TimeSeries::rotate_backwards_onto() ndat="UI64" ts->ndat="UI64" ndim=%d so storage.size()=%d\n",
+	  ndat,ts->ndat,ndim,storage.size());
+
+  for( unsigned ichan=0; ichan<nchan; ichan++){
+    for( unsigned ipol=0; ipol<npol; ipol++){
+      
+      // Step (1) rotate samples forward.  (The lazy memory inefficient way)
+      const float* from1 = get_datptr(ichan,ipol);
+      float* to1 = storage.begin();
+      memcpy(to1,from1,storage.size()*sizeof(float));
+
+      const float* from2 = storage.begin();
+      float* to2 = get_datptr(ichan,ipol) + ts->ndat*ndim;
+      memcpy(to2,from2,storage.size()*sizeof(float));
+
+      // Step (2) copy in from ts
+      const float* from3 = ts->get_datptr(ichan,ipol);
+      float* to3 = get_datptr(ichan,ipol);
+      memcpy(to3,from3,ts->ndat*ts->ndim*sizeof(float));
+    }
+  }
+  
+  // Step (3) Clean up
+  uint64 _ndat = ndat;
+  Observation::operator=( *ts );
+  set_ndat( _ndat );
+
+  return;
 }

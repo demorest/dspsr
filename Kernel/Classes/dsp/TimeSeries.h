@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/21 01:57:20 $
+   $Revision: 1.6 $
+   $Date: 2002/12/04 01:11:00 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -54,9 +54,10 @@ namespace dsp {
     virtual const float* get_datptr (unsigned ichan=0,unsigned ipol=0) const;
 
     //! Append little onto the end of 'this'
-    //! Return value indicates whether 'this' can be further appended
-    //! ie 'false' indicates it's full.
-    virtual bool append (const TimeSeries* little);
+    //! If it is zero, then none were and we assume 'this' is full
+    //! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
+    //! If it is equal to little->get_ndat(), it may/may not be full.
+    virtual uint64 append (const TimeSeries* little);
 
     //! Set all values to zero
     virtual void zero ();
@@ -68,6 +69,29 @@ namespace dsp {
     //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
     //! Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it.
     virtual void attach(auto_ptr<float> _data);
+
+    //! Copy from the back of 'tseries' into the front of 'this'
+    //! This method is quite low-level- you have to fix up things like start_time, the observation data, ndat, and the subsize are all set correctly yourself
+    //! Method basically just does lots of memcpys
+    virtual void copy_from_back(TimeSeries* tseries, uint64 nsamples);
+
+    //! Copy from the front of 'tseries' into the front of 'this'
+    //! This method is quite low-level- you have to fix up things like start_time, the observation data, ndat, and the subsize are all set correctly yourself
+    //! Method basically just does lots of memcpys
+    virtual void copy_from_front(TimeSeries* tseries, uint64 nsamples);
+
+    //! Check to see if subsize==ndat
+    virtual bool full(){ return subsize==ndat; }
+
+    /*! This:
+      (1) Puts the first 'this->ndat-ts->ndat' timesamples of 'this' into the last possible spots of 'this'
+      (2) Copies 'ts' into the start of 'this'
+      (3) So now the last few samples of 'this' are deleted and the timeseries starts earlier.
+    */
+    void rotate_backwards_onto(TimeSeries* ts);
+    
+    // sorry, but this is totally necessary for debugging
+    virtual uint64 get_subsize(){ return subsize; }
 
   protected:
     //! The data buffer
