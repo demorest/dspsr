@@ -40,26 +40,29 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:C:d:D:e:E:f:F:hiIjM:n:N:Oop:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:c:C:d:D:e:E:f:F:hiIjm:M:n:N:Oop:P:sS:t:T:vVx:";
 
 void usage ()
 {
   cout << "dspsr - test baseband/dsp pulsar processing\n"
-    "Usage: dspsr [" << args << "] file1 [file2 ...] \n"
+    "Usage: dspsr [options] file1 [file2 ...] \n"
     "File handling options:\n"
     " -a archive     set the output archive class name\n"
-    " -A             produce a single archive with multiple Integrations\n"
-    " -C offset      Adjust clock by offset seconds\n"
     " -e ext         set the output archive filename extension\n"
     " -E filename    set the output archive filename (including extension)\n"
-    " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
-    " -N name        set the source name\n"
     " -O             run in backward-compatibility psrdisp mode\n"
-    " -s             generate single pulse Integrations\n"
-    " -S seek        Start processing at t=seek seconds\n"
-    " -t gulps       Stop processing after this many gulps\n"
-    " -T total       Process only t=total seconds\n"
+    " -S seek        start processing at t=seek seconds\n"
+    " -t gulps       stop processing after this many gulps\n"
+    " -T total       process only t=total seconds\n"
+    "\n"
+    "Source options:\n"
+    " -N name        set the source name\n"
+    " -c period      fold with constant period\n"
+    "\n"
+    "Clock/Time options:\n"
+    " -C offset      adjust clock by offset seconds\n"
+    " -m mjd         set the start MJD of the observation\n"
     "\n"
     "Two-bit unpacking options:\n"
     " -2n<nsample>   number of samples used in estimating undigitized power\n"
@@ -67,14 +70,14 @@ void usage ()
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
     "Filterbank options:\n"
-    " -f ffts        Perform this many forward FFTs per gulp [16]\n"
+    " -f ffts        perform this many forward FFTs per gulp [16]\n"
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
 #if ACTIVATE_MKL
-    " -I             Over-ride with IncoherentFilterbank class [false]\n"
+    " -I             over-ride with IncoherentFilterbank class [false]\n"
 #endif
-    " -o             Set psrfft up to generate optimized transforms [false]\n" 
+    " -o             set psrfft up to generate optimized transforms [false]\n" 
     "\n"
     "Dedispersion/Convolution options:\n"
     " -D dm          over-ride dispersion measure\n"
@@ -89,6 +92,10 @@ void usage ()
     " -p phase       reference phase of pulse profile bin zero \n"
     " -P psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
     "\n"
+    "Single Pulse options:\n"
+    " -A             produce a single archive with multiple Integrations\n"
+    " -j             join files into contiguous observation\n"
+    " -s             generate single pulse Integrations\n"
        << endl;
 }
 
@@ -197,6 +204,9 @@ int main (int argc, char** argv)
   // number of seconds to adjust clocks by
   double offset_clock = 0.0;
 
+  // set the MJD
+  char* mjd_string = 0;
+
 #if ACTIVATE_MKL
   // If true, a dsp::IncoherentFilterbank is used rather than a dsp::Filterbank
   bool use_incoherent_filterbank = false;
@@ -208,6 +218,8 @@ int main (int argc, char** argv)
 
   // Pulsar name
   string pulsar_name;
+  // Folding period
+  double folding_period = 0.0;
 
   // Filename of polyphase filterbank coefficients
   char* polyphase_filter = 0;
@@ -260,6 +272,10 @@ int main (int argc, char** argv)
 
     case 'C':
       offset_clock = atof (optarg);
+      break;
+
+    case 'c':
+      folding_period = atof (optarg);
       break;
 
     case 'D':
@@ -329,6 +345,10 @@ int main (int argc, char** argv)
 
     case 'j':
       join_files = true;
+      break;
+
+    case 'm':
+      mjd_string = optarg;
       break;
 
     case 'M':
@@ -659,6 +679,9 @@ int main (int argc, char** argv)
   if (reference_phase)
     fold->set_reference_phase (reference_phase);
 
+  if (folding_period)
+    fold->set_folding_period (folding_period);
+
   for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
     fold->add_pulsar_ephemeris ( ephemerides[ieph] );
 
@@ -708,6 +731,12 @@ int main (int argc, char** argv)
     if( pulsar_name!=string() )
       manager->get_info()->set_source( pulsar_name );   
 
+    if( mjd_string != 0 ) {
+      MJD mjd (mjd_string);
+      cerr << "dspsr: setting the start time to " << mjd << endl;
+      manager->get_info()->set_start_time( mjd );
+    }
+
     if (single_pulse && single_archive) {
 
       cerr << "Creating single pulse single archive" << endl;
@@ -732,7 +761,11 @@ int main (int argc, char** argv)
 
     fold->prepare ( manager->get_info() );
 
-    double dm = fold->get_pulsar_ephemeris() -> get_dm();
+    double dm = 0.0;
+
+    const psrephem* eph = fold->get_pulsar_ephemeris();
+    if (eph)
+      dm = eph -> get_dm();
 
     if (dm_set) {
       cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
@@ -858,10 +891,8 @@ int main (int argc, char** argv)
                           << active_operations[iop]->get_name() << endl;
 
         active_operations[iop]->operate ();
-        if(iop==0 && offset_clock!=0.0){
-            voltages->change_start_time(offset_clock*voltages->get_rate());
-        }
-
+        if (iop==0 && offset_clock!=0.0)
+           voltages->change_start_time(int64(offset_clock*voltages->get_rate()));
 
         if (verbose) cerr << "dspsr: " << active_operations[iop]->get_name() 
                           << " done" << endl;
