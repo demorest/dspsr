@@ -17,6 +17,9 @@ class fptm_obs;
 // these functions deal with transfering CPSR data to disk and looking
 // up observations in whatever databases are available (and fashionable)
 
+// default file log name
+const char* cpsr_default_log ();
+
 int cpsr_lookup (const char* filename, const char* tapename,
 		 string* cpsrname, vector<int>* targets);
 
