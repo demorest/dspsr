@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.22 $
-   $Date: 2003/05/13 15:06:56 $
+   $Revision: 1.23 $
+   $Date: 2003/05/14 16:13:54 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -96,8 +96,8 @@ namespace dsp {
     //
     //
 
-    //! Get the optimal fraction of low voltage levels
-    virtual float get_optimal_fraction_low () const;
+    //! Get the fraction of low voltage levels
+    virtual float get_fraction_low () const;
 
     //! Calculate the sum and sum-squared from each digitizer
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
@@ -156,6 +156,9 @@ namespace dsp {
 
     //! Set when Transformation::output is a WeightedTimeSeries
     Reference::To<WeightedTimeSeries> weighted_output;
+
+    //! Sampling threshold as a fraction of the noise power
+    float threshold;
 
     //! Number of samples used to estimate undigitized power
     unsigned nsample;

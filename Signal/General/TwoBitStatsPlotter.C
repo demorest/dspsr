@@ -89,7 +89,7 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
 
   double value = 0.0;
   double fraction_of_samples = 0.0;
-  double fraction_ones = data->get_optimal_fraction_low();
+  double fraction_ones = data->get_fraction_low();
 
   for (int wt=0; wt<L; wt++) {
 

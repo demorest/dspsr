@@ -21,6 +21,7 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
   nsample = 512;
   cutoff_sigma = 3.0;
   table = NULL;
+  threshold = optimal_threshold;
 
   // These are set in set_limits()
   n_min = 0;
@@ -170,7 +171,7 @@ void dsp::TwoBitCorrection::set_limits ()
   if (verbose)
     cerr << "dsp::TwoBitCorrection::set_limits" << endl;;
 
-  float fraction_ones = get_optimal_fraction_low();
+  float fraction_ones = get_fraction_low();
 
   float n_ave = float(nsample) * fraction_ones;
   // the root mean square deviation
@@ -393,12 +394,13 @@ void dsp::TwoBitCorrection::output_levels (float p_in,
 }
 
 /*! Return the average number of samples that lay within the
-     thresholds, x2 and x4, where -x2 = x4 = 0.9674 of the noise
-     power, as in Table 1 of JA98.  Apply t=0.9674sigma to
-     Equation 45, (or -xl=xh=0.9674 to Equation A2) to get: */
-float dsp::TwoBitCorrection::get_optimal_fraction_low () const
+    thresholds, x2 and x4, where -x2 = x4 are optimally set to
+    threshold=0.9674 of the noise power, as in Table 1 of JA98.
+    Apply t=threshold*sigma to Equation 45, 
+    (or -xl=xh=threshold to Equation A2) to get: */
+float dsp::TwoBitCorrection::get_fraction_low () const
 {
-  return erf (optimal_threshold / sqrt(2.0));
+  return erf (threshold / sqrt(2.0));
 }
 
 
