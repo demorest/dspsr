@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.24 $
-   $Date: 2004/06/17 09:50:59 $
+   $Revision: 1.25 $
+   $Date: 2004/08/27 03:34:50 $
    $Author: hknight $ */
 
 #ifndef __Operation_h
@@ -52,7 +52,8 @@ namespace dsp {
     virtual ~Operation ();
 
     //! Call this method to operate on data
-    virtual void operate ();
+    //! Returns false on failure
+    virtual bool operate ();
 
     //! Return the unique name of this operation
     string get_name() { return name; }
@@ -80,6 +81,9 @@ namespace dsp {
     static TimeKeeper* timekeeper;
 
   protected:
+
+    //! Return false if the operation doesn't have enough data to proceed
+    virtual bool can_operate();
 
     //! Perform operation on data.  Defined by derived classes
     virtual void operation () = 0;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.14 $
-   $Date: 2004/06/13 07:40:38 $
+   $Revision: 1.15 $
+   $Date: 2004/08/27 03:34:50 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -34,7 +34,7 @@ namespace dsp {
 
     //! All sub-classes must specify name and capacity for inplace operation
     Transformation (const char* _name, Behaviour _type) : Operation (_name)
-    { type = _type; free_scratch_space = swap_buffers = false; }
+    { type = _type; free_scratch_space = swap_buffers = false; reset_min_samps(); }
 
     //! Virtual destructor
     virtual ~Transformation () { }
@@ -77,7 +77,13 @@ namespace dsp {
     //! Inquire whether you want to delete the unused output buffer
     bool get_free_scratch_space(){ return free_scratch_space; }
 
+    //! Reset minimum_samps_can_process
+    void reset_min_samps(){ minimum_samps_can_process = -1; }
+
   protected:
+
+    //! Return false if the input doesn't have enough data to proceed
+    virtual bool can_operate();
 
     //! Define the Operation pure virtual method
     virtual void operation ();
@@ -100,6 +106,9 @@ namespace dsp {
     //! Use this when you have 'swap_buffers' set to true, and you don't want the TimeSeries that was used as output
     bool free_scratch_space;
 
+    //! If >= zero, and input doesn't have this many samples, operate() returns false
+    int64 minimum_samps_can_process;
+
   private:
 
     //! Behaviour of Transformation
@@ -107,6 +116,25 @@ namespace dsp {
 
   };
   
+}
+
+template<class In, class Out>
+bool dsp::Transformation<In,Out>::can_operate() {
+  if( type==inplace && !has_input() && has_output() )
+    input = (In*)output.get();
+  
+  if( has_input() && minimum_samps_can_process >= 0 ){
+    if( int64(get_input()->get_ndat()) < minimum_samps_can_process ){
+      if( verbose )
+	fprintf(stderr,"dsp::Transformation<In,Out> (%s) has input of "I64" samples.  Minimum samps can process is "I64"\n",
+		get_name().c_str(),
+		int64(get_input()->get_ndat()),
+		minimum_samps_can_process);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 template <class In, class Out>

@@ -48,7 +48,11 @@ dsp::Operation::~Operation ()
     timekeeper->im_dying(this);
 }
 
-void dsp::Operation::operate ()
+bool dsp::Operation::can_operate(){
+  return true;
+}
+
+bool dsp::Operation::operate ()
 {
   if (verbose)
     cerr << "dsp::Operation[" << name << "]::operate" << endl;
@@ -59,11 +63,16 @@ void dsp::Operation::operate ()
   if (record_time)
     optime.start();
 
+  if( !can_operate() )
+    return false;
+
   //! call the pure virtual method defined by sub-classes
   operation();
 
   if (record_time)
     optime.stop();
+
+  return true;
 }
 
 double dsp::Operation::get_total_time () const
