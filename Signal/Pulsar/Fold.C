@@ -83,8 +83,11 @@ void dsp::Fold::prepare (const Observation* observation)
     throw Error (InvalidParam, "dsp::Fold::prepare",
 		 "empty Observation::source");
 
-  if( folding_period > 0.0 && (folding_period_source==jpulsar || folding_period_source==string()) ){
-    fprintf(stderr,"Already got folding_period so returning straight away from dsp::Fold::prepare()\n");
+  if( folding_period > 0.0 && (folding_period_source==jpulsar 
+                               || folding_period_source==string()) )
+  {
+    if (verbose)
+      cerr << "dsp::Fold::prepare using folding_period=" << folding_period << endl;
     pulsar_ephemeris = 0;
     folding_polyco = 0;
     built = true;
@@ -403,7 +406,7 @@ void dsp::Fold::set_nspan (unsigned _nspan)
 
 void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
 {
-  if (pulsar_ephemeris == ephemeris)
+  if (pulsar_ephemeris.ptr() == ephemeris)
     return;
 
   //  Reference::To<const psrephem> grrr(ephemeris);
@@ -650,17 +653,19 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   // number of time samples actually folded
   uint64 ndat_folded = 0;
 
+  // number of bad weights encountered this run
+  unsigned bad_weights = 0;
+
   if (ndatperweight) {
     iweight = idat_start / ndatperweight;
     datendweight = (iweight + 1) * ndatperweight;
 
-    if (weights[iweight] == 0)
+    if (weights[iweight] == 0)  {
       discarded_weights ++;
-
+      bad_weights ++;
+    }
   }
 
-  // total number of bad weights encountered
-  unsigned bad_weights = 0;
   // total number of weights tested
   unsigned n_weights = 1;
 
@@ -675,8 +680,10 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
       datendweight += ndatperweight;
       n_weights ++;
 
-      if (weights[iweight] == 0)
+      if (weights[iweight] == 0) {
         discarded_weights ++;
+	bad_weights ++;
+      }
 
     }
 
@@ -690,9 +697,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
     assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
 
-    if (ndatperweight && weights[iweight] == 0)
-      bad_weights ++;
-    else {
+    if (ndatperweight && weights[iweight] != 0)  {
       hits[ibin]++;
       ndat_folded ++;
     }
