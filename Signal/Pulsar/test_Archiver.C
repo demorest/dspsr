@@ -9,7 +9,7 @@
 #include "dsp/Fold.h"
 #include "dsp/Archiver.h"
 
-#include "Pulsar/TimerArchive.h"
+#include "TimerArchive.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -362,9 +362,6 @@ int main (int argc, char** argv)
 
   } catch (Error& error) {
     cerr << "Error thrown: " << error << endl;
-    return -1;
-  } catch (Reference::invalid& error) {
-    cerr << "Reference invalid exception thrown" << endl;
     return -1;
   } catch (string& error) {
     cerr << "exception thrown: " << error << endl;
