@@ -13,9 +13,6 @@
 #include "pspm++.h"
 #include "genutil.h"
 
-// Register the CPSRFile class with the File::registry
-static Registry::List<dsp::File>::Enter<dsp::CPSRFile> entry;
-
 bool dsp::CPSRFile::is_valid (const char* filename) const
 {
   int fd = ::open (filename, O_RDONLY);
@@ -69,7 +66,7 @@ static pspmDbase::server cpsr_hdr;
 void dsp::CPSRFile::open (const char* filename)
 {
   if (verbose)
-    cerr << "CPSRFile::open" << endl;
+    cerr << "CPSRFile::open " << filename << endl;
 
   if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
     fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");

@@ -10,9 +10,6 @@
 #include "yamasaki_verify.h"
 #include "genutil.h"
 
-// Register the CPSR2File class with the File::registry
-static Registry::List<dsp::File>::Enter<dsp::CPSR2File> entry;
-
 int dsp::CPSR2File::get_header (char* cpsr2_header, const char* filename)
 {
   int fd = ::open (filename, O_RDONLY);

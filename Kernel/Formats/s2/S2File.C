@@ -10,9 +10,6 @@
 #include "tci_file.h"
 #include "genutil.h"
 
-// Register the S2File class with the File::registry
-static Registry::List<dsp::File>::Enter<dsp::S2File> entry;
-
 bool dsp::S2File::is_valid (const char* filename) const
 { 
   tci_fd   s2file;
