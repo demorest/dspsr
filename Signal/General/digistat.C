@@ -14,12 +14,15 @@
 #include "string_utils.h"
 #include "dirutil.h"
 
-static char* args = "vV";
+static char* args = "c:n:t:vV";
 
 void usage ()
 {
   cout << "digistat - plots digitizer statistics\n"
     "Usage: digistat [" << args << "] file1 [file2 ...] \n"
+    " -n <nsample>   number of samples used in estimating undigitized power\n"
+    " -c <cutoff>    cutoff threshold for impulsive interference excision\n"
+    " -t <threshold> sampling threshold at record time\n"
        << endl;
 }
 
@@ -31,9 +34,41 @@ int main (int argc, char** argv)
   bool display = true;
   bool verbose = false;
 
+  unsigned tbc_nsample = 512;
+  float tbc_cutoff = 0.0;
+  float tbc_threshold = 0.0;
+
   int c;
+  int scanned;
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
+
+    case 'n':
+      scanned = sscanf (optarg, "%u", &tbc_nsample);
+      if (scanned != 1) {
+	cerr << "dspsr: error parsing " << optarg << " as"
+	  " number of samples used to estimate undigitized power" << endl;
+	return -1;
+      }
+      break;
+
+    case 'c':
+      scanned = sscanf (optarg, "%f", &tbc_cutoff);
+      if (scanned != 1) {
+        cerr << "dspsr: error parsing " << optarg << " as"
+          " dynamic output level assignment cutoff" << endl;
+        return -1;
+      }
+      break;
+
+    case 't':
+      scanned = sscanf (optarg, "%f", &tbc_threshold);
+      if (scanned != 1) {
+        cerr << "dspsr: error parsing " << optarg << " as"
+          " sampling threshold" << endl;
+        return -1;
+      }
+      break;
 
     case 'V':
       dsp::Operation::verbose = true;
@@ -71,7 +106,7 @@ int main (int argc, char** argv)
   // interface manages the creation of data loading and converting classes
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
 
-  manager->set_block_size (512*512);
+  manager->set_block_size (512*tbc_nsample);
   manager->set_output (voltages);
 
   // plots two-bit digitization statistics
@@ -96,6 +131,15 @@ int main (int argc, char** argv)
 	" does not contain two-bit data" << endl;
       continue;
     }
+
+    if ( tbc_nsample )
+      correct -> set_nsample ( tbc_nsample );
+
+    if ( tbc_threshold )
+      correct -> set_threshold ( tbc_threshold );
+
+    if ( tbc_cutoff )
+      correct -> set_cutoff_sigma ( tbc_cutoff );
 
     plotter->set_data (correct);
 
