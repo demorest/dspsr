@@ -275,8 +275,7 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   return mean/double(get_ndat());
 }
 
-void dsp::TimeSeries::copy_configuration (const Observation* copy)
-{
+void dsp::TimeSeries::copy_configuration (const Observation* copy){
   if( copy==this )
     return;
 
@@ -284,6 +283,9 @@ void dsp::TimeSeries::copy_configuration (const Observation* copy)
     Observation::operator=( *copy );
     return;
   }
+
+  if( verbose )
+    fprintf(stderr,"dsp::TimeSeries::copy_configuration() not copying nchan, npol, ndim, state\n");
 
   Observation* input = (Observation*)copy;
 
