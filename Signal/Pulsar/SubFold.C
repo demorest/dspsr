@@ -214,7 +214,9 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   
   MJD fold_end = std::min (input_end, upper);
   MJD fold_total = fold_end - fold_start;
-  ndat_fold = (uint64) rint (fold_total.in_seconds() * sampling_rate);
+
+  double samples = fold_total.in_seconds() * sampling_rate;
+  ndat_fold = (uint64) rint (samples);
 
   if (verbose)
     cerr << "dsp::SubFold::bound fold " << fold_total.in_seconds()
@@ -235,7 +237,16 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
     MJD::precision = oldMJDprecision;
     return false;
   }
-  
+
+  if (idat_start + ndat_fold > input->get_ndat()) {
+    // this can happen owing to rounding in the above two calls to rint()
+    if (verbose)
+      cerr << "dsp::SubFold::bound fold " << samples << " rounds to "
+	   << ndat_fold << ", " << input->get_ndat() - (idat_start+ndat_fold)
+	   << " more than input holds" << endl;
+    ndat_fold = input->get_ndat() - idat_start;
+  }
+
   double actual = double(ndat_fold)/sampling_rate;
   if (verbose)
     cerr << "dsp::SubFold::bound fold " << actual
@@ -248,7 +259,7 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
 
   if (verbose)
     cerr << "dsp::SubFold::bound " << samples_to_end << " samples to"
-      " end of current profile" << endl;
+      " end of current sub-integration" << endl;
 
   if (samples_to_end < 0.5)
     subint_full = true;
@@ -257,13 +268,12 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
     // the current input TimeSeries extends more than the current
     // sub-integration: set the more_data flag and the boundaries for
     // the next sub-integration
+    if (verbose)
+      cerr << "dsp::SubFold::bound " << (input_end-fold_end).in_seconds()
+	   << " seconds remain following current sub-integration" << endl;
+
     set_boundaries (fold_end+MJD::precision);
     more_data = true;
-  }
-
-  if (idat_start + ndat_fold > input->get_ndat()) {
-    cerr << "dsp::SubFold::bound INTERNAL ERROR *** correcting." << endl;
-    ndat_fold = input->get_ndat() - idat_start;
   }
 
   MJD::precision = oldMJDprecision;
