@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.21 $
-   $Date: 2003/09/29 14:55:43 $
+   $Revision: 1.22 $
+   $Date: 2003/10/05 06:17:07 $
    $Author: hknight $ */
 
 
@@ -126,7 +126,7 @@ namespace dsp {
     /*! If the data stored on the device contains information other
       than the sampled data, this method should be overloaded and the
       additional information should be filtered out. */
-    virtual int64 load_bytes (unsigned char* buffer, uint64 nbyte);
+    virtual int64 load_bytes (unsigned char* buffer, uint64 nbytes);
     
     //! Set the file pointer to the absolute number of sampled data bytes
     /*! If the header_bytes attribute is set, this number of bytes
