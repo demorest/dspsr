@@ -226,7 +226,7 @@ int main (int argc, char** argv)
       scanned = sscanf (optarg, "c%f", &tbc_cutoff);
       if (scanned == 1)  {
         cerr << "dspsr: Setting impulsive interference excision threshold "
-                "to " << tbc_cutoff << endl;
+	  "to " << tbc_cutoff << endl;
         break;
       }
 
@@ -238,7 +238,7 @@ int main (int argc, char** argv)
       }
       
       cerr << "dspsr: error parsing " << optarg << " as"
-	  " two-bit correction nsample, threshold, or cutoff" << endl;
+	" two-bit correction nsample, threshold, or cutoff" << endl;
       return -1;
 
     case 'A':
@@ -910,7 +910,7 @@ int main (int argc, char** argv)
       // archive->pscrunch ();
       // archive->fscrunch ();
 
-      archive->set_backend( archive->get_backend() + " : dspsr");
+      archive->set_backend( archive->get_backend() + ":dspsr");
       archive->unload ();
 
     }
