@@ -19,9 +19,11 @@ dsp::PuMaFile::PuMaFile (const char* filename)
   //! The PuMa header
   unsigned header_size = sizeof (Header_type);
 
-  if (header_size != 4504)
+  if (header_size != 4504) {
+    Error::verbose = true;
     throw Error (InvalidState, "dsp::PuMaFile", 
                  "sizeof(Header_type)=%d != 4504", header_size);
+  }
 
   header = malloc (sizeof(Header_type));
 
@@ -85,7 +87,6 @@ void dsp::PuMaFile::open_file (const char* filename)
   
 void dsp::PuMaFile::parse (const void* header)
 {
-  Error::verbose = true;
   const Header_type* hdr = (const Header_type*) header;
 
   /* Boolean Raw;    In case of raw data */
@@ -204,7 +205,10 @@ void dsp::PuMaFile::parse (const void* header)
   string pulsar = hdr->src.Pulsar;
   
   // strip off the "PSR"
-  stringtok (&pulsar, " _");
+  string prefix = stringtok (&pulsar, " _");
+
+  if (prefix != "PSR")
+    pulsar = prefix;
 
   if (verbose)
     cerr << "dsp::PuMaFile::parse source='" << pulsar << "'" << endl;
@@ -220,9 +224,6 @@ void dsp::PuMaFile::parse (const void* header)
   
   info.set_coordinates( position );
   
-  /* double SkyMidFreq; Mid sky frequency of band (in MHz) */
-  info.set_centre_frequency( hdr->WSRT.Band[iband].SkyMidFreq );
-  
   double sign = 1.0;
   /* Boolean NonFlip; Is band flipped (reverse freq order within band)? */
   if (hdr->WSRT.Band[iband].NonFlip == false)
@@ -233,6 +234,10 @@ void dsp::PuMaFile::parse (const void* header)
 
   /* double Width; Width of the band (in MHz): 2.5, 5.0 or 10.0 */
   info.set_bandwidth( sign * hdr->WSRT.Band[iband].Width / FIR_factor );
+
+  /* double SkyMidFreq; Mid sky frequency of band (in MHz) */
+  info.set_centre_frequency( hdr->WSRT.Band[iband].SkyMidFreq 
+                             - 0.5 * (FIR_factor-1) * info.get_bandwidth() );
 
   /* int StMJD;       MJD at start of observation */
   /* int StTime;      Starttime (s after midnight, multiple of 10 s) */
