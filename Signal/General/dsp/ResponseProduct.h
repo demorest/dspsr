@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ResponseProduct.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/10/18 14:13:31 $
+   $Revision: 1.2 $
+   $Date: 2004/11/01 16:49:49 $
    $Author: wvanstra $ */
 
 #ifndef __ResponseProduct_h
@@ -37,6 +37,9 @@ namespace dsp {
 
     //! The responses
     vector< Reference::To<Response> > response;
+
+    //! The builder
+    void build ();
 
   };
   
