@@ -78,7 +78,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   // set_model must be called after the Integration::MJD has been set
   if( !phase->get_folding_polyco() ){
     fprintf(stderr,"using no polyco whatsoever\n");
-    //archive->set_model( polyco(phase->get_mid_time(),
+    //archive->set_model( polyco(phase->get_epoch(),
     //		       phase->get_dispersion_measure(),
     //		       1.0/phase->get_folding_period(),
     //		       phase->get_telescope()) );
@@ -115,7 +115,7 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
                  "Integration.nchan=%d != PhaseSeries.nchan=%d", 
                  integration->get_nchan(), nchan);
 
-  integration-> set_mid_time ( phase->get_mid_time() );
+  integration-> set_epoch ( phase->get_mid_time() );
   integration-> set_duration ( phase->get_integration_length() );
 
   integration-> set_centre_frequency ( phase->get_centre_frequency() );
