@@ -29,8 +29,9 @@ void dsp::Accumulator::transformation(){
       throw Error(InvalidParam,"dsp::Accumulator::transformation()",
 		  "max_samps=0.  You forgot to set it properly");
     output->Observation::operator=( *input );
-    fprintf(stderr,"accumulator resizing output to have "UI64" samps\n",
-	    max_samps);
+    if( verbose )
+      fprintf(stderr,"accumulator resizing output to have "UI64" samps\n",
+	      max_samps);
     if( max_ndat > max_samps )
       output->resize( max_ndat );
     else
