@@ -52,6 +52,10 @@ void dsp::Seekable::load_data (BitSeries* data)
 
   uint64 read_sample = get_load_sample() + recycled;
 
+  if( verbose )
+    fprintf(stderr,"dsp::seekable::load_data(): Got read_sample = get_load_sample() + recycled = "UI64" + "UI64" = "UI64"\n",
+	    get_load_sample(),recycled,read_sample);
+
   if (verbose)
     cerr << "dsp::Seekable::load_data recycled="
 	 << recycled << endl;
@@ -85,7 +89,7 @@ void dsp::Seekable::load_data (BitSeries* data)
     int64 seeked = seek_bytes (toseek_bytes);
     if (seeked < 0)
       throw Error (FailedCall, "dsp::Seekable::load_data", "error seek_bytes");
-
+    
     // confirm that we be where we expect we be
     if (read_sample != (uint64) data->get_nsamples (seeked))
       throw Error (InvalidState, "dsp::Seekable::load_data", "seek mismatch"
