@@ -136,7 +136,8 @@ int main (int argc, char** argv)
 
       manager.load (&voltages);
 
-      detect.operate ();
+      if (!voltages->get_detected())
+        detect.operate ();
 
       fold.operate ();
 
