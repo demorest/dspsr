@@ -197,6 +197,11 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   if (primary == "cpsr2")
     prefix = "n";
 
+  if (primary == "cgsr1")
+    prefix = "p";
+  if (primary == "cgsr2")
+    prefix = "q";
+
   // make an identifier name
   set_identifier (prefix + get_default_id());
   set_mode (stringprintf ("%d-bit mode", nbit));
