@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/12/03 17:18:14 $
-   $Author: wvanstra $ */
+   $Revision: 1.10 $
+   $Date: 2002/12/04 01:15:20 $
+   $Author: hknight $ */
 
 #ifndef __Response_h
 #define __Response_h
@@ -84,6 +84,9 @@ namespace dsp {
     //! Re-organize frequency bins to reflect natural ordering (DC->Nyq)
     void naturalize ();
 
+    //! Returns how much multiplying by this response will alter your dispersion measure.
+    virtual double get_dispersion_measure(){ return 0.0; }
+
   protected:
 
     //! Swap halves of bandpass(es)
@@ -109,3 +112,5 @@ namespace dsp {
 }
 
 #endif
+
+

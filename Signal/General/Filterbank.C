@@ -157,6 +157,16 @@ void dsp::Filterbank::transformation ()
   output->resize (npart * nkeep * time_res);
 
   double scalefac = 1.0;
+
+  if( verbose ){
+    fprintf(stderr,"fft::get_normalization()=%s\n",
+	    fft::get_normalization() == fft::nfft?"fft::nfft":
+	    fft::get_normalization() == fft::normal?"fft::normal":
+	    "unknown");
+    fprintf(stderr,"n_fft=%d and freq_res=%d\n",
+	    n_fft,freq_res);
+  }
+
   if (fft::get_normalization() == fft::nfft)
     scalefac = double(n_fft) * double(freq_res);
 
@@ -164,7 +174,7 @@ void dsp::Filterbank::transformation ()
     scalefac = double(n_fft) / double(freq_res);
 
   output->rescale (scalefac);
-
+  
   if (verbose)
     cerr << "dsp::Filterbank::transformation scale="<< output->get_scale() <<endl;
 
@@ -337,6 +347,9 @@ void dsp::Filterbank::transformation ()
     } // for each polarization
     
   } // for each big fft (ipart)
+
+  if( response )
+    output->change_dispersion_measure( response->get_dispersion_measure() );
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation exit." << endl;
