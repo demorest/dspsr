@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/09/01 07:07:24 $
-   $Author: hknight $ */
+   $Revision: 1.20 $
+   $Date: 2003/11/26 16:37:57 $
+   $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -46,7 +46,7 @@ namespace dsp {
     //! Swaps the two TimeSeries's.  Returns '*this'
     virtual TimeSeries& swap_data(TimeSeries& ts);
 
-    //! Ouch! Destructor
+    //! Destructor
     virtual ~TimeSeries();
 
     //! Set this equal to copy
@@ -57,6 +57,9 @@ namespace dsp {
 
     //! Multiple each value by this scalar
     virtual TimeSeries& operator *= (float mult);
+
+    //! Copy the configuration of another TimeSeries instance (not the data)
+    virtual void copy_configuration (const TimeSeries* copy);
 
     //! Hack together 2 different bands (not pretty)
     virtual void hack_together(vector<TimeSeries*> bands);

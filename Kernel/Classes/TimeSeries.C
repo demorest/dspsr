@@ -198,6 +198,11 @@ float* dsp::TimeSeries::get_ordered_datptr(unsigned ichan,unsigned ipol){
   return get_datptr(ichan-nchan/2,ipol);
 }
 
+void dsp::TimeSeries::copy_configuration (const TimeSeries* copy)
+{
+  Observation::operator = (*copy);
+}
+
 dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 {
   if (this == &copy)
