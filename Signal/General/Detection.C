@@ -1,6 +1,10 @@
+#include <memory>
+
 #include "dsp/Detection.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Transformation.h"
+#include "dsp/SLDetect.h"
+#include "dsp/PScrunch.h"
 
 #include "genutil.h"
 #include "cross_detect.h"
@@ -13,15 +17,26 @@ dsp::Detection::Detection ()
   ndim = 1;
 }
 
+/*  Other possible polarimetric states of the data
+    enum State {
+    // Nyquist sampled voltages (real)
+    Nyquist,
+    // In-phase and Quadrature sampled voltages (complex)
+    Analytic,
+    // Stokes invariant interval
+    Invariant
+  };
+*/
+
 //! Set the state of output data
 void dsp::Detection::set_output_state (Signal::State _state)
 {
   switch (_state)  {
-  case Signal::Intensity:
-  case Signal::PPQQ:
+  case Signal::Intensity:  // Square-law detected total power (1 pol)
+  case Signal::PPQQ:       // Square-law detected, two polarizations
     ndim = 1;
-  case Signal::Stokes:
-  case Signal::Coherence:
+  case Signal::Stokes:     // Stokes I,Q,U,V
+  case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
     break;
   default:
     throw_str ("Detection::set_output_state unknown state");
@@ -125,6 +140,20 @@ void dsp::Detection::square_law ()
 {
   if (verbose)
     cerr << "Detection::square_law" << endl;
+  auto_ptr<dsp::SLDetect> sld(new dsp::SLDetect);
+  sld->set_input( input );
+  sld->set_output( output );
+  
+  sld->operate();
+
+  if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
+    auto_ptr<dsp::PScrunch> pscrunch(new dsp::PScrunch);
+    pscrunch->set_input( output );
+    pscrunch->set_output( output );
+
+    pscrunch->operate();
+  }
+
 }
 
 void dsp::Detection::polarimetry ()

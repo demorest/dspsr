@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/09 15:55:25 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2003/01/10 23:47:00 $
+   $Author: pulsar $ */
 
 
 #ifndef __Detection_h
@@ -25,6 +25,8 @@ namespace dsp {
   4, 1, or 2, respectively.  The three methods require different
   amounts of RAM and therefore result in performance benefits that are
   largely cache-dependent. */
+
+  //! It is recommended that user calls both set_output_ndim() and set_output_state() 
 
   class Detection : public Transformation <TimeSeries, TimeSeries> {
 
