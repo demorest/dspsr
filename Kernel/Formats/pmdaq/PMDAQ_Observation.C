@@ -29,7 +29,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   //
   // no idea about the size of the data
   //
-  ndat = 0;
+  set_ndat( 0 );
 
   // //////////////////////////////////////////////////////////////////////
   //
