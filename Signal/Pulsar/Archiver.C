@@ -12,7 +12,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 { try {
 
   if (verbose)
-    cerr << "Archiver::set Pulsar::Archive" << endl;
+    cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
   unsigned npol = phase->get_npol();
   unsigned nchan = phase->get_nchan();
@@ -49,7 +49,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_model ( *(phase->get_folding_polyco()) );
 }
 catch (Error& error) {
-  throw error += "Archiver::set Pulsar::Archive";
+  throw error += "dsp::Archiver::set Pulsar::Archive";
 }
 }
 
@@ -57,7 +57,7 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
 			 const PhaseSeries* phase)
 { try {
   if (verbose)
-    cerr << "Archiver::set Pulsar::Integration" << endl;
+    cerr << "dsp::Archiver::set Pulsar::Integration" << endl;
 
   unsigned npol = phase->get_npol();
   unsigned nchan = phase->get_nchan();
@@ -90,7 +90,7 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
       }
 }
 catch (Error& error) {
-  throw error += "Archiver::set Pulsar::Integration";
+  throw error += "dsp::Archiver::set Pulsar::Integration";
 }
 }
 
@@ -100,7 +100,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 				 unsigned ichan, unsigned ipol, unsigned idim)
 { try {
   if (verbose)
-    cerr << "Archiver::set Pulsar::Profile"
+    cerr << "dsp::Archiver::set Pulsar::Profile"
       " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << endl;
 
   unsigned nbin = phase->get_nbin();
@@ -121,10 +121,10 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 
   double scale = phase->get_scale ();
   if (verbose)
-    cerr << "Archiver::set Pulsar::Profile scale=" << scale << endl;
+    cerr << "dsp::Archiver::set Pulsar::Profile scale=" << scale << endl;
 
   if (scale == 0 || isnan(scale))
-    throw Error (InvalidParam, "Archiver::set Pulsar::Profile",
+    throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Profile",
 		"invalid scale=%lf", scale);
 
   for (unsigned ibin = 0; ibin<nbin; ibin++) {
@@ -141,10 +141,10 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
   }
 
   if (zeroes)
-    cerr << "Archiver::set Pulsar::Profile Warning: " << zeroes 
+    cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
 	 << " bins with zero hits!" << endl;
 }
 catch (Error& error) {
-  throw error += "Archiver::set Pulsar::Profile";
+  throw error += "dsp::Archiver::set Pulsar::Profile";
 }}
 
