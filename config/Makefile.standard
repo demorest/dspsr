@@ -5,7 +5,7 @@
 ##########################################################################
 # the standard targets
 ##########################################################################
-TARGETS := include depend libs all install clean veryclean
+TARGETS := include libs all test install clean veryclean
 
 ##########################################################################
 # the standard macro definitions
