@@ -15,8 +15,8 @@ dsp::Fold::Fold ()
   folding_period = 0;
 
   nbin = 0;
-  ncoef = 12;
-  nspan = 90;
+  ncoef = 15;
+  nspan = 120;
 
   built = false;
 }
