@@ -1,47 +1,45 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/11/10 21:49:05 $
+   $Revision: 1.13 $
+   $Date: 2003/05/13 15:09:11 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
 #define __CPSRTwoBitCorrection_h
 
-#include "dsp/TwoBitCorrection.h"
+#include "dsp/SubByteTwoBitCorrection.h"
 
 namespace dsp {
   
   //! Converts CPSR data from 2-bit digitized to floating point values
-  class CPSRTwoBitCorrection: public TwoBitCorrection {
+  class CPSRTwoBitCorrection: public SubByteTwoBitCorrection {
 
   public:
 
     //! Constructor initializes base class atributes
     CPSRTwoBitCorrection ();
 
-    ~CPSRTwoBitCorrection () { destroy(); }
-
     //! Return true if CPSRTwoBitCorrection can convert the Observation
     virtual bool matches (const Observation* observation);
 
-  protected:
+    //! Over-ride the TwoBitCorrection default
+    virtual unsigned get_ndig () const;
 
-    //! Unpacking interface
-    void unpack ();
+    //! Over-ride the TwoBitCorrection default
+    virtual unsigned get_ndig_per_byte () const;
 
-    //! Unpacking algorithm
-    void iq_unpack (float* outdata, const unsigned char* raw, 
-		    uint64 ndat, unsigned channel, unsigned* weights);
+    //! Over-ride the TwoBitCorrection default
+    virtual unsigned get_output_offset (unsigned idig) const;
 
-    //! Temporary storage of bit-shifted values
-    unsigned char* values;
+    //! Over-ride the TwoBitCorrection default
+    virtual unsigned get_output_ipol (unsigned idig) const;
 
-    //! Build the dynamic level setting lookup table and temporary space
-    void build ();
+    //! Over-ride the TwoBitCorrection default
+    virtual unsigned get_output_incr () const;
 
-    //! Delete allocated resources
-    void destroy ();
+    //! Over-ride the SubByteTwoBitCorrection default
+    virtual unsigned get_shift (unsigned idig, unsigned isamp) const;
 
   };
   
