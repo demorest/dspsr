@@ -23,12 +23,12 @@ dsp::Detection::Detection ()
 void dsp::Detection::set_output_state (Signal::State _state)
 {
   switch (_state)  {
-  case Signal::Intensity:  // Square-law detected total power (1 pol)
-  case Signal::PPQQ:       // Square-law detected, two polarizations
+  case Signal::Intensity:
+  case Signal::PPQQ:
     ndim = 1;
-  case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
+  case Signal::Coherence:
     break;
-  case Signal::Stokes:     // Stokes I,Q,U,V
+  case Signal::Stokes:
     throw Error (InvalidParam, "dsp::Detection::set_output_state",
 		 "Stokes output not implemented");
   default:
@@ -43,22 +43,26 @@ void dsp::Detection::set_output_state (Signal::State _state)
 void dsp::Detection::transformation ()
 {
   if (verbose)
-    cerr << "dsp::Detection::transformation output state="
+    cerr << "dsp::Detection::transformation input state=" 
+	 << input->get_state_as_string() << "  output state="
 	 << Signal::state_string(state) << endl;
+  
+  if (input->get_detected())
+    throw Error (InvalidState, "dsp::Detection::transformation",
+		 "invalid input state=" + input->get_state_as_string());
 
-  if( input.get()==output.get() && state==input->get_state() ) {
-    if (verbose) cerr 
-      << "dsp::Detection::transformation inplace and no state change" << endl;
-    return;
-  }
-
-  if (state == Signal::Stokes || state == Signal::Coherence) {
+  if (state == Signal::Stokes || state == Signal::Coherence ||
+      state == Signal::Intensity || state == Signal::PPQQ) {
 
     if (input->get_npol() != 2)
       throw Error (InvalidState, "dsp::Detection::transformation",
 		   "invalid npol=%d for %s formation",
 		   input->get_npol(), Signal::state_string(state));
 
+  }
+
+  if (state == Signal::Stokes || state == Signal::Coherence) {
+    
     if (input->get_state() != Signal::Analytic)
       throw Error (InvalidState, "dsp::Detection::transformation",
 		   "invalid state=%s for %s formation",
@@ -76,8 +80,10 @@ void dsp::Detection::transformation ()
     
   }
 
-  bool inplace = (input.get() == output.get());
-  if (verbose)
+
+  bool inplace = (input == output);
+
+  if (inplace && verbose)
     cerr << "dsp::Detection::transformation inplace" << endl;
 
   if (!inplace)
@@ -113,6 +119,9 @@ void dsp::Detection::resize_output ()
 	   << Signal::state_string(state) << " ndim=" << ndim << endl;
   }
 
+  if (state == Signal::Intensity)
+    output_npol = 1;
+
   output->Observation::operator=(*input);
 
   output->set_state (state);
@@ -143,29 +152,76 @@ void dsp::Detection::square_law ()
   if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
  
-  if( state==Signal::Intensity && input->get_state()==Signal::PPQQ ){
-    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-    pscrunch->set_input( input );
-    pscrunch->set_output( output );
+  unsigned nchan = input->get_nchan();
+  unsigned npol = input->get_npol();
+  uint64 nfloat = input->get_ndim() * input->get_ndat();
 
-    pscrunch->operate();
-    return;
-  }
-
-  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
-  sld->set_input( input );
-  sld->set_output( output );
-  
-  sld->operate();
-  
-  if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
-    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-    pscrunch->set_input( output );
-    pscrunch->set_output( output );
+  bool analytic = input->get_state()==Signal::Analytic;
     
-    pscrunch->operate();
-  }
+  register const float* in_ptr = 0;
+  register const float* in_end = 0;
+  register float* out_ptr = 0;
   
+  for (unsigned ichan=0; ichan<nchan; ichan++) {
+    for (unsigned ipol=0; ipol<npol; ipol++) {
+      
+      in_ptr = input->get_datptr (ichan,ipol);
+      in_end = in_ptr + nfloat;
+      out_ptr = output->get_datptr (ichan,ipol);
+      
+      if (!analytic)
+	while (in_ptr != in_end) {
+	  *out_ptr = *in_ptr * *in_ptr;
+	  out_ptr++;
+	  in_ptr++;
+	} 
+      
+      else
+	while (in_ptr != in_end) {
+	  *out_ptr = *in_ptr * *in_ptr;  // Re*Re
+	  in_ptr++;
+	  
+	  *out_ptr += *in_ptr * *in_ptr; // Im*Im
+	  in_ptr++;
+	  out_ptr++;
+	}	
+      
+      
+    }  // for each ipol
+  }  // for each ichan
+
+
+  if (state == Signal::Intensity) {
+
+    if (input->get_npol() != 2)
+      throw Error (InvalidState, "dsp::Detection::square_law",
+		   "output state=Intensity and input npol=%d",
+		   input->get_npol());
+
+    register float* p0_ptr = 0;
+    register float* p1_ptr = 0;
+    register float* p1_end = 0;
+     
+    nfloat = input->get_ndat();
+
+    for (unsigned ichan=0; ichan<nchan; ichan++) {
+      for (unsigned ipol=0; ipol<npol; ipol++) {
+	
+	p0_ptr = output->get_datptr (ichan,0);
+	p1_ptr = output->get_datptr (ichan,1);
+	p1_end = p1_ptr + nfloat;
+
+	while (p1_ptr != p1_end) {
+	  *p0_ptr += *p1_ptr;
+	  p0_ptr++;
+	  p1_ptr++;
+	} 
+ 
+      }  // for each ipol
+    }  // for each ichan
+
+  }  // if Signal::Intensity
+
 }
 
 void dsp::Detection::polarimetry ()
@@ -243,7 +299,7 @@ void dsp::Detection::polarimetry ()
       r[1] = r[0] + 1;
       r[2] = r[1] + 1;
       r[3] = r[2] + 1;
-     break;
+      break;
     }
 
     cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
