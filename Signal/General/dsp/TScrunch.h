@@ -27,11 +27,16 @@ namespace dsp {
     bool UsingScrunchFactor(){ return !use_tres; }
     bool UsingTimeRes(){ return use_tres; }
 
+    /* deprected */
     bool get_do_only_full_scrunches(){ return do_only_full_scrunches; }
+    /* deprecated */
     void set_do_only_full_scrunches(bool _do_only_full_scrunches){ do_only_full_scrunches = _do_only_full_scrunches; }
 
   protected:
     virtual void transformation ();
+
+    // Returns the unsigned version of the ScrunchFactor
+    unsigned get_sfactor();
 
     int64 ScrunchFactor;
     double TimeRes;  // In microseconds
@@ -39,7 +44,7 @@ namespace dsp {
     // If true, use the tres parameter, if false use the ScrunchFactor parameter
     bool use_tres; 
     
-    //! If set to true, only ndat-ndat%ScrunchFactor points are scrunched in.  The others are discarded
+    /* deprecated */
     bool do_only_full_scrunches;
 
   };
