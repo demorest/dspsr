@@ -50,6 +50,7 @@ void dsp::Observation::init ()
   between_channel_dm = 0.0;
 
   domain = "Time";  /* cf 'Fourier' */
+  last_ondisk_format = "raw"; /* cf 'CoherentFB' or 'Digi' etc */
 }
 
 double dsp::Observation::get_highest_frequency(double max_freq, unsigned chanstart,unsigned chanend){
@@ -420,6 +421,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_mode        ( in_obs.get_mode() );
 
   set_domain( in_obs.get_domain() );
+  set_last_ondisk_format( in_obs.get_last_ondisk_format() );
 
   return *this;
 }
@@ -478,8 +480,8 @@ void dsp::Observation::change_start_time (int64 samples)
 bool dsp::Observation::obs2string(string& ss){
   char dummy[256];
 
-  sprintf(dummy,"dsp::Observation data\n"); ss+= dummy;
-  sprintf(dummy,"NDAT\t"I64"\n",ndat); ss += dummy;
+  sprintf(dummy,"dsp::Observation_data\n"); ss+= dummy;
+  sprintf(dummy,"NDAT\t"UI64"\n",ndat); ss += dummy;
   sprintf(dummy,"TELESCOPE\t%c\n",telescope); ss += dummy;
   sprintf(dummy,"SOURCE\t%s\n",source.c_str()); ss += dummy;
   sprintf(dummy,"CENTRE_FREQUENCY\t%.16f\n",centre_frequency); ss += dummy;
@@ -507,6 +509,7 @@ bool dsp::Observation::obs2string(string& ss){
   sprintf(dummy,"DISPERSION_MEASURE\t%.16f\n",dispersion_measure); ss += dummy;
   sprintf(dummy,"BETWEEN_CHANNEL_DM\t%.16f\n",between_channel_dm); ss += dummy;
   sprintf(dummy,"DOMAIN\t%s\n",domain.c_str()); ss += dummy;
+  sprintf(dummy,"LAST_ONDISK_FORMAT\t%s\n",last_ondisk_format.c_str()); ss += dummy;
 
   return true;
 }
@@ -527,61 +530,75 @@ bool dsp::Observation::obs2file(FILE* fptr){
 
 //! The file pointer must be appropriately seeked
 bool dsp::Observation::file2obs(FILE* fptr){
+  fprintf(stderr,"In dsp::Observation::file2obs()\n");
   if( !fptr ){
     cerr << "dsp::Observation::file2obs() returning false as fptr=NULL\n";
     return false;
   }
 
-  char dummy[256];
-  char moron[256];
+  char dummy[1024];
+  char moron[1024];
 
-  if( fscanf(fptr,"%s",dummy)!=1 ){
-    cerr << "dsp::Observation::file2obs() returning false as \n";
+  int scanned = fscanf(fptr,"%s\n",dummy);
+  if( scanned!=1 ){
+    cerr << "dsp::Observation::file2obs() returning false as could not read first line\n";
     return false;
   }
 
-  if( string(dummy)!=string("dsp::Observation data") ){
-    cerr << "dsp::Observation::file2obs() returning false as \n";
+  if( string(dummy)!=string("dsp::Observation_data") ){
+    cerr << "dsp::Observation::file2obs() returning false as first line is not 'dsp::Observation_data'.  It is '" << string(dummy) << "'\n";
     return false;
   }
 
-  fscanf(fptr,"NDAT\t"I64"\n",&ndat); 
-  fscanf(fptr,"TELESCOPE\t%c\n",&telescope); 
-  fscanf(fptr,"SOURCE\t%s\n",dummy); source = dummy; 
-  fscanf(fptr,"CENTRE_FREQUENCY\t%lf\n",&centre_frequency); 
-  fscanf(fptr,"BANDWIDTH\t%lf\n",&bandwidth); 
-  fscanf(fptr,"NCHAN\t%d\n",&nchan); 
-  fscanf(fptr,"NPOL\t%d\n",&npol); 
-  fscanf(fptr,"NDIM\t%d\n",&ndim); 
-  fscanf(fptr,"NBIT\t%d\n",&nbit); 
-  fscanf(fptr,"TYPE\t%s\n",dummy); type = Signal::string2Source(dummy);
-  fscanf(fptr,"STATE\t%s\n",dummy); state = Signal::string2State(dummy);
-  fscanf(fptr,"BASIS\t%s\n",dummy); basis = Signal::string2Basis(dummy);
-  fscanf(fptr,"RATE\t%lf\n",&rate); 
-  fscanf(fptr,"START_TIME\t%s\n",dummy); start_time = MJD(dummy);
-  fscanf(fptr,"SCALE\t%lf\n",&scale); 
+  fscanf(fptr,"NDAT\t"UI64"\n",&ndat); if(verbose) fprintf(stderr,"Got ndat="UI64"\n",ndat); 
+  fscanf(fptr,"TELESCOPE\t%c\n",&telescope);  if(verbose) fprintf(stderr,"Got telescope=%c\n",telescope); 
+  retrieve_cstring(fptr,"SOURCE\t",dummy); source = dummy;  if(verbose) fprintf(stderr,"Got source=%s\n",source.c_str()); 
+  fscanf(fptr,"CENTRE_FREQUENCY\t%lf\n",&centre_frequency);  if(verbose) fprintf(stderr,"Got centre_frequency=%f\n",centre_frequency); 
+  fscanf(fptr,"BANDWIDTH\t%lf\n",&bandwidth);  if(verbose) fprintf(stderr,"Got bandwidth=%f\n",bandwidth); 
+  fscanf(fptr,"NCHAN\t%d\n",&nchan);  if(verbose) fprintf(stderr,"Got nchan=%d\n",nchan); 
+  fscanf(fptr,"NPOL\t%d\n",&npol);  if(verbose) fprintf(stderr,"Got npol=%d\n",npol); 
+  fscanf(fptr,"NDIM\t%d\n",&ndim);  if(verbose) fprintf(stderr,"Got ndim=%d\n",ndim); 
+  fscanf(fptr,"NBIT\t%d\n",&nbit);  if(verbose) fprintf(stderr,"Got nbit=%d\n",nbit); 
+  retrieve_cstring(fptr,"TYPE\t",dummy); type = Signal::string2Source(dummy);  if(verbose) fprintf(stderr,"Got type=%s\n",Signal::Source2string(type).c_str()); 
+  retrieve_cstring(fptr,"STATE\t",dummy); fprintf(stderr,"yo\n"); state = Signal::string2State(dummy);  if(verbose) fprintf(stderr,"Got state=%s\n",Signal::State2string(state).c_str()); 
+  retrieve_cstring(fptr,"BASIS\t",dummy); basis = Signal::string2Basis(dummy);  if(verbose) fprintf(stderr,"Got basis=%s\n",Signal::Basis2string(basis).c_str()); 
+  fscanf(fptr,"RATE\t%lf\n",&rate);  if(verbose) fprintf(stderr,"Got rate=%f\n",rate); 
+  retrieve_cstring(fptr,"START_TIME\t",dummy); start_time = MJD(dummy);  if(verbose) fprintf(stderr,"Got start_time=%s\n",start_time.printall()); 
+  fscanf(fptr,"SCALE\t%lf\n",&scale);  if(verbose) fprintf(stderr,"Got scale=%f\n",scale); 
   fscanf(fptr,"SWAP\t%s\n",dummy);
   if( string(dummy)==string("true") )
     swap = true;
   else
     swap = false; 
+  if(verbose) fprintf(stderr,"Got swap=%d\n",swap); 
   fscanf(fptr,"DC_CENTRED\t%s\n",dummy);
   if( string(dummy)==string("true") )
     dc_centred = true;
   else
     dc_centred = false;
-  fscanf(fptr,"IDENTIFIER\t%s\n",dummy); identifier=dummy;
-  fscanf(fptr,"MODE\t%s\n",dummy); mode = dummy;
-  fscanf(fptr,"MACHINE\t%s\n",dummy); machine = dummy;
+  if(verbose) fprintf(stderr,"Got dc_centred=%d\n",dc_centred); 
+  retrieve_cstring(fptr,"IDENTIFIER\t",dummy); identifier=dummy;  if(verbose) fprintf(stderr,"Got identifier=%s\n",identifier.c_str()); 
+  retrieve_cstring(fptr,"MODE\t",dummy); mode = dummy;  if(verbose) fprintf(stderr,"Got mode=%s\n",mode.c_str()); 
+  retrieve_cstring(fptr,"MACHINE\t",dummy); machine = dummy; if(verbose) fprintf(stderr,"Got machine=%s\n",machine.c_str()); 
 
   /* COORDINATES is stored as RAJ and DECJ */
-  fscanf(fptr,"RAJ\t%s\n",dummy); 
-  fscanf(fptr,"DECJ\t%s\n",moron);
+  retrieve_cstring(fptr,"RAJ\t",dummy); 
+  retrieve_cstring(fptr,"DECJ\t",moron);
   coordinates.setHMSDMS(dummy,moron);
-  
-  fscanf(fptr,"DISPERSION_MEASURE\t%lf\n",&dispersion_measure);
-  fscanf(fptr,"BETWEEN_CHANNEL_DM\t%lf\n",&between_channel_dm);
-  fscanf(fptr,"DOMAIN\t%s\n",dummy); domain = dummy;
+  if(verbose) fprintf(stderr,"Got coordinates=%s\n",coordinates.getHMSDMS().c_str());   
+
+  fscanf(fptr,"DISPERSION_MEASURE\t%lf\n",&dispersion_measure); if(verbose) fprintf(stderr,"Got dispersion_measure=%f\n",dispersion_measure); 
+  fscanf(fptr,"BETWEEN_CHANNEL_DM\t%lf\n",&between_channel_dm); if(verbose) fprintf(stderr,"Got between_channel_dm=%f\n",between_channel_dm); 
+  retrieve_cstring(fptr,"DOMAIN\t",dummy); domain = dummy; if(verbose) fprintf(stderr,"Got domain=%s\n",domain.c_str());
+  retrieve_cstring(fptr,"LAST_ONDISK_FORMAT\t",dummy); last_ondisk_format = dummy; if(verbose) fprintf(stderr,"Got last_ondisk_format=%s\n",last_ondisk_format.c_str());
+
+
+  string ss;
+  if( !obs2string(ss) )
+    throw Error(InvalidState,"dsp::Observation::file2string()",
+		"Couldn't obs2string!\n");
+
+  fprintf(stderr,"Data got in:\n%s\n",ss.c_str());
 
   return true;
 }

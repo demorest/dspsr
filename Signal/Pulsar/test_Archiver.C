@@ -31,6 +31,7 @@ void usage ()
 int main (int argc, char** argv) 
 
 { try {
+  Error::verbose = true;
 
   char* metafile = 0;
   bool verbose = false;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.40 $
-   $Date: 2002/12/06 19:40:21 $
+   $Revision: 1.41 $
+   $Date: 2002/12/08 14:43:20 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -212,6 +212,12 @@ namespace dsp {
     //! Whether data is in 'Time' or 'Fourier' domain 
     void set_domain(string _domain){ domain = _domain; }
 
+    //! Inquire the last format on disk the dat was stored on
+    string get_last_ondisk_format() const { return last_ondisk_format; }
+
+    //! Set the last format on disk the dat was stored on
+    void set_last_ondisk_format(string _last_ondisk_format){ last_ondisk_format = _last_ondisk_format; }
+
     //! Change the state and correct other attributes accordingly
     virtual void change_state (Signal::State new_state);
 
@@ -369,6 +375,9 @@ namespace dsp {
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     string domain;
+
+    //! The last format the data was stored as ("raw","CoherentFB","Digi" etc)
+    string last_ondisk_format;
 
     /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string() and file2obs() appropriately! */
 
