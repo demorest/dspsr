@@ -145,6 +145,9 @@ void dsp::Convolution::operation ()
   // number of FFTs for this data block
   unsigned long npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
 
+  if (verbose)
+    cerr << "Convolution::operation npart=" << npart << endl;
+
   float* spectrum[2];
   spectrum[0] = float_workingspace (pts_reqd);
   spectrum[1] = spectrum[0];
@@ -177,6 +180,9 @@ void dsp::Convolution::operation ()
   if (fft::get_normalization() == fft::nfft)
     // after performing forward and backward FFTs the data will be scaled
     output->rescale (double(nsamp_fft) * double(n_fft));
+
+  if (verbose)
+    cerr << "Convolution::operation scale="<< output->get_scale() <<endl;
 
   unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
   
