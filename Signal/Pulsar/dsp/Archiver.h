@@ -1,20 +1,31 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.5 $
-   $Date: 2003/06/16 22:03:54 $
+   $Revision: 1.6 $
+   $Date: 2003/06/17 15:49:39 $
    $Author: wvanstra $ */
 
 
 #ifndef __Archiver_h
 #define __Archiver_h
 
-#include "Pulsar/Archive.h"
 #include "dsp/PhaseSeriesUnloader.h"
+
+namespace Pulsar {
+  class Archive;
+  class Integration;
+  class Profile;
+
+  class dspReduction;
+  class TwoBitStats;
+  class Passband;
+}
 
 namespace dsp {
 
   class Response;
+  class Operation;
+  class TwoBitCorrection;
 
   //! Class to unload PhaseSeries data in a Pulsar::Archive
   /*! 
@@ -36,11 +47,14 @@ namespace dsp {
     //! Set the Response from which Passband Extension will be constructed
     void set_passband (const Response* passband);
 
-    //! Unloads all available data to a new Archive instance
-    void unload ();
+    //! Set the Operation instances for the dspReduction Extension
+    void set_operations (const vector<Operation*>& operations);
 
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const char* archive_class_name);
+
+    //! Unloads all available data to a new Archive instance
+    void unload ();
 
     //! Set the Pulsar::Archive with the PhaseSeries data
     void set (Pulsar::Archive* archive, const PhaseSeries* phase);
@@ -53,13 +67,25 @@ namespace dsp {
     //! Response from which Passband Extension will be constructed
     Reference::To<const Response> passband;
 
-    //! Set the Response from which Passband Extension will be constructed
-    void set_passband (Pulsar::Archive* archive);
+    //! TwoBitCorrection from which TwoBitStats Extension will be constructed
+    Reference::To<const TwoBitCorrection> twobit;
+
+    //! The Operation instances for the dspReduction Extension
+    vector< Reference::To<Operation> > operations;
 
     void set (Pulsar::Integration* integration, const PhaseSeries* phase);
 
     void set (Pulsar::Profile* profile, const PhaseSeries* phase,
 		      unsigned ichan, unsigned ipol, unsigned idim);
+
+    //! Set the Pulsar::dspReduction Extension with the dsp::Operation
+    void set (Pulsar::dspReduction* dspR);
+
+    //! Set the Pulsar::TwoBitStats Extension with the dsp::TwoBitCorrection
+    void set (Pulsar::TwoBitStats* twobit);
+
+    //! Set the Pulsar::Passband Extension with the dsp::Response
+    void set (Pulsar::Passband* pband);
 
   };
 

@@ -3,11 +3,15 @@
 #include "dsp/Archiver.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Response.h"
+#include "dsp/Operation.h"
+#include "dsp/TwoBitCorrection.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Integration.h"
 #include "Pulsar/Profile.h"
 
+#include "Pulsar/dspReduction.h"
+#include "Pulsar/TwoBitStats.h"
 #include "Pulsar/Passband.h"
 
 #include "Error.h"
@@ -34,6 +38,14 @@ void dsp::Archiver::set_passband (const Response* _passband)
   passband = _passband;
 }
 
+//! Set the Operation instances for the dspReduction Extension
+void dsp::Archiver::set_operations (const vector<Operation*>& ops)
+{
+  operations.resize ( ops.size() );
+  for (unsigned iop=0; iop < ops.size(); iop++)
+    operations[iop] = ops[iop];
+}
+
 void dsp::Archiver::unload ()
 {
   if (archive_class_name.size() == 0)
@@ -46,15 +58,35 @@ void dsp::Archiver::unload ()
 
   Pulsar::Archive* archive = Pulsar::Archive::new_Archive (archive_class_name);
 
+  // set the main data
   set (archive, profiles);
+
+  // set any available extensions
+
+  unsigned next = archive->get_nextension ();
+  Pulsar::Archive::Extension* ext = 0;
+
+  for (unsigned iext=0; iext<next; iext++)  {
+    ext=const_cast<Pulsar::Archive::Extension*>(archive->get_extension(iext));
+
+    Pulsar::dspReduction* dspR = dynamic_cast<Pulsar::dspReduction*>( ext );
+    if (dspR)
+      set (dspR);
+
+    Pulsar::TwoBitStats* tbc = dynamic_cast<Pulsar::TwoBitStats*>( ext );
+    if (tbc)
+      set (tbc);
+
+    Pulsar::Passband* pband = dynamic_cast<Pulsar::Passband*>( ext );
+    if (pband)
+      set (pband);
+  }
+
 
   if (verbose)
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
   
-  if (passband)
-    set_passband (archive);
-
   archive -> unload();
 
   delete archive;
@@ -160,8 +192,8 @@ catch (Error& error) {
 
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
-				 const PhaseSeries* phase,
-				 unsigned ichan, unsigned ipol, unsigned idim)
+			 const PhaseSeries* phase,
+			 unsigned ichan, unsigned ipol, unsigned idim)
 { try {
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile"
@@ -210,52 +242,3 @@ catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";
 }}
 
-
-void dsp::Archiver::set_passband (Pulsar::Archive* arch)
-{ try {
-
-  if (verbose)
-    cerr << "dsp::Archiver::set_passband Pulsar::Archive" << endl;
-
-  unsigned next = arch->get_nextension ();
-
-  Pulsar::Archive::Extension* ext = 0;
-  Pulsar::Passband* pband = 0;
-
-  for (unsigned iext=0; iext<next; iext++)  {
-
-    ext = const_cast<Pulsar::Archive::Extension*>( arch->get_extension(iext) );
-
-    pband = dynamic_cast<Pulsar::Passband*>( ext );
-
-    if (pband)
-      break;
-  }
-
-  if (!pband) {
-    if (verbose)
-      cerr << "dsp::Archiver::set_passband no Passband Extension" << endl;
-
-    return;
-  }
-
-  // terminology differs between dsp::Shape and the Pulsar::Passband Extension
-  unsigned npol = passband->get_npol ();
-  unsigned nband = passband->get_nchan ();
-  unsigned nchan = passband->get_ndat ();
-
-  pband->resize (nchan, npol, nband);
-
-  if (passband->get_ndim() != 1)
-    throw Error (InvalidState, "dsp::Archiver::set_passband",
-		 "Passband Response ndim != 1");
-
-  for (unsigned ipol=0; ipol<npol; ipol++)
-    for (unsigned iband=0; iband<nband; iband++)
-      pband->set_passband (passband->get_datptr (iband, ipol), ipol, iband);
-
-}
-catch (Error& error) {
-  throw error += "dsp::Archiver::set Pulsar::Archive";
-}
-}
