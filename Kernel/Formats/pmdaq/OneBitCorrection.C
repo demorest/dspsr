@@ -17,27 +17,52 @@
 dsp::OneBitCorrection::OneBitCorrection (const char* _name)
   : Unpacker (_name)
 {
+  first_chan = 0;
+  end_chan = 99999;
+
+  generate_lookup();
 }
 
-dsp::OneBitCorrection::~OneBitCorrection ()
-{
+void dsp::OneBitCorrection::generate_lookup(){
+  unsigned char i = 0;
+
+  for( i=0; i<255; ++i){
+    for( unsigned char j=0; j<8; ++j){
+      if( i & (1 << j) )  lookup[i*8+j] = 1.0;
+      else                lookup[i*8+j] = 0.0;
+    }
+  }
+
+  i = 255;
+  for( unsigned char j=0; j<8; ++j){
+    if( i & (1 << j) )  lookup[i*8+j] = 1.0;
+    else                lookup[i*8+j] = 0.0;
+  }
+
+
 }
+
+dsp::OneBitCorrection::~OneBitCorrection (){ }
 
 //! Initialize and resize the output before calling unpack
 void dsp::OneBitCorrection::transformation ()
 {
   if (input->get_nbit() != 1)
-    throw_str ("OneBitCorrection::transformation input not 1-bit digitized");
+    throw Error(InvalidState,"dsp::OneBitCorrection::transformation()",
+		"input not 1-bit digitized");
 
   if (verbose)
-    cerr << "Inside dsp::OneBitCorrection::transformation" << endl;;
+    cerr << "Inside dsp::OneBitCorrection::transformation" << endl;
 
   // set the Observation information
   output->Observation::operator=(*input);
 
-  // output will contain floating point values
-  output->set_nbit (8 * sizeof(float));  // MXB K?
+  unsigned end_channel = min(input->get_nchan(),end_chan);
+  output->set_nchan( end_channel - first_chan );
 
+  // output will contain floating point values
+  output->set_nbit (8 * sizeof(float));
+  
   // resize the output 
   output->resize (input->get_ndat());
 
@@ -66,17 +91,30 @@ void dsp::OneBitCorrection::unpack ()
     throw Error(InvalidState,"dsp::OneBitCorrection::unpack()",
 		"output doesn't have nbit=32");
 
-  uint64 ndat = input->get_ndat();
-  unsigned n_freq = input->get_nchan();
+  unsigned ndat = input->get_ndat();
+  unsigned n_freq = output->get_nchan();
 
   if (n_freq % 32)
     throw Error (InvalidState, "OneBitCorrection::unpack",
-		 "nchan=%d is not a multiple of 32", n_freq);
+		 "n_freq=%d is not a multiple of 32", n_freq);
+  if( first_chan % 32)
+    throw Error (InvalidState, "OneBitCorrection::unpack",
+		 "first_chan=%d is not a multiple of 32", first_chan);
 
   if (verbose)
     cerr << "dsp::OneBitCorrection::unpack ndat="
 	 << ndat << " n_freq=" << n_freq << endl;
-  
+
+  const uint32 * rawptr = (const uint32 *) input->get_rawptr();
+
+  // Note that algorithm 1 loses ndat%MM samples
+  const unsigned algorithm = 1;
+
+  RealTimer rt0;
+
+  if( algorithm==1 ){
+    rt0.start();
+
 #define MM 512
 #define NN 16
 
@@ -88,36 +126,42 @@ void dsp::OneBitCorrection::unpack ()
 
     How the algorithm works is you want to output MM timesamples into each of NN output arrays.  For each timesample all NN channels are in one uint32, so you bitwise 'and' ('&' operator) NN masks for that uint32.  Each time you do a bitwise 'and' you'll either get zero (0.0) or non-zero (1.0).  You do one mask at a time for the MM values of one channel though.
 
-   */
 
-  const uint32 * rawptr = (const uint32 *) input->get_rawptr();
-   
-  unsigned masks[NN];
+
+   */
+ 
+  uint32 masks[NN];
   
-  for( unsigned i=0; i<NN; i++)
-    masks[i] = unsigned(1) << i;
+  for( uint32 i=0; i<NN; i++)
+    masks[i] = uint32(1) << i;
   
-  const register unsigned nskip = MM*n_freq/32;    
-  
-  for (unsigned ichan=0; ichan < n_freq; ichan+=NN) {
+  // 'nskip' is the number of uint32's you want to skip over in the input stream every time you do a new set of MM timesamples 
+  register const unsigned nskip = MM*input->get_nchan()/32;    
+  // 'jump' is the number of uint32's between timesamples of the same channel
+  register const unsigned jump = input->get_nchan()/32;
+
+  for (unsigned ichan=first_chan; ichan < n_freq+first_chan; ichan+=NN) {
+    // e.g. if NN is 16 then 'shift' is whether you want the first 16 or the second 16 bits in each uint32
     register const uint32 shift = ichan % 32;
     
     const uint32* from = rawptr + ichan / 32;
     
     register float* intos[NN];
     for( unsigned i=0; i<NN; i++)
-      intos[i] = output->get_datptr(ichan+i,0);
+      intos[i] = output->get_datptr(i+ichan-first_chan,0);
     
     register uint32 dat[MM];
-    register const unsigned jump = n_freq/32;
     
-    for (uint64 idat=0; idat < ndat; idat+=MM) {
+    // NOTE: because idat increments in steps of MM, ndat%MM samples are lost!
+    for (unsigned idat=0; idat < ndat; idat+=MM) {
+      // Grab MM uint32's, shift out the bits we're not interested in, and store those MM uint32's in a contiguous array
       unsigned k = 0;
       for( unsigned j=0; j<MM; ++j, k+=jump)
 	dat[j] = from[k] >> shift;
       
+      // Do the work for the NN channels in the MM-sized array, 'dat'.
       for( unsigned i=0; i<NN; ++i){
-	register float* fptr = intos[i]+idat;	  
+	register float* fptr = intos[i] + idat;
 	for( unsigned j=0; j<MM; ++j){
 	  if( dat[j] & masks[i] )  fptr[j] = 1.0;
 	  else	                   fptr[j] = 0.0;
@@ -125,16 +169,108 @@ void dsp::OneBitCorrection::unpack ()
       }
       from += nskip;
     }
+
+  }
+  rt0.stop();
+  if( verbose )
+    fprintf(stderr,"alg 1: %f secs\n",rt0.get_total());
+
   }
 
+  /*
+  else if( algorithm == 2 ){
+    fprintf(stderr,"hi2\n");
+
+    //
+    // Reorder as TimeSeries
+    //
+
+    RealTimer rt1;
+    rt1.start();
+
+    register const unsigned jump = input->get_nchan()/32;
+    
+    uint32* onebit_ts = new uint32[ndat*jump];
+    for( unsigned i=0; i<ndat*jump; i++)
+      onebit_ts[i] = 0;
+    
+    uint32 masks[32];
+    for( unsigned i=0; i<32; i++)
+      masks[i] = 1 << i;
+
+    uint32 ndat_on_32 = ndat/32;
+
+    //for( unsigned idat=0; idat<ndat; idat++){
+    //unsigned dat_offset = idat*jump;
+    //
+    //for( unsigned ichan=0; ichan<input->get_nchan(); ichan++)
+    //onebit_ts[ichan*ndat_on_32 + idat/32] |= rawptr[ichan/32 + dat_offset] & masks[ichan%32];
+    //}
+
+    for (unsigned ichan=0; ichan < n_freq; ichan+=NN) {
+      register const uint32 shift = ichan % 32;
+      
+      const uint32* from = rawptr + ichan / 32;
+      
+      register uint32* intos[NN/32];
+      for( unsigned i=0; i<NN/32; i++)
+	intos[i] = onebit_ts[(ichan+i)*ndat/32];
+      
+      register uint32 dat[MM];
+      
+      for (unsigned idat=0; idat < ndat; idat+=MM) {
+	unsigned k = 0;
+	for( unsigned j=0; j<MM; ++j, k+=jump)
+	  dat[j] = from[k] >> shift;
+	
+	for( unsigned i=0; i<NN; ++i){
+	  register float* fptr = intos[i] + idat;
+	  for( unsigned j=0; j<MM; ++j){
+	    if( dat[j] & masks[i] )  fptr[j] = 1.0;
+	    else	             fptr[j] = 0.0;
+	  }
+	}
+	from += nskip;
+      }
+      
+    }
+
+    rt1.stop();
+
+    RealTimer rt2;
+    rt2.start();
+      
+    //
+    // Expand to a 32-bit TimeSeries
+    //
+    unsigned char* in = (unsigned char*)onebit_ts;
+    
+    for( unsigned ichan=0; ichan<n_freq; ichan++){
+      float* out = output->get_datptr(ichan,0);
+
+      unsigned char* from = in + ichan*ndat/8;
+
+      unsigned i = 0;
+      for( unsigned idat=0; idat<ndat; idat+=8, ++i)
+	memcpy(out+idat,lookup+from[i],8*sizeof(float));
+    }
+    delete [] onebit_ts;
+    
+    rt2.stop();
+
+    fprintf(stderr,"1: %f secs\t2: %f secs\n",rt1.get_total(),rt2.get_total());
+
+  }  
+  */
+   
   if( verbose )
     fprintf(stderr,"Bye from OneBitCorrection\n");
-}
+  exit(0);
+}  
 
 bool dsp::OneBitCorrection::matches (const Observation* observation)
 {
-  return observation->get_machine() == "PMDAQ"
-    && observation->get_nbit() == 1;
+  return observation->get_machine() == "PMDAQ" && observation->get_nbit() == 1;
 }
 
 

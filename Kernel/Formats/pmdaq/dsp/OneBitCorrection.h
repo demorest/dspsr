@@ -16,6 +16,7 @@ class OneBitCorrection;
 namespace dsp {
 
   //! Converts a TimeSeries from one-bit digitized to floating-point values
+  //! Note that algorithm 1 loses ndat%MM samples (And algorithm 1 is only one coded/enabled as at 20 January 2004)
   class OneBitCorrection: public Unpacker {
 
   public:
@@ -29,6 +30,17 @@ namespace dsp {
     //! Virtual destructor
     virtual ~OneBitCorrection ();
 
+    //! Inquire the first on-disk channel to load [0]
+    unsigned get_first_chan(){ return first_chan; }
+    //! Set the the first on-disk channel to load (0 or 256 at present for two filter observations) [0]
+    void set_first_chan(unsigned _first_chan){ first_chan = _first_chan; }
+
+    //! Inquire the on-disk channel at which to stop loading [99999]
+    unsigned get_end_chan(){ return end_chan; }
+    //! Set the the on-disk channel at which to stop loading (e.g. 192 or 512) [99999]
+    void set_end_chan(unsigned _end_chan){ end_chan = _end_chan; }
+    
+    /*
     //! Return a descriptive string
     //virtual const string descriptor () const;
 
@@ -49,10 +61,6 @@ namespace dsp {
 
     //! Get the number of digitizer channels
     int get_nchannel () const { return nchannel; }
-
-    //
-    //
-    //
 
     //! Get the minumum number of ones in nsample points
     int get_nmin() const { return n_min; }
@@ -78,8 +86,14 @@ namespace dsp {
 
     //! Return the high and low output voltage values
     static void output_levels (float p_in, float& lo, float& hi, float& A);
+    */
 
   protected:
+    
+    //! First on-disk channel to load in [0]
+    unsigned first_chan;
+    //! Stop loading on-disk channels at this channel (i.e. load one before this channel but not this one) [99999]
+    unsigned end_chan; 
 
     //! Perform the bit conversion transformation on the input TimeSeries
     virtual void transformation ();
@@ -90,7 +104,7 @@ namespace dsp {
     //! Return true if OneBitCorrection can convert the Observation
     virtual bool matches (const Observation* observation);
 
-
+    /*
     //! Number of digitizer channels
     int nchannel;
 
@@ -123,11 +137,21 @@ namespace dsp {
 
     //! Set limits using current attributes
     void set_limits ();
+    */
+
+  private:
+
+    //! Generate the lookup table
+    void generate_lookup();
+
+    //! Lookup table
+    float lookup[256*8];
 
   };
   
 }
 
+/*
 template <typename T> 
 void dsp::OneBitCorrection::get_histogram (vector<T>& data, int chan) const
 {
@@ -136,5 +160,6 @@ void dsp::OneBitCorrection::get_histogram (vector<T>& data, int chan) const
   for (int i=0; i<nsample; i++)
     data[i] = T(histograms[chan][i]);
 }
+*/
 
 #endif
