@@ -103,7 +103,7 @@ int main (int argc, char** argv)
       cerr << "input initialized" << endl;
 
     // create a new unpacker, appropriate to the backend
-    correct = dynamic_cast<dsp::TwoBitCorrection*>(manager.get_converter());
+    correct = dynamic_cast<dsp::TwoBitCorrection*>(manager.get_unpacker());
     if (!correct) {
       cerr << "converter is not a TwoBitCorrection subclass" << endl;
       continue;

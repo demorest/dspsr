@@ -119,7 +119,7 @@ int main (int argc, char** argv)
       cerr << "end of data file " << filenames[ifile] << endl;
 
     cerr << "Time spent converting data: " 
-	 << manager.get_converter()->get_total_time() << " seconds" << endl;
+	 << manager.get_unpacker()->get_total_time() << " seconds" << endl;
 
     cerr << "Time spent detecting" << ndim << " data: " 
 	 << detect.get_total_time() << " seconds" << endl;
