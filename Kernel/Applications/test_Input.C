@@ -89,6 +89,8 @@ int main (int argc, char** argv)
 
     unsigned resolution = input_small->get_resolution();
 
+    cerr << "time sample resolution = " << resolution << endl;
+
     if (resolution == 1)
       cerr << "WARNING: time sample resolution == 1. "
 	"cannot fully test Input class" << endl;
@@ -107,6 +109,9 @@ int main (int argc, char** argv)
     }
 
     unsigned large_block = small_block * resolution;
+
+    cerr << "small block size = " << small_block << endl;
+    cerr << "large block size = " << large_block << endl;
 
     input_small->set_block_size (small_block);
     input_large->set_block_size (large_block);
@@ -167,9 +172,8 @@ int main (int argc, char** argv)
 
 	  for (unsigned ibyte=0; ibyte < nbyte; ibyte++) {
 	    if (bytes_small[ibyte] != bytes_large[ibyte]) {
-	      cerr << "ERROR: data[" << ibyte << "]"
-		" small=" << bytes_small[ibyte] << " !="
-		" large=" << bytes_large[ibyte] << endl;
+	      fprintf (stderr, "ERROR: data[%d] small=%x != large=%x\n",
+		       ibyte, bytes_small[ibyte], bytes_large[ibyte]);
 	      errors ++;
 	    }
 	  }

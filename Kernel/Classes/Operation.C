@@ -8,13 +8,8 @@
 #include "dsp/TimeKeeper.h"
 #include "dsp/Operation.h"
 
-
-dsp::TimeKeeper* say_wazzup(){
-  //fprintf(stderr,"wazzup\n");
-  return 0;
-}
- 
-dsp::TimeKeeper* dsp::Operation::timekeeper = say_wazzup();
+//! Global time keeper
+dsp::TimeKeeper* dsp::Operation::timekeeper = 0;
  
 //! Global flag tells all Operations to record the time spent operating
 bool dsp::Operation::record_time = false;
@@ -22,11 +17,13 @@ bool dsp::Operation::record_time = false;
 //! Global verbosity flag
 bool dsp::Operation::verbose = false;
 
+//! Global instantiation count
 int dsp::Operation::instantiation_count = 0;
 
 //! Only ever called by TimeKeeper class
 void dsp::Operation::set_timekeeper(TimeKeeper* _timekeeper)
 { timekeeper = _timekeeper; }
+
 void dsp::Operation::unset_timekeeper()
 { timekeeper = 0; }
 
@@ -37,24 +34,23 @@ dsp::Operation::Operation (const char* _name)
   id = instantiation_count;
   instantiation_count++;
 
-  //  fprintf(stderr,"WAZOO\tname='%s' id=%d\n",
-  //  name.c_str(),id);
-
   optime.operation = "operate";
   
   if( timekeeper )
     timekeeper->add_operation(this);
-
 }
 
-dsp::Operation::~Operation (){
+dsp::Operation::~Operation ()
+{
   if( timekeeper )
     timekeeper->im_dying(this);
 }
 
 void dsp::Operation::operate ()
 {
-  //fprintf(stderr,"dsp::Operation::operate() name=%s\n",name.c_str());
+  if (verbose)
+    cerr << "dsp::Operation[" << name << "]::operate" << endl;
+
   if( timekeeper )
     timekeeper->setup_done();
 
