@@ -4,13 +4,16 @@
 
 #include "dsp/TScrunch.h"
 
+#if ACTIVATE_IPP
+#include <ipps.h>
+#endif
+
 dsp::TScrunch::TScrunch(Behaviour place) 
   : Transformation <TimeSeries, TimeSeries> ("TScrunch", place)
 {
   ScrunchFactor = -1;
   TimeRes = -1.0;
   use_tres = false;
-  do_only_full_scrunches = false;
 }
 
 /* returns the ScrunchFactor determined by this tres */
@@ -18,7 +21,6 @@ void dsp::TScrunch::set_NewTimeRes( double microseconds ){
   TimeRes = microseconds;
   use_tres = true;
 }
-
 
 unsigned dsp::TScrunch::get_sfactor(){
   if( UsingScrunchFactor() ){
@@ -77,17 +79,30 @@ void dsp::TScrunch::transformation ()
     for (unsigned ipol=0; ipol<input->get_npol(); ipol++) {
       float* in  = input->get_datptr(ichan, ipol);
       float* out = output->get_datptr(ichan, ipol);
-
+      
       unsigned j=0;
-      for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
+
+      /*
+#if ACTIVATE_IPP
+      //if( sfactor >= 8 ){
+	for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
+	  ippsSum_32f(in+j,sfactor,out+iscrunching,ippAlgHintFast);
+	  j+=sfactor;
+	}
+	continue;
+	//}
+#endif
+      */      
+
+	      for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
 	unsigned stop = j + sfactor;
-
+	
 	out[iscrunching] = in[j]; 	++j;
-
+	
 	for( ; j<stop; ++j)
 	  out[iscrunching] += in[j];
-      }
-      
+	  }
+            
     } // for each ipol
   } // for each ichan
 
