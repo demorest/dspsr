@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/09/27 08:37:59 $
+   $Revision: 1.11 $
+   $Date: 2003/09/29 14:55:43 $
    $Author: hknight $ */
 
 
@@ -33,10 +33,10 @@ namespace dsp {
     virtual ~IOManager ();
     
     //! Prepare the appropriate Input and Unpacker
-    virtual void open (const char* id, int bs_index=-1);
+    virtual void open (const char* id, int bs_index=0);
 
     //! Prepare the appropriate Input and Unpacker
-    void open (const string& id, int bs_index=-1) { open (id.c_str(),bs_index); }
+    void open (const string& id, int bs_index=0) { open (id.c_str(),bs_index); }
 
     //! Return pointer to the appropriate Input
     Input* get_input () const { return input; }
@@ -75,7 +75,7 @@ namespace dsp {
     virtual uint64 get_overlap () const { return overlap; }
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap);
-    
+
   protected:
 
     //! Define abstract method of the Input base class

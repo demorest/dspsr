@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/09/27 08:42:48 $
+   $Revision: 1.21 $
+   $Date: 2003/09/29 14:55:43 $
    $Author: hknight $ */
 
 
@@ -45,10 +45,10 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     /*! This is the entry point for creating new instances of File objects
       from input data files of an arbitrary format. */
-    static File* create (const char* filename,int _bs_index=-1);
+    static File* create (const char* filename,int _bs_index=0);
 
     //! Convenience interface to File::create (const char*)
-    static File* create (const string& filename,int _bs_index=-1)
+    static File* create (const string& filename,int _bs_index=0)
     { return create (filename.c_str(),_bs_index); }
 
     //! Constructor
@@ -60,13 +60,13 @@ namespace dsp {
     //! Return true if filename contains data in the recognized format
     /*! Derived classes must define the conditions under which they can
       be used to parse the given data file */
-    virtual bool is_valid (const char* filename, int _bs_index=-1) const = 0;
+    virtual bool is_valid (const char* filename, int _bs_index=0) const = 0;
 
     //! Open the file
-    void open (const char* filename,int _bs_index=-1);
+    void open (const char* filename,int _bs_index=0);
 
     //! Convenience interface to File::open (const char*)
-    void open (const string& filename,int _bs_index=-1) 
+    void open (const string& filename,int _bs_index=0) 
     { open (filename.c_str(),_bs_index); }
 
     //! Open from a PseudoFile
