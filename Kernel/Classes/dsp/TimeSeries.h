@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.12 $
-   $Date: 2003/04/28 06:21:55 $
+   $Revision: 1.13 $
+   $Date: 2003/05/08 07:19:46 $
    $Author: pulsar $ */
 
 #ifndef __TimeSeries_h
@@ -170,6 +170,8 @@ namespace dsp {
     bool operator < (const ChannelPtr& c) const;
 
     float& operator[](unsigned index){ return ptr[index]; }
+
+    float get_centre_frequency(){ return ts->get_centre_frequency(ichan); }
 
   };
   
