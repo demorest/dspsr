@@ -1,9 +1,10 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.24 $
-   $Date: 2003/12/09 01:08:55 $
+   $Revision: 1.25 $
+   $Date: 2003/12/10 00:36:33 $
    $Author: hknight $ */
+
 
 
 #ifndef __Fold_h

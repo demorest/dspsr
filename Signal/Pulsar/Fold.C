@@ -14,8 +14,7 @@
 
 #include "dsp/Fold.h"
 
-dsp::Fold::Fold () 
-  : Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
+dsp::Fold::Fold () : Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
 {
   folding_period = 0;
 
