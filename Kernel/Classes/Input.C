@@ -10,8 +10,11 @@
 
 dsp::Input::Input (const char* name) : Operation (name)
 {
-  block_size = overlap = 0;
-  next_sample = 0;
+  load_size = block_size = overlap = 0;
+  load_sample = 0;
+
+  resolution = 1;
+  resolution_offset = 0;
 }
 
 dsp::Input::~Input ()
@@ -59,39 +62,46 @@ void dsp::Input::load (BitSeries* data)
 
   string reason;
   if (!info.state_is_valid (reason))
-    throw_str ("Input::load invalid state: "+reason);
+    throw Error (InvalidState, "Input::load", "invalid state: "+reason);
 
   if (verbose)
-    cerr << "Input::load block_size=" << block_size
-         << " overlap=" << overlap << " next=" << next_sample << endl;
+    cerr << "Input::load [EXTERNAL] block_size=" << block_size
+         << " overlap=" << overlap
+	 << " next=" << load_sample+resolution_offset << endl;
 
   // set the Observation information
   data->Observation::operator=(info);
 
   // set the time as expected will result from the next call to load_data
   // note that data->start_time was set in the above call to operator=
-  data->change_start_time (next_sample);
+  data->change_start_time (load_sample);
 
   if (verbose)
-    cerr << "Input::load resize data" << endl;
+    cerr << "Input::load [INTERNAL] load_size=" << load_size 
+	 << " load_sample=" << load_sample << endl;
 
-  data->resize (block_size);
+  data->resize (load_size);
 
   if (verbose)
     cerr << "Input::load call load_data" << endl;
 
   load_data (data);
 
-  data->input_sample = next_sample;
+  data->input_sample = load_sample;
+  data->request_offset = resolution_offset;
+  data->request_ndat = block_size;
 
-  next_sample += block_size - overlap;
+  seek (block_size - overlap, SEEK_CUR);
 
   if (verbose)
-    cerr << "Input::load exit with next_sample="<< next_sample <<endl;
+    cerr << "Input::load exit with load_sample="<< load_sample <<endl;
 }
 
-/*!
-  Set from where the next "load_block" will load
+/*! 
+  This method ensures that the load_sample attribute accomodates any extra 
+  time samples required owing to time sample resolution. This method also 
+  ensures that the load_size attribute is properly set.
+
   \param offset the number of time samples to offset
   \param whence from where to offset: SEEK_SET, SEEK_CUR, SEEK_END (see
   <unistd.h>)
@@ -100,6 +110,9 @@ void dsp::Input::seek (int64 offset, int whence)
 {
   if (verbose)
     cerr << "Input::seek offset=" << offset << endl;
+
+  // the next sample required by the user
+  uint64 next_sample = load_sample + resolution_offset;
 
   switch (whence) {
 
@@ -129,4 +142,31 @@ void dsp::Input::seek (int64 offset, int whence)
     throw Error (InvalidParam, "Input::seek", "invalid whence");
   }
 
+  // calculate the extra samples required owing to resolution
+  resolution_offset = next_sample % resolution;
+  load_sample = next_sample - resolution_offset;
+
+  // ensure that the load_size attribute is properly set
+  set_load_size ();
+}
+
+/*! This method also ensures that the load_size attribute is properly set. */
+void dsp::Input::set_block_size (uint64 size)
+{
+  block_size = size;
+  set_load_size ();
+}
+
+/*! This method ensures that the load_size attribute is large enough to load
+  the number of time samples requested by Input::set_block_size, as well
+  as any extra time samples required owing to time sample resolution and
+  the next time sample requested by Input::seek. */
+void dsp::Input::set_load_size ()
+{
+  load_size = block_size + resolution_offset;
+
+  uint64 remainder = load_size % resolution;
+
+  if (remainder)
+    load_size += resolution - remainder;
 }

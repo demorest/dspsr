@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/01/08 12:47:14 $
+   $Revision: 1.16 $
+   $Date: 2003/01/09 10:16:47 $
    $Author: wvanstra $ */
 
 #ifndef __Input_h
@@ -47,7 +47,7 @@ namespace dsp {
     //! Return the number of time samples to load on each load_block
     virtual uint64 get_block_size () const { return block_size; }
     //! Set the number of time samples to load on each load_block
-    virtual void set_block_size (uint64 _size) { block_size = _size; }
+    virtual void set_block_size (uint64 _size);
     
     //! Return the number of time samples by which consecutive blocks overlap
     virtual uint64 get_overlap () const { return overlap; }
@@ -63,15 +63,20 @@ namespace dsp {
     //! Get the information about the data source
     virtual const Observation* get_info () const { return &info; }
 
-    //! Get the next time sample
-    uint64 get_next_sample () { return next_sample; }
+    //! Get the next time sample to be loaded
+    uint64 get_load_sample ();
+
+    //! Get the number of samples to be loaded
+    uint64 get_load_size ();
 
   protected:
 
     //! The BitSeries to which data will be loaded on next call to operate
     Reference::To<BitSeries> output;
 
-    //! Load next block of data into BitSeries
+    //! Load the next block of time samples into BitSeries
+    /*! Implementations of this method must read get_load_size time
+      samples, beginning with get_load_sample */
     virtual void load_data (BitSeries* data) = 0;
 
     //! Load data into the BitSeries specified with set_output
@@ -80,15 +85,42 @@ namespace dsp {
     //! Information about the data source (passed on to BitSeries in load)
     Observation info;
 
-    //! Number of time samples to load on each load_block
+    //! Time sample resolution of the data source
+    unsigned resolution;
+
+  private:
+
+    //! Requested number of time samples to be read during load
+    /*! The number of times samples actually read during the call to
+      load_data is given by get_load_size.  This may be greater than
+      block_size, owing to the resolution of the data source.
+      Attributes of both the BitSeries and TimeSeries classes keep
+      these details transparent at the top level. */
     uint64 block_size;
         
-    //! Number of time samples by which data blocks overlap
+    //! Requested number of time samples by which data blocks overlap
+    /*! The number of times samples by which data blocks overlap
+      actually depends on the resolution of the data source.
+      Attributes of both the BitSeries and TimeSeries classes keep
+      these details transparent at the top level. */
     uint64 overlap;
     
+    //! Offset from load_sample to the time sample requested by the user
+    /*! Owing to the resolution of the data source, the first sample
+      read during load_data may precede the time sample requested by
+      the user.  Attributes of both the BitSeries and TimeSeries
+      classes keep these details transparent at the top level. */
+    unsigned resolution_offset;
+
     //! First time sample to be read on the next call to load_data
-    uint64 next_sample;
-    
+    uint64 load_sample;
+
+    //! Number of time samples to be read on the next call to load_data
+    uint64 load_size;
+
+    //! Ensures that load size is properly set
+    void set_load_size ();
+
   };
 
 }
