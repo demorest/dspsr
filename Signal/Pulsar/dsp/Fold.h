@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/01/31 13:35:31 $
-   $Author: wvanstra $ */
+   $Revision: 1.15 $
+   $Date: 2003/07/01 05:24:37 $
+   $Author: hknight $ */
 
 
 #ifndef __Fold_h
@@ -35,7 +35,7 @@ namespace dsp {
     Fold ();
     
     //! Destructor
-    ~Fold ();
+    virtual ~Fold ();
 
     //! Prepare to fold the input TimeSeries
     void prepare ();
@@ -141,3 +141,22 @@ namespace dsp {
 }
 
 #endif // !defined(__Fold_h)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
