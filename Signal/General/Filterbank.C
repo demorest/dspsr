@@ -1,0 +1,473 @@
+#include "Filterbank.h"
+#include "Timeseries.h"
+
+#include "fftm.h"
+#include "filter.h"
+#include "window.h"
+
+#include "genutil.h"
+
+// #define _DEBUG
+
+dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
+{
+  nchan = 0;
+  time_res = 1;
+  freq_res = 1;
+}
+
+void dsp::Filterbank::operation ()
+{
+  if (time_res < 1)
+    throw_str ("Filterbank::operation time resolution=%d < 1", time_res);
+
+  if (freq_res < 1)
+    throw_str ("Filterbank::operation freq resolution=%d < 1", freq_res);
+
+  if (nchan < 2)
+    throw_str ("Filterbank::operation number of channels=%d < 2", nchan);
+
+  // number of complex values in the result of the first fft
+  int n_fft = nchan * freq_res;
+  // number of complex samples invalid in result of small ffts
+  int n_filt = nfilt_pos + nfilt_neg;
+
+  // number of time samples in first fft
+  int nsamp_fft = 0;
+  // number of time samples by which big ffts overlap
+  int nsamp_overlap = 0;
+
+  if (input->get_state() == Observation::Nyquist) {
+    nsamp_fft = 2 * n_fft;
+    nsamp_overlap = 2 * n_filt * nchan;
+  }
+
+  else if (input->get_state() == Observation::Analytic) {
+    nsamp_fft = n_fft;
+    nsamp_overlap = n_filt * nchan;
+  }
+
+  else
+    throw_str ("Filterbank::operation invalid input data state\n");
+
+  // if given, test the validity of the window function
+  if (apodizing) {
+
+    if (apodizing->get_ndat() != nsamp_fft)
+      throw_str ("Filterbank::operation invalid apodizing function ndat=%d"
+		 " (nfft=%d)", apodizing->get_ndat(), nsamp_fft);
+
+    if (input->get_state() == Observation::Analytic 
+	&& apodizing->get_ndim() != 2)
+      throw_str ("Filterbank::operation Analytic signal"
+		 " Real apodizing function.");
+
+    if (input->get_state() == Observation::Nyquist 
+	&& apodizing->get_ndim() != 1)
+      throw_str ("Filterbank::operation Nyquist signal."
+		 " Complex apodizing function.");
+  }
+
+  // number of timesamples between start of each big fft
+  int nsamp_step = nsamp_fft - nsamp_overlap;
+
+  // matrix convolution
+  bool cross_filt = false;
+
+  if (response) {
+
+    // convolve the data during filterbank construction... 
+    // there are some limitations:
+
+    // the size of filters must equal the number of complex points
+    // in the first spectra
+
+    if (response->get_ndat() != n_fft)
+      throw_str ("Filterbank::operation response.ndat=%d != %d",
+		 response->get_ndat(), n_fft);
+
+    cross_filt = (response->get_npol() == 4);
+
+    if (verbose)
+      fprintf (stderr, "Filterbank::operation with %s convolution\n",
+	       (cross_filt)?"matrix":"complex");
+
+    if (cross_filt && input->get_npol() != 2)
+	throw_str ("Filterbank::operation cross-filter and input.npol != 2");
+  }
+
+  if (bandpass) {
+    if (bandpass->get_ndat() != n_fft)
+      throw_str ("Filterbank::operation bandpass.ndat=%d != nfft=%d",
+		 bandpass->get_ndat(), n_fft);
+
+    if (cross_filt && bandpass->get_npol() != 4)
+      throw_str ("Filterbank::operation with matrix convolution "
+		 "bandpass.npol=%d != 4", bandpass->get_npol());
+  }
+
+  // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
+  // this may be in addition to any overlap necessary due to deconvolution.
+  // nsamp_step is analogous to ngood in Convolution::operation
+  int nsamp_tres = nchan / time_res;
+  if (nsamp_tres < 1)
+    throw_str ("Filterbank::operation time resolution:%d > no.channels:%d\n",
+	       time_res, nchan);
+
+
+  // number of big FFTs (not including, but still considering, extra FFTs
+  // required to achieve desired time resolution) that can fit into data
+  int npart = (input->get_ndat()-(nchan-nsamp_tres)-nsamp_overlap)/nsamp_step;
+  // points kept from each small fft
+  int nkeep = freq_res - n_filt;
+
+  if (npart == 0)
+    throw_str ("Filterbank::operation input.ndat="I64" to small (nfft=%d",
+	       input->get_ndat(), nsamp_fft);
+
+  // prepare the output Timeseries
+  output->Observation::operator= (*input);
+
+  // output data will be complex
+  output->set_state (Observation::Analytic);
+
+  // output data will be multi-channel
+  output->set_nchan (nchan);
+
+  // resize to new number of valid time samples
+  output->resize (npart * nkeep * time_res);
+
+  double scalefac = 1.0;
+  if (fft::get_normalization() == fft::nfft)
+    scalefac = double(n_fft) * double(freq_res);
+
+  else if (fft::get_normalization() == fft::normal)
+    scalefac = double(n_fft) / double(freq_res);
+
+  output->rescale (scalefac);
+
+  // output data will have new sampling rate
+  double ratechange = double(freq_res * time_res) / double (nsamp_fft);
+  output->set_rate (input->get_rate() * ratechange);
+
+  // complex to complex FFT produces a band swapped result
+  if (input->get_state() == Observation::Analytic)
+    output->set_swap (true);
+
+  // increment the start time by the number of samples dropped from the fft
+  output->change_start_time (nfilt_pos);
+
+  // initialize scratch space for FFTs
+  unsigned bigfftsize = nchan * freq_res * 2;
+  // also need space to hold backward FFTs
+  unsigned scratch_needed = bigfftsize + 2 * freq_res;
+
+  if (apodizing)
+    scratch_needed += bigfftsize;
+
+  if (cross_filt)
+    scratch_needed += bigfftsize;
+
+  // divide up the scratch space
+  float* complex_spectrum[2];
+  complex_spectrum[0] = float_workingspace (scratch_needed);
+  complex_spectrum[1] = complex_spectrum[0];
+  if (cross_filt)
+    complex_spectrum[1] += bigfftsize;
+
+  float* complex_time = complex_spectrum[1] + bigfftsize;
+  float* windowed_time_domain = complex_time + 2 * freq_res;
+
+  // the number of floats skipped between the end of a point and beginning
+  // of next point (complex)
+  int tres_skip = (time_res - 1) * 2;
+
+  int cross_pol = 1;
+  if (cross_filt)
+    cross_pol = 2;
+
+  if (verbose)
+    cerr << "Filterbank::operation enter main loop " <<
+      " npart:" << npart <<
+      " cpol:" << cross_pol <<
+      " npol:" << input->get_npol() << endl;
+
+  // number of floats to step between input to filterbank
+  unsigned long in_step = nsamp_step * input->get_ndim();
+
+  // number of floats to step between output from filterbank
+  unsigned long out_step = nkeep * time_res * 2;
+
+  // number of floats to step between additional time resolution
+  unsigned long tres_step = nsamp_tres * input->get_ndim();
+
+  // counters
+  int ipt, itres, ipol, jpol, ichan, ipart;
+
+  // offsets into input and output
+  unsigned long in_offset, tres_offset, out_offset;
+
+  // some temporary pointers
+  float* time_dom_ptr = NULL;  
+  float* freq_dom_ptr = NULL;
+  float* data_into = NULL;
+  float* data_from = NULL;
+
+  for (ipart=0; ipart<npart; ipart++) {
+
+    in_offset = ipart * in_step;
+    out_offset = ipart * out_step;
+
+    for (ipol=0; ipol<input->get_npol(); ipol++) {
+
+      for (itres=0; itres < time_res; itres ++) {
+
+	tres_offset = itres * tres_step;
+
+	for (jpol=0; jpol<cross_pol; jpol++) {
+	  if (cross_filt)
+	    ipol = jpol;
+	  
+	  time_dom_ptr = const_cast<float*>(input->get_datptr (0, ipol));
+	  time_dom_ptr += in_offset + tres_offset;
+	  
+	  if (apodizing) {
+	    apodizing -> operate (time_dom_ptr, windowed_time_domain);
+	    time_dom_ptr = windowed_time_domain;
+	  }
+
+	  if (input->get_state() == Observation::Nyquist)
+	    fft::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+
+	  else
+	    fft::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+
+	}
+
+	if (cross_filt) {
+
+	  if (bandpass && itres==0)
+	    bandpass->integrate (complex_spectrum[0], complex_spectrum[1]);
+
+	  // cross filt can be set only if there is a response
+	  response->operate (complex_spectrum[0], complex_spectrum[1]);
+
+	}
+	
+	else {
+
+	  if (bandpass && itres==0)
+	    bandpass->integrate (ipol, complex_spectrum[ipol]);
+
+	  if (response)
+	    response->operate (ipol, complex_spectrum[ipol]);
+
+	}
+	
+	for (jpol=0; jpol<cross_pol; jpol++) {
+	  if (cross_filt)
+	    ipol = jpol;
+	  
+	  freq_dom_ptr = complex_spectrum[ipol];
+	  
+	  if (freq_res == 1) {
+	    for (ichan=0; ichan < nchan; ichan++) {
+	      data_into = output->get_datptr (ichan, ipol) + out_offset + itres*2;
+
+	      *data_into = *freq_dom_ptr;     // copy the Re[z]
+	      data_into++; freq_dom_ptr ++;
+	      *data_into = *freq_dom_ptr;     // copy the Im[z]
+	      freq_dom_ptr ++;
+	    }
+	    continue;
+	  }
+	  
+	  // freq_res > 1 requires a backward fft into the time domain
+	  // for each channel
+	  
+	  for (ichan=0; ichan < nchan; ichan++) {
+
+	    fft::bcc1d (freq_res, complex_time, freq_dom_ptr);
+
+	    freq_dom_ptr += freq_res*2;
+
+	    data_into = output->get_datptr (ichan, ipol) + out_offset + itres*2;
+	    data_from = complex_time + nfilt_pos*2;  // complex nos.
+
+	    for (ipt=0; ipt < nkeep; ipt++) {
+	      *data_into = *data_from;     // copy the Re[z]
+	      data_into ++; data_from ++;
+	      *data_into = *data_from;     // copy the Im[z]
+	      data_into ++; data_from ++;
+	      data_into += tres_skip;      // leave space for the in-betweeners
+	    }
+	    
+	  } // for each channel
+
+	} // for each cross poln
+
+      } // for each element of finer time resolution
+      
+    } // for each polarization
+    
+  } // for each big fft (ipart)
+
+  if (verbose)
+    cerr << "Filterbank::operation exit." << endl;
+}
+
+#if 0
+
+void filterbank::scattered_power_correct (float_Stream& dispersed_power,
+					  const a2d_correct& digitization)
+{
+  if (!ppweight)
+    throw string ("filterbank::scattered_power_correct "
+	       "ERROR: no time weights");
+  
+  // check the validity of this operation
+  if (dispersed_power.get_state() != Detected)
+    throw string ("filterbank::scattered_power_correct "
+	       "dispersed power must be detected");
+
+  if (dispersed_power.rate != rate)
+    throw string ("filterbank::scattered_power_correct "
+	       "dispersed power must have same sampling rate");
+
+  if (dispersed_power.start_time > start_time)
+    throw string ("filterbank::scattered_power_correct "
+	       "dispersed power does not start early enough");
+
+  if (dispersed_power.end_time < end_time)
+    throw string ("filterbank::scattered_power_correct "
+	       "dispersed power ends too soon");
+
+  if (verbose)
+    cerr << "filterbank::scattered_power_correct " << endl
+	 << " start:" << start_time << " end:" << end_time << endl
+	 << " dp.start:" << dispersed_power.start_time
+	 << " dp.end:" << dispersed_power.end_time  << endl;
+
+  double offset_time = (start_time - dispersed_power.start_time).in_seconds();
+  unsigned offset_samples = (unsigned) floor (offset_time * rate + 0.5);
+
+  if (verbose)
+    cerr << "filterbank::scattered_power_correct "
+	 << "offset (us):" << offset_time * 1e6 
+	 << " offset (samples):" << offset_samples << endl;
+
+  // sanity check
+  if (dispersed_power.ndat - offset_samples < ndat)
+    throw_str ("filterbank::scattered_power_correct "
+	       " dp.ndat="I64" < ndat="I64" + offset="I64,
+	       dispersed_power.ndat, ndat, offset_samples);
+  
+  // only PP and QQ are corrected...
+  int cpol = 2;
+  if (npol == 1)
+    // ...unless only Stokes I remains
+    cpol = 1;
+
+  if (dispersed_power.npol != cpol)
+    throw_str ("filterbank::scattered_power_correct "
+	       "dispersed power must have npol=%d", cpol);
+
+  if (!( (get_state() == Detected) || (get_state() == Coherence) ))
+    throw string ("filterbank::scattered_power_correct invalid state="
+		  + state_str());
+
+  double normalize = scale / dispersed_power.scale;
+
+  if (verbose)
+    cerr << "filterbank::scattered_power_correct "
+	 << "scale:" << scale << " dp.scale:" << dispersed_power.scale
+	 << " normalize:" << normalize << endl
+	 << " correct " << cpol
+	 << " polns by " << nchan << " chans by " << ndat << " "
+	 << state_str() << " pts" << endl;
+
+  int vincr = 0;    // steps between subsequent time samples in dispersed power
+  float* vptr = 0;  // points to ipol-T0 in the dispersed power
+
+  double cfac = 0.0;
+
+  int ipol;
+  Int64 ipt, endpt;
+    
+  for (ipol=0; ipol < cpol; ipol++) {
+
+    vptr = dispersed_power.datptr (0, ipol, vincr);
+    vptr += offset_samples * vincr;
+
+    ipt = 0;
+    endpt = ppweight;
+
+    for (unsigned iwt=0; iwt<nweights; iwt++) {
+
+      if (weights[ipol][iwt] == 0)
+	cfac = 0;
+      else
+	// the nchan denominator is absorbed in the dispersed_power scale
+	cfac = (1.0 - digitization.spc_factor(weights[ipol][iwt])) * normalize;
+      
+      if (endpt > ndat)
+	endpt = ndat;
+      
+      // set the float_Stream to equal the scattered power correction
+      for (; ipt<endpt; ipt++) {
+	*vptr *= cfac;
+	vptr += vincr;
+      }
+
+      endpt += ppweight;
+
+    } // for each weight
+  
+    // sanity check
+    if (ipt != ndat)
+      throw_str ("filterbank::scattered_power_correct\n"
+		 " sanity check ipt="I64" should equal ndat="I64, ipt, ndat);
+
+  } // for each polarization
+  
+  register float* vp = 0;
+  register float* fp = 0; // points to F0-ipol-T0 in the filterbank
+  register int fincr = 0;   // step between subsequent time samples in filterbank
+
+  for (ipol=0; ipol < cpol; ipol++) {
+
+    vptr = dispersed_power.datptr (0, ipol, vincr);
+    vptr += offset_samples * vincr;
+
+    for (int ichan=0; ichan < nchan; ichan++) {
+
+      fp = datptr (ichan, ipol, fincr);
+      vp = vptr;
+
+      for (ipt=0; ipt<ndat; ipt++)  {
+	*fp -= *vp;
+	fp += fincr;
+	vp += vincr;
+      }
+ 
+    } // for each channel
+    
+  } // for each polarization
+
+}
+
+void filterbank::Hanning (int degree)
+{
+  if (state < Detected)
+    throw string ("filterbank::Hanning called on undetected data");
+
+  SignalProcessing::Window triangle;
+
+  // construct the parzen window triangle for real data
+  triangle.Parzen ((degree-1) * 2 + 1, false);
+  triangle.normalize();
+
+  scrunch (triangle);
+}
+
+#endif
