@@ -7,6 +7,44 @@
 ##########################################################################
 
 ##########################################################################
+# Rule to make the installation directories. (include, lib, bin, etc.)
+# These directories must exist before the files that they will contain
+# can be produced.  However, those things that depend upon the existence
+# of thses directories should never be considered "out-of-date" with
+# respect to them.  (in general, the modification time of a directory will
+# be newer than that of its contents)
+#
+# The rule that forces make to look to this one is given in 
+# Makefile.extended where Makefile depends on $REQD_DIRS
+# 'mkdir -p' ensures that parent directories will be created
+##########################################################################
+
+%/.exists :
+	@if [ ! -d $* ]; then echo Creating $* subdirectory; mkdir -p $*; fi
+	@chmod 770 $*
+	@touch $*/.exists
+
+##########################################################################
+# Rule to copy header files to installed and local include/ directories
+# found in Makefile.install
+##########################################################################
+
+$(INCDIR)/% $(INSTALL_INCDIR)/% : ./% $(INCDIR)/.exists
+	@if [ -f $@ ]; then $(RM) $@; fi
+	@echo "copying $< to $@"
+	@cp $< $@
+	@chmod a-w $@
+
+
+##########################################################################
+# The rest of this file applies only when 'install' appears as a target
+# when make is invoked
+##########################################################################
+
+install_yes := $(findstring install,$(MAKECMDGOALS))
+ifeq ($(install_yes),install)
+
+##########################################################################
 # strip out 'install' and set the default list of things to install
 INSTALL_TARGETS := ${strip ${filter-out install,$(MAKECMDGOALS)}}
 install_LIBS:=$(LIBRARIES)
@@ -54,4 +92,20 @@ INSTALL_INCS:=${install_INCS:%=$(INSTALL_INCDIR)/%}
 ifeq (${strip ${PSRHOME}},)
 ERROR:=environment variable PSRHOME is not defined
 endif
+
+##########################################################################
+# Rules to copy libraries and executables from the user's local "working
+# copy" directories to the installed "group copy" directories found in
+# Makefile.install
+##########################################################################
+
+$(INSTALL_BINDIR)/% : $(BINDIR)/% $(INSTALL_BINDIR).exists
+	@echo "copying $< to $@"
+	@cp $< $@
+
+$(INSTALL_LIBDIR)/% : $(LIBDIR)/% $(INSTALL_BINDIR).exists
+	@echo "copying $< to $@"
+	@cp $< $@
+
+endif # install_yes == install
 

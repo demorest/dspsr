@@ -112,13 +112,10 @@ endif
 
 ##########################################################################
 # The INSTALL_INCS, INSTALL_LIBS and INSTALL_BINS macros are constructed
-# only when 'install' is one of the targets specified on the command line.
+# in a separate Makefile that specializes in installations
 ##########################################################################
-install_yes := $(findstring install,$(MAKECMDGOALS))
 make_install := $(LOCAL_ROOT)/include/Makefile.install
-ifeq ($(install_yes),install)
 include $(make_install)
-endif
 
 ##########################################################################
 ##########################################################################
@@ -244,27 +241,14 @@ $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(LIBS)
 
 ##########################################################################
 # Rules to copy libraries and executables from the user's local "working
-# copy" directories to the installed "group copy" directories
+# copy" directories to the installed "group copy" directories found in
+# Makefile.install
 ##########################################################################
-
-$(INSTALL_BINDIR)/%:$(BINDIR)/%
-	@echo "copying $< to $@"
-	@cp $< $@
-
-$(INSTALL_LIBDIR)/%:$(LIBDIR)/%
-	@echo "copying $< to $@"
-	@cp $< $@
-
 
 ##########################################################################
 # Rule to copy header files to installed and local include/ directories
+# found in Makefile.install
 ##########################################################################
-
-$(INCDIR)/% $(INSTALL_INCDIR)/%:%
-	@if [ -f $@ ]; then $(RM) $@; fi
-	@echo "copying $< to $@"
-	@cp $< $@
-	@chmod a-w $@
 
 ##########################################################################
 # Rule to make C++ code from a Qt Meta-Object Code (MOC) header file
@@ -368,23 +352,6 @@ $(ONELIB) : $(LIB_OBJS)
 	@echo $(LIB_SRCS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
-
-##########################################################################
-# Rule to make the architecture dependent bin and lib dirs.
-# These directories must exist before the files that they will contain
-# can be produced.  However, those things that depend upon the existence
-# of thses directories should never be considered "out-of-date" with
-# respect to them.  (in general, the modification time of a directory will
-# be newer than that of its contents)
-#
-# The rule that forces make to look to this one is given where Makefile
-# depends on $REQD_DIRS (see below)
-# 'mkdir -p' ensures that parent directories will be created
-##########################################################################
-%/.exists :
-	@if [ ! -d $* ]; then echo Creating $* subdirectory; mkdir -p $*; fi
-	@chmod 770 $*
-	@touch $*/.exists
 
 ##########################################################################
 # Special cases: if the make target is depend, clean or veryclean, then 
