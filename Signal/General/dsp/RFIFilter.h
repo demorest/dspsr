@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/RFIFilter.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/10/18 14:13:31 $
+   $Revision: 1.2 $
+   $Date: 2004/11/01 16:49:42 $
    $Author: wvanstra $ */
 
 #ifndef __RFIFilter_h
@@ -16,6 +16,7 @@ namespace dsp {
 
   class IOManager;
   class TimeSeries;
+  class Bandpass;
 
   //! Real-time RFI mitigation using a frequency response function
   /* This class may become a base class for all RFI mitigaton
@@ -49,8 +50,16 @@ namespace dsp {
     //! Set the source of the data
     void set_input (IOManager* input);
 
-    //! Set the buffer into which data will be read
+    //! Set the buffer into which raw data will be read [optional]
     void set_buffer (TimeSeries* buffer);
+
+    //! Set the buffer into which the spectra will be integrated [optional]
+    void set_data (Response* data);
+
+    //! Set the tool used to compute the spectra [optional]
+    void set_bandpass (Bandpass* bandpass);
+
+    void calculate (Response* bp);
 
   protected:
 
@@ -60,17 +69,26 @@ namespace dsp {
     //! The buffer into which data will be read
     Reference::To<TimeSeries> buffer;
 
+    //! The tool for computing the bandpass
+    Reference::To<Bandpass> bandpass;
+
+    //! The buffer into which the bandpass will be integrated
+    Reference::To<Response> data;
+
     //! The maximum block size
     uint64 maximum_block_size;
 
-    //! The number of frequency channels chosen by user
-    unsigned nchan_requested;
+    //! The number of frequency channels used in calculating the bandpass
+    unsigned nchan_bandpass;
 
     //! The interval over which the RFI mask will be calculated
     double interval;
 
     //! The fraction of the data used to calculate the RFI mask
     float duty_cycle;
+
+    //! The size of the window used in median smoothing
+    unsigned median_window;
 
   private:
 
@@ -79,6 +97,9 @@ namespace dsp {
 
     //! The start time of the epoch over which the RFI mask was calculated
     MJD start_time;
+
+    //! Set true when the response has been calculated over the interval
+    bool calculated;
 
   };
   
