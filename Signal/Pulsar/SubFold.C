@@ -206,21 +206,22 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   // determine the amount of data to be integrated, and how far into
   // the current input TimeSeries to start
   MJD offset = fold_start - input_start;
-  idat_start = (uint64) rint (offset.in_seconds() * sampling_rate);
+  double offset_samples = offset.in_seconds() * sampling_rate;
+  idat_start = (uint64) rint (offset_samples);
 
   if (verbose)
-    cerr << "dsp::SubFold::bound offset " << offset.in_seconds()
-	 << "s (" << idat_start << "pts)" << endl;
+    cerr << "dsp::SubFold::bound offset " << offset.in_seconds()*1e3
+	 << " ms (" << idat_start << "pts)" << endl;
   
   MJD fold_end = std::min (input_end, upper);
   MJD fold_total = fold_end - fold_start;
 
-  double samples = fold_total.in_seconds() * sampling_rate;
-  ndat_fold = (uint64) rint (samples);
+  double fold_samples = fold_total.in_seconds() * sampling_rate;
+  ndat_fold = (uint64) rint (fold_samples);
 
   if (verbose)
-    cerr << "dsp::SubFold::bound fold " << fold_total.in_seconds()
-	 << "s (" << ndat_fold << "pts) until"
+    cerr << "dsp::SubFold::bound fold " << fold_total.in_seconds()*1e3
+	 << " ms (" << ndat_fold << "pts) until"
          << "\n          end = " << fold_end
          << "\n   subint end = " << upper
          << "\n    input end = " << input_end
@@ -241,18 +242,18 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   if (idat_start + ndat_fold > input->get_ndat()) {
     // this can happen owing to rounding in the above two calls to rint()
     if (verbose)
-      cerr << "dsp::SubFold::bound fold " << samples << " rounds to "
-	   << ndat_fold << ", " << input->get_ndat() - (idat_start+ndat_fold)
-	   << " more than input holds" << endl;
+      cerr << "dsp::SubFold::bound fold"
+	" offset=rint(" << offset_samples << ")=" << idat_start << " +"
+	" total=rint(" << fold_samples << ")=" << ndat_fold << " = " 
+	   << idat_start+ndat_fold << " > " << input->get_ndat() << endl;
     ndat_fold = input->get_ndat() - idat_start;
   }
 
   double actual = double(ndat_fold)/sampling_rate;
   if (verbose)
-    cerr << "dsp::SubFold::bound fold " << actual
-	 << "s (" << ndat_fold << " pts) out of "
-	 << (input_end - input_start).in_seconds()
-	 << "s (" << input->get_ndat() << " pts)." << endl;
+    cerr << "dsp::SubFold::bound fold " << actual*1e3 << "/"
+	 << (input_end - input_start).in_seconds()*1e3 << " ms ("
+	 << ndat_fold << "/" << input->get_ndat() << " pts)" << endl;
   
   double samples_to_end = 
     (upper - fold_end).in_seconds() * sampling_rate;
@@ -328,8 +329,8 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
 		 "but no folding period or polyco");
 
   if (verbose)
-    cerr << "dsp::SubFold::prepare using polynomial."
-      "  avg. period=" << folding_polyco->period(fold_start) << endl;
+    cerr << "dsp::SubFold::set_boundaries using polynomial: "
+      "avg. period=" << folding_polyco->period(fold_start) << endl;
 
   Phase input_phase = folding_polyco->phase (fold_start);
 
