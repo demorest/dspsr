@@ -1,6 +1,5 @@
 #include "dsp/Operation.h"
-#include "dsp/Basicseries.h"
-#include "genutil.h"
+#include "Error.h"
 
 //! Global flag tells all Operations to record the time spent operating
 bool dsp::Operation::record_time = false;
@@ -52,7 +51,8 @@ void* dsp::Operation::workingspace (size_t nbytes)
     working_space = new char [nbytes];
 
     if (!working_space)
-      throw_str ("Operation::workingspace: error allocating %d bytes",nbytes);
+      throw Error (BadAlloc, "Operation::workingspace",
+	"error allocating %d bytes",nbytes);
 
     working_size = nbytes;
   }
