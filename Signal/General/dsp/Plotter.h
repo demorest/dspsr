@@ -16,6 +16,7 @@ namespace dsp {
     Plotter();
 
     virtual bool plot();
+    virtual void close();
 
     void set_cpgopen_response(string response){ cpgopen_response = response; }
     string get_cpgopen_response(){ return cpgopen_response; }
@@ -32,8 +33,7 @@ namespace dsp {
   protected:
     
     virtual bool open_plotwindow();
-    virtual bool close_plotwindow();
-
+    
     virtual bool plot_background();
     virtual bool user_input();
     
