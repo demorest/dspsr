@@ -154,7 +154,8 @@ void dsp::Input::load (BitSeries* data)
   }
 
   last_load_ndat = data->get_ndat();
-  fprintf(stderr,"Have set last_load_ndat to "UI64"\n",last_load_ndat);
+  if( verbose )
+    fprintf(stderr,"Have set last_load_ndat to "UI64"\n",last_load_ndat);
 
   if (verbose)
     cerr << "dsp::Input::load calling seek(" << to_seek << ")" << endl;
