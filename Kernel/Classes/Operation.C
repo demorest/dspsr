@@ -55,11 +55,13 @@ void dsp::Operation::set_input (const Timeseries* _input)
     throw_str ("Operation::set_input " + name + " has no input");
 
   input = _input;
+
   if (type == inplace)
     output = const_cast<Timeseries*>(input.get_reference());
 
-  if (input && type == outofplace && input == output)
+  if (type == outofplace && input && output && input == output)
     throw_str ("Operation::set_input " + name + " input must != output");
+
 }
 
 //! Set the container into which output data will be written
@@ -69,7 +71,7 @@ void dsp::Operation::set_output (Timeseries* _output)
   if (type == inplace)
     input = output;
 
-  if (output && type == outofplace && input == output)
+  if (type == outofplace && input && output && input == output)
     throw_str ("Operation::set_output " + name + " output must != input");
 }
 
