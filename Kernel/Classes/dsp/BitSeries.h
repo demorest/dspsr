@@ -75,7 +75,7 @@ namespace dsp {
     virtual void attach(unsigned char* _data);
 
     //! Release control of the data buffer- resizes to zero
-    virtual unsigned char* release(uint64& size);
+    virtual unsigned char* release(uint64& _size);
     //! For use by MiniSeries to share the data buffer for unpacking
     void share(unsigned char*& _buffer,uint64& _size) const;
 
@@ -85,11 +85,15 @@ namespace dsp {
     //! Set the miniplan- usually called by MiniFile loader
     void set_miniplan(Reference::To<MiniPlan> _miniplan){ miniplan = _miniplan; }
 
+    //! Returns true if the miniplan is set
+    bool has_miniplan() const { return miniplan.ptr(); }
+
   protected:
     //! The data buffer
     unsigned char* data;
 
-    //! The size of the data buffer (not necessarily ndat)
+    //! The size (in bytes) of the allocated data buffer
+    //! Note that more space may have been allocated than used by the 'ndat' samples
     int64 size;
 
     //! Sample offset from start of source; attribute used by Input class
