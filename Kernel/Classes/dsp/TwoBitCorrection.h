@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/08/07 12:26:57 $
+   $Revision: 1.10 $
+   $Date: 2002/08/10 06:09:23 $
    $Author: pulsar $ */
 
 #ifndef __TwoBitCorrection_h
@@ -129,7 +129,7 @@ namespace dsp {
     void destroy ();
 
     //! Allocate resources
-    void allocate ();
+    void allocate (bool huge);
   };
   
 }

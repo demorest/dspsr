@@ -58,7 +58,7 @@ void dsp::TwoBitCorrection::destroy ()
 // function:
 // nsample, n_min, n_max, maxstates, nchannel
 //
-void dsp::TwoBitCorrection::allocate ()
+void dsp::TwoBitCorrection::allocate (bool huge)
 {
   if (verbose) cerr << "TwoBitCorrection::allocate enter\n";
 
@@ -79,8 +79,12 @@ void dsp::TwoBitCorrection::allocate ()
 
   destroy ();
 
+  int size = 4;
+  if (huge)
+    size *= 256;
+
   if (verbose) cerr << "TwoBitCorrection::allocate allocate buffers\n";
-  dls_lookup = new float [n_range * 4];
+  dls_lookup = new float [n_range * size];
   assert (dls_lookup != 0);
 
   histograms = new unsigned long [nsample * nchannel];
@@ -190,7 +194,7 @@ void dsp::TwoBitCorrection::build (int nsamp, float sigma,
   cutoff_sigma = sigma;
 
   set_twobit_limits ();
-  allocate ();
+  allocate (huge);
 
   generate (dls_lookup, 0, n_min, n_max, nsample, type, huge);
 }
