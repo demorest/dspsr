@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.21 $
-   $Date: 2003/10/24 11:19:06 $
-   $Author: wvanstra $ */
+   $Revision: 1.22 $
+   $Date: 2003/10/30 02:26:45 $
+   $Author: hknight $ */
 
 
 #ifndef __Fold_h
@@ -81,13 +81,9 @@ namespace dsp {
     //! Get the period at which to fold data (in seconds)
     double get_folding_period () const;
 
-    //! Set the phase model with which to fold data
-    void set_folding_polyco (const polyco* folding_polyco);
     //! Get the phase model with which to fold data
     const polyco* get_folding_polyco () const;
 
-    //! Set the ephemeris with which to create the phase model
-    void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
     //! Get the ephemeris with which to create the phase model
     const psrephem* get_pulsar_ephemeris () const;
 
@@ -139,12 +135,6 @@ namespace dsp {
     //! Period at which to fold data (CAL)
     double folding_period;
 
-    //! Phase model with which to fold data (PSR)
-    Reference::To<const polyco> folding_polyco;
-
-    //! Ephemeris with which to create the phase model
-    Reference::To<const psrephem> pulsar_ephemeris;
-
     //! Set when Tranformation::input is a Weighted TimeSeries
     Reference::To<const WeightedTimeSeries> weighted_input;
 
@@ -179,6 +169,18 @@ namespace dsp {
     uint64 ndat_fold;
 
   private:
+
+    //! Set the phase model with which to fold data
+    void set_folding_polyco (const polyco* folding_polyco);
+
+    //! Set the ephemeris with which to create the phase model
+    void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
+
+    //! Phase model with which to fold data (PSR)
+    Reference::To<const polyco> folding_polyco;
+
+    //! Ephemeris with which to create the phase model
+    Reference::To<const psrephem> pulsar_ephemeris;
 
     //! The folding period last used in the fold method
     double pfold;
