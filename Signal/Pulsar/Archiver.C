@@ -83,19 +83,6 @@ void dsp::Archiver::unload ()
     set (archive, profiles);
   }
 
-  // set any available extensions
-  Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
-  if (dspR)
-    set (dspR);
-
-  Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
-  if (tbc)
-    set (tbc);
-
-  Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
-  if (pband)
-    set (pband);
-
   if (!single_archive) {
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
@@ -144,7 +131,6 @@ void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
   
   archive-> resize (nsub + 1);
   set (archive-> get_Integration(nsub), phase);
-
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::add Pulsar::Archive";
@@ -191,6 +177,21 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_dedispersed( archive_dedispersed );
 
   set (archive-> get_Integration(0), phase);
+
+  // set any available extensions
+  Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
+  if (dspR){
+    set (dspR);
+    dspR->set_name( phase->get_machine() );
+  }
+
+  Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
+  if (tbc)
+    set (tbc);
+
+  Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
+  if (pband)
+    set (pband);
 
   // dsp::PhaseSeries has either (both eph and polyco) or (none)
   // set_model must be called after the Integration::MJD has been set

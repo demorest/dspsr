@@ -22,6 +22,8 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::dspReduction Extension" << endl;
 
+  dspR->set_software( archive_software );
+
   if (!operations.size()) {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::dspReduction no operations" << endl;
@@ -31,10 +33,6 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
   if (!profiles)
     throw Error (InvalidState, "dsp::Archiver::set dspReduction Extension",
 		 "Profile data not provided");
-
-  dspR->set_name( profiles->get_machine() );
-  
-  dspR->set_software( archive_software );
 
   for (unsigned i = 0; i < operations.size(); i++) {
 
