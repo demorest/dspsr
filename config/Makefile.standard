@@ -93,9 +93,8 @@ LO3D = -lGL $(LXMU) $(LX11)
 
 ##########################################################################
 # PGPLOT, C-wrappers, Motif/PGPLOT
-PGPLOTDIR = /usr/local/lib
-LPGPLOT = -lpgplot $(LX11) $(LF77)
-LCPGPLOT = -L$(PGPLOTDIR) -lcpgplot $(LPGPLOT)
+LPGPLOT = -L${PGPLOT_DIR} -lpgplot $(LX11) $(LF77)
+LCPGPLOT = -L${PGPLOT_DIR} -lcpgplot $(LPGPLOT)
 
 LX11 = -lX11
 LXMU = -lXmu
@@ -163,12 +162,12 @@ has_BLITZ := $(call exists,$(BLITZ))
 has_CFITS := $(call exists,$(CFITSDIR))
 has_MPI   := $(call exists,$(MPIDIR))
 has_QT    := $(call exists,$(QTDIR))
-has_PGPLOT:= $(call exists,$(PGPLOTDIR))
+has_PGPLOT:= $(call exists,${PGPLOT_DIR})
 
 ##########################################################################
 # PGPLOT
 ifeq ($(has_PGPLOT),yes)
-INCFLAGS += -I$(PGPLOTDIR)
+INCFLAGS += -I${PGPLOT_DIR}
 endif
 
 ##########################################################################
