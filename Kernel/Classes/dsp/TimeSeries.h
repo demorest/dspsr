@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.23 $
-   $Date: 2004/10/25 02:32:40 $
+   $Revision: 1.24 $
+   $Date: 2004/11/01 22:21:50 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -20,6 +20,8 @@ namespace dsp {
   class TimeSeries : public DataSeries {
 
   public:
+
+    //    float* hack_get_data(){ return data; }
 
     //! Null constructor
     TimeSeries ();
@@ -116,6 +118,13 @@ namespace dsp {
     //! Inquire whether the data that has been seeked over top of
     //! will be saved on a resize.
     bool get_preserve_seeked_data(){ return preserve_seeked_data; }
+
+    //! Over-rides DataSeries::set_nchan()- this only allows a change if preserve_seeked_data is false
+    void set_nchan(unsigned _nchan);
+    //! Over-rides DataSeries::set_npol()- this only allows a change if preserve_seeked_data is false
+    void set_npol(unsigned _npol);
+    //! Over-rides DataSeries::set_ndim()- this only allows a change if preserve_seeked_data is false
+    void set_ndim(unsigned _ndim);
 
   protected:
 
