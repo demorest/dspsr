@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/10/08 12:08:27 $
+   $Revision: 1.4 $
+   $Date: 2002/10/08 17:07:06 $
    $Author: wvanstra $ */
 
 
@@ -12,8 +12,11 @@
 #include <vector>
 
 #include "Operation.h"
+#include "environ.h"
+#include "MJD.h"
 
 class polyco;
+class polynomial;
 
 namespace dsp {
 
@@ -29,15 +32,15 @@ namespace dsp {
   public:
     
     //! Constructor
-    Fold () : Operation ("Fold", outofplace) { init(); }
+    Fold ();
     
     //! Destructor
     ~Fold ();
 
     //! Set the number of phase bins into which data will be folded
-    void set_nbin (int nbin);
+    void set_nbin (unsigned _nbin) { nbin = _nbin; }
     //! Set the number of phase bins into which data will be folded
-    int get_nbin () const;
+    unsigned get_nbin () const { return nbin; }
 
     //! Set the period at which to fold data (in seconds)
     void set_folding_period (double folding_period);
@@ -49,8 +52,18 @@ namespace dsp {
     //! Get the phase polynomial(s) with which to fold data
     polyco* get_folding_polyco () const;
 
-    //! Set the container into which output data will be written
-    virtual void set_output (Timeseries* output);
+    //! Time of first sample to be folded
+    void set_start_time (MJD _start_time)
+    { start_time = _start_time; }
+
+    //! Sampling interval of data to be folded
+    void set_sampling_interval (double _sampling_interval)
+    { sampling_interval = _sampling_interval; }
+
+    //! Fold nblock blocks of data
+    void fold (unsigned nblock, int64 ndat, unsigned ndim,
+	       const float* time, float* phase, unsigned* hits,
+	       int64 ndat_fold=0);
 
   protected:
 
@@ -63,45 +76,16 @@ namespace dsp {
     //! Phase polynomial(s) with which to fold data (PSR)
     Reference::To<polyco> folding_polyco;
 
-    //! The output phase-integrated profiles
-    Reference::To<PhaseSeries> profiles;
+    //! Number of phase bins into which the data will be integrated
+    unsigned nbin;
+
+    //! Time of first sample to be folded
+    MJD start_time;
+
+    //! Sampling interval of data to be folded
+    double sampling_interval;
 
   };
-
-
-
-  class PhaseSeries : public Timeseries {
-
-  public:
-
-    //! Constructor
-    PhaseSeries ();
-
-    //! Get the mid-time of the integration
-    MJD get_midtime () const;
-
-    //! Get the number of seconds integrated into the profile(s)
-    double get_integration_length () const;
-
-    //! Reset all phase bin totals to zero
-    void zero ();
-
-  protected:
-
-    //! Number of time samples integrated into each phase bin
-    vector<unsigned> hits;
-
-    //! The number of seconds integrated into the profile(s)
-    double integration_length;
-
-    //! The MJD of the last-integrated time sample's tail edge
-    MJD end_time;
-
-  private:
-    void init();
-    
-  };
-
 }
 
 #endif // !defined(__Fold_h)
