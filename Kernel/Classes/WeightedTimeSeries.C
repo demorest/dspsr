@@ -284,23 +284,21 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 
   double weights_per_dat = 1.0 / ndat_per_weight;
 
-  uint64 total_bad = 0;
-  uint64 start_idat = 0;
+  uint64 blocks = (get_ndat()+nkeep-nfft) / nkeep;
+  uint64 end_idat = blocks * nkeep;
 
+  uint64 total_bad = 0;
   uint64 zero_start = 0;
   uint64 zero_end = 0;
 
-  while (nweights_tot) {
+  for (uint64 start_idat=0; start_idat < end_idat; start_idat += nkeep) {
 
     uint64 start_weight = uint64(start_idat * weights_per_dat);
     uint64 end_weight = uint64(ceil ((start_idat+nfft) * weights_per_dat));
 
-    if (end_weight > nweights_tot) {
-      if (verbose)
-	cerr << "dsp::WeightedTimeSeries::convolve_weights end_weight="
-	     << end_weight << " > nweights=" << nweights_tot << endl;
-      break;
-    }
+    if (end_weight > nweights_tot)
+      throw Error (InvalidState, "dsp::WeightedTimeSeries::convolve_weights",
+		   "end_weight=%d > nweights=%d", end_weight, nweights_tot);
 
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::convolve_weights start_weight="
@@ -342,8 +340,6 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 
     }
 
-    start_idat += nkeep;
-
   } 
 
   for (uint64 iweight=zero_start; iweight < zero_end; iweight++) {
@@ -352,7 +348,7 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
   }
 
   if (total_bad && verbose)
-    cerr << "dsp::WeightedTimeSeries::convolve_weights " << total_bad <<
+    cerr << "dsp::WeightedTimeSeries::convolve_weights " << get_nzero() <<
       "/" << nweights_tot << " total bad weights" << endl;
 
 }
@@ -373,7 +369,7 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::scrunch_weights new points_per_weight="
 	   << points_per_weight << endl;
-    ndat_per_weight = unsigned (points_per_weight);
+    ndat_per_weight = unsigned (points_per_weight);	
     return;
   }
 
