@@ -93,13 +93,13 @@ void dsp::PuMaFile::parse (const void* header)
 {
   const Header_type* hdr = (const Header_type*) header;
 
+  if (verbose)
+    pumadump (hdr, stderr, verbose);
+
   /* Boolean Raw;    In case of raw data */
   if (hdr->redn.Raw != true)
     throw Error (InvalidState, "dsp::PuMaFile::parse",
 		 "Data file does not contain raw data");
-
-  if (verbose)
-    pumadump (hdr, stderr, verbose);
 
   /* Boolean Cluster[MAXFREQBANDS]; Is Data from this cluster in this file? */
   unsigned iband = MAXFREQBANDS;
@@ -274,6 +274,12 @@ void dsp::PuMaFile::parse (const void* header)
   
   info.set_dispersion_measure (0);
   info.set_between_channel_dm (0);
+
+  // cannot load less than a byte. set the time sample resolution accordingly
+  unsigned bits_per_byte = 8;
+  resolution = bits_per_byte / info.get_nbit();
+  if (resolution == 0)
+    resolution = 1;
 
 }
   
