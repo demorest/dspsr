@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/07/01 05:24:37 $
-   $Author: hknight $ */
+   $Revision: 1.16 $
+   $Date: 2003/07/28 09:58:53 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Fold_h
@@ -31,6 +31,15 @@ namespace dsp {
 
   public:
     
+    //! The maximum number of phase bins returned by Fold::choose_nbin
+    static unsigned maximum_nbin;
+
+    //! The minimum width of each pulse phase bin; used by Fold::choose_nbin
+    static double dsp::Fold::minimum_bin_width;
+
+    //! Controls the number of phase bins returned by Fold::choose_nbin
+    static bool power_of_two;
+
     //! Constructor
     Fold ();
     
@@ -44,18 +53,18 @@ namespace dsp {
     void prepare (const Observation* observation);
 
     //! Set the number of phase bins into which data will be folded
-    void set_nbin (unsigned _nbin) { nbin = _nbin; }
-    //! Set the number of phase bins into which data will be folded
-    unsigned get_nbin () const { return nbin; }
+    void set_nbin (unsigned _nbin) { requested_nbin = _nbin; }
+    //! Get the number of phase bins into which data will be folded
+    unsigned get_nbin () const { return requested_nbin; }
 
     //! Set the number of polynomial coefficients in model
     void set_ncoef (unsigned ncoef);
-    //! Set the number of polynomial coefficients in model
+    //! Get the number of polynomial coefficients in model
     unsigned get_ncoef () const { return ncoef; }
 
     //! Set the number of minutes over which polynomial coefficients are valid
     void set_nspan (unsigned nspan);
-    //! Set the number of minutes over which polynomial coefficients are valid
+    //! Get the number of minutes over which polynomial coefficients are valid
     unsigned get_nspan () const { return nspan; }
 
     //! Set the period at which to fold data (in seconds)
@@ -88,6 +97,9 @@ namespace dsp {
     //! Choose an appropriate polyco from those added
     polyco* choose_polyco (const MJD& time, const string& pulsar);
 
+    //! Choose an appropriate number of pulse phase bins
+    unsigned choose_nbin ();
+
     //! Fold nblock blocks of data
     void fold (double& integration_length, float* phase, unsigned* hits,
 	       const Observation* info, unsigned nblock,
@@ -114,7 +126,10 @@ namespace dsp {
     Reference::To<const WeightedTimeSeries> weighted_input;
 
     //! Number of phase bins into which the data will be integrated
-    unsigned nbin;
+    unsigned folding_nbin;
+
+    //! Number of phase bins set using set_nbin
+    unsigned requested_nbin;
 
     //! Number of polynomial coefficients in model
     unsigned ncoef;
@@ -141,22 +156,5 @@ namespace dsp {
 }
 
 #endif // !defined(__Fold_h)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

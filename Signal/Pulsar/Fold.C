@@ -11,12 +11,15 @@
 #include "tempo++.h"
 #include "genutil.h"
 
+
 dsp::Fold::Fold () 
   : Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
 {
   folding_period = 0;
 
-  nbin = 0;
+  requested_nbin = 0;
+  folding_nbin = 0;
+
   ncoef = 15;
   nspan = 120;
 
@@ -53,12 +56,13 @@ void dsp::Fold::prepare (const Observation* observation)
 
   MJD time = observation->get_start_time();
 
+  // optional: choose from provided polyco instances
   folding_polyco = choose_polyco (time, jpulsar);
 
   if (folding_polyco)
     return;
 
-  // no polyco found in list of supplied polycos
+  // default: create a polyco by calling tempo
   pulsar_ephemeris = choose_ephemeris (jpulsar);
 
   if (!pulsar_ephemeris) {
@@ -118,6 +122,13 @@ void dsp::Fold::prepare (const Observation* observation)
 
 #endif
 
+  // The Fold::prepare method may be called with an Observation state
+  // not equal to the state of the input to be folded.  Therefore, the
+  // choice of folding_nbin is postponed until the first call to
+  // Fold::transformation.
+
+  folding_nbin = 0;
+
   built = true;
 } 
 
@@ -160,6 +171,92 @@ psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
 
   return 0;
 }
+
+
+/*! Unless over-ridden by calling the Fold::set_nbin method, this attribute
+  determines the maximum number of pulse phase bins into which input data
+  will be folded. */
+unsigned dsp::Fold::maximum_nbin = 8192;
+
+/*! The minimum width of each pulse phase bin is specified in units of
+  the time resolution of the input TimeSeries. */
+double dsp::Fold::minimum_bin_width = 1.5;
+
+/*! If true, the number of bins chosen by Fold::choose_nbin will be a
+  power of two.  If false, there is no constraint on the value returned. */
+bool dsp::Fold::power_of_two = true;
+
+/*! Based on both the period of the signal to be folded and the time
+  resolution of the input TimeSeries, this method calculates a
+  sensible number of bins into which the input data will be folded.
+  The value returned by this method may be over-ridden by calling the
+  Fold::set_nbin method.  The maximum number of bins to be used during
+  folding may be set through the Fold::maximum_nbin attribute. */
+unsigned dsp::Fold::choose_nbin ()
+{
+  double folding_period = get_folding_period ();
+
+  if (verbose)
+    cerr << "dsp::Fold::choose_nbin folding_period=" << folding_period << endl;
+
+  if (folding_period == 0.0)
+    throw Error (InvalidState, "dsp::Fold::choose_nbin",
+		 "no folding period or polyco set");
+
+  double sampling_period = 1.0 / input->get_rate();
+  double binwidth = minimum_bin_width * sampling_period;
+
+  unsigned sensible_nbin = unsigned (folding_period / binwidth);
+
+  if (power_of_two) {
+    // make sensible_nbin the largest power of two less than the maximum  
+    sensible_nbin = (unsigned)
+      pow ( 2.0, floor(log(folding_period/binwidth)/log(2.0)) );
+  }
+
+  if (requested_nbin > 1) {
+
+    // the Fold::set_nbin method has been called
+
+    if (verbose) cerr << "dsp::Fold::choose_nbin using requested nbin="
+		      << requested_nbin << endl;
+
+    if (requested_nbin > sensible_nbin) {
+      cerr << "dsp::Fold::choose_nbin WARNING Requested nbin=" 
+	   << requested_nbin << " > maximum nbin=" << sensible_nbin << "."
+	"  Where:\n"
+	"  sampling period     = " << sampling_period*1e3 << " ms and\n"
+	"  requested bin width = " << folding_period/requested_nbin*1e3 << 
+	" ms\n" << endl;
+    }
+
+    folding_nbin = requested_nbin;
+
+  }
+  else {
+
+    // the Fold::set_nbin method has not been called.  choose away ...
+
+    if (maximum_nbin && sensible_nbin > maximum_nbin) {
+
+      if (verbose) cerr << "dsp::Fold::choose_nbin using maximum nbin=" 
+			<< maximum_nbin << endl;
+      folding_nbin = maximum_nbin;
+
+    }
+    else {
+
+      if (verbose) cerr << "dsp::Fold::choose_nbin using sensible nbin=" 
+			<< sensible_nbin << endl;
+      folding_nbin = sensible_nbin;
+
+    }
+
+  }
+
+  return folding_nbin;
+}
+
 
 //! Set the period at which to fold data (in seconds)
 void dsp::Fold::set_folding_period (double _folding_period)
@@ -236,9 +333,6 @@ void dsp::Fold::set_input (TimeSeries* _input)
 
 void dsp::Fold::transformation ()
 {
-  if (nbin == 0)
-    throw Error (InvalidState, "dsp::Fold::transformation", "nbin not set");
-
   if (!input->get_detected ())
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input is not detected");
@@ -250,10 +344,13 @@ void dsp::Fold::transformation ()
     throw Error (InvalidState, "dsp::Fold::transformation",
 		 "no folding period or polyco set");
 
+  if (folding_nbin == 0)
+    choose_nbin ();
+
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
-  if (!output->mixable (*input, nbin, idat_start, ndat_fold)){
+  if (!output->mixable (*input, folding_nbin, idat_start, ndat_fold)){
     string input_str;
     string output_str;
 
@@ -299,7 +396,7 @@ void dsp::Fold::transformation ()
 
 /*!  This method creates a folding plan and then folds nblock arrays.
 
-   \pre the nbin and folding_period or folding_polyco attributes must
+   \pre the folding_nbin and folding_period or folding_polyco attributes must
    have been set prior to calling this method.
 
    \param info Observation telling the start_time and sampling_rate of time
@@ -326,8 +423,8 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   // Initialize and check state
   //
 
-  if (!nbin)
-    throw Error (InvalidState, "dsp::Fold::fold", "nbin not set");
+  if (!folding_nbin)
+    throw Error (InvalidState, "dsp::Fold::fold", "folding_nbin not set");
 
   if (!folding_polyco && !folding_period)
     throw Error (InvalidState, "dsp::Fold::fold",
@@ -384,7 +481,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
   }
 
-  double nphi = double (nbin);
+  double nphi = double (folding_nbin);
   double binspersample = nphi * sampling_interval / pfold;
   phi *= nphi;
 
@@ -429,7 +526,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
     phi += binspersample;
     if (phi >= nphi) phi -= nphi;
 
-    assert (ibin < nbin);
+    assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
 
     if (!ndatperweight || weights[iweight] != 0) {
@@ -464,7 +561,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   for (unsigned iblock=0; iblock<nblock; iblock++) {
 
     timep = time + (ndat * iblock + idat_start) * ndim;
-    phasep = phase + nbin * iblock * ndim;
+    phasep = phase + folding_nbin * iblock * ndim;
 
     for (idat=0; idat < ndat_fold; idat++) {
 
