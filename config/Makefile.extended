@@ -27,7 +27,7 @@ src2obj = ${patsubst %.c,%.o,${patsubst %.f,%.o,${patsubst %.C,%.o,$(1)}}}
 src2bin = ${patsubst %.c,%,${patsubst %.f,%,${patsubst %.C,%,$(1)}}}
 
 # filters the archive names out of $(1)
-lib.l = $(patsubst -l%,lib%.a,$(filter -l%,$(1)))
+lib.l = $(patsubst -l%,lib%.a,$(sort $(filter -l%,$(1))))
 
 # filters the library paths out of $(1)
 lib.L = $(subst -L,,$(filter -L%,$(1)))
@@ -41,6 +41,11 @@ lib_deps = $(foreach l,$(lib.l),$(call firstpath,$(l),$(call lib.L,$(1))))
 # set the list of archives on which the general executable depends 
 libraries := $(call lib_deps,$(LDFLAGS))
 
+# returns the list of object code files for a specific executable, $(1)
+eval_srcs = $(addprefix ${LOGIN_ARCH}/, $(call src2obj,$($(1).srcs)))
+
+# returns the list of archives for a specific executable, $(1)
+eval_libs = $(if $($(1).LDFLAGS),$(call lib_deps,$($(1).LDFLAGS)),$(libraries))
 
 
 ##########################################################################
@@ -220,12 +225,9 @@ endef
 # as their information is changed only when the link information changes.
 ##########################################################################
 
-# returns the list of object code files for a specific executable, $(1)
-srcs = $(addprefix ${LOGIN_ARCH}/, $(call src2obj,$($(1).srcs)))
-
 $(LOGIN_ARCH)/%.sdep: Makefile
 	@echo source depend: $*
-	@echo "$*.OBJS := $(call srcs,$*)" > ${LOGIN_ARCH}/$*.sdep;
+	@echo "$*.OBJS := $(call eval_srcs,$*)" > ${LOGIN_ARCH}/$*.sdep;
 	@echo "${BINDIR}/$*: $$($*.OBJS)" >> ${LOGIN_ARCH}/$*.sdep;
 
 
@@ -240,15 +242,8 @@ $(LOGIN_ARCH)/%.sdep: Makefile
 
 LIB_DEPS := $(EXECUTABLES:%=./$(LOGIN_ARCH)/%.ldep)
 
-# returns the list of archives on which a specific executable, $(1), depends
-# this function should be called in the shell.
-define eval_libs
-if [ "$(origin $(1).LDFLAGS)" = "undefined" ]; then echo $(libraries); \
-else echo $(call lib_deps,$($(1).LDFLAGS)); fi
-endef
-
 $(LOGIN_ARCH)/%.ldep:
-	@echo "${BINDIR}/$*: $(shell $(call eval_libs,$*))" > $@;
+	@echo "${BINDIR}/$*: $(call eval_libs,$*)" > $@;
 
 
 
@@ -302,26 +297,26 @@ if [ ! -x $@ ]; then \
 fi
 endef
 
-define eval_LDFLAGS
-if [ ! -z "`grep MakeInfo\.h $*.[cC]`" ]; then echo $(MakeInfo.o); fi; \
-if [ "$(origin $*.LDFLAGS)" = "undefined" ]; then echo $(LDFLAGS); \
-else echo $($*.LDFLAGS); fi
+define eval_MakeInfo
+$(shell if [ ! -z "`grep MakeInfo\.h $*.[cC]`" ]; then echo $(MakeInfo.o); fi;)
 endef
+
+eval_LDFLAGS = $(if $($*.LDFLAGS),$($*.LDFLAGS),$(LDFLAGS))
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C
 	@$(MakeInfo)
-	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(eval_MakeInfo) $(eval_LDFLAGS)
 	@rm -f $(MakeInfo.c) $(MakeInfo.o)
 	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c
 	@$(MakeInfo)
-	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(eval_MakeInfo) $(eval_LDFLAGS)
 	@rm -f $(MakeInfo.c) $(MakeInfo.o)
 	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f
-	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(eval_LDFLAGS)
 	@$(check_exec)
 
 
@@ -395,7 +390,7 @@ clean:
 	$(RM) $(LOGIN_ARCH)/*.o
 
 depend:
-	@$(RM) $(LOGIN_ARCH)/*.dep
+	@$(RM) $(LOGIN_ARCH)/*.dep $(LOGIN_ARCH)/*.ldep
 	@$(MAKE) -s nothing
 
 nothing:
