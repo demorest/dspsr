@@ -3,7 +3,7 @@
 #define __CPSR2_HEADER_h
 
 #define CPSR2_HEADER_SIZE 4096
-#define CPSR2_HEADER_VERSION 0.1
+#define CPSR2_HEADER_VERSION 0.2
 
 /* ************************************************************************
 
@@ -25,7 +25,7 @@
 */
 
 #define CPSR2_HEADER_INIT \
-"CPSR2_HEADER_VERSION 0.1      # Version of this ASCII header\n" \
+"CPSR2_HEADER_VERSION 0.2      # Version of this ASCII header\n" \
 "CPSR2_DAS_VERSION 0.1         # Version of the Data Acquisition Software\n" \
 "CPSR2_FFD_VERSION unset       # Version of the FFD FPGA Software\n" \
 "\n" \
