@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.18 $
-   $Date: 2003/07/21 10:01:06 $
-   $Author: hknight $ */
+   $Revision: 1.19 $
+   $Date: 2003/07/28 13:51:28 $
+   $Author: wvanstra $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -15,6 +15,7 @@
 #include "Reference.h"
 
 #include "dsp/Time.h"
+#include "dsp/dsp.h"
 
 namespace dsp {
   class Operation;

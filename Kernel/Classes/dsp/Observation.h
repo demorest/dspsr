@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.56 $
-   $Date: 2003/07/28 13:40:30 $
+   $Revision: 1.57 $
+   $Date: 2003/07/28 13:51:28 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -16,6 +16,7 @@
 #include "sky_coord.h"
 #include "Types.h"
 #include "MJD.h"
+#include "dsp/dsp.h"
 
 namespace dsp {
 

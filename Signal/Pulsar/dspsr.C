@@ -22,7 +22,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:b:f:F:hjM:n:N:sS:t:T:vV";
+static char* args = "2:a:b:f:F:hjM:n:N:PsS:t:T:vV";
 
 void usage ()
 {
@@ -182,6 +182,10 @@ int main (int argc, char** argv)
 
     case 'n':
       ndim = atoi (optarg);
+      break;
+
+    case 'P':
+      dsp::psrdisp_compatible = true;
       break;
 
     case 'S':
