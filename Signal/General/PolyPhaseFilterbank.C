@@ -203,7 +203,7 @@ void dsp::PolyPhaseFilterbank::load_complex_coefficients (string filename)
     delete C_filterbank;
 
   C_filterbank = new FilterBank< complex<float> > (filename);
-  nchan = filterbank->getItsNumberOfBands();
+  nchan = C_filterbank->getItsNumberOfBands();
 }
 
 
@@ -222,7 +222,8 @@ void dsp::PolyPhaseFilterbank::transformation ()
 
   unsigned nsamp_fft = nchan;
 
-  cerr << "dsp::PolyPhaseFilterbank::transformation nchan=" << nchan << endl;
+  if (verbose)
+    cerr << "dsp::PolyPhaseFilterbank::transformation nchan=" << nchan << endl;
 
   // prepare the output TimeSeries
   output->Observation::operator= (*input);
@@ -271,7 +272,6 @@ void dsp::PolyPhaseFilterbank::transformation ()
   Signal::State state = input->get_state();
 
   unsigned out_ndat = output->get_ndat();
-  unsigned out_iptr = 0;
   float*   out_ptr = 0;
 
   // the result of each polyphase filterbank operation
@@ -280,7 +280,9 @@ void dsp::PolyPhaseFilterbank::transformation ()
   for (unsigned ipol=0; ipol<npol; ipol++) {
 
     float* in_ptr = const_cast<float*>(input->get_datptr (0, ipol));
-    
+
+    unsigned out_iptr = 0;
+
     // import the data to a Blitz++ array
 
     for (unsigned idat=0; idat < out_ndat; idat++) {
@@ -288,7 +290,7 @@ void dsp::PolyPhaseFilterbank::transformation ()
       if (state == Signal::Nyquist) {
 	
 	blitz::Array<float,1> A (in_ptr,
-				 blitz::shape(ndat),
+				 blitz::shape(nchan*2),
 				 blitz::neverDeleteData);
 	
 	result.reference( filterbank->filter (A) );
@@ -297,15 +299,12 @@ void dsp::PolyPhaseFilterbank::transformation ()
       else {
 	
 	blitz::Array<complex<float>,1> A ((complex<float>*) in_ptr,
-					  blitz::shape(ndat),
+					  blitz::shape(nchan),
 					  blitz::neverDeleteData);
 
 	result.reference( C_filterbank->filter (A) );
 	
       }
-
-      cerr << "result.extent(0)=" << result.extent(blitz::firstDim)
-	   << "result.extent(1)=" << result.extent(blitz::secondDim) << endl;
 
       for (unsigned ichan=0; ichan < nchan; ichan++) {
 
@@ -314,9 +313,8 @@ void dsp::PolyPhaseFilterbank::transformation ()
 	blitz::TinyVector<int,2> index (ichan, 0);
 	complex<float> z = result(index);
 
-	*out_ptr = z.real();
-	out_ptr++;
-	*out_ptr = z.imag();
+	out_ptr[0] = z.real();
+	out_ptr[1] = z.imag();
 
       }
 
@@ -329,6 +327,6 @@ void dsp::PolyPhaseFilterbank::transformation ()
   } // for each polarization
     
   if (verbose)
-    cerr << "dsp::Filterbank::transformation exit." << endl;
+    cerr << "dsp::PolyPhaseFilterbank::transformation exit." << endl;
 }
 
