@@ -221,6 +221,11 @@ MJD dsp::Mark4File::decode_date(uint64 from)
   utc_t utcdate;
   utc_t tmpdate;
   
+  // Special lookup table, see documentation for Mark4 formaters.
+  // 0=0, 1=1.25, 2=2.5, 3=3.75, 4=NA, 5=5.0, 6=6.25, 7=7.5, 8=8.75, 9=NA
+  //Required for Mark4 standard format
+  float time_code_table[] = {0,1.25,2.5,3.75,0.0,5.0,6.25,7.50,8.75,0.0};
+
   current.Construct(time(NULL));
   
   uint64 inital_pos = lseek(fd, 0, SEEK_CUR);
@@ -425,7 +430,7 @@ MJD dsp::Mark4File::decode_date(uint64 from)
     tmp[1] = timecode[49*stepsize];
     tmp[2] = timecode[50*stepsize];
     tmp[3] = timecode[51*stepsize];
-    second += decode_bcd(tmp)*0.001;
+    second += time_code_table[decode_bcd(tmp)]*0.001;
     
     
     current.UTC(&tmpdate,0);
