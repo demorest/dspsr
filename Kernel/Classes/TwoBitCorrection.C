@@ -189,15 +189,23 @@ void dsp::TwoBitCorrection::transformation ()
   if (weighted_output)
     weighted_output -> neutral_weights ();
 
-  if( verbose )
-    fprintf(stderr,"dsp::TwoBitCorrection::transformation() calling unpack()\n");
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::transformation calling unpack" << endl;
 
   // unpack the data
   unpack ();
 
   if (weighted_output) {
+
     weighted_output -> mask_weights ();
-    discarded_weights += weighted_output -> get_nzero ();
+    unsigned nbad = weighted_output -> get_nzero ();
+    discarded_weights += nbad;
+
+    if (nbad && verbose)
+      cerr << "dsp::TwoBitCorrection::transformation " << nbad 
+           << "/" << weighted_output -> get_nweights()
+           << " total bad weights" << endl;
+
   }
 
   if (verbose)
