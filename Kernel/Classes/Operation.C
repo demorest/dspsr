@@ -126,8 +126,15 @@ vector<dsp::Time> dsp::Operation::get_extra_times(){
   return extra_times;
 }
 
-void dsp::Operation::cease_timing(){
-  for(unsigned i=0; i<timers.size();i++)
-    timers[i].stop();
-}
+//! Returns the index in the 'timers' array of a particular timer
+int dsp::Operation::timers_index(string op_name){
+  for( unsigned i=0; i<timers.size(); i++)
+    if( timers[i].operation == op_name )
+      return i;
 
+  throw Error(InvalidParam,"dsp::Operation::timers_index()",
+	      "Your input string '%s' didn't match that of any of the %d timers",
+	      op_name.c_str(), timers.size());
+
+  return -1;
+}

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/11/26 16:37:35 $
-   $Author: wvanstra $ */
+   $Revision: 1.21 $
+   $Date: 2004/04/02 08:00:42 $
+   $Author: hknight $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -101,10 +101,12 @@ namespace dsp {
     //! Return pointer to memory resource shared by operations
     static void* workingspace (size_t nbytes);
 
+    //! Returns the index in the 'timers' array of a particular timer
+    int timers_index(string op_name);
+
     //! Called by TimeKeeper to print out times etc.
     Time get_operation_time();
     vector<Time> get_extra_times();
-    void cease_timing();
 
     //! Stop watch records the amount of time spent performing this operation
     OperationTimer optime;
