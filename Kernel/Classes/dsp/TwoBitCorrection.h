@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.23 $
-   $Date: 2003/05/14 16:13:54 $
+   $Revision: 1.24 $
+   $Date: 2003/06/13 15:02:40 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -76,13 +76,18 @@ namespace dsp {
     //! Get the number of time samples used to estimate undigitized power
     unsigned get_nsample () const { return nsample; }
 
+    //! Set the sampling threshold as a fraction of the noise power
+    void set_threshold (float threshold);
+
+    //! Get the sampling threshold as a fraction of the noise power
+    float get_threshold () const { return threshold; }
+
     //! Set the cut off power for impulsive interference excision
     void set_cutoff_sigma (float cutoff_sigma);
     
     //! Get the cut off power for impulsive interference excision
     float get_cutoff_sigma() const { return cutoff_sigma; }
 
-    
     //! Set the digitization convention
     void set_table (TwoBitTable* table);
 

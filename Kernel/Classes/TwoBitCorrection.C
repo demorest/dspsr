@@ -96,6 +96,19 @@ void dsp::TwoBitCorrection::set_nsample (unsigned _nsample)
 }
 
 //! Set the cut off power for impulsive interference excision
+void dsp::TwoBitCorrection::set_threshold (float _threshold)
+{
+  if (threshold == _threshold)
+    return;
+
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::set_threshold = "<<_threshold<<endl;
+
+  threshold = _threshold;
+  built = false;
+}
+
+//! Set the cut off power for impulsive interference excision
 void dsp::TwoBitCorrection::set_cutoff_sigma (float _cutoff_sigma)
 {
   if (cutoff_sigma == _cutoff_sigma)
