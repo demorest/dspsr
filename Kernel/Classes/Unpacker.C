@@ -11,9 +11,6 @@ void dsp::Unpacker::transformation ()
   // set the Observation information
   output->Observation::operator=(*input);
 
-  // output will contain floating point values
-  output->set_nbit (8 * sizeof(float));
-
   // resize the output 
   output->resize (input->get_ndat());
 
