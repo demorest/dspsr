@@ -86,8 +86,11 @@ void dsp::Fold::prepare (const Observation* observation)
   // Preference 2a: Correct ephemeris already generated
   pulsar_ephemeris = choose_ephemeris (jpulsar);
 
+  if( pulsar_ephemeris.ptr() && verbose )
+    fprintf(stderr,"Correct ephemeris already generated\n");
+
   // Preference 2b: Generate correct ephemeris
-  if (!pulsar_ephemeris) {
+  if (!pulsar_ephemeris.ptr()) {
 
     if (verbose) cerr << "dsp::Fold::prepare generating ephemeris" << endl;
 
@@ -158,6 +161,7 @@ Reference::To<polyco> dsp::Fold::get_folding_polyco(const psrephem* pephemeris,
   Reference::To<MatchingPolyco> mpoly = new MatchingPolyco;
   
   MatchingEphemeris* mephem = dynamic_cast<MatchingEphemeris*>(const_cast<psrephem*>(pephemeris));
+
   if( mephem )
     mpoly->set_matching_sources( mephem->get_matching_sources() );
   
@@ -180,6 +184,8 @@ polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 		    << " specified polycos" << endl;
 
   for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++){
+    if( verbose )
+      fprintf(stderr,"dsp::Fold::choose_polyco checking polyco %d of source %s\n",ipoly,polycos[ipoly]->get_psrname().c_str());
 
     MatchingPolyco* mpoly = dynamic_cast<MatchingPolyco*>(polycos[ipoly].ptr());
 
@@ -348,7 +354,7 @@ void dsp::Fold::set_folding_polyco (const polyco* _folding_polyco)
 
 const polyco* dsp::Fold::get_folding_polyco () const
 {
-  return folding_polyco;
+  return folding_polyco.ptr();
 }
 
 void dsp::Fold::set_ncoef (unsigned _ncoef)
@@ -584,7 +590,6 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
     if (verbose)
       cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
-
   }
 
   // adjust to reference phase
