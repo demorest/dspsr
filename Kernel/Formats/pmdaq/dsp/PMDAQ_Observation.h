@@ -16,10 +16,8 @@ namespace dsp {
   public:
 
     //! Construct from a CPSR2 ASCII header block
-    PMDAQ_Observation (const char* header=0);
+    PMDAQ_Observation (const char* header);
 
-    //! Number of bytes offset from the beginning of acquisition
-    uint64 offset_bytes;
   };
   
 }

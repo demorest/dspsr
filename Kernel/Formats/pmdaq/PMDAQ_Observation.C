@@ -1,10 +1,12 @@
+#include <string>
+
 #include "dsp/PMDAQ_Observation.h"
 
 #include "string_utils.h"
 #include "genutil.h"
 #include "coord.h"
 
-dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
+dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 {
   if (header == NULL)
     throw_str ("PMDAQ_Observation - no header!");
@@ -162,22 +164,32 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
 
   // //////////////////////////////////////////////////////////////////////
   //
-  // OFFSET
+  // OFFSET (49152=48*1024 samps per block)
   //
-  offset_bytes = 0;
-
-  // //////////////////////////////////////////////////////////////////////
-  //
-  // CALCULATE the various offsets and sizes
-  //
-  uint64 bitsperbyte = 8;
-  uint64 bitspersample = nbit*npol;
-
-  uint64 offset_samples = offset_bytes * bitsperbyte / bitspersample;
   
-  double offset_seconds = double(offset_samples) * sampling_interval;
+  uint64 offset_blocks = 0;
 
-  set_start_time (recording_start_time + offset_seconds);
+  string to_scan(&header[24],8);
+
+  if( sscanf(to_scan.c_str(),UI64,&offset_blocks)!=1 )
+    throw Error(FailedCall,"dsp::PMDAQ_Observation::PMDAQ_Observation()",
+		"Failed to read in offset blocks");
+  
+  offset_blocks--; // Counting starts from one
+  uint64 offset_bytes = 49152*offset_blocks;
+
+  set_start_time (recording_start_time + get_nsamples(offset_bytes)/get_rate());
+
+  /*
+  static unsigned count = 0;
+  count++;
+
+  fprintf(stderr,"Got offset="UI64" Got start=%s so diff=%f\n",
+	  offset_blocks,get_start_time().printall(),
+	  get_nsamples(offset_bytes)/get_rate());
+  if( count==10 )
+    exit(0);
+  */
 
   //
   // until otherwise, the band is centred on the centre frequency
