@@ -22,14 +22,19 @@ void dsp::TScrunch::set_NewTimeRes( double microseconds ){
 void dsp::TScrunch::operation ()
 {
   if( verbose )
-    fprintf(stderr," In %s::operation()\n",get_name().c_str());
+    fprintf(stderr,"\nIn %s::operation()\n",get_name().c_str());
 
   if( UsingScrunchFactor() ){
-    if( ScrunchFactor <= 1 ){
+    if( ScrunchFactor < 1 ){
       throw_str ("dsp::TScrunch: invalid scrunch factor:%d",
 		 ScrunchFactor);
       return;
     }
+    else if(ScrunchFactor==1){
+      fprintf(stderr,"ScrunchFactor=1 so no need to scrunch!\n");
+      return;
+    }
+
     TimeRes = 1.0e6/(input->get_rate()*double(ScrunchFactor));
   }
   else{
@@ -44,12 +49,11 @@ void dsp::TScrunch::operation ()
   }
 
   if( verbose )
-    fprintf(stderr,"dsp::TScrunch::operation() is scrunching by %f->"I64" to a time resolutions of %f->%f\n",
+    fprintf(stderr,"dsp::TScrunch::operation() is scrunching by %f (ie -> a ScrunchFactor of "I64") to a time resolution of %f (Which will actually come out as %f microsecs)\n",
 	    TimeRes/(1.0e6/input->get_rate()),ScrunchFactor,TimeRes,double(ScrunchFactor)*1.0e6/input->get_rate());
 
   if( !input->get_detected() ){
-    throw_str ("dsp::TScrunch: invalid input state: " + 
-	       input->get_state_as_string());
+    throw_str ("dsp::TScrunch: invalid input state: " + input->get_state_as_string());
     return;
   }
 
@@ -58,13 +62,15 @@ void dsp::TScrunch::operation ()
   /* eg if input->ndat==101 & ScrunchFactor==3 then last 2 points get scrunched into 1 */
   register int64 nfinal = input->get_ndat()%ScrunchFactor;
 
+  if( verbose )
+    fprintf(stderr,"There will be "I64" normal scrunches of ScrunchFactor="I64" and "I64" points in final scrunch\n",
+	    normal_scrunches, ScrunchFactor, nfinal);
+
   int64 output_ndat = normal_scrunches;
   if( nfinal>0 )
     output_ndat++;
 
-  output->rescale( double(output_ndat) / double(input->get_ndat()) );
-
-  if(get_input() != get_output() ){
+  if( get_input() != get_output() ){
     output->Observation::operator=( *input );
     output->resize( output_ndat ); 
     output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output->get_ndat())) );
@@ -77,16 +83,32 @@ void dsp::TScrunch::operation ()
 
   register int64 sfactor = ScrunchFactor;
 
+  if( verbose ){
+    fprintf(stderr,"input has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d\n",
+	    input->get_ndim(), input->get_ndat(), input->get_npol(), input->get_nchan(),input->get_nbit());  
+    fprintf(stderr,"input data is at %p input->get_ndim()=%d input->get_ndat()="I64" with %d pols and %d chans\n",
+	    input->get_datptr(0,0), input->get_ndim(), input->get_ndat(), input->get_npol(),input->get_nchan());
+    fprintf(stderr,"output data is at %p output->get_ndim()=%d output->get_ndat()="I64" with %d pols and %d chans\t\n",
+	    output->get_datptr(0,0), output->get_ndim(), output->get_ndat(), output->get_npol(),output->get_nchan());
+    fprintf(stderr,"un_scr will range from %p to %p ("I64") to %p ("I64") ["I64"]\n",
+	    input->get_datptr(0,0), input->get_datptr(0,1),int64((float*)input->get_datptr(0,1)-(float*)input->get_datptr(0,0)),
+	    (float*)input->get_datptr(0,1)+input->nbytes()/8,
+	    int64((float*)input->get_datptr(0,1)+input->nbytes()/8 - (float*)input->get_datptr(0,1)),
+	    int64((float*)input->get_datptr(0,1)+input->nbytes()/8 - (float*)input->get_datptr(0,0)));
+    fprintf(stderr,"scr will range from %p to %p ("I64")\n",
+	    output->get_datptr(0,0), (float*)output->get_datptr(0,1)+output->nbytes()/8,
+	    int64((float*)output->get_datptr(0,1)+output->nbytes()/8 - (float*)output->get_datptr(0,0)));
+  }
+
   for (int ichan=0; ichan<input->get_nchan(); ichan++) {
     for (int ipol=0; ipol<input->get_npol(); ipol++) {
 
       un_scr =  (float*)input->get_datptr(ichan, ipol);
-      scr    = output->get_datptr(ichan, ipol);
+      scr    =  (float*)output->get_datptr(ichan, ipol);
       onetoomany_un = un_scr + sfactor;
       onetoomany_scr = scr + normal_scrunches;
-      
+
       while( scr != onetoomany_scr ){
-	
 	*scr = *un_scr;
 	un_scr++;
 	
@@ -109,14 +131,21 @@ void dsp::TScrunch::operation ()
 	  *scr += *un_scr;
 	    un_scr++;
 	}
+	*scr *= float(sfactor)/float(nfinal);
       }
       
       
     } // for each ipol
-  } // for each npol
+  } // for each ichan
 
+  /* make sure output has correct parameters */
+  output->Observation::operator=( *input );
+  output->resize( output_ndat ); 
+  output->rescale( double(output_ndat) / double(input->get_ndat()) );
+  output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output->get_ndat())) );
+  
   if( verbose )
-    fprintf(stderr,"Exiting from %s::operation()\n",get_name().c_str()); 
+    fprintf(stderr,"Exiting from %s::operation()\n\n",get_name().c_str()); 
 }
 
 
