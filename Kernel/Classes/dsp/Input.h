@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/10/16 16:24:47 $
+   $Revision: 1.4 $
+   $Date: 2002/10/16 17:41:51 $
    $Author: wvanstra $ */
 
 
@@ -71,21 +71,22 @@ namespace dsp {
     uint64 block_size;
     //! Number of time samples by which data blocks overlap
     uint64 overlap;
-    //! First time sample to be read on the next call to load_block
-    uint64 next_sample;
+
+    //! Get the next time sample
+    uint64 get_next_sample () { return next_sample; }
     
     //! Conserve access to resources by re-using data already in Timeseries
     uint64 recycle_data (Timeseries* data);
 
-    //! Set the sample offset from the start of the data source
-    void set_input_sample (Timeseries* data, int64 sample);
- 
   private:
     //! Initialize all attributes with null values
     void init();
     
     //! Stop watch records the amount of time spent in load method
     RealTimer load_time;
+
+    //! First time sample to be read on the next call to load_data
+    uint64 next_sample;
 
   };
 

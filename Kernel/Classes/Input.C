@@ -19,6 +19,13 @@ void dsp::Input::load (Timeseries* data)
   if (!data)
     throw Error (InvalidParam, "Input::load", "invalid data reference");
 
+  if (block_size < overlap)
+    throw Error (InvalidState, "Input::load", 
+                 "block_size="UI64" < overlap="UI64, block_size, overlap);
+
+  if (eod())
+    throw Error (InvalidState, "Input::load", "end of data");
+
   string reason;
   if (!info.state_is_valid (reason))
     throw_str ("Input::load invalid state: "+reason);
@@ -48,9 +55,12 @@ void dsp::Input::load (Timeseries* data)
 
   load_time.stop();
 
+  data->input_sample = next_sample;
+
+  next_sample += block_size - overlap;
+
   if (verbose)
     cerr << "Input::load exit with next_sample="<< next_sample <<endl;
-
 }
 
 /*!
@@ -119,7 +129,7 @@ uint64 dsp::Input::recycle_data (Timeseries* data)
   uint64 recycle_bytes = data->nbytes (to_recycle);
   uint64 offset_bytes = data->nbytes (next_sample - start_sample);
 
-  next_sample += to_recycle;
+  // next_sample += to_recycle;
 
   if (verbose)
     cerr << "Input::recycle_data recycle " << recycle_bytes
@@ -149,10 +159,5 @@ uint64 dsp::Input::recycle_data (Timeseries* data)
     cerr << "Input::recycle_data recycled " << to_recycle << endl;
 
   return to_recycle;
-}
-
-void dsp::Input::set_input_sample (Timeseries* data, int64 sample)
-{
-  data->input_sample = sample;
 }
 
