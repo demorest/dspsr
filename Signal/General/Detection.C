@@ -152,20 +152,20 @@ void dsp::Detection::square_law ()
     return;
   }
 
- Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
- sld->set_input( input );
- sld->set_output( output );
- 
- sld->operate();
- 
- if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
+  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
+  sld->set_input( input );
+  sld->set_output( output );
+  
+  sld->operate();
+  
+  if( state==Signal::Intensity && output->get_state()==Signal::PPQQ ){
     Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
     pscrunch->set_input( output );
     pscrunch->set_output( output );
-
+    
     pscrunch->operate();
   }
-
+  
 }
 
 void dsp::Detection::polarimetry ()
