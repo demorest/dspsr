@@ -10,7 +10,7 @@
 #include "psrephem.h"
 #include "tempo++.h"
 #include "genutil.h"
-
+#include "string_utils.h"
 
 dsp::Fold::Fold () 
   : Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
@@ -50,8 +50,13 @@ void dsp::Fold::prepare ()
 //! Prepare for folding the given Observation
 void dsp::Fold::prepare (const Observation* observation)
 {
-  if( folding_period )
+  if( verbose )
+    fprintf(stderr,"In dsp::Fold::prepare()\n");
+
+  if( folding_period ){
+    fprintf(stderr,"Already got folding_period so returning straight away from dsp::Fold::prepare()\n");
     return;
+  }
 
   string jpulsar = observation->get_source();
 
@@ -69,6 +74,12 @@ void dsp::Fold::prepare (const Observation* observation)
 
   // optional: choose from provided polyco instances
   folding_polyco = choose_polyco (time, jpulsar);
+  
+  //if( folding_polyco )
+  //fprintf(stderr,"prepare got polyco straight away with folding_polyco->get_psrname()='%s' and MJD=%s through %s\n",
+  //    folding_polyco->get_psrname().c_str(),
+  //    folding_polyco->start_time().printall(),
+  //    folding_polyco->end_time().printall());
 
   if (folding_polyco)
     return;
@@ -150,14 +161,15 @@ polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 		    << polycos.size()
 		    << " specified polycos" << endl;
 
-  for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++)
+  for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++){
 
-    if (polycos[ipoly]->nearest (time, pulsar)
-	&& polycos[ipoly]->nearest (time, pulsar)) {
+    if( polycos[ipoly]->i_nearest(time,pulsar) >= 0 ){
       if (verbose)
 	cerr << "PSR: " << pulsar << " found in polyco entry\n";
       return polycos[ipoly];
     }
+
+  }
 
   return 0;
 }
@@ -351,6 +363,16 @@ void dsp::Fold::set_input (TimeSeries* _input)
     cerr << "dsp::Fold::set_input input is a WeightedTimeSeries" << endl;
 }
 
+//! Add a phase model with which to choose to fold the data
+void dsp::Fold::add_folding_polyco (polyco* folding_polyco){
+  polycos.push_back( folding_polyco );
+}
+
+//! Add an ephemeris with which to choose to create the phase model
+void dsp::Fold::add_pulsar_ephemeris (psrephem* pulsar_ephemeris){
+  ephemerides.push_back( pulsar_ephemeris );
+}
+
 void dsp::Fold::transformation ()
 {
   if (!input->get_detected ())
@@ -514,7 +536,6 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
   }
   else {
-
     // find the period and phase at the mid time of the first sample
     pfold = folding_polyco->period(start_time);
     phi   = folding_polyco->phase(start_time).fracturns();
