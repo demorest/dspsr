@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/rdisk.h,v $
-   $Revision: 1.3 $
-   $Date: 2001/07/31 20:25:56 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2002/02/04 09:34:17 $
+   $Author: hknight $ */
 
 #ifndef __RDISK_H
 #define __RDISK_H
@@ -19,6 +19,8 @@ class rdisk {
  public:
   string machine;
   string path;
+
+  static string rsh;
 
   rdisk () {};
   rdisk (const string& parse) { load (parse); }
