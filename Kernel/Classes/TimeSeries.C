@@ -463,12 +463,13 @@ void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
   }
 }
 
-dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts){
+dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts)
+{
   Observation::swap_data( ts );
-  ::swap(buffer,ts.buffer);
-  ::swap(size,ts.size);
-  ::swap(data,ts.data);
-  ::swap(subsize,ts.subsize);
+  std::swap(buffer,ts.buffer);
+  std::swap(size,ts.size);
+  std::swap(data,ts.data);
+  std::swap(subsize,ts.subsize);
 
   return *this;
 }
