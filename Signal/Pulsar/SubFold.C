@@ -296,9 +296,19 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
 		 "Observation start time not set");
 
   if (subint_turns && folding_polyco && start_phase == Phase::zero) {
-    // round up to start at zero phase
-    start_phase = folding_polyco->phase(start_time).Ceil();
+
+    // On the first call to set_boundaries, initialize to start at
+    // Fold::reference_phase
+
+    start_phase = folding_polyco->phase(start_time);
+
+    if (start_phase.fracturns() > reference_phase)
+      ++ start_phase;
+
+    start_phase = Phase (start_phase.intturns(), reference_phase);
+
     start_time = folding_polyco->iphase (start_phase);
+
   }
 
   MJD fold_start = std::max (start_time, input_start);
@@ -341,12 +351,13 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
   Phase input_phase = folding_polyco->phase (fold_start);
 
   double turns = (input_phase - start_phase).in_turns();
+
   // assumption: integer cast truncates
   uint64 subint = uint64 (turns/subint_turns);
 
   input_phase = start_phase + subint * subint_turns;
   lower = folding_polyco->iphase (input_phase);
   
-  input_phase += double(subint_turns);
+  input_phase += int(subint_turns);
   upper = folding_polyco->iphase (input_phase);
 }
