@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <values.h>
+#include <math.h>
 
 #define cpsr 1
 
@@ -166,8 +167,10 @@ string PSPMidentifier (const PSPM_SEARCH_HEADER* hdr)
   return string(id);
 }
 
-bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
+bool PSPMverify (PSPM_SEARCH_HEADER* hdr)
 {
+  cerr << "PSPMverify entered" << endl;
+
   if (hdr->header_version < 0) {
     fprintf (stderr, "PSPMverify: invalid header_version:%d\n",
 	     (int)hdr->header_version);
@@ -211,6 +214,27 @@ bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
     return false;
   }
 
+  // some more sanity checks
+  if (hdr->ll_file_size) {
+    // double check that the file_offset is a multiple of 1MB
+    int64 mb = 1024 * 1024;
+    if (hdr->ll_file_offset % mb) {
+      fprintf (stderr, "PSPMverify: offset="I64" corrupted.\n",
+	       hdr->ll_file_offset);
+      return false;
+    }
+  }
+
+  // what can you do?
+  double rate = 1e6 / (hdr->samp_rate);  // samples per second
+  double bw = 1e6 * fabs (hdr->bw);      // bandwidth in Hz
+  if (bw != rate) {
+    fprintf (stderr, "PSPMverify: Nyquist mismatch: bw=%lf samp. rate=%lf\n",
+	     bw, rate);
+    // reset to default
+    hdr->bw = 20;
+    hdr->samp_rate = 0.05;
+  }
   return true;
 }
 
@@ -251,6 +275,11 @@ PSPM_SEARCH_HEADER* pspm_read (int fd)
     return NULL;
   }
   PSPMfromBigEndian (static_header);
+
+  if (!PSPMverify(static_header)) {
+    fprintf (stderr, "pspm_read::corrupted header\n");
+    return 0;
+  }
 
   return static_header;
 }
