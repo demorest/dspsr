@@ -46,10 +46,18 @@ void dsp::Detection::set_output_state (Signal::State _state)
 //! Detect the input data
 void dsp::Detection::transformation ()
 {
+  MJD st("52644.176409458518541");
+
+  if( verbose )
+    fprintf(stderr,"In dsp::Detection::transformation() with input ndat="UI64" (st=%f)\n",
+	    get_input()->get_ndat(),
+	    (get_input()->get_start_time()-st).in_seconds());
+
   if (verbose)
     cerr << "dsp::Detection::transformation output state="
 	 << Signal::state_string(state) << " and input state=" 
-	 << Signal::state_string(get_input()->get_state()) << endl;
+	 << Signal::state_string(get_input()->get_state())
+	 << " and input ndat=" << get_input()->get_ndat() << endl;
 
   checks();
 
@@ -96,9 +104,10 @@ void dsp::Detection::transformation ()
 		 + State2string(get_input()->get_state()) + " to "
 		 + State2string(state));
 
-  if (verbose)
-    cerr << "dsp::Detection::transformation output ndat=" 
-	 << get_output()->get_ndat() << endl;
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::Detection::transformation() with output ndat="UI64" (st=%f)\n",
+	    get_output()->get_ndat(),
+	    (get_output()->get_start_time()-st).in_seconds());
 }
 
 void dsp::Detection::resize_output ()
@@ -216,9 +225,7 @@ void dsp::Detection::polarimetry ()
   float* copyp  = NULL;
   float* copyq = NULL;
 
-  if (inplace && ndim != 2) { // Insanity
-    //    fprintf(stderr,"BADPLACE 1!!!\n\n\n\n\n");
-
+  if (inplace && ndim != 2) {
     // only when ndim==2 is this transformation really inplace.
     // so when ndim==1or4, a copy of the data must be made
     
@@ -242,7 +249,6 @@ void dsp::Detection::polarimetry ()
     const float* p = input->get_datptr (ichan, 0);
     const float* q = input->get_datptr (ichan, 1);
     if (inplace && ndim != 2) {
-      //      fprintf(stderr,"BADPLACE 2!!!\n\n\n\n\n");
       memcpy (copyp, p, copy_bytes);
       p = copyp;
 
@@ -296,7 +302,7 @@ vector<float*> dsp::Detection::get_result_pointers(unsigned ichan){
 
   switch (ndim) {
   case 1:
-    if( inplace ){ // Insanity
+    if( inplace ){
       r[1] = r[0] + ndat;
       r[2] = r[1] + ndat;
       r[3] = r[2] + ndat;
@@ -366,96 +372,3 @@ void dsp::Detection::checks(){
   }    
   
 }
-
-    /*    fprintf(stderr,"YO5.1 ndat="UI64" output ndat="UI64" output sz="UI64" ndim=%d out->nchan=%d out->npol=%d out=>ndim=%d samps_offset="I64"\n",
-	    ndat,output->get_ndat(),output->hack_get_size(),ndim,
-	    output->get_nchan(),output->get_npol(),output->get_ndim(),
-	    output->get_samps_offset());
-    fprintf(stderr,"offset 0="I64"\n",
-	    int64(r[0]-output->get_datptr(ichan,0)));
-    fprintf(stderr,"offset 1="I64"\n",
-	    int64(r[1]-output->get_datptr(ichan,0)));
-    fprintf(stderr,"offset 2="I64"\n",
-	    int64(r[2]-output->get_datptr(ichan,0)));
-    fprintf(stderr,"offset 3="I64"\n",
-	    int64(r[3]-output->get_datptr(ichan,0)));
-    fprintf(stderr,"datptr=%p\n",
-	    output->get_datptr(ichan,0));
-    fprintf(stderr,"input ndat="UI64" nchan=%d npol=%d ndim=%d\n",
-	    input->get_ndat(),input->get_nchan(),input->get_npol(),input->get_ndim());
-    fprintf(stderr,"input sz="UI64" buffer=%p data=%p\n",
-	    input->hack_get_size(),input->hack_get_buffer(),
-	    input->hack_get_data());
-    fprintf(stderr,"p is at "I64" q is at "I64"\n",
-	    int64(p-((float*)input->hack_get_buffer())),
-	    int64(q-((float*)input->hack_get_buffer())));
-    fprintf(stderr,"subsize="UI64" datptr0 "I64" datptr1 "I64"\n",
-	    input->hack_get_subsize(),
-	    int64(input->get_datptr(ichan,0)-input->hack_get_data()),
-	    int64(input->get_datptr(ichan,1)-input->hack_get_data()));
-    fprintf(stderr,"*q=%f (%p)\n",*q,q);
-    */
-
-
-
-
-
-
-
-
-
-    /*
-    bool falsehood = false;
-    if( falsehood ){
-      float p_r;
-      float p_i;
-      float q_r;
-      float q_i;
-      
-      //      float* p = *p;
-      //float* q = *q;
-
-      unsigned span = ndim;
-      
-      float* pp = r[0];
-      float* qq = r[1];
-      float* Rpq = r[2];
-      float* Ipq = r[3];
-      
-      for (unsigned j=0; j<unsigned(ndat); j++)  {
-	//fprintf(stderr,"hi j=%d\n",j);
-	//fprintf(stderr,"hi-3\n");
-	p_r = *p;
-	//fprintf(stderr,"hi-3.1\n");
-	p++;
-	//fprintf(stderr,"hi-2\n");
-	p_i = *p;
-	//fprintf(stderr,"hi-2.1\n");
-	p++;
-	//fprintf(stderr,"hi-1\n");
-	//fprintf(stderr,"q=%p\n",q);
-	//fprintf(stderr,"hi-1.01\n");
-	//fprintf(stderr,"*q=%f\n",*q);
-	//fprintf(stderr,"hi-1.02\n");
-	q_r = *q;
-	//fprintf(stderr,"hi-1.1\n");
-	q++;
-	//fprintf(stderr,"hi0\n");
-	q_i = *q;
-	//fprintf(stderr,"hi0.1\n");
-	q++;
-	
-	//fprintf(stderr,"hi1\n");*/
-    //	*pp  = p_r * p_r + p_i * p_i;  pp += span;    /*  p* p      */
-	//fprintf(stderr,"hi2\n");
-	//*qq  = q_r * q_r + q_i * q_i;  qq += span;    /*  q* q      */
-	//fprintf(stderr,"hi3\n");
-	//*Rpq = p_r * q_r + p_i * q_i;  Rpq += span;   /*  Re[p* q]  */
-	//fprintf(stderr,"hi4\n");
-	//*Ipq = p_r * q_i - p_i * q_r;  Ipq += span;   /*  Im[p* q]  */
-	//fprintf(stderr,"hi5\n");
-    //}
-
-    //    }
-
-    //    fprintf(stderr,"YO5.2\n");
