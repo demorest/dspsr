@@ -20,7 +20,11 @@ int main (int argc, char** argv)
   }
 
   pspmDbase::server dbase;
-  dbase.create(argv[1]);
+
+  if (argc==3 && string(argv[2])=="-r")
+    dbase.load (argv[2]);
+  else
+    dbase.create(argv[1]);
 
   cerr << "pspmDbaseCreate " << dbase.entries.size() << " entries" << endl;
 
