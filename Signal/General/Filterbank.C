@@ -188,6 +188,10 @@ void dsp::Filterbank::transformation ()
   if (input->get_state() == Signal::Analytic)
     output->set_swap (true);
 
+  // if freq_res is even, then each sub-band will be centred on a frequency
+  // that lies on a spectral bin *edge* - not the centre of the spectral bin
+  output->set_dc_centred (freq_res%2);
+
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
 
