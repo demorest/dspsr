@@ -71,7 +71,7 @@ void dsp::MPIServer::serve ()
 		   "MPI_Waitany index=MPI_UNDEFINED");
 
     // ensure that all is good
-    root[index]->check ("dsp::MPIServer::server", mpi_err, status);
+    root[index]->check ("dsp::MPIServer::server", mpi_err, status, true);
 
     int dest = status.MPI_SOURCE;
 

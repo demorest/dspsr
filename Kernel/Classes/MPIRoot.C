@@ -222,11 +222,10 @@ void dsp::MPIRoot::size_asyncspace ()
   }
 }
 
-// ////////////////////////////////////////////////////////////////////////////
-//
-//
-//
-void dsp::MPIRoot::wait (const char* method, MPI_Request& request)
+/*! \param request the asynchronous transfer request to use in MPI_Wait
+    \param receive MPI_Status fields are checked only on receive requests
+ */
+void dsp::MPIRoot::wait (MPI_Request& request, bool receive)
 {
   if (request == MPI_REQUEST_NULL)
     return;
@@ -234,10 +233,11 @@ void dsp::MPIRoot::wait (const char* method, MPI_Request& request)
   int mpi_err = MPI_Wait (&request, &status);
   request = MPI_REQUEST_NULL;
 
-  check (method, mpi_err, status);
+  check ("dsp::MPIRoot::wait", mpi_err, status, receive);
 }
 
-void dsp::MPIRoot::check (const char* method, int mpi_err, MPI_Status& _status)
+void dsp::MPIRoot::check (const char* method, int mpi_err, MPI_Status& _status,
+                          bool receive)
 {
   int err_len;
   if (mpi_err != MPI_SUCCESS) {
@@ -252,13 +252,10 @@ void dsp::MPIRoot::check (const char* method, int mpi_err, MPI_Status& _status)
 		 mpi_rank, mpi_errstr);
   }
 
-#if 0
-  // TODO: this tag check fails on the first wait (data_request); why?
-  if (status.MPI_TAG != mpi_tag)
+  if (receive && status.MPI_TAG != mpi_tag)
     throw Error (InvalidState, method,
-		 "rank=%d MPI_Wait MPI_Status::MPI_TAG=%d != mpi_tag=%d"
+		 "rank=%d MPI_Wait MPI_Status::MPI_TAG=%d != mpi_tag=%d",
 		 mpi_rank, status.MPI_TAG, mpi_tag);
-#endif
 
 }
 
@@ -266,7 +263,7 @@ int dsp::MPIRoot::next_destination ()
 {
   ensure_root ("dsp::MPIRoot::next_destination");
 
-  wait ("dsp::MPIRoot::next_destination", ready_request);
+  wait (ready_request, true);
 
   // post the next receive ready request
   MPI_Irecv (&ready, 1, MPI_INT, MPI_ANY_SOURCE, mpi_tag,
@@ -307,8 +304,8 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
 		 "invalid nbytes=%d > data_size=%d)",
 		 nbytes, data_size);
 
-  // ensure that the asynchronous send/recv buffer is free
-  wait ("dsp::MPIRoot::send_data", data_request);
+  // ensure that the asynchronous send buffer is free
+  wait (data_request, false);
 
   int64 start_sample = 0;
   uint64 request_ndat = 0;
@@ -355,8 +352,8 @@ void dsp::MPIRoot::load_data (BitSeries* data)
     throw Error (InvalidState, "dsp::MPIRoot::load_data", 
 		 "buffer not prepared.  call bcast_setup first.");
 
-  wait ("dsp::MPIRoot::load_data ready", ready_request);
-  wait ("dsp::MPIRoot::load_data data", data_request);
+  wait (ready_request, false);
+  wait (data_request, true);
 
   int count;
   MPI_Get_count (&status, MPI_PACKED, &count);

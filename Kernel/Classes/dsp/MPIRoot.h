@@ -71,8 +71,8 @@ namespace dsp {
     //! Load the next block using MPI_Irecv
     void load_data (BitSeries* data);
 
-    //! Wait on the status of the MPI_Request
-    void wait (const char* method, MPI_Request& request);
+    //! Wait for the MPI_Request to complete and check the MPI_Status
+    void wait (MPI_Request& request, bool receive);
 
     //! Returns the rank of the next node ready to receive data
     int next_destination ();
@@ -132,7 +132,7 @@ namespace dsp {
     void ensure_root (const char* method) const;
 
     //! verify that MPI_Wait returns as expected
-    void check (const char* method, int mpi_err, MPI_Status& _status);
+    void check (const char* method, int mpi_err, MPI_Status& _status, bool rcv);
 
   };
 
