@@ -418,6 +418,20 @@ int main (int argc, char** argv)
 
     unsigned fft_size = nfft * nchan * real_complex;
 
+    if (dsp::psrdisp_compatible && tbc) {
+
+      unsigned ppwt = tbc->get_nsample();
+      unsigned extra = ppwt - (block_size % ppwt);
+
+      cerr << "dspsr: psrdisp compatibilty\n"
+	"   adding " << extra << " samples to make block_size a multiple of " 
+	   << ppwt << endl;
+
+      block_size += extra;
+      overlap += extra;
+
+    }
+
     cerr << "FFTsize=" << fft_size << endl;
     cerr << "Blocksz=" << block_size << endl;
     cerr << "Overlap=" << overlap << endl;
