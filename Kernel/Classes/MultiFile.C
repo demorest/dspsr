@@ -45,7 +45,6 @@ void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
       if( verbose )
 	cerr << "dsp::MultiFile::open new PseudoFile = " 
 	     << files.back().filename << endl;
-
     }
   }
 
@@ -127,7 +126,7 @@ void dsp::MultiFile::have_open (const vector<string>& filenames,int bs_index)
 void dsp::MultiFile::erase_files()
 {
   files.erase( files.begin(), files.end());
-  delete loader.release();
+  loader = 0;
   info = Observation();
   reset();
 }
@@ -276,6 +275,10 @@ void dsp::MultiFile::set_loader (unsigned index)
     return;
 
   loader->open (files[index]);
+
+  // MiniFile requires loader to know what output->get_rawptr() is
+  // (ASSUMPTION: output is what is getting loaded into rather than some other BitSeries via load())
+  loader->set_output( get_output() );
 
   current_index = index;
   current_filename = files[index].filename;
