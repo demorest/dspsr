@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/10/21 05:58:44 $
-   $Author: pulsar $ */
+   $Revision: 1.7 $
+   $Date: 2002/11/01 18:42:58 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Input_h
@@ -60,7 +60,7 @@ namespace dsp {
     virtual void set_overlap (uint64 _overlap) { overlap = _overlap; }
     
     //! Return the total number of time samples available
-    virtual uint64 get_total_samples () const { return total_samples; }
+    virtual uint64 get_total_samples () const { return info.get_ndat(); }
 
     //! Get the information about the data source
     virtual operator const Observation* () const { return &info; }
@@ -73,15 +73,9 @@ namespace dsp {
     //! Load next block of data into Timeseries
     virtual void load_data (Timeseries* data) = 0;
 
-    //@{
-    //* Attribute must be set by sub-class */
     //! Information about the data source (passed on to Timeseries in load)
     Observation info;
 
-    //! Total number of time samples available
-    uint64 total_samples;
-    //@}
-    
     //! Number of time samples to load on each load_block
     uint64 block_size;
 

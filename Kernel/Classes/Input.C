@@ -115,13 +115,13 @@ void dsp::Input::seek (int64 offset, int whence)
     break;
 
   case SEEK_END:
-    if (!total_samples)
+    if (!info.get_ndat())
       throw Error (InvalidState, "Input::seek", "SEEK_END unknown eod");
 
-    if (offset < -(int64)total_samples)
+    if (offset < -info.get_ndat())
       throw Error (InvalidRange, "Input::seek", "SEEK_END negative offset");
 
-    next_sample = total_samples + offset;
+    next_sample = info.get_ndat() + offset;
     break;
 
   default:
