@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.64 $
-   $Date: 2004/01/19 05:42:31 $
+   $Revision: 1.65 $
+   $Date: 2004/03/18 03:06:55 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -299,7 +299,8 @@ namespace dsp {
     string obs2string() const;
     
     //! Converts the class information into a Header
-    Reference::To<Header> obs2Header() const;
+    //! If 'hdr' is non-null, that Header is written to but its size, id and version aren't set
+    Reference::To<Header> obs2Header(Header* hdr=0) const;
 
     //! Writes all information contained in this class into the specified filename
     void obs2file(string filename, int64 offset) const;
@@ -318,6 +319,9 @@ namespace dsp {
 
     //! Set all attributes to null default
     virtual void init ();
+
+    //! Returns the version number to put in the Header when writing out
+    float get_version() const { return 2.0; }
 
   protected:
 

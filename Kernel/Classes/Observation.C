@@ -616,12 +616,14 @@ string dsp::Observation::obs2string() const {
 }
 
 //! Returns a Header that stores the info in the class
-Reference::To<Header> dsp::Observation::obs2Header() const{
-  Reference::To<Header> h(new Header);
-
-  h->set_size( 4096 );
-  h->set_id("dsp::Observation_data");
-  h->set_version( 2.0 );
+Reference::To<Header> dsp::Observation::obs2Header(Header* hdr) const{
+  Reference::To<Header> h(hdr);
+  if( !h.ptr() ){
+    h = new Header;
+    h->set_size( 4096 );
+    h->set_id("dsp::Observation_data");
+    h->set_version( get_version() );
+  }
 
   h->add_token("NDAT",ndat);
   h->add_token("TELESCOPE",telescope);
@@ -713,7 +715,7 @@ void dsp::Observation::obs2file(string filename, int64 offset) const{
 void dsp::Observation::obs2file(int fd, int64 offset, int whence) const{
   Reference::To<Header> header(obs2Header());
 
-  header->Printable::write(fd,offset,whence);
+  header->write(fd,offset,whence);
 }
 
 //! Opposite of obs2file
@@ -745,19 +747,13 @@ void dsp::Observation::file_seek(int fd,int64 offset,int whence){
 
 //! Determines the version of the dsp::Observation printout
 float dsp::Observation::get_version(int fd){
-  //fprintf(stderr,"get_version1\n");
-  
   string firstline = read_line(fd);
-
-  //fprintf(stderr,"get_version2 with line '%s'\n",firstline.c_str());
 
   vector<string> words = stringdecimate(firstline," \t");
 
   if( words.size() != 3 ) // Pre-Header days of dsp::Observation
     return 1.0;  
   
-  //  fprintf(stderr,"get_version3\n");
-
   float version = Header::parse_version(firstline);
 
   // Rewind the file descriptor by the first line and the newline character
