@@ -30,11 +30,13 @@
 
 #include "Pulsar/Archive.h"
 
+#include "fftm.h"
 #include "string_utils.h"
 #include "dirutil.h"
 #include "Error.h"
+#include "MakeInfo.h"
 
-static char* args = "2:a:Ab:d:f:F:hIjM:n:N:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:e:E:f:F:hiIjM:n:N:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -43,6 +45,8 @@ void usage ()
     "File handling options:\n"
     " -a archive     set the output archive class name\n"
     " -A             produce a single archive with multiple Integrations\n"
+    " -e ext         set the output archive filename extension\n"
+    " -E filename    set the output archive filename (including extension)\n"
     " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
     " -N name        Over-ride name of pulsar with this name\n"
@@ -78,8 +82,20 @@ void usage ()
        << endl;
 }
 
-int main (int argc, char** argv) 
+void info ()
+{
+#ifdef ACTIVATE_MPI
+  char* mpimsg = ":MPI";
+#else
+  char* mpimsg = "";
+#endif
+  
+  cerr << "dspsr " << dsp::version << " <" << fft::id << mpimsg 
+       << "> compiled by " << MakeInfo_user << " on " << MakeInfo_date
+       << endl;
+}
 
+int main (int argc, char** argv) 
 { try {
 
   // rank of the node on which this processor is running
@@ -138,6 +154,12 @@ int main (int argc, char** argv)
 
   // class name of the archives to be produced
   string archive_class = "TimerArchive";
+
+  // filename extension of the output archives
+  string archive_extension;
+
+  // filename of the output archives
+  string archive_filename;
 
   // form single pulse archives
   bool single_pulse = false;
@@ -215,6 +237,14 @@ int main (int argc, char** argv)
       npol = atoi (optarg);
       break;
 
+    case 'e':
+      archive_extension = optarg;
+      break;
+
+    case 'E':
+      archive_filename = optarg;
+      break;
+
     case 'F': {
       char* pfr = strchr (optarg, ':');
       if (pfr) {
@@ -248,7 +278,13 @@ int main (int argc, char** argv)
       break;
       
     case 'h':
-      usage ();
+      if (mpi_rank == 0)
+	usage ();
+      return 0;
+
+    case 'i':
+      if (mpi_rank == 0)
+	info ();
       return 0;
 
 #if ACTIVATE_MKL      
@@ -517,6 +553,16 @@ int main (int argc, char** argv)
   cerr << "dspsr: Archive class name = " << archive_class << endl;
 
   archiver->set_archive_class (archive_class.c_str());
+
+  if (!archive_extension.empty())
+    archiver->set_extension (archive_extension);
+
+  if (!archive_filename.empty()) {
+    archiver->set_filename (archive_filename);
+
+    if (!archive_extension.empty())
+      cerr << "dspsr: Warning: archive extension will be ignored" << endl;
+  }
 
   if (verbose)
     cerr << "Creating Fold instance" << endl;
