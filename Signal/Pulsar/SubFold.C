@@ -269,8 +269,9 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
     // sub-integration: set the more_data flag and the boundaries for
     // the next sub-integration
     if (verbose)
-      cerr << "dsp::SubFold::bound " << (input_end-fold_end).in_seconds()
-	   << " seconds remain following current sub-integration" << endl;
+      cerr << "dsp::SubFold::bound " << (input_end-fold_end).in_seconds()*1e3
+	   << " ms after end of current sub-integration" << endl
+	   << "dsp::SubFold::bound set bounds for next sub-integration"<<endl;
 
     set_boundaries (fold_end+MJD::precision);
     more_data = true;

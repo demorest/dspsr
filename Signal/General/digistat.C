@@ -28,7 +28,7 @@ int main (int argc, char** argv)
 { try {
 
   char* metafile = 0;
-  bool display = false;
+  bool display = true;
   bool verbose = false;
 
   int c;
@@ -61,9 +61,6 @@ int main (int argc, char** argv)
   if (display) {
     cpgbeg (0, "?", 0, 0);
     cpgask(1);
-  }
-
-  if (display) {
     cpgsvp (0.05, 0.95, 0.0, 0.8);
     cpgsch (2.0);
   }
@@ -84,9 +81,6 @@ int main (int argc, char** argv)
 
   plotter->set_viewport (0.7, 0.95, 0.1, 0.9);
   plotter->horizontal = false;
-
-  cpgbeg(0, "?",1,1);
-  cpgsch(2);  // set character height
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
@@ -111,9 +105,11 @@ int main (int argc, char** argv)
       
       manager->load (voltages);
 
-      cpgpage();
-      plotter->plot();
-
+      if (display)  {
+        cpgpage();
+        plotter->plot();
+      }
+      break;
     }
 
     if (verbose)
