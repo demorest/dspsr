@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.24 $
-   $Date: 2004/12/10 03:43:13 $
+   $Revision: 1.25 $
+   $Date: 2004/12/12 23:36:18 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -110,6 +110,9 @@ namespace dsp {
 
     //! Inquire whether you are going to skip over samples that have been processed already (requires time_conserved==true; Observation->Observation to be meaningful)
     bool get_process_samps_once(){ return process_samps_once; }
+
+    //! Child classes should over-ride this if they want to add a dspExtension history object to the output
+    virtual void add_history(){ }
 
   protected:
 
@@ -490,6 +493,8 @@ void dsp::Transformation<In, Out>::operation ()
   swap_buffer_stuff();
 
   set_valid_data_is_saved();
+
+  add_history();
 
   if( verbose )
     if( ts_out )
