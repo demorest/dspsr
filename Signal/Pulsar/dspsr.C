@@ -544,9 +544,9 @@ int main (int argc, char** argv)
     filterbank->set_output (convolve);
 
     filterbank->load_complex_coefficients (polyphase_filter);
-    
-    cerr << "dsp: PolyPhaseFilterbank with nchan=" << filterbank->get_nchan()
-	 << " loaded" << endl;
+    nchan = filterbank->get_nchan();
+
+    cerr << "dspsr: PolyPhaseFilterbank nchan=" << nchan << " loaded" << endl;
 
     operations.push_back (filterbank);
     
