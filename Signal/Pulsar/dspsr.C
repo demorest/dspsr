@@ -673,8 +673,6 @@ int main (int argc, char** argv)
 
   }
 
-  archiver->set_operations (operations);
-
   // single archive instance used when single_pulse && single_archive
   Reference::To<Pulsar::Archive> archive;
 
@@ -728,12 +726,24 @@ int main (int argc, char** argv)
       dm = dispersion_measure;
     }
 
+    unsigned nblocks_tot = 0;
     unsigned block_size = ffts;
     unsigned overlap = 0;
     unsigned nfft = 0;
     unsigned nfilt = 0;
-  
-    if (!manager->get_info()->get_detected()) {
+
+    vector<dsp::Operation*> active_operations;
+
+    if (manager->get_info()->get_detected()) {
+
+      active_operations.push_back (manager);
+      active_operations.push_back (fold);
+
+    }
+
+    else {
+
+      active_operations = operations;
 
       kernel->set_dispersion_measure (dm);
       kernel->match ( manager->get_info(), nchan);
@@ -752,9 +762,9 @@ int main (int argc, char** argv)
       cerr << "Blocksz=" << block_size << endl;
       cerr << "Overlap=" << overlap << endl;
       
-      unsigned nblocks_tot = 0;
-
     }
+
+    archiver->set_operations (active_operations);
 
     if (mpi_rank == mpi_root) {
 
@@ -828,16 +838,30 @@ int main (int argc, char** argv)
 
     while (!manager->eod()) {
 
-      try {
-        for (unsigned iop=0; iop < operations.size(); iop++)
-	  operations[iop]->operate ();
+      for (unsigned iop=0; iop < active_operations.size(); iop++) try {
+
+        if (verbose) cerr << "dspsr: calling " 
+                          << active_operations[iop]->get_name() << endl;
+
+        active_operations[iop]->operate ();
+
+        if (verbose) cerr << "dspsr: " << active_operations[iop]->get_name() 
+                          << " done" << endl;
+
       }
       catch (Error& error)  {
-        cerr << error << endl;
-        cerr << "dspsr: Exiting data reduction loop." << endl;
-        break;
-      }
 
+        cerr << error << endl;
+        cerr << "dspsr: removing " << active_operations[iop]->get_name() 
+             << " from operations" << endl;
+
+        active_operations.erase (active_operations.begin()+iop);
+        archiver->set_operations (operations);
+
+        iop --;
+
+        cerr << "dspsr: continuing with operation " << iop+1 << endl;
+      }
 
       block++;
 
