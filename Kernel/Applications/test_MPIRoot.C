@@ -25,6 +25,7 @@ int main (int argc, char** argv)
 { try {
 
   MPI_Init (&argc, &argv);
+   // MPI_Errhandler_set (MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
   int  len_name;
   char mpi_name [MPI_MAX_PROCESSOR_NAME];
@@ -86,6 +87,8 @@ int main (int argc, char** argv)
   mpi_b->set_root (mpi_root);
   mpi_a->set_tag (3);
 
+  int retval = 0;
+
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) {
 
     if (mpi_a->get_root() == mpi_a->get_rank()) {
@@ -121,11 +124,16 @@ int main (int argc, char** argv)
       // note that TestInput::runtest knows only the Input base class
       test.runtest (mpi_a, mpi_b);
 
+      if (test.get_errors() != 0) {
+        cerr << "test_MPIRoot test failed" << endl;
+        retval = -1;
+      }
     }
 
   }
 
-  return 0;
+  MPI_Finalize ();
+  return retval;
 }
 
 catch (Error& error) {

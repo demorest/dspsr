@@ -98,10 +98,20 @@ dsp::MPIRoot::MPIRoot (MPI_Comm _comm)
 
   ready = 0;
 
-  async_buf = 0;
-  async_buf_size = 0;
+  pack_buf = 0;
+  pack_buf_size = 0;
   pack_size = 0;
+  min_header_size = 0;
   data_size = 0;
+
+  // compute the MPI_Pack_size of the header information
+  int temp_size = 0;
+  MPI_Pack_size (1, MPI_Int64, comm, &temp_size);
+  min_header_size += temp_size;
+  MPI_Pack_size (1, MPI_UInt64, comm, &temp_size);
+  min_header_size += temp_size;
+  MPI_Pack_size (1, MPI_UNSIGNED, comm, &temp_size);
+  min_header_size += temp_size;
 
   end_of_data = true;
 }
@@ -109,7 +119,7 @@ dsp::MPIRoot::MPIRoot (MPI_Comm _comm)
 
 dsp::MPIRoot::~MPIRoot ()
 {
-  if (async_buf) delete [] async_buf; async_buf = NULL;
+  if (pack_buf) delete [] pack_buf; pack_buf = NULL;
 }
 
 void dsp::MPIRoot::set_root (int root)
@@ -135,6 +145,19 @@ void dsp::MPIRoot::set_resolution (unsigned _resolution)
   resolution = _resolution;
 }
 
+void dsp::MPIRoot::set_block_size (uint64 _size)
+{
+  bool resize_required = (get_block_size() != _size);
+
+  Input::set_block_size (_size);
+
+  if (!end_of_data && resize_required)  {
+    size_pack_buffer ();
+    if (mpi_rank != mpi_root)
+      request_data();
+  }
+}
+
 // ////////////////////////////////////////////////////////////////////////////
 //
 //
@@ -143,11 +166,12 @@ void dsp::MPIRoot::set_resolution (unsigned _resolution)
   and block_size, to all of the nodes using mpiBcast */
 void dsp::MPIRoot::prepare ()
 {
-  if (mpi_rank == mpi_root && info.get_nbytes(get_block_size()) > MAXINT)
-    throw Error (InvalidState, "dsp::MPIRoot::bcast_setup",
-		 "block_size="UI64" will result\n"
-		 "\t\tin buffer size greater than MAXINT=%d\n",
-		 get_block_size(), MAXINT);
+  if (!end_of_data)
+    throw Error (InvalidState, "dsp::MPIRoot::prepare",
+                 "cannot prepare when end_of_data != false");
+
+  if (mpi_rank == mpi_root)
+    check_block_size ("dsp::MPIRoot::prepare");
 
   mpiBcast (this, 1, mpi_root, comm);
 
@@ -155,36 +179,31 @@ void dsp::MPIRoot::prepare ()
     cerr << "dsp::MPIRoot::prepare rank=" << mpi_rank << " block_size="
 	 << get_block_size() << endl;
 
-  size_asyncspace ();
-
   if (data_request != MPI_REQUEST_NULL)
     MPI_Request_free (&data_request);
 
   data_request = MPI_REQUEST_NULL;
+  ready = 0;
 
-  if (mpi_rank == mpi_root)
-    // post the first receive ready request
-    MPI_Irecv (&ready, 1, MPI_INT, MPI_ANY_SOURCE, mpi_tag,
-	       comm, &ready_request);
-
-  else {
-    // post the first receive request
-    MPI_Irecv (async_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag,
-               comm, &data_request);
-
-    ready = 1;
-
-    // post the first send ready request
-    MPI_Isend (&ready, 1, MPI_INT, mpi_root, mpi_tag, comm, &ready_request);
-  }
+  if (get_block_size ())
+    size_pack_buffer ();
 
   end_of_data = false;
+
+  if (mpi_rank == mpi_root)
+    request_ready ();
+
+  else if (ready)
+    request_data ();
 }
 
 
 //! End of data
 bool dsp::MPIRoot::eod()
 {
+  if (!end_of_data && mpi_rank != mpi_root)
+    receive_data ();
+
   return end_of_data;
 }
 
@@ -192,34 +211,38 @@ bool dsp::MPIRoot::eod()
 //
 //
 //
-void dsp::MPIRoot::size_asyncspace ()
+void dsp::MPIRoot::size_pack_buffer ()
 {
+  if (data_request != MPI_REQUEST_NULL || 
+     (ready_request != MPI_REQUEST_NULL && mpi_rank != mpi_root))
+    throw Error (InvalidState, "dsp::MPIRoot::size_pack_buffer",
+                 "cannot resize send/recv buffer when message is pending");
+
+  check_block_size ("dsp::MPIRoot::set_block_size");
+
+  pack_size = min_header_size;
+
+  // the extra bytes enable time sample resolution features
+  data_size = info.get_nbytes( get_block_size() ) + resolution;
+
   int temp_size = 0;
-  MPI_Pack_size (1, MPI_Int64, comm, &temp_size);
-  pack_size = temp_size;
-  MPI_Pack_size (1, MPI_UInt64, comm, &temp_size);
-  pack_size += temp_size;
-  MPI_Pack_size (1, MPI_UNSIGNED, comm, &temp_size);
-  pack_size += temp_size;
-
-  // the total size of nbytes has already been double checked in bcast_setup
-  // the extra two bytes enable time sample resolution features
-  data_size = info.get_nbytes( get_block_size() ) + 2;
-
   MPI_Pack_size (data_size, MPI_CHAR, comm, &temp_size);
   pack_size += temp_size;
   
-  if (async_buf_size < pack_size) {
-    if (async_buf) delete [] async_buf; async_buf = NULL;
+  if (pack_buf_size < pack_size) {
+    if (pack_buf) delete [] pack_buf; pack_buf = NULL;
 
-    async_buf = new char [pack_size];
-    if (async_buf == NULL)
-      throw Error (BadAllocation, "dsp::MPIRoot::size_asyncspace",
+    pack_buf = new char [pack_size];
+    if (pack_buf == NULL)
+      throw Error (BadAllocation, "dsp::MPIRoot::size_pack_buffer",
 		   "mpi_rank=%d - error allocate "I64" bytes",
 		   mpi_rank, pack_size);
 
-    async_buf_size = pack_size;
+    pack_buf_size = pack_size;
   }
+
+  if (mpi_rank != mpi_root)
+    ready = get_block_size();
 }
 
 /*! \param request the asynchronous transfer request to use in MPI_Wait
@@ -233,80 +256,106 @@ void dsp::MPIRoot::wait (MPI_Request& request, bool receive)
   int mpi_err = MPI_Wait (&request, &status);
   request = MPI_REQUEST_NULL;
 
-  check ("dsp::MPIRoot::wait", mpi_err, status, receive);
+  char* method = "dsp::MPIRoot::wait";
+
+  check_error (mpi_err, "MPI_Wait", method);
+  check_error (status.MPI_ERROR, "MPI_Wait MPI_Status", method);
+
+  if (receive)
+    check_status (status, method); 
 }
 
-void dsp::MPIRoot::check (const char* method, int mpi_err, MPI_Status& _status,
-                          bool receive)
+void dsp::MPIRoot::check_error (int err, const char* call, const char* method)
 {
   int err_len;
-  if (mpi_err != MPI_SUCCESS) {
-    MPI_Error_string (mpi_err, mpi_errstr, &err_len);
-    throw Error (FailedCall, method, "rank=%d MPI_Wait %s\n",
-		 mpi_rank, mpi_errstr);
+  if (err != MPI_SUCCESS) { 
+    MPI_Error_string (err, mpi_errstr, &err_len);
+    throw Error (FailedCall, method, "rank=%d %s %s\n",
+                 mpi_rank, call, mpi_errstr);
   }
+}
 
-  if (status.MPI_ERROR != MPI_SUCCESS) {
-    MPI_Error_string (status.MPI_ERROR, mpi_errstr, &err_len);
-    throw Error (FailedCall, method, "rank=%d MPI_Wait MPI_Status %s\n",
-		 mpi_rank, mpi_errstr);
-  }
-
-  if (receive && status.MPI_TAG != mpi_tag)
+void dsp::MPIRoot::check_status (MPI_Status& mpi_status, const char* method)
+{
+  if (mpi_status.MPI_TAG != mpi_tag)
     throw Error (InvalidState, method,
-		 "rank=%d MPI_Wait MPI_Status::MPI_TAG=%d != mpi_tag=%d",
-		 mpi_rank, status.MPI_TAG, mpi_tag);
+		 "rank=%d MPI_Status::MPI_TAG=%d != mpi_tag=%d",
+		 mpi_rank, mpi_status.MPI_TAG, mpi_tag);
+}
 
+void dsp::MPIRoot::check_block_size (const char* method)
+{
+  uint64 bytes = info.get_nbytes(get_block_size()) + 2 + min_header_size;
+
+  if (bytes > MAXINT)
+    throw Error (InvalidState, method, "block_size="UI64" -> buffer_size="UI64
+                 " > MAXINT=%d\n", get_block_size(), bytes, MAXINT);
 }
 
 int dsp::MPIRoot::next_destination ()
 {
   ensure_root ("dsp::MPIRoot::next_destination");
-
   wait (ready_request, true);
-
-  // post the next receive ready request
-  MPI_Irecv (&ready, 1, MPI_INT, MPI_ANY_SOURCE, mpi_tag,
-	     comm, &ready_request);
-
+  request_ready();
   return status.MPI_SOURCE;
 }
+
+void dsp::MPIRoot::request_ready ()
+{
+  ensure_root ("dsp::MPIRoot::request_ready");
+
+  if (ready_request != MPI_REQUEST_NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::request_ready",
+                 "ready_request already pending");
+
+  // post the receive ready-for-data request
+  MPI_Irecv (&ready, 1, MPI_INT, MPI_ANY_SOURCE, mpi_tag, comm, &ready_request);
+}
+
 
 // ////////////////////////////////////////////////////////////////////////////
 //
 //
 //
+
+void dsp::MPIRoot::load_data ()
+{
+  ensure_root ("dsp::MPIRoot::load_data");
+
+  if (!input)
+    throw Error (InvalidState, "dsp::MPIRoot::load_data", "no input");
+
+  if (!ready)
+    return;
+
+  set_block_size (ready);
+  input->set_block_size (ready);
+  input->operate ();
+}
+
+
 void dsp::MPIRoot::send_data (BitSeries* data, int dest)
 {
-  ensure_root ("dsp::MPIRoot::next_destination");
+  ensure_root ("dsp::MPIRoot::send_data");
 
   if (verbose)
     cerr << "MPIRoot::send_data dest="<< dest <<" BitSeries*="<< data <<endl;
 
-  if (!async_buf)
-    throw Error (InvalidState, "MPIRoot::send_data", "not prepared");
+  if (end_of_data)
+    throw Error (InvalidState, "MPIRoot::send_data", "end of data");
+
+  if (!pack_buf)
+    size_pack_buffer ();
 
   if ((dest == mpi_rank) || (dest < 0) || (dest >= mpi_size))
     throw Error (InvalidParam, "MPIRoot::send_data",
                  "invalid dest=%d. mpi_root=%d mpi_size=%d",
 		 dest, mpi_root, mpi_size);
 
-  int nbytes = 0;
-
-  if (data)
-    nbytes = data->get_nbytes();
-
-  else if (verbose)
-    cerr << "dsp::MPIRoot::send_data sending end of data" << endl;
-
-  if (nbytes > data_size)
-    throw Error (InvalidParam, "dsp::MPIRoot::send_data",
-		 "invalid nbytes=%d > data_size=%d)",
-		 nbytes, data_size);
-
   // ensure that the asynchronous send buffer is free
   wait (data_request, false);
 
+  int nbytes = 0;
   int64 start_sample = 0;
   uint64 request_ndat = 0;
   unsigned request_offset = 0;
@@ -314,26 +363,34 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
   char* datptr = 0;
 
   if (data)  {
+    nbytes = data->get_nbytes();
     start_sample = data->get_input_sample();
     request_ndat = data->get_request_ndat ();
     request_offset = data->get_request_offset ();
 
     datptr = (char*) data->get_rawptr();
   }
+  else if (verbose)
+    cerr << "dsp::MPIRoot::send_data sending end of data" << endl;
+
+  if (nbytes > data_size)
+    throw Error (InvalidParam, "dsp::MPIRoot::send_data",
+                 "invalid nbytes=%d > data_size=%d)",
+                 nbytes, data_size);
 
   int position = 0;
-  MPI_Pack (&start_sample, 1, MPI_Int64, async_buf, pack_size,
+  MPI_Pack (&start_sample, 1, MPI_Int64, pack_buf, pack_size,
 	    &position, comm);
-  MPI_Pack (&request_ndat, 1, MPI_UInt64, async_buf, pack_size,
+  MPI_Pack (&request_ndat, 1, MPI_UInt64, pack_buf, pack_size,
 	    &position, comm);
-  MPI_Pack (&request_offset, 1, MPI_UNSIGNED, async_buf, pack_size,
+  MPI_Pack (&request_offset, 1, MPI_UNSIGNED, pack_buf, pack_size,
 	    &position, comm);
 
   if (data)
-    MPI_Pack (datptr, nbytes, MPI_CHAR, async_buf, pack_size,
+    MPI_Pack (datptr, nbytes, MPI_CHAR, pack_buf, pack_size,
 	      &position, comm);
 
-  MPI_Isend (async_buf, position, MPI_PACKED, dest, mpi_tag, 
+  MPI_Isend (pack_buf, position, MPI_PACKED, dest, mpi_tag, 
 	     comm, &data_request);
 
   if (data_request == MPI_REQUEST_NULL)
@@ -346,26 +403,63 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
 //
 //
 //
-void dsp::MPIRoot::load_data (BitSeries* data)
-{
-  if (async_buf == NULL)
-    throw Error (InvalidState, "dsp::MPIRoot::load_data", 
-		 "buffer not prepared.  call bcast_setup first.");
 
-  wait (ready_request, false);
-  wait (data_request, true);
+void dsp::MPIRoot::request_data ()
+{
+  // post receive data request
+  MPI_Irecv (pack_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag, comm, 
+             &data_request);
+
+  // post send ready-to-receive request
+  MPI_Isend (&ready, 1, MPI_INT, mpi_root, mpi_tag, comm, &ready_request);
+}
+
+
+int dsp::MPIRoot::receive_data ()
+{
+  if (verbose)
+    cerr << "dsp::MPIRoot::receive_data" << endl;
+
+  if (data_request)  {
+    wait (ready_request, false);
+    wait (data_request, true);
+  }
 
   int count;
   MPI_Get_count (&status, MPI_PACKED, &count);
 
-  int header_size = pack_size - data_size;
-  int received = count - header_size;
+  int64 start_sample = 0;
+  uint64 request_ndat = 0;
+  unsigned request_offset = 0;
 
-  if (received < 1) {
+  int position = 0;
+
+  MPI_Unpack (pack_buf, pack_size, &position, &start_sample, 1,
+              MPI_Int64, comm);
+  MPI_Unpack (pack_buf, pack_size, &position, &request_ndat, 1,
+              MPI_UInt64, comm);
+  MPI_Unpack (pack_buf, pack_size, &position, &request_offset, 1,
+              MPI_UNSIGNED, comm);
+
+  int received = count - position;
+
+  if (request_ndat == 0) {
     end_of_data = true;
     if (verbose)
-      cerr << "MPIRoot::load_data end of data" << endl;
+      cerr << "dsp::MPIRoot::receive_data end of data" << endl;
   }
+
+  return received;
+}
+
+
+void dsp::MPIRoot::load_data (BitSeries* data)
+{
+  if (pack_buf == NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::load_data", 
+		 "buffer not prepared.  call bcast_setup first.");
+
+  int received = receive_data ();
 
   int64 start_sample = 0;
   uint64 request_ndat = 0;
@@ -375,30 +469,26 @@ void dsp::MPIRoot::load_data (BitSeries* data)
 
   int position = 0;
 
-  MPI_Unpack (async_buf, pack_size, &position, &start_sample, 1, 
+  MPI_Unpack (pack_buf, pack_size, &position, &start_sample, 1, 
 	      MPI_Int64, comm);
-  MPI_Unpack (async_buf, pack_size, &position, &request_ndat, 1, 
+  MPI_Unpack (pack_buf, pack_size, &position, &request_ndat, 1, 
 	      MPI_UInt64, comm);
-  MPI_Unpack (async_buf, pack_size, &position, &request_offset, 1, 
+  MPI_Unpack (pack_buf, pack_size, &position, &request_offset, 1, 
 	      MPI_UNSIGNED, comm);
 
-  MPI_Unpack (async_buf, pack_size, &position, datptr, received,
+  MPI_Unpack (pack_buf, pack_size, &position, datptr, received,
 	      MPI_CHAR, comm);
 
   // by calling the Input::seek and set_block_size methods, the
   // load_sample and resolution_offset attributes will be properly set
   // and passed on to the output BitSeries
-  seek (start_sample + request_offset, SEEK_SET);
-  set_block_size (request_ndat);
-	       
-  // post for the next receive
-  MPI_Irecv (async_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag,
-             comm, &data_request);
+  Input::seek (start_sample + request_offset, SEEK_SET);
+  Input::set_block_size (request_ndat);
 
-  ready = 1;
+  data->set_ndat( data->get_nsamples(received) );
 
-  // post the next send ready request
-  MPI_Isend (&ready, 1, MPI_INT, mpi_root, mpi_tag, comm, &ready_request);
+  // request the next block of data
+  request_data ();
 }
 
 

@@ -40,6 +40,9 @@ namespace dsp {
     //! Set the tag used for all communication
     void set_tag (int tag) { mpi_tag = tag; }
 
+    //! Setting the block_size requires resizing the buffer
+    void set_block_size (uint64 _size);
+
     //! Prepare for sending or receiving from root node
     void prepare ();
 
@@ -77,8 +80,8 @@ namespace dsp {
     //! Returns the rank of the next node ready to receive data
     int next_destination ();
 
-    //! resize the async_buf
-    void size_asyncspace ();
+    //! resize the pack_buf
+    void size_pack_buffer ();
 
     //! Communicator in which data will be sent and received
     MPI_Comm comm;
@@ -95,10 +98,10 @@ namespace dsp {
     //! Tag used for all communication
     int mpi_tag;
 
-    //! status of the asynchronous send/recv of data
+    //! Handle to the asynchronous send/recv of data
     MPI_Request data_request;
 
-    //! status of the asynchronous send/recv of ready flag
+    //! Handle to the asynchronous send/recv of ready flag
     MPI_Request ready_request;
 
     //! Status of the last call to wait
@@ -108,15 +111,18 @@ namespace dsp {
     int ready;
 
     //! Buffer used to store asynchronous send/recv
-    char* async_buf;
+    char* pack_buf;
 
     //! Size of the above buffer
-    int async_buf_size;
+    int pack_buf_size;
 
     //! Size actually needed
     int pack_size;
 
-    //! Size of the data in the buffer
+    //! MPI_Pack_size of the header in the buffer
+    int min_header_size;
+
+    //! Size of the data in bytes
     int data_size;
 
     //! End of data
@@ -128,11 +134,29 @@ namespace dsp {
     //! initialize variables
     void init();
 
+    //! request ready-for-data from any node
+    void request_ready ();
+
+    //! request data from the root
+    void request_data ();
+
+    //! wait for data to be received and return the data count
+    int receive_data ();
+
+    //! when mpi_rank == mpi_root, load data from input
+    void load_data ();
+
     //! ensure that this instance is the root and that mpi_size > 1
     void ensure_root (const char* method) const;
 
-    //! verify that MPI_Wait returns as expected
-    void check (const char* method, int mpi_err, MPI_Status& _status, bool rcv);
+    //! throw an Error exception if mpi_err != MPI_SUCCESS
+    void check_error (int mpi_err, const char* call, const char* method);
+
+    //! verify that MPI_Wait returns as expected after MPI_Irecv
+    void check_status (MPI_Status& mpi_status, const char* method);
+
+    //! verify that the block_size is withing MPI size limits
+    void check_block_size (const char* method);
 
   };
 

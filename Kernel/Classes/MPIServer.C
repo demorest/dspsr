@@ -52,16 +52,20 @@ void dsp::MPIServer::serve ()
   for (ir=0; ir < root.size(); ir++) {
     // allocate buffer to each MPIRoot input data stream
     root[ir]->input->set_output (data);
-
-    // reference the ready_request attributes of each MPIRoot
-    ready[ir] = root[ir]->ready_request;
   }
 
   MPI_Status status;
 
   MPI_Request *requests = &(ready[0]);
 
+  char* method = "dsp::MPIServer::serve";
+
   while (have_data) {
+
+    for (ir=0; ir < root.size(); ir++) {
+      // reference the ready_request attributes of each MPIRoot
+      ready[ir] = root[ir]->ready_request;
+    }
 
     int index = 0;
     int mpi_err = MPI_Waitany( root.size(), requests, &index, &status);
@@ -71,7 +75,13 @@ void dsp::MPIServer::serve ()
 		   "MPI_Waitany index=MPI_UNDEFINED");
 
     // ensure that all is good
-    root[index]->check ("dsp::MPIServer::server", mpi_err, status, true);
+    root[index]->check_error (mpi_err, "MPI_Waitany", method);
+    root[index]->check_error (status.MPI_ERROR, "MPI_Waitany status", method);
+    root[index]->check_status (status, method);
+
+    // post the next ready-to-receive request
+    root[index]->ready_request = MPI_REQUEST_NULL;
+    root[index]->request_ready ();
 
     int dest = status.MPI_SOURCE;
 
@@ -85,13 +95,14 @@ void dsp::MPIServer::serve ()
 	cerr << "dsp::MPIServer::serve end of data[" << index << "]" << endl;
 
       root[index]->send_data (0, dest);
+      have_data --;
 
     }
     else {
       if (MPIRoot::verbose)
 	cerr << "dsp::MPIServer::serve loading data[" << index << "]" << endl;
 
-      root[index]->input->operate ();
+      root[index]->load_data ();
 
       if (MPIRoot::verbose)
 	cerr << "dsp::MPIServer::serve sending data to " << dest << endl;
