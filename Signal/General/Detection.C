@@ -261,12 +261,19 @@ void dsp::Detection::checks(){
 		   "invalid npol=%d for %s formation",
 		   input->get_npol(), Signal::state_string(state));
     
-    if (input->get_state() != Signal::Analytic)
-      throw Error (InvalidState, "dsp::Detection::transformation",
-		   "invalid state=%s for %s formation",
+    if (input->get_state() != Signal::Analytic){
+      if( get_input()->get_state()==Signal::Nyquist )
+	throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid state=%s for %s formation- have you forgotten to add a -F option to form a filterbank or to deconvolve?",
 		   input->get_state_as_string().c_str(),
 		   Signal::state_string(state));
-    
+      else
+	throw Error (InvalidState, "dsp::Detection::transformation",
+		     "invalid state=%s for %s formation",
+		     input->get_state_as_string().c_str(),
+		     Signal::state_string(state));
+    }
+
     // Signal::Coherence product and Signal::Stokes parameter
     // formation can be performed in three ways, corresponding to
     // ndim = 1,2,4
