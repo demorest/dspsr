@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/01/09 10:21:38 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2003/01/14 00:31:53 $
+   $Author: pulsar $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -55,6 +55,9 @@ namespace dsp {
 
     //! Return pointer to the specified block of time samples
     virtual const float* get_datptr (unsigned ichan=0,unsigned ipol=0) const;
+
+    //! Return a pointer to the ichan'th frequency ordered channel and pol
+    virtual float* get_ordered_datptr(unsigned ichan,unsigned ipol);
 
     //! Append little onto the end of 'this'
     //! If it is zero, then none were and we assume 'this' is full

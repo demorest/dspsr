@@ -107,6 +107,15 @@ dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
   return data + (ichan * npol + ipol) * subsize;
 }
 
+//! Return a pointer to the ichan'th frequency ordered channel and pol
+float* dsp::TimeSeries::get_ordered_datptr(unsigned ichan,unsigned ipol){
+  if( !swap )
+    return get_datptr(ichan,ipol);
+  
+  if(ichan<nchan/2)
+    return get_datptr(ichan+nchan/2,ipol);
+  return get_datptr(ichan-nchan/2,ipol);
+}
 
 dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 {
