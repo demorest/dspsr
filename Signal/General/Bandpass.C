@@ -1,14 +1,15 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <rfftw.h>
+
 #include "dsp/Observation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Bandpass.h"
 #include "dsp/Response.h"
 #include "dsp/Transformation.h"
-#include "rfftw.h"
 #include "genutil.h"
-#include "assert.h"
 
 bool dsp::Bandpass::verbose = false;
 
