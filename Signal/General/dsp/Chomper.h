@@ -41,6 +41,8 @@ namespace dsp {
     void dont_use_multiplier(){ dont_multiply = true; }
 
   protected:
+
+    //! Do stuff
     void transformation();
 
   private:
