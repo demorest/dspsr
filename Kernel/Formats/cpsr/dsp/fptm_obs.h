@@ -6,7 +6,7 @@
 #include <string>
 
 #include "MJD.h"
-#include "angle.h"
+#include "Angle.h"
 
 #define FPTM_OBS_LOG "runtime/observe/fptm_obs.log"
 
