@@ -1,17 +1,21 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/12 04:22:36 $
+   $Revision: 1.6 $
+   $Date: 2002/11/22 04:29:58 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
 #define __Transformation_h
 
 #include <string>
+#include <iostream>
+
+#include <stdlib.h>
+
+#include "Error.h"
 
 #include "dsp/Operation.h"
-#include "Error.h"
 
 namespace dsp {
 
@@ -124,16 +128,23 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
   if (verbose)
     cerr << "dsp::Transformation["+name+"]::set_output ("<<_output<<")"<<endl;
 
-  if (type == inplace)
-    throw Error (InvalidState, string("Transformation["+name+"]::set_output").c_str(),
-		 "inplace transformation has only input");
+  if (type == inplace && input.get() && (const void*)input.get()!=(const void*)_output ){
+    Error er(InvalidState, string("Transformation["+name+"]::set_output").c_str(),
+		 "inplace transformation input must equal output");
+    cerr << er << endl;
+    exit(-1);
+  }
 
   output = _output;
 
   if ( type == outofplace && input && output 
-       && (const void*)input == (const void*)output )
-    throw Error (InvalidState, string("Transformation["+name+"]::set_output").c_str(),
+       && (const void*)input.get() == (const void*)output.get() ){
+    Error er(InvalidState, string("Transformation["+name+"]::set_output").c_str(),
 		 "output must != input");
+    cerr << er << endl;
+    exit(-1);
+  }
+
 }
 
 

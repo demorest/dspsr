@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/11/09 15:55:27 $
-   $Author: wvanstra $ */
+   $Revision: 1.14 $
+   $Date: 2002/11/22 04:29:59 $
+   $Author: hknight $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -36,6 +36,7 @@ namespace dsp {
     virtual ~Operation ();
 
     //! Call this method to operate on data
+    //! This does time the operation if record_time=true, but doesn't automatically print out the result
     virtual void operate ();
 
     //! Return the unique name of this operation
@@ -63,7 +64,6 @@ namespace dsp {
     //! Return pointer to memory resource shared by operations
     static void* workingspace (size_t nbytes);
 
-  private:
     //! Stop watch records the amount of time spent performing this operation
     RealTimer optime;
 
