@@ -51,6 +51,19 @@ SWINBURNE_REPOSITORY = pentane.ssi.swin.edu.au:/nfs/cluster/psr/cvsroot
 LTIMES = -ltimes -lgenutil $(LSLA) -lm
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
+LPSRCHIVE = -lpsrchive
+
+ifeq (${PSRFITS},yes)
+LPSRCHIVE += $(LCFITSIO)
+endif  # PSRFITS
+
+PSRTIMER = yes
+ifeq (${PSRTIMER},yes)
+LPSRCHIVE += -larchive
+endif
+
+LPSRCHIVE += -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
+
 ##########################################################################
 # package-specific macro definitions
 ##########################################################################
