@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.1 $
-   $Date: 2001/07/31 20:26:22 $
+   $Revision: 1.2 $
+   $Date: 2001/07/31 20:53:35 $
    $Author: wvanstra $ */
 
 #ifndef __pspmDbase_h
@@ -46,6 +46,8 @@ namespace pspmDbase {
     // create from PSPM_SEARCH_HEADER
     void create (void* hdr);
 
+    friend bool operator < (const entry& e1, const entry& e2)
+      { return e1.scan < e2.scan || (e1.scan == e2.scan && e1.num < e2.num); }
   };
 
 

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stdio.h>
 
 // CPSR hdr and unpacking routines
@@ -41,7 +42,7 @@ void pspmDbase::entry::create (void* vhdr)
   // set the field values
 
   scan      = hdr->scan_num;
-  num       = hdr->tape_file_number;
+  num       = hdr->scan_file_number;
   tape      = hdr->tape_num;
   file      = hdr->tape_file_number;
   
@@ -131,6 +132,8 @@ void pspmDbase::server::create (const char* glob)
 
     entries.push_back(next);
   }
+
+  sort (entries.begin(), entries.end());
 }
 
 // loads ascii version from file
