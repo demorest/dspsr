@@ -114,6 +114,33 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     cerr << "dsp::TimeSeries::resize data=" << data << endl;
 }
 
+//! Use the supplied array to store nsamples time samples.
+//! Always deletes any existing data
+void dsp::TimeSeries::resize( uint64 nsamples, uint64 bytes_supplied, unsigned char* buffer_supplied){
+  uint64 require = uint64(ndim) * nsamples * uint64(npol) * uint64(nchan);
+
+  if( require > bytes_supplied )
+    throw Error(InvalidState,"dsp::TimeSeries::resize()",
+		"Not enough bytes supplied ("UI64") to fit in "UI64" samples -> "UI64" bytes",
+		bytes_supplied, nsamples, require );
+
+  if( buffer ) delete buffer;
+
+  data = buffer = (float*)buffer_supplied;
+  size = bytes_supplied / sizeof(float);
+  ndat = nsamples;
+  subsize = ndim * nsamples;
+}
+
+//! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
+void dsp::TimeSeries::zero_resize(unsigned char*& _buffer, uint64& nbytes){
+  _buffer = (unsigned char*)buffer;
+  nbytes = size*sizeof(float);
+
+  buffer = 0;
+  resize(0);
+}
+
 //! Offset the base pointer by offset time samples
 void dsp::TimeSeries::seek (int64 offset)
 {
@@ -252,12 +279,15 @@ dsp::TimeSeries& dsp::TimeSeries::operator *= (float mult){
 void dsp::TimeSeries::zero ()
 {
   uint64 npt = get_ndat() * get_ndim();
-  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++){
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
       float* dat = get_datptr (ichan, ipol);
       for (uint64 ipt=0; ipt<npt; ipt++)
         dat[ipt]=0.0;
     }
+  }
+
+
 }
 
 //! Convenience function for initialising new TimeSeries from 2 old ones
@@ -426,7 +456,7 @@ uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsi
     set_npol(1);
     set_centre_frequency( little->get_centre_frequency( ichan ) );
     set_bandwidth( little->get_bandwidth()/little->get_nchan() );
-    set_dc_centred( true );
+    set_dc_centred( false );
     set_ndat (0);
   }    
   else if( !contiguous(*little,true,ichan,ipol) )

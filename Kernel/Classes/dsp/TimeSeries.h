@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.18 $
-   $Date: 2003/07/11 12:26:13 $
+   $Revision: 1.19 $
+   $Date: 2003/09/01 07:07:24 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -69,6 +69,13 @@ namespace dsp {
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (uint64 nsamples);
+
+    //! Use the supplied array to store nsamples time samples.
+    //! Always deletes existing data
+    virtual void resize( uint64 nsamples, uint64 bytes_supplied, unsigned char* buffer);
+
+    //! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
+    virtual void zero_resize(unsigned char*& _buffer, uint64& nbytes);
 
     //! Offset the base pointer by offset time samples
     virtual void seek (int64 offset);
