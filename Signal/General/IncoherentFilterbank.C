@@ -72,9 +72,10 @@ void dsp::IncoherentFilterbank::transformation(){
   else
     throw Error(InvalidState,"dsp::IncoherentFilterbank::transformation()",
 		"You need to call dsp::IncoherentFilterbank::set_state() with an argument of: Signal::Intensity, Signal::PPQQ or Signal::Analytic");
-  
-  fprintf(stderr,"nchan=%d nsamp_fft=%d npart=%d\n",
-	  nchan,nsamp_fft,npart);
+
+  if( verbose )
+    fprintf(stderr,"nchan=%d nsamp_fft=%d npart=%d\n",
+	    nchan,nsamp_fft,npart);
 
   if( input->get_ndat()%nsamp_fft )
     fprintf(stderr,"dsp::IncoherentFilterbank::transformation() will throw away %d samples of the input and not FFT them.  (input->ndat ("UI64") doesn't divide nsamp_fft (%d)\n",
