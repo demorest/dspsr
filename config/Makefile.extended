@@ -447,7 +447,7 @@ ifneq ($(install_yes),install)
 # user's Makefile
 ##########################################################################
 $(RUNTESTS) : %.runtest : $(BINDIR)/%
-	@($< $($*.args) || (echo $< Failed && exit 1))
+	@($< $($*.args) || (echo Failed: $< $($*.args) && exit 1))
 	@echo "************************************************************"
 	@echo ""
 	@echo $< $($*.args)
