@@ -69,9 +69,13 @@ void dsp::Detection::operation ()
   if (state == Signal::Intensity || state == Signal::PPQQ)
     square_law ();
 
-  else
+  else if (state == Signal::Stokes || state == Signal::Coherence)
     polarimetry ();
 
+  else
+    throw string("Detection::operation unknown output state: ")
+      + Signal::state_string (state);
+		  
   if (inplace)
     resize_output ();
 }
@@ -87,6 +91,9 @@ void dsp::Detection::resize_output ()
   if (state == Signal::Stokes || state == Signal::Coherence) {
     output_ndim = ndim;
     output_npol = 4/ndim;
+    if (verbose)
+      cerr << "Detection::resize_output state: "
+	   << Signal::state_string(state) << " ndim=" << ndim << endl;
   }
 
   output->Observation::operator=(*input);

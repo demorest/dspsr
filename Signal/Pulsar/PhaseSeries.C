@@ -71,6 +71,9 @@ MJD dsp::PhaseSeries::get_mid_time () const
 //! Reset all phase bin totals to zero
 void dsp::PhaseSeries::zero ()
 {
+  if (verbose)
+    cerr << "PhaseSeries::zero" << endl;
+
   integration_length = 0.0;
 
   unsigned ipt=0; 
@@ -104,6 +107,9 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, int nbin,
   if (integration_length == 0.0) {
 
     // the integration is currently empty; prepare for integration
+
+    if (verbose)
+      cerr << "PhaseSeries::mixable reset" << endl;
 
     Observation::operator = (obs);
     end_time = obsEnd;

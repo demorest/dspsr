@@ -202,6 +202,9 @@ void dsp::Fold::operation ()
   if (!built)
     prepare ();
 
+  if (verbose)
+    cerr << "Fold::operation call PhaseSeries::mixable" << endl;
+
   if (!profile->mixable (*input, nbin))
     throw_str ("Fold::operation cannot mix input with output");
 
@@ -252,6 +255,9 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
   if (fold_ndat == 0)
     fold_ndat = ndat;
 
+  if (verbose)
+    cerr << "Fold::fold fold_ndat=" << fold_ndat << endl;
+
   double phi=0, pfold=0;
 
   if (folding_period != 0) {
@@ -261,7 +267,7 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
     while (phi<0.0) phi += 1.0;
 
     if (verbose)
-      cerr << "folding::fold CAL period=" << pfold << endl;
+      cerr << "Fold::fold CAL period=" << pfold << endl;
 
   }
   else {
@@ -272,7 +278,7 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
     if (phi<0.0) phi += 1.0;
     
     if (verbose)
-      cerr << "folding::fold polyco.period=" << pfold << endl;
+      cerr << "Fold::fold polyco.period=" << pfold << endl;
 
   }
 

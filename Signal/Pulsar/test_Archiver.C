@@ -32,7 +32,7 @@ int main (int argc, char** argv)
   // number of time samples loaded from file at a time
   int block_size = 512*1024;
   int blocks = 0;
-  int ndim = 1;
+  int ndim = 4;
   int nbin = 1024;
 
   int c;
@@ -41,6 +41,7 @@ int main (int argc, char** argv)
 
     case 'V':
       Pulsar::Archive::set_verbosity (3);
+      dsp::Observation::verbose = true;
       dsp::Operation::verbose = true;
       dsp::Input::verbose = true;
       dsp::Archiver::verbose = true;
