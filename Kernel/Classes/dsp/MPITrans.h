@@ -34,6 +34,9 @@ namespace dsp {
     //! request data from the root
     void request_data ();
 
+    //! request ready-for-data from a specific node
+    void request_ready (int node);
+
   };
 
 }

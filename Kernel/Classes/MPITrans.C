@@ -54,3 +54,14 @@ void dsp::MPITrans::request_data ()
   
 }
 
+void dsp::MPITrans::request_ready (int node)
+{
+  // ensure_root ("dsp::MPIRoot::request_ready");
+
+  if (ready_request != MPI_REQUEST_NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::request_ready",
+                 "ready_request already pending");
+
+  // post the receive ready-for-data request
+  MPI_Irecv (&ready, 1, MPI_INT, node, mpi_tag, comm, &ready_request);
+}
