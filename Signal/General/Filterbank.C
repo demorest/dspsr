@@ -20,8 +20,8 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 void dsp::Filterbank::transformation ()
 {
   if (verbose)
-    fprintf(stderr,"In dsp::Filterbank::transformation() with input ndat="UI64"\n",
-	    get_input()->get_ndat());
+    fprintf(stderr,"In dsp::Filterbank::transformation() with input ndat="UI64" output ndim=%d\n",
+	    get_input()->get_ndat(),get_output()->get_ndim());
 
   if (nchan < 2)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
@@ -151,7 +151,21 @@ void dsp::Filterbank::transformation ()
   minimum_samps_can_process = nsamp_fft;
 
   // prepare the output TimeSeries
-  output->copy_configuration (input);
+  {
+    unsigned input_nchan = get_input()->get_nchan();
+    unsigned input_ndim = get_input()->get_ndim();
+    Signal::State input_state = get_input()->get_state();
+   
+    get_input()->set_nchan( nchan );
+    get_input()->set_ndim( 2 );
+    get_input()->set_state( Signal::Analytic );
+    
+    get_output()->copy_configuration ( get_input() );
+    
+    get_input()->set_nchan( input_nchan );
+    get_input()->set_ndim( input_ndim );
+    get_input()->set_state( input_state );
+  }
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
@@ -162,9 +176,6 @@ void dsp::Filterbank::transformation ()
 
   // output data will be complex
   output->set_state (Signal::Analytic);
-
-  // output data will be multi-channel
-  output->set_nchan (nchan);
 
   // resize to new number of valid time samples
   output->resize (npart * nkeep * time_res);
