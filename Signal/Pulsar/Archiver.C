@@ -119,6 +119,14 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 
   unsigned zeroes = 0;
 
+  double scale = phase->get_scale ();
+  if (verbose)
+    cerr << "Archiver::set Pulsar::Profile scale=" << scale << endl;
+
+  if (scale == 0 || isnan(scale))
+    throw Error (InvalidParam, "Archiver::set Pulsar::Profile",
+		"invalid scale=%lf", scale);
+
   for (unsigned ibin = 0; ibin<nbin; ibin++) {
 
     if (phase->get_hit(ibin) == 0) {
@@ -126,7 +134,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
       *to = 0.0;
     }
     else
-      *to = *from / float(phase->get_hit(ibin));
+      *to = *from / (scale * double( phase->get_hit(ibin) ));
 
     to ++;
     from += ndim;
