@@ -154,7 +154,7 @@ endef
 # it so that one never need type 'make depend' ever again.
 ##########################################################################
 %.h:
-	@echo Removing outdated header dependencies
+	@echo Removing outdated header dependencies for $@
 	@$(remove_outdated_deps)
 
 define remove_outdated_deps
