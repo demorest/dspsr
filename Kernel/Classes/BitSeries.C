@@ -1,15 +1,16 @@
+#include <memory>
+
 #include <string.h>
 
 #include "genutil.h"
 #include "string_utils.h"
+#include "Error.h"
 
 #include "dsp/BitSeries.h"
-#include "Error.h"
 
 //! Null constructor
 dsp::BitSeries::BitSeries ()
 {
-  data = 0;
   size = 0;
   input_sample = -1;
 }
@@ -17,7 +18,11 @@ dsp::BitSeries::BitSeries ()
 //! Destructor
 dsp::BitSeries::~BitSeries ()
 {
-  if (data) delete [] data; data = 0;
+  if (data.get()){
+    sink(data);
+    auto_ptr<unsigned char> temp;
+    data = temp;
+  }
   size = 0;
 }
 
@@ -36,7 +41,11 @@ void dsp::BitSeries::resize (int64 nsamples)
     throw_str ("BitSeries::resize invalid size="I64, require);
 
   if (!require || require > size) {
-    if (data) delete [] data; data = 0;
+    if (data.get()){
+      sink(data);
+      auto_ptr<unsigned char> temp;
+      data = temp;
+    }
     size = 0;
     //! data has been deleted. input sample is no longer valid
     input_sample = -1;
@@ -48,7 +57,8 @@ void dsp::BitSeries::resize (int64 nsamples)
     return;
 
   if (size == 0) {
-    data = new unsigned char [require];
+    auto_ptr<unsigned char> temp(new unsigned char [require]);
+    data = temp;
     size = require;
   }
 
@@ -75,13 +85,13 @@ dsp::BitSeries::operator = (const BitSeries& basicseries)
 //! Return pointer to the specified data block
 unsigned char* dsp::BitSeries::get_datptr(uint64 sample)
 {
-  return data + nbytes(sample);
+  return data.get() + nbytes(sample);
 }
 
 //! Return pointer to the specified data block
 const unsigned char* dsp::BitSeries::get_datptr(uint64 sample) const
 {
-  return data + nbytes(sample);
+  return data.get() + nbytes(sample);
 }
 
 void dsp::BitSeries::append (const dsp::BitSeries* little)
@@ -113,4 +123,16 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
 
   ndat += little->ndat;
   
+}
+
+//! Delete the current data buffer and attach to this one
+//! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
+//! Also do not try to delete the old memory once you have called this- the BitSeries::data member now owns it.
+void dsp::BitSeries::attach(auto_ptr<unsigned char> _data){
+  if( !_data.get() )
+    throw Error(InvalidState,"dsp::BitSeries::attach()",
+		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
+
+  sink(data);
+  data = _data;
 }
