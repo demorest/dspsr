@@ -540,7 +540,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 
   unsigned npol = input->get_npol ();
 
-  unsigned nbytes = input->nbytes() / npol;
+  unsigned nbytes = input->get_nbytes() / npol;
 
   // number of bytes per weight sample
   unsigned nbytes_per_weight = nbytes / nweights;

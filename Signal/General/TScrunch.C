@@ -98,12 +98,12 @@ void dsp::TScrunch::transformation ()
 	    output->get_datptr(0,0), output->get_ndim(), output->get_ndat(), output->get_npol(),output->get_nchan());
     fprintf(stderr,"un_scr will range from %p to %p ("I64") to %p ("I64") ["I64"]\n",
 	    input->get_datptr(0,0), input->get_datptr(0,1),int64((float*)input->get_datptr(0,1)-(float*)input->get_datptr(0,0)),
-	    (float*)input->get_datptr(0,1)+input->nbytes()/8,
-	    int64((float*)input->get_datptr(0,1)+input->nbytes()/8 - (float*)input->get_datptr(0,1)),
-	    int64((float*)input->get_datptr(0,1)+input->nbytes()/8 - (float*)input->get_datptr(0,0)));
+	    (float*)input->get_datptr(0,1)+input->get_nbytes()/8,
+	    int64((float*)input->get_datptr(0,1)+input->get_nbytes()/8 - (float*)input->get_datptr(0,1)),
+	    int64((float*)input->get_datptr(0,1)+input->get_nbytes()/8 - (float*)input->get_datptr(0,0)));
     fprintf(stderr,"scr will range from %p to %p ("I64")\n",
-	    output->get_datptr(0,0), (float*)output->get_datptr(0,1)+output->nbytes()/8,
-	    int64((float*)output->get_datptr(0,1)+output->nbytes()/8 - (float*)output->get_datptr(0,0)));
+	    output->get_datptr(0,0), (float*)output->get_datptr(0,1)+output->get_nbytes()/8,
+	    int64((float*)output->get_datptr(0,1)+output->get_nbytes()/8 - (float*)output->get_datptr(0,0)));
   }
 
   for (unsigned ichan=0; ichan<input->get_nchan(); ichan++) {

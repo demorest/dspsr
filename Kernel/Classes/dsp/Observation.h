@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.41 $
-   $Date: 2002/12/08 14:43:20 $
-   $Author: hknight $ */
+   $Revision: 1.42 $
+   $Date: 2003/01/09 12:54:37 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -259,21 +259,21 @@ namespace dsp {
     void rescale (double factor) { scale *= factor; }
 
     //! Return the size in bytes of nsamples time samples
-    uint64 nbytes (uint64 nsamples) const
+    uint64 get_nbytes (uint64 nsamples) const
       { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
 
     //! Return the size in bytes of ndat time samples
-    uint64 nbytes () const
-      { return nbytes (ndat); }
+    uint64 get_nbytes () const
+      { return get_nbytes (ndat); }
 
     uint64 verbose_nbytes (uint64 nsamples) const;
     
     //! Return the size in bytes of one time sample
-    float nbyte () const
+    float get_nbyte () const
       { return float(nbit*npol*nchan*get_ndim()) / 8.0; }
 
     //! Return the number of samples in nbytes bytes
-    uint64 nsamples (uint64 nbytes) const
+    uint64 get_nsamples (uint64 nbytes) const
       { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
 
     //! Returns true if the signal may be integrated

@@ -35,7 +35,7 @@ dsp::BitSeries::~BitSeries ()
 */
 void dsp::BitSeries::resize (int64 nsamples)
 {
-  int64 require = nbytes (nsamples);
+  int64 require = get_nbytes (nsamples);
 
   if (require < 0)
     throw Error (InvalidParam, "BitSeries::resize",
@@ -73,7 +73,7 @@ dsp::BitSeries::operator = (const BitSeries& basicseries)
   const unsigned char* from = basicseries.get_rawptr();
   unsigned char* to = get_rawptr();
 
-  memcpy(to,from,basicseries.nbytes());
+  memcpy(to,from,basicseries.get_nbytes());
 
   return *this;
 }
@@ -82,13 +82,13 @@ dsp::BitSeries::operator = (const BitSeries& basicseries)
 //! Return pointer to the specified data block
 unsigned char* dsp::BitSeries::get_datptr(uint64 sample)
 {
-  return data + nbytes(sample);
+  return data + get_nbytes(sample);
 }
 
 //! Return pointer to the specified data block
 const unsigned char* dsp::BitSeries::get_datptr(uint64 sample) const
 {
-  return data + nbytes(sample);
+  return data + get_nbytes(sample);
 }
 
 void dsp::BitSeries::append (const dsp::BitSeries* little)
@@ -108,7 +108,7 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
       throw Error(InvalidState,"dsp::BitSeries::append()",
 		  "BitSerieses not combinable");
     
-    if( size/nbytes(1) < ndat+little->ndat )
+    if( size/get_nbytes(1) < ndat+little->ndat )
       throw Error(InvalidRange,"dsp::BitSeries::append()",
 		  "BitSeries does not have required capacity to be appended to");
   }    
@@ -116,7 +116,7 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
   const unsigned char* from = little->get_datptr(0);
   unsigned char* to = get_datptr(ndat);
 
-  memcpy(to,from,nbytes());
+  memcpy(to,from,get_nbytes());
 
   ndat += little->ndat;
   

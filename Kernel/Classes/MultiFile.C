@@ -97,7 +97,7 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
 
   for (index = 0; index < files.size(); index++) {
 
-    uint64 file_bytes = files[index]->get_info()->nbytes();
+    uint64 file_bytes = files[index]->get_info()->get_nbytes();
 
     if (bytes < total_bytes + file_bytes)
       break;

@@ -104,7 +104,7 @@ void dsp::S2File::open_file (const char* filename)
   info.set_state (Signal::Nyquist);
 
   // tci_file_open returns data_rate in W/s (16bit/s)
-  info.set_rate (double (s2file.data_rate) * 2.0 / info.nbyte());
+  info.set_rate (double (s2file.data_rate) * 2.0 / info.get_nbyte());
   info.set_bandwidth (16.0);
   
   info.set_machine ("S2");
