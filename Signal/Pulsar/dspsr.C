@@ -22,7 +22,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:b:f:F:hjM:n:N:st:vV";
+static char* args = "2:a:b:f:F:hjM:n:N:sS:t:T:vV";
 
 void usage ()
 {
@@ -41,9 +41,12 @@ void usage ()
     " -2c<cutoff>    cutoff threshold for impulsive interference excision\n"
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
+    "File handling options:\n"
     " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
     " -s             generate an archive for each single pulse\n"
+    " -S seek        Start processing at t=seek seconds\n"
+    " -T total       Process only t=total seconds\n"
        << endl;
 }
 
@@ -84,6 +87,12 @@ int main (int argc, char** argv)
 
   // load filenames from the ascii file named metafile
   char* metafile = 0;
+
+  // number of seconds to seek into data
+  double seek_seconds = 0.0;
+
+  // number of seconds to process from data
+  double total_seconds = 0.0;
 
   int c;
   int scanned;
@@ -175,8 +184,24 @@ int main (int argc, char** argv)
       ndim = atoi (optarg);
       break;
 
+    case 'S':
+      scanned = sscanf (optarg, "%lf", &seek_seconds);
+      if (scanned != 1) {
+        cerr << "dspsr: Error parsing " << optarg << " as seek time" << endl;
+	return -1;
+      }
+      break;
+
     case 's':
       single_pulse = true;
+      break;
+
+    case 'T':
+      scanned = sscanf (optarg, "%lf", &total_seconds);
+      if (scanned != 1) {
+        cerr << "dspsr: Error parsing " << optarg << " as total time" << endl;
+	return -1;
+      }
       break;
 
     case 't':
@@ -392,6 +417,12 @@ int main (int argc, char** argv)
     cerr << "FFTsize=" << fft_size << endl;
     cerr << "Blocksz=" << block_size << endl;
     cerr << "Overlap=" << overlap << endl;
+
+    if (seek_seconds)
+      manager->seek_seconds (seek_seconds);
+
+    if (total_seconds)
+      manager->set_total_seconds (seek_seconds + total_seconds);
 
     manager->set_block_size ( block_size );
     manager->set_overlap ( overlap );

@@ -157,7 +157,8 @@ void dsp::Input::seek (int64 offset, int whence)
 
   case SEEK_CUR:
     if (offset < -(int64)next_sample)
-      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_CUR -ve offset offset="I64" and next_sample="I64,
+      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_CUR -ve "
+		   "offset="I64" and next_sample="I64,
 		   offset,(int64)next_sample);
     next_sample += offset;
     break;
@@ -169,7 +170,7 @@ void dsp::Input::seek (int64 offset, int whence)
     if (offset < -int64(info.get_ndat()))
       throw Error (InvalidRange, "dsp::Input::seek", "SEEK_END -ve offset");
 
-    if( offset != 0 )
+    if (offset != 0)
       set_eod( false );
 
     next_sample = info.get_ndat() + offset;
@@ -192,16 +193,17 @@ void dsp::Input::seek (int64 offset, int whence)
   set_load_size ();
 }
 
-//! Seek to a close sample to the specified MJD
-void dsp::Input::seek(MJD mjd){
+//! Seek to a sample close to the specified MJD
+void dsp::Input::seek(MJD mjd)
+{
   if( mjd+1.0/info.get_rate() < info.get_start_time() )
-    throw Error(InvalidParam,"dsp::Input::seek()",
+    throw Error(InvalidParam, "dsp::Input::seek",
 		"The given MJD (%s) is before the start time of the input data (%s)  (Difference is %s)",
 		mjd.printall(),info.get_start_time().printall(),
 		(info.get_start_time()-mjd).printall());
 
   if( mjd-1.0/info.get_rate() > info.get_end_time() )
-    throw Error(InvalidParam,"dsp::Input::seek()",
+    throw Error(InvalidParam,"dsp::Input::seek",
 		"The given MJD (%s) is after the end time of the input data (%s)  (Difference is %f seconds)",
 		mjd.printall(),info.get_start_time().printall(),
 		(mjd-info.get_start_time()).in_seconds());
@@ -220,8 +222,41 @@ void dsp::Input::seek(MJD mjd){
     fprintf(stderr,"dsp::Input::seek(MJD) will seek %f = "UI64" samples\n",
 	    seek_samples, actual_seek);
 
-  seek( actual_seek, SEEK_SET);
+  seek( actual_seek, SEEK_SET );
 }
+
+void dsp::Input::seek_seconds (double seconds, int whence)
+{
+  if (input.get_rate() == 0)
+    throw Error (InvalidState, "dsp::Input::seek_seconds",
+		 "data rate unknown");
+
+  seek( seconds * input.get_rate(), whence );
+}
+
+
+//! Convenience method used to set the number of seconds
+void set_total_seconds (double seconds)
+{
+  if (seconds < 0)
+    throw Error (InvalidParam, "dsp::Input::set_total_seconds",
+		 "seconds = %lf < 0", seconds);
+
+  if (input.get_rate() == 0)
+    throw Error (InvalidState, "dsp::Input::set_total_seconds",
+		 "data rate unknown");
+
+  uint64 total_samples = seconds * input.get_rate();
+
+  if (total_samples > get_total_samples ())
+    throw Error (InvalidParam, "dsp::Input::set_total_seconds",
+		 "samples="UI64" > total samples="UI64, total_samples,
+		 get_total_samples());
+
+  set_total_samples ( total_samples );
+}
+
+
 
 /*! This method also ensures that the load_size attribute is properly set. */
 void dsp::Input::set_block_size (uint64 size)

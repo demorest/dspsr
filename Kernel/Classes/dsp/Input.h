@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.23 $
-   $Date: 2003/07/05 08:26:34 $
-   $Author: hknight $ */
+   $Revision: 1.24 $
+   $Date: 2003/07/28 13:12:37 $
+   $Author: wvanstra $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -49,8 +49,8 @@ namespace dsp {
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
 
-    //! Seek to a close sample to the specified MJD
-    virtual void seek(MJD mjd);
+    //! Seek to a sample close to the specified MJD
+    virtual void seek (MJD mjd);
     
     //! Return the number of time samples to load on each load_block
     virtual uint64 get_block_size () const { return block_size; }
@@ -63,10 +63,15 @@ namespace dsp {
     virtual void set_overlap (uint64 _overlap) { overlap = _overlap; }
 
     //! Convenience function for returning block_size-overlap
-    virtual uint64 get_stride () const { return get_block_size()-get_overlap(); }
+    virtual uint64 get_stride () const 
+    { return get_block_size()-get_overlap(); }
 
     //! Return the total number of time samples available
     virtual uint64 get_total_samples () const { return info.get_ndat(); }
+
+    //! Set the total number of time samples available
+    /*! Generally useful for debugging */
+    void set_total_samples (uint64 s) { info.set_ndat(s); }
 
     //! Get the information about the data source
     virtual operator const Observation* () const { return &info; }
@@ -83,9 +88,11 @@ namespace dsp {
     //! Get the time sample resolution of the data source
     unsigned get_resolution () const { return resolution; }
 
-    //! Artificially pretend you've got fewer samples than you really do.
-    //! This is generally handy for debugging
-    void kludge_total_samples(uint64 s){ info.set_ndat(s); }
+    //! Convenience method used to seek in units of seconds
+    void seek_seconds (double seconds, int whence = 0);
+
+    //! Convenience method used to set the number of seconds
+    void set_total_seconds (double seconds);
 
   protected:
 
