@@ -20,9 +20,7 @@ dsp::Input::Input (const char* name) : Operation (name)
   last_load_ndat = 0;
 }
 
-dsp::Input::~Input ()
-{
-}
+dsp::Input::~Input (){ }
 
 //! Load data into the BitSeries specified by set_output
 void dsp::Input::operation ()
@@ -127,6 +125,9 @@ void dsp::Input::load (BitSeries* data)
   if (verbose)
     cerr << "dsp::Input::load call load_data Bit_Stream::ndat=" 
          << data->get_ndat () << endl;
+
+  // For MultiFile/HoleyFile using MiniFile load_bytes() requires no plan to be set initially
+  data->set_miniplan( Reference::To<MiniPlan>() );
 
   load_data (data);
 
