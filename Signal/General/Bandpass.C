@@ -37,6 +37,7 @@ void dsp::Bandpass::transformation ()
   nsamp_fft = input->get_ndat ();
   nchan = nsamp_fft;
   
+
   float *scrap=0 ;
   
   scrap = new float [npol*2*nchan];
@@ -92,7 +93,6 @@ void dsp::Bandpass::transformation ()
   if (verbose)
     cerr << "allocated output buffer" << endl;
 
-  int ipol=1;
   for (int ipol=0;ipol<npol;ipol++) {
 
     in = (fftw_complex*) &scrap[ipol*nchan*2];
@@ -104,9 +104,14 @@ void dsp::Bandpass::transformation ()
     }
     
     fftw_one (p,in,out);
+    
+    out[0].re=0;
+    out[0].im=0;   
+    
     if (verbose)
       cerr << "dsp::Bandpass::integrating (calling Response::integrate)" << endl;
-    output->integrate ((float *) out,ipol,0);
+    
+    output->integrate ((float *) out,ipol);
     if (verbose)
       cerr << "dsp::Bandpass::Finished integrating " << endl;
   }
