@@ -74,11 +74,17 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
 */
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
+  //  fprintf(stderr,"Hi from dsp::TimeSeries::resize("UI64") with offset="I64"\n",
+  //  nsamples,int64((data-(float*)buffer)*get_ndim()));
+
   if( !get_preserve_seeked_data() ){
+    //    fprintf(stderr,"dsp::TimeSeries::resize() won't preserve data\n");
     DataSeries::resize(nsamples);
     data = (float*)buffer;
     return;
   }
+
+  //  fprintf(stderr,"dsp::TimeSeries::resize() will have to preserve data\n");
 
   uint64 data_offset = data - (float*)buffer;
   unsigned char* old_buffer = 0;
@@ -106,23 +112,34 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   delete [] old_buffer;
   memory_used -= old_size;
 
-  //  fprintf(stderr,"dsp::TimeSeries::resize() calling seek("UI64")\n",
-  //  data_offset);
   seek( data_offset );
   set_start_time( true_start_time );
+
+  //  fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64"\n",
+  //  nsamples,int64((data-(float*)buffer)*get_ndim()));
 }
 
 dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 {
+  //  fprintf(stderr,"Hi from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
+  //  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
+
   if( !get_preserve_seeked_data() ){
-    data = copy.data;
+    //    fprintf(stderr,"dsp::TimeSeries::operator=() won't preserve data\n");
     DataSeries::operator=(copy);
+    data = (float*)buffer;
+    //fprintf(stderr,"dsp::TimeSeries::operator=() returning\n");
     return *this;
   }
+
+  //  fprintf(stderr,"dsp::TimeSeries::operator=() will preserve data\n");
 
   resize( copy.get_ndat() );
   set_ndat( 0 );
   append( &copy );
+
+  //  fprintf(stderr,"Bye from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
+  //  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
 
   return *this;
 }
@@ -137,7 +154,11 @@ void dsp::TimeSeries::resize( uint64 nsamples, uint64 bytes_supplied, unsigned c
 		"Not enough bytes supplied ("UI64") to fit in "UI64" samples -> "UI64" bytes",
 		bytes_supplied, nsamples, require );
 
-  resize(0);
+  if( get_preserve_seeked_data() )
+    throw Error(InvalidState,"dsp::TimeSeries::resize(uint64,uint64,uchar*)",
+		"You have preserved_seeked_data set to true, but this method is not programmed to do any preserving of seeked data");
+
+  DataSeries::resize(0);
 
   buffer = buffer_supplied;
   data = (float*)buffer_supplied;
@@ -148,12 +169,16 @@ void dsp::TimeSeries::resize( uint64 nsamples, uint64 bytes_supplied, unsigned c
 
 //! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
 void dsp::TimeSeries::zero_resize(unsigned char*& _buffer, uint64& nbytes){
+  if( get_preserve_seeked_data() )
+    throw Error(InvalidState,"dsp::TimeSeries::zero_resize()",
+		"You have preserved_seeked_data set to true, but this method is not programmed to do any preserving of seeked data");
+
   _buffer = (unsigned char*)buffer;
   nbytes = size;
 
   buffer = 0;
   data = 0;
-  resize(0);
+  DataSeries::resize(0);
 }
 
 //! Offset the base pointer by offset time samples
@@ -164,7 +189,7 @@ void dsp::TimeSeries::seek (int64 offset)
 
   if (offset > int64(get_ndat()))
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
-		 "offset=%d > ndat=%d In English: you've tried to seek past the end of the data", offset, get_ndat());
+		 "offset="I64" > ndat="UI64" In English: you've tried to seek past the end of the data", offset, get_ndat());
 
   float* fbuffer = (float*)buffer;
 
@@ -172,7 +197,7 @@ void dsp::TimeSeries::seek (int64 offset)
 
   if (-offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
-		 "offset=%d > current_offset=%d In English: you've tried to seek before the start of the data", offset, current_offset);
+		 "offset="I64" > current_offset="I64" In English: you've tried to seek before the start of the data", offset, current_offset);
 
   data += offset * int64(get_ndim());
   set_ndat( get_ndat() - offset );
@@ -307,8 +332,7 @@ void dsp::TimeSeries::zero ()
 //! If it is zero, then none were and we assume 'this' is full
 //! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
 //! If it is equal to little->get_ndat(), it may/may not be full.
-uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
-{
+uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little){
   if( verbose )
     fprintf(stderr,"In dsp::TimeSeries::append()\n");
 
@@ -316,10 +340,18 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
   uint64 ncopy = little->get_ndat();
 
   append_checks(ncontain,ncopy,little);
-  if( ncontain==subsize_samples() )
+  if( ncontain==maximum_ndat() )
     return 0;
 
   if ( get_ndat() == 0 ) {
+    int64 samps_offset = get_samps_offset();
+
+    if( get_preserve_seeked_data() && samps_offset > 0 ){
+      seek( -samps_offset );
+      uint64 ret = append( little );
+      seek( samps_offset );
+      return ret;
+    }
     Observation::operator=( *little );
     set_ndat (0);
   }    
@@ -353,10 +385,19 @@ uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsi
   uint64 ncopy = little->get_ndat();
   
   append_checks(ncontain,ncopy,little);
-  if( ncontain==subsize_samples() )
+  if( ncontain==maximum_ndat() )
     return 0;
 
   if ( get_ndat() == 0 ) {
+    int64 samps_offset = get_samps_offset();
+
+    if( get_preserve_seeked_data() && samps_offset > 0 ){
+      seek( -samps_offset );
+      uint64 ret = append( little );
+      seek( samps_offset );
+      return ret;
+    }
+
     Observation::operator=( *little );
     set_nchan(1);
     set_npol(1);
@@ -387,13 +428,13 @@ void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
   if( verbose ){
     fprintf(stderr,"dsp::TimeSeries::append_checks() ncopy="UI64"\n",ncopy);
     fprintf(stderr,"dsp::TimeSeries::append_checks() ncontain="UI64"\n",ncontain);
-    fprintf(stderr,"dsp::TimeSeries::append_checks() subsize (in samples)="UI64"\n",subsize_samples());
+    fprintf(stderr,"dsp::TimeSeries::append_checks() maximum_ndat()="UI64"\n",maximum_ndat());
     fprintf(stderr,"dsp::TimeSeries::append_checks() nchan=%d npol=%d\n",nchan,npol);
     fprintf(stderr,"dsp::TimeSeries::append_checks() subsize="UI64"\n",subsize);
   }
 
-  if ( subsize_samples() <= ncontain + ncopy ){
-    ncopy = subsize_samples() - ncontain;
+  if ( maximum_ndat() <= ncontain + ncopy ){
+    ncopy = maximum_ndat() - ncontain;
     if( verbose )
       fprintf(stderr,"dsp::TimeSeries::append()- this append will fill up the timeseries from ndat="UI64" with ncopy="UI64" to ndat="UI64".\n",
 	      get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
