@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.15 $
-   $Date: 2002/12/09 13:33:24 $
+   $Revision: 1.16 $
+   $Date: 2002/12/09 15:38:27 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -65,16 +65,16 @@ namespace dsp {
     void set (const vector<Jones<float> >& jones);
 
     //! Multiply spectrum by complex frequency response
-    void operate (float* spectrum, unsigned poln=0, unsigned chan=0);
+    void operate (float* spectrum, unsigned poln=0, int ichan=-1);
 
     //! Multiply spectrum vector by complex matrix frequency response
-    void operate (float* spectrum1, float* spectrum2, unsigned chan=0);
+    void operate (float* spectrum1, float* spectrum2, int ichan=-1);
 
     //! Integrate the power of spectrum into self
-    void integrate (float* spectrum, unsigned poln=0, unsigned chan=0);
+    void integrate (float* spectrum, unsigned poln=0, int ichan=-1);
 
     //! Integrate coherency matrix of vector spectrum into self
-    void integrate (float* spectrum1, float* spectrum2, unsigned chan=0);
+    void integrate (float* spectrum1, float* spectrum2, int ichan=-1);
 
     //! Match the frequency response to the input Observation
     virtual void match (const Observation* input, unsigned channels=0);

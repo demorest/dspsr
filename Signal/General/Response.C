@@ -202,7 +202,7 @@ void dsp::Response::check_ndat () const
   
   \param data an array of nchan*ndat complex numbers */
 
-void dsp::Response::operate (float* data, unsigned ipol, unsigned ichan)
+void dsp::Response::operate (float* data, unsigned ipol, int ichan)
 {
   assert (ndim == 2);
 
@@ -210,8 +210,15 @@ void dsp::Response::operate (float* data, unsigned ipol, unsigned ichan)
   if (ipol >= npol)
     ipol = 0;
 
-  register float* d_rp = data;
-  register float* d_ip = data + 1;
+  // do all channels at once if ichan < 0
+  unsigned npts = ndat;
+  if (ichan < 0) {
+    npts *= nchan;
+    ichan = 0;
+  }
+    
+  register float* d_from = data;
+  register float* d_to = data;
   register float* f_p = buffer + offset * ipol + ichan * ndat * ndim;
 
 #ifdef _DEBUG
@@ -227,17 +234,14 @@ void dsp::Response::operate (float* data, unsigned ipol, unsigned ichan)
   register float f_r;
   register float f_i;
   
-  unsigned i, n = ndat;
-  for (i=0;i<n;i++) {
-    d_r = *d_rp;
-    d_i = *d_ip;
+  for (unsigned ipt=0; ipt<npts; ipt++) {
+    d_r = *d_from; d_from ++;
+    d_i = *d_from; d_from ++;
     f_r = *f_p; f_p ++;
     f_i = *f_p; f_p ++;
 
-    *d_rp = f_r * d_r - f_i * d_i;
-    d_rp += 2;
-    *d_ip = f_i * d_r + f_r * d_i;
-    d_ip += 2;
+    *d_to = f_r * d_r - f_i * d_i; d_to ++;
+    *d_to = f_i * d_r + f_r * d_i; d_to ++;
   }
 }
 
@@ -252,7 +256,7 @@ void dsp::Response::operate (float* data, unsigned ipol, unsigned ichan)
   integrate a different power spectrum for each polarization)
   
 */
-void dsp::Response::integrate (float* data, unsigned ipol, unsigned ichan)
+void dsp::Response::integrate (float* data, unsigned ipol, int ichan)
 {
   assert (ndim == 1);
   assert (npol != 4);
@@ -261,6 +265,13 @@ void dsp::Response::integrate (float* data, unsigned ipol, unsigned ichan)
   if (ipol >= npol)
     ipol = 0;
 
+  // do all channels at once if ichan < 0
+  unsigned npts = ndat;
+  if (ichan < 0) {
+    npts *= nchan;
+    ichan = 0;
+  }
+   
   register float* d_p = data;
   register float* f_p = buffer + offset * ipol + ichan * ndat * ndim;
 
@@ -273,9 +284,7 @@ void dsp::Response::integrate (float* data, unsigned ipol, unsigned ichan)
   register float d;
   register float t;
 
-  unsigned i, n = ndat;
-
-  for (i=0;i<n;i++) {
+  for (unsigned ipt=0; ipt<npts; ipt++) {
     d = *d_p; d_p ++; // Re
     t = d*d;
     d = *d_p; d_p ++; // Im
@@ -306,9 +315,16 @@ void dsp::Response::set (const vector<complex<float> >& filt)
 // Response::operate - multiplies two complex arrays by complex matrix Response 
 // ndat = number of complex points
 //
-void dsp::Response::operate (float* data1, float* data2, unsigned ichan)
+void dsp::Response::operate (float* data1, float* data2, int ichan)
 {
   assert (ndim == 8);
+
+  // do all channels at once if ichan < 0
+  unsigned npts = ndat;
+  if (ichan < 0) {
+    npts *= nchan;
+    ichan = 0;
+  }
 
   float* d1_rp = data1;
   float* d1_ip = data1 + 1;
@@ -327,8 +343,7 @@ void dsp::Response::operate (float* data1, float* data2, unsigned ichan)
   register float r2_r;
   register float r2_i;
 
-  int i, n = ndat;
-  for (i=0;i<n;i++) {
+  for (unsigned ipt=0; ipt<npts; ipt++) {
 
     // ///////////////////////
     // multiply: r1 = f11 * d1
@@ -372,14 +387,21 @@ void dsp::Response::operate (float* data1, float* data2, unsigned ichan)
   }
 }
 
-void dsp::Response::integrate (float* data1, float* data2, unsigned ichan)
+void dsp::Response::integrate (float* data1, float* data2, int ichan)
 {
   assert (ndim == 1);
   assert (npol == 4);
 
+  // do all channels at once if ichan < 0
+  unsigned npts = ndat;
+  if (ichan < 0) {
+    npts *= nchan;
+    ichan = 0;
+  }
+
   float* data = buffer + ichan * ndat * ndim;
 
-  cross_detect_int (ndat, data1, data2,
+  cross_detect_int (npts, data1, data2,
 		    data, data + offset, 
 		    data + 2*offset, data + 3*offset, 1);
 }
