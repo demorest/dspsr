@@ -215,7 +215,8 @@ fi
 endef
 
 define eval_LDFLAGS
-if [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
+if [ "$($*.LDFLAGS)" = "NONE" ]; then echo ""; \
+elif [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
 else echo $($*.LDFLAGS); fi
 endef
 
@@ -296,6 +297,8 @@ all: libs $(BINS)
 
 include: $(INCS)
 
+##########################################################################
+# Static pattern rule to copy include files in pwd to include/ directory
 $(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
 	@$(copy_header)
 
@@ -303,8 +306,8 @@ $(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
 libs: $(LIBS) include
 
 test: $(TESTBINS)
-	@if [ -z "$(TESTBINS)" ]; then echo No tests to perform.; \
-	else for test in $(TESTBINS); do ($$test || exit 1); done; fi;
+	@if [ -z "$(TESTBINS)" ]; then echo No tests to perform; \
+	else for test in "$(TESTBINS)"; do ($$test || exit 1); done; fi;
 
 clean:
 	$(RM) $(LOGIN_ARCH)/*.o
