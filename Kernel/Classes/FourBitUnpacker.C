@@ -107,7 +107,7 @@ void dsp::FourBitUnpacker::simple_unpack (
   int nchan = output->get_nchan();
   unsigned bytes = input->get_ndat()*nchan/samples_per_byte;
   int tsamp = 0;
-  float *thr = output->get_thresh();
+  // float *thr = output->get_thresh();
  
   if (verbose){
     fprintf(stderr,"input_data=%p\n",input_data);
