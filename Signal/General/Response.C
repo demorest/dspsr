@@ -2,7 +2,7 @@
 #include <math.h>
 
 #include "Response.h"
-#include "Timeseries.h"
+#include "Observation.h"
 
 #include "spectra.h"
 #include "Jones.h"
@@ -30,26 +30,26 @@ dsp::Response::Response ()
 /*! The ordering of frequency channels in the response function depends 
   upon:
   <UL>
-  <LI> the state of the input Timeseries (real or complex); and </LI>
-  <LI> Operations to be performed upon the Timeseries 
+  <LI> the state of the input Observation (real or complex); and </LI>
+  <LI> Operations to be performed upon the Observation 
        (e.g. simultaneous filterbank) </LI>
   </UL>
   As well, sub-classes of Response may need to dynamically check, refine, or
   define their frequency response function based on the state of the
-  input Timeseries or the number of channels into which it will be divided.
+  input Observation or the number of channels into which it will be divided.
 
-  \param input Timeseries to which the frequency response is to be matched
+  \param input Observation to which the frequency response is to be matched
 
   \param channels If specified, the number of filterbank channels into
-  which the input Timeseries will be divided.  Response::match does not
+  which the input Observation will be divided.  Response::match does not
   use this parameter, but sub-classes may find it useful.
 
  */
-void dsp::Response::match (const Timeseries* input, unsigned channels)
+void dsp::Response::match (const Observation* input, unsigned channels)
 {
   if ( input->get_nchan() == 1 ) {
 
-    // if the input Timeseries is single-channel, complex sampled
+    // if the input Observation is single-channel, complex sampled
     // data, then the first forward FFT performed on this data will
     // result in a swapped spectrum
     if ( input->get_state() == Signal::Analytic && !whole_swapped )
@@ -65,7 +65,7 @@ void dsp::Response::match (const Timeseries* input, unsigned channels)
       chan_shifted = true;
     }
 
-    // if the input Timeseries is multi-channel, complex sampled data,
+    // if the input Observation is multi-channel, complex sampled data,
     // then each FFT performed will result in little swapped spectra
     if ( input->get_state() == Signal::Analytic && !chan_swapped )
       swap (true);

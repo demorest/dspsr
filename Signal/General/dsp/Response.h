@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/09/19 03:16:27 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/10/16 09:22:26 $
+   $Author: pulsar $ */
 
 #ifndef __Response_h
 #define __Response_h
@@ -16,7 +16,7 @@
 
 namespace dsp {
 
-  class Timeseries;
+  class Observation;
 
   class Response : public Shape {
 
@@ -75,8 +75,8 @@ namespace dsp {
     //! Integrate coherency matrix of vector spectrum into self
     void integrate (float* spectrum1, float* spectrum2, unsigned chan=0);
 
-    //! Match the frequency response to the input Timeseries
-    virtual void match (const Timeseries* input, unsigned channels=0);
+    //! Match the frequency response to the input Observation
+    virtual void match (const Observation* input, unsigned channels=0);
 
     //! Re-organize frequency bins to reflect natural ordering (DC->Nyq)
     void naturalize ();
