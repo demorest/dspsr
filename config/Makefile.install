@@ -1,3 +1,5 @@
+#-*-Makefile-*- helps emacs recognize that this file is a Makefile
+
 ##########################################################################
 #
 # Special handling of the MAKECMDGOALS macro is performed during
@@ -59,6 +61,7 @@ ifeq ($(install_yes),install)
 # strip out 'install' and set the default list of things to install
 INSTALL_TARGETS := ${strip ${filter-out install, $(MAKECMDGOALS)}}
 install_LIBS:=$(LIBRARIES)
+install_DSO :=$(DSO_NAME)
 install_BINS:=$(EXECUTABLES)
 install_INCS:=$(INCLUDES)
 
@@ -68,8 +71,9 @@ ifneq ($(INSTALL_TARGETS),)
 # A target was specified, as in 'make install blah'...  set the list
 # of things to install accordingly
 install_LIBS:=${strip ${filter %.a,$(INSTALL_TARGETS)}}
+install_DSO:=${strip ${filter %.so,$(INSTALL_TARGETS)}}
 install_INCS:=${strip ${filter %.h %.inc,$(INSTALL_TARGETS)}}
-not_BINS:= $(install_LIBS) $(install_INCS) $(TARGETS)
+not_BINS:= $(install_LIBS) $(install_DSO) $(install_INCS) $(TARGETS)
 install_BINS:=${strip ${filter-out $(not_BINS),$(INSTALL_TARGETS)}}
 
 ##########################################################################
@@ -77,6 +81,7 @@ install_BINS:=${strip ${filter-out $(not_BINS),$(INSTALL_TARGETS)}}
 install_libs_yes := ${findstring libs, $(INSTALL_TARGETS)}
 ifeq ($(install_libs_yes),libs)
 install_LIBS:=$(LIBRARIES)
+install_DSO:=$(DSO_NAME)
 endif
 
 ##########################################################################
@@ -98,6 +103,7 @@ endif
 install_all_yes := ${findstring all, $(INSTALL_TARGETS)}
 ifeq ($(install_all_yes),all)
 install_LIBS:=$(LIBRARIES)
+install_DSO :=$(DSO_NAME)
 install_BINS:=$(EXECUTABLES)
 install_INCS:=$(INCLUDES)
 endif
@@ -113,6 +119,7 @@ $(filter-out clean veryclean, $(INSTALL_TARGETS)):
 endif
 
 INSTALL_LIBS:=${install_LIBS:%=$(INSTALL_LIBDIR)/%}
+INSTALL_DSO :=${install_DSO:%=$(INSTALL_DSODIR)/%}
 INSTALL_BINS:=${install_BINS:%=$(INSTALL_BINDIR)/%}
 INSTALL_INCS:=${install_INCS:%=$(INSTALL_INCDIR)/%}
 INSTALL_SHXS:=${install_SHXS:%=$(INSTALL_SHXDIR)/%}
@@ -133,6 +140,11 @@ $(INSTALL_BINS) : $(INSTALL_BINDIR)/% : $(BINDIR)/%
 	@cp $< $@
 
 $(INSTALL_LIBS) : $(INSTALL_LIBDIR)/%.a : $(LIBDIR)/%.a 
+	@echo "copying $< to $@"
+	@cp $< $@
+
+$(INSTALL_DSO) : $(INSTALL_DSODIR)/%.so : $(DSODIR)/%.so
+	@mkdir -p $(dir $@)
 	@echo "copying $< to $@"
 	@cp $< $@
 

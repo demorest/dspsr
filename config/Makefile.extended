@@ -394,7 +394,8 @@ scripts: $(SHXS)
 
 test: $(RUNTESTS)
 
-install: $(INSTALL_INCS) $(INSTALL_SHXS) $(INSTALL_LIBS) $(INSTALL_BINS)
+install: $(INSTALL_INCS) $(INSTALL_SHXS) $(INSTALL_LIBS) \
+	$(INSTALL_DSO) $(INSTALL_BINS)
 
 clean:
 	$(RM) $(LOGIN_ARCH)/*.o $(CLEAN)
