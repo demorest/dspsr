@@ -1,6 +1,6 @@
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/06/30 07:34:33 $
+   $Revision: 1.3 $
+   $Date: 2002/06/30 11:25:49 $
    $Author: pulsar $ */
 
 #ifndef __Observation_h
@@ -281,5 +281,22 @@ namespace dsp {
   };
 
 }
+
+#ifdef MPI
+
+#include <mpi.h>
+
+//! Return the size required to mpiPack an Observation
+int mpiPack_size (const dsp::Observation&, MPI_Comm comm, int* size);
+
+//! Pack an Observation into outbuf
+int mpiPack (const dsp::Observation&,
+	     void* outbuf, int outcount, int* position, MPI_Comm comm);
+
+//! Unpack an Observation from inbuf
+int mpiUnpack (void* inbuf, int insize, int* position, 
+	       dsp::Observation*, MPI_Comm comm);
+
+#endif
 
 #endif // ! __Observation_h
