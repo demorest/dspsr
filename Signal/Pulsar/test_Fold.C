@@ -14,7 +14,7 @@
 #include "dsp/Detection.h"
 #include "dsp/Fold.h"
 
-static char* args = "b:n:t:vV";
+static char* args = "b:n:op:t:vV";
 
 void usage ()
 {
@@ -27,7 +27,7 @@ int main (int argc, char** argv)
 
 { try {
   Error::verbose = true;
-  //  Error::complete_abort = true;
+  Error::complete_abort = true;
 
   char* metafile = 0;
   bool verbose = false;
@@ -37,6 +37,8 @@ int main (int argc, char** argv)
   int blocks = 0;
   int ndim = 1;
   int nbin = 1024;
+  Signal::State output_state = Signal::Coherence;
+  bool inplace_detection = true;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -46,6 +48,7 @@ int main (int argc, char** argv)
       Tempo::verbose = true;
       dsp::Operation::verbose = true;
       dsp::Input::verbose = true;
+      dsp::Observation::verbose = true;
     case 'v':
       verbose = true;
       break;
@@ -61,6 +64,16 @@ int main (int argc, char** argv)
     case 'n':
       ndim = atoi (optarg);
       break;
+
+    case 'o': inplace_detection = false; break;
+
+    case 'p':
+      {
+	unsigned npol = atoi(optarg);
+	if( npol==1 ) output_state = Signal::Intensity;
+	if( npol==4 ) output_state = Signal::Coherence;
+	break;
+      }
 
     default:
       cerr << "invalid param '" << c << "'" << endl;
@@ -98,11 +111,13 @@ int main (int argc, char** argv)
     cerr << "Creating Detection instance" << endl;
   dsp::Detection detect;
 
-  detect.set_output_state (Signal::Coherence);
+  detect.set_output_state( output_state );
   detect.set_output_ndim (ndim);
   detect.set_input (&voltages);
-  detect.set_output (&voltages);
-    //detect.set_output (new dsp::TimeSeries);
+  if( inplace_detection )
+    detect.set_output (&voltages);
+  else
+    detect.set_output (new dsp::TimeSeries);
 
   if (verbose)
     cerr << "Creating Fold instance" << endl;
@@ -124,12 +139,6 @@ int main (int argc, char** argv)
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
-
-    if (manager.get_info()->get_state() == Signal::Nyquist)
-      detect.set_output_state (Signal::Intensity);
-
-    if (manager.get_info()->get_state() == Signal::Analytic)
-      detect.set_output_state (Signal::Coherence);
 
     profiles.zero ();
 
