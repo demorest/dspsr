@@ -31,7 +31,7 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
 int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 {
   string str_filename = string (filename);
-  int pos = str_filename.find_first_of(".",0);
+  int pos = str_filename.find_last_of(".",str_filename.size()-1);
   string hdr_name = str_filename.substr(0,pos) + ".hdr";
 
   if( verbose )
@@ -158,7 +158,14 @@ uint64 dsp::PMDAQFile::load_partial_chunk(unsigned char*& buffer, uint64 bytes){
 
 int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 {
+  if( verbose )
+    fprintf(stderr,"Got bytes=min("UI64" , "UI64") = "UI64"\n",
+	    bytes,bytes_available(),min(bytes, bytes_available()));
+
   bytes = min(bytes, bytes_available());
+
+  if( bytes==0 )
+    return cleanup(0);
 
   // Load first partial chunk
   uint64 bytes_loaded = load_partial_chunk(buffer,bytes);
@@ -186,7 +193,10 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 }
 
 int64 dsp::PMDAQFile::cleanup(uint64 bytes_loaded){
-  if( bytes_loaded==bytes_available() )
+  uint64 file_blocks = info.get_nbytes()/DATA_BYTES;
+  uint64 file_size = file_blocks * (DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+
+  if( int64(absolute_position) >= int64(file_size-TRAILER_BYTES) )
     end_of_data = true;
   else
     end_of_data = false;
@@ -195,7 +205,32 @@ int64 dsp::PMDAQFile::cleanup(uint64 bytes_loaded){
 }
 
 uint64 dsp::PMDAQFile::bytes_available(){
-  return info.get_nbytes(info.get_ndat() - get_load_sample());
+  uint64 file_blocks = info.get_nbytes()/DATA_BYTES;
+  uint64 file_size = file_blocks * (DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+  
+  uint64 partial_chunk_bytes = absolute_position%(DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+
+  uint64 extra_bytes = 0;
+
+  if( partial_chunk_bytes > HEADER_BYTES && partial_chunk_bytes <= HEADER_BYTES+DATA_BYTES )
+    extra_bytes = DATA_BYTES - (partial_chunk_bytes - HEADER_BYTES);
+
+  uint64 absolute_bytes_left = file_size - absolute_position;
+  uint64 blocks_left = absolute_bytes_left/(DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+
+  uint64 bytes_in_blocks_left = blocks_left * DATA_BYTES;
+
+  uint64 data_bytes_left = bytes_in_blocks_left + extra_bytes;
+
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::bytes_available() Got absolute_position="UI64" file_blocks="UI64" file_size="UI64" partial_chunk_bytes="UI64" extra_bytes="UI64" absolute_bytes_left="UI64" blocks_left="UI64" bytes_in_blocks_left="UI64" data_bytes_left="UI64"\n",
+	    absolute_position,
+	    file_blocks, file_size, partial_chunk_bytes,
+	    extra_bytes, absolute_bytes_left,
+	    blocks_left, bytes_in_blocks_left,
+	    data_bytes_left);
+
+  return data_bytes_left;
 }
 
 void dsp::PMDAQFile::seek_ahead(){
@@ -232,9 +267,14 @@ uint64 dsp::PMDAQFile::load_last_chunk(unsigned char*& buffer, uint64 bytes){
 }
 
 uint64 dsp::PMDAQFile::load_chunk(unsigned char*& buffer){
-  if( read (fd, buffer, DATA_BYTES) != DATA_BYTES )
+  uint64 bytes_read = read (fd, buffer, DATA_BYTES);
+
+  if( bytes_read != DATA_BYTES )
     throw Error(FailedCall,"dsp::PMDAQFile::load_chunk()",
-		"Failed to read full chunk");
+		"Failed to read full chunk (only loaded "UI64" bytes of file '%s' filesize="I64" curr_pos="I64")",
+		bytes_read,get_filename().c_str(),
+		int64(filesize(get_filename().c_str())),
+		int64(lseek(fd,0,SEEK_CUR)));
   
   absolute_position += DATA_BYTES;
   buffer += DATA_BYTES;
