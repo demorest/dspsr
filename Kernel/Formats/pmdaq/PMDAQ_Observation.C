@@ -69,7 +69,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   if( nfilters==1 ){
     set_nchan( nchan1 );
 
-    if( nchan==512 && fabs(chanbw1) > 2.9 ){
+    if( get_nchan()==512 && fabs(chanbw1) > 2.9 ){
       fprintf(stderr,"WARNING: PMDAQ_Observation has read in that nchan=512 and chanbw1=%f which seems strange.  Taking the guess that chanbw1 should be -0.5\n",
 	      chanbw1);
       chanbw1 = -0.5;
@@ -210,7 +210,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   // make an identifier name
   set_identifier ("f" + get_default_id());
-  set_mode (stringprintf ("%d-bit mode", nbit));
+  set_mode (stringprintf ("%d-bit mode", get_nbit()));
   set_machine ("PMDAQ");
 
   // //////////////////////////////////////////////////////////////////////

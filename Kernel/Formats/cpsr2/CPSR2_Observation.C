@@ -79,47 +79,48 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // NPOL
   //
-  int npol;
-  if (ascii_header_get (header, "NPOL", "%d", &npol) < 0)
+  int scan_npol;
+  if (ascii_header_get (header, "NPOL", "%d", &scan_npol) < 0)
     throw_str ("CPSR2_Observation - failed read NPOL");
 
-  set_npol (npol);
+  set_npol (scan_npol);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // NBIT
   //
-  int nbit;
-  if (ascii_header_get (header, "NBIT", "%d", &nbit) < 0)
+  int scan_nbit;
+  if (ascii_header_get (header, "NBIT", "%d", &scan_nbit) < 0)
     throw_str ("CPSR2_Observation - failed read NBIT");
 
-  set_nbit (nbit);
+  set_nbit (scan_nbit);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // NDIM
   //
-  int ndim;
-  if (ascii_header_get (header, "NDIM", "%d", &ndim) < 0)
+  int scan_ndim;
+  if (ascii_header_get (header, "NDIM", "%d", &scan_ndim) < 0)
     throw_str ("CPSR2_Observation - failed read NDIM");
+  set_ndim(scan_ndim);
 
-  switch (ndim) {
+  switch (scan_ndim) {
   case 1:
     set_state (Signal::Nyquist); break;
   case 2:
     set_state (Signal::Analytic); break;
   default:
-    throw_str ("CPSR2_Observation - invalid NDIM=%d\n", ndim);
+    throw_str ("CPSR2_Observation - invalid NDIM=%d\n", get_ndim());
   }
 
   // ////////////////////////////////////////////////////////////////////
   // TEST for detected SimpleFB filterbank file
   // ///////////////////////////////////////////////////////////////////
 
-  int nchan;
-  if ((ascii_header_get (header,"NCHAN", "%d", &nchan)) && (npol == 1)){
+  int scan_nchan;
+  if ((ascii_header_get (header,"NCHAN", "%d", &scan_nchan)) && (get_npol() == 1)){
 	  set_state (Signal::Intensity);
-	  set_nchan(nchan);
+	  set_nchan(scan_nchan);
 	  set_thresh();
   }
   
@@ -180,7 +181,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   // CALCULATE the various offsets and sizes
   //
   uint64 bitsperbyte = 8;
-  uint64 bitspersample = nbit*npol;
+  uint64 bitspersample = get_nbit()*get_npol();
 
   uint64 offset_samples = offset_bytes * bitsperbyte / bitspersample;
   
@@ -216,7 +217,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 
   // make an identifier name
   set_identifier (prefix + get_default_id());
-  set_mode (stringprintf ("%d-bit mode", nbit));
+  set_mode (stringprintf ("%d-bit mode", get_nbit()));
   set_machine ("CPSR2");
 
   // //////////////////////////////////////////////////////////////////////
@@ -257,6 +258,5 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 }
 
 void dsp::CPSR2_Observation::set_thresh() {
-    int chan = get_nchan();
-    thresh = new float [2*chan];
+  thresh = new float [2*get_nchan()];
 }    
