@@ -14,6 +14,10 @@
 
 bool dsp::Archiver::verbose = false;
 
+dsp::Archiver::Archiver ()
+{
+}
+
 dsp::Archiver::~Archiver ()
 {
 }
