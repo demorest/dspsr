@@ -33,7 +33,7 @@ ifneq (${PSREXPORT},1)
 INCFLAGS += -I${INSTALL_INCDIR}
 endif
 
-LDFLAGS := -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
+LDFLAGS := -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib -L/usr/local/lib
 
 ifneq (${PSREXPORT},1)
 LDFLAGS += -L${INSTALL_LIBDIR}
@@ -74,9 +74,9 @@ LO3D = -lGL $(LXMU) $(LX11)
 
 ##########################################################################
 # PGPLOT, C-wrappers, Motif/PGPLOT
+PGPLOTDIR = /usr/local/lib
 LPGPLOT = -lpgplot $(LX11) $(LF77)
-LCPGPLOT= -lcpgplot $(LPGPLOT)
-LXMPGPLOT = -lXmPgplot $(LMOTIF) $(LCPGPLOT)
+LCPGPLOT = -L$(PGPLOTDIR) -lcpgplot $(LPGPLOT)
 
 LX11 = -lX11
 LXMU = -lXmu
