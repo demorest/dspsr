@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeriesUnloader.h"
 
