@@ -1,28 +1,40 @@
-#include "dsp/CPSR2TwoBitCorrection.h"
-#include "dsp/CPSRTwoBitCorrection.h"
-#include "dsp/S2TwoBitCorrection.h"
-#include "dsp/OneBitCorrection.h"
-#include "dsp/CoherentFBUnpacker.h"
-#include "dsp/NullUnpacker.h"
 
-#ifdef Digi_returned_to_Makefile
-#include "dsp/DigiUnpack.h"
+/* HSK 9/12/02 Please note that coherentfb comes first as basically if
+   data has been rewritten to disk it should be unpacked by that packing,
+   rather than whatever unpacker it originally got unpacked as.
+*/
+
+#include "dsp/CoherentFBUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CoherentFBUnpacker> cfb;
+#include "dsp/NullUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
+
+#include "backends.h"
+
+#if DSP_CPSR2
+#include "dsp/CPSR2TwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
+#endif
+
+#if DSP_CPSR
+#include "dsp/CPSRTwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
+#endif
+
+#if DSP_S2
+#include "dsp/S2TwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>    s2;
+#endif
+
+#if DSP_PMDAQ
+#include "dsp/OneBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>      pmdaq;
 #endif
 
 #include "Error.h"
 
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 
-// HSK 9/12/02 Please note that coherentfb comes first as basically if data has been rewritten to disk it should be unpacked by that packing, rather than whatever unpacker it originally got unpacked as.
-
-static Registry::List<dsp::Unpacker>::Enter<dsp::CoherentFBUnpacker>    coherentfb;
-static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker>          bitseries_unpacker;
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
-static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>    s2;
-static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>      pmdaq;
-
-//static Registry::List<dsp::Unpacker>::Enter<dsp::DigiUnpack> digiunpack;
 
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
