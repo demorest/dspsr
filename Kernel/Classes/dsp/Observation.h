@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.30 $
-   $Date: 2002/11/10 01:31:56 $
+   $Revision: 1.31 $
+   $Date: 2002/11/12 00:20:56 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -251,6 +251,9 @@ namespace dsp {
     //! Writes of all information contained in this class into the fptr at the current file offset
     bool retrieve(FILE* fptr);
 
+    //! Set all attributes to null default
+    void init ();
+
   protected:
 
     //! Number of time samples in container
@@ -319,8 +322,6 @@ namespace dsp {
     //! The DM TimeSeries has been dedispersed to
     double dispersion_measure;
 
-    //! Set all attributes to null default
-    void init ();
   };
 
 }
