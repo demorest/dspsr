@@ -14,7 +14,6 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // CPSR2_HEADER_VERSION
   //
-  /* IMPORTANT: CPSR2_HEADER_VERSION is the sampling period in microseconds */
   float version;
   if (ascii_header_get (header, 
 			"CPSR2_HEADER_VERSION", "%f", &version) < 0)
