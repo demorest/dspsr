@@ -3,15 +3,14 @@
 #include <math.h>
 
 #include "TwoBitCorrection.h"
+#include "TwoBitTable.h"
 #include "Timeseries.h"
+
 #include "genutil.h"
 #include "ierf.h"
 
 /*! From JA98, Table 1 */
 const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
-
-//! number of unique bit combinations in an 8-bit byte (256)
-const unsigned dsp::TwoBitCorrection::unique_bytes = 1<<8;
 
 bool dsp::TwoBitCorrection::keep_histogram = true;
 
@@ -34,6 +33,10 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
 
   // This is set in build()
   built = false;
+}
+
+dsp::TwoBitCorrection::~TwoBitCorrection ()
+{
 }
 
 //! Set the number of time samples used to estimate undigitized power
@@ -209,9 +212,9 @@ void dsp::TwoBitCorrection::build ()
 
   bool huge = (channels_per_byte == 1);
 
-  int size = 4;
+  int size = TwoBitTable::vals_per_byte;
   if (huge)
-    size *= unique_bytes;
+    size *= TwoBitTable::unique_bytes;
 
   if (verbose) cerr << "TwoBitCorrection::build allocate buffers\n";
   dls_lookup.resize (n_range * size);
@@ -224,16 +227,16 @@ void dsp::TwoBitCorrection::build ()
 
   zero_histogram ();
 
-  nlo_lookup.resize (unique_bytes);
+  nlo_lookup.resize (TwoBitTable::unique_bytes);
 
   float lo_valsq = table->get_lo_val() * table->get_lo_val();
 
-  for (unsigned byte = 0; byte < unique_bytes; byte++) {
+  for (unsigned byte = 0; byte < TwoBitTable::unique_bytes; byte++) {
 
     nlo_lookup[byte] = 0;
     const float* fourvals = table->get_four_vals (byte);
 
-    for (unsigned ifv=0; ifv<4; ifv++)
+    for (unsigned ifv=0; ifv<TwoBitTable::vals_per_byte; ifv++)
       if (fourvals[ifv]*fourvals[ifv] == lo_valsq)
 	nlo_lookup[byte] ++;
 
@@ -268,12 +271,12 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
       /* Generate the 256 sets of four output floating point values
 	 corresponding to each byte */
       table->generate (dls);
-      dls += unique_bytes * 4;
+      dls += TwoBitTable::unique_bytes * TwoBitTable::vals_per_byte;
     }
     else {
       // Generate the four output levels corresponding to each 2-bit number
       table->four_vals (dls);
-      dls += 4;
+      dls += TwoBitTable::vals_per_byte;
     }
 
     if (spc) {
@@ -337,7 +340,7 @@ void dsp::TwoBitCorrection::unpack ()
 
   int64 ndat = input->get_ndat();
 
-  if (ndat % 4)
+  if (ndat % TwoBitTable::vals_per_byte)
     throw_str ("TwoBitCorrection::unpack input ndat="I64" != 4n", ndat);
   
   if (ndat < nsample)
@@ -371,11 +374,12 @@ void dsp::TwoBitCorrection::poln_unpack (float* data,
 					      unsigned long* hist,
 					      unsigned gap)
 {
-  // four two-bit samples per byte in this unpacking scheme
-  const unsigned samples_per_byte = 4;
+  // 4 floating-point samples per byte
+  const unsigned samples_per_byte = TwoBitTable::vals_per_byte;
 
-  // four floating-point samples for each unique byte
-  const unsigned lookup_block_size = samples_per_byte * unique_bytes;
+  // 4*256 floating-point samples for all unique bytes
+  const unsigned lookup_block_size =
+    samples_per_byte * TwoBitTable::unique_bytes;
 
   unsigned long n_weights = (unsigned long) ceil (float(ndat)/float(nsample));
 
@@ -466,16 +470,16 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
     cerr << "TwoBitCorrection::stats generate lookup table" <<endl;
 
     // calculate the sum and sum-squared of the four time samples in each byte
-    lu_sum = new float [unique_bytes];
-    lu_sumsq = new float [unique_bytes];
-    lu_nlo = new unsigned char [unique_bytes];
+    lu_sum = new float [TwoBitTable::unique_bytes];
+    lu_sumsq = new float [TwoBitTable::unique_bytes];
+    lu_nlo = new unsigned char [TwoBitTable::unique_bytes];
 
     const float* fourvals = 0;
     float val = 0;
     float valsq = 0;
     float lo_valsq = table->get_lo_val() * table->get_lo_val();
 
-    for (unsigned byte = 0; byte < unique_bytes; byte++) {
+    for (unsigned byte = 0; byte < TwoBitTable::unique_bytes; byte++) {
       
       lu_sum[byte] = 0;
       lu_sumsq[byte] = 0;
@@ -483,7 +487,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 
       fourvals = table->get_four_vals (byte);
 
-      for (unsigned ifv=0; ifv<4; ifv++) {
+      for (unsigned ifv=0; ifv<TwoBitTable::vals_per_byte; ifv++) {
 	val = fourvals[ifv];
 	valsq = val * val;
 
@@ -543,7 +547,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 	nlo += lu_nlo[datum];
 
 	// every byte has four samples from one polarization in it
-	total_samples += 4;
+	total_samples += TwoBitTable::vals_per_byte;
       }
 
       if (hist)

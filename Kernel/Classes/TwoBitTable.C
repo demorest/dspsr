@@ -1,10 +1,13 @@
-#include <stdio.h>
-#include <iostream>
 #include "TwoBitTable.h"
+
+//! Number of unique 8-bit combinations
+const unsigned dsp::TwoBitTable::unique_bytes = 1<<8; // (256)
+
+//! Number of 2-bit values per byte
+const unsigned dsp::TwoBitTable::vals_per_byte = 4;
 
 dsp::TwoBitTable::TwoBitTable (Type _type)
 {
-  // 256 possible unsigned chars * 4 floats per byte
   table = 0;
   built = false;
 
@@ -53,7 +56,7 @@ void dsp::TwoBitTable::build ()
     return;
 
   if (!table)
-    table = new float [ 256 * 4 ];
+    table = new float [ unique_bytes * vals_per_byte ];
 
   generate (table);
 }
@@ -63,7 +66,7 @@ const float* dsp::TwoBitTable::get_four_vals (unsigned byte)
   if (!built)
     build ();
 
-  return table + 4 * byte; 
+  return table + vals_per_byte * byte; 
 }
 
 
@@ -73,28 +76,30 @@ const float* dsp::TwoBitTable::get_four_vals (unsigned byte)
 */
 void dsp::TwoBitTable::generate (float* table) const
 {
-  float voltages[4];
+  float voltages[vals_per_byte];
   four_vals (voltages);
 
   float* tabval = table;
 
-  for (unsigned byte=0; byte<256; byte++) {
-    for (unsigned sample=0; sample<4; sample++) {
-      *tabval = voltages[twobit (byte, sample)];
+  for (unsigned byte=0; byte<unique_bytes; byte++) {
+    for (unsigned val=0; val<vals_per_byte; val++) {
+      *tabval = voltages[twobit (byte, val)];
       tabval ++;
     }
   }
 }
 
-/*!  By default, each 8-bit byte is treated as four consecutive 2-bit
-  time samples, with the first time sample in the most significant two bits.
+/*! Each 8-bit byte is treated as four 2-bit numbers, ordered from 0 to 3.
+  By default, the first 2-bit number (val==0) is in the most significant
+  two bits and the last 2-bit number (val==3) is in the least significant
+  two bits.
 
-  \param byte the byte pattern containing four time samples
-  \param sample the sample to extract from the byte */
-unsigned dsp::TwoBitTable::twobit (unsigned byte, unsigned sample) const
+  \param byte the byte pattern containing four 2-bit numbers
+  \param val the value to extract from the byte */
+unsigned dsp::TwoBitTable::twobit (unsigned byte, unsigned val) const
 {
   unsigned char mask  = 0x03;
-  unsigned char shift = 6 - sample*2;
+  unsigned char shift = 6 - val*2;
 
   return (byte>>shift) & mask;
 }

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/07 01:48:37 $
+   $Revision: 1.3 $
+   $Date: 2002/10/07 02:13:22 $
    $Author: wvanstra $ */
 
 #ifndef __S2TwoBitCorrection_h
@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "TwoBitCorrection.h"
+#include "TwoBitTable.h"
 
 namespace dsp {
 

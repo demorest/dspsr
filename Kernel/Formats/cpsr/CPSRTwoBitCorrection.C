@@ -1,4 +1,6 @@
 #include "CPSRTwoBitCorrection.h"
+#include "TwoBitTable.h"
+
 #include "Timeseries.h"
 #include "genutil.h"
 

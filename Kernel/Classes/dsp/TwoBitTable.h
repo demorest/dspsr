@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/10/07 01:48:37 $
+   $Revision: 1.7 $
+   $Date: 2002/10/07 02:13:22 $
    $Author: wvanstra $ */
 
 
@@ -16,12 +16,18 @@ namespace dsp {
   //! Look-up tables for conversion from two-bit to floating point numbers
   /*! 
 
-  */
+   */
   class TwoBitTable : public Reference::Able {
 
   public:
 
     enum Type { Unset, OffsetBinary, SignMagnitude, TwosComplement };
+
+    //! Number of unique 8-bit combinations
+    static const unsigned unique_bytes;
+
+    //! Number of 2-bit values per byte
+    static const unsigned vals_per_byte;
 
     //! Constructor
     TwoBitTable (Type type);
@@ -32,7 +38,7 @@ namespace dsp {
     //! Build a two-bit table with the current attributes
     void build ();
 
-    //! Returns a pointer to four floating-point values represented by one byte
+    //! Returns pointer to the four floating-point values represented by byte
     const float* get_four_vals (unsigned byte);
 
     //! Set the value of the low voltage state

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/10/07 01:48:37 $
+   $Revision: 1.13 $
+   $Date: 2002/10/07 02:13:22 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -10,11 +10,12 @@
 
 #include <vector>
 
-#include "TwoBitTable.h"
 #include "Operation.h"
 #include "environ.h"
 
 namespace dsp {
+
+  class TwoBitTable;
   
   //! Converts a Timeseries from two-bit digitized to floating-point values
   /*! The conversion routines are implemented by the TwoBitCorrection
@@ -28,9 +29,6 @@ namespace dsp {
     //! Optimal fraction of total power for two-bit sampling threshold
     static const double optimal_threshold;
 
-    //! Number of unique bit combinations in an 8-bit byte (256)
-    static const unsigned unique_bytes;
-
     //! Maintain a diagnostic histogram of digitizer statistics
     static bool keep_histogram;
 
@@ -39,7 +37,7 @@ namespace dsp {
 		      Behaviour type = outofplace);
 
     //! Virtual destructor
-    virtual ~TwoBitCorrection () { }
+    virtual ~TwoBitCorrection ();
 
     //! Return a descriptive string
     //virtual const string descriptor () const;

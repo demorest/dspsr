@@ -1,4 +1,5 @@
 #include "CPSR2TwoBitCorrection.h"
+#include "TwoBitTable.h"
 
 //! Null constructor
 dsp::CPSR2TwoBitCorrection::CPSR2TwoBitCorrection ()
