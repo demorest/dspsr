@@ -10,6 +10,8 @@
 #include "pspmDbase.h"
 
 #include "CPSRFile.h"
+#include "Error.h"
+
 #include "pspm++.h"
 #include "genutil.h"
 
@@ -199,11 +201,12 @@ void dsp::CPSRFile::open (const char* filename)
   info.set_npol (hdr.ndigchan / 2);
   info.set_nbit (hdr.nbit);
 
-  total_size = hdr.ndat;
+  info.set_ndat (hdr.ndat);
 
-  if (total_size < 1) {
+  if (hdr.ndat < 1) {
     ::close (fd);
-    throw_str ("CPSRFile::open - Total data: %d\n", total_size);
+    throw Error (InvalidState, "dsp::CPSRFile::open",
+		 "Total data: %d\n", hdr.ndat);
   }
 
   info.set_machine ("CPSR");
