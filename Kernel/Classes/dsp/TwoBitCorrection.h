@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/07/02 08:24:21 $
+   $Revision: 1.3 $
+   $Date: 2002/07/02 09:59:02 $
    $Author: pulsar $ */
 
 #ifndef __TwoBitCorrection_h
@@ -43,38 +43,26 @@ namespace dsp {
     //! Initialize from a descriptor string as output by above
     virtual void initialize (const string& descriptor);
 
+    //! Build the dynamic level setting lookup table
+    virtual void build (int nchannel, int nsample, float cutoff_sigma);
+
     //! Calculate the sum and sum-squared from each channel of digitized data
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
 
     //! Get the number of digitizer channels
     int get_nchannel () const { return nchannel; }
 
-    //! Set the number of digitizer channels
-    void set_nchannel (int);
-
     //! Get the number of samples used to estimate undigitized power
     int get_nsample () const { return nsample; }
 
-    //! Set the number of samples used to estimate undigitized power
-    void set_nsample (int);
-
     //! Get the cut off power for impulsive interference excision
     float get_cutoff_sigma() const { return cutoff_sigma; }
-
-    //! Set the cut off power for impulsive interference excision
-    void set_cutoff_sigma (float);
 
     //! Get the minumum number of ones in nsample points
     int get_nmin() const { return n_min; }
 
     //! Get the maxumum number of ones in nsample points
     int get_nmax() const { return n_max; }
-
-    //! Set n_min and n_max for twobit data
-    void set_twobit_limits (int nsample, float cutoff_sigma);
-
-    //! Sets limits with currently set parameters
-    void set_twobit_limits ();
 
     //! Reset histogram counts to zero
     void zero_histogram ();
@@ -94,11 +82,11 @@ namespace dsp {
     //! Unpacking algorithm is defined by sub-classes
     virtual void unpack () = 0;
 
+    //! Sets limits with currently set parameters
+    void set_twobit_limits ();
+
     //! Number of digitizer channels
     int nchannel;
-
-    //! Maximum number of digitizer output states: 2^nbit
-    int maxstates;
 
     //! Histograms of number of ones in nsample points
     unsigned long* histograms;

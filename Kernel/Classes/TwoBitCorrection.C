@@ -5,6 +5,7 @@
 
 #include "TwoBitCorrection.h"
 #include "genutil.h"
+#include "ierf.h"
 
 /*! From Jenet&Anderson "The Effects of Digitization on Nonstationary
   Stochastic Signals with Applications to Pulsar Signal Baseband
@@ -16,7 +17,6 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
   : Operation (_name, _type)
 {
   nchannel  = -1;
-  maxstates = -1;
 
   histograms = NULL;
   dls_lookup = NULL;
@@ -31,27 +31,6 @@ void dsp::TwoBitCorrection::destroy ()
 {
   if (dls_lookup != NULL) delete [] dls_lookup; dls_lookup = NULL;
   if (histograms != NULL) delete [] histograms; histograms = NULL;
-}
-
-void dsp::TwoBitCorrection::set_nchannel (int chan)
-{
-  if (chan != nchannel)
-    destroy();
-  nchannel = chan;
-}
-
-void dsp::TwoBitCorrection::set_nsample (int ppwt)
-{
-  if (ppwt != nsample)
-    destroy();
-  nsample = ppwt;
-}
-
-void dsp::TwoBitCorrection::set_cutoff_sigma (float cosig)
-{
-  if (cutoff_sigma != cosig)
-    destroy();
-  cutoff_sigma = cosig;
 }
 
 //
@@ -82,7 +61,7 @@ void dsp::TwoBitCorrection::allocate ()
   destroy ();
 
   if (verbose) cerr << "TwoBitCorrection::allocate allocate buffers\n";
-  dls_lookup = new float [n_range * maxstates];
+  dls_lookup = new float [n_range * 4];
   assert (dls_lookup != 0);
 
   histograms = new unsigned long [nsample * nchannel];
@@ -91,14 +70,6 @@ void dsp::TwoBitCorrection::allocate ()
   zero_histogram ();
 
   if (verbose) cerr << "TwoBitCorrection::allocate exits\n";
-}
-
-void dsp::TwoBitCorrection::set_twobit_limits (int ppwt, float co_sigma)
-{
-  nsample = ppwt;
-  cutoff_sigma = co_sigma;
-
-  set_twobit_limits ();
 }
 
 void dsp::TwoBitCorrection::set_twobit_limits ()
@@ -164,6 +135,66 @@ double dsp::TwoBitCorrection::get_histogram_mean (int channel)
     pts  += samples * double (nsample);
   }
   return ones/pts;
+}
+
+/* *************************************************************************
+   TwoBitCorrection::build
+
+   Generates a lookup table of output levels: y1 -> y4, for the range of 
+   sample-statistics within the specified cutoff_sigma.
+
+   This table may then be used to employ the dynamic level setting technique
+   described by Jenet&Anderson in "Effects of Digitization on Nonstationary
+   Stochastic Signals" for data recorded with CBR or CPSR.
+
+   Where possible, references are made to the equations given in this paper,
+   which are mostly found in Section 6.
+   ********************************************************************** */
+
+void dsp::TwoBitCorrection::build (int nchan, int nsamp, float sigma)
+{
+  if (verbose) cerr << "TwoBitCorrection::build:: "
+		    << " nsamp=" << nsamp
+		    << " cutoff=" << sigma << "sigma\n";
+
+  float sign   [4] = {-1.0, -1.0, 1.0, 1.0};
+  int   threes [4] = {  1,    0,   0,   1 };
+
+  nchannel = nchan;
+  nsample = nsamp;
+  cutoff_sigma = sigma;
+
+  set_twobit_limits ();
+  
+  float root_pi  = sqrt(M_PI);
+  float root2    = sqrt(2.0);
+
+  float* dls_lut = dls_lookup;
+
+  for (int n_in=n_min; n_in <= n_max; n_in++)  {
+    /* Given n_in, the number of samples between x2 and x4, 
+       then p_in is the left-hand side of Eq.44 */
+    float p_in = (float) n_in / (float) nsamp;
+
+    /* The inverse error function of p_in gives alpha, equal to the 
+       "t/(root2 * sigma)" in brackets on the right-hand side of Eq.45 */
+    float alpha = ierf (p_in);
+    float expon = exp (-alpha*alpha);
+
+    /* Equation 41 (ones: -y2, y3), substituting the above-computed values */
+    float a = 2.0/(root2*alpha) * sqrt(1.0-(2.0*alpha/root_pi)*(expon/p_in));
+    /* Similarly, Equation 40 (threes: -y1, y4) */
+    float b = 2.0/(root2*alpha) * sqrt(1.0+(2.0*alpha/root_pi)*
+					(expon/(1.0 - p_in)));
+
+    for (int val=0; val<4; val++)  {
+      if (threes[val])
+	*dls_lut = sign[val] * b;
+      else
+	*dls_lut = sign[val] * a;
+      dls_lut ++;
+    }
+  }
 }
 
 //! Calculate the mean voltage and power from Bit_Stream data
