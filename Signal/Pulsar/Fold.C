@@ -13,8 +13,8 @@ dsp::Fold::Fold () : Operation ("Fold", outofplace)
   folding_period = 0;
 
   nbin = 0;
-  ncoef = 12;
-  nspan = 960;
+  ncoef = 15;
+  nspan = 120;
 
   built = false;
 }

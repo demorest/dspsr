@@ -110,7 +110,7 @@ void dsp::PMDAQFile::open (const char* filename)
 // Needs to know where you are currently up to.
 
 #define HEADER_BYTES 4
-#define DATA_BYTES 48*1024
+#define DATA_BYTES (48*1024)
 #define TRAILER_BYTES 4
 
 int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
@@ -125,13 +125,17 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
   loaded_bytes = 0;
 
   // determine if in invalid data section, if so skip until
-  // the end of the header.
+  // the end of the header if loading a partial block
 
   int position = (absolute_position%(HEADER_BYTES+DATA_BYTES+TRAILER_BYTES));
 
-  if (position < HEADER_BYTES) {
+  if (verbose) cerr << "absolute position is "<< absolute_position << endl;
+  if (verbose) cerr << "         position is "<< position << endl;
+
+  if ((position < HEADER_BYTES) && (bytes < DATA_BYTES)) {
     // skip until end of header
     // set absolute_position accordingly
+    if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipping header " << endl; 
     retval = lseek (fd, HEADER_BYTES, SEEK_CUR);
     if (retval < 0 ) return (loaded_bytes);
     absolute_position += HEADER_BYTES;
@@ -140,6 +144,7 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
   if (position >= HEADER_BYTES+DATA_BYTES) {
     // skip until end of header
     // set absolute_position accordingly
+    if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipping trailer " << endl; 
     retval = lseek (fd, TRAILER_BYTES, SEEK_CUR);
     if (retval < 0 ) return (loaded_bytes);
     absolute_position += TRAILER_BYTES;
@@ -153,49 +158,68 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
     else
       part_chunk_of_48k = bytes;
   }
+  if (verbose) cerr << " dsp::PMDAQFILE::load_bytes part_chunk " << part_chunk_of_48k << endl; 
 
-  // Load what you can and bomb if you fail.
+  // Load what you can and bomb if you fail if part_chunk_of_48k is non-zero
 
-  retval = read (fd, buffer, part_chunk_of_48k);
+  if (part_chunk_of_48k !=0 ) {
+    retval = read (fd, buffer, part_chunk_of_48k);
 
-  if (retval < 0 ) {
-    return (int64) loaded_bytes;
+    if (retval < 0 ) {
+      end_of_data = true;
+      return (int64) loaded_bytes;
+    }
+
+    if (retval != part_chunk_of_48k) {
+      absolute_position += retval;
+      loaded_bytes += retval;
+      return (int64) loaded_bytes;
+    }
+
+    if (retval == (int64) bytes) {
+      loaded_bytes = retval;
+      absolute_position += loaded_bytes;
+      return (int64) loaded_bytes;
+    }
+
+    buffer += retval;
   }
-
-  if (retval != part_chunk_of_48k) {
-    absolute_position += retval;
-    loaded_bytes += retval;
-    return (int64) loaded_bytes;
-  }
-
-  if (retval == (int64) bytes) {
-    loaded_bytes = retval;
-    absolute_position += loaded_bytes;
-    return (int64) loaded_bytes;
-  }
-
-  buffer += retval;
-
   // Determine the number of 48k blocks and load them.
 
   int nblocks = (bytes-loaded_bytes)/ DATA_BYTES;
 
+  if (verbose) cerr << "loading "<< nblocks << " blocks of PMDAQ data " << endl;
+
   for (int i=0;i<nblocks;i++){
 
+    if (verbose) cerr << "dsp::PMDAQFile::load_bytes skipping mini header " << endl;
     // Skip mini header
     retval = lseek (fd, HEADER_BYTES, SEEK_CUR);
-    if (retval < 0 ) return (loaded_bytes);
+    if (retval != HEADER_BYTES+absolute_position ) {
+      cerr << "dsp::PMDAQFile::load_bytes Error seeking past header retval=\n"
+	   << retval << " absolute_position " << absolute_position << endl;;
+      end_of_data = true;
+      return (loaded_bytes);
+    }
+    if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipped header " << endl; 
     absolute_position += HEADER_BYTES;
 
     // Load data, and deal with failures
     retval = read (fd, buffer, DATA_BYTES);
     if (retval == -1 ) {
+      cerr << "dsp::PMDAQFile::load_bytes Error reading " << DATA_BYTES <<
+	" from file " << endl;
+      perror("dsp::PMDAQFile::load_bytes");
+      end_of_data = true;
       return (int64) loaded_bytes;
     }
 
     if (retval < DATA_BYTES) {
+      cerr << "dsp::PMDAQFile::load_bytes Only read " << retval <<
+	" bytes from file " << endl;
       absolute_position += retval;
       loaded_bytes += retval;
+      end_of_data = true;
       return (int64) loaded_bytes;
     }
 
@@ -205,7 +229,11 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
 
     // Skip the trailer
     retval = lseek (fd, TRAILER_BYTES, SEEK_CUR);
-    if (retval < 0 ) return (loaded_bytes);
+    if (retval < 0 ) {
+      end_of_data = true;
+      return (loaded_bytes);
+    }
+    if (verbose) cerr << " dsp::PMDAQFILE::load_bytes skipped trailer " << endl; 
     absolute_position += TRAILER_BYTES;
 
   }
@@ -215,14 +243,18 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
   // Load the last part.
 
   last_chunk_of_48k = bytes - loaded_bytes;
+  if (verbose) cerr << " dsp::PMDAQFILE::load_bytes loading partial chunk " << endl; 
 
   // Load and bomb if fails.
   retval = read (fd, buffer, last_chunk_of_48k);
 
-  if (retval < 0 ) return (int64) loaded_bytes;
+  if (retval < 0 ) {
+    return (int64) loaded_bytes;
+  }
 
   absolute_position += retval;
   loaded_bytes += retval;
+  if (retval != last_chunk_of_48k) end_of_data = true;
   return (int64) loaded_bytes;
 }
 
@@ -239,6 +271,8 @@ int residual = bytes - number_of_48ks * 48 * 1024;
 int64 number_to_skip = number_of_48ks * (48*1024 + HEADER_BYTES +
 TRAILER_BYTES) + HEADER_BYTES + residual;
 
+ cerr <<"dsp::PMDAQFile::seek_bytes  WARNING!! Code is completely untested"<<endl;
+
 // skip number_to_skip bytes
 
  int64 retval = lseek (fd, number_to_skip, SEEK_SET);
@@ -249,7 +283,7 @@ TRAILER_BYTES) + HEADER_BYTES + residual;
    return -1;
  }
 
- absolute_position = bytes;
+ absolute_position = number_to_skip;
  return (bytes);
 
 }

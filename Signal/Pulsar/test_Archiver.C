@@ -7,6 +7,10 @@
 #include "Detection.h"
 #include "Fold.h"
 #include "Archiver.h"
+#include "Reference.h"
+#include "File.h"
+#include "Unpacker.h"
+#include "OneBitCorrection.h"
 
 #include "Pulsar/TimerArchive.h"
 
@@ -14,12 +18,16 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "b:n:t:vV";
+static char* args = "b:B:n:t:vV";
 
 void usage ()
 {
   cout << "test_Fold - test phase coherent dedispersion kernel\n"
     "Usage: test_Fold [" << args << "] file1 [file2 ...] \n"
+    " -b nbin\n"
+    " -B block_size  (in number of time samples)\n"
+    " -t blocks      (stop before the end of the file)\n"
+    " -n [1|2|4]     ndim kludge when forming stokes\n"
        << endl;
 }
 
@@ -32,7 +40,7 @@ int main (int argc, char** argv)
 
   // number of time samples loaded from file at a time
   int block_size = 512*1024;
-  int overlap = 1024;
+  int overlap = 0;
   int blocks = 0;
   int ndim = 4;
   int nbin = 1024;
@@ -53,6 +61,10 @@ int main (int argc, char** argv)
 
     case 'b':
       nbin = atoi (optarg);
+      break;
+
+    case 'B':
+      block_size = atoi (optarg);
       break;
 
     case 't':
@@ -82,6 +94,7 @@ int main (int argc, char** argv)
 
   if (verbose)
     cerr << "Creating Timeseries instance" << endl;
+  dsp::Timeseries raw;
   dsp::Timeseries voltages;
 
   if (verbose)
@@ -89,13 +102,19 @@ int main (int argc, char** argv)
   dsp::PhaseSeries profiles;
 
   if (verbose)
-    cerr << "Creating IOManager instance" << endl;
-  dsp::IOManager manager;
+    cerr << "Creating Loader and OneBitCorrection instances" << endl;
 
-  manager.set_block_size (block_size);
-  manager.set_overlap (overlap);
-  manager.set_nsample (1024);  // ppweight
+  // Loader
+  Reference::To<dsp::File> loader(dsp::File::create(filenames.front().c_str()));
+  loader->open( filenames[0].c_str() );
+  loader->set_block_size (block_size);  
 
+  // OneBitCorrection
+  Reference::To<dsp::Unpacker> converter(dsp::Unpacker::create(loader->get_info()));
+  fprintf(stderr,"\nOut of dsp::Unpacker::create()\n");
+  converter->set_input( &raw );
+  converter->set_output( &voltages );
+ 
   if (verbose)
     cerr << "Creating Detection instance" << endl;
   dsp::Detection detect;
@@ -128,34 +147,39 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
 
-    manager.open (filenames[ifile]);
+    loader->open (filenames[ifile]);
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
     int block=0;
 
-    while (!manager.eod()) {
+    while (!loader->eod()) {
 
-      manager.load (&voltages);
+      loader->load (&raw);
+      
+      if(raw.get_ndat()==0){
+	cerr << "Breaking\n";
+	break;
+      }
+      converter->operate();
 
       if (!voltages.get_detected())
         detect.operate ();
 
-      fold.operate ();
-
-      block++;
-      if (blocks && block==blocks) {
-	cerr << "finished " << blocks << " blocks" << endl;
-	break;
+      if (voltages.get_ndat()>0) {
+	fold.operate ();
       }
+      block++;
+      cerr << "finished " << block << " blocks\r";
+      if (block == blocks) break;
     }
 
     if (verbose)
       cerr << "end of data file " << filenames[ifile] << endl;
 
     cerr << "Time spent converting data: " 
-	 << manager.get_unpacker()->get_total_time() << " seconds" << endl;
+	 << converter->get_total_time() << " seconds" << endl;
 
     cerr << "Time spent detecting" << ndim << " data: " 
 	 << detect.get_total_time() << " seconds" << endl;
@@ -163,19 +187,18 @@ int main (int argc, char** argv)
     cerr << "Time spent folding" << ndim << " data: " 
 	 << fold.get_total_time() << " seconds" << endl;
 
-    if (verbose)
-      cerr << "Creating archive" << endl;
     archiver.set (&archive, &profiles);
+    archive.set_dispersion_measure(fold.get_pulsar_ephemeris()->get_dm());
 
     string filename = profiles.get_default_id () + ".ar";
 
-    if (verbose)
-      cerr << "Unloading archive: " << filename<< endl;
+    if (verbose) cerr << "Unloading archive: " << filename<< endl;
     archive.unload (filename.c_str());
 
   }
   catch (string& error) {
     cerr << error << endl;
+
   }
 
   

@@ -65,6 +65,8 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read number of channels\n");
   }
+  set_nchan ( nchan );
+  cerr << "Number of channels is " << nchan << endl;
 
   nscanned = sscanf(&header[232],"%12lf",&freq_channel_one);
   if (nscanned != 1) {
@@ -110,12 +112,14 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
   //
   double sampling_interval;
 
-  nscanned = sscanf(&header[280],"%lf",&sampling_interval);
+  nscanned = sscanf(&header[256],"%lf",&sampling_interval);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read sampling interval\n");
   }
 
   sampling_interval *= 1e-3;
+
+  cerr << " Sampling interval is " << sampling_interval << " secs " << endl;
 
   set_rate (1.0/sampling_interval);
 

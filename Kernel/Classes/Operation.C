@@ -61,6 +61,9 @@ void dsp::Operation::operate ()
 //! Set the container from which input data will be read
 void dsp::Operation::set_input (const Timeseries* _input)
 {
+  if (verbose)
+    cerr << "dsp::Operation::set_input=" << _input << endl;
+
   input = _input;
 
   if (type == inplace)
@@ -74,6 +77,9 @@ void dsp::Operation::set_input (const Timeseries* _input)
 //! Set the container into which output data will be written
 void dsp::Operation::set_output (Timeseries* _output)
 {
+  if (verbose)
+    cerr << "dsp::Operation::set_output=" << _output << endl;
+
   output = _output;
   if (type == inplace)
     input = output;

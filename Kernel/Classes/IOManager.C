@@ -26,6 +26,9 @@ dsp::IOManager::~IOManager()
 //! Set the container from which input data will be read
 void dsp::IOManager::set_raw (Timeseries* _raw)
 {
+  if (verbose)
+    cerr << "IOManager::set_raw=" << _raw << endl;
+
   raw = _raw;
 
   if (unpacker)
@@ -126,6 +129,9 @@ void dsp::IOManager::load (Timeseries* data)
     set_raw (new Timeseries);
 
   input->load (raw);
+
+  if (verbose)
+    cerr << "IOManager::load data=" << data << endl;
 
   unpacker->set_output (data);
   unpacker->operate();
