@@ -1,4 +1,7 @@
 #include <iostream>
+#include <string>
+#include <vector>
+
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
@@ -28,7 +31,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:Ab:d:f:F:hIjM:n:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:f:F:hIjM:n:N:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -39,6 +42,7 @@ void usage ()
     " -A             produce a single archive with multiple Integrations\n"
     " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
+    " -N name        Over-ride name of pulsar with this name\n"
     " -s             generate single pulse Integrations\n"
     " -S seek        Start processing at t=seek seconds\n"
     " -t gulps       Stop processing after this many gulps\n"
@@ -151,6 +155,9 @@ int main (int argc, char** argv)
   // If true, a dsp::IncoherentFilterbank is used rather than a dsp::Filterbank
   bool use_incoherent_filterbank = false;
 
+  // Pulsar name
+  string pulsar_name;
+
   int c;
   int scanned;
 
@@ -253,6 +260,10 @@ int main (int argc, char** argv)
       ndim = atoi (optarg);
       break;
 
+    case 'N':
+      pulsar_name = optarg;
+      break;
+
     case 'P':
       dsp::psrdisp_compatible = true;
       break;
@@ -323,7 +334,7 @@ int main (int argc, char** argv)
       cerr << "invalid param '" << c << "'" << endl;
     }
 
-  vector <string> filenames;
+  vector<string> filenames;
 
   if (metafile)
     stringfload (&filenames, metafile);
@@ -355,7 +366,7 @@ int main (int argc, char** argv)
     cerr << "Creating IOManager instance" << endl;
 
   dsp::IOManager* manager = new dsp::IOManager;
-
+  
   manager->set_output (voltages);
 
   operations.push_back (manager);
@@ -553,11 +564,15 @@ int main (int argc, char** argv)
 	cerr << "opening data file " << filenames[ifile] << endl;
       
       manager->open (filenames[ifile]);
-      
+        
       if (verbose)
 	cerr << "data file " << filenames[ifile] << " opened" << endl;
       
     }
+
+    // Make sure the source name used to construct kernel is set correctly
+    if( pulsar_name!=string() )
+      manager->get_info()->set_source( pulsar_name );   
 
     if (single_pulse && single_archive) {
 
@@ -619,7 +634,6 @@ int main (int argc, char** argv)
       nblocks_tot = manager->get_total_samples() / ndat_good;
       if (manager->get_total_samples() % ndat_good)
 	nblocks_tot ++;
-
 
       cerr << "processing ";
       if (blocks)
