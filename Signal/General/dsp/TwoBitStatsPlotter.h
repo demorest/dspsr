@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.6 $
-   $Date: 2003/05/13 15:08:02 $
+   $Revision: 1.7 $
+   $Date: 2004/11/22 22:55:36 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitStatsPlotter_h
@@ -34,7 +34,7 @@ namespace dsp {
     void set_viewport (float xmin, float xmax, float ymin, float ymax);
 
     //! Set the plot colour used for each digitizer
-    void set_colours (const vector<int>& colours);
+    void set_colours (const std::vector<int>& colours);
 
     //! Get the colour used to plot the theoretical distribution
     int get_theory_colour () { return theory_colour; };
@@ -63,10 +63,10 @@ namespace dsp {
   protected:
 
     //! Where individual histograms are kept for plotting
-    vector<float> histogram;
+    std::vector<float> histogram;
 
     //! Theoretical, optimal histogram
-    vector<float> theory;
+    std::vector<float> theory;
 
     //! Maxmimum value of theory
     float theory_max;
@@ -78,7 +78,7 @@ namespace dsp {
     int theory_colour;
 
     //! Colour used when plotting histogram from each digitizer
-    vector <int> colours;
+    std::vector <int> colours;
 
     //! Device normalized coordinates of viewport frame
     float vpxmin;

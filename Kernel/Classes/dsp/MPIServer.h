@@ -29,7 +29,7 @@ namespace dsp {
   protected:
 
     //! The managed MPIRoot instances
-    vector< Reference::To<MPIRoot> > root;
+    std::vector< Reference::To<MPIRoot> > root;
 
   };
 

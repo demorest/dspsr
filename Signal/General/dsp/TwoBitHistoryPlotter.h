@@ -24,7 +24,8 @@ namespace dsp {
     void reset () { ndig = 0; }
     
     //! Log the statistics of the digitized data in some form
-    virtual void log_stats (vector<double>& mean, vector<double>& variance,
+    virtual void log_stats (std::vector<double>& mean,
+                            std::vector<double>& variance,
 			    TwoBitCorrection* stats);
     
     // the number of minutes to keep in history
@@ -39,16 +40,16 @@ namespace dsp {
     timeval start;
     
     //! Data mean as a function of time and digitizer
-    vector< vector<float> > means;
+    std::vector< std::vector<float> > means;
     //! Data variance as a function of time and digitizer
-    vector< vector<float> > variances;
+    std::vector< std::vector<float> > variances;
     //! Time of each index in minutes since start
-    vector< float > times;
+    std::vector< float > times;
     
     //! Colours of symbol
-    vector<int> colour;
+    std::vector<int> colour;
     //! Shapes of symbols
-    vector<int> symbol;
+    std::vector<int> symbol;
     
     //! number of digitizers
     unsigned ndig;

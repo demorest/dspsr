@@ -3,6 +3,8 @@
 
 #include "dsp/Dedispersion.h"
 
+using namespace std;
+
 void usage()
 {
   cerr <<
@@ -16,6 +18,7 @@ void usage()
     "   -x nfft    over-ride the optimal number of points in the transform\n"
     "   -w smear   over-ride extra fractional smearing buffer size\n"
     "\n"
+    "   -q         quiet mode; print only the dispersion smearing\n"
     "   -v         enable verbosity flags in Dedispersion class\n"
     "\n"
     "  Program returns smear in microseconds as well as the minimum\n"
@@ -27,6 +30,7 @@ int main(int argc, char ** argv)
 { try {
 
   bool verbose = false;
+  bool quiet = false;
 
   float  dm = 1.0;
   double centrefreq = 1420.4;
@@ -37,7 +41,7 @@ int main(int argc, char ** argv)
   bool   triple = false;
 
   int c;
-  while ((c = getopt(argc, argv, "hd:b:f:n:vw:x:")) != -1)
+  while ((c = getopt(argc, argv, "hd:b:f:n:qvw:x:")) != -1)
     switch (c) {
 
     case 'b':
@@ -62,6 +66,10 @@ int main(int argc, char ** argv)
 
     case 't':
       triple = true;
+      break;
+
+    case 'q':
+      quiet = true;
       break;
 
     case 'v':
@@ -93,18 +101,23 @@ int main(int argc, char ** argv)
   if (set_nfft)
     kernel.set_frequency_resolution (set_nfft);
 
+  /* micro seconds */
+  float smear_us = kernel.get_smearing_time () * 1e6;
+
+  if (quiet) {
+    cerr << " " << smear_us * 1e-6 << endl;
+    return 0;
+  }
+
   cerr << "\nInput Parameters:\n"
-    "Centre Frequency:   " << kernel.get_centre_frequency () << " MHz\n"
-    "Bandwidth:          " << kernel.get_bandwidth () << " MHz\n"
-    "Dispersion Measure: " << kernel.get_dispersion_measure () << " pc/cm^3\n";
+    "Centre Frequency:   " << kernel.get_centre_frequency() << " MHz\n"
+    "Bandwidth:          " << kernel.get_bandwidth() << " MHz\n"
+    "Dispersion Measure: " << kernel.get_dispersion_measure() << " pc/cm^3\n";
 
   if (nchan > 1)
     cerr <<
       "Sub-bands:          " << kernel.get_nchan() << endl;
   
-  /* micro seconds */
-  float smear_us = kernel.get_smearing_time () * 1e6;
-
   cerr << "\nOutput parameters:\n"
     "Dispersion delay:   " << kernel.delay_time() << " s\n"
     "Smearing time:      " << smear_us << " us\n";
