@@ -19,6 +19,7 @@ The 'values' are truncated so that the same number of characters are in the line
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "psr_cpp.h"
 #include "genutil.h"
 #include "Error.h"
 #include "Reference.h"
@@ -29,18 +30,23 @@ The 'values' are truncated so that the same number of characters are in the line
 #include "dsp/CPSR2File.h"
 #include "dsp/BitSeriesFile.h"
 
-const char* args = "f:hk:m:";
+const char* args = "a:f:hk:m:v";
+int exit_status = 0;
+bool verbose = false;
+
 void usage();
 
 void parse_it(int argc,char** argv,
 	      vector<string>& filenames,
-	      vector<string>& keywords, vector<string>& values);
+	      vector<string>& keywords, vector<string>& values,
+	      vector<string>& new_keywords, vector<string>& new_values);
 
 void check_type(dsp::File* loader);
 vector<char> get_header(string filename,unsigned header_bytes);
 bool match_line(const vector<string>& lines,string keyword, unsigned& the_line);
 string chomp_value(string to_chomp, unsigned chars_avail);
 void rewrite_header(string filename, vector<char> header);
+bool change_header(string filename,string keyword,string value,vector<string>& lines);
 
 int main(int argc,char** argv){ try {
   Error::verbose = true;
@@ -50,10 +56,11 @@ int main(int argc,char** argv){ try {
 
   vector<string> keywords;
   vector<string> values;
+  vector<string> new_keywords;
+  vector<string> new_values;
 
-  bool verbose = false;
-
-  parse_it(argc,argv,filenames,keywords,values);
+  parse_it(argc,argv,filenames,keywords,values,
+	   new_keywords, new_values);
 
   for(unsigned ifile=0; ifile<filenames.size(); ifile++){
     fprintf(stderr,"Working with file '%s'\n",
@@ -74,7 +81,7 @@ int main(int argc,char** argv){ try {
 	      header.size()-2,header[header.size()-2],header.size()-1,header.back());
     }
 
-    string to_breakup = string(header.begin(),header.end());
+    string to_breakup(&*header.begin());
     vector<string> lines = stringlines(to_breakup);
 
     if( verbose ){
@@ -83,40 +90,28 @@ int main(int argc,char** argv){ try {
 	fprintf(stderr,"%d: '%s'\n",i,lines[i].c_str());
       fprintf(stderr,"\n");
     }
-
-    for( unsigned i=0; i<keywords.size(); i++){
-      if( verbose )
-	fprintf(stderr,"working with keyword '%s'\n",keywords[i].c_str());
-
-      unsigned the_line = 0;
-      if( !match_line(lines,keywords[i],the_line) ){
-	fprintf(stderr,"Failed to match keyword '%s' for file '%s'\n",
-		keywords[i].c_str(),filenames[i].c_str());
-	continue;
+    
+    /////////////////////////////////////////////////////
+    // Change over each key/value pair for 'keywords'
+    for( unsigned i=0; i<keywords.size(); i++)
+      change_header(filenames[ifile],keywords[i],values[i],lines);
+      
+    /////////////////////////////////////////////////////
+    // If possible, change over each key/value pair for 'new_keywords'
+    {
+      vector<string> unfound_keywords;
+      vector<string> unfound_values;
+      
+      for( unsigned i=0; i<new_keywords.size(); i++){
+	if( !change_header(filenames[ifile],new_keywords[i],new_values[i],lines) ){
+	  unfound_keywords.push_back( new_keywords[i] );
+	  unfound_values.push_back( new_values[i] );
+	}
       }
-
-      if( verbose )
-	fprintf(stderr,"Got the_line='%s'\n",lines[the_line].c_str());
-
-      vector<string> words = stringdecimate(lines[the_line]," \t");
-
-      if( verbose ){
-	fprintf(stderr,"Got %d words:\n",words.size());
-	for( unsigned iword=0; iword<words.size(); iword++)
-	  fprintf(stderr,"%d\t'%s'\n",iword,words[iword].c_str());
-      }
-
-      unsigned chars_avail = lines[the_line].size()-words[0].size()-1; 
-      string new_value = chomp_value(values[i],chars_avail);
-
-      if( verbose )
-	fprintf(stderr,"Got %d chars avail and new_value='%s'\n",chars_avail,new_value.c_str());
-
-      lines[the_line] = words[0] + " " + new_value;
-
-      if( verbose )
-	fprintf(stderr,"the_line now '%s'\n",lines[the_line].c_str());
-    }
+      
+      new_keywords = unfound_keywords;
+      new_values = unfound_values;
+    }      
 
     string str_header = stringdelimit(lines,'\n') + '\n';
 
@@ -124,24 +119,39 @@ int main(int argc,char** argv){ try {
       fprintf(stderr,"Got str_header (%d vs %d):\n'%s'\n",
 	      str_header.size(),loader->get_header_bytes(),str_header.c_str());
 
+    /////////////////////////////////////////////////////
+    // Add additional key/value pairs
+    for( unsigned iadd=0; iadd<new_keywords.size(); iadd++){
+      unsigned new_chars = new_keywords[iadd].length() + 1 + new_values[iadd].length() + 1;
+      if( str_header.length() + new_chars + 1 > unsigned(loader->get_header_bytes()) ){
+	fprintf(stderr,"ERROR: key/value pair %d/%d of '%s' and '%s' pushed header size too big!  (%d + %d > %d)  Could not change header\n",
+		iadd+1,new_keywords.size(),new_keywords[iadd].c_str(),new_values[iadd].c_str(),
+		str_header.length()+1,new_chars,unsigned(loader->get_header_bytes()));
+	exit_status = -1;
+	break;
+      }
+      str_header += new_keywords[iadd] + '\t' + new_values[iadd] + '\n';
+    }
+
+    /////////////////////////////////////////////////////
+    // Write new header out
     unsigned ichar = 0;
     for( ichar=0; ichar<str_header.size(); ichar++)
       header[ichar] = str_header[ichar];
+
     for( ;ichar<unsigned(loader->get_header_bytes());ichar++)
       header[ichar] = 0;
       
     rewrite_header(filenames[ifile],header);
   }
 
-} catch(Error& er) {
-  cerr << er << endl;
-  exit(-1);
-} catch( ... ) {
-  fprintf(stderr,"Unknown exception caught!\n");
-  exit(-1);
+  printf("Biyee!\n"); 
+
+} catch(Error& er) { cerr << er << endl; exit_status = -1;
+} catch( ... ) { fprintf(stderr,"Unknown exception caught!\n"); exit_status = -1;
 }
- printf("Biyee!\n"); 
- exit(0);
+
+  exit(exit_status);
 }
 
 void check_type(dsp::File* loader){
@@ -218,18 +228,26 @@ void rewrite_header(string file,vector<char> header){
 
 void parse_it(int argc,char** argv,
 	      vector<string>& filenames,
-	      vector<string>& keywords, vector<string>& values)
+	      vector<string>& keywords, vector<string>& values,
+	      vector<string>& new_keywords, vector<string>& new_values)
 {
   if( argc==1 )
     usage();
 
   int c;
 
-  //const char* args = "f:hk:m:";
+  //const char* args = "a:f:hk:m:";
 
   while ((c = getopt(argc, argv, args)) != -1){
     switch (c) {
       
+    case 'a':
+      new_keywords.push_back( optarg );
+      new_values.push_back( argv[optind] );
+      fprintf(stderr,"Got a new keyword of '%s' and new value of '%s'\n",
+	      new_keywords.back().c_str(), new_values.back().c_str());
+      optind++;
+      break;
     case 'f':
       filenames.push_back( optarg );
       break;
@@ -245,6 +263,8 @@ void parse_it(int argc,char** argv,
     case 'm':
       parse_metafile(filenames,optarg);
       break;
+    case 'v': verbose = true; break;
+
     default:
       fprintf(stderr,"Could not parse command line.\n");
       exit(-1);
@@ -260,11 +280,30 @@ void usage(){
   cout << "A program to edit the headers of cpsr2 and/or .bs files\n" << endl;
   cout << "Note: for each '-k' call, the keyword, a space(s), and then the value are written out.  If there are not enough chars available in the line, the value is cocatenated.   BEWARE!\n" << endl;
   cout << "Usage: cpsr2_change_header -[" << args << "] filename1 filename2..." << endl;
-  cout << " f filename            Process this filename ('-f' or '-m' req) {fm}\n"
+  cout << " a keyword value       Add a new keyword and value to the bottom of header, if there is room.  (If it is already a keyword this is equivalent to '-k')\n" 
+       << " f filename            Process this filename ('-f' or '-m' req) {fm}\n"
        << " h                     This help page\n"
        << " k keyword value       Replace the line starting with 'keyword' with 'keyword value'\n"
        << " m metafile            Metafile of files to process ('-f' or '-m' req) {fm}\n"
+       << " v                     Verbose mode\n"
        << endl;
 
   exit(0);
+}
+
+bool change_header(string filename,string keyword,string value,vector<string>& lines){
+  unsigned the_line = 0;
+  if( !match_line(lines,keyword,the_line) ){
+    fprintf(stderr,"Failed to match keyword '%s' for file '%s'\n",
+	    keyword.c_str(),filename.c_str());
+    return false;
+  }
+  
+  vector<string> words = stringdecimate(lines[the_line]," \t");
+  unsigned chars_avail = lines[the_line].size()-words[0].size()-1; 
+  string new_value = chomp_value(value,chars_avail);
+  
+  lines[the_line] = words[0] + " " + new_value;
+
+  return true;
 }
