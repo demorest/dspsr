@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/08/05 19:58:57 $
+   $Revision: 1.5 $
+   $Date: 2002/10/21 06:04:51 $
    $Author: pulsar $ */
 
 #ifndef __TwoBitStatsPlotter_h
@@ -10,14 +10,14 @@
 
 #include <vector>
 
-#include "ReferenceTo.h"
+#include "Reference.h"
 
 namespace dsp {
   
   class TwoBitCorrection;
 
   //! Plots the histograms maintained by TwoBitCorrection
-  class TwoBitStatsPlotter {
+  class TwoBitStatsPlotter : public Reference::Able {
 
   public:
 
