@@ -260,6 +260,7 @@ void dsp::IncoherentFilterbank::form_undetected(){
   Reference::To<dsp::ChannelOrder> order(new dsp::ChannelOrder);
   order->set_input( bs );
   order->set_output( output );
+  order->set_rapid_variable( dsp::ChannelOrder::Channel );
 
   order->operate();
 
