@@ -137,12 +137,12 @@ void dsp::Convolution::transformation ()
   unsigned nsamp_fft = 0;
   unsigned nsamp_overlap = 0;
 
-  if (input->get_state() == Signal::Nyquist) {
+  if (state == Signal::Nyquist) {
     nsamp_fft = n_fft * 2;
     nsamp_overlap = n_overlap * 2;
     pts_reqd += 4;
   }
-  else if (input->get_state() == Signal::Analytic) {
+  else if (state == Signal::Analytic) {
     nsamp_fft = n_fft;
     nsamp_overlap = n_overlap;
   }
@@ -185,10 +185,8 @@ void dsp::Convolution::transformation ()
 
   float* complex_time  = spectrum[1] + n_fft * 2;
 
-  if (input->get_state() == Signal::Nyquist)
+  if (state == Signal::Nyquist)
     complex_time += 2;
-
-  Signal::State input_state = get_input()->get_state();
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
@@ -201,12 +199,11 @@ void dsp::Convolution::transformation ()
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
   if (weighted_output) {
     weighted_output->convolve_weights (nsamp_fft, nsamp_good);
-    if (input->get_state() == Signal::Nyquist)
+    if (state == Signal::Nyquist)
       weighted_output->scrunch_weights (2);
   }
 
-
-  if( get_input()->get_state() == Signal::Analytic ){
+  if( state == Signal::Analytic ){
     // Case 1. Analytic->Analytic:
     if (input.get() == output.get())
       output->set_ndat (npart * nsamp_good);
