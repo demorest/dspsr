@@ -86,18 +86,14 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 
   uint64 require = uint64(ndim) * nsamples * uint64(npol) * uint64(nchan);
 
-  if( verbose )
-    fprintf(stderr,"dsp::TimeSeries::resize require= "UI64" * "UI64" * "UI64" * "UI64" * = "UI64" (cf size="UI64") (buffer=%p and data=%p\n",
-	    uint64(ndim) , nsamples , uint64(npol) , uint64(nchan), require, size,
-	    buffer,data);
+  if (verbose)
+    cerr << "dsp::TimeSeries::resize require float[" << require << "];"
+      " have float[" << size << "]" << endl;
 
   if (!require || require > size) {
     if (buffer) delete buffer; buffer = 0;
     data = 0;
     size = subsize = 0;
-
-    if( verbose )
-      fprintf(stderr,"dsp::TimeSeries::resize has deleted old data buffer, size now is zero\n");
   }
 
   ndat = nsamples;
@@ -106,9 +102,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     return;
 
   if (size == 0) {
-    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() calling new float["UI64"]\n", require);
     buffer = new float[require];
-    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() have called new float["UI64"] buffer=%p\n", require, buffer);
     size = require;
   }
 
@@ -116,8 +110,8 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 
   data = buffer;
 
-  if( verbose )
-    fprintf(stderr,"dsp::TimeSeries::resize() returning with data=%p\n",data);
+  if (verbose)
+    cerr << "dsp::TimeSeries::resize data=" << data << endl;
 }
 
 //! Offset the base pointer by offset time samples
