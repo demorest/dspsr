@@ -1,9 +1,9 @@
 #include "Archiver.h"
 #include "PhaseSeries.h"
 
-#include "Archive.h"
-#include "Integration.h"
-#include "Profile.h"
+#include "Pulsar/Archive.h"
+#include "Pulsar/Integration.h"
+#include "Pulsar/Profile.h"
 #include "Error.h"
 
 bool dsp::Archiver::verbose = false;
@@ -27,7 +27,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 
   archive-> set_telescope_code ( phase->get_telescope() );
 
-  archive-> set_observation_type ( phase->get_type() );
+  archive-> set_type ( phase->get_type() );
   archive-> set_basis ( phase->get_basis() );
   archive-> set_state ( phase->get_state() );
 

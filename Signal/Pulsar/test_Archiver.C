@@ -7,7 +7,8 @@
 #include "Detection.h"
 #include "Fold.h"
 #include "Archiver.h"
-#include "TimerArchive.h"
+
+#include "Pulsar/TimerArchive.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -31,6 +32,7 @@ int main (int argc, char** argv)
 
   // number of time samples loaded from file at a time
   int block_size = 512*1024;
+  int overlap = 1024;
   int blocks = 0;
   int ndim = 4;
   int nbin = 1024;
@@ -91,6 +93,7 @@ int main (int argc, char** argv)
   dsp::IOManager manager;
 
   manager.set_block_size (block_size);
+  manager.set_overlap (overlap);
   manager.set_nsample (1024);  // ppweight
 
   if (verbose)
