@@ -79,15 +79,6 @@ namespace dsp {
     //! For use by MiniSeries to share the data buffer for unpacking
     void share(unsigned char*& _buffer,uint64& _size) const;
 
-    //! Retrieve a reference to the miniplan 
-    Reference::To<MiniPlan> get_miniplan() const { return miniplan; }
-
-    //! Set the miniplan- usually called by MiniFile loader
-    void set_miniplan(Reference::To<MiniPlan> _miniplan){ miniplan = _miniplan; }
-
-    //! Returns true if the miniplan is set
-    bool has_miniplan() const { return miniplan.ptr(); }
-
   protected:
     //! The data buffer
     unsigned char* data;
@@ -107,10 +98,6 @@ namespace dsp {
 
     //! Number of time samples requested
     uint64 request_ndat;
-
-    //! The MiniPlan, if one is needed to expand into a TimeSeries
-    Reference::To<MiniPlan> miniplan;
-
   };
   
 }

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <vector>
 
 #include "Telescope.h"
 #include "Angle.h"
@@ -21,6 +22,7 @@
 
 #include "environ.h"
 
+#include "dsp/dspExtension.h"
 #include "dsp/Observation.h"
 
 bool dsp::Observation::verbose = false;
@@ -543,6 +545,11 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_domain( in_obs.get_domain() );
   set_last_ondisk_format( in_obs.get_last_ondisk_format() );
 
+  extensions.resize( 0 );
+
+  for( unsigned iext=0; iext<in_obs.get_nextensions(); iext++)
+    add( in_obs.get_extension( iext );
+
   return *this;
 }
 
@@ -900,3 +907,56 @@ void dsp::Observation::old_file2obs(int fd){
 
 }
 
+//! Adds a dspExtension
+void dsp::Observation::add(dspExtension* extension){
+  if( extension->must_have_only_one() )
+    for( unsigned i=0; i<extensions.size(); i++)
+      if( extensions[i]->get_name()==extension->get_name() )
+	throw Error(InvalidState,"dsp::Observation::add()",
+		    "You can only have one '%s' dspExtension, but you are trying to add your second!",
+		    extension->get_name().c_str());
+
+  extensions.push_back( extension );
+}
+
+//! Removes a dspExtension
+Reference::To<dsp::dspExtension> dsp::Observation::remove_extension(string ext_name){
+  for( unsigned i=0; i<extensions.size(); i++){
+    if( extensions[i]->get_name() == ext_name ){
+      Reference::To<dspExtension> removed = extensions[i];
+      extensions.erase( extensions.begin()+i );
+      return removed;
+    }
+  }
+  return 0;
+}
+
+//! Returns true if one of the stored dspExtensions has this name
+bool dsp::Observation::has(string extension_name){
+  for( unsigned i=0; i<extensions.size(); i++)
+    if( extensions[i]->get_name()==extension_name )
+      return true;
+
+  return false;
+}
+
+//! Returns the number of dspExtensions currently stored
+void dsp::Observation::get_nextensions(){
+  return extensions.size();
+}
+
+//! Returns the i'th dspExtension stored
+dsp::dspExtension* dsp::Observation::get_extension(unsigned iext){
+  if( iext >= extensions.size() )
+    throw Error(InvalidParam,"dsp::Observation::get_extension()",
+		"You requested extension '%d' but there are only %d extensions stored",iext,extensions.size());
+  return extensions[iext].get();
+}
+
+//! Returns the i'th dspExtension stored
+const dsp::dspExtension* dsp::Observation::get_extension(unsigned iext) const{
+  if( iext >= extensions.size() )
+    throw Error(InvalidParam,"dsp::Observation::get_extension()",
+		"You requested extension '%d' but there are only %d extensions stored",iext,extensions.size());
+  return extensions[iext].get();
+}

@@ -59,9 +59,6 @@ void dsp::Input::operation ()
     cerr << "dsp::Input::operation call load_data Bit_Stream::ndat=" 
          << get_output()->get_ndat () << endl;
 
-  // For MultiFile/HoleyFile using MiniFile load_bytes() requires no plan to be set initially
-  get_output()->set_miniplan( Reference::To<MiniPlan>() );
-
   load_data (get_output());
   if( verbose )
     fprintf(stderr,"dsp::Input::operation() out of load_data() with load_sample="UI64" name='%s'\n",

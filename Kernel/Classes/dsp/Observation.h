@@ -3,6 +3,8 @@
 #define __Observation_h
 
 #include <string>
+#include <vector>
+#include <typeinfo>
 
 #include <stdio.h>
 
@@ -14,6 +16,7 @@
 #include "MJD.h"
 #include "environ.h"
 
+#include "dsp/dspExtension.h"
 #include "dsp/dsp.h"
 
 namespace dsp {
@@ -329,9 +332,45 @@ namespace dsp {
     //! Returns the version number to put in the Header when writing out
     float get_version() const { return 2.0; }
 
+    //! Returns a pointer to the dspExtension
+    //! If the dspExtension is not stored this throws an Error
+    template<class ExtensionType>
+    ExtensionType* get();
+
+    //! Returns a pointer to the dspExtension
+    //! If the dspExtension is not stored this throws an Error
+    template<class ExtensionType>
+    const ExtensionType* get() const;
+
+    //! Returns true if the given dspExtension is stored
+    //! Call like: if( obs->has<MiniExtension>() )...
+    template<class ExtensionType>
+    bool has() const;
+
+    //! Returns true if one of the stored dspExtensions has this name
+    bool has(string extension_name);
+
+    //! Adds a dspExtension
+    void add(dspExtension* extension);
+
+    //! Removes a dspExtension
+    Reference::To<dspExtension> remove(string ext_name);
+
+    //! Returns the number of dspExtensions currently stored
+    void get_nextensions();
+
+    //! Returns the i'th dspExtension stored
+    dspExtension* get_extension(unsigned iext);
+
+    //! Returns the i'th dspExtension stored
+    const dspExtension* get_extension(unsigned iext) const;
+
   protected:
 
     /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
+    /* HSK 4/12/04 dspExtensions not currently written out */
+    //! Extra stuff
+    vector<Reference::To<dspExtension> > extensions;
     
     //! Tempo telescope code
     char telescope;
@@ -453,6 +492,55 @@ namespace dsp {
     ~ObservationPtr(){ }
   };
 
+}
+
+//! Returns a pointer to the dspExtension
+//! If the dspExtension is not stored this throws an Error
+template<class ExtensionType>
+dsp::ExtensionType* dsp::Observation::get(){
+  ExtensionType* ret = 0;
+
+  for( unsigned i=0; i<extensions.size(); i++){
+    ret = dynamic_cast<ExtensionType*>(extensions[i].get());
+    if( ret )
+      return ret;
+  }
+
+  throw Error(InvalidState,"dsp::Observation::get()",
+	      "Could not find a matching extension of the %d stored for '%s'",
+	      extensions.size(), typeid(ret).name());
+  
+  return 0;
+}
+
+//! Returns a pointer to the dspExtension
+//! If the dspExtension is not stored this throws an Error
+template<class ExtensionType>
+const dsp::ExtensionType* dsp::Observation::get() const{
+  ExtensionType* ret = 0;
+
+  for( unsigned i=0; i<extensions.size(); i++){
+    ret = dynamic_cast<ExtensionType*>(extensions[i].get());
+    if( ret )
+      return ret;
+  }
+
+  throw Error(InvalidState,"dsp::Observation::get()",
+	      "Could not find a matching extension of the %d stored for '%s'",
+	      extensions.size(), typeid(ret).name());
+  
+  return 0;
+}
+
+//! Returns true if the given dspExtension is stored
+//! Call like: if( obs->has<MiniExtension>() )...
+template<class ExtensionType>
+bool dsp::Observation::has() const{
+  for( unsigned i=0; i<extensions.size(); i++)
+    if( dynamic_cast<ExtensionType*>(extensions[i]) )
+      return true;
+
+  return false;
 }
 
 #ifdef ACTIVATE_MPI
