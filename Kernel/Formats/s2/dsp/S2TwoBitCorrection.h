@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitCorrection.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/10/07 11:58:20 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2002/10/15 13:11:20 $
+   $Author: pulsar $ */
 
 #ifndef __S2TwoBitCorrection_h
 #define __S2TwoBitCorrection_h
@@ -21,10 +21,19 @@ namespace dsp {
     //! Construct based on the telescope at which the data was recorded
     S2TwoBitCorrection (char telescope = Telescope::Parkes);
 
+    //! Return true if S2TwoBitCorrection can convert the Observation
+    virtual bool matches (const Observation* observation);
+
   protected:
 
     //! Unpacking interface
     void unpack ();
+
+    //! Match the unpacking scheme to the Observation
+    void match (const Observation* observation);
+
+    //! Match the unpacking scheme to the telescope
+    void match (char telescope);
 
     //! Interval in seconds between data resynch of S2-DAS
     double resynch_period;

@@ -1,7 +1,18 @@
 #include "S2TwoBitCorrection.h"
 #include "S2TwoBitTable.h"
+#include "Observation.h"
+#include "Error.h"
 
 #include "genutil.h"
+
+// Register the S2TwoBitCorrection class with the Unpacker::registry
+static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection> entry;
+
+bool dsp::S2TwoBitCorrection::matches (const Observation* observation)
+{
+  return observation->get_machine() == "S2";
+}
+
 
 /*!
   The VLBA encode offset binary;  the AT encode sign magnitude
@@ -14,7 +25,17 @@ dsp::S2TwoBitCorrection::S2TwoBitCorrection (char telescope)
 
   resynch_period = resynch_start = resynch_end = 0.0;
 
-  switch (telescope) {
+  match (telescope);
+}
+
+void dsp::S2TwoBitCorrection::match (const Observation* observation)
+{
+  match ( observation->get_telescope() );
+}
+
+void dsp::S2TwoBitCorrection::match (char telescope)
+{
+  switch ( telescope ) {
 
   case Telescope::Parkes:
     resynch_period = 10.0;
@@ -23,24 +44,25 @@ dsp::S2TwoBitCorrection::S2TwoBitCorrection (char telescope)
     
     table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
     break;
-
+    
   case Telescope::ATCA:
     resynch_period = 10.0;
     resynch_start = 9.940;
     resynch_end = 0.15;
-
+    
     table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
     break;
-
+    
   case Telescope::Tidbinbilla:
   case Telescope::Arecibo:
     table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
-
+    
   default:
-    throw_str ("S2TwoBitCorrection:: unknown telescope = %c", telescope);
-
+    throw Error (InvalidParam, "S2TwoBitCorrection::match",
+		 "unknown telescope = %c", telescope );
   }
 }
+
 
 void dsp::S2TwoBitCorrection::unpack ()
 {

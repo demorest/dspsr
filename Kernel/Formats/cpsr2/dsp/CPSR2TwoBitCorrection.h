@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2TwoBitCorrection.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/10/07 11:46:48 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/10/15 13:11:20 $
+   $Author: pulsar $ */
 
 #ifndef __CPSR2TwoBitCorrection_h
 #define __CPSR2TwoBitCorrection_h
@@ -21,6 +21,9 @@ namespace dsp {
 
     //! Constructor initializes base class attributes
     CPSR2TwoBitCorrection ();
+
+    //! Return true if CPSR2TwoBitCorrection can convert the Observation
+    virtual bool matches (const Observation* observation);
 
   };
   

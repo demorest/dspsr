@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/10/07 11:46:43 $
-   $Author: wvanstra $ */
+   $Revision: 1.8 $
+   $Date: 2002/10/15 13:11:20 $
+   $Author: pulsar $ */
 
 #ifndef __CPSRTwoBitCorrection_h
 #define __CPSRTwoBitCorrection_h
@@ -21,6 +21,9 @@ namespace dsp {
     CPSRTwoBitCorrection ();
 
     ~CPSRTwoBitCorrection () { destroy(); }
+
+    //! Return true if CPSRTwoBitCorrection can convert the Observation
+    virtual bool matches (const Observation* observation);
 
   protected:
 

@@ -4,6 +4,14 @@
 #include "Timeseries.h"
 #include "genutil.h"
 
+// Register the CPSRTwoBitCorrection class with the Unpacker::registry
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection> entry;
+
+bool dsp::CPSRTwoBitCorrection::matches (const Observation* observation)
+{
+  return observation->get_machine() == "CPSR";
+}
+
 //! Null constructor
 dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection ()
   : TwoBitCorrection ("CPSRTwoBitCorrection")
