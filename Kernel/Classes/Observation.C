@@ -32,11 +32,11 @@ dsp::Observation::Observation ()
 
 void dsp::Observation::init ()
 {
-  set_ndat( 0 );
-  nchan = 1;
-  npol = 1;
-  set_ndim( 1 );
-  nbit = 0;
+  Observation::set_ndat( 0 );
+  Observation::set_nchan( 1 );
+  Observation::set_npol( 1 );
+  Observation::set_ndim( 1 );
+  Observation::set_nbit( 0 );
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -63,7 +63,7 @@ void dsp::Observation::init ()
 }
 
 double dsp::Observation::get_highest_frequency(double max_freq, unsigned chanstart,unsigned chanend){
-  chanend = min(nchan,chanend);
+  chanend = min(get_nchan(),chanend);
 
   double sign_change = 1;
 
@@ -98,7 +98,7 @@ double dsp::Observation::get_highest_frequency(double max_freq, unsigned chansta
 }
 
 double dsp::Observation::get_lowest_frequency(double min_freq, unsigned chanstart,unsigned chanend){
-  chanend = min(nchan,chanend);
+  chanend = min(get_nchan(),chanend);
 
   double sign_change = 1;
 
@@ -142,11 +142,11 @@ void dsp::Observation::set_state (Signal::State _state)
     set_ndim(2);
   else if (state == Signal::Intensity){
     set_ndim(1);
-    npol = 1;
+    set_npol( 1 );
   }
   else if (state == Signal::PPQQ){
     set_ndim(1);
-    npol = 2;
+    set_npol( 2 );
   }
   else if (state == Signal::Coherence){
     /* best not to muck with kludges */
@@ -156,7 +156,7 @@ void dsp::Observation::set_state (Signal::State _state)
   }
   else if (state == Signal::Invariant){
     set_ndim(1);
-    npol = 1;
+    set_npol( 1 );
   }
 }
 
@@ -234,10 +234,10 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
   }  
 
   if( ichan>=0 ){
-    if( fabs(bandwidth/float(nchan) - obs.bandwidth) > eps ) {
+    if( fabs(bandwidth/float(get_nchan()) - obs.bandwidth) > eps ) {
       if (verbose || combinable_verbose)
 	cerr << "dsp::Observation::combinable different channel bandwidth:"
-	     << bandwidth/float(nchan) << " and " << obs.bandwidth << endl;
+	     << bandwidth/float(get_nchan()) << " and " << obs.bandwidth << endl;
       can_combine = false;
     }
   }
@@ -248,17 +248,17 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
 
-  if (nchan != obs.nchan && ichan<0) {
+  if (get_nchan() != obs.get_nchan() && ichan<0) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different nchan:"
-	   << nchan << " and " << obs.nchan << endl;
+	   << get_nchan() << " and " << obs.get_nchan() << endl;
     can_combine = false;
   }
  
-  if (npol != obs.npol && ipol<0 ) {
+  if (get_npol() != obs.get_npol() && ipol<0 ) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different npol:"
-	   << npol << " and " << obs.npol << endl;
+	   << get_npol() << " and " << obs.get_npol() << endl;
     can_combine = false;
   }
 
@@ -269,10 +269,10 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
 
-  if (nbit != obs.nbit) {
+  if (get_nbit() != obs.get_nbit()) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different nbit:"
-	   << nbit << " and " << obs.nbit << endl;
+	   << get_nbit() << " and " << obs.get_nbit() << endl;
     can_combine = false;
   }
 
@@ -559,11 +559,11 @@ double dsp::Observation::get_centre_frequency (unsigned ichan) const
 {
   unsigned swap_chan = 0;
   if (swap)
-    swap_chan = nchan/2;
+    swap_chan = get_nchan()/2;
 
-  double channel = double ( (ichan+swap_chan) % nchan );
+  double channel = double ( (ichan+swap_chan) % get_nchan() );
 
-  return get_base_frequency() + channel * bandwidth / double(nchan);
+  return get_base_frequency() + channel * bandwidth / double(get_nchan());
 }
 
 //! Returns the centre frequency of the ichan'th frequency ordered channel in MHz.
@@ -577,13 +577,13 @@ double dsp::Observation::get_base_frequency () const
   if (dc_centred)
     return centre_frequency - 0.5*bandwidth;
   else
-    return centre_frequency - 0.5*bandwidth + 0.5*bandwidth/double(nchan);
+    return centre_frequency - 0.5*bandwidth + 0.5*bandwidth/double(get_nchan());
 }
 
 void dsp::Observation::get_minmax_frequencies (double& min, double& max) const
 {
   min = get_base_frequency();
-  max = min + bandwidth*(1.0-1.0/double(nchan));
+  max = min + bandwidth*(1.0-1.0/double(get_nchan()));
 
   if (min > max)
     std::swap (min, max);
@@ -639,10 +639,10 @@ Reference::To<Header> dsp::Observation::obs2Header(Header* hdr) const{
   h->add_token("SOURCE",source);
   h->add_token("CENTRE_FREQUENCY",centre_frequency);
   h->add_token("BANDWIDTH",bandwidth);
-  h->add_token("NCHAN",nchan);
-  h->add_token("NPOL",npol);
+  h->add_token("NCHAN",get_nchan());
+  h->add_token("NPOL",get_npol());
   h->add_token("NDIM",get_ndim());
-  h->add_token("NBIT",nbit);
+  h->add_token("NBIT",get_nbit());
   h->add_token("TYPE",Signal::Source2string(type));
   h->add_token("STATE",Signal::State2string(state));
   h->add_token("BASIS",Signal::Basis2string(basis));
@@ -682,10 +682,10 @@ bool dsp::Observation::obs2string(string& info_string) const{
   sprintf(dummy,"SOURCE\t%s\n",source.c_str()); ss += dummy;
   sprintf(dummy,"CENTRE_FREQUENCY\t%.16f\n",centre_frequency); ss += dummy;
   sprintf(dummy,"BANDWIDTH\t%.16f\n",bandwidth); ss += dummy;
-  sprintf(dummy,"NCHAN\t%d\n",nchan); ss += dummy;
-  sprintf(dummy,"NPOL\t%d\n",npol); ss += dummy;
+  sprintf(dummy,"NCHAN\t%d\n",get_nchan()); ss += dummy;
+  sprintf(dummy,"NPOL\t%d\n",get_npol()); ss += dummy;
   sprintf(dummy,"NDIM\t%d\n",get_ndim()); ss += dummy;
-  sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
+  sprintf(dummy,"NBIT\t%d\n",get_nbit()); ss += dummy;
   sprintf(dummy,"TYPE\t%s\n",Signal::Source2string(type).c_str()); ss += dummy;
   sprintf(dummy,"STATE\t%s\n",Signal::State2string(state).c_str()); ss += dummy;
   sprintf(dummy,"BASIS\t%s\n",Signal::Basis2string(basis).c_str()); ss += dummy;
@@ -792,10 +792,10 @@ void dsp::Observation::Header2obs(Reference::To<Header> h){
   source = h->retrieve_token<string>("SOURCE");
   centre_frequency = h->retrieve_token<double>("CENTRE_FREQUENCY");
   bandwidth = h->retrieve_token<double>("BANDWIDTH");
-  nchan = h->retrieve_token<unsigned>("NCHAN");
-  npol = h->retrieve_token<unsigned>("NPOL");
+  set_nchan( h->retrieve_token<unsigned>("NCHAN") );
+  set_npol( h->retrieve_token<unsigned>("NPOL") );
   set_ndim( h->retrieve_token<unsigned>("NDIM") );
-  nbit = h->retrieve_token<unsigned>("NBIT");
+  set_nbit( h->retrieve_token<unsigned>("NBIT") );
   type = Signal::string2Source( h->retrieve_token<string>("TYPE") );
   state = Signal::string2State( h->retrieve_token<string>("STATE") );
   basis = Signal::string2Basis( h->retrieve_token<string>("BASIS") );
@@ -858,10 +858,10 @@ void dsp::Observation::old_file2obs(int fd){
   retrieve_cstring(fptr,"SOURCE\t",dummy); source = dummy;  if(verbose) fprintf(stderr,"Got source=%s\n",source.c_str()); 
   fscanf(fptr,"CENTRE_FREQUENCY\t%lf\n",&centre_frequency);  if(verbose) fprintf(stderr,"Got centre_frequency=%f\n",centre_frequency); 
   fscanf(fptr,"BANDWIDTH\t%lf\n",&bandwidth);  if(verbose) fprintf(stderr,"Got bandwidth=%f\n",bandwidth); 
-  fscanf(fptr,"NCHAN\t%d\n",&nchan);  if(verbose) fprintf(stderr,"Got nchan=%d\n",nchan); 
-  fscanf(fptr,"NPOL\t%d\n",&npol);  if(verbose) fprintf(stderr,"Got npol=%d\n",npol); 
+  fscanf(fptr,"NCHAN\t%d\n",&retardo); set_nchan(retardo); if(verbose) fprintf(stderr,"Got nchan=%d\n",get_nchan()); 
+  fscanf(fptr,"NPOL\t%d\n",&retardo); set_npol(retardo); if(verbose) fprintf(stderr,"Got npol=%d\n",get_npol()); 
   fscanf(fptr,"NDIM\t%d\n",&retardo); set_ndim(retardo); if(verbose) fprintf(stderr,"Got ndim=%d\n",get_ndim()); 
-  fscanf(fptr,"NBIT\t%d\n",&nbit);  if(verbose) fprintf(stderr,"Got nbit=%d\n",nbit); 
+  fscanf(fptr,"NBIT\t%d\n",&retardo); set_nbit(retardo); if(verbose) fprintf(stderr,"Got nbit=%d\n",get_nbit()); 
   retrieve_cstring(fptr,"TYPE\t",dummy); type = Signal::string2Source(dummy);  if(verbose) fprintf(stderr,"Got type=%s\n",Signal::Source2string(type).c_str()); 
   retrieve_cstring(fptr,"STATE\t",dummy); state = Signal::string2State(dummy);  if(verbose) fprintf(stderr,"Got state=%s\n",Signal::State2string(state).c_str()); 
   retrieve_cstring(fptr,"BASIS\t",dummy); basis = Signal::string2Basis(dummy);  if(verbose) fprintf(stderr,"Got basis=%s\n",Signal::Basis2string(basis).c_str()); 
