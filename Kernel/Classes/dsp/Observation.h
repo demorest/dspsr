@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.34 $
-   $Date: 2002/11/21 02:02:14 $
-   $Author: hknight $ */
+   $Revision: 1.35 $
+   $Date: 2002/11/28 16:37:18 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -70,10 +70,20 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
+    //! Set the type of receiver feeds
+    void set_basis (Signal::Basis _basis) { basis = _basis; }
+    //! Return the type of receiver feeds
+    Signal::Basis get_basis () const { return basis; }
+
     //! Set the state of the signal
     virtual void set_state (Signal::State _state);
     //! Return the state of the signal
     Signal::State get_state () const { return state; }
+
+    //! Set the source type
+    void set_type (Signal::Source _type) { type = _type; }
+    //! Return the source type
+    Signal::Source get_type () const { return type; }
 
     //! Set the dimension of each datum
     virtual void set_ndim (unsigned _ndim) { ndim = _ndim; }
@@ -109,15 +119,15 @@ namespace dsp {
     //! Return the tempo telescope code
     char get_telescope () const { return telescope; }
 
-    //! Set the source type
-    void set_type (Signal::Source _type) { type = _type; }
-    //! Return the source type
-    Signal::Source get_type () const { return type; }
-
     //! Set the source name
     void set_source (string _source) { source = _source; }
     //! Return the source name
     string get_source () const { return source; }
+
+    //! Set the coordinates of the source
+    void set_coordinates (sky_coord _coordinates) { coordinates=_coordinates; }
+    //! Return the coordinates of the source
+    sky_coord get_coordinates () const { return coordinates; }
 
     //! Set the centre frequency of the band-limited signal in MHz
     void set_centre_frequency (double cf) { centre_frequency = cf; }
@@ -131,10 +141,10 @@ namespace dsp {
     //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double get_bandwidth () const { return bandwidth; }
 
-    //! Set the type of receiver feeds
-    void set_basis (Signal::Basis _basis) { basis = _basis; }
-   //! Return the type of receiver feeds
-    Signal::Basis get_basis () const { return basis; }
+    //! Returns the DM to which the data has been dedispersed
+    double get_dispersion_measure () const { return dispersion_measure; }
+    //! Set the record of what DM the data is dedispersed
+    void set_dispersion_measure (double dm) { dispersion_measure = dm; }
 
     //! Set the start time of the leading edge of the first time sample
     void set_start_time (MJD _start_time) { start_time = _start_time; }
@@ -176,26 +186,15 @@ namespace dsp {
     //! Return the observation identifier
     string get_identifier () const { return identifier; }
 
-    //! Set the observation mode
-    void set_mode (string _mode) { mode = _mode; }
-    //! Return the observation mode
-    string get_mode () const { return mode; }
-
-    //! Set the coordinates of the source
-    void set_coordinates (sky_coord _coordinates) { coordinates=_coordinates; }
-    //! Return the coordinates of the source
-    sky_coord get_coordinates () const { return coordinates; }
-
     //! Set the instrument used to record signal
     void set_machine (string _machine) { machine = _machine; }
     //! Return the instrument used to record signal
     string get_machine () const { return machine; }
 
-    //! Returns the DM to which the data has been dedispersed
-    double get_dispersion_measure () const { return dispersion_measure; }
-
-    //! Set the record of what DM the data is dedispersed
-    void set_dispersion_measure (double dm) { dispersion_measure = dm; }
+    //! Set the observation mode
+    void set_mode (string _mode) { mode = _mode; }
+    //! Return the observation mode
+    string get_mode () const { return mode; }
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     string get_domain(){ return domain; }

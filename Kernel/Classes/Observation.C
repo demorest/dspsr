@@ -305,15 +305,23 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   if (this == &in_obs)
     return *this;
 
-  set_centre_frequency ( in_obs.get_centre_frequency() );
-  set_bandwidth   ( in_obs.get_bandwidth() );
+  set_basis       ( in_obs.get_basis() );
+  set_state       ( in_obs.get_state() );
+  set_type        ( in_obs.get_type() );
+
+  set_ndim        ( in_obs.get_ndim() );
   set_nchan       ( in_obs.get_nchan() );
   set_npol        ( in_obs.get_npol() );
-  set_ndat        ( in_obs.get_ndat() );
-  set_ndim        ( in_obs.get_ndim() );
   set_nbit        ( in_obs.get_nbit() );
-  set_state       ( in_obs.get_state() );
-  set_basis       ( in_obs.get_basis() );
+  set_ndat        ( in_obs.get_ndat() );
+
+  set_telescope   ( in_obs.get_telescope() );
+  set_source      ( in_obs.get_source() );
+  set_coordinates ( in_obs.get_coordinates() );
+
+  set_centre_frequency ( in_obs.get_centre_frequency() );
+  set_bandwidth   ( in_obs.get_bandwidth() );
+  set_dispersion_measure   ( in_obs.get_dispersion_measure() );
 
   set_start_time  ( in_obs.get_start_time() );
 
@@ -322,14 +330,9 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_swap        ( in_obs.get_swap() );
   set_dc_centred  ( in_obs.get_dc_centred() );
 
-  set_telescope   ( in_obs.get_telescope() );
-
-  set_source      ( in_obs.get_source() );
   set_identifier  ( in_obs.get_identifier() );
   set_machine     ( in_obs.get_machine() );
   set_mode        ( in_obs.get_mode() );
-
-  set_coordinates ( in_obs.get_coordinates() );
 
   return *this;
 }
