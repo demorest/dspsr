@@ -77,6 +77,10 @@ void dsp::MultiFile::setup(Reference::To<dsp::File> opener){
   if( !loader )
     loader = opener;
   loader->open( files.front().filename, &files.front() );
+
+  // MultiFile must reflect the time sample resolution of the underlying device
+  resolution = loader->resolution;
+
   current_filename = files.front().filename;
 
   reset();
