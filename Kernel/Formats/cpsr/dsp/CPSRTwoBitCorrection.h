@@ -1,14 +1,12 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/11/06 06:30:41 $
-   $Author: hknight $ */
+   $Revision: 1.11 $
+   $Date: 2002/11/10 01:31:01 $
+   $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
 #define __CPSRTwoBitCorrection_h
-
-class CPSRTwoBitCorrection;
 
 #include "dsp/TwoBitCorrection.h"
 
