@@ -331,7 +331,7 @@ void dsp::Response::integrate (float* data1, float* data2, unsigned ichan)
 
   cross_detect_int (ndat, data1, data2,
 		    data, data + offset, 
-		    data + 2*offset, data + 3*offset);
+		    data + 2*offset, data + 3*offset, 1);
 }
 
 void dsp::Response::set (const vector<Jones<float> >& response)
