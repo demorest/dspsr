@@ -75,9 +75,11 @@ void dsp::IOManager::set_nsample (int _nsample)
 { 
   nsample = _nsample;
 
-  TwoBitCorrection* tbc = dynamic_cast<TwoBitCorrection*> (converter.get());
-  if (tbc)
-    tbc -> set_nsample (nsample);
+  if (converter) {
+    TwoBitCorrection* tbc = dynamic_cast<TwoBitCorrection*> (converter.get());
+    if (tbc)
+      tbc -> set_nsample (nsample);
+  }
 }
 
 //! The operation loads the next block of data and converts it to float_Stream
