@@ -85,8 +85,8 @@ LMOTIF = -lXm -lXt
 
 ##########################################################################
 # Qt Qt/Xt Qt/Motif/PGPLOT
-IQT := -I/usr/local/qt/include
-LQT := -L/usr/local/qt/lib -lqt
+IQT := -I${QTDIR}/include
+LQT := -L${QTDIR}/lib -lqt
 LQXT = $(LQT) -lqxt
 LQXMPGPLOT = $(LQXT) $(LXMPGPLOT)
 
@@ -120,7 +120,8 @@ else
 endif
 
 ##########################################################################
-# update
+# package detection 
+##########################################################################
 
 exists = $(if $(wildcard $(1)),yes,no)
 
@@ -129,6 +130,8 @@ has_MPI   := $(call exists,$(MPIDIR))
 has_QT    := $(call exists,$(QTDIR))
 has_PGPLOT:= $(call exists,$(PGPLOTDIR))
 
+##########################################################################
+# PGPLOT
 ifeq ($(has_PGPLOT),yes)
 INCFLAGS += -I$(PGPLOTDIR)
 endif
