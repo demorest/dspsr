@@ -200,8 +200,11 @@ int dsp::MPIRoot::wait ()
     throw_str ("MPIRoot::%d:wait - status.MPI_ERROR %s\n",
 	       mpi_self, mpi_errstr);
   }
+  
+  int count;
+  MPI_Get_count(&status, MPI_PACKED, &count);
 
-  return status.count;
+  return count;
 }
 
 // ////////////////////////////////////////////////////////////////////////////
