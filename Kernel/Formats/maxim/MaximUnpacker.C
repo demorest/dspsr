@@ -9,8 +9,8 @@
 bool dsp::MaximUnpacker::matches (const Observation* observation)
 {
   return observation->get_machine() == "Maxim"
-    && observation->get_nbit() == 8
-    && observation->get_state() == Signal::Analytic;
+    && observation->get_nbit() == 4
+    && observation->get_state() == Signal::Nyquist;
 }
 
 void dsp::MaximUnpacker::unpack ()
@@ -25,7 +25,7 @@ void dsp::MaximUnpacker::unpack ()
   const unsigned char* from = input->get_rawptr();
 
   float* into = output->get_datptr (0, 0);
- 
+
   unsigned bytes = input->get_ndat()/samples_per_byte;
 
   for (unsigned bt = 0; bt < bytes; bt++) {

@@ -89,11 +89,11 @@ void dsp::MaximFile::open_file (const char* filename)
 
 
   info.set_start_time(utc);
-  info.set_nbit(8);
-  info.set_npol(1);
+  info.set_nbit(4);
+  info.set_npol(2);
   info.set_nchan(1);
   
-  info.set_state(Signal::Analytic);
+  info.set_state(Signal::Nyquist);
 
   info.set_rate(80000000);
   info.set_machine("Maxim");
@@ -111,10 +111,7 @@ void dsp::MaximFile::open_file (const char* filename)
   // file_info.st_size contains number of bytes in file, 
   // subtract header_bytes (16bytes).
 
-  // This needs to be checked and fixed
-  
-  info.set_ndat( int64((file_info.st_size - header_bytes)/info.get_npol() )* 
-		 16 / (info.get_nbit()*info.get_npol()) );
+  info.set_ndat( int64(file_info.st_size - header_bytes) );
   
   unsigned bits_per_byte = 8;
   resolution = bits_per_byte / info.get_nbit();
