@@ -74,9 +74,11 @@ void dsp::TScrunch::transformation ()
 
   if( input.get() != output.get() ){
     get_output()->copy_configuration( get_input() );
-    //    fprintf(stderr,"resizing to "UI64" / %d = "UI64"\n",
-    //    input->get_ndat(), sfactor,
-    //    uint64(input->get_ndat()/ sfactor));
+    get_output()->set_ndim( get_input()->get_ndim() );
+    get_output()->set_nchan( get_input()->get_nchan() );
+    get_output()->set_npol( get_input()->get_npol() );
+    get_output()->set_state( get_input()->get_state() );
+
     get_output()->resize( get_input()->get_ndat()/sfactor );
   }
 
