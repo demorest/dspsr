@@ -1,15 +1,14 @@
-#include <iostream>
 
+#include <iostream>
 #include <assert.h>
 #include <math.h>
 
 #include "TwoBitCorrection.h"
+#include "Timeseries.h"
 #include "genutil.h"
 #include "ierf.h"
 
-/*! From Jenet&Anderson "The Effects of Digitization on Nonstationary
-  Stochastic Signals with Applications to Pulsar Signal Baseband
-  Recording", Table 1 */
+/*! From JA98, Table 1 */
 const double dsp::TwoBitCorrection::optimal_2bit_threshold = 0.9674;
 
 //! Null constructor
@@ -25,6 +24,25 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
   cutoff_sigma = 0.0;
   n_min = 0;
   n_max = 0;
+}
+
+//! The operation loads the next block of data and sets the observation info
+void dsp::TwoBitCorrection::operation ()
+{
+  if (input->get_nbit() != 2)
+    throw_str ("TwoBitCorrection::operation input not 2-bit digitized");
+
+  // set the Observation information
+  output->Observation::operator=(*input);
+
+  // output will be floating point values
+  output->set_nbit (8 * sizeof(float));
+
+  // resize the output 
+  output->resize (input->get_ndat());
+
+  // call the virtual method defined by subclasses
+  unpack ();
 }
 
 void dsp::TwoBitCorrection::destroy ()
@@ -157,44 +175,78 @@ void dsp::TwoBitCorrection::build (int nchan, int nsamp, float sigma)
 		    << " nsamp=" << nsamp
 		    << " cutoff=" << sigma << "sigma\n";
 
-  float sign   [4] = {-1.0, -1.0, 1.0, 1.0};
-  int   threes [4] = {  1,    0,   0,   1 };
-
   nchannel = nchan;
   nsample = nsamp;
   cutoff_sigma = sigma;
 
   set_twobit_limits ();
   
-  float root_pi  = sqrt(M_PI);
-  float root2    = sqrt(2.0);
-
   float* dls_lut = dls_lookup;
+  float lo=0, hi=0;
 
   for (int n_in=n_min; n_in <= n_max; n_in++)  {
-    /* Given n_in, the number of samples between x2 and x4, 
-       then p_in is the left-hand side of Eq.44 */
-    float p_in = (float) n_in / (float) nsamp;
 
-    /* The inverse error function of p_in gives alpha, equal to the 
-       "t/(root2 * sigma)" in brackets on the right-hand side of Eq.45 */
-    float alpha = ierf (p_in);
-    float expon = exp (-alpha*alpha);
+    get_output_levels (n_in, lo, hi);
 
-    /* Equation 41 (ones: -y2, y3), substituting the above-computed values */
-    float a = 2.0/(root2*alpha) * sqrt(1.0-(2.0*alpha/root_pi)*(expon/p_in));
-    /* Similarly, Equation 40 (threes: -y1, y4) */
-    float b = 2.0/(root2*alpha) * sqrt(1.0+(2.0*alpha/root_pi)*
-					(expon/(1.0 - p_in)));
-
-    for (int val=0; val<4; val++)  {
-      if (threes[val])
-	*dls_lut = sign[val] * b;
+    for (unsigned char val=0; val<4; val++)  {
+      if (get_hi(val))
+	*dls_lut = get_sign(val) * hi;
       else
-	*dls_lut = sign[val] * a;
+	*dls_lut = get_sign(val) * lo;
       dls_lut ++;
     }
   }
+}
+
+/*!  Given the number of digitized samples in the low voltage state,
+  this method returns the optimal values for low and high output
+  voltage states.
+
+  \pre the nsample attribute must be set before calling this method
+  \param nlo number of low voltage state samples (out of nsample)
+  \retval lo the low voltage output state
+  \retval hi the hi voltage output state
+*/
+  
+void dsp::TwoBitCorrection::get_output_levels (int nlo, float& lo, float& hi) 
+{
+  static float root_pi = sqrt(M_PI);
+  static float root2   = sqrt(2.0);
+
+  if (nsample < 1)
+    throw_str ("TwoBitCorrection::get_output_levels"
+	       " invalid nsample=%d", nsample);
+
+  if (nlo < 0 || nlo > nsample)
+    throw_str ("TwoBitCorrection::get_output_levels"
+	       " invalid nlo=%d", nlo);
+
+  /* Refering to JA98, nlo is the number of samples between x2 and x4, 
+     and p_in is the left-hand side of Eq.44 */
+  float p_in = (float) nlo / (float) nsample;
+
+  /* The inverse error function of p_in gives alpha, equal to the 
+     "t/(root2 * sigma)" in brackets on the right-hand side of Eq.45 */
+  float alpha = ierf (p_in);
+  float expon = exp (-alpha*alpha);
+
+  // Equation 41 (-y2, y3)
+  lo = 2.0/(root2*alpha) * sqrt(1.0 - (2.0*alpha/root_pi)*(expon/p_in));
+
+  // Equation 40 (-y1, y4)
+  hi = 2.0/(root2*alpha) * sqrt(1.0 + (2.0*alpha/root_pi)*(expon/(1.0-p_in)));
+}
+
+bool dsp::TwoBitCorrection::get_hi (unsigned char val)
+{
+  bool hi [4] = { 1, 0, 0, 1 };
+  return hi[val];
+}
+
+int dsp::TwoBitCorrection::get_sign (unsigned char val)
+{
+  float sign [4] = { -1.0, -1.0, 1.0, 1.0 };
+  return sign[val];
 }
 
 //! Calculate the mean voltage and power from Bit_Stream data

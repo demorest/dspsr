@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/07/02 09:59:02 $
-   $Author: pulsar $ */
+   $Revision: 1.4 $
+   $Date: 2002/07/05 03:02:57 $
+   $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
@@ -18,8 +18,8 @@ namespace dsp {
   //! Converts a Timeseries from 2-bit digitized to floating point values
   /*! The conversion routines are implemented by the TwoBitCorrection
     sub-classes, which perform the dynamic level-setting technique
-    described by Jenet & Anderson (1998, PASP, 110, 1467) in order to
-    correct for the effects of digitization */
+    described by Jenet & Anderson (1998, PASP, 110, 1467; hereafter
+    JA98) in order to correct for the effects of digitization */
   class TwoBitCorrection: public Operation {
 
   public:
@@ -45,6 +45,15 @@ namespace dsp {
 
     //! Build the dynamic level setting lookup table
     virtual void build (int nchannel, int nsample, float cutoff_sigma);
+
+    //! Get the low and hi output levels
+    virtual void get_output_levels (int nlo, float& lo, float& hi);
+
+    //! Return true if val corresponds to a digitized high voltage state
+    virtual bool get_hi (unsigned char val);
+
+    //! Return the sign of the digitized voltage state
+    virtual int get_sign (unsigned char val);
 
     //! Calculate the sum and sum-squared from each channel of digitized data
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
