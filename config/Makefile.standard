@@ -44,7 +44,7 @@ MDFLAGS := -D__cplusplus
 AR      := ar
 RANLIB  := ranlib
 ARFLAGS := crv
-RM    := rm -f
+RM    := rm -rf
 AWK   := awk
 GREP  := grep
 QTMOC := moc
@@ -155,6 +155,6 @@ LTIMES = -ltimes -lgenutil $(LSLA) -lm
 
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
-LPSRCHIVE = -lpsrchive -ltempo++ -lpolyco -leph -lCalibration -lgenutil++ \
-	$(LFFT) $(LTIMES)
+LPSRCHIVE = -lpsrchive -lpsrchive_Extension -ltempo++ -lpolyco -leph \
+	-lCalibration -lunits -lgenutil++ $(LFFT) $(LTIMES)
 
