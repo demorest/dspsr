@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "environ.h"
+
 // CPSR header and unpacking routines
 #define cpsr 1
 #include "pspm_search_header.h"
@@ -78,7 +80,9 @@ void dsp::CPSRFile::open_file (const char* filename)
   }
 
   header_bytes = sizeof(PSPM_SEARCH_HEADER);
-  
+  fprintf(stderr,"header_bytes="UI64"\n",
+	  uint64(header_bytes));
+
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
     throw Error (FailedSys, "dsp::CPSRFile::open", 
@@ -200,8 +204,23 @@ void dsp::CPSRFile::open_file (const char* filename)
   // number of channels = number of polarizations * ((I and Q)=2);
   info.set_npol (hdr.ndigchan / 2);
   info.set_nbit (hdr.nbit);
-  
+   
   info.set_ndat (hdr.ndat);
+
+  uint64 fsize = filesize(filename);
+
+  if( fsize-header_bytes != info.get_nbytes() ){
+    info.set_ndat( info.get_nsamples(fsize-header_bytes) );
+    fprintf(stderr,"WARNING: dsp::CPSRFile::open_file(): Your ndat in header ("UI64") doesn't match file size ("UI64" bytes) (The number of samples has been reduced to "UI64" because the header size is "UI64")\n",
+	    uint64(hdr.ndat),uint64(fsize),info.get_ndat(),
+	    uint64(header_bytes));
+  }
+
+  //throw Error(InvalidState,"dsp::CPSRFile::open_file()",
+  //      "ndat in header ("UI64") doesn't match file size ("UI64")\n",
+  //      uint64(hdr.ndat),uint64(fsize));
+
+  fprintf(stderr,"Have set CPSR ndat to be "UI64"\n",uint64(hdr.ndat));
   
   if (hdr.ndat < 1) {
     ::close (fd);
@@ -218,4 +237,14 @@ void dsp::CPSRFile::open_file (const char* filename)
     cerr << "dsp::CPSRFile::open exit" << endl;
 }
   
+
+
+
+
+
+
+
+
+
+
 
