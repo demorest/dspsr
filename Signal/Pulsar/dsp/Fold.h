@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.22 $
-   $Date: 2003/10/30 02:26:45 $
-   $Author: hknight $ */
+   $Revision: 1.23 $
+   $Date: 2003/11/26 08:34:48 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Fold_h
@@ -37,6 +37,7 @@ namespace dsp {
 #if HSKTEST
     friend class MultiFold;
 #endif
+    friend class rawprofile;
 
   public:
     
@@ -168,13 +169,13 @@ namespace dsp {
     //! INTERNAL: the number of time samples to fold
     uint64 ndat_fold;
 
-  private:
-
     //! Set the phase model with which to fold data
     void set_folding_polyco (const polyco* folding_polyco);
 
     //! Set the ephemeris with which to create the phase model
     void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
+
+  private:
 
     //! Phase model with which to fold data (PSR)
     Reference::To<const polyco> folding_polyco;
