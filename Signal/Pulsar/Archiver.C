@@ -174,9 +174,10 @@ try {
   else
     effective_npol *= ndim;
 
-  cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
-       << " npol=" << effective_npol << " nchan=" << nchan 
-       << " nbin=" << nbin << endl;
+  if( verbose )
+    cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
+	 << " npol=" << effective_npol << " nchan=" << nchan 
+	 << " nbin=" << nbin << endl;
 
   archive-> resize (nsub, effective_npol, nchan, nbin);
 
@@ -294,8 +295,9 @@ try {
 
 	Pulsar::Profile* profile = integration->get_Profile(poln, chan);
 
-	cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
-	     << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
+	if( verbose )
+	  cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
+	       << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
 	set (profile, phase, ichan, ipol, idim);
 
