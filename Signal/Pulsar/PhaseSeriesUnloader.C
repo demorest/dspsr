@@ -16,12 +16,8 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
-
-  if( data->get_archive_filename() != string() ){
-    fprintf(stderr,"dsp::PhaseSeriesUnloader::get_filename() got archive_filename as '%s'- calling make_unique()\n",
-	      data->get_archive_filename().c_str());
+  if( data->get_archive_filename() != string() )
     return make_unique(data->get_archive_filename(),"",data);
-  }
 
   string filename;
   string fname_extension = filename_extension;

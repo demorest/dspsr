@@ -483,10 +483,8 @@ void dsp::Fold::transformation ()
   output->set_rate (1.0/sampling_interval);
 
   // Set things out of the pulsar ephemeris
-  if( dispersion_measure > 0.0 ){
+  if( dispersion_measure > 0.0 )
     output->set_dispersion_measure( dispersion_measure );
-    fprintf(stderr,"folder has set DM to be %f\n",dispersion_measure);
-  }
   else if( pulsar_ephemeris )
     output->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
