@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.21 $
-   $Date: 2004/04/08 04:09:57 $
+   $Revision: 1.22 $
+   $Date: 2004/04/21 09:56:32 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -13,30 +13,13 @@
 #include "Error.h"
 #include "environ.h"
 
-#include "dsp/Observation.h"
+#include "dsp/DataSeries.h"
 
 namespace dsp {
   
-  //! Container of dimension/time-major order floating point data.
-  /* The TimeSeries class contains floating point data arranged as a
-     function of frequency, polarization, time, and dimension, ie.
-
-     f0p0t0d0...f0p0t0dD,f0p0t1d0...f0p0t1dD...f0p0tTd0...f0p0tTdD, 
-     f0p1t0d0...f0p1t0dD,f0p1t1d0...f0p1t1dD...f0p1tTd0...f0p1tTdD, 
-     ...
-     f0pPt0d0...f0pPt0dD,f0pPt1d0...f0pPt1dD...f0pPtTd0...f0pPtTdD, 
-     f1p0t0d0...f1p0t0dD,f1p0t1d0...f1p0t1dD...f1p0tTd0...f1p0tTdD, 
-     ...
-     fFpPt0d0...fFpPt0dD,fFpPt1d0...fFpPt1dD...fFpPtTd0...fFpPtTdD
-  */
-  class TimeSeries : public Observation {
+  class TimeSeries : public DataSeries {
 
   public:
-
-    //! Counts number of TimeSeries's in existence
-    static int instantiation_count;
-    //! Stores the cumulative amount of memory used
-    static int64 memory_used;
 
     //! Null constructor
     TimeSeries ();
@@ -49,6 +32,9 @@ namespace dsp {
 
     //! Cloner (calls new)
     virtual TimeSeries* clone();
+
+    //! Returns a null-instantiation (calls new)
+    virtual TimeSeries* null_clone();
 
     //! Swaps the two TimeSeries's.  Returns '*this'
     virtual TimeSeries& swap_data(TimeSeries& ts);
@@ -68,12 +54,6 @@ namespace dsp {
     //! Copy the configuration of another TimeSeries instance (not the data)
     virtual void copy_configuration (const TimeSeries* copy);
 
-    //! Hack together 2 different bands (not pretty)
-    virtual void hack_together(vector<TimeSeries*> bands);
-
-    //! Convenience interface to the above hack_together
-    virtual void hack_together(TimeSeries* band1, TimeSeries* band2);
-
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
 
@@ -86,18 +66,15 @@ namespace dsp {
 
     //! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
     virtual void zero_resize(unsigned char*& _buffer, uint64& nbytes);
+    
+    //! Return pointer to the specified data block
+    float* get_datptr (unsigned ichan=0, unsigned ipol=0);
+
+    //! Return pointer to the specified data block
+    const float* get_datptr (unsigned ichan=0, unsigned ipol=0) const;
 
     //! Offset the base pointer by offset time samples
     virtual void seek (int64 offset);
-
-    //! Return pointer to the specified block of time samples
-    virtual float* get_datptr (unsigned ichan=0,unsigned ipol=0);
-
-    //! Return pointer to the specified block of time samples
-    virtual const float* get_datptr (unsigned ichan=0,unsigned ipol=0) const;
-
-    //! Return a pointer to the ichan'th frequency ordered channel and pol
-    virtual float* get_ordered_datptr(unsigned ichan,unsigned ipol);
 
     //! Append little onto the end of 'this'
     //! If it is zero, then none were and we assume 'this' is full
@@ -125,55 +102,26 @@ namespace dsp {
     //! Call this when you do not want to transfer ownership of the array
     virtual void attach(float* _data);
 
-    //! Copy from the back of 'tseries' into the front of 'this'
-    //! This method is quite low-level- you have to fix up things like start_time, the observation data, ndat, and the subsize are all set correctly yourself
-    //! Method basically just does lots of memcpys
-    virtual void copy_from_back(TimeSeries* tseries, uint64 nsamples);
-
-    //! Copy from the front of 'tseries' into the front of 'this'
-    //! This method is quite low-level- you have to fix up things like start_time, the observation data, ndat, and the subsize are all set correctly yourself
-    //! Method basically just does lots of memcpys
-    virtual void copy_from_front(TimeSeries* tseries, uint64 nsamples);
-
-    //! Check to see if subsize==ndat
-    virtual bool full(){ return subsize==ndat; }
-
-    //! Set ndat to subsize- the most it can be
-    virtual void set_maximal_ndat(){ ndat = subsize; }
-
     //! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
     virtual void normalise();
 
     //! Returns the maximum bin of channel 0, pol 0
     virtual unsigned get_maxbin();
-
-    /*! This:
-      (1) Puts the first 'this->ndat-ts->ndat' timesamples of 'this' into the last possible spots of 'this'
-      (2) Copies 'ts' into the start of 'this'
-      (3) So now the last few samples of 'this' are deleted and the timeseries starts earlier.
-    */
-    void rotate_backwards_onto(TimeSeries* ts);
     
-    // Inquire the stride between floats representing the same timesample but in different chan/pol groups.  This is called by CoherentFBWriter 
-    virtual uint64 get_subsize(){ return subsize; }
-
   protected:
+
+    //! Returns a uchar pointer to the first piece of data
+    virtual unsigned char* get_data();
+    //! Returns a uchar pointer to the first piece of data
+    virtual const unsigned char* const_get_data() const;
 
     //! Called by append()
     void append_checks(uint64& ncontain,uint64& ncopy,
 		       const TimeSeries* little);
-
-    //! The data buffer
-    float* buffer;
-
-    //! The size of the data buffer 
-    uint64 size;
-
+    
     //! Pointer into buffer, offset to the first time sample requested by user
     float* data;
 
-    //! The number of floats in a data sub-division
-    uint64 subsize;
   };
 
   class TimeSeriesPtr{
@@ -181,20 +129,18 @@ namespace dsp {
     
     TimeSeries* ptr;
    
-    TimeSeries& operator * () const
-    { if(!ptr) throw Error(InvalidState,"dsp::TimeSeriesPtr::operator*()","You have called operator*() when ptr is NULL"); return *ptr; }
-    TimeSeries* operator -> () const 
-    { if(!ptr) throw Error(InvalidState,"dsp::TimeSeriesPtr::operator*()","You have called operator*() when ptr is NULL"); return ptr; }
+    TimeSeries& operator * () const;
+    TimeSeries* operator -> () const; 
         
-    TimeSeriesPtr& operator=(const TimeSeriesPtr& tsp){ ptr = tsp.ptr; return *this; }
+    TimeSeriesPtr& operator=(const TimeSeriesPtr& tsp);
 
-    TimeSeriesPtr(const TimeSeriesPtr& tsp){ operator=(tsp); }
-    TimeSeriesPtr(TimeSeries* _ptr){ ptr = _ptr; }
-    TimeSeriesPtr(){ ptr = 0; }
+    TimeSeriesPtr(const TimeSeriesPtr& tsp);
+    TimeSeriesPtr(TimeSeries* _ptr);
+    TimeSeriesPtr();
 
     bool operator < (const TimeSeriesPtr& tsp) const;
 
-    ~TimeSeriesPtr(){ }
+    ~TimeSeriesPtr();
   };
 
   // This class just stores a pointer into a particular channel/polarisation pair's data
@@ -205,25 +151,21 @@ namespace dsp {
     unsigned ichan;
     unsigned ipol;
 
-    void init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
-    { ts=_ts; ichan=_ichan; ipol = _ipol; ptr=ts->get_datptr(ichan,ipol); }
+    void init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol);
 
-    ChannelPtr& operator=(const ChannelPtr& c){ ts=c.ts; ptr=c.ptr; ichan=c.ichan; ipol=c.ipol; return *this; }
+    ChannelPtr& operator=(const ChannelPtr& c);
 
-    ChannelPtr()
-    { ts = 0; ptr = 0; ichan=ipol=0; }
-    ChannelPtr(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
-    { init(_ts,_ichan,_ipol); }
-    ChannelPtr(TimeSeriesPtr _ts,unsigned _ichan, unsigned _ipol)
-    { init(_ts.ptr,_ichan,_ipol); }
-    ChannelPtr(const ChannelPtr& c){ operator=(c); }
-    ~ChannelPtr(){ }
+    ChannelPtr();
+    ChannelPtr(TimeSeries* _ts,unsigned _ichan, unsigned _ipol);
+    ChannelPtr(TimeSeriesPtr _ts,unsigned _ichan, unsigned _ipol);
+    ChannelPtr(const ChannelPtr& c);
+    ~ChannelPtr();
     
     bool operator < (const ChannelPtr& c) const;
 
-    float& operator[](unsigned index){ return ptr[index]; }
+    float& operator[](unsigned index);
 
-    float get_centre_frequency(){ return ts->get_centre_frequency(ichan); }
+    float get_centre_frequency();
 
   };
   
