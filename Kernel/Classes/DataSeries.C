@@ -72,7 +72,12 @@ uint64 dsp::DataSeries::subsize_samples(){
   and the current data fill be lost.
   </UL>
 */
-void dsp::DataSeries::resize (uint64 nsamples)
+void dsp::DataSeries::resize (uint64 nsamples){
+  unsigned char* dummy = (unsigned char*)(-1);
+  resize(nsamples,dummy);
+}
+
+void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 {
   if (verbose)
     cerr << "dsp::DataSeries::resize (" << nsamples << ")" << endl;
@@ -99,9 +104,14 @@ void dsp::DataSeries::resize (uint64 nsamples)
 
   if (!require || require > size) {
     if (buffer){
-      delete [] buffer;
+      if( old_buffer != (unsigned char*)(-1) ){
+	old_buffer = buffer;
+      }
+      else{
+	delete [] buffer;
+	memory_used -= size;
+      }
       buffer = 0;
-      memory_used -= size;
     }
     size = subsize = 0;
   }
@@ -136,18 +146,6 @@ const unsigned char* dsp::DataSeries::const_get_data() const{
 //! Return pointer to the specified data block
 unsigned char* dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol)
 {
-  /*
-  char dummy[1024];
-  sprintf(dummy,"%p",buffer);
-  string address = dummy;
-
-  if( address=="0x5a99c008" ){
-    fprintf(stderr,"buffer=%p get_data()=%p ichan=%d npol=%d ipol=%d subsize="UI64" ret=%p\n",
-	    buffer,get_data(),ichan,npol,ipol,subsize,
-	    ((unsigned char*)get_data()) + (ichan*npol+ipol)*subsize);
-  }
-  */
-
   return ((unsigned char*)get_data()) + (ichan*npol+ipol)*subsize;
 }
 
@@ -155,18 +153,6 @@ unsigned char* dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol)
 const unsigned char*
 dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol) const
 {
-  /*
-  char dummy[1024];
-  sprintf(dummy,"%p",buffer);
-  string address = dummy;
-
-  if( address=="0x5a99c008" ){
-    fprintf(stderr,"buffer=%p get_data()=%p ichan=%d npol=%d ipol=%d subsize="UI64" ret=%p\n",
-	    buffer,get_data(),ichan,npol,ipol,subsize,
-	    ((unsigned char*)get_data()) + (ichan*npol+ipol)*subsize);
-  }
-  */
-
   return ((const unsigned char*)const_get_data()) + (ichan*npol+ipol)*subsize;
 }
 
@@ -181,59 +167,13 @@ dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
 
   uint64 npt = (get_ndat() * get_ndim() * get_nbit())/8;
 
-  /*
-  fprintf(stderr,"In dsp::DataSeries::operator=() with ndat="UI64" nchan=%d get_nbytes()="UI64" npt="UI64"\n",
-	  get_ndat(),nchan,get_nbytes(),npt);
-
-  fprintf(stderr,"Got subsize="UI64" size="UI64" buffer=%p\n",
-	  subsize,size,buffer);
-  fprintf(stderr,"For copy got subsize="UI64" size="UI64" buffer=%p\n",
-	  copy.subsize,copy.size,copy.buffer);
-  */
-
   for (unsigned ichan=0; ichan<get_nchan(); ichan++){
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
-      //  fprintf(stderr,"hi1\n");
-
       unsigned char* dest = get_udatptr (ichan, ipol);
       const unsigned char* src = copy.get_udatptr (ichan, ipol);
-      //float* dest = dynamic_cast<TimeSeries*>(this)->get_datptr (ichan, ipol);
-      //const float* src = dynamic_cast<TimeSeries*>(const_cast<DataSeries*>(&copy))->get_datptr (ichan, ipol);
-
-      /*
-      fprintf(stderr,"Got dest=%p src=%p npt="UI64"\n",dest,src,npt);
-      fprintf(stderr,"hi2\n");
-
-      char dummy[1024];
-      sprintf(dummy,"%p",dest);
-      string address = dummy;
-
-      if( address=="0x519db008" ){
-	fprintf(stderr,"not broken!!!\n");
-	fprintf(stderr,"src=%p dest=%p\n",src,dest);
-	fprintf(stderr,"not broken!!!\n");
-	
-	DataSeries* bla = (DataSeries*)&copy;
-
-	fprintf(stderr,"nonconst: %p const: %p\n",
-		bla->get_udatptr(ichan,ipol),src);
-	//exit(0);
-      }
-          
-
-      for( unsigned i=0; i<npt; i++){
-	if( address=="0x519db008" ){
-	  fprintf(stderr,"i=%d src[0]=%f\n",i,i,*((float*)src));
-	}
-	dest[i] = src[i];
-      }
-      */
       memcpy(dest,src,npt);
-
-      //fprintf(stderr,"hi3\n");
     }
   }
-  //  fprintf(stderr,"hi4\n");
   
   return *this;
 }
@@ -242,13 +182,8 @@ dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
 {
   Observation::swap_data( ts );
   unsigned char* tmp = buffer; buffer = ts.buffer; ts.buffer = tmp;
-  //  std::swap(buffer,ts.buffer);
-  
   uint64 tmp2 = size; size = ts.size; ts.size = tmp2;
-  //  std::swap(size,ts.size);
-
   uint64 tmp3 = subsize; subsize = ts.subsize; ts.subsize = tmp3;
-  //  std::swap(subsize,ts.subsize);
 
   return *this;
 }
