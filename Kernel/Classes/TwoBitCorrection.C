@@ -21,8 +21,8 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
   histograms = NULL;
   dls_lookup = NULL;
 
-  nsample = 0;
-  cutoff_sigma = 0.0;
+  nsample = 512;
+  cutoff_sigma = 3.0;
   n_min = 0;
   n_max = 0;
 }
@@ -176,13 +176,15 @@ unsigned long dsp::TwoBitCorrection::get_histogram_total (int channel) const
    which are mostly found in Section 6.
    ********************************************************************** */
 
-void dsp::TwoBitCorrection::build (int nchan, int nsamp, float sigma)
+void dsp::TwoBitCorrection::build (int nsamp, float sigma)
 {
   if (verbose) cerr << "TwoBitCorrection::build:: "
 		    << " nsamp=" << nsamp
 		    << " cutoff=" << sigma << "sigma\n";
 
-  nchannel = nchan;
+  if (nchannel<1)
+    throw_str ("TwoBitCorrection::build invalid nchannel=%d", nchannel);
+
   nsample = nsamp;
   cutoff_sigma = sigma;
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/07/11 16:04:16 $
+   $Revision: 1.4 $
+   $Date: 2002/07/15 06:34:28 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
@@ -20,15 +20,13 @@ namespace dsp {
 
   public:
 
-    //! Null constructor
-    CPSRTwoBitCorrection (const char* name = "CPSRTwoBitCorrection",
-			  Behaviour type = outofplace) :
-      TwoBitCorrection (name, type) { values = 0; nchannel = 4; }
+    //! Constructor
+    CPSRTwoBitCorrection (int nsample = 512, float cutoff_sigma = 3.0);
 
     ~CPSRTwoBitCorrection () { destroy(); }
 
     //! Build the dynamic level setting lookup table and temporary space
-    void build (int nchannel, int nsample, float cutoff_sigma);
+    void build (int nsample, float cutoff_sigma);
 
   protected:
 

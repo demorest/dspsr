@@ -2,6 +2,16 @@
 #include "Timeseries.h"
 #include "genutil.h"
 
+//! Null constructor
+dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection (int _nsample,
+						 float _cutoff_sigma)
+  : TwoBitCorrection ("CPSRTwoBitCorrection", outofplace)
+{
+  values = 0;
+  nchannel = 4;
+  build (_nsample, _cutoff_sigma);
+}
+
 void dsp::CPSRTwoBitCorrection::unpack ()
 {
   if (input->get_npol() != 2)
@@ -23,8 +33,8 @@ void dsp::CPSRTwoBitCorrection::unpack ()
       float* unpackinto = output->get_datptr(0,ipol) + iq;
       
       if (verbose)
-	fprintf (stderr, "cpsr_convert_fs into data[%d]=%p (chan:%d)\n", 
-		 ipol, unpackinto, channel);
+	fprintf (stderr, "CPSRTwoBitCorrection::unpack"
+		 " into data[%d]=%p (chan:%d)\n", ipol, unpackinto, channel);
       
       iq_unpack (unpackinto, rawptr, ndat, channel, NULL);
       
@@ -46,17 +56,18 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 					   int64 ndat, 
 					   int channel, int* weights)
 {
+  if (!values)
+    throw_str ("CPSRTwoBitCorrection::iq_unpack not built");
 
-#ifdef _DEBUG
-  fprintf (stderr, "iq_unpack: entered\n");
-#endif
   if (channel < 0 || channel >= nchannel)
     throw_str ("CPSRTwoBitCorrection::iq_unpack invalid channel %d", channel);
 
-  if (int(ndat) < nsample)  {
-    cerr << "iq_unpack:: not enough data " << ndat << endl;
-    throw (string("CPSRTwoBitCorrection::iq_unpack invalid ndat"));
-  }
+  if (nsample < 10)
+    throw_str ("CPSRTwoBitCorrection::iq_unpack invalid nsample %d", nsample);
+
+  if (ndat < nsample)
+    throw_str ("CPSRTwoBitCorrection::iq_unpack ndat=%d < nsample=%d",
+	       ndat, nsample);
 
   static int ones [4] = { 0, 1, 1, 0 };
 
@@ -79,7 +90,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
   //fprintf (stderr, "tbc: chan: %d\n", newchan);
   int nsuccess = 0;
 
-  unsigned long n_weights = (unsigned long) ceil (float(ndat) / float(nsample));
+  unsigned long n_weights = (unsigned long) ceil (float(ndat)/float(nsample));
 
   int64 points_left = ndat;
 
@@ -111,7 +122,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
     if (hist)
       hist [n_in] ++;
 
-    if (weights[wt]==0 || n_in<n_min || n_in>n_max) {
+    if (weights && weights[wt]==0 || n_in<n_min || n_in>n_max) {
 
       // cerr << "iq:weight[" << wt << "]=0" << endl;
 
@@ -130,7 +141,8 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 	*datptr = corrected [values[pt]];
 	datptr += 2;
       }
-      weights[wt] += n_in;
+      if (weights)
+	weights[wt] += n_in;
       nsuccess ++;
     }
 
@@ -144,13 +156,13 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 
 }
 
-void dsp::CPSRTwoBitCorrection::build (int nchan, int nsamp, float sigma)
+void dsp::CPSRTwoBitCorrection::build (int nsamp, float sigma)
 {
   // delete the old space
   CPSRTwoBitCorrection::destroy();
 
   // setup the lookup table
-  TwoBitCorrection::build (nchan, nsamp, sigma);
+  TwoBitCorrection::build (nsamp, sigma);
 
   // create the new space
   values = new unsigned char [nsamp];

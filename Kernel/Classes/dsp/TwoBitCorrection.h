@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/07/12 14:16:06 $
+   $Revision: 1.8 $
+   $Date: 2002/07/15 06:34:54 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -44,7 +44,7 @@ namespace dsp {
     //virtual void initialize (const string& descriptor);
 
     //! Build the dynamic level setting lookup table
-    virtual void build (int nchannel, int nsample, float cutoff_sigma);
+    virtual void build (int nsample, float cutoff_sigma = 3.0);
 
     //! Get the low and hi output levels
     virtual void get_output_levels (int nlo, float& lo, float& hi);
