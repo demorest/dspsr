@@ -1,0 +1,20 @@
+##############################################################################
+#
+# Uncomment any of the following lines to compile instrument specific code
+# See Makefile.backends for comments and restrictions
+#
+
+#PMDAQ:=yes
+#CPSR2:=yes
+#CPSR2_4bit:=yes
+#CPSR:=yes
+#S2:=yes
+#PuMa:=yes
+#MARK4:=yes
+#Maxim:=yes
+#SMRO:=yes
+#K5:=yes
+#VSIB:=yes
+#SPIGOT:=yes
+#BCPM:=yes
+
