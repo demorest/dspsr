@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.32 $
-   $Date: 2004/11/02 10:16:43 $
-   $Author: hknight $ */
+   $Revision: 1.33 $
+   $Date: 2004/11/02 14:02:00 $
+   $Author: wvanstra $ */
 
 
 
@@ -151,10 +151,10 @@ namespace dsp {
     virtual void transformation ();
 
     //! Fold nblock blocks of data
-    void new_fold (const unsigned* weights, unsigned ndatperweight);
+    virtual void fold (const unsigned* weights, unsigned ndatperweight);
 
-    //! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
-    void workout_idat_start(const Observation* input);
+    //! Set the idat_start and ndat_fold attributes
+    virtual void set_limits (const Observation* input);
 
     //! Used by the MultiFold class
     void set_idat_start(uint64 _idat_start){ idat_start = _idat_start; }
@@ -165,7 +165,7 @@ namespace dsp {
     //! Used by the MultiFold class
     uint64 get_ndat_fold(){ return ndat_fold; }
 
-    //! Called by new_fold() to return pfold
+    //! Called by fold to return pfold
     double get_pfold(MJD start_time);
     
     //! Called by new_fold() to return phi
