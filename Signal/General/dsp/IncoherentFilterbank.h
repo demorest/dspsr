@@ -12,13 +12,13 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/Transformation.h"
 
-/* The IncoherentFilterbank is designed for searching and thus square law detects + pscrunches the data.  If you want to form Stokes parameters then it is suggested that you work out how you do it and then implement it.  For a real input of length n, MKL has output:
-
-   DC, r1, r2, ... , r(n/2), 0, i1, ... , i(n/2-1), 0 
+/* The IncoherentFilterbank is designed for searching and thus square law detects + pscrunches the data.  If you want to form Stokes parameters then it is suggested that you work out how you do it and then implement it.
 
 NOTE: This transformation DESTROYS your input data
 
- */
+NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces nchan+1 channels.  I have chosen to throw away the last (Nyquist) channel, to be consistent with dsp::Observation::get_base_frequency().  I don't actually understand it myself.  HSK 16/1/03
+
+*/
 
 namespace dsp{
 

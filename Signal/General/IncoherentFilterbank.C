@@ -87,15 +87,20 @@ void dsp::IncoherentFilterbank::transformation(){
   //
   const size_t n_memcpy = nsamp_fft*sizeof(float);
   const unsigned stride = nsamp_fft; 
-  const unsigned npol= input->get_npol();
 
   auto_ptr<float> scratch0(new float[nsamp_fft+2]);
   auto_ptr<float> scratch1(new float[nsamp_fft+2]);
   
+  auto_ptr<float> scratch_big(new float[npart*nchan]);
+
   const float* in0 = input->get_datptr(0,0);
   const float* in1 = input->get_datptr(0,1);
   
-  for( int ipart=0; ipart<npart; ++ipart){
+  //register float* det = scratch_big.get();
+  register float* det = (float*)in0;
+  register const unsigned det_stride = nchan;
+
+  for( int ipart=0; ipart<npart; ++ipart, det+=det_stride ){
       
     // (1) memcpy to scratch	
     memcpy(scratch0.get(),in0+ipart*stride,n_memcpy);
@@ -106,27 +111,31 @@ void dsp::IncoherentFilterbank::transformation(){
     scfft1dc(scratch1.get(), nsamp_fft, 1, wsave->begin()); 
     
     // (3) SLD and add polarisations back
-    register const float* real0 = scratch0.get()+1;
-    register const float* imag0 = scratch0.get()+nchan+1;
+    register const float* real0 = scratch0.get();
+    register const float* imag0 = scratch0.get()+1;
     
-    register const float* real1 = scratch1.get()+1;
-    register const float* imag1 = scratch1.get()+nchan+1;
+    register const float* real1 = scratch1.get();
+    register const float* imag1 = scratch1.get()+1;  
     
-    register float* det = (float*)in0+ipart*nchan;
-    
-    for( unsigned i=0; i<nchan; i++)
+    //register float* det = (float*)in0+ipart*nchan;
+    //register float* det = scratch_big.get()+ipart*nchan;
+
+    for( unsigned i=0; i<nchan; i+=2)
       det[i] = real0[i]*real0[i] + imag0[i]*imag0[i]  + real1[i]*real1[i] + imag1[i]*imag1[i];
   }
-  
-  float* out = output->get_datptr(0,0); 
+
   // (4) Convert the BitSeries to a TimeSeries in output's data array 
-  
-  for( unsigned ichan=0; ichan<nchan; ++ichan){
+  register float* to = output->get_datptr(0,0);
+  register const unsigned to_stride = npart;
+  register const unsigned from_stride = nchan;
+
+  for( unsigned ichan=0; ichan<nchan; ++ichan, to += to_stride){
     register const float* from = in0+ichan;
-    register float* to = out+ichan*npol;
+    //register const float* from = scratch_big.get();
+    register unsigned from_i = 0;
     
-    for( int ipart=0; ipart<npart; ++ipart )
-      to[ipart] = from[ipart*nchan];
+    for( int ipart=0; ipart<npart; ++ipart, from_i += from_stride )
+      to[ipart] = from[from_i];
   }
     
   if( verbose )
