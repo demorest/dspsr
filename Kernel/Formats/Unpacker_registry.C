@@ -21,6 +21,8 @@ Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 static Registry::List<dsp::Unpacker>::Enter<dsp::CoherentFBUnpacker> cfb;
 #include "dsp/NullUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
+#include "dsp/MiniUnpack.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> register_miniunpack;
 
 #include "backends.h"
 
