@@ -16,6 +16,8 @@ dsp::Accumulator::~Accumulator(){ }
 //! Reset the output
 void dsp::Accumulator::reset(){
   append = false;
+  if( has_output() )
+    output->set_ndat(0);
 }
 
 //! Do the work
@@ -32,3 +34,4 @@ void dsp::Accumulator::transformation(){
 
   output->append( input );
 }
+
