@@ -25,10 +25,10 @@ dsp::Input::~Input ()
 void dsp::Input::operation ()
 {
   if (verbose)
-    cerr << "Input::operate" << endl;
+    cerr << "dsp::Input::operate" << endl;
   
   if (!output)
-    throw Error (InvalidState, "Input::operate", "no output BitSeries");
+    throw Error (InvalidState, "dsp::Input::operate", "no output BitSeries");
 
   load (output);
 }
@@ -48,24 +48,24 @@ void dsp::Input::set_output (BitSeries* data)
 void dsp::Input::load (BitSeries* data)
 {
   if (verbose)
-    cerr << "Input::load (BitSeries* = " << data << ")" << endl;
+    cerr << "dsp::Input::load (BitSeries* = " << data << ")" << endl;
 
   if (!data)
-    throw Error (InvalidParam, "Input::load", "invalid data reference");
+    throw Error (InvalidParam, "dsp::Input::load", "invalid data reference");
 
   if (block_size < overlap)
-    throw Error (InvalidState, "Input::load", 
+    throw Error (InvalidState, "dsp::Input::load", 
                  "block_size="UI64" < overlap="UI64, block_size, overlap);
 
   if (eod())
-    throw Error (InvalidState, "Input::load", "end of data");
+    throw Error (InvalidState, "dsp::Input::load", "end of data");
 
   string reason;
   if (!info.state_is_valid (reason))
-    throw Error (InvalidState, "Input::load", "invalid state: "+reason);
+    throw Error (InvalidState, "dsp::Input::load", "invalid state: "+reason);
 
   if (verbose)
-    cerr << "Input::load [EXTERNAL] block_size=" << block_size
+    cerr << "dsp::Input::load [EXTERNAL] block_size=" << block_size
          << " overlap=" << overlap
 	 << " next=" << load_sample+resolution_offset << endl;
 
@@ -77,13 +77,13 @@ void dsp::Input::load (BitSeries* data)
   data->change_start_time (load_sample);
 
   if (verbose)
-    cerr << "Input::load [INTERNAL] load_size=" << load_size 
+    cerr << "dsp::Input::load [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
   data->resize (load_size);
 
   if (verbose)
-    cerr << "Input::load call load_data" << endl;
+    cerr << "dsp::Input::load call load_data" << endl;
 
   load_data (data);
 
@@ -94,7 +94,7 @@ void dsp::Input::load (BitSeries* data)
   seek (block_size - overlap, SEEK_CUR);
 
   if (verbose)
-    cerr << "Input::load exit with load_sample="<< load_sample <<endl;
+    cerr << "dsp::Input::load exit with load_sample="<< load_sample <<endl;
 }
 
 /*! 
@@ -109,7 +109,7 @@ void dsp::Input::load (BitSeries* data)
 void dsp::Input::seek (int64 offset, int whence)
 {
   if (verbose)
-    cerr << "Input::seek offset=" << offset << endl;
+    cerr << "dsp::Input::seek offset=" << offset << endl;
 
   // the next sample required by the user
   uint64 next_sample = load_sample + resolution_offset;
@@ -118,28 +118,28 @@ void dsp::Input::seek (int64 offset, int whence)
 
   case SEEK_SET:
     if (offset < 0)
-      throw Error (InvalidRange, "Input::seek", "SEEK_SET negative offset");
+      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_SET -ve offset");
     next_sample = offset;
     break;
 
   case SEEK_CUR:
     if (offset < -(int64)next_sample)
-      throw Error (InvalidRange, "Input::seek", "SEEK_CUR negative offset");
+      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_CUR -ve offset");
     next_sample += offset;
     break;
 
   case SEEK_END:
     if (!info.get_ndat())
-      throw Error (InvalidState, "Input::seek", "SEEK_END unknown eod");
+      throw Error (InvalidState, "dsp::Input::seek", "SEEK_END unknown eod");
 
     if (offset < -int64(info.get_ndat()))
-      throw Error (InvalidRange, "Input::seek", "SEEK_END negative offset");
+      throw Error (InvalidRange, "dsp::Input::seek", "SEEK_END -ve offset");
 
     next_sample = info.get_ndat() + offset;
     break;
 
   default:
-    throw Error (InvalidParam, "Input::seek", "invalid whence");
+    throw Error (InvalidParam, "dsp::Input::seek", "invalid whence");
   }
 
   // calculate the extra samples required owing to resolution

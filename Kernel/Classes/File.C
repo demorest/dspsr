@@ -75,18 +75,18 @@ void dsp::File::set_total_samples ()
 
   uint64 total_bytes = buf.st_size - header_bytes;
 
-  info.set_ndat (info.nsamples (total_bytes));
+  info.set_ndat (info.get_nsamples (total_bytes));
 }
 
 //! Load bytes from file
 int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 {
   if (verbose)
-    cerr << "File::load_bytes nbytes=" << bytes << endl;
+    cerr << "dsp::File::load_bytes nbytes=" << bytes << endl;
 
   ssize_t bytes_read = read (fd, buffer, bytes);
   if (bytes_read < 0)
-    perror ("File::load_bytes read error");
+    perror ("dsp::File::load_bytes read error");
 
   return bytes_read;
 }
@@ -95,17 +95,17 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 int64 dsp::File::seek_bytes (uint64 bytes)
 {
   if (verbose)
-    cerr << "File::seek_bytes nbytes=" << bytes << endl;
+    cerr << "dsp::File::seek_bytes nbytes=" << bytes << endl;
 
   if (fd < 0) {
-    fprintf (stderr, "File::seek_bytes invalid fd\n");
+    fprintf (stderr, "dsp::File::seek_bytes invalid fd\n");
     return -1;
   }
 
   bytes += header_bytes;
   int64 retval = lseek (fd, bytes, SEEK_SET);
   if (retval < 0) {
-    perror ("File::seek_bytes lseek error");
+    perror ("dsp::File::seek_bytes lseek error");
     return -1;
   }
 
