@@ -158,13 +158,13 @@ void dsp::Filterbank::transformation ()
 
   double scalefac = 1.0;
 
-  if( verbose ){
-    fprintf(stderr,"fft::get_normalization()=%s\n",
-	    fft::get_normalization() == fft::nfft?"fft::nfft":
-	    fft::get_normalization() == fft::normal?"fft::normal":
-	    "unknown");
-    fprintf(stderr,"n_fft=%d and freq_res=%d\n",
-	    n_fft,freq_res);
+  if (verbose) {
+    cerr << "dsp::Filterbank::transformation\n"
+      "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
+      "  fft::normalization=" <<
+      (fft::get_normalization() == fft::nfft?"fft::nfft":
+      fft::get_normalization() == fft::normal?"fft::normal":
+      "unknown") << endl;
   }
 
   if (fft::get_normalization() == fft::nfft)
@@ -194,6 +194,10 @@ void dsp::Filterbank::transformation ()
 
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
+
+  // enable the Response to record its effect on the output Timeseries
+  if (response)
+    response->mark (output);
 
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan * freq_res * 2;
@@ -351,9 +355,6 @@ void dsp::Filterbank::transformation ()
     } // for each polarization
     
   } // for each big fft (ipart)
-
-  if( response )
-    output->change_dispersion_measure( response->get_dispersion_measure() );
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation exit." << endl;
