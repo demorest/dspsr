@@ -18,6 +18,8 @@ dsp::BitSeries::BitSeries ()
 
   request_offset = 0;
   request_ndat = 0;
+
+  subheader_bytes = data_bytes = bytes_since_subheader = 0;
 }
 
 //! Destructor
@@ -26,7 +28,6 @@ dsp::BitSeries::~BitSeries ()
   if (data) delete [] data; data = 0;
   size = 0;
 }
-
 
 //! Allocate the space required to store nsamples time samples.
 /*!
