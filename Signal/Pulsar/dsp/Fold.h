@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.29 $
-   $Date: 2004/07/22 02:10:55 $
+   $Revision: 1.30 $
+   $Date: 2004/09/24 07:11:26 $
    $Author: hknight $ */
 
 
@@ -206,6 +206,12 @@ namespace dsp {
 
     //! INTERNAL: the number of time samples to fold
     uint64 ndat_fold;
+
+    //! Makes sure parameters are initialised
+    // This is called from prepare() rather than the constructor so that reducer
+    // can set parameters (globally) if they have not been initialised locally for a given
+    // dsp::Fold
+    void initialise();
 
   private:
 

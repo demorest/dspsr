@@ -17,27 +17,45 @@
 dsp::Fold::Fold () :
   Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
 {
+  // reducer relies on these defaults being what they are
+  // Be sure to check it works if you change them
+
   folding_period = 0;
 
   requested_nbin = 0;
   folding_nbin = 0;
 
-  reference_phase = 0.0;
+  reference_phase = -1.0; // Defaults to 0.0
 
-  ncoef = 15;
-  nspan = 120;
+  ncoef = 0; // Defaults to 15
+  nspan = 0; // Defaults to 120
 
   dispersion_measure = -1.0;
-
-  if (psrdisp_compatible) {
-    cerr << "dsp::Fold psrdisp compatibility\n"
-      "   using nspan of 960 instead of 120" << endl;
-    nspan = 960;
-  }
 
   built = false;
 
   idat_start = ndat_fold = 0;
+}
+
+//! Makes sure parameters are initialised
+// This is called from prepare() rather than the constructor so that reducer
+// can set parameters (globally) if they have not been initialised locally for a given
+// dsp::Fold
+void dsp::Fold::initialise(){
+  if( ncoef==0 )
+    ncoef = 15;
+
+  if( nspan==0 ){
+    nspan = 120;   
+    if (psrdisp_compatible) {
+      cerr << "dsp::Fold psrdisp compatibility\n"
+	"   using nspan of 960 instead of 120" << endl;
+      nspan = 960;
+    }
+  }
+
+  if( reference_phase < 0.0 )
+    reference_phase = 0.0;
 }
 
 dsp::Fold::~Fold () { }
@@ -56,6 +74,8 @@ void dsp::Fold::prepare (const Observation* observation)
 {
   if (verbose)
     cerr << "dsp::Fold::prepare" << endl;
+
+  initialise();
 
   string jpulsar = observation->get_source();
   
