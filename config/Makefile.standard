@@ -103,9 +103,7 @@ endif
 ##########################################################################
 # CFITSIO
 ifeq ($(PSRFITS),yes)
-INCFLAGS += -I/usr/local/include/cfitsio
 CPPFLAGS += -DPSRFITS=1
-LCFITSIO = -lcfitsio $(LSOCK)
 endif
 
 ##########################################################################
@@ -121,4 +119,8 @@ ERROR:=environment variable LOGIN_ARCH is not defined
 else
 include ${LOCAL_ROOT}/include/Makefile.${LOGIN_ARCH}
 endif
+
+##########################################################################
+# update
+INCFLAGS += $(ICFITSIO)
 
