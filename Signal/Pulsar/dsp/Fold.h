@@ -1,13 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/07/19 07:03:25 $
+   $Revision: 1.2 $
+   $Date: 2002/09/24 07:55:45 $
    $Author: wvanstra $ */
 
 
 #ifndef __Fold_h
 #define __Fold_h
+
+#include <vector>
 
 #include "Operation.h"
 #include "Observation.h"
