@@ -12,7 +12,7 @@
 
 //! Constructor
 dsp::Detection::Detection () 
-  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace)
+  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace,true)
 {
   state = Signal::Intensity;
   ndim = 1;
@@ -43,7 +43,8 @@ void dsp::Detection::transformation ()
 {
   if (verbose)
     cerr << "dsp::Detection::transformation output state="
-	 << Signal::state_string(state) << endl;
+	 << Signal::state_string(state) << " and input ndat=" 
+	 << get_input()->get_ndat() << endl;
 
   checks();
 
@@ -85,6 +86,9 @@ void dsp::Detection::transformation ()
 		  
   if (inplace)
     resize_output ();
+
+  if( verbose )
+    fprintf(stderr,"Returning from dsp::Detection::transformation() with output ndat="UI64"\n",get_output()->get_ndat());
 }
 
 void dsp::Detection::resize_output ()
@@ -112,6 +116,7 @@ void dsp::Detection::resize_output ()
   uint64 output_ndat = input->get_ndat();
   output->resize (output_ndat);
 
+  /*
   if (state == Signal::Stokes || state == Signal::Coherence) {
     // double-check the basic assumption of the polarimetry() method
 
@@ -126,6 +131,7 @@ void dsp::Detection::resize_output ()
 		       "pointer mis-match");
     }
   }
+  */
 }
 
 void dsp::Detection::square_law ()
@@ -220,13 +226,13 @@ void dsp::Detection::polarimetry ()
 
     switch (ndim) {
     case 1:
-      r[1] = r[0] + ndat;
-      r[2] = r[1] + ndat;
-      r[3] = r[2] + ndat;
+      r[1] = get_output()->get_datptr(ichan,1);
+      r[2] = get_output()->get_datptr(ichan,2);
+      r[3] = get_output()->get_datptr(ichan,3);
       break;
     case 2:
       r[1] = r[0] + 1;
-      r[2] = r[0] + ndat * 2;
+      r[2] = get_output()->get_datptr(ichan,1);
       r[3] = r[2] + 1;
       break;
     case 4:
