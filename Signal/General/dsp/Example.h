@@ -1,0 +1,43 @@
+//-*-C++-*-
+
+/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Example.h,v $
+   $Revision: 1.1 $
+   $Date: 2002/11/10 01:56:38 $
+   $Author: wvanstra $ */
+
+#ifndef __Example_h
+#define __Example_h
+
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
+
+namespace dsp {
+
+  //! Simple example of how to inherit the Transformation template base class
+  /*! This Example class exists only to demonstrate basic Transformation
+    template base class inheritance.  Note that the constructor must define
+    the name and behaviour of the transformation.  As well, one pure virtual
+    method, transformation, must be defined at least once in the inheritance
+    tree.  This example transforms a TimeSeries into a TimeSeries, though
+    any class that fits the Tranformation template could be used.
+  */
+  class Example : public Transformation <TimeSeries, TimeSeries> {
+
+  public:
+    
+    //! Constructor
+    Example () : Transformation ("Example", inplace) { }
+    
+    //! Destructor
+    ~Example ();
+    
+  protected:
+
+    //! Define the Transformation template base class pure virtual method
+    virtual void transformation ();
+
+  };
+
+}
+
+#endif // !defined(__Example_h)
