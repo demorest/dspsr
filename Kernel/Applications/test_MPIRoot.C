@@ -1,9 +1,10 @@
 #include <iostream>
 #include <unistd.h>
 
+#include "dsp/TestInput.h"
+#include "dsp/MPIServer.h"
 #include "dsp/MPIRoot.h"
 #include "dsp/File.h"
-#include "dsp/TestInput.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -80,7 +81,10 @@ int main (int argc, char** argv)
   Reference::To<dsp::MPIRoot> mpi_b = new dsp::MPIRoot (MPI_COMM_WORLD);
 
   mpi_a->set_root (mpi_root);
+  mpi_a->set_tag (2);
+
   mpi_b->set_root (mpi_root);
+  mpi_a->set_tag (3);
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) {
 
@@ -98,7 +102,12 @@ int main (int argc, char** argv)
       mpi_b -> set_Input (input_b);
       mpi_b -> prepare ();
 
-      // mpi_a -> serve ();
+      dsp::MPIServer server;
+
+      server.manage (mpi_a);
+      server.manage (mpi_b);
+
+      server.serve ();
 
       cerr << "end of data file " << filenames[ifile] << endl << endl;
 

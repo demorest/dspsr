@@ -8,6 +8,7 @@
 #define ACTIVATE_MPI 1
 #include "dsp/Input.h"
 
+
 namespace dsp {
 
   //! Loads BitSeries data using the MPI communications protocol
@@ -15,6 +16,8 @@ namespace dsp {
     
   public:
     
+    friend class MPIServer;
+
     //! Construct from MPI_Bcast
     MPIRoot (MPI_Comm comm);
 
@@ -57,6 +60,8 @@ namespace dsp {
 
     //@}
 
+    //! Provide access to resolution attribute (required in mpiUnpack)
+    void set_resolution (unsigned resolution);
 
   protected:
 
@@ -106,10 +111,13 @@ namespace dsp {
     char* async_buf;
 
     //! Size of the above buffer
-    int64 async_buf_size;
+    int async_buf_size;
 
     //! Size actually needed
-    int64 pack_size;
+    int pack_size;
+
+    //! Size of the data in the buffer
+    int data_size;
 
     //! End of data
     bool end_of_data;
@@ -120,16 +128,23 @@ namespace dsp {
     //! initialize variables
     void init();
 
+    //! ensure that this instance is the root and that mpi_size > 1
+    void ensure_root (const char* method) const;
+
+    //! verify that MPI_Wait returns as expected
+    void check (const char* method, int mpi_err, MPI_Status& _status);
+
   };
 
 }
+
 
 //! Return the size required to mpiPack an MPIRoot
 int mpiPack_size (const dsp::MPIRoot&, MPI_Comm comm, int* size);
 
 //! Pack an MPIRoot into outbuf
-int mpiPack (const dsp::MPIRoot&,
-	     void* outbuf, int outcount, int* position, MPI_Comm comm);
+int mpiPack (const dsp::MPIRoot&, void* outbuf, int outcount,
+	     int* position, MPI_Comm comm);
 
 //! Unpack an MPIRoot from inbuf
 int mpiUnpack (void* inbuf, int insize, int* position, 

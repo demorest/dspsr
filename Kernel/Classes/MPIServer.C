@@ -1,5 +1,6 @@
 #include "dsp/MPIServer.h"
 #include "dsp/MPIRoot.h"
+#include "dsp/BitSeries.h"
 
 //! Default constructor
 dsp::MPIServer::MPIServer ()
@@ -37,7 +38,7 @@ void dsp::MPIServer::serve ()
       throw Error (InvalidState, "dsp::MPIServer::serve", "input not set");
 
     // count the number of inputs with data
-    if (!input->eod())
+    if (!root[ir]->input->eod())
       have_data ++;
   }
 
@@ -49,8 +50,8 @@ void dsp::MPIServer::serve ()
   vector< MPI_Request > ready( root.size() );
 
   for (ir=0; ir < root.size(); ir++) {
-    // allocate buffer to each MPIRoot data stream
-    root[ir]->input->set_output (data[ir]);
+    // allocate buffer to each MPIRoot input data stream
+    root[ir]->input->set_output (data);
 
     // reference the ready_request attributes of each MPIRoot
     ready[ir] = root[ir]->ready_request;
@@ -74,28 +75,28 @@ void dsp::MPIServer::serve ()
 
     int dest = status.MPI_SOURCE;
 
-    if (verbose)
+    if (MPIRoot::verbose)
       cerr << "dsp::MPIServer::serve index=" << index 
 	   << " dest=" << dest << endl;
 
     if ( root[index]->input->eod() ) {
 
-      if (verbose)
+      if (MPIRoot::verbose)
 	cerr << "dsp::MPIServer::serve end of data[" << index << "]" << endl;
 
       root[index]->send_data (0, dest);
 
     }
     else {
-      if (verbose)
+      if (MPIRoot::verbose)
 	cerr << "dsp::MPIServer::serve loading data[" << index << "]" << endl;
 
       root[index]->input->operate ();
 
-      if (verbose)
+      if (MPIRoot::verbose)
 	cerr << "dsp::MPIServer::serve sending data to " << dest << endl;
       
-      root[index]->send_data (data, destination);
+      root[index]->send_data (data, dest);
 
     }
   }
