@@ -6,6 +6,7 @@
 #include "dsp/SLDetect.h"
 #include "dsp/PScrunch.h"
 
+#include "Error.h"
 #include "genutil.h"
 #include "cross_detect.h"
 
@@ -36,6 +37,9 @@ void dsp::Detection::set_output_state (Signal::State _state)
   case Signal::PPQQ:       // Square-law detected, two polarizations
     ndim = 1;
   case Signal::Stokes:     // Stokes I,Q,U,V
+    throw Error(InvalidParam,"dsp::Detection::set_output_state()",
+		"You've tried to set the output state to Signal::Stokes.  Unfortunately, the code doesn't actually do this.  Why don't you change the code so that it does?");
+
   case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
     break;
   default:
