@@ -47,23 +47,24 @@ void dsp::Observation::init ()
   ndim = -1;
   nbit = -1;
 
-  centre_frequency = 0;
-  bandwidth = 0;
-
+  type = Signal::Pulsar;
+  state = Signal::Intensity;
   basis = Signal::Linear;
 
-  start_time = 0.0;
-  rate = 0;
+  telescope = 7;
+  source = "unknown";
+  centre_frequency = 0.0;
+  bandwidth = 0.0;
 
-  scale = 1;
-  state = Signal::Intensity;
+  rate = 0.0;
+  start_time = 0.0;
+  scale = 1.0;
 
   swap = dc_centred = false;
-  telescope = 0;
-  source = identifier = mode = machine = "";
+
+  identifier = mode = machine = "";
   coordinates = sky_coord();
   dispersion_measure = 0.0;
-  isdigi = false;
 }
 
 void dsp::Observation::set_sample (Signal::State _state,
