@@ -1,3 +1,5 @@
+#-*-Makefile-*- helps emacs recognize this file as a Makefile
+
 ##########################################################################
 ##########################################################################
 # Define those files recognized by make
@@ -97,7 +99,7 @@ OTHER_SRCS += $(sort $(filter-out %.srcs,$(subst \", ,$(SRCS_CLEAN))))
 # code created from a .h header file, but the object code may still be
 # required in an archive (using LIB_SRCS)
 ##########################################################################
-all_srcs := ${LIB_SRCS} ${PROGRAMS} ${TESTS} ${OTHER_SRCS}
+all_srcs := $(sort ${LIB_SRCS} ${DSO_SRCS}) ${PROGRAMS} ${TESTS} ${OTHER_SRCS}
 ALL_SRCS := ${filter-out moc_%.C, ${all_srcs}}
 
 
@@ -141,8 +143,9 @@ SHXS:=${SCRIPTS:%=$(SHXDIR)/%}
 # upon which the "libs" target depends.
 # LIBRARY and LIBRARIES macros are previously defined in the user Makefile
 ##########################################################################
-LIBRARIES += ${LIBRARY}
-LIBS:=${LIBRARIES:%=$(LIBDIR)/%}
+LIBRARIES += ${LIBRARY} 
+ALL_LIBS := ${LIBRARIES} ${DSO_NAME}
+LIBS:=${ALL_LIBS:%=$(LIBDIR)/%}
 
 ##########################################################################
 # The following lines create the RUNTESTS macro,
@@ -500,6 +503,22 @@ LIB_OBJS := $(LOBJS:%=$(LOGIN_ARCH)/%)
 $(ONELIB) : $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
 	$(RANLIB) $@
+
+
+##########################################################################
+# Explicit rule to make one dynamic shared object from the DSONAME macro
+# Additional libraries must be added to the LIBRARIES macro and given
+# explicit make rules in the user's make file.
+##########################################################################
+
+DSOLIB := $(DSODIR)/$(DSO_NAME)
+DSOBJS := $(call src2obj,$(DSO_SRCS))
+DSO_OBJS := $(DSOBJS:%=$(LOGIN_ARCH)/%)
+
+$(DSOLIB) : $(DSO_OBJS)
+	@mkdir -p $(dir $(DSOLIB))
+	$(DSO) $@ $(DSO_OBJS) $(DSO_FLAGS)
+
 
 ##########################################################################
 # Special cases:  for certain targets, the whole makedepend system should

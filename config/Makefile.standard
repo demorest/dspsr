@@ -1,3 +1,5 @@
+#-*-Makefile-*- helps emacs recognize this file as a Makefile
+
 ##########################################################################
 # the standard Makefile 
 ##########################################################################
@@ -19,6 +21,7 @@ INSTALL_SHXDIR := ${PSRHOME}/csh_script
 
 BINDIR := ${LOCAL_ROOT}/bin/${LOGIN_ARCH}
 LIBDIR := ${LOCAL_ROOT}/lib/${LOGIN_ARCH}
+DSODIR := ${LIBDIR}
 INCDIR := ${LOCAL_ROOT}/include
 SHXDIR := ${LOCAL_ROOT}/csh_script
 
@@ -43,7 +46,10 @@ RM    := rm -f
 AWK   := awk
 GREP  := grep
 QTMOC := moc
-MAKEDEPEND := makedepend -Y -f 
+MAKEDEPEND := makedepend -Y -f
+
+# dynamic shared object linker
+DSO = $(CCC) -shared -o
 
 SWINBURNE_REPOSITORY := pulsar.swin.edu.au:/psr/cvsroot
 
@@ -141,7 +147,7 @@ endif
 LTIMES = -ltimes -lgenutil $(LSLA) -lm
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
-LPSRCHIVE = -lpsrchive
+LPSRCHIVE = -lpsrchive -fPIC -Wl,--export-dynamic -ldl
 
 ifeq ($(has_CFITS),yes)
 LPSRCHIVE += -lfitsutil $(LCFITSIO)
