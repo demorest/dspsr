@@ -130,10 +130,17 @@ LSLA = -lsla $(LF77)
 ifeq (${strip ${LOGIN_ARCH}},)
 ERROR:=environment variable LOGIN_ARCH is not defined
 else
-include ${LOCAL_ROOT}/include/Makefile.${LOGIN_ARCH}
+-include ${LOCAL_ROOT}/include/Makefile.${LOGIN_ARCH}
 endif
 
 ##########################################################################
 # update
 INCFLAGS += $(ICFITSIO)
+
+exists = $(shell if [ ! -z "$(1)" ]; then if [ -d $(1) ];then echo yes;fi;fi)
+
+has_CFITS := $(call exists,$(CFITSDIR))
+has_MPI   := $(call exists,$(MPIDIR))
+has_QT    := $(call exists,$(QTDIR))
+has_PGPLOT:= $(call exists,$(PGPLOTDIR))
 
