@@ -1,4 +1,5 @@
 #include "dsp/Convolution.h"
+#include "dsp/WeightedTimeSeries.h"
 #include "dsp/Apodization.h"
 #include "dsp/Response.h"
 
@@ -184,7 +185,12 @@ void dsp::Convolution::transformation ()
     complex_time += 2;
 
   // prepare the output TimeSeries
-  output->Observation::operator= (*input);
+  output->copy_configuration (input);
+
+  WeightedTimeSeries* weighted_output;
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
+  if (weighted_output)
+    weighted_output->convolve_weights (nsamp_fft, nsamp_good);
 
   // valid time samples convolved
   if (input.get() == output.get())
