@@ -78,6 +78,6 @@ void dsp::CPSR2File::open (const char* filename)
   reset();
 
   if (verbose)
-    cerr << "Returning from CPSR2File::open" << endl;
+    cerr << "CPSR2File::open exit" << endl;
 }
 
