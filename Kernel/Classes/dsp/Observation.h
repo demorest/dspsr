@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.48 $
-   $Date: 2003/04/24 17:27:45 $
-   $Author: wvanstra $ */
+   $Revision: 1.49 $
+   $Date: 2003/05/08 14:14:05 $
+   $Author: pulsar $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -171,9 +171,8 @@ namespace dsp {
     //! Return true if frequency channels are out of order (band swappped)
     bool get_swap () const { return swap; }
 
-    //! Set true if centre channel is centred on centre frequency
+    //! Set true if centre channel is centred on centre frequency (doesn't actually sufficiently describe band so will be deprecated soon)
     void set_dc_centred (bool _dc_centred) { dc_centred = _dc_centred; }
-    //! Return true if centre channel is centred on centre frequency
     bool get_dc_centred () const { return dc_centred; }
 
     //! Set the observation identifier
