@@ -494,7 +494,7 @@ $(ONELIB) : $(LIB_OBJS)
 # be relaxed.
 ##########################################################################
 autodepend:=yes
-no_makedepend_targets := include scripts clean veryclean cvsck
+no_makedepend_targets := include scripts clean veryclean cvsck depend
 
 ifneq ($(filter $(no_makedepend_targets),$(MAKECMDGOALS)),)
 autodepend:=no
