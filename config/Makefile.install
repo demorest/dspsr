@@ -89,7 +89,7 @@ endif
 # should not be over-ridden. 'all' 'include' and 'libs' 
 ##########################################################################
 $(filter-out clean veryclean, $(INSTALL_TARGETS)):
-	@echo "Installed '$@' successfully."
+	@echo nothing >> /dev/null
 
 endif
 
