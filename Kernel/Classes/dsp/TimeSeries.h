@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.9 $
-   $Date: 2003/01/14 00:31:53 $
-   $Author: pulsar $ */
+   $Revision: 1.10 $
+   $Date: 2003/01/20 04:43:38 $
+   $Author: hknight $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -76,6 +76,9 @@ namespace dsp {
     //! Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it.
     virtual void attach(auto_ptr<float> _data);
 
+    //! Call this when you do not want to transfer ownership of the array
+    virtual void attach(float* _data);
+
     //! Copy from the back of 'tseries' into the front of 'this'
     //! This method is quite low-level- you have to fix up things like start_time, the observation data, ndat, and the subsize are all set correctly yourself
     //! Method basically just does lots of memcpys
@@ -96,7 +99,7 @@ namespace dsp {
     */
     void rotate_backwards_onto(TimeSeries* ts);
     
-    // sorry, but this is totally necessary for debugging
+    // Inquire the stride between floats representing the same timesample but in different chan/pol groups.  This is called by CoherentFBWriter 
     virtual uint64 get_subsize(){ return subsize; }
 
   protected:

@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <memory>
 
 #include "environ.h"
@@ -70,6 +72,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   }
 
   subsize = ndim * nsamples;
+
   data = buffer;
 }
 
@@ -264,6 +267,16 @@ void dsp::TimeSeries::attach(auto_ptr<float> _data){
 
   if (buffer) delete [] buffer; buffer = 0;
   buffer = data = _data.release();
+}
+
+//! Call this when you do not want to transfer ownership of the array
+void dsp::TimeSeries::attach(float* _data){
+  if( !_data )
+    throw Error(InvalidState,"dsp::TimeSeries::attach()",
+		"NULL ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
+
+  if (buffer) delete [] buffer; buffer = 0;
+  buffer = data = _data;
 }
 
 bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){
