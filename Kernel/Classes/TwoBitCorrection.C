@@ -332,7 +332,7 @@ float dsp::TwoBitCorrection::get_optimal_fraction_low () const
 
 void dsp::TwoBitCorrection::unpack ()
 {
-  if (input->get_state() != Observation::Nyquist)
+  if (input->get_state() != Signal::Nyquist)
     throw_str ("TwoBitCorrection::unpack input not real sampled");
 
   if (input->get_nbit() != 2)
@@ -455,7 +455,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   if (input->get_nbit() != 2)
     throw_str ("TwoBitCorrection::stats input nbit != 2");
 
-  if (input->get_state() != Observation::Nyquist)
+  if (input->get_state() != Signal::Nyquist)
     throw_str ("TwoBitCorrection::stats input state != Nyquist");
 
   if (int(histograms.size()) != nchannel) {

@@ -51,12 +51,12 @@ void dsp::Filterbank::operation ()
   // number of time samples by which big ffts overlap
   unsigned nsamp_overlap = 0;
 
-  if (input->get_state() == Observation::Nyquist) {
+  if (input->get_state() == Signal::Nyquist) {
     nsamp_fft = 2 * n_fft;
     nsamp_overlap = 2 * n_filt * nchan;
   }
 
-  else if (input->get_state() == Observation::Analytic) {
+  else if (input->get_state() == Signal::Analytic) {
     nsamp_fft = n_fft;
     nsamp_overlap = n_filt * nchan;
   }
@@ -71,14 +71,14 @@ void dsp::Filterbank::operation ()
       throw_str ("Filterbank::operation invalid apodization function ndat=%d"
 		 " (nfft=%d)", apodization->get_ndat(), nsamp_fft);
 
-    if (input->get_state() == Observation::Analytic 
+    if (input->get_state() == Signal::Analytic 
 	&& apodization->get_ndim() != 2)
-      throw_str ("Filterbank::operation Analytic signal"
+      throw_str ("Filterbank::operation Signal::Analytic signal"
 		 " Real apodization function.");
 
-    if (input->get_state() == Observation::Nyquist 
+    if (input->get_state() == Signal::Nyquist 
 	&& apodization->get_ndim() != 1)
-      throw_str ("Filterbank::operation Nyquist signal."
+      throw_str ("Filterbank::operation Signal::Nyquist signal."
 		 " Complex apodization function.");
   }
 
@@ -145,7 +145,7 @@ void dsp::Filterbank::operation ()
   output->Observation::operator= (*input);
 
   // output data will be complex
-  output->set_state (Observation::Analytic);
+  output->set_state (Signal::Analytic);
 
   // output data will be multi-channel
   output->set_nchan (nchan);
@@ -164,12 +164,12 @@ void dsp::Filterbank::operation ()
 
   // output data will have new sampling rate
   // NOTE: that nsamp_fft already contains the extra factor of two required
-  // when the input Timeseries is Nyquist (real) sampled
+  // when the input Timeseries is Signal::Nyquist (real) sampled
   double ratechange = double(freq_res * time_res) / double (nsamp_fft);
   output->set_rate (input->get_rate() * ratechange);
 
   // complex to complex FFT produces a band swapped result
-  if (input->get_state() == Observation::Analytic)
+  if (input->get_state() == Signal::Analytic)
     output->set_swap (true);
 
   // increment the start time by the number of samples dropped from the fft
@@ -256,7 +256,7 @@ void dsp::Filterbank::operation ()
 	    time_dom_ptr = windowed_time_domain;
 	  }
 
-	  if (input->get_state() == Observation::Nyquist)
+	  if (input->get_state() == Signal::Nyquist)
 	    fft::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
 
 	  else
@@ -385,14 +385,14 @@ void filterbank::scattered_power_correct (float_Stream& dispersed_power,
   // only PP and QQ are corrected...
   int cpol = 2;
   if (npol == 1)
-    // ...unless only Stokes I remains
+    // ...unless only Signal::Stokes I remains
     cpol = 1;
 
   if (dispersed_power.npol != cpol)
     throw_str ("filterbank::scattered_power_correct "
 	       "dispersed power must have npol=%d", cpol);
 
-  if (!( (get_state() == Detected) || (get_state() == Coherence) ))
+  if (!( (get_state() == Detected) || (get_state() == Signal::Coherence) ))
     throw string ("filterbank::scattered_power_correct invalid state="
 		  + state_str());
 

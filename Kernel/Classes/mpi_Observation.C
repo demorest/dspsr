@@ -30,7 +30,7 @@ int mpiPack_size (const dsp::Observation& obs, MPI_Comm comm, int* size)
 
   MPI_Pack_size (1, MPI_CHAR, comm, &temp_size);
   total_size += temp_size;  // state
-  total_size += temp_size;  // feedtype
+  total_size += temp_size;  // basis
   total_size += temp_size;  // swap
   total_size += temp_size;  // dc_centred
   total_size += temp_size;  // telescope
@@ -92,7 +92,7 @@ int mpiPack (const dsp::Observation& obs,
   tempc = obs.get_state();
   MPI_Pack (&tempc, 1, MPI_CHAR, outbuf, outcount, pos, comm);
 
-  tempc = obs.get_feedtype();
+  tempc = obs.get_basis();
   MPI_Pack (&tempc, 1, MPI_CHAR, outbuf, outcount, pos, comm);
 
   tempc = obs.get_swap();
@@ -163,10 +163,10 @@ int mpiUnpack (void* inbuf, int insize, int* pos, dsp::Observation* obs,
 
   char tempc;
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs->set_state ((dsp::Observation::State) tempc);
+  obs->set_state ((Signal::State) tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs->set_feedtype ((dsp::Observation::Feed) tempc);
+  obs->set_basis ((Signal::Basis) tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
   obs->set_swap (tempc);

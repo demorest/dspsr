@@ -83,7 +83,7 @@ int main (int argc, char** argv)
     cerr << "Creating Detection instance" << endl;
 
   dsp::Detection detect;
-  detect.set_output_state (dsp::Observation::Coherence);
+  detect.set_output_state (Signal::Coherence);
   detect.set_output_ndim (ndim);
   detect.set_input (&voltages);
   detect.set_output (&voltages);

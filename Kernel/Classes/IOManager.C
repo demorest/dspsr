@@ -113,7 +113,7 @@ bool dsp::IOManager::eod()
 }
     
 //! Seek to the specified time sample
-void dsp::IOManager::seek (int64 offset, int whence = 0)
+void dsp::IOManager::seek (int64 offset, int whence)
 {
   if (!input)
     return;

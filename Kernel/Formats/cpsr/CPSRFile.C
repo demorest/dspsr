@@ -16,12 +16,12 @@
 
 bool dsp::CPSRFile::is_valid (const char* filename)
 {
-  int fd = std::open (filename, O_RDONLY);
+  int fd = ::open (filename, O_RDONLY);
   if (fd < 0)
     return false;
 
   PSPM_SEARCH_HEADER* header = pspm_read (fd);
-  std::close (fd);
+  ::close (fd);
 
   if (!header)
     return false;
@@ -80,14 +80,14 @@ void dsp::CPSRFile::open (const char* filename)
 
   header_bytes = sizeof(PSPM_SEARCH_HEADER);
 
-  fd = std::open (filename, O_RDONLY);
+  fd = ::open (filename, O_RDONLY);
   if (fd < 0)
     throw_str ("CPSRFile::open - failed open(%s) %s\n",
 	       filename, strerror(errno));
 
   PSPM_SEARCH_HEADER* header = pspm_read (fd);
   if (!header) {
-    std::close (fd);
+    ::close (fd);
     throw_str ("CPSRFile::open - failed pspm_read(%s) %s\n", 
 	     filename, strerror(errno));
   }
@@ -145,8 +145,7 @@ void dsp::CPSRFile::open (const char* filename)
   fprintf (stderr, "Channels:        %ld\n", header->num_chans);
   fprintf (stderr, "Bit Mode:        %ld\n", header->bit_mode);
   
-  fprintf (stderr, "CPSRFile::open - header size %d\n",
-	   bs->header_size);
+  fprintf (stderr, "CPSRFile::open - header size %d\n", header_bytes);
 
   fflush (stderr);
 #endif
@@ -154,7 +153,7 @@ void dsp::CPSRFile::open (const char* filename)
   pspmDbase::entry hdr;
   try { hdr = pspmDbase::Entry (header); }
   catch (...) {
-    std::close (fd);
+    ::close (fd);
     throw_str ("CPSRFile::open no match found in pspmDbase for %s",
 	       PSPMidentifier (header).c_str());
   }
@@ -190,13 +189,13 @@ void dsp::CPSRFile::open (const char* filename)
   info.set_bandwidth (hdr.bandwidth);
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
-  // default_feedtype
+  // default_basis
   info.set_telescope (hdr.ttelid);
   info.set_centre_frequency (hdr.frequency);
-  info.set_default_feedtype();
+  info.set_default_basis();
 
   // CPSR samples the analytic representation of the voltages
-  info.set_state (Observation::Analytic);
+  info.set_state (Signal::Analytic);
   // number of channels = number of polarizations * ((I and Q)=2);
   info.set_npol (hdr.ndigchan / 2);
   info.set_nbit (hdr.nbit);
@@ -204,7 +203,7 @@ void dsp::CPSRFile::open (const char* filename)
   total_size = hdr.ndat;
 
   if (total_size < 1) {
-    std::close (fd);
+    ::close (fd);
     throw_str ("CPSRFile::open - Total data: %d\n", total_size);
   }
 

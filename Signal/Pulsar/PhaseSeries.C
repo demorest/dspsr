@@ -8,6 +8,8 @@ dsp::PhaseSeries::PhaseSeries ()
   folding_period = 0;
 }
 
+dsp::PhaseSeries::~PhaseSeries () { }
+
 //! Set the number of phase bins into which data will be PhaseSeriesed
 void dsp::PhaseSeries::resize (int64 nbin)
 {

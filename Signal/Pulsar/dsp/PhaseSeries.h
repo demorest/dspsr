@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/10/09 04:43:25 $
+   $Revision: 1.2 $
+   $Date: 2002/10/11 02:31:14 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -54,7 +54,10 @@ namespace dsp {
 
     //! Get the number of phase bins
     int get_nbin () const { return ndat; }
-  
+
+    //! Get the hits for the given bin
+    unsigned get_hit (unsigned ibin) const { return hits[ibin]; }
+
     //! Get the mid-time of the integration
     MJD get_midtime () const;
 

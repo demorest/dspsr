@@ -66,7 +66,7 @@ void dsp::CPSR2File::open (const char* filename)
   info = data;
 
   // re-open the file
-  fd = std::open (filename, O_RDONLY);
+  fd = ::open (filename, O_RDONLY);
   if (fd < 0)
     throw_str ("CPSR2File::open - failed open(%s): %s", 
 	       filename, strerror(errno));

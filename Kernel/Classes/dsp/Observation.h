@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.17 $
-   $Date: 2002/10/09 04:43:25 $
+   $Revision: 1.18 $
+   $Date: 2002/10/11 02:31:14 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -11,8 +11,9 @@
 #include <string>
 
 #include "Reference.h"
-#include "MJD.h"
 #include "sky_coord.h"
+#include "Types.h"
+#include "MJD.h"
 
 /*! \mainpage 
  
@@ -52,25 +53,6 @@ namespace dsp {
 
   public:
 
-    //! Possible states of the data
-    enum State { Unknown,
-		 //! Nyquist sampled voltages (real)
-		 Nyquist,
-		 //! In-phase and Quadrature sampled voltages (complex)
-		 Analytic,
-		 //! Square-law detected power
-		 Detected,
-		 //! PP, QQ, Re[PQ], Im[PQ]
-		 Coherence,
-		 //! Stokes I,Q,U,V
-		 Stokes
-    };
-
-    //! Receiver feed types
-    enum Feed { Invalid = -1,
-		Circular = 0,
-		Linear = 1 };
-
     //! Verbosity flag
     static bool verbose;
 
@@ -88,13 +70,13 @@ namespace dsp {
 
     //! Set the dimensions of each time sample
     /*! Parameters determine the size and interpretation of each datum */
-    virtual void set_sample (State state,
+    virtual void set_sample (Signal::State state,
 			     int nchan, int npol, int ndim, int nbit);
 
     //! Set the state of the signal
-    virtual void set_state (State _state);
+    virtual void set_state (Signal::State _state);
     //! Return the state of the signal
-    State get_state () const { return state; }
+    Signal::State get_state () const { return state; }
 
     //! Set the dimension of each datum
     virtual void set_ndim (int _ndim) { ndim = _ndim; }
@@ -148,9 +130,9 @@ namespace dsp {
     double get_bandwidth () const { return bandwidth; }
 
     //! Set the type of receiver feeds
-    void set_feedtype (Feed _feedtype) { feedtype = _feedtype; }
+    void set_basis (Signal::Basis _basis) { basis = _basis; }
    //! Return the type of receiver feeds
-    Feed get_feedtype () const { return feedtype; }
+    Signal::Basis get_basis () const { return basis; }
 
     //! Set the start time of the leading edge of the first time sample
     void set_start_time (MJD _start_time) { start_time = _start_time; }
@@ -208,13 +190,13 @@ namespace dsp {
     string get_machine () const { return machine; }
 
     //! Returns the DM to which the data has been dedispersed
-    double get_DM_level () const { return DM_level; }
+    double get_dispersion_measure () const { return dispersion_measure; }
 
     //! Set the record of what DM the data is dedispersed
-    void set_DM_level (double _DM_level) { DM_level = _DM_level; }
+    void set_dispersion_measure (double dm) { dispersion_measure = dm; }
 
     //! Change the state and correct other attributes accordingly
-    virtual void change_state (State new_state);
+    virtual void change_state (Signal::State new_state);
 
     //! Return true if the state of the Observation is valid
     bool state_is_valid (string& reason) const;
@@ -224,8 +206,6 @@ namespace dsp {
 
     //! Returns a convenient id string for a given MJD
     static string get_default_id (const MJD& mjd);
-
-    static string state2string (State state);
 
     //! Returns default_id (start_time);
     string get_default_id () const;
@@ -254,7 +234,7 @@ namespace dsp {
     bool combinable (const Observation& obs);
 
     //! Sets the feed type based on the telescope and centre frequency
-    void set_default_feedtype ();
+    void set_default_basis ();
 
   protected:
 
@@ -285,11 +265,11 @@ namespace dsp {
     //! Number of bits per value
     int nbit;
 
-    //! State of the signal
-    State state;
+    //! Signal::State of the signal
+    Signal::State state;
 
     //! Type of receiver feeds
-    Feed feedtype;
+    Signal::Basis basis;
 
     //! Time samples per second in Hz
     double rate;
@@ -319,7 +299,7 @@ namespace dsp {
     sky_coord position;
 
     //! The DM Timeseries has been dedispersed to
-    double DM_level;
+    double dispersion_measure;
 
     //! Set all attributes to null default
     void init ();

@@ -31,7 +31,7 @@ void dsp::SLDetect::operation ()
   // increments values to be squared.
   register float* in_ptr = const_cast<float*>(input->get_datptr(0,0));
 
-  if (input->get_state() == Observation::Nyquist) {
+  if (input->get_state() == Signal::Nyquist) {
 
     if( get_type() == Operation::inplace ){
       
@@ -50,9 +50,9 @@ void dsp::SLDetect::operation ()
       }while( ++in_ptr != dend );
       /* cf this: while( &(*in_ptr *= *in_ptr) != dend ) in_ptr++; */
     
-    } // end operations for inplace and Nyquist sampled
+    } // end operations for inplace and Signal::Nyquist sampled
 
-    else{   // Nyquist sampled && (type==outofplace || type==anyplace)
+    else{   // Signal::Nyquist sampled && (type==outofplace || type==anyplace)
       
       // increments result values
       register float* out_ptr = output->get_datptr(0,0);
@@ -65,11 +65,11 @@ void dsp::SLDetect::operation ()
 	in_ptr++;
       }while( out_ptr != dend );
     
-    } // end operations for outofplace and Nyquist sampled
+    } // end operations for outofplace and Signal::Nyquist sampled
     
-  } // end operations for Nyquist sampled
+  } // end operations for Signal::Nyquist sampled
 
-  else if (input->get_state() == Observation::Analytic) {
+  else if (input->get_state() == Signal::Analytic) {
     
     // increments stored values
     register float* out_ptr = output->get_datptr(0,0);
@@ -85,7 +85,7 @@ void dsp::SLDetect::operation ()
       out_ptr++;
     }while( out_ptr!=dend );
   
-  } // end operations for Analytically sampled
+  } // end operations for Signal::Analytically sampled
 
   output->change_state( Observation::Detected );
 

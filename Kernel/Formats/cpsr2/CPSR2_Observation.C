@@ -102,9 +102,9 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 
   switch (ndim) {
   case 1:
-    set_state (Nyquist); break;
+    set_state (Signal::Nyquist); break;
   case 2:
-    set_state (Analytic); break;
+    set_state (Signal::Analytic); break;
   default:
     throw_str ("CPSR2_Observation - invalid NDIM=%d\n", ndim);
   }
@@ -112,7 +112,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // call this only after setting frequency and telescope
   //
-  set_default_feedtype ();
+  set_default_basis ();
 
 
   // //////////////////////////////////////////////////////////////////////

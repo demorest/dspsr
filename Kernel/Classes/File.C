@@ -11,7 +11,7 @@ void dsp::File::init()
 void dsp::File::close()
 {
   if (fd >= 0)
-    std::close (fd);
+    ::close (fd);
   fd = -1;
 }
 

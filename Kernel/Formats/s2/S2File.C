@@ -85,7 +85,7 @@ void dsp::S2File::open (const char* filename)
   info.set_centre_frequency (centre_frequency);
   
   // S2 data defaults to single side-band, real-sampled data
-  info.set_state (Observation::Nyquist);
+  info.set_state (Signal::Nyquist);
 
   // tci_file_open returns data_rate in W/s (16bit/s)
   info.set_rate (double (s2file.data_rate) * 2.0 / info.nbyte());
@@ -114,7 +114,7 @@ void dsp::S2File::open (const char* filename)
 
   info.set_telescope (Telescope::Parkes);
 
-  info.set_default_feedtype();
+  info.set_default_basis();
 
   // set the file pointers
   reset();

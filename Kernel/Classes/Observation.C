@@ -43,13 +43,13 @@ void dsp::Observation::init ()
   centre_frequency = 0;
   bandwidth = 0;
 
-  feedtype = Invalid;
+  basis = Signal::Linear;
 
   start_time = 0.0;
   rate = 0;
 
   scale = 1;
-  state = Unknown;
+  state = Signal::Intensity;
 
   swap = dc_centred = false;
   telescope = 0;
@@ -57,7 +57,7 @@ void dsp::Observation::init ()
   position = sky_coord();
 }
 
-void dsp::Observation::set_sample (State _state,
+void dsp::Observation::set_sample (Signal::State _state,
 				   int _nchan, int _npol,
 				   int _ndim, int _nbit)
 {
@@ -73,13 +73,13 @@ void dsp::Observation::set_sample (State _state,
     throw_str ("Observation::set_sample invalid state: " + reason);
 }
 
-void dsp::Observation::set_state (State _state)
+void dsp::Observation::set_state (Signal::State _state)
 {
   state = _state;
 
-  if (state == Nyquist)
+  if (state == Signal::Nyquist)
     ndim = 1;
-  else if (state == Analytic)
+  else if (state == Signal::Analytic)
     ndim = 2;
 }
 
@@ -90,25 +90,37 @@ void dsp::Observation::set_state (State _state)
 bool dsp::Observation::state_is_valid (string& reason) const
 {
   switch (state) {
-  case Nyquist:
+  case Signal::Nyquist:
     if (ndim != 1)  {
-      reason = "state=Nyquist and ndim!=1";
+      reason = "state=" + get_state_as_string() + " and ndim!=1";
       return false;
     }
     break;
 
-  case Analytic:
+  case Signal::Analytic:
     if (ndim != 2) {
-      reason = "state=Analytic and ndim!=2";
+      reason = "state=" + get_state_as_string() + " and ndim!=2";
       return false;
     }
     break;
 
-  case Detected:
+  case Signal::Invariant:
+  case Signal::Intensity:
+    if (npol != 1) {
+      reason = "state=" + get_state_as_string() + " and npol!=1";
+      return false;
+    }
     break;
 
-  case Coherence:
-  case Stokes:
+  case Signal::PPQQ:
+    if (npol != 2) {
+      reason = "state=" + get_state_as_string() + " and npol!=2";
+      return false;
+    }
+    break;
+
+  case Signal::Coherence:
+  case Signal::Stokes:
     if (ndim*npol != 4) {
       reason = "state=" + get_state_as_string() + " and ndim*npol!=4";
       return false;
@@ -126,7 +138,7 @@ bool dsp::Observation::state_is_valid (string& reason) const
 
 bool dsp::Observation::get_detected () const
 {
-  return (state == Detected || state == Stokes || state == Coherence);
+  return (state != Signal::Nyquist && state != Signal::Analytic);
 }
 
 /* this returns a flag that is true if an Observation may be combined 
@@ -152,9 +164,9 @@ bool dsp::Observation::combinable (const Observation & obs)
     if (state != obs.state)
       cerr << "dsp::Observation::combinable different state:"
 	   << state << " and " << obs.state << endl;
-    if (feedtype != obs.feedtype)
+    if (basis != obs.basis)
       cerr << "dsp::Observation::combinable different feeds:"
-	   << feedtype << " and " << obs.feedtype << endl;
+	   << basis << " and " << obs.basis << endl;
   }
 
   return ( (centre_frequency == obs.centre_frequency) &&
@@ -176,25 +188,25 @@ void dsp::Observation::set_telescope (char _telescope)
   telescope = _telescope;
 }
 
-void dsp::Observation::set_default_feedtype ()
+void dsp::Observation::set_default_basis ()
 {
   if (telescope == Telescope::Parkes)  {
     // Parkes has linear feeds for multibeam, H-OH, and 50cm
-    feedtype = Linear;
+    basis = Signal::Linear;
     // above 2 GHz, can assume that the Galileo receiver is used
     if (centre_frequency > 2000.0)
-      feedtype = Circular;
+      basis = Signal::Circular;
   }
   else if (telescope == Telescope::ATCA)
-    feedtype = Circular;
+    basis = Signal::Circular;
   else if (telescope == Telescope::Tidbinbilla)
-    feedtype = Circular;
+    basis = Signal::Circular;
   else if (telescope == Telescope::Arecibo)
-    feedtype = Circular;
+    basis = Signal::Circular;
   else if (telescope == Telescope::Hobart)
-    feedtype = Circular;
+    basis = Signal::Circular;
   else
-    throw_str ("Observation::set_default_feedtype no info telid: %c\n",
+    throw_str ("Observation::set_default_basis no info telid: %c\n",
 	       telescope);
 }
 
@@ -216,23 +228,7 @@ string dsp::Observation::get_default_id () const
 
 string dsp::Observation::get_state_as_string () const
 {
-  return state2string (state);
-}
-
-string dsp::Observation::state2string (State state)
-{
-#define OBS_OPT(st) case st: return string (#st)
-  // possible states of the data
-  switch (state) { 
-    OBS_OPT (Unknown);
-    OBS_OPT (Nyquist);
-    OBS_OPT (Analytic);
-    OBS_OPT (Detected);
-    OBS_OPT (Coherence);
-    OBS_OPT (Stokes);
-  };
-  return string ("invalid");
-#undef OBS_OPT
+  return Signal::state_string (state);
 }
 
 dsp::Observation::Observation (const Observation & in_obs)
@@ -258,7 +254,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   ndim        = in_obs.ndim;
   nbit        = in_obs.nbit;
   state       = in_obs.state;
-  feedtype    = in_obs.feedtype;
+  basis    = in_obs.basis;
 
   start_time  = in_obs.start_time;
 
@@ -301,12 +297,12 @@ double dsp::Observation::get_centre_frequency (int ichan) const
 }
 
 //! Change the state and correct other attributes accordingly
-void dsp::Observation::change_state (State new_state)
+void dsp::Observation::change_state (Signal::State new_state)
 {
-  if (new_state == Analytic && state == Nyquist) {
-    /* Observation was originally single-sideband, Nyquist-sampled data.
+  if (new_state == Signal::Analytic && state == Signal::Nyquist) {
+    /* Observation was originally single-sideband, Signal::Nyquist-sampled data.
        Now it is complex, quadrature sampled */
-    state = Analytic;
+    state = Signal::Analytic;
     ndat /= 2;         // number of complex samples
     rate /= 2.0;       // samples are now complex at half the rate
   }

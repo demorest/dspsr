@@ -52,7 +52,7 @@ void dsp::Response::match (const Timeseries* input, unsigned channels)
     // if the input Timeseries is single-channel, complex sampled
     // data, then the first forward FFT performed on this data will
     // result in a swapped spectrum
-    if ( input->get_state() == Observation::Analytic && !whole_swapped )
+    if ( input->get_state() == Signal::Analytic && !whole_swapped )
       swap (false);
     
   }      
@@ -67,7 +67,7 @@ void dsp::Response::match (const Timeseries* input, unsigned channels)
 
     // if the input Timeseries is multi-channel, complex sampled data,
     // then each FFT performed will result in little swapped spectra
-    if ( input->get_state() == Observation::Analytic && !chan_swapped )
+    if ( input->get_state() == Signal::Analytic && !chan_swapped )
       swap (true);
 
     // the ordering of the filterbank channels may be swapped

@@ -37,7 +37,7 @@ void dsp::Convolution::set_bandpass (Response* _bandpass)
 
 /*!
   \pre input Timeseries must contain phase coherent (undetected) data
-  \post output Timeseries will contain complex (observation::Analytic) data
+  \post output Timeseries will contain complex (observation::Signal::Signal::Analytic) data
     
   \post IMPORTANT!! Most backward complex FFT functions expect
   frequency components organized with f0+bw/2 -> f0, f0-bw/2 -> f0.
@@ -45,7 +45,7 @@ void dsp::Convolution::set_bandpass (Response* _bandpass)
   save CPU cycles, convolve() does not re-sort the ouput array, and
   therefore introduces a frequency shift in the output data.  This
   results in a phase gradient in the time domain.  Since only
-  relative phases matter when calculating the Stokes parameters,
+  relative phases matter when calculating the Signal::Signal::Stokes parameters,
   this effect is basically ignorable for our purposes.
 */
 void dsp::Convolution::operation ()
@@ -68,7 +68,7 @@ void dsp::Convolution::operation ()
   // if the response has 8 dimensions, then perform matrix convolution
   bool matrix_convolution = response->get_ndim() == 8;
 
-  Timeseries::State state = input->get_state();
+  Signal::State state = input->get_state();
   unsigned npol  = input->get_npol();
   unsigned nchan = input->get_nchan();
   unsigned ndim  = input->get_ndim();
@@ -109,12 +109,12 @@ void dsp::Convolution::operation ()
   unsigned nsamp_fft = 0;
   unsigned nsamp_overlap = 0;
 
-  if (input->get_state() == Timeseries::Nyquist) {
+  if (input->get_state() == Signal::Nyquist) {
     nsamp_fft = n_fft * 2;
     nsamp_overlap = n_overlap * 2;
     pts_reqd += 4;
   }
-  else if (input->get_state() == Timeseries::Analytic) {
+  else if (input->get_state() == Signal::Analytic) {
     nsamp_fft = n_fft;
     nsamp_overlap = n_overlap;
   }
@@ -153,7 +153,7 @@ void dsp::Convolution::operation ()
 
   float* complex_time  = spectrum[1] + n_fft * 2;
 
-  if (input->get_state() == Timeseries::Nyquist)
+  if (input->get_state() == Signal::Nyquist)
     complex_time += 2;
 
   // prepare the output Timeseries
@@ -167,7 +167,7 @@ void dsp::Convolution::operation ()
   // output data is complex
   // notice that nsamp_good is the number of input time samples.
   // therefore, the state must be changed after resize
-  output->change_state (Timeseries::Analytic);
+  output->change_state (Signal::Analytic);
 
   // nfilt_pos complex points were dropped from the start of the first FFT
   output->change_start_time (nfilt_neg);
@@ -209,10 +209,10 @@ void dsp::Convolution::operation ()
 	    ptr = complex_time;
 	  }
 	  
-	  if (state == Timeseries::Nyquist)
+	  if (state == Signal::Nyquist)
 	    fft::frc1d (nsamp_fft, spectrum[ipol], ptr);
 
-	  else if (state == Timeseries::Analytic)
+	  else if (state == Signal::Analytic)
 	    fft::fcc1d (nsamp_fft, spectrum[ipol], ptr);
 	  
 	}

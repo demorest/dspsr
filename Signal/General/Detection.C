@@ -8,18 +8,19 @@
 dsp::Detection::Detection () 
   : Operation ("Detection", anyplace)
 {
-  state = Observation::Detected;
+  state = Signal::Intensity;
   ndim = 1;
 }
 
 //! Set the state of output data
-void dsp::Detection::set_output_state (Observation::State _state)
+void dsp::Detection::set_output_state (Signal::State _state)
 {
   switch (_state)  {
-  case Observation::Detected:
+  case Signal::Intensity:
+  case Signal::PPQQ:
     ndim = 1;
-  case Observation::Stokes:
-  case Observation::Coherence:
+  case Signal::Stokes:
+  case Signal::Coherence:
     break;
   default:
     throw_str ("Detection::set_output_state unknown state");
@@ -33,28 +34,28 @@ void dsp::Detection::operation ()
 {
   if (verbose)
     cerr << "Detection::operation output state="
-	 << Observation::state2string(state) << endl;
+	 << Signal::state_string(state) << endl;
 
   if (input->get_nbit() != sizeof(float) * 8)
     throw_str ("Detection::operation input not floating point");
 
-  if (state == Observation::Stokes || state == Observation::Coherence) {
+  if (state == Signal::Stokes || state == Signal::Coherence) {
 
     if (input->get_npol() != 2)
       throw_str ("Detection::operation invalid npol=%d for %s formation",
-		 input->get_npol(), Observation::state2string(state).c_str());
+		 input->get_npol(), Signal::state_string(state));
 
-    if (input->get_state() != Observation::Analytic)
+    if (input->get_state() != Signal::Analytic)
       throw_str ("Detection::operation invalid state=%s for %s formation",
 		 input->get_state_as_string().c_str(),
-		 Observation::state2string(state).c_str());
+		 Signal::state_string(state));
 
-    // Coherence product and Stokes parameter formation can be performed
+    // Signal::Coherence product and Signal::Stokes parameter formation can be performed
     // in three ways, corresponding to ndim = 1,2,4
 
     if (!(ndim==1 || ndim==2 || ndim==4))
       throw_str ("Detection::operation invalid ndim=%d for %s formation",
-		 ndim, Observation::state2string(state).c_str());
+		 ndim, Signal::state_string(state));
     
   }
 
@@ -65,7 +66,7 @@ void dsp::Detection::operation ()
   if (!inplace)
     resize_output ();
 
-  if (state == Observation::Detected)
+  if (state == Signal::Intensity || state == Signal::PPQQ)
     square_law ();
 
   else
@@ -83,7 +84,7 @@ void dsp::Detection::resize_output ()
   int output_ndim = 1;
   int output_npol = input->get_npol();
 
-  if (state == Observation::Stokes || state == Observation::Coherence) {
+  if (state == Signal::Stokes || state == Signal::Coherence) {
     output_ndim = ndim;
     output_npol = 4/ndim;
   }
@@ -97,7 +98,7 @@ void dsp::Detection::resize_output ()
   int64 output_ndat = input->get_ndat();
   output->resize (output_ndat);
 
-  if (state == Observation::Stokes || state == Observation::Coherence) {
+  if (state == Signal::Stokes || state == Signal::Coherence) {
     // double-check the basic assumption of the polarimetry() method
 
     unsigned block_size = output_ndim * output_ndat;

@@ -1,12 +1,136 @@
+#include <assert.h>
+
 #include "Fold.h"
 #include "PhaseSeries.h"
 
-#include "polyco.h"
+#include "tempo++.h"
 #include "genutil.h"
 
 dsp::Fold::Fold () : Operation ("Fold", outofplace) 
 {
   folding_period = 0;
+
+  nbin = 0;
+  ncoef = 12;
+  nspan = 960;
+
+  built = false;
+}
+
+dsp::Fold::~Fold () { }
+
+//! Prepare for folding the input Timeseries
+void dsp::Fold::prepare ()
+{
+  if (!input)
+    throw_str ("Fold::prepare no input");
+
+  string jpulsar = input->get_source();
+  if (jpulsar[0] != 'J')
+    jpulsar = "J" + jpulsar;
+
+  if (verbose)
+    cerr << "Fold::prepare source=" << jpulsar << endl;
+
+  MJD time = input->get_start_time();
+
+  folding_polyco = choose_polyco (time, jpulsar);
+
+  if (folding_polyco)
+    return;
+
+  // no polyco found in list of supplied polycos
+  pulsar_ephemeris = choose_ephemeris (jpulsar);
+
+  if (!pulsar_ephemeris) {
+    pulsar_ephemeris = new psrephem;
+
+    if (pulsar_ephemeris->create (jpulsar, 0) < 0)
+      throw_str ("Fold::prepare error psrephem::create ("+jpulsar+")");
+  }
+
+#if 0
+
+  dm = ephemeris.get_dm();
+  if (verbose)
+    cerr << "Fold::prepare psrephem dm = " << dm << endl;
+
+  // set the source position
+  raw.position.setRadians (ephemeris.jra(), ephemeris.jdec());
+
+  // No longer using the catalogue!!
+  if (psrstat != NULL) {
+    if (verbose)
+      cerr << "Looking up " << info.source << " in catalogue\n";
+
+    // look up the pulsar in the catalogue
+    if (!creadcat (jpulsar.c_str(), psrstat))  {
+      cerr << "Fold::prepare error creadcat (" 
+	   << jpulsar << ")\n";
+      return -1;
+    }
+
+    nspan = (*psrstat)->nspan;
+    ncoef = (*psrstat)->ncoef;
+  }
+
+#endif
+
+  folding_polyco = new polyco;
+
+  Tempo::set_polyco ( *folding_polyco, *pulsar_ephemeris, time, time,
+		      nspan, ncoef, 8, input->get_telescope() );
+
+#if 0
+  doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
+  
+  if (verbose)
+    cerr << "Fold::prepare Doppler shift from polyco:" << doppler << endl;
+
+#endif
+
+  built = true;
+  IsPrepared = true;
+} 
+
+polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
+{
+  if (verbose) cerr << "Fold::choose_polyco checking "
+		    << polycos.size()
+		    << " specified polycos" << endl;
+
+  for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++)
+
+    if (polycos[ipoly]->nearest (time, pulsar)
+	&& polycos[ipoly]->nearest (time, pulsar)) {
+      if (verbose)
+	cerr << "PSR: " << pulsar << " found in polyco entry\n";
+      return polycos[ipoly];
+    }
+
+  return 0;
+}
+
+psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
+{
+  if (verbose) cerr << "Fold::choose_ephemeris checking "
+		    << ephemerides.size()
+		    << " specified ephemerides" << endl;
+
+  for (unsigned ieph=0; ieph<ephemerides.size(); ieph++) {
+
+    if (verbose) cerr << "Fold::prepare compare " 
+		      << pulsar << " and "
+		      << ephemerides[ieph]->psrname() << endl;
+
+    if (pulsar.find (ephemerides[ieph]->psrname()) != string::npos) {
+      if (verbose)
+	cerr << "PSR: " << pulsar << " matches parfile entry\n";
+      return ephemerides[ieph];
+    }
+  }
+
+  return 0;
 }
 
 //! Set the period at which to fold data (in seconds)
@@ -14,6 +138,7 @@ void dsp::Fold::set_folding_period (double _folding_period)
 {
   folding_period = _folding_period;
   folding_polyco = 0;
+  built = true;
 }
 
 //! Get the average folding period
@@ -30,21 +155,59 @@ void dsp::Fold::set_folding_polyco (polyco* _folding_polyco)
 {
   folding_polyco = _folding_polyco;
   folding_period = 0.0;
+  built = true;
 }
+
+void dsp::Fold::set_ncoef (unsigned _ncoef)
+{
+  if (ncoef == _ncoef)
+    return;
+
+  ncoef = _ncoef; 
+  built = false;
+}
+
+void dsp::Fold::set_nspan (unsigned _nspan)
+{
+  if (nspan == _nspan)
+    return;
+
+  nspan = _nspan;
+  built = false;
+}
+
+void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
+{
+  if (pulsar_ephemeris == ephemeris)
+    return;
+
+  pulsar_ephemeris = ephemeris;
+  built = false;
+}
+
 
 void dsp::Fold::operation ()
 {
+  if (!input->get_detected ())
+    throw_str ("Fold::operation input is not detected");
+
+  if (nbin == 0)
+    throw_str ("Fold::operation nbin not set");
+
   PhaseSeries* profile = dynamic_cast<PhaseSeries*> (output.get());
 
   if (!profile)
     throw_str ("Fold::operation output is not a PhaseSeries");
 
+  if (!built)
+    prepare ();
+
   if (!profile->mixable (*input, nbin))
     throw_str ("Fold::operation cannot mix input with output");
 
-  if (folding_period == 0 && folding_polyco == NULL)
+  if (folding_period == 0 && !folding_polyco)
     throw_str ("Fold::operation no folding period or polyco set");
-  
+
   int blocks = input->get_nchan() * input->get_npol();
 
   sampling_interval = 1.0/input->get_rate();
