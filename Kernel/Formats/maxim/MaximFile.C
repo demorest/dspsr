@@ -90,12 +90,12 @@ void dsp::MaximFile::open_file (const char* filename)
 
   info.set_start_time(utc);
   info.set_nbit(8);
-  info.set_npol(2);
-  info.set_nchan(2);
+  info.set_npol(1);
+  info.set_nchan(1);
   
-  info.set_state(Signal::Nyquist);
+  info.set_state(Signal::Analytic);
 
-  info.set_rate(40000000);
+  info.set_rate(80000000);
   info.set_machine("Maxim");
   info.set_bandwidth(40.0);
 

@@ -10,13 +10,11 @@ bool dsp::MaximUnpacker::matches (const Observation* observation)
 {
   return observation->get_machine() == "Maxim"
     && observation->get_nbit() == 8
-    && observation->get_state() == Signal::Nyquist;
+    && observation->get_state() == Signal::Analytic;
 }
 
 void dsp::MaximUnpacker::unpack ()
 {
-  uint64 ndat = input->get_ndat();
-
   unsigned samples_per_byte = 1;
 
   if (input->get_state() != Signal::Nyquist && input->get_state() 
@@ -26,16 +24,13 @@ void dsp::MaximUnpacker::unpack ()
 
   const unsigned char* from = input->get_rawptr();
 
-  float* into_0 = output->get_datptr (0, 0);
-  float* into_1 = output->get_datptr (0, 1); 
+  float* into = output->get_datptr (0, 0);
  
   unsigned bytes = input->get_ndat()/samples_per_byte;
 
   for (unsigned bt = 0; bt < bytes; bt++) {
-    *into_0 = float(int(*from)-128);
-    *into_1 = float(int(*from)-128);
-    into_0 += 1;
-    into_1 += 1;
+    *into = float(int(*from)-128);
+    into += 1;
     from += 1;
   }
 
