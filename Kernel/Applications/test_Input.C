@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "dsp/File.h"
-#include "dsp/BitSeries.h"
+#include "dsp/TestInput.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -66,10 +66,7 @@ int main (int argc, char** argv)
     return -1;
   }
 
-  if (verbose)
-    cerr << "Creating BitSeries instances" << endl;
-  Reference::To<dsp::BitSeries> data_small = new dsp::BitSeries;
-  Reference::To<dsp::BitSeries> data_large = new dsp::BitSeries;
+  dsp::TestInput test;
 
   Reference::To<dsp::Input> input_small;
   Reference::To<dsp::Input> input_large;
@@ -85,114 +82,19 @@ int main (int argc, char** argv)
     input_large = dsp::File::create (filenames[ifile]);
 
     cerr << "data file " << filenames[ifile] << " opened" << endl;
-    cerr << "testing " << input_large->get_name() << " sub-class" << endl;
 
-    unsigned resolution = input_small->get_resolution();
-
-    cerr << "time sample resolution = " << resolution << endl;
-
-    if (resolution == 1)
-      cerr << "WARNING: time sample resolution == 1. "
-	"cannot fully test Input class" << endl;
-    
-    input_small->set_output (data_small);
-    input_large->set_output (data_large);
-
-    unsigned small_block = block_size;
-
-    // ensure that the small block size triggers resolution-related code
-    unsigned modres = small_block % resolution;
-
-    if (modres == 0) {
-      small_block --;
-      modres = resolution - 1;
-    }
-
-    unsigned large_block = small_block * resolution;
-
-    cerr << "small block size = " << small_block << endl;
-    cerr << "large block size = " << large_block << endl;
-
-    input_small->set_block_size (small_block);
-    input_large->set_block_size (large_block);
-      
-    int block=0;
-
-    while (!input_large->eod()) {
-
-      input_large->operate();
-
-      // test that Input produces the expected output
-      if (data_large->get_ndat() != large_block) {
-	if (input_large->eod())
-	  break;
-	cerr << "ERROR: Input::block_size=" << large_block 
-	     << " != BitSeries::ndat=" << data_large->get_ndat() << endl;
-	errors ++;
-      }
-
-      if (data_large->get_request_ndat() != large_block)
-	cerr << "ERROR: large Input::block_size=" << large_block 
-	     << " != BitSeries::request_ndat=" 
-	     << data_large->get_request_ndat() << endl;
-
-      if (data_large->get_request_offset() != 0) {
-	cerr << "ERROR: BitSeries::request_offset != 0 [large]" << endl;
-	errors ++;
-      }
-
-      for (unsigned ismall=0; ismall<resolution; ismall++) {
-
-	input_small->operate();
-
-	if (data_small->get_request_ndat() != small_block) {
-	  cerr << "ERROR: small Input::block_size=" << small_block 
-	       << " != BitSeries::request_ndat=" 
-	       << data_small->get_request_ndat() << endl;
-	  errors ++;
-	}
-
-	uint64 expected_offset = (ismall * modres) % resolution;
-
-	if (data_small->get_request_offset() != expected_offset) {
-	  cerr << "ERROR: BitSeries::request_offset="
-	       << data_small->get_request_offset() << " != expected offset="
-	       << expected_offset << endl;
-	  errors ++;
-	}
-
-	// on the first read of each loop, the first small_block samples
-	// of data_small should equal those of data_large
-	if (ismall == 0) {
-
-	  unsigned char* bytes_small = data_small->get_rawptr();
-	  unsigned char* bytes_large = data_large->get_rawptr();
-
-	  uint64 nbyte = data_small->get_nbytes();
-
-	  for (unsigned ibyte=0; ibyte < nbyte; ibyte++) {
-	    if (bytes_small[ibyte] != bytes_large[ibyte]) {
-	      fprintf (stderr, "ERROR: data[%d] small=%x != large=%x\n",
-		       ibyte, bytes_small[ibyte], bytes_large[ibyte]);
-	      errors ++;
-	    }
-	  }
-	}
-
-      }
-      block++;
-      if (block == blocks)
-	break;
-    }
+    test.runtest (input_small, input_large);
 
     cerr << "end of data file " << filenames[ifile] << endl << endl;
 
     if (!errors)
       cerr << "success: dsp::Input operates as expected with " 
 	   << input_large->get_name() << " sub-class" << endl;
-    else
+    else {
       cerr << "failure: dsp::Input does not operate as expected with " 
 	   << input_large->get_name() << " sub-class" << endl;
+      return -1;
+    }
 
   }
   catch (string& error) {
