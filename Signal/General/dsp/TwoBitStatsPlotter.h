@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/08/05 19:50:06 $
+   $Revision: 1.4 $
+   $Date: 2002/08/05 19:58:57 $
    $Author: pulsar $ */
 
 #ifndef __TwoBitStatsPlotter_h
@@ -22,10 +22,10 @@ namespace dsp {
   public:
 
     //! Null constructor
-    TwoBitStatsPlotter () { init(); }
+    TwoBitStatsPlotter ();
 
     //! Virtual destructor
-    virtual ~TwoBitStatsPlotter () { }
+    virtual ~TwoBitStatsPlotter ();
 
     //! Set the data to be plotted
     void set_data (const TwoBitCorrection* stats);
@@ -101,8 +101,6 @@ namespace dsp {
 
     void check_colours ();
 
-    //! Initialize null values
-    void init();
   };
   
 }

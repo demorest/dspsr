@@ -10,7 +10,7 @@
 #include "TwoBitCorrection.h"
 #include "genutil.h"
 
-void dsp::TwoBitStatsPlotter::init ()
+dsp::TwoBitStatsPlotter::TwoBitStatsPlotter ()
 {
   theory_calculated = false;
   theory_max = 0.0;
@@ -27,6 +27,10 @@ void dsp::TwoBitStatsPlotter::init ()
   vpxmax = 0.9;
   vpymin = 0.1;
   vpymax = 0.9;
+}
+
+dsp::TwoBitStatsPlotter::~TwoBitStatsPlotter ()
+{
 }
 
 void dsp::TwoBitStatsPlotter::set_data (const TwoBitCorrection* stats)
