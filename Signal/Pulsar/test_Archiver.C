@@ -261,6 +261,16 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
+    if (manager.get_info()->get_state() == Signal::Nyquist)
+      detect->set_output_state (Signal::Intensity);
+
+    if (manager.get_info()->get_state() == Signal::Analytic)
+      detect->set_output_state (Signal::Coherence);
+
+    profiles.zero ();
+
+    fold.prepare ( manager.get_info() );
+
     int block=0;
 
     while (!manager.eod()) {
