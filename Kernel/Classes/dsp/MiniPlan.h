@@ -86,6 +86,10 @@ namespace dsp {
     //! Copy constructor- copies references, but not instances
     MiniPlan(const MiniPlan& mp);
 
+    //! Merge together many frequency-contiguous MiniPlans into one
+    //! Does few checks
+    MiniPlan(vector<Reference::To<MiniPlan> > plans);
+
     //! Virtual destructor
     virtual ~MiniPlan();
 
