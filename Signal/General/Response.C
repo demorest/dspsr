@@ -1,0 +1,331 @@
+#include <assert.h>
+#include <math.h>
+
+#include "Response.h"
+#include "Timeseries.h"
+
+#include "spectra.h"
+#include "Jones.h"
+#include "genutil.h"
+#include "cross_detect.h"
+
+//#define _DEBUG
+
+dsp::Response::Response ()
+{
+  whole_swapped = chan_swapped = chan_shifted = false;
+}
+
+/*! The ordering of frequency channels in the response function depends 
+  upon:
+  <UL>
+  <LI> the state of the input Timeseries (real or complex); and </LI>
+  <LI> what will be done to the Timeseries (e.g. simultaneous filterbank) </LI>
+  </UL>
+  As well, Response sub-classes may need dynamically check, refine, or
+  define their frequency response function based on the state of the
+  input Timeseries or the number of channels into which it will be divided. 
+ */
+void dsp::Response::match (const Timeseries* input, unsigned nchan)
+{
+  if ( input->get_nchan() == 1 ) {
+
+    // if the input Timeseries is single-channel, complex sampled
+    // data, then the first forward FFT performed on this data will
+    // result in a swapped spectrum
+    if ( input->get_state() == Observation::Analytic && !whole_swapped )
+      swap (false);
+    
+  }      
+  else  {
+
+    // if the input Timeseries is multi-channel, complex sampled data,
+    // then each FFT performed will result in little swapped spectra
+    if ( input->get_state() == Observation::Analytic && !chan_swapped )
+      swap (true);
+
+    if ( input->get_swap() && !whole_swapped )
+      swap (false);
+
+    if ( input->get_dc_centred() )
+      throw_str ("Response::match must rotate the bandbass by half channel");
+
+  }
+}
+
+// /////////////////////////////////////////////////////////////////////////
+
+/*! Multiplies an array of complex points by the complex response
+
+  \param ipol the polarization of the data (Response may optionally
+  contain a different frequency response function for each polarization)
+  
+  \param data an array of nchan*ndat complex numbers */
+
+void dsp::Response::operate (float* data, unsigned ipol, unsigned ichan)
+{
+  assert (ndim == 2);
+
+  // one filter may apply to two polns
+  if (ipol >= npol)
+    ipol = 0;
+
+  register float* d_rp = data;
+  register float* d_ip = data + 1;
+  register float* f_p = buffer + offset * ipol + ichan * ndat * ndim;
+
+#ifdef _DEBUG
+  cerr << "dsp::Response::operate nchan=" << nchan << " ipol=" << ipol 
+       << " buf=" << buffer << " f_p=" << f_p
+       << " off=" << offset(ipol) << endl;
+#endif
+
+  // the idea is that by explicitly calling the values from the
+  // arrays into local stack space, the routine should run faster
+  register float d_r;
+  register float d_i;
+  register float f_r;
+  register float f_i;
+  
+  unsigned i, n = ndat;
+  for (i=0;i<n;i++) {
+    d_r = *d_rp;
+    d_i = *d_ip;
+    f_r = *f_p; f_p ++;
+    f_i = *f_p; f_p ++;
+
+    *d_rp = f_r * d_r - f_i * d_i;
+    d_rp += 2;
+    *d_ip = f_i * d_r + f_r * d_i;
+    d_ip += 2;
+  }
+}
+
+
+// /////////////////////////////////////////////////////////////////////////
+
+/*! Adds the square of each complex point to the current power spectrum
+
+  \param data an array of nchan*ndat complex numbers 
+
+  \param ipol the polarization of the data (Response may optionally
+  integrate a different power spectrum for each polarization)
+  
+*/
+void dsp::Response::integrate (float* data, unsigned ipol, unsigned ichan)
+{
+  assert (ndim == 1);
+  assert (npol != 4);
+
+  // may be used to integrate total intensity from two polns
+  if (ipol >= npol)
+    ipol = 0;
+
+  register float* d_p = data;
+  register float* f_p = buffer + offset * ipol + ichan * ndat * ndim;
+
+#ifdef _DEBUG
+  cerr << "dsp::Response::integrate ipol=" << ipol 
+       << " buf=" << buffer << " f_p=" << f_p
+       << "off=" << offset(ipol) << endl;
+#endif
+
+  register float d;
+  register float t;
+
+  unsigned i, n = ndat;
+
+  for (i=0;i<n;i++) {
+    d = *d_p; d_p ++; // Re
+    t = d*d;
+    d = *d_p; d_p ++; // Im
+
+    *f_p += t + d*d;
+    f_p ++;
+  }
+}
+
+void dsp::Response::set (const vector<complex<float> >& filt)
+{
+  // one poln, one channel, complex
+  resize (1, 1, filt.size(), 2);
+  float* f = buffer;
+
+  for (unsigned idat=0; idat<filt.size(); idat++) {
+    // Re
+    *f = filt[idat].real();
+    f++;
+    // Im
+    *f = filt[idat].imag();
+    f++;
+  }
+}
+
+// /////////////////////////////////////////////////////////////////////////
+//
+// Response::operate - multiplies two complex arrays by complex matrix Response 
+// ndat = number of complex points
+//
+void dsp::Response::operate (float* data1, float* data2, unsigned ichan)
+{
+  assert (ndim == 8);
+
+  float* d1_rp = data1;
+  float* d1_ip = data1 + 1;
+  float* d2_rp = data2;
+  float* d2_ip = data2 + 1;
+
+  float* f_p = buffer + ichan * ndat * ndim;
+
+  register float d_r;
+  register float d_i;
+  register float f_r;
+  register float f_i;
+
+  register float r1_r;
+  register float r1_i;
+  register float r2_r;
+  register float r2_i;
+
+  int i, n = ndat;
+  for (i=0;i<n;i++) {
+
+    // ///////////////////////
+    // multiply: r1 = f11 * d1
+    d_r = *d1_rp; 
+    d_i = *d1_ip;
+    f_r = *f_p; f_p ++;
+    f_i = *f_p; f_p ++;
+
+    r1_r = f_r * d_r - f_i * d_i; 
+    r1_i = f_i * d_r + f_r * d_i;
+
+    // ///////////////////////
+    // multiply: r2 = f21 * d1
+    f_r = *f_p; f_p ++;
+    f_i = *f_p; f_p ++;
+
+    r2_r = f_r * d_r - f_i * d_i; 
+    r2_i = f_i * d_r + f_r * d_i;
+
+    // ////////////////////////////
+    // multiply: d2 = r2 + f22 * d2
+    d_r = *d2_rp;
+    d_i = *d2_ip;
+    f_r = *f_p; f_p ++;
+    f_i = *f_p; f_p ++;
+
+    *d2_rp = r2_r + f_r * d_r - f_i * d_i;
+    d2_rp += 2;
+    *d2_ip = r2_i + f_i * d_r + f_r * d_i;
+    d2_ip += 2;
+
+    // ////////////////////////////
+    // multiply: d1 = r1 + f12 * d2
+    f_r = *f_p; f_p ++;
+    f_i = *f_p; f_p ++;
+
+    *d1_rp = r1_r + f_r * d_r - f_i * d_i; 
+    d1_rp += 2;
+    *d1_ip = r1_i + f_i * d_r + f_r * d_i;
+    d1_ip += 2;
+  }
+}
+
+void dsp::Response::integrate (float* data1, float* data2, unsigned ichan)
+{
+  assert (ndim == 1);
+  assert (npol == 4);
+
+  float* data = buffer + ichan * ndat * ndim;
+
+  cross_detect_int (ndat, data1, data2,
+		    data, data + offset, 
+		    data + 2*offset, data + 3*offset);
+}
+
+void dsp::Response::set (const vector<Jones<float> >& response)
+{
+  // one poln, one channel, Jones
+  resize (1, 1, response.size(), 8);
+
+  float* f = buffer;
+
+  for (unsigned idat=0; idat<response.size(); idat++) {
+
+    // for efficiency, the elements of a Jones matrix Response 
+    // are ordered as: f11, f21, f22, f12
+
+    for (int j=0; j<2; j++)
+      for (int i=0; i<2; i++) {
+	complex<double> element = response[idat].j( (i+j)%2, j );
+	// Re
+	*f = element.real();
+	f++;
+	// Im
+	*f = element.imag();
+	f++;
+      }
+  }
+}
+
+// ////////////////////////////////////////////////////////////////
+//
+// dsp::Response::swap swaps the passband(s)
+//
+// If 'each_chan' is true, then the nchan units (channels) into which
+// the Response is logically divided will be swapped individually
+//
+void dsp::Response::swap (bool each_chan)
+{
+  if (nchan == 0)
+   throw_str ("dsp::Response::swap invalid nchan=%d", nchan);
+
+  unsigned half_npts = (ndat * ndim) / 2;
+
+  if (!each_chan)
+    half_npts *= nchan;
+
+  if (half_npts < 2)
+    throw_str ("dsp::Response::swap invalid npts=%d", half_npts);
+
+  unsigned ndiv = 1;
+  if (each_chan)
+    ndiv = nchan;
+
+#ifdef _DEBUG
+  cerr << "dsp::Response::swap"
+    " nchan=" << nchan <<
+    " ndat=" << ndat <<
+    " ndim=" << ndim <<
+    " npts=" << half_npts
+       << endl;
+#endif
+
+  float* ptr1 = 0;
+  float* ptr2 = 0;
+  float  temp = 0;
+
+  for (unsigned ipol=0; ipol<npol; ipol++) {
+
+    ptr1 = buffer + offset * ipol;
+    ptr2 = ptr1 + half_npts;
+
+    for (unsigned idiv=0; idiv<ndiv; idiv++) {
+
+      for (unsigned ipt=0; ipt<half_npts; ipt++) {
+	temp = *ptr1;
+	*ptr1 = *ptr2; ptr1++;
+	*ptr2 = temp; ptr2++;
+      }
+
+      ptr1+=half_npts;
+      ptr2+=half_npts;
+    }
+  }
+
+  if (each_chan)
+    chan_swapped = !chan_swapped;
+  else
+    whole_swapped = !whole_swapped;
+}

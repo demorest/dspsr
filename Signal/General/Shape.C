@@ -1,0 +1,160 @@
+#include <assert.h>
+
+#include "Shape.h"
+#include "genutil.h"
+
+bool dsp::Shape::verbose = false;
+
+void dsp::Shape::init ()
+{
+  buffer = NULL;
+  bufsize = 0;
+  offset = 0;
+
+  npol = nchan = ndat = ndim = 0;
+  borrowed = false;
+}
+
+
+void dsp::Shape::destroy ()
+{
+  if (!borrowed && buffer!=NULL) delete [] buffer; buffer = NULL;
+  init ();
+}
+
+dsp::Shape::Shape(void) {
+  init ();
+}
+
+dsp::Shape::~Shape(void) {
+  destroy ();
+}
+
+const dsp::Shape& dsp::Shape::operator /= (float factor)
+{
+  return operator *= (1.0/factor);
+}
+
+const dsp::Shape& dsp::Shape::operator *= (float factor)
+{
+  unsigned pts = ndim * ndat * nchan;
+
+  for (unsigned ipol=0; ipol < npol; ipol++) {
+    float* buf = buffer + offset * ipol;
+    for (unsigned ipt=0; ipt<pts; ipt++)
+      buf[ipt] *= factor;
+  }
+  return *this;
+}
+
+const dsp::Shape& dsp::Shape::operator += (const dsp::Shape& ds)
+{
+  if (npol != ds.npol)
+    throw_str ("dsp::Shape::operator += npol=%d!=ds.npol=%d", npol,ds.npol);
+  if (nchan != ds.nchan)
+    throw_str ("dsp::Shape::operator += nchan=%d!=ds.nchan=%d",nchan,ds.nchan);
+  if (ndat != ds.ndat)
+    throw_str ("dsp::Shape::operator += ndat=%d!=ds.ndat=%d", ndat,ds.ndat);
+  if (ndim != ds.ndim)
+    throw_str ("dsp::Shape::operator += ndim=%d!=ds.ndim=%d", ndim,ds.ndim);
+
+  unsigned pts = ndim * ndat * nchan;
+
+  for (unsigned ipol=0; ipol < npol; ipol++) {
+    float* buf = buffer + offset * ipol;
+    float* dbuf = ds.buffer + ds.offset * ipol;
+    for (unsigned ipt=0; ipt<pts; ipt++) {
+      *buf += *dbuf;
+      buf++; dbuf++;
+    }
+  }
+  return *this;
+}
+
+void dsp::Shape::resize (unsigned _npol, unsigned _nchan,
+			 unsigned _ndat, unsigned _ndim)
+{
+  npol = _npol;
+  nchan = _nchan;
+  ndat = _ndat;
+  ndim = _ndim;
+
+  offset = ndim * ndat * nchan;
+
+  unsigned new_bufsize = ndim * ndat * nchan * npol;
+
+  // only reallocate the array if necessary
+  if (!borrowed && bufsize >= new_bufsize)
+    return;
+
+  if (!borrowed && buffer!=NULL) delete [] buffer; buffer = NULL;
+
+  borrowed = false;
+
+  buffer = new float [new_bufsize]; assert (buffer != NULL);
+  bufsize = new_bufsize;
+}
+
+void dsp::Shape::borrow (const dsp::Shape& data, unsigned ichan)
+{
+  if (ichan >= data.nchan)
+    throw_str ("dsp::Shape::external invalid ichan=%d/%d", ichan, data.nchan);
+
+  // cerr << "dsp::Shape::external ichan=" << ichan << "/" << nchan << endl;
+  destroy ();
+
+  ndim = data.ndim;
+  ndat = data.ndat;
+  nchan = 1;
+  npol = data.npol;
+
+  offset = data.offset;
+  buffer = data.buffer + ichan * ndat * ndim;
+
+  borrowed = true;
+}
+
+void dsp::Shape::scrunch_to (unsigned new_ndat)
+{
+  if (ndat == new_ndat)
+    return;
+
+  if (borrowed)
+    throw_str ("dsp::Shape::scrunch_to cannot scrunch borrowed data");
+
+  if (new_ndat == 0)
+    throw_str ("dsp::Shape::scrunch_to invalid ndat=0");
+
+  if (ndat < new_ndat)
+    throw_str ("dsp::Shape::scrunch_to ndat=%d > current ndat=%d",
+	       new_ndat, ndat);
+
+  if (ndat % new_ndat)
+    throw_str ("dsp::Shape::scrunch_to uneven factor");
+
+  unsigned sfactor = ndat / new_ndat;
+
+  unsigned npts = ndim * new_ndat * nchan;
+
+  register float* mvr = buffer;
+  register float* adr = buffer;
+
+  for (unsigned ipol=0; ipol < npol; ipol++) {
+    for (unsigned ipt=0; ipt<npts; ipt++) {
+      *mvr = *adr; adr++;
+      for (unsigned ipta=1; ipta<sfactor; ipta++) {
+	*mvr += *adr; adr++;
+      }
+      mvr ++;
+    }
+  }
+
+  ndat = new_ndat;
+  offset = npts;
+}
+
+void dsp::Shape::zero ()
+{
+  for (unsigned ifilt=0; ifilt<bufsize; ifilt++)
+    buffer[ifilt] = 0;
+}
