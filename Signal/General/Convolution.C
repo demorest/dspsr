@@ -23,8 +23,24 @@ void dsp::Convolution::set_response (Response* _response)
   response = _response;
 }
 
-const dsp::Response* dsp::Convolution::get_response() const{
-  return response.get();
+bool dsp::Convolution::has_response () const
+{
+  return response;
+}
+
+const dsp::Response* dsp::Convolution::get_response() const
+{
+  return response;
+}
+
+bool dsp::Convolution::has_passband () const
+{
+  return passband;
+}
+
+const dsp::Response* dsp::Convolution::get_passband() const
+{
+  return passband;
 }
 
 //! Set the apodization function
@@ -67,7 +83,8 @@ void dsp::Convolution::transformation ()
 
   // response must have at least two points in it
   if (response->get_ndat() < 2)
-    throw_str ("Convolution::transformation invalid response size");
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "invalid response size");
 
   // if the response has 8 dimensions, then perform matrix convolution
   bool matrix_convolution = response->get_ndim() == 8;
@@ -79,12 +96,14 @@ void dsp::Convolution::transformation ()
 
   // if matrix convolution, then there must be two polns
   if (matrix_convolution && npol != 2)
-    throw_str ("Convolution::transformation matrix response and input.npol != 2");
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "matrix response and input.npol != 2");
 
   // response must contain a unique kernel for each channel
   if (response->get_nchan() != nchan)
-    throw_str ("Convolution::transformation invalid response nsub=%d != nchan=%d",
-	       response->get_nchan(), nchan);
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "invalid response nsub=%d != nchan=%d",
+		 response->get_nchan(), nchan);
 
   // number of points after first fft
   unsigned n_fft = response->get_ndat();
@@ -123,8 +142,9 @@ void dsp::Convolution::transformation ()
     nsamp_overlap = n_overlap;
   }
   else
-    throw_str ("Convolution::transformation Invalid state:"
-	       + input->get_state_as_string());
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "Cannot transform Signal::State="
+		 + input->get_state_as_string());
 
 
 #ifdef DEBUG
@@ -135,13 +155,13 @@ void dsp::Convolution::transformation ()
 
   // there must be at least enough data for one FFT
   if (input->get_ndat() < nsamp_fft)
-    throw_str ("Convolution::transformation error ndat="I64" < nfft=%d",
-	       input->get_ndat(), nsamp_fft);
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "error ndat="I64" < nfft=%d", input->get_ndat(), nsamp_fft);
 
   // the FFT size must be greater than the number of discarded points
   if (nsamp_fft < nsamp_overlap)
-    throw_str ("Convolution::transformation error nfft=%d < nfilt=%d",
-	       nsamp_fft, nsamp_overlap);
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "error nfft=%d < nfilt=%d", nsamp_fft, nsamp_overlap);
 
   // valid time samples per FFT
   unsigned nsamp_good = nsamp_fft-nsamp_overlap;
