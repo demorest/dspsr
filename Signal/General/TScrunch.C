@@ -75,8 +75,6 @@ void dsp::TScrunch::transformation ()
 
   for (unsigned ichan=0; ichan<input->get_nchan(); ichan++) {
     for (unsigned ipol=0; ipol<input->get_npol(); ipol++) {
-      fprintf(stderr,"working with %d %d\n",ichan,ipol);
-      
       float* in  = input->get_datptr(ichan, ipol);
       float* out = output->get_datptr(ichan, ipol);
 
