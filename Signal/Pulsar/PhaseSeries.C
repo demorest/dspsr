@@ -43,8 +43,8 @@ void dsp::PhaseSeries::set_folding_polyco (const polyco* _folding_polyco)
 //! Set the phase polynomial(s) with which to fold data
 const polyco* dsp::PhaseSeries::get_folding_polyco () const
 {
-  if (!folding_polyco)
-    throw_str ("PhaseSeries::get_folding_polyco polyco not set");
+  if( !folding_polyco )
+    return NULL;
 
   return folding_polyco;
 }
