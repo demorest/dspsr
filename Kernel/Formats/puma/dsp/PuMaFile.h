@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaFile.h,v $
-   $Revision: 1.3 $
-   $Date: 2003/05/13 12:01:55 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2003/09/27 08:59:21 $
+   $Author: hknight $ */
 
 
 #ifndef __dsp_PuMaFile_h
@@ -26,12 +26,12 @@ namespace dsp {
     ~PuMaFile ();
 
     //! Returns true if filename appears to name a valid PuMa file
-    bool is_valid (const char* filename) const;
+    bool is_valid (const char* filename,int NOT_USED=-1) const;
 
   protected:
 
     //! Open the file
-    void open_file (const char* filename);
+    void open_file (const char* filename,int NOT_USED=-1);
 
     //! Set the Input::info attribute, given a loaded Header_type object
     void parse (const void* hdr);

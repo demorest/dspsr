@@ -26,7 +26,7 @@ dsp::PuMaFile::PuMaFile (const char* filename)
   header = malloc (sizeof(Header_type));
 
   if (filename)
-    open (filename);
+    open (filename,0);
 }
 
 dsp::PuMaFile::~PuMaFile ()
@@ -34,7 +34,7 @@ dsp::PuMaFile::~PuMaFile ()
   free (header);
 }
 
-bool dsp::PuMaFile::is_valid (const char* filename) const
+bool dsp::PuMaFile::is_valid (const char* filename,int) const
 { 
   return true; // false;
 }
