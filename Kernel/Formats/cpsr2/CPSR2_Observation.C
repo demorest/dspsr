@@ -22,7 +22,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // no idea about the size of the data
   //
-  ndat = 0;
+  set_ndat( 0 );
 
   // //////////////////////////////////////////////////////////////////////
   //

@@ -37,7 +37,7 @@ dsp::BitSeries::~BitSeries ()
 */
 void dsp::BitSeries::resize (int64 nsamples)
 {
-  int64 require = get_nbytes (nsamples);
+  int64 require = get_nbytes(nsamples);
 
   if (require < 0)
     throw Error (InvalidParam, "dsp::BitSeries::resize",
@@ -59,7 +59,9 @@ void dsp::BitSeries::resize (int64 nsamples)
   if( verbose )
     fprintf(stderr,"dsp::BitSeries::resize() setting request_ndat to "I64"\n",
 	  nsamples);
-  request_ndat = ndat = nsamples;
+  
+  set_ndat( nsamples );
+  request_ndat = nsamples;
   request_offset = 0;
 
   if (!require)
@@ -79,7 +81,7 @@ dsp::BitSeries::operator = (const BitSeries& bitseries)
     return *this;
 
   Observation::operator = (bitseries);
-  resize (bitseries.ndat);
+  resize (bitseries.get_ndat());
 
   const unsigned char* from = bitseries.get_rawptr();
   unsigned char* to = get_rawptr();
@@ -112,14 +114,14 @@ int64 dsp::BitSeries::get_input_sample (Input* test_input) const
 
 void dsp::BitSeries::append (const dsp::BitSeries* little)
 {
-  if( !ndat ){
+  if( !get_ndat() ){
     if( size < little->size )
       throw Error(InvalidRange,"dsp::BitSeries::append()",
 		  string("BitSeries does not have required capacity to be appended to (size=")
 		  + make_string(size) + string(")"));
 
     Observation::operator=(*little);
-    ndat = 0;
+    set_ndat(0);
   }    
 
   else{
@@ -127,18 +129,17 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
       throw Error(InvalidState,"dsp::BitSeries::append()",
 		  "BitSerieses not combinable");
     
-    if( size/get_nbytes(1) < ndat+little->ndat )
+    if( get_nsamples(size) < get_ndat()+little->get_ndat() )
       throw Error(InvalidRange,"dsp::BitSeries::append()",
 		  "BitSeries does not have required capacity to be appended to");
   }    
 
   const unsigned char* from = little->get_datptr(0);
-  unsigned char* to = get_datptr(ndat);
+  unsigned char* to = get_datptr(get_ndat());
 
   memcpy(to,from,get_nbytes());
 
-  ndat += little->ndat;
-  
+  set_ndat( get_ndat() + little->get_ndat() );
 }
 
 //! Delete the current data buffer and attach to this one
@@ -180,7 +181,8 @@ unsigned char* dsp::BitSeries::release(uint64& _size){
   size = 0;
   input_sample = -1;
   input = 0;
-  request_ndat = ndat = 0;
+  set_ndat( 0 );
+  request_ndat = 0;
   request_offset = 0;
 
   return ret;
