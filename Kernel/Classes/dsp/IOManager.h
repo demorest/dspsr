@@ -1,13 +1,17 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.12 $
-   $Date: 2003/10/24 11:22:20 $
-   $Author: wvanstra $ */
+   $Revision: 1.13 $
+   $Date: 2003/10/25 06:47:42 $
+   $Author: hknight $ */
 
 
 #ifndef __IOManager_h
 #define __IOManager_h
+
+namespace dsp {
+  class IOManager;
+}
 
 #include "dsp/Input.h"
 #include "Error.h"
@@ -75,10 +79,14 @@ namespace dsp {
     
     //! Return the number of time samples by which consecutive blocks overlap
     virtual uint64 get_overlap () const { return overlap; }
+
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap);
 
   protected:
+
+    //! set end_of_data flag in the loader
+    virtual void set_eod(bool _eod);
 
     //! Define abstract method of the Input base class
     void load_data (BitSeries* data);

@@ -22,6 +22,12 @@ dsp::IOManager::~IOManager()
 {
 }
 
+//! set end_of_data
+void dsp::IOManager::set_eod(bool _eod){
+  if(input)
+    input->set_eod(_eod);
+}
+
 void dsp::IOManager::set_output (BitSeries* raw)
 {
   if (verbose)
