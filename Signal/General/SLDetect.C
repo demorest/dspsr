@@ -1,12 +1,14 @@
 #include <stdio.h>
 
+#include <iostream>
+
 #include "genutil.h"
 
 #include "Timeseries.h"
 
 #include "SLDetect.h"
 
-dsp::SLDetect::SLDetect( Behaviour _type=Operation::anyplace) : Operation ("SLDetect", _type){
+dsp::SLDetect::SLDetect(Behaviour _type) : Operation ("SLDetect", _type){
 }
 
 void dsp::SLDetect::operation ()
@@ -23,12 +25,21 @@ void dsp::SLDetect::operation ()
   }
 
   if( input.get() != output.get() ){
+    if(verbose)
+      fprintf(stderr,"input.get()!=output.get()\n");
+
     /* Set output's capacity etc.
-       Things that are different from input are state, size, subsize
+       Things that are different from input are state, subsize
        These can be set correctly by simply setting state to detected
        and resizing output */
     output->Observation::operator=( *input );
-    output->set_state( Signal::Intensity );
+    if( input->get_npol()==2 )
+      output->set_state( Signal::PPQQ );
+    else if( input->get_npol()==1 ){
+      fprintf(stderr,"dsp::SLDetect input had 1 polarisation- assuming this is total power over all polarisations\n"
+	      "ie setting output->state to Signal::Intensity\n");
+      output->set_state( Signal::Intensity );
+    }
     output->resize( input->get_ndat() );
   }
 
@@ -36,8 +47,20 @@ void dsp::SLDetect::operation ()
   register float* in_ptr = const_cast<float*>(input->get_datptr(0,0));
   register float* out_ptr = output->get_datptr(0,0);
   // When in_ptr=dend, we are on our last timesample to SLD
-  register float* dend = in_ptr + input->get_ndat(); 
+  register float* dend = in_ptr + input->get_npol()*input->get_nchan()*input->get_ndim()*input->get_ndat(); 
 
+  if(verbose)
+    fprintf(stderr,"For calculating dend npol=%d nchan=%d ndim=%d ndat="I64"\n",
+	    input->get_npol(),input->get_nchan(),input->get_ndim(),input->get_ndat());
+
+  if(verbose){
+    cerr << "in_ptr="<<in_ptr<<"\n";
+    cerr << "out_ptr="<<out_ptr<<"\n";
+    cerr << "dend="<<dend<<"\n";
+    cerr << "dend-in_ptr="<<dend-in_ptr<<"\n";
+  }
+  else if(verbose)
+    fprintf(stderr,"input.get()==output.get()\n");
   /* See ~hknight/h_code/test2Aug02.C to see the test I
      ran to find the quickest way of doing the squaring.
      Not that this is the fastest though- but it's hopefully
@@ -48,17 +71,17 @@ void dsp::SLDetect::operation ()
     if(verbose)
       fprintf(stderr,"SLDetect case is an %s operation on Nyquist data\n",
 	      input.get()==output.get()?"inplace":"outofplace"); 
-
+    
     do{
       *out_ptr = *in_ptr * *in_ptr;
       out_ptr++;
       in_ptr++;
-    } while( out_ptr != dend );
+    } while( in_ptr != dend );
   }
 
   else if( input->get_state()==Signal::Analytic ){
     if(verbose)
-      fprintf(stderr,"SLDetect case is an %s operation on Nyquist data\n",
+      fprintf(stderr,"SLDetect case is an %s operation on Analytic data\n",
 	      input.get()==output.get()?"inplace":"outofplace");
 
     do{
@@ -68,12 +91,10 @@ void dsp::SLDetect::operation ()
       *out_ptr += *in_ptr * *in_ptr; // Add in Im*Im
       in_ptr++;
       out_ptr++;
-    } while( out_ptr!=dend );
+    } while( in_ptr!=dend );
   }
 
-  /* just to make sure that output has all the correct values */
-  output->Observation::operator=( *input );
-
+  // Set new state if output==input
   if( input->get_npol()==2 )
     output->set_state( Signal::PPQQ );
   else if( input->get_npol()==1 ){
@@ -82,9 +103,12 @@ void dsp::SLDetect::operation ()
     output->set_state( Signal::Intensity );
   }
 
-  output->resize( output->get_ndat() );
-
-  if(verbose)
+  // Bad:
+  //  output->resize( output->get_ndat() );
+  // Good: (ndim has changed so subsize changes:)
+  output->set_subsize( (output->get_ndat()*output->get_nbit())/8 );
+  
+    if(verbose)
     fprintf(stderr,"after sld output has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d state=%s\n",
 	    output->get_ndim(), output->get_ndat(), output->get_npol(), output->get_nchan(),output->get_nbit(),
 	    output->get_state_as_string().c_str());

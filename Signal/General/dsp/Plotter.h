@@ -12,10 +12,8 @@
 #include "environ.h"
 #include "genutil.h"
 
-#include "h_plotdata.h"
-#include "plot_params.h"
-#include "genutil.h"
-
+#include "PlotData.h"
+#include "PlotParams.h"
 #include "Timeseries.h"
 #include "Ready.h"
 #include "Reference.h"
@@ -33,56 +31,35 @@ namespace dsp {
 
     virtual bool EnsureReadiness();
 
-    Timeseries* get_input()
-      { return input.get(); }
-    void set_input(Timeseries* _input)
-      { input = _input; }
+    Timeseries* get_input(){ return input.get(); }
+    void set_input(Timeseries* _input){ input = _input; }
 
-    void set_cpgopen_response(string response)
-      { cpgopen_response = response; }
-    string get_cpgopen_response()
-      { return cpgopen_response; }
+    void set_cpgopen_response(string response){ cpgopen_response = response; }
+    string get_cpgopen_response(){ return cpgopen_response; }
 
-    void set_sample_start(int64 _sample_start)
-      { sample_start = _sample_start; }
-    int64 get_sample_start()
-      { return sample_start; }
+    void set_sample_start(int64 _sample_start){ sample_start = _sample_start; }
+    int64 get_sample_start(){ return sample_start; }
 
-    void set_sample_finish(int64 _sample_finish)
-      { sample_finish = _sample_finish; }
-    int64 get_sample_finish()
-      { return sample_finish; }
+    void set_sample_finish(int64 _sample_finish){ sample_finish = _sample_finish; }
+    int64 get_sample_finish(){ return sample_finish; }
 
-    void set_title(string title)
-      { params.back().set_title(title); }
-    string get_title()
-      { return params.back().get_title(); }
+    void set_base_title(string _base_title){base_title = _base_title; }
+    string get_base_title(){ return base_title; }
 
-    void set_xlabel(string xlabel)
-      { params.back().set_xlabel(xlabel); }
-    string get_xlabel()
-      { return params.back().get_xlabel(); }
+    void set_xlabel(string _xlabel){ xlabel = _xlabel; }
+    string get_xlabel(){ return xlabel; }
 
-    void set_ylabel(string ylabel)
-      { params.back().set_ylabel(ylabel); }
-    string get_ylabel()
-      { return params.back().get_ylabel(); }
-    
+    void set_ylabel(string _ylabel){ ylabel = _ylabel; }    
+    string get_ylabel(){ return ylabel; }
+
     // A pair is a chan-pol pair
-    bool get_plot_all_pairs()
-      { return plot_all_pairs; }
-    void set_plot_all_pairs(bool _plot_all_pairs)
-      {  plot_all_pairs = _plot_all_pairs; }
+    bool get_plot_all_pairs(){ return plot_all_pairs; }
+    void set_plot_all_pairs(bool _plot_all_pairs){  plot_all_pairs = _plot_all_pairs; }
 
     // To use pairs_to_plot you must explicity set_plot_all_pairs(false)
     void add_to_pairs_to_plot(pair<int,int> chanpol)
       { if( !is_one_of(chanpol,pairs_to_plot) ) pairs_to_plot.push_back(chanpol); }
     void remove_from_pairs_to_plot(pair<int,int> chanpol);
-
-    static vector<int> good_colours;
-    static vector<int> bad_colours;
-    static vector<int> initial_good_colours();
-    static vector<int> initial_bad_colours();
 
   protected:
     
@@ -106,9 +83,13 @@ namespace dsp {
     string cpgopen_response;  // default is 101/xs
     int dev;
 
-    vector<plot_params> params;
-    vector<plotdata> plotdatas;
+    vector<plot::PlotParams> params;
+    vector<plot::PlotData> plotdatas;
     
+    string base_title;
+    string xlabel;
+    string ylabel;
+
     // A pair is a chan-pol pair
     // When plot_all_pairs=true, pairs_to_plot is ignored
     bool plot_all_pairs;
