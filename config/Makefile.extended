@@ -308,6 +308,9 @@ all: libs $(BINS)
 
 include: $(INCS)
 
+$(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
+	@$(copy_header)
+
 # copy the include files only after successful compilation
 libs: $(LIBS) include
 

@@ -35,9 +35,6 @@ cp $< $@
 chmod a-w $@
 endef
 
-$(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
-	@$(copy_header)
-
 $(INSTALL_INCDIR)/% : ./% $(INSTALL_INCDIR)/.exists
 	@$(copy_header)
 
