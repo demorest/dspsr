@@ -144,6 +144,8 @@ void dsp::Filterbank::transformation ()
 		 "input.ndat="I64" < nfft=%d",
 		 input->get_ndat(), nsamp_fft);
 
+  minimum_samps_can_process = nsamp_fft;
+
   // prepare the output TimeSeries
   output->Observation::operator= (*input);
 
