@@ -241,8 +241,9 @@ namespace dsp {
     { return int64((latter->get_start_time() - get_start_time()).in_seconds() * get_rate()); }
 
     //! Return the end time of the trailing edge of the last time sample
+    // Returns correct answer if ndat=rate=0 and avoids division by zero
     virtual MJD get_end_time () const
-    { return start_time + double(ndat) / rate; }
+    { if( ndat==0 ) return start_time; return start_time + double(ndat) / rate; }
 
     //! Multiply scale by factor
     void rescale (double factor) { scale *= factor; }
