@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.45 $
-   $Date: 2003/02/07 05:50:39 $
-   $Author: cwest $ */
+   $Revision: 1.46 $
+   $Date: 2003/03/07 00:04:50 $
+   $Author: pulsar $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -277,7 +277,7 @@ namespace dsp {
     /* This returns a flag that is true if the Observations may be combined 
        It doesn't check the start times- you have to do that yourself!
     */
-    bool combinable (const Observation& obs) const;
+    bool combinable (const Observation& obs, bool different_bands=false) const;
 
     //! Return true if the first sample of next follows the last sample of this
     bool contiguous (const Observation& next) const;

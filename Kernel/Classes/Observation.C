@@ -212,7 +212,7 @@ bool dsp::Observation::get_detected () const
 /* this returns a flag that is true if the Observations may be combined 
    It doesn't check the start times- you have to do that yourself!
 */
-bool dsp::Observation::combinable (const Observation & obs) const
+bool dsp::Observation::combinable (const Observation & obs, bool different_bands) const
 {
   double eps = 0.000001;
   bool can_combine = true;
@@ -231,12 +231,14 @@ bool dsp::Observation::combinable (const Observation & obs) const
     can_combine = false;
   }
 
-  if( fabs(centre_frequency-obs.centre_frequency) > eps ) {
-    if (verbose)
-      cerr << "dsp::Observation::combinable different frequencies:"
-	   << centre_frequency << " and " << obs.centre_frequency << endl;
-    can_combine = false;
-  }
+  if( !different_bands ){
+    if( fabs(centre_frequency-obs.centre_frequency) > eps ) {
+      if (verbose)
+	cerr << "dsp::Observation::combinable different frequencies:"
+	     << centre_frequency << " and " << obs.centre_frequency << endl;
+      can_combine = false;
+    }
+  }  
 
   if( fabs(bandwidth-obs.bandwidth) > eps ) {
     if (verbose)
@@ -356,12 +358,37 @@ bool dsp::Observation::combinable (const Observation & obs) const
 	   << between_channel_dm << " and " << obs.between_channel_dm << endl;
     can_combine = false;
   }
+
+  if( different_bands ){
+    float this_lo = get_centre_frequency() - fabs(get_bandwidth())/2.0;
+    float this_hi = get_centre_frequency() + fabs(get_bandwidth())/2.0;
+    float obs_lo = obs.get_centre_frequency() - fabs(obs.get_bandwidth())/2.0;
+    float obs_hi = obs.get_centre_frequency() + fabs(obs.get_bandwidth())/2.0;
+    
+    bool bands_meet = false;
+    float eps = 0.000001;
+
+    if( fabs(this_hi-obs_lo)<eps || fabs(this_lo-obs_hi)<eps )
+      bands_meet = true;
+    
+    if( !bands_meet ){
+      if( verbose )
+	fprintf(stderr,"dsp::Observation::combinable bands don't meet- this is centred at %f with bandwidth %f.  obs is centred at %f with bandwidth %f\n",
+		get_centre_frequency(), fabs(get_bandwidth()),
+		obs.get_centre_frequency(), fabs(obs.get_bandwidth()));
+      can_combine = false;
+    }
+  }
   
   return can_combine;
 }
 
 bool dsp::Observation::contiguous (const Observation & obs) const
 {
+  if( verbose )
+    fprintf(stderr,"In dsp::Observation::contiguous() with this=%p and obs=%p\n",
+	    this,&obs);
+
   double difference = (get_end_time() - obs.get_start_time()).in_seconds();
 
   bool ret = ( combinable(obs) && (difference-1.0/rate) < 0.9/rate );
@@ -376,7 +403,7 @@ bool dsp::Observation::contiguous (const Observation & obs) const
     fprintf(stderr,"obs.get_start_time().in_seconds()=%f\n",
 	    obs.get_start_time().in_seconds());
     fprintf(stderr,"difference                       =%f\n",fabs(difference));
-    fprintf(stderr,"difference needed to be less than %f\n",1e3/rate);    
+    fprintf(stderr,"difference needed to be less than %f\n",0.9/rate);    
     fprintf(stderr,"ndat="UI64" and rate=%f.  obs.ndat="UI64" obs.rate=%f\n",
 	    ndat,rate,obs.ndat,obs.rate);
   } 
@@ -509,7 +536,7 @@ double dsp::Observation::get_base_frequency () const
   if (dc_centred)
     return centre_frequency - 0.5*bandwidth;
   else
-    return centre_frequency - 0.5*bandwidth*(1.0-1.0/double(nchan));
+    return centre_frequency - 0.5*bandwidth + 0.5*bandwidth/double(nchan);
 }
 
 void dsp::Observation::get_minmax_frequencies (double& min, double& max) const
@@ -563,7 +590,7 @@ bool dsp::Observation::obs2string(string& ss){
   sprintf(dummy,"STATE\t%s\n",Signal::State2string(state).c_str()); ss += dummy;
   sprintf(dummy,"BASIS\t%s\n",Signal::Basis2string(basis).c_str()); ss += dummy;
   sprintf(dummy,"RATE\t%.16f\n",rate); ss += dummy;
-  sprintf(dummy,"START_TIME\t%s\n",start_time.printall()); ss += dummy;
+  sprintf(dummy,"START_TIME\t%s\n",start_time.printdays(15).c_str()); ss += dummy;
   sprintf(dummy,"SCALE\t%.16f\n",scale); ss += dummy;
   sprintf(dummy,"SWAP\t%s\n",swap?"true":"false"); ss += dummy;
   sprintf(dummy,"DC_CENTRED\t%s\n",dc_centred?"true":"false"); ss += dummy;
@@ -599,7 +626,9 @@ bool dsp::Observation::obs2file(FILE* fptr){
 
 //! The file pointer must be appropriately seeked
 bool dsp::Observation::file2obs(FILE* fptr){
-  fprintf(stderr,"In dsp::Observation::file2obs()\n");
+  if( verbose )
+    fprintf(stderr,"In dsp::Observation::file2obs()\n");
+
   if( !fptr ){
     cerr << "dsp::Observation::file2obs() returning false as fptr=NULL\n";
     return false;
@@ -637,7 +666,7 @@ bool dsp::Observation::file2obs(FILE* fptr){
   fscanf(fptr,"NDIM\t%d\n",&ndim);  if(verbose) fprintf(stderr,"Got ndim=%d\n",ndim); 
   fscanf(fptr,"NBIT\t%d\n",&nbit);  if(verbose) fprintf(stderr,"Got nbit=%d\n",nbit); 
   retrieve_cstring(fptr,"TYPE\t",dummy); type = Signal::string2Source(dummy);  if(verbose) fprintf(stderr,"Got type=%s\n",Signal::Source2string(type).c_str()); 
-  retrieve_cstring(fptr,"STATE\t",dummy); fprintf(stderr,"yo\n"); state = Signal::string2State(dummy);  if(verbose) fprintf(stderr,"Got state=%s\n",Signal::State2string(state).c_str()); 
+  retrieve_cstring(fptr,"STATE\t",dummy); state = Signal::string2State(dummy);  if(verbose) fprintf(stderr,"Got state=%s\n",Signal::State2string(state).c_str()); 
   retrieve_cstring(fptr,"BASIS\t",dummy); basis = Signal::string2Basis(dummy);  if(verbose) fprintf(stderr,"Got basis=%s\n",Signal::Basis2string(basis).c_str()); 
   fscanf(fptr,"RATE\t%lf\n",&rate);  if(verbose) fprintf(stderr,"Got rate=%f\n",rate); 
   retrieve_cstring(fptr,"START_TIME\t",dummy); start_time = MJD(dummy);  if(verbose) fprintf(stderr,"Got start_time=%s\n",start_time.printdays(15).c_str()); 
@@ -675,7 +704,8 @@ bool dsp::Observation::file2obs(FILE* fptr){
     throw Error(InvalidState,"dsp::Observation::file2string()",
 		"Couldn't obs2string!\n");
 
-  fprintf(stderr,"Data got in:\n%s\n",ss.c_str());
+  if( verbose )
+    fprintf(stderr,"Data got in:\n%s\n",ss.c_str());
 
   return true;
 }
