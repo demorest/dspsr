@@ -5,6 +5,7 @@
 #include "dsp/S2File.h"
 #include "dsp/PMDAQFile.h"
 #include "dsp/CoherentFBFile.h"
+#include "dsp/BitSeriesFile.h"
 
 //#include "dsp/DigiFile.h"
 
@@ -14,11 +15,12 @@ Registry::List<dsp::File> dsp::File::registry;
 //S2 should remain last as it doesn't do proper "is_valid()" tests
 //Ensure that anything you add does do proper "is_valid()" tests
 
-static Registry::List<dsp::File>::Enter<dsp::CPSR2File> cpsr2;
-static Registry::List<dsp::File>::Enter<dsp::CPSRFile>  cpsr;
-static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> pmdaq;
-static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile>    coherentfb;
-static Registry::List<dsp::File>::Enter<dsp::S2File>    s2;
+static Registry::List<dsp::File>::Enter<dsp::CPSR2File>      cpsr2;
+static Registry::List<dsp::File>::Enter<dsp::CPSRFile>       cpsr;
+static Registry::List<dsp::File>::Enter<dsp::PMDAQFile>      pmdaq;
+static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> coherentfb;
+static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile>  bitseries_file;
+static Registry::List<dsp::File>::Enter<dsp::S2File>         s2;
 
 //static Registry::List<dsp::File>::Enter<dsp::DigiFile> digifile;
 
