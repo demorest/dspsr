@@ -342,8 +342,12 @@ void dsp::TimeSeries::hack_together(vector<TimeSeries*> bands){
   for( unsigned i=0; i<bands.size(); i++)
     bands[i] = to_sort[i].ptr;
 
+  float req_scale = bands.front()->get_scale();
+
   // Check the sorted TimeSeries's are combinable
   for( unsigned iband=1; iband<bands.size(); iband++){
+    bands[iband]->operator*=( req_scale / bands[iband]->get_scale() );
+
     if( !bands[iband-1]->combinable(*bands[iband],true) )
       throw Error(InvalidParam,"dsp::TimeSeries::hack_together()",
 		  "bands %d and %d aren't combinable",
