@@ -4,6 +4,7 @@
 #include "dsp/Response.h"
 #include "dsp/Observation.h"
 
+#include "Error.h"
 #include "spectra.h"
 #include "Jones.h"
 #include "genutil.h"
@@ -218,8 +219,9 @@ void dsp::Response::check_ndat () const
     cerr << "Response::check_ndat minimum ndat=" << ndat_min << endl;
   
   if (ndat < ndat_min)
-    throw_str ("Response::check_ndat specified ndat (%d)" 
-	       " < required minimum ndat (%d)", ndat, ndat_min);
+    throw Error(InvalidState,"dsp::Response::check_ndat()",
+		"specified ndat (%d) < required minimum ndat (%d)",
+		ndat, ndat_min);
 }
   
 
