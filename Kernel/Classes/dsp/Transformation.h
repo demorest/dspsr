@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/07/28 14:19:40 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2003/09/02 08:32:06 $
+   $Author: hknight $ */
 
 #ifndef __Transformation_h
 #define __Transformation_h
@@ -14,10 +14,10 @@
 #include <stdlib.h>
 
 #include "environ.h"
-
 #include "Error.h"
 
 #include "dsp/Operation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
@@ -34,7 +34,7 @@ namespace dsp {
 
     //! All sub-classes must specify name and capacity for inplace operation
     Transformation (const char* _name, Behaviour _type) : Operation (_name)
-    { type = _type; }
+    { type = _type; free_scratch_space = swap_buffers = false; }
 
     //! Virtual destructor
     virtual ~Transformation () { }
@@ -56,6 +56,21 @@ namespace dsp {
     //! Return the Transformation type
     Behaviour get_type() { return type; }
 
+    //! Setting this determines whether you want to swap 'input' and 'output' before returning
+    //! You might set this to true when you have a class that must be outofplace, but you want
+    //!   your output to go into the same TimeSeries as your input.
+    void set_swap_buffers(bool _swap_buffers){ swap_buffers = _swap_buffers; }
+
+    //! Inquire whether the 'input' and 'output' will be swapped before returning
+    bool get_swap_buffers(){ return swap_buffers; }
+
+    //! Setting this determines whether you want to delete the unused output buffer
+    //! Use this when you have 'swap_buffers' set to true, and you don't want the TimeSeries that was used as output
+    void set_free_scratch_space(bool _free_scratch_space){ free_scratch_space = _free_scratch_space; }
+
+    //! Inquire whether you want to delete the unused output buffer
+    bool get_free_scratch_space(){ return free_scratch_space; }
+
   protected:
 
     //! Define the Operation pure virtual method
@@ -69,6 +84,15 @@ namespace dsp {
 
     //! Container into which output data will be written
     Reference::To <Out> output;
+
+    //! Swap 'input' and 'output' before returning (simulates an inplace operation but can be faster) (Only for TimeSeries's)
+    //! You might set this to true when you have a class that must be outofplace, but you want
+    //!   your output to go into the same TimeSeries as your input.
+    bool swap_buffers;
+
+    //! If 'swap_buffers' is true, and 'free_scratch_space' is true, then the 'output' is resized to zero to free up memory (Only for TimeSeries's)
+    //! Use this when you have 'swap_buffers' set to true, and you don't want the TimeSeries that was used as output
+    bool free_scratch_space;
 
   private:
 
@@ -115,6 +139,19 @@ void dsp::Transformation<In, Out>::operation ()
   if ( type!=inplace && !output->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid output state: " + reason);
+
+  if( swap_buffers ){
+    // Perhaps a better idea would be each class having a 'name' attribute?
+    if( sizeof(In)==sizeof(TimeSeries) && sizeof(Out)==sizeof(TimeSeries) ){
+      TimeSeries* in = (TimeSeries*)input.ptr();
+      TimeSeries* out = (TimeSeries*)output.ptr();
+
+      in->swap_data( *out );
+      if( free_scratch_space )
+	out->resize(0);
+    }
+  }
+
 }
 
 template <class In, class Out>
