@@ -187,7 +187,6 @@ endif
 
 LTIMES = -ltimes -lunits $(LSLA) -lm
 
-LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil++ -lgenutil \
-	-lpsrfft $(LFFT) $(LTIMES)
+LARCHIVE = -larchive -lpsrchive -lpsrastro -lpsrutils $(LFFT) $(LSLA)
 
 -include ${LOCAL_ROOT}/include/Makefile.psrchive
