@@ -148,13 +148,13 @@ void dsp::TimeSeries::seek (int64 offset)
 
   if (offset > int64(ndat))
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
-		 "offset=%d > ndat=%d", offset, ndat);
+		 "offset=%d > ndat=%d In English: you've tried to seek past the end of the data", offset, ndat);
 
   int64 current_offset = int64(data - buffer) * int64(ndim);
 
   if (-offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
-		 "offset=%d > current_offset=%d", offset, current_offset);
+		 "offset=%d > current_offset=%d In English: you've tried to seek before the start of the data", offset, current_offset);
 
   data += offset * int64(ndim);
   ndat -= offset;
