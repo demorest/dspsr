@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/11/26 16:37:23 $
+   $Revision: 1.15 $
+   $Date: 2004/10/15 12:10:52 $
    $Author: wvanstra $ */
 
 
@@ -62,6 +62,12 @@ namespace dsp {
     //! Set the BitSeries into which data will be loaded
     // (should not normally need to be used)
     virtual void set_output (BitSeries* output);
+
+    //! Get the information about the data source
+    Observation* get_info () { return input->get_info(); }
+
+    //! Get the information about the data source
+    const Observation* get_info () const { return input->get_info(); }
 
     //! End of data
     virtual bool eod();
