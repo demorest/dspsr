@@ -76,7 +76,7 @@ void dsp::TScrunch::transformation ()
   if( get_input() != get_output() ){
     output->Observation::operator=( *input );
     if( verbose )
-      fprintf(stderr,"Going to resize output to "UI64"\n",output_ndat);
+      fprintf(stderr,"Going to resize output (%p) to "UI64"\n",output.ptr(),output_ndat);
     output->resize( output_ndat );
     if( verbose )
       fprintf(stderr,"Resized output to size "UI64"\n",output->get_ndat());
