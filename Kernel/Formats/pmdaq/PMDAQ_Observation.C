@@ -33,7 +33,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
   //
 
   if (strncmp(&header[592],"PARKES",6)==0) {
-    set_telescope (7);
+    set_telescope_code (7);
   }
       else {
     throw_str ("PMDAQ_Observation - failed to recognise telescope %10.10s\n",

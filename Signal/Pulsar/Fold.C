@@ -101,7 +101,7 @@ void dsp::Fold::prepare (const Observation* observation)
   Reference::To<polyco> polly = new polyco;
 
   Tempo::set_polyco ( *polly, *pulsar_ephemeris, time, time,
-		      nspan, ncoef, 8, observation->get_telescope() );
+		      nspan, ncoef, 8, observation->get_telescope_code() );
 
   folding_polyco = polly;
 

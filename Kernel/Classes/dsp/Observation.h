@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.47 $
-   $Date: 2003/03/13 23:36:28 $
-   $Author: pulsar $ */
+   $Revision: 1.48 $
+   $Date: 2003/04/24 17:27:45 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -115,9 +115,9 @@ namespace dsp {
     uint64 get_ndat () const { return ndat; }
 
     //! Set the tempo telescope code
-    void set_telescope (char telescope);
+    void set_telescope_code (char telescope);
     //! Return the tempo telescope code
-    char get_telescope () const { return telescope; }
+    char get_telescope_code () const { return telescope; }
 
     //! Set the source name
     void set_source (string _source) { source = _source; }

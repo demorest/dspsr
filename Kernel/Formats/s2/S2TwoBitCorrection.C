@@ -27,7 +27,7 @@ dsp::S2TwoBitCorrection::S2TwoBitCorrection (char telescope)
 
 void dsp::S2TwoBitCorrection::match (const Observation* observation)
 {
-  match ( observation->get_telescope() );
+  match ( observation->get_telescope_code() );
 }
 
 void dsp::S2TwoBitCorrection::match (char telescope)

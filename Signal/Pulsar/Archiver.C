@@ -55,7 +55,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_ephemeris (const psrephem& ephemeris);
   */
 
-  archive-> set_telescope_code ( phase->get_telescope() );
+  archive-> set_telescope_code ( phase->get_telescope_code() );
 
   archive-> set_type ( phase->get_type() );
   archive-> set_basis ( phase->get_basis() );
@@ -76,16 +76,8 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   set (archive-> get_Integration(0), phase);
 
   // set_model must be called after the Integration::MJD has been set
-  if( !phase->get_folding_polyco() ){
-    fprintf(stderr,"using no polyco whatsoever\n");
-    //archive->set_model( polyco(phase->get_epoch(),
-    //		       phase->get_dispersion_measure(),
-    //		       1.0/phase->get_folding_period(),
-    //		       phase->get_telescope()) );
-  }
-  else{
+  if( phase->get_folding_polyco() )
     archive-> set_model ( *(phase->get_folding_polyco()) );
-  }
 
   archive-> set_filename (get_filename (phase));
 

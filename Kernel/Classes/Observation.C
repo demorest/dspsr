@@ -411,7 +411,7 @@ bool dsp::Observation::contiguous (const Observation & obs) const
   return ret;
 }
 
-void dsp::Observation::set_telescope (char _telescope)
+void dsp::Observation::set_telescope_code (char _telescope)
 {
   if (_telescope < 10) /* if the char is < 10 then it was probably an int */
     _telescope += '0';
@@ -487,7 +487,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_nbit        ( in_obs.get_nbit() );
   set_ndat        ( in_obs.get_ndat() );
 
-  set_telescope   ( in_obs.get_telescope() );
+  set_telescope_code   ( in_obs.get_telescope_code() );
   set_source      ( in_obs.get_source() );
   set_coordinates ( in_obs.get_coordinates() );
 

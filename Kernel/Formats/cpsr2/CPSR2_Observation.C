@@ -34,9 +34,9 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 
   string tel = hdrstr;
   if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS")
-    set_telescope (7);
+    set_telescope_code (7);
   else
-    set_telescope (hdrstr[0]);
+    set_telescope_code (hdrstr[0]);
 
   // //////////////////////////////////////////////////////////////////////
   //

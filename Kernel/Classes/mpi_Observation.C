@@ -101,7 +101,7 @@ int mpiPack (const dsp::Observation& obs,
   tempc = obs.get_dc_centred();
   MPI_Pack (&tempc, 1, MPI_CHAR, outbuf, outcount, pos, comm);
 
-  tempc = obs.get_telescope();
+  tempc = obs.get_telescope_code();
   MPI_Pack (&tempc, 1, MPI_CHAR, outbuf, outcount, pos, comm);
 
   // use mpiPack (string)
@@ -175,7 +175,7 @@ int mpiUnpack (void* inbuf, int insize, int* pos, dsp::Observation* obs,
   obs->set_dc_centred (tempc);
 
   MPI_Unpack (inbuf, insize, pos, &tempc, 1, MPI_CHAR, comm);
-  obs->set_telescope (tempc);
+  obs->set_telescope_code (tempc);
 
   // use mpiUnpack (string)
 
