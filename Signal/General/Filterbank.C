@@ -147,7 +147,7 @@ void dsp::Filterbank::transformation ()
   minimum_samps_can_process = nsamp_fft;
 
   // prepare the output TimeSeries
-  output->Observation::operator= (*input);
+  output->copy_configuration (input);
 
   // output data will be complex
   output->set_state (Signal::Analytic);
