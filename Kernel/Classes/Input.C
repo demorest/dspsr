@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "dsp/Input.h"
 #include "dsp/BitSeries.h"
 

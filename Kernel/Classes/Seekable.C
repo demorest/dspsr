@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "dsp/Seekable.h"
 #include "dsp/BitSeries.h"
 
