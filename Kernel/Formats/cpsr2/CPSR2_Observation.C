@@ -215,18 +215,32 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   bool has_position = true;
   double ra, dec;
 
-  if (has_position)
-    has_position = (ascii_header_get (header, "RA", "%s", hdrstr) == 0);
-  if (has_position)
-    has_position = (str2ra (&ra, hdrstr) == 0);
-  if (has_position)
-    has_position = (ascii_header_get (header, "DEC", "%s", hdrstr) == 0);
-  if (has_position)
-    has_position = (str2dec (&dec, hdrstr) == 0);
-
-  if (!has_position) {
-    ra = dec = 0.0;
+  if (has_position){
+    has_position = (ascii_header_get (header, "RA", "%s", hdrstr) == 1);
+    //    fprintf(stderr,"1 has_position=%d hdrstr='%s'\n",has_position,hdrstr);
   }
+
+  if (has_position){
+    has_position = (str2ra (&ra, hdrstr) == 0);
+    //fprintf(stderr,"2 has_position=%d ra=%f\n",has_position,ra);
+  }
+
+  if (has_position){
+    has_position = (ascii_header_get (header, "DEC", "%s", hdrstr) == 1);
+    //fprintf(stderr,"3 has_position=%d hdrstr='%s'\n",has_position,hdrstr);
+  }
+
+  if (has_position){
+    has_position = (str2dec (&dec, hdrstr) == 0);
+    //fprintf(stderr,"4 has_position=%d dec=%f\n",has_position,dec);
+  }
+
+  if (!has_position){
+    ra = dec = 0.0;
+    //fprintf(stderr,"5 has_position=%d set shit to zero\n",has_position);
+  }
+  
+  //fprintf(stderr,"Got ra=%f dec=%f exiting\n",ra,dec);
 
   coordinates.setRadians(ra, dec);
 }
