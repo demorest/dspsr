@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/01/27 23:41:45 $
-   $Author: hknight $ */
+   $Revision: 1.11 $
+   $Date: 2003/02/13 01:28:48 $
+   $Author: pulsar $ */
 
 
 #ifndef __MultiFile_h
@@ -11,16 +11,18 @@
 
 #include <vector>
 
+#include "dsp/Observation.h"
 #include "dsp/Seekable.h"
 #include "dsp/File.h"
+#include "dsp/PseudoFile.h"
 
 namespace dsp {
 
   class File;
 
   //! Loads BitSeries data from multiple files
-  class MultiFile : public Seekable
-  {
+  class MultiFile : public Seekable {
+
   public:
     
     //! Constructor
@@ -31,14 +33,17 @@ namespace dsp {
     
     //! Open a number of files and treat them as one logical observation.  This function will take the union of the existing filenames and the new ones, and sort them by start time
     //! Resets the file pointers
-    virtual void open (vector<string> filenames);
+    virtual void open (vector<string> new_filenames);
 
     //! Makes sure only these filenames are open
     //! Resets the file pointers
     virtual void have_open(vector<string> filenames);
 
-    //! Retrieve a pointer to one of the File instances
-    File* get_file(unsigned ifile){ return files[ifile]; }
+    //! Retrieve a pointer to the loader File instance
+    File* get_loader(){ if(!loader) return NULL; return loader.get(); }
+
+    //! Retrieve a pointer to the pseudofile
+    Observation* get_file(unsigned ifile){ return &files[ifile]; }
 
     //! Inquire the number of files
     unsigned nfiles(){ return files.size(); }
@@ -51,6 +56,12 @@ namespace dsp {
     //! Resets the file pointers regardless
     virtual void erase_files(vector<string> erase_filenames);
 
+    //! Find out which file is currently open;
+    string get_current_filename(){ return current_filename; }
+
+    //! Find out the index of current file is
+    unsigned get_index(){ return index; }
+
   protected:
     
     //! Load bytes from file
@@ -59,9 +70,12 @@ namespace dsp {
     //! Adjust the file pointer
     virtual int64 seek_bytes (uint64 bytes);
 
-    //! File instances
-    vector<Reference::To<dsp::File> > files;
+    // List of files
+    vector<PseudoFile> files;
 
+    //! Loader
+    Reference::To<File> loader;
+    
     //! Current File in use
     unsigned index;
 
@@ -74,6 +88,12 @@ namespace dsp {
 
     //! Ensure that files are contiguous
     void ensure_contiguity();
+
+    //! Setup ndat etc after a change to the list of files
+    void setup(Reference::To<dsp::File> opener);
+
+    //! The currently open filename (not really needed but we have it anyway)
+    string current_filename;
 
   };
 
