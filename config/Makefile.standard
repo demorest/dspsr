@@ -83,6 +83,10 @@ LQT := -L${PSRPKGS}/${LOGIN_ARCH}/qt/lib -lqt
 LQXT = $(LQT) -lqxt
 LQXMPGPLOT = $(LQXT) $(LXMPGPLOT)
 
+##########################################################################
+# Qt OpenGL
+LQO3D = $(LQT) -lqgl $(LO3D)
+
 LENDIAN = -lendian
 LDIALOG = -ldialog
 F77LIBS = $(LF77)  # LF77 defined in architecture-dependent Makefile
