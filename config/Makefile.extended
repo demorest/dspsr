@@ -375,6 +375,11 @@ $(LIBRARIES) : %.a : $(LIBDIR)/%.a
 ##########################################################################
 MODULE += $(ALL_SRCS) $(INCLUDES) $(SCRIPTS) $(make_install)
 $(filter-out $(NONMODULE), $(MODULE)):
+	@if [ ! -d CVS ]; then \
+		echo "File: $@ does not exist."; \
+		exit 1; \
+	fi;
+	@echo Attempting to retrieve \"$@\" from CVS repository
 	cvs update $@
 	@if [ ! -f $@ ]; then \
 		echo "$@ not found in CVS repository"; \
