@@ -80,6 +80,9 @@ namespace dsp {
     //! Also do not try to delete the old memory once you have called this- the BitSeries::data member now owns it.
     virtual void attach(auto_ptr<unsigned char> _data);
 
+    //! Call this when you want the array to still be owned by it's owner
+    virtual void attach(unsigned char* _data);
+
   protected:
     //! The data buffer
     unsigned char* data;

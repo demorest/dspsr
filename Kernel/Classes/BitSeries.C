@@ -147,3 +147,13 @@ void dsp::BitSeries::attach(auto_ptr<unsigned char> _data){
   if (data) delete [] data; data = 0;
   data = _data.release();
 }
+
+//! Call this when you want the array to still be owned by it's owner
+void dsp::BitSeries::attach(unsigned char* _data){
+  if( !_data )
+    throw Error(InvalidState,"dsp::BitSeries::attach()",
+		"NULL ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
+
+  if (data) delete [] data; data = 0;
+  data = _data;
+}
