@@ -1,18 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/12/07 19:02:36 $
-   $Author: hknight $ */
+   $Revision: 1.13 $
+   $Date: 2002/12/09 11:43:38 $
+   $Author: wvanstra $ */
 
 #ifndef __Response_h
 #define __Response_h
 
 #include <vector>
 #include <complex>
-#include <string>
-
-#include <stdio.h>
 
 #include "dsp/Shape.h"
 #include "Jones.h"
@@ -24,9 +21,6 @@ namespace dsp {
   class Response : public Shape {
 
   public:
-
-    //! Hacked in to make it compile
-    bool state_is_valid(string ss){ return true; }
 
     //! Maximum ndat allowed
     static unsigned ndat_max;
@@ -89,9 +83,6 @@ namespace dsp {
 
     //! Re-organize frequency bins to reflect natural ordering (DC->Nyq)
     void naturalize ();
-
-    //! Returns how much multiplying by this response will alter your dispersion measure.
-    virtual double get_dispersion_measure() const{ return 0.0; }
 
   protected:
 
