@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/06/30 07:34:33 $
+   $Revision: 1.3 $
+   $Date: 2002/07/02 08:04:09 $
    $Author: pulsar $ */
 
 #ifndef __Operation_h
@@ -65,8 +65,12 @@ namespace dsp {
     //! Perform operation on data.  Defined by sub-classes
     virtual void operation () = 0;
 
-    //! Reset the Timeseries::loader_sample attribute
-    virtual void reset_loader_sample ();
+    //! Only the Loader class should over-ride this method
+    /*! The Loader class need not have an input Timeseries, and also
+      uses an extra book-keeping attribute, Timeseries::loader_sample.
+      This attribute is reset by Operation::operate if this method
+      returns false */
+    virtual bool is_Loader () { return false; }
 
     //! Operation name
     string name;
