@@ -163,9 +163,9 @@ void dsp::MultiFile::ensure_contiguity()
       cerr << "dsp::MultiFile::ensure_contiguity files " << ifile-1 
 	   << " and " << ifile << endl;
 
-    const Observation* obs1 = &files[ifile-1];
-    const Observation* obs2 = &files[ifile];
-    
+    Observation* obs1 = &files[ifile-1];
+    Observation* obs2 = &files[ifile];
+
     if( verbose )
       fprintf(stderr,"dsp::MultiFile::ensure_contiguity() Going to call contiguous() with obs1.start=%s obs1.end=%s obs2.start=%s obs2.end=%s\n",
 	      obs1->get_start_time().printall(),
