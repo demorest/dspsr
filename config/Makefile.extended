@@ -158,7 +158,9 @@ LIBS:=${ALL_LIBS:%=$(LIBDIR)/%}
 # The DSO_NAME macro is previously defined in the user Makefile
 ##########################################################################
 
+ifdef DSO_NAME
 DSOLIB := $(DSODIR)/$(DSO_NAME)
+endif
 
 ##########################################################################
 # The following lines create the RUNTESTS macro,
