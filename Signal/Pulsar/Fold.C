@@ -248,7 +248,7 @@ void dsp::Fold::transformation ()
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
-  if (!output->mixable (*input, nbin))
+  if (!output->mixable (*input, nbin, idat_start, ndat_fold))
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input and output are not PhaseSeries::mixable");
 

@@ -85,7 +85,7 @@ void dsp::PhaseSeries::zero ()
 
 
 bool dsp::PhaseSeries::mixable (const Observation& obs, int nbin,
-				     int64 istart, int64 fold_ndat)
+				int64 istart, int64 fold_ndat)
 {
   MJD obsStart = obs.get_start_time() + double (istart) / obs.get_rate();
 
