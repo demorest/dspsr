@@ -41,7 +41,7 @@ void dsp::CPSRTwoBitCorrection::unpack ()
       float* unpackinto = output->get_datptr(0,ipol) + iq;
       
       if (verbose)
-	fprintf (stderr, "CPSRTwoBitCorrection::unpack"
+	fprintf (stderr, "dsp::CPSRTwoBitCorrection::unpack"
 		 " into data[%d]=%p (chan:%d)\n", ipol, unpackinto, channel);
       
       iq_unpack (unpackinto, rawptr, ndat, channel, NULL);
@@ -65,17 +65,20 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 					   int channel, int* weights)
 {
   if (!values)
-    throw_str ("CPSRTwoBitCorrection::iq_unpack not built");
-
-  if (channel < 0 || channel >= nchannel)
-    throw_str ("CPSRTwoBitCorrection::iq_unpack invalid channel %d", channel);
+    throw Error (InvalidState, "dsp::CPSRTwoBitCorrection::iq_unpack",
+		 "not built");
 
   if (nsample < 10)
-    throw_str ("CPSRTwoBitCorrection::iq_unpack invalid nsample %d", nsample);
+    throw Error (InvalidState, "dsp::CPSRTwoBitCorrection::iq_unpack",
+		 "invalid nsample %d", nsample);
+
+  if (channel < 0 || channel >= nchannel)
+    throw Error (InvalidParam, "dsp::CPSRTwoBitCorrection::iq_unpack",
+		 "invalid channel %d", channel);
 
   if (ndat < nsample)
-    throw_str ("CPSRTwoBitCorrection::iq_unpack ndat=%d < nsample=%d",
-	       ndat, nsample);
+    throw Error (InvalidParam, "dsp::CPSRTwoBitCorrection::iq_unpack",
+		 "ndat=%d < nsample=%d", ndat, nsample);
 
   static int ones [4] = { 0, 1, 1, 0 };
 
@@ -132,7 +135,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 
     if (weights && (weights[wt]==0 || n_in<n_min || n_in>n_max)) {
 
-      // cerr << "iq:weight[" << wt << "]=0" << endl;
+      // cerr << "iq:w[" << wt << "]=0 " << endl;
 
       weights[wt] = 0;
       // reduce the risk of other functions accessing un-initialized 
