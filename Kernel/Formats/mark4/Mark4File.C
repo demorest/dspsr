@@ -15,10 +15,8 @@ dsp::Mark4File::Mark4File (const char* filename)
   : File ("Mark4")
 {
   
-  channels = 16; // a little crude but fine for now - perhaps should be 8?
+  channels = 8; 
   SYNC_pattern = 0xFF;
-
-  
 }
 
 dsp::Mark4File::~Mark4File ()
@@ -51,23 +49,23 @@ void dsp::Mark4File::open_file (const char* filename)
     throw Error (FailedSys, "dsp::Mark4File::open",
 		 "failed fopen(%s)", filename);
   
-  cerr << endl << "Counting channels ..." << endl;
+  //  cerr << endl << "Counting channels ..." << endl;
   channels = count_channels (fd);
-  cerr << "Located " << channels << " channels" << endl << endl;
+  //  cerr << "Located " << channels << " channels" << endl << endl;
 
 
   // testing
-  cerr << "LOCATING SYNC..." << endl;
+  //  cerr << "LOCATING SYNC..." << endl;
   uint64 first_sync = find_sync(fd);
-  cerr << "NextSYNC: " << first_sync << "\t" << hex << first_sync << dec << endl;
+  //  cerr << "NextSYNC: " << first_sync << "\t" << hex << first_sync << dec << endl;
 
   //  lseek(fd,first_sync+(4*channels),SEEK_CUR);
   
-  cerr << "LOCATE SECOND SYNC..." << endl;
+  //  cerr << "LOCATE SECOND SYNC..." << endl;
   uint64 next_sync = find_sync(fd,first_sync+(4*channels));
-  cerr << "NextSYNC: " << next_sync << "\t" << hex << next_sync << dec << endl;
+  //  cerr << "NextSYNC: " << next_sync << "\t" << hex << next_sync << dec << endl;
     
-  cerr << "Distances between SYNCs: " << next_sync - first_sync << endl;
+  //  cerr << "Distances between SYNCs: " << next_sync - first_sync << endl;
 
   uint64 sync_distance = next_sync-first_sync;
   
@@ -84,11 +82,45 @@ void dsp::Mark4File::open_file (const char* filename)
   else
     cerr << "Unknown mode - distance between SYNCS: " << sync_distance << endl;
   
-  cerr << endl << endl;
+  //  cerr << endl << endl;
   
   info.set_start_time(decode_date());
+
+  // Need to rewind time to start of file, which is NOT the start of the header.
   
-  cerr << info.get_start_time().printall() << endl;
+  
+  // These need to be auto set.
+  info.set_bandwidth(16.0);
+  info.set_rate(32000000);
+  info.set_state(Signal::Nyquist);
+
+  info.set_machine("Mark4");
+  
+  info.set_npol(2);
+  info.set_nbit(2);
+  info.set_nchan(1);
+  
+  unsigned bits_per_byte = 8;
+  resolution = bits_per_byte / info.get_nbit();
+  
+  struct stat file_info;
+  
+  stat (filename, &file_info);
+  
+  // This needs to include information about the headers in Mark4-VLBA modes
+  info.set_ndat( int64((file_info.st_size)/info.get_npol() )*16/(info.get_nbit()*info.get_npol()));
+  
+  uint64 last_sync = find_sync(fd,file_info.st_size-2500*channels);
+  //  cout << last_sync << "\t" << decode_date(last_sync).printall() << endl;
+  
+  double initial_offset_time = 0.0;
+  
+  initial_offset_time = (first_sync*8.0/(info.get_nbit()*info.get_npol()))/info.get_rate();
+  
+  info.set_start_time(info.get_start_time() - initial_offset_time);
+
+  //  cerr << info.get_start_time().printall() << "\t";
+  //  cerr << info.get_end_time().printall() << endl;
 }
 
 
@@ -169,12 +201,12 @@ uint64 dsp::Mark4File::find_sync (int file_descriptor, uint64 from) const
   //  cerr << "FOUND  position: " << currpos << endl;
 
   lseek(file_descriptor,inital_pos,SEEK_SET);  // restored original file pointer
-  
+
   return next_sync;
   
 }
 
-MJD dsp::Mark4File::decode_date()
+MJD dsp::Mark4File::decode_date(uint64 from)
 {
   char *timecode = new char[8*channels]; // 8 bytes per channel
 
@@ -187,7 +219,7 @@ MJD dsp::Mark4File::decode_date()
   
   uint64 inital_pos = lseek(fd, 0, SEEK_CUR);
   
-  uint64 next_sync = find_sync(fd);
+  uint64 next_sync = find_sync(fd, from);
   
   // Read the 8 bytes after the SYNC - and handle them as per modes
   lseek(fd,next_sync+4*channels,SEEK_SET);
@@ -383,10 +415,10 @@ MJD dsp::Mark4File::decode_date()
     tmp[3] = timecode[47*stepsize];
     second += decode_bcd(tmp)*0.01;
 
-    tmp[0] = timecode[44*stepsize];
-    tmp[1] = timecode[45*stepsize];
-    tmp[2] = timecode[46*stepsize];
-    tmp[3] = timecode[47*stepsize];
+    tmp[0] = timecode[48*stepsize];
+    tmp[1] = timecode[49*stepsize];
+    tmp[2] = timecode[50*stepsize];
+    tmp[3] = timecode[51*stepsize];
     second += decode_bcd(tmp)*0.001;
     
     
@@ -398,7 +430,7 @@ MJD dsp::Mark4File::decode_date()
       year += int((tmpdate.tm_year/10)-1)*10;
     }
     
-    utcdate.tm_year = 2004;
+    utcdate.tm_year = year;
     utcdate.tm_yday = day;
     utcdate.tm_hour = hour;
     utcdate.tm_min  = minute;
@@ -415,6 +447,9 @@ MJD dsp::Mark4File::decode_date()
     
   }
   
+  //  cerr << "SEEK_CUR: " << lseek(fd,0,SEEK_CUR);
+  //  lseek(fd,next_sync-8*channels,SEEK_SET);  // position of decoded time.
+  //  cerr << "\t" << lseek(fd,0,SEEK_CUR)/channels << endl; 
   
   lseek(fd,inital_pos,SEEK_SET);  // restored original file pointer
   

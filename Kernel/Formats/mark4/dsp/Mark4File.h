@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark4/dsp/Mark4File.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/06/10 02:49:14 $
+   $Revision: 1.2 $
+   $Date: 2004/11/04 06:21:41 $
    $Author: cwest $ */
 
 #ifndef __Mark4File_h
@@ -48,9 +48,8 @@ namespace dsp {
     int count_channels (int file_descriptor) const;
 
     //! Returns the MJD date of the next header.
-    MJD decode_date();
+    MJD decode_date(uint64 from = 0);
     
-
     //! Defines the number of data channels.
     unsigned int channels;
 
@@ -68,8 +67,6 @@ namespace dsp {
     
     //! Used to determine if data is VLBA or non-VLBA formated.
     bool VLBA_mode;
-    
-
     
     
   };

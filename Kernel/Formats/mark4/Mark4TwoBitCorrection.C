@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 #include "dsp/Mark4TwoBitCorrection.h"
+#include "dsp/Mark4TwoBitTable.h"
 #include "dsp/Observation.h"
-#include "dsp/TwoBitTable.h"
 
 bool dsp::Mark4TwoBitCorrection::matches (const Observation* observation)
 {
@@ -15,5 +15,6 @@ bool dsp::Mark4TwoBitCorrection::matches (const Observation* observation)
 dsp::Mark4TwoBitCorrection::Mark4TwoBitCorrection ()
   : TwoBitCorrection ("Mark4TwoBitCorrection")
 {
-  table = new TwoBitTable (TwoBitTable::OffsetBinary);
+  table = new Mark4TwoBitTable (TwoBitTable::OffsetBinary);
+  //  table->set_flip(true);
 }
