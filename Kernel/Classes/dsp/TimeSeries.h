@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/01/20 04:43:38 $
-   $Author: hknight $ */
+   $Revision: 1.11 $
+   $Date: 2003/03/06 23:53:37 $
+   $Author: pulsar $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -28,6 +28,13 @@ namespace dsp {
   */
   class TimeSeries : public Observation {
 
+    class TimeSeriesPtr{
+    public:
+      TimeSeriesPtr(){ }
+      TimeSeries* ptr;
+      TimeSeriesPtr& operator=(TimeSeriesPtr& tsp){ ptr = tsp.ptr; return *this; }
+    };
+
   public:
     //! Null constructor
     TimeSeries ();
@@ -40,6 +47,9 @@ namespace dsp {
 
     //! Add each value in data to this
     virtual TimeSeries& operator += (const TimeSeries& data);
+
+    //! Hack together 2 different bands (not pretty)
+    virtual void hack_together(vector<TimeSeries*> bands);
 
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
@@ -91,6 +101,9 @@ namespace dsp {
 
     //! Check to see if subsize==ndat
     virtual bool full(){ return subsize==ndat; }
+
+    //! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
+    virtual void normalise();
 
     /*! This:
       (1) Puts the first 'this->ndat-ts->ndat' timesamples of 'this' into the last possible spots of 'this'

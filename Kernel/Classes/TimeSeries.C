@@ -1,10 +1,12 @@
 #include <stdio.h>
 
+#include <algorithm>
 #include <memory>
 
 #include "environ.h"
 #include "genutil.h"
 #include "fsleep.h"
+#include "minmax.h"
 
 #include "Error.h"
 
@@ -181,6 +183,109 @@ void dsp::TimeSeries::zero ()
     }
 }
 
+bool operator<(const dsp::TimeSeries::TimeSeriesPtr& ts1,
+	       const dsp::TimeSeries::TimeSeriesPtr& ts2){
+  if( !ts1.ptr || !ts2.ptr )
+    throw Error(InvalidParam,"operator<(TimeSeriesPtr&,TimeSeriesPtr&)"
+		"Null pointer passed in");
+  return ts1.ptr->get_centre_frequency() < ts2.ptr->get_centre_frequency();
+}
+
+//! Hack together 2 different bands (not pretty)
+void dsp::TimeSeries::hack_together(vector<TimeSeries*> bands){
+  //verbose = true;
+  if( verbose ){
+    fprintf(stderr,"In dsp::TimeSeries::hack_together() with bands at %f and %f MHz\n",
+	    bands[0]->get_centre_frequency(),bands[1]->get_centre_frequency());
+    fprintf(stderr,"The bands are %p and %p\n",bands[0],bands[1]);
+  }
+  if( bands.empty() )
+    throw Error(InvalidState,"dsp::TimeSeries::hack_together()",
+		"input vector is empty");
+
+  // Sort the TimeSeries's
+  vector<TimeSeriesPtr> to_sort(bands.size());
+  for( unsigned i=0; i<bands.size(); i++)
+    to_sort[i].ptr = bands[i];
+
+  sort(to_sort.begin(),to_sort.end());
+
+  if( bands[0]->get_bandwidth() < 0.0 ){
+    vector<TimeSeriesPtr> temp(bands.size());
+    unsigned j=temp.size()-1;
+    for( unsigned i=0; i<to_sort.size(); i++,j--)
+      temp[j] = to_sort[i];
+    for( unsigned i=0; i<to_sort.size(); i++)
+      to_sort[i] = temp[i];
+  }
+
+  for( unsigned i=0; i<bands.size(); i++)
+    bands[i] = to_sort[i].ptr;
+
+  // Check the sorted TimeSeries's are combinable
+  for( unsigned iband=1; iband<bands.size(); iband++){
+    if( !bands[iband-1]->combinable(*bands[iband],true) )
+      throw Error(InvalidParam,"dsp::TimeSeries::hack_together()",
+		  "bands %d and %d aren't combinable",
+		  iband-1,iband);
+  } 
+
+  if( bands.size()==1 ){
+    operator=( *bands.front() );
+    return;
+  }
+  
+  Observation::operator=( *bands.front() );
+  set_nchan( get_nchan()*bands.size() );
+  resize( get_ndat() );
+
+  unsigned chans_per_iband = bands.front()->get_nchan();
+
+  const float* from;
+  float* to;
+
+  for( unsigned iband=0; iband<bands.size(); iband++){
+    for( unsigned ichan=0; ichan<bands[iband]->get_nchan(); ichan++){
+      for( unsigned ipol=0; ipol<get_npol(); ipol++){
+	if( !swap ){
+	  from = bands[iband]->get_datptr(ichan,ipol);
+	  to = get_datptr(iband*chans_per_iband+ichan,ipol);
+	}
+	else{
+	  int offset_chans = chans_per_iband/2;
+	  if( ichan > chans_per_iband/2 )
+	    offset_chans = -chans_per_iband/2;
+
+	  from = bands[iband]->get_datptr(ichan+offset_chans,ipol);
+	  to = get_datptr(iband*chans_per_iband+ichan,ipol);
+	}
+	memcpy(to, from, get_ndat()*get_ndim()*get_nbit()/8);
+      }
+    }
+  }
+
+  set_bandwidth( get_bandwidth()*bands.size() );
+  
+  vector<double> cfreqs(bands.size());
+  for( unsigned iband=0; iband<bands.size(); iband++){
+    cfreqs[iband] = bands[iband]->get_centre_frequency();
+    //    fprintf(stderr,"bands[%d]->cf=%f\n",
+    //    iband,bands[iband]->get_centre_frequency());
+  }
+
+  double min_cfreq = findmin(cfreqs.begin(),cfreqs.end());
+  double max_cfreq = findmax(cfreqs.begin(),cfreqs.end());
+
+  set_centre_frequency(0.5*(max_cfreq-min_cfreq)+min_cfreq);
+  //fprintf(stderr,"cf=0.5*(%f-%f)+%f = %f\n",
+  //  max_cfreq,min_cfreq,min_cfreq,get_centre_frequency());
+  //exit(0);
+  set_swap( false );
+
+  if( verbose )
+    fprintf(stderr,"Exiting from dsp::TimeSeries::hack_together()\n");
+}
+
 //! return value is number of timesamples actually appended.
 //! If it is zero, then none were and we assume 'this' is full
 //! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
@@ -209,14 +314,12 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
     Observation::operator=(*little);
     set_ndat (0);
   }    
-
   else if( !contiguous(*little) )
     throw Error (InvalidState, "dsp::TimeSeries::append()",
 		 "next TimeSeries is not contiguous");
   
   for( unsigned ichan=0; ichan<nchan; ichan++) {
     for( unsigned ipol=0; ipol<npol; ipol++) {
-
       const float* from = little->get_datptr (ichan,ipol);
       float* to = get_datptr(ichan,ipol) + ncontain;
       
@@ -371,6 +474,33 @@ void dsp::TimeSeries::copy_from_front(TimeSeries* tseries, uint64 nsamples)
       memcpy(to,from,copy_bytes);
     }
   }
+}
+
+//! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
+void dsp::TimeSeries::normalise(){
+  if( ndim!=1 )
+    throw Error(InvalidState,"dsp::TimeSeries::normalise()",
+		"You can only give a real timeseries to this method- ie ndim!=1");
+
+  for( unsigned ichan=0; ichan<nchan; ichan++){
+    for( unsigned ipol=0; ipol<npol; ipol++){
+      float* dat = get_datptr(ichan,ipol);
+      float mmean = many_findmean(dat,dat+ndat);
+
+      float ssigma = sqrt( many_findvar( dat, dat+ndat, mmean) );
+
+      register unsigned the_ndat = ndat;
+
+      // HSK TODO: which is quicker- 2 loops or 1???  
+      for( unsigned i=0; i<the_ndat; ++i)
+	dat[i] -= mmean;
+
+      for( unsigned i=0; i<the_ndat; ++i)
+	dat[i] /= ssigma;
+
+    }
+  }
+
 }
 
 void dsp::TimeSeries::rotate_backwards_onto(TimeSeries* ts){
