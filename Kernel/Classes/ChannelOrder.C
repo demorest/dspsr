@@ -4,7 +4,9 @@
 
 #include "dsp/ChannelOrder.h"
 
-dsp::ChannelOrder::ChannelOrder() : Transformation<BitSeries,TimeSeries>("ChannelOrder",outofplace){ }
+dsp::ChannelOrder::ChannelOrder() : Transformation<BitSeries,TimeSeries>("ChannelOrder",outofplace){
+  rapid = Channel;
+}
 
 dsp::ChannelOrder::~ChannelOrder(){ }
 
@@ -17,24 +19,49 @@ void dsp::ChannelOrder::transformation(){
   output->set_swap( false );  
   output->resize( input->get_ndat() );
 
-  // number of floats between (t0,f0) and (t1,f0) of a BitSeries
-  register const unsigned input_stride = input->get_nchan()*input->get_npol()*input->get_ndim();
-  register const unsigned output_stride = output->get_ndim();
-
-  for( unsigned idim=0; idim<output->get_ndim(); idim++){
-    for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
+  if( rapid==Channel ){
+    // number of floats between (t0,f0) and (t1,f0) of a BitSeries
+    register const unsigned input_stride = input->get_nchan()*input->get_npol()*input->get_ndim();
+    register const unsigned output_stride = output->get_ndim();
+    
+    for( unsigned idim=0; idim<output->get_ndim(); idim++){
+      for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
+	for( unsigned ipol=0; ipol<output->get_npol(); ipol++){
+	  float* in = (float*)input->get_rawptr() + idim + input->get_ndim()*         (ichan + input->get_nchan()*ipol); 
+	  float* out = (float*)output->get_datptr(ichan,ipol)+idim;
+	  
+	  register const unsigned isamp_end = output->get_ndat()*output->get_ndim(); 
+	  register unsigned input_samp=0; 
+	  
+	  for( unsigned isamp=0; isamp<isamp_end;
+	       isamp+=output_stride, input_samp+=input_stride)
+	    out[isamp] = in[input_samp];
+	}
+      }
+    }    
+   
+  }
+  else if( rapid==Polarisation ){
+    // number of floats between (t0,f0) and (t1,f0) of a BitSeries
+    register const unsigned input_stride = input->get_nchan()*input->get_npol()*input->get_ndim();
+    register const unsigned output_stride = output->get_ndim();
+    
+    for( unsigned idim=0; idim<output->get_ndim(); idim++){
       for( unsigned ipol=0; ipol<output->get_npol(); ipol++){
-	float* in = (float*)input->get_offset_ptr(ichan,ipol,idim);
-	float* out = (float*)output->get_datptr(ichan,ipol)+idim;
-	
-	register const unsigned isamp_end = output->get_ndat()*output->get_ndim(); 
-	register unsigned input_samp=0;
-	
-	for( unsigned isamp=0; isamp<isamp_end;
-	     isamp+=output_stride, input_samp+=input_stride)
-	  out[isamp] = in[input_samp];
+	for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
+	  float* in = (float*)input->get_rawptr() + idim + input->get_ndim()*         (ipol + input->get_npol()*ichan);
+	  float* out = (float*)output->get_datptr(ichan,ipol)+idim;
+	  
+	  register const unsigned isamp_end = output->get_ndat()*output->get_ndim(); 
+	  register unsigned input_samp=0;
+	  
+	  for( unsigned isamp=0; isamp<isamp_end;
+	       isamp+=output_stride, input_samp+=input_stride)
+	    out[isamp] = in[input_samp];
+	}
       }
     }
-  }    
 
+  }
+ 
 }

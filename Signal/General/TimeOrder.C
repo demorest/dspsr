@@ -4,7 +4,9 @@
 
 #include "dsp/TimeOrder.h"
 
-dsp::TimeOrder::TimeOrder() : Transformation<TimeSeries,BitSeries>("TimeOrder",outofplace){ }
+dsp::TimeOrder::TimeOrder() : Transformation<TimeSeries,BitSeries>("TimeOrder",outofplace){
+  rapid = Channel;
+}
 
 dsp::TimeOrder::~TimeOrder(){ }
 
@@ -31,8 +33,12 @@ void dsp::TimeOrder::transformation(){
       for( unsigned ichan=0; ichan<input->get_nchan(); ichan++){
 	for( unsigned ipol=0; ipol<input->get_npol(); ipol++){
 	  float* in = ((float*)input->get_datptr(ichan,ipol))+idim;
-	  float* out = (float*)output->get_offset_ptr(ichan,ipol,idim);
-	  
+	  float* out = 0;
+	  if( rapid==Channel )
+	    out = (float*)output->get_rawptr() + idim + input->get_ndim()* (ichan*output->get_nchan()*ipol);
+	  else if( rapid==Polarisation )
+	    out = (float*)output->get_rawptr() + idim + input->get_ndim()* (ipol*output->get_npol()*ichan);
+
 	  register const unsigned isamp_end = input->get_ndat()*input->get_ndim(); 
 	  register unsigned output_samp=0;
 	  
@@ -61,7 +67,11 @@ void dsp::TimeOrder::transformation(){
       for( unsigned ichan=0; ichan<input->get_nchan()/2; ichan++){
 	for( unsigned ipol=0; ipol<input->get_npol(); ipol++){
 	  float* in = ((float*)input->get_datptr(ichan,ipol))+idim;
-	  float* out = (float*)output->get_offset_ptr(ichan+input->get_nchan()/2,ipol,idim);
+	  float* out = 0;
+	  if( rapid==Channel )
+	    out = (float*)output->get_rawptr() + idim + input->get_ndim()* ((ichan+input->get_nchan()/2)+output->get_nchan()*ipol);
+	  else if( rapid==Polarisation )
+	    out = (float*)output->get_rawptr() + idim + input->get_ndim()* (ipol+output->get_npol()*(ichan+input->get_nchan()/2));
 	  
 	  register const unsigned isamp_end = input->get_ndat()*input->get_ndim(); 
 	  register unsigned output_samp=0;
@@ -77,8 +87,12 @@ void dsp::TimeOrder::transformation(){
       for( unsigned ichan=input->get_nchan()/2; ichan<input->get_nchan(); ichan++){
 	for( unsigned ipol=0; ipol<input->get_npol(); ipol++){
 	  float* in = ((float*)input->get_datptr(ichan,ipol))+idim;
-	  float* out = (float*)output->get_offset_ptr(ichan-input->get_nchan()/2,ipol,idim);
-	  
+	  float* out = 0;
+	  if( rapid==Channel )
+	    out = (float*)output->get_rawptr() + idim + input->get_ndim()* ((ichan-input->get_nchan()/2)+output->get_nchan()*ipol);
+	  else if( rapid==Polarisation )
+	    out = (float*)output->get_rawptr() + idim + input->get_ndim()* (ipol+output->get_npol()*(ichan-input->get_nchan()/2));	  
+
 	  register const unsigned isamp_end = input->get_ndat()*input->get_ndim(); 
 	  register unsigned output_samp=0;
 	  
