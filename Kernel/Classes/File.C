@@ -48,7 +48,6 @@ void dsp::File::open (const PseudoFile& file)
   open (0, &file);
 }
 
-
 void dsp::File::open (const char* filename, const PseudoFile* file)
 {
   close ();
@@ -86,6 +85,10 @@ void dsp::File::close()
   if (fd >= 0)
     ::close (fd);
   init ();
+}
+
+dsp::PseudoFile dsp::File::get_pseudofile(){
+  return PseudoFile(this);
 }
 
 void dsp::File::set_total_samples ()

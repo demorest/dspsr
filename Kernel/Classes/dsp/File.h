@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/04/23 08:04:02 $
-   $Author: wvanstra $ */
+   $Revision: 1.15 $
+   $Date: 2003/05/07 01:43:07 $
+   $Author: pulsar $ */
 
 
 #ifndef __File_h
@@ -57,6 +57,9 @@ namespace dsp {
 
     //! Inquire the howmany bytes are in the header
     int get_header_bytes() const{ return header_bytes; }
+
+    //! Return a PseudoFile constructed from this File
+    PseudoFile get_pseudofile();
 
   protected:
     
