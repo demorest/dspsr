@@ -86,6 +86,8 @@ void dsp::Dedispersion::set_fractional_delay (bool _fractional_delay)
 
 void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
 {
+  if (verbose)
+    cerr << "dsp::Dedispersion::set_frequency_resolution ("<<nfft<<")"<<endl;
   resize (npol, nchan, nfft, ndim);
 
   frequency_resolution_set = true;
@@ -113,8 +115,18 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
   if (!channels)
     channels = input->get_nchan();
 
-  resize (npol, channels, ndat, ndim);
+  if (channels != nchan)
+    built = false;
+
+  nchan = channels;
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::match call build" << endl;
+
   build ();
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::match call Response::match" << endl;
 
   Response::match (input, channels);
 }
@@ -146,7 +158,12 @@ void dsp::Dedispersion::build ()
   for (unsigned ipt=0; ipt<phases.size(); ipt++)
     phasors[ipt] = complex<float>(polar (float(1.0), phases[ipt]));
 
+  unsigned _ndat = ndat;
+  unsigned _nchan = nchan;
+
   set (phasors);
+
+  resize (npol, _nchan, _ndat, ndim);
 
   built = true;
 }
