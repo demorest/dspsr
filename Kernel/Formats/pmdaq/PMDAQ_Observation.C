@@ -61,19 +61,21 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
     throw_str("PMDAQ_Observation - failed to read channel increment\n");
   }
 
-  nscanned = sscanf(&header[224],"%d",&nchan);
+  unsigned dummy_nchan;
+
+  nscanned = sscanf(&header[224],"%d",&dummy_nchan);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read number of channels\n");
   }
-  set_nchan ( nchan );
-  cerr << "Number of channels is " << nchan << endl;
+  set_nchan ( dummy_nchan );
+  cerr << "Number of channels is " << get_nchan() << endl;
 
   nscanned = sscanf(&header[232],"%12lf",&freq_channel_one);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read frequency of channel one\n");
   }
 
-  set_centre_frequency (freq_channel_one - 0.5 * chan_incr + nchan/2 * 
+  set_centre_frequency (freq_channel_one - 0.5 * chan_incr + get_nchan()/2 * 
 			chan_incr);
 
   // //////////////////////////////////////////////////////////////////////
@@ -81,7 +83,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation (const char* header)
   // BW
   //
 
-  set_bandwidth (chan_incr * nchan);   
+  set_bandwidth (chan_incr * get_nchan());   
 
   // //////////////////////////////////////////////////////////////////////
   //

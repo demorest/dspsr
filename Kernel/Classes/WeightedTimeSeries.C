@@ -60,7 +60,7 @@ void dsp::WeightedTimeSeries::resize (uint64 nsamples)
   TimeSeries::resize (nsamples);
   
   uint64 nweights = get_nweights ();
-  uint64 require = nweights * npol * nchan;
+  uint64 require = nweights * npol * get_nchan();
   
   if (!require || require > weight_size) {
     if (weights) delete [] weights; weights = 0;
