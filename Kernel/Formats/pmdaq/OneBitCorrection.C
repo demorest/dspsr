@@ -90,8 +90,10 @@ void dsp::OneBitCorrection::unpack ()
     const unsigned int mask = 0x01;
     // PMDAQ data comes in 8 1-bit sample chunks in reverse order??
     if (verbose) cerr << "unloading " << n_samples << " of data " << endl;
-    float * base_address = output->get_datptr(0,0);
-    int gap = output->get_datptr(1,0)-base_address;
+
+    float * base_address = (float*)output->get_rawptr();
+    int gap = int(output->get_ndat() * output->get_ndim());
+    //int gap = output->get_datptr(1,0)-base_address;
     float * into;
     int pol_number;
     for (int i=0;i<n_samples;i++)

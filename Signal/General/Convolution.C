@@ -9,7 +9,7 @@
 //#define DEBUG
 
 dsp::Convolution::Convolution (const char* _name, Behaviour _type)
-  : Operation (_name, _type)
+  : TimeseriesOperation (_name, _type)
 {
 }
 
@@ -163,7 +163,7 @@ void dsp::Convolution::operation ()
   output->Observation::operator= (*input);
 
   // valid time samples convolved
-  if (input == output)
+  if (input.get() == output.get())
     output->set_ndat (npart * nsamp_good);
   else
     output->resize (npart * nsamp_good);

@@ -54,7 +54,7 @@ bool dsp::CPSR2File::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::CPSR2File::open (const char* filename)
+void dsp::CPSR2File::open_it (const char* filename)
 {  
   if (get_header (cpsr2_header, filename) < 0)
     throw Error (FailedCall, "dsp::CPSR2File::open",
@@ -89,8 +89,8 @@ void dsp::CPSR2File::open (const char* filename)
   info.set_ndat (info.nsamples (total_bytes));
 
   // set the number of bytes in header attribute
-  header_bytes = CPSR2_HEADER_SIZE;
-
+  set_header_bytes();
+  
   // set the file pointers
   reset();
 
@@ -98,3 +98,6 @@ void dsp::CPSR2File::open (const char* filename)
     cerr << "CPSR2File::open exit" << endl;
 }
 
+void dsp::CPSR2File::set_header_bytes(){
+  header_bytes = CPSR2_HEADER_SIZE;
+}

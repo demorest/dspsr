@@ -64,7 +64,7 @@ bool dsp::PMDAQFile::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::PMDAQFile::open (const char* filename)
+void dsp::PMDAQFile::open_it (const char* filename)
 {  
   if (get_header (pmdaq_header, filename) < 0)
     throw_str ("PMDAQFile::open - failed get_header(%s): %s",

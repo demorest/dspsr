@@ -4,11 +4,11 @@
 
 #include "genutil.h"
 
+#include "dsp/TimeseriesOperation.h"
 #include "dsp/Timeseries.h"
-
 #include "dsp/SLDetect.h"
 
-dsp::SLDetect::SLDetect(Behaviour _type) : Operation ("SLDetect", _type){
+dsp::SLDetect::SLDetect(Behaviour _type) : TimeseriesOperation ("SLDetect", _type){
 }
 
 void dsp::SLDetect::operation ()
@@ -102,6 +102,9 @@ void dsp::SLDetect::operation ()
 	    "ie setting output->state to Signal::Intensity\n");
     output->set_state( Signal::Intensity );
   }
+
+  fprintf(stderr,"\n\nNear end of SLDetection, state is '%s'\n",
+	  output->get_state_as_string().c_str());
 
   // Bad:
   //  output->resize( output->get_ndat() );

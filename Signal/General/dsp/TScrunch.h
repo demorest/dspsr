@@ -3,13 +3,13 @@
 #ifndef __TScrunch_h
 #define __TScrunch_h
 
-#include "dsp/Operation.h"
+#include "dsp/TimeseriesOperation.h"
 
 namespace dsp {
 
   //! Time-scrunches a Timeseries by ScrunchFactor OR to a required time resolution- which ever is specified as the last setting before operation() is called.
 
-  class TScrunch : public Operation {
+  class TScrunch : public TimeseriesOperation {
 
   public:
 

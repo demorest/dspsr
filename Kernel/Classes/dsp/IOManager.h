@@ -1,16 +1,20 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/11/06 06:30:42 $
+   $Author: hknight $ */
 
 
 #ifndef __IOManager_h
 #define __IOManager_h
 
+#include "Error.h"
+
 #include "dsp/Input.h"
 #include "dsp/Unpacker.h"
+#include "dsp/Chronoseries.h"
+#include "dsp/Timeseries.h"
 
 namespace dsp {
 
@@ -41,6 +45,14 @@ namespace dsp {
     
     //! Set the Input operator (should not normally need to be used)
     void set_input (Input* input);
+
+    //! Because IOManager doesn't write to a Chronoseries, it needs this:
+    virtual void set_output(Chronoseries* _output)
+    { throw Error(FailedCall,"dsp::IOManager::set_output()",
+		  "For an IOManager, use set_final_output, not set_output!"); }
+
+    //! This is the one to call:
+    virtual void set_final_output(Timeseries* _output);
 
     //! Return pointer to the appropriate Unpacker
     Unpacker* get_unpacker () const { return unpacker; }
@@ -76,12 +88,15 @@ namespace dsp {
     virtual void set_nsample (int _nsample);
 
     //! Set the container into which input (raw) data will be read
-    virtual void set_raw (Timeseries* raw);
+    virtual void set_raw (Chronoseries* raw);
 
   protected:
 
+    //! Yet another Haydon kludge
+    Reference::To<Timeseries> output;
+    
     //! Null-define abstract method of the Input base class
-    void load_data (Timeseries* data);
+    void load_data (Chronoseries* data);
 
     //! Number of time samples to load on each load_block
     uint64 block_size;
@@ -99,7 +114,7 @@ namespace dsp {
     Reference::To<Unpacker> unpacker;
 
     //! The container in which the input (raw, unpacked) bitstream is stored
-    Reference::To<Timeseries> raw;
+    Reference::To<Chronoseries> raw;
 
   private:
     void init();

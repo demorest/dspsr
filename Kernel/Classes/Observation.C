@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 #include <string>
 
@@ -167,53 +168,88 @@ bool dsp::Observation::get_detected () const
   return (state != Signal::Nyquist && state != Signal::Analytic);
 }
 
-/* this returns a flag that is true if an Observation may be combined 
-   with this object using operators like += and things like that */
+/* this returns a flag that is true if the Observations may be combined 
+   It doesn't check the start times- you have to do that yourself!
+*/
 bool dsp::Observation::combinable (const Observation & obs) const
 {
-  if (verbose) {
-    if (centre_frequency != obs.centre_frequency)
-      cerr << "dsp::Observation::combinable different frequencies:"
-	   << centre_frequency << " and " << obs.centre_frequency << endl;
-    if (bandwidth != obs.bandwidth)
-      cerr << "dsp::Observation::combinable different bandwidth:"
-	   << bandwidth << " and " << obs.bandwidth << endl;
-    if (nchan != obs.nchan)
-      cerr << "dsp::Observation::combinable different nchan:"
-	   << nchan << " and " << obs.nchan << endl;
-    if (npol != obs.npol)
-      cerr << "dsp::Observation::combinable different npol:"
-	   << npol << " and " << obs.npol << endl;
-    if (ndim != obs.ndim)
-      cerr << "dsp::Observation::combinable different ndim:"
-	   << ndim << " and " << obs.ndim << endl;
-    if (state != obs.state)
-      cerr << "dsp::Observation::combinable different state:"
-	   << state << " and " << obs.state << endl;
-    if (source != obs.source)
-      cerr << "dsp::Observation::combinable different source:"
-	   << source << " and " << obs.source << endl;
-    if (swap != obs.swap)
-      cerr << "dsp::Observation::combinable different swap:"
-	   << swap << " and " << obs.swap << endl;
-    if (dc_centred != obs.dc_centred)
-      cerr << "dsp::Observation::combinable different dc_centred:"
-	   << dc_centred << " and " << obs.dc_centred << endl;
-    if (basis != obs.basis)
-      cerr << "dsp::Observation::combinable different feeds:"
-	   << basis << " and " << obs.basis << endl;
-  }
+  double eps = 0.000001;
+  bool can_combine = true;
 
-  return ( (centre_frequency == obs.centre_frequency) &&
-	   (bandwidth    == obs.bandwidth)    &&
-	   (nchan == obs.nchan) &&
-	   (npol  == obs.npol)  &&
-	   (ndim  == obs.ndim)  &&
-	   (state == obs.state) &&
-	   (source == obs.source) &&
-	   (swap  == obs.swap) &&
-	   (dc_centred == obs.dc_centred) &&
-	   (basis == obs.basis ));
+  if (telescope != obs.telescope){
+    cerr << "dsp::Observation::combinable different telescope:"
+	 << telescope << " and " << obs.telescope << endl;
+  can_combine = false; }
+  if (source != obs.source){
+    cerr << "dsp::Observation::combinable different source:"
+	 << source << " and " << obs.source << endl;
+  can_combine = false; }
+  if( fabs(centre_frequency-obs.centre_frequency) > eps ){
+    cerr << "dsp::Observation::combinable different frequencies:"
+	 << centre_frequency << " and " << obs.centre_frequency << endl;
+  can_combine = false; }
+  if( fabs(bandwidth-obs.bandwidth) > eps ){
+  cerr << "dsp::Observation::combinable different bandwidth:"
+	 << bandwidth << " and " << obs.bandwidth << endl;
+  can_combine = false; }
+  if (nchan != obs.nchan){
+    cerr << "dsp::Observation::combinable different nchan:"
+	 << nchan << " and " << obs.nchan << endl;
+  can_combine = false; }
+  if (npol != obs.npol){
+    cerr << "dsp::Observation::combinable different npol:"
+	 << npol << " and " << obs.npol << endl;
+  can_combine = false; }
+  if (ndim != obs.ndim){
+    cerr << "dsp::Observation::combinable different ndim:"
+	 << ndim << " and " << obs.ndim << endl;
+  can_combine = false; }
+  if (nbit != obs.nbit){
+    cerr << "dsp::Observation::combinable different nbit:"
+	 << nbit << " and " << obs.nbit << endl;
+  can_combine = false; }
+  if (type != obs.type){
+    cerr << "dsp::Observation::combinable different type:"
+	 << type << " and " << obs.type << endl;
+  can_combine = false; }
+  if (state != obs.state){
+    cerr << "dsp::Observation::combinable different state:"
+	 << state << " and " << obs.state << endl;
+  can_combine = false; }
+  if (basis != obs.basis){
+    cerr << "dsp::Observation::combinable different feeds:"
+	 << basis << " and " << obs.basis << endl;
+  can_combine = false; }
+  if( fabs(rate-obs.rate) > eps ){
+    cerr << "dsp::Observation::combinable different rate:"
+	 << rate << " and " << obs.rate << endl;
+  can_combine = false; }
+  if( fabs(scale-obs.scale) > eps ){
+    cerr << "dsp::Observation::combinable different scale:"
+	 << scale << " and " << obs.scale << endl;
+  can_combine = false; }
+  if (swap != obs.swap){
+    cerr << "dsp::Observation::combinable different swap:"
+	 << swap << " and " << obs.swap << endl;
+  can_combine = false; }
+  if (dc_centred != obs.dc_centred){
+    cerr << "dsp::Observation::combinable different dc_centred:"
+	 << dc_centred << " and " << obs.dc_centred << endl;
+  can_combine = false; }
+  if (identifier != obs.identifier){
+    cerr << "dsp::Observation::combinable different identifier:"
+	 << identifier << " and " << obs.identifier << endl;
+  can_combine = false; }
+  if (mode != obs.mode){
+    cerr << "dsp::Observation::combinable different mode:"
+	 << mode << " and " << obs.mode << endl;
+  can_combine = false; }
+  if (machine != obs.machine){
+    cerr << "dsp::Observation::combinable different machine:"
+	 << machine << " and " << obs.machine << endl;
+  can_combine = false; }
+
+  return can_combine;
 }
 
 bool dsp::Observation::contiguous (const Observation & obs) const
@@ -359,14 +395,40 @@ void dsp::Observation::change_start_time (int64 ndat)
   start_time += double(ndat)/rate;
 }
 
-//! Returns a FitsHeader format of all information contained in this class into the string info_string
-bool dsp::Observation::retrieve(string& info_string){
-  /* Here's where the FITS magic goes */
-  exit(-1);
-  return false;
+//! Returns all information contained in this class into the string info_string
+bool dsp::Observation::retrieve(string& ss){
+  char dummy[300];
+
+  sprintf(dummy,"NDAT\t"I64"\n",ndat); ss += dummy;
+  sprintf(dummy,"TELESCOPE\t%c\n",telescope); ss += dummy;
+  sprintf(dummy,"SOURCE\t%s\n",source.c_str()); ss += dummy;
+  sprintf(dummy,"CENTRE_FREQUENCY\t%.16f\n",centre_frequency); ss += dummy;
+  sprintf(dummy,"BANDWIDTH\t%.16f\n",bandwidth); ss += dummy;
+  sprintf(dummy,"NCHAN\t%d\n",nchan); ss += dummy;
+  sprintf(dummy,"NPOL\t%d\n",npol); ss += dummy;
+  sprintf(dummy,"NDIM\t%d\n",ndim); ss += dummy;
+  sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
+  sprintf(dummy,"TYPE\t%s\n",Signal::source_string(type)); ss += dummy;
+  sprintf(dummy,"STATE\t%s\n",Signal::state_string(state)); ss += dummy;
+  sprintf(dummy,"BASIS\t%s\n",Signal::basis_string(basis)); ss += dummy;
+  sprintf(dummy,"RATE\t%.16f\n",rate); ss += dummy;
+  sprintf(dummy,"START_TIME\t%s\n",start_time.printall()); ss += dummy;
+  sprintf(dummy,"SCALE\t%.16f\n",scale); ss += dummy;
+  sprintf(dummy,"SWAP\t%s\n",swap?"true":"false"); ss += dummy;
+  sprintf(dummy,"DC_CENTRED\t%s\n",dc_centred?"true":"false"); ss += dummy;
+  sprintf(dummy,"IDENTIFIER\t%s\n",identifier.c_str()); ss += dummy;
+  sprintf(dummy,"MODE\t%s\n",mode.c_str()); ss += dummy;
+  sprintf(dummy,"MACHINE\t%s\n",machine.c_str()); ss += dummy;
+  sprintf(dummy,"DISPERSION_MEASURE\t%.16f\n",dispersion_measure); ss += dummy;
+
+
+  sprintf(dummy,"RAJ\t%s\n",coordinates.ra().getHMS().c_str()); ss += dummy;
+  sprintf(dummy,"DECJ\t%s\n",coordinates.dec().getDMS().c_str()); ss += dummy;
+
+  return true;
 }
     
-//! Writes a FitsHeader format of all information contained in this class into the fptr at the current file offset
+//! Writes all information contained in this class into the fptr at the current file offset
 bool dsp::Observation::retrieve(FILE* fptr){
   string ss;
   if( !retrieve(ss) ){

@@ -65,21 +65,12 @@ static pspmDbase::server cpsr_hdr;
 // If you change the way this stuff works, please try to make sure
 // the multi-file constructor (below) will still work.
 
-void dsp::CPSRFile::open (const char* filename)
+void dsp::CPSRFile::open_it (const char* filename)
 {
   if (verbose)
     cerr << "CPSRFile::open " << filename << endl;
 
-  if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
-    fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");
-    fprintf (stderr, "CPSRFile:: PSPM header size %d.\n", PSPM_HEADER_SIZE);
-    fprintf (stderr, "CPSRFile:: for this architecture: %d.\n",
-	     sizeof(PSPM_SEARCH_HEADER));
-
-    throw_str ("CPSRFile::open - Architecture Error!");
-  }
-
-  header_bytes = sizeof(PSPM_SEARCH_HEADER);
+  set_header_bytes();
 
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
@@ -187,6 +178,7 @@ void dsp::CPSRFile::open (const char* filename)
 
   /* IMPORTANT: tsamp is the sampling period in microseconds */
   info.set_rate (1e6/hdr.tsamp);
+
   info.set_bandwidth (hdr.bandwidth);
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
@@ -221,3 +213,15 @@ void dsp::CPSRFile::open (const char* filename)
     cerr << "CPSRFile::open exit" << endl;
 }
 
+void dsp::CPSRFile::set_header_bytes(){
+  if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
+    fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");
+    fprintf (stderr, "CPSRFile:: PSPM header size %d.\n", PSPM_HEADER_SIZE);
+    fprintf (stderr, "CPSRFile:: for this architecture: %d.\n",
+	     sizeof(PSPM_SEARCH_HEADER));
+
+    throw_str ("CPSRFile::open - Architecture Error!");
+  }
+
+  header_bytes = sizeof(PSPM_SEARCH_HEADER);
+}

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.25 $
-   $Date: 2002/11/01 18:40:15 $
-   $Author: wvanstra $ */
+   $Revision: 1.26 $
+   $Date: 2002/11/06 06:30:42 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -238,7 +238,10 @@ namespace dsp {
     int64 nsamples (int64 nbytes) const
       { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
 
-    //! Returns true if the signals are mostly similar
+    //! Returns true if the signal may be integrated
+    /* This returns a flag that is true if the Observations may be combined 
+       It doesn't check the start times- you have to do that yourself!
+    */
     bool combinable (const Observation& obs) const;
 
     //! Return true if the first sample of next follows the last sample of this
@@ -247,10 +250,10 @@ namespace dsp {
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
 
-    //! Returns a FitsHeader format of all information contained in this class into the string info_string
+    //! Returns all information contained in this class into the string info_string
     bool retrieve(string& info_string);
     
-    //! Writes a FitsHeader format of all information contained in this class into the fptr at the current file offset
+    //! Writes of all information contained in this class into the fptr at the current file offset
     bool retrieve(FILE* fptr);
 
   protected:
@@ -282,7 +285,7 @@ namespace dsp {
     //! Number of bits per value
     int nbit;
 
-    //! Type of signal source
+    //! Type of signal source (Linear or Circular)
     Signal::Source type;
 
     //! State of the signal

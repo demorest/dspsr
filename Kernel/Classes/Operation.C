@@ -1,5 +1,5 @@
 #include "dsp/Operation.h"
-#include "dsp/Timeseries.h"
+#include "dsp/Basicseries.h"
 #include "genutil.h"
 
 //! Global flag tells all Operations to record the time spent operating
@@ -58,44 +58,14 @@ void dsp::Operation::operate ()
   output -> input_sample = -1;
 }
 
-//! Set the container from which input data will be read
-void dsp::Operation::set_input (const Timeseries* _input)
-{
-  if (verbose)
-    cerr << "dsp::Operation::set_input=" << _input << endl;
-
-  input = _input;
-
-  if (type == inplace)
-    output = const_cast<Timeseries*>(input.get());
-
-  if (type == outofplace && input && output && input == output)
-    throw_str ("Operation::set_input["+name+"] input must != output");
-
-}
-
-//! Set the container into which output data will be written
-void dsp::Operation::set_output (Timeseries* _output)
-{
-  if (verbose)
-    cerr << "dsp::Operation::set_output=" << _output << endl;
-
-  output = _output;
-  if (type == inplace)
-    input = output;
-
-  if (type == outofplace && input && output && input == output)
-    throw_str ("Operation::set_output["+name+"] output must != input");
-}
-
 //! Return pointer to the container from which input data will be read
-const dsp::Timeseries* dsp::Operation::get_input () const
+const dsp::Basicseries* dsp::Operation::get_input () const
 {
   return input;
 }
 
 //! Return pointer to the container into which output data will be written
-dsp::Timeseries* dsp::Operation::get_output () const
+dsp::Basicseries* dsp::Operation::get_output () const
 {
   return output;
 }
@@ -129,3 +99,37 @@ void* dsp::Operation::workingspace (size_t nbytes)
   return working_space;
 }
 
+//! Set the container from which input data will be read
+void dsp::Operation::set_input (const Basicseries* _input)
+{
+  if (verbose)
+    cerr << "dsp::Operation::set_input=" << _input << endl;
+
+  input = _input;
+
+  check_input();
+
+  if (type == inplace)
+    output = const_cast<Basicseries*>(input.get());
+
+  if (type == outofplace && input && output && input == output)
+    throw_str ("Operation::set_input["+name+"] input must != output");
+
+}
+
+//! Set the container into which output data will be written
+void dsp::Operation::set_output (Basicseries* _output)
+{
+  if (verbose)
+    cerr << "dsp::Operation::set_output=" << _output << endl;
+
+  output = _output;
+
+  check_output();
+
+  if (type == inplace)
+    input = output;
+
+  if (type == outofplace && input && output && input == output)
+    throw_str ("Operation::set_output["+name+"] output must != input");
+}

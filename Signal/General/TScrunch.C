@@ -4,10 +4,10 @@
 
 #include "dsp/Timeseries.h"
 
-#include "dsp/Operation.h"
+#include "dsp/TimeseriesOperation.h"
 #include "dsp/TScrunch.h"
 
-dsp::TScrunch::TScrunch(Behaviour _type) : Operation("TScrunch", _type){
+dsp::TScrunch::TScrunch(Behaviour _type) : TimeseriesOperation("TScrunch", _type){
   ScrunchFactor = -1;
   TimeRes = -1.0;
   use_tres = false;
@@ -103,9 +103,9 @@ void dsp::TScrunch::operation ()
   for (int ichan=0; ichan<input->get_nchan(); ichan++) {
     for (int ipol=0; ipol<input->get_npol(); ipol++) {
 
-      un_scr =  (float*)input->get_datptr(ichan, ipol);
-      scr    =  reinterpret_cast<float*>(output->get_rawptr()) + 
-	(ichan*input->get_npol()+ipol) * output_ndat;
+      un_scr = (float*)input->get_datptr(ichan, ipol);
+      scr    = reinterpret_cast<float*>(output->get_rawptr()) + 
+	(ichan * output->get_npol() + ipol) * output_ndat;
       onetoomany_un = un_scr + sfactor;
       onetoomany_scr = scr + normal_scrunches;
 
@@ -130,7 +130,7 @@ void dsp::TScrunch::operation ()
 	
 	while( un_scr != onetoomany_un ){
 	  *scr += *un_scr;
-	    un_scr++;
+	  un_scr++;
 	}
 	*scr *= float(sfactor)/float(nfinal);
       }
@@ -140,13 +140,12 @@ void dsp::TScrunch::operation ()
   } // for each ichan
 
   /* make sure output has correct parameters */
-  output->Observation::operator=( *input );
   output->rescale( double(output_ndat) / double(input->get_ndat()) );
   output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output_ndat)) );
   
-  // This is usually very bad but should work in both the inplace and outofplace situations:
+  // This is usually very bad but should work (and is needed) in both the inplace and outofplace situations:
   output->resize(output_ndat);
-    
+
   if( verbose )
     fprintf(stderr,"Exiting from %s::operation()\n\n",get_name().c_str()); 
 }

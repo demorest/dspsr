@@ -1,16 +1,22 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2002/11/06 06:30:42 $
+   $Author: hknight $ */
 
 
 #ifndef __Unpacker_h
 #define __Unpacker_h
 
+class Unpacker;
+
+#include "dsp/Timeseries.h"
+#include "dsp/Chronoseries.h"
 #include "dsp/Operation.h"
+
 #include "Registry.h"
+#include "Reference.h"
 
 namespace dsp {
 
@@ -31,6 +37,17 @@ namespace dsp {
     static Unpacker* create (const Observation* observation);
 
    protected:
+    //! kludge of the century:
+    Reference::To<const Chronoseries> input;
+
+    //! kludge of the century part 2
+    Reference::To<Timeseries> output;
+
+    //! check the input is dsp::Timeseries- called by set_input()
+    virtual void check_input();
+
+    //! check the output is dsp::Timeseries- called by set_output()
+    virtual void check_output();
 
     //! The operation unpacks n-bit into floating point Timeseries
     virtual void operation ();

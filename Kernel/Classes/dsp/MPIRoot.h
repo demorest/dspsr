@@ -1,10 +1,12 @@
 //-*-C++-*-
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MPIRoot.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+/*
 
+BEWARE: If you intend to use IPCBuffer and MPIRoot be very careful.  It is assumed by dsp::Input that any derived class will load in a Chronoseries.  Clearly this is unlikely, but since no code uses these 2 classes as at 6/11/02 I haven't bothered to write a work-around.  
+
+HSK 11/6/02
+
+*/
 
 #ifndef __MPIRoot_h
 #define __MPIRoot_h

@@ -3,13 +3,13 @@
 #ifndef __SLDetect_h
 #define __SLDetect_h
 
-#include "dsp/Operation.h"
+#include "dsp/TimeseriesOperation.h"
 
 namespace dsp {
 
   //! Simply Square Law detects Timeseries in-place.
 
-  class SLDetect : public Operation {
+  class SLDetect : public TimeseriesOperation {
 
   public:
 

@@ -1,5 +1,6 @@
 #include "dsp/IOManager.h"
 #include "dsp/Timeseries.h"
+#include "dsp/Chronoseries.h"
 #include "dsp/File.h"
 #include "dsp/Unpacker.h"
 #include "dsp/TwoBitCorrection.h"
@@ -24,7 +25,7 @@ dsp::IOManager::~IOManager()
 }
 
 //! Set the container from which input data will be read
-void dsp::IOManager::set_raw (Timeseries* _raw)
+void dsp::IOManager::set_raw (Chronoseries* _raw)
 {
   if (verbose)
     cerr << "IOManager::set_raw=" << _raw << endl;
@@ -126,7 +127,7 @@ void dsp::IOManager::load (Timeseries* data)
     throw string ("IOManager::load no unpacker");
 
   if (!raw)
-    set_raw (new Timeseries);
+    set_raw (new Chronoseries);
 
   input->load (raw);
 
@@ -138,7 +139,7 @@ void dsp::IOManager::load (Timeseries* data)
 }
 
 
-void dsp::IOManager::load_data (Timeseries* data)
+void dsp::IOManager::load_data (Chronoseries* data)
 {
   throw string ("IOManager::load_data run-time error");
 }
@@ -160,4 +161,13 @@ void dsp::IOManager::seek (int64 offset, int whence)
     return;
 
   input->seek (offset, whence);
+}
+
+//! Set the Timeseries to which data will be output to
+void dsp::IOManager::set_final_output (Timeseries* data)
+{
+  if (!output.get() || output.get() != data) {
+    output = data;
+    output -> input_sample = -1;
+  }
 }

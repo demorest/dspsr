@@ -1,15 +1,17 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2002/11/06 06:30:41 $
+   $Author: hknight $ */
 
 
 #ifndef __Detection_h
 #define __Detection_h
 
-#include "dsp/Operation.h"
+class Detection;
+
+#include "dsp/TimeseriesOperation.h"
 #include "dsp/Observation.h"
 
 namespace dsp {
@@ -20,16 +22,13 @@ namespace dsp {
     In the case of Signal::Stokes/Coherency, the components may be formed in
     polarization-major order or time-major order. 
   */
-  class Detection : public Operation {
+  class Detection : public TimeseriesOperation {
 
   public:
     
     //! Constructor
     Detection ();
     
-    //! Destructor
-    ~Detection () { }
-
     //! Set the state of the output data
     void set_output_state (Signal::State _state);
     //! Get the state of the output data

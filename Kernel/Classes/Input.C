@@ -1,5 +1,5 @@
 #include "dsp/Input.h"
-#include "dsp/Timeseries.h"
+#include "dsp/Chronoseries.h"
 #include "Error.h"
 
 #include "genutil.h"
@@ -16,20 +16,20 @@ dsp::Input::~Input ()
 {
 }
 
-//! Load data into the Timeseries specified with set_output
+//! Load data into the Chronoseries specified with set_output
 void dsp::Input::operate ()
 {
   if (verbose)
     cerr << "Input::operate" << endl;
   
   if (!output)
-    throw Error (InvalidState, "Input::operate", "no output Timeseries");
+    throw Error (InvalidState, "Input::operate", "no output Chronoseries");
 
   load (output);
 }
 
-//! Set the Timeseries to which data will be loaded
-void dsp::Input::set_output (Timeseries* data)
+//! Set the Chronoseries to which data will be loaded
+void dsp::Input::set_output (Chronoseries* data)
 {
   if (!output || output != data) {
     output = data;
@@ -40,7 +40,7 @@ void dsp::Input::set_output (Timeseries* data)
 
 /*! Set the Observation attributes of data and load the next block of data
  */
-void dsp::Input::load (Timeseries* data)
+void dsp::Input::load (Chronoseries* data)
 {
   if (!data)
     throw Error (InvalidParam, "Input::load", "invalid data reference");
@@ -133,12 +133,12 @@ void dsp::Input::seek (int64 offset, int whence)
 /*!  
   Based on the next time sample, next_sample, and the number of time
   samples, block_size, to be loaded, this function determines the
-  amount of data currently found in the Timeseries object, copies this
-  data to the start of Timeseries::data and returns the number of time
+  amount of data currently found in the Chronoseries object, copies this
+  data to the start of Chronoseries::data and returns the number of time
   samples that have been "recycled"
 */
 
-uint64 dsp::Input::recycle_data (Timeseries* data)
+uint64 dsp::Input::recycle_data (Chronoseries* data)
 {
   if (data->input_sample == -1)  {
     if (verbose)
@@ -200,4 +200,3 @@ uint64 dsp::Input::recycle_data (Timeseries* data)
 
   return to_recycle;
 }
-

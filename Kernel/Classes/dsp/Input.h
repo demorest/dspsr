@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2002/11/06 06:30:42 $
+   $Author: hknight $ */
 
 
 #ifndef __Input_h
@@ -14,7 +14,7 @@
 
 namespace dsp {
 
-  class Timeseries;
+  class Chronoseries;
 
   //! Pure virtual base class of all objects that can load Timeseries data
   /*! 
@@ -38,13 +38,13 @@ namespace dsp {
     virtual bool eod() = 0;
     
     //! Load Timeseries data
-    virtual void load (Timeseries* data);
+    virtual void load (Chronoseries* data);
 
     //! Load data into the Timeseries specified with set_output
     virtual void operate ();
 
     //! Set the Timeseries to which data will be loaded
-    virtual void set_output (Timeseries* data);
+    virtual void set_output (Chronoseries* data);
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
@@ -71,7 +71,7 @@ namespace dsp {
   protected:
 
     //! Load next block of data into Timeseries
-    virtual void load_data (Timeseries* data) = 0;
+    virtual void load_data (Chronoseries* data) = 0;
 
     //! Information about the data source (passed on to Timeseries in load)
     Observation info;
@@ -86,7 +86,7 @@ namespace dsp {
     uint64 get_next_sample () { return next_sample; }
     
     //! Conserve access to resources by re-using data already in Timeseries
-    uint64 recycle_data (Timeseries* data);
+    uint64 recycle_data (Chronoseries* data);
 
   private:
     //! Stop watch records the amount of time spent in load method
@@ -96,7 +96,7 @@ namespace dsp {
     uint64 next_sample;
 
     //! The Timeseries to which data will be loaded on next call to operate
-    Reference::To<Timeseries> output;
+    Reference::To<Chronoseries> output;
 
   };
 

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2002/11/06 06:30:42 $
+   $Author: hknight $ */
 
 
 #ifndef __Fold_h
@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#include "dsp/Operation.h"
+#include "dsp/TimeseriesOperation.h"
 #include "environ.h"
 #include "MJD.h"
 
@@ -28,7 +28,7 @@ namespace dsp {
     This Operation does not modify the Timeseries.  Rather, it accumulates
     the (folded) average pulse profile data within its data structures.
   */
-  class Fold : public Operation {
+  class Fold : public TimeseriesOperation {
 
   public:
     

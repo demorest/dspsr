@@ -20,7 +20,7 @@ bool dsp::S2File::is_valid (const char* filename) const
 /*! 
   Loads the Observation information from an S2-TCI style file.
 */
-void dsp::S2File::open (const char* filename)
+void dsp::S2File::open_it (const char* filename)
 {
   tci_fd   s2file;
   tci_hdr  header;
@@ -91,10 +91,9 @@ void dsp::S2File::open (const char* filename)
   info.set_telescope (Telescope::Parkes);
   info.set_default_basis();
 
-
   // tci_file_open returns file size in Words (16 bits)
   info.set_ndat ( int64(s2file.fsz) * 16 / (info.get_nbit()*info.get_npol()) );
-  
+
   if (verbose)
     cerr << "dsp::S2File::open " << s2file.fsz * 2 << " bytes = "
 	 << info.get_ndat() << " time samples" << endl;
@@ -109,3 +108,19 @@ void dsp::S2File::open (const char* filename)
     cerr << "dsp::S2File::open return" << endl;
 }
 
+void dsp::S2File::set_header_bytes(){
+  tci_fd   s2file;
+  tci_hdr  header;
+
+  if (tci_file_open (current_filename.c_str(), &s2file, &header, 'r') != 0)
+    throw_str ("dsp::S2File::set_header_bytes() - could not construct from %s\n",
+	       current_filename.c_str());
+
+  for (int c=0; c<TCI_TIME_STRLEN-1; c++)
+    if (!isdigit(header.hdr_time[c]))
+      throw_str ("S2File::open - corrupted time in header.\n");
+
+  header_bytes = s2file.base;
+
+  tci_file_close( s2file );
+}

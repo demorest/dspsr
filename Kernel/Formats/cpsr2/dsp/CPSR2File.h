@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2002/11/06 06:30:41 $
+   $Author: hknight $ */
 
 
 #ifndef __CPSR2File_h
@@ -26,8 +26,13 @@ namespace dsp {
     //! Construct and open file
     CPSR2File (const char* filename=0) { if (filename) open (filename); }
 
+  protected:
+
     //! Open the file
-    void open (const char* filename);
+    virtual void open_it (const char* filename);
+
+    // set the number of bytes in header attribute- called by open_it() and by dsp::ManyFile::switch_to_file()
+    virtual void set_header_bytes();
 
   };
 

@@ -346,7 +346,9 @@ void dsp::TwoBitCorrection::unpack ()
 
     const unsigned char* from = rawptr + ipol;
 
-    float* into = output->get_datptr (0, ipol);
+    Timeseries* ts_output = dynamic_cast<Timeseries*>(output.get());
+
+    float* into = ts_output->get_datptr (0, ipol);
 
     unsigned long* hist = 0;
 

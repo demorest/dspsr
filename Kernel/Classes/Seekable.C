@@ -1,5 +1,5 @@
 #include "dsp/Seekable.h"
-#include "dsp/Timeseries.h"
+#include "dsp/Chronoseries.h"
 #include "genutil.h"
 
 void dsp::Seekable::init()
@@ -20,7 +20,7 @@ bool dsp::Seekable::eod()
   return end_of_data;
 }
 
-void dsp::Seekable::load_data (Timeseries* data)
+void dsp::Seekable::load_data (Chronoseries* data)
 {
   if (verbose)
     cerr << "Seekable::load_data"
@@ -79,7 +79,7 @@ void dsp::Seekable::load_data (Timeseries* data)
   unsigned char* into = data->get_rawptr() + data->nbytes (recycled);
 
   if (toread_bytes < 1)
-    throw_str ("Seekable::load_data invalid Timeseries state");
+    throw_str ("Seekable::load_data invalid Chronoseries state");
 
   if (verbose)
     cerr<<"Seekable::load_data call load_bytes("<< toread_bytes << ")" <<endl;

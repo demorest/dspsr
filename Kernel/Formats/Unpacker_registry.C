@@ -13,7 +13,7 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>    s2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>      pmdaq;
 
-static Registry::List<dsp::Unpacker>::Enter<dsp::DigiUnpack> digiunpack;
+//static Registry::List<dsp::Unpacker>::Enter<dsp::DigiUnpack> digiunpack;
 
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)

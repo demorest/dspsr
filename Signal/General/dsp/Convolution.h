@@ -1,14 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2002/11/06 06:30:41 $
+   $Author: hknight $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
 
-#include "dsp/Operation.h"
+#include "dsp/TimeseriesOperation.h"
 
 namespace dsp {
   
@@ -44,7 +44,7 @@ namespace dsp {
     for this loss.
   */
 
-  class Convolution: public Operation {
+  class Convolution: public TimeseriesOperation {
 
   public:
 

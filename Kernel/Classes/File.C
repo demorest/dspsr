@@ -7,6 +7,7 @@
 void dsp::File::init()
 {
   fd = header_bytes = -1;
+  current_filename = "No file open";
 }
 
 void dsp::File::close()
@@ -14,6 +15,7 @@ void dsp::File::close()
   if (fd >= 0)
     ::close (fd);
   fd = -1;
+  current_filename = "No file open";
 }
 
 //! Load bytes from file
@@ -50,4 +52,15 @@ int64 dsp::File::seek_bytes (uint64 bytes)
   // return absolute data byte offset from the start of file
   return retval - header_bytes;
 }
+
+
+
+
+
+
+
+
+
+
+
 

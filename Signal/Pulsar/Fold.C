@@ -2,13 +2,15 @@
 
 #include "dsp/Fold.h"
 #include "dsp/PhaseSeries.h"
+#include "dsp/TimeseriesOperation.h"
+
 #include "Error.h"
 
 #include "psrephem.h"
 #include "tempo++.h"
 #include "genutil.h"
 
-dsp::Fold::Fold () : Operation ("Fold", outofplace) 
+dsp::Fold::Fold () : TimeseriesOperation ("Fold", outofplace) 
 {
   folding_period = 0;
 

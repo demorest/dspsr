@@ -1,16 +1,17 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "dsp/IOManager.h"
-#include "dsp/Timeseries.h"
-#include "dsp/PhaseSeries.h"
-#include "dsp/Detection.h"
-#include "dsp/Fold.h"
 #include "tempo++.h"
-
 #include "string_utils.h"
 #include "dirutil.h"
 #include "Error.h"
+
+#include "dsp/IOManager.h"
+#include "dsp/Timeseries.h"
+#include "dsp/Chronoseries.h"
+#include "dsp/PhaseSeries.h"
+#include "dsp/Detection.h"
+#include "dsp/Fold.h"
 
 static char* args = "b:n:t:vV";
 
@@ -83,6 +84,7 @@ int main (int argc, char** argv)
     cerr << "Creating PhaseSeries instance" << endl;
   dsp::PhaseSeries profiles;
 
+  
   if (verbose)
     cerr << "Creating IOManager instance" << endl;
   dsp::IOManager manager;
@@ -90,6 +92,7 @@ int main (int argc, char** argv)
   manager.set_block_size (block_size);
   manager.set_nsample (1024);  // ppweight
 
+  
   if (verbose)
     cerr << "Creating Detection instance" << endl;
   dsp::Detection detect;
@@ -151,7 +154,6 @@ int main (int argc, char** argv)
   catch (string& error) {
     cerr << error << endl;
   }
-
   
   return 0;
 }

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2002/11/06 06:30:42 $
+   $Author: hknight $ */
 
 
 #ifndef __Seekable_h
@@ -37,8 +37,8 @@ namespace dsp {
 
   protected:
     
-    //! Load next block of data into Timeseries
-    virtual void load_data (Timeseries* data);
+    //! Load next block of data into Chronoseries
+    virtual void load_data (Chronoseries* data);
  
     //! Load data from device and return the number of bytes read.
     virtual int64 load_bytes (unsigned char* buffer, uint64 bytes) = 0;

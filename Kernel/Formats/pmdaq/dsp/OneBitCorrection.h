@@ -3,9 +3,14 @@
 #ifndef __OneBitCorrection_h
 #define __OneBitCorrection_h
 
+class OneBitCorrection;
+
 #include <vector>
 
 #include "dsp/Unpacker.h"
+#include "dsp/Timeseries.h"
+#include "dsp/Chronoseries.h"
+
 #include "environ.h"
 
 namespace dsp {
@@ -68,7 +73,7 @@ namespace dsp {
     void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
-    static OneBitCorrection* create (const Timeseries& input,
+    static OneBitCorrection* create (const Chronoseries& input,
 				     int nsample=0, float cutoff_sigma=3.0);
 
     //! Return the high and low output voltage values

@@ -1,20 +1,22 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2002/11/06 06:30:41 $
+   $Author: hknight $ */
 
 
 #ifndef __File_h
 #define __File_h
 
 #include "dsp/Seekable.h"
+#include "dsp/Chronoseries.h"
+
 #include "Registry.h"
 
 namespace dsp {
 
-  //! Loads Timeseries data from file
+  //! Loads Chronoseries data from file
   class File : public Seekable
   {
     friend class MultiFile;
@@ -31,7 +33,11 @@ namespace dsp {
     virtual bool is_valid (const char* filename) const = 0;
 
     //! Open the file
-    virtual void open (const char* filename) = 0;
+    virtual void open (const char* filename)
+    { current_filename=filename; open_it(filename); }
+
+    //! Convenience interface to File::open (const char*)
+    void open (const string& filename) { open (filename.c_str()); }
 
     //! Close the file
     virtual void close ();
@@ -46,8 +52,13 @@ namespace dsp {
     static File* create (const string& filename)
     { return create (filename.c_str()); }
 
+    string get_current_filename(){ return current_filename; }
+
   protected:
     
+    //! The name of the currently opened file, set by open()
+    string current_filename;
+
     //! The file descriptor
     int fd;
     
@@ -71,6 +82,12 @@ namespace dsp {
       and the additional information should be skipped. */
     virtual int64 seek_bytes (uint64 bytes);
     
+    //! Called by the wrapper-function, open
+    virtual void open_it (const char* filename) = 0;
+
+    //! Called by open_it() and by dsp::ManyFile::switch_to_file()
+    virtual void set_header_bytes() = 0;
+
     //! initialize variables
     void init();
 

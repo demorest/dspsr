@@ -1,12 +1,13 @@
 #include "dsp/Detection.h"
 #include "dsp/Timeseries.h"
+#include "dsp/TimeseriesOperation.h"
 
 #include "genutil.h"
 #include "cross_detect.h"
 
 //! Constructor
 dsp::Detection::Detection () 
-  : Operation ("Detection", anyplace)
+  : TimeseriesOperation ("Detection", anyplace)
 {
   state = Signal::Intensity;
   ndim = 1;
@@ -59,7 +60,7 @@ void dsp::Detection::operation ()
     
   }
 
-  bool inplace = (input == output);
+  bool inplace = (input.get() == output.get());
   if (verbose)
     cerr << "Detection::operation inplace" << endl;
 
@@ -138,7 +139,7 @@ void dsp::Detection::polarimetry ()
   unsigned input_npol = 2;
   unsigned input_ndim = 2;
 
-  bool inplace = (input == output);
+  bool inplace = (input.get() == output.get());
 
   unsigned required_space = 0;
   unsigned copy_bytes = 0;
