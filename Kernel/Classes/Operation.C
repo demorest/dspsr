@@ -28,13 +28,18 @@ void dsp::Operation::prepare ()
 void dsp::Operation::operate ()
 {
   if (!input)
-    throw_str ("Operation::operate no input");
+    throw_str ("Operation::operate["+name+"] no input");
 
   if (!input->get_ndat())
-    throw_str ("Operation::operate empty input");
+    throw_str ("Operation::operate["+name+"] empty input");
+
+  string reason;
+  if (!input->state_is_valid (reason))
+    throw_str ("Operation::operate["+name+"] invalid input state: "+reason);
 
   if (!output)
-    throw_str ("Operation::operate no output");
+    throw_str ("Operation::operate["+name+"] no output");
+
 
   if (record_time)
     optime.start();
@@ -47,7 +52,10 @@ void dsp::Operation::operate ()
 
   if (record_time)
     optime.stop();
-  
+
+  if (!output->state_is_valid (reason))
+    throw_str ("Operation::operate["+name+"] invalid output state: "+reason);
+
   /*! If an operation is performed on a Timeseries, then the data no
     longer represents that which was loaded by an Input sub-class.
     Reset the input_sample attribute of the output so that the
@@ -65,7 +73,7 @@ void dsp::Operation::set_input (const Timeseries* _input)
     output = const_cast<Timeseries*>(input.get());
 
   if (type == outofplace && input && output && input == output)
-    throw_str ("Operation::set_input " + name + " input must != output");
+    throw_str ("Operation::set_input["+name+"] input must != output");
 
 }
 
@@ -77,7 +85,7 @@ void dsp::Operation::set_output (Timeseries* _output)
     input = output;
 
   if (type == outofplace && input && output && input == output)
-    throw_str ("Operation::set_output " + name + " output must != input");
+    throw_str ("Operation::set_output["+name+"] output must != input");
 }
 
 //! Return pointer to the container from which input data will be read
@@ -108,7 +116,7 @@ void* dsp::Operation::workingspace (size_t nbytes)
     working_space = new char [nbytes];
 
     if (!working_space)
-      throw_str ("Operation::workingspace: error allocating %d bytes", nbytes);
+      throw_str ("Operation::workingspace: error allocating %d bytes",nbytes);
 
     working_size = nbytes;
   }
