@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.23 $
-   $Date: 2002/10/17 07:31:59 $
-   $Author: hknight $ */
+   $Revision: 1.24 $
+   $Date: 2002/10/17 11:20:49 $
+   $Author: pulsar $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -242,9 +242,6 @@ namespace dsp {
 
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
-
-    //! Returns true if data has been digitised by DigiPack
-    bool IsDigi(){ return isdigi; }
 
     //! Returns a FitsHeader format of all information contained in this class into the string info_string
     bool retrieve(string& info_string);
