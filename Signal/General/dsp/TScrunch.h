@@ -14,7 +14,7 @@ namespace dsp {
 
   public:
 
-    TScrunch ();
+    TScrunch (Behaviour place=anyplace);
     
     void set_ScrunchFactor( int64 _ScrunchFactor){ ScrunchFactor = _ScrunchFactor; use_tres = false; }
     int64 get_ScrunchFactor(){ return ScrunchFactor; }

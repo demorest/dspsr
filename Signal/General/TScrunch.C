@@ -4,8 +4,8 @@
 
 #include "dsp/TScrunch.h"
 
-dsp::TScrunch::TScrunch() 
-  : Transformation <TimeSeries, TimeSeries> ("TScrunch", anyplace)
+dsp::TScrunch::TScrunch(Behaviour place) 
+  : Transformation <TimeSeries, TimeSeries> ("TScrunch", place)
 {
   ScrunchFactor = -1;
   TimeRes = -1.0;
