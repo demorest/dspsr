@@ -228,8 +228,11 @@ void dsp::PuMaFile::parse (const void* header)
   if (hdr->WSRT.Band[iband].NonFlip == false)
     sign = -1.0;
   
+  int FIR_factor = hdr->mode.FIRFactor;
+  cerr << "fir factor=" << FIR_factor << endl;
+
   /* double Width; Width of the band (in MHz): 2.5, 5.0 or 10.0 */
-  info.set_bandwidth( sign * hdr->WSRT.Band[iband].Width );
+  info.set_bandwidth( sign * hdr->WSRT.Band[iband].Width / FIR_factor );
 
   /* int StMJD;       MJD at start of observation */
   /* int StTime;      Starttime (s after midnight, multiple of 10 s) */
