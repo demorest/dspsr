@@ -41,6 +41,16 @@ static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
+#if DSP_MARK4
+#include "dsp/MARK4File.h"
+static Registry::List<dsp::File>::Enter<dsp::MARK4File> register_mark4;
+#endif
+
+#if DSP_SMRO
+#include "dsp/SMROFile.h"
+static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_smro;
+#endif
+
 #if DSP_VSIB
 #include "dsp/VSIBFile.h"
 static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;

@@ -72,7 +72,38 @@ endif
 
 ##############################################################################
 #
+# Uncomment the following line to compile Mark4 specific code
+# 
+# Don't be misled by the name, it is really the Mark4 encoders that are giving
+# the file this name. This is because the Mark5 recorders - currently - use
+# Mark4 formatters and record the data like a tape drive would (without parity)
+#
+#MARK4:=yes
+
+ifeq ($(MARK4),yes)
+BACKENDS += MARK4
+LBACKENDS += -ldsp_MARK4
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile SMRO specific code
+# 
+# WARNING: Don't use SMRO and VSIB at the same time, VSIB is being phased out
+#
+#SMRO:=yes
+
+ifeq ($(SMRO),yes)
+BACKENDS += SMRO
+LBACKENDS += -ldsp_SMRO
+endif
+
+##############################################################################
+#
 # Uncomment the following line to compile VSIB specific code
+#
+# This should not be considered anymore as the better version of smro will be 
+# its replacement.
 #
 #VSIB:=yes
 
