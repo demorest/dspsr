@@ -8,7 +8,7 @@
 #include "ierf.h"
 
 /*! From JA98, Table 1 */
-const double dsp::TwoBitCorrection::optimal_2bit_threshold = 0.9674;
+const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
 
 //! Null constructor
 dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
@@ -95,7 +95,7 @@ void dsp::TwoBitCorrection::set_twobit_limits ()
      where -x2 = x4 = 0.9674 of the noise power, as in Table 1 of 
      Jenet&Anderson.  Apply t=0.9674sigma to Equation 45, 
      (or -xl=xh=0.9674 to Equation A2) to get: */
-  float fraction_ones = erf(optimal_2bit_threshold/sqrt(2.0));
+  float fraction_ones = erf(optimal_threshold/sqrt(2.0));
 
   float n_ave = float(nsample) * fraction_ones;
   // the root mean square deviation
@@ -123,7 +123,6 @@ void dsp::TwoBitCorrection::set_twobit_limits ()
 
   if (verbose) cerr << "TwoBitCorrection::set_twobit_limits nmin:"
 		    << n_min << " and nmax:" << n_max << endl;
-
 }
 
 void dsp::TwoBitCorrection::zero_histogram ()
@@ -179,7 +178,8 @@ void dsp::TwoBitCorrection::build (int nchan, int nsamp, float sigma)
   cutoff_sigma = sigma;
 
   set_twobit_limits ();
-  
+  allocate ();
+
   float* dls_lut = dls_lookup;
   float lo=0, hi=0;
 

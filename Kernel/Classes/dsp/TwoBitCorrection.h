@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/07/05 03:02:57 $
+   $Revision: 1.5 $
+   $Date: 2002/07/10 06:59:34 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -25,7 +25,7 @@ namespace dsp {
   public:
 
     //! Optimal fraction of total power for 2-bit sampling threshold
-    static const double optimal_2bit_threshold;
+    static const double optimal_threshold;
 
     //! Maintain a diagnostic histogram of digitizer statistics
     static bool keep_histogram;
@@ -91,9 +91,6 @@ namespace dsp {
     //! Unpacking algorithm is defined by sub-classes
     virtual void unpack () = 0;
 
-    //! Sets limits with currently set parameters
-    void set_twobit_limits ();
-
     //! Number of digitizer channels
     int nchannel;
 
@@ -114,6 +111,9 @@ namespace dsp {
 
     //! Maximum number of ones in nsample points
     int n_max;
+
+    //! Set limits using current attributes
+    void set_twobit_limits ();
 
     //! Destroy allocated resources
     void destroy ();
