@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.26 $
-   $Date: 2004/02/09 07:06:39 $
-   $Author: hknight $ */
+   $Revision: 1.27 $
+   $Date: 2004/02/09 23:28:55 $
+   $Author: cwest $ */
 
 
 
@@ -35,9 +35,7 @@ namespace dsp {
   */
   class Fold : public Transformation <const TimeSeries, PhaseSeries> {
 
-#if HSKTEST
     friend class MultiFold;
-#endif
     friend class rawprofile;
 
   public:
