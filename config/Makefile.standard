@@ -43,7 +43,7 @@ GREP  = grep
 QTMOC = moc
 MAKEDEPEND = makedepend -f 
 
-SWINBURNE_REPOSITORY = mania.physics.swin.edu.au:/psr/cvsroot
+SWINBURNE_REPOSITORY = pentane.ssi.swin.edu.au:/nfs/cluster/psr/cvsroot
 
 ##########################################################################
 # macro definitions for various "home-grown" libraries
