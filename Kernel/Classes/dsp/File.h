@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/10/15 13:12:31 $
-   $Author: pulsar $ */
+   $Revision: 1.5 $
+   $Date: 2002/11/01 18:43:47 $
+   $Author: wvanstra $ */
 
 
 #ifndef __File_h
@@ -17,6 +17,8 @@ namespace dsp {
   //! Loads Timeseries data from file
   class File : public Seekable
   {
+    friend class MultiFile;
+
   public:
     
     //! Constructor
@@ -31,11 +33,11 @@ namespace dsp {
     //! Open the file
     virtual void open (const char* filename) = 0;
 
-    //! Convenience interface to File::open (const char*)
-    void open (const string& filename) { open (filename.c_str()); }
-
     //! Close the file
     virtual void close ();
+
+    //! Return the name of the file from which this instance was created
+    string get_filename () const { return filename; }
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static File* create (const char* filename);
@@ -52,6 +54,9 @@ namespace dsp {
     //! Size of the header in bytes
     int header_bytes;
     
+    //! Name of the file from which this instance was created
+    string filename;
+
     //! Load nbyte bytes of sampled data from the device into buffer
     /*! If the data stored on the device contains information other
       than the sampled data, this method should be overloaded and the
