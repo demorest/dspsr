@@ -19,17 +19,9 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
 
 void dsp::Filterbank::transformation ()
 {
-  if (time_res < 1)
-    throw_str ("Filterbank::transformation time resolution=%d < 1", time_res);
-
-  if (freq_res < 1)
-    throw_str ("Filterbank::transformation freq resolution=%d < 1", freq_res);
-
   if (nchan < 2)
-    throw_str ("Filterbank::transformation number of channels=%d < 2", nchan);
-
-  // number of complex values in the result of the first fft
-  unsigned n_fft = nchan * freq_res;
+    throw Error (InvalidState, "dsp::Filterbank::transformation",
+		 "invalid number of channels = %d", nchan);
 
   //! Complex samples dropped from beginning of cyclical convolution result
   unsigned nfilt_neg = 0;
@@ -38,10 +30,24 @@ void dsp::Filterbank::transformation ()
   unsigned nfilt_pos = 0;
 
   if (response) {
+
+    // convolve the data with a frequency response function during
+    // filterbank construction...
+
     response -> match (input, nchan);
+    if (response->get_nchan() != nchan)
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "Response.nchan=%d != nchan", response->get_nchan(), nchan);
+
     nfilt_pos = response->get_impulse_pos ();
     nfilt_neg = response->get_impulse_neg ();
+
+    freq_res = response->get_ndat();
+
   }
+
+  // number of complex values in the result of the first fft
+  unsigned n_fft = nchan * freq_res;
 
   // number of complex samples invalid in result of small ffts
   unsigned n_filt = nfilt_pos + nfilt_neg;
@@ -62,24 +68,26 @@ void dsp::Filterbank::transformation ()
   }
 
   else
-    throw_str ("Filterbank::transformation invalid input data state\n");
+    throw Error (InvalidState, "dsp::Filterbank::transformation",
+		 "invalid input data state = " + input->get_state_as_string());
 
   // if given, test the validity of the window function
   if (apodization) {
 
     if (apodization->get_ndat() != nsamp_fft)
-      throw_str ("Filterbank::transformation invalid apodization function ndat=%d"
-		 " (nfft=%d)", apodization->get_ndat(), nsamp_fft);
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "invalid apodization function ndat=%d"
+		   " (nfft=%d)", apodization->get_ndat(), nsamp_fft);
 
     if (input->get_state() == Signal::Analytic 
 	&& apodization->get_ndim() != 2)
-      throw_str ("Filterbank::transformation Signal::Analytic signal"
-		 " Real apodization function.");
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "Signal::Analytic signal. Real apodization function.");
 
     if (input->get_state() == Signal::Nyquist 
 	&& apodization->get_ndim() != 1)
-      throw_str ("Filterbank::transformation Signal::Nyquist signal."
-		 " Complex apodization function.");
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "Signal::Nyquist signal. Complex apodization function.");
   }
 
   // number of timesamples between start of each big fft
@@ -90,35 +98,28 @@ void dsp::Filterbank::transformation ()
 
   if (response) {
 
-    // convolve the data during filterbank construction... 
-    // there are some limitations:
-
-    // the size of filters must equal the number of complex points
-    // in the first spectra
-
-    if (response->get_ndat() != n_fft)
-      throw_str ("Filterbank::transformation response.ndat=%d != %d",
-		 response->get_ndat(), n_fft);
-
     // if the response has 8 dimensions, then perform matrix convolution
     matrix_convolution = (response->get_ndim() == 8);
 
     if (verbose)
-      fprintf (stderr, "Filterbank::transformation with %s convolution\n",
+      fprintf (stderr, "dsp::Filterbank::transformation with %s convolution\n",
 	       (matrix_convolution)?"matrix":"complex");
 
     if (matrix_convolution && input->get_npol() != 2)
-	throw_str ("Filterbank::transformation cross-filter and input.npol != 2");
+	throw Error (InvalidState, "dsp::Filterbank::transformation",
+		     "matrix convolution and input.npol != 2");
   }
 
   if (bandpass) {
     if (bandpass->get_ndat() != n_fft)
-      throw_str ("Filterbank::transformation bandpass.ndat=%d != nfft=%d",
-		 bandpass->get_ndat(), n_fft);
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "bandpass.ndat=%d != nfft=%d",
+		   bandpass->get_ndat(), n_fft);
 
     if (matrix_convolution && bandpass->get_npol() != 4)
-      throw_str ("Filterbank::transformation with matrix convolution "
-		 "bandpass.npol=%d != 4", bandpass->get_npol());
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "matrix convolution and bandpass.npol=%d != 4",
+		   bandpass->get_npol());
   }
 
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
@@ -126,8 +127,8 @@ void dsp::Filterbank::transformation ()
   // nsamp_step is analogous to ngood in Convolution::transformation
   int nsamp_tres = nchan / time_res;
   if (nsamp_tres < 1)
-    throw_str ("Filterbank::transformation time resolution:%d > no.channels:%d\n",
-	       time_res, nchan);
+    throw Error (InvalidState, "dsp::Filterbank::transformation",
+		 "time resolution:%d > no.channels:%d\n", time_res, nchan);
 
   unsigned ndat = input->get_ndat();
 
@@ -138,8 +139,9 @@ void dsp::Filterbank::transformation ()
   unsigned nkeep = freq_res - n_filt;
 
   if (npart == 0)
-    throw_str ("Filterbank::transformation input.ndat="I64" to small (nfft=%d",
-	       input->get_ndat(), nsamp_fft);
+    throw Error (InvalidState, "dsp::Filterbank::transformation",
+		 "input.ndat="I64" too small (nfft=%d",
+		 input->get_ndat(), nsamp_fft);
 
   // prepare the output TimeSeries
   output->Observation::operator= (*input);
@@ -163,7 +165,7 @@ void dsp::Filterbank::transformation ()
   output->rescale (scalefac);
 
   if (verbose)
-    cerr << "Filterbank::transformation scale="<< output->get_scale() <<endl;
+    cerr << "dsp::Filterbank::transformation scale="<< output->get_scale() <<endl;
 
   // output data will have new sampling rate
   // NOTE: that nsamp_fft already contains the extra factor of two required
@@ -208,7 +210,7 @@ void dsp::Filterbank::transformation ()
     cross_pol = 2;
 
   if (verbose)
-    cerr << "Filterbank::transformation enter main loop " <<
+    cerr << "dsp::Filterbank::transformation enter main loop " <<
       " npart:" << npart <<
       " cpol:" << cross_pol <<
       " npol:" << input->get_npol() << endl;
@@ -336,7 +338,7 @@ void dsp::Filterbank::transformation ()
   } // for each big fft (ipart)
 
   if (verbose)
-    cerr << "Filterbank::transformation exit." << endl;
+    cerr << "dsp::Filterbank::transformation exit." << endl;
 }
 
 #if 0
@@ -381,7 +383,7 @@ void filterbank::scattered_power_correct (float_Stream& dispersed_power,
 
   // sanity check
   if (dispersed_power.ndat - offset_samples < ndat)
-    throw_str ("filterbank::scattered_power_correct "
+    throw Error (InvalidState, "filterbank::scattered_power_correct "
 	       " dp.ndat="I64" < ndat="I64" + offset="I64,
 	       dispersed_power.ndat, ndat, offset_samples);
   
@@ -392,7 +394,7 @@ void filterbank::scattered_power_correct (float_Stream& dispersed_power,
     cpol = 1;
 
   if (dispersed_power.npol != cpol)
-    throw_str ("filterbank::scattered_power_correct "
+    throw Error (InvalidState, "filterbank::scattered_power_correct "
 	       "dispersed power must have npol=%d", cpol);
 
   if (!( (get_state() == Detected) || (get_state() == Signal::Coherence) ))
@@ -448,7 +450,7 @@ void filterbank::scattered_power_correct (float_Stream& dispersed_power,
   
     // sanity check
     if (ipt != ndat)
-      throw_str ("filterbank::scattered_power_correct\n"
+      throw Error (InvalidState, "filterbank::scattered_power_correct\n"
 		 " sanity check ipt="I64" should equal ndat="I64, ipt, ndat);
 
   } // for each polarization
