@@ -12,6 +12,22 @@
 
 #include "dsp/TimeSeries.h"
 
+bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
+{ return c1.ts==c2.ts && c1.ptr==c2.ptr && c1.ichan==c2.ichan && c1.ipol==c2.ipol; } 
+bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
+{ return !(c1==c2); }
+
+bool dsp::TimeSeriesPtr::operator < (const TimeSeriesPtr& tsp) const{
+  if( !ptr || !tsp.ptr )
+    throw Error(InvalidParam,"dsp::TimeSeriesPtr::operator<(TimeSeriesPtr&))"
+		"Null pointer passed in");
+  return ptr->get_centre_frequency() < tsp.ptr->get_centre_frequency();
+}
+
+bool dsp::ChannelPtr::operator < (const ChannelPtr& c) const{
+  return ts->get_centre_frequency(ichan) < c.ts->get_centre_frequency(c.ichan);
+}
+
 dsp::TimeSeries::TimeSeries()
 {
   data = buffer = NULL;
@@ -181,14 +197,6 @@ void dsp::TimeSeries::zero ()
       for (uint64 ipt=0; ipt<npt; ipt++)
         dat[ipt]=0.0;
     }
-}
-
-bool operator<(const dsp::TimeSeries::TimeSeriesPtr& ts1,
-	       const dsp::TimeSeries::TimeSeriesPtr& ts2){
-  if( !ts1.ptr || !ts2.ptr )
-    throw Error(InvalidParam,"operator<(TimeSeriesPtr&,TimeSeriesPtr&)"
-		"Null pointer passed in");
-  return ts1.ptr->get_centre_frequency() < ts2.ptr->get_centre_frequency();
 }
 
 //! Hack together 2 different bands (not pretty)

@@ -1,14 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/03/06 23:53:37 $
+   $Revision: 1.12 $
+   $Date: 2003/04/28 06:21:55 $
    $Author: pulsar $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
 
 #include <memory>
+
+#include "Error.h"
 
 #include "dsp/Observation.h"
 
@@ -27,13 +29,6 @@ namespace dsp {
      fFpPt0d0...fFpPt0dD,fFpPt1d0...fFpPt1dD...fFpPtTd0...fFpPtTdD
   */
   class TimeSeries : public Observation {
-
-    class TimeSeriesPtr{
-    public:
-      TimeSeriesPtr(){ }
-      TimeSeries* ptr;
-      TimeSeriesPtr& operator=(TimeSeriesPtr& tsp){ ptr = tsp.ptr; return *this; }
-    };
 
   public:
     //! Null constructor
@@ -128,7 +123,59 @@ namespace dsp {
     //! The number of floats in a data sub-division
     uint64 subsize;
   };
+
+  class TimeSeriesPtr{
+    public:
+    
+    TimeSeries* ptr;
+   
+    TimeSeries& operator * () const
+    { if(!ptr) throw Error(InvalidState,"dsp::TimeSeriesPtr::operator*()","You have called operator*() when ptr is NULL"); return *ptr; }
+    TimeSeries* operator -> () const 
+    { if(!ptr) throw Error(InvalidState,"dsp::TimeSeriesPtr::operator*()","You have called operator*() when ptr is NULL"); return ptr; }
+        
+    TimeSeriesPtr& operator=(const TimeSeriesPtr& tsp){ ptr = tsp.ptr; return *this; }
+
+    TimeSeriesPtr(const TimeSeriesPtr& tsp){ operator=(tsp); }
+    TimeSeriesPtr(TimeSeries* _ptr){ ptr = _ptr; }
+    TimeSeriesPtr(){ ptr = 0; }
+
+    bool operator < (const TimeSeriesPtr& tsp) const;
+
+    ~TimeSeriesPtr(){ }
+  };
+
+  // This class just stores a pointer into a particular channel/polarisation pair's data
+  class ChannelPtr{
+  public :
+    TimeSeries* ts;
+    float* ptr;
+    unsigned ichan;
+    unsigned ipol;
+
+    void init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
+    { ts=_ts; ichan=_ichan; ipol = _ipol; ptr=ts->get_datptr(ichan,ipol); }
+
+    ChannelPtr& operator=(const ChannelPtr& c){ ts=c.ts; ptr=c.ptr; ichan=c.ichan; ipol=c.ipol; return *this; }
+
+    ChannelPtr()
+    { ts = 0; ptr = 0; ichan=ipol=0; }
+    ChannelPtr(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
+    { init(_ts,_ichan,_ipol); }
+    ChannelPtr(TimeSeriesPtr _ts,unsigned _ichan, unsigned _ipol)
+    { init(_ts.ptr,_ichan,_ipol); }
+    ChannelPtr(const ChannelPtr& c){ operator=(c); }
+    ~ChannelPtr(){ }
+    
+    bool operator < (const ChannelPtr& c) const;
+
+    float& operator[](unsigned index){ return ptr[index]; }
+
+  };
   
 }
+    
+bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2);
+bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2);
 
 #endif
