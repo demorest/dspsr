@@ -579,7 +579,8 @@ endif # autodepend == yes
 # interfere with $< expansion
 ##########################################################################
 $(DEPS) $(SRC_DEPS): $(LOGIN_ARCH)/.exists
-$(INCS): $(INCDIR)/.exists
+$(BASINCS): $(INCDIR)/.exists
+$(SUBINCS): $(INCDIR)/$(SUBINCDIR)/.exists
 $(SHXS): $(SHXDIR)/.exists
 $(LIBS): $(LIBDIR)/.exists
 $(BINS): $(BINDIR)/.exists
