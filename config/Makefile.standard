@@ -185,8 +185,7 @@ endif
 # macro definitions for various "home-grown" libraries
 ##########################################################################
 
-LTIMES = -ltimes -lunits $(LSLA) -lm
-
-LARCHIVE = -larchive -lpsrchive -lpsrastro -lpsrutils $(LFFT) $(LSLA)
-
 -include ${LOCAL_ROOT}/include/Makefile.psrchive
+
+LARCHIVE = -larchive $(LPSRCHIVE)
+
