@@ -94,9 +94,10 @@ void dsp::CPSRFile::open_file (const char* filename)
   pspmDbase::entry hdr;
   try { hdr = pspmDbase::Entry (header); }
   catch (...) {
-    ::close (fd);
-    throw Error (InvalidState, "dsp::CPSRFile::open", 
-		 "no match found in pspmDbase for " + PSPMidentifier (header));
+    cerr << "dsp::CPSRFile::open WARNING no match found in pspmDbase for "
+	 << PSPMidentifier (header) << endl;
+
+    hdr.create (header);
   }
     
   tapenum = hdr.tape;
