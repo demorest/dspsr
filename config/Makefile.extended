@@ -504,7 +504,9 @@ ifneq ($(SRC_DEPS),)
 -include $(SRC_DEPS)
 endif
 
+ifneq ($(LIB_DEPS),)
 -include $(LIB_DEPS)
+endif
 
 ifneq (${strip $(MAKEDEP)},no)
 ifneq ($(DEPS),)
