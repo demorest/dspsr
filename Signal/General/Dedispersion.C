@@ -91,18 +91,28 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
   frequency_resolution_set = true;
 }
 
-//! Build the dedispersion frequency response kernel
-void dsp::Dedispersion::match (const Timeseries* input, unsigned _nchan)
+/*! Builds a frequency response function (kernel) suitable for phase-coherent
+  dispersion removal, based on the centre frequency, bandwidth, and number
+  of channels in the input Timeseries. 
+
+  \param input Timeseries for which a dedispersion kernel will be built.
+
+  \param channels If specified, over-rides the number of channels of the
+  input Timeseries.  This parameter is useful if the Timeseries is to be
+  simultaneously divided into filterbank channels during convolution.
+ */
+void dsp::Dedispersion::match (const Timeseries* input, unsigned channels)
 {
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
 
-  if (_nchan)
-    resize (npol, _nchan, ndat, ndim);
+  if (!channels)
+    channels = input->get_nchan();
 
+  resize (npol, channels, ndat, ndim);
   build ();
 
-  Response::match (input, _nchan);
+  Response::match (input, channels);
 }
 
 
@@ -111,9 +121,9 @@ void dsp::Dedispersion::build ()
   if (built)
     return;
 
-  // higher frequencies (upper half) arrive sooner (t<0)
+  // signal in the upper half of the band arrives sooner (t<0)
   impulse_neg = smearing_samples (1);
-  // lower frequencies (lower half) arrive later (t>0)
+  // signal in the lower half of the band arrives later (t>0)
   impulse_pos = smearing_samples (-1);
 
   if (!frequency_resolution_set)
@@ -182,9 +192,7 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 	 << ": " << smearing_time (lower_ch_cfreq, ch_abs_bw)*1e3
 	 << " ms" << endl;
 
-  // Smearing part one - just to ensure that the cyclical properties
-  // of convolution via FFT are minimized, find the smearing in the lower
-  // half of the band in one channel...
+  // calculate the smearing in the specified half of the band
   ch_abs_bw /= 2.0;
   lower_ch_cfreq += double(half) * ch_abs_bw;
     
@@ -195,8 +203,8 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 	 << tsmear*1e3 << " ms"
       " (" << int(tsmear * sampling_rate) << " pts).\n";
 
-  // add another ten percent while at it, just to be sure that mixing
-  // due to cyclical convolution is minimized
+  // add another ten percent, just to be sure that the pollution due
+  // to the cyclical convolution effect is minimized
   tsmear *= 1.1;
   
   // smear across one channel in number of time samples.
