@@ -95,6 +95,32 @@ void dsp::Response::match (const Observation* input, unsigned channels)
   }
 }
 
+//! Returns true if the dimension and ordering match
+bool dsp::Response::matches (const Response* response)
+{
+  return
+    whole_swapped == response->whole_swapped &&
+    chan_swapped == response->chan_swapped &&
+    chan_shifted == response->chan_shifted &&
+    Shape::matches (response);
+}
+
+//! Match the frequency response to another Response
+void dsp::Response::match(const Response* response)
+{
+  if (matches (response))
+    return;
+
+  resize (response->get_npol(), response->get_nchan(),
+	  response->get_ndat(), ndim);
+  
+  whole_swapped = response->whole_swapped;
+  chan_swapped = response->chan_swapped;
+  chan_shifted = response->chan_shifted;
+  
+  zero();
+}
+
 void dsp::Response::mark (Observation* output)
 {
   

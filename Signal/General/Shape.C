@@ -104,6 +104,15 @@ void dsp::Shape::resize (unsigned _npol, unsigned _nchan,
   bufsize = new_bufsize;
 }
 
+
+bool dsp::Shape::matches (const Shape* shape)
+{
+  return
+    npol == shape->get_npol() &&
+    nchan == shape->get_nchan() &&
+    ndat == shape->get_ndat();
+}
+
 void dsp::Shape::borrow (const dsp::Shape& data, unsigned ichan)
 {
   if (ichan >= data.nchan)

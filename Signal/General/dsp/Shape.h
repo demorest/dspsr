@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/12 09:15:51 $
+   $Revision: 1.5 $
+   $Date: 2002/12/09 13:33:24 $
    $Author: wvanstra $ */
 
 #ifndef __Shape_h
@@ -40,6 +40,9 @@ namespace dsp {
 
     //! Get the dimension of each datum (e.g. 2=complex 8=Jones)
     unsigned get_ndim()  const { return ndim; }
+
+    //! Returns true if the npol, nchan, and ndat dimensions match
+    virtual bool matches (const Shape* shape);
 
     //! Scrunch each dimension to a new ndat
     void scrunch_to (unsigned ndat);

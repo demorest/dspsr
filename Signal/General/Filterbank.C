@@ -112,15 +112,15 @@ void dsp::Filterbank::transformation ()
   }
 
   if (bandpass) {
-    if (bandpass->get_ndat() != n_fft)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
-		   "bandpass.ndat=%d != nfft=%d",
-		   bandpass->get_ndat(), n_fft);
 
-    if (matrix_convolution && bandpass->get_npol() != 4)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
-		   "matrix convolution and bandpass.npol=%d != 4",
-		   bandpass->get_npol());
+    if (response)
+      bandpass -> match (response);
+
+    else {
+      bandpass->resize (input->get_npol(), nchan, freq_res, 1);
+      bandpass->match (input);
+    }
+
   }
 
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.

@@ -58,7 +58,7 @@ void dsp::Convolution::transformation ()
   response->match (input);
 
   if (bandpass)
-    bandpass->match (input);
+    bandpass->match (response);
 
   // response must have at least two points in it
   if (response->get_ndat() < 2)

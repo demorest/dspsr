@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.14 $
-   $Date: 2002/12/09 11:54:25 $
-   $Author: pulsar $ */
+   $Revision: 1.15 $
+   $Date: 2002/12/09 13:33:24 $
+   $Author: wvanstra $ */
 
 #ifndef __Response_h
 #define __Response_h
@@ -78,6 +78,12 @@ namespace dsp {
 
     //! Match the frequency response to the input Observation
     virtual void match (const Observation* input, unsigned channels=0);
+
+    //! Match the frequency response to another Response
+    virtual void match (const Response* response);
+
+    //! Returns true if the dimension and ordering match
+    virtual bool matches (const Response* response);
 
     //! Modify the out Observation information as seen fit by sub-classes
     virtual void mark (Observation* output);
