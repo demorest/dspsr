@@ -24,7 +24,7 @@ bool dsp::Seekable::eod()
 void dsp::Seekable::load_data (Timeseries* data)
 {
   if (verbose)
-    cerr << "Seekable::load_block"
+    cerr << "Seekable::load_data"
       " block_size=" << block_size << 
       " next_sample=" << next_sample <<
       " current_sample=" << current_sample << endl;
@@ -32,7 +32,7 @@ void dsp::Seekable::load_data (Timeseries* data)
   uint64 recycled = recycle_data (data);
 
   if (verbose)
-    cerr << "Seekable::load_block recycled="
+    cerr << "Seekable::load_data recycled="
 	 << recycled << endl;
 
   uint64 read_size = block_size - recycled;
@@ -42,7 +42,7 @@ void dsp::Seekable::load_data (Timeseries* data)
     uint64 samples_left = total_size - next_sample;
     if (samples_left <= read_size) {
       if (verbose)
-	cerr << "Seekable::load_block end of data read_size="
+	cerr << "Seekable::load_data end of data read_size="
 	     << samples_left << endl;
       read_size = samples_left;
       end_of_data = true;
@@ -58,16 +58,16 @@ void dsp::Seekable::load_data (Timeseries* data)
     uint64 toseek_bytes = data->nbytes (next_sample);
 
     if (verbose)
-      cerr << "Seekable::load_block seek nbytes="
+      cerr << "Seekable::load_data seek nbytes="
 	   << toseek_bytes << endl;
 
     int64 seeked = seek_bytes (toseek_bytes);
     if (seeked < 0)
-      throw_str ("Seekable::load_block error seek_bytes");
+      throw_str ("Seekable::load_data error seek_bytes");
 
     // confirm that we be where we expect we be
     if (next_sample != (uint64) data->nsamples (seeked))
-      throw_str ("Seekable::load_block seek mismatch"
+      throw_str ("Seekable::load_data seek mismatch"
 		 " next_sample="UI64" absolute_sample="UI64,
 		 next_sample, data->nsamples (seeked));
 
@@ -78,15 +78,15 @@ void dsp::Seekable::load_data (Timeseries* data)
   unsigned char* into = data->get_rawptr() + data->nbytes (recycled);
 
   if (to_read < 1)
-    throw_str ("Seekable::load_block invalid Timeseries state");
+    throw_str ("Seekable::load_data invalid Timeseries state");
 
   if (verbose)
-    cerr << "Seekable::load_block read nbytes=" << to_read << endl;
+    cerr << "Seekable::load_data call load_bytes; nbytes=" << to_read << endl;
 
   int64 bytes_read = load_bytes (into, to_read);
 
   if (bytes_read < 0)
-    throw_str ("Seekable::load_block load_bytes error");
+    throw_str ("Seekable::load_data load_bytes error");
 
   if ((uint64)bytes_read < to_read) {
     end_of_data = true;
