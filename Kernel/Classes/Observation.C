@@ -135,7 +135,7 @@ string dsp::Observation::get_default_id () const
   return get_default_id (start_time);
 }
 
-string dsp::Observation::get_state_str () const
+string dsp::Observation::get_state_as_string () const
 {
 #define OBS_OPT(st) case st: return string (#st)
   // possible states of the data
@@ -235,4 +235,3 @@ void dsp::Observation::change_start_time (int64 ndat)
   start_time += double(ndat)/rate;
 }
 
-void dsp::Observation::get_DM_level()
