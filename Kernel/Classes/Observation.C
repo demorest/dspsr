@@ -9,7 +9,7 @@
 #include <string>
 
 #include "Telescope.h"
-#include "angle.h"
+#include "Angle.h"
 #include "MJD.h"
 #include "Types.h"
 #include "Header.h"
