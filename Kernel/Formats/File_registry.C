@@ -42,8 +42,8 @@ static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
 #if DSP_MARK4
-#include "dsp/MARK4File.h"
-static Registry::List<dsp::File>::Enter<dsp::MARK4File> register_mark4;
+#include "dsp/Mark4File.h"
+static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
 #endif
 
 #if DSP_SMRO

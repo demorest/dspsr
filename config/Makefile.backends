@@ -82,7 +82,7 @@ endif
 
 ifeq ($(MARK4),yes)
 BACKENDS += MARK4
-LBACKENDS += -ldsp_MARK4
+LBACKENDS += -ldsp_Mark4
 endif
 
 ##############################################################################
