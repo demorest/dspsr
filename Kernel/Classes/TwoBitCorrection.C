@@ -4,7 +4,7 @@
 
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
-#include "dsp/TimeSeries.h"
+#include "dsp/WeightedTimeSeries.h"
 
 #include "Error.h"
 #include "ierf.h"
@@ -58,7 +58,7 @@ void dsp::TwoBitCorrection::set_cutoff_sigma (float _cutoff_sigma)
     return;
 
   if (verbose)
-    cerr << "dsp::TwoBitCorrection::set_cutoff_sigma = " << _cutoff_sigma << endl;
+    cerr << "dsp::TwoBitCorrection::set_cutoff_sigma = "<<_cutoff_sigma<<endl;
 
   cutoff_sigma = _cutoff_sigma;
   built = false;
@@ -90,8 +90,23 @@ void dsp::TwoBitCorrection::transformation ()
   if (!built)
     build ();
 
-  Unpacker::transformation ();
+  // set the Observation information
+  output->Observation::operator=(*input);
+
+  WeightedTimeSeries* wout = dynamic_cast<WeightedTimeSeries*> (output.get());
+  if (wout)
+    wout -> set_ndat_per_weight (nsample);
+
+  // resize the output 
+  output->resize (input->get_ndat());
+
+  // unpack the data
+  unpack ();
+
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::transformation exit" << endl;
 }
+
 
 
 void dsp::TwoBitCorrection::set_limits ()
