@@ -50,15 +50,31 @@ void dsp::Fold::operation ()
   sampling_interval = 1.0/input->get_rate();
   start_time = input->get_start_time() + 0.5 * sampling_interval;
 
-  fold (blocks, input->get_ndat(), input->get_ndim(),
-	input->get_datptr(), profile->get_datptr(), profile->hits.begin());
+  int64 block_size = input->get_datptr (0,1) - input->get_datptr (0,0);
+  int64 block_ndat = block_size / input->get_ndim();
+
+  assert (block_size % input->get_ndim() == 0);
+
+  fold (blocks, block_ndat, input->get_ndim(),
+	input->get_datptr(), profile->get_datptr(), profile->hits.begin(),
+	input->get_ndat());
 
   profile->integration_length += double(input->get_ndat())*sampling_interval;
 }
 
-/*!
-   This method creates a folding plan then folds nblock arrays,
-   one at a time.
+/*!  This method creates a folding plan and then folds nblock arrays.
+
+   \pre the nbin, sampling_interval, start_time, and folding_period or
+   folding_polyco attributes must have been set prior to calling this
+   method.
+
+   \param nblock the number of blocks of data to be folded
+   \param ndat the number of time samples in each time block
+   \param ndim the dimension of each time sample
+   \param time base address of nblock contiguous time blocks (of ndat*ndim)
+   \param phase base address of nblock contiguous phase blocks (of nbin*ndim)
+   \param hits array of nbin phase bin counts
+   \param fold_ndat the number of time samples to be folded from each block
 */
 void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
 		      const float* time, float* phase, unsigned* hits,
