@@ -28,3 +28,11 @@ dsp::PseudoFile* dsp::PseudoFile::get_pseudo(string file){
   Reference::To<dsp::File> loader(dsp::File::create(file));
   return new dsp::PseudoFile(loader.get());
 }
+
+bool dsp::PseudoFilePtr::operator < (const dsp::PseudoFilePtr& pfp) const{
+  if( !ptr || !pfp.ptr )
+    throw Error(InvalidState,"dsp::PseudoFilePtr::operator<",
+		"One of the PseudoFilePtr's is NULL");
+
+  return this->ptr->operator<(*pfp.ptr);
+}
