@@ -36,7 +36,7 @@ void dsp::Convolution::set_bandpass (Response* _bandpass)
 
 /*!
   \pre input TimeSeries must contain phase coherent (undetected) data
-  \post output TimeSeries will contain complex (observation::Signal::Signal::Analytic) data
+  \post output TimeSeries will contain complex (Analytic) data
     
   \post IMPORTANT!! Most backward complex FFT functions expect
   frequency components organized with f0+bw/2 -> f0, f0-bw/2 -> f0.
@@ -44,7 +44,7 @@ void dsp::Convolution::set_bandpass (Response* _bandpass)
   save CPU cycles, convolve() does not re-sort the ouput array, and
   therefore introduces a frequency shift in the output data.  This
   results in a phase gradient in the time domain.  Since only
-  relative phases matter when calculating the Signal::Signal::Stokes parameters,
+  relative phases matter when calculating the Stokes parameters,
   this effect is basically ignorable for our purposes.
 */
 void dsp::Convolution::transformation ()
