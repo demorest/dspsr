@@ -153,8 +153,8 @@ dsp::WeightedTimeSeries::get_weights (unsigned ichan, unsigned ipol) const
 dsp::WeightedTimeSeries& 
 dsp::WeightedTimeSeries::operator = (const WeightedTimeSeries& copy)
 {
-  TimeSeries::operator = (copy);
   copy_configuration (&copy);
+  TimeSeries::operator = (copy);
   return *this;
 }
 
