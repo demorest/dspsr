@@ -114,6 +114,13 @@ void dsp::TestInput::runtest (Input* input_small, Input* input_large)
 	if (nbyte > data_large->get_nbytes())
           nbyte = data_large->get_nbytes();
 
+        if (data_small->get_start_time() != data_large->get_start_time()) {
+           cerr << "ERROR: small.start_time=" << data_small->get_start_time()
+                << " != large.start_time=" << data_large->get_start_time() 
+                << endl;
+           errors ++;
+        }
+
 	for (unsigned ibyte=0; ibyte < nbyte; ibyte++) {
 	  if (bytes_small[ibyte] != bytes_large[ibyte]) {
 	    fprintf (stderr, "ERROR: block=%d data[%d] small=%x != large=%x\n",

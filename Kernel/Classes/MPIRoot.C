@@ -486,6 +486,8 @@ void dsp::MPIRoot::load_data (BitSeries* data)
   Input::set_block_size (request_ndat);
 
   data->set_ndat( data->get_nsamples(received) );
+  data->set_start_time( info.get_start_time() );
+  data->change_start_time( start_sample );
 
   // request the next block of data
   request_data ();
