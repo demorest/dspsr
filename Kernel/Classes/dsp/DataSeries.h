@@ -28,7 +28,7 @@ namespace dsp {
     static int instantiation_count;
     //! Stores the cumulative amount of memory used
     static int64 memory_used;
-    
+
     //! Null constructor
     DataSeries ();
 
@@ -63,6 +63,7 @@ namespace dsp {
     //! Note that the space used in each chan/pol group must be an integer
     //! number of bytes.
     virtual void resize (uint64 nsamples);
+    virtual void resize (uint64 nsamples, unsigned char*& old_buffer);
 
     //! Return pointer to the specified block of time samples
     virtual unsigned char* get_udatptr (unsigned ichan=0,unsigned ipol=0);
