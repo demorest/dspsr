@@ -563,22 +563,28 @@ void dsp::MPIRoot::serve (BitSeries* data)
     if (verbose)
       cerr << "dsp::MPIRoot::serve waiting for next ready node" << endl;
 
-    int destination = next_destination ();
+    int dest = next_destination ();
 
     if (verbose)
-      cerr << "dsp::MPIRoot::serve sending data to " << destination << endl;
+      cerr << "dsp::MPIRoot::serve sending data to " << dest << endl;
 
-    send_data (data, destination);
+    send_data (data, dest);
 
   }
 
   if (verbose)
     cerr << "dsp::MPIRoot::serve end of data" << endl;
 
-  // after end of data, send empty buffer to each node
-  for (int irank=0; irank < mpi_size; irank++)
-    if (irank != mpi_rank)
-      send_data (0, irank);
+  while (!eod ()) {
+
+    int dest = next_destination ();
+
+    if (verbose)
+      cerr << "dsp::MPIRoot::serve sending end of data to " << dest << endl;
+
+    send_data (0, dest);
+
+  }
 
 }
 
