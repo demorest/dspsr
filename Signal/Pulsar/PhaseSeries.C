@@ -28,7 +28,7 @@ void dsp::PhaseSeries::set_folding_period (double _folding_period)
 double dsp::PhaseSeries::get_folding_period () const
 {
   if (folding_polyco)
-    return folding_polyco->get_refperiod();
+    return folding_polyco->period( get_mid_time() );
   else
     return folding_period;
 }
