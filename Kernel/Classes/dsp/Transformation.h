@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.27 $
-   $Date: 2005/01/19 06:40:02 $
+   $Revision: 1.28 $
+   $Date: 2005/03/17 06:58:30 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -174,6 +174,16 @@ namespace dsp {
     //! If the input is a dsp::Observation, this returns the input start time
     //! Over-ridden by BandCombiner class
     virtual MJD get_input_start_time(dsp::Observation* ts_in);
+
+    //! Does stuff after the call to transformation()
+    virtual void post_transformation_stuff(int64 surplus_samples,int64 samples_prepended,
+					   double time_in, double rate_in,
+					   MJD input_start_time);
+
+    //! Does stuff before the call to transformation()
+    virtual bool pre_transformation_stuff(int64& surplus_samps, int64& samples_prepended,
+					  double& time_in, double& rate_in,
+					  MJD& input_start_time);
 
     //! Container from which input data will be read
     Reference::To <In> input;
@@ -470,72 +480,102 @@ void dsp::Transformation<In, Out>::seek_back_over_surplus_samps(int64 surplus_sa
 template <class In, class Out>
 void dsp::Transformation<In, Out>::operation ()
 {
+  checks();
+
+  double time_in = 0.0;
+  double rate_in = 0.0;
+
+  MJD input_start_time;
+
+  int64 samples_prepended = 0;
+  int64 surplus_samples = 0;
+
+  if( !pre_transformation_stuff(surplus_samples, samples_prepended, time_in, rate_in, input_start_time) )
+    return;
+
+  transformation ();
+
+  post_transformation_stuff(surplus_samples, samples_prepended, time_in, rate_in, input_start_time);
+  add_history();
+}
+
+//! Does stuff before the call to transformation()
+template <class In, class Out>
+bool
+dsp::Transformation<In,Out>::pre_transformation_stuff(int64& surplus_samples, int64& samples_prepended,
+						      double& time_in, double& rate_in,
+						      MJD& input_start_time)
+{
   dsp::Observation* obs_in = (dsp::Observation*)dynamic_cast<const dsp::Observation*>(get_input());
 
   if( verbose )
     if( obs_in )
       fprintf(stderr,"TRANS (%s) at start of operation input ndat="UI64"\n",get_name().c_str(),obs_in->get_ndat());
-
-  checks();
-
-  double time_in = get_time_in(obs_in);
-  double rate_in = get_rate_in(obs_in);
+  
+  time_in = get_time_in(obs_in);
+  rate_in = get_rate_in(obs_in);
 
   // Used by workout_end_of_processed_data() only
   // input_start_time is the earliest start time for dsp::BandCombiner
-  MJD input_start_time = get_input_start_time(obs_in); 
+  input_start_time = get_input_start_time(obs_in); 
 
   dsp::TimeSeries* ts_out = dynamic_cast<dsp::TimeSeries*>(get_output());
-
-  int64 samples_prepended = 0;
 
   if( valid_data_is_saved && ts_out ){
     samples_prepended = prepend_data( ts_out );
     time_in += samples_prepended / ts_out->get_rate();
   }
 
-  int64 surplus_samples = seek_over_surplus_samps();
+  surplus_samples = seek_over_surplus_samps();
 
   if( surplus_samples < 0 ){
     operation_status = -1;
-    return;
+    return false;
   }
 
-  transformation ();
+  return true;
+}   
+
+//! Does stuff after the call to transformation()
+template <class In, class Out>
+void
+dsp::Transformation<In,Out>::post_transformation_stuff(int64 surplus_samples,int64 samples_prepended,
+						       double time_in, double rate_in,
+						       MJD input_start_time)
+{
+  dsp::TimeSeries* ts_out = dynamic_cast<dsp::TimeSeries*>(get_output());
+  
   if( verbose )
     if( ts_out )
       fprintf(stderr,"TRANS (%s) after transformation() got ndat="UI64"\n",
 	      get_name().c_str(),ts_out->get_ndat());
-
+  
   seek_back_over_surplus_samps(surplus_samples);
-
+  
   rounding_stuff(ts_out);
-
+  
   deprepend_data(ts_out,samples_prepended,time_in,rate_in,
 		 double(surplus_samples)/rate_in,
 		 samples_prepended!=0);
-
+  
   if( ts_out )
     workout_end_of_processed_data(input_start_time,double(samples_prepended)/ts_out->get_rate(),
 				  double(surplus_samples)/rate_in);
-
+  
   string reason;
   if ( type!=inplace && !output->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid output state: " + reason);
-
+  
   swap_buffer_stuff();
-
+  
   set_valid_data_is_saved();
-
-  add_history();
 
   if( verbose )
     if( ts_out )
       fprintf(stderr,"TRANS (%s) at end of operation ndat="UI64"\n",
 	      get_name().c_str(),ts_out->get_ndat());
 }
-
 
 //! Does all the swap buffer stuff
 template <class In, class Out>
