@@ -373,6 +373,10 @@ void dsp::Fold::transformation ()
 		 "output reference phase=%lf != reference phase=%lf",
 		 output->get_reference_phase(), get_reference_phase() );
 
+  // Temporarily make sure the DMs are the same
+  if( pulsar_ephemeris )
+    output->set_dispersion_measure( input->get_dispersion_measure() ); 
+
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
@@ -427,7 +431,6 @@ void dsp::Fold::transformation ()
   // Set things out of the pulsar ephemeris
   if( pulsar_ephemeris )
     output->set_dispersion_measure( pulsar_ephemeris->get_dm() );
-
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
