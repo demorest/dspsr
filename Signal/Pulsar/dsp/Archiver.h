@@ -1,18 +1,18 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.13 $
-   $Date: 2004/09/08 04:16:41 $
-   $Author: hknight $ */
+   $Revision: 1.14 $
+   $Date: 2004/11/08 14:03:19 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Archiver_h
 #define __Archiver_h
 
 #include "dsp/PhaseSeriesUnloader.h"
+#include "Pulsar/Archive.h"
 
 namespace Pulsar {
-  class Archive;
   class Integration;
   class Profile;
 
@@ -51,14 +51,13 @@ namespace dsp {
     void set_operations (const vector<Operation*>& operations);
 
     //! Set the name of the Pulsar::Archive class used to create new instances
-    void set_archive_class (const char* archive_class_name);
+    void set_archive_class (const string& archive_class_name);
     
-    //! Convenience function
-    void set_archive_class (string archive_class_name)
-    { set_archive_class(archive_class_name.c_str()); }
-
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
+
+    //! Add a Pulsar::Archive::Extension to those added to the output archive
+    void add_extension (Pulsar::Archive::Extension* extension);
 
     //! Unloads all available data to a Pulsar::Archive instance
     void unload ();
@@ -102,8 +101,14 @@ namespace dsp {
     //! The Operation instances for the dspReduction Extension
     vector< Reference::To<Operation> > operations;
 
-    void set (Pulsar::Integration* integration, const PhaseSeries* phase);
+    //! The Pulsar::Archive::Extension classes to be added to the output
+    vector< Reference::To<Pulsar::Archive::Extension> > extensions;
 
+    //! Set the Pulsar::Integration with the PhaseSeries data
+    void set (Pulsar::Integration* integration, const PhaseSeries* phase,
+	      unsigned isub=0, unsigned nsub=1);
+
+    //! Set the Pulsar::Profile with the specified subset of PhaseSeries data
     void set (Pulsar::Profile* profile, const PhaseSeries* phase,
 	      unsigned ichan, unsigned ipol, unsigned idim);
 

@@ -14,6 +14,7 @@
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
 #include "Pulsar/Passband.h"
+#include "Pulsar/Telescope.h"
 
 #include "Error.h"
 
@@ -31,14 +32,20 @@ dsp::Archiver::~Archiver ()
 {
 }
 
-void dsp::Archiver::set_archive_class (const char* _archive_class_name)
+void dsp::Archiver::set_archive_class (const string& class_name)
 {
-  archive_class_name = _archive_class_name;
+  archive_class_name = class_name;
 }
 
 void dsp::Archiver::set_archive (Pulsar::Archive* archive)
 {
   single_archive = archive;
+}
+
+//! Add a Pulsar::Archive::Extension to those added to the output archive
+void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
+{
+  extensions.push_back (extension);
 }
 
 //! Set the Response from which Passband Extension will be constructed
@@ -93,7 +100,7 @@ void dsp::Archiver::unload ()
 }
 
 void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
-{ try {
+try {
 
   if (verbose)
     cerr << "dsp::Archiver::add Pulsar::Archive" << endl;
@@ -135,11 +142,10 @@ void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
 catch (Error& error) {
   throw error += "dsp::Archiver::add Pulsar::Archive";
 }
-}
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
-{ 
-  try {
+try {
+
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
@@ -155,8 +161,20 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   unsigned nchan = phase->get_nchan();
   unsigned nbin = phase->get_nbin();
   unsigned ndim = phase->get_ndim();
+  unsigned nsub = 1;
 
-  archive-> resize (1, npol*ndim, nchan, nbin);
+  unsigned effective_npol = npol;
+
+  if ( phase->get_domain() == "Lag" )
+    nsub = ndim;
+  else
+    effective_npol *= ndim;
+
+  cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
+       << " npol=" << effective_npol << " nchan=" << nchan 
+       << " nbin=" << nbin << endl;
+
+  archive-> resize (nsub, effective_npol, nchan, nbin);
 
   /*! Install the given ephemeris and calls update_model
   archive-> set_ephemeris (const psrephem& ephemeris);
@@ -177,7 +195,8 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_faraday_corrected (false);
   archive-> set_dedispersed( archive_dedispersed );
 
-  set (archive-> get_Integration(0), phase);
+  for (unsigned isub=0; isub < nsub; isub++)
+    set (archive->get_Integration(isub), phase, isub, nsub);
 
   // set any available extensions
   Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
@@ -194,6 +213,12 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   if (pband)
     set (pband);
 
+  Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
+  telescope->set_coordinates (phase -> get_telescope_code());
+
+  for (unsigned iext=0; iext < extensions.size(); iext++)
+    archive -> add_extension ( extensions[iext] );
+
   // dsp::PhaseSeries has either (both eph and polyco) or (none)
   // set_model must be called after the Integration::MJD has been set
   if( phase->get_pulsar_ephemeris() ){
@@ -202,18 +227,21 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   }
 
   archive-> set_filename (get_filename (phase));
-  if( verbose )
-    fprintf(stderr,"Archiver set archive filename to '%s'\n",archive->get_filename().c_str());
+
+  if (verbose) cerr << "dsp::Archiver set archive filename to '"
+		    << archive->get_filename() << "'" << endl;
 
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Archive";
 }
-}
+
 
 void dsp::Archiver::set (Pulsar::Integration* integration,
-			 const PhaseSeries* phase)
-{ try {
+			 const PhaseSeries* phase,
+			 unsigned isub, unsigned nsub)
+try {
+
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Integration" << endl;
 
@@ -221,10 +249,20 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
   unsigned nchan = phase->get_nchan();
   unsigned ndim = phase->get_ndim();
 
-  if ( integration->get_npol() != npol*ndim)
+  unsigned effective_npol = npol;
+
+  if (nsub > 1) {
+    if (ndim != nsub)
+      cerr << "YIKES!" << endl;
+    ndim = 1;
+  }
+  else
+    effective_npol *= ndim;
+
+  if ( integration->get_npol() != effective_npol)
     throw Error (InvalidParam, "dsp::Archiver::set (Pulsar::Integration)",
                  "Integration.npol=%d != PhaseSeries.npol=%d", 
-                 integration->get_npol(), npol*ndim);
+                 integration->get_npol(), effective_npol);
 
   if ( integration->get_nchan() != nchan)
     throw Error (InvalidParam, "dsp::Archiver::set (Pulsar::Integration)",
@@ -243,22 +281,33 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
   for (unsigned ichan=0; ichan<nchan; ichan++)
     for (unsigned ipol=0; ipol<npol; ipol++)
       for (unsigned idim=0; idim<ndim; idim++) {
+
 	unsigned poln = ipol*ndim+idim;
 	unsigned chan = (ichan+offchan)%nchan;
-	set (integration->get_Profile(poln, chan),
-		     phase, ichan, ipol, idim);
+
+	if (nsub > 1)
+	  idim = isub;
+
+	Pulsar::Profile* profile = integration->get_Profile(poln, chan);
+
+	cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
+	     << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
+
+	set (profile, phase, ichan, ipol, idim);
+
       }
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Integration";
 }
-}
+
 
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
 			 const PhaseSeries* phase,
 			 unsigned ichan, unsigned ipol, unsigned idim)
-{ try {
+try {
+
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile"
       " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << "\r";
@@ -281,18 +330,27 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 
   double scale = phase->get_scale ();
 
-  if (scale == 0 || isnan(scale))
-    throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Profile",
-		"invalid scale=%lf", scale);
+  if (scale == 0 || !finite(scale))
+    throw Error (InvalidParam, string(), "invalid scale=%lf", scale);
 
   for (unsigned ibin = 0; ibin<nbin; ibin++) {
 
     if (phase->get_hit(ibin) == 0) {
+
       zeroes ++;
       *to = 0.0;
+
     }
-    else
+    else {
+
+      if (!finite(*from))
+	throw Error (InvalidParam, string(),
+		     "invalid data[ichan=%d][ipol=%d][idim=%d][ibin=%d]=%f",
+		     ichan, ipol, idim, ibin, *from);
+
       *to = *from / (scale * double( phase->get_hit(ibin) ));
+
+    }
 
     to ++;
     from += ndim;
@@ -304,4 +362,5 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";
-}}
+}
+
