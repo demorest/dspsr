@@ -2,6 +2,7 @@
 
 #include "Fold.h"
 #include "PhaseSeries.h"
+#include "Error.h"
 
 #include "tempo++.h"
 #include "genutil.h"
@@ -23,7 +24,7 @@ dsp::Fold::~Fold () { }
 void dsp::Fold::prepare ()
 {
   if (!input)
-    throw_str ("Fold::prepare no input");
+    throw Error (InvalidState, "Fold::prepare", "no input");
 
   prepare (input);
 }
@@ -32,6 +33,10 @@ void dsp::Fold::prepare ()
 void dsp::Fold::prepare (const Observation* observation)
 {
   string jpulsar = observation->get_source();
+
+  if (jpulsar.length() == 0)
+    throw Error (InvalidParam, "Fold::prepare", "empty Observation::source");
+
   if (jpulsar[0] != 'J')
     jpulsar = "J" + jpulsar;
 
@@ -192,6 +197,10 @@ void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
   built = false;
 }
 
+const psrephem* dsp::Fold::get_pulsar_ephemeris () const
+{
+  return pulsar_ephemeris;
+}
 
 void dsp::Fold::operation ()
 {
