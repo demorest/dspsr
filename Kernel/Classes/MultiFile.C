@@ -11,6 +11,10 @@ dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
   current_index = 0;
 }
 
+dsp::MultiFile::~MultiFile ()
+{
+}
+
 void dsp::MultiFile::open (const vector<string>& new_filenames)
 {
   if (new_filenames.empty())

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.12 $
-   $Date: 2003/04/23 08:04:49 $
+   $Revision: 1.13 $
+   $Date: 2003/04/23 10:26:45 $
    $Author: wvanstra $ */
 
 
@@ -26,7 +26,7 @@ namespace dsp {
     MultiFile ();
     
     //! Destructor
-    virtual ~MultiFile () { }
+    virtual ~MultiFile ();
     
     //! Open a number of files and treat them as one logical observation.
     /*! This method forms the union of the existing filenames and the 
@@ -71,18 +71,14 @@ namespace dsp {
     //! Adjust the file pointer
     virtual int64 seek_bytes (uint64 bytes);
 
-    // List of files
+    //! List of files
     vector<PseudoFile> files;
 
-    //! Loader
+    //! Currently open File instance
     Reference::To<File> loader;
 
     //! Name of the currently opened file
     string current_filename;
-
-    //! Return the index of the file containing the offset_from_obs_start byte
-    /*! offsets do no include header_bytes */
-    int getindex (int64 offset_from_obs_start, int64& offset_in_file);
 
     //! initialize variables
     void init();
