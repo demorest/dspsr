@@ -18,7 +18,10 @@
 
 #include "dsp/AutoCorrelation.h"
 #include "dsp/Filterbank.h"
+
+#include "dsp/ACFilterbank.h"
 #include "dsp/Detection.h"
+
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
 
@@ -44,7 +47,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjJl:m:M:n:N:Oop:P:RsS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjJl:L:m:M:n:N:Oop:P:RsS:t:T:vVx:";
 
 void usage ()
 {
@@ -94,8 +97,11 @@ void usage ()
     "Detection options:\n"
     " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
     " -n ndim        ndim of detected TimeSeries [4]\n"
+    " -L nlag        form nlag ACF of the undetected data (using nlag*2 PSD)\n"
+    " -L nlag:nchan  form nlag ACF of the undetected data (using nchan PSD)\n"
     " -l nlag        form lag spectrum of detected data\n"
     "\n"
+    " -L nlag        form nlag ACF of the undetected data (using nlag*2 PSD)\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins \n"
     " -p phase       reference phase of pulse profile bin zero \n"
@@ -121,8 +127,7 @@ void info ()
        << endl;
 }
 
-int main (int argc, char** argv) 
-{ try {
+int main (int argc, char** argv) try {
 
   // rank of the node on which this processor is running
   int mpi_rank = 0;
@@ -151,6 +156,11 @@ int main (int argc, char** argv)
 
 #endif
 
+#ifdef ENABLE_SIMD
+  if (fft::SIMD_aware)
+    fft::enable_SIMD();
+#endif
+
   bool verbose = false;
 
   // number of time samples loaded from file at a time
@@ -159,6 +169,8 @@ int main (int argc, char** argv)
   int nchan = 1;
   int npol = 4;
   int nlag = 0;
+  int nlag_acf = 0;
+  int nchan_acf = 0;
   int set_nfft = 0;
 
   int nbin = 0;
@@ -385,6 +397,30 @@ int main (int argc, char** argv)
     case 'l':
       nlag = atoi (optarg);
       break;
+
+    case 'L': {
+
+      if (sscanf (optarg, "%d", &nlag_acf) < 1) {
+        cerr << "Error parsing " << optarg << " as number of" 
+                " auto-correlation filterbank lags" << endl;
+        return -1;
+      }
+
+      nchan_acf = nlag_acf * 2;
+
+      char* pfr = strchr (optarg, ':');
+      if (pfr) {
+        pfr++;
+        if (sscanf (pfr, "%d", &nchan_acf) < 1) {
+          cerr << "Error parsing " << optarg << " as number of"
+                  " auto-correlation filterbank channels" << endl;
+          return -1;
+        }
+      }
+
+      dsp::TransformationBase::check_state = false;
+      break;
+    }
 
     case 'm':
       mjd_string = optarg;
@@ -629,7 +665,8 @@ int main (int argc, char** argv)
       }
     
   }
-  
+
+
 #if ACTIVATE_BLITZ
 
   if (polyphase_filter) {
@@ -668,6 +705,26 @@ int main (int argc, char** argv)
     convolution->set_output (convolve);  // inplace
     
     operations.push_back (convolution);
+  }
+
+  if (nchan_acf > 1 && nlag_acf > 1) {
+
+    // output ACFilterbank data
+    convolve = new dsp::WeightedTimeSeries;
+
+    if (verbose)
+      cerr << "Creating ACFilterbank instance" << endl;
+
+    // software filterbank constructor
+    dsp::ACFilterbank* filterbank = new dsp::ACFilterbank;
+    filterbank->set_input (voltages);
+    filterbank->set_output (convolve);
+    filterbank->set_nlag (nlag_acf);
+    filterbank->set_nchan (nchan_acf);
+
+    operations.push_back (filterbank);
+    need_to_detect = false;
+
   }
   
   if( need_to_detect ) {
@@ -1044,6 +1101,44 @@ int main (int argc, char** argv)
 	       (float) operations[iop]->get_total_time(),
                (int) operations[iop]->get_discarded_weights());
 
+    if (nlag_acf && nchan_acf) {
+
+      cerr << "Rearranging PhaseSeries data" << endl;
+
+      dsp::PhaseSeries* output = new dsp::PhaseSeries (*profiles);
+
+      cerr << "nchan=" << nlag_acf << endl;
+      output->set_nchan( nlag_acf );
+      cerr << "ndim=1" << endl;
+      output->set_ndim( 1 );
+      cerr << "npol=" <<  2*profiles->get_npol() << endl;
+      output->set_npol( 2*profiles->get_npol() );  // Re,Im * each poln
+      if (output->get_npol() == 4)
+        output->set_state(Signal::Stokes);
+      cerr << "nbin=" << profiles->get_nbin() << endl;
+      output->resize( profiles->get_nbin() );
+
+      float* temp = new float [nchan_acf*2];
+
+      cerr << "start copying" << endl;
+
+      for (unsigned ipol=0; ipol < profiles->get_npol(); ipol++)  {
+        float* from = profiles->get_datptr(0, ipol);
+        for (unsigned ibin=0; ibin < profiles->get_nbin(); ibin++)  {
+          fft::bcc1d (nchan_acf, temp, from);
+          for (unsigned ichan=0; ichan < nlag_acf; ichan++)  {
+            output->get_datptr (ichan, ipol*2)[ibin] = temp[ichan*2];
+            output->get_datptr (ichan, ipol*2+1)[ibin] = temp[ichan*2+1];
+          }
+          from += nchan_acf*2;
+        }
+      }
+
+      delete profiles;
+      profiles = output;
+
+    }
+
     if (!single_pulse) {
 
       if (verbose)
@@ -1092,4 +1187,3 @@ catch (...) {
   return -1;
 }
 
-}
