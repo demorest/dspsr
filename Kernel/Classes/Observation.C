@@ -389,7 +389,14 @@ bool dsp::Observation::contiguous (const Observation & obs) const
     fprintf(stderr,"In dsp::Observation::contiguous() with this=%p and obs=%p\n",
 	    this,&obs);
 
-  double difference = (get_end_time() - obs.get_start_time()).in_seconds();
+  double difference = fabs((get_end_time() - obs.get_start_time()).in_seconds());
+
+  if( verbose ){
+    fprintf(stderr,"Got difference=%f seconds and rate=%f\n",
+	    difference,rate);
+    fprintf(stderr,"(difference-1.0/rate)=%f   0.9/rate=%f\n",
+	    (difference-1.0/rate),0.9/rate);
+  }
 
   bool ret = ( combinable(obs) && (difference-1.0/rate) < 0.9/rate );
 
@@ -577,7 +584,7 @@ uint64 dsp::Observation::get_offset(){
 }
 
 //! Returns all information contained in this class into the string info_string
-bool dsp::Observation::obs2string(string& ss){
+bool dsp::Observation::obs2string(string& ss) const{
   string ui64(UI64);
   ui64.replace(0,1,"%16");
 
