@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/08/15 09:06:28 $
-   $Author: wvanstra $ */
+   $Revision: 1.10 $
+   $Date: 2002/09/16 03:09:55 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -98,9 +98,6 @@ namespace dsp {
     void set_state (State _state) { state = _state; }
     //! Return the state of the signal
     State get_state () const { return state; }
-
-    //! Return the state as a string
-    string state_as_string () const;
 
     //! Change the state and correct other attributes accordingly
     virtual void change_state (State new_state);
@@ -225,6 +222,12 @@ namespace dsp {
     //! Returns a string describing the state of the data
     string get_state_str () const;
 
+    //! Returns the DM to which the data has been dedispersed to
+    double get_DM_level(){ return DM_level; }
+
+    //! Set the record of what DM the data is dedispersed to
+    void set_DM_level(double _DM_level){ DM_level = _DM_level; }
+
     //! Return the size in bytes of nsamples time samples
     int64 nbytes (int64 nsamples) const
       { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
@@ -306,6 +309,9 @@ namespace dsp {
 
     //! Coordinates of the source
     sky_coord position;
+
+    //! The DM Timeseries has been dedispersed to
+    double DM_level;
 
     //! Set all attributes to null default
     void init ();
