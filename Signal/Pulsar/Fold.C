@@ -4,6 +4,7 @@
 #include "PhaseSeries.h"
 #include "Error.h"
 
+#include "psrephem.h"
 #include "tempo++.h"
 #include "genutil.h"
 
