@@ -439,14 +439,8 @@ void dsp::Fold::transformation ()
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
   if (!output->mixable (*input, folding_nbin, idat_start, ndat_fold)){
-    string input_str;
-    string output_str;
-
-    input->obs2string(input_str);
-    output->obs2string(output_str);
-
-    fprintf(stderr,"Input:\n\n%s\n\n",input_str.c_str());
-    fprintf(stderr,"Ouput:\n\n%s\n\n",output_str.c_str());
+    fprintf(stderr,"Input:\n\n%s\n\n",input->obs2string().c_str());
+    fprintf(stderr,"Output:\n\n%s\n\n",output->obs2string().c_str());
 	    
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input and output are not PhaseSeries::mixable");
