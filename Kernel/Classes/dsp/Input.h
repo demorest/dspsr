@@ -1,22 +1,23 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.26 $
-   $Date: 2003/09/11 08:45:07 $
+   $Revision: 1.27 $
+   $Date: 2003/10/25 06:46:16 $
    $Author: hknight $ */
 
 #ifndef __Input_h
 #define __Input_h
 
 #include "MJD.h"
+#include "environ.h"
 
 #include "dsp/Operation.h"
 #include "dsp/Observation.h"
-#include "environ.h"
 
 namespace dsp {
 
   class BitSeries;
+  class IOManager;
 
   //! Pure virtual base class of all objects that can load BitSeries data
   /*! 
@@ -25,6 +26,8 @@ namespace dsp {
   */
 
   class Input : public Operation {
+
+    friend class IOManager;
 
   public:
     
@@ -105,6 +108,9 @@ namespace dsp {
 
   protected:
 
+    //! Set the 'end_of_data' flag in dsp::Seekable
+    virtual void set_eod(bool _eod) = 0;
+
     //! The BitSeries to which data will be loaded on next call to operate
     Reference::To<BitSeries> output;
 
@@ -121,10 +127,10 @@ namespace dsp {
 
     //! Time sample resolution of the data source
     unsigned resolution;
-
-    virtual void set_eod(bool _eod)
-    { throw Error(FailedCall,"dsp::Input::set_eod()",
-		  "This method is overloaded in Seekable, but not anything else, and you've called it from something else"); }
+    
+    //! The ndat of the BitSeries last loaded
+    //! Used by Seekable::recycle_data() and set by load()
+    uint64 last_load_ndat;
 
   private:
 
