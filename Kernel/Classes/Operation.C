@@ -62,7 +62,7 @@ void dsp::Operation::set_input (const Timeseries* _input)
   input = _input;
 
   if (type == inplace)
-    output = const_cast<Timeseries*>(input.get_reference());
+    output = const_cast<Timeseries*>(input.get());
 
   if (type == outofplace && input && output && input == output)
     throw_str ("Operation::set_input " + name + " input must != output");
