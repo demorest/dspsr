@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/09/19 07:59:57 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2002/09/23 05:03:49 $
+   $Author: hknight $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -74,6 +74,9 @@ namespace dsp {
     //! Operation name
     string name;
 
+    //! If false then virtual method prepare() is called from within the operate() wrapper method
+    bool IsPrepared;
+
     //! Container from which input data will be read
     Reference::To <const Timeseries> input;
 
@@ -91,6 +94,9 @@ namespace dsp {
     //! Return pointer to memory resource shared by operations
     static void* workingspace (size_t nbytes);
 
+    //! Called within operate() wrapper function if IsPrepared is false.
+    //! This is not pure virtual so that existing classes need not write a redundant prepare() method
+    virtual void prepare();
 
   private:
     //! Stop watch records the amount of time spent performing this operation
