@@ -139,7 +139,8 @@ void dsp::Response::set_dc_centred (bool _dc_centred)
 
 void dsp::Response::naturalize ()
 {
-  cerr << "dsp::Response::naturalize" << endl;
+  if (verbose)
+    cerr << "dsp::Response::naturalize" << endl;
 
   if ( whole_swapped ) {
     if (verbose)
