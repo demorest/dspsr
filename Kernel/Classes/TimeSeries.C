@@ -275,9 +275,34 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   return mean/double(get_ndat());
 }
 
-void dsp::TimeSeries::copy_configuration (const TimeSeries* copy)
+void dsp::TimeSeries::copy_configuration (const Observation* copy)
 {
-  Observation::operator = (*copy);
+  if( copy==this )
+    return;
+
+  if( !get_preserve_seeked_data() || get_samps_offset() == 0 ){
+    Observation::operator=( *copy );
+    return;
+  }
+
+  Observation* input = (Observation*)copy;
+
+  unsigned input_nchan = input->get_nchan();
+  unsigned input_npol = input->get_npol();
+  unsigned input_ndim = input->get_ndim();
+  Signal::State input_state = input->get_state();
+
+  input->set_npol( get_npol() );
+  input->set_ndim( get_ndim() );
+  input->set_state( get_state() );
+  input->set_nchan( get_nchan() );
+
+  Observation::operator=( *input );
+
+  input->set_nchan( input_nchan );
+  input->set_npol( input_npol );
+  input->set_ndim( input_ndim );
+  input->set_state( input_state );
 }
 
 dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
