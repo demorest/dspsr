@@ -65,10 +65,6 @@ void dsp::SLDetect::transformation ()
 	 less confusing.
       */
       if( input->get_state()==Signal::Nyquist ){
-	//if(verbose)
-	//fprintf(stderr,"SLDetect case is an %s transformation on Nyquist data\n",
-	//  input.get()==output.get()?"inplace":"outofplace"); 
-    
 	while( in_ptr != dend ){
 	  *out_ptr = *in_ptr * *in_ptr;
 	  out_ptr++;
@@ -77,10 +73,6 @@ void dsp::SLDetect::transformation ()
       }
       
       else if( input->get_state()==Signal::Analytic ){
-	if(verbose)
-	  fprintf(stderr,"SLDetect case is an %s transformation on Analytic data\n",
-		  input.get()==output.get()?"inplace":"outofplace");
-	
 	while( in_ptr!=dend ){
 	  *out_ptr = *in_ptr * *in_ptr;  // Re*Re
 	  in_ptr++;
