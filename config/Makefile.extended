@@ -343,6 +343,8 @@ $(filter-out $(NONMODULE), $(MODULE)):
 		exit 1; \
 	fi;
 
+endif # install_yes != install
+
 ##########################################################################
 # Explicit rule to make one library from the LIBRARY target.
 # Additional libraries must be added to the LIBRARIES macro and given
@@ -358,8 +360,6 @@ $(ONELIB) : $(LIB_OBJS)
 	@echo $(LIB_SRCS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
-
-endif # install_yes != install
 
 ##########################################################################
 # Special cases: if the make target is depend, clean or veryclean, then 
