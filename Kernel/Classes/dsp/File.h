@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/11 02:31:14 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2002/10/11 12:12:22 $
+   $Author: mbailes $ */
 
 
 #ifndef __File_h
@@ -63,3 +63,4 @@ namespace dsp {
 
 #endif // !defined(__File_h)
   
+
