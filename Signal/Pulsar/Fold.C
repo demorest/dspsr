@@ -500,15 +500,15 @@ void dsp::Fold::transformation ()
 
   // Set things out of the pulsar ephemeris
   if( dispersion_measure > 0.0 )
-    output->set_dispersion_measure( dispersion_measure );
+    get_output()->set_dispersion_measure( dispersion_measure );
   else if( pulsar_ephemeris )
-    output->set_dispersion_measure( pulsar_ephemeris->get_dm() );
+    get_output()->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
   if( archive_filename.size() > 0 )
-    output->set_archive_filename( archive_filename );
+    get_output()->set_archive_filename( archive_filename );
 
   if( archive_filename_extension.size() > 0 )
-    output->set_archive_filename_extension( archive_filename_extension );
+    get_output()->set_archive_filename_extension( archive_filename_extension );
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
@@ -722,7 +722,6 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
      
     } // for each idat
   } // for each block
-
 }
 
 //! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
