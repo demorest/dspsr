@@ -187,6 +187,12 @@ void dsp::Dedispersion::prepare ()
   impulse_pos = smearing_samples (1);
   impulse_neg = smearing_samples (-1);
 
+#if 0
+  // testing a possibly common error in the interpretation of HR75
+  impulse_pos += impulse_neg;
+  impulse_neg = 0;
+#endif
+
   if (psrdisp_compatible) {
     cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
       "   using symmetric impulse response function" << endl;
