@@ -4,6 +4,7 @@
 #define __PMDAQFile_h
 
 #include "dsp/File.h"
+#include "dsp/Observation.h"
 
 namespace dsp {
 
