@@ -19,7 +19,10 @@
  *
  *
  * $Log: pspm_search_header.h,v $
- * Revision 1.1  1999/10/28 17:59:09  wvanstra
+ * Revision 1.2  2000/01/24 02:32:59  wvanstra
+ * Updated for August 1999 changes to pspm_search_header
+ *
+ * Revision 1.1  1999/10/28  17:59:09  wvanstra
  * from baseband/timeseries
  *
  * Revision 2.2  1999/10/26  16:36:43  wvanstra
@@ -152,7 +155,20 @@ typedef struct {
     int	SIDEBAND;		/* sideband				    */
     int observatory;		/* Observatory code			    */
     float128 mjd_start;	        /* Start time (MJD)			    */
-    char filler[32516];
+    /*
+     * (long long) file_size and offset where added August 1999 to the
+     * source tree. Prior to this time, or when the production binaries
+     * where updated for a particular backend, these values will hold 0
+     * and you should use the (long) file_size above. Note, there was
+     * no equivalent offset number prior to ll_file_offset.
+     */
+    int64 ll_file_offset;       /* Cummulative size of all of the previous  */
+                                /* files in this scan (Bytes) which can,    */
+                                /* e.g. be used to calculate the start time */
+                                /* of this file.                            */
+    int64 ll_file_size;         /* Size of this particular file (Bytes).    */
+
+    char filler[32500];
     int32 BACKEND_TYPE;
     int32 UPDATE_DONE;
     int32 HEADER_TYPE;

@@ -62,6 +62,11 @@ void PSPMfromBigEndian (PSPM_SEARCH_HEADER* header)
   fromBigEndian (&(header->SIDEBAND),         sizeof (int));
   fromBigEndian (&(header->observatory),      sizeof (int));
 
+  // Do NOT byte-swap the long double MJD, as it is interpretted as big endian
+
+  fromBigEndian (&(header->ll_file_offset),   sizeof (int64));
+  fromBigEndian (&(header->ll_file_size),     sizeof (int64));
+
   fromBigEndian (&(header->BACKEND_TYPE), sizeof (int32));
   fromBigEndian (&(header->UPDATE_DONE),  sizeof (int32));
   fromBigEndian (&(header->HEADER_TYPE),  sizeof (int32));
@@ -105,6 +110,9 @@ void PSPMtoBigEndian (PSPM_SEARCH_HEADER* header)
   toBigEndian (&(header->SIDEBAND),         sizeof (int));
   toBigEndian (&(header->observatory),      sizeof (int));
 
+  toBigEndian (&(header->ll_file_offset),   sizeof (int64));
+  toBigEndian (&(header->ll_file_size),     sizeof (int64));
+
   toBigEndian (&(header->BACKEND_TYPE), sizeof (int32));
   toBigEndian (&(header->UPDATE_DONE),  sizeof (int32));
   toBigEndian (&(header->HEADER_TYPE),  sizeof (int32));
@@ -119,19 +127,30 @@ MJD PSPMstart_time (const PSPM_SEARCH_HEADER* header)
 {
   MJD start_time (header->mjd_start);
 
-  // MODIFY THE MJD BY THE SCAN FILE NUMBER
-
-  double seconds_per_file = (32768.0 * 32768.0) * header->samp_rate / 1e6;
-
-  for (int file=1; file<header->scan_file_number; file++)
-    start_time = start_time + seconds_per_file;
+  if (header->ll_file_size == 0) {
+    // old style - pre-August 1999
+    // MODIFY THE MJD BY THE SCAN FILE NUMBER
+    double seconds_per_file = (32768.0 * 32768.0) * header->samp_rate / 1e6;
+    start_time += seconds_per_file * double(header->scan_file_number);
+  }
+  else
+    start_time += (double(header->ll_file_offset) / 1e6) * header->samp_rate;
 
   return start_time;
 }
 
 double PSPMduration (const PSPM_SEARCH_HEADER* hdr)
 {
-  double npts = hdr->file_size * (BITSPERBYTE/(hdr->bit_mode*hdr->num_chans));
+  double fsize;
+
+  if (hdr->ll_file_size == 0)
+    // old style - pre-August 1999
+    fsize = double(hdr->file_size);
+  else
+    fsize = double(hdr->ll_file_size);
+  
+  double npts = fsize*double(BITSPERBYTE)/double(hdr->bit_mode*hdr->num_chans);
+
   return npts * hdr->samp_rate / 1e6;
 }
 
