@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/09/18 15:24:09 $
+   $Revision: 1.6 $
+   $Date: 2002/09/19 03:16:27 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -98,7 +98,7 @@ namespace dsp {
     virtual void build ();
 
     //! Match the dedispersion kernel to the input Timeseries
-    virtual void match (const Timeseries* input, unsigned nchan=0);
+    virtual void match (const Timeseries* input, unsigned channels=0);
 
 
     //! Centre frequency of the band-limited signal in MHz

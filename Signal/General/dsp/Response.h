@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/09/18 14:56:07 $
+   $Revision: 1.5 $
+   $Date: 2002/09/19 03:16:27 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -76,7 +76,7 @@ namespace dsp {
     void integrate (float* spectrum1, float* spectrum2, unsigned chan=0);
 
     //! Match the frequency response to the input Timeseries
-    virtual void match (const Timeseries* input, unsigned nchan=0);
+    virtual void match (const Timeseries* input, unsigned channels=0);
 
     //! Re-organize frequency bins to reflect natural ordering (DC->Nyq)
     void naturalize ();

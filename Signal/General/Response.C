@@ -31,13 +31,21 @@ dsp::Response::Response ()
   upon:
   <UL>
   <LI> the state of the input Timeseries (real or complex); and </LI>
-  <LI> what will be done to the Timeseries (e.g. simultaneous filterbank) </LI>
+  <LI> Operations to be performed upon the Timeseries 
+       (e.g. simultaneous filterbank) </LI>
   </UL>
-  As well, Response sub-classes may need dynamically check, refine, or
+  As well, sub-classes of Response may need to dynamically check, refine, or
   define their frequency response function based on the state of the
-  input Timeseries or the number of channels into which it will be divided. 
+  input Timeseries or the number of channels into which it will be divided.
+
+  \param input Timeseries to which the frequency response is to be matched
+
+  \param channels If specified, the number of filterbank channels into
+  which the input Timeseries will be divided.  Response::match does not
+  use this parameter, but sub-classes may find it useful.
+
  */
-void dsp::Response::match (const Timeseries* input, unsigned nchan)
+void dsp::Response::match (const Timeseries* input, unsigned channels)
 {
   if ( input->get_nchan() == 1 ) {
 
@@ -65,7 +73,6 @@ void dsp::Response::match (const Timeseries* input, unsigned nchan)
     // the ordering of the filterbank channels may be swapped
     if ( input->get_swap() && !whole_swapped )
       swap (false);
-
 
   }
 }
