@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/07/01 17:18:22 $
+   $Revision: 1.5 $
+   $Date: 2002/07/01 17:23:38 $
    $Author: pulsar $ */
 
 #ifndef __Observation_h
@@ -23,17 +23,17 @@
   the dsp namespace, is divided into three main classes: data
   containers and loaders, DSP algorithms, and auxilliary routines.
 
-  The main data container is the Timeseries class.  This class may
-  hold N-bit digitized data as well as the "unpacked" floating point
-  representation.  The Loader class and its children are used to load
-  data into the Timeseries container.
+  The main data container is the dsp::Timeseries class.  This class
+  may hold N-bit digitized data as well as the "unpacked" floating
+  point representation.  The dsp::Loader class and its children are
+  used to load data into the dsp::Timeseries container.
 
-  The main DSP algorithms are implemented by Operation and its
-  sub-classes.  These operate on Timeseries and can:
+  The main DSP algorithms are implemented by dsp::Operation and its
+  sub-classes.  These operate on dsp::Timeseries and can:
   <UL>
-  <LI> convert digitized data to floating points (Converter class)
-  <LI> coherently dedisperse data (Convolution class)
-  <LI> fold data using polyco (Fold class)
+  <LI> convert digitized data to floating points (dsp::Converter class)
+  <LI> coherently dedisperse data (dsp::Convolution class)
+  <LI> fold data using polyco (dsp::Fold class)
   <LI> etc...
   </UL>
 
