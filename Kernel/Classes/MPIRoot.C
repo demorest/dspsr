@@ -156,7 +156,8 @@ void dsp::MPIRoot::set_block_size (uint64 _size)
   if (!end_of_data && resize_required)  {
     size_pack_buffer ();
     if (ready && mpi_rank != mpi_root && auto_request){
-      cerr << "dsp::MPIRoot::set_block_size REQUESTING DATA" << endl;
+      if(verbose)
+        cerr << "dsp::MPIRoot::set_block_size REQUESTING DATA" << endl;
       request_data();
     }
   }
@@ -206,7 +207,8 @@ void dsp::MPIRoot::prepare ()
   }
 
   else if (ready && auto_request){
-    cerr << "dsp::MPIRoot::prepare REQUESTING DATA" << endl;
+    if(verbose)
+      cerr << "dsp::MPIRoot::prepare REQUESTING DATA" << endl;
     request_data ();
   }
 }
@@ -546,7 +548,8 @@ void dsp::MPIRoot::load_data (BitSeries* data)
 
   // request the next block of data
   if(auto_request){
-    cerr << "dsp::MPIRoot::load_data REQUESTING DATA" << endl;
+    if (verbose)
+      cerr << "dsp::MPIRoot::load_data REQUESTING DATA" << endl;
     request_data ();
   }
 }
