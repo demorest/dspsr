@@ -384,7 +384,7 @@ all: libs $(BINS) scripts
 
 include: $(INCS)
 
-libs: $(LIBS) include
+libs: include $(LIBS)
 
 scripts: $(SHXS)
 
