@@ -1,9 +1,18 @@
+#include <vector>
+
+#include <string.h>
+#include <stdio.h>
+
+#include "machine_endian.h"
 #include "Error.h"
 
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
 
+#include "dsp/BCPMExtension.h"
 #include "dsp/BCPMUnpacker.h"
+
+typedef float[512] float512;
 
 //! Null constructor
 dsp::BCPMUnpacker::BCPMUnpacker (const char* _name) : Unpacker (_name){ }
@@ -17,6 +26,72 @@ bool dsp::BCPMUnpacker::matches (const Observation* observation){
 
 //! Does the work
 void dsp::BCPMUnpacker::unpack (){
+  if( !get_input()->has<BCPMExtension>() )
+    throw Error(InvalidState,"dsp::BCPMUnpacker::unpack ()",
+		"Input BitSeries does not have a BCPMExtension!");
 
+  if( get_input()->get_nbit() != 4 )
+    throw Error(InvalidState,"dsp::BCPMUnpacker::unpack ()",
+		"Input nbit=%d.  Only a 4-bit unpacker is written",
+		get_input()->get_nbit());
 
+  get_output()->Observation::operator=( *get_input() );
+  get_output()->remove_extension("BCPMExtension");
+  get_output()->set_nbit( 32 );
+  get_output()->resize( get_input()->get_ndat() );
+
+  vector<int>& chtab = get_input()->get<BCPMExtension>()->chtab;
+  const unsigned nchan = get_input()->get_nchan();
+  vector<float> tempblock(nchan);
+  unsigned char* raw = get_rawptr();
+
+  static float512 lookup = get_lookup();
+
+  vector<float*> datptrs( nchan );
+  for( unsigned i=0; i<nchan; i++)
+    datptrs[i] = get_output()->get_datptr(i,0);
+
+  float* in = raw;
+
+#if MACHINE_LITTLE_ENDIAN
+  vector<unsigned char> temp_buffer(nchan/2);
+  in = &temp_buffer[0];
+#endif
+
+  for( unsigned s=0; s<get_input()->get_ndat(); s++){
+#if MACHINE_LITTLE_ENDIAN
+    memcpy(&temp_buffer[0], raw, nchan/2);
+    for( unsigned l=0; l<nchan/2; l++)
+      ChangeEndian(in[l]);
+#endif
+
+    unsigned j = 0;
+    for( unsigned i=0; i<nchan/2; i++){
+      tempblock[j++] = lookup[in[i]];
+      tempblock[j++] = lookup[256+in[i]];
+    }
+    
+    for( unsigned k=0; k<nchan; k++)
+      datptrs[k][s] = tempblock[chtab[s+k]];
+    
+    raw += nchan/2;
+  }
+
+}
+
+//! Generates the lookup table
+float* dsp::BCPMUnpacker::get_lookup(){
+  float512 lookup;
+  
+  float lower = 0.0;
+  float step = 1.0;
+  
+  for( unsigned char i=0; i<255; ++i){
+    lookup[i] =     lower + step*float((i >> 4) & 15);
+    lookup[256+i] = lower + step*float( i       & 15);
+  }
+  lookup[255] =     lower + 15.*step;
+  lookup[256+255] = lower + 15.*step;
+  
+  return lookup;
 }

@@ -25,6 +25,9 @@ namespace dsp {
     //! Unpack the BCPM data into the output TimeSeries
     void unpack ();
 
+    //! Generates the lookup table
+    float* get_lookup();
+
   };
   
 }
