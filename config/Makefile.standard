@@ -48,7 +48,7 @@ SWINBURNE_REPOSITORY = mania.physics.swin.edu.au:/psr/cvsroot
 ##########################################################################
 # macro definitions for various "home-grown" libraries
 ##########################################################################
-LTIMES = -ltimes $(LSLA) -lm
+LTIMES = -ltimes -lgenutil $(LSLA) -lm
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
 ##########################################################################
