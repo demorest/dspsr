@@ -88,18 +88,17 @@ void dsp::CPSR2File::open_file (const char* filename,PseudoFile* _info)
       throw Error (FailedCall, "dsp::CPSR2File::open_file()",
 		   "yamasaki_verify(%s) failed", filename);
 
-    info = data;
-
-    // re-open the file
-    fd = ::open (filename, O_RDONLY);
-    if (fd < 0)
-      throw Error (FailedSys, "dsp::CPSR2File::open_file()", 
-		   "open(%s) failed", filename);
-    
+    info = data; 
 
     header_bytes = CPSR2_HEADER_SIZE;
   }
 
+  // re-open the file
+  fd = ::open (filename, O_RDONLY);
+  if (fd < 0)
+    throw Error (FailedSys, "dsp::CPSR2File::open_file()", 
+		 "open(%s) failed", filename);
+  
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
   resolution = bits_per_byte / info.get_nbit();
