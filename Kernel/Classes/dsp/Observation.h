@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.35 $
-   $Date: 2002/11/28 16:37:18 $
-   $Author: wvanstra $ */
+   $Revision: 1.36 $
+   $Date: 2002/12/04 01:19:53 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -152,7 +152,7 @@ namespace dsp {
     MJD get_start_time () const { return start_time; }
     
     //! Change the start time by the number of time samples specified
-    void change_start_time (int64 ndat);
+    void change_start_time (int64 nsamples);
 
     //! Return the end time of the trailing edge of the last time sample
     virtual MJD get_end_time () const
@@ -190,6 +190,15 @@ namespace dsp {
     void set_machine (string _machine) { machine = _machine; }
     //! Return the instrument used to record signal
     string get_machine () const { return machine; }
+
+    //! Returns the DM to which the data has been dedispersed (in-channel dispersion)
+    double get_dispersion_measure () const { return dispersion_measure; }
+
+    //! Set the record of what DM the data is dedispersed (in-channel dispersion)
+    void set_dispersion_measure (double dm) { dispersion_measure = dm; }
+
+    //! Add on extra DM units to the dispersion measure
+    void change_dispersion_measure(double dm) { dispersion_measure += dm; }
 
     //! Set the observation mode
     void set_mode (string _mode) { mode = _mode; }
@@ -251,16 +260,21 @@ namespace dsp {
     void set_default_basis ();
 
     //! Returns all information contained in this class into the string info_string
-    bool retrieve(string& info_string);
+    bool obs2string(string& info_string);
     
-    //! Writes of all information contained in this class into the fptr at the current file offset
-    bool retrieve(FILE* fptr);
+    //! Writes of all information contained in this class into the fptr at the current file offset.  Does no seeking etc.
+    bool obs2file(FILE* fptr);
+
+    //! Opposite of obs2file
+    bool file2obs(FILE* fptr);
 
     //! Set all attributes to null default
     void init ();
 
   protected:
 
+    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string(), file2obs() and string2obs() appropriately! */
+    
     //! Number of time samples in container
     uint64 ndat;
 
@@ -329,6 +343,9 @@ namespace dsp {
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     string domain;
+
+    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string() and file2obs() appropriately! */
+
   };
 
 }

@@ -6,7 +6,9 @@
 #include "dsp/Observation.h"
 #include "dsp/Telescope.h"
 
+#include "angle.h"
 #include "MJD.h"
+#include "Types.h"
 
 #include "genutil.h"
 #include "string_utils.h"
@@ -373,15 +375,16 @@ void dsp::Observation::change_state (Signal::State new_state)
 }
 
 //! Change the start time by the number of time samples specified
-void dsp::Observation::change_start_time (int64 ndat)
+void dsp::Observation::change_start_time (int64 samples)
 {
-  start_time += double(ndat)/rate;
+  start_time += double(samples)/rate;
 }
 
 //! Returns all information contained in this class into the string info_string
-bool dsp::Observation::retrieve(string& ss){
-  char dummy[300];
+bool dsp::Observation::obs2string(string& ss){
+  char dummy[256];
 
+  sprintf(dummy,"dsp::Observation data\n"); ss+= dummy;
   sprintf(dummy,"NDAT\t"I64"\n",ndat); ss += dummy;
   sprintf(dummy,"TELESCOPE\t%c\n",telescope); ss += dummy;
   sprintf(dummy,"SOURCE\t%s\n",source.c_str()); ss += dummy;
@@ -391,9 +394,9 @@ bool dsp::Observation::retrieve(string& ss){
   sprintf(dummy,"NPOL\t%d\n",npol); ss += dummy;
   sprintf(dummy,"NDIM\t%d\n",ndim); ss += dummy;
   sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
-  sprintf(dummy,"TYPE\t%s\n",Signal::source_string(type)); ss += dummy;
-  sprintf(dummy,"STATE\t%s\n",Signal::state_string(state)); ss += dummy;
-  sprintf(dummy,"BASIS\t%s\n",Signal::basis_string(basis)); ss += dummy;
+  sprintf(dummy,"TYPE\t%s\n",Signal::Source2string(type).c_str()); ss += dummy;
+  sprintf(dummy,"STATE\t%s\n",Signal::State2string(state).c_str()); ss += dummy;
+  sprintf(dummy,"BASIS\t%s\n",Signal::Basis2string(basis).c_str()); ss += dummy;
   sprintf(dummy,"RATE\t%.16f\n",rate); ss += dummy;
   sprintf(dummy,"START_TIME\t%s\n",start_time.printall()); ss += dummy;
   sprintf(dummy,"SCALE\t%.16f\n",scale); ss += dummy;
@@ -402,19 +405,21 @@ bool dsp::Observation::retrieve(string& ss){
   sprintf(dummy,"IDENTIFIER\t%s\n",identifier.c_str()); ss += dummy;
   sprintf(dummy,"MODE\t%s\n",mode.c_str()); ss += dummy;
   sprintf(dummy,"MACHINE\t%s\n",machine.c_str()); ss += dummy;
-  sprintf(dummy,"DISPERSION_MEASURE\t%.16f\n",dispersion_measure); ss += dummy;
 
-
+  /* COORDINATES is stored as RAJ and DECJ */
   sprintf(dummy,"RAJ\t%s\n",coordinates.ra().getHMS().c_str()); ss += dummy;
   sprintf(dummy,"DECJ\t%s\n",coordinates.dec().getDMS().c_str()); ss += dummy;
+  
+  sprintf(dummy,"DISPERSION_MEASURE\t%.16f\n",dispersion_measure); ss += dummy;
+  sprintf(dummy,"DOMAIN\t%s\n",domain.c_str());
 
   return true;
 }
     
 //! Writes all information contained in this class into the fptr at the current file offset
-bool dsp::Observation::retrieve(FILE* fptr){
+bool dsp::Observation::obs2file(FILE* fptr){
   string ss;
-  if( !retrieve(ss) ){
+  if( !obs2string(ss) ){
     fprintf(stderr,"dsp::Observation::retrieve() failed to write to fptr because string version failed\n");
     fclose(fptr);
     return false;
@@ -424,3 +429,64 @@ bool dsp::Observation::retrieve(FILE* fptr){
 
   return true;
 }
+
+//! The file pointer must be appropriately seeked
+bool dsp::Observation::file2obs(FILE* fptr){
+  if( !fptr ){
+    cerr << "dsp::Observation::file2obs() returning false as fptr=NULL\n";
+    return false;
+  }
+
+  char dummy[256];
+  char moron[256];
+
+  if( fscanf(fptr,"%s",dummy)!=1 ){
+    cerr << "dsp::Observation::file2obs() returning false as \n";
+    return false;
+  }
+
+  if( string(dummy)!=string("dsp::Observation data") ){
+    cerr << "dsp::Observation::file2obs() returning false as \n";
+    return false;
+  }
+
+  fscanf(fptr,"NDAT\t"I64"\n",&ndat); 
+  fscanf(fptr,"TELESCOPE\t%c\n",&telescope); 
+  fscanf(fptr,"SOURCE\t%s\n",dummy); source = dummy; 
+  fscanf(fptr,"CENTRE_FREQUENCY\t%lf\n",&centre_frequency); 
+  fscanf(fptr,"BANDWIDTH\t%lf\n",&bandwidth); 
+  fscanf(fptr,"NCHAN\t%d\n",&nchan); 
+  fscanf(fptr,"NPOL\t%d\n",&npol); 
+  fscanf(fptr,"NDIM\t%d\n",&ndim); 
+  fscanf(fptr,"NBIT\t%d\n",&nbit); 
+  fscanf(fptr,"TYPE\t%s\n",dummy); type = Signal::string2Source(dummy);
+  fscanf(fptr,"STATE\t%s\n",dummy); state = Signal::string2State(dummy);
+  fscanf(fptr,"BASIS\t%s\n",dummy); basis = Signal::string2Basis(dummy);
+  fscanf(fptr,"RATE\t%lf\n",&rate); 
+  fscanf(fptr,"START_TIME\t%s\n",dummy); start_time = MJD(dummy);
+  fscanf(fptr,"SCALE\t%lf\n",&scale); 
+  fscanf(fptr,"SWAP\t%s\n",dummy);
+  if( string(dummy)==string("true") )
+    swap = true;
+  else
+    swap = false; 
+  fscanf(fptr,"DC_CENTRED\t%s\n",dummy);
+  if( string(dummy)==string("true") )
+    dc_centred = true;
+  else
+    dc_centred = false;
+  fscanf(fptr,"IDENTIFIER\t%s\n",dummy); identifier=dummy;
+  fscanf(fptr,"MODE\t%s\n",dummy); mode = dummy;
+  fscanf(fptr,"MACHINE\t%s\n",dummy); machine = dummy;
+
+  /* COORDINATES is stored as RAJ and DECJ */
+  fscanf(fptr,"RAJ\t%s\n",dummy); 
+  fscanf(fptr,"DECJ\t%s\n",moron);
+  coordinates.setHMSDMS(dummy,moron);
+  
+  fscanf(fptr,"DISPERSION_MEASURE\t%lf\n",&dispersion_measure); 
+  fscanf(fptr,"DOMAIN\t%s\n",dummy); domain = dummy;
+
+  return true;
+}
+
