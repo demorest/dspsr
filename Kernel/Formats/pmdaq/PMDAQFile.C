@@ -58,7 +58,7 @@ int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 
 static char pmdaq_header [PMDAQ_HEADER_SIZE];
 
-bool dsp::PMDAQFile::is_valid (const char* filename) const
+bool dsp::PMDAQFile::is_valid (const char* filename,int) const
 {
   if (get_header (pmdaq_header, filename) < 0){
     if(verbose) fprintf(stderr,"false 1\n");

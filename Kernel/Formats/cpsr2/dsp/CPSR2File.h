@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/04/23 08:04:02 $
-   $Author: wvanstra $ */
+   $Revision: 1.12 $
+   $Date: 2003/09/27 08:43:07 $
+   $Author: hknight $ */
 
 
 #ifndef __CPSR2File_h
@@ -22,7 +22,7 @@ namespace dsp {
     CPSR2File (const char* filename=0);
 
     //! Returns true if filename appears to name a valid CPSR2 file
-    bool is_valid (const char* filename) const;
+    bool is_valid (const char* filename,int NOT_USED=-1) const;
 
     //! Set this to 'false' if you don't need to yamasaki verify
     static bool want_to_yamasaki_verify;

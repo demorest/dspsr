@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/07/28 14:21:21 $
-   $Author: wvanstra $ */
+   $Revision: 1.18 $
+   $Date: 2003/09/27 08:36:28 $
+   $Author: hknight $ */
 
 
 #ifndef __MultiFile_h
@@ -29,11 +29,12 @@ namespace dsp {
     virtual ~MultiFile ();
     
     //! Open a number of files and treat them as one logical observation.
-    virtual void open (const vector<string>& new_filenames);
+    //! 'bs_index' is the index of the BitSeries to be loaded.  Usually there is only a single BitSeries stream per file, but for classes such as MultiBitSeriesFile there can be multiple streams per file
+    virtual void open (const vector<string>& new_filenames, int bs_index = -1);
 
     //! Makes sure only these filenames are open
     //! Resets the file pointers
-    virtual void have_open (const vector<string>& filenames);
+    virtual void have_open (const vector<string>& filenames, int bs_index = -1);
 
     //! Use to open files when they've already been opened once
     virtual void open(const vector<PseudoFile*>& pseudos);

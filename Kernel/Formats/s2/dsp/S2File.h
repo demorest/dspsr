@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/07/01 05:34:50 $
+   $Revision: 1.12 $
+   $Date: 2003/09/27 08:35:06 $
    $Author: hknight $ */
 
 
@@ -23,7 +23,7 @@ namespace dsp {
     S2File (const char* filename = 0);
 
     //! Returns true if filename appears to name a valid S2 file
-    bool is_valid (const char* filename) const;
+    bool is_valid (const char* filename,int NOT_USED=-1) const;
 
   protected:
     //! Open the file

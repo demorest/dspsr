@@ -16,7 +16,7 @@ namespace dsp {
     PMDAQFile (const char* filename=0);
 
     //! Returns true if filename appears to name a valid PMDAQ file
-    bool is_valid (const char* filename) const;
+    bool is_valid (const char* filename,int NOT_USED=-1) const;
 
   protected:
     //! Open the file

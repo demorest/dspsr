@@ -58,7 +58,7 @@ int main(int argc,char** argv){ try {
     fprintf(stderr,"Working with file '%s'\n",
 	    filenames[ifile].c_str());
 
-    Reference::To<dsp::File> loader(dsp::File::create(filenames[ifile]));
+    Reference::To<dsp::File> loader(dsp::File::create(filenames[ifile],0));
     loader->open( filenames[ifile] );
     check_type(loader.get());
 

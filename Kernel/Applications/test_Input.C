@@ -78,8 +78,8 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
 
-    input_small = dsp::File::create (filenames[ifile]);
-    input_large = dsp::File::create (filenames[ifile]);
+    input_small = dsp::File::create (filenames[ifile],0);
+    input_large = dsp::File::create (filenames[ifile],0);
 
     cerr << "data file " << filenames[ifile] << " opened" << endl;
 

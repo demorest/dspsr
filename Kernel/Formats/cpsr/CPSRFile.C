@@ -25,7 +25,7 @@ dsp::CPSRFile::CPSRFile (const char* filename)
 }
 
 
-bool dsp::CPSRFile::is_valid (const char* filename) const
+bool dsp::CPSRFile::is_valid (const char* filename,int) const
 {
   int fd = ::open (filename, O_RDONLY);
   if (fd < 0)

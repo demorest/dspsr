@@ -97,8 +97,8 @@ int main (int argc, char** argv)
       if (verbose)
 	cerr << "opening data file " << filenames[ifile] << endl;
 
-      Reference::To<dsp::Input> input_a = dsp::File::create (filenames[ifile]);
-      Reference::To<dsp::Input> input_b = dsp::File::create (filenames[ifile]);
+      Reference::To<dsp::Input> input_a = dsp::File::create (filenames[ifile],0);
+      Reference::To<dsp::Input> input_b = dsp::File::create (filenames[ifile],0);
 
       mpi_a -> set_Input (input_a);
       mpi_a -> prepare ();

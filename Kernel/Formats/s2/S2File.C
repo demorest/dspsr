@@ -18,7 +18,7 @@ dsp::S2File::S2File (const char* filename)
 }
 
 
-bool dsp::S2File::is_valid (const char* filename) const
+bool dsp::S2File::is_valid (const char* filename,int) const
 { 
   tci_fd   s2file;
   tci_hdr  header;

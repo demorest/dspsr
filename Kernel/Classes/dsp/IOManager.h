@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.9 $
-   $Date: 2003/08/21 09:47:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.10 $
+   $Date: 2003/09/27 08:37:59 $
+   $Author: hknight $ */
 
 
 #ifndef __IOManager_h
@@ -33,10 +33,10 @@ namespace dsp {
     virtual ~IOManager ();
     
     //! Prepare the appropriate Input and Unpacker
-    virtual void open (const char* id);
+    virtual void open (const char* id, int bs_index=-1);
 
     //! Prepare the appropriate Input and Unpacker
-    void open (const string& id) { open (id.c_str()); }
+    void open (const string& id, int bs_index=-1) { open (id.c_str(),bs_index); }
 
     //! Return pointer to the appropriate Input
     Input* get_input () const { return input; }

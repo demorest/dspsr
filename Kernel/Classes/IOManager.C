@@ -117,11 +117,11 @@ void dsp::IOManager::set_overlap (uint64 _overlap)
 
   \pre This function is not fully implemented.
 */
-void dsp::IOManager::open (const char* id) 
+void dsp::IOManager::open (const char* id, int bs_index) 
 {
   try {
 
-    set_input ( File::create(id), true );
+    set_input ( File::create(id,bs_index), true );
 
   } catch (Error& error) {
     throw error += "dsp::IOManager::open";

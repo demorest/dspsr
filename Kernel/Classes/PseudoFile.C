@@ -11,6 +11,7 @@ dsp::PseudoFile::PseudoFile (const dsp::File* f)
   Observation::operator = ( *f->get_info() );
   filename = f->get_filename();
   header_bytes = f->get_header_bytes();
+  bs_index = f->get_bs_index();
 }
 
 bool dsp::PseudoFile::operator < (const PseudoFile& in) const
@@ -24,8 +25,8 @@ bool dsp::PseudoFile::operator < (const PseudoFile& in) const
   return get_start_time() < in.get_start_time();
 }
 
-dsp::PseudoFile* dsp::PseudoFile::get_pseudo(string file){
-  Reference::To<dsp::File> loader(dsp::File::create(file));
+dsp::PseudoFile* dsp::PseudoFile::get_pseudo(string file,int bs_index){
+  Reference::To<dsp::File> loader(dsp::File::create(file,bs_index));
   return new dsp::PseudoFile(loader.get());
 }
 

@@ -50,7 +50,7 @@ int dsp::CPSR2File::get_header (char* cpsr2_header, const char* filename)
 
 static char cpsr2_header [CPSR2_HEADER_SIZE];
 
-bool dsp::CPSR2File::is_valid (const char* filename) const
+bool dsp::CPSR2File::is_valid (const char* filename,int) const
 {
   if (get_header (cpsr2_header, filename) < 0)
     return false;

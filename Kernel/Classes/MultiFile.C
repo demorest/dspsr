@@ -20,7 +20,7 @@ dsp::MultiFile::~MultiFile ()
   
   \post Resets the file pointers 
 */
-void dsp::MultiFile::open (const vector<string>& new_filenames)
+void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
 {
   if (new_filenames.empty())
     throw Error (InvalidParam, "dsp::Multifile::open",
@@ -33,13 +33,13 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
 
   // If there is no loader, create one from the first file
   if (!loader)
-    loader = File::create( new_filenames[0] );
+    loader = File::create( new_filenames[0],bs_index );
 
   // open up each of the new files and add it to our list of files
   for( unsigned i=0; i<new_filenames.size(); i++){
     if( !is_one_of(new_filenames[i],old_filenames) ){
 
-      loader->open( new_filenames[i] );
+      loader->open( new_filenames[i],bs_index );
       files.push_back( PseudoFile( loader ) );
 
       if( verbose )
@@ -65,7 +65,7 @@ void dsp::MultiFile::open(const vector<PseudoFile*>& pseudos){
 
   // If there is no loader, create one from the first pseudo
   if (!loader){
-    loader = File::create( pseudos.front()->filename );
+    loader = File::create( pseudos.front()->filename, pseudos.front()->bs_index );
     loader->open( *pseudos.front() );
   }
 
@@ -110,7 +110,7 @@ void dsp::MultiFile::setup ()
 }
 
 //! Makes sure only these filenames are open
-void dsp::MultiFile::have_open (const vector<string>& filenames)
+void dsp::MultiFile::have_open (const vector<string>& filenames,int bs_index)
 {
   // Erase any files we already have open that we don't want open
   for( unsigned ifile=0; ifile<files.size(); ifile++){
@@ -120,7 +120,7 @@ void dsp::MultiFile::have_open (const vector<string>& filenames)
     }
   }
 
-  open (filenames);
+  open (filenames,bs_index);
 }
 
 //! Erase the entire list of loadable files
