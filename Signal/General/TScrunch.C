@@ -140,9 +140,9 @@ void dsp::TScrunch::operation ()
 
   /* make sure output has correct parameters */
   output->Observation::operator=( *input );
-  output->resize( output_ndat ); 
   output->rescale( double(output_ndat) / double(input->get_ndat()) );
-  output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output->get_ndat())) );
+  output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output_ndat)) );
+  output->resize( output_ndat ); 
   
   if( verbose )
     fprintf(stderr,"Exiting from %s::operation()\n\n",get_name().c_str()); 
