@@ -10,6 +10,10 @@ dsp::SubFold::SubFold ()
   subint_turns = 0;
 }
 
+dsp::SubFold::~SubFold ()
+{
+}
+
 /*! As the SubFold base class knows nothing about any Archive file
   formats, it must be inherited by a derived class that knows how
   to unload folded profiles along the way. */
@@ -160,10 +164,13 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
     // check that the input TimeSeries has data within the current boundaries
 
     if (input_end < lower || input_start > upper) {
-      if (verbose)
-	cerr << "dsp::SubFold::bound input from different subint" << endl;
-      MJD::precision = oldMJDprecision;
+      if (verbose) cerr << "dsp::SubFold::bound"
+		     " input not from this sub-integration" << endl;
+
+      lower = MJD::zero;
       more_data = true;
+
+      MJD::precision = oldMJDprecision;
       return false;
     }
     
@@ -179,8 +186,10 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   }
   else {
 
-    // the current subint contains no data, start at the first sample
-    // of the input TimeSeries
+    // the current subint contains no data and there are currently no
+    // sub-integration boundaries set.  Set new boundaries and start
+    // folding with the first sample of the input TimeSeries within the
+    // boundaries.
     
     set_boundaries (input_start);
 
