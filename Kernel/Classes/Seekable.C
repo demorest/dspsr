@@ -45,19 +45,19 @@ void dsp::Seekable::load_data (BitSeries* data)
 {
   if (verbose)
     cerr << "Seekable::load_data"
-      " block_size=" << block_size << 
-      " next_sample=" << get_next_sample() <<
+      " load_size=" << get_load_size() << 
+      " load_sample=" << get_load_sample() <<
       " current_sample=" << current_sample << endl;
 
   uint64 recycled = recycle_data (data);
 
-  uint64 read_sample = get_next_sample() + recycled;
+  uint64 read_sample = get_load_sample() + recycled;
 
   if (verbose)
     cerr << "Seekable::load_data recycled="
 	 << recycled << endl;
 
-  uint64 read_size = block_size - recycled;
+  uint64 read_size = get_load_size() - recycled;
 
   // check that the amount to read does not surpass the end of data
   if (info.get_ndat()) {
@@ -119,9 +119,9 @@ void dsp::Seekable::load_data (BitSeries* data)
   data->set_ndat (recycled + read_size);
 }
 
-/*!  Based on the next time sample, next_sample, and the number of
-  time samples, block_size, to be loaded, this function determines the
-  amount of required data currently found in the BitSeries object,
+/*!  Based on the next time sample, get_load_sample, and the number of
+  time samples, get_load_size, to be loaded, this function determines the
+  amount of requested data that is currently found in the BitSeries object,
   copies this data to the start of BitSeries::data and returns the
   number of time samples that have been "recycled" */
 uint64 dsp::Seekable::recycle_data (BitSeries* data)
@@ -139,23 +139,22 @@ uint64 dsp::Seekable::recycle_data (BitSeries* data)
     cerr << "dsp::Seekable::recycle_data"
       " start_sample=" << start_sample <<
       " last_sample=" << last_sample << 
-      " next_sample=" << next_sample << endl;
+      " load_sample=" << get_load_sample() << endl;
 
-  if (next_sample < start_sample || next_sample >= last_sample)
+  if (get_load_sample() < start_sample || get_load_sample() >= last_sample)
     return 0;
 
-  uint64 to_recycle = last_sample - next_sample;
+  uint64 to_recycle = last_sample - get_load_sample();
 
   if (verbose)
-    cerr << "dsp::Seekable::recycle_data recycle " << to_recycle << " samples" << endl;
+    cerr << "dsp::Seekable::recycle_data recycle " 
+	 << to_recycle << " samples" << endl;
 
-  if (to_recycle > block_size)
-    to_recycle = block_size;
+  if (to_recycle > get_load_size())
+    to_recycle = get_load_size();
 
   uint64 recycle_bytes = data->nbytes (to_recycle);
-  uint64 offset_bytes = data->nbytes (next_sample - start_sample);
-
-  // next_sample += to_recycle;
+  uint64 offset_bytes = data->nbytes (get_load_sample() - start_sample);
 
   if (verbose)
     cerr << "dsp::Seekable::recycle_data recycle " << recycle_bytes
