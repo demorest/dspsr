@@ -4,16 +4,20 @@
 #include <cpgplot.h>
 
 #include "TwoBitStatsPlotter.h"
+#include "DataManager.h"
+#include "TwoBitCorrection.h"
+#include "Loader.h"
 #include "Timeseries.h"
-#include "CPSRFileLoader.h"
-#include "CPSRTwoBitCorrection.h"
+
 #include "string_utils.h"
 #include "dirutil.h"
 
+static char* args = "vV";
+
 void usage ()
 {
-  cout << "program to look at CPSR data using basband/dsp classes\n"
-    "Usage: test_CPSRTwoBitCorrection [options] file1 [file2 ...] \n"
+  cout << "digistat - plots digitizer statistics\n"
+    "Usage: digistat [" << args << "] file1 [file2 ...] \n"
        << endl;
 }
 
@@ -24,7 +28,6 @@ int main (int argc, char** argv)
   bool verbose = false;
 
   int c;
-  const char* args = "vV";
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
 
@@ -61,35 +64,52 @@ int main (int argc, char** argv)
     cpgsch (2.0);
   }
 
+  // raw baseband data container
   dsp::Timeseries raw;
+
+  // converted voltages container
   dsp::Timeseries voltage;
 
-  dsp::CPSRFileLoader loader;
-  loader.set_block_size (512*512);
-  loader.set_output (&raw);
+  // interface manages the creation of data loading and converting classes
+  dsp::DataManager manager;
 
-  dsp::CPSRTwoBitCorrection correct;
-  correct.set_input (&raw);
-  correct.set_output (&voltage);
-
+  // plots two-bit digitization statistics
   dsp::TwoBitStatsPlotter plotter;
-  plotter.set_viewport (0.1, 0.9,  0.1, 0.9);
-  plotter.set_data (&correct);
+
+  // raw baseband data loader
+  Reference::To<dsp::Loader> loader;
+
+  // voltage converter
+  Reference::To<dsp::TwoBitCorrection> correct;
 
   cpgbeg(0, "?",1,1);
   cpgsch(2);  // set character height
 
-
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
-    loader.open (filenames[ifile].c_str());
+    manager.open (filenames[ifile]);
 
-    while (!loader.eod()) {
+    // create a new file loader, appropriate to the backend
+    loader = manager.get_loader();
 
-      correct.zero_histogram ();
+    loader->set_block_size (512*512);
+    loader->set_output (&raw);
 
-      loader.operate ();
-      correct.operate ();
+    // create a new unpacker, appropriate to the backend
+    correct = dynamic_cast<dsp::TwoBitCorrection*>(manager.get_converter());
+
+    correct->set_input (&raw);
+    correct->set_output (&voltage);
+
+    plotter.set_data (correct);
+
+    // loop
+    while (!loader->eod()) {
+
+      correct->zero_histogram ();
+      
+      loader->operate ();
+      correct->operate ();
 
       cpgpage();
       plotter.plot();
@@ -97,7 +117,6 @@ int main (int argc, char** argv)
     }
 
     cerr << "end of data file " << filenames[ifile] << endl;
-    loader.close ();
 
   }
   catch (string& error) {
