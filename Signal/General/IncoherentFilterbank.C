@@ -102,6 +102,9 @@ void dsp::IncoherentFilterbank::transformation(){
   // First channel corresponds to DC which is centred at the edge of the band
   output->set_dc_centred( true );
 
+  if( verbose )
+    fprintf(stderr,"Calling output->resize(%d) with nchan=%d npol=%d ndim=%d\n",
+	    npart,output->get_nchan(),output->get_npol(),output->get_ndim());
   output->resize( npart );
 
   // Set up wsave 
@@ -122,6 +125,9 @@ void dsp::IncoherentFilterbank::transformation(){
 }
   
 void dsp::IncoherentFilterbank::form_stokesI(){
+  if( verbose )
+    fprintf(stderr,"In dsp::IncoherentFilterbank::form_stokesI()\n");
+
   // Number of floats in the forward FFT
   const int nsamp_fft = nchan * 2/input->get_ndim();
 
@@ -129,7 +135,6 @@ void dsp::IncoherentFilterbank::form_stokesI(){
   const int npart = input->get_ndat()/nsamp_fft;
 
   const size_t n_memcpy = nsamp_fft*sizeof(float);
-  const unsigned stride = nsamp_fft; 
 
   auto_ptr<float> scratch0(new float[nsamp_fft+2]);
   auto_ptr<float> scratch1(new float[nsamp_fft+2]);
@@ -138,14 +143,13 @@ void dsp::IncoherentFilterbank::form_stokesI(){
   const float* in1 = input->get_datptr(0,1);
   
   register float* det = (float*)in0;
-  register const unsigned det_stride = nchan;
 
   fft_loop_timer.start();
-  for( int ipart=0; ipart<npart; ++ipart, det+=det_stride ){
+  for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
     
     // (1) memcpy to scratch	
-    memcpy(scratch0.get(),in0+ipart*stride,n_memcpy);
-    memcpy(scratch1.get(),in1+ipart*stride,n_memcpy);
+    memcpy(scratch0.get(),in0+ipart*nsamp_fft,n_memcpy);
+    memcpy(scratch1.get(),in1+ipart*nsamp_fft,n_memcpy);
     
     // (2) FFT	
     fft_timer.start();
