@@ -276,11 +276,18 @@ void dsp::MultiFile::set_loader (unsigned index)
   current_filename = files[index].filename;
 }
 
+// HSK 24 June 2003 This function is a disaster- what it's original intention is unclear to me.  What about loader->get_next_sample()- wouldn't that return the same thing?
 uint64 dsp::MultiFile::get_next_sample(){
   uint64 samples_over = 0;
 
   for( unsigned i=0; i<current_index; i++)
     samples_over += files[i].get_ndat();
 
+  if( verbose )
+    fprintf(stderr,"dsp::MultiFile::get_next_sample() got get_load_sample()="UI64" and samples_over="UI64" and current_index=%d\n",
+	    get_load_sample(), samples_over,current_index);
+
+  //return get_load_sample();
   return get_load_sample()-samples_over;
 }
+

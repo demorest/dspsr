@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/05/24 00:29:44 $
-   $Author: pulsar $ */
+   $Revision: 1.16 $
+   $Date: 2003/07/01 05:23:28 $
+   $Author: hknight $ */
 
 
 #ifndef __MultiFile_h
@@ -21,7 +21,7 @@ namespace dsp {
   class MultiFile : public Seekable {
 
   public:
-    
+  
     //! Constructor
     MultiFile ();
     
@@ -47,10 +47,13 @@ namespace dsp {
     File* get_loader(){ if(!loader) return NULL; return loader.get(); }
 
     //! Retrieve a pointer to the pseudofile
-    Observation* get_file(unsigned ifile){ return &files[ifile]; }
+    PseudoFile* get_file(unsigned ifile){ return &files[ifile]; }
 
     //! Inquire the number of files
     unsigned nfiles(){ return files.size(); }
+
+    PseudoFile* get_first_file(){ return &files[0]; }
+    PseudoFile* get_last_file(){ return &files.back(); }
 
     //! Erase the entire list of loadable files
     //! Resets the file pointers
@@ -102,6 +105,7 @@ namespace dsp {
 
     //! Set the loader to the specified PseudoFile
     void set_loader (unsigned index);
+
   };
 
 }
