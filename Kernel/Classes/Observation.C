@@ -9,6 +9,7 @@
 
 #include "genutil.h"
 #include "string_utils.h"
+#include "Error.h"
 
 bool dsp::Observation::verbose = false;
 
@@ -41,8 +42,8 @@ void dsp::Observation::init ()
   ndat = 0;
   nchan = 1;
   npol = 1;
-  ndim = -1;
-  nbit = -1;
+  ndim = 1;
+  nbit = 0;
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -241,8 +242,8 @@ void dsp::Observation::set_default_basis ()
   else if (telescope == Telescope::Hobart)
     basis = Signal::Circular;
   else
-    throw_str ("Observation::set_default_basis no info telid: %c\n",
-	       telescope);
+    throw Error (InvalidState, "Observation::set_default_basis",
+		 "unrecognized telescope: %c\n", telescope);
 }
 
 string dsp::Observation::get_default_id (const MJD& mjd)
