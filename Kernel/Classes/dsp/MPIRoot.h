@@ -68,6 +68,9 @@ namespace dsp {
 
   protected:
 
+    //! Method that is p.v. in dsp::Input so that dsp::Seekable can set its 'end_of_data' flag.  I don't know what MPIRoot should do in it, if anything.  HSK 25/10/03
+    virtual void set_eod(bool _eod){/* HSK doesn't know what to put here*/}
+
     //! Send the next block using MPI_Isend
     void send_data (BitSeries* data, int dest);
 
