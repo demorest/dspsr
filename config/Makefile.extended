@@ -195,10 +195,10 @@ include $(make_install)
 # The recommendation comes from the GNU make 3.77 docucmentation:
 # "Writing Rules" chapter; "Generating Dependencies Automatically" section
 ##########################################################################
-$(LOGIN_ARCH)/%.dep: %.c
+$(LOGIN_ARCH)/%.dep: %.c $(LOGIN_ARCH)/.exists
 	$(header_depend)
 
-$(LOGIN_ARCH)/%.dep: %.C
+$(LOGIN_ARCH)/%.dep: %.C $(LOGIN_ARCH)/.exists
 	$(header_depend)
 
 define header_depend
@@ -232,7 +232,7 @@ endef
 # as their information is changed only when the link information changes.
 ##########################################################################
 
-$(LOGIN_ARCH)/%.sdep: Makefile
+$(LOGIN_ARCH)/%.sdep: Makefile $(LOGIN_ARCH)/.exists
 	@echo source depend: $*
 	@echo "$*.OBJS := $(call eval_srcs,$*)" > ${LOGIN_ARCH}/$*.sdep;
 	@echo '${BINDIR}/$*: $$($*.OBJS)' >> ${LOGIN_ARCH}/$*.sdep;
@@ -249,7 +249,7 @@ $(LOGIN_ARCH)/%.sdep: Makefile
 
 LIB_DEPS := $(patsubst %,./$(LOGIN_ARCH)/%.ldep,$(TESTEXECS) $(EXECUTABLES))
 
-$(LOGIN_ARCH)/%.ldep:
+$(LOGIN_ARCH)/%.ldep: $(LOGIN_ARCH)/.exists
 	@echo "${BINDIR}/$*: $(call eval_libs,$*)" > $@;
 
 
