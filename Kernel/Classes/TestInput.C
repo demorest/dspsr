@@ -54,47 +54,50 @@ void dsp::TestInput::runtest (Input* input_small, Input* input_large)
 
   input_small->set_block_size (small_block);
   input_large->set_block_size (large_block);
-      
+
+  unsigned block = 0;
+
+  errors = 0;
+
   while (!input_large->eod()) {
 
     input_large->operate();
 
     // test that Input produces the expected output
-    if (data_large->get_ndat() != large_block) {
-      if (input_large->eod())
-	break;
-      cerr << "ERROR: Input::block_size=" << large_block 
+    if (data_large->get_ndat() != large_block)
+      cerr << "WARNING: block=" << block << " Input::block_size="<< large_block 
 	   << " != BitSeries::ndat=" << data_large->get_ndat() << endl;
-      errors ++;
-    }
     
-    if (data_large->get_request_ndat() != large_block) {
-      cerr << "ERROR: large Input::block_size=" << large_block 
-	   << " != BitSeries::request_ndat=" 
-	   << data_large->get_request_ndat() << endl;
+    if (data_large->get_request_ndat() != data_large->get_ndat()) {
+      cerr << "ERROR: block=" << block << " large BitSeries::request_ndat=" 
+           << data_large->get_request_ndat() << " != BitSeries::ndat=" 
+	   << data_large->get_ndat() << endl;
       errors ++;
     }
 
     if (data_large->get_request_offset() != 0) {
-      cerr << "ERROR: BitSeries::request_offset != 0 [large]" << endl;
+      cerr << "ERROR: block=" << block << " large BitSeries::request_offset!=0"
+           << endl;
       errors ++;
     }
     
     for (unsigned ismall=0; ismall<resolution; ismall++) {
-      
+
+      if (input_small->eod())
+        break;
+
       input_small->operate();
       
       if (data_small->get_request_ndat() != small_block) {
-	cerr << "ERROR: small Input::block_size=" << small_block 
-	     << " != BitSeries::request_ndat=" 
+	cerr << "WARNING: block=" << block << " small Input::block_size=" 
+             << small_block << " != BitSeries::request_ndat=" 
 	     << data_small->get_request_ndat() << endl;
-	errors ++;
       }
       
       uint64 expected_offset = (ismall * modres) % resolution;
       
       if (data_small->get_request_offset() != expected_offset) {
-	cerr << "ERROR: BitSeries::request_offset="
+	cerr << "ERROR: block=" << block << " BitSeries::request_offset="
 	     << data_small->get_request_offset() << " != expected offset="
 	     << expected_offset << endl;
 	errors ++;
@@ -108,15 +111,18 @@ void dsp::TestInput::runtest (Input* input_small, Input* input_large)
 	unsigned char* bytes_large = data_large->get_rawptr();
 	
 	uint64 nbyte = data_small->get_nbytes();
-	
+	if (nbyte > data_large->get_nbytes())
+          nbyte = data_large->get_nbytes();
+
 	for (unsigned ibyte=0; ibyte < nbyte; ibyte++) {
 	  if (bytes_small[ibyte] != bytes_large[ibyte]) {
-	    fprintf (stderr, "ERROR: data[%d] small=%x != large=%x\n",
-		     ibyte, bytes_small[ibyte], bytes_large[ibyte]);
+	    fprintf (stderr, "ERROR: block=%d data[%d] small=%x != large=%x\n",
+		     block, ibyte, bytes_small[ibyte], bytes_large[ibyte]);
 	    errors ++;
 	  }
 	}
       }
     }
+    block ++;
   }
 } 
