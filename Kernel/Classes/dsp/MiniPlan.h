@@ -31,7 +31,10 @@ namespace dsp {
     public:
       SubInt();
       SubInt(string line);
+      SubInt(const SubInt&);
       virtual ~SubInt();
+
+      SubInt& operator=(const SubInt&);
 
       uint64 get_duration() const { return duration; }
       MJD get_start_time() const { return start_time; }
@@ -48,7 +51,7 @@ namespace dsp {
       //! Returns true if the given MJD is between start_time and duration
       bool covers(MJD time,double rate);
 
-      //! Extends duration by 'ext'
+      //! Extends duration to max(ext,duration)
       void extend(uint64 ext);
 
     private:
@@ -63,14 +66,17 @@ namespace dsp {
       friend class MiniPlan;
 
       SubIntVector();
+      SubIntVector(const SubIntVector&);
       virtual ~SubIntVector();
+
+      virtual SubIntVector& operator=(const SubIntVector&);
 
       virtual void add_subint(Reference::To<SubInt> _subint);
       
       //! Shares the references to the subints 
       virtual void share(SubIntVector& has_subints);
 
-      unsigned size();
+      unsigned size() const;
 
       string print_subint(unsigned isub);
 
@@ -83,8 +89,11 @@ namespace dsp {
     //! Default constructor
     MiniPlan();
 
-    //! Copy constructor- copies references, but not instances
+    //! Copy constructor- copies instances
     MiniPlan(const MiniPlan& mp);
+
+    //! Assignment operator
+    MiniPlan& operator=(const MiniPlan&);
 
     //! Merge together many frequency-contiguous MiniPlans into one
     //! Does few checks
@@ -92,6 +101,8 @@ namespace dsp {
 
     //! Virtual destructor
     virtual ~MiniPlan();
+
+    SubInt* get_subint(unsigned ichan,unsigned ipol,unsigned isub);
 
     uint64 get_requested_scan_samps() const { return requested_scan_samps; }
     uint64 get_requested_duration() const { return requested_duration; }
@@ -129,6 +140,9 @@ namespace dsp {
     //! Each TimeSeries this is called on must be contiguous with the last
     virtual void add_data(const TimeSeries* data);
 
+    //! Append 'miniplan's subints onto the end of this
+    void append(Reference::To<MiniPlan> miniplan);
+
     //! Retrieve a reference to the info
     Reference::To<Observation> get_info(){ return info; }
 
@@ -141,8 +155,8 @@ namespace dsp {
     //! Resize the subints_vector
     void resize(unsigned nchan, unsigned npol);
 
-    unsigned get_nchan(){ return subint_vectors.size(); }
-    unsigned get_npol(){ return subint_vectors[0].size(); }
+    unsigned get_nchan() const { return subint_vectors.size(); }
+    unsigned get_npol() const { return subint_vectors[0].size(); }
 
     //! Makes the final subints 'ext' samples longer in duration
     void extend_last_subint(uint64 ext);
@@ -150,8 +164,14 @@ namespace dsp {
     //! Checks that requested_duration and requested_scan_samps are valid;
     void check_requests(const TimeSeries* data);
 
-    //! Returns the end time of the final subint
-    MJD get_end_time(double rate);
+    //! Returns the end time of the final subint of the first group
+    MJD get_end_time();
+
+    //! Returns the end time of the particular subint
+    MJD get_end_time(unsigned isub);
+
+    //! Returns the start time of the first subint of the first group
+    MJD get_start_time();
 
   protected:
     
@@ -159,7 +179,7 @@ namespace dsp {
     void read_info(int fd);
 
     //! Called by write() to write the MiniPlan to disk
-    void write_info(int fd);
+    int64 write_info(int fd);
 
     //! Returns a string for print() to print out
     string info_string();
@@ -201,8 +221,3 @@ namespace dsp {
 }
 
 #endif
-
-
-
-
-
