@@ -33,7 +33,7 @@ bool dsp::CPSRFile::is_valid (const char* filename) const
   PSPM_SEARCH_HEADER* header = pspm_read (fd);
   ::close (fd);
 
-  if (!header || !PSPMverify(header))
+  if (!header || !PSPMverify(header, verbose))
     return false;
 
   return true;

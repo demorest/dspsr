@@ -119,14 +119,7 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
     built = false;
 
   nchan = channels;
-
-  if (verbose)
-    cerr << "dsp::Dedispersion::match call build" << endl;
-
   build ();
-
-  if (verbose)
-    cerr << "dsp::Dedispersion::match call Response::match" << endl;
 
   Response::match (input, channels);
 }
@@ -149,6 +142,16 @@ void dsp::Dedispersion::build ()
 
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::build"
+	"\n  centre frequency = " << centre_frequency <<
+	"\n  bandwidth = " << bandwidth <<
+        "\n  dispersion measure = " << dispersion_measure <<
+        "\n  Doppler shift = " << Doppler_shift <<
+        "\n  ndat = " << ndat <<
+        "\n  nchan = " << nchan <<
+	"\n  fractional delay compensation = " << fractional_delay << endl;
 
   build (phases, centre_frequency, bandwidth, 
 	 dispersion_measure, Doppler_shift,
