@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.14 $
-   $Date: 2002/11/22 04:29:59 $
-   $Author: hknight $ */
+   $Revision: 1.15 $
+   $Date: 2003/03/07 00:00:14 $
+   $Author: pulsar $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -44,6 +44,9 @@ namespace dsp {
 
     //! Return the total time spent on this Operation in seconds
     double get_total_time () const;
+
+    //! Get the time spent in the last invocation of operate()
+    double get_elapsed_time() const;
 
   protected:
 

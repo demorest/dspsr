@@ -35,6 +35,11 @@ double dsp::Operation::get_total_time () const
   return optime.get_total();
 }
 
+double dsp::Operation::get_elapsed_time () const
+{
+  return optime.get_elapsed();
+}
+
 //! Return pointer to a memory resource shared by operations
 void* dsp::Operation::workingspace (size_t nbytes)
 {
