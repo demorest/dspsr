@@ -46,7 +46,13 @@ void dsp::TScrunch::transformation ()
 		 TimeRes);
       return;
     }
-    ScrunchFactor = int64(TimeRes/(1.0e6/input->get_rate()));
+    double in_tsamp = 1.0e6/input->get_rate();  // in microseconds
+    ScrunchFactor = int64(TimeRes/in_tsamp + 0.00001);
+
+    if( verbose )
+      fprintf(stderr,"Setting Scrunchfactor to int64(%f/%f+0.00001) = "I64"\n",
+	      TimeRes,in_tsamp,ScrunchFactor);
+
     if( ScrunchFactor<1 )
       ScrunchFactor = 1;
   }
