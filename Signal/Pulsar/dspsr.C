@@ -26,6 +26,10 @@
 #include "dsp/IncoherentFilterbank.h"
 #endif
 
+#if ACTIVATE_BLITZ
+#include "dsp/PolyPhaseFilterbank.h"
+#endif
+
 #include "dsp/Archiver.h"
 
 #include "Pulsar/Archive.h"
@@ -192,6 +196,9 @@ int main (int argc, char** argv)
   // Pulsar name
   string pulsar_name;
 
+  // Filename of polyphase filterbank coefficients
+  char* polyphase_filter = 0;
+
   int c;
   int scanned;
 
@@ -320,7 +327,7 @@ int main (int argc, char** argv)
       break;
 
     case 'P':
-      dsp::psrdisp_compatible = true;
+      polyphase_filter = optarg;
       break;
 
     case 'p':
@@ -467,6 +474,7 @@ int main (int argc, char** argv)
 
 #if ACTIVATE_MKL
     if( use_incoherent_filterbank ) {
+
       if (verbose)
 	cerr << "Creating IncoherentFilterbank instance" << endl;
 
@@ -495,26 +503,45 @@ int main (int argc, char** argv)
     }
     else
 #endif
-      {
+
+#if ACTIVATE_BLITZ
+      if (polyphase_filter) {
 	
 	if (verbose)
-	cerr << "Creating Filterbank instance" << endl;
-      
-      // software filterbank constructor
-      dsp::Filterbank* filterbank = new dsp::Filterbank;
-      filterbank->set_input (voltages);
-      filterbank->set_output (convolve);
-      filterbank->set_nchan (nchan);
-      
-      if (simultaneous) {
-	filterbank->set_response (kernel);
-	filterbank->set_passband (passband);
+	  cerr << "Creating Filterbank instance" << endl;
+	  
+	// polyphase filterbank constructor
+	dsp::PolyphaseFilterbank* filterbank = new dsp::PolyphaseFilterbank;
+	filterbank->set_input (voltages);
+	filterbank->set_output (convolve);
+	filterbank->set_nchan (nchan);
+	  
+	operations.push_back (filterbank);
+	
       }
-      
-      operations.push_back (filterbank);
-    }
-  }
+      else
+#endif
+	
+	{  
+	  if (verbose)
+	    cerr << "Creating Filterbank instance" << endl;
+	  
+	  // software filterbank constructor
+	  dsp::Filterbank* filterbank = new dsp::Filterbank;
+	  filterbank->set_input (voltages);
+	  filterbank->set_output (convolve);
+	  filterbank->set_nchan (nchan);
+	  
+	  if (simultaneous) {
+	    filterbank->set_response (kernel);
+	    filterbank->set_passband (passband);
+	  }
+	  
+	  operations.push_back (filterbank);
+	}
     
+  }
+  
   if (nchan == 1 || !simultaneous) {
     
     if (verbose)
