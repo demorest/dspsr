@@ -61,6 +61,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
 static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
 #endif
 
+#if DSP_BCPM
+#include "dsp/BCPMUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::BCPMUnpacker> registry_bcpm;
+#endif
+
 #if DSP_MARK4
 #include "dsp/Mark4TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection>  mark4;

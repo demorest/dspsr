@@ -150,3 +150,14 @@ BACKENDS += Spigot
 LBACKENDS += -ldsp_Spigot $(LCFITSIO)
 endif
 
+##############################################################################
+#
+# Uncomment the following line to compile BCPM specific code
+#
+#BCPM:=yes
+
+ifeq ($(BCPM),yes)
+BACKENDS += BCPM
+LBACKENDS += -ldsp_BCPM
+endif
+
