@@ -10,6 +10,8 @@ TARGETS := include depend libs scripts all test install clean veryclean cvsck
 ##########################################################################
 # the standard macro definitions
 ##########################################################################
+PSRPKGS ?= ${PSRHOME}/packages
+
 INSTALL_BINDIR := ${PSRHOME}/bin/${LOGIN_ARCH}
 INSTALL_LIBDIR := ${PSRHOME}/lib/${LOGIN_ARCH}
 INSTALL_INCDIR := ${PSRHOME}/include
@@ -143,4 +145,8 @@ has_CFITS := $(call exists,$(CFITSDIR))
 has_MPI   := $(call exists,$(MPIDIR))
 has_QT    := $(call exists,$(QTDIR))
 has_PGPLOT:= $(call exists,$(PGPLOTDIR))
+
+ifeq ($(has_PGPLOT),yes)
+INCFLAGS += -I$(PGPLOTDIR)
+endif
 
