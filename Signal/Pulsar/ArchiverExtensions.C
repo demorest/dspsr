@@ -49,7 +49,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
     //
     // TwoBitCorrection class parameters
     //
-    TwoBitCorrection* tbc;
+    const TwoBitCorrection* tbc;
 
     // ////////////////////////////////////////////////////////////////////
     //
@@ -57,9 +57,9 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
     //
     IOManager* manager = dynamic_cast<IOManager*>( operations[i].get() );
     if (manager)
-      tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+      tbc = dynamic_cast<const TwoBitCorrection*> ( manager->get_unpacker() );
     else
-      tbc = dynamic_cast<TwoBitCorrection*>( operations[i].get() );
+      tbc = dynamic_cast<const TwoBitCorrection*>( operations[i].get() );
 
     // save it for the TwoBitStats Extension
     if (tbc)
