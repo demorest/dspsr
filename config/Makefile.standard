@@ -41,7 +41,7 @@ RM    = rm -f
 AWK   = awk
 GREP  = grep
 QTMOC = moc
-MAKEDEPEND = makedepend -f 
+MAKEDEPEND = makedepend -Y -f 
 
 SWINBURNE_REPOSITORY = pentane.ssi.swin.edu.au:/nfs/cluster/psr/cvsroot
 
