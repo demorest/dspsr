@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/06 06:30:42 $
-   $Author: hknight $ */
+   $Revision: 1.5 $
+   $Date: 2002/11/09 15:55:27 $
+   $Author: wvanstra $ */
 
 
 #ifndef __S2File_h
@@ -13,7 +13,7 @@
 
 namespace dsp {
 
-  //! Loads Timeseries data from a S2 data file.
+  //! Loads TimeSeries data from a S2 data file.
   /*! The treatment of S2 data is specific to the use of S2-TCI at Swinburne */
   class S2File : public File 
   {

@@ -2,7 +2,7 @@
 
 #include "dsp/Fold.h"
 #include "dsp/PhaseSeries.h"
-#include "dsp/TimeseriesOperation.h"
+#include "dsp/Transformation.h"
 
 #include "Error.h"
 
@@ -10,7 +10,8 @@
 #include "tempo++.h"
 #include "genutil.h"
 
-dsp::Fold::Fold () : TimeseriesOperation ("Fold", outofplace) 
+dsp::Fold::Fold () 
+  : Transformation <TimeSeries, PhaseSeries> ("Fold", outofplace) 
 {
   folding_period = 0;
 
@@ -23,7 +24,7 @@ dsp::Fold::Fold () : TimeseriesOperation ("Fold", outofplace)
 
 dsp::Fold::~Fold () { }
 
-//! Prepare for folding the input Timeseries
+//! Prepare for folding the input TimeSeries
 void dsp::Fold::prepare ()
 {
   if (!input)
@@ -205,30 +206,25 @@ const psrephem* dsp::Fold::get_pulsar_ephemeris () const
   return pulsar_ephemeris;
 }
 
-void dsp::Fold::operation ()
+void dsp::Fold::transformation ()
 {
   if (!input->get_detected ())
-    throw_str ("Fold::operation input is not detected");
+    throw_str ("Fold::transformation input is not detected");
 
   if (nbin == 0)
-    throw_str ("Fold::operation nbin not set");
-
-  PhaseSeries* profile = dynamic_cast<PhaseSeries*> (output.get());
-
-  if (!profile)
-    throw_str ("Fold::operation output is not a PhaseSeries");
+    throw_str ("Fold::transformation nbin not set");
 
   if (!built)
     prepare ();
 
   if (verbose)
-    cerr << "Fold::operation call PhaseSeries::mixable" << endl;
+    cerr << "Fold::transformation call PhaseSeries::mixable" << endl;
 
-  if (!profile->mixable (*input, nbin))
-    throw_str ("Fold::operation cannot mix input with output");
+  if (!output->mixable (*input, nbin))
+    throw_str ("Fold::transformation cannot mix input with output");
 
   if (folding_period == 0 && !folding_polyco)
-    throw_str ("Fold::operation no folding period or polyco set");
+    throw_str ("Fold::transformation no folding period or polyco set");
 
   int blocks = input->get_nchan() * input->get_npol();
 
@@ -241,15 +237,15 @@ void dsp::Fold::operation ()
   assert (block_size % input->get_ndim() == 0);
 
   fold (blocks, block_ndat, input->get_ndim(),
-	input->get_datptr(), profile->get_datptr(), profile->hits.begin(),
+	input->get_datptr(), output->get_datptr(), output->hits.begin(),
 	input->get_ndat());
 
-  profile->integration_length += double(input->get_ndat())*sampling_interval;
+  output->integration_length += double(input->get_ndat())*sampling_interval;
   
   if (folding_period)
-    profile->set_folding_period( folding_period );
+    output->set_folding_period( folding_period );
   else
-    profile->set_folding_polyco( folding_polyco );
+    output->set_folding_polyco( folding_polyco );
 
 }
 

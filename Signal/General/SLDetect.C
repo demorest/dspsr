@@ -4,17 +4,17 @@
 
 #include "genutil.h"
 
-#include "dsp/TimeseriesOperation.h"
-#include "dsp/Timeseries.h"
 #include "dsp/SLDetect.h"
 
-dsp::SLDetect::SLDetect(Behaviour _type) : TimeseriesOperation ("SLDetect", _type){
+dsp::SLDetect::SLDetect () 
+  : Transformation <TimeSeries, TimeSeries> ("SLDetect", anyplace)
+{
 }
 
-void dsp::SLDetect::operation ()
+void dsp::SLDetect::transformation ()
 {
   if( verbose ){
-    fprintf(stderr,"\nIn %s::operation()\n",get_name().c_str());
+    fprintf(stderr,"\nIn %s::transformation()\n",get_name().c_str());
     fprintf(stderr,"In SLDetect::Operation input has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d\n",
 	    input->get_ndim(), input->get_ndat(), input->get_npol(), input->get_nchan(),input->get_nbit());    
   }
@@ -69,7 +69,7 @@ void dsp::SLDetect::operation ()
   
   if( input->get_state()==Signal::Nyquist ){
     if(verbose)
-      fprintf(stderr,"SLDetect case is an %s operation on Nyquist data\n",
+      fprintf(stderr,"SLDetect case is an %s transformation on Nyquist data\n",
 	      input.get()==output.get()?"inplace":"outofplace"); 
     
     do{
@@ -81,7 +81,7 @@ void dsp::SLDetect::operation ()
 
   else if( input->get_state()==Signal::Analytic ){
     if(verbose)
-      fprintf(stderr,"SLDetect case is an %s operation on Analytic data\n",
+      fprintf(stderr,"SLDetect case is an %s transformation on Analytic data\n",
 	      input.get()==output.get()?"inplace":"outofplace");
 
     do{
@@ -109,7 +109,8 @@ void dsp::SLDetect::operation ()
   // Bad:
   //  output->resize( output->get_ndat() );
   // Good: (ndim has changed so subsize changes:)
-  output->set_subsize( (output->get_ndat()*output->get_nbit())/8 );
+  // wrong: subsize is the number of floats in a data block
+  // output->set_subsize( (output->get_ndat()*output->get_nbit())/8 );
   
     if(verbose)
     fprintf(stderr,"after sld output has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d state=%s\n",
@@ -117,6 +118,6 @@ void dsp::SLDetect::operation ()
 	    output->get_state_as_string().c_str());
 
   if( verbose )
-    fprintf(stderr,"Exiting from %s::operation()\n\n",get_name().c_str());
+    fprintf(stderr,"Exiting from %s::transformation()\n\n",get_name().c_str());
 }
 

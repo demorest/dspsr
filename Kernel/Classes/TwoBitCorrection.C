@@ -4,7 +4,7 @@
 
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
-#include "dsp/Timeseries.h"
+#include "dsp/TimeSeries.h"
 
 #include "genutil.h"
 #include "ierf.h"
@@ -77,19 +77,19 @@ void dsp::TwoBitCorrection::set_table (TwoBitTable* _table)
 }
 
 //! Initialize and resize the output before calling unpack
-void dsp::TwoBitCorrection::operation ()
+void dsp::TwoBitCorrection::transformation ()
 {
   if (input->get_nbit() != 2)
-    throw_str ("TwoBitCorrection::operation input not 2-bit digitized");
+    throw_str ("TwoBitCorrection::transformation input not 2-bit digitized");
 
   if (verbose)
-    cerr << "TwoBitCorrection::operation" << endl;;
+    cerr << "TwoBitCorrection::transformation" << endl;;
 
   // build the two-bit lookup table
   if (!built)
     build ();
 
-  Unpacker::operation ();
+  Unpacker::transformation ();
 }
 
 
@@ -346,7 +346,7 @@ void dsp::TwoBitCorrection::unpack ()
 
     const unsigned char* from = rawptr + ipol;
 
-    Timeseries* ts_output = dynamic_cast<Timeseries*>(output.get());
+    TimeSeries* ts_output = dynamic_cast<TimeSeries*>(output.get());
 
     float* into = ts_output->get_datptr (0, ipol);
 

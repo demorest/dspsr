@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
-#include "dsp/Timeseries.h"
+#include "dsp/TimeSeries.h"
 #include "dsp/Detection.h"
 
 #include "string_utils.h"
@@ -66,10 +66,10 @@ int main (int argc, char** argv)
   }
 
   if (verbose)
-    cerr << "Creating Timeseries instance" << endl;
+    cerr << "Creating TimeSeries instance" << endl;
 
   // input voltages (float_Stream)
-  dsp::Timeseries voltages;
+  dsp::TimeSeries voltages;
 
   if (verbose)
     cerr << "Creating IOManager instance" << endl;

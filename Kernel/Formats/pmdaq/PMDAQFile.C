@@ -113,12 +113,11 @@ void dsp::PMDAQFile::open_it (const char* filename)
 #define DATA_BYTES (48*1024)
 #define TRAILER_BYTES 4
 
-int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes){
+int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
+{
   int part_chunk_of_48k;
-  int whole_chunks_of_48k;
   int last_chunk_of_48k;
 
-  int prelim_skip;
   int64 loaded_bytes;
   int64 retval;
 

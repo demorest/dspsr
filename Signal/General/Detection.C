@@ -1,13 +1,13 @@
 #include "dsp/Detection.h"
-#include "dsp/Timeseries.h"
-#include "dsp/TimeseriesOperation.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/Transformation.h"
 
 #include "genutil.h"
 #include "cross_detect.h"
 
 //! Constructor
 dsp::Detection::Detection () 
-  : TimeseriesOperation ("Detection", anyplace)
+  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace)
 {
   state = Signal::Intensity;
   ndim = 1;
@@ -31,23 +31,23 @@ void dsp::Detection::set_output_state (Signal::State _state)
 }
 
 //! Detect the input data
-void dsp::Detection::operation ()
+void dsp::Detection::transformation ()
 {
   if (verbose)
-    cerr << "Detection::operation output state="
+    cerr << "Detection::transformation output state="
 	 << Signal::state_string(state) << endl;
 
   if (input->get_nbit() != sizeof(float) * 8)
-    throw_str ("Detection::operation input not floating point");
+    throw_str ("Detection::transformation input not floating point");
 
   if (state == Signal::Stokes || state == Signal::Coherence) {
 
     if (input->get_npol() != 2)
-      throw_str ("Detection::operation invalid npol=%d for %s formation",
+      throw_str ("Detection::transformation invalid npol=%d for %s formation",
 		 input->get_npol(), Signal::state_string(state));
 
     if (input->get_state() != Signal::Analytic)
-      throw_str ("Detection::operation invalid state=%s for %s formation",
+      throw_str ("Detection::transformation invalid state=%s for %s formation",
 		 input->get_state_as_string().c_str(),
 		 Signal::state_string(state));
 
@@ -55,14 +55,14 @@ void dsp::Detection::operation ()
     // in three ways, corresponding to ndim = 1,2,4
 
     if (!(ndim==1 || ndim==2 || ndim==4))
-      throw_str ("Detection::operation invalid ndim=%d for %s formation",
+      throw_str ("Detection::transformation invalid ndim=%d for %s formation",
 		 ndim, Signal::state_string(state));
     
   }
 
   bool inplace = (input.get() == output.get());
   if (verbose)
-    cerr << "Detection::operation inplace" << endl;
+    cerr << "Detection::transformation inplace" << endl;
 
   if (!inplace)
     resize_output ();
@@ -74,7 +74,7 @@ void dsp::Detection::operation ()
     polarimetry ();
 
   else
-    throw string("Detection::operation unknown output state: ")
+    throw string("Detection::transformation unknown output state: ")
       + Signal::state_string (state);
 		  
   if (inplace)
@@ -86,8 +86,8 @@ void dsp::Detection::resize_output ()
   if (verbose)
     cerr << "Detection::resize_output" << endl;
 
-  int output_ndim = 1;
-  int output_npol = input->get_npol();
+  unsigned output_ndim = 1;
+  unsigned output_npol = input->get_npol();
 
   if (state == Signal::Stokes || state == Signal::Coherence) {
     output_ndim = ndim;
@@ -103,7 +103,7 @@ void dsp::Detection::resize_output ()
   output->set_ndim (output_ndim);
   output->set_npol (output_npol);
 
-  int64 output_ndat = input->get_ndat();
+  uint64 output_ndat = input->get_ndat();
   output->resize (output_ndat);
 
   if (state == Signal::Stokes || state == Signal::Coherence) {
@@ -111,10 +111,10 @@ void dsp::Detection::resize_output ()
 
     unsigned block_size = output_ndim * output_ndat;
     
-    for (int ichan=0; ichan < output->get_nchan(); ichan ++) {
+    for (unsigned ichan=0; ichan < output->get_nchan(); ichan ++) {
       float* base = output->get_datptr (ichan, 0);
       
-      for (int ipol=1; ipol<output_npol; ipol++)
+      for (unsigned ipol=1; ipol<output_npol; ipol++)
 	if (output->get_datptr (ichan, ipol) != base + ipol*block_size)
 	  throw_str ("Detection::resize_output pointer mis-match");
     }
@@ -132,7 +132,7 @@ void dsp::Detection::polarimetry ()
   if (verbose)
     cerr << "Detection::polarimetry ndim=" << ndim << endl;
 
-  int64 ndat = input->get_ndat();
+  uint64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
   // necessary conditions of this form of detection
@@ -148,7 +148,7 @@ void dsp::Detection::polarimetry ()
   float* copyq = NULL;
 
   if (inplace && ndim != 2) {
-    // only when ndim==2 is this operation really inplace.
+    // only when ndim==2 is this transformation really inplace.
     // so when ndim==1or4, a copy of the data must be made
     
     // need to copy both polarizations

@@ -4,7 +4,9 @@
 
 bool dsp::CPSR2TwoBitCorrection::matches (const Observation* observation)
 {
-  return observation->get_machine() == "CPSR2";
+  return observation->get_machine() == "CPSR2"
+    && observation->get_nbit() == 2
+    && observation->get_state() == Signal::Nyquist;
 }
 
 //! Null constructor

@@ -1,27 +1,28 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/11/08 01:26:15 $
-   $Author: hknight $ */
+   $Revision: 1.11 $
+   $Date: 2002/11/09 15:55:27 $
+   $Author: wvanstra $ */
 
 #ifndef __Input_h
 #define __Input_h
 
+#include "dsp/Operation.h"
 #include "dsp/Observation.h"
-#include "dsp/Basicseries.h"
-
-#include "RealTimer.h"
+#include "environ.h"
 
 namespace dsp {
 
-  //! Pure virtual base class of all objects that can load Basicseries data
+  class BitSeries;
+
+  //! Pure virtual base class of all objects that can load BitSeries data
   /*! 
     This class defines the common interface as well as some basic
-    functionality relating to sources of baseband data.
+    functionality relating to sources of BitSeries data.
   */
 
-  class Input : public Reference::Able {
+  class Input : public Operation {
 
   public:
     
@@ -29,7 +30,7 @@ namespace dsp {
     static bool verbose;
     
     //! Constructor
-    Input ();
+    Input (const char* name = "Input");
     
     //! Destructor
     virtual ~Input ();
@@ -37,14 +38,11 @@ namespace dsp {
     //! End of data
     virtual bool eod() = 0;
     
-    //! Load Timeseries data
-    virtual void load (Basicseries* data);
+    //! Load BitSeries data
+    virtual void load (BitSeries* data);
 
-    //! Load data into the Timeseries specified with set_output
-    virtual void operate ();
-
-    //! Set the Timeseries to which data will be loaded
-    virtual void set_output (Basicseries* data);
+    //! Set the BitSeries to which data will be loaded
+    virtual void set_output (BitSeries* data);
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
@@ -70,10 +68,16 @@ namespace dsp {
 
   protected:
 
-    //! Load next block of data into Timeseries
-    virtual void load_data (Basicseries* data) = 0;
+    //! The BitSeries to which data will be loaded on next call to operate
+    Reference::To<BitSeries> output;
 
-    //! Information about the data source (passed on to Timeseries in load)
+    //! Load next block of data into BitSeries
+    virtual void load_data (BitSeries* data) = 0;
+
+    //! Load data into the BitSeries specified with set_output
+    virtual void operation ();
+
+    //! Information about the data source (passed on to BitSeries in load)
     Observation info;
 
     //! Number of time samples to load on each load_block
@@ -88,13 +92,6 @@ namespace dsp {
     //! First time sample to be read on the next call to load_data
     uint64 next_sample;
     
-  private:
-    //! Stop watch records the amount of time spent in load method
-    RealTimer load_time;
-
-    //! The Timeseries to which data will be loaded on next call to operate
-    Reference::To<Basicseries> output;
-
   };
 
 }

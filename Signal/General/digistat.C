@@ -5,8 +5,8 @@
 
 #include "dsp/TwoBitStatsPlotter.h"
 #include "dsp/TwoBitCorrection.h"
-#include "dsp/Bitseries.h"
-#include "dsp/Timeseries.h"
+#include "dsp/BitSeries.h"
+#include "dsp/TimeSeries.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
 #include "Error.h"
@@ -69,7 +69,7 @@ int main (int argc, char** argv)
   }
 
   // converted voltages container
-  Reference::To<dsp::Timeseries> voltages = new dsp::Timeseries;
+  Reference::To<dsp::TimeSeries> voltages = new dsp::TimeSeries;
 
   // interface manages the creation of data loading and converting classes
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;

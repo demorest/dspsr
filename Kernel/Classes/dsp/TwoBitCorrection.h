@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.17 $
-   $Date: 2002/11/08 01:26:54 $
-   $Author: hknight $ */
+   $Revision: 1.18 $
+   $Date: 2002/11/09 15:55:27 $
+   $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
@@ -13,8 +13,8 @@ class TwoBitCorrection;
 #include <vector>
 
 #include "dsp/Unpacker.h"
-#include "dsp/Bitseries.h"
-#include "dsp/Timeseries.h"
+#include "dsp/BitSeries.h"
+#include "dsp/TimeSeries.h"
 
 #include "environ.h"
 
@@ -22,7 +22,7 @@ namespace dsp {
 
   class TwoBitTable;
   
-  //! Converts a Timeseries from two-bit digitized to floating-point values
+  //! Converts a TimeSeries from two-bit digitized to floating-point values
   /*! The conversion routines are implemented by the TwoBitCorrection
     sub-classes, which perform the dynamic level-setting technique
     described by Jenet & Anderson (1998, PASP, 110, 1467; hereafter
@@ -99,7 +99,7 @@ namespace dsp {
     void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
-    static TwoBitCorrection* create (const Bitseries& input,
+    static TwoBitCorrection* create (const BitSeries& input,
 				     int nsample=0, float cutoff_sigma=3.0);
 
     //! Return the high and low output voltage values
@@ -112,8 +112,8 @@ namespace dsp {
 
   protected:
 
-    //! Perform the bit conversion operation on the input Timeseries
-    virtual void operation ();
+    //! Perform the bit conversion transformation on the input TimeSeries
+    virtual void transformation ();
 
     //! Build the two-bit correction look-up table and allocate histograms
     virtual void build ();

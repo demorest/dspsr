@@ -1,13 +1,12 @@
 #include "dsp/Input.h"
-#include "dsp/Basicseries.h"
+#include "dsp/BitSeries.h"
 
 #include "Error.h"
-
 #include "genutil.h"
 
 bool dsp::Input::verbose = false;
 
-dsp::Input::Input ()
+dsp::Input::Input (const char* name) : Operation (name)
 {
   block_size = overlap = 0;
   next_sample = 0;
@@ -17,20 +16,20 @@ dsp::Input::~Input ()
 {
 }
 
-//! Load data into the Basicseries specified by set_output
-void dsp::Input::operate ()
+//! Load data into the BitSeries specified by set_output
+void dsp::Input::operation ()
 {
   if (verbose)
     cerr << "Input::operate" << endl;
   
   if (!output)
-    throw Error (InvalidState, "Input::operate", "no output Basicseries");
+    throw Error (InvalidState, "Input::operate", "no output BitSeries");
 
   load (output);
 }
 
-//! Set the Basicseries to which data will be loaded
-void dsp::Input::set_output (Basicseries* data)
+//! Set the BitSeries to which data will be loaded
+void dsp::Input::set_output (BitSeries* data)
 {
   if (!output || output != data) {
     output = data;
@@ -41,8 +40,11 @@ void dsp::Input::set_output (Basicseries* data)
 
 /*! Set the Observation attributes of data and load the next block of data
  */
-void dsp::Input::load (Basicseries* data)
+void dsp::Input::load (BitSeries* data)
 {
+  if (verbose)
+    cerr << "Input::load (BitSeries* = " << data << ")" << endl;
+
   if (!data)
     throw Error (InvalidParam, "Input::load", "invalid data reference");
 
@@ -73,14 +75,10 @@ void dsp::Input::load (Basicseries* data)
 
   data->resize (block_size);
 
-  load_time.start();
-
   if (verbose)
     cerr << "Input::load call load_data" << endl;
 
   load_data (data);
-
-  load_time.stop();
 
   data->input_sample = next_sample;
 
@@ -119,7 +117,7 @@ void dsp::Input::seek (int64 offset, int whence)
     if (!info.get_ndat())
       throw Error (InvalidState, "Input::seek", "SEEK_END unknown eod");
 
-    if (offset < -info.get_ndat())
+    if (offset < -int64(info.get_ndat()))
       throw Error (InvalidRange, "Input::seek", "SEEK_END negative offset");
 
     next_sample = info.get_ndat() + offset;

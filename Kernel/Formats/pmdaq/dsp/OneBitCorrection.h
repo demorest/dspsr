@@ -8,14 +8,14 @@ class OneBitCorrection;
 #include <vector>
 
 #include "dsp/Unpacker.h"
-#include "dsp/Timeseries.h"
-#include "dsp/Bitseries.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
 
 #include "environ.h"
 
 namespace dsp {
 
-  //! Converts a Timeseries from one-bit digitized to floating-point values
+  //! Converts a TimeSeries from one-bit digitized to floating-point values
   class OneBitCorrection: public Unpacker {
 
   public:
@@ -73,7 +73,7 @@ namespace dsp {
     void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
-    static OneBitCorrection* create (const Bitseries& input,
+    static OneBitCorrection* create (const BitSeries& input,
 				     int nsample=0, float cutoff_sigma=3.0);
 
     //! Return the high and low output voltage values
@@ -81,8 +81,8 @@ namespace dsp {
 
   protected:
 
-    //! Perform the bit conversion operation on the input Timeseries
-    virtual void operation ();
+    //! Perform the bit conversion transformation on the input TimeSeries
+    virtual void transformation ();
 
     //! Unpacking algorithm may be re-defined by sub-classes
     virtual void unpack ();

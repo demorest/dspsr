@@ -159,11 +159,13 @@ template <typename T> inline T sqr (T x) { return x*x; }
 */
 double dsp::Dedispersion::smearing_time (double cfreq, double bw) const
 {
-  double f_lower = cfreq - bw/2.0;
-  double f_upper = cfreq + bw/2.0;
+  return delay_time (cfreq - fabs(0.5*bw), cfreq + fabs(0.5*bw));
+}
 
+double dsp::Dedispersion::delay_time (double freq1, double freq2) const
+{
   double dispersion = dispersion_measure/dm_dispersion;
-  return dispersion * (1.0/sqr(f_lower)-1.0/sqr(f_upper));
+  return dispersion * ( 1.0/sqr(freq1) - 1.0/sqr(freq2) );
 }
 
 unsigned dsp::Dedispersion::smearing_samples (int half) const

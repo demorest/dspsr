@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.26 $
-   $Date: 2002/11/06 06:30:42 $
-   $Author: hknight $ */
+   $Revision: 1.27 $
+   $Date: 2002/11/09 15:55:27 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -27,13 +27,13 @@
   the dsp namespace, is divided into three main classes: data
   containers and loaders, DSP algorithms, and auxilliary routines.
 
-  The main data container is the dsp::Timeseries class.  This class
+  The main data container is the dsp::TimeSeries class.  This class
   may hold N-bit digitized data as well as the "unpacked" floating
   point representation.  The dsp::Loader class and its children are
-  used to load data into the dsp::Timeseries container.
+  used to load data into the dsp::TimeSeries container.
 
   The main DSP algorithms are implemented by dsp::Operation and its
-  sub-classes.  These operate on dsp::Timeseries and can:
+  sub-classes.  These operate on dsp::TimeSeries and can:
   <UL>
   <LI> convert digitized data to floating points (dsp::TwoBitCorrection class)
   <LI> coherently dedisperse data (dsp::Convolution class)
@@ -70,44 +70,39 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
-    //! Set the dimensions of each time sample
-    /*! Parameters determine the size and interpretation of each datum */
-    virtual void set_sample (Signal::State state,
-			     int nchan, int npol, int ndim, int nbit);
-
     //! Set the state of the signal
     virtual void set_state (Signal::State _state);
     //! Return the state of the signal
     Signal::State get_state () const { return state; }
 
     //! Set the dimension of each datum
-    virtual void set_ndim (int _ndim) { ndim = _ndim; }
+    virtual void set_ndim (unsigned _ndim) { ndim = _ndim; }
      //! Return the dimension of each datum
-    int get_ndim () const { return ndim; }
+    unsigned get_ndim () const { return ndim; }
 
      //! Set the number of channels into which the band is divided
-    virtual void set_nchan (int _nchan) { nchan = _nchan; }
+    virtual void set_nchan (unsigned _nchan) { nchan = _nchan; }
     //! Return the number of channels into which the band is divided
-    int get_nchan () const { return nchan; }
+    unsigned get_nchan () const { return nchan; }
 
     //! Set the number of polarizations
-    virtual void set_npol (int _npol) { npol = _npol; }
+    virtual void set_npol (unsigned _npol) { npol = _npol; }
     //! Return the number of polarizations
-    int get_npol () const { return npol; }
+    unsigned get_npol () const { return npol; }
 
     //! Set the number of bits per value
-    void set_nbit (int _nbit) { nbit = _nbit; }
+    void set_nbit (unsigned _nbit) { nbit = _nbit; }
     //! Return the number of polarizations
-    int get_nbit () const { return nbit; }
+    unsigned get_nbit () const { return nbit; }
 
     //! Set the number of time samples in container
     /*! Note that one time sample may be complex and/or vector in
       nature.  For instance, the in-phase and quadrature components of
       two orthogonal polarizations, though represented by four
       independent numbers, still represent one time sample. */
-    virtual void set_ndat (int64 _ndat) { ndat = _ndat; }
+    virtual void set_ndat (uint64 _ndat) { ndat = _ndat; }
     //! Return the number of time samples in container
-    int64 get_ndat () const { return ndat; }
+    uint64 get_ndat () const { return ndat; }
 
     //! Set the tempo telescope code
     void set_telescope (char telescope);
@@ -129,7 +124,7 @@ namespace dsp {
     //! Return the centre frequency of the band-limited signal in MHz
     double get_centre_frequency () const { return centre_frequency; }
     //! Returns the centre frequency of the specified channel in MHz
-    double get_centre_frequency (int ichan) const;
+    double get_centre_frequency (unsigned ichan) const;
 
     //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
@@ -221,21 +216,21 @@ namespace dsp {
     string get_state_as_string () const;
 
     //! Return the size in bytes of nsamples time samples
-    int64 nbytes (int64 nsamples) const
+    uint64 nbytes (uint64 nsamples) const
       { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
 
     //! Return the size in bytes of ndat time samples
-    int64 nbytes () const
+    uint64 nbytes () const
       { return nbytes (ndat); }
 
-    int64 verbose_nbytes (int64 nsamples) const;
+    uint64 verbose_nbytes (uint64 nsamples) const;
     
     //! Return the size in bytes of one time sample
     float nbyte () const
       { return float(nbit*npol*nchan*get_ndim()) / 8.0; }
 
     //! Return the number of samples in nbytes bytes
-    int64 nsamples (int64 nbytes) const
+    uint64 nsamples (uint64 nbytes) const
       { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
 
     //! Returns true if the signal may be integrated
@@ -259,7 +254,7 @@ namespace dsp {
   protected:
 
     //! Number of time samples in container
-    int64 ndat;
+    uint64 ndat;
 
     //! Tempo telescope code
     char telescope;
@@ -274,16 +269,16 @@ namespace dsp {
     double bandwidth;
 
     //! Number of frequency channels across bandwidth
-    int nchan;
+    unsigned nchan;
 
     //! Number of polarizations
-    int npol;
+    unsigned npol;
 
     //! Dimension of each datum
-    int ndim;
+    unsigned ndim;
 
     //! Number of bits per value
-    int nbit;
+    unsigned nbit;
 
     //! Type of signal source (Linear or Circular)
     Signal::Source type;
@@ -321,7 +316,7 @@ namespace dsp {
     //! Coordinates of the source
     sky_coord coordinates;
 
-    //! The DM Timeseries has been dedispersed to
+    //! The DM TimeSeries has been dedispersed to
     double dispersion_measure;
 
     //! Set all attributes to null default

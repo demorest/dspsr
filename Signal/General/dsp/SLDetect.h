@@ -3,21 +3,22 @@
 #ifndef __SLDetect_h
 #define __SLDetect_h
 
-#include "dsp/TimeseriesOperation.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
-  //! Simply Square Law detects Timeseries in-place.
+  //! Simply Square Law detects TimeSeries in-place.
 
-  class SLDetect : public TimeseriesOperation {
+  class SLDetect : public Transformation <TimeSeries, TimeSeries> {
 
   public:
 
-    SLDetect(Behaviour _type=Operation::anyplace);
+    SLDetect ();
         
   protected:
-    //! The operation loads the next block of data
-    virtual void operation ();
+    //! The transformation loads the next block of data
+    virtual void transformation ();
 
   };
 

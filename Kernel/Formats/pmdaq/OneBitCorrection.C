@@ -4,7 +4,7 @@
 
 #include "environ.h"
 #include "OneBitCorrection.h"
-#include "Timeseries.h"
+#include "TimeSeries.h"
 #include "Error.h"
 
 #include "genutil.h"
@@ -20,13 +20,13 @@ dsp::OneBitCorrection::~OneBitCorrection ()
 }
 
 //! Initialize and resize the output before calling unpack
-void dsp::OneBitCorrection::operation ()
+void dsp::OneBitCorrection::transformation ()
 {
   if (input->get_nbit() != 1)
-    throw_str ("OneBitCorrection::operation input not 1-bit digitized");
+    throw_str ("OneBitCorrection::transformation input not 1-bit digitized");
 
   if (verbose)
-    cerr << "Inside dsp::OneBitCorrection::operation" << endl;;
+    cerr << "Inside dsp::OneBitCorrection::transformation" << endl;;
 
   // set the Observation information
   output->Observation::operator=(*input);
@@ -48,71 +48,49 @@ void dsp::OneBitCorrection::operation ()
 void dsp::OneBitCorrection::unpack ()
 {
   if (verbose)
-    cerr << "dsp::OneBitCorrection::unpack input=" << input.get() << endl;;
+    cerr << "dsp::OneBitCorrection::unpack" << endl;
 
   if (input->get_state() != Signal::Intensity)
-    throw_str ("OneBitCorrection::unpack input not total intensity");
-
-  if (verbose)
-    cerr << "dsp::OneBitCorrection::unpack 0.1" << endl;
+    throw Error (InvalidState, "OneBitCorrection::unpack",
+		 "input not total intensity");
 
   if (input->get_nbit() != 1)
-    throw_str ("OneBitCorrection::unpack input not 1-bit sampled");
-
-  if (verbose)
-    cerr << "dsp::OneBitCorrection::unpack 0.2" << endl;
+    throw Error (InvalidState, "OneBitCorrection::unpack",
+		 "input not 1-bit sampled");
 
   int64 ndat = input->get_ndat();
-  int n_freq = input->get_nchan();
+  unsigned n_freq = input->get_nchan();
+
+  if (n_freq % 32)
+    throw Error (InvalidState, "OneBitCorrection::unpack",
+		 "nchan=%d is not a multiple of 32", n_freq);
 
   if (verbose)
     cerr << "dsp::OneBitCorrection::unpack ndat="
 	 << ndat << " n_freq=" << n_freq << endl;
   
-  if (verbose)
-    cerr << "Inside dsp::OneBitCorrection::unpack()2 " << endl;;
-  const unsigned int * rawptr = (const unsigned int *)input->get_rawptr();
+  const uint32 * rawptr = (const uint32 *) input->get_rawptr();
+  const uint32 mask = 0x01;
 
-  //if (input->get_npol()!=1) 
-  //  throw_str ("OneBitCorrection::unpack npol != 1, instead %d",
-  //	       input_get_npol());
+  unsigned nskip32 = n_freq/32;
 
-  if (verbose)
-    cerr << "Inside dsp::OneBitCorrection::unpack()3" << endl;;
+  for (unsigned ichan=0; ichan < n_freq; ichan++) {
 
-    //unsigned int * from = (unsigned int * ) rawptr;
+    unsigned shift32 = ichan % 32;
 
-    int n_samples = ndat; // * 8 / n_freq;
+    const uint32* from = rawptr + ichan / 32;
+    float* into = output -> get_datptr (ichan, 0);
 
-    if (verbose) cerr << " n_freq " <<n_freq<< " n_samples " <<
-		   n_samples<< endl;
-
-    const unsigned int mask = 0x01;
-    // PMDAQ data comes in 8 1-bit sample chunks in reverse order??
-    if (verbose) cerr << "unloading " << n_samples << " of data " << endl;
-
-    float * base_address = (float*)output->get_rawptr();
-    int gap = int(output->get_ndat() * output->get_ndim());
-    //int gap = output->get_datptr(1,0)-base_address;
-    float * into;
-    int pol_number;
-    for (int i=0;i<n_samples;i++)
-      {
-      pol_number = 0;
-      into = base_address + i;
-      for (int j=0; j<n_freq/32;j++){
-	for (int k=0;k<32;k++){
-	  into += gap;
-	  *into = (float) (((*rawptr)>>k) & mask);
-	  pol_number++;
-	}
-	rawptr ++;
-      }
-      //      cout <<"."<< endl;
-      }
+    for (unsigned idat=0; idat < ndat; idat++) {
+      *into = float (((*from)>>shift32) & mask);
+      from += nskip32;
+      into ++;
+    }
+  }
 }
 
 bool dsp::OneBitCorrection::matches (const Observation* observation)
 {
-  return (observation->get_machine() == "PMDAQ" && observation->get_nbit()==1);
+  return observation->get_machine() == "PMDAQ"
+    && observation->get_nbit() == 1;
 }

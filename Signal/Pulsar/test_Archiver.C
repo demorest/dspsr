@@ -2,7 +2,8 @@
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
-#include "dsp/Timeseries.h"
+#include "dsp/Unpacker.h"
+#include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Detection.h"
 #include "dsp/Fold.h"
@@ -36,7 +37,6 @@ int main (int argc, char** argv)
 
   // number of time samples loaded from file at a time
   int block_size = 512*1024;
-  int overlap = 0;
   int blocks = 0;
   int ndim = 4;
   int nbin = 1024;
@@ -89,8 +89,8 @@ int main (int argc, char** argv)
   }
 
   if (verbose)
-    cerr << "Creating Timeseries instance" << endl;
-  dsp::Timeseries voltages;
+    cerr << "Creating TimeSeries instance" << endl;
+  dsp::TimeSeries voltages;
 
   if (verbose)
     cerr << "Creating PhaseSeries instance" << endl;

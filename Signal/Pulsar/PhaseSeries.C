@@ -13,7 +13,7 @@ dsp::PhaseSeries::~PhaseSeries () { }
 //! Set the number of phase bins into which data will be PhaseSeriesed
 void dsp::PhaseSeries::resize (int64 nbin)
 {
-  Timeseries::resize (nbin);
+  TimeSeries::resize (nbin);
   hits.resize (nbin);
 }
 
@@ -80,7 +80,7 @@ void dsp::PhaseSeries::zero ()
   for (ipt=0; ipt<hits.size(); ipt++)
     hits[ipt]=0;
 
-  Timeseries::zero ();
+  TimeSeries::zero ();
 }
 
 
@@ -147,7 +147,7 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   if (this == &prof)
     return *this;
 
-  Timeseries::operator = (prof);
+  TimeSeries::operator = (prof);
 
   integration_length = prof.integration_length;
   end_time           = prof.end_time;
@@ -164,7 +164,7 @@ dsp::PhaseSeries::operator += (const PhaseSeries& prof)
   if (!mixable (prof, prof.get_nbin()))
     throw_str ("PhaseSeries::operator+= !mixable");
 
-  Timeseries::operator += (prof);
+  TimeSeries::operator += (prof);
 
   for (unsigned ibin=0; ibin<hits.size(); ibin++)
     hits[ibin] += prof.hits[ibin];

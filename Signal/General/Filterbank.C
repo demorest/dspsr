@@ -1,5 +1,5 @@
 #include "dsp/Filterbank.h"
-#include "dsp/Timeseries.h"
+#include "dsp/TimeSeries.h"
 
 #include "fftm.h"
 #include "dsp/Response.h"
@@ -17,16 +17,16 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
 }
 
 
-void dsp::Filterbank::operation ()
+void dsp::Filterbank::transformation ()
 {
   if (time_res < 1)
-    throw_str ("Filterbank::operation time resolution=%d < 1", time_res);
+    throw_str ("Filterbank::transformation time resolution=%d < 1", time_res);
 
   if (freq_res < 1)
-    throw_str ("Filterbank::operation freq resolution=%d < 1", freq_res);
+    throw_str ("Filterbank::transformation freq resolution=%d < 1", freq_res);
 
   if (nchan < 2)
-    throw_str ("Filterbank::operation number of channels=%d < 2", nchan);
+    throw_str ("Filterbank::transformation number of channels=%d < 2", nchan);
 
   // number of complex values in the result of the first fft
   unsigned n_fft = nchan * freq_res;
@@ -62,23 +62,23 @@ void dsp::Filterbank::operation ()
   }
 
   else
-    throw_str ("Filterbank::operation invalid input data state\n");
+    throw_str ("Filterbank::transformation invalid input data state\n");
 
   // if given, test the validity of the window function
   if (apodization) {
 
     if (apodization->get_ndat() != nsamp_fft)
-      throw_str ("Filterbank::operation invalid apodization function ndat=%d"
+      throw_str ("Filterbank::transformation invalid apodization function ndat=%d"
 		 " (nfft=%d)", apodization->get_ndat(), nsamp_fft);
 
     if (input->get_state() == Signal::Analytic 
 	&& apodization->get_ndim() != 2)
-      throw_str ("Filterbank::operation Signal::Analytic signal"
+      throw_str ("Filterbank::transformation Signal::Analytic signal"
 		 " Real apodization function.");
 
     if (input->get_state() == Signal::Nyquist 
 	&& apodization->get_ndim() != 1)
-      throw_str ("Filterbank::operation Signal::Nyquist signal."
+      throw_str ("Filterbank::transformation Signal::Nyquist signal."
 		 " Complex apodization function.");
   }
 
@@ -97,36 +97,36 @@ void dsp::Filterbank::operation ()
     // in the first spectra
 
     if (response->get_ndat() != n_fft)
-      throw_str ("Filterbank::operation response.ndat=%d != %d",
+      throw_str ("Filterbank::transformation response.ndat=%d != %d",
 		 response->get_ndat(), n_fft);
 
     // if the response has 8 dimensions, then perform matrix convolution
     matrix_convolution = (response->get_ndim() == 8);
 
     if (verbose)
-      fprintf (stderr, "Filterbank::operation with %s convolution\n",
+      fprintf (stderr, "Filterbank::transformation with %s convolution\n",
 	       (matrix_convolution)?"matrix":"complex");
 
     if (matrix_convolution && input->get_npol() != 2)
-	throw_str ("Filterbank::operation cross-filter and input.npol != 2");
+	throw_str ("Filterbank::transformation cross-filter and input.npol != 2");
   }
 
   if (bandpass) {
     if (bandpass->get_ndat() != n_fft)
-      throw_str ("Filterbank::operation bandpass.ndat=%d != nfft=%d",
+      throw_str ("Filterbank::transformation bandpass.ndat=%d != nfft=%d",
 		 bandpass->get_ndat(), n_fft);
 
     if (matrix_convolution && bandpass->get_npol() != 4)
-      throw_str ("Filterbank::operation with matrix convolution "
+      throw_str ("Filterbank::transformation with matrix convolution "
 		 "bandpass.npol=%d != 4", bandpass->get_npol());
   }
 
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
   // this may be in addition to any overlap necessary due to deconvolution.
-  // nsamp_step is analogous to ngood in Convolution::operation
+  // nsamp_step is analogous to ngood in Convolution::transformation
   int nsamp_tres = nchan / time_res;
   if (nsamp_tres < 1)
-    throw_str ("Filterbank::operation time resolution:%d > no.channels:%d\n",
+    throw_str ("Filterbank::transformation time resolution:%d > no.channels:%d\n",
 	       time_res, nchan);
 
   unsigned ndat = input->get_ndat();
@@ -138,10 +138,10 @@ void dsp::Filterbank::operation ()
   unsigned nkeep = freq_res - n_filt;
 
   if (npart == 0)
-    throw_str ("Filterbank::operation input.ndat="I64" to small (nfft=%d",
+    throw_str ("Filterbank::transformation input.ndat="I64" to small (nfft=%d",
 	       input->get_ndat(), nsamp_fft);
 
-  // prepare the output Timeseries
+  // prepare the output TimeSeries
   output->Observation::operator= (*input);
 
   // output data will be complex
@@ -163,11 +163,11 @@ void dsp::Filterbank::operation ()
   output->rescale (scalefac);
 
   if (verbose)
-    cerr << "Filterbank::operation scale="<< output->get_scale() <<endl;
+    cerr << "Filterbank::transformation scale="<< output->get_scale() <<endl;
 
   // output data will have new sampling rate
   // NOTE: that nsamp_fft already contains the extra factor of two required
-  // when the input Timeseries is Signal::Nyquist (real) sampled
+  // when the input TimeSeries is Signal::Nyquist (real) sampled
   double ratechange = double(freq_res * time_res) / double (nsamp_fft);
   output->set_rate (input->get_rate() * ratechange);
 
@@ -208,7 +208,7 @@ void dsp::Filterbank::operation ()
     cross_pol = 2;
 
   if (verbose)
-    cerr << "Filterbank::operation enter main loop " <<
+    cerr << "Filterbank::transformation enter main loop " <<
       " npart:" << npart <<
       " cpol:" << cross_pol <<
       " npol:" << input->get_npol() << endl;
@@ -336,7 +336,7 @@ void dsp::Filterbank::operation ()
   } // for each big fft (ipart)
 
   if (verbose)
-    cerr << "Filterbank::operation exit." << endl;
+    cerr << "Filterbank::transformation exit." << endl;
 }
 
 #if 0
@@ -348,7 +348,7 @@ void filterbank::scattered_power_correct (float_Stream& dispersed_power,
     throw string ("filterbank::scattered_power_correct "
 	       "ERROR: no time weights");
   
-  // check the validity of this operation
+  // check the validity of this transformation
   if (dispersed_power.get_state() != Detected)
     throw string ("filterbank::scattered_power_correct "
 	       "dispersed power must be detected");

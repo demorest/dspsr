@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/11/06 06:30:42 $
-   $Author: hknight $ */
+   $Revision: 1.10 $
+   $Date: 2002/11/09 15:55:27 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Fold_h
@@ -11,9 +11,9 @@
 
 #include <vector>
 
-#include "dsp/TimeseriesOperation.h"
-#include "environ.h"
-#include "MJD.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/PhaseSeries.h"
 
 class polyco;
 class psrephem;
@@ -23,12 +23,12 @@ namespace dsp {
   class PhaseSeries;
   class Observation;
 
-  //! Fold Timeseries data into phase-averaged profile(s)
+  //! Fold TimeSeries data into phase-averaged profile(s)
   /*! 
-    This Operation does not modify the Timeseries.  Rather, it accumulates
+    This Operation does not modify the TimeSeries.  Rather, it accumulates
     the (folded) average pulse profile data within its data structures.
   */
-  class Fold : public TimeseriesOperation {
+  class Fold : public Transformation <TimeSeries, PhaseSeries> {
 
   public:
     
@@ -38,7 +38,7 @@ namespace dsp {
     //! Destructor
     ~Fold ();
 
-    //! Prepare to fold the input Timeseries
+    //! Prepare to fold the input TimeSeries
     void prepare ();
 
     //! Prepare to fold the given Observation
@@ -101,8 +101,8 @@ namespace dsp {
 
   protected:
 
-    //! The operation folds the data into the profile
-    virtual void operation ();
+    //! The transformation folds the data into the profile
+    virtual void transformation ();
 
     //! Period at which to fold data (CAL)
     double folding_period;

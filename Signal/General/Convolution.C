@@ -1,15 +1,14 @@
 #include "dsp/Convolution.h"
-#include "dsp/Timeseries.h"
-
-#include "dsp/Response.h"
 #include "dsp/Apodization.h"
+#include "dsp/Response.h"
+
 #include "fftm.h"
 #include "genutil.h"
 
 //#define DEBUG
 
 dsp::Convolution::Convolution (const char* _name, Behaviour _type)
-  : TimeseriesOperation (_name, _type)
+  : Transformation<TimeSeries,TimeSeries> (_name, _type)
 {
 }
 
@@ -36,8 +35,8 @@ void dsp::Convolution::set_bandpass (Response* _bandpass)
 }
 
 /*!
-  \pre input Timeseries must contain phase coherent (undetected) data
-  \post output Timeseries will contain complex (observation::Signal::Signal::Analytic) data
+  \pre input TimeSeries must contain phase coherent (undetected) data
+  \post output TimeSeries will contain complex (observation::Signal::Signal::Analytic) data
     
   \post IMPORTANT!! Most backward complex FFT functions expect
   frequency components organized with f0+bw/2 -> f0, f0-bw/2 -> f0.
@@ -48,11 +47,11 @@ void dsp::Convolution::set_bandpass (Response* _bandpass)
   relative phases matter when calculating the Signal::Signal::Stokes parameters,
   this effect is basically ignorable for our purposes.
 */
-void dsp::Convolution::operation ()
+void dsp::Convolution::transformation ()
 {
   if (!response) {
     if (verbose)
-      cerr << "Convolution::operation no frequency response" << endl;
+      cerr << "Convolution::transformation no frequency response" << endl;
     return;
   }
 
@@ -63,7 +62,7 @@ void dsp::Convolution::operation ()
 
   // response must have at least two points in it
   if (response->get_ndat() < 2)
-    throw_str ("Convolution::operation invalid response size");
+    throw_str ("Convolution::transformation invalid response size");
 
   // if the response has 8 dimensions, then perform matrix convolution
   bool matrix_convolution = response->get_ndim() == 8;
@@ -75,11 +74,11 @@ void dsp::Convolution::operation ()
 
   // if matrix convolution, then there must be two polns
   if (matrix_convolution && npol != 2)
-    throw_str ("Convolution::operation matrix response and input.npol != 2");
+    throw_str ("Convolution::transformation matrix response and input.npol != 2");
 
   // response must contain a unique kernel for each channel
   if (response->get_nchan() != nchan)
-    throw_str ("Convolution::operation invalid response nsub=%d != nchan=%d",
+    throw_str ("Convolution::transformation invalid response nsub=%d != nchan=%d",
 	       response->get_nchan(), nchan);
 
   // number of points after first fft
@@ -94,7 +93,7 @@ void dsp::Convolution::operation ()
   unsigned n_overlap = nfilt_pos + nfilt_neg;
 
   if (verbose)
-    cerr << "Convolution::operation filt=" << n_fft 
+    cerr << "Convolution::transformation filt=" << n_fft 
 	 << " smear=" << n_overlap << endl;
 
   // 2 arrays needed: one for each of the forward and backward FFT results
@@ -119,7 +118,7 @@ void dsp::Convolution::operation ()
     nsamp_overlap = n_overlap;
   }
   else
-    throw_str ("Convolution::operation Invalid state:"
+    throw_str ("Convolution::transformation Invalid state:"
 	       + input->get_state_as_string());
 
 
@@ -131,12 +130,12 @@ void dsp::Convolution::operation ()
 
   // there must be at least enough data for one FFT
   if (input->get_ndat() < nsamp_fft)
-    throw_str ("Convolution::operation error ndat="I64" < nfft=%d",
+    throw_str ("Convolution::transformation error ndat="I64" < nfft=%d",
 	       input->get_ndat(), nsamp_fft);
 
   // the FFT size must be greater than the number of discarded points
   if (nsamp_fft < nsamp_overlap)
-    throw_str ("Convolution::operation error nfft=%d < nfilt=%d",
+    throw_str ("Convolution::transformation error nfft=%d < nfilt=%d",
 	       nsamp_fft, nsamp_overlap);
 
   // valid time samples per FFT
@@ -146,7 +145,7 @@ void dsp::Convolution::operation ()
   unsigned long npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
 
   if (verbose)
-    cerr << "Convolution::operation npart=" << npart << endl;
+    cerr << "Convolution::transformation npart=" << npart << endl;
 
   float* spectrum[2];
   spectrum[0] = float_workingspace (pts_reqd);
@@ -159,7 +158,7 @@ void dsp::Convolution::operation ()
   if (input->get_state() == Signal::Nyquist)
     complex_time += 2;
 
-  // prepare the output Timeseries
+  // prepare the output TimeSeries
   output->Observation::operator= (*input);
 
   // valid time samples convolved
@@ -182,7 +181,7 @@ void dsp::Convolution::operation ()
     output->rescale (double(nsamp_fft) * double(n_fft));
 
   if (verbose)
-    cerr << "Convolution::operation scale="<< output->get_scale() <<endl;
+    cerr << "Convolution::transformation scale="<< output->get_scale() <<endl;
 
   unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
   

@@ -4,6 +4,22 @@
 #include "dsp/File.h"
 #include "Error.h"
 
+//! Constructor
+dsp::File::File (const char* name) : Seekable (name)
+{ 
+  init(); 
+}
+    
+/*! The destructor is defined in the .C file so that the
+    Reference::To<BitStream> destructor need not know about the BitStream
+    class in the .h file, allowing changes to be made to BitStream without
+    forcing the re-compilation of code that uses Input but does not use
+    BitStream.
+*/
+dsp::File::~File ()
+{
+}
+
 void dsp::File::init()
 {
   fd = header_bytes = -1;

@@ -3,17 +3,18 @@
 #ifndef __TScrunch_h
 #define __TScrunch_h
 
-#include "dsp/TimeseriesOperation.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
-  //! Time-scrunches a Timeseries by ScrunchFactor OR to a required time resolution- which ever is specified as the last setting before operation() is called.
+  //! Time-scrunches a TimeSeries by ScrunchFactor OR to a required time resolution- which ever is specified as the last setting before transformation() is called.
 
-  class TScrunch : public TimeseriesOperation {
+  class TScrunch : public Transformation <TimeSeries, TimeSeries> {
 
   public:
 
-    TScrunch(Behaviour _type=Operation::anyplace);// : Operation ("TScrunch", _type);
+    TScrunch ();
     
     void set_ScrunchFactor( int64 _ScrunchFactor){ ScrunchFactor = _ScrunchFactor; use_tres = false; }
     int64 get_ScrunchFactor(){ return ScrunchFactor; }
@@ -27,7 +28,7 @@ namespace dsp {
     bool UsingTimeRes(){ return use_tres; }
 
   protected:
-    virtual void operation ();
+    virtual void transformation ();
 
     int64 ScrunchFactor;
     double TimeRes;  // In microseconds

@@ -1,33 +1,31 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/08 01:26:15 $
-   $Author: hknight $ */
+   $Revision: 1.9 $
+   $Date: 2002/11/09 15:55:26 $
+   $Author: wvanstra $ */
 
 
 #ifndef __File_h
 #define __File_h
 
-#include "dsp/BitseriesSeekable.h"
-#include "dsp/Bitseries.h"
-
+#include "dsp/Seekable.h"
 #include "Registry.h"
 
 namespace dsp {
 
-  //! Loads Bitseries data from file
-  class File : public BitseriesSeekable
+  //! Loads BitSeries data from file
+  class File : public Seekable
   {
     friend class MultiFile;
 
   public:
     
     //! Constructor
-    File () { init(); }
+    File (const char* name = "File");
     
     //! Destructor
-    virtual ~File () { }
+    virtual ~File ();
 
     //! Return true if filename appears to refer to a valid format
     virtual bool is_valid (const char* filename) const = 0;

@@ -1,16 +1,12 @@
 #include "dsp/Unpacker.h"
-#include "dsp/Observation.h"
-#include "dsp/Timeseries.h"
-#include "dsp/Bitseries.h"
-#include "dsp/Basicseries.h"
 
 #include "Error.h"
 
 //! Initialize and resize the output before calling unpack
-void dsp::Unpacker::operation ()
+void dsp::Unpacker::transformation ()
 {
   if (verbose)
-    cerr << "Unpacker::operation" << endl;;
+    cerr << "Unpacker::transformation" << endl;;
 
   // set the Observation information
   output->Observation::operator=(*input);
@@ -25,7 +21,7 @@ void dsp::Unpacker::operation ()
   unpack ();
 
   if (verbose)
-    cerr << "Unpacker::operation exit" << endl;;
+    cerr << "Unpacker::transformation exit" << endl;;
 }
 
 //! Specialize the unpacker to the Observation
@@ -33,21 +29,5 @@ void dsp::Unpacker::match (const Observation* observation)
 {
   if (verbose)
     cerr << "Unpacker::match" << endl;
-}
-
-void dsp::Unpacker::check_input(){
-  Bitseries* _input = dynamic_cast<Bitseries*>(const_cast<Basicseries*>(Operation::input.get()));
-  if( _input==0 )
-    throw Error(InvalidParam,"dsp::Unpacker::check_input()",
-		"You have given an input to this operation that is required to be a dsp::Bitseries- it is some other type of dsp::Basicseries");
-  input = _input;
-}
-
-void dsp::Unpacker::check_output(){
-  Timeseries* _output = dynamic_cast<Timeseries*>(Operation::output.get());
-  if( _output==0 )
-    throw Error(InvalidParam,"dsp::Unpacker::check_output()",
-		"You have given an output to this operation that is required to be a dsp::Timeseries- it is some other type of dsp::Basicseries");
-  output = _output;
 }
 

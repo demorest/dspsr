@@ -5,12 +5,12 @@
 
 #include <mpi.h>
 #define MPI 1
-#include "dsp/TimeseriesInput.h"
+#include "dsp/Input.h"
 
 namespace dsp {
 
-  //! Loads Timeseries data using the MPI communications protocol
-  class MPIRoot : public TimeseriesInput {
+  //! Loads BitSeries data using the MPI communications protocol
+  class MPIRoot : public Input {
     
   public:
     
@@ -27,10 +27,10 @@ namespace dsp {
     virtual bool eod();
     
     //! Send the next block using MPI_Isend
-    void send_data (Timeseries* data, int dest, int nbytes);
+    void send_data (BitSeries* data, int dest, int nbytes);
 
     //! Load the next block using MPI_Irecv
-    void load_data (Timeseries* data);
+    void load_data (BitSeries* data);
 
     //! MPI load does not support seeking
     virtual void seek (int64 offset, int whence = 0)

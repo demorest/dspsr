@@ -7,8 +7,9 @@
 #include "Error.h"
 
 #include "dsp/IOManager.h"
-#include "dsp/Timeseries.h"
-#include "dsp/Bitseries.h"
+#include "dsp/Unpacker.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Detection.h"
 #include "dsp/Fold.h"
@@ -77,8 +78,8 @@ int main (int argc, char** argv)
   }
 
   if (verbose)
-    cerr << "Creating Timeseries instance" << endl;
-  dsp::Timeseries voltages;
+    cerr << "Creating TimeSeries instance" << endl;
+  dsp::TimeSeries voltages;
 
   if (verbose)
     cerr << "Creating PhaseSeries instance" << endl;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/03 21:51:49 $
+   $Revision: 1.5 $
+   $Date: 2002/11/09 15:55:27 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -10,13 +10,13 @@
 
 #include <vector>
 
-#include "dsp/Timeseries.h"
+#include "dsp/TimeSeries.h"
 
 class polyco;
 
 namespace dsp {
   
-  class PhaseSeries : public Timeseries {
+  class PhaseSeries : public TimeSeries {
 
     friend class Fold;
 

@@ -1,56 +1,40 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/08 01:23:00 $
-   $Author: hknight $ */
+   $Revision: 1.5 $
+   $Date: 2002/11/09 15:55:27 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Unpacker_h
 #define __Unpacker_h
 
-class Unpacker;
-
-#include "dsp/Timeseries.h"
-#include "dsp/Bitseries.h"
-#include "dsp/Operation.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
 
 #include "Registry.h"
-#include "Reference.h"
 
 namespace dsp {
 
-  class Observation;
-
-  //! Abstract base class of Operations that convert n-bit to float
+  //! Abstract base class of Transformations that convert n-bit to float
   /*! 
 
   */
-  class Unpacker : public Operation {
+  class Unpacker : public Transformation <const BitSeries, TimeSeries> {
 
   public:
     
     //! Constructor
-    Unpacker (const char* name = "Unpacker") : Operation (name, outofplace) { }
+    Unpacker (const char* name = "Unpacker") 
+      : Transformation <const BitSeries, TimeSeries> (name, outofplace) { }
     
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);
 
    protected:
-    //! kludge of the century:
-    Reference::To<const Bitseries> input;
-
-    //! kludge of the century part 2
-    Reference::To<Timeseries> output;
-
-    //! check the input is dsp::Timeseries- called by set_input()
-    virtual void check_input();
-
-    //! check the output is dsp::Timeseries- called by set_output()
-    virtual void check_output();
-
-    //! The operation unpacks n-bit into floating point Timeseries
-    virtual void operation ();
+    //! The operation unpacks n-bit into floating point TimeSeries
+    virtual void transformation ();
     
     //! The unpacking routine
     virtual void unpack () = 0;

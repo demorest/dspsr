@@ -7,7 +7,7 @@
 
 bool dsp::S2TwoBitCorrection::matches (const Observation* observation)
 {
-  return observation->get_machine() == "S2";
+  return observation->get_machine() == "S2" && observation->get_nbit()==2;
 }
 
 

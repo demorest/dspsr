@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/06 06:30:41 $
-   $Author: hknight $ */
+   $Revision: 1.6 $
+   $Date: 2002/11/09 15:55:25 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Detection_h
@@ -11,18 +11,22 @@
 
 class Detection;
 
-#include "dsp/TimeseriesOperation.h"
-#include "dsp/Observation.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
-  //! Detects phase-coherent floating-point Timeseries data
-  /*!  This class may be used to perform simple square law detection
-    or calculation of the Signal::Stokes parameters or the coherency matrix.  
-    In the case of Signal::Stokes/Coherency, the components may be formed in
-    polarization-major order or time-major order. 
-  */
-  class Detection : public TimeseriesOperation {
+  //! Detects phase-coherent TimeSeries data
+  /*!  The Detection class may be used to perform simple square law
+  detection or calculation of the Stokes parameters or the coherency
+  matrix.  In the case of Stokes/Coherency formation, the components
+  may be stored in polarization-major order or time-major order, or a
+  mixture of the two by calling set_output_ndim() with an argument of
+  4, 1, or 2, respectively.  The three methods require different
+  amounts of RAM and therefore result in performance benefits that are
+  largely cache-dependent. */
+
+  class Detection : public Transformation <TimeSeries, TimeSeries> {
 
   public:
     
@@ -42,7 +46,7 @@ namespace dsp {
   protected:
 
     //! Detect the input data
-    virtual void operation ();
+    virtual void transformation ();
 
     //! Signal::State of the output data
     Signal::State state;
@@ -56,7 +60,7 @@ namespace dsp {
     //! Perform simple square-law detection
     void polarimetry ();
 
-    //! Set the state of the output Timeseries
+    //! Set the state of the output TimeSeries
     void resize_output ();
   };
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/03 21:51:49 $
+   $Revision: 1.5 $
+   $Date: 2002/11/09 15:55:27 $
    $Author: wvanstra $ */
 
 #ifndef __Filterbank_h
@@ -12,7 +12,7 @@
 
 namespace dsp {
   
-  //! Breaks a single-band Timeseries into multiple frequency channels
+  //! Breaks a single-band TimeSeries into multiple frequency channels
   /* This class implements the coherent filterbank technique described
      in Willem van Straten's thesis.  */
 
@@ -49,8 +49,8 @@ namespace dsp {
 
   protected:
 
-    //! Perform the convolution operation on the input Timeseries
-    virtual void operation ();
+    //! Perform the convolution transformation on the input TimeSeries
+    virtual void transformation ();
 
     //! Number of channels into which the input will be divided
     unsigned nchan;

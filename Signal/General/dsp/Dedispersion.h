@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/03 21:51:49 $
+   $Revision: 1.9 $
+   $Date: 2002/11/09 15:55:25 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -77,6 +77,10 @@ namespace dsp {
 
     //! Get the frequency resolution in each channel of the kernel
     unsigned get_frequency_resolution () const { return ndat; }
+
+    //! Return the dispersion delay between freq1 and freq2
+    /*! If freq2 is higher than freq1, delay_time is positive */
+    double delay_time (double freq1, double freq2) const;
 
     //! Return the smearing time, given the centre frequency and bandwidth
     double smearing_time (double centre_frequency, double bandwidth) const;

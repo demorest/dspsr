@@ -9,10 +9,9 @@ bool dsp::Operation::record_time = false;
 bool dsp::Operation::verbose = false;
 
 //! All sub-classes must specify name and capacity for inplace operation
-dsp::Operation::Operation (const char* _name, Behaviour _type)
+dsp::Operation::Operation (const char* _name)
 {
   name = _name;
-  type = _type;
 }
 
 dsp::Operation::~Operation ()
@@ -21,23 +20,6 @@ dsp::Operation::~Operation ()
 
 void dsp::Operation::operate ()
 {
-  if (verbose)
-    cerr << "Operation::operate["+name+"]" << endl;
-
-  if (!input)
-    throw_str ("Operation::operate["+name+"] no input");
-
-  if (input->get_ndat() < 1)
-    throw_str ("Operation::operate["+name+"] empty input");
-
-  string reason;
-  if (!input->state_is_valid (reason))
-    throw_str ("Operation::operate["+name+"] invalid input state: "+reason);
-
-  if (!output)
-    throw_str ("Operation::operate["+name+"] no output");
-
-
   if (record_time)
     optime.start();
 
@@ -46,29 +28,8 @@ void dsp::Operation::operate ()
 
   if (record_time)
     optime.stop();
-
-  if (!output->state_is_valid (reason))
-    throw_str ("Operation::operate["+name+"] invalid output state: "+reason);
-
-  /*! If an operation is performed on a Timeseries, then the data no
-    longer represents that which was loaded by an Input sub-class.
-    Reset the input_sample attribute of the output so that the
-    Input::recycle_data method knows that the data has been modified
-    since the last call to Input::load */
-  output -> input_sample = -1;
 }
 
-//! Return pointer to the container from which input data will be read
-const dsp::Basicseries* dsp::Operation::get_input () const
-{
-  return input;
-}
-
-//! Return pointer to the container into which output data will be written
-dsp::Basicseries* dsp::Operation::get_output () const
-{
-  return output;
-}
 
 double dsp::Operation::get_total_time () const
 {
@@ -99,37 +60,3 @@ void* dsp::Operation::workingspace (size_t nbytes)
   return working_space;
 }
 
-//! Set the container from which input data will be read
-void dsp::Operation::set_input (const Basicseries* _input)
-{
-  if (verbose)
-    cerr << "dsp::Operation::set_input=" << _input << endl;
-
-  input = _input;
-
-  check_input();
-
-  if (type == inplace)
-    output = const_cast<Basicseries*>(input.get());
-
-  if (type == outofplace && input && output && input == output)
-    throw_str ("Operation::set_input["+name+"] input must != output");
-
-}
-
-//! Set the container into which output data will be written
-void dsp::Operation::set_output (Basicseries* _output)
-{
-  if (verbose)
-    cerr << "dsp::Operation::set_output=" << _output << endl;
-
-  output = _output;
-
-  check_output();
-
-  if (type == inplace)
-    input = output;
-
-  if (type == outofplace && input && output && input == output)
-    throw_str ("Operation::set_output["+name+"] output must != input");
-}

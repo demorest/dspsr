@@ -1,6 +1,6 @@
 #include "dsp/IOManager.h"
-#include "dsp/Timeseries.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
 #include "dsp/File.h"
 #include "dsp/Unpacker.h"
 #include "dsp/TwoBitCorrection.h"
@@ -24,16 +24,29 @@ dsp::IOManager::~IOManager()
 {
 }
 
-//! Set the container from which input data will be read
-void dsp::IOManager::set_raw (Chronoseries* _raw)
+void dsp::IOManager::set_output (BitSeries* raw)
 {
   if (verbose)
-    cerr << "IOManager::set_raw=" << _raw << endl;
+    cerr << "IOManager::set_output (BitSeries*) " << raw << endl;
 
-  raw = _raw;
+  Input::set_output (raw);
 
+  if (input)
+    input -> set_output (raw);
+  
   if (unpacker)
     unpacker -> set_input (raw);
+}
+
+void dsp::IOManager::set_output (TimeSeries* _data)
+{
+  if (verbose)
+    cerr << "IOManager::set_output (TimeSeries*) " << _data << endl;
+
+  data = _data;
+
+  if (unpacker)
+    unpacker -> set_output (_data);
 }
 
 //! Set the Input operator (should not normally need to be used)
@@ -44,6 +57,8 @@ void dsp::IOManager::set_input (Input* _input)
   if (input) {
     input->set_block_size (block_size);
     input->set_overlap (overlap);
+    if (output)
+      input->set_output (output);
   }
 }
 
@@ -51,6 +66,13 @@ void dsp::IOManager::set_input (Input* _input)
 void dsp::IOManager::set_unpacker (Unpacker* _unpacker)
 {
   unpacker = _unpacker;
+
+  if (unpacker)  {
+    if (output)
+      unpacker -> set_input (output);
+    if (data)
+      unpacker -> set_output (data);
+  }
 
   TwoBitCorrection* tbc = dynamic_cast<TwoBitCorrection*> (_unpacker);
 
@@ -118,30 +140,44 @@ void dsp::IOManager::open (const char* id)
 
 
 //! The operation loads the next block of data and converts it to float_Stream
-void dsp::IOManager::load (Timeseries* data)
+void dsp::IOManager::load (TimeSeries* _data)
 {
-  if (!input)
-    throw string ("IOManager::load no input");
-
-  if (!unpacker)
-    throw string ("IOManager::load no unpacker");
-
-  if (!raw)
-    set_raw (new Chronoseries);
-
-  input->load (raw);
-
   if (verbose)
-    cerr << "IOManager::load data=" << data << endl;
+    cerr << "IOManager::load (TimeSeries* = " << _data << ")" << endl;
 
-  unpacker->set_output (data);
-  unpacker->operate();
+  set_output (_data);
+
+  operation ();
 }
 
 
-void dsp::IOManager::load_data (Chronoseries* data)
+void dsp::IOManager::operation ()
 {
-  throw string ("IOManager::load_data run-time error");
+  if (!output)
+    set_output (new BitSeries);
+
+  if (!input)
+    throw Error (InvalidState, "IOManager::load", "no input");
+
+  input->operate ();
+
+  if (!data)
+    return;
+
+  if (!unpacker)
+    throw Error (InvalidState, "IOManager::load", "no unpacker");
+
+  unpacker->operate ();
+}
+
+
+void dsp::IOManager::load_data (BitSeries* data)
+{
+  if (!input)
+    throw Error (InvalidState, "IOManager::load", "no input");
+
+  input->set_output (data);
+  input->operate ();
 }
 
 
@@ -163,11 +199,3 @@ void dsp::IOManager::seek (int64 offset, int whence)
   input->seek (offset, whence);
 }
 
-//! Set the Timeseries to which data will be output to
-void dsp::IOManager::set_final_output (Timeseries* data)
-{
-  if (!output.get() || output.get() != data) {
-    output = data;
-    output -> input_sample = -1;
-  }
-}

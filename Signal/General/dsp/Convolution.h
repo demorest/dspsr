@@ -1,21 +1,22 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/11/06 06:30:41 $
-   $Author: hknight $ */
+   $Revision: 1.10 $
+   $Date: 2002/11/09 15:55:25 $
+   $Author: wvanstra $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
 
-#include "dsp/TimeseriesOperation.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
   
   class Apodization;
   class Response;
 
-  //! Convolves a Timeseries with a frequency response function
+  //! Convolves a TimeSeries with a frequency response function
   /*! This class implements the overlap-save method of discrete
     (cyclical) convolution, as performed by multiplication in the
     frequency domain.
@@ -36,7 +37,7 @@ namespace dsp {
     Convolution::nfilt_pos+Convolution::nfilt_neg is effectively the
     duration of g(t), or the the number of complex time samples in
     the result of each backward FFT that are polluted by the cyclical
-    convolution operation.  In order to allow for assymetry of g(t)
+    convolution transformation.  In order to allow for assymetry of g(t)
     around t=0, Convolution::nfilt_pos and Convolution::nfilt_neg
     complex samples are dropped from the beginning and end,
     respectively, of the result of each backward FFT; neighbouring
@@ -44,7 +45,7 @@ namespace dsp {
     for this loss.
   */
 
-  class Convolution: public TimeseriesOperation {
+  class Convolution: public Transformation <TimeSeries, TimeSeries> {
 
   public:
 
@@ -71,8 +72,8 @@ namespace dsp {
 
   protected:
 
-    //! Perform the convolution operation on the input Timeseries
-    virtual void operation ();
+    //! Perform the convolution transformation on the input TimeSeries
+    virtual void transformation ();
 
     //! Frequency response (convolution kernel)
     Reference::To<Response> response;

@@ -14,25 +14,6 @@
 
 bool dsp::Observation::verbose = false;
 
-int64 dsp::Observation::verbose_nbytes (int64 nsamples) const
-{
-  fprintf(stderr,"nsamples="I64"\tnbit="I64"\tnpol="I64"\tnchan="I64"\tget_ndim()="I64"\n",
-	  int64(nsamples),
-	  int64(nbit),
-	  int64(npol),
-	  int64(nchan),
-	  int64(get_ndim()));
-  fprintf(stderr,"\t"I64"\t"I64"\t"I64"\t"I64"\t"I64"\t"I64"\n",
-	  int64(nsamples),
-	  int64(nsamples*nbit),
-	  int64(nsamples*nbit*npol),
-	  int64(nsamples*nbit*npol*nchan),
-	  int64(nsamples*nbit*npol*nchan*get_ndim()),
-	  int64((nsamples*nbit*npol*nchan*get_ndim())/8));
-
-  return (nsamples*nbit*npol*nchan*get_ndim())/8;
-}
-
 dsp::Observation::Observation ()
 {
   init ();
@@ -66,21 +47,6 @@ void dsp::Observation::init ()
   dispersion_measure = 0.0;
 }
 
-void dsp::Observation::set_sample (Signal::State _state,
-				   int _nchan, int _npol,
-				   int _ndim, int _nbit)
-{
-  // check state and dimension information
-  state = _state;
-  nchan = _nchan;
-  npol = _npol;
-  ndim = _ndim;
-  nbit = _nbit;
-
-  string reason;
-  if (!state_is_valid (reason))
-    throw_str ("Observation::set_sample invalid state: " + reason);
-}
 
 void dsp::Observation::set_state (Signal::State _state)
 {
@@ -357,7 +323,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 }
 
 // returns the centre_frequency of the ichan channel
-double dsp::Observation::get_centre_frequency (int ichan) const
+double dsp::Observation::get_centre_frequency (unsigned ichan) const
 {
   double chan_bandwidth = bandwidth / double(nchan);
 
@@ -368,7 +334,7 @@ double dsp::Observation::get_centre_frequency (int ichan) const
   else
     lower_cfreq = centre_frequency - 0.5*(double(bandwidth)-chan_bandwidth);
 
-  int swap_chan = 0;
+  unsigned swap_chan = 0;
   if (swap)
     swap_chan = nchan/2;
 

@@ -1,7 +1,7 @@
 #include "dsp/CPSRTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 
-#include "dsp/Timeseries.h"
+#include "dsp/TimeSeries.h"
 #include "genutil.h"
 
 bool dsp::CPSRTwoBitCorrection::matches (const Observation* observation)

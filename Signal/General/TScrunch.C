@@ -2,12 +2,11 @@
 
 #include "genutil.h"
 
-#include "dsp/Timeseries.h"
-
-#include "dsp/TimeseriesOperation.h"
 #include "dsp/TScrunch.h"
 
-dsp::TScrunch::TScrunch(Behaviour _type) : TimeseriesOperation("TScrunch", _type){
+dsp::TScrunch::TScrunch() 
+  : Transformation <TimeSeries, TimeSeries> ("TScrunch", anyplace)
+{
   ScrunchFactor = -1;
   TimeRes = -1.0;
   use_tres = false;
@@ -19,10 +18,10 @@ void dsp::TScrunch::set_NewTimeRes( double microseconds ){
   use_tres = true;
 }
 
-void dsp::TScrunch::operation ()
+void dsp::TScrunch::transformation ()
 {
   if( verbose )
-    fprintf(stderr,"\nIn %s::operation()\n",get_name().c_str());
+    fprintf(stderr,"\nIn %s::transformation()\n",get_name().c_str());
 
   if( UsingScrunchFactor() ){
     if( ScrunchFactor < 1 ){
@@ -49,7 +48,7 @@ void dsp::TScrunch::operation ()
   }
 
   if( verbose )
-    fprintf(stderr,"dsp::TScrunch::operation() is scrunching by %f (ie -> a ScrunchFactor of "I64") to a time resolution of %f (Which will actually come out as %f microsecs)\n",
+    fprintf(stderr,"dsp::TScrunch::transformation() is scrunching by %f (ie -> a ScrunchFactor of "I64") to a time resolution of %f (Which will actually come out as %f microsecs)\n",
 	    TimeRes/(1.0e6/input->get_rate()),ScrunchFactor,TimeRes,double(ScrunchFactor)*1.0e6/input->get_rate());
 
   if( !input->get_detected() ){
@@ -100,12 +99,12 @@ void dsp::TScrunch::operation ()
 	    int64((float*)output->get_datptr(0,1)+output->nbytes()/8 - (float*)output->get_datptr(0,0)));
   }
 
-  for (int ichan=0; ichan<input->get_nchan(); ichan++) {
-    for (int ipol=0; ipol<input->get_npol(); ipol++) {
+  for (unsigned ichan=0; ichan<input->get_nchan(); ichan++) {
+    for (unsigned ipol=0; ipol<input->get_npol(); ipol++) {
 
-      un_scr = (float*)input->get_datptr(ichan, ipol);
-      scr    = reinterpret_cast<float*>(output->get_rawptr()) + 
-	(ichan * output->get_npol() + ipol) * output_ndat;
+      un_scr = input->get_datptr(ichan, ipol);
+      scr    = output->get_datptr(ichan, ipol);
+
       onetoomany_un = un_scr + sfactor;
       onetoomany_scr = scr + normal_scrunches;
 
@@ -152,7 +151,7 @@ void dsp::TScrunch::operation ()
   output->resize(output_ndat);
 
   if( verbose )
-    fprintf(stderr,"Exiting from %s::operation()\n\n",get_name().c_str()); 
+    fprintf(stderr,"Exiting from %s::transformation()\n\n",get_name().c_str()); 
 }
 
 
