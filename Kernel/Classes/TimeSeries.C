@@ -201,6 +201,11 @@ void dsp::TimeSeries::zero ()
 
 //! Hack together 2 different bands (not pretty)
 void dsp::TimeSeries::hack_together(vector<TimeSeries*> bands){
+  if( bands.size()==1 ){
+    operator=( *bands[0] );
+    return;
+  }
+
   //verbose = true;
   if( verbose ){
     fprintf(stderr,"In dsp::TimeSeries::hack_together() with bands at %f and %f MHz\n",
