@@ -20,7 +20,8 @@ dsp::PuMaFile::PuMaFile (const char* filename)
   unsigned header_size = sizeof (Header_type);
 
   if (header_size != 4504)
-    throw Error (InvalidState, "dsp::PuMaFile", "sizeof(Header_type) != 4504");
+    throw Error (InvalidState, "dsp::PuMaFile", 
+                 "sizeof(Header_type)=%d != 4504", header_size);
 
   header = malloc (sizeof(Header_type));
 
