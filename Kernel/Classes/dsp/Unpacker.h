@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.8 $
-   $Date: 2004/10/25 02:30:36 $
+   $Revision: 1.9 $
+   $Date: 2005/03/03 07:56:35 $
    $Author: hknight $ */
 
 
@@ -65,6 +65,8 @@ namespace dsp {
     //! List of registered sub-classes
     static Registry::List<Unpacker> registry;
 
+    //! Removes subheaders
+    void remove_subheaders();
 
   };
 
