@@ -93,11 +93,7 @@ void dsp::TwoBitCorrection::allocate ()
 
 void dsp::TwoBitCorrection::set_twobit_limits ()
 {
-  /* average number of samples that lay within the thresholds, x2 and x4,
-     where -x2 = x4 = 0.9674 of the noise power, as in Table 1 of 
-     Jenet&Anderson.  Apply t=0.9674sigma to Equation 45, 
-     (or -xl=xh=0.9674 to Equation A2) to get: */
-  float fraction_ones = erf(optimal_threshold/sqrt(2.0));
+  float fraction_ones = get_optimal_fraction_low();
 
   float n_ave = float(nsample) * fraction_ones;
   // the root mean square deviation
@@ -137,7 +133,7 @@ void dsp::TwoBitCorrection::zero_histogram ()
     histograms [ibin] = 0;
 }
 
-double dsp::TwoBitCorrection::get_histogram_mean (int channel)
+double dsp::TwoBitCorrection::get_histogram_mean (int channel) const
 {
   if (channel < 0 || channel >= nchannel)
     throw_str ("TwoBitCorrection::get_histogram_mean"
@@ -153,6 +149,17 @@ double dsp::TwoBitCorrection::get_histogram_mean (int channel)
     pts  += samples * double (nsample);
   }
   return ones/pts;
+}
+
+unsigned long dsp::TwoBitCorrection::get_histogram_total (int channel) const
+{
+  unsigned long nweights = 0;
+  unsigned long* hist = histograms + channel*nsample;
+
+  for (int iwt=0; iwt<nsample; iwt++)
+    nweights += hist[iwt];
+
+  return nweights;
 }
 
 /* *************************************************************************
@@ -199,6 +206,16 @@ void dsp::TwoBitCorrection::build (int nchan, int nsamp, float sigma)
   }
 }
 
+
+/*! Return the average number of samples that lay within the
+     thresholds, x2 and x4, where -x2 = x4 = 0.9674 of the noise
+     power, as in Table 1 of JA98.  Apply t=0.9674sigma to
+     Equation 45, (or -xl=xh=0.9674 to Equation A2) to get: */
+float dsp::TwoBitCorrection::get_optimal_fraction_low () const
+{
+  return erf (optimal_threshold / sqrt(2.0));
+}
+
 /*!  Given the number of digitized samples in the low voltage state,
   this method returns the optimal values for low and high output
   voltage states.
@@ -208,7 +225,6 @@ void dsp::TwoBitCorrection::build (int nchan, int nsamp, float sigma)
   \retval lo the low voltage output state
   \retval hi the hi voltage output state
 */
-  
 void dsp::TwoBitCorrection::get_output_levels (int nlo, float& lo, float& hi) 
 {
   static float root_pi = sqrt(M_PI);

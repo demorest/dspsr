@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/07/11 16:06:51 $
+   $Revision: 1.7 $
+   $Date: 2002/07/12 14:16:06 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -49,6 +49,9 @@ namespace dsp {
     //! Get the low and hi output levels
     virtual void get_output_levels (int nlo, float& lo, float& hi);
 
+    //! Get the optimal fraction of low voltage levels
+    virtual float get_optimal_fraction_low () const;
+
     //! Return true if val corresponds to a digitized high voltage state
     virtual bool get_hi (unsigned char val);
 
@@ -73,11 +76,17 @@ namespace dsp {
     //! Get the maxumum number of ones in nsample points
     int get_nmax() const { return n_max; }
 
-    //! Reset histogram counts to zero
-    void zero_histogram ();
+    //! Get the histogram for the given channel
+    template <typename T> void get_histogram (vector<T>& data, int chan) const;
 
     //! Get the centroid of the histogram for the given digitizer channel
-    double get_histogram_mean (int channel);
+    double get_histogram_mean (int channel) const;
+
+    //! Get the total number of samples in the histogram
+    unsigned long get_histogram_total (int channel) const;
+
+    //! Reset histogram counts to zero
+    void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static TwoBitCorrection* create (const Timeseries& input,
@@ -122,6 +131,16 @@ namespace dsp {
     void allocate ();
   };
   
+}
+
+template <typename T> 
+void dsp::TwoBitCorrection::get_histogram (vector<T>& data, int chan) const
+{
+  data.resize (nsample);
+  unsigned long* hist = histograms + chan * nsample;
+
+  for (int i=0; i<nsample; i++)
+    data[i] = T(hist[i]);
 }
 
 #endif
