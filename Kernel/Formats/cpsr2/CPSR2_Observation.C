@@ -180,7 +180,8 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // until otherwise, the band is centred on the centre frequency
   //
-  dc_centred = true;
+  dc_centred = false; // new
+  //  dc_centred = true;  // old
 
   // //////////////////////////////////////////////////////////////////////
   //
