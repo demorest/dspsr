@@ -224,7 +224,19 @@ bool dsp::Observation::contiguous (const Observation & obs) const
 {
   double difference = (get_end_time() - obs.get_start_time()).in_seconds();
 
-  return ( combinable(obs) && fabs(difference) < 1e3/rate );
+  bool ret = ( combinable(obs) && fabs(difference) < 1e3/rate );
+
+  if( !ret ){
+    fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
+    fprintf(stderr,"combinable(obs)=%d\n",combinable(obs));
+    fprintf(stderr,"get_start_time().in_seconds()=%f\n",get_start_time().in_seconds());    
+    fprintf(stderr,"get_end_time().in_seconds()=%f\n",get_end_time().in_seconds());    
+    fprintf(stderr,"obs.get_start_time().in_seconds()=%f\n",obs.get_start_time().in_seconds());
+    fprintf(stderr,"difference=%f\n",fabs(difference));
+    fprintf(stderr,"difference needed to be less than %f\n",1e3/rate);    
+  } 
+
+  return ret;
 }
 
 void dsp::Observation::set_telescope (char _telescope)
