@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "Observation.h"
 #include "Telescope.h"
 
@@ -5,6 +7,29 @@
 #include "string_utils.h"
 
 bool dsp::Observation::verbose = false;
+
+int* dsp::Observation::get_addr_nchan(){
+  return static_cast<int*>(&nchan);
+}
+
+int64 dsp::Observation::verbose_nbytes (int64 nsamples) const
+{
+  fprintf(stderr,"nsamples="I64"\tnbit="I64"\tnpol="I64"\tnchan="I64"\tget_ndim()="I64"\n",
+	  int64(nsamples),
+	  int64(nbit),
+	  int64(npol),
+	  int64(nchan),
+	  int64(get_ndim()));
+  fprintf(stderr,"\t"I64"\t"I64"\t"I64"\t"I64"\t"I64"\t"I64"\n",
+	  int64(nsamples),
+	  int64(nsamples*nbit),
+	  int64(nsamples*nbit*npol),
+	  int64(nsamples*nbit*npol*nchan),
+	  int64(nsamples*nbit*npol*nchan*get_ndim()),
+	  int64((nsamples*nbit*npol*nchan*get_ndim())/8));
+
+  return (nsamples*nbit*npol*nchan*get_ndim())/8;
+}
 
 dsp::Observation::Observation ()
 {
@@ -62,6 +87,23 @@ bool dsp::Observation::combinable (const Observation & obs)
 	   (source == obs.source) &&
 	   (swap  == obs.swap) &&
 	   (dc_centred == obs.dc_centred) );
+}
+
+string dsp::Observation::state_as_string () const{
+  string ss("Unknown");
+  
+  if( state == Nyquist )
+    ss = "Nyquist";
+  else if( state == Analytic )
+    ss = "Analytic";
+  else if( state == Detected )
+    ss = "Detected";
+  else if( state == Coherence )
+    ss = "Coherence";
+  else if( state == Stokes )
+    ss = "Stokes";
+
+  return ss;
 }
 
 void dsp::Observation::set_telescope (char _telescope)

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/07/17 07:23:05 $
-   $Author: wvanstra $ */
+   $Revision: 1.8 $
+   $Date: 2002/08/14 18:17:35 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -86,6 +86,9 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
+    // wipe this- it has been used for debugging
+    int* get_addr_nchan();
+
     //! Set the dimensions of each time sample
     /*! Parameters determine the size and interpretation of each datum */
     virtual void set_sample (State _state, int _nchan, int _npol, int _nbit)
@@ -95,6 +98,9 @@ namespace dsp {
     void set_state (State _state) { state = _state; }
     //! Return the state of the signal
     State get_state () const { return state; }
+
+    //! Return the state as a string
+    string state_as_string () const;
 
     //! Change the state and correct other attributes accordingly
     virtual void change_state (State new_state);
@@ -222,6 +228,7 @@ namespace dsp {
     //! Return the size in bytes of nsamples time samples
     int64 nbytes (int64 nsamples) const
       { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
+    int64 verbose_nbytes (int64 nsamples) const;
     
     //! Return the size in bytes of one time sample
     float nbyte () const
