@@ -112,9 +112,8 @@ endif
 
 ##########################################################################
 # update
-INCFLAGS += $(ICFITSIO)
 
-exists = $(shell if [ ! -z "$(1)" ]; then if [ -d $(1) ];then echo yes;fi;fi)
+exists = $(shell if [ ! -z "$(1)" ]; then if [ -e $(1) ];then echo yes;fi;fi)
 
 has_CFITS := $(call exists,$(CFITSDIR))
 has_MPI   := $(call exists,$(MPIDIR))
@@ -127,8 +126,13 @@ endif
 
 ##########################################################################
 # CFITSIO
+ifneq ($(has_CFITS),yes)
+has_CFITS := $(call exists,${PSRHOME}/packages/${LOGIN_ARCH}/include/fitsio.h)
+endif
+
 ifeq ($(has_CFITS),yes)
 CPPFLAGS += -DPSRFITS=1
+INCFLAGS += $(ICFITSIO)
 endif
 
 ##########################################################################
