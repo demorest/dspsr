@@ -10,6 +10,34 @@
 
 bool dsp::Archiver::verbose = false;
 
+dsp::Archiver::~Archiver ()
+{
+}
+
+void dsp::Archiver::set_agent (Pulsar::Archive::Agent* _agent)
+{
+  agent = _agent;
+}
+
+
+void dsp::Archiver::unload (const PhaseSeries* data)
+{
+  if (!agent)
+    throw Error (InvalidState, "dsp::Archiver::unload", "no Archive::Agent");
+
+  Pulsar::Archive* archive = agent->new_Archive ();
+
+  set (archive, data);
+
+  if (verbose)
+    cerr << "dsp::Archiver::unload archive '"
+	 << archive->get_filename() << "'" << endl;
+
+  archive -> unload();
+
+  delete archive;
+}
+
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 { try {
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.1 $
-   $Date: 2003/01/31 13:18:48 $
+   $Revision: 1.2 $
+   $Date: 2003/01/31 16:00:36 $
    $Author: wvanstra $ */
 
 #ifndef __SubFold_h
@@ -18,11 +18,12 @@ namespace dsp {
     from a single observation.  Given a polyco and the number of pulses
     to integrate, this class can be used to produce single pulse profiles.
 
-    If the file unloading flag is set to false (see SubFold::set_unload)
+    If no PhaseSeriesUnloader is set (see SubFold::set_unloader),
     the SubFold class will store folded sub-integrations in the subints 
-    vector.  If it is true, the SubFold class will call SubFold::unload,
-    a virtual method that must be defined by a derived class that knows
-    about archive file formats. */
+    vector.  If set, the SubFold class will call unloader->unload (output)
+  */
+
+  class PhaseSeriesUnloader;
 
   class SubFold : public Fold {
 
@@ -34,11 +35,11 @@ namespace dsp {
     //! Destructor
     ~SubFold ();
     
-    //! Set the file unloading flag
-    void set_unload (bool _unload = true) { unload_data = _unload; }
+    //! Set the file unloader
+    void set_unloader (PhaseSeriesUnloader* unloader);
 
-    //! Get the file unloading flag
-    bool get_unload () const { return unload_data; }
+    //! Get the file unloader
+    PhaseSeriesUnloader* get_unloader () const;
 
     //! Set the start time from which to begin counting sub-integrations
     void set_start_time (MJD start_time);
@@ -58,9 +59,6 @@ namespace dsp {
     //! Get the number of turns to fold into each sub-integration
     unsigned get_subint_turns () const { return subint_turns; }
 
-    //! Store the folded profile somewhere safe
-    virtual void unload (PhaseSeries* data);
-
     //! Decide wether or not to keep the folded profile
     virtual bool keep (PhaseSeries* data) { return true; }
 
@@ -72,12 +70,12 @@ namespace dsp {
     //! Folds the TimeSeries data into one or more sub-integrations
     virtual void transformation ();
 
-    //! If unload == false, sub-integrations are stored here
+    //! If no unloader is set, sub-integrations are stored here
     vector< Reference::To<PhaseSeries> > subints;
 
     //! File unloading flag
-    bool unload_data;
-
+    Reference::To<PhaseSeriesUnloader> unloader;
+    
     //! The start time from which to begin counting sub-integrations
     MJD start_time;
 

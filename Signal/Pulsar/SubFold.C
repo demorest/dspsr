@@ -1,11 +1,11 @@
-#include "SubFold.h"
+#include "dsp/SubFold.h"
+#include "dsp/PhaseSeriesUnloader.h"
+
 #include "polyco.h"
 #include "Error.h"
 
 dsp::SubFold::SubFold ()
 {
-  unload_data = false;
-
   subint_seconds = 0;
   subint_turns = 0;
 }
@@ -14,12 +14,16 @@ dsp::SubFold::~SubFold ()
 {
 }
 
-/*! As the SubFold base class knows nothing about any Archive file
-  formats, it must be inherited by a derived class that knows how
-  to unload folded profiles along the way. */
-void dsp::SubFold::unload (PhaseSeries* profiles) 
-{ 
-  throw Error (InvalidState, "SubFold::unload", "cannot unload"); 
+//! Set the file unloader
+void dsp::SubFold::set_unloader (dsp::PhaseSeriesUnloader* _unloader)
+{
+  unloader = _unloader;
+}
+
+//! Get the file unloader
+dsp::PhaseSeriesUnloader* dsp::SubFold::get_unloader () const
+{
+  return unloader;
 }
 
 
@@ -115,11 +119,11 @@ void dsp::SubFold::transformation ()
       continue;
     }
 
-    if (unload_data) {
+    if (unloader) {
       if (verbose)
 	cerr << ":dsp::SubFold::transformation unload subint" << endl;
 
-      unload (output);
+      unloader->unload (output);
       output->zero();
     }
 
