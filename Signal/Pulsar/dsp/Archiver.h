@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.7 $
-   $Date: 2003/07/01 05:34:51 $
-   $Author: hknight $ */
+   $Revision: 1.8 $
+   $Date: 2003/08/22 15:49:09 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Archiver_h
@@ -53,16 +53,25 @@ namespace dsp {
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const char* archive_class_name);
 
-    //! Unloads all available data to a new Archive instance
+    //! Set the Pulsar::Archive instance to which data will be added
+    void set_archive (Pulsar::Archive* archive);
+
+    //! Unloads all available data to a Pulsar::Archive instance
     void unload ();
 
     //! Set the Pulsar::Archive with the PhaseSeries data
     void set (Pulsar::Archive* archive, const PhaseSeries* phase);
 
+    //! Add the PhaseSeries data to the Pulsar::Archive instance
+    void add (Pulsar::Archive* archive, const PhaseSeries* phase);
+
   protected:
 
     //! Name of the Pulsar::Archive class used to create new instances
     string archive_class_name;
+
+    //! The Pulsar::Archive instance to which data will be added
+    Reference::To<Pulsar::Archive> single_archive;
 
     //! Response from which Passband Extension will be constructed
     Reference::To<const Response> passband;

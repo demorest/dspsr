@@ -33,6 +33,11 @@ void dsp::Archiver::set_archive_class (const char* _archive_class_name)
   archive_class_name = _archive_class_name;
 }
 
+void dsp::Archiver::set_archive (Pulsar::Archive* archive)
+{
+  single_archive = archive;
+}
+
 
 //! Set the Response from which Passband Extension will be constructed
 void dsp::Archiver::set_passband (const Response* _passband)
@@ -50,18 +55,28 @@ void dsp::Archiver::set_operations (const vector<Operation*>& ops)
 
 void dsp::Archiver::unload ()
 {
-  if (archive_class_name.size() == 0)
+  if (!single_archive && archive_class_name.size() == 0)
     throw Error (InvalidState, "dsp::Archiver::unload", 
-		 "Archive class name not specified");
+		 "neither Archive nor class name specified");
 
   if (!profiles)
     throw Error (InvalidState, "dsp::Archiver::unload",
 		 "Profile data not provided");
 
-  Pulsar::Archive* archive = Pulsar::Archive::new_Archive (archive_class_name);
+  Reference::To<Pulsar::Archive> archive;
 
-  // set the main data
-  set (archive, profiles);
+  if (single_archive) {
+    // refer to the single archive to which all sub-integration will be written
+    archive = single_archive;
+    // add the main data
+    add (archive, profiles);
+  }
+  else {
+    // create a new archive
+    archive = Pulsar::Archive::new_Archive (archive_class_name);
+    // set the main data
+    set (archive, profiles);
+  }
 
   // set any available extensions
 
@@ -84,14 +99,59 @@ void dsp::Archiver::unload ()
       set (pband);
   }
 
-
-  if (verbose)
+  if (!single_archive) {
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
   
-  archive -> unload();
+    archive -> unload();
+  }
 
-  delete archive;
+}
+
+void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
+{ try {
+
+  if (verbose)
+    cerr << "dsp::Archiver::add Pulsar::Archive" << endl;
+
+  if (!archive)
+    throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
+		 "no Archive");
+
+  if (!phase) 
+    throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
+		 "no PhaseSeries");
+
+  unsigned nsub = archive->get_nsubint();
+
+  if (!nsub) {
+    set (archive, phase);
+    return;
+  }
+
+  unsigned npol = phase->get_npol() * phase->get_ndim();
+
+  // simple sanity check
+  if (archive->get_npol() != npol)
+    throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
+		 "Pulsar::Archive::npol=%d != PhaseSeries::npol=%d",
+		 archive->get_npol(), npol);
+  if (archive->get_nchan() != phase->get_nchan())
+    throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
+		 "Pulsar::Archive::nchan=%d != PhaseSeries::nchan=%d",
+		 archive->get_nchan(), phase->get_nchan());
+  if (archive->get_nbin() != phase->get_nbin())
+    throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
+		 "Pulsar::Archive::nbin=%d != PhaseSeries::nbin=%d",
+		 archive->get_nbin(), phase->get_nbin());
+  
+  archive-> resize (nsub + 1);
+  set (archive-> get_Integration(nsub), phase);
+
+}
+catch (Error& error) {
+  throw error += "dsp::Archiver::add Pulsar::Archive";
+}
 }
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
@@ -99,6 +159,14 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
+
+  if (!archive)
+    throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Archive",
+		 "no Archive");
+
+  if (!phase)
+    throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Archive",
+		 "no PhaseSeries");
 
   unsigned npol = phase->get_npol();
   unsigned nchan = phase->get_nchan();
