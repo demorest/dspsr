@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/09/29 14:55:43 $
-   $Author: hknight $ */
+   $Revision: 1.20 $
+   $Date: 2003/10/24 11:22:20 $
+   $Author: wvanstra $ */
 
 
 #ifndef __MultiFile_h
@@ -40,7 +40,10 @@ namespace dsp {
     virtual void open(const vector<PseudoFile*>& pseudos);
 
     //! Retrieve a pointer to the loader File instance
-    File* get_loader(){ if(!loader) return NULL; return loader.get(); }
+    File* get_loader ();
+
+    //! Return true if the loader File instance is set
+    bool has_loader ();
 
     //! Retrieve a pointer to the pseudofile
     PseudoFile* get_file(unsigned ifile){ return &files[ifile]; }

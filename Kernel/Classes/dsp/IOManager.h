@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/09/29 14:55:43 $
-   $Author: hknight $ */
+   $Revision: 1.12 $
+   $Date: 2003/10/24 11:22:20 $
+   $Author: wvanstra $ */
 
 
 #ifndef __IOManager_h
@@ -39,13 +39,15 @@ namespace dsp {
     void open (const string& id, int bs_index=0) { open (id.c_str(),bs_index); }
 
     //! Return pointer to the appropriate Input
-    Input* get_input () const { return input; }
-    
+    const Input* get_input () const;
+    Input* get_input ();
+ 
     //! Set the Input operator (should not normally need to be used)
     void set_input (Input* input, bool set_params = false);
 
      //! Return pointer to the appropriate Unpacker
-    Unpacker* get_unpacker () const { return unpacker; }
+    const Unpacker* get_unpacker () const;
+    Unpacker* get_unpacker ();
 
     //! Set the Unpacker (should not normally need to be used)
     void set_unpacker (Unpacker* unpacker);

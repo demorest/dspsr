@@ -141,6 +141,12 @@ void dsp::TwoBitCorrection::set_table (TwoBitTable* _table)
   built = false;
 }
 
+//! Get the digitization convention
+const dsp::TwoBitTable* dsp::TwoBitCorrection::get_table () const
+{ 
+  return table;
+}
+
 void dsp::TwoBitCorrection::set_output (TimeSeries* _output)
 {
   if (verbose)

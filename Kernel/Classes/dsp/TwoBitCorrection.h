@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.24 $
-   $Date: 2003/06/13 15:02:40 $
+   $Revision: 1.25 $
+   $Date: 2003/10/24 11:22:20 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -19,14 +19,14 @@ namespace dsp {
   class TwoBitTable;
   class WeightedTimeSeries;
 
-  //! Converts a TimeSeries from two-bit digitized to floating-point values
+  //! Converts BitSeries data from two-bit digitized to floating-point values
   /*! The conversion method, poln_unpack, implements the dynamic
     level-setting technique described by Jenet & Anderson (1998, PASP,
-    110, 1467; hereafter JA98).  It requires that each byte contains four samples
-    from one digitized signal.  If the digitized bits from different convertors
-    (ie. different polarizations and/or in-phase and quadrature components are mixed
-    within each byte), it is recommended to inherit the SubByteTwoBitCorrection
-    class */
+    110, 1467; hereafter JA98).  It requires that each byte contains
+    four samples from one digitized signal.  If the digitized bits
+    from different convertors (ie. different polarizations and/or
+    in-phase and quadrature components) are mixed within each byte, it
+    is recommended to inherit the SubByteTwoBitCorrection class. */
   class TwoBitCorrection: public Unpacker {
 
   public:
@@ -49,19 +49,19 @@ namespace dsp {
     //! Get the number of digitizer outputs in one byte
     virtual unsigned get_ndig_per_byte () const;
 
-    //! Return the offset (number of bytes) into input for the given digitizer
+    //! Get the offset (number of bytes) into input for the given digitizer
     virtual unsigned get_input_offset (unsigned idig) const;
 
-    //! Return the offset (number of floats) into output for the given digitizer
+    //! Get the offset (number of floats) into output for the given digitizer
     virtual unsigned get_output_offset (unsigned idig) const;
 
-    //! Return the output polarization for the given digitizer
+    //! Get the output polarization for the given digitizer
     virtual unsigned get_output_ipol (unsigned idig) const;
 
-    //! Return the offset to the next byte containing the current digitizer data
+    //! Get the offset to the next byte containing the current digitizer data
     virtual unsigned get_input_incr () const;
 
-    //! Return the offset (number of floats) between consecutive digitizer samples
+    //! Get the offset (number of floats) between consecutive digitizer samples
     virtual unsigned get_output_incr () const;
 
     //! Return a descriptive string
@@ -92,7 +92,7 @@ namespace dsp {
     void set_table (TwoBitTable* table);
 
     //! Get the digitization convention
-    TwoBitTable* get_table () const { return table; }
+    const TwoBitTable* get_table () const;
 
     //! Overload Transformation::set_output to set weighted_output
     void set_output (TimeSeries* output);

@@ -234,8 +234,8 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
 int64 dsp::MultiFile::seek_bytes (uint64 bytes)
 {
   if( !loader )
-    throw Error(InvalidState,"dsp::MultiFile::seek_bytes",
-		"Seek bytes called with no loader.  Have you called MultiFile::open() yet?");
+    throw Error(InvalidState, "dsp::MultiFile::seek_bytes",
+		"no loader.  Have you called MultiFile::open() yet?");
 
   if (verbose)
     cerr << "MultiFile::seek_bytes nbytes=" << bytes << endl;
@@ -279,6 +279,16 @@ void dsp::MultiFile::set_loader (unsigned index)
 
   current_index = index;
   current_filename = files[index].filename;
+}
+
+bool dsp::MultiFile::has_loader ()
+{
+  return loader;
+}
+
+dsp::File* dsp::MultiFile::get_loader ()
+{
+  return loader;
 }
 
 // HSK 24 June 2003 This function is a disaster- what it's original intention is unclear to me.  What about loader->get_next_sample()- wouldn't that return the same thing?

@@ -75,6 +75,18 @@ void dsp::IOManager::set_input (Input* _input, bool set_params)
 
 }
 
+//! Return pointer to the appropriate Input
+const dsp::Input* dsp::IOManager::get_input () const 
+{
+  return input;
+}
+
+dsp::Input* dsp::IOManager::get_input ()
+{
+  return input;
+}
+
+
 //! Set the Unpacker (should not normally need to be used)
 void dsp::IOManager::set_unpacker (Unpacker* _unpacker)
 {
@@ -87,6 +99,17 @@ void dsp::IOManager::set_unpacker (Unpacker* _unpacker)
       unpacker -> set_output (data);
   }
 }
+
+const dsp::Unpacker* dsp::IOManager::get_unpacker () const 
+{ 
+  return unpacker;
+}
+
+dsp::Unpacker* dsp::IOManager::get_unpacker ()
+{
+  return unpacker;
+}
+
 
 //! Set the number of time samples to load on each call to load_data
 void dsp::IOManager::set_block_size (uint64 _block_size) 
