@@ -897,6 +897,7 @@ int main (int argc, char** argv)
       if (verbose)
 	cerr << "Creating archive" << endl;
       archiver->set_profiles (profiles);
+      archiver->set_reducing_program( "dspsr" );
       archiver->unload ();
 
     }
@@ -909,6 +910,7 @@ int main (int argc, char** argv)
       // archive->pscrunch ();
       // archive->fscrunch ();
 
+      archive->set_backend( archive->get_backend() + " : dspsr");
       archive->unload ();
 
     }
