@@ -11,6 +11,7 @@
 
 #include "environ.h"
 #include "genutil.h"
+#include "MJD.h"
 
 #include "PlotData.h"
 #include "PlotParams.h"
@@ -52,6 +53,9 @@ namespace dsp {
     void set_ylabel(string _ylabel){ ylabel = _ylabel; }    
     string get_ylabel(){ return ylabel; }
 
+    void set_referenceMJD(const MJD& ref){ referenceMJD = ref; }
+    const MJD& get_referenceMJD(){ return referenceMJD; } 
+
     // A pair is a chan-pol pair
     bool get_plot_all_pairs(){ return plot_all_pairs; }
     void set_plot_all_pairs(bool _plot_all_pairs){  plot_all_pairs = _plot_all_pairs; }
@@ -61,9 +65,13 @@ namespace dsp {
       { if( !is_one_of(chanpol,pairs_to_plot) ) pairs_to_plot.push_back(chanpol); }
     void remove_from_pairs_to_plot(pair<int,int> chanpol);
 
+    char get_user_char(){ return user_char; }
+
   protected:
     
     virtual bool open_plotwindow();
+    virtual bool close_plotwindow();
+
     // Called by plot() to set up the plotdatas
     virtual bool set_plotdatas();
     // Called by plot() to set xxmin, etc in params
@@ -72,8 +80,7 @@ namespace dsp {
     virtual bool plot_background();
     virtual bool set_colour_index(int iplotdata);
     virtual bool user_input();
-    virtual bool close_plotwindow();
-
+    
     virtual bool highlight(float& x,float& y);
 
     char user_char;
@@ -95,6 +102,9 @@ namespace dsp {
     bool plot_all_pairs;
     // To use pairs_to_plot you must explicity set_plot_all_pairs(false)
     vector<pair<int,int> > pairs_to_plot;
+
+    // Used for setting xaxis scale (time)
+    MJD referenceMJD;
 
     /* plotting window limits in units of samples */
     int64 sample_start;
