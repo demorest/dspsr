@@ -640,7 +640,7 @@ bool dsp::Observation::file2obs(FILE* fptr){
   retrieve_cstring(fptr,"STATE\t",dummy); fprintf(stderr,"yo\n"); state = Signal::string2State(dummy);  if(verbose) fprintf(stderr,"Got state=%s\n",Signal::State2string(state).c_str()); 
   retrieve_cstring(fptr,"BASIS\t",dummy); basis = Signal::string2Basis(dummy);  if(verbose) fprintf(stderr,"Got basis=%s\n",Signal::Basis2string(basis).c_str()); 
   fscanf(fptr,"RATE\t%lf\n",&rate);  if(verbose) fprintf(stderr,"Got rate=%f\n",rate); 
-  retrieve_cstring(fptr,"START_TIME\t",dummy); start_time = MJD(dummy);  if(verbose) fprintf(stderr,"Got start_time=%s\n",start_time.printall()); 
+  retrieve_cstring(fptr,"START_TIME\t",dummy); start_time = MJD(dummy);  if(verbose) fprintf(stderr,"Got start_time=%s\n",start_time.printdays(15).c_str()); 
   fscanf(fptr,"SCALE\t%lf\n",&scale);  if(verbose) fprintf(stderr,"Got scale=%f\n",scale); 
   fscanf(fptr,"SWAP\t%s\n",dummy);
   if( string(dummy)==string("true") )
