@@ -1,21 +1,19 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/07/31 15:41:49 $
-   $Author: pulsar $ */
+   $Revision: 1.6 $
+   $Date: 2002/08/20 05:08:47 $
+   $Author: wvanstra $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
 
 #include "Operation.h"
-#include "window.h"
-#include "filter.h"
 
 namespace dsp {
   
-  //class window;
-  //class filter;
+  class Apodization;
+  class Response;
 
   //! Convolves a Timeseries with a frequency response function
   /*! This class implements the overlap-save method of discrete
@@ -32,8 +30,8 @@ namespace dsp {
     contain an array of filters, one for each frequency channel.
     
     In order to improve the spectral leakage characteristics, an
-    apodizing function may be applied to the data in the time domain
-    by calling the Convolution::set_apodizing() method.
+    apodization function may be applied to the data in the time domain
+    by calling the Convolution::set_Apodization() method.
     
     Convolution::nfilt_pos+Convolution::nfilt_neg is effectively the
     duration of g(t), or the the number of complex time samples in
@@ -53,6 +51,9 @@ namespace dsp {
     //! Null constructor
     Convolution (const char* name = "Convolution", Behaviour type = anyplace);
 
+    //! Destructor
+    ~Convolution ();
+
     //! Return a descriptive string
     //virtual const string descriptor () const;
 
@@ -60,13 +61,13 @@ namespace dsp {
     //virtual void initialize (const string& descriptor);
 
     //! Set the frequency response function
-    virtual void set_response (filter* response);
+    virtual void set_response (Response* response);
 
-    //! Set the apodizing function
-    virtual void set_apodizing (window* function);
+    //! Set the apodization function
+    virtual void set_apodization (Apodization* function);
 
     //! Set the bandpass integrator
-    virtual void set_bandpass (filter* bandpass);
+    virtual void set_bandpass (Response* bandpass);
 
   protected:
 
@@ -74,13 +75,13 @@ namespace dsp {
     virtual void operation ();
 
     //! Frequency response (convolution kernel)
-    Reference::To<filter> response;
+    Reference::To<Response> response;
 
-    //! Apodizing function (time domain window)
-    Reference::To<window> apodizing;
+    //! Apodization function (time domain window)
+    Reference::To<Apodization> apodization;
 
     //! Integrated bandpass
-    Reference::To<filter> bandpass;
+    Reference::To<Response> bandpass;
 
     //! Complex samples dropped from beginning of cyclical convolution result
     int nfilt_pos;
