@@ -130,8 +130,11 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
       cerr << "w[" << wt << "]=0 ";
 #endif
 
-      if (weights)
+      if (weights) {
+        if (weights[wt] != 0)
+          discarded_weights ++;
         weights[wt] = 0;
+      }
 
       // reduce the risk of other functions accessing un-initialized 
       // segments of the array

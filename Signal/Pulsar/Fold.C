@@ -50,11 +50,11 @@ void dsp::Fold::prepare ()
 //! Prepare for folding the given Observation
 void dsp::Fold::prepare (const Observation* observation)
 {
-  if( verbose )
-    fprintf(stderr,"In dsp::Fold::prepare()\n");
+  if (verbose)
+    cerr << "dsp::Fold::prepare" << endl;
 
-  if( folding_period ){
-    fprintf(stderr,"Already got folding_period so returning straight away from dsp::Fold::prepare()\n");
+  if (folding_period) {
+    cerr << "dsp::Fold::prepare folding_period=" << folding_period << endl;
     return;
   }
 
@@ -75,12 +75,6 @@ void dsp::Fold::prepare (const Observation* observation)
   // optional: choose from provided polyco instances
   folding_polyco = choose_polyco (time, jpulsar);
   
-  //if( folding_polyco )
-  //fprintf(stderr,"prepare got polyco straight away with folding_polyco->get_psrname()='%s' and MJD=%s through %s\n",
-  //    folding_polyco->get_psrname().c_str(),
-  //    folding_polyco->start_time().printall(),
-  //    folding_polyco->end_time().printall());
-
   if (folding_polyco)
     return;
 
@@ -429,6 +423,8 @@ void dsp::Fold::transformation ()
   unsigned ndatperweight = 0;
 
   if (weighted_input) {
+    if (verbose)
+      cerr << "dsp::Fold::transformation WeightedTimeSeries" << endl;
     weights = weighted_input->get_weights();
     ndatperweight = weighted_input->get_ndat_per_weight();
   }
@@ -576,6 +572,10 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   if (ndatperweight) {
     iweight = idat_start / ndatperweight;
     datendweight = (iweight + 1) * ndatperweight;
+
+    if (weights[iweight] == 0)
+      discarded_weights ++;
+
   }
 
   double double_nbin = double (folding_nbin);
@@ -583,9 +583,13 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
   for (idat=idat_start; idat < idat_end; idat++) {
 
-    if (idat >= datendweight) {
+    if (ndatperweight && idat >= datendweight) {
       iweight ++;
       datendweight += ndatperweight;
+
+      if (weights[iweight] == 0)
+        discarded_weights ++;
+
     }
 
     // ensure that phi runs from 0 to 1
