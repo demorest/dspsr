@@ -169,8 +169,6 @@ string PSPMidentifier (const PSPM_SEARCH_HEADER* hdr)
 
 bool PSPMverify (PSPM_SEARCH_HEADER* hdr)
 {
-  cerr << "PSPMverify entered" << endl;
-
   if (hdr->header_version < 0) {
     fprintf (stderr, "PSPMverify: invalid header_version:%d\n",
 	     (int)hdr->header_version);
