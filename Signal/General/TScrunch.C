@@ -147,7 +147,7 @@ void dsp::TScrunch::transformation ()
   } // for each ichan
 
   /* make sure output has correct parameters */
-  output->rescale( double(input->get_ndat()) / double(output_ndat) );
+  output->rescale( ScrunchFactor );
 
   if( verbose )
     fprintf(stderr,"TScrunch:: input->rate=%f\tinput=>ndat="I64"\toutput_ndat="I64"\n",
