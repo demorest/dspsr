@@ -68,11 +68,9 @@ int main (int argc, char** argv)
 
   // raw baseband data container
   dsp::Timeseries raw;
-  raw.is_static();
 
   // converted voltages container
   dsp::Timeseries voltage;
-  voltage.is_static();
 
   // interface manages the creation of data loading and converting classes
   dsp::DataManager manager;
