@@ -5,8 +5,14 @@
 */
 
 // Based on Makefile.local, backends.h #defines the DSP_Backend macros
+
+#include "dsp/File.h"
+
 #include "backends.h"
 #include "Error.h"
+
+/*! The registry must always be constructed before the entries. */
+Registry::List<dsp::File> dsp::File::registry;
 
 #if DSP_CPSR2
 #include "dsp/CPSR2File.h"
@@ -39,18 +45,22 @@ static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile>  bitseries_file;
 static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
 #endif
 
-
-Registry::List<dsp::File> dsp::File::registry;
-
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::File* dsp::File::create (const char* filename)
 { 
+  // check if file can be opened for reading
+  FILE* fptr = fopen (filename, "r");
+  if (!fptr) throw Error (FailedSys, "dsp::File::create",
+			  "cannot open '%s'", filename);
+  fclose (fptr);
+
   try {
 
-    if (verbose) cerr << "File::create with " << registry.size() 
+    if (verbose) cerr << "dsp::File::create with " << registry.size() 
 		      << " registered sub-classes" << endl;
 
-    for (unsigned ichild=0; ichild < registry.size(); ichild++){
+    for (unsigned ichild=0; ichild < registry.size(); ichild++) {
+
       if ( registry[ichild]->is_valid (filename) ) {
 	
 	File* child = registry.create (ichild);
@@ -60,13 +70,22 @@ dsp::File* dsp::File::create (const char* filename)
 	return child;
 	
       }
+
     }
     
   } catch (Error& error) {
-    throw error += "File::create";
+    throw error += "dsp::File::create";
   }
   
-  throw Error (FileNotFound, "File::create", "%s not valid", filename);
+  string msg = filename;
+
+  msg += " not a recognized file format\n\tRegistered Formats: ";
+
+  for (unsigned ichild=0; ichild < registry.size(); ichild++)
+    msg += registry[ichild]->get_name() + " ";
+
+  throw Error (InvalidParam, "dsp::File::create", msg);
+
 }
 
 

@@ -4,6 +4,11 @@
    rather than whatever unpacker it originally got unpacked as.
 */
 
+#include "dsp/Unpacker.h"
+
+/*! The registry must always be constructed before the entries. */
+Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
+
 #include "dsp/CoherentFBUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CoherentFBUnpacker> cfb;
 #include "dsp/NullUnpacker.h"
@@ -37,9 +42,6 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::PuMaTwoBitCorrection>  puma;
 #endif
 
 #include "Error.h"
-
-Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
-
 
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
