@@ -72,7 +72,7 @@ namespace dsp {
     void load_data (BitSeries* data);
 
     //! Wait on the status of the MPI_Request
-    void wait (MPI_Request& request);
+    void wait (const char* method, MPI_Request& request);
 
     //! Returns the rank of the next node ready to receive data
     int next_destination ();
