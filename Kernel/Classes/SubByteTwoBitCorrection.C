@@ -78,7 +78,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
 
   if (weights && n_weights > nweights)
     throw Error (InvalidParam, "dsp::SubByteTwoBitCorrection::dig_unpack",
-		 "weights array size=%d < number of weights=%d", nweights, n_weights);
+		 "weights array size=%d < nweights=%d", nweights, n_weights);
 
   uint64 points_left = ndat;
 
@@ -107,10 +107,13 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
     if (hist)
       hist [n_in] ++;
 
-    if ( (weights && weights[wt]==0) || n_in<n_min || n_in>n_max ) {
+    // test if the number of low voltage states is outside the
+    // acceptable limit or if this section of data has been previously
+    // flagged bad (for example, due to bad data in the other polarization)
+    if ( n_in<n_min || n_in>n_max || (weights && weights[wt]==0) ) {
 
 #ifdef _DEBUG
-      cerr << "iq:w[" << wt << "]=0 ";
+      cerr << "w[" << wt << "]=0 ";
 #endif
 
       if (weights)
@@ -122,6 +125,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
 	*output_data_ptr = 0.0;
 	output_data_ptr += output_incr;
       }
+
     }
 
     else {
