@@ -260,7 +260,7 @@ void dsp::MPIRoot::load_data (BitSeries* data)
 	      MPI_CHAR, comm);
   
   data->change_start_time (start_sample);
-  data->set_ndat (info.nsamples(received));
+  data->set_ndat (info.get_nsamples(received));
 
   // post for the next receive
   MPI_Irecv (async_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag,
