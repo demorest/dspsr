@@ -72,7 +72,20 @@ IMPI = -I/usr/local/mpi/include
 
 ##########################################################################
 # FFTW and pulsar group wrappers
+
 LFFT = -lpsrfft -lrfftw -lfftw
+
+ifeq ($(PSRFFTW3),yes)
+CPPFLAGS += -DACTIVATE_FFTW3=1
+LFFT += -lfftw3f
+endif
+
+##########################################################################
+# Intel IPP library
+
+ifeq ($(PSRIPP),yes)
+IPPINC = -I/nfs/cluster/ska/cwest/intel/ipp/include
+endif
 
 ##########################################################################
 # OpenGL 3D stuff
