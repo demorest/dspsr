@@ -66,8 +66,8 @@ void dsp::Input::load (Timeseries* data)
 /*!
   Set from where the next "load_block" will load
   \param offset the number of time samples to offset
-  \param whence from where to offset; 0==absolute, 1=relative
-  \return 0 on success; -1 on failure
+  \param whence from where to offset: SEEK_SET, SEEK_CUR, SEEK_END (see
+  <unistd.h>)
 */
 void dsp::Input::seek (int64 offset, int whence)
 {
@@ -75,19 +75,33 @@ void dsp::Input::seek (int64 offset, int whence)
     cerr << "Input::seek offset=" << offset << endl;
 
   switch (whence) {
-  case 0:
+
+  case SEEK_SET:
     if (offset < 0)
-      throw_str ("Input::seek negative offset");
+      throw Error (InvalidRange, "Input::seek", "SEEK_SET negative offset");
     next_sample = offset;
     break;
-  case 1:
+
+  case SEEK_CUR:
     if (offset < -(int64)next_sample)
-      throw_str ("Input::seek negative offset");
+      throw Error (InvalidRange, "Input::seek", "SEEK_CUR negative offset");
     next_sample += offset;
     break;
+
+  case SEEK_END:
+    if (!total_samples)
+      throw Error (InvalidState, "Input::seek", "SEEK_END unknown eod");
+
+    if (offset < -(int64)total_samples)
+      throw Error (InvalidRange, "Input::seek", "SEEK_END negative offset");
+
+    next_sample = total_samples + offset;
+    break;
+
   default:
-    throw_str ("Input::seek cannot seek past end of file");
+    throw Error (InvalidParam, "Input::seek", "invalid whence");
   }
+
 }
 
 /*!  
