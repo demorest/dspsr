@@ -1,4 +1,5 @@
 #include <string>
+#include <stdio.h>
 
 #include "psr_cpp.h"
 
@@ -20,7 +21,7 @@ void dsp::BCPMExtension::copy(const dsp::BCPMExtension& b){
 
 //! Dump out to a string
 string dsp::BCPMExtension::dump_string() const {
-  string ss = "BCPMExtension MiniExtension.C $Revision: 1.2 $ $Date: 2004/12/13 01:28:28 $:\n";
+  string ss = "BCPMExtension MiniExtension.C $Revision: 1.3 $ $Date: 2004/12/13 03:19:36 $:\n";
 
   char dummy[4096];
 
