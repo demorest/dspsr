@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/07/01 05:14:07 $
+   $Revision: 1.9 $
+   $Date: 2003/07/05 08:18:48 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -129,6 +129,9 @@ void dsp::Transformation<In, Out>::set_input (In* _input)
        && (const void*)input == (const void*)output )
     throw Error (InvalidState, string("Transformation["+name+"]::set_input").c_str(),
 		 "input must != output");
+
+  if( type==inplace )
+    output = (Out*)_input;
 }
 
 template <class In, class Out>
@@ -137,13 +140,10 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
   if (verbose)
     cerr << "dsp::Transformation["+name+"]::set_output ("<<_output<<")"<<endl;
 
-  if (type == inplace && input.get() && (const void*)input.get()!=(const void*)_output ){
-    Error er(InvalidState, string("Transformation["+name+"]::set_output").c_str(),
+  if (type == inplace && input.ptr() && (const void*)input.get()!=(const void*)_output )
+    throw Error(InvalidState, string("Transformation["+name+"]::set_output").c_str(),
 		 "inplace transformation input must equal output");
-    cerr << er << endl;
-    exit(-1);
-  }
-
+  
   output = _output;
 
   if ( type == outofplace && input && output 
@@ -153,6 +153,9 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
     cerr << er << endl;
     exit(-1);
   }
+
+  if( type == inplace && !input.ptr() )
+    input = (In*)_output;
 
 }
 
