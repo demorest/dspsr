@@ -49,7 +49,7 @@ void dsp::BitSeries::resize (int64 nsamples)
       cerr << "dsp::BitSeries::resize current size = " << size << " bytes"
           " -- required size = " << require << " bytes" << endl;
  
-    if (data) delete data; data = 0;
+    if (data) delete [] data; data = 0;
     size = 0;
     //! data has been deleted. input sample is no longer valid
     input_sample = -1;
@@ -162,3 +162,27 @@ void dsp::BitSeries::attach(unsigned char* _data){
   if (data) delete [] data; data = 0;
   data = _data;
 }
+
+void dsp::BitSeries::share(unsigned char*& _buffer,uint64& _size) const {
+  _size = size;
+  _buffer = data;
+}
+
+//! Release control of the data buffer- resizes to zero
+unsigned char* dsp::BitSeries::release(uint64& _size){
+  if( !data )
+    return 0;
+
+  unsigned char* ret = data;
+  _size = size;
+
+  data = 0;
+  size = 0;
+  input_sample = -1;
+  input = 0;
+  request_ndat = ndat = 0;
+  request_offset = 0;
+
+  return ret;
+}
+
