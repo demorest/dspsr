@@ -26,3 +26,9 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 
   return filename;
 }
+
+//! Set the PhaseSeries from which Profile data will be constructed
+void dsp::PhaseSeriesUnloader::set_profiles (const PhaseSeries* _profiles)
+{
+  profiles = _profiles;
+}
