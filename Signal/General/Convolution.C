@@ -151,7 +151,6 @@ void dsp::Convolution::transformation ()
 		 "Cannot transform Signal::State="
 		 + input->get_state_as_string());
 
-
 #ifdef DEBUG
   fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
 	   mpi_rank, (int)matrix_convolution, ndat, nsamp_fft, nsamp_overlap);
@@ -185,8 +184,10 @@ void dsp::Convolution::transformation ()
 
   float* complex_time  = spectrum[1] + n_fft * 2;
 
+  // although only two extra points are required, adding 4 ensures that
+  // SIMD alignment is maintained
   if (state == Signal::Nyquist)
-    complex_time += 2;
+    complex_time += 4;
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
@@ -236,11 +237,9 @@ void dsp::Convolution::transformation ()
 
   response->mark (output);
 
-  unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
-  
-  unsigned cross_pol = 1;
-  if (matrix_convolution)
-    cross_pol = 2;
+  const unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
+ 
+  const unsigned cross_pol = matrix_convolution ? 2 : 1;
  
   // temporary things that should not go in and out of scope
   float* ptr = 0;
@@ -248,7 +247,7 @@ void dsp::Convolution::transformation ()
 
   unsigned long offset;
   // number of floats to step between each FFT
-  unsigned long step = nsamp_good * ndim;
+  const unsigned long step = nsamp_good * ndim;
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
@@ -267,7 +266,7 @@ void dsp::Convolution::transformation ()
 	    apodization -> operate (ptr, complex_time);
 	    ptr = complex_time;
 	  }
-	  
+
 	  if (state == Signal::Nyquist)
 	    fft::frc1d (nsamp_fft, spectrum[ipol], ptr);
 

@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <stdio.h>
+#include <malloc.h>
 
 #include "Error.h"
 
@@ -115,13 +116,13 @@ void* dsp::Operation::workingspace (size_t nbytes)
   static size_t working_size = 0;
 
   if (!nbytes) {
-    if (working_space) delete [] working_space; working_space = 0;
+    if (working_space) free(working_space); working_space = 0;
     working_size = 0;
   }
 
   if (working_size < nbytes) {
-    if (working_space) delete [] working_space; working_space = 0;
-    working_space = new char [nbytes];
+    if (working_space) free(working_space); working_space = 0;
+    working_space = memalign(16, nbytes);
 
     if (!working_space)
       throw Error (BadAllocation, "Operation::workingspace",

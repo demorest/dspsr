@@ -1,13 +1,7 @@
-#include "environ.h"
-#include "genutil.h"
-#include "fsleep.h"
-#include "minmax.h"
+#include "dsp/DataSeries.h"
 #include "Error.h"
 
-#include "dsp/Observation.h"
-#include "dsp/BitSeries.h"
-#include "dsp/DataSeries.h"
-#include "dsp/TimeSeries.h"
+#include <malloc.h>
 
 int dsp::DataSeries::instantiation_count = 0;
 int64 dsp::DataSeries::memory_used = 0;
@@ -76,20 +70,19 @@ void dsp::DataSeries::resize (uint64 nsamples){
 void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 {
   if (verbose)
-    cerr << "dsp::DataSeries::resize (" << nsamples << ")" << endl;
+    cerr << "dsp::DataSeries::resize (" << nsamples << ") nbit="
+         << get_nbit() << " ndim=" << get_ndim() << endl;
 
   // Number of bits needed to allocate a single pol/chan group
   uint64 nbits_required = nsamples * get_nbit() * get_ndim();
 
-  if( verbose )
-    fprintf(stderr,"dsp::DataSeries::resize() got nbits required per group="UI64"\n",
-	    nbits_required);
+  if (verbose)
+    cerr << "dsp::DataSeries::resize nbits=" << nbits_required << endl;
 
-  if( nbits_required%8 )  // 8 bits per byte
-    throw Error(InvalidParam,"dsp::DataSeries::resize()",
-		"Your nbit=%d and you've tried allocating a buffer of "UI64" samples."
-		"  This is not an integer number of bytes",
-		get_nbit(),nsamples);
+  if (nbits_required & 0x07)  // 8 bits per byte
+    throw Error (InvalidParam,"dsp::DataSeries::resize",
+		"nbit=%d ndim=%d nsamp="UI64" not an integer number of bytes",
+		get_nbit(), get_ndim(), nsamples);
 
   // Number of bytes needed to be allocated
   uint64 require = (nbits_required*get_npol()*get_nchan())/8;
@@ -119,7 +112,7 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 
   if (size == 0) {
     // Add '8' (2 floats) on for FFTs that require 2 extra floats in the allocated memory
-    buffer = new unsigned char[require + 8];
+    buffer = (unsigned char*) memalign (16, require + 8);
     //    fprintf(stderr,"dsp::DataSeries::resize() have resized buffer to be of size "UI64".  buffer=%p\n",
     //    require,buffer);
     size = require;
