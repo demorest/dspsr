@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/11/26 16:37:57 $
-   $Author: wvanstra $ */
+   $Revision: 1.21 $
+   $Date: 2004/04/08 04:09:57 $
+   $Author: hknight $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "Error.h"
+#include "environ.h"
 
 #include "dsp/Observation.h"
 
@@ -31,6 +32,12 @@ namespace dsp {
   class TimeSeries : public Observation {
 
   public:
+
+    //! Counts number of TimeSeries's in existence
+    static int instantiation_count;
+    //! Stores the cumulative amount of memory used
+    static int64 memory_used;
+
     //! Null constructor
     TimeSeries ();
 
