@@ -537,7 +537,7 @@ DSO_OBJS := $(DSOBJS:%=$(LOGIN_ARCH)/%)
 
 $(DSOLIB) : $(DSO_OBJS)
 	@mkdir -p $(dir $(DSOLIB))
-	$(DSO) $@ $(DSO_OBJS) $(DSO_FLAGS)
+	$(DSO) $@ $(DSO_OBJS) $(DSO_FLAGS) $(DSO_LDFLAGS)
 
 endif
 
