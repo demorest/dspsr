@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/11/10 12:57:08 $
+   $Revision: 1.11 $
+   $Date: 2002/11/12 00:23:29 $
    $Author: wvanstra $ */
 
 
@@ -31,8 +31,7 @@ namespace dsp {
     virtual bool is_valid (const char* filename) const = 0;
 
     //! Open the file
-    virtual void open (const char* filename)
-    { current_filename=filename; open_it(filename); }
+    void open (const char* filename);
 
     //! Convenience interface to File::open (const char*)
     void open (const string& filename) { open (filename.c_str()); }
@@ -41,7 +40,7 @@ namespace dsp {
     virtual void close ();
 
     //! Return the name of the file from which this instance was created
-    string get_filename () const { return filename; }
+    string get_filename () const { return current_filename; }
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static File* create (const char* filename);
@@ -54,8 +53,8 @@ namespace dsp {
 
   protected:
     
-    //! The name of the currently opened file, set by open()
-    string current_filename;
+    //! Called by the wrapper-function, open
+    virtual void open_file (const char* filename) = 0;
 
     //! The file descriptor
     int fd;
@@ -63,8 +62,8 @@ namespace dsp {
     //! Size of the header in bytes
     int header_bytes;
     
-    //! Name of the file from which this instance was created
-    string filename;
+    //! The name of the currently opened file, set by open()
+    string current_filename;
 
     //! Load nbyte bytes of sampled data from the device into buffer
     /*! If the data stored on the device contains information other
@@ -80,13 +79,10 @@ namespace dsp {
       and the additional information should be skipped. */
     virtual int64 seek_bytes (uint64 bytes);
     
-    //! Called by the wrapper-function, open
-    virtual void open_it (const char* filename) = 0;
+    //! Calculates the total number of samples in the file, base on it size
+    virtual void set_total_samples ();
 
-    //! Called by open_it() and by dsp::ManyFile::switch_to_file()
-    virtual void set_header_bytes() = 0;
-
-    //! initialize variables
+    //! initialize variables to sensible null values
     void init();
 
     //! List of registered sub-classes

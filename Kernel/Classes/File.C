@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -18,20 +19,60 @@ dsp::File::File (const char* name) : Seekable (name)
 */
 dsp::File::~File ()
 {
+  close ();
 }
 
 void dsp::File::init()
 {
-  fd = header_bytes = -1;
-  current_filename = "No file open";
+  fd = -1;
+
+  header_bytes = 0;
+
+  current_filename = "";
+
+  info.init();
 }
+
+void dsp::File::open (const char* filename)
+{
+  close ();
+
+  open_file (filename);
+
+  if (info.get_ndat() == 0)
+    set_total_samples ();
+
+  reset ();
+
+  current_filename = filename;
+}
+
 
 void dsp::File::close()
 {
   if (fd >= 0)
     ::close (fd);
-  fd = -1;
-  current_filename = "No file open";
+  init ();
+}
+
+void dsp::File::set_total_samples ()
+{
+  if (fd < 0)
+    throw Error (InvalidState, "dsp::File::set_total_samples", "fd < 0");
+
+  struct stat buf;
+  if (fstat (fd, &buf) < 0)
+    throw Error (FailedSys, "dsp::File::set_total_samples",
+		 "fstat(%s)", current_filename.c_str());
+
+  if (buf.st_size < header_bytes)
+    throw Error (InvalidState, "dsp::File::set_total_samples",
+		 "file size=%d < header size=%d",
+		 buf.st_size, header_bytes);
+
+  uint64 total_bytes = buf.st_size - header_bytes;
+
+  info.set_ndat (info.nsamples (total_bytes));
 }
 
 //! Load bytes from file
