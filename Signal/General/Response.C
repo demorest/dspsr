@@ -28,6 +28,53 @@ dsp::Response::Response ()
   nchan = 1;
 }
 
+//! Destructor
+dsp::Response::~Response ()
+{
+}
+
+//! Copy constructor
+dsp::Response::Response (const Response& response)
+{
+  operator = (response);
+}
+
+//! Assignment operator
+const dsp::Response& dsp::Response::operator = (const Response& response)
+{
+  Shape::operator = ( response );
+
+  impulse_pos = response.impulse_pos;
+  impulse_neg = response.impulse_neg;
+  whole_swapped = response.whole_swapped;
+  chan_swapped = response.chan_swapped;
+  dc_centred = response.dc_centred;
+
+  return *this;
+}
+
+//! Multiplication operator
+const dsp::Response& dsp::Response::operator *= (const Response& response)
+{
+  if (ndat != response.ndat)
+    throw Error (InvalidParam, "dsp::Response::operator *=",
+		 "ndat=%d != *.ndat=%d", ndat, response.ndat);
+
+  if (nchan != response.nchan)
+    throw Error (InvalidParam, "dsp::Response::operator *=",
+		 "nchan=%d != *.nchan=%d", nchan, response.nchan);
+
+  if (npol < response.npol)
+    throw Error (InvalidParam, "dsp::Response::operator *=",
+		 "npol=%d < *.npol=%d", npol, response.npol);
+
+  for (unsigned ipol=0; ipol < npol; ipol++)
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+      response.operate (buffer + offset*ipol + ichan*ndat*ndim, ipol, ichan);
+
+  return *this;
+}
+
 /*! The ordering of frequency channels in the response function depends 
   upon:
   <UL>
@@ -224,6 +271,26 @@ void dsp::Response::check_ndat () const
 		ndat, ndat_min);
 }
   
+//! Get the passband
+vector<float> dsp::Response::get_passband (unsigned ipol, int ichan) const
+{
+  assert (ndim == 1);
+
+  // output all channels at once if ichan < 0
+  unsigned npts = ndat;
+  if (ichan < 0) {
+    npts *= nchan;
+    ichan = 0;
+  }
+
+  register float* f_p = buffer + offset * ipol + ichan * ndat * ndim;
+
+  vector<float> retval (npts);
+  for (unsigned ipt=0; ipt < npts; ipt++)
+    retval[ipt]=f_p[ipt];
+
+  return retval;
+}
 
 // /////////////////////////////////////////////////////////////////////////
 
@@ -234,7 +301,7 @@ void dsp::Response::check_ndat () const
   
   \param data an array of nchan*ndat complex numbers */
 
-void dsp::Response::operate (float* data, unsigned ipol, int ichan)
+void dsp::Response::operate (float* data, unsigned ipol, int ichan) const
 {
   assert (ndim == 2);
 
@@ -347,7 +414,7 @@ void dsp::Response::set (const vector<complex<float> >& filt)
 // Response::operate - multiplies two complex arrays by complex matrix Response 
 // ndat = number of complex points
 //
-void dsp::Response::operate (float* data1, float* data2, int ichan)
+void dsp::Response::operate (float* data1, float* data2, int ichan) const
 {
   assert (ndim == 8);
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/01/07 16:25:12 $
+   $Revision: 1.21 $
+   $Date: 2004/10/22 08:51:45 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -26,8 +26,20 @@ namespace dsp {
     //! Maximum ndat allowed
     static unsigned ndat_max;
 
-    //! null constructor
+    //! Default constructor
     Response();
+
+    //! Destructor
+    virtual ~Response ();
+
+    //! Copy constructor
+    Response (const Response&);
+
+    //! Assignment operator
+    const Response& operator = (const Response&);
+
+    //! Multiplication operator
+    const Response& operator *= (const Response&);
 
     //! Get the size of the positive half of the impulse response, \f$m_+\f$
     /*! Get the number of complex time samples in the t>0 half of the
@@ -64,6 +76,9 @@ namespace dsp {
     //! Given impulse_pos and impulse_neg, check that ndat is large enough
     void check_ndat () const;
 
+    //! Get the passband
+    vector<float> get_passband (unsigned ipol, int ichan=-1) const;
+
     //! Construct frequency response from complex phasors
     void set (const vector<complex<float> >& phasors);
 
@@ -71,10 +86,10 @@ namespace dsp {
     void set (const vector<Jones<float> >& jones);
 
     //! Multiply spectrum by complex frequency response
-    void operate (float* spectrum, unsigned poln=0, int ichan=-1);
+    void operate (float* spectrum, unsigned poln=0, int ichan=-1) const;
 
     //! Multiply spectrum vector by complex matrix frequency response
-    void operate (float* spectrum1, float* spectrum2, int ichan=-1);
+    void operate (float* spectrum1, float* spectrum2, int ichan=-1) const;
 
     //! Integrate the power of spectrum into self
     void integrate (float* spectrum, unsigned poln=0, int ichan=-1);
