@@ -4,10 +4,11 @@
 #include <cpgplot.h>
 
 #include "TwoBitStatsPlotter.h"
-#include "IOManager.h"
 #include "TwoBitCorrection.h"
-#include "Input.h"
 #include "Timeseries.h"
+#include "IOManager.h"
+#include "Input.h"
+#include "Error.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -66,67 +67,51 @@ int main (int argc, char** argv)
     cpgsch (2.0);
   }
 
-  // raw baseband data container
-  dsp::Timeseries raw;
-
   // converted voltages container
-  dsp::Timeseries voltage;
+  Reference::To<dsp::Timeseries> voltages = new dsp::Timeseries;
 
   // interface manages the creation of data loading and converting classes
-  dsp::IOManager manager;
+  Reference::To<dsp::IOManager> manager = new dsp::IOManager;
+
+  manager->set_block_size (512*512);
+  manager->set_output (voltages);
 
   // plots two-bit digitization statistics
-  dsp::TwoBitStatsPlotter plotter;
-
-  // raw baseband data input
-  Reference::To<dsp::Input> input;
-
-  // voltage converter
+  Reference::To<dsp::TwoBitStatsPlotter> plotter = new dsp::TwoBitStatsPlotter;
+  
   Reference::To<dsp::TwoBitCorrection> correct;
+
+  plotter->set_viewport (0.7, 0.95, 0.1, 0.9);
+  plotter->horizontal = false;
 
   cpgbeg(0, "?",1,1);
   cpgsch(2);  // set character height
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
-    manager.open (filenames[ifile]);
+    manager->open (filenames[ifile]);
 
     if (verbose)
-      cerr << "data file " << filenames[ifile] << " opened" << endl;
-
-    // create a new file input, appropriate to the backend
-    input = manager.get_input();
-
-    input->set_block_size (512*512);
-
-    if (verbose)
-      cerr << "input initialized" << endl;
+      cerr << "digistat: file " << filenames[ifile] << " opened" << endl;
 
     // create a new unpacker, appropriate to the backend
-    correct = dynamic_cast<dsp::TwoBitCorrection*>(manager.get_unpacker());
+    correct = dynamic_cast<dsp::TwoBitCorrection*>(manager->get_unpacker());
     if (!correct) {
-      cerr << "converter is not a TwoBitCorrection subclass" << endl;
+      cerr << "digistat: " << filenames[ifile] <<
+	" does not contain two-bit data" << endl;
       continue;
     }
 
-    correct->set_input (&raw);
-    correct->set_output (&voltage);
+    plotter->set_data (correct);
 
-    if (verbose)
-      cerr << "converter initialized" << endl;
-
-    plotter.set_data (correct);
-
-    while (!input->eod()) {
+    while (!manager->eod()) {
 
       correct->zero_histogram ();
       
-      input->load (&raw);
-
-      correct->operate ();
+      manager->load (voltages);
 
       cpgpage();
-      plotter.plot();
+      plotter->plot();
 
     }
 
@@ -144,6 +129,11 @@ int main (int argc, char** argv)
   return 0;
 }
 
+
+catch (Error& error) {
+  cerr << error << endl;
+  return -1;
+}
 
 catch (Reference::invalid& error) {
   cerr << "Invalid Reference exception thrown" << endl;
