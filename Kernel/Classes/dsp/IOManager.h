@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/09/25 06:35:24 $
-   $Author: ahotan $ */
+   $Revision: 1.3 $
+   $Date: 2002/10/07 15:49:13 $
+   $Author: wvanstra $ */
 
 
 #ifndef __IOManager_h
@@ -22,9 +22,6 @@ namespace dsp {
   class IOManager : public Input {
 
   public:
-    
-    //! Verbosity flag
-    static bool verbose;
     
     //! Constructor
     IOManager ();
