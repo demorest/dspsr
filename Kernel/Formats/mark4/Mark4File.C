@@ -85,7 +85,9 @@ void dsp::Mark4File::open_file (const char* filename)
   //  cerr << endl << endl;
   
   info.set_start_time(decode_date());
-
+  
+  //  cout << "Decoded date: " << info.get_start_time().printall() << endl;
+  
   // Need to rewind time to start of file, which is NOT the start of the header.
   
   
@@ -113,14 +115,12 @@ void dsp::Mark4File::open_file (const char* filename)
   uint64 last_sync = find_sync(fd,file_info.st_size-2500*channels);
   //  cout << last_sync << "\t" << decode_date(last_sync).printall() << endl;
   
-  double initial_offset_time = 0.0;
-  
-  initial_offset_time = (first_sync*8.0/(info.get_nbit()*info.get_npol()))/info.get_rate();
-  
-  info.set_start_time(info.get_start_time() - initial_offset_time);
+  double initial_offset_time = ((first_sync-8*channels)/(info.get_npol()))
+                                *(8/info.get_nbit())/info.get_rate();
 
-  //  cerr << info.get_start_time().printall() << "\t";
-  //  cerr << info.get_end_time().printall() << endl;
+  info.set_start_time(info.get_start_time() - initial_offset_time);
+  
+  cout << "FS: " << ((first_sync-8*channels)/(info.get_npol()))*(8/info.get_nbit())/info.get_rate() << endl;
 }
 
 
