@@ -18,16 +18,6 @@ dsp::Detection::Detection ()
   ndim = 1;
 }
 
-/*  Other possible polarimetric states of the data
-    enum State {
-    // Nyquist sampled voltages (real)
-    Nyquist,
-    // In-phase and Quadrature sampled voltages (complex)
-    Analytic,
-    // Stokes invariant interval
-    Invariant
-  };
-*/
 
 //! Set the state of output data
 void dsp::Detection::set_output_state (Signal::State _state)
@@ -39,10 +29,11 @@ void dsp::Detection::set_output_state (Signal::State _state)
   case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
     break;
   case Signal::Stokes:     // Stokes I,Q,U,V
-    throw Error(InvalidParam,"dsp::Detection::set_output_state()",
-		"You've tried to set the output state to Signal::Stokes.  Unfortunately, the code doesn't actually do this.  Why don't you change the code so that it does?");
+    throw Error (InvalidParam, "dsp::Detection::set_output_state",
+		 "Stokes output not implemented");
   default:
-    throw_str ("Detection::set_output_state unknown state");
+    throw Error (InvalidParam, "dsp::Detection::set_output_state",
+		 "invalid state=%s", Signal::state_string (_state));
   }
 
   state = _state;
@@ -52,42 +43,42 @@ void dsp::Detection::set_output_state (Signal::State _state)
 void dsp::Detection::transformation ()
 {
   if (verbose)
-    cerr << "Detection::transformation output state="
+    cerr << "dsp::Detection::transformation output state="
 	 << Signal::state_string(state) << endl;
 
-  if (input->get_nbit() != sizeof(float) * 8)
-    throw Error(InvalidState,"Detection::transformation()",
-		"input not floating point (nbit=%d)",input->get_nbit());
-
-  if( input.get()==output.get() && state==input->get_state() ){
-    if( verbose )
-      fprintf(stderr,"dsp::Detection::transformation(): Inplace operation with no change of state- no work to do- returning"); 
+  if( input.get()==output.get() && state==input->get_state() ) {
+    if (verbose) cerr 
+      << "dsp::Detection::transformation inplace and no state change" << endl;
     return;
   }
 
   if (state == Signal::Stokes || state == Signal::Coherence) {
 
     if (input->get_npol() != 2)
-      throw_str ("Detection::transformation invalid npol=%d for %s formation",
-		 input->get_npol(), Signal::state_string(state));
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid npol=%d for %s formation",
+		   input->get_npol(), Signal::state_string(state));
 
     if (input->get_state() != Signal::Analytic)
-      throw_str ("Detection::transformation invalid state=%s for %s formation",
-		 input->get_state_as_string().c_str(),
-		 Signal::state_string(state));
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid state=%s for %s formation",
+		   input->get_state_as_string().c_str(),
+		   Signal::state_string(state));
 
-    // Signal::Coherence product and Signal::Stokes parameter formation can be performed
-    // in three ways, corresponding to ndim = 1,2,4
+    // Signal::Coherence product and Signal::Stokes parameter
+    // formation can be performed in three ways, corresponding to
+    // ndim = 1,2,4
 
     if (!(ndim==1 || ndim==2 || ndim==4))
-      throw_str ("Detection::transformation invalid ndim=%d for %s formation",
-		 ndim, Signal::state_string(state));
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid ndim=%d for %s formation",
+		   ndim, Signal::state_string(state));
     
   }
 
   bool inplace = (input.get() == output.get());
   if (verbose)
-    cerr << "Detection::transformation inplace" << endl;
+    cerr << "dsp::Detection::transformation inplace" << endl;
 
   if (!inplace)
     resize_output ();
@@ -99,8 +90,8 @@ void dsp::Detection::transformation ()
     polarimetry ();
 
   else
-    throw string("Detection::transformation unknown output state: ")
-      + Signal::state_string (state);
+    throw Error (InvalidState, "dsp::Detection::transformation",
+		 "unknown output state=%s", Signal::state_string (state));
 		  
   if (inplace)
     resize_output ();
@@ -109,7 +100,7 @@ void dsp::Detection::transformation ()
 void dsp::Detection::resize_output ()
 {
   if (verbose)
-    cerr << "Detection::resize_output" << endl;
+    cerr << "dsp::Detection::resize_output" << endl;
 
   unsigned output_ndim = 1;
   unsigned output_npol = input->get_npol();
@@ -118,7 +109,7 @@ void dsp::Detection::resize_output ()
     output_ndim = ndim;
     output_npol = 4/ndim;
     if (verbose)
-      cerr << "Detection::resize_output state: "
+      cerr << "dsp::Detection::resize_output state: "
 	   << Signal::state_string(state) << " ndim=" << ndim << endl;
   }
 
@@ -141,7 +132,8 @@ void dsp::Detection::resize_output ()
       
       for (unsigned ipol=1; ipol<output_npol; ipol++)
 	if (output->get_datptr (ichan, ipol) != base + ipol*block_size)
-	  throw_str ("Detection::resize_output pointer mis-match");
+	  throw Error (InvalidState, "dsp::Detection::resize_output",
+		       "pointer mis-match");
     }
   }
 }
@@ -149,7 +141,7 @@ void dsp::Detection::resize_output ()
 void dsp::Detection::square_law ()
 {
   if (verbose)
-    cerr << "Detection::square_law" << endl;
+    cerr << "dsp::Detection::square_law" << endl;
  
   if( state==Signal::Intensity && input->get_state()==Signal::PPQQ ){
     Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
@@ -179,7 +171,7 @@ void dsp::Detection::square_law ()
 void dsp::Detection::polarimetry ()
 {
   if (verbose)
-    cerr << "Detection::polarimetry ndim=" << ndim << endl;
+    cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
 
   uint64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
