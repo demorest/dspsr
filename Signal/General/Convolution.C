@@ -113,7 +113,8 @@ void dsp::Convolution::operation ()
     nsamp_overlap = n_overlap;
   }
   else
-    throw_str ("Convolution::operation Invalid state:" + input->get_state_str());
+    throw_str ("Convolution::operation Invalid state:"
+	       + input->get_state_as_string());
 
 #ifdef DEBUG
   fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/09/16 03:09:55 $
-   $Author: hknight $ */
+   $Revision: 1.11 $
+   $Date: 2002/09/17 11:19:40 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -213,6 +213,12 @@ namespace dsp {
     //! Return the instrument used to record signal
     string get_machine () const { return machine; }
 
+    //! Returns the DM to which the data has been dedispersed
+    double get_DM_level () const { return DM_level; }
+
+    //! Set the record of what DM the data is dedispersed
+    void set_DM_level (double _DM_level) { DM_level = _DM_level; }
+
     //! Returns a convenient id string for a given MJD
     static string get_default_id (const MJD& mjd);
 
@@ -220,13 +226,7 @@ namespace dsp {
     string get_default_id () const;
 
     //! Returns a string describing the state of the data
-    string get_state_str () const;
-
-    //! Returns the DM to which the data has been dedispersed to
-    double get_DM_level(){ return DM_level; }
-
-    //! Set the record of what DM the data is dedispersed to
-    void set_DM_level(double _DM_level){ DM_level = _DM_level; }
+    string get_state_as_string () const;
 
     //! Return the size in bytes of nsamples time samples
     int64 nbytes (int64 nsamples) const
