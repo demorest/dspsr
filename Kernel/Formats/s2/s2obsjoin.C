@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "tci_file.h"
 
+using namespace std;
+
 //#define DEBUG 1
 
 bool ObsJoin::s2File::load(const string& fname_)

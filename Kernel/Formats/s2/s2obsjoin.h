@@ -10,7 +10,7 @@ namespace ObsJoin
   {
   public:
     s2File() {}
-    virtual bool load(const string& fname_); // return success status
+    virtual bool load(const std::string& fname_); // return success status
   };
   typedef LoadableSegments<s2File> s2Files;
 }

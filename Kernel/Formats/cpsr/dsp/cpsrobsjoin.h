@@ -10,7 +10,7 @@ namespace ObsJoin
   {
   public:
     CPSRFile() {}
-    virtual bool load(const string& fname_); // return success status
+    virtual bool load(const std::string& fname_); // return success status
   };
   typedef LoadableSegments<CPSRFile> CPSRFiles;
 }
