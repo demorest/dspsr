@@ -1,6 +1,9 @@
 #include <iostream>
+
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "environ.h"
 #include "OneBitCorrection.h"
@@ -58,6 +61,10 @@ void dsp::OneBitCorrection::unpack ()
     throw Error (InvalidState, "OneBitCorrection::unpack",
 		 "input not 1-bit sampled");
 
+  if( output->get_nbit() != 32 )
+    throw Error(InvalidState,"dsp::OneBitCorrection::unpack()",
+		"output doesn't have nbit=32");
+
   uint64 ndat = input->get_ndat();
   unsigned n_freq = input->get_nchan();
 
@@ -85,6 +92,7 @@ void dsp::OneBitCorrection::unpack ()
       *into = float (((*from)>>shift32) & mask);
       from += nskip32;
       into ++;
+
     }
   }
 }
