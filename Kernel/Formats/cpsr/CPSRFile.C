@@ -24,15 +24,6 @@ dsp::CPSRFile::CPSRFile (const char* filename)
     open (filename);
 }
 
-//! Return a pointer to an possibly identical instance of a CPSRFile
-dsp::CPSRFile* dsp::CPSRFile::clone(bool identical){
-  CPSRFile* copy = new CPSRFile;
-
-  //if( identical )
-  //copy->operator=( *this );
-
-  return copy;
-}
 
 bool dsp::CPSRFile::is_valid (const char* filename) const
 {
@@ -70,79 +61,77 @@ static pspmDbase::server cpsr_hdr;
   </UL>
 */
 
-void dsp::CPSRFile::open_file (const char* filename,PseudoFile* _info)
+void dsp::CPSRFile::open_file (const char* filename)
 {
   if (verbose)
-    cerr << "CPSRFile::open " << filename << endl;
+    cerr << "dsp::CPSRFile::open " << filename << endl;
 
   if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
-    fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");
-    fprintf (stderr, "CPSRFile:: PSPM header size %d.\n", PSPM_HEADER_SIZE);
-    fprintf (stderr, "CPSRFile:: for this architecture: %d.\n",
+    fprintf (stderr, "dsp::CPSRFile:: PSPM header size is invalid.\n");
+    fprintf (stderr, "dsp::CPSRFile:: PSPM header size %d.\n",
+	     PSPM_HEADER_SIZE);
+    fprintf (stderr, "dsp::CPSRFile:: for this architecture: %d.\n",
 	     sizeof(PSPM_SEARCH_HEADER));
     
-    throw_str ("CPSRFile::open - Architecture Error!");
+    throw Error (InvalidState, "dsp::CPSRFile::open", 
+		 "Architecture Error: Invalid PSPM header size");
   }
 
   header_bytes = sizeof(PSPM_SEARCH_HEADER);
   
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
-    throw_str ("CPSRFile::open - failed open(%s) %s\n",
-	       filename, strerror(errno));
+    throw Error (FailedSys, "dsp::CPSRFile::open", 
+		 "failed open(%s)", filename);
 
   PSPM_SEARCH_HEADER* header = pspm_read (fd);
   if (!header) {
     ::close (fd);
-    throw_str ("CPSRFile::open - failed pspm_read(%s) %s\n", 
-	       filename, strerror(errno));
+    throw Error (FailedCall, "dsp::CPSRFile::open",
+		 "failed pspm_read(%s) %s\n", filename, strerror(errno));
   }
 
   pspmDbase::entry hdr;
   try { hdr = pspmDbase::Entry (header); }
   catch (...) {
     ::close (fd);
-    throw_str ("CPSRFile::open no match found in pspmDbase for %s",
-	       PSPMidentifier (header).c_str());
+    throw Error (InvalidState, "dsp::CPSRFile::open", 
+		 "no match found in pspmDbase for " + PSPMidentifier (header));
   }
     
   tapenum = hdr.tape;
   filenum = hdr.file;
   
-  if( _info ){
-    info = *_info;
-  }
-  else{ 
 #if _DEBUG
 
-    fprintf (stderr, "File size:       %ld\n", header->file_size);
-    fprintf (stderr, "Large File Size: "I64"\n", header->ll_file_size);
-    fprintf (stderr, "Large Offset:    "I64"\n", header->ll_file_offset);
-    fprintf (stderr, "MJD in header    %40.38Lf\n", header->mjd_start);
-    
-    fprintf (stderr, "tick offset:     %30.28lf\n\n", header->tick_offset);
-    fprintf (stderr, "tape_num:        %d\n", header->tape_num);
-    fprintf (stderr, "tape_file_number:%d\n", header->tape_file_number);
-    fprintf (stderr, "scan_num:        %d\n", header->scan_num);
-    fprintf (stderr, "scan_file_number %d\n", header->scan_file_number);
-    fprintf (stderr, "file_size        %d\n\n", header->file_size);
+  fprintf (stderr, "File size:       %ld\n", header->file_size);
+  fprintf (stderr, "Large File Size: "I64"\n", header->ll_file_size);
+  fprintf (stderr, "Large Offset:    "I64"\n", header->ll_file_offset);
+  fprintf (stderr, "MJD in header    %40.38Lf\n", header->mjd_start);
+  
+  fprintf (stderr, "tick offset:     %30.28lf\n\n", header->tick_offset);
+  fprintf (stderr, "tape_num:        %d\n", header->tape_num);
+  fprintf (stderr, "tape_file_number:%d\n", header->tape_file_number);
+  fprintf (stderr, "scan_num:        %d\n", header->scan_num);
+  fprintf (stderr, "scan_file_number %d\n", header->scan_file_number);
+  fprintf (stderr, "file_size        %d\n\n", header->file_size);
 
-    fprintf (stderr, "LMST in header   %lf\n", header->pasmon_lmst);
-    
-    fprintf (stderr, "Pulsar:          %s\n",  header->psr_name);
-    fprintf (stderr, "Date:            %s\n",  header->date);
-    fprintf (stderr, "Start Time:      %s\n",  header->start_time);
-    
-    fprintf (stderr, "pasmon_daynumber:%d\n",  header->pasmon_daynumber);
-    fprintf (stderr, "pasmon_ast:      %d\n",  header->pasmon_ast);
-    
-    fprintf (stderr, "Centre Freq:     %lf\n", header->rf_freq);
-    fprintf (stderr, "Sampling Period: %lf\n", header->samp_rate);
-    fprintf (stderr, "Bandwidth:       %lf\n", header->bw);
-    fprintf (stderr, "SIDEBAND:        %d:",  header->SIDEBAND);
-    switch (header->SIDEBAND) 
-      {
-      case UNKNOWN_SIDEBAND:
+  fprintf (stderr, "LMST in header   %lf\n", header->pasmon_lmst);
+  
+  fprintf (stderr, "Pulsar:          %s\n",  header->psr_name);
+  fprintf (stderr, "Date:            %s\n",  header->date);
+  fprintf (stderr, "Start Time:      %s\n",  header->start_time);
+  
+  fprintf (stderr, "pasmon_daynumber:%d\n",  header->pasmon_daynumber);
+  fprintf (stderr, "pasmon_ast:      %d\n",  header->pasmon_ast);
+  
+  fprintf (stderr, "Centre Freq:     %lf\n", header->rf_freq);
+  fprintf (stderr, "Sampling Period: %lf\n", header->samp_rate);
+  fprintf (stderr, "Bandwidth:       %lf\n", header->bw);
+  fprintf (stderr, "SIDEBAND:        %d:",  header->SIDEBAND);
+  switch (header->SIDEBAND) 
+    {
+    case UNKNOWN_SIDEBAND:
 	fprintf (stderr, "Unknown (assume USB)\n");
 	break;
       case SSB_LOWER:
@@ -162,73 +151,70 @@ void dsp::CPSRFile::open_file (const char* filename,PseudoFile* _info)
 	break;
       }
     
-    fprintf (stderr, "Telescope:       %d\n",  header->observatory);
-    fprintf (stderr, "Channels:        %ld\n", header->num_chans);
-    fprintf (stderr, "Bit Mode:        %ld\n", header->bit_mode);
+  fprintf (stderr, "Telescope:       %d\n",  header->observatory);
+  fprintf (stderr, "Channels:        %ld\n", header->num_chans);
+  fprintf (stderr, "Bit Mode:        %ld\n", header->bit_mode);
     
-    fprintf (stderr, "CPSRFile::open - header size %d\n", header_bytes);
+  fprintf (stderr, "dsp::CPSRFile::open - header size %d\n", header_bytes);
     
-    fflush (stderr);
+  fflush (stderr);
 #endif
     
-    char modestr[30];
-    sprintf (modestr, "%d", hdr.nbit);
-    info.set_mode (modestr);
-    
-    info.set_start_time (hdr.start);
-    
-    /* redwards --- set "position" from the header.. should replace cal_ra/dec*/
-    double ra_deg, dec_deg;
-    ra_deg = 15.0 * floor(header->user_ra/10000.0)
-      + 15.0/60.0 * floor(fmod(header->user_ra,10000.0)/100.0)
-      + 15.0/3600.0 * fmod(header->user_ra,100.0);
-    if (header->user_dec == 0.0)
-      dec_deg = 0.0;
-    else
-      dec_deg = header->user_dec/fabs(header->user_dec)* // sign
+  char modestr[30];
+  sprintf (modestr, "%d", hdr.nbit);
+  info.set_mode (modestr);
+  
+  info.set_start_time (hdr.start);
+
+  /* redwards --- set "position" from the header.. should replace cal_ra/dec*/
+  double ra_deg, dec_deg;
+  ra_deg = 15.0 * floor(header->user_ra/10000.0)
+    + 15.0/60.0 * floor(fmod(header->user_ra,10000.0)/100.0)
+    + 15.0/3600.0 * fmod(header->user_ra,100.0);
+  if (header->user_dec == 0.0)
+    dec_deg = 0.0;
+  else
+    dec_deg = header->user_dec/fabs(header->user_dec)* // sign
 	( floor(fabs(header->user_dec)/10000.0)         // magnitude
 	  +1.0/60.0*floor(fmod(fabs(header->user_dec),10000.0)/100.0)
 	  +1.0/3600.0*fmod(fabs(header->user_dec),100.0));
     
-    info.set_coordinates (sky_coord(ra_deg, dec_deg));
+  info.set_coordinates (sky_coord(ra_deg, dec_deg));
     
-    info.set_source (hdr.name);
+  info.set_source (hdr.name);
     
-    /* IMPORTANT: tsamp is the sampling period in microseconds */
-    info.set_rate (1e6/hdr.tsamp);
+  /* IMPORTANT: tsamp is the sampling period in microseconds */
+  info.set_rate (1e6/hdr.tsamp);
 
-    info.set_bandwidth (hdr.bandwidth);
+  info.set_bandwidth (hdr.bandwidth);
     
-    // IMPORTANT: both telescope and centre_freq should be set before calling
-    // default_basis
-    info.set_telescope (hdr.ttelid);
-    info.set_centre_frequency (hdr.frequency);
-    info.set_default_basis();
+  // IMPORTANT: both telescope and centre_freq should be set before calling
+  // default_basis
+  info.set_telescope (hdr.ttelid);
+  info.set_centre_frequency (hdr.frequency);
+  info.set_default_basis();
     
-    // CPSR samples the analytic representation of the voltages
-    info.set_state (Signal::Analytic);
-    // number of channels = number of polarizations * ((I and Q)=2);
-    info.set_npol (hdr.ndigchan / 2);
-    info.set_nbit (hdr.nbit);
-    
-    info.set_ndat (hdr.ndat);
-    
-    if (hdr.ndat < 1) {
-      ::close (fd);
-      throw Error (InvalidState, "dsp::CPSRFile::open",
-		 "Total data: %d\n", hdr.ndat);
-    }
-
-    info.set_machine ("CPSR");
-    
-    // make an identifier name
-    info.set_identifier ("o" + info.get_default_id());  // o for orion
-  } 
+  // CPSR samples the analytic representation of the voltages
+  info.set_state (Signal::Analytic);
+  // number of channels = number of polarizations * ((I and Q)=2);
+  info.set_npol (hdr.ndigchan / 2);
+  info.set_nbit (hdr.nbit);
   
+  info.set_ndat (hdr.ndat);
+  
+  if (hdr.ndat < 1) {
+    ::close (fd);
+    throw Error (InvalidState, "dsp::CPSRFile::open",
+		   "Total data: %d\n", hdr.ndat);
+  }
+
+  info.set_machine ("CPSR");
+
+  // make an identifier name
+  info.set_identifier ("o" + info.get_default_id());  // o for orion
+
   if (verbose)
-    cerr << "CPSRFile::open exit" << endl;
+    cerr << "dsp::CPSRFile::open exit" << endl;
 }
   
-
-
 

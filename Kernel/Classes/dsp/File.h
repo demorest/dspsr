@@ -1,50 +1,52 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/03/13 23:39:15 $
-   $Author: pulsar $ */
+   $Revision: 1.14 $
+   $Date: 2003/04/23 08:04:02 $
+   $Author: wvanstra $ */
 
 
 #ifndef __File_h
 #define __File_h
 
-namespace dsp {
-  class File;
-}
-
 #include "Registry.h"
-
 #include "dsp/Seekable.h"
-#include "dsp/PseudoFile.h"
 
 namespace dsp {
+
+  class PseudoFile;
 
   //! Loads BitSeries data from file
   class File : public Seekable
   {
     friend class MultiFile;
-
+    
   public:
     
+    //! Return a pointer to a new instance of the appropriate sub-class
+    /*! This is the entry point for creating new instances of File objects
+      from input data files of an arbitrary format. */
+    static File* create (const char* filename);
+
+    //! Convenience interface to File::create (const char*)
+    static File* create (const string& filename)
+    { return create (filename.c_str()); }
+
     //! Constructor
     File (const char* name);
     
     //! Destructor
     virtual ~File ();
 
-    //! Return a pointer to a new null instance of the derived class 
-    virtual File* clone(bool identical=true)=0;
-
-    //! Return true if filename appears to refer to a valid format
+    //! Return true if filename appears to refer to a file in a valid format
     virtual bool is_valid (const char* filename) const = 0;
 
     //! Open the file
-    //! If _info is not null, we copy that data instead of re-reading in all info
-    void open (const char* filename, PseudoFile* _info=NULL);
+    void open (const char* filename);
 
     //! Convenience interface to File::open (const char*)
-    void open (const string& filename, PseudoFile* _info=NULL) { open (filename.c_str(),_info); }
+    void open (const string& filename) 
+    { open (filename.c_str()); }
 
     //! Close the file
     virtual void close ();
@@ -53,27 +55,22 @@ namespace dsp {
     string get_filename () const { return current_filename; }
     string get_current_filename(){ return current_filename; }
 
-    //! Return a pointer to a new instance of the appropriate sub-class
-    static File* create (const char* filename);
-
-    //! Convenience interface to File::create (const char*)
-    static File* create (const string& filename)
-    { return create (filename.c_str()); }
-
     //! Inquire the howmany bytes are in the header
     int get_header_bytes() const{ return header_bytes; }
-
-    //! Return a PseudoFile constructed from this File
-    PseudoFile get_pseudofile();
 
   protected:
     
     //! Called by the wrapper-function, open
-    virtual void open_file (const char* filename,PseudoFile* _info) = 0;
-    
-    //! Called by open_file() for some file types, to determine that the header ndat matches the file size
-    //! Requires 'info' parameters nchan,npol,ndim to be set, and also header_bytes to be correctly set
-    //! Return value is the actual ndat in the file
+    virtual void open_file (const char* filename) = 0;
+
+    //! Open from a PseudoFile
+    /*! Resets attributes without calling open_file */
+    void open (const PseudoFile& file);
+
+    //! Return ndat given the file and header sizes, nchan, npol, and ndim
+    /*! Called by open_file for some file types, to determine that the
+    header ndat matches the file size.  Requires 'info' parameters
+    nchan, npol, and ndim as well as header_bytes to be correctly set */
     virtual int64 fstat_file_ndat();
 
     //! The file descriptor
@@ -99,17 +96,23 @@ namespace dsp {
       and the additional information should be skipped. */
     virtual int64 seek_bytes (uint64 bytes);
     
-    //! Calculates the total number of samples in the file, base on it size
+    //! Calculates the total number of samples in the file, based on its size
     virtual void set_total_samples ();
-
-    //! initialize variables to sensible null values
-    void init();
 
     //! List of registered sub-classes
     static Registry::List<File> registry;
 
     // Declare friends with Registry entries
     friend class Registry::Entry<File>;
+
+  private:
+
+    //! Worker function for both forms of open
+    void open (const char* filename, const PseudoFile* file);
+
+    //! Initialize variables to sensible null values
+    void init();
+
 
   };
 

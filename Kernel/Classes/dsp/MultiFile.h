@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/02/13 01:28:48 $
-   $Author: pulsar $ */
+   $Revision: 1.12 $
+   $Date: 2003/04/23 08:04:49 $
+   $Author: wvanstra $ */
 
 
 #ifndef __MultiFile_h
@@ -13,12 +13,9 @@
 
 #include "dsp/Observation.h"
 #include "dsp/Seekable.h"
-#include "dsp/File.h"
 #include "dsp/PseudoFile.h"
 
 namespace dsp {
-
-  class File;
 
   //! Loads BitSeries data from multiple files
   class MultiFile : public Seekable {
@@ -31,13 +28,17 @@ namespace dsp {
     //! Destructor
     virtual ~MultiFile () { }
     
-    //! Open a number of files and treat them as one logical observation.  This function will take the union of the existing filenames and the new ones, and sort them by start time
-    //! Resets the file pointers
-    virtual void open (vector<string> new_filenames);
+    //! Open a number of files and treat them as one logical observation.
+    /*! This method forms the union of the existing filenames and the 
+      new ones, and sort them by start time.
+
+      \post Resets the file pointers
+    */
+    virtual void open (const vector<string>& new_filenames);
 
     //! Makes sure only these filenames are open
     //! Resets the file pointers
-    virtual void have_open(vector<string> filenames);
+    virtual void have_open (const vector<string>& filenames);
 
     //! Retrieve a pointer to the loader File instance
     File* get_loader(){ if(!loader) return NULL; return loader.get(); }
@@ -54,13 +55,13 @@ namespace dsp {
 
     //! Erase just some of the list of loadable files
     //! Resets the file pointers regardless
-    virtual void erase_files(vector<string> erase_filenames);
+    virtual void erase_files (const vector<string>& erase_filenames);
 
     //! Find out which file is currently open;
-    string get_current_filename(){ return current_filename; }
+    string get_current_filename() const { return current_filename; }
 
     //! Find out the index of current file is
-    unsigned get_index(){ return index; }
+    unsigned get_index() const { return current_index; }
 
   protected:
     
@@ -75,9 +76,9 @@ namespace dsp {
 
     //! Loader
     Reference::To<File> loader;
-    
-    //! Current File in use
-    unsigned index;
+
+    //! Name of the currently opened file
+    string current_filename;
 
     //! Return the index of the file containing the offset_from_obs_start byte
     /*! offsets do no include header_bytes */
@@ -89,12 +90,16 @@ namespace dsp {
     //! Ensure that files are contiguous
     void ensure_contiguity();
 
-    //! Setup ndat etc after a change to the list of files
-    void setup(Reference::To<dsp::File> opener);
+  private:
 
-    //! The currently open filename (not really needed but we have it anyway)
-    string current_filename;
+    //! Index of the current PseudoFile in use
+    unsigned current_index;
 
+    //! Setup loader and ndat etc after a change to the list of files
+    void setup ();
+
+    //! Set the loader to the specified PseudoFile
+    void set_loader (unsigned index);
   };
 
 }

@@ -1,57 +1,52 @@
-#include <algorithm>
-
-#include <math.h>
-
+#include "dsp/MultiFile.h"
+#include "dsp/File.h"
+#include "Error.h"
 #include "genutil.h"
 
-#include "Error.h"
-
-#include "dsp/File.h"
-
-#include "dsp/MultiFile.h"
+#include <algorithm>
+#include <math.h>
 
 dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
 {
-  index = 0;
+  current_index = 0;
 }
 
-void dsp::MultiFile::open (vector<string> new_filenames)
+void dsp::MultiFile::open (const vector<string>& new_filenames)
 {
   if (new_filenames.empty())
-    throw Error (InvalidParam, "dsp::Multifile::open()", "An empty list of filenames has been given to this method");
+    throw Error (InvalidParam, "dsp::Multifile::open",
+		 "An empty list of filenames has been given to this method");
 
   // construct a list of the files we already have open
-  vector<string> old_filenames(files.size());
-  for( unsigned i=0; i<files.size(); i++)
+  vector<string> old_filenames (files.size());
+  for (unsigned i=0; i<files.size(); i++)
     old_filenames[i] = files[i].filename;
 
-  // create the opener
-  Reference::To<File> opener;
-  if( !files.empty() )
-    opener = loader->clone();
-  else
-    opener = File::create( new_filenames[0] );
+  // If there is no loader, create one from the first file
+  if (!loader)
+    loader = File::create( new_filenames[0] );
 
   // open up each of the new files and add it to our list of files
   for( unsigned i=0; i<new_filenames.size(); i++){
     if( !is_one_of(new_filenames[i],old_filenames) ){
-      opener->open( new_filenames[i] );
 
-      files.push_back(PseudoFile());
-      files.back().filename = new_filenames[i];
+      loader->open( new_filenames[i] );
+      files.push_back( PseudoFile( loader ) );
+
       if( verbose )
-	fprintf(stderr,"dsp::MultiFile::open() has pushed back a file of '%s'\n",files.back().filename.c_str());
-      files.back().header_bytes = opener->get_header_bytes();
-      files.back().Observation::operator=( *opener->get_info() );
+	cerr << "dsp::MultiFile::open new PseudoFile = " 
+	     << files.back().filename << endl;
+
     }
   }
 
   ensure_contiguity();
 
-  setup(opener);
+  setup();
 }
 
-void dsp::MultiFile::setup(Reference::To<dsp::File> opener){
+void dsp::MultiFile::setup ()
+{
   info = files.front();
 
   uint64 total_ndat = 0;
@@ -60,26 +55,17 @@ void dsp::MultiFile::setup(Reference::To<dsp::File> opener){
 
   info.set_ndat (total_ndat);
 
-  if( !loader )
-    loader = opener;
-  loader->open( files.front().filename, &files.front() );
-
   // MultiFile must reflect the time sample resolution of the underlying device
   resolution = loader->resolution;
 
-  current_filename = files.front().filename;
+  set_loader (0);
 
   reset();
 }
 
 //! Makes sure only these filenames are open
-void dsp::MultiFile::have_open(vector<string> filenames){
-
-  if( files.empty() ){
-    open(filenames);
-    return;
-  }
-
+void dsp::MultiFile::have_open (const vector<string>& filenames)
+{
   // Erase any files we already have open that we don't want open
   for( unsigned ifile=0; ifile<files.size(); ifile++){
     if( !is_one_of(files[ifile].filename,filenames) ){
@@ -88,33 +74,12 @@ void dsp::MultiFile::have_open(vector<string> filenames){
     }
   }
 
-  // Make a list of files we still have open
-  vector<string> old_filenames; 
-  for( unsigned ifile=0; ifile<files.size(); ifile++)
-    old_filenames.push_back( files[ifile].filename );
-
-  Reference::To<File> opener(loader->clone());
-
-  // Open any files we don't already have open
-  for( unsigned i=0; i<filenames.size(); i++){
-    if( !is_one_of(filenames[i],old_filenames) ){
-      opener->open( filenames[i] );
-
-      files.push_back( PseudoFile() );
-      files.back().filename = filenames[i];
-      files.back().header_bytes = opener->get_header_bytes();
-      files.back().Observation::operator=( *opener->get_info() );
-    }
-  }
-
-  // sort and ensure contiguity
-  ensure_contiguity();
-
-  setup(loader);
+  open (filenames);
 }
 
 //! Erase the entire list of loadable files
-void dsp::MultiFile::erase_files(){
+void dsp::MultiFile::erase_files()
+{
   files.erase( files.begin(), files.end());
   delete loader.release();
   info = Observation();
@@ -122,7 +87,8 @@ void dsp::MultiFile::erase_files(){
 }
 
 //! Erase just some of the list of loadable files
-void dsp::MultiFile::erase_files(vector<string> erase_filenames){
+void dsp::MultiFile::erase_files(const vector<string>& erase_filenames)
+{
   for( unsigned ifile=0; ifile<files.size(); ifile++){
     if( is_one_of(files[ifile].filename,erase_filenames) ){
       files.erase( files.begin()+ifile );
@@ -131,26 +97,25 @@ void dsp::MultiFile::erase_files(vector<string> erase_filenames){
   }
   
   if( files.empty() ){
-    info = Observation();
-    reset();
-    delete loader.release();
+    erase_files ();
     return;
   }
 
   ensure_contiguity();
-
-  setup(loader);
+  setup();
 }
 
-void dsp::MultiFile::ensure_contiguity(){
+void dsp::MultiFile::ensure_contiguity()
+{
   if( verbose )
-    fprintf(stderr,"In dsp::MultiFile::ensure_contiguity()\n");
+    cerr << "dsp::MultiFile::ensure_contiguity enter" << endl;
 
   sort( files.begin(), files.end() );
 
   for (unsigned ifile=1; ifile<files.size(); ifile++) {
     if( verbose )
-      fprintf(stderr,"Ensuring contiguity for files %d and %d\n",ifile-1,ifile);
+      cerr << "dsp::MultiFile::ensure_contiguity files " << ifile-1 
+	   << " and " << ifile << endl;
 
     const Observation* obs1 = &files[ifile-1];
     const Observation* obs2 = &files[ifile];
@@ -166,7 +131,7 @@ void dsp::MultiFile::ensure_contiguity(){
   }
 
   if( verbose )
-    fprintf(stderr,"Returning from dsp::MultiFile::ensure_contiguity()\n");
+    cerr << "dsp::MultiFile::ensure_contiguity return" << endl;
 }
 
 //! Load bytes from file
@@ -176,10 +141,11 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
     cerr << "MultiFile::load_bytes nbytes=" << bytes << endl;
   
   if( !loader )
-    throw Error(InvalidState,"dsp::MultiFile::load_bytes()",
-		"Load bytes called with no loader.  Have you called MultiFile::open() yet?");
+    throw Error(InvalidState,"dsp::MultiFile::load_bytes",
+		"No loader.  Possible MultiFile::open failure.");
 
   uint64 bytes_loaded = 0;
+  unsigned index = current_index;
 
   while (bytes_loaded < bytes) {
 
@@ -187,16 +153,13 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
 
     if (index >= files.size()) {
       if (verbose)
-	cerr << "MultiFile::load_bytes end of data" << endl;
+	cerr << "dsp::MultiFile::load_bytes end of data" << endl;
       end_of_data = true;
       break;
     }
 
     // Ensure we are loading from correct file
-    if( loader->get_current_filename() != files[index].filename ){
-      loader->open( files[index].filename, &files[index] );
-      current_filename = files[index].filename;
-    }
+    set_loader (index);
 
     int64 did_load = loader->load_bytes (buffer, to_load);
 
@@ -218,7 +181,7 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
 int64 dsp::MultiFile::seek_bytes (uint64 bytes)
 {
   if( !loader )
-    throw Error(InvalidState,"dsp::MultiFile::seek_bytes()",
+    throw Error(InvalidState,"dsp::MultiFile::seek_bytes",
 		"Seek bytes called with no loader.  Have you called MultiFile::open() yet?");
 
   if (verbose)
@@ -227,6 +190,7 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
   // Total number of bytes stored in files thus far
   uint64 total_bytes = 0;
 
+  unsigned index;
   for (index = 0; index < files.size(); index++) {
 
     // Number of bytes stored in this file
@@ -244,14 +208,22 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
     return -1;
   }
 
-  if( loader->get_current_filename() != files[index].filename ){
-    loader->open( files[index].filename, &files[index] );
-    current_filename = files[index].filename;
-  }
+  set_loader (index);
 
   int64 seeked = loader->seek_bytes (bytes-total_bytes);
   if (seeked < 0)
     return -1;
 
   return total_bytes + seeked;
+}
+
+void dsp::MultiFile::set_loader (unsigned index)
+{
+  if (index == current_index)
+    return;
+
+  loader->open (files[index]);
+
+  current_index = index;
+  current_filename = files[index].filename;
 }

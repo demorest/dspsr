@@ -1,10 +1,13 @@
+#include "dsp/File.h"
+#include "dsp/PseudoFile.h"
+#include "Error.h"
+
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
-#include "dsp/MultiFile.h"
-#include "dsp/File.h"
-#include "Error.h"
 
 //! Constructor
 dsp::File::File (const char* name) : Seekable (name)
@@ -34,30 +37,48 @@ void dsp::File::init()
   info.init();
 }
 
-dsp::PseudoFile dsp::File::get_pseudofile(){
-  return PseudoFile(*this);
+void dsp::File::open (const char* filename)
+{
+  open (filename, 0);
 }
 
-void dsp::File::open (const char* filename, dsp::PseudoFile* _info)
-{
-  //fprintf(stderr,"In dsp::File::open()\n");
 
+void dsp::File::open (const PseudoFile& file)
+{
+  open (0, &file);
+}
+
+
+void dsp::File::open (const char* filename, const PseudoFile* file)
+{
   close ();
+
+  if (filename) {
+
+    open_file (filename);
+      
+    if (info.get_ndat() == 0)
+      set_total_samples ();
+
+  }
+  else if (file) {
+
+    filename = file->filename.c_str();
+    fd = ::open (filename, O_RDONLY);
+    if (fd < 0)
+      throw Error (FailedSys, "dsp::File::open PseudoFile", 
+		   "failed open(%s)", filename);
+  
+    header_bytes = file->header_bytes;
+    info = *file;
+  }
 
   current_filename = filename;
 
-  open_file (filename,_info);
-  
-  if (info.get_ndat() == 0)
-    set_total_samples ();
-
-  //fprintf(stderr,"dsp::File::open() calling seek_bytes(0)\n");
   // ensure that file is set to load the first sample after the header
   seek_bytes (0);
-  //fprintf(stderr,"dsp::File::open() called seek_bytes(0)\n");
 
   reset ();
-  //fprintf(stderr,"Returning from dsp::File::open()\n");
 }
 
 void dsp::File::close()

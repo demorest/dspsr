@@ -17,15 +17,6 @@ dsp::S2File::S2File (const char* filename)
     open (filename);
 }
 
-//! Return a pointer to an null instance of a S2File
-dsp::S2File* dsp::S2File::clone(bool identical){
-  S2File* copy = new S2File;
-
-  //if( identical )
-  //copy->operator=( *this );
-
-  return copy;
-}
 
 bool dsp::S2File::is_valid (const char* filename) const
 { 
@@ -41,7 +32,7 @@ bool dsp::S2File::is_valid (const char* filename) const
 /*! 
   Loads the Observation information from an S2-TCI style file.
 */
-void dsp::S2File::open_file (const char* filename,PseudoFile* _info)
+void dsp::S2File::open_file (const char* filename)
 {
   load_S2info(filename);
 
@@ -54,95 +45,88 @@ void dsp::S2File::open_file (const char* filename,PseudoFile* _info)
 
   fd = s2file.fd;
 
-  if( _info ){
-    info = *_info;
-    header_bytes = _info->header_bytes;
-  }
-  else{
-    
-    for (int c=0; c<TCI_TIME_STRLEN-1; c++)
-      if (!isdigit(header.hdr_time[c]))
+  for (int c=0; c<TCI_TIME_STRLEN-1; c++)
+    if (!isdigit(header.hdr_time[c]))
 	throw Error (InvalidState, "dsp::S2File::open",
 		     "corrupted time in header");
     
-    info.set_identifier ("s" + string (header.hdr_time));
+  info.set_identifier ("s" + string (header.hdr_time));
     
-    utc_t utc;
-    str2utc (&utc, header.hdr_time);  
-    info.set_start_time (utc);
+  utc_t utc;
+  str2utc (&utc, header.hdr_time);  
+  info.set_start_time (utc);
     
-    if (verbose) {
-      char buffer [50];
-      cerr << "dsp::S2File::open source_start_time"
+  if (verbose) {
+    char buffer [50];
+    cerr << "dsp::S2File::open source_start_time"
 	"\n  " << header.hdr_time << 
 	"\n  " << utc2str(buffer, utc, "yyyy-ddd-hh:mm:ss") <<
 	"\n  " << info.get_start_time().printall() << endl;
-    }
+  }
     
-    info.set_mode (header.hdr_s2mode);
-    
-    // find the '-' in the mode (assumed to be of format like 8x16-2)
-    char* bitspersample = strrchr (header.hdr_s2mode, '-');
-    
-    if (!bitspersample) {
-      cerr << "dsp::S2File::open - trouble finding bits/sample in " 
+  info.set_mode (header.hdr_s2mode);
+  
+  // find the '-' in the mode (assumed to be of format like 8x16-2)
+  char* bitspersample = strrchr (header.hdr_s2mode, '-');
+  
+  if (!bitspersample) {
+    cerr << "dsp::S2File::open - trouble finding bits/sample in " 
 	   << header.hdr_s2mode
 	   << "\ndsp::S2File::open -  setting to 2 bit/sample" << endl;
-      info.set_nbit (2);
-    }
-    else
-      info.set_nbit (atoi (bitspersample+1));
+    info.set_nbit (2);
+  }
+  else
+    info.set_nbit (atoi (bitspersample+1));
     
-    info.set_npol (2);
+  info.set_npol (2);
     
-    if ( extra_hdr.source.length() > 1)
-      info.set_source (extra_hdr.source);
+  if ( extra_hdr.source.length() > 1)
+    info.set_source (extra_hdr.source);
     
-    else if (strlen(header.hdr_usr_field2) < 8)
-      cerr << "dsp::S2File::open Warning: TCI header field2 ("
+  else if (strlen(header.hdr_usr_field2) < 8)
+    cerr << "dsp::S2File::open Warning: TCI header field2 ("
 	   << header.hdr_usr_field2 << ") lacks source" << endl;
     
-    else
-      info.set_source (header.hdr_usr_field2);
+  else
+    info.set_source (header.hdr_usr_field2);
     
-    double centre_frequency = 0.0;
+  double centre_frequency = 0.0;
     
-    if (extra_hdr.freq != 0.0){
-      centre_frequency = extra_hdr.freq;
-    }
-    else if (sscanf (header.hdr_usr_field3, "%lf", &(centre_frequency)) != 1) {
-      cerr << "dsp::S2File::open Warning: TCI header field3 ("
+  if (extra_hdr.freq != 0.0){
+    centre_frequency = extra_hdr.freq;
+  }
+  else if (sscanf (header.hdr_usr_field3, "%lf", &(centre_frequency)) != 1) {
+    cerr << "dsp::S2File::open Warning: TCI header field3 ("
 	   << header.hdr_usr_field3 << ") lacks frequency" << endl;
-      centre_frequency = 0.0;
-    }
+    centre_frequency = 0.0;
+  }
     
-    info.set_centre_frequency (centre_frequency);
+  info.set_centre_frequency (centre_frequency);
     
-    // S2 data defaults to single side-band, real-sampled data
-    info.set_state (Signal::Nyquist);
+  // S2 data defaults to single side-band, real-sampled data
+  info.set_state (Signal::Nyquist);
     
-    // tci_file_open returns data_rate in W/s (16bit/s)
-    info.set_rate (double (s2file.data_rate) * 2.0 / info.get_nbyte());
-    info.set_bandwidth (16.0);
+  // tci_file_open returns data_rate in W/s (16bit/s)
+  info.set_rate (double (s2file.data_rate) * 2.0 / info.get_nbyte());
+  info.set_bandwidth (16.0);
+  
+  info.set_machine ("S2");
+  if(extra_hdr.telid > ' ' )
+    info.set_telescope ((char)extra_hdr.telid);
+  else
+    info.set_telescope (Telescope::Parkes);
     
-    info.set_machine ("S2");
-    if(extra_hdr.telid > ' ' )
-      info.set_telescope ((char)extra_hdr.telid);
-    else
-      info.set_telescope (Telescope::Parkes);
-    
-    info.set_default_basis();
+  info.set_default_basis();
     
     
-    // tci_file_open returns file size in Words (16 bits)
-    info.set_ndat ( int64(s2file.fsz) * 16 / (info.get_nbit()*info.get_npol()) );
+  // tci_file_open returns file size in Words (16 bits)
+  info.set_ndat ( int64(s2file.fsz) * 16 / (info.get_nbit()*info.get_npol()) );
     
-    if (verbose)
-      cerr << "dsp::S2File::open " << s2file.fsz * 2 << " bytes = "
+  if (verbose)
+    cerr << "dsp::S2File::open " << s2file.fsz * 2 << " bytes = "
 	   << info.get_ndat() << " time samples" << endl;
     
-    header_bytes = s2file.base;
-  }
+  header_bytes = s2file.base;
   
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;

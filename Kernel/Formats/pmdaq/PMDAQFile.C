@@ -18,16 +18,6 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
     open (filename);
 }
 
-//! Return a pointer to an possibly identical instance of a PMDAQFile
-dsp::PMDAQFile* dsp::PMDAQFile::clone(bool identical){
-  PMDAQFile* copy = new PMDAQFile;
-
-  //if( identical )
-  //copy->operator=( *this );
-
-  return copy;
-}
-
 // Loads header into character array pmdaq_header from file filename.
 
 // Takes root name as the name, ie takes SWT001 and adds .hdr to it.
@@ -94,25 +84,20 @@ bool dsp::PMDAQFile::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::PMDAQFile::open_file (const char* filename,PseudoFile* _info)
+void dsp::PMDAQFile::open_file (const char* filename)
 {  
-  if( _info ){
-    info = *_info;
-  }
-  else{
-    if (get_header (pmdaq_header, filename) < 0)
-      throw_str ("PMDAQFile::open - failed get_header(%s): %s",
-		 filename, strerror(errno));
-    
-    // MXB - what have we here?
-    PMDAQ_Observation data (pmdaq_header);
-    
-    //  Yamasaki verification not needed for PMDAQ data
-    //  if (yamasaki_verify (filename, data.offset_bytes, PMDAQ_HEADER_SIZE) < 0)
-    //  throw_str ("cpsr2_Construct: YAMASAKI verification failed");
-    
-    info = data;
-  }
+  if (get_header (pmdaq_header, filename) < 0)
+    throw_str ("PMDAQFile::open - failed get_header(%s): %s",
+	       filename, strerror(errno));
+  
+  // MXB - what have we here?
+  PMDAQ_Observation data (pmdaq_header);
+  
+  //  Yamasaki verification not needed for PMDAQ data
+  //  if (yamasaki_verify (filename, data.offset_bytes, PMDAQ_HEADER_SIZE) < 0)
+  //  throw_str ("cpsr2_Construct: YAMASAKI verification failed");
+  
+  info = data;
    
   // Open the data file, which is now just filename.
   fd = ::open (filename, O_RDONLY);
@@ -122,7 +107,7 @@ void dsp::PMDAQFile::open_file (const char* filename,PseudoFile* _info)
 	       filename, strerror(errno));
   
   absolute_position = 0;
-    
+  
   if (verbose)
     cerr << "Returning from PMDAQFile::open" << endl;
 }
