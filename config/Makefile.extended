@@ -120,6 +120,12 @@ DEPS := ${DEP_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
 # upon which the "include" target depends.
 # INCLUDE macro is previously defined in the user Makefile
 ##########################################################################
+
+ifdef NAMESPACE
+INCDIR := $(INCDIR)/$(NAMESPACE)
+INSTALL_INCDIR := $(INSTALL_INCDIR)/$(NAMESPACE)
+endif
+
 INCS:=${INCLUDES:%=$(INCDIR)/%}
 
 ##########################################################################
