@@ -25,13 +25,95 @@ dsp::Input::~Input (){ }
 //! Load data into the BitSeries specified by set_output
 void dsp::Input::operation ()
 {
-  if (verbose)
-    cerr << "dsp::Input::operation" << endl;
-  
-  if (!output)
-    throw Error (InvalidState, "dsp::Input::operate", "no output BitSeries");
+  if (block_size < overlap)
+    throw Error (InvalidState, "dsp::Input::operation", 
+                 "block_size="UI64" < overlap="UI64, block_size, overlap);
 
-  load (output);
+  if (eod())
+    throw Error (InvalidState, "dsp::Input::operation",
+		 "end of data for class '%s'",get_name().c_str());
+
+  string reason;
+  if (!info.state_is_valid (reason))
+    throw Error (InvalidState, "dsp::Input::operation()", "invalid state: "+reason);
+
+  if (verbose)
+    cerr << "dsp::Input::operation [EXTERNAL] block_size=" << block_size
+	 << " next_sample=" << load_sample+resolution_offset
+         << " (overlap=" << overlap << ")" << endl;
+
+  // set the Observation information
+  get_output()->Observation::operator=(info);
+
+  // set the time as expected will result from the next call to load_data
+  // note that get_output()->start_time was set in the above call to operator=
+  get_output()->change_start_time (load_sample);
+
+  if (verbose)
+    cerr << "dsp::Input::operation [INTERNAL] block_size = " << get_block_size() << " load_size=" << load_size 
+	 << " load_sample=" << load_sample << endl;
+
+  get_output()->resize (load_size);
+
+  if (verbose)
+    cerr << "dsp::Input::operation call load_data Bit_Stream::ndat=" 
+         << get_output()->get_ndat () << endl;
+
+  // For MultiFile/HoleyFile using MiniFile load_bytes() requires no plan to be set initially
+  get_output()->set_miniplan( Reference::To<MiniPlan>() );
+
+  load_data (get_output());
+  if( verbose )
+    fprintf(stderr,"dsp::Input::operation() out of load_data() with load_sample="UI64" name='%s'\n",
+	    get_load_sample(), get_name().c_str());
+
+  // mark the input_sample and input attributes of the BitSeries
+  get_output()->input_sample = load_sample;
+  get_output()->input = this;
+
+  get_output()->request_offset = resolution_offset;
+  get_output()->request_ndat   = block_size;
+
+  int64 to_seek = block_size - overlap;
+
+  uint64 available = get_output()->get_ndat() - resolution_offset;
+
+  if( verbose )
+    fprintf(stderr,"dsp::Input::operation() get_output()->input_sample="UI64" input=%p request_offset="UI64" request_ndat="UI64" to_seek="UI64" available="UI64"\n",
+	    uint64(get_output()->input_sample), get_output()->input,
+	    uint64(get_output()->request_offset),
+	    uint64(get_output()->request_ndat), uint64(to_seek), uint64(available));
+
+  if (available < block_size) {
+    // should be the end of data
+
+    get_output()->request_ndat = available;
+    to_seek = available;
+
+    if (!eod())
+      cerr << "dsp::Input::operation available=" << available << " < block_size="
+	   << block_size << " but eod not set" << endl;
+  }
+
+  last_load_ndat = get_output()->get_ndat();
+  if( verbose )
+    fprintf(stderr,"dsp::Input::operation() Have set last_load_ndat to "UI64"\n",last_load_ndat);
+
+  if( verbose ){
+    uint64 next_sample = load_sample + resolution_offset;
+    fprintf(stderr,"Got next_sample = "UI64" and ndat="UI64"\n",
+	    next_sample,get_info()->get_ndat());
+  }
+
+  if (verbose)
+    cerr << "dsp::Input::operation calling seek(" << to_seek << ")" << endl;
+
+  bool at_eod = eod();
+  seek( to_seek, SEEK_CUR);
+  set_eod( at_eod );
+
+  if (verbose)
+    cerr << "dsp::Input::operation exit with load_sample="<< load_sample <<endl;
 }
 
 //! Set the BitSeries to which data will be loaded
@@ -80,109 +162,8 @@ void dsp::Input::copy (const Input* input)
  */
 void dsp::Input::load (BitSeries* data)
 {
-  if( data!=output.ptr() ){
-    if( timekeeper )
-      timekeeper->setup_done();
-    if (record_time)
-      optime.start();
-  }
-
-  if (verbose)
-    cerr << "\n\ndsp::Input::load (BitSeries* = " << data << ")" << endl;
-
-  if (!data)
-    throw Error (InvalidParam, "dsp::Input::load", "invalid data reference");
-
-  if (block_size < overlap)
-    throw Error (InvalidState, "dsp::Input::load", 
-                 "block_size="UI64" < overlap="UI64, block_size, overlap);
-
-  if (eod())
-    throw Error (InvalidState, "dsp::Input::load", "end of data");
-
-  string reason;
-  if (!info.state_is_valid (reason))
-    throw Error (InvalidState, "dsp::Input::load", "invalid state: "+reason);
-
-  if (verbose)
-    cerr << "dsp::Input::load [EXTERNAL] block_size=" << block_size
-	 << " next_sample=" << load_sample+resolution_offset
-         << " (overlap=" << overlap << ")" << endl;
-
-  // set the Observation information
-  data->Observation::operator=(info);
-
-  // set the time as expected will result from the next call to load_data
-  // note that data->start_time was set in the above call to operator=
-  data->change_start_time (load_sample);
-
-  if (verbose)
-    cerr << "dsp::Input::load [INTERNAL] block_size = " << get_block_size() << " load_size=" << load_size 
-	 << " load_sample=" << load_sample << endl;
-
-  data->resize (load_size);
-
-  if (verbose)
-    cerr << "dsp::Input::load call load_data Bit_Stream::ndat=" 
-         << data->get_ndat () << endl;
-
-  // For MultiFile/HoleyFile using MiniFile load_bytes() requires no plan to be set initially
-  data->set_miniplan( Reference::To<MiniPlan>() );
-
-  load_data (data);
-
-  // mark the input_sample and input attributes of the BitSeries
-  data->input_sample = load_sample;
-  data->input = this;
-
-  data->request_offset = resolution_offset;
-  data->request_ndat   = block_size;
-
-  int64 to_seek = block_size - overlap;
-
-  uint64 available = data->get_ndat() - resolution_offset;
-
-  //fprintf(stderr,"data->input_sample="UI64" input=%p request_offset="UI64" request_ndat="UI64" to_seek="UI64" available="UI64"\n",
-  //  uint64(data->input_sample), data->input,
-  //  uint64(data->request_offset),
-  //  uint64(data->request_ndat), uint64(to_seek), uint64(available));
-
-  if (available < block_size) {
-    // should be the end of data
-
-    data->request_ndat = available;
-    to_seek = available;
-
-    if (!eod())
-      cerr << "dsp::Input::load available=" << available << " < block_size="
-	   << block_size << " but eod not set" << endl;
-  }
-
-  last_load_ndat = data->get_ndat();
-  if( verbose )
-    fprintf(stderr,"Have set last_load_ndat to "UI64"\n",last_load_ndat);
-
-  if (verbose)
-    cerr << "dsp::Input::load calling seek(" << to_seek << ")" << endl;
-
-  if( verbose ){
-    uint64 next_sample = load_sample + resolution_offset;
-    fprintf(stderr,"Got next_sample = "UI64" and ndat="UI64"\n",
-	    next_sample,get_info()->get_ndat());
-  }
-
-  bool at_eod = eod();
-  seek( to_seek, SEEK_CUR);
-  set_eod( at_eod );
-
-  if (verbose)
-    cerr << "dsp::Input::load exit with load_sample="<< load_sample <<endl;
-
-  if( data!=output.ptr() ){
-    if (record_time)
-      optime.stop();
-  }
-
+  set_output( data );
+  operate();
 }
 
 /*! 
@@ -201,6 +182,11 @@ void dsp::Input::seek (int64 offset, int whence)
 
   // the next sample required by the user
   uint64 next_sample = load_sample + resolution_offset;
+
+  if( verbose )
+    fprintf(stderr,"dsp::Input::seek("I64",%s) got next_sample="UI64"\n",
+	    offset, whence==SEEK_SET?"SEEK_SET":( whence==SEEK_CUR?"SEEK_CUR":"SEEK_END" ),
+	    next_sample);
 
   switch (whence) {
 
