@@ -1,6 +1,6 @@
 #ifndef __Bandpass_h
 #define __Bandpass_h
-
+#include "rfftw.h"
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Response.h"
@@ -44,6 +44,9 @@ namespace dsp {
 
     //! Number of channels is passband
     unsigned nchan;
+
+    //! fftw plan
+    fftw_plan p;
 
   };
 }

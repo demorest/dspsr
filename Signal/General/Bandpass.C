@@ -15,7 +15,7 @@ bool dsp::Bandpass::verbose = false;
 
 dsp::Bandpass::Bandpass (const char *_name, Behaviour _type )  : Transformation<TimeSeries,Response> (_name, _type)
 {
-  nchan = 256;
+ p=NULL;
 }
 void dsp::Bandpass::transformation ()
 {
@@ -77,9 +77,8 @@ void dsp::Bandpass::transformation ()
   if (verbose)
     cerr << "dsp::Bandpass::npoints in BP is " << nchan << endl;
   */
-
-  fftw_plan p;
-  p = fftw_create_plan(nchan,FFTW_FORWARD,FFTW_ESTIMATE);
+  if (p==NULL)
+    p = fftw_create_plan(nchan,FFTW_FORWARD,FFTW_ESTIMATE);
 
   if (verbose)
     cerr << "allocated scrap buffer" << endl;
