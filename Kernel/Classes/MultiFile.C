@@ -1,8 +1,14 @@
 #include <algorithm>
 
-#include "dsp/MultiFile.h"
-#include "dsp/File.h"
+#include <math.h>
+
+#include "genutil.h"
+
 #include "Error.h"
+
+#include "dsp/File.h"
+
+#include "dsp/MultiFile.h"
 
 dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
 {
@@ -16,24 +22,113 @@ bool operator < (const Reference::To<dsp::File>& f1,
   return f1->get_info()->get_start_time() < f2->get_info()->get_start_time();
 }
 
-void dsp::MultiFile::open (vector<string>& filenames)
+void dsp::MultiFile::open (vector<string> filenames)
 {
   if (filenames.empty())
-    throw Error (InvalidParam, "dsp::Multifile::load", "no filenames");
+    throw Error (InvalidParam, "dsp::Multifile::open()", "An empty list of filenames has been given to this method");
 
-  files.resize (filenames.size());
-
+  vector<string> old_filenames;
   unsigned ifile;
+
   int64 total_ndat = 0;
 
-  for (ifile=0; ifile<filenames.size(); ifile++) {
-    files[ifile] = File::create (filenames[ifile]);
+  for( ifile=0; ifile<files.size(); ifile++){
+    old_filenames.push_back( files[ifile]->get_filename() );
     total_ndat += files[ifile]->get_info()->get_ndat();
   }
 
-  sort (files.begin(), files.end());
+  for( unsigned i=0; i<filenames.size(); i++){
+    if( !is_one_of(filenames[i],old_filenames) ){
+      files.push_back( File::create(filenames[i]) );
+      old_filenames.push_back( filenames[i] );
+      total_ndat += files.back()->get_info()->get_ndat();
+    }
+  }
 
-  for (ifile=1; ifile<files.size(); ifile++) {
+  ensure_contiguity();
+
+  info = *(files[0]->get_info());
+  info.set_ndat (total_ndat);
+
+  reset();
+}
+
+//! Makes sure only these filenames are open
+void dsp::MultiFile::have_open(vector<string> filenames){
+
+  // Erase any files we already have open that we don't want open
+  for( unsigned ifile=0; ifile<files.size(); ifile++){
+    if( !is_one_of(files[ifile]->get_filename(),filenames) ){
+      files.erase(files.begin()+ifile);
+      ifile--;
+    }
+  }
+
+  // Make a list of files we still have open
+  vector<string> old_filenames; 
+  for( unsigned ifile=0; ifile<files.size(); ifile++)
+    old_filenames.push_back( files[ifile]->get_filename() );
+
+  // Open any files we don't already have open
+  for( unsigned i=0; i<filenames.size(); i++)
+    if( !is_one_of(filenames[i],old_filenames) )
+      files.push_back( File::create(filenames[i]) );
+
+  // sort and ensure contiguity
+  ensure_contiguity();
+
+  // work out the total ndat
+  int64 total_ndat = 0;
+  for( unsigned ifile=0; ifile<files.size(); ifile++)
+    total_ndat += files[ifile]->get_info()->get_ndat();
+
+  // set up info
+  info = *(files[0]->get_info());
+  info.set_ndat (total_ndat);
+
+  // reset those file pointers
+  reset();
+}
+
+//! Erase the entire list of loadable files
+void dsp::MultiFile::erase_files(){
+  files.erase( files.begin(), files.end());
+  info = Observation();
+  reset();
+}
+
+//! Erase just some of the list of loadable files
+void dsp::MultiFile::erase_files(vector<string> erase_filenames){
+  for( unsigned ifile=0; ifile<files.size(); ifile++){
+    if( is_one_of(files[ifile]->get_filename(),erase_filenames) ){
+      files.erase( files.begin()+ifile );
+      ifile--;
+    }
+  }
+  
+  if( files.empty() ){
+    info = Observation();
+    reset();
+    return;
+  }
+
+  ensure_contiguity();
+
+  uint64 total_ndat = 0;
+  
+  for( unsigned ifile=0; ifile<files.size(); ifile++)
+    total_ndat += files[ifile]->get_info()->get_ndat();
+
+  info = *(files[0]->get_info());
+  info.set_ndat (total_ndat);
+
+  reset();
+}
+
+void dsp::MultiFile::ensure_contiguity(){
+  sort( files.begin(), files.end() );
+
+  for (unsigned ifile=1; ifile<files.size(); ifile++) {
     
     const Observation* obs1 = files[ifile-1]->get_info();
     const Observation* obs2 = files[ifile]->get_info();
@@ -46,10 +141,6 @@ void dsp::MultiFile::open (vector<string>& filenames)
 
   }
 
-  info = *(files[0]->get_info());
-  info.set_ndat (total_ndat);
-
-  reset();
 }
 
 //! Load bytes from file
