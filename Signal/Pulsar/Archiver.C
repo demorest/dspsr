@@ -20,6 +20,10 @@
 
 #include <assert.h>
 
+#ifdef sun
+#include <ieeefp.h>
+#endif
+
 bool dsp::Archiver::verbose = false;
 
 dsp::Archiver::Archiver ()
