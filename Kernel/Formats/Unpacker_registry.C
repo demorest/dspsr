@@ -36,11 +36,6 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 #endif
 
-#if DSP_MARK4
-#include "dsp/Mark4TwoBitCorrection.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection>  mark4;
-#endif
-
 #if DSP_SMRO
 #include "dsp/SMROTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection>  smro;
@@ -54,6 +49,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
 #if DSP_Spigot
 #include "dsp/ACFUnpack.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
+#endif
+
+#if DSP_MARK4
+#include "dsp/Mark4TwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection>  mark4;
 #endif
 
 #if DSP_S2
