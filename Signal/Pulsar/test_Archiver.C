@@ -94,7 +94,6 @@ int main (int argc, char** argv)
 
   if (verbose)
     cerr << "Creating Timeseries instance" << endl;
-  dsp::Timeseries raw;
   dsp::Timeseries voltages;
 
   if (verbose)
@@ -102,19 +101,12 @@ int main (int argc, char** argv)
   dsp::PhaseSeries profiles;
 
   if (verbose)
-    cerr << "Creating Loader and OneBitCorrection instances" << endl;
+    cerr << "Creating IOManager instance" << endl;
 
   // Loader
-  Reference::To<dsp::File> loader(dsp::File::create(filenames.front().c_str()));
-  loader->open( filenames[0].c_str() );
-  loader->set_block_size (block_size);  
+  Reference::To<dsp::IOManager> manager;
+  manager.set_block_size (block_size);  
 
-  // OneBitCorrection
-  Reference::To<dsp::Unpacker> converter(dsp::Unpacker::create(loader->get_info()));
-  fprintf(stderr,"\nOut of dsp::Unpacker::create()\n");
-  converter->set_input( &raw );
-  converter->set_output( &voltages );
- 
   if (verbose)
     cerr << "Creating Detection instance" << endl;
   dsp::Detection detect;
@@ -147,29 +139,22 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
 
-    loader->open (filenames[ifile]);
+    manager.open (filenames[ifile]);
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
     int block=0;
 
-    while (!loader->eod()) {
+    while (!manager.eod()) {
 
-      loader->load (&raw);
+      manager.load (&raw);
       
-      if(raw.get_ndat()==0){
-	cerr << "Breaking\n";
-	break;
-      }
-      converter->operate();
-
       if (!voltages.get_detected())
         detect.operate ();
 
-      if (voltages.get_ndat()>0) {
-	fold.operate ();
-      }
+      fold.operate ();
+
       block++;
       cerr << "finished " << block << " blocks\r";
       if (block == blocks) break;
