@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/spigot/dsp/ACFUnpack.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/01/23 23:00:59 $
+   $Revision: 1.2 $
+   $Date: 2004/01/24 03:00:59 $
    $Author: wvanstra $ */
 
 #ifndef __ACFUnpack_h
@@ -20,12 +20,15 @@ namespace dsp {
     ACFUnpack (const char* name = "ACFUnpack");
 
     //! Virtual destructor
-    virtual ~ACFUnpack ();
+    ~ACFUnpack ();
+
+    //! Return true if ACFUnpack can convert the Observation
+    bool matches (const Observation* observation);
 
   protected:
 
-    //! Perform the bit conversion transformation on the input TimeSeries
-    virtual void transformation ();
+    //! Unpack the ACFs into the output TimeSeries
+    void unpack ();
 
   };
   

@@ -3,38 +3,37 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
 
+#include "fftm.h"
 #include "Error.h"
 
 //! Null constructor
-dsp::ACFUnpacker::ACFUnpacker (const char* _name) : Unpacker (_name)
+dsp::ACFUnpack::ACFUnpack (const char* _name) : Unpacker (_name)
 {
-
 }
 
-dsp::ACFUnpacker::~ACFUnpacker ()
+dsp::ACFUnpack::~ACFUnpack ()
 {
+}
+
+bool dsp::ACFUnpack::matches (const Observation* observation)
+{
+  return observation->get_machine() == "Spigot";
 }
 
 
 //! Initialize and resize the output before calling unpack
-void dsp::ACFUnpacker::transformation ()
+void dsp::ACFUnpack::unpack ()
 {
   if (verbose)
-    cerr << "dsp::ACFUnpacker::transformation" << endl;;
-
-  // set the Observation information
-  output->Observation::operator=(*input);
+    cerr << "dsp::ACFUnpack::unpack" << endl;;
 
   uint64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
-  // resize the output 
-  output->resize (ndat);
-
   const uint16* input16 = reinterpret_cast<const uint16*>(input->get_rawptr());
 
   float* input_fft = float_workingspace (nchan * 4 + 2);
-  float* output_fft = input + nchan * 2;
+  float* output_fft = input_fft + nchan * 2;
 
   unsigned ichan;
 
@@ -56,5 +55,5 @@ void dsp::ACFUnpacker::transformation ()
   }
 
   if (verbose)
-    cerr << "dsp::ACFUnpacker::transformation exit" << endl;
+    cerr << "dsp::ACFUnpack::unpack exit" << endl;
 }
