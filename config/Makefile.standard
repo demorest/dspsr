@@ -5,7 +5,7 @@
 ##########################################################################
 # the standard targets
 ##########################################################################
-TARGETS := include libs scripts all test install clean veryclean cvsck
+TARGETS := include depend libs scripts all test install clean veryclean cvsck
 
 ##########################################################################
 # the standard macro definitions
@@ -46,6 +46,11 @@ MAKEDEPEND = makedepend -f
 SWINBURNE_REPOSITORY = mania.physics.swin.edu.au:/psr/cvsroot
 
 ##########################################################################
+# macro definitions for various "home-grown" libraries
+##########################################################################
+LTIMES = -ltimes $(LSLA)
+
+##########################################################################
 # package-specific macro definitions
 ##########################################################################
 
@@ -65,7 +70,7 @@ LO3D = -lGL $(LXMU) $(LX11)
 # PGPLOT, C-wrappers, Motif/PGPLOT
 LPGPLOT = -lpgplot $(LX11) $(LF77)
 LCPGPLOT= -lcpgplot $(LPGPLOT)
-LXMPGPLOT = -lXmPgplot $(LMOTIF) $(LCPGPLOT)
+LXMPGPLOT = -L/usr/local/pgplot -lXmPgplot $(LMOTIF) $(LCPGPLOT)
 
 LX11 = -lX11
 LXMU = -lXmu
