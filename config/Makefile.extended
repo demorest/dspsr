@@ -237,6 +237,11 @@ $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries)
 	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
+# pattern rule for object with no source code file of same name
+$(BINDIR)/%: $(libraries)
+	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	@$(check_exec)
+
 ##########################################################################
 # Rules to copy libraries and executables from the user's local "working
 # copy" directories to the installed "group copy" directories found in
