@@ -19,7 +19,7 @@ BACKENDS :=
 PMDAQ:=yes
 
 ifeq ($(PMDAQ),yes)
-CLASSES += PMDAQFile PMDAQ_Observation
+CLASSES += PMDAQFile PMDAQ_Observation OneBitCorrection
 BACKENDS += PMDAQ
 endif
 
