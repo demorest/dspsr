@@ -23,7 +23,7 @@ namespace dsp {
       BufferStatus status;
 
       //! The file the Buffer was loaded from
-      string filename;
+      std::string filename;
 
       //! The offset from the start of the file that the Buffer starts from
       uint64 offset;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ResponseProduct.h,v $
-   $Revision: 1.2 $
-   $Date: 2004/11/01 16:49:49 $
+   $Revision: 1.3 $
+   $Date: 2004/11/22 22:37:56 $
    $Author: wvanstra $ */
 
 #ifndef __ResponseProduct_h
@@ -36,7 +36,7 @@ namespace dsp {
   protected:
 
     //! The responses
-    vector< Reference::To<Response> > response;
+    std::vector< Reference::To<Response> > response;
 
     //! The builder
     void build ();
