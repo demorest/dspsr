@@ -34,9 +34,9 @@
 "\n" \
 "# time of the rising edge of the first time sample\n" \
 "UTC_START unset               # yyyy-mm-dd-hh:mm:ss.fs\n" \
-"MJD_START unset               # MJD corresponding to UTC_START\n" \
+"MJD_START unset               # MJD equivalent to the start UTC\n" \
 "\n" \
-"OFFSET    unset               # bytes offset from MJD_START\n" \
+"OFFSET    unset               # bytes offset from the start MJD/UTC\n" \
 "\n" \
 "SOURCE    unset               # name of the astronomical source\n" \
 "RA        unset               # Right Ascension of the source\n" \
