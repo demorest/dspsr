@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.61 $
-   $Date: 2003/09/27 08:39:36 $
+   $Revision: 1.62 $
+   $Date: 2003/11/04 01:47:10 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 
+#include "Error.h"
 #include "Reference.h"
 #include "sky_coord.h"
 #include "Types.h"
@@ -382,6 +383,27 @@ namespace dsp {
 
     /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2string() and file2obs() appropriately! */
 
+  };
+
+  class ObservationPtr {
+  public:
+    Observation* ptr;
+
+    Observation& operator * () const
+    { if(!ptr) throw Error(InvalidState,"dsp::ObservationPtr::operator*()","You have called operator*() when ptr is NULL"); return *ptr; }
+    Observation* operator -> () const 
+    { if(!ptr) throw Error(InvalidState,"dsp::ObservationPtr::operator*()","You have called operator*() when ptr is NULL"); return ptr; }
+        
+    ObservationPtr& operator=(const ObservationPtr& obs){ ptr = obs.ptr; return *this; }
+
+    ObservationPtr(const ObservationPtr& obs){ ptr = obs.ptr; }
+    ObservationPtr(Observation* _ptr){ ptr = _ptr; }
+    ObservationPtr(){ ptr = 0; }
+
+    bool operator < (const ObservationPtr& obs) const
+    { return ptr->get_centre_frequency() < obs->get_centre_frequency(); }
+
+    ~ObservationPtr(){ }
   };
 
 }
