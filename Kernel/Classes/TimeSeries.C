@@ -463,6 +463,16 @@ void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
   }
 }
 
+dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts){
+  Observation::swap_data( ts );
+  ::swap(buffer,ts.buffer);
+  ::swap(size,ts.size);
+  ::swap(data,ts.data);
+  ::swap(subsize,ts.subsize);
+
+  return *this;
+}
+
 void dsp::TimeSeries::check (float min, float max)
 {
   if (get_detected()) {

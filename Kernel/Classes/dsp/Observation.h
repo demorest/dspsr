@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.54 $
-   $Date: 2003/07/05 08:25:57 $
+   $Revision: 1.55 $
+   $Date: 2003/07/11 12:27:43 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -75,6 +75,9 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
+    //! Swaps the 2 Observations.  Returns '*this'
+    Observation& swap_data(Observation& obs);
+    
     //! Set the type of receiver feeds
     void set_basis (Signal::Basis _basis) { basis = _basis; }
     //! Return the type of receiver feeds

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/07/05 08:21:09 $
+   $Revision: 1.18 $
+   $Date: 2003/07/11 12:26:13 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -42,6 +42,9 @@ namespace dsp {
 
     //! Cloner (calls new)
     virtual TimeSeries* clone();
+
+    //! Swaps the two TimeSeries's.  Returns '*this'
+    virtual TimeSeries& swap_data(TimeSeries& ts);
 
     //! Ouch! Destructor
     virtual ~TimeSeries();
@@ -117,6 +120,9 @@ namespace dsp {
 
     //! Check to see if subsize==ndat
     virtual bool full(){ return subsize==ndat; }
+
+    //! Set ndat to subsize- the most it can be
+    virtual void set_maximal_ndat(){ ndat = subsize; }
 
     //! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
     virtual void normalise();
