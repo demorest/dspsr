@@ -25,7 +25,6 @@ void dsp::Observation::init ()
   nchan = 1;
   npol = 1;
   ndim = 1;
-  nbit = 0;
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -134,6 +133,7 @@ bool dsp::Observation::get_detected () const
   return (state != Signal::Nyquist && state != Signal::Analytic);
 }
 
+
 /* this returns a flag that is true if the Observations may be combined 
    It doesn't check the start times- you have to do that yourself!
 */
@@ -169,10 +169,6 @@ bool dsp::Observation::combinable (const Observation & obs) const
   if (ndim != obs.ndim){
     cerr << "dsp::Observation::combinable different ndim:"
 	 << ndim << " and " << obs.ndim << endl;
-  can_combine = false; }
-  if (nbit != obs.nbit){
-    cerr << "dsp::Observation::combinable different nbit:"
-	 << nbit << " and " << obs.nbit << endl;
   can_combine = false; }
   if (type != obs.type){
     cerr << "dsp::Observation::combinable different type:"
@@ -299,7 +295,6 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   npol        = in_obs.npol;
   ndat        = in_obs.ndat;
   ndim        = in_obs.ndim;
-  nbit        = in_obs.nbit;
   state       = in_obs.state;
   basis       = in_obs.basis;
 
@@ -375,7 +370,7 @@ bool dsp::Observation::retrieve(string& ss){
   sprintf(dummy,"NCHAN\t%d\n",nchan); ss += dummy;
   sprintf(dummy,"NPOL\t%d\n",npol); ss += dummy;
   sprintf(dummy,"NDIM\t%d\n",ndim); ss += dummy;
-  sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
+  //sprintf(dummy,"NBIT\t%d\n",nbit); ss += dummy;
   sprintf(dummy,"TYPE\t%s\n",Signal::source_string(type)); ss += dummy;
   sprintf(dummy,"STATE\t%s\n",Signal::state_string(state)); ss += dummy;
   sprintf(dummy,"BASIS\t%s\n",Signal::basis_string(basis)); ss += dummy;

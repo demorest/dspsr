@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.27 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.28 $
+   $Date: 2002/11/10 00:37:44 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -89,11 +89,6 @@ namespace dsp {
     virtual void set_npol (unsigned _npol) { npol = _npol; }
     //! Return the number of polarizations
     unsigned get_npol () const { return npol; }
-
-    //! Set the number of bits per value
-    void set_nbit (unsigned _nbit) { nbit = _nbit; }
-    //! Return the number of polarizations
-    unsigned get_nbit () const { return nbit; }
 
     //! Set the number of time samples in container
     /*! Note that one time sample may be complex and/or vector in
@@ -215,24 +210,6 @@ namespace dsp {
     //! Returns a string describing the state of the data
     string get_state_as_string () const;
 
-    //! Return the size in bytes of nsamples time samples
-    uint64 nbytes (uint64 nsamples) const
-      { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
-
-    //! Return the size in bytes of ndat time samples
-    uint64 nbytes () const
-      { return nbytes (ndat); }
-
-    uint64 verbose_nbytes (uint64 nsamples) const;
-    
-    //! Return the size in bytes of one time sample
-    float nbyte () const
-      { return float(nbit*npol*nchan*get_ndim()) / 8.0; }
-
-    //! Return the number of samples in nbytes bytes
-    uint64 nsamples (uint64 nbytes) const
-      { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
-
     //! Returns true if the signal may be integrated
     /* This returns a flag that is true if the Observations may be combined 
        It doesn't check the start times- you have to do that yourself!
@@ -276,9 +253,6 @@ namespace dsp {
 
     //! Dimension of each datum
     unsigned ndim;
-
-    //! Number of bits per value
-    unsigned nbit;
 
     //! Type of signal source (Linear or Circular)
     Signal::Source type;

@@ -33,9 +33,16 @@ namespace dsp {
     //! Destructor
     virtual ~BitSeries ();
 
+    //! Set the number of bits per value
+    void set_nbit (unsigned _nbit) { nbit = _nbit; }
+    //! Return the number of polarizations
+    unsigned get_nbit () const { return nbit; }
+
     //! Allocate the space required to store nsamples time samples.
-    virtual void resize (int64 nsamples);
+    virtual void resize (uint64 nsamples);
     
+    virtual bool combinable (const BitSeries& bs) const;
+
     //! Set this equal to data
     virtual BitSeries& operator = (const BitSeries& data);
 
@@ -62,12 +69,31 @@ namespace dsp {
     //! Return the sample offset from the start of the data source
     int64 get_input_sample () const { return input_sample; }
 
+    //! Return the size in bytes of nsamples time samples
+    uint64 nbytes (uint64 nsamples) const
+      { return (nsamples*nbit*npol*nchan*ndim)/8; }
+
+    //! Return the size in bytes of ndat time samples
+    uint64 nbytes () const
+      { return nbytes (ndat); }
+
+    //! Return the size in bytes of one time sample
+    float nbyte () const
+      { return float(nbit*npol*nchan*ndim) / 8.0; }
+
+    //! Return the number of samples in nbytes bytes
+    uint64 nsamples (uint64 nbytes) const
+      { return (nbytes * 8)/(nbit*npol*nchan*ndim); }
+
   protected:
+    //! Number of bits per value
+    unsigned nbit;
+
     //! The data buffer
     unsigned char *data;
 
     //! The size of the data buffer (not necessarily ndat)
-    int64 size;
+    uint64 size;
 
     //! Sample offset from start of source; attribute used by Input class
     int64 input_sample;
