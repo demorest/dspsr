@@ -10,6 +10,11 @@
 
 bool dsp::Observation::verbose = false;
 
+string get_cpsr2_header(){
+  exit(-1);
+  return ("not written yet");
+}
+
 int64 dsp::Observation::verbose_nbytes (int64 nsamples) const
 {
   fprintf(stderr,"nsamples="I64"\tnbit="I64"\tnpol="I64"\tnchan="I64"\tget_ndim()="I64"\n",
@@ -57,6 +62,8 @@ void dsp::Observation::init ()
   telescope = 0;
   source = identifier = mode = machine = "";
   coordinates = sky_coord();
+  dispersion_measure = 0.0;
+  isdigi = false;
 }
 
 void dsp::Observation::set_sample (Signal::State _state,
