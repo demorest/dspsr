@@ -1,23 +1,23 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "window.h"
+#include "Apodization.h"
 
-dsp::window::window() : dsp::shape ()
+dsp::Apodization::Apodization()
 {
   type = none;
 }  
 
-void dsp::window::Hanning (int npts, bool analytic)
+void dsp::Apodization::Hanning (int npts, bool analytic)
 {
-  Construct (1, npts, analytic);
+  resize (1, 1, npts, (analytic)?2:1);
 
   float* datptr = buffer;
   float  value = 0.0;
 
   double denom = npts - 1.0;
 
-  for (int idat=0; idat<ndat; idat++) {
+  for (unsigned idat=0; idat<ndat; idat++) {
     value = 0.5 * (1 - cos(2.0*M_PI*double(idat)/denom));
     *datptr = value; datptr++;
     if (analytic) {
@@ -27,7 +27,7 @@ void dsp::window::Hanning (int npts, bool analytic)
   type = hanning;
 }
 
-void dsp::window::set_shape (int npts, Type type, bool analytic)
+void dsp::Apodization::set_shape (int npts, Type type, bool analytic)
 {
   switch (type)  {
   case hanning:
@@ -45,9 +45,9 @@ void dsp::window::set_shape (int npts, Type type, bool analytic)
   }
 }
 
-void dsp::window::Welch (int npts, bool analytic)
+void dsp::Apodization::Welch (int npts, bool analytic)
 {
-  Construct (1, npts, analytic);
+  resize (1, 1, npts, (analytic)?2:1);
 
   float* datptr = buffer;
   float  value = 0.0;
@@ -56,7 +56,7 @@ void dsp::window::Welch (int npts, bool analytic)
   float numerator = 0.5 * (npts - 1);
   float denominator = 0.5 * (npts + 1);
 
-  for (int idat=0; idat<ndat; idat++) {
+  for (unsigned idat=0; idat<ndat; idat++) {
     tosquare = (float(idat)-numerator)/denominator;
     value = 1.0 - tosquare * tosquare;
     *datptr = value; datptr++;
@@ -67,9 +67,9 @@ void dsp::window::Welch (int npts, bool analytic)
   type = welch;
 }
 
-void dsp::window::Parzen (int npts, bool analytic)
+void dsp::Apodization::Parzen (int npts, bool analytic)
 {
-  Construct (1, npts, analytic);
+  resize (1, 1, npts, (analytic)?2:1);
 
   float* datptr = buffer;
   float  value = 0.0;
@@ -77,7 +77,7 @@ void dsp::window::Parzen (int npts, bool analytic)
   float numerator = 0.5 * (npts - 1);
   float denominator = 0.5 * (npts + 1);
 
-  for (int idat=0; idat<ndat; idat++) {
+  for (unsigned idat=0; idat<ndat; idat++) {
     value = 1.0 - fabs ((float(idat)-numerator)/denominator);
     *datptr = value; datptr++;
     if (analytic) {
@@ -88,7 +88,7 @@ void dsp::window::Parzen (int npts, bool analytic)
 }
 
 
-void dsp::window::operate (float* indata, float* outdata) const
+void dsp::Apodization::operate (float* indata, float* outdata) const
 {
   int npts = ndat * ndim;
   float* winptr = buffer;
@@ -102,30 +102,30 @@ void dsp::window::operate (float* indata, float* outdata) const
   } 
 }
 
-void dsp::window::normalize()
+void dsp::Apodization::normalize()
 {
   float* winptr = buffer;
 
   double total = 0.0;
-  for (int idat=0; idat<ndat; idat++) {
+  for (unsigned idat=0; idat<ndat; idat++) {
     total += *winptr;
     winptr += ndim;
   }
 
   winptr = buffer;
-  int npts = ndat * ndim;
-  for (int ipt=0; ipt<npts; ipt++) {
+  unsigned npts = ndat * ndim;
+  for (unsigned ipt=0; ipt<npts; ipt++) {
     *winptr /= total;
     winptr ++;
   }
 }
 
-double dsp::window::integrated_product (float* data, int incr) const
+double dsp::Apodization::integrated_product (float* data, unsigned incr) const
 {
   double total = 0.0;
-  int cdat = 0;
+  unsigned cdat = 0;
 
-  for (int idat=0; idat<ndat; idat++) {
+  for (unsigned idat=0; idat<ndat; idat++) {
     total += buffer[idat] * data[cdat];
     cdat += incr;
   }
