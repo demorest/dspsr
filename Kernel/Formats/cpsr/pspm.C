@@ -167,70 +167,79 @@ string PSPMidentifier (const PSPM_SEARCH_HEADER* hdr)
   return string(id);
 }
 
-bool PSPMverify (PSPM_SEARCH_HEADER* hdr)
+bool PSPMverify (PSPM_SEARCH_HEADER* hdr, bool verbose)
 {
   if (hdr->header_version < 0) {
-    fprintf (stderr, "PSPMverify: invalid header_version:%d\n",
-	     (int)hdr->header_version);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid header_version:%d\n",
+	       (int)hdr->header_version);
     return false;
   }
   if (hdr->ll_file_offset == 0)  {
     if (hdr->scan_file_number < 0) {
-      fprintf (stderr, "PSPMverify: invalid scan_file_number:%d\n",
-	       (int)hdr->scan_file_number);
+      if (verbose)
+	fprintf (stderr, "PSPMverify: invalid scan_file_number:%d\n",
+		 (int)hdr->scan_file_number);
       return false;
     }
   }
   else if (hdr->ll_file_offset < 0)  {
-    fprintf (stderr, "PSPMverify: invalid ll_file_offset:%ld\n",
-             hdr->ll_file_offset);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid ll_file_offset:%ld\n",
+	       hdr->ll_file_offset);
     return false;
   }
   if (hdr->bit_mode < 0) {
-    fprintf (stderr, "PSPMverify: invalid bit_mode:%d\n",
-	     (int)hdr->bit_mode);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid bit_mode:%d\n",
+	       (int)hdr->bit_mode);
     return false;
   }
   if (hdr->num_chans < 0) {
-    fprintf (stderr, "PSPMverify: invalid num_chans:%d\n",
-	     (int)hdr->num_chans);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid num_chans:%d\n",
+	       (int)hdr->num_chans);
     return false;
   }
   if (hdr->file_size < 32768) {
-    fprintf (stderr, "PSPMverify: invalid file_size:%d\n",
-	     (int)hdr->file_size);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid file_size:%d\n",
+	       (int)hdr->file_size);
     return false;
   }
   if (hdr->tape_num < 0) {
-    fprintf (stderr, "PSPMverify: invalid tape_num:%d\n",
-	     (int)hdr->tape_num);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid tape_num:%d\n",
+	       (int)hdr->tape_num);
     return false;
   }
   if (hdr->tape_file_number < 0) {
-    fprintf (stderr, "PSPMverify: invalid tape_file_number:%d\n",
-	     (int)hdr->tape_file_number);
+    if (verbose)
+      fprintf (stderr, "PSPMverify: invalid tape_file_number:%d\n",
+	       (int)hdr->tape_file_number);
     return false;
   }
-
+  
   // some more sanity checks
   if (hdr->ll_file_size) {
     // double check that the file_offset is a multiple of 1MB
     int64 mb = 1024 * 1024;
     if (hdr->ll_file_offset % mb) {
-      fprintf (stderr, "PSPMverify: offset="I64" corrupted.\n",
-	       hdr->ll_file_offset);
+      if (verbose)
+	fprintf (stderr, "PSPMverify: offset="I64" corrupted.\n",
+		 hdr->ll_file_offset);
       return false;
     }
   }
-
+  
   // what can you do?
-  double rate = 1e6 / (hdr->samp_rate);  // samples per second
-  double bw = 1e6 * fabs (hdr->bw);      // bandwidth in Hz
+  double rate = 1.0 / (hdr->samp_rate);  // samples per microsecond
+  double bw = fabs (hdr->bw);      // bandwidth in MHz
   if (bw != rate) {
-    fprintf (stderr, "PSPMverify: Nyquist mismatch: bw=%lf samp. rate=%lf\n",
-	     bw, rate);
+    fprintf (stderr, "PSPMverify: Nyquist mismatch: bw=%lf MHz."
+	     "  sampling rate=%lf\n", bw, rate);
     // reset to default
-    hdr->bw = 20;
+    hdr->bw = -20.0;
     hdr->samp_rate = 0.05;
   }
   return true;
