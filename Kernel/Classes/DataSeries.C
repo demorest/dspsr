@@ -118,7 +118,8 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
     return;
 
   if (size == 0) {
-    buffer = new unsigned char[require];
+    // Add '8' (2 floats) on for FFTs that require 2 extra floats in the allocated memory
+    buffer = new unsigned char[require + 8];
     //    fprintf(stderr,"dsp::DataSeries::resize() have resized buffer to be of size "UI64".  buffer=%p\n",
     //    require,buffer);
     size = require;
