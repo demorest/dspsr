@@ -122,22 +122,28 @@ void dsp::Convolution::operation ()
     throw_str ("Convolution::operation Invalid state:"
 	       + input->get_state_as_string());
 
+
 #ifdef DEBUG
   fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
 	   mpi_rank, (int)matrix_convolution, ndat, nsamp_fft, nsamp_overlap);
   fflush (stderr);
 #endif
 
-  unsigned nsamp_good = nsamp_fft-nsamp_overlap;   // valid time samples per FFT
-  if (nsamp_good < 0)
-    throw_str ("Convolution::operation invalid nfft=%d nfilt=%d",
-	       nsamp_fft, n_overlap);
+  // there must be at least enough data for one FFT
+  if (input->get_ndat() < nsamp_fft)
+    throw_str ("Convolution::operation error ndat="I64" < nfft=%d",
+	       input->get_ndat(), nsamp_fft);
+
+  // the FFT size must be greater than the number of discarded points
+  if (nsamp_fft < nsamp_overlap)
+    throw_str ("Convolution::operation error nfft=%d < nfilt=%d",
+	       nsamp_fft, nsamp_overlap);
+
+  // valid time samples per FFT
+  unsigned nsamp_good = nsamp_fft-nsamp_overlap;
 
   // number of FFTs for this data block
   unsigned long npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
-  if (npart == 0)
-    throw_str ("Convolution::operation invalid ndat="I64" nfilt=%d ngood=%d",
-	       input->get_ndat(), nsamp_overlap, nsamp_good);
 
   float* spectrum[2];
   spectrum[0] = float_workingspace (pts_reqd);
