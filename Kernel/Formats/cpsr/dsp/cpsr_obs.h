@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "psr_cpp.h"
 
 #define cpsr 1
 #include "pspm_search_header.h"
@@ -13,14 +14,6 @@
 class MJD;
 class fptm_obs;
 class SystemTime;
-
-// these function return some parameter that must be derived from the
-// fields in a PSPM_SEARCH_HEADER struct.  Most others are trivially
-// obtained directly from the fields
-
-MJD    PSPMstart_time (const PSPM_SEARCH_HEADER* header);
-double PSPMduration (const PSPM_SEARCH_HEADER* header);
-bool   PSPMverify (const PSPM_SEARCH_HEADER* hdr);
 
 // these functions deal with transfering CPSR data to disk and looking
 // up observations in whatever databases are available (and fashionable)
@@ -53,7 +46,8 @@ int PSPM_relevant (vector<fptm_obs>* observations, PSPM_SEARCH_HEADER* header,
 		   string* identifier=NULL);
 
 int xfer_tape (const char* tapedev, vector<int>* filenos,
-	       const vector<string>& disks, char* ext,
+	       const vector<string>& disks, char* ext, 
+	       bool check_fptm = true, double leave_alone = 600e6, // 600MB
 	       SystemTime* clock=NULL, int obstype=-1, int keep=1);
 
 #endif // __CPSR_H

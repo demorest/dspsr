@@ -27,6 +27,7 @@ class fptm_obs {
 
   fptm_obs ();
   fptm_obs (string* parse);
+  fptm_obs (const MJD& start, double duration, string source, int obstype=0);
 
   bool overlaps (const MJD& tstart, const MJD& tend);
 

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <values.h>
 
@@ -7,7 +9,8 @@
 
 #include "pspm_search_header.h"
 #include "machine_endian.h"
-#include "MJD.h"
+#include "pspm.h"
+#include "genutil.h"
 
 // #if (sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZES)
 // #error Architecture Error! PSPM header size is invalid.
@@ -107,6 +110,11 @@ void PSPMtoBigEndian (PSPM_SEARCH_HEADER* header)
   toBigEndian (&(header->HEADER_TYPE),  sizeof (int32));
 }
 
+string PSPMsource (const PSPM_SEARCH_HEADER* header)
+{
+  return string (header->psr_name);
+}
+
 MJD PSPMstart_time (const PSPM_SEARCH_HEADER* header)
 {
   MJD start_time (header->mjd_start);
@@ -123,8 +131,20 @@ MJD PSPMstart_time (const PSPM_SEARCH_HEADER* header)
 
 double PSPMduration (const PSPM_SEARCH_HEADER* hdr)
 {
-  double npts = hdr->file_size * (BITSPERBYTE/(hdr->bit_mode * hdr->num_chans));
+  double npts = hdr->file_size * (BITSPERBYTE/(hdr->bit_mode*hdr->num_chans));
   return npts * hdr->samp_rate / 1e6;
+}
+
+
+string PSPMidentifier (const PSPM_SEARCH_HEADER* hdr)
+{
+  char id [20];
+  if (hdr->observatory == 7)
+    sprintf (id, "CPSR%04d.%d", hdr->tape_num, hdr->tape_file_number);
+  else
+    sprintf (id, "CBR%04d.%d", hdr->tape_num, hdr->tape_file_number);
+
+  return string(id);
 }
 
 bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
@@ -172,3 +192,85 @@ bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
   return true;
 }
 
+static PSPM_SEARCH_HEADER* static_header = NULL;
+
+PSPM_SEARCH_HEADER* pspm_read (int fd)
+{
+  unsigned header_size = sizeof(PSPM_SEARCH_HEADER);
+
+  if (static_header == NULL) {
+    static_header = (PSPM_SEARCH_HEADER*) malloc (header_size);
+    if (static_header == NULL)  {
+      fprintf (stderr, "pspm_read: Could not malloc PSPM header (%d bytes)",
+	sizeof (PSPM_SEARCH_HEADER));
+      throw ("pspm_read: memory error");
+    }
+  }
+
+  ssize_t to_read = header_size;
+  char* buf = (char*)(void*) static_header;
+  int retries = 3;
+  while (retries && to_read) {
+    ssize_t bread = read (fd, (void*) buf, to_read);
+    if (bread < 0) {
+      perror ("pspm_read::Couldn't read header");
+      return NULL;
+    }
+    if (bread < to_read) {
+      fprintf (stderr, "pspm_read::read only %d/%d of header\n", bread,
+	       header_size);
+    }
+    to_read -= bread;
+    buf += bread;
+    retries --;
+  }
+  if (to_read && !retries) {
+    fprintf (stderr, "pspm_read::could not read PSPM header\n");
+    return NULL;
+  }
+  PSPMfromBigEndian (static_header);
+
+  return static_header;
+}
+
+PSPM_SEARCH_HEADER* pspm_read (const char* filename)
+{
+  int datfd = open (filename, O_RDONLY);
+  if (datfd < 0) {
+    fprintf (stderr, "pspm_read::Couldn't open '%s'\n", filename);
+    perror (":");
+    return NULL;
+  }
+  PSPM_SEARCH_HEADER* ret = pspm_read (datfd);
+  close (datfd);
+  return ret;
+}
+
+PSPM_SEARCH_HEADER* pspm_read (const char* tapedev, int filenum) 
+{
+  int tfd = open (tapedev, O_RDONLY);
+  if (tfd < 0) {
+    fprintf (stderr, "pspm_read:: Could not open '%s'", tapedev);
+    perror (":");
+    return NULL;
+  }
+
+  if (tapepos (tfd, filenum-1) < 0) {
+    fprintf (stderr, "pspm_read:: error positioning tape:'%s' to file:%d\n",
+	     tapedev, filenum);
+    close (tfd);
+    return NULL;
+  }
+
+  PSPM_SEARCH_HEADER* ret = pspm_read (tfd);
+
+  // re-position the tape and get it ready for dd
+  if (tapepos (tfd, filenum-1) < 0) {
+    fprintf (stderr, "pspm_read:: error positioning tape:'%s' to file:%d\n",
+	     tapedev, filenum);
+    close (tfd);
+    return NULL;
+  }
+  close (tfd);
+  return ret;
+}

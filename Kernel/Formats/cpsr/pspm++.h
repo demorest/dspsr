@@ -1,6 +1,6 @@
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspm++.h,v $
-   $Revision: 1.1 $
-   $Date: 2000/01/13 03:56:26 $
+   $Revision: 1.2 $
+   $Date: 2000/01/13 10:09:30 $
    $Author: wvanstra $ */
 
 #ifndef __PSPM_H
@@ -8,6 +8,9 @@
 
 #include <string>
 #include "MJD.h"
+
+#define cpsr 1
+#include "pspm_search_header.h"
 
 // these function return some parameter that must be derived from the
 // fields in a PSPM_SEARCH_HEADER struct.  Most others are trivially
