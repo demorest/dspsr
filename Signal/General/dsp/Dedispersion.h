@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/08/20 05:14:22 $
+   $Revision: 1.2 $
+   $Date: 2002/09/17 11:20:22 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -14,7 +14,7 @@ namespace dsp {
   
   //! Phase-coherent dedispersion frequency response function
   /* This class implements the phase-coherent dedispersion kernel, or the
-     frequency response of the interstellar medium. */
+     frequency response of the interstellar medium.  Not tested. */
 
   class Dedispersion: public Response {
 
@@ -66,14 +66,20 @@ namespace dsp {
     //! Get the flag to add fractional inter-channel delay
     bool get_fractional_delay () const { return fractional_delay; }
 
+    //! Compute the phases for a dedispersion kernel
+    void build (vector<float>& phases,
+		double centrefreq, double bw, 
+		float dm, double doppler,
+		unsigned npts, unsigned nchan, bool dmcorr);
 
   protected:
 
-    //! Perform the convolution operation on the input Timeseries
-    virtual void operation ();
-
     //! Build the dedispersion frequency response kernel
+    virtual void build ();
+
+    //! Match the dedispersion kernel to the input Timeseries
     virtual void match (const Timeseries* input, unsigned nchan=0);
+
 
     //! Centre frequency of the band-limited signal in MHz
     double centre_frequency;

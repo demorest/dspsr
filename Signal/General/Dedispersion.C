@@ -1,4 +1,7 @@
+#include <complex>
+
 #include "Dedispersion.h"
+#include "Timeseries.h"
 
 dsp::Dedispersion::Dedispersion ()
 {
@@ -12,7 +15,7 @@ dsp::Dedispersion::Dedispersion ()
   built = false;
 }
 
-//! Set the dimensions of the data
+//! Set the dimensions of the data and update the built attribute
 void dsp::Dedispersion::resize (unsigned _npol, unsigned _nchan,
 				unsigned _ndat, unsigned _ndim)
 {
@@ -74,3 +77,83 @@ void dsp::Dedispersion::set_fractional_delay (bool _fractional_delay)
   fractional_delay = _fractional_delay;
 }
 
+
+//! Build the dedispersion frequency response kernel
+void dsp::Dedispersion::match (const Timeseries* input, unsigned _nchan)
+{
+  set_centre_frequency ( input->get_centre_frequency() );
+  set_bandwidth ( input->get_bandwidth() );
+
+  if (_nchan)
+    resize (npol, _nchan, ndat, ndim);
+
+  build ();
+
+  Response::match (input, _nchan);
+}
+
+
+void dsp::Dedispersion::build ()
+{
+  if (built)
+    return;
+
+  vector<float> phases (ndat * nchan);
+
+  build (phases, centre_frequency, bandwidth, 
+	 dispersion_measure, Doppler_shift,
+	 ndat, nchan, fractional_delay);
+
+  vector<complex<float> > phasors (ndat * nchan);
+  for (unsigned ipt=0; ipt<phases.size(); ipt++)
+    phasors[ipt] = complex<float>(polar (float(1.0), phases[ipt]));
+
+  set (phasors);
+}
+
+void dsp::Dedispersion::build (vector<float>& phases,
+			       double centrefreq, double bw, 
+			       float dm, double doppler,
+			       unsigned npts, unsigned nchan, bool dmcorr)
+{
+  centrefreq /= doppler;
+  bw /= doppler;
+
+  double sign = bw / fabs (bw);
+  double chanwidth = bw / double(nchan);
+  double binwidth = chanwidth / double(npts);
+
+  double lower_cfreq = centrefreq - 0.5*(bw-chanwidth);
+
+  double highest_freq = centrefreq + 0.5*fabs(bw) - 0.5*chanwidth;
+
+  double samp_int = 1.0/chanwidth; // sampint in microseconds, for
+                                   // quadrature nyquist data eg fb.
+  double delay = 0.0;
+
+  double DM = dm/2.41e-10;
+
+  phases.resize (npts * nchan);
+
+  for (unsigned ichan = 0; ichan < nchan; ichan++) {
+
+    double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
+   
+    // Compute the DM delay in microseconds
+    if (dmcorr) {
+      delay = DM * ( 1.0/(chan_cfreq*chan_cfreq)
+		     -1.0/(highest_freq*highest_freq));
+      // Modulo one sample and invert it
+      delay = - fmod(delay, samp_int);
+    }
+
+    double coeff = -sign * 2*M_PI * DM / (chan_cfreq * chan_cfreq);
+
+    unsigned spt = ichan * npts;
+    for (unsigned ipt = 0; ipt < npts; ipt++) {
+      // FFTX - not the mean of the bin, but the offset from the DC bin
+      double freq = double(ipt) * binwidth - 0.5*chanwidth;
+      phases[spt+ipt] = coeff*freq*freq/(chan_cfreq+freq)-2.0*M_PI*freq*delay;
+    }
+  }
+}
