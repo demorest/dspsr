@@ -511,10 +511,12 @@ int main (int argc, char** argv)
 	  cerr << "Creating Filterbank instance" << endl;
 	  
 	// polyphase filterbank constructor
-	dsp::PolyphaseFilterbank* filterbank = new dsp::PolyphaseFilterbank;
+	dsp::PolyPhaseFilterbank* filterbank = new dsp::PolyPhaseFilterbank;
+
 	filterbank->set_input (voltages);
 	filterbank->set_output (convolve);
 	filterbank->set_nchan (nchan);
+        filterbank->load_coefficients (polyphase_filter);
 	  
 	operations.push_back (filterbank);
 	
