@@ -769,16 +769,16 @@ int main (int argc, char** argv)
     if (mpi_rank == mpi_root) {
 
       if (seek_seconds)
-	manager->seek_seconds (seek_seconds);
+	manager->get_input()->seek_seconds (seek_seconds);
       
       if (total_seconds)
-	manager->set_total_seconds (seek_seconds + total_seconds);
+	manager->get_input()->set_total_seconds (seek_seconds + total_seconds);
 
       manager->set_block_size ( block_size );
       manager->set_overlap ( overlap );
 
       unsigned ndat_good = block_size - overlap;
-      nblocks_tot = manager->get_total_samples() / ndat_good;
+      nblocks_tot = manager->get_input()->get_total_samples() / ndat_good;
       if (manager->get_total_samples() % ndat_good)
 	nblocks_tot ++;
 
