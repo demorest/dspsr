@@ -234,11 +234,6 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   // the sampling rate of the resulting complex time samples
   double sampling_rate = ch_abs_bw * 1e6;
 
-  if (verbose)
-    cerr << "dsp::Dedispersion::smearing_samples time across the " << band
-	 << ": " << smearing_time (lower_ch_cfreq, ch_abs_bw)*1e3
-	 << " ms" << endl;
-
   // calculate the smearing in the specified half of the band
   ch_abs_bw /= 2.0;
   lower_ch_cfreq += double(half) * ch_abs_bw;
@@ -246,7 +241,8 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
   
   if (verbose)
-    cerr << "dsp::Dedispersion::smearing_samples time in the " << side 
+    cerr << "dsp::Dedispersion::smearing_samples\n"
+      "  smearing time in the " << side 
 	 << " half of the " << band << ": " << tsmear*1e3 << " ms"
       " (" << int(tsmear * sampling_rate) << " pts).\n";
   
