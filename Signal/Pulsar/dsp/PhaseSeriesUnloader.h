@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.5 $
-   $Date: 2003/12/09 01:08:55 $
+   $Revision: 1.6 $
+   $Date: 2004/08/25 09:13:24 $
    $Author: hknight $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -47,6 +47,15 @@ namespace dsp {
     void set_extension (const string& extension)
     { set_extension (extension.c_str()); }
 
+    //! Set whether you want to allow the archive filename to be
+    //! over-ridden by a pulse number
+    void set_force_filename(bool _force_filename)
+    { force_filename = _force_filename; }
+
+    //! Inquire whether it is possible for the archive filename to be
+    //! over-ridden by a pulse number
+    bool get_force_filename(){ return force_filename; }
+
   protected:
 
     //! Helper function that makes sure a given filename is unique
@@ -61,6 +70,9 @@ namespace dsp {
 
     //! The filename extension;
     string filename_extension;
+
+    //! Force make_unique() to return 'filename' [false]
+    bool force_filename;
 
   };
 

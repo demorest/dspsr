@@ -52,7 +52,7 @@ string dsp::PhaseSeriesUnloader::make_unique(string filename,string fname_extens
 					     const PhaseSeries* data) const{
   string unique_filename = filename;
 
-  if (data->get_integration_length() < 1.0) {
+  if (data->get_integration_length() < 1.0 && !force_filename) {
 
     // small files need a more unique filename
 
