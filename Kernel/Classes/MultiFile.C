@@ -170,10 +170,11 @@ void dsp::MultiFile::ensure_contiguity(){
     const Observation* obs2 = &files[ifile];
 
     if (! obs1->contiguous(*obs2)){
-      string ss = string("'") + files[ifile-1].filename+string("'") + 
-	string(" is not contiguous with ") +
-	string("'") + files[ifile].filename + string("'");
-      throw Error (InvalidParam, "dsp::Multifile::load",ss.c_str());
+      char cstr[4096];
+      sprintf(cstr,"file %d (%s) is not contiguous with file %d (%s)",
+	      ifile-1,files[ifile-1].filename.c_str(),
+	      ifile,files[ifile].filename.c_str());
+      throw Error (InvalidParam, "dsp::Multifile::ensure_contiguity",cstr);
     }
 
   }
