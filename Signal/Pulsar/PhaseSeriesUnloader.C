@@ -16,8 +16,9 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
-  if( data->get_archive_filename() != string() )
+  if( data->get_archive_filename() != string() ){
     return make_unique(data->get_archive_filename(),"",data);
+  }
 
   string filename;
   string fname_extension = filename_extension;
@@ -26,7 +27,7 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
     fname_extension = data->get_archive_filename_extension();
 
   if ( filename_pattern.empty() ){
-    filename = data->get_default_id () + fname_extension;
+    filename = data->get_identifier () + fname_extension;
   }
   else {
     char* fname = new char[FILENAME_MAX];
@@ -36,7 +37,7 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
     if (retval)
       filename = retval;
 
-    delete fname;
+    delete[] fname;
 
     cerr << "filename = " << filename << endl;
 
