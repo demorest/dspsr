@@ -549,6 +549,7 @@ void dsp::Observation::change_state (Signal::State new_state)
     state = Signal::Analytic;
     ndat /= 2;         // number of complex samples
     rate /= 2.0;       // samples are now complex at half the rate
+    ndim = 2;          // the dimension of each datum is now 2 [re+im]
   }
 
   state = new_state;
