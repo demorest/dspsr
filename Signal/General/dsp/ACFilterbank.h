@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ACFilterbank.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/03/25 06:06:42 $
+   $Revision: 1.3 $
+   $Date: 2005/03/25 08:54:20 $
    $Author: wvanstra $ */
 
 #ifndef __ACFilterbank_h
@@ -57,13 +57,16 @@ namespace dsp {
     bool get_form_acf () const { return form_acf; }
 
     //! Set the apodization function
-    virtual void set_apodization (Apodization* function);
+    void set_apodization (Apodization* function);
 
     //! Return true if the passband attribute has been set
     bool has_passband () const;
 
     //! Return a pointer to the integrated passband
-    virtual const Response* get_passband() const;
+    const Response* get_passband() const;
+
+    //! Set the integrated passband
+    void set_passband (Response* band);
 
   protected:
 

@@ -6,7 +6,7 @@
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
 
-// #define _DEBUG
+// #define _DEBUG 1
 
 dsp::ACFilterbank::ACFilterbank () 
   : Transformation<TimeSeries,TimeSeries> ("ACFilterbank", outofplace, true)
@@ -14,6 +14,11 @@ dsp::ACFilterbank::ACFilterbank ()
   nchan = 0;
   nlag = 0;
   form_acf = false;
+}
+
+void dsp::ACFilterbank::set_passband (Response* band)
+{
+  passband = band;
 }
 
 void dsp::ACFilterbank::transformation ()
@@ -70,7 +75,7 @@ void dsp::ACFilterbank::transformation ()
   }
 
   if (passband) {
-    passband->resize (input->get_npol(), nchan, 1, 1);
+    passband->resize (input->get_npol(), 1, nchan, 1);
     passband->match (input);
   }
 
@@ -90,18 +95,24 @@ void dsp::ACFilterbank::transformation ()
   // prepare the output TimeSeries
   {
     get_output()->copy_configuration ( get_input() );
+    get_output()->set_state( Signal::PPQQ );
+    get_output()->set_npol( get_input()->get_npol() );
 
     if (form_acf) {
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank ACF nlag=" << nlag << " ndim=2" << endl;
+#endif
       get_output()->set_nchan( nlag );
       get_output()->set_ndim( 2 );
     }
     else {
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank PSD nchan=1 ndim=" << 2*nchan << endl;
+#endif
       get_output()->set_nchan( 1 );
       get_output()->set_ndim( 2*nchan );
     }
 
-    get_output()->set_state( Signal::Analytic );
-    get_output()->set_npol( get_input()->get_npol() );
   }
 
   WeightedTimeSeries* weighted_output;
@@ -139,9 +150,8 @@ void dsp::ACFilterbank::transformation ()
   float* windowed_time_domain = spectrum2 + nfloat_fft + 4;
 
   if (verbose)
-    cerr << "dsp::ACFilterbank::transformation enter main loop " <<
-      " npart:" << npart <<
-      " npol:" << input->get_npol() << endl;
+    cerr << "dsp::ACFilterbank::transformation enter main loop" <<
+      " npart=" << npart << " npol=" << npol << endl;
 
   // number of floats to step between input to filterbank
   const unsigned long in_step = nsamp_step * input->get_ndim();
@@ -167,6 +177,10 @@ void dsp::ACFilterbank::transformation ()
 
     for (ipart=0; ipart<npart; ipart++) {
 
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank ipol=" << ipol << " ipart=" << ipart << endl;
+#endif
+
       input_ptr = input_datptr;
       input_datptr += in_step;
 
@@ -174,6 +188,9 @@ void dsp::ACFilterbank::transformation ()
       output_datptr += out_step;
 
       if (apodization) {
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank apodizing" << endl;
+#endif
 	apodization -> operate (const_cast<float*>(input_ptr), 
                                 windowed_time_domain);
 	input_ptr = windowed_time_domain;
@@ -181,21 +198,41 @@ void dsp::ACFilterbank::transformation ()
 
       // calculate the zero-padded transform
 
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank copy half" << endl;
+#endif
+
       // copy half of the data
       memcpy (spectrum1, input_ptr, nbytes_half);
+
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank conjugate" << endl;
+#endif
 
       // complex conjugate
       for (idat=1; idat<nchan; idat+=2)
 	spectrum1[idat] = -spectrum1[idat];
 
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank zero pad" << endl;
+#endif
+
       // zero pad the rest
-      for (idat=0; idat<nchan; idat++)
-	spectrum1[idat+nchan] = 0.0;
+      for (idat=nchan; idat<nchan*2; idat++)
+	spectrum1[idat] = 0.0;
+
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank FFT padded conjugate nfft=" << nsamp_fft << endl;
+#endif
 
       if (input->get_state() == Signal::Nyquist)
 	fft::frc1d (nsamp_fft, spectrum2, spectrum1);
       else
 	fft::fcc1d (nsamp_fft, spectrum2, spectrum1);
+
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank FFT data" << endl;
+#endif
  
       // calculate the normal transform
       if (input->get_state() == Signal::Nyquist)
@@ -203,16 +240,28 @@ void dsp::ACFilterbank::transformation ()
       else
 	fft::fcc1d (nsamp_fft, spectrum1, input_ptr);
 
-      // integrate the normal transform
-      if (passband)
+      if (passband) {
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank integrate passband" << endl;
+#endif
 	passband->integrate (spectrum1, ipol);
-      
+      }
+
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank form PSD" << endl;
+#endif
+
       // multiply the two complex spectra
       mfilter (nchan, spectrum1, spectrum2);
 
       if (!form_acf)
 	memcpy (output_ptr, spectrum1, nbytes_fft);
       else {
+
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank form ACF" << endl;
+#endif
+
 	// if forming lags, do the inverse fft and multiplex the lag data
 	fft::bcc1d (nchan, spectrum2, spectrum1);
 	input_ptr = spectrum2;
