@@ -408,6 +408,10 @@ void dsp::Fold::transformation ()
 
   output->set_reference_phase( reference_phase );
 
+  // set the sampling rate of the output PhaseSeries
+  double sampling_interval = pfold / double(folding_nbin);
+  output->set_rate (1.0/sampling_interval);
+
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
@@ -473,7 +477,8 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   // MJD of midpoint of the first sample
   MJD start_time = info->get_start_time() + mid_idat_start * sampling_interval;
 
-  double phi=0, pfold=0;
+  double phi=0;
+  pfold = 0;
 
   // /////////////////////////////////////////////////////////////////////////
   //

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/07/29 13:28:38 $
+   $Revision: 1.18 $
+   $Date: 2003/08/05 10:10:53 $
    $Author: wvanstra $ */
 
 
@@ -159,6 +159,11 @@ namespace dsp {
 
     //! INTERNAL: the number of time samples to fold
     uint64 ndat_fold;
+
+  private:
+
+    //! The folding period last used in the fold method
+    double pfold;
 
   };
 }
