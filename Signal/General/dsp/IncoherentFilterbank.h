@@ -9,6 +9,8 @@
 #include "genutil.h"
 #include "Types.h"
 
+#include "RealTimer.h"
+
 #include "dsp/TimeSeries.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Transformation.h"
@@ -52,6 +54,17 @@ namespace dsp{
     //! Inquire the output state- default is Intensity
     Signal::State get_output_state(){ return state; }
 
+    //! Inquire timings
+    double get_fft_time(){ return fft_timer.get_total(); }
+    double get_fft_loop_time(){ return fft_loop_timer.get_total(); }
+    double get_conversion_time(){ return conversion_timer.get_total(); }
+
+    //! Inquire loop unroll level for forming incoherent filterbank
+    unsigned get_unroll_level(){ return unroll_level; }
+    
+    //! Set loop unroll level for forming incoherent filterbank
+    void set_unroll_level(unsigned _unroll_level){ unroll_level = _unroll_level; }
+
   protected:
 
     //! Perform the operation
@@ -77,6 +90,18 @@ namespace dsp{
 
     //! Worker function for state=Signal::Analytic
     virtual void form_undetected();
+
+    //! Timer for FFT'ing
+    RealTimer fft_timer;
+
+    //! Timer for FFT loop
+    RealTimer fft_loop_timer;
+
+    //! Timer for TimeSeries conversion
+    RealTimer conversion_timer;
+
+    //! Loop unroll level for forming undetected filterbank
+    unsigned unroll_level;
 
   };
 
