@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.38 $
-   $Date: 2002/12/04 14:48:17 $
-   $Author: hknight $ */
+   $Revision: 1.39 $
+   $Date: 2002/12/04 15:09:43 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -133,14 +133,6 @@ namespace dsp {
     void set_centre_frequency (double cf) { centre_frequency = cf; }
     //! Return the centre frequency of the band-limited signal in MHz
     double get_centre_frequency () const { return centre_frequency; }
-    //! Returns the centre frequency of the specified channel in MHz
-    double get_centre_frequency (unsigned ichan) const;
-
-    //! Return the centre frequency of the highest frequency channel
-    double get_highest_frequency();
-
-    //! Return the centre frequency of the lowest frequency channel
-    double get_lowest_frequency();
 
     //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
@@ -152,13 +144,6 @@ namespace dsp {
     //! Return the start time of the leading edge of the first time sample
     MJD get_start_time () const { return start_time; }
     
-    //! Change the start time by the number of time samples specified
-    void change_start_time (int64 nsamples);
-
-    //! Return the end time of the trailing edge of the last time sample
-    virtual MJD get_end_time () const
-    { return start_time + double(ndat + 1) / rate; }
-
     //! Set the sampling rate (time samples per second in Hz)
     void set_rate (double _rate) { rate = _rate; }
     //! Return the sampling rate (time samples per second in Hz)
@@ -168,9 +153,6 @@ namespace dsp {
     void set_scale (double _scale) { scale = _scale; }
     //! Return the amount by which data has been scaled
     double get_scale () const { return scale; }
-
-    //! Multiply scale by factor
-    void rescale (double factor) { scale *= factor; }
 
     //! Set true if frequency channels are out of order (band swappped)
     void set_swap (bool _swap) { swap = _swap; }
@@ -238,6 +220,31 @@ namespace dsp {
 
     //! Returns a string describing the state of the data
     string get_state_as_string () const;
+
+    //! Returns the centre frequency of the specified channel in MHz
+    double get_centre_frequency (unsigned ichan) const;
+
+    //! Returns the centre frequency of the first channel in MHz
+    double get_base_frequency () const;
+
+    //! Return the centre frequency of the highest frequency channel
+    double get_highest_frequency();
+
+    //! Return the centre frequency of the lowest frequency channel
+    double get_lowest_frequency();
+
+    //! Returns the minimum and maximum centre frequencies in MHz
+    void get_minmax_frequencies (double& min, double& max) const;
+
+    //! Change the start time by the number of time samples specified
+    void change_start_time (int64 ndat);
+
+    //! Return the end time of the trailing edge of the last time sample
+    virtual MJD get_end_time () const
+    { return start_time + double(ndat + 1) / rate; }
+
+    //! Multiply scale by factor
+    void rescale (double factor) { scale *= factor; }
 
     //! Return the size in bytes of nsamples time samples
     uint64 nbytes (uint64 nsamples) const

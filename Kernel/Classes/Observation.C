@@ -356,29 +356,38 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 // returns the centre_frequency of the ichan channel
 double dsp::Observation::get_centre_frequency (unsigned ichan) const
 {
-  double chan_bandwidth = bandwidth / double(nchan);
-
-  double lower_cfreq = 0.0;
-
-  if (dc_centred)
-    lower_cfreq = centre_frequency - bandwidth/2.0;
-  else
-    lower_cfreq = centre_frequency - 0.5*(double(bandwidth)-chan_bandwidth);
-
   unsigned swap_chan = 0;
   if (swap)
     swap_chan = nchan/2;
 
   double channel = double ( (ichan+swap_chan) % nchan );
 
-  return lower_cfreq + channel * chan_bandwidth;
+  return get_base_frequency() + channel * bandwidth / double(nchan);
+}
+
+// returns the centre_frequency of the first channel
+double dsp::Observation::get_base_frequency () const
+{
+  if (dc_centred)
+    return centre_frequency - 0.5*bandwidth;
+  else
+    return centre_frequency - 0.5*bandwidth*(1.0-1.0/double(nchan));
+}
+
+void dsp::Observation::get_minmax_frequencies (double& min, double& max) const
+{
+  min = get_base_frequency();
+  max = min + bandwidth*(1.0-1.0/double(nchan));
+
+  if (min > max)
+    std::swap (min, max);
 }
 
 //! Change the state and correct other attributes accordingly
 void dsp::Observation::change_state (Signal::State new_state)
 {
   if (new_state == Signal::Analytic && state == Signal::Nyquist) {
-    /* Observation was originally single-sideband, Signal::Nyquist-sampled data.
+    /* Observation was originally single-sideband, Nyquist-sampled.
        Now it is complex, quadrature sampled */
     state = Signal::Analytic;
     ndat /= 2;         // number of complex samples
