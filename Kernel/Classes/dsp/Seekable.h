@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/09/19 07:59:57 $
+   $Revision: 1.2 $
+   $Date: 2002/11/01 18:37:46 $
    $Author: wvanstra $ */
 
 
@@ -48,9 +48,6 @@ namespace dsp {
     
     //! end of data reached
     bool end_of_data;
-    
-    //! Number of time samples in source
-    uint64 total_size;
     
     //! Current time sample
     uint64 current_sample;

@@ -5,7 +5,6 @@
 void dsp::Seekable::init()
 {
   end_of_data = true;
-  total_size = 0;
   current_sample = 0;
 }
 
@@ -40,8 +39,8 @@ void dsp::Seekable::load_data (Timeseries* data)
   uint64 read_size = block_size - recycled;
 
   // check that the amount to read does not surpass the end of data
-  if (total_size) {
-    uint64 samples_left = total_size - read_sample;
+  if (info.get_ndat()) {
+    uint64 samples_left = info.get_ndat() - read_sample;
     if (samples_left <= read_size) {
       if (verbose)
 	cerr << "Seekable::load_data end of data read_size="
