@@ -101,6 +101,14 @@ LGTKMM := ${shell ${PSRPKGS}/${LOGIN_ARCH}/bin/gtkmm-config --libs}
 endif
 
 ##########################################################################
+# CFITSIO
+ifeq ($(PSRFITS),yes)
+INCFLAGS += -I/usr/local/include/cfitsio
+CPPFLAGS += -DPSRFITS=1
+LCFITSIO = -lcfitsio $(LSOCK)
+endif
+
+##########################################################################
 # SLA LIB
 LSLA = -lsla $(LF77)
 
