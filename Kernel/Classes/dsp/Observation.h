@@ -249,7 +249,7 @@ namespace dsp {
 
     //! Return the size in bytes of nsamples time samples
     uint64 get_nbytes (uint64 nsamples) const
-      { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
+      { return (nsamples*get_nbit()*get_npol()*get_nchan()*get_ndim())/8; }
 
     //! Return the size in bytes of ndat time samples
     uint64 get_nbytes () const
@@ -259,11 +259,11 @@ namespace dsp {
     
     //! Return the size in bytes of one time sample
     float get_nbyte () const
-      { return float(nbit*npol*nchan*get_ndim()) / 8.0; }
+      { return float(nbit*get_npol()*get_nchan()*get_ndim()) / 8.0; }
 
     //! Return the number of samples in nbytes bytes
     uint64 get_nsamples (uint64 nbytes) const
-      { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
+      { return (nbytes * 8)/(nbit*get_npol()*get_nchan()*get_ndim()); }
 
     //! Constructs the CPSR2-header parameter, OFFSET
     uint64 get_offset();
@@ -344,17 +344,8 @@ namespace dsp {
     //! Bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double bandwidth;
 
-    //! Number of frequency channels across bandwidth
-    unsigned nchan;
-
     //! Pointer to the digitizer thresholds
     float * thresh;
-
-    //! Number of polarizations
-    unsigned npol;
-
-    //! Number of bits per value
-    unsigned nbit;
 
     //! Type of signal source (Linear or Circular)
     Signal::Source type;
@@ -416,6 +407,8 @@ namespace dsp {
     void old_file2obs(int fd);
 
   private:
+    /////////////////////////////////////////////////////////////////////
+    // Private variables should only be accessed by set/get at all times!
 
     //! Number of time samples in container
     //! This is private so that classes that inherit from Observation that have nbit%8 != 0
@@ -426,6 +419,15 @@ namespace dsp {
     //! This is private so that classes that inherit from Observation that have nbit%8 != 0
     //! can enforce set_ndim's so that ndat*ndim is always an integer number of bytes
     unsigned ndim;
+
+    //! Number of frequency channels across bandwidth
+    unsigned nchan;
+
+    //! Number of polarizations
+    unsigned npol;
+
+    //! Number of bits per value
+    unsigned nbit;
 
   };
 
