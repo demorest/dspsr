@@ -45,7 +45,7 @@ ifeq ($(install_yes),install)
 
 ##########################################################################
 # strip out 'install' and set the default list of things to install
-INSTALL_TARGETS := ${strip ${filter-out install,$(MAKECMDGOALS)}}
+INSTALL_TARGETS := ${strip ${filter-out install, $(MAKECMDGOALS)}}
 install_LIBS:=$(LIBRARIES)
 install_BINS:=$(EXECUTABLES)
 install_INCS:=$(INCLUDES)
@@ -57,28 +57,39 @@ ifneq ($(INSTALL_TARGETS),)
 # of things to install accordingly
 install_LIBS:=${strip ${filter %.a,$(INSTALL_TARGETS)}}
 install_INCS:=${strip ${filter %.h %.inc,$(INSTALL_TARGETS)}}
-not_BINS:= libs include $(install_LIBS) $(install_INCS)
+not_BINS:= $(install_LIBS) $(install_INCS) $(TARGETS)
 install_BINS:=${strip ${filter-out $(not_BINS),$(INSTALL_TARGETS)}}
 
 ##########################################################################
 # Check for 'make install libs'
-install_libs_yes := ${strip ${filter libs,$(INSTALL_TARGETS)}}
+install_libs_yes := ${findstring libs, $(INSTALL_TARGETS)}
 ifeq ($(install_libs_yes),libs)
 install_LIBS:=$(LIBRARIES)
 endif
 
 ##########################################################################
 # Check for 'make install include'
-install_incs_yes := ${strip ${filter include,$(INSTALL_TARGETS)}}
+install_incs_yes := ${findstring include, $(INSTALL_TARGETS)}
 ifeq ($(install_incs_yes),include)
 install_INCS:=$(INCLUDES)
 endif
 
 ##########################################################################
+# Check for 'make install all'
+install_all_yes := ${findstring all, $(INSTALL_TARGETS)}
+ifeq ($(install_all_yes),all)
+install_LIBS:=$(LIBRARIES)
+install_BINS:=$(EXECUTABLES)
+install_INCS:=$(INCLUDES)
+endif
+
+##########################################################################
 # this simple rule ensures that the rest of the targets in MAKECMDGOALS
-# are effectively ignored.
-$(INSTALL_TARGETS):
-	@echo nothing > /dev/null
+# are effectively ignored.  clean and veryclean have their own rule that
+# should not be over-ridden. 'all' 'include' and 'libs' 
+##########################################################################
+$(filter-out clean veryclean, $(INSTALL_TARGETS)):
+	@echo "Installed '$@' successfully."
 
 endif
 
