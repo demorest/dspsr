@@ -160,8 +160,16 @@ void dsp::Input::load (BitSeries* data)
   if (verbose)
     cerr << "dsp::Input::load calling seek(" << to_seek << ")" << endl;
 
+  if( verbose ){
+    uint64 next_sample = load_sample + resolution_offset;
+    fprintf(stderr,"Got next_sample = "UI64" and ndat="UI64"\n",
+	    next_sample,get_info()->get_ndat());
+  }
+
+  bool at_eod = eod();
   seek( to_seek, SEEK_CUR);
-  
+  set_eod( at_eod );
+
   if (verbose)
     cerr << "dsp::Input::load exit with load_sample="<< load_sample <<endl;
 
