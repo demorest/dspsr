@@ -188,8 +188,14 @@ void dsp::Convolution::transformation ()
   if (input->get_state() == Signal::Nyquist)
     complex_time += 2;
 
+  Signal::State input_state = get_input()->get_state();
+
   // prepare the output TimeSeries
   output->copy_configuration (input);
+  get_output()->set_nchan( get_input()->get_nchan() ); // nchan doesn't change
+  get_output()->set_npol( get_input()->get_npol() );   // npol doesn't change
+  get_output()->set_state( Signal::Analytic );
+  get_output()->set_ndim( 2 );
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
@@ -199,16 +205,26 @@ void dsp::Convolution::transformation ()
       weighted_output->scrunch_weights (2);
   }
 
-  // valid time samples convolved
-  if (input.get() == output.get())
-    output->set_ndat (npart * nsamp_good);
-  else
-    output->resize (npart * nsamp_good);
 
-  // output data is complex
-  // notice that nsamp_good is the number of input time samples.
-  // therefore, the state must be changed after resize
-  output->change_state (Signal::Analytic);
+  if( get_input()->get_state() == Signal::Analytic ){
+    // Case 1. Analytic->Analytic:
+    if (input.get() == output.get())
+      output->set_ndat (npart * nsamp_good);
+    else
+      output->resize (npart * nsamp_good);
+  }
+  else{
+    // Case 2. Nyquist->Analytic:
+    get_output()->set_rate( 0.5*get_input()->get_rate() );
+
+    // nsamp_good is number of input timesamples
+    if( get_input() != get_output() )
+      get_output()->resize( (npart*nsamp_good) / 2 );
+    else
+      get_output()->set_ndat( (npart*nsamp_good) / 2 );
+  }
+    
+  get_output()->check_sanity();
 
   // nfilt_pos complex points are dropped from the start of the first FFT
   output->change_start_time (nfilt_pos);
