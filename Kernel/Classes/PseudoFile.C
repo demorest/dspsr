@@ -8,7 +8,7 @@
 
 dsp::PseudoFile::PseudoFile (const dsp::File* f)
 {
-  Observation::operator = ( *(f->get_info()) );
+  Observation::operator = ( *f->get_info() );
   filename = f->get_filename();
   header_bytes = f->get_header_bytes();
 }
