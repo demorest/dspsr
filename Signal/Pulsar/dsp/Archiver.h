@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.6 $
-   $Date: 2003/06/17 15:49:39 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2003/07/01 05:34:51 $
+   $Author: hknight $ */
 
 
 #ifndef __Archiver_h
@@ -76,7 +76,7 @@ namespace dsp {
     void set (Pulsar::Integration* integration, const PhaseSeries* phase);
 
     void set (Pulsar::Profile* profile, const PhaseSeries* phase,
-		      unsigned ichan, unsigned ipol, unsigned idim);
+	      unsigned ichan, unsigned ipol, unsigned idim);
 
     //! Set the Pulsar::dspReduction Extension with the dsp::Operation
     void set (Pulsar::dspReduction* dspR);

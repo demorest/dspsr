@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "dsp/CPSR2TwoBitCorrection.h"
 #include "dsp/Observation.h"
 #include "dsp/TwoBitTable.h"
@@ -15,4 +17,14 @@ dsp::CPSR2TwoBitCorrection::CPSR2TwoBitCorrection ()
 {
   table = new TwoBitTable (TwoBitTable::OffsetBinary);
 }
+
+
+
+
+
+
+
+
+
+
 

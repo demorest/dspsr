@@ -258,6 +258,9 @@ void dsp::Filterbank::transformation ()
   float* data_from = NULL;
 
   for (ipart=0; ipart<npart; ipart++) {
+    if( verbose )
+      fprintf(stderr,"dsp::Filterbank working with park %d/%d\n",
+	      ipart+1,npart);
 
     in_offset = ipart * in_step;
     out_offset = ipart * out_step;
@@ -328,7 +331,7 @@ void dsp::Filterbank::transformation ()
 	  
 	  // freq_res > 1 requires a backward fft into the time domain
 	  // for each channel
-	  
+  
 	  for (ichan=0; ichan < nchan; ichan++) {
 
 	    fft::bcc1d (freq_res, complex_time, freq_dom_ptr);

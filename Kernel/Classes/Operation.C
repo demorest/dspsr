@@ -40,6 +40,7 @@ dsp::Operation::~Operation (){
 
 void dsp::Operation::operate ()
 {
+  //fprintf(stderr,"dsp::Operation::operate() name=%s\n",name.c_str());
   if( timekeeper )
     timekeeper->setup_done();
 

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/04/23 08:04:02 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2003/07/01 05:34:50 $
+   $Author: hknight $ */
 
 
 #ifndef __S2File_h
@@ -31,7 +31,7 @@ namespace dsp {
     
   private:
     
-        //! Loads the extra S2 "filename.info" header file
+    //! Loads the extra S2 "filename.info" header file
     void load_S2info (const char* filename);
 
     //! Structure to be used with the load_S2info function

@@ -62,6 +62,9 @@ void dsp::BitSeries::resize (int64 nsamples)
     input_sample = -1;
   }
 
+  if( verbose )
+    fprintf(stderr,"dsp::BitSeries::resize() setting request_ndat to "I64"\n",
+	  nsamples);
   request_ndat = ndat = nsamples;
   request_offset = 0;
 

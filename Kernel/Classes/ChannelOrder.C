@@ -11,6 +11,8 @@ dsp::ChannelOrder::ChannelOrder() : Transformation<BitSeries,TimeSeries>("Channe
 dsp::ChannelOrder::~ChannelOrder(){ }
 
 void dsp::ChannelOrder::transformation(){
+  //fprintf(stderr,"hello1\n");
+
   if( verbose )
     fprintf(stderr,"In dsp::ChannelOrder::transformation() with input->ndat="UI64"\n",
 	    input->get_ndat());
