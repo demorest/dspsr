@@ -21,27 +21,56 @@ namespace dsp {
     //! Destructor
     virtual ~MPIRoot ();
     
+    //! Get the number of nodes in communicator
+    int get_size () const { return mpi_size; }
+
+    //! Get the rank of this process within the communicator
+    int get_rank () const { return mpi_rank; }
+
+    //! Get the rank of process sending data
+    int get_root () const { return mpi_root; }
+    //! Set the rank of process sending data
+    void set_root (int root);
+
+    //! Get the tag used for all communication
+    int get_tag () const { return mpi_tag; }
+    //! Set the tag used for all communication
+    void set_tag (int tag) { mpi_tag = tag; }
+
     //! Prepare for sending or receiving from root node
-    void bcast_setup (int root_node);
+    void prepare ();
 
     //! End of data
     bool eod();
-    
+
+    /** @name mpi_root methods
+     *  These methods are used only by the MPIRoot instance for which
+     *  mpi_rank == mpi_root
+     */
+    //@{
+
+    //! Set the source from which input data will be read
+    void set_Input (Input* input);
+
+    //! Serve the data from Input
+    void serve (BitSeries* bitseries = 0);
+
+    //@}
+
+
+  protected:
+
     //! Send the next block using MPI_Isend
-    void send_data (BitSeries* data, int dest, int nbytes = 0);
+    void send_data (BitSeries* data, int dest);
 
     //! Load the next block using MPI_Irecv
     void load_data (BitSeries* data);
 
-    //! MPI load does not support seeking
-    void seek (int64 offset, int whence = 0);
+    //! Wait on the status of the MPI_Request
+    void wait (MPI_Request& request);
 
-    void serve_data (Input* input, BitSeries* data = 0);
-
-  protected:
-
-    //! Wait on the status of the previous MPI_Request, return count
-    int wait ();
+    //! Returns the rank of the next node ready to receive data
+    int next_destination ();
 
     //! resize the async_buf
     void size_asyncspace ();
@@ -52,17 +81,26 @@ namespace dsp {
     //! Number of nodes in communicator
     int mpi_size;
 
-    //! Node number of this process within the communicator
-    int mpi_self;
+    //! Rank of this process within the communicator
+    int mpi_rank;
 
-    //! Node number of process sending data
+    //! Rank of process sending data
     int mpi_root;
  
     //! Tag used for all communication
     int mpi_tag;
 
-    //! status of the asynchronous send/recv
-    MPI_Request request;
+    //! status of the asynchronous send/recv of data
+    MPI_Request data_request;
+
+    //! status of the asynchronous send/recv of ready flag
+    MPI_Request ready_request;
+
+    //! Status of the last call to wait
+    MPI_Status status;
+
+    //! The ready flag
+    int ready;
 
     //! Buffer used to store asynchronous send/recv
     char* async_buf;
@@ -75,6 +113,9 @@ namespace dsp {
 
     //! End of data
     bool end_of_data;
+
+    //! The source from which input data will be read
+    Reference::To<Input> input;
 
     //! initialize variables
     void init();
