@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/10/07 15:52:25 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2002/10/15 13:14:07 $
+   $Author: pulsar $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -29,7 +29,7 @@ namespace dsp {
     //! All operations must define their behaviour
     enum Behaviour { inplace, outofplace, anyplace };
 
-    //! Global flag tells all operations to record the time spent operating
+    //! Global flag enables stopwatch to record the time spent operating
     static bool record_time;
 
     //! Global verbosity flag
@@ -77,9 +77,6 @@ namespace dsp {
     //! Operation name
     string name;
 
-    //! If false then virtual method prepare() is called from within the operate() wrapper method
-    bool IsPrepared;
-
     //! Container from which input data will be read
     Reference::To <const Timeseries> input;
 
@@ -96,10 +93,6 @@ namespace dsp {
     
     //! Return pointer to memory resource shared by operations
     static void* workingspace (size_t nbytes);
-
-    //! Called within operate() wrapper function if IsPrepared is false.
-    //! This is not pure virtual so that existing classes need not write a redundant prepare() method
-    virtual void prepare();
 
   private:
     //! Stop watch records the amount of time spent performing this operation

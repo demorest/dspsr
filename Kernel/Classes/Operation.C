@@ -13,16 +13,10 @@ dsp::Operation::Operation (const char* _name, Behaviour _type)
 {
   name = _name;
   type = _type;
-  IsPrepared = false;
 }
 
 dsp::Operation::~Operation ()
 {
-}
-
-void dsp::Operation::prepare ()
-{
-  IsPrepared = true;
 }
 
 void dsp::Operation::operate ()
@@ -46,9 +40,6 @@ void dsp::Operation::operate ()
 
   if (record_time)
     optime.start();
-
-  if( !IsPrepared )
-    prepare();
 
   //! call the pure virtual method defined by sub-classes
   operation();
