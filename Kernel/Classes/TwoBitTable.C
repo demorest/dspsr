@@ -15,6 +15,8 @@ dsp::TwoBitTable::TwoBitTable (Type _type)
   hi_val = 0.75;
 
   type = _type;
+
+  flip = false;
 }
 
 
@@ -49,6 +51,12 @@ void dsp::TwoBitTable::set_type (Type _type)
 
   type = _type;
 }
+
+void dsp::TwoBitTable::set_flip (bool flipped)
+{
+  flip = flipped;
+}
+
 
 void dsp::TwoBitTable::build ()
 {
@@ -122,13 +130,6 @@ void dsp::TwoBitTable::four_vals (float* vals) const
     vals[3] = -hi_val;
     break;
     
-  case MagnitudeSign:
-    vals[0] = lo_val;
-    vals[1] = -lo_val;
-    vals[2] = hi_val;
-    vals[3] = -hi_val;
-    break;
-    
   case TwosComplement:
     vals[0] = lo_val;
     vals[1] = hi_val;
@@ -139,4 +140,13 @@ void dsp::TwoBitTable::four_vals (float* vals) const
   default:
     throw "TwoBitTable::four_vals unsupported type";
   }
+  
+  // Swap the order of the bits, e.g. SignMag becomes MagSign
+  if(flip){
+    float tmp;
+    tmp = vals[1];
+    vals[1] = vals[2];
+    vals[2] = tmp;
+  }
+    
 }

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.8 $
-   $Date: 2004/06/04 07:55:22 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2004/06/07 00:31:05 $
+   $Author: cwest $ */
 
 
 #ifndef __TwoBitTable_h
@@ -25,7 +25,6 @@ namespace dsp {
     enum Type { Unset, 
 		OffsetBinary, 
 		SignMagnitude,
-		MagnitudeSign,
 		TwosComplement 
     };
 
@@ -65,6 +64,12 @@ namespace dsp {
     //! Return the digitization convention
     Type get_type () const { return type; }
 
+    //! Set the flip value to be true or false
+    void set_flip (bool flipped);
+
+    //! Get the flip value
+    bool get_flip () const { return flip; }
+
     //! Generate a look-up table for byte to 4xfloating point conversion
     void generate (float* table) const;
 
@@ -90,6 +95,9 @@ namespace dsp {
 
     //! Digitization convention
     Type type;
+
+    //! Flip the two data bits - that is SignMag becomes MagSign
+    bool flip;
 
   private:
 
