@@ -33,6 +33,7 @@ void dsp::Seekable::reset ()
   end_of_data = false;
   current_sample = 0;
   Input::seek (0);
+  last_load_ndat = 0;
 }
 
 bool dsp::Seekable::eod()
@@ -42,8 +43,6 @@ bool dsp::Seekable::eod()
 
 void dsp::Seekable::load_data (BitSeries* data)
 {
-  //  verbose = true;
-
   if (verbose)
     cerr << "dsp::Seekable::load_data"
       "\n   load_size=" << get_load_size() << 
@@ -63,6 +62,14 @@ void dsp::Seekable::load_data (BitSeries* data)
 
   // check that the amount to read does not surpass the end of data
   if (info.get_ndat()) {
+
+    if( verbose )
+      fprintf(stderr,"ndat="UI64" read_sample="UI64"\n",
+	      info.get_ndat(), read_sample);
+
+    if( read_sample > info.get_ndat() )
+      throw Error(InvalidState,"dsp::Seekable::load_data ()",
+		  "'read_sample' > ndat.... BUG!");
 
     uint64 samples_left = info.get_ndat() - read_sample;
 
@@ -153,13 +160,13 @@ uint64 dsp::Seekable::recycle_data (BitSeries* data)
   }
 
   uint64 start_sample = (uint64) data->get_input_sample();
-  uint64 last_sample = start_sample + (uint64) data->get_ndat();
+  uint64 last_sample = start_sample + last_load_ndat;
 
   if (verbose)
     cerr << "dsp::Seekable::recycle_data"
-      " start_sample=" << start_sample <<
-      " last_sample=" << last_sample << 
-      " load_sample=" << get_load_sample() << endl;
+      "\n start_sample=" << start_sample <<
+      "\n last_sample=" << last_sample << 
+      "\n load_sample=" << get_load_sample() << endl;
 
   if (get_load_sample() < start_sample || get_load_sample() >= last_sample)
     return 0;
@@ -205,3 +212,4 @@ uint64 dsp::Seekable::recycle_data (BitSeries* data)
 
   return to_recycle;
 }
+
