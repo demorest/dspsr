@@ -4,6 +4,7 @@
 
 #include "fftm.h"
 #include "genutil.h"
+#include "Reference.h"
 
 //#define DEBUG
 
@@ -20,6 +21,10 @@ dsp::Convolution::~Convolution ()
 void dsp::Convolution::set_response (Response* _response)
 {
   response = _response;
+}
+
+const dsp::Response* dsp::Convolution::get_response() const{
+  return response.get();
 }
 
 //! Set the apodization function

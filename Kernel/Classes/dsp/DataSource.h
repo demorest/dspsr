@@ -10,7 +10,6 @@ namespace dsp {
   template<class Output>
   class DataSource : public Reference::Able {
   public:
-
     DataSource(){ }
 
     virtual ~DataSource(){ }
@@ -20,6 +19,8 @@ namespace dsp {
 
     virtual bool get_full_buffer(Reference::To<Output>& buf) = 0;
     virtual void buffer_used() = 0;
+
+    virtual void set_verbosity(bool _verbose) = 0;
 
   };
 

@@ -1,12 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/12/04 15:09:15 $
-   $Author: wvanstra $ */
+   $Revision: 1.13 $
+   $Date: 2003/04/28 06:28:55 $
+   $Author: pulsar $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
+
+#include "dsp/Response.h"
 
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
@@ -14,7 +16,6 @@
 namespace dsp {
   
   class Apodization;
-  class Response;
 
   //! Convolves a TimeSeries using a frequency response function
   /*! This class implements the overlap-save method of discrete
@@ -69,6 +70,9 @@ namespace dsp {
 
     //! Set the bandpass integrator
     virtual void set_bandpass (Response* bandpass);
+
+    //! Return a pointer to the frequency response function
+    virtual const Response* get_response() const;
 
   protected:
 
