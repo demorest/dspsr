@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/08/13 14:22:56 $
+   $Revision: 1.21 $
+   $Date: 2004/11/22 22:31:53 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -36,10 +36,10 @@ namespace dsp {
     virtual void mark (Observation* output);
 
     //! Return a descriptive string
-    //virtual const string descriptor () const;
+    //virtual const std::string descriptor () const;
 
     //! Initialize from a descriptor string as output by above
-    //virtual void initialize (const string& descriptor);
+    //virtual void initialize (const std::string& descriptor);
 
     //! Set the dimensions of the data
     virtual void resize (unsigned npol, unsigned nchan,
@@ -115,15 +115,15 @@ namespace dsp {
     double smearing_time (double centre_frequency, double bandwidth) const;
 
     //! Compute the phases for a dedispersion kernel
-    void build (vector<float>& phases, unsigned npts, unsigned nchan);
+    void build (std::vector<float>& phases, unsigned npts, unsigned nchan);
 
     //! Prepare for building
     void prepare ();
 
-  protected:
-
     //! Build the dedispersion frequency response kernel
     virtual void build ();
+
+  protected:
 
     //! Centre frequency of the band-limited signal in MHz
     double centre_frequency;

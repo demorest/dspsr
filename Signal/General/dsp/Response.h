@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.21 $
-   $Date: 2004/10/22 08:51:45 $
+   $Revision: 1.22 $
+   $Date: 2004/11/22 22:31:53 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -77,13 +77,13 @@ namespace dsp {
     void check_ndat () const;
 
     //! Get the passband
-    vector<float> get_passband (unsigned ipol, int ichan=-1) const;
+    std::vector<float> get_passband (unsigned ipol, int ichan=-1) const;
 
     //! Construct frequency response from complex phasors
-    void set (const vector<complex<float> >& phasors);
+    void set (const std::vector<std::complex<float> >& phasors);
 
     //! Construct frequency response from jones matrices
-    void set (const vector<Jones<float> >& jones);
+    void set (const std::vector<Jones<float> >& jones);
 
     //! Multiply spectrum by complex frequency response
     void operate (float* spectrum, unsigned poln=0, int ichan=-1) const;
@@ -113,7 +113,7 @@ namespace dsp {
     void naturalize ();
 
     //! Enable Response to be used in Transformation template
-    virtual bool state_is_valid (string& reason) { return true; }
+    virtual bool state_is_valid (std::string& reason) { return true; }
 
   protected:
 
