@@ -1,6 +1,8 @@
+//-*-C++-*-
+
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/06/30 11:25:49 $
+   $Revision: 1.4 $
+   $Date: 2002/07/01 17:18:22 $
    $Author: pulsar $ */
 
 #ifndef __Observation_h
@@ -11,19 +13,40 @@
 #include "MJD.h"
 #include "sky_coord.h"
 
-#ifdef MPI
-#include "mpi.h"
-#endif
+/*! \mainpage 
+ 
+  \section intro Introduction
+ 
+  The Baseband Data Reduction Library implements a family of C++
+  classes that may be used in the loading and manipulation of
+  phase-coherent observational data.  The functionality, contained in
+  the dsp namespace, is divided into three main classes: data
+  containers and loaders, DSP algorithms, and auxilliary routines.
 
-#define TELID_PKS  '7'
-#define TELID_ATCA '2'
-#define TELID_TID  '6'
-#define TELID_ARECIBO '3'
-#define TELID_HOBART '4'
+  The main data container is the Timeseries class.  This class may
+  hold N-bit digitized data as well as the "unpacked" floating point
+  representation.  The Loader class and its children are used to load
+  data into the Timeseries container.
 
+  The main DSP algorithms are implemented by Operation and its
+  sub-classes.  These operate on Timeseries and can:
+  <UL>
+  <LI> convert digitized data to floating points (Converter class)
+  <LI> coherently dedisperse data (Convolution class)
+  <LI> fold data using polyco (Fold class)
+  <LI> etc...
+  </UL>
+
+  The auxilliary routines include classes that perform operations on
+  arrays of data, such as multiplying a jones matrix frequency response
+  by a complex vector spectrum (e.g. the dsp::filter class).
+
+ */
+
+//! Contains all Baseband Data Reduction Library classes
 namespace dsp {
 
-  //! Base class for containers of band-limited time-varying signals
+  //! Stores information about digital, band-limited, time-varying signals
   class Observation {
 
   public:

@@ -1,4 +1,6 @@
 #include "Observation.h"
+#include "Telescope.h"
+
 #include "genutil.h"
 #include "string_utils.h"
 
@@ -64,22 +66,20 @@ bool dsp::Observation::combinable (const Observation & obs)
 
 void dsp::Observation::set_default_feedtype ()
 {
-  if (telescope == TELID_PKS)  {
+  if (telescope == Telescope::Parkes)  {
     // Parkes has linear feeds for multibeam, H-OH, and 50cm
     feedtype = Linear;
     // above 2 GHz, can assume that the Galileo receiver is used
     if (centre_frequency > 2000.0)
       feedtype = Circular;
   }
-  else if (telescope == TELID_ATCA)
+  else if (telescope == Telescope::ATCA)
     feedtype = Circular;
-  else if (telescope == TELID_TID)
+  else if (telescope == Telescope::Tidbinbilla)
     feedtype = Circular;
-  else if (telescope == TELID_ARECIBO)
+  else if (telescope == Telescope::Arecibo)
     feedtype = Circular;
-  else if (telescope == TELID_HOBART)
-    feedtype = Circular;
-  else if (telescope == TELID_HOBART)
+  else if (telescope == Telescope::Hobart)
     feedtype = Circular;
   else
     throw_str ("Observation::set_default_feedtype no info telid: %d\n", telescope);
