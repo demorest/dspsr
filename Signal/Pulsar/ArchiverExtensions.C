@@ -3,6 +3,7 @@
 #include "dsp/PhaseSeries.h"
 
 #include "dsp/Input.h"
+#include "dsp/IOManager.h"
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/Filterbank.h"
 #include "dsp/Convolution.h"
@@ -43,12 +44,22 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
 
     }
 
+
     // ////////////////////////////////////////////////////////////////////
     //
     // TwoBitCorrection class parameters
     //
     TwoBitCorrection* tbc;
-    tbc = dynamic_cast<TwoBitCorrection*>( operations[i].get() );
+
+    // ////////////////////////////////////////////////////////////////////
+    //
+    // IOManager class may contain a TwoBitCorrection Unpacker
+    //
+    IOManager* manager = dynamic_cast<IOManager*>( operations[i].get() );
+    if (manager)
+      tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+    else
+      tbc = dynamic_cast<TwoBitCorrection*>( operations[i].get() );
 
     // save it for the TwoBitStats Extension
     if (tbc)
