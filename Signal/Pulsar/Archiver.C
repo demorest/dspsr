@@ -95,9 +95,6 @@ void dsp::Archiver::unload ()
   if (pband)
     set (pband);
 
-  if( reducing_program != string() )
-    archive->set_backend( archive->get_backend() + " : " + reducing_program);
-
   if (!single_archive) {
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
@@ -181,8 +178,8 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_telescope_code ( phase->get_telescope_code() );
 
   archive-> set_type ( phase->get_type() );
-  archive-> set_basis ( phase->get_basis() );
   archive-> set_state ( phase->get_state() );
+  archive-> set_scale ( Signal::FluxDensity );
 
   archive-> set_source ( phase->get_source() );
   archive-> set_coordinates ( phase->get_coordinates() );
@@ -190,14 +187,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
   archive-> set_dispersion_measure ( phase->get_dispersion_measure() );
 
-  archive-> set_flux_calibrated (false);
-  archive-> set_feedangle_corrected (false);
-  archive-> set_iono_rm_corrected (false);
-  archive-> set_ism_rm_corrected (false);
-  archive-> set_parallactic_corrected (false);
-
-  archive-> set_backend( phase->get_machine() );
-
+  archive-> set_faraday_corrected (false);
   archive-> set_dedispersed( archive_dedispersed );
 
   set (archive-> get_Integration(0), phase);

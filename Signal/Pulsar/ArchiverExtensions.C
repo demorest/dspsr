@@ -28,6 +28,14 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
     return;
   }
 
+  if (!profiles)
+    throw Error (InvalidState, "dsp::Archiver::set dspReduction Extension",
+		 "Profile data not provided");
+
+  dspR->set_name( profiles->get_machine() );
+  
+  dspR->set_software( reducing_program );
+
   for (unsigned i = 0; i < operations.size(); i++) {
 
     // ////////////////////////////////////////////////////////////////////
