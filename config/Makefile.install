@@ -31,7 +31,7 @@
 define copy_header
 if [ -f $@ ]; then $(RM) $@; fi
 echo "copying $< to $@"
-cp $< $@
+cp -fp $< $@
 chmod a-w $@
 endef
 
