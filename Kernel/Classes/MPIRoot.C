@@ -3,7 +3,7 @@
 #include <values.h>
 
 #include "dsp/MPIRoot.h"
-#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
 
 #include "stdmpi.h"
 #include "portable_mpi.h"
@@ -188,7 +188,7 @@ int dsp::MPIRoot::wait ()
 //
 //
 //
-void dsp::MPIRoot::send_data (TimeSeries* data, int dest, int nbytes)
+void dsp::MPIRoot::send_data (BitSeries* data, int dest, int nbytes)
 {
   if (verbose)
     cerr << "MPIRoot::send_data dest="<< dest <<" nbytes="<< nbytes <<endl;
@@ -229,7 +229,7 @@ void dsp::MPIRoot::send_data (TimeSeries* data, int dest, int nbytes)
 //
 //
 //
-void dsp::MPIRoot::load_data (TimeSeries* data)
+void dsp::MPIRoot::load_data (BitSeries* data)
 {
   if (async_buf == NULL)
     throw_str ("MPIRoot::load_data not prepared");
