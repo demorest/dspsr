@@ -169,7 +169,7 @@ bool dsp::Observation::get_detected () const
 
 /* this returns a flag that is true if an Observation may be combined 
    with this object using operators like += and things like that */
-bool dsp::Observation::combinable (const Observation & obs)
+bool dsp::Observation::combinable (const Observation & obs) const
 {
   if (verbose) {
     if (centre_frequency != obs.centre_frequency)
@@ -214,6 +214,13 @@ bool dsp::Observation::combinable (const Observation & obs)
 	   (swap  == obs.swap) &&
 	   (dc_centred == obs.dc_centred) &&
 	   (basis == obs.basis ));
+}
+
+bool dsp::Observation::contiguous (const Observation & obs) const
+{
+  double difference = (get_end_time() - obs.get_start_time()).in_seconds();
+
+  return ( combinable(obs) && fabs(difference) < 1e3/rate );
 }
 
 void dsp::Observation::set_telescope (char _telescope)

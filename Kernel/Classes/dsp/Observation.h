@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.24 $
-   $Date: 2002/10/17 11:20:49 $
-   $Author: pulsar $ */
+   $Revision: 1.25 $
+   $Date: 2002/11/01 18:40:15 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -223,22 +223,26 @@ namespace dsp {
     //! Return the size in bytes of nsamples time samples
     int64 nbytes (int64 nsamples) const
       { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
+
+    //! Return the size in bytes of ndat time samples
+    int64 nbytes () const
+      { return nbytes (ndat); }
+
     int64 verbose_nbytes (int64 nsamples) const;
     
     //! Return the size in bytes of one time sample
     float nbyte () const
       { return float(nbit*npol*nchan*get_ndim()) / 8.0; }
 
-    //! Return the size in bytes of ndat time samples
-    int64 nbytes () const
-      { return nbytes (ndat); }
-
     //! Return the number of samples in nbytes bytes
     int64 nsamples (int64 nbytes) const
       { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
 
-    //! Returns true if the signal may be integrated
-    bool combinable (const Observation& obs);
+    //! Returns true if the signals are mostly similar
+    bool combinable (const Observation& obs) const;
+
+    //! Return true if the first sample of next follows the last sample of this
+    bool contiguous (const Observation& next) const;
 
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
