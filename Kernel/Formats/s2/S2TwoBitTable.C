@@ -1,4 +1,4 @@
-#include "S2TwoBitTable.h"
+#include "dsp/S2TwoBitTable.h"
 
 /*! Each byte is interpreted as follows:
 

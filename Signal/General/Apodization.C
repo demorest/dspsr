@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "Apodization.h"
+#include "dsp/Apodization.h"
 
 dsp::Apodization::Apodization()
 {

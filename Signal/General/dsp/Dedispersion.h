@@ -1,14 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/10/16 09:21:46 $
-   $Author: pulsar $ */
+   $Revision: 1.8 $
+   $Date: 2002/11/03 21:51:49 $
+   $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
 
-#include "Response.h"
+#include "dsp/Response.h"
 
 namespace dsp {
   

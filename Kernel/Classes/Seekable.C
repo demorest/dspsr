@@ -1,5 +1,5 @@
-#include "Seekable.h"
-#include "Timeseries.h"
+#include "dsp/Seekable.h"
+#include "dsp/Timeseries.h"
 #include "genutil.h"
 
 void dsp::Seekable::init()

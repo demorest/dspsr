@@ -3,8 +3,8 @@
 
 #include <sys/time.h>
 
-#include "TwoBitHistory.h"
-#include "TwoBitStatsPlotter.h"
+#include "dsp/TwoBitHistory.h"
+#include "dsp/TwoBitStatsPlotter.h"
 
 namespace dsp {
 

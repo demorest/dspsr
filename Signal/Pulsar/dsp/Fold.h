@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/10/16 16:21:31 $
+   $Revision: 1.8 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 
@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#include "Operation.h"
+#include "dsp/Operation.h"
 #include "environ.h"
 #include "MJD.h"
 

@@ -1,6 +1,6 @@
-#include "S2TwoBitCorrection.h"
-#include "S2TwoBitTable.h"
-#include "Observation.h"
+#include "dsp/S2TwoBitCorrection.h"
+#include "dsp/S2TwoBitTable.h"
+#include "dsp/Observation.h"
 #include "Error.h"
 
 #include "genutil.h"

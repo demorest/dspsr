@@ -1,15 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/01 18:42:58 $
+   $Revision: 1.8 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 
 #ifndef __Input_h
 #define __Input_h
 
-#include "Observation.h"
+#include "dsp/Observation.h"
 #include "RealTimer.h"
 
 namespace dsp {

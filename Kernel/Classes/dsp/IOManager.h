@@ -1,16 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/10/15 13:15:56 $
-   $Author: pulsar $ */
+   $Revision: 1.5 $
+   $Date: 2002/11/03 21:51:49 $
+   $Author: wvanstra $ */
 
 
 #ifndef __IOManager_h
 #define __IOManager_h
 
-#include "Input.h"
-#include "Unpacker.h"
+#include "dsp/Input.h"
+#include "dsp/Unpacker.h"
 
 namespace dsp {
 

@@ -3,11 +3,11 @@
 
 #include <cpgplot.h>
 
-#include "TwoBitStatsPlotter.h"
-#include "TwoBitCorrection.h"
-#include "Timeseries.h"
-#include "IOManager.h"
-#include "Input.h"
+#include "dsp/TwoBitStatsPlotter.h"
+#include "dsp/TwoBitCorrection.h"
+#include "dsp/Timeseries.h"
+#include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "Error.h"
 
 #include "string_utils.h"

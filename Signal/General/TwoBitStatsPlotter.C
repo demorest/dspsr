@@ -6,8 +6,8 @@
 
 #include <cpgplot.h>
 
-#include "TwoBitStatsPlotter.h"
-#include "TwoBitCorrection.h"
+#include "dsp/TwoBitStatsPlotter.h"
+#include "dsp/TwoBitCorrection.h"
 #include "genutil.h"
 
 dsp::TwoBitStatsPlotter::TwoBitStatsPlotter ()

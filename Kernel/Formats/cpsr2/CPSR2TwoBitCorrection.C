@@ -1,6 +1,6 @@
-#include "CPSR2TwoBitCorrection.h"
-#include "Observation.h"
-#include "TwoBitTable.h"
+#include "dsp/CPSR2TwoBitCorrection.h"
+#include "dsp/Observation.h"
+#include "dsp/TwoBitTable.h"
 
 bool dsp::CPSR2TwoBitCorrection::matches (const Observation* observation)
 {

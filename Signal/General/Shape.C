@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include "Shape.h"
+#include "dsp/Shape.h"
 #include "genutil.h"
 
 bool dsp::Shape::verbose = false;

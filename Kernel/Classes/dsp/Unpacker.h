@@ -1,15 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/10/15 13:13:38 $
-   $Author: pulsar $ */
+   $Revision: 1.2 $
+   $Date: 2002/11/03 21:51:49 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Unpacker_h
 #define __Unpacker_h
 
-#include "Operation.h"
+#include "dsp/Operation.h"
 #include "Registry.h"
 
 namespace dsp {

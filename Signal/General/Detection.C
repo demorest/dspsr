@@ -1,5 +1,5 @@
-#include "Detection.h"
-#include "Timeseries.h"
+#include "dsp/Detection.h"
+#include "dsp/Timeseries.h"
 
 #include "genutil.h"
 #include "cross_detect.h"

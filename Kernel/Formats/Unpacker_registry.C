@@ -1,8 +1,8 @@
-#include "CPSR2TwoBitCorrection.h"
-#include "CPSRTwoBitCorrection.h"
-#include "S2TwoBitCorrection.h"
+#include "dsp/CPSR2TwoBitCorrection.h"
+#include "dsp/CPSRTwoBitCorrection.h"
+#include "dsp/S2TwoBitCorrection.h"
 #include "OneBitCorrection.h"
-#include "DigiUnpack.h"
+#include "dsp/DigiUnpack.h"
 
 #include "Error.h"
 

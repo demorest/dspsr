@@ -3,7 +3,7 @@
 #ifndef __PMDAQFile_h
 #define __PMDAQFile_h
 
-#include "File.h"
+#include "dsp/File.h"
 
 namespace dsp {
 

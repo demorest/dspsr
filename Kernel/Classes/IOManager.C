@@ -1,8 +1,8 @@
-#include "IOManager.h"
-#include "Timeseries.h"
-#include "File.h"
-#include "Unpacker.h"
-#include "TwoBitCorrection.h"
+#include "dsp/IOManager.h"
+#include "dsp/Timeseries.h"
+#include "dsp/File.h"
+#include "dsp/Unpacker.h"
+#include "dsp/TwoBitCorrection.h"
 #include "Error.h"
 
 #include "genutil.h"

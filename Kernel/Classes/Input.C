@@ -1,5 +1,5 @@
-#include "Input.h"
-#include "Timeseries.h"
+#include "dsp/Input.h"
+#include "dsp/Timeseries.h"
 #include "Error.h"
 
 #include "genutil.h"

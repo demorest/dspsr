@@ -3,7 +3,7 @@
 #ifndef __Apodization_h
 #define __Apodization_h
 
-#include "Shape.h"
+#include "dsp/Shape.h"
 
 namespace dsp {
   

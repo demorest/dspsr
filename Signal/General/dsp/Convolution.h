@@ -1,14 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/09/18 13:51:01 $
+   $Revision: 1.8 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
 
-#include "Operation.h"
+#include "dsp/Operation.h"
 
 namespace dsp {
   

@@ -1,16 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/10/11 02:31:13 $
+   $Revision: 1.4 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 
 #ifndef __Detection_h
 #define __Detection_h
 
-#include "Operation.h"
-#include "Observation.h"
+#include "dsp/Operation.h"
+#include "dsp/Observation.h"
 
 namespace dsp {
 

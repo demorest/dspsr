@@ -1,7 +1,7 @@
 #include <assert.h>
 
-#include "Fold.h"
-#include "PhaseSeries.h"
+#include "dsp/Fold.h"
+#include "dsp/PhaseSeries.h"
 #include "Error.h"
 
 #include "psrephem.h"

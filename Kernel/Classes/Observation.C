@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "Observation.h"
-#include "Telescope.h"
+#include "dsp/Observation.h"
+#include "dsp/Telescope.h"
 
 #include "MJD.h"
 

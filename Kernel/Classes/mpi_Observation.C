@@ -1,5 +1,5 @@
 #define MPI 1
-#include "Observation.h"
+#include "dsp/Observation.h"
 #include "stdmpi.h"
 #include "portable_mpi.h"
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/11/01 18:41:00 $
+   $Revision: 1.3 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 
@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#include "Seekable.h"
+#include "dsp/Seekable.h"
 
 namespace dsp {
 

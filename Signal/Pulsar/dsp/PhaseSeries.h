@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/10/12 00:54:05 $
+   $Revision: 1.4 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -10,7 +10,7 @@
 
 #include <vector>
 
-#include "Timeseries.h"
+#include "dsp/Timeseries.h"
 
 class polyco;
 

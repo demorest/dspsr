@@ -1,16 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.14 $
-   $Date: 2002/10/15 13:13:02 $
-   $Author: pulsar $ */
+   $Revision: 1.15 $
+   $Date: 2002/11/03 21:51:49 $
+   $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
 #include <vector>
 
-#include "Unpacker.h"
+#include "dsp/Unpacker.h"
 #include "environ.h"
 
 namespace dsp {

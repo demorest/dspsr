@@ -2,10 +2,10 @@
 
 #include "genutil.h"
 
-#include "Timeseries.h"
+#include "dsp/Timeseries.h"
 
-#include "Operation.h"
-#include "TScrunch.h"
+#include "dsp/Operation.h"
+#include "dsp/TScrunch.h"
 
 dsp::TScrunch::TScrunch(Behaviour _type) : Operation("TScrunch", _type){
   ScrunchFactor = -1;

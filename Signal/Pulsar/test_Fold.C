@@ -1,11 +1,11 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "IOManager.h"
-#include "Timeseries.h"
-#include "PhaseSeries.h"
-#include "Detection.h"
-#include "Fold.h"
+#include "dsp/IOManager.h"
+#include "dsp/Timeseries.h"
+#include "dsp/PhaseSeries.h"
+#include "dsp/Detection.h"
+#include "dsp/Fold.h"
 #include "tempo++.h"
 
 #include "string_utils.h"

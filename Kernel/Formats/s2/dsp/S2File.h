@@ -1,15 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/15 13:12:31 $
-   $Author: pulsar $ */
+   $Revision: 1.3 $
+   $Date: 2002/11/03 21:51:49 $
+   $Author: wvanstra $ */
 
 
 #ifndef __S2File_h
 #define __S2File_h
 
-#include "File.h"
+#include "dsp/File.h"
 
 namespace dsp {
 

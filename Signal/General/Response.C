@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <math.h>
 
-#include "Response.h"
-#include "Observation.h"
+#include "dsp/Response.h"
+#include "dsp/Observation.h"
 
 #include "spectra.h"
 #include "Jones.h"

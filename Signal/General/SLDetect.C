@@ -4,9 +4,9 @@
 
 #include "genutil.h"
 
-#include "Timeseries.h"
+#include "dsp/Timeseries.h"
 
-#include "SLDetect.h"
+#include "dsp/SLDetect.h"
 
 dsp::SLDetect::SLDetect(Behaviour _type) : Operation ("SLDetect", _type){
 }

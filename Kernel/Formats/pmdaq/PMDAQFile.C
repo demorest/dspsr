@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "PMDAQFile.h"
-#include "PMDAQ_Observation.h"
+#include "dsp/PMDAQFile.h"
+#include "dsp/PMDAQ_Observation.h"
 
 #include "genutil.h"   // Is this really needed?
 

@@ -1,8 +1,8 @@
-#include "Convolution.h"
-#include "Timeseries.h"
+#include "dsp/Convolution.h"
+#include "dsp/Timeseries.h"
 
-#include "Response.h"
-#include "Apodization.h"
+#include "dsp/Response.h"
+#include "dsp/Apodization.h"
 #include "fftm.h"
 #include "genutil.h"
 

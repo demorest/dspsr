@@ -1,7 +1,7 @@
 #ifndef __PMDAQ_Observation_h
 #define __PMDAQ_Observation_h
 
-#include "Observation.h"
+#include "dsp/Observation.h"
 
 namespace dsp {
  

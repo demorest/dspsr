@@ -1,9 +1,9 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "IOManager.h"
-#include "Timeseries.h"
-#include "Detection.h"
+#include "dsp/IOManager.h"
+#include "dsp/Timeseries.h"
+#include "dsp/Detection.h"
 
 #include "string_utils.h"
 #include "dirutil.h"

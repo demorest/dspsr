@@ -1,5 +1,5 @@
-#include "Archiver.h"
-#include "PhaseSeries.h"
+#include "dsp/Archiver.h"
+#include "dsp/PhaseSeries.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Integration.h"

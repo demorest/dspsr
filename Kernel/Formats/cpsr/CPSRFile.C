@@ -9,7 +9,7 @@
 #include "pspm_search_header.h"
 #include "pspmDbase.h"
 
-#include "CPSRFile.h"
+#include "dsp/CPSRFile.h"
 #include "Error.h"
 
 #include "pspm++.h"

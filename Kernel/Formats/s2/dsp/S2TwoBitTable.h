@@ -1,15 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitTable.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/07 01:48:37 $
+   $Revision: 1.3 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 
 #ifndef __S2TwoBitTable_h
 #define __S2TwoBitTable_h
 
-#include "TwoBitTable.h"
+#include "dsp/TwoBitTable.h"
 
 namespace dsp {
 

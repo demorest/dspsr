@@ -1,15 +1,15 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "IOManager.h"
-#include "Timeseries.h"
-#include "PhaseSeries.h"
-#include "Detection.h"
-#include "Fold.h"
-#include "Archiver.h"
+#include "dsp/IOManager.h"
+#include "dsp/Timeseries.h"
+#include "dsp/PhaseSeries.h"
+#include "dsp/Detection.h"
+#include "dsp/Fold.h"
+#include "dsp/Archiver.h"
 #include "Reference.h"
-#include "File.h"
-#include "Unpacker.h"
+#include "dsp/File.h"
+#include "dsp/Unpacker.h"
 #include "OneBitCorrection.h"
 
 #include "Pulsar/TimerArchive.h"

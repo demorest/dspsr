@@ -1,9 +1,9 @@
-#include "Filterbank.h"
-#include "Timeseries.h"
+#include "dsp/Filterbank.h"
+#include "dsp/Timeseries.h"
 
 #include "fftm.h"
-#include "Response.h"
-#include "Apodization.h"
+#include "dsp/Response.h"
+#include "dsp/Apodization.h"
 
 #include "genutil.h"
 

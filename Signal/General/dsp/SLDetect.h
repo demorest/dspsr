@@ -3,7 +3,7 @@
 #ifndef __SLDetect_h
 #define __SLDetect_h
 
-#include "Operation.h"
+#include "dsp/Operation.h"
 
 namespace dsp {
 

@@ -1,7 +1,7 @@
 #include <complex>
 
-#include "Dedispersion.h"
-#include "Observation.h"
+#include "dsp/Dedispersion.h"
+#include "dsp/Observation.h"
 
 /*! 
   \f$ DM\,({\rm pc\,cm^{-3}})=2.410000\times 10^{-4}D\,({\rm s\,MHz^{2}}) \f$

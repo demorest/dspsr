@@ -1,10 +1,10 @@
 #include "Error.h"
 
-#include "CPSR2File.h"
-#include "CPSRFile.h"
-#include "S2File.h"
-#include "PMDAQFile.h"
-#include "DigiFile.h"
+#include "dsp/CPSR2File.h"
+#include "dsp/CPSRFile.h"
+#include "dsp/S2File.h"
+#include "dsp/PMDAQFile.h"
+#include "dsp/DigiFile.h"
 
 Registry::List<dsp::File> dsp::File::registry;
 

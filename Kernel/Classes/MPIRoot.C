@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <values.h>
 
-#include "MPIRoot.h"
-#include "Timeseries.h"
+#include "dsp/MPIRoot.h"
+#include "dsp/Timeseries.h"
 
 #include "stdmpi.h"
 #include "portable_mpi.h"

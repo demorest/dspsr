@@ -1,5 +1,5 @@
-#include "Operation.h"
-#include "Timeseries.h"
+#include "dsp/Operation.h"
+#include "dsp/Timeseries.h"
 #include "genutil.h"
 
 //! Global flag tells all Operations to record the time spent operating

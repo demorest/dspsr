@@ -3,7 +3,7 @@
 #ifndef __TScrunch_h
 #define __TScrunch_h
 
-#include "Operation.h"
+#include "dsp/Operation.h"
 
 namespace dsp {
 

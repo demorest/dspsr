@@ -1,14 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/08/20 05:16:18 $
+   $Revision: 1.4 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
 
-#include "Convolution.h"
+#include "dsp/Convolution.h"
 
 namespace dsp {
   

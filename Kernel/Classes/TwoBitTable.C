@@ -1,4 +1,4 @@
-#include "TwoBitTable.h"
+#include "dsp/TwoBitTable.h"
 
 //! Number of unique 8-bit combinations
 const unsigned dsp::TwoBitTable::unique_bytes = 1<<8; // (256)

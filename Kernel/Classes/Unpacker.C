@@ -1,6 +1,6 @@
-#include "Unpacker.h"
-#include "Observation.h"
-#include "Timeseries.h"
+#include "dsp/Unpacker.h"
+#include "dsp/Observation.h"
+#include "dsp/Timeseries.h"
 #include "Error.h"
 
 //! Initialize and resize the output before calling unpack

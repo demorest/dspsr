@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MPIRoot.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/09/19 07:59:56 $
+   $Revision: 1.2 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 
@@ -11,7 +11,7 @@
 
 #include <mpi.h>
 #define MPI 1
-#include "Input.h"
+#include "dsp/Input.h"
 
 namespace dsp {
 

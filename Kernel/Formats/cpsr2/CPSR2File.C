@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "CPSR2File.h"
-#include "CPSR2_Observation.h"
+#include "dsp/CPSR2File.h"
+#include "dsp/CPSR2_Observation.h"
 #include "Error.h"
 
 #include "cpsr2_header.h"

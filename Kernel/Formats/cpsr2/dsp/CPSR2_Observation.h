@@ -1,14 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/08/15 09:04:30 $
+   $Revision: 1.4 $
+   $Date: 2002/11/03 21:51:49 $
    $Author: wvanstra $ */
 
 #ifndef __CPSR2_Observation_h
 #define __CPSR2_Observation_h
 
-#include "Observation.h"
+#include "dsp/Observation.h"
 
 namespace dsp {
  

@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "BasicPlotter.h"
+#include "dsp/BasicPlotter.h"
 
 namespace dsp {
   

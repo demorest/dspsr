@@ -1,7 +1,7 @@
 #include <algorithm>
 
-#include "MultiFile.h"
-#include "File.h"
+#include "dsp/MultiFile.h"
+#include "dsp/File.h"
 #include "Error.h"
 
 dsp::MultiFile::MultiFile ()

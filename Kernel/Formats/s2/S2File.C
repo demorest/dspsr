@@ -1,5 +1,5 @@
-#include "S2File.h"
-#include "Telescope.h"
+#include "dsp/S2File.h"
+#include "dsp/Telescope.h"
 #include "Error.h"
 
 // S2 header and unpacking routines

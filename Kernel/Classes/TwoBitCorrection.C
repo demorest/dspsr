@@ -2,9 +2,9 @@
 #include <assert.h>
 #include <math.h>
 
-#include "TwoBitCorrection.h"
-#include "TwoBitTable.h"
-#include "Timeseries.h"
+#include "dsp/TwoBitCorrection.h"
+#include "dsp/TwoBitTable.h"
+#include "dsp/Timeseries.h"
 
 #include "genutil.h"
 #include "ierf.h"
