@@ -7,10 +7,6 @@
 #include "dsp/IOManager.h"
 #include "dsp/MultiFile.h"
 
-#if ACTIVATE_MPI
-#include "dsp/MPIRoot.h"
-#endif
-
 #include "dsp/Unpacker.h"
 #include "dsp/BitSeries.h"
 #include "dsp/TwoBitCorrection.h"
@@ -21,6 +17,10 @@
 #include "dsp/Detection.h"
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
+
+#if ACTIVATE_MPI
+#include "dsp/MPIRoot.h"
+#endif
 
 #if ACTIVATE_MKL
 #include "dsp/IncoherentFilterbank.h"
@@ -80,9 +80,11 @@ void usage ()
     "Detection options:\n"
     " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
     " -n ndim        ndim of detected TimeSeries [4]\n"
+    "\n"
     "Folding options:\n"
-    " -b nbin        fold pulse profile into nbin phase bins\n"
-    " -p phase       reference phase of pulse profile bin zero\n"
+    " -b nbin        fold pulse profile into nbin phase bins \n"
+    " -p phase       reference phase of pulse profile bin zero \n"
+    " -P psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
     "\n"
        << endl;
 }
@@ -140,7 +142,12 @@ int main (int argc, char** argv)
   int set_nfft = 0;
 
   int nbin = 0;
+
+  // the pulse phase of profile bin zero
   double reference_phase = 0.0;
+
+  // the ephemerides from which to choose when creating a folding polyco
+  vector< psrephem* > ephemerides;
 
   int ffts = 16;
   int fres = 0;
@@ -327,7 +334,7 @@ int main (int argc, char** argv)
       break;
 
     case 'P':
-      polyphase_filter = optarg;
+      ephemerides.push_back ( new psrephem (optarg) );
       break;
 
     case 'p':
@@ -632,6 +639,9 @@ int main (int argc, char** argv)
 
   if (reference_phase)
     fold->set_reference_phase (reference_phase);
+
+  for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
+    fold->add_pulsar_ephemeris ( ephemerides[ieph] );
 
   fold->set_input (convolve);
   fold->set_output (profiles);
