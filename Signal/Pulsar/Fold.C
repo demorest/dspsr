@@ -15,7 +15,7 @@
 #include "dsp/Fold.h"
 
 dsp::Fold::Fold () :
-  Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
+  Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
 {
   // reducer relies on these defaults being what they are
   // Be sure to check it works if you change them
