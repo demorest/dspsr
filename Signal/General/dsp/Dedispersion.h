@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/09/19 03:16:27 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2002/10/16 09:21:46 $
+   $Author: pulsar $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
@@ -25,6 +25,9 @@ namespace dsp {
 
     //! Null constructor
     Dedispersion ();
+
+    //! Match the dedispersion kernel to the input Observation
+    virtual void match (const Observation* input, unsigned channels=0);
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
@@ -96,10 +99,6 @@ namespace dsp {
 
     //! Build the dedispersion frequency response kernel
     virtual void build ();
-
-    //! Match the dedispersion kernel to the input Timeseries
-    virtual void match (const Timeseries* input, unsigned channels=0);
-
 
     //! Centre frequency of the band-limited signal in MHz
     double centre_frequency;

@@ -1,7 +1,7 @@
 #include <complex>
 
 #include "Dedispersion.h"
-#include "Timeseries.h"
+#include "Observation.h"
 
 /*! 
   \f$ DM\,({\rm pc\,cm^{-3}})=2.410000\times 10^{-4}D\,({\rm s\,MHz^{2}}) \f$
@@ -93,15 +93,15 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
 
 /*! Builds a frequency response function (kernel) suitable for phase-coherent
   dispersion removal, based on the centre frequency, bandwidth, and number
-  of channels in the input Timeseries. 
+  of channels in the input Observation. 
 
-  \param input Timeseries for which a dedispersion kernel will be built.
+  \param input Observation for which a dedispersion kernel will be built.
 
   \param channels If specified, over-rides the number of channels of the
-  input Timeseries.  This parameter is useful if the Timeseries is to be
+  input Observation.  This parameter is useful if the Observation is to be
   simultaneously divided into filterbank channels during convolution.
  */
-void dsp::Dedispersion::match (const Timeseries* input, unsigned channels)
+void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 {
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
