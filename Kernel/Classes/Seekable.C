@@ -113,6 +113,9 @@ void dsp::Seekable::load_data (BitSeries* data)
 
   current_sample += read_size;
 
+  if (info.get_ndat() && current_sample >= info.get_ndat())
+    end_of_data = true;
+
   data->set_ndat (recycled + read_size);
 }
 
