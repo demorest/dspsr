@@ -1,15 +1,17 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/07/15 09:34:46 $
+   $Revision: 1.5 $
+   $Date: 2002/07/17 07:32:52 $
    $Author: wvanstra $ */
 
 #ifndef __Operation_h
 #define __Operation_h
 
 #include <string>
+
 #include "RealTimer.h"
+#include "Reference.h"
 
 namespace dsp {
   
@@ -20,7 +22,7 @@ namespace dsp {
     digital signal processing routines are performed on the baseband
     data contained in a Timeseries object */
 
-  class Operation {
+  class Operation : public Reference::Able {
 
   public:
 
@@ -37,7 +39,7 @@ namespace dsp {
     Operation (const char* name, Behaviour type);
 
     //! Virtual destructor
-    virtual ~Operation () {}
+    virtual ~Operation ();
 
     //! Call this method to operate on input Timeseries
     virtual void operate ();
@@ -76,10 +78,10 @@ namespace dsp {
     string name;
 
     //! Container from which input data will be read
-    const Timeseries* input;
+    Reference::To <const Timeseries> input;
 
     //! Container into which output data will be written
-    Timeseries* output;
+    Reference::To <Timeseries> output;
 
     //! Return pointer to memory resource shared by operations
     static float* float_workingspace (size_t nfloats)

@@ -15,6 +15,10 @@ dsp::Operation::Operation (const char* _name, Behaviour _type)
   type = _type;
 }
 
+dsp::Operation::~Operation ()
+{
+}
+
 void dsp::Operation::operate ()
 {
   //! The Loader classes do not require an input Timeseries
@@ -52,7 +56,7 @@ void dsp::Operation::set_input (const Timeseries* _input)
 
   input = _input;
   if (type == inplace)
-    output = const_cast<Timeseries*>(input);
+    output = const_cast<Timeseries*>(input.get_reference());
 
   if (input && type == outofplace && input == output)
     throw_str ("Operation::set_input " + name + " input must != output");
