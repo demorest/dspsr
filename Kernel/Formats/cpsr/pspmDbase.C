@@ -79,7 +79,7 @@ static char src[32];
 void pspmDbase::entry::load (const char* str) 
 {
   int scan = sscanf (str,
-		     "%d %d %d %d"
+		     I32" "I32" "I32" "I32
 		     " %s %s"
 		     " %lf %lf %lf"
 		     " %d %d %d "I64,
@@ -99,7 +99,7 @@ void pspmDbase::entry::load (const char* str)
 void pspmDbase::entry::unload (string& str)
 {
   int scan = sprintf (buffer,
-		      "%d %d %d %d"
+		      I32" "I32" "I32" "I32
 		      " %s %s"
 		      " %lf %lf %lf"
 		      " %d %d %d "I64,
@@ -110,6 +110,20 @@ void pspmDbase::entry::unload (string& str)
   str = buffer;
 };
 
+int pspmDbase::entry::match (int32 _scan, int32 _num, int32 _tape, int32 _file)
+{
+  int matches = 0;
+  if (scan == _scan)
+    matches ++;
+  if (num == _num)
+    matches ++;
+  if (tape == _tape)
+    matches ++;
+  if (file == _file)
+    matches ++;
+
+  return matches;
+}
 
 // server::create - uses dirglob to expand wild-card-style
 // list of files containing CPSR headers 

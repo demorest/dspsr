@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.2 $
-   $Date: 2001/07/31 20:53:35 $
+   $Revision: 1.3 $
+   $Date: 2001/08/01 03:50:01 $
    $Author: wvanstra $ */
 
 #ifndef __pspmDbase_h
@@ -17,11 +17,11 @@ namespace pspmDbase {
   class entry {
 
   public:
-    int       scan;        // scan number
-    int       num;         // scan file number
+    int32     scan;        // scan number
+    int32     num;         // scan file number
 
-    int       tape;        // tape number
-    int       file;        // file number
+    int32     tape;        // tape number
+    int32     file;        // file number
 
     MJD       start;       // MJD of start time
     int       ttelid;      // tempo telescope code
@@ -45,6 +45,9 @@ namespace pspmDbase {
 
     // create from PSPM_SEARCH_HEADER
     void create (void* hdr);
+
+    // returns the number of members that match the arguments
+    int  match (int32 scan, int32 num, int32 tape, int32 file);
 
     friend bool operator < (const entry& e1, const entry& e2)
       { return e1.scan < e2.scan || (e1.scan == e2.scan && e1.num < e2.num); }
@@ -71,6 +74,10 @@ namespace pspmDbase {
     void load (const char* dbase_filename);
     // unloads ascii version to file
     void unload (const char* dbase_filename);
+
+    // returns the database entry that most closely matches the arguments
+    // (close = fewest number of bits corrupted in these four header fields)
+    entry match (int32 scan, int32 num, int32 tape, int32 file);
 
   };
 
