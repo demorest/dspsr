@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.58 $
-   $Date: 2003/08/05 10:44:55 $
-   $Author: wvanstra $ */
+   $Revision: 1.59 $
+   $Date: 2003/09/01 07:17:17 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -221,6 +221,10 @@ namespace dsp {
     //! Change the start time by the number of time samples specified
     void change_start_time (int64 ndat);
 
+    //! Returns the number of samples 'latter' follows 'this' by.  (Positive means 'latter' starts later.)
+    int64 samps_diff(const Observation* latter) const
+    { return int64((latter->get_start_time() - get_start_time()).in_seconds() * get_rate()); }
+
     //! Return the end time of the trailing edge of the last time sample
     virtual MJD get_end_time () const
     { return start_time + double(ndat) / rate; }
@@ -258,6 +262,17 @@ namespace dsp {
     bool combinable (const Observation& obs, bool different_bands=false,
 		     bool combinable_verbose=false,
 		     int ichan=-1,int ipol=-1) const;
+
+    //! The same as combinable, but use this for two bands of differing sky frequencies
+    bool bands_combinable(const Observation& obs,bool combinable_verbose=false) const;
+
+    //! Called by combinable() to see if bands are adjoining if the 'different_bands' variable is set to true
+    bool bands_adjoining(const Observation& obs) const;
+
+    //! Called by combinable(), and does every check but the bands_adjoining() check
+    bool ordinary_checks(const Observation& obs, bool different_bands=false,
+			 bool combinable_verbose=false,
+			 int ichan=-1,int ipol=-1) const;
 
     //! Return true if test_rate is withing 1% of the rate attribute
     virtual bool combinable_rate (double test_rate) const;

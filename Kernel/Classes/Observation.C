@@ -173,8 +173,22 @@ bool dsp::Observation::combinable (const Observation & obs,
 				   bool combinable_verbose, 
 				   int ichan, int ipol) const
 {
-  double eps = 0.000001;
+  bool can_combine = ordinary_checks( obs, different_bands, combinable_verbose, ichan, ipol );
+
+  if( different_bands && !bands_adjoining(obs) ){
+    if( verbose || combinable_verbose )
+	fprintf(stderr,"dsp::Observation::combinable bands don't meet- this is centred at %f with bandwidth %f.  obs is centred at %f with bandwidth %f\n",
+		get_centre_frequency(), fabs(get_bandwidth()),
+		obs.get_centre_frequency(), fabs(obs.get_bandwidth()));
+      can_combine = false;
+  }
+
+  return can_combine;
+}
+
+bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_bands, bool combinable_verbose, int ichan, int ipol) const {
   bool can_combine = true;
+  double eps = 0.000001;
 
   if (telescope != obs.telescope) {
     if (verbose || combinable_verbose)
@@ -337,28 +351,28 @@ bool dsp::Observation::combinable (const Observation & obs,
     can_combine = false;
   }
 
-  if( different_bands ){
-    float this_lo = get_centre_frequency() - fabs(get_bandwidth())/2.0;
-    float this_hi = get_centre_frequency() + fabs(get_bandwidth())/2.0;
-    float obs_lo = obs.get_centre_frequency() - fabs(obs.get_bandwidth())/2.0;
-    float obs_hi = obs.get_centre_frequency() + fabs(obs.get_bandwidth())/2.0;
-    
-    bool bands_meet = false;
-    float eps = 0.000001;
-
-    if( fabs(this_hi-obs_lo)<eps || fabs(this_lo-obs_hi)<eps )
-      bands_meet = true;
-    
-    if( !bands_meet ){
-      if( verbose || combinable_verbose )
-	fprintf(stderr,"dsp::Observation::combinable bands don't meet- this is centred at %f with bandwidth %f.  obs is centred at %f with bandwidth %f\n",
-		get_centre_frequency(), fabs(get_bandwidth()),
-		obs.get_centre_frequency(), fabs(obs.get_bandwidth()));
-      can_combine = false;
-    }
-  }
-  
   return can_combine;
+}
+
+bool dsp::Observation::bands_adjoining(const Observation& obs) const {
+  float this_lo = get_centre_frequency() - fabs(get_bandwidth())/2.0;
+  float this_hi = get_centre_frequency() + fabs(get_bandwidth())/2.0;
+  float obs_lo = obs.get_centre_frequency() - fabs(obs.get_bandwidth())/2.0;
+  float obs_hi = obs.get_centre_frequency() + fabs(obs.get_bandwidth())/2.0;
+  
+  float eps = 0.000001;
+  
+  if( fabs(this_hi-obs_lo)<eps || fabs(this_lo-obs_hi)<eps )
+    return true;
+  
+  if( verbose )
+    fprintf(stderr,"dsp::Observation::bands_adjoining) returning false\n");
+
+  return false;
+}
+
+bool dsp::Observation::bands_combinable(const Observation& obs,bool combinable_verbose) const{
+  return ordinary_checks(obs,true,combinable_verbose);
 }
 
 /* return true if the test_rate is within 1% of the rate attribute */
@@ -389,14 +403,14 @@ bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_fail
   if ( !ret && verbose_on_failure ) {
     fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
     fprintf(stderr,"combinable(obs)=%d\n",combine);
-    fprintf(stderr,"get_start_time().in_seconds()    =%f\n",
+    fprintf(stderr,"get_start_time().in_seconds()    =%.9f\n",
 	    get_start_time().in_seconds());    
-    fprintf(stderr,"get_end_time().in_seconds()      =%f\n",
+    fprintf(stderr,"get_end_time().in_seconds()      =%.9f\n",
 	    get_end_time().in_seconds());    
-    fprintf(stderr,"obs.get_start_time().in_seconds()=%f\n",
+    fprintf(stderr,"obs.get_start_time().in_seconds()=%.9f\n",
 	    obs.get_start_time().in_seconds());
-    fprintf(stderr,"difference                       =%f\n",fabs(difference));
-    fprintf(stderr,"difference needed to be less than %f\n",0.9/rate);    
+    fprintf(stderr,"difference                       =%.9f\n",fabs(difference));
+    fprintf(stderr,"difference needed to be less than %.9f\n",0.9/rate);    
     fprintf(stderr,"ndat="UI64" and rate=%f.  obs.ndat="UI64" obs.rate=%f\n",
 	    ndat,rate,obs.ndat,obs.rate);
   } 
