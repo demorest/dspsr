@@ -87,7 +87,8 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
     archive-> set_model ( *(phase->get_folding_polyco()) );
   }
 
-  archive-> set_filename (phase->get_default_id () + ".ar");
+  archive-> set_filename (get_filename (phase));
+
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Archive";
