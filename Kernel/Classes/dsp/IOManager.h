@@ -1,15 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/10/07 15:49:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2002/10/15 13:15:56 $
+   $Author: pulsar $ */
 
 
 #ifndef __IOManager_h
 #define __IOManager_h
 
 #include "Input.h"
+#include "Unpacker.h"
 
 namespace dsp {
 
@@ -29,10 +30,10 @@ namespace dsp {
     //! Destructor
     virtual ~IOManager ();
     
-    //! Prepare the appropriate Input and conversion Operation
+    //! Prepare the appropriate Input and Unpacker
     virtual void open (const char* id);
 
-    //! Prepare the appropriate Input and conversion Operation
+    //! Prepare the appropriate Input and Unpacker
     void open (const string& id) { open (id.c_str()); }
 
     //! Return pointer to the appropriate Input
@@ -41,11 +42,11 @@ namespace dsp {
     //! Set the Input operator (should not normally need to be used)
     void set_input (Input* input);
 
-    //! Return pointer to the appropriate conversion Operation
-    Operation* get_converter () const { return converter; }
+    //! Return pointer to the appropriate Unpacker
+    Unpacker* get_unpacker () const { return unpacker; }
 
-    //! Set the conversion Operation (should not normally need to be used)
-    void set_converter (Operation* converter);
+    //! Set the Unpacker (should not normally need to be used)
+    void set_unpacker (Unpacker* unpacker);
 
     // not sure about the rest of these
 
@@ -94,8 +95,8 @@ namespace dsp {
     //! Appropriate Input subclass
     Reference::To<Input> input;
 
-    //! Appropriate converter Operation
-    Reference::To<Operation> converter;
+    //! Appropriate Unpacker subclass
+    Reference::To<Unpacker> unpacker;
 
     //! The container in which the input (raw, unpacked) bitstream is stored
     Reference::To<Timeseries> raw;
