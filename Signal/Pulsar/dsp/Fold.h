@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/09/20 07:15:03 $
-   $Author: hknight $ */
+   $Revision: 1.21 $
+   $Date: 2003/10/24 11:19:06 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Fold_h
@@ -44,7 +44,7 @@ namespace dsp {
     static unsigned maximum_nbin;
 
     //! The minimum width of each pulse phase bin; used by Fold::choose_nbin
-    static double dsp::Fold::minimum_bin_width;
+    static double minimum_bin_width;
 
     //! Controls the number of phase bins returned by Fold::choose_nbin
     static bool power_of_two;
