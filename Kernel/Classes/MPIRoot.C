@@ -200,7 +200,8 @@ void dsp::MPIRoot::prepare ()
     // don't need to send to self
     eod_sent[mpi_rank] = true;
 
-    request_ready ();
+    if( auto_request )
+      request_ready ();
 
   }
 
@@ -396,7 +397,7 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
         end_of_data = false;
   }
 
-  if (!end_of_data)
+  if (!end_of_data && auto_request)
     request_ready();
 
   if (nbytes > data_size)
