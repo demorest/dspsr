@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.5 $
-   $Date: 2004/10/19 10:06:00 $
+   $Revision: 1.6 $
+   $Date: 2004/10/19 12:17:24 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -69,6 +69,9 @@ namespace dsp {
 
     //! Get the number of weights required for a given number of samples
     uint64 get_nweights (uint64 nsample) const;
+
+    //! Get the number of zero weights in the ichan == ipol == 0 array
+    uint64 get_nzero () const;
 
     //! Get the weights array for the specfied polarization and frequency
     unsigned* get_weights (unsigned ichan=0, unsigned ipol=0);

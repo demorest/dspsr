@@ -223,6 +223,17 @@ void dsp::WeightedTimeSeries::neutral_weights ()
     weights[i] = 1;
 }
 
+uint64 dsp::WeightedTimeSeries::get_nzero () const
+{
+  uint64 nweights = get_nweights ();
+  uint64 zeroes = 0;
+  for (uint64 i=0; i<nweights; i++)
+    if (weights[i] == 0)
+      zeroes ++;
+
+  return zeroes;
+}
+
 /*! The algorithm is written so that only two sections of the array are
   used at one time.  Should minimize the number of cache hits */
 void dsp::WeightedTimeSeries::mask_weights ()
@@ -271,18 +282,18 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 	 << " nkeep=" << nkeep << " ndat_per_weight=" << ndat_per_weight
 	 << " nweights=" << nweights_tot << endl;
 
-  float weights_per_dat = 1.0 / ndat_per_weight;
+  double weights_per_dat = 1.0 / ndat_per_weight;
 
-  unsigned total_bad = 0;
-  unsigned start_idat = 0;
+  uint64 total_bad = 0;
+  uint64 start_idat = 0;
 
-  unsigned zero_start = 0;
-  unsigned zero_end = 0;
+  uint64 zero_start = 0;
+  uint64 zero_end = 0;
 
   while (nweights_tot) {
 
-    unsigned start_weight = unsigned(start_idat * weights_per_dat);
-    unsigned end_weight = unsigned(ceil ((start_idat+nfft) * weights_per_dat));
+    uint64 start_weight = uint64(start_idat * weights_per_dat);
+    uint64 end_weight = uint64(ceil ((start_idat+nfft) * weights_per_dat));
 
     if (end_weight > nweights_tot) {
       if (verbose)
@@ -295,8 +306,8 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
       cerr << "dsp::WeightedTimeSeries::convolve_weights start_weight="
 	   << start_weight << " end_weight=" << end_weight << endl;
 
-    unsigned zero_weights = 0;
-    unsigned iweight = 0;
+    uint64 zero_weights = 0;
+    uint64 iweight = 0;
     for (iweight=start_weight; iweight<end_weight; iweight++)
       if (weights[iweight] == 0)
 	zero_weights ++;
@@ -323,7 +334,7 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 	     << zero_weights << endl;
 
       zero_start = start_weight;
-      zero_end = unsigned( ceil((start_idat+nkeep) * weights_per_dat) );
+      zero_end = uint64( ceil((start_idat+nkeep) * weights_per_dat) );
 
       if (verbose)
 	cerr << "dsp::WeightedTimeSeries::convolve_weights"
@@ -335,7 +346,7 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 
   } 
 
-  for (unsigned iweight=zero_start; iweight < zero_end; iweight++) {
+  for (uint64 iweight=zero_start; iweight < zero_end; iweight++) {
     weights[iweight] = 0;
     total_bad ++;
   }
@@ -356,7 +367,7 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
 	 << " nweights=" << nweights_tot << endl;
 
   // the points per weight after time resolution decreases
-  float points_per_weight = float(ndat_per_weight) / float(nscrunch);
+  double points_per_weight = double(ndat_per_weight) / double(nscrunch);
 
   if (points_per_weight >= 1.0) {
     if (verbose)
@@ -371,13 +382,13 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
       " scrunching to 1 point per wieght" << endl;
 
   // reduce the number of weights by scrunching
-  unsigned long new_nweights = nweights_tot / nscrunch;
-  unsigned extra = nweights_tot % nscrunch;
+  uint64 new_nweights = nweights_tot / nscrunch;
+  uint64 extra = nweights_tot % nscrunch;
 
   if (extra)
     new_nweights ++;
 
-  for (unsigned iwt=0; iwt < new_nweights; iwt++) {
+  for (uint64 iwt=0; iwt < new_nweights; iwt++) {
     
     unsigned* indi_weight = weights + iwt * nscrunch;
     
