@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/07/11 16:05:34 $
+   $Revision: 1.7 $
+   $Date: 2002/07/17 07:23:05 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -12,6 +12,7 @@
 
 #include "MJD.h"
 #include "sky_coord.h"
+#include "ReferenceAble.h"
 
 /*! \mainpage 
  
@@ -47,7 +48,7 @@
 namespace dsp {
 
   //! Stores information about digital, band-limited, time-varying signals
-  class Observation {
+  class Observation : public Reference::Able {
 
   public:
 
