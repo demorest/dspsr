@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitCorrection.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/06 06:30:42 $
-   $Author: hknight $ */
+   $Revision: 1.8 $
+   $Date: 2003/10/09 12:54:13 $
+   $Author: wvanstra $ */
 
 #ifndef __S2TwoBitCorrection_h
 #define __S2TwoBitCorrection_h
@@ -11,7 +11,7 @@
 class S2TwoBitCorrection;
 
 #include "dsp/TwoBitCorrection.h"
-#include "dsp/Telescope.h"
+#include "Telescope.h"
 
 namespace dsp {
 

@@ -4,7 +4,7 @@
 #include <string>
 
 #include "dsp/Observation.h"
-#include "dsp/Telescope.h"
+#include "Telescope.h"
 
 #include "angle.h"
 #include "MJD.h"
