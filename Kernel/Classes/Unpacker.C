@@ -1,7 +1,7 @@
 #include "dsp/Unpacker.h"
 #include "dsp/Observation.h"
 #include "dsp/Timeseries.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/Bitseries.h"
 #include "dsp/Basicseries.h"
 
 #include "Error.h"
@@ -36,10 +36,10 @@ void dsp::Unpacker::match (const Observation* observation)
 }
 
 void dsp::Unpacker::check_input(){
-  Chronoseries* _input = dynamic_cast<Chronoseries*>(const_cast<Basicseries*>(Operation::input.get()));
+  Bitseries* _input = dynamic_cast<Bitseries*>(const_cast<Basicseries*>(Operation::input.get()));
   if( _input==0 )
     throw Error(InvalidParam,"dsp::Unpacker::check_input()",
-		"You have given an input to this operation that is required to be a dsp::Chronoseries- it is some other type of dsp::Basicseries");
+		"You have given an input to this operation that is required to be a dsp::Bitseries- it is some other type of dsp::Basicseries");
   input = _input;
 }
 

@@ -8,7 +8,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Timeseries.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/Bitseries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Detection.h"
 #include "dsp/Fold.h"

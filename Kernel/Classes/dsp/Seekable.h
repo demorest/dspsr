@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/06 06:30:42 $
+   $Revision: 1.5 $
+   $Date: 2002/11/08 01:26:15 $
    $Author: hknight $ */
 
 
@@ -37,14 +37,17 @@ namespace dsp {
 
   protected:
     
-    //! Load next block of data into Chronoseries
-    virtual void load_data (Chronoseries* data);
+    //! Load next block of data into Bitseries
+    virtual void load_data (Basicseries* data);
  
     //! Load data from device and return the number of bytes read.
     virtual int64 load_bytes (unsigned char* buffer, uint64 bytes) = 0;
     
     //! Seek to absolute position and return absolute position in bytes
     virtual int64 seek_bytes (uint64 bytes) = 0;
+    
+    //! Conserve access to resources by re-using data already in Basicseries
+    virtual uint64 recycle_data (Basicseries* data) = 0;
     
     //! end of data reached
     bool end_of_data;

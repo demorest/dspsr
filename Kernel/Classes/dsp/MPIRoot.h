@@ -1,24 +1,16 @@
 //-*-C++-*-
 
-/*
-
-BEWARE: If you intend to use IPCBuffer and MPIRoot be very careful.  It is assumed by dsp::Input that any derived class will load in a Chronoseries.  Clearly this is unlikely, but since no code uses these 2 classes as at 6/11/02 I haven't bothered to write a work-around.  
-
-HSK 11/6/02
-
-*/
-
 #ifndef __MPIRoot_h
 #define __MPIRoot_h
 
 #include <mpi.h>
 #define MPI 1
-#include "dsp/Input.h"
+#include "dsp/TimeseriesInput.h"
 
 namespace dsp {
 
   //! Loads Timeseries data using the MPI communications protocol
-  class MPIRoot : public Input {
+  class MPIRoot : public TimeseriesInput {
     
   public:
     

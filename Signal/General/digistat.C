@@ -5,7 +5,7 @@
 
 #include "dsp/TwoBitStatsPlotter.h"
 #include "dsp/TwoBitCorrection.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/Bitseries.h"
 #include "dsp/Timeseries.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
@@ -75,7 +75,7 @@ int main (int argc, char** argv)
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
 
   manager->set_block_size (512*512);
-  manager->set_final_output (voltages);
+  manager->set_output (voltages);
 
   // plots two-bit digitization statistics
   Reference::To<dsp::TwoBitStatsPlotter> plotter = new dsp::TwoBitStatsPlotter;

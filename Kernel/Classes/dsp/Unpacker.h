@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/11/06 06:30:42 $
+   $Revision: 1.4 $
+   $Date: 2002/11/08 01:23:00 $
    $Author: hknight $ */
 
 
@@ -12,7 +12,7 @@
 class Unpacker;
 
 #include "dsp/Timeseries.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/Bitseries.h"
 #include "dsp/Operation.h"
 
 #include "Registry.h"
@@ -38,7 +38,7 @@ namespace dsp {
 
    protected:
     //! kludge of the century:
-    Reference::To<const Chronoseries> input;
+    Reference::To<const Bitseries> input;
 
     //! kludge of the century part 2
     Reference::To<Timeseries> output;

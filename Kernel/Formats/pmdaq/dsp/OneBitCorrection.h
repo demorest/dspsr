@@ -9,7 +9,7 @@ class OneBitCorrection;
 
 #include "dsp/Unpacker.h"
 #include "dsp/Timeseries.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/Bitseries.h"
 
 #include "environ.h"
 
@@ -73,7 +73,7 @@ namespace dsp {
     void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
-    static OneBitCorrection* create (const Chronoseries& input,
+    static OneBitCorrection* create (const Bitseries& input,
 				     int nsample=0, float cutoff_sigma=3.0);
 
     //! Return the high and low output voltage values

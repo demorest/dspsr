@@ -1,23 +1,23 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/06 06:30:41 $
+   $Revision: 1.8 $
+   $Date: 2002/11/08 01:26:15 $
    $Author: hknight $ */
 
 
 #ifndef __File_h
 #define __File_h
 
-#include "dsp/Seekable.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/BitseriesSeekable.h"
+#include "dsp/Bitseries.h"
 
 #include "Registry.h"
 
 namespace dsp {
 
-  //! Loads Chronoseries data from file
-  class File : public Seekable
+  //! Loads Bitseries data from file
+  class File : public BitseriesSeekable
   {
     friend class MultiFile;
 

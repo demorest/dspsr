@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2002/11/08 01:26:15 $
+   $Author: hknight $ */
 
 
 #ifndef __MultiFile_h
@@ -11,14 +11,14 @@
 
 #include <vector>
 
-#include "dsp/Seekable.h"
+#include "dsp/BitseriesSeekable.h"
 
 namespace dsp {
 
   class File;
 
-  //! Loads Timeseries data from multiple files
-  class MultiFile : public Seekable
+  //! Loads Bitseries data from multiple files
+  class MultiFile : public BitseriesSeekable
   {
   public:
     

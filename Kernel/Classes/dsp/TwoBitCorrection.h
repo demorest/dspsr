@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.16 $
-   $Date: 2002/11/06 06:30:42 $
+   $Revision: 1.17 $
+   $Date: 2002/11/08 01:26:54 $
    $Author: hknight $ */
 
 #ifndef __TwoBitCorrection_h
@@ -13,7 +13,7 @@ class TwoBitCorrection;
 #include <vector>
 
 #include "dsp/Unpacker.h"
-#include "dsp/Chronoseries.h"
+#include "dsp/Bitseries.h"
 #include "dsp/Timeseries.h"
 
 #include "environ.h"
@@ -99,7 +99,7 @@ namespace dsp {
     void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
-    static TwoBitCorrection* create (const Chronoseries& input,
+    static TwoBitCorrection* create (const Bitseries& input,
 				     int nsample=0, float cutoff_sigma=3.0);
 
     //! Return the high and low output voltage values
