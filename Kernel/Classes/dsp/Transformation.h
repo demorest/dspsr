@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.21 $
-   $Date: 2004/11/20 00:48:26 $
+   $Revision: 1.22 $
+   $Date: 2004/11/20 00:58:44 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -160,9 +160,6 @@ namespace dsp {
 
   private:
 
-    //! Prints a string used by Haydon for debugging
-    void debug_print(dsp::Observation* ts_in,string str,bool want_print);
-
     //! Makes sure input & output are okay before calling transformation()
     void checks();
 
@@ -259,26 +256,6 @@ bool dsp::Transformation<In,Out>::can_operate() {
   return true;
 }
 
-//! Prints a string used by Haydon for debugging
-template <class In, class Out>
-void dsp::Transformation<In,Out>::debug_print(dsp::Observation* obs_in,string str,bool want_print){
-  if( !want_print || !obs_in )
-    return;
-  if( verbose ){
-    MJD st = MJD("52644.180875615555578");
-    fprintf(stderr,"TRANS (%s): At %s.  Input start (%s) is at %f samples past start MJD; ndat="UI64"\n",
-	    str.c_str(),
-	    get_name().c_str(),
-	    obs_in->get_start_time().printdays(15).c_str(),
-	    (obs_in->get_start_time()-st).in_seconds()*obs_in->get_rate(),
-	    obs_in->get_ndat());
-    TimeSeries* ts_in = dynamic_cast<TimeSeries*>(obs_in);
-    if( ts_in )
-      fprintf(stderr,"TRANS (%s): At %s.  samps_offset="I64"\n",
-	      str.c_str(),get_name().c_str(),ts_in->get_samps_offset());
-  }
-}
-
 //! Makes sure input & output are okay before calling transformation()
 template <class In, class Out>
 void dsp::Transformation<In, Out>::checks(){
@@ -359,24 +336,6 @@ void dsp::Transformation<In,Out>::deprepend_data(dsp::TimeSeries* ts_out,int64 s
     if( verbose )
       fprintf(stderr,"TRANS deprepend_data (%s) have seeked back "I64" samps offset="I64"\n",
 	      get_name().c_str(),samples_prepended,ts_out->get_samps_offset());
-    
-    if( samples_prepended >= 4 && debug ){
-      unsigned twos = 0;
-      for( unsigned ichan=0;ichan<ts_out->get_nchan();ichan++){
-	for( unsigned ipol=0;ipol<ts_out->get_npol();ipol++){
-	  if( fabs(ts_out->get_datptr(ichan,ipol)[2]-2.0)<0.3 )
-	    twos++;
-	  else
-	    fprintf(stderr,"TRANS deprepend_data (%s) ichan=%d ipol=%d sample was not 2- it was %f\n",
-		    get_name().c_str(),ichan,ipol,ts_out->get_datptr(ichan,ipol)[2]);
-	}
-      }
-        
-      if( ts_out->get_nchan() > 6 )
-	fprintf(stderr,"TRANS::deprepend_data() (%s) after seeking backwards "I64" samples have samp [2]=%f [3]=%f twos=%d/%d\n",
-		get_name().c_str(), samples_prepended, ts_out->get_datptr(6,0)[2], ts_out->get_datptr(6,0)[3],
-		twos,ts_out->get_nchan()*ts_out->get_npol()); 
-    }
   }
 
   if( seeked_data_being_saved )
@@ -402,14 +361,6 @@ int64 dsp::Transformation<In,Out>::seek_over_surplus_samps(){
   double secs_surplus = (end_of_processed_data - ts_in->get_start_time()).in_seconds();
   int64 samps_surplus = nint64(secs_surplus * ts_in->get_rate());
   
-  {
-    MJD st("52644.176409458518541");
-    fprintf(stderr,"TRANS (%s) seek_over_surplus_samps() got end_of_processed_data=%f ts_in=%f\n",
-	    get_name().c_str(),
-	    (end_of_processed_data-st).in_seconds(),
-	    (ts_in->get_start_time()-st).in_seconds());	  
-  }
-
   if( samps_surplus < 0 )
     throw Error(InvalidState,"dsp::Transformation::seek_over_surplus_samps()",
 		"Your last processing call ended at MJD %s.  This is %f seconds ("I64" samps) before current input starts",
@@ -417,14 +368,6 @@ int64 dsp::Transformation<In,Out>::seek_over_surplus_samps(){
 		fabs(secs_surplus), -samps_surplus);
 
   if( samps_surplus != 0 ){
-    if( verbose ){
-      MJD st = MJD("52644.180875615555578");    
-      fprintf(stderr,"TRANS::seek_over_surplus_samps() (%s) eopd=%f ts_in->st=%f seeking over %f seconds or "I64" surplus samps\n",
-	      get_name().c_str(),
-	      (end_of_processed_data-st).in_seconds(),
-	      (ts_in->get_start_time()-st).in_seconds(),
-	      secs_surplus,samps_surplus);
-    }
     if( samps_surplus > int64(ts_in->get_ndat()) ){
       fprintf(stderr,"dsp::Transformation::seek_over_surplus_samps(): Wanted to seek over "I64" samps but input ndat was only "UI64".  Returning -1",
 	      samps_surplus, ts_in->get_ndat());
@@ -450,14 +393,6 @@ void dsp::Transformation<In, Out>::workout_end_of_processed_data(MJD input_start
     return;
 
   end_of_processed_data = input_start_time + obs_out->get_duration() - time_prepended + time_surplus;
-  //  if( verbose ){
-    MJD st("52644.176409458518541");
-    fprintf(stderr,"\nTRANS(%s)::workout_end_of_processed_data() has set end_of_processed_data to %f + %f - %f + %f = %f\n\n",
-	    get_name().c_str(),
-	    (input_start_time-st).in_seconds(),obs_out->get_duration(),
-	    time_prepended,time_surplus,
-	    (end_of_processed_data-st).in_seconds());
-    //  }
 }
 
 //! Makes sure the input isn't changed by the seeking over of surplus samples
@@ -473,7 +408,8 @@ void dsp::Transformation<In, Out>::seek_back_over_surplus_samps(int64 surplus_sa
 template <class In, class Out>
 void dsp::Transformation<In, Out>::operation ()
 {
-  fprintf(stderr,"TRANS (%s) at start of operation\n",get_name().c_str());
+  if( verbose )
+    fprintf(stderr,"TRANS (%s) at start of operation\n",get_name().c_str());
 
   dsp::Observation* obs_in = (dsp::Observation*)dynamic_cast<const dsp::Observation*>(get_input());
 
@@ -502,27 +438,7 @@ void dsp::Transformation<In, Out>::operation ()
     return;
   }
 
-  if( ts_out && ts_out->get_nchan()>6 && samples_prepended>=4 && debug ){
-    uint64 data_offset = ts_out->get_samps_offset()*ts_out->get_ndim();
-    fprintf(stderr,"TRANS::operation() (%s) before transformation() has floats offset="UI64" ndim=%d [2]=%f (%p) [3]=%f\n",
-	    get_name().c_str(), data_offset, ts_out->get_ndim(),
-	    (ts_out->get_datptr(6,0)-data_offset)[2],
-	    &((ts_out->get_datptr(6,0)-data_offset)[2]),
-	    (ts_out->get_datptr(6,0)-data_offset)[3]);
-  }
-
-  //  debug_print(obs_in,"before transformation",verbose);
   transformation ();
-  //debug_print(ts_out,"after transformation",verbose);
-
-  if( ts_out && ts_out->get_nchan()>6 && samples_prepended>=4 && debug ){
-    uint64 data_offset = ts_out->get_samps_offset()*ts_out->get_ndim();
-    fprintf(stderr,"TRANS::operation() (%s) after transformation() has floats offset="UI64" ndim=%d [2]=%f (%p) [3]=%f\n",
-	    get_name().c_str(), data_offset,ts_out->get_ndim(),
-	    (ts_out->get_datptr(6,0)-data_offset)[2],
-	    &((ts_out->get_datptr(6,0)-data_offset)[2]),
-	    (ts_out->get_datptr(6,0)-data_offset)[3]);
-  }
 
   seek_back_over_surplus_samps(surplus_samples);
 
@@ -545,21 +461,8 @@ void dsp::Transformation<In, Out>::operation ()
 
   set_valid_data_is_saved();
 
-  if( ts_out && ts_out->get_nchan()>6 && samples_prepended >= 4 && debug){
-    unsigned twos = 0;
-    for( unsigned ichan=0;ichan<ts_out->get_nchan();ichan++){
-      for( unsigned ipol=0;ipol<ts_out->get_npol();ipol++){
-	if( fabs(ts_out->get_datptr(ichan,ipol)[2]-2.0)<0.3 )
-	  twos++;
-      }
-    }
-
-    fprintf(stderr,"TRANS::operation() (%s) right at end have samp [2]=%f [3]=%f twos=%d/%d\n",
-	    get_name().c_str(), ts_out->get_datptr(6,0)[2], ts_out->get_datptr(6,0)[3],
-	    twos,ts_out->get_nchan()*ts_out->get_npol()); 
-  }
-
-  fprintf(stderr,"TRANS (%s) at end of operation\n",get_name().c_str());
+  if( verbose )
+    fprintf(stderr,"TRANS (%s) at end of operation\n",get_name().c_str());
 }
 
 
@@ -596,45 +499,15 @@ uint64 dsp::Transformation<In, Out>::prepend_data(dsp::TimeSeries* ts_out){
     throw Error(InvalidState,"dsp::Transformation::prepend_data()",
 		"Saved data buffer is not of type TimeSeries- this is not programmed for!  It is of type '%s'.  This classes name is '%s'",
 		typeid(saved_data.ptr()).name(),get_name().c_str());
-
-  if( debug ){
-    unsigned twos = 0;
-    for( unsigned ichan=0;ichan<ts_out->get_nchan();ichan++){
-      for( unsigned ipol=0;ipol<ts_out->get_npol();ipol++){
-	if( fabs(ts_out->get_datptr(ichan,ipol)[2]-2.0)<0.3 )
-	  twos++;
-      }
-    }
-    
-    if( sd->get_nchan()>6 )
-      fprintf(stderr,"TRANS::prepend_data() (%s) before operator= sd has samp [2]=%f [3]=%f twos=%d/%d sd->nchan=%d\n",
-	      get_name().c_str(), sd->get_datptr(6,0)[2], sd->get_datptr(6,0)[3],
-	      twos,sd->get_nchan()*sd->get_npol(),sd->get_nchan()); 
-  }
   
   ts_out->operator=( *sd );
-
-  if( debug ){
-    unsigned twos = 0;
-    for( unsigned ichan=0;ichan<ts_out->get_nchan();ichan++){
-      for( unsigned ipol=0;ipol<ts_out->get_npol();ipol++){
-	if( fabs(ts_out->get_datptr(ichan,ipol)[2]-2.0)<0.3 )
-	  twos++;
-      }
-    }
-    
-    if( ts_out->get_nchan()>6 )
-      fprintf(stderr,"TRANS::prepend_data() (%s) after operator= has samp [2]=%f [3]=%f twos=%d/%d nchan=%d\n",
-	      get_name().c_str(), ts_out->get_datptr(6,0)[2], ts_out->get_datptr(6,0)[3],
-	      twos,ts_out->get_nchan()*ts_out->get_npol(),ts_out->get_nchan()); 
-  }
 
   uint64 samples_seeked = ts_out->get_ndat();
   ts_out->seek( ts_out->get_ndat() );
   
   ts_out->set_preserve_seeked_data( true );
 
-  //  if( verbose )
+  if( verbose )
     fprintf(stderr,"TRANS: (%s) prepend_data(): returning a prepend data buffer of ndat="UI64"\n",
 	    get_name().c_str(),samples_seeked);
 
@@ -686,7 +559,7 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
 //! Save the last_nsamps into the saved_data buffer
 template <class In, class Out>
 void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
-  //  if( verbose )
+  if( verbose )
     fprintf(stderr,"TRANS (%s) in save_data("UI64")\n",
 	    get_name().c_str(),last_nsamps);
 
@@ -710,16 +583,6 @@ void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
   ts->change_start_time( out->get_ndat() - last_nsamps );
   ts->resize(last_nsamps);
 
-  if( debug ){
-    for( unsigned ichan=0; ichan<out->get_nchan(); ichan++){
-      for( unsigned ipol=0; ipol<out->get_npol(); ipol++){
-	float* dat = out->get_datptr(ichan,ipol) + out->get_ndat() - last_nsamps;
-	for( uint64 i=0; i<last_nsamps; i++)
-	  dat[i] = float(i) + 0.1*float(ipol) + float(ichan)*0.0001;
-      }
-    }      
-  }
-
   if( last_nsamps > out->get_ndat() )
     throw Error(InvalidState,"dsp::Transformation<In,Out>::save_data()",
 		"last_nsamps provided ("UI64") is greater than output's ndat! (output's ndat="UI64")",
@@ -733,21 +596,6 @@ void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
       for( uint64 i=0; i<last_nsamps; i++)
 	to[i] = from[i];
     }
-  }
-
-  if( last_nsamps > 0 && debug ){
-    unsigned twos = 0;
-    for( unsigned ichan=0;ichan<ts->get_nchan();ichan++){
-      for( unsigned ipol=0;ipol<ts->get_npol();ipol++){
-	if( fabs(ts->get_datptr(ichan,ipol)[2]-2.0)<0.3 )
-	  twos++;
-      }
-    }
-    
-    if( ts->get_nchan()>6)
-      fprintf(stderr,"TRANS::save_data() (%s) at end got samples: [2]=%f [3]=%f twos=%d/%d\n",
-	      get_name().c_str(),ts->get_datptr(6,0)[2], ts->get_datptr(6,0)[3],
-	      twos,ts->get_nchan()*ts->get_npol());
   }
 
   valid_data_is_saved = true;
@@ -776,73 +624,6 @@ void dsp::Transformation<In,Out>::set_process_samps_once(bool _process_samps_onc
 		"process_samps_once can't be set to true if time_conserved is false- it just hasn't been programmed for");
   
   process_samps_once = _process_samps_once; 
-}
-
-//! Not used now
-template <class In, class Out>
-void dsp::Transformation<In, Out>::prepend_output(dsp::TimeSeries* ts_out){
-  fprintf(stderr,"Shouldn't enter here (dsp::Transformation<In, Out>::prepend_output())\n");
-  abort();
-
-  static int prepend_output_index = -1;
-
-  if( prepend_output_index == -1 ){
-    timers.push_back( OperationTimer("prepend_output") );  
-    prepend_output_index = timers_index("prepend_output");
-  }
-
-  timers[prepend_output_index].start();
-
-  if( !ts_out )
-    throw Error(InvalidState,"dsp::Transformation::prepend_output()",
-		"BUG!  Valid data is saved, but the output is not a TimeSeries!");
-
-  if( !saved_data.ptr() )
-    throw Error(InvalidState,"dsp::Transformation::prepend_output()",
-		"Saved data buffer is null when valid_data_is_saved=%d\n",
-		valid_data_is_saved);
-
-  dsp::TimeSeries* sd = dynamic_cast<dsp::TimeSeries*>(saved_data.ptr());
-  
-  if( !sd )
-    throw Error(InvalidState,"dsp::Transformation::prepend_output()",
-		"Saved data buffer is not of type TimeSeries- this is not programmed for!  It is of type '%s'.  This classes name is '%s'",
-		typeid(saved_data.ptr()).name(),get_name().c_str());
-
-  if( sd->get_ndat()==0 ){
-    timers[prepend_output_index].stop();
-    return;
-  }   
-
-  if( sd->maximum_ndat() < sd->get_ndat() + ts_out->get_ndat() ){
-    Reference::To<dsp::TimeSeries> temp(new dsp::TimeSeries);
-    temp->copy_configuration( sd );
-    temp->resize( sd->get_ndat() + ts_out->get_ndat() );
-    temp->set_ndat( 0 );
-    temp->append( sd );
-    temp->swap_data( *sd );
-  }
-  sd->append( ts_out );
-  //  fprintf(stderr,"TRANS 3. output ndat="UI64" sd ndat="UI64"\n",
-  //  ts_out->get_ndat(),
-  //  sd->get_ndat());
-  
-  sd->swap_data( *ts_out );
-  sd->set_ndat( 0 );
-  //  fprintf(stderr,"TRANS 4. output ndat="UI64" sd ndat="UI64"\n",
-  //  ts_out->get_ndat(),
-  //  sd->get_ndat());
-  
-  //  double secs_diff = (last_output_end - ts_out->get_start_time()).in_seconds();
-  //int64 samps_diff = nint64(secs_diff * ts_out->get_rate());
-  //if( samps_diff > 0 )
-  //ts_out->seek( samps_diff );
-  
-  //  fprintf(stderr,"TRANS 5. output ndat="UI64" sd ndat="UI64"\n",
-  //  ts_out->get_ndat(),
-  //  sd->get_ndat());
-
-  timers[prepend_output_index].stop();
 }
 
 #endif
