@@ -27,7 +27,7 @@ bool dsp::S2File::is_valid (const char* filename) const
 /*! 
   Loads the Observation information from an S2-TCI style file.
 */
-void dsp::S2File::open_it (const char* filename)
+void dsp::S2File::open_file (const char* filename)
 {
   tci_fd   s2file;
   tci_hdr  header;
@@ -108,26 +108,7 @@ void dsp::S2File::open_it (const char* filename)
   fd = s2file.fd;
   header_bytes = s2file.base;
 
-  // set the file pointers
-  reset();
-
   if (verbose)
     cerr << "dsp::S2File::open return" << endl;
 }
 
-void dsp::S2File::set_header_bytes(){
-  tci_fd   s2file;
-  tci_hdr  header;
-
-  if (tci_file_open (current_filename.c_str(), &s2file, &header, 'r') != 0)
-    throw_str ("dsp::S2File::set_header_bytes() - could not construct from %s\n",
-	       current_filename.c_str());
-
-  for (int c=0; c<TCI_TIME_STRLEN-1; c++)
-    if (!isdigit(header.hdr_time[c]))
-      throw_str ("S2File::open - corrupted time in header.\n");
-
-  header_bytes = s2file.base;
-
-  tci_file_close( s2file );
-}

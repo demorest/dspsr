@@ -71,7 +71,7 @@ bool dsp::PMDAQFile::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::PMDAQFile::open_it (const char* filename)
+void dsp::PMDAQFile::open_file (const char* filename)
 {  
   if (get_header (pmdaq_header, filename) < 0)
     throw_str ("PMDAQFile::open - failed get_header(%s): %s",
@@ -105,9 +105,7 @@ void dsp::PMDAQFile::open_it (const char* filename)
     throw_str ("PMDAQFile::open - failed open(%s): %s", 
 	       data_name, strerror(errno));
 
-  // MXB I don't think we need this
-    reset();
-    absolute_position = 0;
+  absolute_position = 0;
 
   if (verbose)
     cerr << "Returning from PMDAQFile::open" << endl;
@@ -125,10 +123,8 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
   int part_chunk_of_48k;
   int last_chunk_of_48k;
 
-  int64 loaded_bytes;
+  uint64 loaded_bytes = 0;
   int64 retval;
-
-  loaded_bytes = 0;
 
   // determine if in invalid data section, if so skip until
   // the end of the header if loading a partial block

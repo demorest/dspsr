@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/10 12:57:08 $
+   $Revision: 1.7 $
+   $Date: 2002/11/12 00:24:07 $
    $Author: wvanstra $ */
 
 
@@ -27,10 +27,8 @@ namespace dsp {
 
   protected:
     //! Open the file
-    void open_it (const char* filename);
+    void open_file (const char* filename);
 
-    // set the number of bytes in header attribute- NOT called by open_it(), but it is called by dsp::ManyFile::switch_to_file()
-    virtual void set_header_bytes();
   };
 
 }

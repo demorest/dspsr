@@ -61,7 +61,7 @@ bool dsp::CPSR2File::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::CPSR2File::open_it (const char* filename)
+void dsp::CPSR2File::open_file (const char* filename)
 {  
   if (get_header (cpsr2_header, filename) < 0)
     throw Error (FailedCall, "dsp::CPSR2File::open",
@@ -81,22 +81,8 @@ void dsp::CPSR2File::open_it (const char* filename)
     throw Error (FailedSys, "dsp::CPSR2File::open", 
 		 "open(%s) failed", filename);
 
-  struct stat buf;
-  if (fstat (fd, &buf) < 0)
-    throw Error (FailedSys, "dsp::CPSR2File::open", 
-		 "fstat(%s) failed", filename);
 
-  if (buf.st_size < CPSR2_HEADER_SIZE)
-    throw Error (InvalidState, "dsp::CPSR2File::open", 
-		 "file size=%d < CPSR2 header size=%d",
-		 buf.st_size, CPSR2_HEADER_SIZE);
-
-  uint64 total_bytes = buf.st_size - CPSR2_HEADER_SIZE;
-
-  info.set_ndat (info.nsamples (total_bytes));
-
-  // set the number of bytes in header attribute
-  set_header_bytes();
+  header_bytes = CPSR2_HEADER_SIZE;
   
   // set the file pointers
   reset();
@@ -105,6 +91,3 @@ void dsp::CPSR2File::open_it (const char* filename)
     cerr << "CPSR2File::open exit" << endl;
 }
 
-void dsp::CPSR2File::set_header_bytes(){
-  header_bytes = CPSR2_HEADER_SIZE;
-}

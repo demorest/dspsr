@@ -51,28 +51,30 @@ bool dsp::CPSRFile::is_valid (const char* filename) const
 
 static pspmDbase::server cpsr_hdr;
 
-/* ***********************************************************************
-   load
+/*!
+  Opens a CPSR (PSPM) data file and prepares the attributes of the various
+  base classes, including:  <UL>
+  <LI> Input::info
+  <LI> File::header_bytes
+  <LI> File::fd
+  </UL>
+*/
 
-   Construct a Bit_Stream object from a CPSR (PSPM) style file.
-
-   If tape_num or file_num are not NULL,
-   the tape number and file number (on tape) will be returned via the
-   arguments to which they point.
-
-   *********************************************************************** */
-
-// NOTE!!!!!
-//
-// If you change the way this stuff works, please try to make sure
-// the multi-file constructor (below) will still work.
-
-void dsp::CPSRFile::open_it (const char* filename)
+void dsp::CPSRFile::open_file (const char* filename)
 {
   if (verbose)
     cerr << "CPSRFile::open " << filename << endl;
 
-  set_header_bytes();
+  if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
+    fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");
+    fprintf (stderr, "CPSRFile:: PSPM header size %d.\n", PSPM_HEADER_SIZE);
+    fprintf (stderr, "CPSRFile:: for this architecture: %d.\n",
+	     sizeof(PSPM_SEARCH_HEADER));
+    
+    throw_str ("CPSRFile::open - Architecture Error!");
+  }
+
+  header_bytes = sizeof(PSPM_SEARCH_HEADER);
 
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
@@ -208,22 +210,7 @@ void dsp::CPSRFile::open_it (const char* filename)
   // make an identifier name
   info.set_identifier ("o" + info.get_default_id());  // o for orion
 
-  // set the file pointers
-  reset();
-
   if (verbose)
     cerr << "CPSRFile::open exit" << endl;
 }
 
-void dsp::CPSRFile::set_header_bytes(){
-  if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
-    fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");
-    fprintf (stderr, "CPSRFile:: PSPM header size %d.\n", PSPM_HEADER_SIZE);
-    fprintf (stderr, "CPSRFile:: for this architecture: %d.\n",
-	     sizeof(PSPM_SEARCH_HEADER));
-
-    throw_str ("CPSRFile::open - Architecture Error!");
-  }
-
-  header_bytes = sizeof(PSPM_SEARCH_HEADER);
-}

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/10 12:57:08 $
+   $Revision: 1.8 $
+   $Date: 2002/11/12 00:24:07 $
    $Author: wvanstra $ */
 
 
@@ -32,11 +32,8 @@ namespace dsp {
 
   protected:
     //! Open the file
-    virtual void open_it (const char* filename);
+    virtual void open_file (const char* filename);
 
-    // set the number of bytes in header attribute- called by open_it() and by dsp::ManyFile::switch_to_file()
-    virtual void set_header_bytes();
-    
   };
 
 }
