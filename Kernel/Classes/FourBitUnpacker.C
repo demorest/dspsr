@@ -7,6 +7,7 @@
 
 #include "Error.h"
 
+static long numtsamps = 0;
 
 //! Null constructor
 dsp::FourBitUnpacker::FourBitUnpacker (const char* _name) : Unpacker (_name)
@@ -43,7 +44,7 @@ void dsp::FourBitUnpacker::transformation ()
   // set the Observation information
   output->Observation::operator=(*input);
   if (verbose) {
-    cerr << "dsp::FourBitUnpacker::transformation output ndat= " << input->get_ndat() << " npol = " << output->get_npol() << endl;
+    cerr << "dsp::FourBitUnpacker::transformation output ndat= " << input->get_ndat() << " npol = " << output->get_npol() << " nchan = " << output->get_nchan() << endl;
   }
   // resize the output 
   output->resize (input->get_ndat());
@@ -69,23 +70,18 @@ void dsp::FourBitUnpacker::unpack ()
     throw Error (InvalidParam, "dsp::FourBitUnpacker::check_input",
 		 "input ndat="I64" != %dn", ndat, samples_per_byte);
   
-  if (input->get_state() != Signal::Nyquist && input->get_state() != Signal::Analytic)
-    throw Error (InvalidParam, "dsp::FourBitUnpacker::check_input",
-		 "input is detected");
-
 
   const unsigned char* rawptr = input->get_rawptr();
 
   const unsigned char* from = rawptr;
 
   unsigned ipol = get_output_ipol ();
-
-  float* into = output->get_datptr (0, ipol);
-  
+  int nchan = output->get_nchan();
+ 
   if (verbose)
     cerr << "dsp::FourBitUnpacker::unpack into simple unpack";
 
-  simple_unpack (into, from, ndat);
+   simple_unpack (from, ndat);
       
   if (verbose)
     cerr << "dsp::FourBitUnpacker::unpack out of  simple unpack";
@@ -97,41 +93,44 @@ void dsp::FourBitUnpacker::unpack ()
     
 }
 
-void dsp::FourBitUnpacker::simple_unpack (float* output_data,
+void dsp::FourBitUnpacker::simple_unpack (
 					const unsigned char* input_data, 
 					uint64 ndat)
 {
 
   unsigned samples_per_byte = 2;
 
-
-  if (verbose){
-    cerr << "dsp::FourBitUnpacker::simple_unpack out=" << output_data << endl;
-    fprintf(stderr,"input_data=%p\n",input_data);
-    fprintf(stderr,"ndat="UI64"\n",ndat);
-  }
    
   const unsigned char * input_data_ptr = input_data;
+  float  * output_data = NULL;
   unsigned val;
-  unsigned bytes = input->get_ndat()/samples_per_byte;
-
+  int nchan = output->get_nchan();
+  unsigned bytes = input->get_ndat()*nchan/samples_per_byte;
+  int tsamp = 0;
+  float *thr = output->get_thresh();
+ 
+  if (verbose){
+    fprintf(stderr,"input_data=%p\n",input_data);
+    fprintf(stderr,"ndat="UI64"\n",ndat);
+    fprintf(stderr,"nchan=%d\n",nchan);
+  }
+ 
   const float *twovals = 0;
 
  
   for (unsigned bt=0; bt<bytes; bt++) {
     val = unsigned(*input_data_ptr);
     twovals = table->get_two_vals(val);
+    tsamp = (bt*samples_per_byte)/nchan;    
     for (unsigned pt=0; pt<samples_per_byte; pt++) {
-      *output_data = twovals[pt];
-      output_data += 1;
-    }
-    if (verbose) {
-      fprintf(stderr, "dsp::FourBitUnpacker::simple_unpack input byte %d: %0x output  %f %f\n",bt,val,*(output_data-2),*(output_data-1));
+      // cout << "timesample " << (numtsamps + (bt*samples_per_byte)/nchan) << " byte " << bt << " channel " << (((bt*2)%nchan)+pt) << " value " << twovals[pt] << endl;
+      output_data = output->get_datptr((((bt*2)%nchan)+pt),0) + tsamp;
+      *output_data = twovals[pt] ;
     }
     input_data_ptr += 1;
   }
   
-  
+  numtsamps = numtsamps + input->get_ndat();  
 }
 
 int64 dsp::FourBitUnpacker::stats(vector<double>& _sum, vector<double>& _sumsq) {

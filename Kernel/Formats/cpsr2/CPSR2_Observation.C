@@ -71,7 +71,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   set_bandwidth (bw);
 
   //
-  // CPSR2 data is single-channel
+  // CPSR2 data is single-channel unless this is a detected CPSR2 FB see later
   //
   set_nchan(1);
 
@@ -112,6 +112,17 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     throw_str ("CPSR2_Observation - invalid NDIM=%d\n", ndim);
   }
 
+  // ////////////////////////////////////////////////////////////////////
+  // TEST for detected SimpleFB filterbank file
+  // ///////////////////////////////////////////////////////////////////
+
+  int nchan;
+  if ((ascii_header_get (header,"NCHAN", "%d", &nchan)) && (npol == 1)){
+	  set_state (Signal::Intensity);
+	  set_nchan(nchan);
+	  set_thresh();
+  }
+  
   //
   // call this only after setting frequency and telescope
   //
@@ -245,3 +256,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   coordinates.setRadians(ra, dec);
 }
 
+void dsp::CPSR2_Observation::set_thresh() {
+    int chan = get_nchan();
+    thresh = new float [2*chan];
+}    

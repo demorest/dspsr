@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/08/14 05:46:58 $
+   $Revision: 1.2 $
+   $Date: 2004/10/18 07:36:12 $
    $Author: sord $ */
 
 #ifndef __FourBitUnpacker_h
@@ -59,7 +59,7 @@ namespace dsp {
     virtual void unpack ();
 
     //! Simple unpacker
-    void simple_unpack( float * out, const unsigned char * in, uint64 ndat);
+    void simple_unpack(const unsigned char * in, uint64 ndat);
 
     //! What ipol to unpack into
     unsigned get_output_ipol ();

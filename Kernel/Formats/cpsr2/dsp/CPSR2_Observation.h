@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/03 21:51:49 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2004/10/18 07:36:12 $
+   $Author: sord $ */
 
 #ifndef __CPSR2_Observation_h
 #define __CPSR2_Observation_h
@@ -27,6 +27,9 @@ namespace dsp {
 
     //! Number of bytes offset from the beginning of acquisition
     uint64 offset_bytes;
+
+    //! The digitizer thresholds for a SimpleFB file
+    virtual void set_thresh();
   };
   
 }
