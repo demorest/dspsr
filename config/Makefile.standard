@@ -15,17 +15,17 @@ TARGETS := include depend libs dso scripts all test install \
 ##########################################################################
 PSRPKGS ?= ${PSRHOME}/packages
 
-INSTALL_BINDIR := ${PSRHOME}/bin/${LOGIN_ARCH}
-INSTALL_LIBDIR := ${PSRHOME}/lib/${LOGIN_ARCH}
+INSTALL_BINDIR := ${PSRHOME}/${LOGIN_ARCH}/bin
+INSTALL_LIBDIR := ${PSRHOME}/${LOGIN_ARCH}/lib
 INSTALL_DSODIR := ${INSTALL_LIBDIR}
-INSTALL_INCDIR := ${PSRHOME}/include
-INSTALL_SHXDIR := ${PSRHOME}/csh_script
+INSTALL_INCDIR := ${PSRHOME}/${LOGIN_ARCH}/include
+INSTALL_SHXDIR := ${PSRHOME}/${LOGIN_ARCH}/csh_script
 
-BINDIR := ${LOCAL_ROOT}/bin/${LOGIN_ARCH}
-LIBDIR := ${LOCAL_ROOT}/lib/${LOGIN_ARCH}
+BINDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/bin
+LIBDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/lib
 DSODIR := ${LIBDIR}
-INCDIR := ${LOCAL_ROOT}/include
-SHXDIR := ${LOCAL_ROOT}/csh_script
+INCDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/include
+SHXDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/csh_script
 
 INCFLAGS := -I. -I${INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
@@ -73,7 +73,7 @@ IMPI = -I/usr/local/mpi/include
 ##########################################################################
 # FFTW and pulsar group wrappers
 
-LFFT = -lpsrfft -lrfftw -lfftw
+LFFT = -lrfftw -lfftw
 
 ifeq ($(PSRFFTW3),yes)
 CPPFLAGS += -DACTIVATE_FFTW3=1
