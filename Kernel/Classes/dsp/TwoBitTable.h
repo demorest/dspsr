@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/08/06 23:31:19 $
+   $Revision: 1.2 $
+   $Date: 2002/08/07 12:25:02 $
    $Author: pulsar $ */
 
 
@@ -18,7 +18,7 @@ namespace dsp {
   class TwoBitTable {
 
   public:
-    
+
     enum Type { OffsetBinary, SignMagnitude, TwosComplement };
 
     //! Constructor
@@ -28,15 +28,27 @@ namespace dsp {
     ~TwoBitTable ();
 
     //! Returns a pointer to the first of four values represented by one byte
-    const float* get_4vals (unsigned char byte) const
+    const float* get_four_vals (unsigned char byte) const
     {
       return table + 4 * unsigned(byte); 
     }
+
+    //! Return the value of the low voltage state
+    float get_lo_val () const { return lo_val; }
+
+    //! Initialize a look-up table for byte to 4xfloating point conversion
+    static void generate (float* table, Type type, float lo, float hi);
+
+    //! Initialize a look-up table for 2-bit to floating point conversion
+    static void four_vals (float* vals, Type type, float lo, float hi);
 
   protected:
 
     //! For each unsigned char, values of the four output voltage states
     float* table;
+
+    //! Low voltage
+    float lo_val;
 
   private:
     TwoBitTable () { /* allow no one to contruct without a type */ }

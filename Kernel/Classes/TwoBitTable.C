@@ -2,32 +2,28 @@
 
 dsp::TwoBitTable::TwoBitTable (Type type)
 {
-  float offset_binary[4]   = {-0.75, -0.25, 0.25, 0.75};
-  float sign_magnitude[4]  = {0.25, 0.75, -0.25, -0.75};
-  float twos_complement[4] = {0.25, 0.75, -0.75, -0.25};
-
-  float* voltages = 0;
-
-  switch (type) {
-
-  case OffsetBinary:
-    voltages = offset_binary;
-    break;
-    
-  case SignMagnitude:
-    voltages = sign_magnitude;
-    break;
-    
-  case TwosComplement:
-    voltages = twos_complement;
-    break;
-
-  default:
-    throw "TwoBitTable:: unsupported type";
-  }
-
   // 256 possible unsigned chars * 4 floats per bytes
   table = new float [ 256 * 4 ];
+  lo_val = 0.25;
+  generate (table, type, lo_val, 3.0*lo_val);
+}
+
+dsp::TwoBitTable::~TwoBitTable ()
+{
+  delete [] table;
+}
+
+/*!
+  \param table pointer to space for at least 4*256=1024 floating point values,
+  representing the four outputs for each of 256 possible bytes
+  \param type the digitization convention
+  \param lo value of voltage in low state
+  \param hi value of voltage in high state
+*/
+void dsp::TwoBitTable::generate (float* table, Type type, float lo, float hi)
+{
+  float voltages[4];
+  dsp::TwoBitTable::four_vals (voltages, type, lo, hi);
 
   float* tabval = table;
 
@@ -44,9 +40,32 @@ dsp::TwoBitTable::TwoBitTable (Type type)
   }
 }
 
-dsp::TwoBitTable::~TwoBitTable ()
+void dsp::TwoBitTable::four_vals (float* vals, Type type, float lo, float hi)
 {
-  delete [] table;
+  switch (type) {
+
+  case OffsetBinary:
+    vals[0x00] = -hi;
+    vals[0x01] = -lo;
+    vals[0x10] = lo;
+    vals[0x11] = hi;
+    break;
+    
+  case SignMagnitude:
+    vals[0x00] = lo;
+    vals[0x01] = hi;
+    vals[0x10] = -lo;
+    vals[0x11] = -hi;
+    break;
+    
+  case TwosComplement:
+    vals[0x00] = lo;
+    vals[0x01] = hi;
+    vals[0x10] = -hi;
+    vals[0x11] = -lo;
+    break;
+
+  default:
+    throw "TwoBitTable::four_vals unsupported type";
+  }
 }
-
-
