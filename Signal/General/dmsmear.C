@@ -27,7 +27,7 @@ int main(int argc, char ** argv)
 
   bool verbose = false;
 
-  float  dm = 2.0;
+  float  dm = 1.0;
   double centrefreq = 1420.4;
   double bw = 20.0;
   int    nchan = 1;
@@ -81,28 +81,28 @@ int main(int argc, char ** argv)
   kernel.set_dc_centred (triple);
 
   cerr << "\nInput Parameters:\n"
-    "Centre Frequency: " << kernel.get_centre_frequency () << " MHz\n"
-    "Bandwidth:        " << kernel.get_bandwidth () << " MHz\n"
-    "Dispersion Meas.: " << kernel.get_dispersion_measure () << " pc/cm^3\n";
+    "Centre Frequency:   " << kernel.get_centre_frequency () << " MHz\n"
+    "Bandwidth:          " << kernel.get_bandwidth () << " MHz\n"
+    "Dispersion Measure: " << kernel.get_dispersion_measure () << " pc/cm^3\n";
 
   if (nchan > 1)
     cerr <<
-      "Sub-bands:        " << kernel.get_nchan() << endl;
+      "Sub-bands:          " << kernel.get_nchan() << endl;
   
   /* micro seconds */
   float smear_us = kernel.get_smearing_time () * 1e6;
 
   cerr << "\nOutput parameters:\n"
-    "Smearing time:    " << smear_us << " us\n";
+    "Smearing time:      " << smear_us << " us\n";
 
   if (nchan > 1)  {
     smear_us = kernel.get_effective_smearing_time () * 1e6;
-    cerr << "Effective Smearing time: " << smear_us << " us\n";
+    cerr << "Effective Smearing: " << smear_us << " us\n";
   }
 
-  cerr << "Minimum Kernel Length " << kernel.get_minimum_ndat () << endl;
+  kernel.prepare();
 
-  kernel.set_optimal_ndat ();
+  cerr << "\nMinimum Kernel Length " << kernel.get_minimum_ndat () << endl;
   cerr << "Optimal Kernel Length " << kernel.get_ndat () << endl;
 
   return 0;
