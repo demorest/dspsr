@@ -2,7 +2,7 @@ C ChannelSummer- fortran version of the ChannelSum algorithm
 C Original code by HSK 4 April 2004
 C ******************************************************************
       SUBROUTINE channelsummer(chans_per_group, todo,
-     &                         input, output, offsets);
+     :                         input, output, offsets)
 C ******************************************************************
       implicit none
 
@@ -39,7 +39,7 @@ c      write (*,*) "Got ", nblocks," ",leftovers
       jump = nblocks*BB
 
       DO K=1,leftovers
-        output(K+jump) = 0.0;
+        output(K+jump) = 0.0
       ENDDO      
 
       DO J=1,chans_per_group
