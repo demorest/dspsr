@@ -77,8 +77,6 @@ static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
 #endif
 
 // these are defined in libdsp.a
-#include "dsp/CoherentFBFile.h"
-static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> register_coherentfbfile;
 #include "dsp/BitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfile;
 //#include "dsp/MiniFile.h"
