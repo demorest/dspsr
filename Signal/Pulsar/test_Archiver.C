@@ -7,10 +7,6 @@
 #include "dsp/Detection.h"
 #include "dsp/Fold.h"
 #include "dsp/Archiver.h"
-#include "Reference.h"
-#include "dsp/File.h"
-#include "dsp/Unpacker.h"
-#include "OneBitCorrection.h"
 
 #include "Pulsar/TimerArchive.h"
 
@@ -104,7 +100,7 @@ int main (int argc, char** argv)
     cerr << "Creating IOManager instance" << endl;
 
   // Loader
-  Reference::To<dsp::IOManager> manager;
+  dsp::IOManager manager;
   manager.set_block_size (block_size);  
 
   if (verbose)
@@ -148,7 +144,7 @@ int main (int argc, char** argv)
 
     while (!manager.eod()) {
 
-      manager.load (&raw);
+      manager.load (&voltages);
       
       if (!voltages.get_detected())
         detect.operate ();
@@ -164,7 +160,7 @@ int main (int argc, char** argv)
       cerr << "end of data file " << filenames[ifile] << endl;
 
     cerr << "Time spent converting data: " 
-	 << converter->get_total_time() << " seconds" << endl;
+	 << manager.get_unpacker()->get_total_time() << " seconds" << endl;
 
     cerr << "Time spent detecting" << ndim << " data: " 
 	 << detect.get_total_time() << " seconds" << endl;
