@@ -232,3 +232,20 @@ uint64 dsp::DataSeries::maximum_ndat() const {
   //  bytes_offset,subsize,bits_avail,bits_avail,get_ndim(),get_nbit(),bits_avail/(get_ndim()*get_nbit()));
   return bits_avail/(get_ndim()*get_nbit());
 }
+
+//! Checks that ndat is not too big for size and subsize
+void dsp::DataSeries::check_sanity() const {
+  if( get_nbytes(get_ndat()+get_samps_offset()) > size )
+    throw Error(InvalidState,"dsp::DataSeries::check_sanity()",
+		"ndat="UI64" samps_offset="I64" nbytes used="UI64" is greater than bytes allocated ("UI64")",
+		get_ndat(), get_samps_offset(),
+		get_nbytes(get_ndat()+get_samps_offset()),
+		size);
+
+  if( (get_nbit()*get_ndim()*(get_ndat()+get_samps_offset()))/8 > subsize )
+    throw Error(InvalidState,"dsp::DataSeries::check_sanity()",
+		"ndat="UI64" samps_offset="I64" bytes used in a block="UI64" is greater than subsize="UI64,
+		get_ndat(), get_samps_offset(),
+		(get_nbit()*get_ndim()*(get_ndat()+get_samps_offset()))/8,
+		subsize);
+}

@@ -91,6 +91,9 @@ namespace dsp {
     //! Returns the number of samples that have been seeked over
     virtual int64 get_samps_offset() const;
 
+    //! Checks that ndat is not too big for size and subsize
+    virtual void check_sanity() const;
+
   protected:
     
     //! Returns a uchar pointer to the first piece of data
