@@ -265,7 +265,6 @@ void dsp::OneBitCorrection::unpack ()
    
   if( verbose )
     fprintf(stderr,"Bye from OneBitCorrection\n");
-  exit(0);
 }  
 
 bool dsp::OneBitCorrection::matches (const Observation* observation)
