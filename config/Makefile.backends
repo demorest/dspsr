@@ -100,6 +100,18 @@ endif
 
 ##############################################################################
 #
+# PuMa2 specific code
+#
+ifeq ($(PuMa2),yes)
+
+CPPFLAGS += -DDSP_PuMa2=1
+BACKENDS += PuMa2
+LBACKENDS += -ldsp_PuMa2
+
+endif
+
+##############################################################################
+#
 # Mark4 specific code
 # 
 # Don't be misled by the name, it is really the Mark4 encoders that are giving

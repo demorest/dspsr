@@ -74,6 +74,11 @@ static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
 static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
 #endif
 
+#if DSP_PuMa2
+#include "dsp/PuMa2File.h"
+static Registry::List<dsp::File>::Enter<dsp::PuMa2File> register_puma2;
+#endif
+
 #if DSP_Spigot
 #include "dsp/SpigotFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;

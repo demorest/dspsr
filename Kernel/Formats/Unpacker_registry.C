@@ -93,3 +93,8 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>  pmdaq;
 static Registry::List<dsp::Unpacker>::Enter<dsp::PuMaTwoBitCorrection>  puma;
 #endif
 
+#if DSP_PuMa2
+#include "dsp/PuMa2Unpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::PuMa2Unpacker> puma2;
+#endif
+
