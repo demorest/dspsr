@@ -189,6 +189,8 @@ void dsp::Dedispersion::build ()
 
   resize (npol, _nchan, _ndat, ndim);
 
+  whole_swapped = chan_swapped = chan_shifted = false;
+
   built = true;
 }
 
