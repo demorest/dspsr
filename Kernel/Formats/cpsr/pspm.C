@@ -173,19 +173,21 @@ bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
 	     (int)hdr->header_version);
     return false;
   }
-  if (hdr->scan_file_number < 0) {
-    fprintf (stderr, "PSPMverify: invalid scan_file_number:%d\n",
-	     (int)hdr->scan_file_number);
+  if (hdr->ll_file_offset == 0)  {
+    if (hdr->scan_file_number < 0) {
+      fprintf (stderr, "PSPMverify: invalid scan_file_number:%d\n",
+	       (int)hdr->scan_file_number);
+      return false;
+    }
+  }
+  else if (hdr->ll_file_offset < 0)  {
+    fprintf (stderr, "PSPMverify: invalid ll_file_offset:%ld\n",
+             hdr->ll_file_offset);
     return false;
   }
   if (hdr->bit_mode < 0) {
     fprintf (stderr, "PSPMverify: invalid bit_mode:%d\n",
 	     (int)hdr->bit_mode);
-    return false;
-  }
-  if (hdr->scan_num < 0) {
-    fprintf (stderr, "PSPMverify: invalid scan_num:%d\n",
-	     (int)hdr->scan_num);
     return false;
   }
   if (hdr->num_chans < 0) {
@@ -208,6 +210,7 @@ bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
 	     (int)hdr->tape_file_number);
     return false;
   }
+
   return true;
 }
 
