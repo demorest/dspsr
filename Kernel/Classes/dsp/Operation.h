@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.22 $
-   $Date: 2004/04/08 04:22:14 $
+   $Revision: 1.23 $
+   $Date: 2004/04/08 05:32:04 $
    $Author: hknight $ */
 
 #ifndef __Operation_h
@@ -72,16 +72,6 @@ namespace dsp {
     //! Only ever called by TimeKeeper class
     static void set_timekeeper(TimeKeeper* _timekeeper);
     static void unset_timekeeper();
-
-    //! Only ever called by TimeKeeper class:
-    //! Returns the index in the TimeKeepers array of class times that
-    //!   the operation time should add to
-    int get_operation_time_index(vector<Time>& times);
-    
-    //! Only ever called by TimeKeeper class:
-    //! Returns the index in the TimeKeepers array of class times that
-    //!   this particular extra time should add to
-    int get_extra_time_index(vector<Time>& times,unsigned iextra);
 
     //! Inquire the unique instantiation id
     int get_id(){ return id; }
