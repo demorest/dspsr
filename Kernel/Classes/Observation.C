@@ -89,23 +89,6 @@ bool dsp::Observation::combinable (const Observation & obs)
 	   (dc_centred == obs.dc_centred) );
 }
 
-string dsp::Observation::state_as_string () const{
-  string ss("Unknown");
-  
-  if( state == Nyquist )
-    ss = "Nyquist";
-  else if( state == Analytic )
-    ss = "Analytic";
-  else if( state == Detected )
-    ss = "Detected";
-  else if( state == Coherence )
-    ss = "Coherence";
-  else if( state == Stokes )
-    ss = "Stokes";
-
-  return ss;
-}
-
 void dsp::Observation::set_telescope (char _telescope)
 {
   if (_telescope < 10) /* if the char is < 10 then it was probably an int */
@@ -251,3 +234,5 @@ void dsp::Observation::change_start_time (int64 ndat)
 {
   start_time += double(ndat)/rate;
 }
+
+void dsp::Observation::get_DM_level()
