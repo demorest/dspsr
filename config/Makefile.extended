@@ -306,6 +306,8 @@ veryclean:
 ##########################################################################
 ##########################################################################
 
+ifneq ($(install_yes),install)
+
 ###  STATIC PATTERN RULES and EXPLICIT RULES (must follow default targets)
 ##########################################################################
 ##########################################################################
@@ -356,6 +358,8 @@ $(ONELIB) : $(LIB_OBJS)
 	@echo $(LIB_SRCS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
+
+endif # install_yes != install
 
 ##########################################################################
 # Special cases: if the make target is depend, clean or veryclean, then 
