@@ -16,12 +16,12 @@ namespace dsp {
     
   public:
     
-    TwoBitHistoryPlotter () { nchan = 0; keep_minutes = 150; }
+    TwoBitHistoryPlotter () { ndig = 0; keep_minutes = 150; }
     
     virtual ~TwoBitHistoryPlotter() {}
 
     //! Reset the history
-    void reset () { nchan = 0; }
+    void reset () { ndig = 0; }
     
     //! Log the statistics of the digitized data in some form
     virtual void log_stats (vector<double>& mean, vector<double>& variance,
@@ -38,9 +38,9 @@ namespace dsp {
     //! Time of the first call to log_stats
     timeval start;
     
-    //! Data mean as a function of time and channel
+    //! Data mean as a function of time and digitizer
     vector< vector<float> > means;
-    //! Data variance as a function of time and channel
+    //! Data variance as a function of time and digitizer
     vector< vector<float> > variances;
     //! Time of each index in minutes since start
     vector< float > times;
@@ -50,8 +50,8 @@ namespace dsp {
     //! Shapes of symbols
     vector<int> symbol;
     
-    //! number of digitization channels
-    unsigned nchan;
+    //! number of digitizers
+    unsigned ndig;
 
     //! this gets called on the first call
     void init_stats_log (TwoBitCorrection* converter);

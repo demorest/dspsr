@@ -109,19 +109,19 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
   theory_calculated = true;
 }
 
-double dsp::TwoBitStatsPlotter::get_chi_squared (int chan)
+double dsp::TwoBitStatsPlotter::get_chi_squared (int idig)
 {
   if (!data)
     return 0;
 
   calculate_theory ();
 
-  // get the histogram for this channel
-  data->get_histogram (histogram, chan);
+  // get the histogram for this digitizer
+  data->get_histogram (histogram, idig);
 
   // the theoretical binomial distribution must be scaled to the
   // number of weights tested
-  double nweights = data->get_histogram_total (chan);
+  double nweights = data->get_histogram_total (idig);
 
   double chisq = 0;
   for (unsigned iwt=0; iwt<histogram.size(); iwt++) {
@@ -168,13 +168,13 @@ void dsp::TwoBitStatsPlotter::check_colours ()
 
   int defc[2] = { 10, 13 };
 
-  int channels = data->get_nchannel ();
-  if (channels < 0)
+  int ndig = data->get_ndig ();
+  if (ndig < 0)
     return;
 
-  if (colours.size() < (unsigned)channels) {
+  if (colours.size() < (unsigned)ndig) {
     int available = colours.size();
-    colours.resize(channels);
+    colours.resize(ndig);
 
     if (available == 0)
       for (unsigned ic=0; ic<colours.size(); ic++)
@@ -201,15 +201,15 @@ void dsp::TwoBitStatsPlotter::pglabel()
   if (nsample < 0)
     return;
 
-  int channels = data->get_nchannel ();
-  if (channels < 0)
+  int ndig = data->get_ndig ();
+  if (ndig < 0)
     return;
 
   char label [80];
   sprintf (label, "Number of ones (in %d pts)", nsample );
   cpglab (label, "Number of weights", " ");
 
-  if (channels == 4) {
+  if (ndig == 4) {
     cpgsci (colours[0]);
     cpgmtxt("T", .5, 0.0, 0.0, "In-phase");
     cpgsci (colours[1]);
@@ -250,8 +250,8 @@ void dsp::TwoBitStatsPlotter::plot ()
   if (nsample < 0)
     return;
 
-  int channels = data->get_nchannel ();
-  if (channels < 0)
+  int ndig = data->get_ndig ();
+  if (ndig < 0)
     return;
 
   float x1=vpxmax;
@@ -261,7 +261,7 @@ void dsp::TwoBitStatsPlotter::plot ()
 
   float adjust;
 
-  if (channels > 1)
+  if (ndig > 1)
     if (horizontal)
       x1 = x2 = (vpxmax + vpxmin) / 2.0;
     else {
@@ -299,18 +299,18 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
   if (nsample < 0)
     return;
 
-  int channels = data->get_nchannel ();
-  if (channels < 0)
+  int ndig = data->get_ndig ();
+  if (ndig < 0)
     return;
   
   int istat = 0;
   int iendt = 0;
 
   if (poln == 4)
-    iendt = channels -1;
+    iendt = ndig -1;
   else {
-    istat = poln * (channels / 2);
-    if (channels == 4)
+    istat = poln * (ndig / 2);
+    if (ndig == 4)
       iendt = istat + 1;
     else
       iendt = istat;
@@ -321,15 +321,15 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
   float ymax = 0.0;
   int imax=0, imin=nsample-1;
 
-  int ichan = 0;
-  for (ichan=istat; ichan <= iendt; ichan++) {
+  int idig = 0;
+  for (idig=istat; idig <= iendt; idig++) {
 
-    data->get_histogram (histogram, ichan);
+    data->get_histogram (histogram, idig);
 
     maxel = max_element(histogram.begin(), histogram.end());
     
     if (maxel == histogram.end())
-      throw_str ("TwoBitStatsPlotter::pgplot: empty range channel %d", ichan);
+      throw_str ("TwoBitStatsPlotter::pgplot: empty range idig=%d", idig);
     
     ymax = max (ymax, *maxel);
     
@@ -413,14 +413,14 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
   // plot the actual distribution of number of ones
   float midheight = ymax/2.0;
 
-  for (ichan=istat; ichan <= iendt; ichan++) {
+  for (idig=istat; idig <= iendt; idig++) {
 
-    data->get_histogram (histogram, ichan);
+    data->get_histogram (histogram, idig);
 
-    cpgsci (colours[ichan]);
+    cpgsci (colours[idig]);
     cpgpt (histogram, 2);
     
-    float fractone = data->get_histogram_mean (ichan);
+    float fractone = data->get_histogram_mean (idig);
     cpgsls (4);
     cpgmove (fractone*float(nsample), 0.0);
     cpgdraw (fractone*float(nsample), midheight);

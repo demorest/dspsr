@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/10/21 06:04:51 $
-   $Author: pulsar $ */
+   $Revision: 1.6 $
+   $Date: 2003/05/13 15:08:02 $
+   $Author: wvanstra $ */
 
 #ifndef __TwoBitStatsPlotter_h
 #define __TwoBitStatsPlotter_h
@@ -33,7 +33,7 @@ namespace dsp {
     //! Set the device-normalized coordinates of viewport frame
     void set_viewport (float xmin, float xmax, float ymin, float ymax);
 
-    //! Set the plot colour used for each digitizer channel
+    //! Set the plot colour used for each digitizer
     void set_colours (const vector<int>& colours);
 
     //! Get the colour used to plot the theoretical distribution
@@ -43,7 +43,7 @@ namespace dsp {
     void plot ();
 
     //! Get a measure of the difference between the histogram and the theory
-    double get_chi_squared (int chan);
+    double get_chi_squared (int idig);
 
     //! Plot vertical bars to indicate the cut-off thresholds
     bool show_cutoff_sigma;
@@ -77,7 +77,7 @@ namespace dsp {
     //! Colour used when plotting theoretical
     int theory_colour;
 
-    //! Colour used when plotting histogram from each channel
+    //! Colour used when plotting histogram from each digitizer
     vector <int> colours;
 
     //! Device normalized coordinates of viewport frame
