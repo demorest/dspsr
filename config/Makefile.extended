@@ -309,6 +309,13 @@ install: $(INSTALL_INCS) $(INSTALL_SHXS) $(INSTALL_LIBS) $(INSTALL_BINS)
 clean:
 	$(RM) $(LOGIN_ARCH)/*.o
 
+depend:
+	@$(RM) $(LOGIN_ARCH)/*.dep
+	@$(MAKE) -s nothing
+
+nothing:
+	@echo nothing > /dev/null
+
 veryclean:
 	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS)
 
