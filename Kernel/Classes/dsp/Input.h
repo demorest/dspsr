@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.24 $
-   $Date: 2003/07/28 13:12:37 $
+   $Revision: 1.25 $
+   $Date: 2003/08/18 13:17:23 $
    $Author: wvanstra $ */
 
 #ifndef __Input_h
@@ -34,6 +34,9 @@ namespace dsp {
     //! Destructor
     virtual ~Input ();
     
+    //! Copies the behaviour and information attributes (not data)
+    virtual void copy (const Input* input);
+
     //! End of data
     virtual bool eod() = 0;
     
@@ -43,8 +46,11 @@ namespace dsp {
     //! Set the BitSeries to which data will be loaded
     virtual void set_output (BitSeries* data);
 
-    //! Retrieve a pointer to the output.  (May be null so watch out!)
-    virtual BitSeries* get_output(){ return output.ptr(); }
+    //! Retrieve a pointer to the output.
+    virtual BitSeries* get_output();
+
+    //! Return true if output is set
+    virtual bool has_output () const;
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);

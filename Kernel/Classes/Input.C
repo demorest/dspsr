@@ -46,6 +46,39 @@ void dsp::Input::set_output (BitSeries* data)
   }
 }
 
+/*! This method throws an exception if the output is not set.  To test
+  if the output attribute is set, use Input::has_output. */
+dsp::BitSeries* dsp::Input::get_output ()
+{
+  if (!output)
+    throw Error (InvalidState, "dsp::Input::get_output", "no output set");
+
+  return output; 
+}
+
+bool dsp::Input::has_output () const
+{
+  return output;
+}
+
+/*! This method copies the following behavioural and informational attributes:
+
+  <UL>
+  <LI> block_size
+  <LI> overlap
+  <LI> info
+  <LI> resolution
+  </UL>
+*/
+void dsp::Input::copy (const Input* input)
+{
+  set_block_size ( input->get_block_size() );
+  set_overlap ( input->get_overlap() );
+
+  info = input->info;
+  resolution = input->resolution;
+}
+
 /*! Set the Observation attributes of data and load the next block of data
  */
 void dsp::Input::load (BitSeries* data)
@@ -231,7 +264,7 @@ void dsp::Input::seek_seconds (double seconds, int whence)
     throw Error (InvalidState, "dsp::Input::seek_seconds",
 		 "data rate unknown");
 
-  seek( seconds * info.get_rate(), whence );
+  seek( int64(seconds * info.get_rate()), whence );
 }
 
 
