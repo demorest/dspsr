@@ -477,7 +477,7 @@ void dsp::Fold::transformation ()
 
   output->integration_length += integrated;
   
-  if (folding_period >= 0.0)
+  if (folding_period > 0.0)
     output->set_folding_period( folding_period );
   else
     output->set_pulsar_ephemeris( pulsar_ephemeris, folding_polyco );
