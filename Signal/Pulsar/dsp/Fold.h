@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/08/26 11:43:56 $
-   $Author: wvanstra $ */
+   $Revision: 1.20 $
+   $Date: 2003/09/20 07:15:03 $
+   $Author: hknight $ */
 
 
 #ifndef __Fold_h
@@ -17,6 +17,11 @@
 
 class polyco;
 class psrephem;
+#if HSKTEST
+namespace dsp {
+  class MultiFold;
+}
+#endif
 
 namespace dsp {
 
@@ -28,6 +33,10 @@ namespace dsp {
     the (folded) average pulse profile data within its data structures.
   */
   class Fold : public Transformation <const TimeSeries, PhaseSeries> {
+
+#if HSKTEST
+    friend class MultiFold;
+#endif
 
   public:
     
@@ -118,6 +127,15 @@ namespace dsp {
     //! The transformation folds the data into the profile
     virtual void transformation ();
 
+    //! Used by the MultiFold class
+    void set_idat_start(uint64 _idat_start){ idat_start = _idat_start; }
+    //! Used by the MultiFold class
+    uint64 get_idat_start(){ return idat_start; }
+    //! Used by the MultiFold class
+    void set_ndat_fold(uint64 _ndat_fold){ ndat_fold = _ndat_fold; }
+    //! Used by the MultiFold class
+    uint64 get_ndat_fold(){ return ndat_fold; }
+
     //! Period at which to fold data (CAL)
     double folding_period;
 
@@ -169,5 +187,8 @@ namespace dsp {
 }
 
 #endif // !defined(__Fold_h)
+
+
+
 
 
