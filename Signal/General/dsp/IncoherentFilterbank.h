@@ -16,6 +16,8 @@
 
    DC, r1, r2, ... , r(n/2), 0, i1, ... , i(n/2-1), 0 
 
+NOTE: This transformation DESTROYS your input data
+
  */
 
 namespace dsp{
@@ -36,12 +38,6 @@ namespace dsp{
     //! Free up the memory used by the current plan
     void free_plan(){ sink(wsave); }
     
-    //! Inquire which algorithm is being used (3 is the fastest but 1 doesn't destroy the input)
-    //int get_choice(){ return choice; }
-
-    //! Set the algorithm being used (3 is the fastest but 1 doesn't destroy the input)
-    //void set_choice(int _choice){ choice = _choice; }
-
     //! Set the number of channels
     void set_nchan(unsigned _nchan){ nchan = _nchan; }
 
@@ -61,9 +57,6 @@ namespace dsp{
 
     //! Memory used by MKL to store transform coefficients (ie the plan)
     auto_ptr<vector<float> > wsave; 
-
-    //! Which choice of algorithm is being used
-    //int choice;
 
   };
 
