@@ -36,6 +36,18 @@ endif
 
 ##############################################################################
 #
+# Uncomment the following line to compile CPSR2 specific code
+#
+#CPSR2_4bit:=yes
+
+ifeq ($(CPSR2_4bit),yes)
+CLASSES += CPSR2FourBitUnpacker 
+BACKENDS += CPSR2_4bit
+endif
+
+
+##############################################################################
+#
 # Uncomment the following line to compile CPSR specific code
 #
 CPSR:=yes
