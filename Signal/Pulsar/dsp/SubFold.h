@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.2 $
-   $Date: 2003/01/31 16:00:36 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2004/09/24 07:10:24 $
+   $Author: hknight $ */
 
 #ifndef __SubFold_h
 #define __SubFold_h
@@ -61,9 +61,6 @@ namespace dsp {
 
     //! Decide wether or not to keep the folded profile
     virtual bool keep (PhaseSeries* data) { return true; }
-
-    //! Prepare to fold with the current attributes
-    void prepare ();
 
   protected:
 
