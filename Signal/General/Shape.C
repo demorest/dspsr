@@ -76,7 +76,7 @@ void dsp::Shape::resize (unsigned _npol, unsigned _nchan,
 {
   if (verbose)
     cerr <<
-      "dsp::Shape::resize\n"
+      "dsp::Shape::resize"
       "  npol=" << _npol <<
       "  nchan=" << _nchan <<
       "  ndat=" << _ndat <<

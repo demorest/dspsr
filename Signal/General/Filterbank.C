@@ -37,7 +37,8 @@ void dsp::Filterbank::transformation ()
     response -> match (input, nchan);
     if (response->get_nchan() != nchan)
       throw Error (InvalidState, "dsp::Filterbank::transformation",
-		   "Response.nchan=%d != nchan", response->get_nchan(), nchan);
+		   "Response.nchan=%d != nchan=%d",
+		   response->get_nchan(), nchan);
 
     nfilt_pos = response->get_impulse_pos ();
     nfilt_neg = response->get_impulse_neg ();
