@@ -184,28 +184,36 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
 	   << "\n subint start = " << lower
 	   << "\n  input start = " << input_start
 	   << endl;
+
   }
-  else {
 
-    // The current sub-integration contains data.  Check that the
-    // input TimeSeries has data within the current boundaries.
+  // The current sub-integration contains data.  Check that the
+  // input TimeSeries has data within the current boundaries.
 
-    if (input_end < lower || input_start > upper) {
+  if (input_end < lower || input_start > upper) {
 
-      if (verbose) cerr << "dsp::SubFold::bound"
-		     " input not from this sub-integration" << endl;
+    if (verbose) cerr << "dsp::SubFold::bound"
+	     " input not from this sub-integration" << endl;
 
-      // This state: (more_data == true && subint_full == false)
-      // indicates that the output PhaseSeries may be only partially
-      // full.  The output should be set to an empty PhaseSeries and
-      // this method should be called again.
+    /*  
+     This state: (more_data == true && subint_full == false)
+     indicates that the output PhaseSeries may be only partially
+     full.  The output should be reset and this method should be 
+     called again.  However, if the output contains no data, and
+     the current input is not within the current boundaries, then
+     it should be discarded.
+     */
 
-      lower = MJD::zero;
+    if (contains_data)
       more_data = true;
-      return false;
 
-    }
-    
+    lower = MJD::zero;
+    return false;
+
+  }
+ 
+  if (contains_data)  {
+   
     MJD output_end = output->get_end_time();
 
     fold_start = std::max (output_end, input_start);
@@ -227,7 +235,14 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   MJD offset = fold_start - input_start;
 
   double start_sample = offset.in_seconds() * sampling_rate;
-  idat_start = (uint64) rint (start_sample);
+
+  //cerr << "start_sample=" << start_sample << endl;
+  start_sample = rint (start_sample);
+  //cerr << "rint(start_sample)=" << start_sample << endl;
+
+  assert (start_sample >= 0);
+
+  idat_start = (uint64) start_sample;
 
   if (verbose)
     cerr << "dsp::SubFold::bound start offset " << offset.in_seconds()*1e3
@@ -262,7 +277,14 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   offset = fold_end - input_start;
 
   double end_sample = offset.in_seconds() * sampling_rate;
-  uint64 idat_end = (uint64) rint (end_sample);
+
+  //cerr << "end_sample=" << end_sample << endl;
+  end_sample = rint (end_sample);
+  //cerr << "rint(end_sample)=" << end_sample << endl;
+
+  assert (end_sample >= 0);
+
+  uint64 idat_end = (uint64) end_sample;
 
   if (verbose)
     cerr << "dsp::SubFold::bound end offset " << offset.in_seconds()*1e3
@@ -341,6 +363,10 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
     // On the first call to set_boundaries, initialize to start at
     // Fold::reference_phase
 
+    if (verbose)
+      cerr << "dsp::SubFold::set_boundaries first call\n\treference_phase="
+           << reference_phase << " start_time=" << start_time << endl;
+
     start_phase = get_folding_polyco()->phase(start_time);
 
     if (start_phase.fracturns() > reference_phase)
@@ -349,6 +375,10 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
     start_phase = Phase (start_phase.intturns(), reference_phase);
 
     start_time = get_folding_polyco()->iphase (start_phase);
+
+    if (verbose)
+      cerr << "dsp::SubFold::set_boundaries first call\n\tstart_phase="
+           << start_phase << " start_time=" << start_time << endl;
 
   }
 
