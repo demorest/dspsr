@@ -84,8 +84,8 @@ int main (int argc, char** argv)
     input_small = dsp::File::create (filenames[ifile]);
     input_large = dsp::File::create (filenames[ifile]);
 
-    if (verbose)
-      cerr << "data file " << filenames[ifile] << " opened" << endl;
+    cerr << "data file " << filenames[ifile] << " opened" << endl;
+    cerr << "testing " << input_large->get_name() << " sub-class" << endl;
 
     unsigned resolution = input_small->get_resolution();
 
@@ -181,7 +181,7 @@ int main (int argc, char** argv)
 	break;
     }
 
-    cerr << "end of data file " << filenames[ifile] << endl;
+    cerr << "end of data file " << filenames[ifile] << endl << endl;
 
     if (!errors)
       cerr << "success: dsp::Input operates as expected with " 
