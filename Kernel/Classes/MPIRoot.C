@@ -71,6 +71,7 @@ int mpiUnpack (void* inbuf, int insize, int* position,
 //
 //
 dsp::MPIRoot::MPIRoot (MPI_Comm _comm)
+ : Input ("MPIRoot")
 {
   comm = _comm;
 

@@ -15,7 +15,7 @@ void dsp::IOManager::init()
 }
 
 //! Constructor
-dsp::IOManager::IOManager ()
+dsp::IOManager::IOManager () : Input ("IOManager")
 {
   init();
 }
@@ -27,7 +27,7 @@ dsp::IOManager::~IOManager()
 void dsp::IOManager::set_output (BitSeries* raw)
 {
   if (verbose)
-    cerr << "IOManager::set_output (BitSeries*) " << raw << endl;
+    cerr << "dsp::IOManager::set_output (BitSeries*) " << raw << endl;
 
   Input::set_output (raw);
 
@@ -41,7 +41,7 @@ void dsp::IOManager::set_output (BitSeries* raw)
 void dsp::IOManager::set_output (TimeSeries* _data)
 {
   if (verbose)
-    cerr << "IOManager::set_output (TimeSeries*) " << _data << endl;
+    cerr << "dsp::IOManager::set_output (TimeSeries*) " << _data << endl;
 
   data = _data;
 
@@ -59,6 +59,7 @@ void dsp::IOManager::set_input (Input* _input)
     input->set_overlap (overlap);
     if (output)
       input->set_output (output);
+    name = "IOManager:" + input->get_name();
   }
 }
 
@@ -132,7 +133,7 @@ void dsp::IOManager::open (const char* id)
     set_unpacker ( Unpacker::create (input->get_info()) );
 
   } catch (Error& error) {
-    throw error += "IOManager::open";
+    throw error += "dsp::IOManager::open";
   }
 
   info = *( input->get_info() );
@@ -143,7 +144,7 @@ void dsp::IOManager::open (const char* id)
 void dsp::IOManager::load (TimeSeries* _data)
 {
   if (verbose)
-    cerr << "IOManager::load (TimeSeries* = " << _data << ")" << endl;
+    cerr << "dsp::IOManager::load (TimeSeries* = " << _data << ")" << endl;
 
   set_output (_data);
 
@@ -157,7 +158,7 @@ void dsp::IOManager::operation ()
     set_output (new BitSeries);
 
   if (!input)
-    throw Error (InvalidState, "IOManager::load", "no input");
+    throw Error (InvalidState, "dsp::IOManager::load", "no input");
 
   input->operate ();
 
@@ -165,7 +166,7 @@ void dsp::IOManager::operation ()
     return;
 
   if (!unpacker)
-    throw Error (InvalidState, "IOManager::load", "no unpacker");
+    throw Error (InvalidState, "dsp::IOManager::load", "no unpacker");
 
   unpacker->operate ();
 }
@@ -174,7 +175,7 @@ void dsp::IOManager::operation ()
 void dsp::IOManager::load_data (BitSeries* data)
 {
   if (!input)
-    throw Error (InvalidState, "IOManager::load", "no input");
+    throw Error (InvalidState, "dsp::IOManager::load", "no input");
 
   input->set_output (data);
   input->operate ();

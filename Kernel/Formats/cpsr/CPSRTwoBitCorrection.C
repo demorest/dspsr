@@ -135,7 +135,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 
     if (weights && (weights[wt]==0 || n_in<n_min || n_in>n_max)) {
 
-      // cerr << "iq:w[" << wt << "]=0 " << endl;
+      // cerr << "iq:w[" << wt << "]=0 ";
 
       weights[wt] = 0;
       // reduce the risk of other functions accessing un-initialized 

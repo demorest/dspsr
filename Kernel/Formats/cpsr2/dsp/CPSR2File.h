@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/09 15:55:25 $
+   $Revision: 1.7 $
+   $Date: 2002/11/10 12:57:08 $
    $Author: wvanstra $ */
 
 
@@ -18,13 +18,13 @@ namespace dsp {
   {
   public:
    
+    //! Construct and open file
+    CPSR2File (const char* filename=0);
+
     //! Returns true if filename appears to name a valid CPSR2 file
     bool is_valid (const char* filename) const;
     
     static int get_header (char* cpsr2_header, const char* filename);
-
-    //! Construct and open file
-    CPSR2File (const char* filename=0) { if (filename) open (filename); }
 
   protected:
 

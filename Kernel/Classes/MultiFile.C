@@ -4,7 +4,7 @@
 #include "dsp/File.h"
 #include "Error.h"
 
-dsp::MultiFile::MultiFile ()
+dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
 {
   index = 0;
 }

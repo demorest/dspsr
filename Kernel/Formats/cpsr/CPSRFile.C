@@ -15,6 +15,15 @@
 #include "pspm++.h"
 #include "genutil.h"
 
+//! Construct and open file
+dsp::CPSRFile::CPSRFile (const char* filename)
+  : File ("CPSR")
+{ 
+  tapenum = filenum = -1;
+  if (filename)
+    open (filename);
+}
+
 bool dsp::CPSRFile::is_valid (const char* filename) const
 {
   int fd = ::open (filename, O_RDONLY);
@@ -30,13 +39,6 @@ bool dsp::CPSRFile::is_valid (const char* filename) const
   return true;
 }
 
-//! Construct and open file
-dsp::CPSRFile::CPSRFile (const char* filename)
-{ 
-  tapenum = filenum = -1;
-  if (filename)
-    open (filename);
-}
 
 // #define _DEBUG 1
 

@@ -12,13 +12,13 @@ namespace dsp {
   {
   public:
    
+    //! Construct and open file
+    PMDAQFile (const char* filename=0);
+
     //! Returns true if filename appears to name a valid PMDAQ file
     bool is_valid (const char* filename) const;
     
     static int get_header (char* pmdaq_header, const char* filename);
-
-    //! Construct and open file
-    PMDAQFile (const char* filename=0) { if (filename) open (filename); }
 
     // Insert PMDAQ-specific entries here.
     // Overload these because of fortran 4-byte headers and footers to blocks

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.7 $
+   $Date: 2002/11/10 12:57:08 $
    $Author: wvanstra $ */
 
 
@@ -24,7 +24,7 @@ namespace dsp {
   public:
     
     //! Constructor
-    Seekable (const char* name = "Seekable");
+    Seekable (const char* name);
     
     //! Destructor
     virtual ~Seekable ();

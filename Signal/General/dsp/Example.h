@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Example.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/11/10 01:56:38 $
+   $Revision: 1.2 $
+   $Date: 2002/11/10 13:01:25 $
    $Author: wvanstra $ */
 
 #ifndef __Example_h
@@ -19,7 +19,7 @@ namespace dsp {
     the name and behaviour of the transformation.  As well, one pure virtual
     method, transformation, must be defined at least once in the inheritance
     tree.  This example transforms a TimeSeries into a TimeSeries, though
-    any class that fits the Tranformation template could be used.
+    any classes that fit the Tranformation template could be used.
   */
   class Example : public Transformation <TimeSeries, TimeSeries> {
 

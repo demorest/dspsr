@@ -12,6 +12,13 @@
 #include "yamasaki_verify.h"
 #include "genutil.h"
 
+dsp::CPSR2File::CPSR2File (const char* filename)
+  : File ("CPSR2")
+{
+  if (filename) 
+    open (filename);
+}
+
 int dsp::CPSR2File::get_header (char* cpsr2_header, const char* filename)
 {
   int fd = ::open (filename, O_RDONLY);

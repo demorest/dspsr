@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.6 $
+   $Date: 2002/11/10 12:57:08 $
    $Author: wvanstra $ */
 
 
@@ -19,11 +19,11 @@ namespace dsp {
   {
   public:
    
+    //! Construct and open file
+    S2File (const char* filename = 0);
+
     //! Returns true if filename appears to name a valid S2 file
     bool is_valid (const char* filename) const;
-
-    //! Construct and open file
-    S2File (const char* filename = 0) { if (filename) open (filename); }
 
   protected:
     //! Open the file

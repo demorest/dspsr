@@ -11,6 +11,13 @@
 
 #define PMDAQ_HEADER_SIZE 648
 
+dsp::PMDAQFile::PMDAQFile (const char* filename) 
+  : File ("PMDAQ")
+{
+  if (filename)
+    open (filename);
+}
+
 // Loads header into character array pmdaq_header from file filename.
 
 // Takes root name as the name, ie takes SWT001 and adds .hdr to it.

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/11/09 15:55:26 $
+   $Revision: 1.10 $
+   $Date: 2002/11/10 12:57:08 $
    $Author: wvanstra $ */
 
 
@@ -22,7 +22,7 @@ namespace dsp {
   public:
     
     //! Constructor
-    File (const char* name = "File");
+    File (const char* name);
     
     //! Destructor
     virtual ~File ();

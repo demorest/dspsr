@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.12 $
+   $Date: 2002/11/10 12:57:08 $
    $Author: wvanstra $ */
 
 #ifndef __Input_h
@@ -30,7 +30,7 @@ namespace dsp {
     static bool verbose;
     
     //! Constructor
-    Input (const char* name = "Input");
+    Input (const char* name);
     
     //! Destructor
     virtual ~Input ();

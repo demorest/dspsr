@@ -6,6 +6,13 @@
 #include "tci_file.h"
 #include "genutil.h"
 
+dsp::S2File::S2File (const char* filename)
+  : File ("S2")
+{
+  if (filename)
+    open (filename);
+}
+
 bool dsp::S2File::is_valid (const char* filename) const
 { 
   tci_fd   s2file;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/09 15:55:25 $
+   $Revision: 1.7 $
+   $Date: 2002/11/10 12:57:08 $
    $Author: wvanstra $ */
 
 
@@ -18,11 +18,11 @@ namespace dsp {
   {
   public:
 
-    //! Returns true if filename appears to name a valid CPSR file
-    bool is_valid (const char* filename) const;
-
     //! Construct and open file
     CPSRFile (const char* filename = 0);
+
+    //! Returns true if filename appears to name a valid CPSR file
+    bool is_valid (const char* filename) const;
 
     //! The tape number
     int tapenum;
