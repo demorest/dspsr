@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/12/09 16:46:08 $
+   $Revision: 1.13 $
+   $Date: 2002/12/11 17:34:39 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -97,11 +97,7 @@ namespace dsp {
     unsigned smearing_samples (int half = -1) const;
 
     //! Compute the phases for a dedispersion kernel
-    static void build (vector<float>& phases,
-		       double centrefreq, double bw, 
-		       float dm, double doppler,
-		       unsigned npts, unsigned nchan, 
-		       bool bin_centred, bool dmcorr);
+    void build (vector<float>& phases, unsigned npts, unsigned nchan);
 
   protected:
 

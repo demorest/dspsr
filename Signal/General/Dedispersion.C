@@ -120,9 +120,9 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
   // If the input is already a filterbank, then the frequency channels will
   // be centred on the bin, not the edge of the bin
   if (input->get_nchan() % 2) {
-    if (!bin_centred)
+    if (!dc_centred)
       built = false;
-    bin_centred = true;
+    dc_centred = true;
   }
 
   if (!channels)
@@ -171,22 +171,10 @@ void dsp::Dedispersion::build ()
   else
     check_ndat ();
 
-  if (verbose)
-    cerr << "dsp::Dedispersion::build"
-	"\n  centre frequency = " << centre_frequency <<
-	"\n  bandwidth = " << bandwidth <<
-        "\n  dispersion measure = " << dispersion_measure <<
-        "\n  Doppler shift = " << Doppler_shift <<
-        "\n  ndat = " << ndat <<
-        "\n  nchan = " << nchan <<
-	"\n  fractional delay compensation = " << fractional_delay << endl;
-
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
 
-  build (phases, centre_frequency, bandwidth, 
-	 dispersion_measure, Doppler_shift,
-	 ndat, nchan, bin_centred, fractional_delay);
+  build (phases, ndat, nchan);
 
   vector<complex<float> > phasors (ndat * nchan);
   for (unsigned ipt=0; ipt<phases.size(); ipt++)
@@ -276,23 +264,29 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 
 
 void dsp::Dedispersion::build (vector<float>& phases,
-			       double centrefreq, double bw, 
-			       float dm, double doppler,
-			       unsigned npts, unsigned nchan,
-			       bool bin_centred, bool dmcorr)
+			       unsigned _ndat, unsigned _nchan)
 {
-  centrefreq /= doppler;
-  bw /= doppler;
+  if (verbose)
+    cerr << "dsp::Dedispersion::build"
+      "\n  centre frequency = " << centre_frequency <<
+      "\n  bandwidth = " << bandwidth <<
+      "\n  dispersion measure = " << dispersion_measure <<
+      "\n  Doppler shift = " << Doppler_shift <<
+      "\n  ndat = " << ndat <<
+      "\n  nchan = " << _nchan <<
+      "\n  centred on DC = " << dc_centred <<
+      "\n  fractional delay compensation = " << fractional_delay << endl;
+
+  double centrefreq = centre_frequency / Doppler_shift;
+  double bw = bandwidth / Doppler_shift;
 
   double sign = bw / fabs (bw);
-  double chanwidth = bw / double(nchan);
-  double binwidth = chanwidth / double(npts);
+  double chanwidth = bw / double(_nchan);
+  double binwidth = chanwidth / double(_ndat);
 
-  double lower_cfreq = 0.0;
-  if (bin_centred)
-    lower_cfreq = centrefreq - 0.5*bw;
-  else
-    lower_cfreq = centrefreq - 0.5*bw*(1.0-1.0/double(nchan));
+  double lower_cfreq = centrefreq - 0.5*bw;
+  if (!dc_centred)
+    lower_cfreq += 0.5*chanwidth;
 
   double highest_freq = centrefreq + 0.5*fabs(bw-chanwidth);
 
@@ -300,15 +294,15 @@ void dsp::Dedispersion::build (vector<float>& phases,
                                    // quadrature nyquist data eg fb.
   double delay = 0.0;
 
-  double dispersion_per_MHz = 1e6 * dm / dm_dispersion;
+  double dispersion_per_MHz = 1e6 * dispersion_measure / dm_dispersion;
 
-  phases.resize (npts * nchan);
+  phases.resize (_ndat * _nchan);
 
-  for (unsigned ichan = 0; ichan < nchan; ichan++) {
+  for (unsigned ichan = 0; ichan < _nchan; ichan++) {
 
     double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
    
-    if (dmcorr) {
+    if (fractional_delay) {
       // Compute the DM delay in microseconds
       delay = dispersion_per_MHz * ( 1.0/sqr(chan_cfreq) -
 				     1.0/sqr(highest_freq) );
@@ -318,11 +312,16 @@ void dsp::Dedispersion::build (vector<float>& phases,
 
     double coeff = -sign * 2*M_PI * dispersion_per_MHz / sqr(chan_cfreq);
 
-    unsigned spt = ichan * npts;
-    for (unsigned ipt = 0; ipt < npts; ipt++) {
-      // FFTX - not the mean of the bin, but the offset from the DC bin
-      double freq = double(ipt) * binwidth - 0.5*chanwidth;
-      phases[spt+ipt] = coeff*sqr(freq)/(chan_cfreq+freq)-2.0*M_PI*freq*delay;
+    unsigned spt = ichan * _ndat;
+    for (unsigned ipt = 0; ipt < _ndat; ipt++) {
+
+      // frequency offset from centre frequency of channel
+      double freq = double(ipt)*binwidth - 0.5*chanwidth;
+
+      // additional phase turn for fractional dispersion delay shift
+      double delay_phase = -2.0*M_PI * freq * delay;
+
+      phases[spt+ipt] = coeff*sqr(freq)/(chan_cfreq+freq) + delay_phase;
     }
   }
 }
