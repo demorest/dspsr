@@ -39,19 +39,40 @@ void dsp::Response::match (const Timeseries* input, unsigned nchan)
   }      
   else  {
 
+    // if the filterbank channels are centred on DC
+    if ( input->get_dc_centred() && !chan_shifted ) {
+      naturalize ();
+      rotate (-ndat/2);
+      chan_shifted = true;
+    }
+
     // if the input Timeseries is multi-channel, complex sampled data,
     // then each FFT performed will result in little swapped spectra
     if ( input->get_state() == Observation::Analytic && !chan_swapped )
       swap (true);
 
+    // the ordering of the filterbank channels may be swapped
     if ( input->get_swap() && !whole_swapped )
       swap (false);
 
-    if ( input->get_dc_centred() )
-      throw_str ("Response::match must rotate the bandbass by half channel");
 
   }
 }
+
+void dsp::Response::naturalize ()
+{
+  if ( whole_swapped )
+    swap (false);
+    
+  if ( chan_swapped )
+    swap (true);
+
+  if ( chan_shifted ) {
+    rotate (ndat/2);
+    chan_shifted = false;
+  }
+}
+
 
 // /////////////////////////////////////////////////////////////////////////
 
