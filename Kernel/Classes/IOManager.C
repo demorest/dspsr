@@ -85,8 +85,11 @@ void dsp::IOManager::set_nsample (int _nsample)
 //! The operation loads the next block of data and converts it to float_Stream
 void dsp::IOManager::load (Timeseries* data)
 {
-  if (!input || !converter)
-    return;
+  if (!input)
+    throw string ("IOManager::load no input");
+
+  if (!converter)
+    throw string ("IOManager::load no converter");
 
   if (!raw)
     set_raw (new Timeseries);
