@@ -58,7 +58,7 @@ void dsp::OneBitCorrection::unpack ()
     throw Error (InvalidState, "OneBitCorrection::unpack",
 		 "input not 1-bit sampled");
 
-  int64 ndat = input->get_ndat();
+  uint64 ndat = input->get_ndat();
   unsigned n_freq = input->get_nchan();
 
   if (n_freq % 32)
@@ -81,7 +81,7 @@ void dsp::OneBitCorrection::unpack ()
     const uint32* from = rawptr + ichan / 32;
     float* into = output -> get_datptr (ichan, 0);
 
-    for (unsigned idat=0; idat < ndat; idat++) {
+    for (uint64 idat=0; idat < ndat; idat++) {
       *into = float (((*from)>>shift32) & mask);
       from += nskip32;
       into ++;
@@ -94,3 +94,4 @@ bool dsp::OneBitCorrection::matches (const Observation* observation)
   return observation->get_machine() == "PMDAQ"
     && observation->get_nbit() == 1;
 }
+
