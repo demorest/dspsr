@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include <string>
+
 #include "Observation.h"
 #include "Telescope.h"
 
@@ -9,11 +11,6 @@
 #include "string_utils.h"
 
 bool dsp::Observation::verbose = false;
-
-string get_cpsr2_header(){
-  exit(-1);
-  return ("not written yet");
-}
 
 int64 dsp::Observation::verbose_nbytes (int64 nsamples) const
 {
@@ -46,6 +43,9 @@ void dsp::Observation::init ()
   npol = 1;
   ndim = -1;
   nbit = -1;
+
+  centre_frequency = 0;
+  bandwidth = 0;
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -344,3 +344,23 @@ void dsp::Observation::change_start_time (int64 ndat)
   start_time += double(ndat)/rate;
 }
 
+//! Returns a FitsHeader format of all information contained in this class into the string info_string
+bool dsp::Observation::retrieve(string& info_string){
+  /* Here's where the FITS magic goes */
+  exit(-1);
+  return false;
+}
+    
+//! Writes a FitsHeader format of all information contained in this class into the fptr at the current file offset
+bool dsp::Observation::retrieve(FILE* fptr){
+  string ss;
+  if( !retrieve(ss) ){
+    fprintf(stderr,"dsp::Observation::retrieve() failed to write to fptr because string version failed\n");
+    fclose(fptr);
+    return false;
+  }
+
+  fprintf(fptr,"%s",ss.c_str());
+
+  return true;
+}

@@ -1,14 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.22 $
-   $Date: 2002/10/16 16:23:25 $
-   $Author: wvanstra $ */
+   $Revision: 1.23 $
+   $Date: 2002/10/17 07:31:59 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
 
 #include <string>
+
+#include <stdio.h>
 
 #include "Reference.h"
 #include "sky_coord.h"
@@ -240,6 +242,15 @@ namespace dsp {
 
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
+
+    //! Returns true if data has been digitised by DigiPack
+    bool IsDigi(){ return isdigi; }
+
+    //! Returns a FitsHeader format of all information contained in this class into the string info_string
+    bool retrieve(string& info_string);
+    
+    //! Writes a FitsHeader format of all information contained in this class into the fptr at the current file offset
+    bool retrieve(FILE* fptr);
 
   protected:
 
