@@ -76,6 +76,8 @@ int main (int argc, char** argv)
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
+    unsigned errors = 0;
+
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
 
@@ -121,6 +123,7 @@ int main (int argc, char** argv)
 	  break;
 	cerr << "ERROR: Input::block_size=" << large_block 
 	     << " != BitSeries::ndat=" << data_large->get_ndat() << endl;
+	errors ++;
       }
 
       if (data_large->get_request_ndat() != large_block)
@@ -128,24 +131,30 @@ int main (int argc, char** argv)
 	     << " != BitSeries::request_ndat=" 
 	     << data_large->get_request_ndat() << endl;
 
-      if (data_large->get_request_offset() != 0)
+      if (data_large->get_request_offset() != 0) {
 	cerr << "ERROR: BitSeries::request_offset != 0 [large]" << endl;
+	errors ++;
+      }
 
       for (unsigned ismall=0; ismall<resolution; ismall++) {
 
 	input_small->operate();
 
-	if (data_small->get_request_ndat() != small_block)
+	if (data_small->get_request_ndat() != small_block) {
 	  cerr << "ERROR: small Input::block_size=" << small_block 
 	       << " != BitSeries::request_ndat=" 
 	       << data_small->get_request_ndat() << endl;
+	  errors ++;
+	}
 
 	uint64 expected_offset = (ismall * modres) % resolution;
 
-	if (data_small->get_request_offset() != expected_offset)
+	if (data_small->get_request_offset() != expected_offset) {
 	  cerr << "ERROR: BitSeries::request_offset="
 	       << data_small->get_request_offset() << " != expected offset="
 	       << expected_offset << endl;
+	  errors ++;
+	}
 
 	// on the first read of each loop, the first small_block samples
 	// of data_small should equal those of data_large
@@ -157,10 +166,12 @@ int main (int argc, char** argv)
 	  uint64 nbyte = data_small->get_nbytes();
 
 	  for (unsigned ibyte=0; ibyte < nbyte; ibyte++) {
-	    if (bytes_small[ibyte] != bytes_large[ibyte])
+	    if (bytes_small[ibyte] != bytes_large[ibyte]) {
 	      cerr << "ERROR: data[" << ibyte << "]"
 		" small=" << bytes_small[ibyte] << " !="
 		" large=" << bytes_large[ibyte] << endl;
+	      errors ++;
+	    }
 	  }
 	}
 
@@ -170,8 +181,14 @@ int main (int argc, char** argv)
 	break;
     }
 
-    if (verbose)
-      cerr << "end of data file " << filenames[ifile] << endl;
+    cerr << "end of data file " << filenames[ifile] << endl;
+
+    if (!errors)
+      cerr << "success: dsp::Input operates as expected with " 
+	   << input_large->get_name() << " sub-class" << endl;
+    else
+      cerr << "failure: dsp::Input does not operate as expected with " 
+	   << input_large->get_name() << " sub-class" << endl;
 
   }
   catch (string& error) {
