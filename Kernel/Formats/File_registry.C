@@ -1,3 +1,5 @@
+#include "Error.h"
+
 #include "CPSR2File.h"
 #include "CPSRFile.h"
 #include "S2File.h"
@@ -12,3 +14,28 @@ static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> pmdaq;
 static Registry::List<dsp::File>::Enter<dsp::S2File>    s2;
 
 static Registry::List<dsp::File>::Enter<dsp::DigiFile> digifile;
+
+//! Return a pointer to a new instance of the appropriate sub-class
+dsp::File* dsp::File::create (const char* filename)
+{ 
+  try {
+
+    if (verbose) cerr << "File::create with " << registry.size() 
+		      << " registered sub-classes" << endl;
+
+    for (unsigned ichild=0; ichild < registry.size(); ichild++)
+      if ( registry[ichild]->is_valid (filename) ) {
+
+	File* child = registry.create (ichild);
+	child-> open( filename );
+	child-> reset ();
+	child-> filename = filename;
+	return child;
+
+      }
+  } catch (Error& error) {
+    throw error += "File::create";
+  }
+
+  throw Error (FileNotFound, "File::create", "%s not valid", filename);
+}

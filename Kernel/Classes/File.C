@@ -4,31 +4,6 @@
 #include "File.h"
 #include "Error.h"
 
-//! Return a pointer to a new instance of the appropriate sub-class
-dsp::File* dsp::File::create (const char* filename)
-{ 
-  try {
-
-    if (verbose) cerr << "File::create with " << registry.size() 
-		      << " registered sub-classes" << endl;
-
-    for (unsigned ichild=0; ichild < registry.size(); ichild++)
-      if ( registry[ichild]->is_valid (filename) ) {
-
-	File* child = registry.create (ichild);
-	child-> open( filename );
-
-	return child;
-
-      }
-  } catch (Error& error) {
-    throw error += "File::create";
-  }
-
-  throw Error (FileNotFound, "File::create", "%s not valid", filename);
-}
-
-
 void dsp::File::init()
 {
   fd = header_bytes = -1;
