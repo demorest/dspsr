@@ -1,128 +1,140 @@
-#include <iostream>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <rfftw.h>
-
-#include "dsp/Observation.h"
-#include "dsp/TimeSeries.h"
 #include "dsp/Bandpass.h"
-#include "dsp/Response.h"
-#include "dsp/Transformation.h"
-#include "genutil.h"
+#include "dsp/Apodization.h"
+#include "fftm.h"
 
-bool dsp::Bandpass::verbose = false;
-
-dsp::Bandpass::Bandpass (const char *_name, Behaviour _type )  : Transformation<TimeSeries,Response> (_name, _type)
+dsp::Bandpass::Bandpass () :
+  Transformation <const TimeSeries, Response> ("Bandpass", outofplace) 
 {
- p=NULL;
+  resolution = 0;
+  integration_length = 0;
+  output_state = Signal::PPQQ;
 }
+
+dsp::Bandpass::~Bandpass ()
+{
+}
+
+//! Set the apodization function
+void dsp::Bandpass::set_apodization (Apodization* _function)
+{
+  apodization = _function; 
+}
+
 void dsp::Bandpass::transformation ()
 {
+  if (!resolution)
+    throw Error (InvalidState, "dsp::Bandpass::transformation",
+		 "number of output frequency channels == 0");
+
   // Number of points in fft
-  int npol = input->get_npol ();
-  
+  unsigned npol = input->get_npol ();
+  unsigned nchan = input->get_nchan ();
+
   if (verbose)
-    cerr << "dsp::Bandpass::npol is " << npol << endl;
+    cerr << "dsp::Bandpass::transformation input npol=" << npol
+	 << " nchan=" << nchan << endl;
     
-  if (input->get_state() != Signal::Nyquist) {
-    cerr << "Bandpass::transformation input data state may not be valid\n" << endl;
-    return;
+  // 2 floats per complex number
+  unsigned pts_reqd = resolution * 2;
+
+  bool full_poln = npol == 2 &&
+    (output_state == Signal::Stokes || output_state == Signal::Coherence);
+
+  if (full_poln)
+    // need space for one more complex spectrum
+    pts_reqd += resolution * 2;
+
+  // number of time samples in forward fft and overlap region
+  unsigned nsamp_fft = 0;
+
+  Signal::State state = input->get_state();
+
+  if (state == Signal::Nyquist) {
+    nsamp_fft = resolution * 2;
+    pts_reqd += 4;
   }
-
-  int nsamp_fft = input->get_ndat ();
-
-  nchan = nsamp_fft;
-
-  float *scrap = new float [npol*2*nchan];
-  
-  register float *op = scrap;
-  float *ptr_base = 0;
-  register float *ptr=0;
-
-  for (int ipol = 0; ipol < npol; ipol++) {   
-    if (verbose) 
-      cerr << endl << "poln " << ipol << endl;
-    
-    ptr_base = (input->get_datptr(0,ipol)) ;
-    
-    if (verbose)
-      cerr << "Pointer to data " << ptr_base << endl;
-
-    for (unsigned int chan = 0; chan < nchan;chan++) {
-      ptr = ptr_base + chan;
-   /*   if (verbose)
-       cerr << "Incremented pointer" <<	ptr << " ..value " << *ptr << endl;
-     */ 
-      *op = *ptr;
-      op++;
-      *op=0;
-      op++;
-      
-    }
-  }	
-  if (verbose)
-    cerr << "dsp::Bandpass::built input data" << endl;
-  // set the output
-  // Need to pack the TimeSeries into a spectrum
-  // this would work....but the spectrum would go out of scope....
-  // Need to with define bandpass within calling function
-
-  float * outp;
-  fftw_complex *in;
-  fftw_complex *out;
-  
-  outp = new float [2*nchan];
-  /*  
-  if (verbose)
-    cerr << "dsp::Bandpass::npoints in BP is " << nchan << endl;
-  */
-  if (p==NULL)
-    p = fftw_create_plan(nchan,FFTW_FORWARD,FFTW_ESTIMATE);
-
-  if (verbose)
-    cerr << "allocated scrap buffer" << endl;
-
-  output->resize (npol, 1, nchan,1);
-  if (verbose)
-    cerr << "allocated output buffer" << endl;
-
-  for (int ipol=0;ipol<npol;ipol++) {
-
-    in = (fftw_complex*) &scrap[ipol*nchan*2];
-    out = (fftw_complex*) outp;
-
-    if (verbose){
-      cerr << "FFT " << nchan << " points" << " polarisation " << ipol << endl;
-      cerr << "in: "<< in << " out: " << out << endl;
-    }
-    
-    fftw_one (p,in,out);
-    
-    out[0].re=0;
-    out[0].im=0;   
-    
-    if (verbose)
-      cerr << "dsp::Bandpass::integrating (calling Response::integrate)" << endl;
-    
-    output->integrate ((float *) out,ipol);
-    if (verbose)
-      cerr << "dsp::Bandpass::Finished integrating " << endl;
+  else if (state == Signal::Analytic) {
+    nsamp_fft = resolution;
   }
-  
+  else
+    throw Error (InvalidState, "dsp::Bandpass::transformation",
+		 "Cannot transform Signal::State="
+		 + input->get_state_as_string());
+
+  // there must be at least enough data for one FFT
+  if (input->get_ndat() < nsamp_fft)
+    throw Error (InvalidState, "dsp::Bandpass::transformation",
+		 "error ndat="I64" < nfft=%d", input->get_ndat(), nsamp_fft);
+
+  // number of FFTs for this data block
+  uint64 npart = input->get_ndat() / nsamp_fft;
+
   if (verbose)
-    cerr << "dsp::Bandpass::deleting scrap buffer" << endl;
+    cerr << "dsp::Bandpass::transformation npart=" << npart << endl;
 
-  delete [] scrap;
-  delete [] outp;
+  float* spectrum[2];
+  spectrum[0] = float_workingspace (pts_reqd);
+  spectrum[1] = spectrum[0];
+  if (full_poln)
+    spectrum[1] += resolution * 2;
 
-  if (verbose)
-    cerr << "dsp::Bandpass::operate::Finished" << endl;
+  unsigned cross_pol = 1;
+  if (full_poln)
+    cross_pol = 2;
 
+  if (full_poln)
+    output->resize (4, nchan, resolution, 1);
+  else
+    output->resize (npol, nchan, resolution, 1);
+
+  // number of floats to step between each FFT
+  unsigned step = resolution * 2;
+
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+    for (unsigned ipol=0; ipol < npol; ipol++)
+      for (uint64 ipart=0; ipart < npart; ipart++)  {
+	
+	uint64 offset = ipart * step;
+		
+	for (unsigned jpol=0; jpol<cross_pol; jpol++) {
+	  
+	  if (full_poln)
+	    ipol = jpol;
+	  
+	  float* ptr = const_cast<float*>(input->get_datptr (ichan, ipol));
+	  ptr += offset;
+	  
+	  if (apodization)
+	    apodization -> operate (ptr);
+
+	  
+	  if (state == Signal::Nyquist)
+	    fft::frc1d (nsamp_fft, spectrum[ipol], ptr);
+
+	  else if (state == Signal::Analytic)
+	    fft::fcc1d (nsamp_fft, spectrum[ipol], ptr);
+	  
+	}
+	
+	if (full_poln) 
+	  output->integrate (spectrum[0], spectrum[1], ichan);
+
+	else
+	  output->integrate (spectrum[ipol], ipol, ichan);
+
+
+      }  // for each part of the time series
+
+  integration_length += double(npart*nsamp_fft) / input->get_rate();
+
+  // for each poln
+  // for each channel
 }
-dsp::Bandpass::~Bandpass () {
+
+//! Set the integration length and bandpass to zero
+void dsp::Bandpass::reset_output()
+{
+  integration_length = 0;
+  if (output)
+    output -> zero();
 }
-
-
-
-
