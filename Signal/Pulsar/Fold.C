@@ -499,9 +499,12 @@ void dsp::Fold::transformation ()
     ndatperweight = weighted_input->get_ndat_per_weight();
   }
 
+  //double integrated = 0.0;
+  //unsigned blocks = get_input()->get_nchan() * get_input()->get_npol();
+  //uint64 block_ndat = get_input()->maximum_ndat();
   //fold (integrated, output->get_datptr(), &(output->hits[0]),
-  //     input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
-  //     weights, ndatperweight, idat_start, ndat_fold);
+  //	input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
+  //	weights, ndatperweight, idat_start, ndat_fold);
   new_fold (weights, ndatperweight);
   
   if (folding_period > 0.0)
