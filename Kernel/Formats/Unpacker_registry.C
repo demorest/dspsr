@@ -1,7 +1,15 @@
+/*! \file Unpacker_registry.C
+  \brief Register dsp::Unpacker-derived classes for use in this file
+    
+  Classes that inherit dsp::Unpacker may be registered for use by
+  utilizing the Registry::List<dsp::Unpacker>::Enter<Type> template class.
+  Static instances of this template class should be given a unique
+  name and enclosed within preprocessor directives that make the
+  instantiation optional.  There are plenty of examples in the source code.
 
-/* HSK 9/12/02 Please note that coherentfb comes first as basically if
-   data has been rewritten to disk it should be unpacked by that packing,
-   rather than whatever unpacker it originally got unpacked as.
+  \note HSK 9/12/02 CoherentFBUnpacker comes first as basically if
+  data has been rewritten to disk it should be unpacked by that packing,
+  rather than whatever unpacker it originally got unpacked as.
 */
 
 #include "dsp/Unpacker.h"
@@ -41,31 +49,3 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>      pmdaq;
 static Registry::List<dsp::Unpacker>::Enter<dsp::PuMaTwoBitCorrection>  puma;
 #endif
 
-#include "Error.h"
-
-//! Return a pointer to a new instance of the appropriate sub-class
-dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
-{
-  try {
-
-    if (verbose) cerr << "dsp::Unpacker::create with " << registry.size()
-                      << " registered sub-classes" << endl;
-
-    for (unsigned ichild=0; ichild < registry.size(); ichild++)
-      if ( registry[ichild]->matches (observation) ) {
-
-        Unpacker* child = registry.create (ichild);
-        child-> match( observation );
-
-	if (verbose)
-	  cerr << "dsp::Unpacker::create return new sub-class" << endl;
-        return child;
-
-      }
-  } catch (Error& error) {
-    throw error += "dsp::Unpacker::create";
-  }
-
-  throw Error (InvalidState, "dsp::Unpacker::create",
-               "no unpacker for machine=" + observation->get_machine());
-}
