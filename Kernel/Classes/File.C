@@ -4,6 +4,7 @@
 #include "Reference.h"
 #include "Error.h"
 #include "RealTimer.h"
+#include "genutil.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -64,6 +65,9 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 		ichild,registry[ichild]->get_name().c_str());
 
       if ( registry[ichild]->is_valid (filename,_bs_index) ) {	
+	if( verbose )
+	  fprintf(stderr,"%s::is_valid() returned true\n",
+		  registry[ichild]->get_name().c_str());
 	File* child = registry.create (ichild);
 	child->open( filename,_bs_index );	
 	return child;	
@@ -179,16 +183,21 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
   if (verbose)
     cerr << "dsp::File::load_bytes nbytes=" << bytes << endl;
 
+  uint64 old_pos = uint64(lseek(fd,0,SEEK_CUR));
+
   ssize_t bytes_read = read (fd, buffer, bytes);
-  
+ 
   if (bytes_read < 0)
     perror ("dsp::File::load_bytes read error");
 
-  if( uint64(lseek(fd,0,SEEK_CUR)) == get_info()->get_nbytes()+uint64(header_bytes) )
+  if( uint64(lseek(fd,0,SEEK_CUR)) >= get_info()->get_nbytes()+uint64(header_bytes) ){
+    bytes_read = get_info()->get_nbytes()+uint64(header_bytes) - old_pos;
+    lseek(fd,get_info()->get_nbytes()+uint64(header_bytes),SEEK_SET);
     end_of_data = true;
+  }
   else
     end_of_data = false;
-  
+
   return bytes_read;
 }
 
