@@ -439,8 +439,13 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   // Initialize and check state
   //
 
-  if (!folding_nbin)
-    throw Error (InvalidState, "dsp::Fold::fold", "folding_nbin not set");
+  if (!folding_nbin) {
+
+    if (!requested_nbin)
+      throw Error (InvalidState, "dsp::Fold::fold", "nbin not set");
+
+    folding_nbin = requested_nbin;
+  }
 
   if (!folding_polyco && !folding_period)
     throw Error (InvalidState, "dsp::Fold::fold",
