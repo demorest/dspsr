@@ -13,7 +13,6 @@
 
 class MJD;
 class fptm_obs;
-class SystemTime;
 
 // these functions deal with transfering CPSR data to disk and looking
 // up observations in whatever databases are available (and fashionable)
@@ -44,10 +43,5 @@ int fd_relevant   (vector<fptm_obs>* observations, int fd,
 		   string* identifier=NULL);
 int PSPM_relevant (vector<fptm_obs>* observations, PSPM_SEARCH_HEADER* header,
 		   string* identifier=NULL);
-
-int xfer_tape (const char* tapedev, vector<int>* filenos,
-	       const vector<string>& disks, char* ext, 
-	       bool check_fptm = true, double leave_alone = 600e6, // 600MB
-	       SystemTime* clock=NULL, int obstype=-1, int keep=1);
 
 #endif // __CPSR_H
