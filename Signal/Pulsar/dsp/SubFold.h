@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.3 $
-   $Date: 2004/09/24 07:10:24 $
-   $Author: hknight $ */
+   $Revision: 1.4 $
+   $Date: 2004/11/02 14:02:22 $
+   $Author: wvanstra $ */
 
 #ifndef __SubFold_h
 #define __SubFold_h
@@ -66,6 +66,9 @@ namespace dsp {
 
     //! Folds the TimeSeries data into one or more sub-integrations
     virtual void transformation ();
+
+    //! Disable Fold class from setting the idat_start and ndat_fold attributes
+    virtual void set_limits (const Observation* input);
 
     //! If no unloader is set, sub-integrations are stored here
     vector< Reference::To<PhaseSeries> > subints;

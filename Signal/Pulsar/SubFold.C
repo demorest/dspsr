@@ -138,6 +138,14 @@ void dsp::SubFold::transformation ()
   }
 }
 
+void dsp::SubFold::set_limits (const Observation* input)
+{
+  /* Limits are set by the SubFold::bound method.  However,
+   Fold::transformation calls this virtual method when it is called in
+   SubFold::transformation.  Therefore, it is necessary to disable
+   Fold::set_limits. */
+}
+
 /*! This method sets the idat_start and ndat_fold attributes of the
   Fold base class */
 bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
