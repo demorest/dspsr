@@ -62,7 +62,8 @@ void dsp::RFIFilter::match (const Observation* obs, unsigned nchan)
   if (!data)
     data = new Response;
 
-  cerr << "making bandpass with nchan=" << nchan_bandpass << endl;
+  if (verbose)
+    cerr << "dsp::RFIFilter::match bandpass nchan=" << nchan_bandpass << endl;
 
   bandpass->set_input (buffer);
   bandpass->set_output (data);
@@ -89,8 +90,6 @@ void dsp::RFIFilter::match (const Observation* obs, unsigned nchan)
   input->get_input()->set_block_size (blocksz);
   input->get_input()->set_overlap (overlap);
   input->set_output (ptr);
-
-  cerr << "computing mask" << endl;
 
   calculate (data);
 }
@@ -121,38 +120,35 @@ void dsp::RFIFilter::calculate (Response* bp)
 
   variance /= nchan_bp;
 
-  resize (1, 1, nchan_bp, 2);
+  resize (1, 1, nchan_bp, 1);
+  float* ptr = get_datptr(0,0);
 
   bool zapped = true;
   unsigned round = 1;
+  unsigned total_zapped = 0;
 
   while (zapped)  {
 
-  float cutoff = 16.0 * variance;
-  cerr << "round " << round << " cutoff = " << cutoff << endl;
+    float cutoff = 16.0 * variance;
+    cerr << "\tround " << round << " cutoff = " << cutoff << endl;
 
-  zapped = false;
-  round ++;
-  float* ptr = get_datptr(0,0);
+    zapped = false;
+    round ++;
 
-  for (ichan=0; ichan < nchan_bp; ichan++) {
-    if (spectrum[ichan] > cutoff ||
-        (ichan && fabs(spectrum[ichan]-spectrum[ichan-1]) > 2*cutoff)) {
-      cerr << "ichan=" << ichan << endl;
-      variance -= spectrum[ichan]/nchan_bp;
-      spectrum[ichan] = p0ptr[ichan] = p1ptr[ichan] = *ptr = 0.0;
-      zapped = true; 
-    }
-    else
-      *ptr = 1;
+    for (ichan=0; ichan < nchan_bp; ichan++)
+      if (spectrum[ichan] > cutoff ||
+          (ichan && fabs(spectrum[ichan]-spectrum[ichan-1]) > 2*cutoff)) {
+        variance -= spectrum[ichan]/nchan_bp;
+        spectrum[ichan] = p0ptr[ichan] = p1ptr[ichan] = ptr[ichan] = 0.0;
+	total_zapped ++;
+        zapped = true; 
+      }
+      else
+        ptr[ichan] = 1;
 
-    // imaginary
-    ptr ++;
-    *ptr = 0;
-    ptr ++;
   }
-  }
-    
+
+  cerr << "\tzapped " << total_zapped << " channels" << endl;
   calculated = true;
 }
 
@@ -174,22 +170,29 @@ void dsp::RFIFilter::match (const Response* response)
 
   unsigned required = response->get_nchan() * response->get_ndat();
   unsigned expand = required / get_ndat();
+  unsigned shrink = get_ndat() / required;
 
-  cerr << "expand by " << expand << endl;
-
-  vector< complex<float> > phasors (required);
+  vector< complex<float> > phasors (required, 1.0);
 
   float* data = get_datptr(0,0);
 
-  for (unsigned idat=0; idat < get_ndat(); idat++)
-    for (unsigned ip=0; ip < expand; ip++)
-      phasors[idat*expand+ip] = data[idat];
+  if (expand)
+    for (unsigned idat=0; idat < get_ndat(); idat++)
+      for (unsigned ip=0; ip < expand; ip++)
+        phasors[idat*expand+ip] = data[idat];
+  else if (shrink)
+    for (unsigned idat=0; idat < required; idat++)
+      for (unsigned ip=0; ip < expand; ip++)
+        if (data[idat*shrink+ip] == 0.0)
+          phasors[idat] = 0.0;
+  else
+    throw Error (InvalidState, "dsp::RFIFilter::match Response",
+                 "not matched and not able to shrink or expand");
 
   set (phasors);
 
   resize (1, response->get_nchan(),
 	  response->get_ndat(), 2);
-
 
 }
 
