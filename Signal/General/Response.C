@@ -65,7 +65,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
   else  {
 
     // if the filterbank channels are centred on DC
-    if ( input->get_dc_centred() && !bin_centred ) {
+    if ( input->get_dc_centred() && !dc_centred ) {
       if (verbose)
 	cerr << "dsp::Response::match rotate half channel" << endl;
 
@@ -73,7 +73,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
         swap (true);
 
       rotate (-int(ndat/2));
-      bin_centred = true;
+      dc_centred = true;
     }
 
     // if the input Observation is multi-channel, complex sampled data,
@@ -101,14 +101,16 @@ bool dsp::Response::matches (const Response* response)
   return
     whole_swapped == response->whole_swapped &&
     chan_swapped == response->chan_swapped &&
-    bin_centred == response->bin_centred &&
+    dc_centred == response->dc_centred &&
+
     nchan == response->get_nchan() &&
     ndat == response->get_ndat();
     // Shape::matches (response);
+
 }
 
 //! Match the frequency response to another Response
-void dsp::Response::match(const Response* response)
+void dsp::Response::match (const Response* response)
 {
   if (matches (response))
     return;
@@ -119,7 +121,7 @@ void dsp::Response::match(const Response* response)
   
   whole_swapped = response->whole_swapped;
   chan_swapped = response->chan_swapped;
-  bin_centred = response->bin_centred;
+  dc_centred = response->dc_centred;
   
   zero();
 }
@@ -131,15 +133,25 @@ void dsp::Response::mark (Observation* output)
 
 void dsp::Response::naturalize ()
 {
-  if ( whole_swapped )
-    swap (false);
-    
-  if ( chan_swapped )
-    swap (true);
+  cerr << "dsp::Response::naturalize" << endl;
 
-  if ( bin_centred ) {
+  if ( whole_swapped ) {
+    if (verbose)
+      cerr << "dsp::Response::naturalize whole bandpass swap" << endl;
+    swap (false);
+  }
+
+  if ( chan_swapped ) {
+    if (verbose)
+      cerr << "dsp::Response::naturalize sub-bandpass swap" << endl;
+    swap (true);
+  }
+  
+  if ( dc_centred ) {
+    if (verbose)
+      cerr << "dsp::Response::naturalize rotation" << endl;
     rotate (ndat/2);
-    bin_centred = false;
+    dc_centred = false;
   }
 }
 
