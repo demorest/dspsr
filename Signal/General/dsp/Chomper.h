@@ -31,6 +31,15 @@ namespace dsp {
     //! Don't chomp off the timeseries to new_ndat
     void dont_use_new_ndat(){ use_new_ndat = false; }
 
+    //! Set multiplying facter
+    void set_multiplier(float _multiplier){ multiplier = _multiplier; dont_multiply = false; }
+
+    //! Get multiplying facter
+    float get_multiplier(){ return multiplier; }
+
+    //! Don't multiply by a previously set multiplying factor
+    void dont_use_multiplier(){ dont_multiply = true; }
+
   protected:
     void transformation();
 
@@ -44,6 +53,12 @@ namespace dsp {
 
     //! Gets set to true on set_new_ndat
     bool use_new_ndat;
+
+    //! Chomper can also multiply
+    float multiplier;
+
+    //! Whether or not to use 'multiplier'
+    bool dont_multiply;
 
   };
 

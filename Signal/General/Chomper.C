@@ -9,6 +9,8 @@ dsp::Chomper::Chomper() : Transformation<TimeSeries,TimeSeries>("Chomper",inplac
   new_ndat = 0;
   rounding = 1;
   use_new_ndat = false;
+  multiplier = 0.0;
+  dont_multiply = true;
 }
 
 void dsp::Chomper::transformation(){
@@ -20,5 +22,8 @@ void dsp::Chomper::transformation(){
     get_input()->set_ndat( new_ndat );
   }
 
-  get_input()->set_ndat( get_input()->get_ndat() % rounding );
+  get_input()->set_ndat( get_input()->get_ndat() - get_input()->get_ndat() % rounding );
+
+  if( !dont_multiply )
+    get_input()->operator*=( multiplier );
 }
