@@ -40,10 +40,7 @@ void dsp::Input::set_output (BitSeries* data)
   if (verbose)
     cerr << "dsp::Input::set_output (BitSeries* = " << data << ")" << endl;
 
-  if (!output || output != data) {
-    output = data;
-    output -> input_sample = -1;
-  }
+  output = data;
 }
 
 /*! This method throws an exception if the output is not set.  To test
@@ -131,7 +128,10 @@ void dsp::Input::load (BitSeries* data)
 
   load_data (data);
 
+  // mark the input_sample and input attributes of the BitSeries
   data->input_sample = load_sample;
+  data->input = this;
+
   data->request_offset = resolution_offset;
   data->request_ndat   = block_size;
 

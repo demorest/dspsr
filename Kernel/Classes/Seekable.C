@@ -139,13 +139,14 @@ void dsp::Seekable::load_data (BitSeries* data)
 }
 
 /*!  Based on the next time sample, get_load_sample, and the number of
-  time samples, get_load_size, to be loaded, this function determines the
-  amount of requested data that is currently found in the BitSeries object,
-  copies this data to the start of BitSeries::data and returns the
-  number of time samples that have been "recycled" */
+  time samples, get_load_size, to be loaded, this function determines
+  the amount of requested data that is currently found in the output
+  BitSeries instance.  This data is then copied to the start of
+  BitSeries::data and the number of time samples that have been
+  "recycled" is returned. */
 uint64 dsp::Seekable::recycle_data (BitSeries* data)
 {
-  if (data->get_input_sample() == -1)  {
+  if (data->get_input_sample(this) == -1)  {
     if (verbose)
       cerr << "dsp::Seekable::recycle_data no input_sample" << endl;
     return 0;
