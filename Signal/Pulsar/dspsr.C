@@ -22,7 +22,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:b:f:F:jM:n:N:st:vV";
+static char* args = "2:a:b:f:F:hjM:n:N:st:vV";
 
 void usage ()
 {
@@ -51,29 +51,42 @@ int main (int argc, char** argv)
 
 { try {
 
-  char* metafile = 0;
   bool verbose = false;
 
   // number of time samples loaded from file at a time
   int blocks = 0;
   int ndim = 4;
   int nchan = 1;
-  int nbin = 1024;
+  int nbin = 0;
   int ffts = 16;
   int fres = 0;
 
+  // perform coherent dedispersion during filterbank construction
   bool simultaneous = false;
+
+  // number of time samples used to estimate undigitized power
+  unsigned tbc_nsample = 0;
+
+  // cutoff power used for impulsive interference rejection
+  float tbc_cutoff = 0.0;
+
+  // sampling threshold
+  float tbc_threshold = 0.0;
+
+  // class name of the archives to be produced
+  string archive_class = "TimerArchive";
+
+  // form single pulse archives
   bool single_pulse = false;
+
+  // treat all files as though they were one contiguous observation
   bool join_files = false;
 
-  unsigned tbc_nsample = 0;
-  float tbc_cutoff = 0.0;
-  float tbc_threshold = 0.0;
+  // load filenames from the ascii file named metafile
+  char* metafile = 0;
 
   int c;
   int scanned;
-
-  string archive_class = "TimerArchive";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -105,16 +118,6 @@ int main (int argc, char** argv)
       cerr << "dspsr: error parsing " << optarg << " as"
 	  " two-bit correction nsample, threshold, or cutoff" << endl;
       return -1;
-
-    case 'V':
-      Pulsar::Archive::set_verbosity (3);
-      dsp::Observation::verbose = true;
-      dsp::Operation::verbose = true;
-      dsp::Shape::verbose = true;
-    case 'v':
-      dsp::Archiver::verbose = true;
-      verbose = true;
-      break;
 
     case 'a':
       archive_class = optarg;
@@ -156,6 +159,10 @@ int main (int argc, char** argv)
       ffts = atoi (optarg);
       break;
 
+    case 'h':
+      usage ();
+      return 0;
+
     case 'j':
       join_files = true;
       break;
@@ -174,6 +181,16 @@ int main (int argc, char** argv)
 
     case 't':
       blocks = atoi (optarg);
+      break;
+
+    case 'V':
+      Pulsar::Archive::set_verbosity (3);
+      dsp::Observation::verbose = true;
+      dsp::Operation::verbose = true;
+      dsp::Shape::verbose = true;
+    case 'v':
+      dsp::Archiver::verbose = true;
+      verbose = true;
       break;
 
     default:
@@ -302,7 +319,9 @@ int main (int argc, char** argv)
   else
     fold = new dsp::Fold;
 
-  fold->set_nbin (nbin);
+  if (nbin)
+    fold->set_nbin (nbin);
+
   fold->set_input (convolve);
   fold->set_output (profiles);
 
