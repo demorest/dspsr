@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/08/07 12:25:02 $
+   $Revision: 1.3 $
+   $Date: 2002/08/10 06:08:41 $
    $Author: pulsar $ */
 
 
@@ -28,9 +28,9 @@ namespace dsp {
     ~TwoBitTable ();
 
     //! Returns a pointer to the first of four values represented by one byte
-    const float* get_four_vals (unsigned char byte) const
+    const float* get_four_vals (unsigned byte) const
     {
-      return table + 4 * unsigned(byte); 
+      return table + 4 * byte; 
     }
 
     //! Return the value of the low voltage state
