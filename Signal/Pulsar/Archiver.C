@@ -306,7 +306,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 
   if (zeroes)
     cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
-	 << " bins with zero hits!" << "\r";
+	 << " out of " << nbin << " bins with zero hits\r";
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";

@@ -245,6 +245,8 @@ int main (int argc, char** argv)
 	     << endl;
 	return -1;
       }
+      cerr << "dspsr: reference phase of pulse profile bin zero = "
+           << reference_phase << endl;
       break;
 
     case 'r':
@@ -645,15 +647,24 @@ int main (int argc, char** argv)
 	       (float) operations[iop]->get_total_time());
 
     if (!single_pulse) {
+
       if (verbose)
 	cerr << "Creating archive" << endl;
       archiver->set_profiles (profiles);
       archiver->unload ();
+
     }
     else if (archive) {
-      cerr << "Unloading single archive '" << archive->get_filename() << "'" 
-	   << endl;
+
+      cerr << "Unloading single archive with " << archive->get_nsubint ()
+           << " integrations" << endl
+           << "Filename = '" << archive->get_filename() << "'" << endl;
+
+      // archive->pscrunch ();
+      // archive->fscrunch ();
+
       archive->unload ();
+
     }
   }
   catch (string& error) {
