@@ -48,7 +48,7 @@ SWINBURNE_REPOSITORY = mania.physics.swin.edu.au:/psr/cvsroot
 ##########################################################################
 # macro definitions for various "home-grown" libraries
 ##########################################################################
-LTIMES = -ltimes $(LSLA)
+LTIMES = -ltimes $(LSLA) -lm
 
 ##########################################################################
 # package-specific macro definitions
@@ -100,7 +100,7 @@ endif
 
 ##########################################################################
 # SLA LIB
-LSLA := -lsla
+LSLA := -lsla $(LF77)
 
 ##########################################################################
 # OS-specific
