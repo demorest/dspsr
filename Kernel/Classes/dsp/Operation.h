@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/05/08 12:12:13 $
-   $Author: hknight $ */
+   $Revision: 1.17 $
+   $Date: 2003/05/14 04:10:16 $
+   $Author: pulsar $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -58,6 +58,8 @@ namespace dsp {
     static void set_timekeeper(TimeKeeper* _timekeeper);
     static void unset_timekeeper();
 
+    //! Pointer to the timekeeper
+    static TimeKeeper* timekeeper;
   protected:
 
     //! Perform operation on data.  Defined by sub-classes
@@ -79,10 +81,6 @@ namespace dsp {
 
     //! Stop watch records the amount of time spent performing this operation
     RealTimer optime;
-
-  private:
-    //! Pointer to the timekeeper
-    static TimeKeeper* timekeeper;
 
   };
   
