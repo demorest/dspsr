@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.25 $
-   $Date: 2004/08/27 03:34:50 $
+   $Revision: 1.26 $
+   $Date: 2004/11/01 23:48:26 $
    $Author: hknight $ */
 
 #ifndef __Operation_h
@@ -34,6 +34,9 @@ namespace dsp {
     friend class TimeKeeper;
 
   public:
+
+    //! If this is set to true then dsp::Transformation nukes prepends with test values
+    static bool debug;
 
     //! Global flag enables stopwatch to record the time spent operating
     static bool record_time;

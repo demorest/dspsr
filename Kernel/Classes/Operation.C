@@ -10,7 +10,10 @@
 
 //! Global time keeper
 dsp::TimeKeeper* dsp::Operation::timekeeper = 0;
- 
+
+//! If this is set to true then dsp::Transformation nukes prepends with test values
+bool dsp::Operation::debug = false;
+
 //! Global flag tells all Operations to record the time spent operating
 bool dsp::Operation::record_time = false;
 
