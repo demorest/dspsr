@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.23 $
-   $Date: 2003/10/25 06:47:08 $
+   $Revision: 1.24 $
+   $Date: 2004/03/18 03:12:47 $
    $Author: hknight $ */
 
 
@@ -64,7 +64,7 @@ namespace dsp {
     virtual bool is_valid (const char* filename, int _bs_index=0) const = 0;
 
     //! Open the file
-    void open (const char* filename,int _bs_index=0);
+    virtual void open (const char* filename,int _bs_index=0);
 
     //! Convenience interface to File::open (const char*)
     void open (const string& filename,int _bs_index=0) 
@@ -72,7 +72,7 @@ namespace dsp {
 
     //! Open from a PseudoFile
     /*! Resets attributes without calling open_file */
-    void open (const PseudoFile& file);
+    virtual void open (const PseudoFile& file);
 
     //! Close the file
     virtual void close ();
