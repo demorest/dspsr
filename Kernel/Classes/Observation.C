@@ -3,6 +3,8 @@
 #include "Observation.h"
 #include "Telescope.h"
 
+#include "MJD.h"
+
 #include "genutil.h"
 #include "string_utils.h"
 
@@ -44,13 +46,12 @@ void dsp::Observation::init ()
   bandwidth = 0;
 
   basis = Signal::Linear;
-  state = Signal::Intensity;
-  type = Signal::Pulsar;
 
   start_time = 0.0;
   rate = 0;
 
   scale = 1;
+  state = Signal::Intensity;
 
   swap = dc_centred = false;
   telescope = 0;
@@ -82,6 +83,24 @@ void dsp::Observation::set_state (Signal::State _state)
     ndim = 1;
   else if (state == Signal::Analytic)
     ndim = 2;
+  else if (state == Signal::Intensity){
+    ndim = 1;
+    npol = 1;
+  }
+  else if (state == Signal::PPQQ){
+    ndim = 1;
+    npol = 2;
+  }
+  else if (state == Signal::Coherence){
+    /* best not to muck with kludges */
+  }
+  else if (state == Signal::Stokes){
+    /* best not to muck with kludges */
+  }
+  else if (state == Signal::Invariant){
+    ndim = 1;
+    npol = 1;
+  }
 }
 
 /*! 
