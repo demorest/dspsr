@@ -232,7 +232,7 @@ int main (int argc, char** argv)
 	  rms [ipt] = 0;
 	  unsigned count = 0;
 
-	  for (int jdat=0; jdat<point_size && idat<ndat; jdat++)  {
+	  for (uint64 jdat=0; jdat<point_size && idat<ndat; jdat++)  {
 	    float sample = data[idat]; idat ++;
 	    mean[ipt] += sample;
 	    rms [ipt] += sample*sample;
