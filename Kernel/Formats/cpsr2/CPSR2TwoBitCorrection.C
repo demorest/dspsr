@@ -20,15 +20,17 @@ dsp::CPSR2TwoBitCorrection::CPSR2TwoBitCorrection (unsigned _nsample,
 
   nsample = _nsample;
   cutoff_sigma = _cutoff_sigma;
-
+  
   nchannel = 2;
+  table = 0;
 }
 
 void dsp::CPSR2TwoBitCorrection::unpack ()
 {
   if (input->get_ndim() != 1)
-    throw_str ("TwoBitCorrection::operation input not real sampled");
+    throw_str ("CPSR2TwoBitCorrection::operation input not real sampled");
 
+#if 0
   int64 ndat = input->get_ndat();
   const unsigned char* rawptr = input->get_rawptr();
 
@@ -37,6 +39,7 @@ void dsp::CPSR2TwoBitCorrection::unpack ()
 
 
   }  // for each polarization
+#endif
 
 }
 
@@ -47,18 +50,22 @@ int64 dsp::CPSR2TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   static unsigned char* lu_nlo = 0;
 
   if (!input)
-    throw string ("dsp::CPSR2TwoBitCorrection::stats no input");
+    throw_str ("CPSR2TwoBitCorrection::stats no input");
 
   if (input->get_nbit() != 2)
-    throw string ("dsp::CPSR2TwoBitCorrection::stats input nbit != 2");
+    throw_str ("CPSR2TwoBitCorrection::stats input nbit != 2");
 
   if (input->get_state() != Observation::Nyquist)
-    throw string ("dsp::CPSR2TwoBitCorrection::stats input state != Nyquist");
+    throw_str ("CPSR2TwoBitCorrection::stats input state != Nyquist");
 
   if (!table)
     table = new TwoBitTable (TwoBitTable::OffsetBinary);
 
-  if (!lu_sum) {
+  if (lu_sum == NULL) {
+
+    //if (verbose)
+    cerr << "CPSR2TwoBitCorrection::stats generate lookup table" <<endl;
+
     // calculate the sum and sum-squared of the four time samples in each byte
     lu_sum = new float [256];
     lu_sumsq = new float [256];
@@ -69,8 +76,8 @@ int64 dsp::CPSR2TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
     float valsq = 0;
     float lo_valsq = table->get_lo_val() * table->get_lo_val();
 
-    for (unsigned char byte = 0; byte < 256; byte++) {
-
+    for (unsigned byte = 0; byte < 256; byte++) {
+      
       lu_sum[byte] = 0;
       lu_sumsq[byte] = 0;
       lu_nlo[byte] = 0;
@@ -93,18 +100,32 @@ int64 dsp::CPSR2TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   // number of weight samples
   unsigned nweights = input->get_ndat() / nsample;
 
-  // number of bytes per weight sample
-  unsigned nbytes_per_weight = input->nbytes () / nweights;
-
   unsigned npol = input->get_npol ();
+
+  unsigned nbytes = input->nbytes() / npol;
+
+  // number of bytes per weight sample
+  unsigned nbytes_per_weight = nbytes / nweights;
+
+
+  if (verbose)
+    cerr << "CPSR2TwoBitCorrection::stats npol=" << npol 
+	 << " nweights=" << nweights << " bytespw=" << nbytes_per_weight
+	 << endl;
+
+  m.resize(npol);
+  p.resize(npol);
+
+  unsigned total_samples = 0;
 
   for (unsigned ipol=0; ipol < npol; ipol++) {
 
     unsigned long* hist = histograms + nsample * ipol;
     double sum = 0;
     double sumsq = 0;
+    total_samples = 0;
 
-    const unsigned char* data = input->get_rawptr();
+    const unsigned char* data = input->get_rawptr() + ipol;
     unsigned char datum;
 
     for (unsigned iwt=0; iwt<nweights; iwt++) {
@@ -114,24 +135,31 @@ int64 dsp::CPSR2TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
       for (unsigned ipwt=0; ipwt < nbytes_per_weight; ipwt++) {
 
 	datum = *data;
-	data += ipol;
+	data += npol;
 
 	sum += lu_sum[datum];
 	sumsq += lu_sumsq[datum];
 	nlo += lu_nlo[datum];
 
+	// every byte has four samples from one polarization in it
+	total_samples += 4;
       }
 
-      hist[nlo] ++;
+      if (hist)
+	hist[nlo] ++;
     }
-
+    //cerr << "sum:" << ipol << "=" << sum << endl;
+    //cerr << "sumsq:" << ipol << "=" << sumsq << endl;
+    m[ipol] = sum;
+    p[ipol] = sumsq;
   }
 
-  unsigned nbytes_total = nweights * nbytes_per_weight;
-  unsigned nsamples_per_byte = unsigned (1.0/input->nbyte());
+  if (verbose)
+    cerr << "CPSR2TwoBitCorrection::stats return total samples " 
+	 << total_samples <<  endl;
 
   // return the total number of timesamples measured
-  return nbytes_total * nsamples_per_byte; 
+  return total_samples;
 }
 
 void dsp::CPSR2TwoBitCorrection::build (int nsamp, float sigma)
