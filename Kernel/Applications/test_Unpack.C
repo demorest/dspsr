@@ -9,16 +9,14 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "b:B:n:t:vV";
+static char* args = "B:t:vV";
 
 void usage ()
 {
-  cout << "test_Fold - test phase coherent dedispersion kernel\n"
-    "Usage: test_Fold [" << args << "] file1 [file2 ...] \n"
-    " -b nbin\n"
+  cout << "test_Unpack - test phase coherent dedispersion kernel\n"
+    "Usage: test_Unpack [" << args << "] file1 [file2 ...] \n"
     " -B block_size  (in number of time samples)\n"
     " -t blocks      (stop before the end of the file)\n"
-    " -n [1|2|4]     ndim kludge when forming stokes\n"
        << endl;
 }
 
@@ -80,7 +78,6 @@ int main (int argc, char** argv)
   dsp::IOManager manager;
   manager.set_block_size (block_size);  
 
-
   dsp::Operation::record_time = true;
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
@@ -104,8 +101,8 @@ int main (int argc, char** argv)
       voltages.check();
 
       block++;
-      cerr << "finished " << block << " blocks\r";
-      if (block == blocks) break;
+      if (block == blocks)
+	break;
     }
 
     if (verbose)
