@@ -30,10 +30,26 @@ bool dsp::ChannelPtr::operator < (const ChannelPtr& c) const{
 
 dsp::TimeSeries::TimeSeries()
 {
+  init();
+}
+
+void dsp::TimeSeries::init(){
+  Observation::init();
+  
   data = buffer = NULL;
   size = 0;
   subsize = 0;
   nbit = 8 * sizeof(float);
+}
+  
+
+dsp::TimeSeries::TimeSeries(const TimeSeries& ts) {
+  init();
+  operator=(ts);
+}
+
+dsp::TimeSeries* dsp::TimeSeries::clone(){
+  return new TimeSeries(*this);
 }
 
 dsp::TimeSeries::~TimeSeries()
@@ -68,15 +84,20 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   if (verbose)
     cerr << "dsp::TimeSeries::resize (" << nsamples << ")" << endl;
 
-  uint64 require = ndim * nsamples * npol * nchan;
+  uint64 require = uint64(ndim) * nsamples * uint64(npol) * uint64(nchan);
 
   if( verbose )
-    cerr << "dsp::TimeSeries::resize require="<<require<<endl;
+    fprintf(stderr,"dsp::TimeSeries::resize require= "UI64" * "UI64" * "UI64" * "UI64" * = "UI64" (cf size="UI64") (buffer=%p and data=%p\n",
+	    uint64(ndim) , nsamples , uint64(npol) , uint64(nchan), require, size,
+	    buffer,data);
 
   if (!require || require > size) {
     if (buffer) delete buffer; buffer = 0;
     data = 0;
     size = subsize = 0;
+
+    if( verbose )
+      fprintf(stderr,"dsp::TimeSeries::resize has deleted old data buffer, size now is zero\n");
   }
 
   ndat = nsamples;
@@ -85,15 +106,18 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     return;
 
   if (size == 0) {
-    //    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() calling new float["UI64"]\n", require);
+    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() calling new float["UI64"]\n", require);
     buffer = new float[require];
-    //if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() have called new float["UI64"]\n", require);
+    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() have called new float["UI64"] buffer=%p\n", require, buffer);
     size = require;
   }
 
   subsize = ndim * nsamples;
 
   data = buffer;
+
+  if( verbose )
+    fprintf(stderr,"dsp::TimeSeries::resize() returning with data=%p\n",data);
 }
 
 //! Offset the base pointer by offset time samples
@@ -160,20 +184,21 @@ dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
     return *this;
 
   Observation::operator = (copy);
+  nbit = copy.get_nbit();
+
   resize (copy.get_ndat());
 
   uint64 npt = get_ndat() * get_ndim();
 
-  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++){
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
-
       float* data1 = get_datptr (ichan, ipol);
       const float* data2 = copy.get_datptr (ichan, ipol);
 
       for (uint64 ipt=0; ipt<npt; ipt++)
         data1[ipt] = data2[ipt];
-
     }
+  }
 
   return *this;
 }
@@ -367,26 +392,15 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
   uint64 ncontain = get_ndat() * get_ndim();
   uint64 ncopy = little->get_ndat() * little->get_ndim();
 
-  if( verbose ){
-    fprintf(stderr,"ncopy="UI64"\n",ncopy);
-    fprintf(stderr,"ncontain="UI64"\n",ncontain);
-    fprintf(stderr,"subsize="UI64"\n",subsize);
-  }
-
+  append_checks(ncontain,ncopy,little);
   if( ncontain==subsize )
     return 0;
-
-  if ( subsize <= ncontain + ncopy ){
-    ncopy = subsize - ncontain;
-    fprintf(stderr,"dsp::TimeSeries::append()- this append will fill up the timeseries from ndat="UI64" with ncopy="UI64" to ndat="UI64".\n",
-	    get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
-  }
 
   if ( get_ndat() == 0 ) {
     Observation::operator=(*little);
     set_ndat (0);
   }    
-  else if( !contiguous(*little) )
+  else if( !contiguous(*little,true) )
     throw Error (InvalidState, "dsp::TimeSeries::append()",
 		 "next TimeSeries is not contiguous");
   
@@ -402,6 +416,51 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
   set_ndat (get_ndat() + ncopy/little->get_ndim());
 
   return ncopy / uint64(ndim);
+}
+
+uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsigned ipol){
+  uint64 ncontain = get_ndat() * get_ndim();
+  uint64 ncopy = little->get_ndat() * little->get_ndim();
+  
+  append_checks(ncontain,ncopy,little);
+  if( ncontain==subsize )
+    return 0;
+
+  if ( get_ndat() == 0 ) {
+    Observation::operator=(*little);
+    set_nchan(1);
+    set_npol(1);
+    set_centre_frequency( little->get_centre_frequency( ichan ) );
+    set_bandwidth( little->get_bandwidth()/little->get_nchan() );
+    set_dc_centred( true );
+    set_ndat (0);
+  }    
+  else if( !contiguous(*little,true,ichan,ipol) )
+    throw Error (InvalidState, "dsp::TimeSeries::append()",
+		 "next TimeSeries is not contiguous");
+  
+  const float* from = little->get_datptr (ichan,ipol);
+  float* to = get_datptr(0,0) + ncontain;
+  memcpy (to, from, ncopy*sizeof(float));
+  
+  set_ndat (get_ndat() + ncopy/little->get_ndim());
+
+  return ncopy / uint64(ndim);
+}			       
+
+void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
+				    const TimeSeries* little){
+  if( verbose ){
+    fprintf(stderr,"ncopy="UI64"\n",ncopy);
+    fprintf(stderr,"ncontain="UI64"\n",ncontain);
+    fprintf(stderr,"subsize="UI64"\n",subsize);
+  }
+
+  if ( subsize <= ncontain + ncopy ){
+    ncopy = subsize - ncontain;
+    fprintf(stderr,"dsp::TimeSeries::append()- this append will fill up the timeseries from ndat="UI64" with ncopy="UI64" to ndat="UI64".\n",
+	    get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
+  }
 }
 
 void dsp::TimeSeries::check (float min, float max)

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/07/01 05:14:56 $
+   $Revision: 1.17 $
+   $Date: 2003/07/05 08:21:09 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -33,6 +33,15 @@ namespace dsp {
   public:
     //! Null constructor
     TimeSeries ();
+
+    //! Copy constructor
+    TimeSeries(const TimeSeries& ts);
+
+    //! Called by constructor to initialise variables
+    virtual void init();
+
+    //! Cloner (calls new)
+    virtual TimeSeries* clone();
 
     //! Ouch! Destructor
     virtual ~TimeSeries();
@@ -75,6 +84,9 @@ namespace dsp {
     //! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
     //! If it is equal to little->get_ndat(), it may/may not be full.
     virtual uint64 append (const TimeSeries* little);
+
+    //! Only append the one chan/pol pair
+    virtual uint64 append(const TimeSeries* little,unsigned ichan,unsigned ipol);
 
     //! Set all values to zero
     virtual void zero ();
@@ -123,6 +135,11 @@ namespace dsp {
     virtual uint64 get_subsize(){ return subsize; }
 
   protected:
+
+    //! Called by append()
+    void append_checks(uint64& ncontain,uint64& ncopy,
+		       const TimeSeries* little);
+
     //! The data buffer
     float* buffer;
 
