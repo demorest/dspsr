@@ -91,8 +91,6 @@ int main (int argc, char** argv)
   dsp::IOManager manager;
 
   manager.set_block_size (block_size);
-  manager.set_nsample (1024);  // ppweight
-
   
   if (verbose)
     cerr << "Creating Detection instance" << endl;

@@ -78,7 +78,6 @@ int main (int argc, char** argv)
   // interface manages the creation of data loading and converting classes
   dsp::IOManager manager;
   manager.set_block_size (block_size);
-  manager.set_nsample (1024);  // ppweight
 
   if (verbose)
     cerr << "Creating Detection instance" << endl;
