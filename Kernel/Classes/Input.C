@@ -16,6 +16,8 @@ dsp::Input::Input (const char* name) : Operation (name)
 
   resolution = 1;
   resolution_offset = 0;
+
+  last_load_ndat = 0;
 }
 
 dsp::Input::~Input ()
@@ -151,6 +153,9 @@ void dsp::Input::load (BitSeries* data)
 	   << block_size << " but eod not set" << endl;
   }
 
+  last_load_ndat = data->get_ndat();
+  fprintf(stderr,"Have set last_load_ndat to "UI64"\n",last_load_ndat);
+
   if (verbose)
     cerr << "dsp::Input::load calling seek(" << to_seek << ")" << endl;
 
@@ -205,15 +210,17 @@ void dsp::Input::seek (int64 offset, int whence)
     if (offset < -int64(info.get_ndat()))
       throw Error (InvalidRange, "dsp::Input::seek", "SEEK_END -ve offset");
 
-    if (offset != 0)
-      set_eod( false );
-
     next_sample = info.get_ndat() + offset;
     break;
 
   default:
     throw Error (InvalidParam, "dsp::Input::seek", "invalid whence");
   }
+
+  if( next_sample < get_info()->get_ndat() )
+    set_eod( false );
+  else
+    set_eod( true );
 
   // calculate the extra samples required owing to resolution
   resolution_offset = next_sample % resolution;
