@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/22 04:29:58 $
+   $Revision: 1.7 $
+   $Date: 2003/03/13 23:17:00 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -12,6 +12,8 @@
 #include <iostream>
 
 #include <stdlib.h>
+
+#include "environ.h"
 
 #include "Error.h"
 
@@ -89,7 +91,8 @@ void dsp::Transformation<In, Out>::operation ()
 
   if (input->get_ndat() < 1)
     throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
-		 "empty input");
+		 "empty input- input=%p input->ndat="UI64,
+		 input.get(),input->get_ndat());
 
   string reason;
   if (!input->state_is_valid (reason))
