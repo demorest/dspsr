@@ -8,12 +8,13 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "B:t:vV";
+static char* args = "b:t:vV";
 
 void usage ()
 {
   cout << "test_Input - test time sample resolution features of Input class\n"
     "Usage: test_Input [" << args << "] file1 [file2 ...] \n"
+    " -b block size  the base block size used in the test\n"
     " -t blocks      (stop before the end of the file)\n"
        << endl;
 }
@@ -26,6 +27,7 @@ int main (int argc, char** argv)
   bool verbose = false;
 
   int blocks = 0;
+  unsigned block_size = 4096;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -34,8 +36,13 @@ int main (int argc, char** argv)
     case 'V':
       dsp::Observation::verbose = true;
       dsp::Operation::verbose = true;
+
     case 'v':
       verbose = true;
+      break;
+
+    case 'b':
+      block_size = atoi (optarg);
       break;
 
     case 't':
@@ -87,7 +94,11 @@ int main (int argc, char** argv)
     input_small->set_output (data_small);
     input_large->set_output (data_large);
 
-    unsigned small_block = 2*resolution -1;
+    unsigned small_block = block_size;
+
+    if (block_size % resolution)
+      small_block --;
+
     unsigned large_block = small_block * resolution;
 
     input_small->set_block_size (small_block);
