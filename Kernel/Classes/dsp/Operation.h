@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/07/28 13:51:28 $
+   $Revision: 1.20 $
+   $Date: 2003/11/26 16:37:35 $
    $Author: wvanstra $ */
 
 #ifndef __Operation_h
@@ -13,6 +13,7 @@
 
 #include "RealTimer.h"
 #include "Reference.h"
+#include "environ.h"
 
 #include "dsp/Time.h"
 #include "dsp/dsp.h"
@@ -51,7 +52,6 @@ namespace dsp {
     virtual ~Operation ();
 
     //! Call this method to operate on data
-    //! This does time the operation if record_time=true, but doesn't automatically print out the result
     virtual void operate ();
 
     //! Return the unique name of this operation
@@ -63,6 +63,12 @@ namespace dsp {
     //! Get the time spent in the last invocation of operate()
     double get_elapsed_time() const;
 
+    //! Return the number of invalid timesample weights encountered
+    virtual uint64 get_discarded_weights () const;
+
+    //! Reset the count of invalid timesample weights encountered
+    virtual void reset_discarded_weights ();
+
     //! Only ever called by TimeKeeper class
     static void set_timekeeper(TimeKeeper* _timekeeper);
     static void unset_timekeeper();
@@ -72,13 +78,17 @@ namespace dsp {
 
     //! Pointer to the timekeeper
     static TimeKeeper* timekeeper;
+
   protected:
 
-    //! Perform operation on data.  Defined by sub-classes
+    //! Perform operation on data.  Defined by derived classes
     virtual void operation () = 0;
 
     //! Operation name
     string name;
+
+    //! Number of time sample weights encountered that are flagged invalid
+    uint64 discarded_weights;
 
     //! Return pointer to memory resource shared by operations
     static float* float_workingspace (size_t nfloats)

@@ -34,6 +34,8 @@ dsp::Operation::Operation (const char* _name)
   id = instantiation_count;
   instantiation_count++;
 
+  discarded_weights = 0;
+
   optime.operation = "operate";
   
   if( timekeeper )
@@ -72,6 +74,18 @@ double dsp::Operation::get_total_time () const
 double dsp::Operation::get_elapsed_time () const
 {
   return optime.get_elapsed();
+}
+
+//! Return the number of invalid timesample weights encountered
+uint64 dsp::Operation::get_discarded_weights () const
+{
+  return discarded_weights;
+}
+ 
+//! Reset the count of invalid timesample weights encountered
+void dsp::Operation::reset_discarded_weights ()
+{
+  discarded_weights = 0;
 }
 
 //! Return pointer to a memory resource shared by operations
