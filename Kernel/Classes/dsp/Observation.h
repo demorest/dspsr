@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.29 $
-   $Date: 2002/11/10 00:56:22 $
+   $Revision: 1.30 $
+   $Date: 2002/11/10 01:31:56 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -91,7 +91,7 @@ namespace dsp {
     unsigned get_npol () const { return npol; }
 
     //! Set the number of bits per value
-    void set_nbit (unsigned _nbit) { nbit = _nbit; }
+    virtual void set_nbit (unsigned _nbit) { nbit = _nbit; }
     //! Return the number of polarizations
     unsigned get_nbit () const { return nbit; }
 

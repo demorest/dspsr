@@ -11,8 +11,8 @@ dsp::TimeSeries::TimeSeries()
 
 void dsp::TimeSeries::set_nbit (unsigned)
 {
-  throw Error (InvalidState, "dsp::TimeSeries::set_nbit",
-	       "cannot set nbit");
+  if (verbose)
+    cerr << "dsp::TimeSeries::set_nbit ignored" << endl;
 }
 
 //! Allocate the space required to store nsamples time samples.
@@ -30,6 +30,9 @@ void dsp::TimeSeries::set_nbit (unsigned)
 */
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
+  if (verbose)
+    cerr << "dsp::TimeSeries::resize (" << nsamples << ")" << endl;
+
   uint64 require = ndim * nsamples * npol * nchan;
 
   if (!require || require > size) {

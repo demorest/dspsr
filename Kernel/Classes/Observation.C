@@ -215,8 +215,6 @@ bool dsp::Observation::combinable (const Observation & obs) const
 	 << machine << " and " << obs.machine << endl;
   can_combine = false; }
 
-  cerr << "Exiting from combinable() with rate="<<rate<<"and obs.rate="<<obs.rate<<endl;
-
   return can_combine;
 }
 
