@@ -64,7 +64,7 @@ int main (int argc, char** argv)
 
   if (filenames.size() == 0) {
     usage ();
-    return 0;
+    return -1;
   }
 
   if (verbose)

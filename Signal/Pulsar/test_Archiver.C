@@ -44,7 +44,6 @@ void usage ()
     "                      'main' [false]\n"
     " -V             Full verbosity [false]\n"
        << endl;
-  exit(0);
 }
 
 void get_filenames(vector<string>& filenames, char* optarg);
@@ -102,6 +101,7 @@ int main (int argc, char** argv)
       break;
     case 'h':
       usage();
+      return 0;
     case 'm':
       get_filenames( filenames, optarg);
       break;
@@ -180,8 +180,10 @@ int main (int argc, char** argv)
 
   }
 
-  if( filenames.empty() )
+  if( filenames.empty() ) {
     usage ();
+    return -1;
+  }
 
   if( file_offset>=filenames.size() )
     throw Error(InvalidParam,"main()",
