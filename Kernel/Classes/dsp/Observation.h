@@ -233,6 +233,9 @@ namespace dsp {
     //! Change the start time by the number of time samples specified
     void change_start_time (int64 _ndat);
 
+    //! Convenience function for returning the duration in seconds of the Observation
+    double get_duration() const { return (get_end_time()-get_start_time()).in_seconds(); }
+
     //! Returns the number of samples 'latter' follows 'this' by.  (Positive means 'latter' starts later.)
     int64 samps_diff(const Observation* latter) const
     { return int64((latter->get_start_time() - get_start_time()).in_seconds() * get_rate()); }
