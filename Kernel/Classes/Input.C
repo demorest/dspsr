@@ -1,5 +1,7 @@
 #include "Input.h"
 #include "Timeseries.h"
+#include "Error.h"
+
 #include "genutil.h"
 
 bool dsp::Input::verbose = false;
@@ -15,7 +17,7 @@ void dsp::Input::init()
 void dsp::Input::load (Timeseries* data)
 {
   if (!data)
-    throw_str ("Input::load invalid data reference");
+    throw Error (InvalidParam, "Input::load", "invalid data reference");
 
   string reason;
   if (!info.state_is_valid (reason))

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/09/25 06:12:23 $
-   $Author: wvanstra $ */
+   $Revision: 1.2 $
+   $Date: 2002/10/15 13:14:48 $
+   $Author: pulsar $ */
 
 
 #ifndef __Input_h
@@ -53,11 +53,11 @@ namespace dsp {
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap) { overlap = _overlap; }
     
-    //! Set the information about the data source
-    virtual void set_info (const Observation& _info) { info = _info; }
+    //! Get the information about the data source
+    virtual operator const Observation* () const { return &info; }
 
     //! Get the information about the data source
-    virtual const Observation& get_info () const { return info; }
+    virtual const Observation* get_info () const { return &info; }
 
   protected:
 
