@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.29 $
-   $Date: 2004/10/15 12:10:59 $
+   $Revision: 1.30 $
+   $Date: 2004/11/01 16:49:35 $
    $Author: wvanstra $ */
 
 #ifndef __Input_h
@@ -17,7 +17,6 @@
 namespace dsp {
 
   class BitSeries;
-  class IOManager;
 
   //! Pure virtual base class of all objects that can load BitSeries data
   /*! 
@@ -57,6 +56,9 @@ namespace dsp {
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
+
+    //! Return the first time sample to be read on the next call to operate
+    uint64 tell () const { return load_sample; }
 
     //! Seek to a sample close to the specified MJD
     virtual void seek (MJD mjd);
@@ -129,6 +131,10 @@ namespace dsp {
     Observation info;
 
     //! Time sample resolution of the data source
+    /*! Derived classes must define the smallest number of time
+      samples that can be loaded at one time.  For instance, when reading
+      two-bit sampled data, four time samples may be packed into one
+      byte.  In this case, resolution == 4. */
     unsigned resolution;
     
     //! The ndat of the BitSeries last loaded
