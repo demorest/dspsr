@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/12/04 01:15:20 $
+   $Revision: 1.11 $
+   $Date: 2002/12/06 19:44:37 $
    $Author: hknight $ */
 
 #ifndef __Response_h
@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <complex>
+#include <string>
 
 #include "dsp/Shape.h"
 #include "Jones.h"
@@ -21,6 +22,9 @@ namespace dsp {
   class Response : public Shape {
 
   public:
+
+    //! Hacked in to make it compile
+    bool state_is_valid(string ss){ return true; }
 
     //! Maximum ndat allowed
     static unsigned ndat_max;
