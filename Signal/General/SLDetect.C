@@ -10,7 +10,7 @@
 #include "dsp/SLDetect.h"
 
 dsp::SLDetect::SLDetect (Behaviour _type) 
-  : Transformation <TimeSeries, TimeSeries> ("SLDetect", _type)
+  : Transformation <TimeSeries, TimeSeries> ("SLDetect", _type,true)
 { }
 
 void dsp::SLDetect::transformation ()

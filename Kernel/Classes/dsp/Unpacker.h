@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.7 $
-   $Date: 2003/09/22 10:01:20 $
-   $Author: wvanstra $ */
+   $Revision: 1.8 $
+   $Date: 2004/10/25 02:30:36 $
+   $Author: hknight $ */
 
 
 #ifndef __Unpacker_h
@@ -36,7 +36,7 @@ namespace dsp {
     
     //! Constructor
     Unpacker (const char* name = "Unpacker") 
-      : Transformation <const BitSeries, TimeSeries> (name, outofplace) { }
+      : Transformation <const BitSeries, TimeSeries> (name, outofplace,true) { }
     
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);

@@ -9,7 +9,7 @@
 #endif
 
 dsp::TScrunch::TScrunch(Behaviour place) 
-  : Transformation <TimeSeries, TimeSeries> ("TScrunch", place)
+  : Transformation <TimeSeries, TimeSeries> ("TScrunch", place, true)
 {
   ScrunchFactor = -1;
   TimeRes = -1.0;
