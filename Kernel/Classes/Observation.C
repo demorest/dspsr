@@ -456,6 +456,10 @@ void dsp::Observation::set_default_basis ()
     basis = Signal::Circular;
   else if (telescope == Telescope::Hobart)
     basis = Signal::Circular;
+  else if (telescope == Telescope::GBT) {
+    fprintf(stderr,"WARNING Assuming GBT is Circular\n");
+    basis = Signal::Circular;
+  }
   else
     throw Error (InvalidState, "Observation::set_default_basis",
 		 "unrecognized telescope: %c\n", telescope);
