@@ -25,6 +25,12 @@ dsp::Fold::Fold ()
   ncoef = 15;
   nspan = 120;
 
+  if (psrdisp_compatible) {
+    cerr << "dsp::Fold psrdisp compatibility\n"
+      "   using nspan of 960 instead of 120" << endl;
+    nspan = 960;
+  }
+
   built = false;
 
   idat_start = ndat_fold = 0;
@@ -353,7 +359,7 @@ void dsp::Fold::transformation ()
        output->get_reference_phase() != get_reference_phase() )
     throw Error (InvalidState, "dsp::Fold::transformation",
 		 "output reference phase=%lf != reference phase=%lf",
-		 output->get_reference_phase() != get_reference_phase() );
+		 output->get_reference_phase(), get_reference_phase() );
 
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
@@ -399,6 +405,8 @@ void dsp::Fold::transformation ()
     output->set_folding_period( folding_period );
   else
     output->set_folding_polyco( folding_polyco );
+
+  output->set_reference_phase( reference_phase );
 
 }
 
