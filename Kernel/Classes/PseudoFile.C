@@ -5,9 +5,7 @@
 #include "Error.h"
 
 #include "dsp/File.h"
-#include "dsp/MiniFile.h"
 #include "dsp/dspExtension.h"
-#include "dsp/MiniExtension.h"
 #include "dsp/Observation.h"
 #include "dsp/PseudoFile.h"
 
