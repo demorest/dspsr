@@ -1,12 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/06/09 02:02:41 $
+   $Revision: 1.2 $
+   $Date: 2005/01/17 03:14:27 $
    $Author: cwest $ */
 
 #ifndef __SMROFile_h
 #define __SMROFile_h
+
+#include "environ.h"
 
 #include "dsp/File.h"
 
@@ -31,7 +33,9 @@ namespace dsp {
 
     //! Open the file
     void open_file (const char* filename);
-    
+
+    //! Pad over top of gaps in data
+    int64 pad_bytes(unsigned char* buffer, int64 bytes);
     
   private:
     
