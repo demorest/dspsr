@@ -1,7 +1,12 @@
+#include <stdlib.h>
+
+#include "Reference.h"
+#include "MJD.h"
+
 #include "dsp/PseudoFile.h"
 #include "dsp/File.h"
 
-dsp::PseudoFile::PseudoFile (const File* f)
+dsp::PseudoFile::PseudoFile (const dsp::File* f)
 {
   Observation::operator = ( *(f->get_info()) );
   filename = f->get_filename();
@@ -17,4 +22,9 @@ bool dsp::PseudoFile::operator < (const PseudoFile& in) const
   }
 
   return get_start_time() < in.get_start_time();
+}
+
+dsp::PseudoFile* dsp::PseudoFile::get_pseudo(string file){
+  Reference::To<dsp::File> loader(dsp::File::create(file));
+  return new dsp::PseudoFile(loader.get());
 }
