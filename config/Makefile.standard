@@ -48,25 +48,6 @@ MAKEDEPEND = makedepend -Y -f
 SWINBURNE_REPOSITORY = pentane.ssi.swin.edu.au:/nfs/cluster/psr/cvsroot
 
 ##########################################################################
-# macro definitions for various "home-grown" libraries
-##########################################################################
-LTIMES = -ltimes -lgenutil $(LSLA) -lm
-LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
-
-LPSRCHIVE = -lpsrchive
-
-ifeq (${PSRFITS},yes)
-LPSRCHIVE += $(LCFITSIO)
-endif  # PSRFITS
-
-PSRTIMER = yes
-ifeq (${PSRTIMER},yes)
-LPSRCHIVE += -larchive
-endif
-
-LPSRCHIVE += -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
-
-##########################################################################
 # package-specific macro definitions
 ##########################################################################
 
@@ -116,12 +97,6 @@ LGTKMM := ${shell ${PSRPKGS}/${LOGIN_ARCH}/bin/gtkmm-config --libs}
 endif
 
 ##########################################################################
-# CFITSIO
-ifeq ($(PSRFITS),yes)
-CPPFLAGS += -DPSRFITS=1
-endif
-
-##########################################################################
 # SLA LIB
 LSLA = -lsla $(LF77)
 
@@ -149,4 +124,30 @@ has_PGPLOT:= $(call exists,$(PGPLOTDIR))
 ifeq ($(has_PGPLOT),yes)
 INCFLAGS += -I$(PGPLOTDIR)
 endif
+
+##########################################################################
+# CFITSIO
+ifeq ($(has_CFITS),yes)
+CPPFLAGS += -DPSRFITS=1
+endif
+
+##########################################################################
+# macro definitions for various "home-grown" libraries
+##########################################################################
+LTIMES = -ltimes -lgenutil $(LSLA) -lm
+LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
+
+LPSRCHIVE = -lpsrchive
+
+ifeq ($(has_CFITS),yes)
+LPSRCHIVE += $(LCFITSIO)
+endif  # PSRFITS
+
+PSRTIMER = yes
+ifeq (${PSRTIMER},yes)
+LPSRCHIVE += -larchive
+endif
+
+LPSRCHIVE += -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
+
 
