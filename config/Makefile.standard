@@ -102,7 +102,7 @@ LMOTIF = -lXm -lXt
 
 ##########################################################################
 # Qt Qt/Xt Qt/Motif/PGPLOT
-QTDIR := ${PSRPKGS}/${LOGIN_ARCH}/qt
+QTDIR ?= ${PSRPKGS}/${LOGIN_ARCH}/qt
 IQT := -I${QTDIR}/include
 LQT := -L${QTDIR}/lib -lqt
 LQXT = $(LQT) -lqxt
