@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/07/01 15:53:04 $
+   $Revision: 1.2 $
+   $Date: 2002/07/31 15:43:24 $
    $Author: pulsar $ */
 
 #ifndef __Filterbank_h
@@ -24,10 +24,10 @@ namespace dsp {
     Filterbank ();
 
     //! Return a descriptive string
-    virtual const string descriptor () const;
+    //virtual const string descriptor () const;
 
     //! Initialize from a descriptor string as output by above
-    virtual void initialize (const string& descriptor);
+    //virtual void initialize (const string& descriptor);
 
     //! Set the number of channels into which the input will be divided
     void set_nchan (int _nchan) { nchan = _nchan; }
