@@ -247,9 +247,10 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
     // this can happen owing to rounding in the above two calls to rint()
     if (verbose)
       cerr << "dsp::SubFold::bound fold"
-	" offset=rint(" << offset_samples << ")=" << idat_start << " +"
-	" total=rint(" << fold_samples << ")=" << ndat_fold << " = " 
-	   << idat_start+ndat_fold << " > " << input->get_ndat() << endl;
+	"\n   offset=rint(" << offset_samples << ")=" << idat_start <<
+	"\n +  total=rint(" << fold_samples << ")=" << ndat_fold <<
+        "\n = " << idat_start+ndat_fold << 
+	" > input ndat=" << input->get_ndat() << endl;
     ndat_fold = input->get_ndat() - idat_start;
   }
 
