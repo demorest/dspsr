@@ -227,26 +227,26 @@ void dsp::Input::seek(MJD mjd)
 
 void dsp::Input::seek_seconds (double seconds, int whence)
 {
-  if (input.get_rate() == 0)
+  if (info.get_rate() == 0)
     throw Error (InvalidState, "dsp::Input::seek_seconds",
 		 "data rate unknown");
 
-  seek( seconds * input.get_rate(), whence );
+  seek( seconds * info.get_rate(), whence );
 }
 
 
 //! Convenience method used to set the number of seconds
-void set_total_seconds (double seconds)
+void dsp::Input::set_total_seconds (double seconds)
 {
   if (seconds < 0)
     throw Error (InvalidParam, "dsp::Input::set_total_seconds",
 		 "seconds = %lf < 0", seconds);
 
-  if (input.get_rate() == 0)
+  if (info.get_rate() == 0)
     throw Error (InvalidState, "dsp::Input::set_total_seconds",
 		 "data rate unknown");
 
-  uint64 total_samples = seconds * input.get_rate();
+  uint64 total_samples = uint64( seconds * info.get_rate() );
 
   if (total_samples > get_total_samples ())
     throw Error (InvalidParam, "dsp::Input::set_total_seconds",
