@@ -96,9 +96,16 @@ void dsp::CPSR2TwoBitCorrection::poln_unpack (float* data,
 
   unsigned long n_weights = (unsigned long) ceil (float(ndat)/float(nsample));
 
-  // four 2-bit samples per byte in this unpacking scheme
-  unsigned long bytes_left = ndat / 4;
-  unsigned long bytes_per_weight = nsample / 4;
+  assert (n_weights*nsample >= ndat);
+
+  // four two-bit samples per byte in this unpacking scheme
+  const unsigned samples_per_byte = 4;
+
+  // four floating-point samples for each of 256 possible bytes in each block
+  const unsigned lookup_block_size = samples_per_byte * 256;
+
+  unsigned long bytes_left = ndat / samples_per_byte;
+  unsigned long bytes_per_weight = nsample / samples_per_byte;
   unsigned long bytes = bytes_per_weight;
   unsigned bt;
   unsigned pt;
@@ -126,7 +133,7 @@ void dsp::CPSR2TwoBitCorrection::poln_unpack (float* data,
       hist [n_lo] ++;
 
     if (n_lo<n_min || n_lo>n_max) {
-      for (bt=0; bt<bytes*4; bt++) {
+      for (bt=0; bt<bytes*samples_per_byte; bt++) {
 	*data = 0.0;
 	data ++;
       }
@@ -135,11 +142,11 @@ void dsp::CPSR2TwoBitCorrection::poln_unpack (float* data,
     else {
 
       rawptr = raw;
-      section = dls_lookup.begin() + (n_lo-n_min) * 1024;
+      section = dls_lookup.begin() + (n_lo-n_min) * lookup_block_size;
 
       for (bt=0; bt<bytes; bt++) {
-	fourval = section + *rawptr * 4;
-	for (pt=0; pt<4; pt++) {
+	fourval = section + unsigned(*rawptr) * samples_per_byte;
+	for (pt=0; pt<samples_per_byte; pt++) {
 	  *data = fourval[pt];
 	  data ++;
 	}
