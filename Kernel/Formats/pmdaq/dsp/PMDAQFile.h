@@ -13,7 +13,7 @@ namespace dsp {
   public:
    
     //! Returns true if filename appears to name a valid PMDAQ file
-    static bool is_valid (const char* filename);
+    bool is_valid (const char* filename) const;
     
     static int get_header (char* pmdaq_header, const char* filename);
 

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/04 10:37:32 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2002/10/15 13:12:31 $
+   $Author: pulsar $ */
 
 
 #ifndef __CPSRFile_h
@@ -19,7 +19,7 @@ namespace dsp {
   public:
 
     //! Returns true if filename appears to name a valid CPSR file
-    static bool is_valid (const char* filename);
+    bool is_valid (const char* filename) const;
 
     //! Construct and open file
     CPSRFile (const char* filename = 0);

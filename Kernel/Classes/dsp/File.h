@@ -1,15 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/10/11 12:12:22 $
-   $Author: mbailes $ */
+   $Revision: 1.4 $
+   $Date: 2002/10/15 13:12:31 $
+   $Author: pulsar $ */
 
 
 #ifndef __File_h
 #define __File_h
 
 #include "Seekable.h"
+#include "Registry.h"
 
 namespace dsp {
 
@@ -24,14 +25,24 @@ namespace dsp {
     //! Destructor
     virtual ~File () { }
 
+    //! Return true if filename appears to refer to a valid format
+    virtual bool is_valid (const char* filename) const = 0;
+
     //! Open the file
     virtual void open (const char* filename) = 0;
 
-    //! Convenience interface
+    //! Convenience interface to File::open (const char*)
     void open (const string& filename) { open (filename.c_str()); }
 
     //! Close the file
     virtual void close ();
+
+    //! Return a pointer to a new instance of the appropriate sub-class
+    static File* create (const char* filename);
+
+    //! Convenience interface to File::create (const char*)
+    static File* create (const string& filename)
+    { return create (filename.c_str()); }
 
   protected:
     
@@ -57,6 +68,13 @@ namespace dsp {
     
     //! initialize variables
     void init();
+
+    //! List of registered sub-classes
+    static Registry::List<File> registry;
+
+    // Declare friends with Registry entries
+    friend class Registry::Entry<File>;
+
   };
 
 }

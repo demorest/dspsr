@@ -9,6 +9,9 @@
 
 #include "genutil.h"   // Is this really needed?
 
+// Register the PMDAQFile class with the File::registry
+static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> entry;
+
 #define PMDAQ_HEADER_SIZE 648
 
 // Loads header into character array pmdaq_header from file filename.
@@ -50,7 +53,7 @@ int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 
 static char pmdaq_header [PMDAQ_HEADER_SIZE];
 
-bool dsp::PMDAQFile::is_valid (const char* filename)
+bool dsp::PMDAQFile::is_valid (const char* filename) const
 {
   if (get_header (pmdaq_header, filename) < 0)
     return false;

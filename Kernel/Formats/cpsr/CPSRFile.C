@@ -13,8 +13,10 @@
 #include "pspm++.h"
 #include "genutil.h"
 
+// Register the CPSRFile class with the File::registry
+static Registry::List<dsp::File>::Enter<dsp::CPSRFile> entry;
 
-bool dsp::CPSRFile::is_valid (const char* filename)
+bool dsp::CPSRFile::is_valid (const char* filename) const
 {
   int fd = ::open (filename, O_RDONLY);
   if (fd < 0)
