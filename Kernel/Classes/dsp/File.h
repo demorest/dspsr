@@ -1,13 +1,17 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.12 $
-   $Date: 2003/02/13 01:30:36 $
+   $Revision: 1.13 $
+   $Date: 2003/03/13 23:39:15 $
    $Author: pulsar $ */
 
 
 #ifndef __File_h
 #define __File_h
+
+namespace dsp {
+  class File;
+}
 
 #include "Registry.h"
 
@@ -58,6 +62,9 @@ namespace dsp {
 
     //! Inquire the howmany bytes are in the header
     int get_header_bytes() const{ return header_bytes; }
+
+    //! Return a PseudoFile constructed from this File
+    PseudoFile get_pseudofile();
 
   protected:
     

@@ -34,6 +34,10 @@ void dsp::File::init()
   info.init();
 }
 
+dsp::PseudoFile dsp::File::get_pseudofile(){
+  return PseudoFile(*this);
+}
+
 void dsp::File::open (const char* filename, dsp::PseudoFile* _info)
 {
   //fprintf(stderr,"In dsp::File::open()\n");
