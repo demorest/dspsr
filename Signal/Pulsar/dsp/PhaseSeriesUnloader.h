@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.6 $
-   $Date: 2004/08/25 09:13:24 $
-   $Author: hknight $ */
+   $Revision: 1.7 $
+   $Date: 2004/11/22 22:20:08 $
+   $Author: wvanstra $ */
 
 #ifndef __PhaseSeriesUnloader_h
 #define __PhaseSeriesUnloader_h
@@ -35,16 +35,16 @@ namespace dsp {
     virtual void unload () = 0;
 
     //! Creates a good filename for the PhaseSeries data archive
-    virtual string get_filename (const PhaseSeries* data) const;
+    virtual std::string get_filename (const PhaseSeries* data) const;
 
     //! Set the filename (pattern) to be used by get_filename
     virtual void set_filename (const char* filename);
-    void set_filename (const string& filename)
+    void set_filename (const std::string& filename)
     { set_filename (filename.c_str()); }
 
     //! Set the extension to be used by get_filename
     virtual void set_extension (const char* extension);
-    void set_extension (const string& extension)
+    void set_extension (const std::string& extension)
     { set_extension (extension.c_str()); }
 
     //! Set whether you want to allow the archive filename to be
@@ -59,17 +59,17 @@ namespace dsp {
   protected:
 
     //! Helper function that makes sure a given filename is unique
-    string make_unique(string filename, string fname_extension,
+    std::string make_unique(std::string filename, std::string fname_extension,
 		       const PhaseSeries* data) const;
 
     //! PhaseSeries from which Profile data will be constructed
     Reference::To<const PhaseSeries> profiles;
 
     //! The filename pattern
-    string filename_pattern;
+    std::string filename_pattern;
 
     //! The filename extension;
-    string filename_extension;
+    std::string filename_extension;
 
     //! Force make_unique() to return 'filename' [false]
     bool force_filename;
