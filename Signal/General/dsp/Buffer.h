@@ -3,8 +3,11 @@
 #ifndef __Buffer_h
 #define __Buffer_h
 
+#include <string>
+
 #include <stdlib.h>
 
+#include "environ.h"
 #include "Reference.h"
 
 namespace dsp {
@@ -19,14 +22,49 @@ namespace dsp {
       //! A class like RingBuffer doesn't actually need this, but I guess it's  nice to have is as an extra safety feature for debugging
       BufferStatus status;
 
-      Buffer<Container>& operator=(const Buffer<Container>& buf){ container = buf.container; status = buf.status; return *this; }
+      //! The file the Buffer was loaded from
+      string filename;
 
-      Buffer(const Buffer<Container>& buf){ operator=(buf); }
-      Buffer(){ container = new Container; status = free; }
+      //! The offset from the start of the file that the Buffer starts from
+      uint64 offset;
 
-      ~Buffer(){ }
+      Buffer<Container>& operator=(const Buffer<Container>& buf);
+
+      Buffer(const Buffer<Container>& buf);
+      Buffer();
+
+      ~Buffer();
   };
 
 }
 
+template<class Container>
+dsp::Buffer<Container>::Buffer(){
+  status = free;
+  offset = 0;
+  filename = "unset";
+
+  container = new Container;
+}
+
+template<class Container>
+dsp::Buffer<Container>::Buffer(const Buffer<Container>& buf){
+  operator=(buf);
+}
+
+template<class Container>
+dsp::Buffer<Container>::~Buffer(){ }
+
+template<class Container>
+dsp::Buffer<Container>& dsp::Buffer<Container>::operator=(const dsp::Buffer<Container>& buf){
+  status = buf.status;
+  offset = buf.offset;
+  filename = buf.filename;
+
+  container = buf.container;
+  
+  return *this;
+}
+
 #endif
+
