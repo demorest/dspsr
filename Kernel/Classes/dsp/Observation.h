@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.51 $
-   $Date: 2003/06/04 04:04:04 $
-   $Author: cwest $ */
+   $Revision: 1.52 $
+   $Date: 2003/06/11 10:25:07 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -23,27 +23,32 @@
  
   The Baseband Data Reduction Library implements a family of C++
   classes that may be used in the loading and manipulation of
-  phase-coherent observational data.  The functionality, contained in
-  the dsp namespace, is divided into three main classes: data
-  containers and loaders, DSP algorithms, and auxilliary routines.
+  observational data, primarily as a regularly sampled function of
+  time.  This includes both phase-coherent data, as stored by baseband
+  recording systems, and detected data, as produced by a filterbank
+  system.  The functionality, contained in the dsp namespace, is
+  divided into three main classes: data containers, operations,
+  and auxilliary objects.
 
-  The main data container is the dsp::TimeSeries class.  This class
-  may hold N-bit digitized data as well as the "unpacked" floating
-  point representation.  The dsp::Loader class and its children are
-  used to load data into the dsp::TimeSeries container.
+  The most general data container is the dsp::TimeSeries class, which
+  is used to store the floating point representation of the signal in
+  a variety of states.  The dsp::BitSeries class is used to store the
+  N-bit digitized data before unpacking into a TimeSeries object.  The
+  dsp::Loader class and its children are used to load data into the
+  dsp::TimeSeries container.
 
   The main DSP algorithms are implemented by dsp::Operation and its
   sub-classes.  These operate on dsp::TimeSeries and can:
   <UL>
-  <LI> convert digitized data to floating points (dsp::TwoBitCorrection class)
+  <LI> convert digitized data to floating points (dsp::Unpack class)
   <LI> coherently dedisperse data (dsp::Convolution class)
   <LI> fold data using polyco (dsp::Fold class)
   <LI> etc...
   </UL>
 
-  The auxilliary routines include classes that perform operations on
-  arrays of data, such as multiplying a jones matrix frequency response
-  by a complex vector spectrum (e.g. the dsp::filter class).
+  The auxilliary classes perform operations on arrays of data, such as
+  multiplying a frequency response matrix by a spectrum field vector
+  (e.g. the dsp::Response class).
 
  */
 
