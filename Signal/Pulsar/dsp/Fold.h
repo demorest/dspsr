@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/11/10 15:41:54 $
+   $Revision: 1.13 $
+   $Date: 2002/11/11 12:50:12 $
    $Author: wvanstra $ */
 
 
@@ -20,15 +20,14 @@ class psrephem;
 
 namespace dsp {
 
-  class PhaseSeries;
-  class Observation;
+  class WeightedTimeSeries;
 
   //! Fold TimeSeries data into phase-averaged profile(s)
   /*! 
     This Operation does not modify the TimeSeries.  Rather, it accumulates
     the (folded) average pulse profile data within its data structures.
   */
-  class Fold : public Transformation <TimeSeries, PhaseSeries> {
+  class Fold : public Transformation <const TimeSeries, PhaseSeries> {
 
   public:
     
@@ -74,6 +73,9 @@ namespace dsp {
     //! Get the ephemeris with which to create the phase model
     const psrephem* get_pulsar_ephemeris () const;
 
+    //! Overload Transformation::set_input to set weighted_input
+    void set_input (TimeSeries* input);
+
     //! Add a phase model with which to choose to fold the data
     void add_folding_polyco (polyco* folding_polyco);
 
@@ -90,7 +92,7 @@ namespace dsp {
     void fold (double& integration_length, float* phase, unsigned* hits,
 	       const Observation* info, unsigned nblock,
 	       const float* time, uint64 ndat, unsigned ndim,
-	       unsigned* weights=0, unsigned ndatperweight=0,
+	       const unsigned* weights=0, unsigned ndatperweight=0,
 	       uint64 idat_start=0, uint64 ndat_fold=0);
 
 
@@ -107,6 +109,9 @@ namespace dsp {
 
     //! Ephemeris with which to create the phase model
     Reference::To<const psrephem> pulsar_ephemeris;
+
+    //! Set when Tranformation::input is a Weighted TimeSeries
+    Reference::To<const WeightedTimeSeries> weighted_input;
 
     //! Number of phase bins into which the data will be integrated
     unsigned nbin;

@@ -1,8 +1,7 @@
 #include <assert.h>
 
 #include "dsp/Fold.h"
-#include "dsp/PhaseSeries.h"
-#include "dsp/Transformation.h"
+#include "dsp/WeightedTimeSeries.h"
 
 #include "Error.h"
 
@@ -11,7 +10,7 @@
 #include "genutil.h"
 
 dsp::Fold::Fold () 
-  : Transformation <TimeSeries, PhaseSeries> ("Fold", outofplace) 
+  : Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
 {
   folding_period = 0;
 
@@ -212,6 +211,19 @@ const psrephem* dsp::Fold::get_pulsar_ephemeris () const
   return pulsar_ephemeris;
 }
 
+void dsp::Fold::set_input (TimeSeries* _input)
+{
+  if (verbose)
+    cerr << "dsp::Fold::set_input (TimeSeries* =" << _input << ")" << endl;
+
+  Transformation<const TimeSeries, PhaseSeries>::set_input (_input);
+
+  weighted_input = dynamic_cast<WeightedTimeSeries*> (_input);
+
+  if (verbose && weighted_input)
+    cerr << "dsp::Fold::set_input input is a WeightedTimeSeries" << endl;
+}
+
 void dsp::Fold::transformation ()
 {
   if (nbin == 0)
@@ -244,8 +256,17 @@ void dsp::Fold::transformation ()
 
   double integrated = 0.0;
 
+  const unsigned* weights = 0;
+  unsigned ndatperweight = 0;
+
+  if (weighted_input) {
+    weights = weighted_input->get_weights();
+    ndatperweight = weighted_input->get_ndat_per_weight();
+  }
+
   fold (integrated, output->get_datptr(), output->hits.begin(),
-	input, blocks, input->get_datptr(), block_ndat, input->get_ndim());
+	input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
+	weights, ndatperweight);
 
   output->integration_length += integrated;
   
@@ -277,7 +298,7 @@ void dsp::Fold::transformation ()
 void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 		      const Observation* info, unsigned nblock,
 		      const float* time, uint64 ndat, unsigned ndim,
-		      unsigned* weights, unsigned ndatperweight,
+		      const unsigned* weights, unsigned ndatperweight,
 		      uint64 idat_start, uint64 ndat_fold)
 {
   // /////////////////////////////////////////////////////////////////////////
