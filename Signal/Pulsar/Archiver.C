@@ -23,6 +23,7 @@ bool dsp::Archiver::verbose = false;
 
 dsp::Archiver::Archiver ()
 {
+  archive_dedispersed = false;
 }
 
 dsp::Archiver::~Archiver ()
@@ -196,6 +197,8 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_parallactic_corrected (false);
 
   archive-> set_backend( phase->get_machine() );
+
+  archive-> set_dedispersed( archive_dedispersed );
 
   set (archive-> get_Integration(0), phase);
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.11 $
-   $Date: 2004/03/16 04:11:31 $
+   $Revision: 1.12 $
+   $Date: 2004/05/24 02:17:04 $
    $Author: hknight $ */
 
 
@@ -75,6 +75,14 @@ namespace dsp {
     //! Inquire the name of the program to go in the 'backend' variable of the output archive
     string get_reducing_program(){ return reducing_program; }
 
+    //! Quick hack until a dsp::Observation can store _properly_ the ChannelSum history
+    //! In particular it will need to store whether the 'channel_align' flag was enabled
+    //! and therefore whether the archive was dedispersed
+    void set_archive_dedispersed(bool _archive_dedispersed){ archive_dedispersed = _archive_dedispersed; }
+    
+    //! Retrieves this hack attribute that indicates whether the archive is dedispersed already
+    bool get_archive_dedispersed(){ return archive_dedispersed; }
+
   protected:
 
     //!  The name of the program to go in the 'backend' variable of the output archive.  Set to "" if no program name required
@@ -108,6 +116,11 @@ namespace dsp {
 
     //! Set the Pulsar::Passband Extension with the dsp::Response
     void set (Pulsar::Passband* pband);
+
+  private:
+
+    //! Hack attribute that indicates whether the archive is dedispersed already [false]
+    bool archive_dedispersed;
 
   };
 
