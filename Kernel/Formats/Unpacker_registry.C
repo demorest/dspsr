@@ -39,7 +39,8 @@ dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
         Unpacker* child = registry.create (ichild);
         child-> match( observation );
 
-	fprintf(stderr,"Returning from dsp::Unpacker::create ()\n");
+	if (verbose)
+	  cerr << "dsp::Unpacker::create return new sub-class" << endl;
         return child;
 
       }
