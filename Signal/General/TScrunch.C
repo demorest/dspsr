@@ -48,8 +48,8 @@ void dsp::TScrunch::operation ()
 	    TimeRes/(1.0e6/input->get_rate()),ScrunchFactor,TimeRes,double(ScrunchFactor)*1.0e6/input->get_rate());
 
   if( !input->get_detected() ){
-    throw_str ("dsp::TScrunch: invalid input state:%s", 
-	       input->state_as_string().c_str());
+    throw_str ("dsp::TScrunch: invalid input state: " + 
+	       input->get_state_as_string());
     return;
   }
 
