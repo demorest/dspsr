@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/10/07 02:13:22 $
+   $Revision: 1.8 $
+   $Date: 2004/06/04 07:55:22 $
    $Author: wvanstra $ */
 
 
@@ -13,15 +13,21 @@
 
 namespace dsp {
 
-  //! Look-up tables for conversion from two-bit to floating point numbers
+  //! Look-up table for conversion from two-bit to floating point numbers
   /*! 
-
+    The TwoBitTable class can build a lookup up table of four floating point
+    numbers per one-byte character.
    */
   class TwoBitTable : public Reference::Able {
 
   public:
 
-    enum Type { Unset, OffsetBinary, SignMagnitude, TwosComplement };
+    enum Type { Unset, 
+		OffsetBinary, 
+		SignMagnitude,
+		MagnitudeSign,
+		TwosComplement 
+    };
 
     //! Number of unique 8-bit combinations
     static const unsigned unique_bytes;
@@ -86,7 +92,9 @@ namespace dsp {
     Type type;
 
   private:
-    TwoBitTable () { /* allow no one to contruct without a type */ }
+
+    //! Private default constructor ensures that type is specified
+    TwoBitTable () { }
 
   };
 

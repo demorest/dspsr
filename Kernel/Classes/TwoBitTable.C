@@ -122,6 +122,13 @@ void dsp::TwoBitTable::four_vals (float* vals) const
     vals[3] = -hi_val;
     break;
     
+  case MagnitudeSign:
+    vals[0] = lo_val;
+    vals[1] = -lo_val;
+    vals[2] = hi_val;
+    vals[3] = -hi_val;
+    break;
+    
   case TwosComplement:
     vals[0] = lo_val;
     vals[1] = hi_val;
