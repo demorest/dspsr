@@ -120,7 +120,8 @@ void dsp::Seekable::load_data (BitSeries* data)
   int64 bytes_read = load_bytes (into, toread_bytes);
 
   if (bytes_read < 0)
-    throw Error (FailedCall, "dsp::Seekable::load_data", "load_bytes error");
+    throw Error (FailedCall, "dsp::Seekable::load_data", "load_bytes error- possibly your blocksize may be too large.  (blocksize="UI64")",
+		 get_block_size());
 
   if ((uint64)bytes_read < toread_bytes) {
     if (verbose)
