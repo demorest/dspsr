@@ -4,7 +4,7 @@
 
 #include "dsp/ChannelOrder.h"
 
-dsp::ChannelOrder::ChannelOrder() : Transformation<BitSeries,TimeSeries>("ChannelOrder",outofplace){
+dsp::ChannelOrder::ChannelOrder() : Transformation<BitSeries,TimeSeries>("ChannelOrder",outofplace,true){
   rapid = Polarisation;
 }
 
