@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/21 02:25:31 $
+   $Revision: 1.7 $
+   $Date: 2002/12/04 01:21:59 $
    $Author: hknight $ */
 
 
@@ -31,6 +31,8 @@ namespace dsp {
     
     //! Load a number of files and treat them as one logical observation
     void load (vector<string>& filenames);
+
+    void kludge_total_samples(uint64 s){ info.set_ndat(s); }
 
   protected:
     
