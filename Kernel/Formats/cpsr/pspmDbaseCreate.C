@@ -21,8 +21,10 @@ int main (int argc, char** argv)
 
   pspmDbase::server dbase;
 
-  if (argc==3 && string(argv[2])=="-r")
+  if (argc==3 && string(argv[1])=="-r")  {
+    cerr << "pspmDbaseCreate loading ascii from '" << argv[2] << "'" << endl;
     dbase.load (argv[2]);
+  }
   else
     dbase.create(argv[1]);
 
