@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.30 $
-   $Date: 2004/09/24 07:11:26 $
+   $Revision: 1.31 $
+   $Date: 2004/11/01 23:50:22 $
    $Author: hknight $ */
 
 
@@ -134,17 +134,21 @@ namespace dsp {
     unsigned choose_nbin ();
 
     //! Fold nblock blocks of data
+    //! This is kept in for use in baseband/timeseries/rawprofile.C
+    //! new_fold() is now called which doesn't assume chanpols are contiguous and uses get_datptr()
     void fold (double& integration_length, float* phase, unsigned* hits,
-	       const Observation* info, unsigned nblock,
+	       const Observation* info,unsigned nblock,
 	       const float* time, uint64 ndat, unsigned ndim,
 	       const unsigned* weights=0, unsigned ndatperweight=0,
 	       uint64 idat_start=0, uint64 ndat_fold=0);
-
 
   protected:
 
     //! The transformation folds the data into the profile
     virtual void transformation ();
+
+    //! Fold nblock blocks of data
+    void new_fold (const unsigned* weights, unsigned ndatperweight);
 
     //! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
     void workout_idat_start(const Observation* input);
@@ -157,6 +161,12 @@ namespace dsp {
     void set_ndat_fold(uint64 _ndat_fold){ ndat_fold = _ndat_fold; }
     //! Used by the MultiFold class
     uint64 get_ndat_fold(){ return ndat_fold; }
+
+    //! Called by new_fold() to return pfold
+    double get_pfold(MJD start_time);
+    
+    //! Called by new_fold() to return phi
+    double get_phi(MJD start_time);
 
     //! Period at which to fold data
     double folding_period;
