@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/11/11 12:50:12 $
+   $Revision: 1.14 $
+   $Date: 2003/01/31 13:35:31 $
    $Author: wvanstra $ */
 
 
@@ -130,6 +130,12 @@ namespace dsp {
 
     //! Ephemerides from which to choose
     vector< Reference::To<psrephem> > ephemerides;
+
+    //! INTERNAL: the time sample at which to start folding
+    uint64 idat_start;
+
+    //! INTERNAL: the number of time samples to fold
+    uint64 ndat_fold;
 
   };
 }

@@ -19,6 +19,8 @@ dsp::Fold::Fold ()
   nspan = 120;
 
   built = false;
+
+  idat_start = ndat_fold = 0;
 }
 
 dsp::Fold::~Fold () { }
@@ -269,7 +271,7 @@ void dsp::Fold::transformation ()
 
   fold (integrated, output->get_datptr(), output->hits.begin(),
 	input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
-	weights, ndatperweight);
+	weights, ndatperweight, idat_start, ndat_fold);
 
   output->integration_length += integrated;
   
