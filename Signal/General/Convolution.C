@@ -77,6 +77,10 @@ void dsp::Convolution::transformation ()
     return;
   }
 
+  if (input->get_detected())
+    throw Error (InvalidState, "dsp::Convolution::transformation",
+		 "input data are detected");
+
   response->match (input);
 
   if (passband)
