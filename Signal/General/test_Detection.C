@@ -134,11 +134,6 @@ int main (int argc, char** argv)
 }
 
 
-catch (Reference::invalid& error) {
-  cerr << "Invalid Reference exception thrown" << endl;
-  return -1;
-}
-
 catch (string& error) {
   cerr << "exception thrown: " << error << endl;
   return -1;
