@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/12/04 01:09:35 $
-   $Author: hknight $ */
+   $Revision: 1.14 $
+   $Date: 2002/12/11 10:13:50 $
+   $Author: wvanstra $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -25,9 +25,6 @@ namespace dsp {
   class Input : public Operation {
 
   public:
-    
-    //! Verbosity flag
-    static bool verbose;
     
     //! Constructor
     Input (const char* name);

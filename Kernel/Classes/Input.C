@@ -8,8 +8,6 @@
 #include "Error.h"
 #include "genutil.h"
 
-bool dsp::Input::verbose = false;
-
 dsp::Input::Input (const char* name) : Operation (name)
 {
   block_size = overlap = 0;
