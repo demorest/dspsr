@@ -40,7 +40,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:p:P:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -414,6 +414,12 @@ int main (int argc, char** argv)
     join_files = false;
   }
 
+  if (nchan != 1 && polyphase_filter) {
+    cerr << "dsp: cannot use both Filterbank (-F) and PolyPhaseFilterbank (-P)"
+	 << endl;
+    return -1;
+  }
+
   if (verbose)
     cerr << "Creating WeightedTimeSeries instance" << endl;
   dsp::TimeSeries* voltages = new dsp::WeightedTimeSeries;
@@ -503,47 +509,51 @@ int main (int argc, char** argv)
     }
     else
 #endif
-
-#if ACTIVATE_BLITZ
-      if (polyphase_filter) {
 	
+      {  
 	if (verbose)
 	  cerr << "Creating Filterbank instance" << endl;
-	  
-	// polyphase filterbank constructor
-	dsp::PolyPhaseFilterbank* filterbank = new dsp::PolyPhaseFilterbank;
-
+	
+	// software filterbank constructor
+	dsp::Filterbank* filterbank = new dsp::Filterbank;
 	filterbank->set_input (voltages);
 	filterbank->set_output (convolve);
 	filterbank->set_nchan (nchan);
-        filterbank->load_coefficients (polyphase_filter);
-	  
-	operations.push_back (filterbank);
 	
-      }
-      else
-#endif
-	
-	{  
-	  if (verbose)
-	    cerr << "Creating Filterbank instance" << endl;
-	  
-	  // software filterbank constructor
-	  dsp::Filterbank* filterbank = new dsp::Filterbank;
-	  filterbank->set_input (voltages);
-	  filterbank->set_output (convolve);
-	  filterbank->set_nchan (nchan);
-	  
-	  if (simultaneous) {
-	    filterbank->set_response (kernel);
-	    filterbank->set_passband (passband);
-	  }
-	  
-	  operations.push_back (filterbank);
+	if (simultaneous) {
+	  filterbank->set_response (kernel);
+	  filterbank->set_passband (passband);
 	}
+	
+	operations.push_back (filterbank);
+      }
     
   }
   
+#if ACTIVATE_BLITZ
+
+  if (polyphase_filter) {
+	
+    if (verbose)
+      cerr << "Creating PolyPhaseFilterbank instance" << endl;
+    
+    // polyphase filterbank constructor
+    dsp::PolyPhaseFilterbank* filterbank = new dsp::PolyPhaseFilterbank;
+    
+    filterbank->set_input (voltages);
+    filterbank->set_output (convolve);
+
+    filterbank->load_complex_coefficients (polyphase_filter);
+    
+    cerr << "dsp: PolyPhaseFilterbank with nchan=" << filterbank->get_nchan()
+	 << " loaded" << endl;
+
+    operations.push_back (filterbank);
+    
+  }
+
+#endif
+
   if (nchan == 1 || !simultaneous) {
     
     if (verbose)

@@ -188,15 +188,22 @@ dsp::PolyPhaseFilterbank::~PolyPhaseFilterbank ()
 }
 
 
-void dsp::PolyPhaseFilterbank::load_coefficients (string CoefficientFile)
+void dsp::PolyPhaseFilterbank::load_coefficients (string filename)
 {
-  filterbank = new FilterBank<float> (CoefficientFile);
+  if (filterbank)
+    delete filterbank;
+
+  filterbank = new FilterBank<float> (filename);
+  nchan = filterbank->getItsNumberOfBands();
 }
 
-void 
-dsp::PolyPhaseFilterbank::load_complex_coefficients (string CoefficientFile)
+void dsp::PolyPhaseFilterbank::load_complex_coefficients (string filename)
 {
-  C_filterbank = new FilterBank< complex<float> > (CoefficientFile);
+  if (C_filterbank)
+    delete C_filterbank;
+
+  C_filterbank = new FilterBank< complex<float> > (filename);
+  nchan = filterbank->getItsNumberOfBands();
 }
 
 
@@ -260,52 +267,64 @@ void dsp::PolyPhaseFilterbank::transformation ()
     response->mark (output);
 
   unsigned npol = input->get_npol();
-  unsigned out_nbyte = output->get_ndat() * 2 * sizeof(float);
+
+  Signal::State state = input->get_state();
+
+  unsigned out_ndat = output->get_ndat();
+  unsigned out_iptr = 0;
+  float*   out_ptr = 0;
+
+  // the result of each polyphase filterbank operation
+  blitz::Array<complex<float>,2> result;
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
 
-    cerr << "import ndat=" << ndat << endl;
-
+    float* in_ptr = const_cast<float*>(input->get_datptr (0, ipol));
+    
     // import the data to a Blitz++ array
-    float* data = const_cast<float*>(input->get_datptr (0, ipol));
 
-    blitz::Array<complex<float>,2> result;
+    for (unsigned idat=0; idat < out_ndat; idat++) {
 
-    if (input->get_state() == Signal::Nyquist) {
+      if (state == Signal::Nyquist) {
+	
+	blitz::Array<float,1> A (in_ptr,
+				 blitz::shape(ndat),
+				 blitz::neverDeleteData);
+	
+	result.reference( filterbank->filter (A) );
+	
+      } 
+      else {
+	
+	blitz::Array<complex<float>,1> A ((complex<float>*) in_ptr,
+					  blitz::shape(ndat),
+					  blitz::neverDeleteData);
 
-      blitz::Array<float,1> A (data,
-			       blitz::shape(ndat),
-			       blitz::neverDeleteData);
+	result.reference( C_filterbank->filter (A) );
+	
+      }
 
-      result = filterbank->filter (A);
+      cerr << "result.extent(0)=" << result.extent(blitz::firstDim)
+	   << "result.extent(1)=" << result.extent(blitz::secondDim) << endl;
 
-    } 
-    else {
+      for (unsigned ichan=0; ichan < nchan; ichan++) {
 
-      cerr<< "cast to complex blitz::Array" << endl;
-      blitz::Array<complex<float>,1> A ((complex<float>*) data,
-					blitz::shape(ndat),
-					blitz::neverDeleteData);
+	out_ptr = output->get_datptr (ichan, ipol) + out_iptr;
 
-      cerr<< "filter" << endl;
+	blitz::TinyVector<int,2> index (ichan, 0);
+	complex<float> z = result(index);
 
-      result.reference( C_filterbank->filter (A) );
+	*out_ptr = z.real();
+	out_ptr++;
+	*out_ptr = z.imag();
+
+      }
+
+      // prepare for the next lot
+      in_ptr += nchan * 2;
+      out_iptr += 2;
 
     }
-
-    cerr << "result.extent(0)=" << result.extent(blitz::firstDim)
-         << "result.extent(1)=" << result.extent(blitz::secondDim) << endl;
-
-    // copy result into output
-    data = (float*) result.data();
-
-    for (unsigned ichan=0; ichan < nchan; ichan++) {
-
-      float* out_ptr = output->get_datptr (ichan, ipol);
-      memcpy (out_ptr, data, out_nbyte);
-
-    }
-
 
   } // for each polarization
     
