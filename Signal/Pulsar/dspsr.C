@@ -728,24 +728,33 @@ int main (int argc, char** argv)
       dm = dispersion_measure;
     }
 
-    kernel->set_dispersion_measure (dm);
-    kernel->match ( manager->get_info(), nchan);
+    unsigned block_size = ffts;
+    unsigned overlap = 0;
+    unsigned nfft = 0;
+    unsigned nfilt = 0;
+  
+    if (!manager->get_info()->get_detected()) {
 
-    unsigned nfft = kernel->get_ndat();
-    unsigned nfilt = kernel->get_impulse_pos() + kernel->get_impulse_neg();
+      kernel->set_dispersion_measure (dm);
+      kernel->match ( manager->get_info(), nchan);
+      
+      nfft = kernel->get_ndat();
+      nfilt = kernel->get_impulse_pos() + kernel->get_impulse_neg();
+      
+      unsigned real_complex = 2 / manager->get_info()->get_ndim();
+      
+      block_size = ((nfft-nfilt) * ffts + nfilt) * nchan * real_complex;
+      overlap = nfilt * nchan * real_complex;
+      
+      unsigned fft_size = nfft * nchan * real_complex;
 
-    unsigned real_complex = 2 / manager->get_info()->get_ndim();
+      cerr << "FFTsize=" << fft_size << endl;
+      cerr << "Blocksz=" << block_size << endl;
+      cerr << "Overlap=" << overlap << endl;
+      
+      unsigned nblocks_tot = 0;
 
-    unsigned block_size = ((nfft-nfilt) * ffts + nfilt) * nchan * real_complex;
-    unsigned overlap = nfilt * nchan * real_complex;
-
-    unsigned fft_size = nfft * nchan * real_complex;
-
-    cerr << "FFTsize=" << fft_size << endl;
-    cerr << "Blocksz=" << block_size << endl;
-    cerr << "Overlap=" << overlap << endl;
-
-    unsigned nblocks_tot = 0;
+    }
 
     if (mpi_rank == mpi_root) {
 
@@ -770,13 +779,16 @@ int main (int argc, char** argv)
       if (blocks)
 	nblocks_tot = blocks;
       
-      fprintf (stderr, "(nfft:%d  ngood:%d  ffts/job:%d  jobs:%d)\n",
-	       nfft, nfft-nfilt, ffts, nblocks_tot);
-      if (nchan > 1)
-	fprintf (stderr,
-		 "(nchan:%d -- Resolution:: spectral:%d  temporal:%d)\n",
-		 nchan, fres, 1);
+      if (nfft) {
 
+	fprintf (stderr, "(nfft:%d  ngood:%d  ffts/job:%d  jobs:%d)\n",
+		 nfft, nfft-nfilt, ffts, nblocks_tot);
+	if (nchan > 1)
+	  fprintf (stderr,
+		   "(nchan:%d -- Resolution:: spectral:%d  temporal:%d)\n",
+		   nchan, fres, 1);
+	
+      }
 
 #if ACTIVATE_MPI
 
