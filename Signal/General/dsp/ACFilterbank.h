@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ACFilterbank.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/03/25 05:54:02 $
+   $Revision: 1.2 $
+   $Date: 2005/03/25 06:06:42 $
    $Author: wvanstra $ */
 
 #ifndef __ACFilterbank_h
@@ -11,6 +11,9 @@
 #include "dsp/Transformation.h"
 
 namespace dsp {
+
+  class Apodization;
+  class Response;
   
   //! Calculates Power Spectral Density or Auto-Correlation Function 
   /* This class can be used to form the power spectral density (PSD)
@@ -53,6 +56,15 @@ namespace dsp {
     //! Get flag to calculate auto-correlation function
     bool get_form_acf () const { return form_acf; }
 
+    //! Set the apodization function
+    virtual void set_apodization (Apodization* function);
+
+    //! Return true if the passband attribute has been set
+    bool has_passband () const;
+
+    //! Return a pointer to the integrated passband
+    virtual const Response* get_passband() const;
+
   protected:
 
     //! Perform the convolution transformation on the input TimeSeries
@@ -65,7 +77,13 @@ namespace dsp {
     unsigned nlag;
 
     //! Flag to calculate auto-correlation function
-    form_acf;
+    bool form_acf;
+
+    //! Apodization function (time domain window)
+    Reference::To<Apodization> apodization;
+
+    //! Integrated passband
+    Reference::To<Response> passband;
 
   };
   

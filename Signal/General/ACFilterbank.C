@@ -2,6 +2,7 @@
 #include "dsp/WeightedTimeSeries.h"
 
 #include "fftm.h"
+#include "spectra.h"
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
 
@@ -173,7 +174,8 @@ void dsp::ACFilterbank::transformation ()
       output_datptr += out_step;
 
       if (apodization) {
-	apodization -> operate (input_ptr, windowed_time_domain);
+	apodization -> operate (const_cast<float*>(input_ptr), 
+                                windowed_time_domain);
 	input_ptr = windowed_time_domain;
       }
 
