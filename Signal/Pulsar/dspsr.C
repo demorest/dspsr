@@ -36,7 +36,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:d:e:E:f:F:hiIjM:n:N:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -69,7 +69,8 @@ void usage ()
     " -I             Over-ride with IncoherentFilterbank class [false]\n"
 #endif
     "\n"
-    "Convolution options:\n"
+    "Dedispersion/Convolution options:\n"
+    " -D dm          over-ride dispersion measure\n"
     " -x nfft        over-ride optimal transform length\n"
     "\n"
     "Detection options:\n"
@@ -184,6 +185,10 @@ int main (int argc, char** argv)
   bool use_incoherent_filterbank = false;
 #endif
 
+  // dispersion measure
+  double dispersion_measure = 0.0;
+  bool dm_set = false;
+
   // Pulsar name
   string pulsar_name;
 
@@ -233,16 +238,21 @@ int main (int argc, char** argv)
       nbin = atoi (optarg);
       break;
 
+    case 'D':
+      dispersion_measure = atof(optarg);
+      dm_set = true;
+      break;
+
     case 'd':
       npol = atoi (optarg);
       break;
 
-    case 'e':
-      archive_extension = optarg;
-      break;
-
     case 'E':
       archive_filename = optarg;
+      break;
+
+    case 'e':
+      archive_extension = optarg;
       break;
 
     case 'F': {
@@ -657,6 +667,12 @@ int main (int argc, char** argv)
     fold->prepare ( manager->get_info() );
 
     double dm = fold->get_pulsar_ephemeris() -> get_dm();
+
+    if (dm_set) {
+      cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
+	   << dispersion_measure << endl;
+      dm = dispersion_measure;
+    }
 
     kernel->set_dispersion_measure (dm);
     kernel->match ( manager->get_info(), nchan);
