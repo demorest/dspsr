@@ -57,7 +57,8 @@ LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
 ##########################################################################
 # MPI
-LMPI = -lmpich $(LSOCK)
+LMPI = -L/usr/local/mpi/lib -lmpich $(LSOCK)
+IMPI = -I/usr/local/mpi/include
 
 ##########################################################################
 # FFTW and pulsar group wrappers
@@ -79,8 +80,8 @@ LMOTIF = -lXm -lXt
 
 ##########################################################################
 # Qt Qt/Xt Qt/Motif/PGPLOT
-IQT := -I${PSRPKGS}/${LOGIN_ARCH}/qt/include
-LQT := -L${PSRPKGS}/${LOGIN_ARCH}/qt/lib -lqt
+IQT := -I/usr/local/qt/include
+LQT := -L/usr/local/qt/lib -lqt
 LQXT = $(LQT) -lqxt
 LQXMPGPLOT = $(LQXT) $(LXMPGPLOT)
 
