@@ -188,4 +188,4 @@ LTIMES = -ltimes -lgenutil $(LSLA) -lm
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil++ -lgenutil \
 	-lpsrfft $(LFFT) $(LTIMES)
 
-include ${LOCAL_ROOT}/include/Makefile.psrchive
+-include ${LOCAL_ROOT}/include/Makefile.psrchive
