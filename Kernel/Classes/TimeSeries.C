@@ -12,6 +12,9 @@
 
 #include "dsp/TimeSeries.h"
 
+int dsp::TimeSeries::instantiation_count = 0;
+int64 dsp::TimeSeries::memory_used = 0;
+
 bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
 { return c1.ts==c2.ts && c1.ptr==c2.ptr && c1.ichan==c2.ichan && c1.ipol==c2.ipol; } 
 bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
@@ -34,6 +37,8 @@ dsp::TimeSeries::TimeSeries()
 }
 
 void dsp::TimeSeries::init(){
+  instantiation_count++;
+
   Observation::init();
   
   data = buffer = NULL;
@@ -53,10 +58,8 @@ dsp::TimeSeries* dsp::TimeSeries::clone(){
 
 dsp::TimeSeries::~TimeSeries()
 {
-  if (buffer) delete [] buffer; buffer = 0;
-  data = 0;
-  size = 0;
-  subsize = 0;
+  resize(0);
+  instantiation_count--;
 }
 
 void dsp::TimeSeries::set_nbit (unsigned _nbit)
@@ -90,7 +93,12 @@ void dsp::TimeSeries::resize (uint64 nsamples)
       " have float[" << size << "]" << endl;
 
   if (!require || require > size) {
-    if (buffer) delete [] buffer; buffer = 0;
+    if (buffer){
+      delete [] buffer;
+      buffer = 0;
+      memory_used -= size*4;
+    }
+
     data = 0;
     size = subsize = 0;
   }
@@ -103,6 +111,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   if (size == 0) {
     buffer = new float[require];
     size = require;
+    memory_used += size*4;
   }
 
   subsize = ndim * nsamples;
