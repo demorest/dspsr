@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.15 $
-   $Date: 2002/10/07 15:51:45 $
+   $Revision: 1.16 $
+   $Date: 2002/10/08 17:08:32 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -10,9 +10,9 @@
 
 #include <string>
 
+#include "Reference.h"
 #include "MJD.h"
 #include "sky_coord.h"
-#include "Reference.h"
 
 /*! \mainpage 
  
@@ -161,7 +161,8 @@ namespace dsp {
     void change_start_time (int64 ndat);
 
     //! Return the end time of the trailing edge of the last time sample
-    MJD get_end_time () const { return start_time + double(ndat + 1) / rate; }
+    virtual MJD get_end_time () const
+    { return start_time + double(ndat + 1) / rate; }
 
     //! Set the sampling rate (time samples per second in Hz)
     void set_rate (double _rate) { rate = _rate; }
