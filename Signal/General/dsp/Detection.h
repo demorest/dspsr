@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/10/07 11:47:45 $
+   $Revision: 1.2 $
+   $Date: 2002/10/07 15:47:43 $
    $Author: wvanstra $ */
 
 
@@ -28,7 +28,7 @@ namespace dsp {
     Detection ();
     
     //! Destructor
-    ~Detection ();
+    ~Detection () { }
 
     //! Set the state of the output data
     void set_output_state (Observation::State _state);
