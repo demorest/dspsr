@@ -146,57 +146,27 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
   subint_full = false;
 
   double sampling_rate = input->get_rate();
+  uint64 input_ndat = input->get_ndat();
+
   MJD input_start = input->get_start_time();
   MJD input_end   = input->get_end_time();
 
   bool contains_data = (output->get_integration_length () > 0);
-  MJD output_end;
 
-  if (contains_data)
-    output_end = output->get_end_time();
-  else
-    output_end = lower;
-
+  //////////////////////////////////////////////////////////////////////////
+  //
+  // determine the MJD at which to start folding 
+  //
   MJD fold_start;
 
-  // some comparisons need not be so rigorous for the purposes of this
-  // routine.  half the time resolution will do
-  double oldMJDprecision = MJD::precision;
-  MJD::precision = 0.5/sampling_rate;
+  if (!contains_data) {
 
-  if (contains_data || lower != MJD::zero) {
+    // The current sub-integration contains no data.  Set new
+    // boundaries and start folding with the first sample of the input
+    // TimeSeries within the boundaries.
 
-    // check that the input TimeSeries has data within the current boundaries
-
-    if (input_end < lower || input_start > upper) {
-      if (verbose) cerr << "dsp::SubFold::bound"
-		     " input not from this sub-integration" << endl;
-
-      lower = MJD::zero;
-      more_data = true;
-
-      MJD::precision = oldMJDprecision;
-      return false;
-    }
-    
-    fold_start = std::max (output_end, input_start);
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound continue folding at" 
-	   << "\n        start = " << fold_start
-	   << "\n   output end = " << output_end
-	   << "\n  input start = " << input_start
-	   << endl;
-
-  }
-  else {
-
-    // the current subint contains no data and there are currently no
-    // sub-integration boundaries set.  Set new boundaries and start
-    // folding with the first sample of the input TimeSeries within the
-    // boundaries.
-    
-    set_boundaries (input_start);
+    if (lower == MJD::zero)
+      set_boundaries (input_start);
 
     fold_start = std::max (lower, input_start);
 
@@ -207,84 +177,147 @@ bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
 	   << "\n  input start = " << input_start
 	   << endl;
   }
+  else {
 
-  // determine the amount of data to be integrated, and how far into
-  // the current input TimeSeries to start
+    // The current sub-integration contains data.  Check that the
+    // input TimeSeries has data within the current boundaries.
+
+    if (input_end < lower || input_start > upper) {
+
+      if (verbose) cerr << "dsp::SubFold::bound"
+		     " input not from this sub-integration" << endl;
+
+      // This state: (more_data == true && subint_full == false)
+      // indicates that the output PhaseSeries may be only partially
+      // full.  The output should be set to an empty PhaseSeries and
+      // this method should be called again.
+
+      lower = MJD::zero;
+      more_data = true;
+      return false;
+
+    }
+    
+    MJD output_end = output->get_end_time();
+
+    fold_start = std::max (output_end, input_start);
+
+    if (verbose)
+      cerr << "dsp::SubFold::bound continue folding at" 
+	   << "\n        start = " << fold_start
+	   << "\n   output end = " << output_end
+	   << "\n  input start = " << input_start
+	   << endl;
+
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////
+  //
+  // determine how far into the current input TimeSeries to start
+  //
   MJD offset = fold_start - input_start;
-  double offset_samples = offset.in_seconds() * sampling_rate;
-  idat_start = (uint64) rint (offset_samples);
+
+  double start_sample = offset.in_seconds() * sampling_rate;
+  idat_start = (uint64) rint (start_sample);
 
   if (verbose)
-    cerr << "dsp::SubFold::bound offset " << offset.in_seconds()*1e3
+    cerr << "dsp::SubFold::bound start offset " << offset.in_seconds()*1e3
 	 << " ms (" << idat_start << "pts)" << endl;
   
-  MJD fold_end = std::min (input_end, upper);
-  MJD fold_total = fold_end - fold_start;
+  if (idat_start >= input_ndat) {
 
-  double fold_samples = fold_total.in_seconds() * sampling_rate;
-  ndat_fold = (uint64) rint (fold_samples);
+    // The current data end before the start of the current
+    // sub-integration
+
+    if (verbose)
+      cerr << "dsp::SubFold::bound data end before start of current subint=" 
+	   << fold_start << endl;
+
+    return false;
+
+  }
+
+  //////////////////////////////////////////////////////////////////////////
+  //
+  // determine how far into the current input TimeSeries to end
+  //
+  MJD fold_end = std::min (input_end, upper);
 
   if (verbose)
-    cerr << "dsp::SubFold::bound fold " << fold_total.in_seconds()*1e3
-	 << " ms (" << ndat_fold << "pts) until"
+    cerr << "dsp::SubFold::bound end folding at "
          << "\n          end = " << fold_end
          << "\n   subint end = " << upper
          << "\n    input end = " << input_end
          << endl;
 
-  if (fold_total.in_seconds() < 0.0) {
-    // the current data end before the start subint of interest
-    if (verbose)
-      cerr << "dsp::SubFold::bound data end before start of current subint=" 
-	   << fold_start << endl;
+  offset = fold_end - input_start;
 
-    // return false - no error, but the caller should check the
-    // integration length before using the subint
-    MJD::precision = oldMJDprecision;
-    return false;
-  }
+  double end_sample = offset.in_seconds() * sampling_rate;
+  uint64 idat_end = (uint64) rint (end_sample);
 
-  if (idat_start + ndat_fold > input->get_ndat()) {
-    // this can happen owing to rounding in the above two calls to rint()
+  if (verbose)
+    cerr << "dsp::SubFold::bound end offset " << offset.in_seconds()*1e3
+	 << " ms (" << idat_end << "pts)" << endl;
+  
+  if (idat_end > input_ndat) {
+
+    // this can happen owing to rounding in the above call to rint()
+
     if (verbose)
       cerr << "dsp::SubFold::bound fold"
-	"\n   offset=rint(" << offset_samples << ")=" << idat_start <<
-	"\n +  total=rint(" << fold_samples << ")=" << ndat_fold <<
-        "\n = " << idat_start+ndat_fold << 
-	" > input ndat=" << input->get_ndat() << endl;
-    ndat_fold = input->get_ndat() - idat_start;
+	"\n   end_sample=rint(" << end_sample << ")=" << idat_end << 
+	" > input ndat=" << input_ndat << endl;
+
+    idat_end = input_ndat;
   }
 
-  double actual = double(ndat_fold)/sampling_rate;
-  if (verbose)
-    cerr << "dsp::SubFold::bound fold " << actual*1e3 << "/"
-	 << (input_end - input_start).in_seconds()*1e3 << " ms ("
-	 << ndat_fold << "/" << input->get_ndat() << " pts)" << endl;
-  
-  double samples_to_end = 
-    (upper - fold_end).in_seconds() * sampling_rate;
+  ndat_fold = idat_end - idat_start;
+
+  //////////////////////////////////////////////////////////////////////////
+  //
+  // determine if the end of the current sub-integration has been reached
+  //
+
+  double samples_to_end = (upper - fold_end).in_seconds() * sampling_rate;
 
   if (verbose)
     cerr << "dsp::SubFold::bound " << samples_to_end << " samples to"
       " end of current sub-integration" << endl;
 
-  if (samples_to_end < 0.5)
-    subint_full = true;
+  if (samples_to_end < 0.5) {
 
-  if (fold_end < input_end) {
-    // the current input TimeSeries extends more than the current
-    // sub-integration: set the more_data flag and the boundaries for
-    // the next sub-integration
     if (verbose)
-      cerr << "dsp::SubFold::bound " << (input_end-fold_end).in_seconds()*1e3
-	   << " ms after end of current sub-integration" << endl
-	   << "dsp::SubFold::bound set bounds for next sub-integration"<<endl;
+      cerr << "dsp::SubFold::bound end of sub-integration" << endl;
 
-    set_boundaries (fold_end+MJD::precision);
-    more_data = true;
+    subint_full = true;
+    set_boundaries (input_end + 1.0/sampling_rate);
+
+    if (idat_end < input_ndat) {
+
+      // The current input TimeSeries extends more than the current
+      // sub-integration.  The more_data flag indicates that the input
+      // TimeSeries should be used again.
+      
+      if (verbose)
+	cerr << "dsp::SubFold::bound input data ends "
+	     << (input_end-fold_end).in_seconds()*1e3 <<
+	  " ms after current sub-integration" << endl; 
+      
+      more_data = true;
+
+    }
+
   }
 
-  MJD::precision = oldMJDprecision;
+  if (verbose) {
+    double used = double(ndat_fold)/sampling_rate;
+    double available = double(input_ndat)/sampling_rate;
+    cerr << "dsp::SubFold::bound fold " << used*1e3 << "/"
+	 << available*1e3 << " ms (" << ndat_fold << "/" << input_ndat
+	 << " samples)" << endl;
+  }
+
   return true;
 }
 
