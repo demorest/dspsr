@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/01/27 23:42:18 $
+   $Revision: 1.21 $
+   $Date: 2003/05/07 05:49:21 $
    $Author: hknight $ */
 
 #ifndef __Input_h
@@ -58,6 +58,9 @@ namespace dsp {
     virtual uint64 get_overlap () const { return overlap; }
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap) { overlap = _overlap; }
+
+    //! Convenience function for returning block_size-overlap
+    virtual uint64 get_stride () const { return get_block_size()-get_overlap(); }
 
     //! Return the total number of time samples available
     virtual uint64 get_total_samples () const { return info.get_ndat(); }
