@@ -42,6 +42,9 @@ void dsp::File::open (const char* filename)
   if (info.get_ndat() == 0)
     set_total_samples ();
 
+  // ensure that file is set to load the first sample after the header
+  seek_bytes (0);
+
   reset ();
 
   current_filename = filename;
