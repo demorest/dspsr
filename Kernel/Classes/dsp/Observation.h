@@ -1,6 +1,6 @@
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/06/30 05:09:01 $
+   $Revision: 1.2 $
+   $Date: 2002/06/30 07:34:33 $
    $Author: pulsar $ */
 
 #ifndef __Observation_h
@@ -62,6 +62,40 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
+    //! Set the dimensions of each time sample
+    /*! Parameters determine the size and interpretation of each datum */
+    virtual void set_sample (State _state, int _nchan, int _npol, int _nbit)
+      { state=_state; nchan=_nchan; npol=_npol; nbit=_nbit; }
+
+    //! Set the state of the signal
+    void set_state (State _state) { state = _state; }
+    //! Return the state of the signal
+    State get_state () const { return state; }
+
+    //! Change the state and correct other attributes accordingly
+    virtual void change_state (State new_state);
+
+    //! Returns true if state is Detected, Coherence, or Stokes
+    bool get_detected () const { return state >= Detected; }
+
+    //! Returns the dimension of the data (complex or real)
+    int get_ndim () const { if (state==Analytic) return 2; else return 1; }
+
+     //! Set the number of channels into which the band is divided
+    void set_nchan (int _nchan) { nchan = _nchan; }
+    //! Return the number of channels into which the band is divided
+    int get_nchan () const { return nchan; }
+
+    //! Set the number of polarizations
+    void set_npol (int _npol) { npol = _npol; }
+    //! Return the number of polarizations
+    int get_npol () const { return npol; }
+
+   //! Set the number of bits per value
+    void set_nbit (int _nbit) { nbit = _nbit; }
+    //! Return the number of polarizations
+    int get_nbit () const { return nbit; }
+
     //! Set the number of time samples in container
     /*! Note that one time sample may be complex and/or vector in
       nature.  For instance, the in-phase and quadrature components of
@@ -75,28 +109,13 @@ namespace dsp {
     void set_centre_frequency (double cf) { centre_frequency = cf; }
     //! Return the centre frequency of the band-limited signal in MHz
     double get_centre_frequency () const { return centre_frequency; }
-
-    //! Returns the centre frequency of the specified channel
+    //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (int ichan) const;
-
 
     //! Set the bandwidth of signal in MHz
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
     //! Return the bandwidth of signal in MHz
     double get_bandwidth () const { return bandwidth; }
-
-    //! Set the number of channels into which the band is divided
-    void set_nchan (int _nchan) { nchan = _nchan; }
-    //! Return the number of channels into which the band is divided
-    int get_nchan () const { return nchan; }
-
-    //! Set the number of polarizations
-    void set_npol (int _npol) { npol = _npol; }
-    //! Return the number of polarizations
-    int get_npol () const { return npol; }
-
-    //! Returns the dimension of the data (complex or real)
-    int get_ndim () const { if (state==Analytic) return 2; else return 1; }
 
     //! Set the type of receiver feeds
     void set_feedtype (Feed _feedtype) { feedtype = _feedtype; }
@@ -126,17 +145,6 @@ namespace dsp {
 
     //! Multiply scale by factor
     void rescale (double factor) { scale *= factor; }
-
-    //! Set the state of the signal
-    void set_state (State _state) { state = _state; }
-    //! Return the state of the signal
-    State get_state () const { return state; }
-
-    //! Change the state and correct other attributes accordingly
-    virtual void change_state (State new_state);
-
-    //! Returns true if state is Detected, Coherence, or Stokes
-    bool get_detected () const { return state >= Detected; }
 
     //! Set true if frequency channels are out of order (band swappped)
     void set_swap (bool _swap) { swap = _swap; }
@@ -187,6 +195,22 @@ namespace dsp {
     //! Returns a string describing the state of the data
     string get_state_str () const;
 
+    //! Return the size in bytes of nsamples time samples
+    int64 nbytes (int64 nsamples) const
+      { return (nsamples*nbit*npol*nchan*get_ndim())/8; }
+    
+    //! Return the size in bytes of one time sample
+    float nbyte () const
+      { return float(nbit*npol*nchan*get_ndim()) / 8.0; }
+
+    //! Return the size in bytes of ndat time samples
+    int64 nbytes () const
+      { return nbytes (ndat); }
+
+    //! Return the number of samples in nbytes bytes
+    int64 nsamples (int64 nbytes) const
+      { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
+
     //! Returns true if the signal may be integrated
     bool combinable (const Observation& obs);
 
@@ -210,6 +234,12 @@ namespace dsp {
     //! Number of polarizations
     int npol;
 
+    //! Number of bits per value
+    int nbit;
+
+    //! State of the signal
+    State state;
+
     //! Type of receiver feeds
     Feed feedtype;
 
@@ -221,9 +251,6 @@ namespace dsp {
 
     //! Amount by which data has been scaled
     double scale;
-
-    //! State of the signal
-    State state;
 
     //! Flag set when frequency channels are out of order (band swappped)
     bool swap;
@@ -243,11 +270,11 @@ namespace dsp {
     //! Observation mode
     string mode;
 
-    //! Coordinates of the source
-    sky_coord position;
-
     //! Instrument used to record signal
     string machine;
+
+    //! Coordinates of the source
+    sky_coord position;
 
     //! Set all attributes to null default
     void init ();

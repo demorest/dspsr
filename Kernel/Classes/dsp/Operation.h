@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/06/30 05:09:01 $
+   $Revision: 1.2 $
+   $Date: 2002/06/30 07:34:33 $
    $Author: pulsar $ */
 
 #ifndef __Operation_h
@@ -23,6 +23,10 @@ namespace dsp {
   class Operation {
 
   public:
+
+    //! All operations must define their behaviour
+    enum Behaviour { inplace, outofplace, anyplace };
+
     //! Global flag tells all operations to record the time spent operating
     static bool record_time;
 
@@ -30,7 +34,10 @@ namespace dsp {
     static bool verbose;
 
     //! All sub-classes must specify name and capacity for inplace operation
-    Operation (const char* name, bool inplace_capable);
+    Operation (const char* name, Behaviour type);
+
+    //! Virtual destructor
+    virtual ~Operation ();
 
     //! Call this method to operate on input Timeseries
     virtual void operate ();
@@ -57,12 +64,12 @@ namespace dsp {
 
     //! Perform operation on data.  Defined by sub-classes
     virtual void operation () = 0;
-    
+
+    //! Reset the Timeseries::loader_sample attribute
+    virtual void reset_loader_sample ();
+
     //! Operation name
     string name;
-
-    //! True if operation can be performed in-place
-    bool inplace_capable;
 
     //! Container from which input data will be read
     const Timeseries* input;
@@ -85,6 +92,8 @@ namespace dsp {
     //! Stop watch records the amount of time spent performing this operation
     RealTimer optime;
 
+    //! Behaviour of operation
+    Behaviour type;
 
   };
   

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/06/30 05:09:01 $
+   $Revision: 1.2 $
+   $Date: 2002/06/30 07:34:33 $
    $Author: pulsar $ */
 
 #ifndef __Convolution_h
@@ -62,9 +62,6 @@ namespace dsp {
     //! Null constructor
     Convolution ();
 
-    //! Perform the onvolution operation on the input Timeseries
-    virtual void operation ();
-
     //! Return a descriptive string
     virtual const string descriptor () const;
 
@@ -76,6 +73,9 @@ namespace dsp {
 
 
   protected:
+
+    //! Perform the convolution operation on the input Timeseries
+    virtual void operation ();
 
     //! Frequency response (convolution kernel)
     filter response;

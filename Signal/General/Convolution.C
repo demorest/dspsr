@@ -5,7 +5,7 @@
 
 //#define DEBUG
 
-dsp::Convolution::Convolution() : Operation ("Convolution", true)
+dsp::Convolution::Convolution() : Operation ("Convolution", anyplace)
 {
   apodizing = 0;
   bandpass = 0;

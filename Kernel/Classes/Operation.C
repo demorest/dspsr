@@ -9,10 +9,10 @@ bool dsp::Operation::record_time = false;
 bool dsp::Operation::verbose = false;
 
 //! All sub-classes must specify name and capacity for inplace operation
-dsp::Operation::Operation (const char* _name, bool inplace)
+dsp::Operation::Operation (const char* _name, Behaviour _type)
 {
   name = _name;
-  inplace_capable = inplace;
+  type = _type;
 }
 
 void dsp::Operation::operate ()
@@ -23,7 +23,7 @@ void dsp::Operation::operate ()
   if (!output)
     throw_str ("Operation::operate no output");
 
-  if (!inplace_capable && input == output)
+  if (type == outofplace && input == output)
     throw_str ("Operation::operate input cannot equal output");
 
   if (record_time)
@@ -34,18 +34,24 @@ void dsp::Operation::operate ()
 
   if (record_time)
     optime.stop();
+  
+  reset_loader_sample ();
 }
 
 //! Set the container from which input data will be read
 void dsp::Operation::set_input (const Timeseries* _input)
 {
   input = _input;
+  if (type == inplace)
+    output = const_cast<Timeseries*>(input);
 }
 
 //! Set the container into which output data will be written
 void dsp::Operation::set_output (Timeseries* _output)
 {
   output = _output;
+  if (type == inplace)
+    input = output;
 }
 
 //! Return pointer to the container from which input data will be read
@@ -59,6 +65,17 @@ dsp::Timeseries* dsp::Operation::get_output () const
 {
   return output;
 }
+
+/*! By default, if an inplace operation if performed on a Timeseries,
+ then the data no longer represents that which was set by a Loader operation.
+ Reset the loader_sample attribute of the output so that the Loader knows
+ that the data has been changed since the last load
+*/
+void dsp::Operation::reset_loader_sample ()
+{
+  output -> loader_sample = -1;
+}
+
 
 //! Return pointer to a memory resource shared by operations
 void* dsp::Operation::workingspace (size_t nbytes)

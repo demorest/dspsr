@@ -137,6 +137,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   bandwidth   = in_obs.bandwidth;
   nchan       = in_obs.nchan;
   npol        = in_obs.npol;
+  nbit        = in_obs.nbit;
   state       = in_obs.state;
   feedtype    = in_obs.feedtype;
 
