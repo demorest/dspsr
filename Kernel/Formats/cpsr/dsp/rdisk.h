@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/rdisk.h,v $
-   $Revision: 1.2 $
-   $Date: 2001/06/02 09:49:13 $
+   $Revision: 1.3 $
+   $Date: 2001/07/31 20:25:56 $
    $Author: wvanstra $ */
 
 #ifndef __RDISK_H
@@ -11,6 +11,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include "psr_cpp.h"
 
 class rdisk {
 
