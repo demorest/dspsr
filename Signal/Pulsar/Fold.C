@@ -298,6 +298,11 @@ void dsp::Fold::set_folding_polyco (const polyco* _folding_polyco)
   built = true;
 }
 
+const polyco* dsp::Fold::get_folding_polyco () const
+{
+  return folding_polyco;
+}
+
 void dsp::Fold::set_ncoef (unsigned _ncoef)
 {
   if (ncoef == _ncoef)
