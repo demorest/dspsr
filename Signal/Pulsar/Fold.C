@@ -25,14 +25,20 @@ void dsp::Fold::prepare ()
   if (!input)
     throw_str ("Fold::prepare no input");
 
-  string jpulsar = input->get_source();
+  prepare (input);
+}
+
+//! Prepare for folding the given Observation
+void dsp::Fold::prepare (const Observation* observation)
+{
+  string jpulsar = observation->get_source();
   if (jpulsar[0] != 'J')
     jpulsar = "J" + jpulsar;
 
   if (verbose)
     cerr << "Fold::prepare source=" << jpulsar << endl;
 
-  MJD time = input->get_start_time();
+  MJD time = observation->get_start_time();
 
   folding_polyco = choose_polyco (time, jpulsar);
 
@@ -81,7 +87,7 @@ void dsp::Fold::prepare ()
   folding_polyco = new polyco;
 
   Tempo::set_polyco ( *folding_polyco, *pulsar_ephemeris, time, time,
-		      nspan, ncoef, 8, input->get_telescope() );
+		      nspan, ncoef, 8, observation->get_telescope() );
 
 #if 0
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);

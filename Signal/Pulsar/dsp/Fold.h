@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/10/11 02:31:14 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/10/16 09:23:52 $
+   $Author: pulsar $ */
 
 
 #ifndef __Fold_h
@@ -21,6 +21,7 @@ class psrephem;
 namespace dsp {
 
   class PhaseSeries;
+  class Observation;
 
   //! Fold Timeseries data into phase-averaged profile(s)
   /*! 
@@ -39,6 +40,9 @@ namespace dsp {
 
     //! Prepare to fold the input Timeseries
     void prepare ();
+
+    //! Prepare to fold the given Observation
+    void prepare (const Observation* observation);
 
     //! Set the number of phase bins into which data will be folded
     void set_nbin (unsigned _nbin) { nbin = _nbin; }
