@@ -105,7 +105,7 @@ int main (int argc, char** argv)
 	     << " != BitSeries::ndat=" << data_large->get_ndat() << endl;
 
       if (data_large->get_request_ndat() != large_block)
-	cerr << "ERROR: Input::block_size=" << large_block 
+	cerr << "ERROR: large Input::block_size=" << large_block 
 	     << " != BitSeries::request_ndat=" 
 	     << data_large->get_request_ndat() << endl;
 
@@ -116,12 +116,21 @@ int main (int argc, char** argv)
 
 	input_small->operate();
 
+	if (data_small->get_request_ndat() != small_block)
+	  cerr << "ERROR: small Input::block_size=" << small_block 
+	       << " != BitSeries::request_ndat=" 
+	       << data_small->get_request_ndat() << endl;
+
+	uint64 expected_offset = (resolution - ismall) % resolution;
+
+	if (data_small->get_request_offset() != expected_offset)
+	  cerr << "ERROR: BitSeries::request_offset="
+	       << data_small->get_request_offset() << " != expected offset="
+	       << expected_offset << endl;
+
 	// on the first read of each loop, the first small_block samples
 	// of data_small should equal those of data_large
 	if (ismall == 0) {
-
-	  if (data_small->get_request_offset() != 0)
-	    cerr << "ERROR: BitSeries::request_offset != 0 [small]" << endl;
 
 	  unsigned char* bytes_small = data_small->get_rawptr();
 	  unsigned char* bytes_large = data_large->get_rawptr();
