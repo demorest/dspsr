@@ -45,7 +45,41 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
   }
 
   ensure_contiguity();
+  setup();
+}
 
+void dsp::MultiFile::open(const vector<PseudoFile*>& pseudos){
+  if (pseudos.empty())
+    throw Error (InvalidParam, "dsp::Multifile::open",
+		 "An empty list of PseudoFiles has been given to this method");
+
+  // construct a list of the files we already have open
+  vector<string> old_filenames (files.size());
+  for (unsigned i=0; i<files.size(); i++)
+    old_filenames[i] = files[i].filename;
+
+  // If there is no loader, create one from the first pseudo
+  if (!loader){
+    loader = File::create( pseudos.front()->filename );
+    loader->open( *pseudos.front() );
+  }
+
+  // Add each element of 'pseudos' to our list of PseudoFiles
+  for( unsigned i=0; i<pseudos.size(); i++){
+    if( !pseudos[i] )
+      throw Error(InvalidState,"dsp::MultiFile::open()",
+		  "pseudos[%d] was NULL",i);
+    if( is_one_of(pseudos[i]->filename,old_filenames) )
+      continue;
+
+    files.push_back( *pseudos[i] );
+
+    if( verbose )
+      cerr << "dsp::MultiFile::open new PseudoFile = " 
+	   << files.back().filename << endl;
+  } 
+
+  ensure_contiguity();
   setup();
 }
 
@@ -127,7 +161,13 @@ void dsp::MultiFile::ensure_contiguity()
     const Observation* obs1 = &files[ifile-1];
     const Observation* obs2 = &files[ifile];
 
-    if (! obs1->contiguous(*obs2)){
+    fprintf(stderr,"Going to return contiguous() with obs1.start=%s obs1.end=%s obs2.start=%s obs2.end=%s\n",
+	    obs1->get_start_time().printall(),
+	    obs1->get_end_time().printall(),
+	    obs2->get_start_time().printall(),
+	    obs2->get_end_time().printall());
+
+    if ( !obs1->contiguous(*obs2) ){
       char cstr[4096];
       sprintf(cstr,"file %d (%s) is not contiguous with file %d (%s)",
 	      ifile-1,files[ifile-1].filename.c_str(),

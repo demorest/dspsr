@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/04/23 10:26:45 $
-   $Author: wvanstra $ */
+   $Revision: 1.14 $
+   $Date: 2003/05/18 11:33:49 $
+   $Author: pulsar $ */
 
 
 #ifndef __MultiFile_h
@@ -39,6 +39,9 @@ namespace dsp {
     //! Makes sure only these filenames are open
     //! Resets the file pointers
     virtual void have_open (const vector<string>& filenames);
+
+    //! Use to open files when they've already been opened once
+    virtual void open(const vector<PseudoFile*>& pseudos);
 
     //! Retrieve a pointer to the loader File instance
     File* get_loader(){ if(!loader) return NULL; return loader.get(); }
