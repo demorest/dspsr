@@ -28,9 +28,9 @@ namespace dsp {
     bool UsingTimeRes(){ return use_tres; }
 
     /* deprected */
-    bool get_do_only_full_scrunches(){ return do_only_full_scrunches; }
+    bool get_do_only_full_scrunches(){ return true; }
     /* deprecated */
-    void set_do_only_full_scrunches(bool _do_only_full_scrunches){ do_only_full_scrunches = _do_only_full_scrunches; }
+    void set_do_only_full_scrunches(bool){ }
 
   protected:
     virtual void transformation ();
