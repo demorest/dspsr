@@ -20,36 +20,27 @@ dsp::Bandpass::Bandpass (const char *_name, Behaviour _type )  : Transformation<
 void dsp::Bandpass::transformation ()
 {
   // Number of points in fft
-  int nsamp_fft = 0; 
-  int npol = 0;
-
-  npol = input->get_npol ();
+  int npol = input->get_npol ();
   
   if (verbose)
     cerr << "dsp::Bandpass::npol is " << npol << endl;
-
-
     
   if (input->get_state() != Signal::Nyquist) {
     cerr << "Bandpass::transformation input data state may not be valid\n" << endl;
     return;
   }
 
-  nsamp_fft = input->get_ndat ();
-
+  int nsamp_fft = input->get_ndat ();
 
   nchan = nsamp_fft;
-  
 
-  float *scrap=0 ;
-  
-  scrap = new float [npol*2*nchan];
+  float *scrap = new float [npol*2*nchan];
   
   register float *op = scrap;
   float *ptr_base = 0;
   register float *ptr=0;
-  for (int ipol = 0; ipol < npol; ipol++) {
-    
+
+  for (int ipol = 0; ipol < npol; ipol++) {   
     if (verbose) 
       cerr << endl << "poln " << ipol << endl;
     
