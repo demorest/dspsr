@@ -16,7 +16,6 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
   freq_res = 1;
 }
 
-
 void dsp::Filterbank::transformation ()
 {
   if (verbose)
@@ -152,19 +151,11 @@ void dsp::Filterbank::transformation ()
 
   // prepare the output TimeSeries
   {
-    unsigned input_nchan = get_input()->get_nchan();
-    unsigned input_ndim = get_input()->get_ndim();
-    Signal::State input_state = get_input()->get_state();
-   
-    get_input()->set_nchan( nchan );
-    get_input()->set_ndim( 2 );
-    get_input()->set_state( Signal::Analytic );
-    
     get_output()->copy_configuration ( get_input() );
-    
-    get_input()->set_nchan( input_nchan );
-    get_input()->set_ndim( input_ndim );
-    get_input()->set_state( input_state );
+    get_output()->set_nchan( nchan );
+    get_output()->set_ndim( 2 );
+    get_output()->set_state( Signal::Analytic);
+    get_output()->set_npol( get_input()->get_npol() );
   }
 
   WeightedTimeSeries* weighted_output;

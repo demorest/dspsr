@@ -96,11 +96,11 @@ void dsp::IncoherentFilterbank::transformation(){
 	    int(input->get_ndat())%nsamp_fft, input->get_ndat(), nsamp_fft);
 
   get_output()->copy_configuration( get_input() );
-
-  output->set_state( state );
-  output->set_ndim( output_ndim );
-  output->set_nchan( nchan );
-  output->set_npol( output_npol );
+  get_output()->set_state( state );
+  get_output()->set_ndim( output_ndim );
+  get_output()->set_nchan( nchan );
+  get_output()->set_npol( output_npol );
+  
   output->rescale( nchan );
   output->set_rate( input->get_rate()/(nchan*real2complex));
   // First channel corresponds to DC which is centred at the edge of the band

@@ -36,7 +36,11 @@ void dsp::SLDetect::transformation ()
        These can be set correctly by simply setting state to detected
        and resizing output */
 
-    output->copy_configuration( input );
+    get_output()->copy_configuration( input );
+    get_output()->set_npol( get_input()->get_npol() );
+    get_output()->set_nchan( get_input()->get_nchan() );
+    get_output()->set_ndim( 1 );
+
     if( input->get_npol()==2 )
       output->set_state( Signal::PPQQ );
     else if( input->get_npol()==1 ){

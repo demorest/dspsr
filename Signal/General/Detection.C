@@ -5,6 +5,7 @@
 #include "dsp/Transformation.h"
 #include "dsp/SLDetect.h"
 #include "dsp/PScrunch.h"
+#include "dsp/Observation.h"
 
 #include "Error.h"
 #include "genutil.h"
@@ -36,6 +37,9 @@ void dsp::Detection::set_output_state (Signal::State _state)
   }
 
   state = _state;
+  fprintf(stderr,"dsp::Detection::set_output_state() have set state to be '%s'\n",
+	  Signal::state_string(state));
+
 }
 
 //! Detect the input data
@@ -43,8 +47,8 @@ void dsp::Detection::transformation ()
 {
   if (verbose)
     cerr << "dsp::Detection::transformation output state="
-	 << Signal::state_string(state) << " and input ndat=" 
-	 << get_input()->get_ndat() << endl;
+	 << Signal::state_string(state) << " and input state=" 
+	 << Signal::state_string(get_input()->get_state()) << endl;
 
   checks();
 
@@ -79,7 +83,7 @@ void dsp::Detection::transformation ()
     form_stokes_I();
   // Case 6. Nyquist -> Coherency
   else if( state==Signal::Coherence && get_input()->get_state()==Signal::Nyquist )
-    form_stokes_I();
+    polarimetry();
   // Case 7. Nyquist -> PPQQ
   else if( state==Signal::PPQQ && get_input()->get_state()==Signal::Nyquist )
     square_law();
@@ -117,10 +121,11 @@ void dsp::Detection::resize_output ()
     output_npol = 1;
 
   get_output()->copy_configuration( get_input() );
+  get_output()->set_npol( output_npol );
+  get_output()->set_state( state );
+  get_output()->set_ndim( output_ndim );
 
-  uint64 output_ndat = input->get_ndat();
-
-  get_output()->resize (output_ndat);
+  get_output()->resize( get_input()->get_ndat() );
 }
 
 void dsp::Detection::square_law ()
@@ -149,13 +154,10 @@ void dsp::Detection::form_stokes_I(){
   unsigned input_ndim = get_input()->get_ndim();
 
   get_output()->copy_configuration( get_input() );
-
-  if( !get_output()->get_preserve_seeked_data() || get_output()->get_samps_offset()==0 ) {
-    get_output()->set_npol( 1 );
-    get_output()->set_ndim( 1 );
-    get_output()->set_state( Signal::Intensity );
-  }
-
+  get_output()->set_npol( 1 );
+  get_output()->set_ndim( 1 );
+  get_output()->set_state( Signal::Intensity );
+  
   get_output()->resize( get_input()->get_ndat() );
 
   if( input_ndim==1 ){ // Signal::Nyquist
@@ -182,7 +184,6 @@ void dsp::Detection::form_stokes_I(){
 	out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
     }
   }
-
   
 }
   
@@ -194,6 +195,10 @@ void dsp::Detection::polarimetry ()
   unsigned input_npol = get_input()->get_npol();
   unsigned input_ndim = get_input()->get_ndim();
 
+  if( ndim != 1 && get_input()->get_state()==Signal::Nyquist )
+    throw Error(InvalidState,"dsp::Detection::polarimetry ()",
+		"This function throws this Error if ndim!=1 and input state is Nyquist as I can't be bothered checking to see if other ndims work HSK 2 November 2004");
+
   if ( get_input() != get_output() )
     resize_output ();    
 
@@ -204,8 +209,8 @@ void dsp::Detection::polarimetry ()
   if( verbose )
     fprintf(stderr,"dsp::Detection::polarimetry () inplace=%d\n",inplace);
   
-  unsigned required_space = 0;
-  unsigned copy_bytes = 0;
+  uint64 required_space = 0;
+  uint64 copy_bytes = 0;
 
   float* copyp  = NULL;
   float* copyq = NULL;
