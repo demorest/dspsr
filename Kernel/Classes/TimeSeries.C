@@ -42,7 +42,6 @@ void dsp::TimeSeries::init(){
   nbit = 8 * sizeof(float);
 }
   
-
 dsp::TimeSeries::TimeSeries(const TimeSeries& ts) {
   init();
   operator=(ts);
@@ -91,7 +90,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
       " have float[" << size << "]" << endl;
 
   if (!require || require > size) {
-    if (buffer) delete buffer; buffer = 0;
+    if (buffer) delete [] buffer; buffer = 0;
     data = 0;
     size = subsize = 0;
   }
@@ -124,7 +123,7 @@ void dsp::TimeSeries::resize( uint64 nsamples, uint64 bytes_supplied, unsigned c
 		"Not enough bytes supplied ("UI64") to fit in "UI64" samples -> "UI64" bytes",
 		bytes_supplied, nsamples, require );
 
-  if( buffer ) delete buffer;
+  if( buffer ) delete [] buffer;
 
   data = buffer = (float*)buffer_supplied;
   size = bytes_supplied / sizeof(float);
