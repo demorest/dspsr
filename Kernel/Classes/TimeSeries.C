@@ -93,7 +93,7 @@ void dsp::TimeSeries::seek (int64 offset)
 		 "offset=%d > current_offset=%d", offset, current_offset);
 
   data += offset * int64(ndim);
-  ndat += offset;
+  ndat -= offset;
   change_start_time (offset);
 }
 
