@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.16 $
-   $Date: 2002/10/08 17:08:32 $
+   $Revision: 1.17 $
+   $Date: 2002/10/09 04:43:25 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -92,26 +92,26 @@ namespace dsp {
 			     int nchan, int npol, int ndim, int nbit);
 
     //! Set the state of the signal
-    void set_state (State _state);
+    virtual void set_state (State _state);
     //! Return the state of the signal
     State get_state () const { return state; }
 
     //! Set the dimension of each datum
-    void set_ndim (int _ndim) { ndim = _ndim; }
+    virtual void set_ndim (int _ndim) { ndim = _ndim; }
      //! Return the dimension of each datum
     int get_ndim () const { return ndim; }
 
      //! Set the number of channels into which the band is divided
-    void set_nchan (int _nchan) { nchan = _nchan; }
+    virtual void set_nchan (int _nchan) { nchan = _nchan; }
     //! Return the number of channels into which the band is divided
     int get_nchan () const { return nchan; }
 
     //! Set the number of polarizations
-    void set_npol (int _npol) { npol = _npol; }
+    virtual void set_npol (int _npol) { npol = _npol; }
     //! Return the number of polarizations
     int get_npol () const { return npol; }
 
-   //! Set the number of bits per value
+    //! Set the number of bits per value
     void set_nbit (int _nbit) { nbit = _nbit; }
     //! Return the number of polarizations
     int get_nbit () const { return nbit; }
@@ -121,7 +121,7 @@ namespace dsp {
       nature.  For instance, the in-phase and quadrature components of
       two orthogonal polarizations, though represented by four
       independent numbers, still represent one time sample. */
-    void set_ndat (int64 _ndat) { ndat = _ndat; }
+    virtual void set_ndat (int64 _ndat) { ndat = _ndat; }
     //! Return the number of time samples in container
     int64 get_ndat () const { return ndat; }
 

@@ -1,5 +1,5 @@
 #include "Fold.h"
-#include "PhaseIntegration.h"
+#include "PhaseSeries.h"
 
 #include "polyco.h"
 #include "genutil.h"
@@ -34,10 +34,10 @@ void dsp::Fold::set_folding_polyco (polyco* _folding_polyco)
 
 void dsp::Fold::operation ()
 {
-  PhaseIntegration* profile = dynamic_cast<PhaseIntegration*> (output.get());
+  PhaseSeries* profile = dynamic_cast<PhaseSeries*> (output.get());
 
   if (!profile)
-    throw_str ("Fold::operation output is not a PhaseIntegration");
+    throw_str ("Fold::operation output is not a PhaseSeries");
 
   if (!profile->mixable (*input, nbin))
     throw_str ("Fold::operation cannot mix input with output");
