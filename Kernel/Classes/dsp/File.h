@@ -1,13 +1,19 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/07/01 05:27:36 $
+   $Revision: 1.17 $
+   $Date: 2003/09/20 07:15:59 $
    $Author: hknight $ */
 
 
 #ifndef __File_h
 #define __File_h
+
+#include "Reference.h"
+
+namespace dsp {
+  class File;
+}
 
 #include "Registry.h"
 #include "dsp/Seekable.h"
