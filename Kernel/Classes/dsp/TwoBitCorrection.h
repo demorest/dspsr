@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.19 $
-   $Date: 2002/11/09 17:12:51 $
+   $Revision: 1.20 $
+   $Date: 2002/11/10 21:43:58 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -48,10 +48,10 @@ namespace dsp {
     //virtual void initialize (const string& descriptor);
 
     //! Set the number of time samples used to estimate undigitized power
-    void set_nsample (int nsample);
+    void set_nsample (unsigned nsample);
 
     //! Get the number of time samples used to estimate undigitized power
-    int get_nsample () const { return nsample; }
+    unsigned get_nsample () const { return nsample; }
 
     //! Set the cut off power for impulsive interference excision
     void set_cutoff_sigma (float cutoff_sigma);
@@ -60,7 +60,7 @@ namespace dsp {
     float get_cutoff_sigma() const { return cutoff_sigma; }
 
     //! Get the number of digitizer channels
-    int get_nchannel () const { return nchannel; }
+    unsigned get_nchannel () const { return nchannel; }
 
     //! Set the digitization convention
     void set_table (TwoBitTable* table);
@@ -79,33 +79,33 @@ namespace dsp {
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
 
     //! Get the minumum number of ones in nsample points
-    int get_nmin() const { return n_min; }
+    unsigned get_nmin() const { return n_min; }
 
     //! Get the maxumum number of ones in nsample points
-    int get_nmax() const { return n_max; }
+    unsigned get_nmax() const { return n_max; }
 
     //! Get the histogram for the given channel
-    template <typename T> void get_histogram (vector<T>& data, int chan) const;
+    template <typename T> void get_histogram (vector<T>& data, unsigned chan) const;
 
     //! Get the centroid of the histogram for the given digitizer channel
-    double get_histogram_mean (int channel) const;
+    double get_histogram_mean (unsigned channel) const;
 
     //! Get the total number of samples in the histogram
-    unsigned long get_histogram_total (int channel) const;
+    unsigned long get_histogram_total (unsigned channel) const;
 
     //! Reset histogram counts to zero
     void zero_histogram ();
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static TwoBitCorrection* create (const BitSeries& input,
-				     int nsample=0, float cutoff_sigma=3.0);
+				     unsigned nsample=0, float cutoff_sigma=3.0);
 
     //! Return the high and low output voltage values
     static void output_levels (float p_in, float& lo, float& hi, float& A);
 
     //! Generate dynamic level setting and scattered power correction lookup
     static void generate (float* dls, float* spc,
-			  int n_min, int n_max, int n_tot,
+			  unsigned n_min, unsigned n_max, unsigned n_tot,
 			  TwoBitTable* table, bool huge);
 
   protected:
@@ -127,22 +127,22 @@ namespace dsp {
     Reference::To<TwoBitTable> table;
 
     //! Number of digitizer channels
-    int nchannel;
+    unsigned nchannel;
 
     //! Number of digitizer channels packed into each byte
-    int channels_per_byte;
+    unsigned channels_per_byte;
 
     //! Number of samples used to estimate undigitized power
-    int nsample;
+    unsigned nsample;
 
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
 
     //! Minumum number of ones in nsample points
-    int n_min;
+    unsigned n_min;
 
     //! Maximum number of ones in nsample points
-    int n_max;
+    unsigned n_max;
 
     //! Lookup table and histogram dimensions reflect the attributes
     bool built;
@@ -164,11 +164,11 @@ namespace dsp {
 }
 
 template <typename T> 
-void dsp::TwoBitCorrection::get_histogram (vector<T>& data, int chan) const
+void dsp::TwoBitCorrection::get_histogram (vector<T>& data, unsigned chan) const
 {
   data.resize (nsample);
 
-  for (int i=0; i<nsample; i++)
+  for (unsigned i=0; i<nsample; i++)
     data[i] = T(histograms[chan][i]);
 }
 

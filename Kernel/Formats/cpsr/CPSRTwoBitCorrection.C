@@ -23,10 +23,12 @@ dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection ()
 void dsp::CPSRTwoBitCorrection::unpack ()
 {
   if (input->get_npol() != 2)
-    throw_str ("TwoBitCorrection::operation input not dual-poln");
+    throw Error (InvalidParam, "dsp::CPSRTwoBitCorrection::unpack",
+		 "input not dual-poln");
 
   if (input->get_ndim() != 2)
-    throw_str ("TwoBitCorrection::operation input not quadrature sampled");
+    throw Error (InvalidParam, "dsp::CPSRTwoBitCorrection::unpack",
+		 "input not quadrature sampled");
 
   int64 ndat = input->get_ndat();
   const unsigned char* rawptr = input->get_rawptr();
@@ -150,6 +152,10 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
       float* corrected = dls_lookup.begin() + (n_in-n_min) * 4;
       for (pt=0; pt<points; pt++) {
 	*datptr = corrected [values[pt]];
+
+	if (*datptr > 5 || *datptr < -5)
+	  cerr << "b:" << *datptr << endl;
+
 	datptr += 2;
       }
       if (weights)
@@ -169,6 +175,9 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 
 void dsp::CPSRTwoBitCorrection::build ()
 {
+  if (verbose)
+    cerr << "dsp::CPSRTwoBitCorrection::build" << endl;
+
   // delete the old space
   CPSRTwoBitCorrection::destroy();
 

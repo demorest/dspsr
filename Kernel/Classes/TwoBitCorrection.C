@@ -6,7 +6,7 @@
 #include "dsp/TwoBitTable.h"
 #include "dsp/TimeSeries.h"
 
-#include "genutil.h"
+#include "Error.h"
 #include "ierf.h"
 
 /*! From JA98, Table 1 */
@@ -18,8 +18,8 @@ bool dsp::TwoBitCorrection::keep_histogram = true;
 dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
 {
   // Sub-classes must define these three variables
-  nchannel = -1;
-  channels_per_byte = -1;
+  nchannel = 0;
+  channels_per_byte = 0;
 
   // Sub-classes may re-define these
   nsample = 512;
@@ -39,13 +39,13 @@ dsp::TwoBitCorrection::~TwoBitCorrection ()
 }
 
 //! Set the number of time samples used to estimate undigitized power
-void dsp::TwoBitCorrection::set_nsample (int _nsample)
+void dsp::TwoBitCorrection::set_nsample (unsigned _nsample)
 {
   if (nsample == _nsample)
     return;
 
   if (verbose)
-    cerr << "TwoBitCorrection::set_nsample = " << _nsample << endl;
+    cerr << "dsp::TwoBitCorrection::set_nsample = " << _nsample << endl;
 
   nsample = _nsample;
   built = false;
@@ -58,7 +58,7 @@ void dsp::TwoBitCorrection::set_cutoff_sigma (float _cutoff_sigma)
     return;
 
   if (verbose)
-    cerr << "TwoBitCorrection::set_cutoff_sigma = " << _cutoff_sigma << endl;
+    cerr << "dsp::TwoBitCorrection::set_cutoff_sigma = " << _cutoff_sigma << endl;
 
   cutoff_sigma = _cutoff_sigma;
   built = false;
@@ -70,7 +70,7 @@ void dsp::TwoBitCorrection::set_table (TwoBitTable* _table)
     return;
 
   if (verbose)
-    cerr << "TwoBitCorrection::set_table" << endl;
+    cerr << "dsp::TwoBitCorrection::set_table" << endl;
 
   table = _table;
   built = false;
@@ -79,11 +79,12 @@ void dsp::TwoBitCorrection::set_table (TwoBitTable* _table)
 //! Initialize and resize the output before calling unpack
 void dsp::TwoBitCorrection::transformation ()
 {
-  if (input->get_nbit() != 2)
-    throw_str ("TwoBitCorrection::transformation input not 2-bit digitized");
-
   if (verbose)
-    cerr << "TwoBitCorrection::transformation" << endl;;
+    cerr << "dsp::TwoBitCorrection::transformation" << endl;;
+
+  if (input->get_nbit() != 2)
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::transformation",
+		 "input not 2-bit digitized");
 
   // build the two-bit lookup table
   if (!built)
@@ -96,7 +97,7 @@ void dsp::TwoBitCorrection::transformation ()
 void dsp::TwoBitCorrection::set_limits ()
 {
   if (verbose)
-    cerr << "TwoBitCorrection::set_limits" << endl;;
+    cerr << "dsp::TwoBitCorrection::set_limits" << endl;;
 
   float fraction_ones = get_optimal_fraction_low();
 
@@ -104,47 +105,48 @@ void dsp::TwoBitCorrection::set_limits ()
   // the root mean square deviation
   float n_sigma = sqrt(nsample);
 
-  n_min = int (n_ave - (cutoff_sigma * n_sigma));
-  n_max = int (n_ave + (cutoff_sigma * n_sigma));
+  n_max = unsigned (n_ave + (cutoff_sigma * n_sigma));
 
   if (n_max >= nsample) {
     if (verbose)
-      cerr << "TwoBitCorrection::set_limits resetting nmax:"
+      cerr << "dsp::TwoBitCorrection::set_limits resetting nmax:"
 	   << n_max << " to nsample-2:" << nsample-1 << endl;
     n_max = nsample-1;
   }
 
-  if (n_min < 1) {
+  if (cutoff_sigma * n_sigma >= n_ave+1.0) {
     if (verbose)
-      cerr << "TwoBitCorrection::set_limits resetting nmin:"
+      cerr << "dsp::TwoBitCorrection::set_limits resetting nmin:"
 	   << n_min << " to one:1" << endl;
     n_min = 1;
   }
-
-  if (verbose) cerr << "TwoBitCorrection::set_limits nmin:"
+  else 
+    n_min = unsigned (n_ave - (cutoff_sigma * n_sigma));
+  
+  if (verbose) cerr << "dsp::TwoBitCorrection::set_limits nmin:"
 		    << n_min << " and nmax:" << n_max << endl;
 }
 
 void dsp::TwoBitCorrection::zero_histogram ()
 {
   if (verbose)
-    cerr << "TwoBitCorrection::zero_histogram" << endl;;
+    cerr << "dsp::TwoBitCorrection::zero_histogram" << endl;;
 
   for (unsigned ichan=0; ichan < histograms.size(); ichan++)
     for (unsigned ibin=0; ibin<histograms[ichan].size(); ibin++)
       histograms[ichan][ibin] = 0;
 }
 
-double dsp::TwoBitCorrection::get_histogram_mean (int channel) const
+double dsp::TwoBitCorrection::get_histogram_mean (unsigned channel) const
 {
   if (channel < 0 || channel >= nchannel)
-    throw_str ("TwoBitCorrection::get_histogram_mean"
-		" invalid channel=%d", channel);
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::get_histogram_mean",
+		 "invalid channel=%d", channel);
 
   double ones = 0.0;
   double pts  = 0.0;
 
-  for (int ival=0; ival<nsample; ival++) {
+  for (unsigned ival=0; ival<nsample; ival++) {
     double samples = double (histograms[channel][ival]);
     ones += samples * double (ival);
     pts  += samples * double (nsample);
@@ -152,11 +154,11 @@ double dsp::TwoBitCorrection::get_histogram_mean (int channel) const
   return ones/pts;
 }
 
-unsigned long dsp::TwoBitCorrection::get_histogram_total (int channel) const
+unsigned long dsp::TwoBitCorrection::get_histogram_total (unsigned channel) const
 {
   unsigned long nweights = 0;
 
-  for (int iwt=0; iwt<nsample; iwt++)
+  for (unsigned iwt=0; iwt<nsample; iwt++)
     nweights += histograms[channel][iwt];
 
   return nweights;
@@ -181,37 +183,39 @@ void dsp::TwoBitCorrection::build ()
   if (built)
     return;
 
-  if (verbose) cerr << "TwoBitCorrection::build:: "
+  if (verbose) cerr << "dsp::TwoBitCorrection::build"
 		    << " nsamp=" << nsample
 		    << " cutoff=" << cutoff_sigma << "sigma\n";
 
   if (nchannel<1)
-    throw_str ("TwoBitCorrection::build invalid nchannel=%d", nchannel);
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::build",
+		 "invalid nchannel=%d", nchannel);
 
   if (channels_per_byte<1)
-    throw_str ("TwoBitCorrection::build invalid channels_per_byte=%d",
-	       channels_per_byte);
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::build",
+		 "invalid channels_per_byte=%d", channels_per_byte);
  
   if (!table)
-    throw_str ("TwoBitCorrection::build no TwoBitTable");
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::build",
+		 "no TwoBitTable");
 
   set_limits ();
 
-  int n_range = n_max - n_min + 1;
+  unsigned n_range = n_max - n_min + 1;
 
   bool huge = (channels_per_byte == 1);
 
-  int size = TwoBitTable::vals_per_byte;
+  unsigned size = TwoBitTable::vals_per_byte;
   if (huge)
     size *= TwoBitTable::unique_bytes;
 
-  if (verbose) cerr << "TwoBitCorrection::build allocate buffers\n";
+  if (verbose) cerr << "dsp::TwoBitCorrection::build allocate buffers\n";
   dls_lookup.resize (n_range * size);
 
   generate (dls_lookup.begin(), 0, n_min, n_max, nsample, table, huge);
 
   histograms.resize (nchannel);
-  for (int ichan=0; ichan < nchannel; ichan++)
+  for (unsigned ichan=0; ichan < nchannel; ichan++)
     histograms[ichan].resize(nsample);
 
   zero_histogram ();
@@ -235,18 +239,18 @@ void dsp::TwoBitCorrection::build ()
 
   built = true;
 
-  if (verbose) cerr << "TwoBitCorrection::build exits\n";
+  if (verbose) cerr << "dsp::TwoBitCorrection::build exits\n";
 
 }
 
 void dsp::TwoBitCorrection::generate (float* dls, float* spc, 
-				      int n_min, int n_max, int n_tot,
+				      unsigned n_min, unsigned n_max, unsigned n_tot,
 				      TwoBitTable* table, bool huge)
 {
   static float root_pi = sqrt(M_PI);
   static float root2   = sqrt(2.0);
 
-  for (int nlo=n_min; nlo <= n_max; nlo++)  {
+  for (unsigned nlo=n_min; nlo <= n_max; nlo++)  {
   
     /* Refering to JA98, nlo is the number of samples between x2 and x4, 
        and p_in is the left-hand side of Eq.44 */
@@ -324,25 +328,28 @@ float dsp::TwoBitCorrection::get_optimal_fraction_low () const
 void dsp::TwoBitCorrection::unpack ()
 {
   if (input->get_state() != Signal::Nyquist)
-    throw_str ("TwoBitCorrection::unpack input not real sampled");
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
+		 "input not real sampled");
 
   if (input->get_nbit() != 2)
-    throw_str ("TwoBitCorrection::unpack input not 2-bit sampled");
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
+		 "input not 2-bit sampled");
 
-  int64 ndat = input->get_ndat();
+  uint64 ndat = input->get_ndat();
 
   if (ndat % TwoBitTable::vals_per_byte)
-    throw_str ("TwoBitCorrection::unpack input ndat="I64" != 4n", ndat);
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
+		 "input ndat="I64" != 4n", ndat);
   
   if (ndat < nsample)
-    throw_str ("TwoBitCorrection::unpack input ndat="I64" < nsample=%d",
-	       ndat, nsample);
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
+		 "input ndat="UI64" < nsample=%d", ndat, nsample);
 
   const unsigned char* rawptr = input->get_rawptr();
 
-  int npol = input->get_npol();
+  unsigned npol = input->get_npol();
 
-  for (int ipol=0; ipol<npol; ipol++) {
+  for (unsigned ipol=0; ipol<npol; ipol++) {
 
     const unsigned char* from = rawptr + ipol;
 
@@ -397,7 +404,7 @@ void dsp::TwoBitCorrection::poln_unpack (float* data,
     }
 
     // calculate the weight based on the last nsample pts
-    int n_lo = 0;
+    unsigned n_lo = 0;
     for (bt=0; bt<bytes_per_weight; bt++) {
       n_lo += nlo_lookup [*rawptr];
       rawptr += gap;
@@ -443,24 +450,26 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   static unsigned char* lu_nlo = 0;
 
   if (!input)
-    throw_str ("TwoBitCorrection::stats no input");
+    throw Error (InvalidState, "dsp::TwoBitCorrection::stats", "no input");
 
   if (input->get_nbit() != 2)
-    throw_str ("TwoBitCorrection::stats input nbit != 2");
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::stats",
+		 "input nbit != 2");
 
   if (input->get_state() != Signal::Nyquist)
-    throw_str ("TwoBitCorrection::stats input state != Nyquist");
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::stats",
+		 "input state != Nyquist");
 
-  if (int(histograms.size()) != nchannel) {
+  if (histograms.size() != nchannel) {
     histograms.resize(nchannel);
-    for (int ichan=0; ichan < nchannel; ichan++)
+    for (unsigned ichan=0; ichan < nchannel; ichan++)
       histograms[ichan].resize (nsample);
   }
 
   if (lu_sum == NULL) {
 
     //if (verbose)
-    cerr << "TwoBitCorrection::stats generate lookup table" <<endl;
+    cerr << "dsp::TwoBitCorrection::stats generate lookup table" <<endl;
 
     // calculate the sum and sum-squared of the four time samples in each byte
     lu_sum = new float [TwoBitTable::unique_bytes];
@@ -506,7 +515,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 
 
   if (verbose)
-    cerr << "TwoBitCorrection::stats npol=" << npol 
+    cerr << "dsp::TwoBitCorrection::stats npol=" << npol 
 	 << " nweights=" << nweights << " bytespw=" << nbytes_per_weight
 	 << endl;
 
@@ -553,7 +562,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   }
 
   if (verbose)
-    cerr << "TwoBitCorrection::stats return total samples " 
+    cerr << "dsp::TwoBitCorrection::stats return total samples " 
 	 << total_samples <<  endl;
 
   // return the total number of timesamples measured
