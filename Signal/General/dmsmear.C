@@ -12,8 +12,9 @@ void usage()
     "   -d DM      dispersion measure in pc cm^-3\n"
     "   -b BW      bandwidth in MHz\n"
     "   -f FREQ    centre frequency in MHz\n"
-    "   -n NCHAN   number of channels into which band will be divided\n"
-    "   -t         generate output for the triple method\n"
+    "   -n nchan   number of channels into which band will be divided\n"
+    "   -x nfft    over-ride the optimal number of points in the transform\n"
+    "   -w smear   over-ride extra fractional smearing buffer size\n"
     "\n"
     "   -v         enable verbosity flags in Dedispersion class\n"
     "\n"
@@ -31,11 +32,12 @@ int main(int argc, char ** argv)
   double centrefreq = 1420.4;
   double bw = 20.0;
   int    nchan = 1;
+  int    set_nfft = 0;
 
   bool   triple = false;
 
   int c;
-  while ((c = getopt(argc, argv, "hd:b:f:n:tv")) != -1)
+  while ((c = getopt(argc, argv, "hd:b:f:n:vw:x:")) != -1)
     switch (c) {
 
     case 'b':
@@ -67,6 +69,14 @@ int main(int argc, char ** argv)
       verbose = true;
       break;
 
+    case 'w':
+      dsp::Dedispersion::smearing_buffer = atof (optarg);
+      break;
+
+    case 'x':
+      set_nfft = atoi (optarg);
+      break;
+
     default:
       cerr << "invalid param '" << c << "'" << endl;
     }
@@ -79,6 +89,9 @@ int main(int argc, char ** argv)
 
   kernel.set_nchan (nchan);
   kernel.set_dc_centred (triple);
+
+  if (set_nfft)
+    kernel.set_frequency_resolution (set_nfft);
 
   cerr << "\nInput Parameters:\n"
     "Centre Frequency:   " << kernel.get_centre_frequency () << " MHz\n"
@@ -103,9 +116,21 @@ int main(int argc, char ** argv)
 
   kernel.prepare();
 
-  cerr << "\nMinimum Kernel Length " << kernel.get_minimum_ndat () << endl;
-  cerr << "Optimal Kernel Length " << kernel.get_ndat () << endl;
+  unsigned nfilt = kernel.get_impulse_pos() + kernel.get_impulse_neg();
+  unsigned nfft = kernel.get_minimum_ndat ();
 
+  cerr << "\nWrap-Around: " << nfilt << " samples" << endl;
+  cerr << "Minimum Kernel Length " << nfft
+       << " (" << float(nfilt)/float(nfft)*100.0 << "% wrap)" << endl;
+
+  nfft = kernel.get_ndat ();
+
+  if (set_nfft)
+    cerr << "Specified Kernel Length " << nfft;
+  else
+    cerr << "Optimal Kernel Length " << nfft;
+
+  cerr << " (" << float(nfilt)/float(nfft)*100.0 << "% wrap)" << endl;
 
   return 0;
 
