@@ -55,10 +55,6 @@ void dsp::DataSeries::set_ndim(uint64 _ndim){
   Observation::set_ndim( _ndim );
 }
 
-uint64 dsp::DataSeries::subsize_samples(){
-  return (subsize*8) / (get_nbit()*get_ndim());
-}
-
 //! Allocate the space required to store nsamples time samples.
 /*!
   \pre The dimensions of each time sample (nchan, npol, ndim) should
@@ -186,4 +182,18 @@ dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
   uint64 tmp3 = subsize; subsize = ts.subsize; ts.subsize = tmp3;
 
   return *this;
+}
+
+//! Returns the number of samples that have been seeked over
+int64 dsp::DataSeries::get_samps_offset() const {
+  uint64 bytes_offset = ((unsigned char*)const_get_data()) - buffer; 
+  uint64 samps_offset = (bytes_offset * get_nbit() * get_ndim())/8;
+  return int64(samps_offset);
+}
+
+//! Returns the maximum ndat possible with current offset of data from base pointer
+uint64 dsp::DataSeries::maximum_ndat() const {
+  uint64 bytes_offset = ((unsigned char*)const_get_data()) - buffer; 
+  uint64 bits_avail = (subsize-bytes_offset) * get_nbit();
+  return bits_avail/(get_ndim()*8);
 }

@@ -71,20 +71,21 @@ namespace dsp {
     //! Return pointer to the specified block of time samples
     virtual const unsigned char* get_udatptr (unsigned ichan=0,unsigned ipol=0) const;
 
-    //! Check to see if subsize==ndat
-    virtual bool full(){ return subsize_samples()==get_ndat(); }
+    //! Check to see if any more samples can be added
+    virtual bool full(){ return maximum_ndat()==get_ndat(); }
 
-    //! Set ndat to subsize- the most it can be
-    virtual void set_maximal_ndat(){ set_ndat( subsize_samples() ); }
+    //! Set ndat so to the most it can be with current offset of data from base pointer
+    virtual void set_maximal_ndat(){ set_ndat( maximum_ndat() ); }
 
     //! Inquire the stride (in bytes) between floats representing the same
     //! timesample but in different chan/pol groups.  This is called by CoherentFBWriter 
     virtual uint64 get_subsize(){ return subsize; }
 
-    //! Returns the number of samples in a data sub-division
-    //! Note that this assumes that ndat*ndim corresponds to an integer number of bytes
-    //! resize() and set_ndat() should enforce this
-    virtual uint64 subsize_samples();
+    //! Returns the maximum ndat possible with current offset of data from base pointer
+    virtual uint64 maximum_ndat() const;
+
+    //! Returns the number of samples that have been seeked over
+    virtual int64 get_samps_offset() const;
 
   protected:
     
