@@ -17,7 +17,7 @@ dsp::PseudoFile::PseudoFile (File* f)
   filename = f->get_filename();
   header_bytes = f->get_header_bytes();
   bs_index = f->get_bs_index();
-  subsize = 0;
+  //subsize = 0;
 }
 
 bool dsp::PseudoFile::operator < (const PseudoFile& in) const
