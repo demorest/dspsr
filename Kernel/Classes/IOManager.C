@@ -1,8 +1,6 @@
 #include "IOManager.h"
 #include "Timeseries.h"
-
-#include "CPSRFile.h"
-#include "CPSRTwoBitCorrection.h"
+#include "TwoBitCorrection.h"
 
 #include "genutil.h"
 
@@ -102,30 +100,6 @@ void dsp::IOManager::load_data (Timeseries* data)
   throw string ("IOManager::load_data run-time error");
 }
 
-//! Prepare the appropriate Input and converter Operation
-/*!
-
-  \param id string containing the id of the data source.  The source
-  id may be a:
-  <UL>
-  <LI> filename (for File)
-  <LI> a comma separated list of filenames (for MultiFile).
-  <LI> a string of the form "IPC:xx", where "xx" is a shmkey
-  </UL>
-
-  \pre This function is not fully implemented.
-*/
-void dsp::IOManager::open (const char* id) 
-{
-  File* loader = new CPSRFile;
-  loader->open(id);
-
-  set_input (loader);
-
-  TwoBitCorrection* tbc = new CPSRTwoBitCorrection;
-
-  set_converter (tbc);
-}
 
 //! End of data
 bool dsp::IOManager::eod()
