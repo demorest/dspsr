@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.23 $
-   $Date: 2004/11/21 10:52:18 $
+   $Revision: 1.24 $
+   $Date: 2004/12/10 03:43:13 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -90,7 +90,6 @@ namespace dsp {
     void delete_saved_data(){ saved_data = 0; }
 
     //! Returns how many samples were lost in the last call to operation()
-    //! Throws an Error if input/output aren't dsp::TimeSeries's
     virtual int64 get_input_samps_lost();
 
     //! Inquire whether valid data is saved already
@@ -327,27 +326,32 @@ void dsp::Transformation<In,Out>::rounding_stuff(dsp::TimeSeries* ts_out){
 template <class In, class Out>
 void dsp::Transformation<In,Out>::deprepend_data(dsp::TimeSeries* ts_out,int64 samples_prepended,double time_in,
 						 double rate_in,double time_surplus, bool seeked_data_being_saved){
-  if( !ts_out )
+  if( ts_out ){
+    if( samples_prepended > 0 ){
+      ts_out->seek( -samples_prepended );
+      
+      if( verbose )
+	fprintf(stderr,"TRANS deprepend_data (%s) have seeked back "I64" samps offset="I64"\n",
+		get_name().c_str(),samples_prepended,ts_out->get_samps_offset());
+    }
+
+    if( seeked_data_being_saved )
+      ts_out->set_preserve_seeked_data( false );
+  }  
+
+  Observation* obs_out = dynamic_cast<Observation*>(get_output());
+  Observation* obs_in = (Observation*)dynamic_cast<const Observation*>(get_input());
+
+  if( !obs_out || !obs_in )
     return;
-  
-  if( samples_prepended > 0 ){
-    ts_out->seek( -samples_prepended );
 
-    if( verbose )
-      fprintf(stderr,"TRANS deprepend_data (%s) have seeked back "I64" samps offset="I64"\n",
-	      get_name().c_str(),samples_prepended,ts_out->get_samps_offset());
-  }
-
-  if( seeked_data_being_saved )
-    ts_out->set_preserve_seeked_data( false );
-  
-  double time_out = ts_out->get_duration();
+  double time_out = obs_out->get_duration();
   if( verbose )
     fprintf(stderr,"TRANS (%s): time_in=%f time_out=%f time_surplus=%f so input_samps_lost=nint64(%f*%f)\n",
 	    get_name().c_str(), time_in, time_out, time_surplus,
 	    (time_in-time_surplus)-time_out, rate_in);
 
-  input_samps_lost = nint64( ((time_in-time_surplus)-time_out)*rate_in );
+  input_samps_lost = nint64( (time_in-time_surplus-time_out)*rate_in );
 }
 
 //! Seeks over any samples that have already been processed
