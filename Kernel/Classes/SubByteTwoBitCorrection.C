@@ -1,9 +1,5 @@
-// #define _DEBUG 1
-
 #include "dsp/SubByteTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
-
-#include "genutil.h"
 
 dsp::SubByteTwoBitCorrection::SubByteTwoBitCorrection (const char* name)
   : TwoBitCorrection (name)
@@ -41,7 +37,7 @@ unsigned dsp::SubByteTwoBitCorrection::get_shift (unsigned idig, unsigned samp) 
 }
 
 void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
-					       const unsigned char* input_data, 
+					       const unsigned char* input_data,
 					       uint64 ndat,
 					       unsigned digitizer,
 					       unsigned* weights,
@@ -82,7 +78,6 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
   unsigned required_nweights = (unsigned) ceil (float(ndat)/float(nsample));
 
   if (weights)  {
-
     if (verbose) cerr << "dsp::SubByteTwoBitCorrection::dig_unpack nweights=" 
 		      << nweights << endl;
 
@@ -130,11 +125,8 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
       cerr << "w[" << wt << "]=0 ";
 #endif
 
-      if (weights) {
-        if (weights[wt] != 0)
-          discarded_weights ++;
+      if (weights)
         weights[wt] = 0;
-      }
 
       // reduce the risk of other functions accessing un-initialized 
       // segments of the array

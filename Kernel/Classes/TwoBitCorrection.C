@@ -169,8 +169,8 @@ void dsp::TwoBitCorrection::transformation ()
 
   // build the two-bit lookup table
   if (!built){
-    if( verbose )
-      fprintf(stderr,"dsp::TwoBitCorrection::transformation() calling build()\n");
+    if (verbose)
+      cerr << "dsp::TwoBitCorrection::transformation calling build" << endl;
     build ();
   }
 
@@ -195,8 +195,10 @@ void dsp::TwoBitCorrection::transformation ()
   // unpack the data
   unpack ();
 
-  if (weighted_output)
+  if (weighted_output) {
     weighted_output -> mask_weights ();
+    discarded_weights += weighted_output -> get_nzero ();
+  }
 
   if (verbose)
     cerr << "dsp::TwoBitCorrection::transformation exit" << endl;
