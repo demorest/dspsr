@@ -1,0 +1,421 @@
+##########################################################################
+##########################################################################
+
+###  SETUP STANDARD CONVENTIONS
+
+# define those files recognized by make
+.SUFFIXES:
+.SUFFIXES: .o .c .C .f .h .dep .odep
+
+SHELL = /bin/sh
+
+##########################################################################
+##########################################################################
+
+###  MACRO DEFINITIONS
+
+##########################################################################
+##########################################################################
+
+##########################################################################
+# The following lines create the BINS macro, upon which the "all" target 
+# depends and the EXECUTABLES macrso used in the calculation of the
+# SRC_DEPS macro.
+# PROGRAMS and EXECUTABLES macros are defined in the user Makefile
+##########################################################################
+# Add programs to executables (PROGRAMS lists the source code,
+# from which the extensions must be stripped).
+EXECS := ${patsubst %.c,%,${patsubst %.f,%,${patsubst %.C,%,${PROGRAMS}}}}
+EXECUTABLES += $(EXECS)
+
+# define bin path executables
+BINS:=$(EXECUTABLES:%=$(BINDIR)/%)
+
+##########################################################################
+# The following lines create the SRC_DEPS macro,
+# upon which the Makefile depends.  This allows executables to be built
+# from more than one source code file using the 'exec.srcs = blah.c'
+# macro functionality
+##########################################################################
+
+# expand each exec.srcs macro to exec.srcs="blah.c"
+SRCS_EXP := $(foreach exec,$(EXECUTABLES),$(exec).srcs\"${$(exec).srcs}\")
+# strip out those expansions with empty ""
+SRCS_CLEAN := $(strip $(filter-out %\"\",$(SRCS_EXP)))
+# now select those exec.srcs strings left
+SRCS_INCLUDE := $(filter %.srcs,$(subst \", ,$(SRCS_CLEAN)))
+# and make the list of files to include
+SRC_DEPS := $(SRCS_INCLUDE:%.srcs=./$(LOGIN_ARCH)/%.sdep)
+
+# now filter out the exec.srcs strings and remove repeats
+OTHER_SRCS += $(sort $(filter-out %.srcs,$(subst \", ,$(SRCS_CLEAN))))
+
+##########################################################################
+# The ALL_SRCS macro determines for which files makedepend will be called
+# to construct the header file dependency list.
+# It also defines those targets that may be built by cvs checkout.
+#
+# PROGRAMS and LIB_SRCS and TESTS and OTHER_SRCS macros are previously
+# defined in the user Makefile.
+#
+# moc_%.C files are filtered out because they are Qt Meta-Object source
+# code created from a .h header file, but the object code may still be
+# required in an archive (using LIB_SRCS)
+##########################################################################
+all_srcs := ${LIB_SRCS} ${PROGRAMS} ${TESTS} ${OTHER_SRCS}
+ALL_SRCS := ${filter-out moc_%.C, ${all_srcs}}
+ALL_C_SRCS := ${filter %.C, $(ALL_SRCS)}
+ALL_c_SRCS := ${filter %.c, $(ALL_SRCS)}
+ALL_f_SRCS := ${filter %.f, $(ALL_SRCS)}
+
+##########################################################################
+# The following lines create the DEPS macro, upon which the Makefile 
+# depends. (unless MAKEDEP=no)  Dependencies are built only for C/C++ code
+##########################################################################
+DEPS := ${ALL_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
+	${ALL_c_SRCS:%.c=./$(LOGIN_ARCH)/%.dep}
+
+##########################################################################
+# The following lines create the INCS macro,
+# upon which the "include" target depends.
+# INCLUDE macro is previously defined in the user Makefile
+##########################################################################
+INCS:=${INCLUDES:%=$(INCDIR)/%}
+
+##########################################################################
+# The following lines create the LIBS macro,
+# upon which the "libs" target depends.
+# LIBRARY and LIBRARIES macros are previously defined in the user Makefile
+##########################################################################
+LIBRARIES += ${LIBRARY}
+LIBS:=${LIBRARIES:%=$(LIBDIR)/%}
+
+##########################################################################
+# The following lines create the TESTBINS macro,
+# upon which the "test" target depends...
+# TESTS and TESTEXECS macros are previously defined in the user Makefile
+##########################################################################
+TEXECS := ${patsubst %.c,%,${patsubst %.f,%,${patsubst %.C,%,${TESTS}}}}
+TESTEXECS += $(TEXECS)
+
+# define bin path executables
+TESTBINS:=$(TESTEXECS:%=$(BINDIR)/%)
+
+##########################################################################
+# Flags specified to makedepend
+#########################################################################
+MDFLAGS += ${INCFLAGS}
+
+ifeq ($(PSRGTKMM),yes)
+MDFLAGS += -DGTK_MAJOR_VERSION=2 # makedepend is stupid
+endif
+
+##########################################################################
+# The INSTALL_INCS, INSTALL_LIBS and INSTALL_BINS macros are constructed
+# only when 'install' is one of the targets specified on the command line.
+##########################################################################
+install_yes := $(findstring install,$(MAKECMDGOALS))
+make_install := $(LOCAL_ROOT)/include/Makefile.install
+ifeq ($(install_yes),install)
+include $(make_install)
+endif
+
+##########################################################################
+##########################################################################
+
+###  RULE DEFINITIONS
+
+##########################################################################
+##########################################################################
+
+##########################################################################
+# Disable attempts to compile C++ include files
+##########################################################################
+/usr/include/cxx/%:
+
+##########################################################################
+# Rules to make the header file dependency list in the appropriate 
+# architecture specific subdirectory.
+# The recommendation comes from the GNU make 3.77 docucmentation:
+# "Writing Rules" chapter; "Generating Dependencies Automatically" section
+#
+# These are double colon rules so that a null rule can be executed
+# when the .dep targets become out of date wrt the $(LOGIN_ARCH) subdir
+# upon which they also depend.
+##########################################################################
+mdtemp :=${LOGIN_ARCH}/.mdtemp
+
+$(LOGIN_ARCH)/%.dep: %.c
+	$(header_depend.action)
+
+$(LOGIN_ARCH)/%.dep: %.C
+	$(header_depend.action)
+
+define header_depend.action
+@$(RM) $(mdtemp); touch $(mdtemp)
+@echo makedepend $<
+@$(MAKEDEPEND) $(mdtemp) ${MDFLAGS} ${CPPFLAGS} $<
+@sed 's/$*\.o/$(LOGIN_ARCH)\/$*\.o $(LOGIN_ARCH)\/$*\.dep/g' $(mdtemp) > $@
+endef
+
+##########################################################################
+# Rule to make the source file dependency list in the appropriate
+# architecture specific subdirectory.  These files depend on the Makefile,
+# as their information is changed only when the link information changes.
+##########################################################################
+$(LOGIN_ARCH)/%.sdep: %.srcs Makefile
+	@echo source depend: $*
+
+SRC2OBJ := sed -e 's/\.c/\.o/g' -e 's/\.C/\.o/g' -e 's/\.f/\.o/g'
+%.srcs:
+	@srcdep_file=$(@:%.srcs=${LOGIN_ARCH}/%.sdep); \
+	OBJS=`echo "$($@:%=${LOGIN_ARCH}/%)" | $(SRC2OBJ)`; \
+	echo "$(@:%.srcs=%.OBJS) := $$OBJS" > $$srcdep_file; \
+	echo "$(@:%.srcs=${BINDIR}/%): $$OBJS" >> $$srcdep_file;
+
+##########################################################################
+# Rules to make an object code file in the appropriate architecture
+# specific subdirectory. 
+##########################################################################
+
+$(LOGIN_ARCH)/%.o: %.c
+	$(CC) ${INCFLAGS} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
+
+$(LOGIN_ARCH)/%.o: %.C
+	$(CCC) ${INCFLAGS} ${CCFLAGS} ${CPPFLAGS} -c -o $@ $<
+
+$(LOGIN_ARCH)/%.o: %.f
+	$(FC) ${INCFLAGS} ${FFLAGS} ${CPPFLAGS} -c -o $@ $<
+
+##########################################################################
+# Rules to make (link) an executable (for example: 'exec') 
+# made up of the object file of the same name (exec.o) and, optionally,
+# object files listed in the exec.OBJS macro.  This macro is defined in
+# ${LOGIN_ARCH}/exec.odep included by Makefile.extended when the
+# exec.srcs macro is defined in the user's makefile.
+##########################################################################
+
+lib_dir_fl := $(filter -L%,$(LDFLAGS))
+lib_dirs  := $(lib_dir_fl:-L=)
+all_libs  := $(foreach dir,$(lib_dirs),$(wildcard $(dir)/*.a))
+lflags    := $(filter -l%,$(LDFLAGS))
+libraries := $(lflags:-l%=$(LIBDIR)/%.a)
+
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(LIBS)
+	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(LDFLAGS)
+	@if [ ! -x $@ ]; then \
+           echo "Cleaning up failed compilation: $@"; \
+           ($(RM) $@ && exit 1); \
+         fi;
+
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(LIBS)
+	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(LDFLAGS)
+	@if [ ! -x $@ ]; then \
+           echo "Cleaning up failed compilation: $@"; \
+           ($(RM) $@ && exit 1); \
+         fi;
+
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(LIBS)
+	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(LDFLAGS)
+	@if [ ! -x $@ ]; then \
+           echo "Cleaning up failed compilation: $@"; \
+           ($(RM) $@ && exit 1); \
+         fi;
+
+##########################################################################
+# The following rules convert targets like "exec", "object.o", 
+# and "library.a" to an equivalent target in the appropriate 
+# architecture-dependent subdirectory.
+##########################################################################
+
+%:$(BINDIR)/%
+	@if [ -x $(BINDIR)/$@ ]; then \
+	  echo make: $(BINDIR)/$@ is up to date; \
+	else \
+	  $(RM) $(BINDIR)/$@; \
+	  echo "Please run: 'make $@' again"; \
+	fi;
+
+%.a:$(LIBDIR)/%.a
+	@echo nothing > /dev/null
+
+%.o:$(LOGIN_ARCH)/%.o
+	@echo nothing > /dev/null
+
+##########################################################################
+# Rules to copy libraries and executables from the user's local "working
+# copy" directories to the installed "group copy" directories
+##########################################################################
+
+$(INSTALL_BINDIR)/%:$(BINDIR)/%
+	@echo "copying $< to $@"
+	@cp $< $@
+
+$(INSTALL_LIBDIR)/%:$(LIBDIR)/%
+	@echo "copying $< to $@"
+	@cp $< $@
+
+
+##########################################################################
+# Rule to copy header files to installed and local include/ directories
+##########################################################################
+
+$(INCDIR)/% $(INSTALL_INCDIR)/%:%
+	@if [ -f $@ ]; then $(RM) $@; fi
+	@echo "copying $< to $@"
+	@cp $< $@
+	@chmod a-w $@
+
+##########################################################################
+# Rule to make C++ code from a Qt Meta-Object Code (MOC) header file
+##########################################################################
+moc_%.C: %.h
+	$(QTMOC) $< -o $@
+
+##########################################################################
+##########################################################################
+
+###  STANDARD TARGETS
+
+##########################################################################
+##########################################################################
+
+##########################################################################
+# Rule to make the standard targets "phony".  eg. no file 'all'
+##########################################################################
+.PHONY: ${TARGETS} %.srcs error
+
+##########################################################################
+# Check for any errors
+##########################################################################
+ifneq (${strip $(ERROR)},)
+RETURN_ERROR := 1
+endif
+
+ifneq (${strip $(SOFT_ERROR)},)
+RETURN_ERROR := 0
+ERROR := SOFT_ERROR
+endif
+
+ifneq ($(RETURN_ERROR),)
+
+# ###################################
+# force all targets to result in the
+# above action
+error:
+	@echo ERROR: $(ERROR)
+	@exit $(RETURN_ERROR)
+
+$(MAKECMDGOALS):error
+
+else
+
+ifeq ($(install_yes),install)
+
+install: $(INSTALL_INCS) $(INSTALL_LIBS) $(INSTALL_BINS)
+
+else
+
+all: libs $(BINS)
+
+include: $(INCS)
+
+# copy the include files only after successful compilation
+libs: $(LIBS) include
+
+test: $(TESTBINS)
+	@if [ -z "$(TESTBINS)" ]; then echo No tests to perform.; \
+	else for test in $(TESTBINS); do ($$test || exit 1); done; fi;
+
+depend:
+	@$(RM) $(DEPS) $(SRC_DEPS)
+	@echo Dependencies will be updated next make
+
+clean:
+	$(RM) $(LOGIN_ARCH)/*.o
+
+veryclean:
+	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS)
+
+endif # install_yes != install
+
+##########################################################################
+##########################################################################
+
+##########################################################################
+# Explicit rule to fetch a source code file from the cvs repository if it 
+# cannot be found in the current working directory. (must follow 'all'!)
+##########################################################################
+$(make_install) $(ALL_SRCS):
+	cvs update $@
+	@if [ ! -f $@ ]; then \
+		echo "$@ not found in CVS repository"; \
+		exit 1; \
+	fi;
+
+##########################################################################
+# Explicit rule to make one library from the LIBRARY target.
+# Additional libraries must be added to the LIBRARIES macro and given
+# explicit make rules in the user's make file.
+##########################################################################
+
+ONELIB := ${LIBDIR}/${LIBRARY}
+
+LOBJS:=${patsubst %.c,%.o,${patsubst %.f,%.o,${patsubst %.C,%.o,${LIB_SRCS}}}}
+LIB_OBJS := ${LOBJS:%=${LOGIN_ARCH}/%}
+
+$(ONELIB) : $(LIB_OBJS)
+	@echo $(LIB_SRCS)
+	$(AR) $(ARFLAGS) $@ $?
+	$(RANLIB) $@
+
+##########################################################################
+# Rule to make the architecture dependent bin and lib dirs.
+# These directories must exist before the files that they will contain
+# can be produced.  However, those things that depend upon the existence
+# of thses directories should never be considered "out-of-date" with
+# respect to them.  (in general, the modification time of a directory will
+# be newer than that of its contents)
+#
+# The rule that forces make to look to this one is given where Makefile
+# depends on $REQD_DIRS (see below)
+# 'mkdir -p' ensures that parent directories will be created
+##########################################################################
+%/.exists :
+	@if [ ! -d $* ]; then echo Creating $* subdirectory; mkdir -p $*; fi
+	@chmod 770 $*
+	@touch $*/.exists
+
+##########################################################################
+# Special cases: if the make target is depend, clean or veryclean, then 
+# certain automatic dependencies need to be relaxed
+##########################################################################
+autodepend:=yes
+ifneq (${strip $(MAKECMDGOALS)},)
+ifneq ($(filter include depend clean veryclean,$(MAKECMDGOALS)),)
+autodepend:=no
+endif # MAKECMDGOALS contains include, depend, clean or veryclean
+endif # MAKECMDGOALS != ""
+
+#############################################################################
+# If autodepend is not disabled, include the .dep and .odep files
+#############################################################################
+ifeq ($(autodepend),yes)
+
+REQD_DIRS := $(INCDIR) $(LIBDIR) $(BINDIR) $(LOGIN_ARCH)
+Makefile $(DEPS) $(SRC_DEPS): $(REQD_DIRS:%=%/.exists)
+
+ifneq ($(SRC_DEPS),)
+-include $(SRC_DEPS)
+endif
+
+ifneq (${strip $(MAKEDEP)},no)
+ifneq ($(DEPS),)
+-include $(DEPS)
+endif # DEPS != ""
+endif # MAKEDEP != no
+
+endif # autodepend == yes
+
+endif # no errors
+
