@@ -64,6 +64,14 @@ bool dsp::Observation::combinable (const Observation & obs)
 	   (dc_centred == obs.dc_centred) );
 }
 
+void dsp::Observation::set_telescope (char _telescope)
+{
+  if (_telescope < 10) /* if the char is < 10 then it was probably an int */
+    _telescope += '0';
+ 
+  telescope = _telescope;
+}
+
 void dsp::Observation::set_default_feedtype ()
 {
   if (telescope == Telescope::Parkes)  {
@@ -82,7 +90,8 @@ void dsp::Observation::set_default_feedtype ()
   else if (telescope == Telescope::Hobart)
     feedtype = Circular;
   else
-    throw_str ("Observation::set_default_feedtype no info telid: %d\n", telescope);
+    throw_str ("Observation::set_default_feedtype no info telid: %c\n",
+	       telescope);
 }
 
 string dsp::Observation::get_default_id (const MJD& mjd)

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/07/01 17:23:38 $
-   $Author: pulsar $ */
+   $Revision: 1.6 $
+   $Date: 2002/07/11 16:05:34 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -180,7 +180,7 @@ namespace dsp {
     bool get_dc_centred () const { return dc_centred; }
 
     //! Set the tempo telescope code
-    void set_telescope (char _telescope) { telescope = _telescope; }
+    void set_telescope (char telescope);
     //! Return the tempo telescope code
     char get_telescope () const { return telescope; }
 
