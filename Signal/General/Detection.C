@@ -44,19 +44,19 @@ void dsp::Detection::transformation ()
 
     if (input->get_npol() != 2)
       throw_str ("Detection::transformation invalid npol=%d for %s formation",
-		 input->get_npol(), Signal::state_string(state).c_str());
+		 input->get_npol(), Signal::state_string(state));
 
     if (input->get_state() != Signal::Analytic)
       throw_str ("Detection::transformation invalid state=%s for %s formation",
 		 input->get_state_as_string().c_str(),
-		 Signal::state_string(state).c_str());
+		 Signal::state_string(state));
 
     // Signal::Coherence product and Signal::Stokes parameter formation can be performed
     // in three ways, corresponding to ndim = 1,2,4
 
     if (!(ndim==1 || ndim==2 || ndim==4))
       throw_str ("Detection::transformation invalid ndim=%d for %s formation",
-		 ndim, Signal::state_string(state).c_str());
+		 ndim, Signal::state_string(state));
     
   }
 
