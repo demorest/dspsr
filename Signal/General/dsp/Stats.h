@@ -10,7 +10,7 @@
 
 namespace dsp {
 
-  class Stats : public Sink<TimeSeries> {
+  class Stats : public Sink {
   public:
 
     //! Null constructor
@@ -30,6 +30,12 @@ namespace dsp {
 
     //! Returns true if a call to operate() has been made and 'mean' and 'sigma' are meaningful
     bool has_stats(){ return stats_calculated; }
+
+    //! Over-ride set_input to check that input is MiniSeries
+    void set_input(Observation* _input);
+
+    //! Over-ride get_input to return a TimeSeries
+    TimeSeries* get_input(){ return dynamic_cast<TimeSeries*>(input.get()); }
 
   protected:
 
