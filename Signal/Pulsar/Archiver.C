@@ -48,6 +48,9 @@ void dsp::Archiver::set_passband (const Response* _passband)
 //! Set the Operation instances for the dspReduction Extension
 void dsp::Archiver::set_operations (const vector<Operation*>& ops)
 {
+  if (verbose) cerr << "dsp::Archiver::set_operations " << ops.size() 
+                    << " operations" << endl;
+ 
   operations.resize ( ops.size() );
   for (unsigned iop=0; iop < ops.size(); iop++)
     operations[iop] = ops[iop];

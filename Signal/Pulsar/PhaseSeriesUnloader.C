@@ -49,9 +49,6 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 		   "error MJD::datestr(" + filename_pattern + ")");
   }
 
-  fprintf(stderr,"dsp::PhaseSeriesUnloader::get_filename() returning make_unique on filename of '%s' (fname_extension='%s'\n",
-	  filename.c_str(),fname_extension.c_str());
-
   return make_unique(filename,fname_extension,data);
 }
 

@@ -36,6 +36,7 @@ int main (int argc, char** argv)
     case 'V':
       dsp::Observation::verbose = true;
       dsp::Operation::verbose = true;
+      MJD::verbose = true;
 
     case 'v':
       verbose = true;
