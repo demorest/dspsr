@@ -21,6 +21,29 @@
 #include "dirutil.h"
 #include "pspm++.h"
 
+static string default_fname;
+static pspmDbase::server default_server;
+
+const char* pspmDbase::server::default_name()
+{
+  if (default_fname.empty()) {
+    char* psrhome = getenv ("PSRHOME");
+    if (!psrhome)
+      throw string ("pspmDbase::server::default PSRHOME not defined");
+    default_fname = psrhome;
+    default_fname += "/runtime/cpsr/hdrlog.txt";
+  }
+  return default_fname.c_str();
+}
+
+pspmDbase::entry pspmDbase::Entry (void* hdr)
+{
+  if (default_server.entries.size() == 0)
+    default_server.load();   // load from the default location
+
+  return default_server.match (hdr);
+}
+
 void ascii_dump (const PSPM_SEARCH_HEADER* hdr);
 
 pspmDbase::entry::entry ()
@@ -65,8 +88,7 @@ void pspmDbase::entry::create (void* vhdr)
   else
     fsize = hdr->ll_file_size;
   
-  ndat = fsize/(ndigchan*nbit);        // number of time samples
-  
+  ndat = 8*(fsize/(ndigchan*nbit));        // number of time samples
 }
 
 
@@ -108,7 +130,7 @@ void pspmDbase::entry::unload (string& str)
 		      frequency, bandwidth, tsamp,
 		      ttelid, ndigchan, nbit, ndat );
   str = buffer;
-};
+}
 
 int pspmDbase::entry::match (int32 _scan, int32 _num, int32 _tape, int32 _file)
 {
@@ -123,6 +145,18 @@ int pspmDbase::entry::match (int32 _scan, int32 _num, int32 _tape, int32 _file)
     matches ++;
 
   return matches;
+}
+
+string pspmDbase::entry::tapename ()
+{
+  sprintf (src, "CPSR%04d", tape);
+  return string (src);
+}
+
+string pspmDbase::entry::identifier ()
+{
+  sprintf (src, "CPSR%04d.%d", tape, file);
+  return string (src);
 }
 
 // server::create - uses dirglob to expand wild-card-style
@@ -140,6 +174,9 @@ void pspmDbase::server::create (const char* glob)
 
   for (unsigned ifile=0; ifile<filenames.size(); ifile++) {
     PSPM_SEARCH_HEADER* hdr = pspm_read (filenames[ifile].c_str());
+
+    if (!hdr) throw "pspmDbase::server::create "
+		"failed pspm_read(" + filenames[ifile] + ")";
 
     try { next.create(hdr); }
     catch (...) { continue; }
@@ -190,6 +227,65 @@ void pspmDbase::server::unload (const char* dbase_filename)
   fclose (fptr);
 }
 
+pspmDbase::entry pspmDbase::server::match (void* vhdr)
+{
+  PSPM_SEARCH_HEADER* hdr = (PSPM_SEARCH_HEADER*) vhdr;
+
+  pspmDbase::entry result;
+
+  try {
+    result = match (hdr->scan_num, hdr->scan_file_number,
+		    hdr->tape_num, hdr->tape_file_number);
+  }
+  catch (string xcptn) {
+    cerr << xcptn << endl;
+    cerr << "pspmDbase::server::match hope for the best" << endl;
+    result.create (hdr);
+  }
+  return result;
+}
+
+pspmDbase::entry pspmDbase::server::match (int32 tape, int32 file)
+{
+  for (unsigned ie=0; ie<entries.size(); ie++)
+    if (entries[ie].match( tape, file ))
+      return entries[ie];
+
+  throw string ("pspmDbase::server::match none found");
+}
+
+pspmDbase::entry
+pspmDbase::server::match (int32 scan, int32 num, int32 tape, int32 file)
+{
+  int ties=0;
+  int best=0;
+
+  unsigned index=0;
+
+  for (unsigned ie=0; ie<entries.size(); ie++) {
+    int matches = entries[ie].match( scan, num, tape, file );
+    if (matches > best) {
+      best = matches;
+      index = ie;
+      ties = 0;
+    }
+    else if (matches == best)
+      ties ++;
+  }
+
+  if (best < 3)
+    throw string ("pspmDbase::server::match not found");
+
+  if (best == 3) {
+    cerr << "pspmDbase::server::match partial with " <<ties<< " ties" << endl;
+    if (ties) {
+      cerr << "pspmDbase::server::match WILLEM, CODE A SOLUTION!" << endl;
+      throw string ("pspmDbase::server::match TIED");
+    }
+  }
+
+  return entries[index];
+}
 
 void ascii_dump (const PSPM_SEARCH_HEADER* hdr)
 {

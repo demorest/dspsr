@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.3 $
-   $Date: 2001/08/01 03:50:01 $
+   $Revision: 1.4 $
+   $Date: 2001/08/02 08:29:22 $
    $Author: wvanstra $ */
 
 #ifndef __pspmDbase_h
@@ -33,6 +33,9 @@ namespace pspmDbase {
     int       nbit;        // number of bits per sample
     int64     ndat;        // number of time samples
 
+    double    duration()   // in seconds
+      { return double(ndat) * tsamp * 1e-6; }
+
     // parse from database line
     entry (const char* str) { load(str); }
     // null construct
@@ -49,10 +52,20 @@ namespace pspmDbase {
     // returns the number of members that match the arguments
     int  match (int32 scan, int32 num, int32 tape, int32 file);
 
+    // returns true on exact match
+    bool match (int32 _tape, int32 _file)
+      {  return tape==_tape && file==_file; }
+
+    // used for sorting. by scan number, then by scan file number
     friend bool operator < (const entry& e1, const entry& e2)
       { return e1.scan < e2.scan || (e1.scan == e2.scan && e1.num < e2.num); }
+
+    string tapename ();   // returns CPSR1234
+    string identifier (); // returns CPSR1234.32
   };
 
+  // returns an entry from the default database
+  entry Entry (void* hdr);
 
   class server {
 
@@ -71,13 +84,30 @@ namespace pspmDbase {
     void create (const char* glob);
 
     // loads ascii version from file
-    void load (const char* dbase_filename);
+    void load (const char* dbase_filename = default_name());
     // unloads ascii version to file
     void unload (const char* dbase_filename);
 
-    // returns the database entry that most closely matches the arguments
+    //
+    // Returns the database entry that most closely matches the arguments
     // (close = fewest number of bits corrupted in these four header fields)
+    //
+    // Use this interface when dealing with information taken from
+    // a PSPM_SEARCH_HEADER, so that all four fields may be used to
+    // make a positive match
     entry match (int32 scan, int32 num, int32 tape, int32 file);
+
+    //
+    // Returns the database entry for CPSRtape.file
+    //
+    // Use this interface when you positively know the tape and file
+    entry match (int32 tape, int32 file);
+
+    // convenience. return match from PSPM_SEARCH_HEADER
+    entry match (void* hdr);
+
+    // returns the default name of the database
+    static const char* default_name();
 
   };
 
