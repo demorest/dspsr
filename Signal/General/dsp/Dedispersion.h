@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/01/11 07:28:47 $
-   $Author: pulsar $ */
+   $Revision: 1.18 $
+   $Date: 2003/07/28 14:16:52 $
+   $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
@@ -21,7 +21,7 @@ namespace dsp {
   public:
 
     //! Conversion factor between dispersion measure, DM, and dispersion, D
-    static const double dm_dispersion;
+    static double dm_dispersion;
 
     //! Null constructor
     Dedispersion ();
@@ -101,6 +101,12 @@ namespace dsp {
     //! Return the dispersion delay between freq1 and freq2
     /*! If freq2 is higher than freq1, delay_time is positive */
     double delay_time (double freq1, double freq2) const;
+
+    //! Return the dispersion delay for the given frequency
+    double delay_time (double freq) const;
+
+    //! Return the dispersion delay for the given frequency
+    double delay_time () const { return delay_time (centre_frequency); }
 
     //! Return the smearing time, given the centre frequency and bandwidth
     double smearing_time (double centre_frequency, double bandwidth) const;

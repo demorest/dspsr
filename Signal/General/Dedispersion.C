@@ -4,13 +4,19 @@
 #include "dsp/Observation.h"
 #include "Error.h"
 
-/*! 
-  \f$ DM\,({\rm pc\,cm^{-3}})=2.410000\times 10^{-4}D\,({\rm s\,MHz^{2}}) \f$
+/*! See Section 3 of Backer, Hama, van Hook and Foster 1993. ApJ 404, 636-642
+  \f$ DM\,({\rm pc\,cm^{-3}})=2.410331(2)\times10^{-4}D\,({\rm s\,MHz^{2}}) \f$
 */
-const double dsp::Dedispersion::dm_dispersion = 2.410000e-4;
+double dsp::Dedispersion::dm_dispersion = 2.410331e-4;
 
 dsp::Dedispersion::Dedispersion ()
 {
+  if (psrdisp_compatible) {
+    cerr << "dsp::Dedispersion psrdisp compatibility\n"
+      "   using old dm/dispersion constant" << endl;
+    dm_dispersion = 2.410000e-4;
+  }
+
   centre_frequency = -1.0;
   bandwidth = 0.0;
   dispersion_measure = 0.0;
@@ -181,6 +187,12 @@ void dsp::Dedispersion::prepare ()
   impulse_pos = smearing_samples (1);
   impulse_neg = smearing_samples (-1);
 
+  if (psrdisp_compatible) {
+    cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
+      "   using symmetric impulse response function" << endl;
+    impulse_pos = impulse_neg;
+  }
+
   if (!frequency_resolution_set)
     set_optimal_ndat ();
   else
@@ -235,6 +247,12 @@ double dsp::Dedispersion::delay_time (double freq1, double freq2) const
 {
   double dispersion = dispersion_measure/dm_dispersion;
   return dispersion * ( 1.0/sqr(freq1) - 1.0/sqr(freq2) );
+}
+
+double dsp::Dedispersion::delay_time (double freq) const
+{
+  double dispersion = dispersion_measure/dm_dispersion;
+  return dispersion * 1.0/sqr(freq);
 }
 
 double dsp::Dedispersion::get_effective_smearing_time () const
@@ -300,7 +318,13 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 
   // add another ten percent, just to be sure that the pollution due
   // to the cyclical convolution effect is minimized
-  tsmear *= 1.1;
+  if (psrdisp_compatible) {
+     cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
+       "   increasing smearing time by 5 instead of 10 percent" << endl;
+    tsmear *= 1.05;
+  }
+  else
+    tsmear *= 1.1;
   
   // smear across one channel in number of time samples.
   unsigned nsmear = unsigned (ceil(tsmear * sampling_rate));
@@ -346,6 +370,7 @@ void dsp::Dedispersion::build (vector<float>& phases,
                                    // quadrature nyquist data eg fb.
   double delay = 0.0;
 
+  // when divided by MHz, yields a dimensionless value
   double dispersion_per_MHz = 1e6 * dispersion_measure / dm_dispersion;
 
   phases.resize (_ndat * _nchan);
@@ -355,7 +380,8 @@ void dsp::Dedispersion::build (vector<float>& phases,
     double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
    
     if (fractional_delay) {
-      // Compute the DM delay in microseconds
+      // Compute the DM delay in microseconds; when multiplied by the
+      // frequency in MHz, the powers of ten cancel each other
       delay = dispersion_per_MHz * ( 1.0/sqr(chan_cfreq) -
 				     1.0/sqr(highest_freq) );
       // Modulo one sample and invert it
