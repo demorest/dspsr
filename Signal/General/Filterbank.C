@@ -24,10 +24,10 @@ void dsp::Filterbank::transformation ()
 		 "invalid number of channels = %d", nchan);
 
   //! Complex samples dropped from beginning of cyclical convolution result
-  unsigned nfilt_neg = 0;
+  unsigned nfilt_pos = 0;
 
   //! Complex samples dropped from end of cyclical convolution result
-  unsigned nfilt_pos = 0;
+  unsigned nfilt_neg = 0;
 
   if (response) {
 
@@ -179,7 +179,7 @@ void dsp::Filterbank::transformation ()
     output->set_swap (true);
 
   // increment the start time by the number of samples dropped from the fft
-  output->change_start_time (nfilt_neg);
+  output->change_start_time (nfilt_pos);
 
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan * freq_res * 2;
@@ -318,7 +318,7 @@ void dsp::Filterbank::transformation ()
 	    freq_dom_ptr += freq_res*2;
 
 	    data_into = output->get_datptr (ichan, ipol) + out_offset+itres*2;
-	    data_from = complex_time + nfilt_neg*2;  // complex nos.
+	    data_from = complex_time + nfilt_pos*2;  // complex nos.
 
 	    for (ipt=0; ipt < nkeep; ipt++) {
 	      *data_into = *data_from;     // copy the Re[z]

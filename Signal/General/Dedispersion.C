@@ -140,17 +140,14 @@ void dsp::Dedispersion::build ()
     return;
 
   // signal in the upper half of the band arrives sooner (t<0)
-  impulse_neg = smearing_samples (1);
+  impulse_neg = smearing_samples (-1);
   // signal in the lower half of the band arrives later (t>0)
-  impulse_pos = smearing_samples (-1);
+  impulse_pos = smearing_samples (1);
 
   if (!frequency_resolution_set)
     set_optimal_ndat ();
   else
     check_ndat ();
-
-  // calculate the complex frequency response function
-  vector<float> phases (ndat * nchan);
 
   if (verbose)
     cerr << "dsp::Dedispersion::build"
@@ -161,6 +158,9 @@ void dsp::Dedispersion::build ()
         "\n  ndat = " << ndat <<
         "\n  nchan = " << nchan <<
 	"\n  fractional delay compensation = " << fractional_delay << endl;
+
+  // calculate the complex frequency response function
+  vector<float> phases (ndat * nchan);
 
   build (phases, centre_frequency, bandwidth, 
 	 dispersion_measure, Doppler_shift,

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/11/09 15:55:25 $
+   $Revision: 1.11 $
+   $Date: 2002/12/03 17:18:14 $
    $Author: wvanstra $ */
 
 #ifndef __Convolution_h
@@ -16,34 +16,35 @@ namespace dsp {
   class Apodization;
   class Response;
 
-  //! Convolves a TimeSeries with a frequency response function
+  //! Convolves a TimeSeries using a frequency response function
   /*! This class implements the overlap-save method of discrete
-    (cyclical) convolution, as performed by multiplication in the
-    frequency domain.
+    convolution with a finite impulse response (FIR) function, as
+    described in Chapter 13.1 of Numerical Recipes.
 
-    The algorithm implements both scalar and matrix convolution
-    techniques, and is highly suited to perform both phase-coherent
-    dispersion removal and phase-coherent polarimetric calibration.
+    The algorithm can perform both scalar and matrix convolution
+    methods, and is highly suited to phase-coherent dispersion removal
+    and phase-coherent polarimetric calibration.
     
-    If g(t) is the impulse response function with which the data
-    stream will be convolved, then the Convolution::response member
-    represents G(w), the FFT of g(t).  Convolution::response may
-    contain an array of filters, one for each frequency channel.
+    If g(t) is the finite impulse response function with which the
+    data stream will be convolved, then the Convolution::response
+    attribute represents G(w), the FFT of g(t).  Convolution::response
+    may contain an array of filters, one for each frequency channel.
     
     In order to improve the spectral leakage characteristics, an
     apodization function may be applied to the data in the time domain
-    by calling the Convolution::set_Apodization() method.
+    by setting the Convolution::apodization attribute.
     
-    Convolution::nfilt_pos+Convolution::nfilt_neg is effectively the
-    duration of g(t), or the the number of complex time samples in
-    the result of each backward FFT that are polluted by the cyclical
-    convolution transformation.  In order to allow for assymetry of g(t)
-    around t=0, Convolution::nfilt_pos and Convolution::nfilt_neg
-    complex samples are dropped from the beginning and end,
-    respectively, of the result of each backward FFT; neighbouring
-    FFTs will overlap by the appropriate number of points to make up
-    for this loss.
-  */
+    Referring to Figure 13.1.3 in Numerical Recipes,
+    \f$m_+\f$=response->get_impulse_pos() and
+    \f$m_-\f$=response->get_impulse_neg(), so that the duration of
+    g(t) is given by M=\f$m_+ + m_-\f$, the number of complex time
+    samples in the result of each backward FFT that are polluted by
+    the cyclical convolution transformation.  The impulse response,
+    g(t), may be assymetric around t=0.  Convolution::nfilt_pos and
+    Convolution::nfilt_neg complex samples are dropped from the
+    beginning and end, respectively, of the result of each backward
+    FFT; neighbouring FFTs will overlap by the appropriate number of
+    points to make up for this loss.  */
 
   class Convolution: public Transformation <TimeSeries, TimeSeries> {
 
