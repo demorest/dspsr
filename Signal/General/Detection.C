@@ -17,18 +17,25 @@ void dsp::Detection::set_output_state (Observation::State _state)
 {
   switch (_state)  {
   case Observation::Detected:
+    ndim = 1;
   case Observation::Stokes:
   case Observation::Coherence:
     break;
   default:
     throw_str ("Detection::set_output_state unknown state");
   }
+
+  state = _state;
 }
 
 //! Detect the input data
 void dsp::Detection::operation ()
 {
-  if (input->get_nbit() != 16)
+  if (verbose)
+    cerr << "Detection::operation output state="
+	 << Observation::state2string(state) << endl;
+
+  if (input->get_nbit() != sizeof(float) * 8)
     throw_str ("Detection::operation input not floating point");
 
   if (state == Observation::Stokes || state == Observation::Coherence) {
@@ -52,6 +59,8 @@ void dsp::Detection::operation ()
   }
 
   bool inplace = (input == output);
+  if (verbose)
+    cerr << "Detection::operation inplace" << endl;
 
   if (!inplace)
     resize_output ();
@@ -68,6 +77,9 @@ void dsp::Detection::operation ()
 
 void dsp::Detection::resize_output ()
 {
+  if (verbose)
+    cerr << "Detection::resize_output" << endl;
+
   int output_ndim = 1;
   int output_npol = input->get_npol();
 
@@ -100,8 +112,17 @@ void dsp::Detection::resize_output ()
   }
 }
 
+void dsp::Detection::square_law ()
+{
+  if (verbose)
+    cerr << "Detection::square_law" << endl;
+}
+
 void dsp::Detection::polarimetry ()
 {
+  if (verbose)
+    cerr << "Detection::polarimetry ndim=" << ndim << endl;
+
   int64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
