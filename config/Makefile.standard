@@ -144,7 +144,7 @@ LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 LPSRCHIVE = -lpsrchive
 
 ifeq ($(has_CFITS),yes)
-LPSRCHIVE += $(LCFITSIO)
+LPSRCHIVE += -lfitsutil $(LCFITSIO)
 endif  # PSRFITS
 
 PSRTIMER = yes
