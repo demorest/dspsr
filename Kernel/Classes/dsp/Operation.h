@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/03/07 00:00:14 $
-   $Author: pulsar $ */
+   $Revision: 1.16 $
+   $Date: 2003/05/08 12:12:13 $
+   $Author: hknight $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -12,6 +12,12 @@
 
 #include "RealTimer.h"
 #include "Reference.h"
+
+namespace dsp {
+  class Operation;
+}
+
+#include "dsp/TimeKeeper.h"
 
 namespace dsp {
   
@@ -48,6 +54,10 @@ namespace dsp {
     //! Get the time spent in the last invocation of operate()
     double get_elapsed_time() const;
 
+    //! Only ever called by TimeKeeper class
+    static void set_timekeeper(TimeKeeper* _timekeeper);
+    static void unset_timekeeper();
+
   protected:
 
     //! Perform operation on data.  Defined by sub-classes
@@ -69,6 +79,10 @@ namespace dsp {
 
     //! Stop watch records the amount of time spent performing this operation
     RealTimer optime;
+
+  private:
+    //! Pointer to the timekeeper
+    static TimeKeeper* timekeeper;
 
   };
   

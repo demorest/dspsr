@@ -1,3 +1,6 @@
+#include <stdio.h>
+
+#include "dsp/TimeKeeper.h"
 #include "dsp/Operation.h"
 #include "Error.h"
 
@@ -7,18 +10,33 @@ bool dsp::Operation::record_time = false;
 //! Global verbosity flag
 bool dsp::Operation::verbose = false;
 
+dsp::TimeKeeper* dsp::Operation::timekeeper = 0;
+
+//! Only ever called by TimeKeeper class
+void dsp::Operation::set_timekeeper(TimeKeeper* _timekeeper)
+{ timekeeper = _timekeeper; }
+void dsp::Operation::unset_timekeeper()
+{ timekeeper = 0; }
+
 //! All sub-classes must specify name and capacity for inplace operation
 dsp::Operation::Operation (const char* _name)
 {
   name = _name;
+
+  if( timekeeper )
+    timekeeper->add_operation(this);
 }
 
-dsp::Operation::~Operation ()
-{
+dsp::Operation::~Operation (){
+  if( timekeeper )
+    timekeeper->im_dying(this);
 }
 
 void dsp::Operation::operate ()
 {
+  if( timekeeper )
+    timekeeper->setup_done();
+
   if (record_time)
     optime.start();
 
@@ -28,7 +46,6 @@ void dsp::Operation::operate ()
   if (record_time)
     optime.stop();
 }
-
 
 double dsp::Operation::get_total_time () const
 {
