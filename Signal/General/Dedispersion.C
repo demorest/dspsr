@@ -119,7 +119,7 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 
   // If the input is already a filterbank, then the frequency channels will
   // be centred on the bin, not the edge of the bin
-  if (input->get_nchan() % 2) {
+  if (input->get_dc_centred()) {
     if (!dc_centred)
       built = false;
     dc_centred = true;
