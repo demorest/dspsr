@@ -26,7 +26,7 @@ dsp::Input::~Input ()
 void dsp::Input::operation ()
 {
   if (verbose)
-    cerr << "dsp::Input::operate" << endl;
+    cerr << "dsp::Input::operation" << endl;
   
   if (!output)
     throw Error (InvalidState, "dsp::Input::operate", "no output BitSeries");
@@ -90,8 +90,6 @@ void dsp::Input::load (BitSeries* data)
       optime.start();
   }
 
-  //if( verbose ) fprintf(stderr,"in dsp::Input::load() with load_size="UI64"\n",load_size);
-
   if (verbose)
     cerr << "dsp::Input::load (BitSeries* = " << data << ")" << endl;
 
@@ -141,19 +139,29 @@ void dsp::Input::load (BitSeries* data)
 
   data->input_sample = load_sample;
   data->request_offset = resolution_offset;
+  data->request_ndat   = block_size;
+
+  int64 to_seek = block_size - overlap;
 
   uint64 available = data->get_ndat() - resolution_offset;
-  if (available < block_size)
+
+  if (available < block_size) {
+
+    // should be the end of data
+
     data->request_ndat = available;
-  else
-    data->request_ndat = block_size;
+    to_seek = available;
 
-  if( verbose )
-    fprintf(stderr,"dsp::Input::load() calling seek("I64")\n",
-	    int64(data->get_ndat()) - int64(overlap));
-  seek( int64(data->get_ndat()) - int64(overlap), SEEK_CUR);
-  //seek (block_size - overlap, SEEK_CUR);
+    if (!eod())
+      cerr << "dsp::Input::load available=" << available << " < block_size="
+	   << block_size << " but eod not set" << endl;
+  }
 
+  if (verbose)
+    cerr << "dsp::Input::load calling seek(" << to_seek << ")" << endl;
+
+  seek( to_seek, SEEK_CUR);
+  
   if (verbose)
     cerr << "dsp::Input::load exit with load_sample="<< load_sample <<endl;
 
@@ -306,7 +314,7 @@ void dsp::Input::set_load_size ()
 {
   if (verbose)
     cerr << "dsp::Input::set_load_size block_size=" << block_size 
-         << "resolution_offset=" << resolution_offset << endl;
+         << " resolution_offset=" << resolution_offset << endl;
 
   load_size = block_size + resolution_offset;
 
