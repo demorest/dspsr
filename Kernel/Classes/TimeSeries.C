@@ -10,6 +10,7 @@
 
 dsp::TimeSeries::TimeSeries()
 {
+  data = buffer = NULL;
   size = 0;
   subsize = 0;
   nbit = 8 * sizeof(float);
@@ -17,7 +18,8 @@ dsp::TimeSeries::TimeSeries()
 
 dsp::TimeSeries::~TimeSeries()
 {
-  if (data) delete [] data; data = 0;
+  if (buffer) delete [] buffer; buffer = 0;
+  data = 0;
   size = 0;
   subsize = 0;
 }
@@ -49,10 +51,11 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   uint64 require = ndim * nsamples * npol * nchan;
 
   if( verbose )
-    cerr << "dsp::TimeSeries::resize() has got require="<<require<<endl;
+    cerr << "dsp::TimeSeries::resize require="<<require<<endl;
 
   if (!require || require > size) {
-    if (data) delete data; data = 0;
+    if (buffer) delete buffer; buffer = 0;
+    data = 0;
     size = subsize = 0;
   }
 
@@ -62,11 +65,33 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     return;
 
   if (size == 0) {
-    data = new float[require];
+    buffer = new float[require];
     size = require;
   }
 
   subsize = ndim * nsamples;
+  data = buffer;
+}
+
+//! Offset the base pointer by offset time samples
+void dsp::TimeSeries::seek (int64 offset)
+{
+  if (offset == 0)
+    return;
+
+  if (offset > int64(ndat))
+    throw Error (InvalidRange, "dsp::TimeSeries::seek",
+		 "offset=%d > ndat=%d", offset, ndat);
+
+  int64 current_offset = int64(data - buffer) * int64(ndim);
+
+  if (-offset > current_offset)
+    throw Error (InvalidRange, "dsp::TimeSeries::seek",
+		 "offset=%d > current_offset=%d", offset, current_offset);
+
+  data += offset * int64(ndim);
+  ndat += offset;
+  change_start_time (offset);
 }
 
 //! Return pointer to the specified data block
@@ -138,9 +163,9 @@ void dsp::TimeSeries::zero ()
   uint64 npt = get_ndat() * get_ndim();
   for (unsigned ichan=0; ichan<get_nchan(); ichan++)
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
-      float* data = get_datptr (ichan, ipol);
+      float* dat = get_datptr (ichan, ipol);
       for (uint64 ipt=0; ipt<npt; ipt++)
-        data[ipt]=0.0;
+        dat[ipt]=0.0;
     }
 }
 
@@ -205,17 +230,17 @@ void dsp::TimeSeries::check (float min, float max)
   for (unsigned ichan=0; ichan<get_nchan(); ichan++)
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
 
-      float* data = get_datptr (ichan, ipol);
+      float* dat = get_datptr (ichan, ipol);
 
       for (uint64 idat=0; idat<get_ndat(); idat++)
 	for (unsigned idim=0; idim<get_ndim(); idim++) {
-	  if (isnan (*data) || *data < min || *data > max)
+	  if (isnan (*dat) || *dat < min || *dat > max)
 	    cerr << "dsp::TimeSeries::check data ["
 	      "f=" << ichan << ", "
 	      "p=" << ipol << ", "
 	      "t=" << idat << ", "
-	      "d=" << idim << "] = " << *data << endl;
-	  data ++;
+	      "d=" << idim << "] = " << *dat << endl;
+	  dat ++;
 	}
     }
 }
@@ -228,8 +253,8 @@ void dsp::TimeSeries::attach(auto_ptr<float> _data){
     throw Error(InvalidState,"dsp::TimeSeries::attach()",
 		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
 
-  if (data) delete [] data;
-  data = _data.get();
+  if (buffer) delete [] buffer; buffer = 0;
+  buffer = data = _data.release();
 }
 
 bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){

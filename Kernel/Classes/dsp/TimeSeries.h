@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.7 $
-   $Date: 2003/01/08 13:41:03 $
+   $Revision: 1.8 $
+   $Date: 2003/01/09 10:21:38 $
    $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
@@ -41,11 +41,14 @@ namespace dsp {
     //! Add each value in data to this
     virtual TimeSeries& operator += (const TimeSeries& data);
 
-    //! Disable set_nbit
-    void set_nbit (unsigned);
+    //! Disable the set_nbit method of the Observation base class
+    virtual void set_nbit (unsigned);
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (uint64 nsamples);
+
+    //! Offset the base pointer by offset time samples
+    virtual void seek (int64 offset);
 
     //! Return pointer to the specified block of time samples
     virtual float* get_datptr (unsigned ichan=0,unsigned ipol=0);
@@ -95,14 +98,16 @@ namespace dsp {
 
   protected:
     //! The data buffer
-    float* data;
+    float* buffer;
 
-    //! The number of floats of the data buffer 
+    //! The size of the data buffer 
     uint64 size;
+
+    //! Pointer into buffer, offset to the first time sample requested by user
+    float* data;
 
     //! The number of floats in a data sub-division
     uint64 subsize;
-
   };
   
 }
