@@ -268,11 +268,10 @@ $(LOGIN_ARCH)/%.sdep: Makefile $(LOGIN_ARCH)/.exists
 # updated, the executable will be considered out of date and re-made.
 ##########################################################################
 
-LIB_DEPS := $(patsubst %,./$(LOGIN_ARCH)/%.ldep,$(TESTEXECS) $(EXECUTABLES))
+LIB_DEPS := $(patsubst %,./$(LOGIN_ARCH)/%.ldep, $(TESTEXECS) $(EXECUTABLES))
 
 $(LOGIN_ARCH)/%.ldep: $(LOGIN_ARCH)/.exists
 	@echo "${BINDIR}/$*: $(call eval_libs,$*)" > $@;
-
 
 
 ##########################################################################
@@ -428,7 +427,7 @@ nothing:
 	@echo nothing > /dev/null
 
 veryclean:
-	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS) $(CLEAN)
+	$(RM) $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS) $(DSOLIB) $(CLEAN)
 
 cvsck:
 	@-cvs status | grep atus | grep -v Up
@@ -531,6 +530,12 @@ endif
 ##########################################################################
 
 ifdef DSO_NAME
+
+DSO_LDEP := ./$(LOGIN_ARCH)/DSO.ldep
+LIB_DEPS += $(DSO_LDEP)
+
+$(DSO_LDEP): $(LOGIN_ARCH)/.exists
+	@echo "$(DSOLIB): $(call lib_deps,$(DSO_LDFLAGS))" > $@;
 
 DSOBJS := $(call src2obj,$(DSO_SRCS))
 DSO_OBJS := $(DSOBJS:%=$(LOGIN_ARCH)/%)
