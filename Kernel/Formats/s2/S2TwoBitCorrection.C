@@ -55,9 +55,14 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     break;
     
   case Telescope::Tidbinbilla:
+
     if (verbose)
-      cerr << "dsp::S2TwoBitCorrection::match Tidbinbilla (VLBA)" << endl;
-    table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
+      cerr << "dsp::S2TwoBitCorrection::match Tidbinbilla (AT)" << endl;
+    table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
+    // CHANGED BY CWEST - noone was using the VLBA mode, and I wanted AT mode.
+    //    if (verbose)
+    //      cerr << "dsp::S2TwoBitCorrection::match Tidbinbilla (VLBA)" << endl;
+    //    table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
     break;
 
   case Telescope::Arecibo:
