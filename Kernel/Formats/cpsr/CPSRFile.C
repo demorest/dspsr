@@ -21,11 +21,13 @@
 dsp::CPSRFile::CPSRFile (const char* filename)
   : File ("CPSR")
 { 
-  tapenum = filenum = -1;
+ tapenum = filenum = -1;
   if (filename)
     open (filename);
 }
 
+//! Virtual destructor
+dsp::CPSRFile::~CPSRFile(){ }
 
 bool dsp::CPSRFile::is_valid (const char* filename,int) const
 {

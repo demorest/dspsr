@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/09/27 08:39:07 $
+   $Revision: 1.12 $
+   $Date: 2004/12/12 05:50:17 $
    $Author: hknight $ */
 
 
@@ -20,6 +20,9 @@ namespace dsp {
 
     //! Construct and open file
     CPSRFile (const char* filename = 0);
+
+    //! Virtual destructor
+    virtual ~CPSRFile();
 
     //! Returns true if filename appears to name a valid CPSR file
     bool is_valid (const char* filename,int NOT_USED=-1) const;
