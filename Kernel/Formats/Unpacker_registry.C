@@ -2,7 +2,10 @@
 #include "dsp/CPSRTwoBitCorrection.h"
 #include "dsp/S2TwoBitCorrection.h"
 #include "dsp/OneBitCorrection.h"
+
+#ifdef Digi_returned_to_Makefile
 #include "dsp/DigiUnpack.h"
+#endif
 
 #include "Error.h"
 
