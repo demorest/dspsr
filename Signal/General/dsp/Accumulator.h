@@ -32,6 +32,9 @@ namespace dsp {
     //! Returns true if its time to write out the buffer
     virtual bool full();
 
+    //! Returns true if buffer is within 'close_enough' samples of being full
+    virtual bool nearly_full(uint64 close_enough);
+
     //! Set the maximum size of the output buffer in samples [max_samps]
     void set_max_ndat(uint64 _max_ndat){ max_ndat = _max_ndat; }
 

@@ -67,7 +67,7 @@ void dsp::Accumulator::transformation(){
   get_output()->append( input );
 }
 
-//! Returns true if its time to write out the buffer
+//! Returns true if its time to write out the buffe
 bool dsp::Accumulator::full(){
   if( !has_output() )
     throw Error(InvalidState,"dsp::Accumulator::full()",
@@ -76,3 +76,11 @@ bool dsp::Accumulator::full(){
   return get_output()->get_ndat() >= max_samps;
 }
 
+//! Returns true if buffer is within 'close_enough' samples of being full
+bool dsp::Accumulator::nearly_full(uint64 close_enough){
+  if( !has_output() )
+    throw Error(InvalidState,"dsp::Accumulator::nearly_full()",
+                "Your output is null so inquiring whether or not it is nearly full is not really a valid question");
+
+  return get_output()->get_ndat() + close_enough >= max_samps;
+}
