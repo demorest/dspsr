@@ -62,6 +62,12 @@ namespace dsp{
     //! Set loop unroll level for forming incoherent filterbank
     void set_unroll_level(unsigned _unroll_level){ unroll_level = _unroll_level; }
 
+    //! Inquire loop floats-per-group unroll level for forming undetected incoherent filterbank
+    unsigned get_floats_per_group(){ return floats_per_group; }
+    
+    //! Set loop floats-per-group unroll level for forming undetected incoherent filterbank
+    void set_floats_per_group(unsigned _floats_per_group){ floats_per_group = _floats_per_group; }   
+
     //! Inquire whether input can be destroyed upon call to operate()
     bool get_destroy_input(){ return destroy_input; }
     
@@ -72,9 +78,6 @@ namespace dsp{
 
     //! Perform the operation
     virtual void transformation ();
-
-    //! Acquire the plan (wsave)
-    void acquire_plan();
 
     //! Number of channels into which the input will be divided
     unsigned nchan;
@@ -108,6 +111,9 @@ namespace dsp{
 
     //! Loop unroll level for forming undetected filterbank
     unsigned unroll_level;
+
+    //! Loop floats-per-group unroll level for forming undetected filterbank
+    unsigned floats_per_group;
 
     //! If set to true, the input data array may be destroyed on the call to operation()
     bool destroy_input;
