@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/15 13:14:48 $
-   $Author: pulsar $ */
+   $Revision: 1.3 $
+   $Date: 2002/10/16 16:24:47 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Input_h
@@ -76,7 +76,10 @@ namespace dsp {
     
     //! Conserve access to resources by re-using data already in Timeseries
     uint64 recycle_data (Timeseries* data);
-    
+
+    //! Set the sample offset from the start of the data source
+    void set_input_sample (Timeseries* data, int64 sample);
+ 
   private:
     //! Initialize all attributes with null values
     void init();

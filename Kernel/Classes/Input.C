@@ -24,7 +24,8 @@ void dsp::Input::load (Timeseries* data)
     throw_str ("Input::load invalid state: "+reason);
 
   if (verbose)
-    cerr << "Input::load block_size=" << block_size << endl;
+    cerr << "Input::load block_size=" << block_size
+         << " overlap=" << overlap << " next=" << next_sample << endl;
 
   // set the Observation information
   data->Observation::operator=(info);
@@ -45,10 +46,11 @@ void dsp::Input::load (Timeseries* data)
 
   load_data (data);
 
-  if (verbose)
-    cerr << "Input::load load_data returns" << endl;
-
   load_time.stop();
+
+  if (verbose)
+    cerr << "Input::load exit with next_sample="<< next_sample <<endl;
+
 }
 
 /*!
@@ -88,8 +90,11 @@ void dsp::Input::seek (int64 offset, int whence)
 
 uint64 dsp::Input::recycle_data (Timeseries* data)
 {
-  if (data->input_sample == -1)
+  if (data->input_sample == -1)  {
+    if (verbose)
+      cerr << "Input::recycle_data no input_sample" << endl;
     return 0;
+  }
 
   uint64 start_sample = (uint64) data->input_sample;
   uint64 last_sample = start_sample + (uint64) data->get_ndat();
@@ -97,7 +102,8 @@ uint64 dsp::Input::recycle_data (Timeseries* data)
   if (verbose)
     cerr << "Input::recycle_data"
       " start_sample=" << start_sample <<
-      " last_sample=" << last_sample << endl;
+      " last_sample=" << last_sample << 
+      " next_sample=" << next_sample << endl;
 
   if (next_sample < start_sample || next_sample >= last_sample)
     return 0;
@@ -105,15 +111,19 @@ uint64 dsp::Input::recycle_data (Timeseries* data)
   uint64 to_recycle = last_sample - next_sample;
 
   if (verbose)
-    cerr << "Input::recycle_data to_recycle=" << to_recycle <<endl;
+    cerr << "Input::recycle_data recycle " << to_recycle << " samples" << endl;
 
   if (to_recycle > block_size)
     to_recycle = block_size;
 
-  next_sample += to_recycle;
-
   uint64 recycle_bytes = data->nbytes (to_recycle);
   uint64 offset_bytes = data->nbytes (next_sample - start_sample);
+
+  next_sample += to_recycle;
+
+  if (verbose)
+    cerr << "Input::recycle_data recycle " << recycle_bytes
+	 << " bytes (offset=" << offset_bytes << " bytes)" << endl;
 
   // check if the next sample is already the start sample
   if (!offset_bytes)
@@ -140,3 +150,9 @@ uint64 dsp::Input::recycle_data (Timeseries* data)
 
   return to_recycle;
 }
+
+void dsp::Input::set_input_sample (Timeseries* data, int64 sample)
+{
+  data->input_sample = sample;
+}
+
