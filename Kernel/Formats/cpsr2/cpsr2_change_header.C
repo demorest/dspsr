@@ -161,7 +161,7 @@ vector<char> get_header(string file,unsigned header_bytes){
   
   vector<char> header(header_bytes);
 
-  int retval = read (fd, header.begin(), header_bytes);
+  int retval = read (fd, &(header[0]), header_bytes);
   
   close (fd);    
 
@@ -205,7 +205,7 @@ void rewrite_header(string file,vector<char> header){
     throw Error(FailedCall,"rewrite_header()",
 		"failed open(%s): %s",file.c_str(), strerror(errno));
   
-  unsigned bytes_written = write(fd,header.begin(),header.size());
+  unsigned bytes_written = write(fd, &(header[0]),header.size());
 
   close (fd);    
 
