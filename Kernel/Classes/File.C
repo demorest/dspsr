@@ -4,8 +4,6 @@
 #include "File.h"
 #include "Error.h"
 
-Registry::List<dsp::File> dsp::File::registry;
-
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::File* dsp::File::create (const char* filename)
 { 
