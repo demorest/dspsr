@@ -9,6 +9,8 @@ This class is not pure virtual, but it probably will be in future.
 #ifndef __BitSeries_h
 #define __BitSeries_h
 
+#include <memory>
+
 #include "dsp/Observation.h"
 
 namespace dsp {
@@ -44,10 +46,10 @@ namespace dsp {
     { Observation::operator= (obs); return *this; }
 
     //! Return pointer to the raw data buffer
-    virtual unsigned char* get_rawptr () { return data; }
+    virtual unsigned char* get_rawptr () { return data.get(); }
 
     //! Return pointer to the raw data buffer
-    virtual const unsigned char* get_rawptr () const { return data; }
+    virtual const unsigned char* get_rawptr () const { return data.get(); }
 
 
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
@@ -62,9 +64,14 @@ namespace dsp {
     //! Return the sample offset from the start of the data source
     int64 get_input_sample () const { return input_sample; }
 
+    //! Delete the current data buffer and attach to this one
+    //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
+    //! Also do not try to delete the old memory once you have called this- the BitSeries::data member now owns it.
+    virtual void attach(auto_ptr<unsigned char> _data);
+
   protected:
     //! The data buffer
-    unsigned char *data;
+    auto_ptr<unsigned char> data;
 
     //! The size of the data buffer (not necessarily ndat)
     int64 size;

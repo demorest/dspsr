@@ -1,12 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/11/19 06:32:26 $
+   $Revision: 1.5 $
+   $Date: 2002/11/21 01:57:20 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
+
+#include <memory>
 
 #include "dsp/Observation.h"
 
@@ -29,6 +31,9 @@ namespace dsp {
   public:
     //! Null constructor
     TimeSeries ();
+
+    //! Ouch! Destructor
+    virtual ~TimeSeries();
 
     //! Set this equal to copy
     virtual TimeSeries& operator = (const TimeSeries& copy);
@@ -59,9 +64,14 @@ namespace dsp {
     //! Check that each floating point value is roughly as expected
     virtual void check (float min=-10.0, float max=10.0);
 
+    //! Delete the current data buffer and attach to this one
+    //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
+    //! Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it.
+    virtual void attach(auto_ptr<float> _data);
+
   protected:
     //! The data buffer
-    float* data;
+    auto_ptr<float> data;
 
     //! The number of floats of the data buffer 
     uint64 size;

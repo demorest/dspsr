@@ -1,4 +1,7 @@
+#include <memory>
+
 #include "environ.h"
+#include "genutil.h"
 
 #include "Error.h"
 
@@ -6,10 +9,19 @@
 
 dsp::TimeSeries::TimeSeries()
 {
-  data = 0;
   size = 0;
   subsize = 0;
   nbit = 32;
+}
+
+dsp::TimeSeries::~TimeSeries(){
+  if (data.get()){
+    sink(data);
+    auto_ptr<float> temp;
+    data = temp;
+  }
+  size = 0;
+  subsize = 0;
 }
 
 void dsp::TimeSeries::set_nbit (unsigned)
@@ -39,7 +51,11 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   uint64 require = ndim * nsamples * npol * nchan;
 
   if (!require || require > size) {
-    if (data) delete [] data; data = 0;
+    if (data.get()){
+      sink(data);
+      auto_ptr<float> temp;
+      data = temp;
+    }
     size = subsize = 0;
   }
 
@@ -49,7 +65,8 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     return;
 
   if (size == 0) {
-    data = new float [require];
+    auto_ptr<float> temp(new float[require]);
+    data = temp;
     size = require;
   }
 
@@ -59,14 +76,14 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 //! Return pointer to the specified data block
 float* dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol)
 {
-  return data + (ichan * npol + ipol) * subsize;
+  return data.get() + (ichan * npol + ipol) * subsize;
 }
 
 //! Return pointer to the specified data block
 const float*
 dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
 {
-  return data + (ichan * npol + ipol) * subsize;
+  return data.get() + (ichan * npol + ipol) * subsize;
 }
 
 
@@ -208,4 +225,16 @@ void dsp::TimeSeries::check (float min, float max)
 	  data ++;
 	}
     }
+}
+
+//! Delete the current data buffer and attach to this one
+//! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
+//! Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it.
+void dsp::TimeSeries::attach(auto_ptr<float> _data){
+  if( !_data.get() )
+    throw Error(InvalidState,"dsp::TimeSeries::attach()",
+		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
+
+  sink(data);
+  data = _data;
 }
