@@ -9,7 +9,7 @@
 
 // #define _DEBUG
 
-dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
+dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 {
   nchan = 0;
   time_res = 1;
@@ -19,6 +19,10 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
 
 void dsp::Filterbank::transformation ()
 {
+  if (verbose)
+    fprintf(stderr,"In dsp::Filterbank::transformation() with input ndat="UI64"\n",
+	    get_input()->get_ndat());
+
   if (nchan < 2)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
 		 "invalid number of channels = %d", nchan);
@@ -366,7 +370,8 @@ void dsp::Filterbank::transformation ()
   } // for each big fft (ipart)
 
   if (verbose)
-    cerr << "dsp::Filterbank::transformation exit." << endl;
+    fprintf(stderr,"Returning from dsp::Filterbank::transformation() with output ndat="UI64"\n",
+	    get_output()->get_ndat());
 }
 
 #if 0
