@@ -67,7 +67,7 @@ void dsp::WeightedTimeSeries::set_nchan_weight (unsigned _nchan_weight)
 //! Get the number of weights
 uint64 dsp::WeightedTimeSeries::get_nweights () const
 {
-  return get_nweights (ndat);
+  return get_nweights (get_ndat());
 }
 
 //! Get the number of weights
@@ -78,10 +78,10 @@ uint64 dsp::WeightedTimeSeries::get_nweights (uint64 nsamples) const
  
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::get_nweights ndat_per_weight=" 
-         << ndat_per_weight << " ndat=" << ndat << endl;
+         << ndat_per_weight << " ndat=" << get_ndat() << endl;
  
-  uint64 nweights = ndat / ndat_per_weight;
-  if (ndat % ndat_per_weight)
+  uint64 nweights = get_ndat() / ndat_per_weight;
+  if (get_ndat() % ndat_per_weight)
     nweights ++;
   
   return nweights;
