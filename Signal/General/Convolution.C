@@ -18,6 +18,19 @@ dsp::Convolution::Convolution (const char* _name, Behaviour _type)
   nfilt_pos = nfilt_neg = 0;
 }
 
+/*!
+  \pre input Timeseries must contain phase coherent (undetected) data
+  \post output Timeseries will contain complex (observation::Analytic) data
+    
+  \post IMPORTANT!! Most backward complex FFT functions expect
+  frequency components organized with f0+bw/2 -> f0, f0-bw/2 -> f0.
+  The forward real-to-complex FFT produces f0-bw/2 -> f0+bw/2.  To
+  save CPU cycles, convolve() does not re-sort the ouput array, and
+  therefore introduces a frequency shift in the output data.  This
+  results in a phase gradient in the time domain.  Since only
+  relative phases matter when calculating the Stokes parameters,
+  this effect is basically ignorable for our purposes.
+*/
 void dsp::Convolution::operation ()
 {
   if (!response) {
