@@ -100,10 +100,10 @@ void dsp::MPIRoot::bcast_setup (int root_node)
 {
   mpi_root = root_node;
 
-  if (mpi_self == mpi_root && info.nbytes(block_size) > MAXINT)
+  if (mpi_self == mpi_root && info.nbytes(get_block_size()) > MAXINT)
     throw_str ("MPIRoot::bcast_setup block_size="UI64" will result\n"
 	       "\t\tin buffer size greater than MAXINT:%d\n",
-	       block_size, MAXINT);
+	       get_block_size(), MAXINT);
 
   mpiBcast (this, 1, mpi_root, comm);
 
@@ -111,7 +111,7 @@ void dsp::MPIRoot::bcast_setup (int root_node)
   fprintf(stderr, "MPIRoot::%d:bcast_setup start time: %s\n",
 	  mpi_self, source_start_time.printall());
   fprintf(stderr, "MPIRoot::%d:bcast_setup block size: %lu\n",
-	  mpi_self, block_size);
+	  mpi_self, get_block_size());
   fprintf(stderr, "MPIRoot::%d:bcast_setup sampl rate: %lf\n",
 	  mpi_self, rate);
 #endif
@@ -140,7 +140,7 @@ void dsp::MPIRoot::size_asyncspace ()
   pack_size = temp_size;
 
   // the total size of nbytes has already been double checked in bcast_setup
-  MPI_Pack_size ((int)info.nbytes(block_size), MPI_CHAR, comm, &temp_size);
+  MPI_Pack_size (info.nbytes(get_block_size()), MPI_CHAR, comm, &temp_size);
   pack_size += temp_size;
   
   if (async_buf_size < pack_size) {
