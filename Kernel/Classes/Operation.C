@@ -56,7 +56,7 @@ void* dsp::Operation::workingspace (size_t nbytes)
     working_space = new char [nbytes];
 
     if (!working_space)
-      throw Error (BadAlloc, "Operation::workingspace",
+      throw Error (BadAllocation, "Operation::workingspace",
 	"error allocating %d bytes",nbytes);
 
     working_size = nbytes;
