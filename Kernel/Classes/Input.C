@@ -142,7 +142,7 @@ void dsp::Input::load (BitSeries* data)
 void dsp::Input::seek (int64 offset, int whence)
 {
   if (verbose)
-    cerr << "dsp::Input::seek offset=" << offset << endl;
+    cerr << "dsp::Input::seek [EXTERNAL] offset=" << offset << endl;
 
   // the next sample required by the user
   uint64 next_sample = load_sample + resolution_offset;
@@ -181,15 +181,15 @@ void dsp::Input::seek (int64 offset, int whence)
 
   // calculate the extra samples required owing to resolution
   resolution_offset = next_sample % resolution;
-
-  //  fprintf(stderr,"dsp::Input::seek(): before: load_sample="UI64"\n",load_sample);
   load_sample = next_sample - resolution_offset;
-  //fprintf(stderr,"dsp::Input::seek(): after: load_sample="UI64"\n",load_sample);
 
-  //  fprintf(stderr,"dsp::Input::seek calling set_load_size()\n");
+  if (verbose)
+    cerr << "dsp::Input::seek [INTERNAL] resolution=" << resolution 
+         << " resolution_offset=" << resolution_offset 
+	 << " load_sample=" << load_sample << endl;
+
   // ensure that the load_size attribute is properly set
   set_load_size ();
-  //fprintf(stderr,"Returning from dsp::Input::seek()\n");
 }
 
 //! Seek to a close sample to the specified MJD
@@ -236,28 +236,19 @@ void dsp::Input::set_block_size (uint64 size)
   the next time sample requested by Input::seek. */
 void dsp::Input::set_load_size ()
 {
-  if(verbose)
-    fprintf(stderr,"In dsp::Input::set_load_size() with load_size="UI64".  block_size="UI64" and resolution_offset="UI64"\n",
-	    load_size,block_size,uint64(resolution_offset));
+  if (verbose)
+    cerr << "dsp::Input::set_load_size block_size=" << block_size 
+         << "resolution_offset=" << resolution_offset << endl;
+
   load_size = block_size + resolution_offset;
 
-  //  fprintf(stderr,"In dsp::Input::set_load_size() [1] with load_size="UI64"\n",
-  //  load_size);
-  
   uint64 remainder = load_size % resolution;
 
-  //fprintf(stderr,"In dsp::Input::set_load_size() [2] with load_size="UI64" and remainder="UI64"\n",
-  //  load_size,remainder);
-
-  if (remainder){
-    //fprintf(stderr,"In dsp::Input::set_load_size() [3] load_size will be load_size + resolution - remainder = "UI64" + "UI64" - "UI64"\n",
-    //    load_size,uint64(resolution),remainder);
+  if (remainder)
     load_size += resolution - remainder;
-  }
 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::Input::set_load_size() with load_size()="UI64"\n",
-	  load_size);
+  if (verbose)
+    cerr << "dsp::Input::set_load_size load_size=" << load_size << endl;
 }
 
 
