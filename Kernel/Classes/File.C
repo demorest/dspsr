@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "dsp/MultiFile.h"
 #include "dsp/File.h"
 #include "Error.h"
 
@@ -33,23 +34,27 @@ void dsp::File::init()
   info.init();
 }
 
-void dsp::File::open (const char* filename)
+void dsp::File::open (const char* filename, dsp::PseudoFile* _info)
 {
+  //fprintf(stderr,"In dsp::File::open()\n");
+
   close ();
 
-  open_file (filename);
+  current_filename = filename;
 
+  open_file (filename,_info);
+  
   if (info.get_ndat() == 0)
     set_total_samples ();
 
+  //fprintf(stderr,"dsp::File::open() calling seek_bytes(0)\n");
   // ensure that file is set to load the first sample after the header
   seek_bytes (0);
+  //fprintf(stderr,"dsp::File::open() called seek_bytes(0)\n");
 
   reset ();
-
-  current_filename = filename;
+  //fprintf(stderr,"Returning from dsp::File::open()\n");
 }
-
 
 void dsp::File::close()
 {
@@ -113,11 +118,22 @@ int64 dsp::File::seek_bytes (uint64 bytes)
   return retval - header_bytes;
 }
 
+/* Do an fstat on the current file descriptro to see if purported ndat is correct */
+int64 dsp::File::fstat_file_ndat(){
+  struct stat file_stats;
 
+  int ret = fstat(fd, &file_stats);
 
+  if( ret!=0 )
+    throw Error(FailedCall,"dsp::File::fstat_file_ndat()",
+		"fstat on file '%s' failed.  Return value=%d\n",ret);
 
+  int64 actual_file_sz = file_stats.st_size;
 
-
+  int64 bytes_per_samp = info.get_nchan()*info.get_npol()*info.get_ndim()*info.get_nbit()/8;
+  
+  return (actual_file_sz - header_bytes)/bytes_per_samp;
+}
 
 
 

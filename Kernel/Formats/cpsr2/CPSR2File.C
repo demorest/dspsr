@@ -19,6 +19,16 @@ dsp::CPSR2File::CPSR2File (const char* filename)
     open (filename);
 }
 
+//! Return a pointer to an possibly identical instance of a CPSR2File
+dsp::CPSR2File* dsp::CPSR2File::clone(bool identical){
+  CPSR2File* copy = new CPSR2File;
+
+  //if( identical )
+  //copy->operator=( *this );
+
+  return copy;
+}
+
 int dsp::CPSR2File::get_header (char* cpsr2_header, const char* filename)
 {
   int fd = ::open (filename, O_RDONLY);
@@ -61,28 +71,34 @@ bool dsp::CPSR2File::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::CPSR2File::open_file (const char* filename)
+void dsp::CPSR2File::open_file (const char* filename,PseudoFile* _info)
 {  
-  if (get_header (cpsr2_header, filename) < 0)
-    throw Error (FailedCall, "dsp::CPSR2File::open_file()",
-		 "get_header(%s) failed", filename);
+  if( _info ){
+    info = *_info;
+    header_bytes = CPSR2_HEADER_SIZE;
+  }
+  else{
+    if (get_header (cpsr2_header, filename) < 0)
+      throw Error (FailedCall, "dsp::CPSR2File::open_file()",
+		   "get_header(%s) failed", filename);
   
-  CPSR2_Observation data (cpsr2_header);
+    CPSR2_Observation data (cpsr2_header);
+    
+    if (yamasaki_verify (filename, data.offset_bytes, CPSR2_HEADER_SIZE) < 0)
+      throw Error (FailedCall, "dsp::CPSR2File::open_file()",
+		   "yamasaki_verify(%s) failed", filename);
 
-  if (yamasaki_verify (filename, data.offset_bytes, CPSR2_HEADER_SIZE) < 0)
-    throw Error (FailedCall, "dsp::CPSR2File::open_file()",
-		 "yamasaki_verify(%s) failed", filename);
+    info = data;
 
-  info = data;
+    // re-open the file
+    fd = ::open (filename, O_RDONLY);
+    if (fd < 0)
+      throw Error (FailedSys, "dsp::CPSR2File::open_file()", 
+		   "open(%s) failed", filename);
+    
 
-  // re-open the file
-  fd = ::open (filename, O_RDONLY);
-  if (fd < 0)
-    throw Error (FailedSys, "dsp::CPSR2File::open_file()", 
-		 "open(%s) failed", filename);
-
-
-  header_bytes = CPSR2_HEADER_SIZE;
+    header_bytes = CPSR2_HEADER_SIZE;
+  }
 
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
@@ -96,4 +112,19 @@ void dsp::CPSR2File::open_file (const char* filename)
   if (verbose)
     cerr << "CPSR2File::open exit" << endl;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,16 +1,18 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/11/12 00:23:29 $
-   $Author: wvanstra $ */
+   $Revision: 1.12 $
+   $Date: 2003/02/13 01:30:36 $
+   $Author: pulsar $ */
 
 
 #ifndef __File_h
 #define __File_h
 
-#include "dsp/Seekable.h"
 #include "Registry.h"
+
+#include "dsp/Seekable.h"
+#include "dsp/PseudoFile.h"
 
 namespace dsp {
 
@@ -27,20 +29,25 @@ namespace dsp {
     //! Destructor
     virtual ~File ();
 
+    //! Return a pointer to a new null instance of the derived class 
+    virtual File* clone(bool identical=true)=0;
+
     //! Return true if filename appears to refer to a valid format
     virtual bool is_valid (const char* filename) const = 0;
 
     //! Open the file
-    void open (const char* filename);
+    //! If _info is not null, we copy that data instead of re-reading in all info
+    void open (const char* filename, PseudoFile* _info=NULL);
 
     //! Convenience interface to File::open (const char*)
-    void open (const string& filename) { open (filename.c_str()); }
+    void open (const string& filename, PseudoFile* _info=NULL) { open (filename.c_str(),_info); }
 
     //! Close the file
     virtual void close ();
 
     //! Return the name of the file from which this instance was created
     string get_filename () const { return current_filename; }
+    string get_current_filename(){ return current_filename; }
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static File* create (const char* filename);
@@ -49,12 +56,18 @@ namespace dsp {
     static File* create (const string& filename)
     { return create (filename.c_str()); }
 
-    string get_current_filename(){ return current_filename; }
+    //! Inquire the howmany bytes are in the header
+    int get_header_bytes() const{ return header_bytes; }
 
   protected:
     
     //! Called by the wrapper-function, open
-    virtual void open_file (const char* filename) = 0;
+    virtual void open_file (const char* filename,PseudoFile* _info) = 0;
+    
+    //! Called by open_file() for some file types, to determine that the header ndat matches the file size
+    //! Requires 'info' parameters nchan,npol,ndim to be set, and also header_bytes to be correctly set
+    //! Return value is the actual ndat in the file
+    virtual int64 fstat_file_ndat();
 
     //! The file descriptor
     int fd;

@@ -18,6 +18,16 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
     open (filename);
 }
 
+//! Return a pointer to an possibly identical instance of a PMDAQFile
+dsp::PMDAQFile* dsp::PMDAQFile::clone(bool identical){
+  PMDAQFile* copy = new PMDAQFile;
+
+  //if( identical )
+  //copy->operator=( *this );
+
+  return copy;
+}
+
 // Loads header into character array pmdaq_header from file filename.
 
 // Takes root name as the name, ie takes SWT001 and adds .hdr to it.
@@ -29,7 +39,7 @@ int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
   int pos = str_filename.find_first_of(".",0);
   string hdr_name = str_filename.substr(0,pos) + ".hdr";
 
-  if(verbose)
+  if( verbose )
     cerr << "dsp::PMDAQFile::get_header looks for header called " <<
       hdr_name << endl;
 
@@ -84,33 +94,35 @@ bool dsp::PMDAQFile::is_valid (const char* filename) const
   return true;
 }
 
-void dsp::PMDAQFile::open_file (const char* filename)
+void dsp::PMDAQFile::open_file (const char* filename,PseudoFile* _info)
 {  
-  if (get_header (pmdaq_header, filename) < 0)
-    throw_str ("PMDAQFile::open - failed get_header(%s): %s",
-	       filename, strerror(errno));
-  
-  // MXB - what have we here?
-  PMDAQ_Observation data (pmdaq_header);
-
-  //  Yamasaki verification not needed for PMDAQ data
-  //  if (yamasaki_verify (filename, data.offset_bytes, PMDAQ_HEADER_SIZE) < 0)
-  //  throw_str ("cpsr2_Construct: YAMASAKI verification failed");
-
-  info = data;
-
+  if( _info ){
+    info = *_info;
+  }
+  else{
+    if (get_header (pmdaq_header, filename) < 0)
+      throw_str ("PMDAQFile::open - failed get_header(%s): %s",
+		 filename, strerror(errno));
+    
+    // MXB - what have we here?
+    PMDAQ_Observation data (pmdaq_header);
+    
+    //  Yamasaki verification not needed for PMDAQ data
+    //  if (yamasaki_verify (filename, data.offset_bytes, PMDAQ_HEADER_SIZE) < 0)
+    //  throw_str ("cpsr2_Construct: YAMASAKI verification failed");
+    
+    info = data;
+  }
+   
   // Open the data file, which is now just filename.
-
-  string data_name = string(filename);
-
-  fd = ::open (data_name.c_str(), O_RDONLY);
-
+  fd = ::open (filename, O_RDONLY);
+  
   if (fd < 0)
     throw_str ("PMDAQFile::open - failed open(%s): %s", 
-	       data_name.c_str(), strerror(errno));
-
+	       filename, strerror(errno));
+  
   absolute_position = 0;
-
+    
   if (verbose)
     cerr << "Returning from PMDAQFile::open" << endl;
 }

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/12/09 08:31:31 $
-   $Author: cwest $ */
+   $Revision: 1.9 $
+   $Date: 2003/02/13 01:35:08 $
+   $Author: pulsar $ */
 
 
 #ifndef __S2File_h
@@ -25,9 +25,12 @@ namespace dsp {
     //! Returns true if filename appears to name a valid S2 file
     bool is_valid (const char* filename) const;
 
+    //! Return a pointer to an possibly identical instance of a S2File
+    virtual S2File* clone(bool identical=true);
+
   protected:
     //! Open the file
-    void open_file (const char* filename);
+    void open_file (const char* filename,PseudoFile* _info);
     
   private:
     

@@ -17,10 +17,13 @@ namespace dsp {
 
     //! Returns true if filename appears to name a valid PMDAQ file
     bool is_valid (const char* filename) const;
-    
+
+    //! Return a pointer to an possibly identical instance of a PMDAQFile
+    virtual PMDAQFile* clone(bool identical=true);
+
   protected:
     //! Open the file
-    void open_file (const char* filename);
+    void open_file (const char* filename,PseudoFile* _info);
     
     // Insert PMDAQ-specific entries here.
     // Overload these because of fortran 4-byte headers and footers to blocks

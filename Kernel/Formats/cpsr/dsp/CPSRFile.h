@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/12 00:24:07 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2003/02/13 01:35:08 $
+   $Author: pulsar $ */
 
 
 #ifndef __CPSRFile_h
@@ -29,10 +29,13 @@ namespace dsp {
 
     //! The file number on tape
     int filenum;
+    
+    //! Return a pointer to an possibly identical instance of a CPSRFile
+    virtual CPSRFile* clone(bool identical=true);
 
   protected:
     //! Open the file
-    virtual void open_file (const char* filename);
+    virtual void open_file (const char* filename,PseudoFile* _info);
 
   };
 
