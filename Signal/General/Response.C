@@ -172,8 +172,9 @@ unsigned dsp::Response::get_minimum_ndat () const
   
   if (nsmear == 0)
     return 0;
-
-  return (unsigned) pow (2.0, 1.0 + ceil( log((double)nsmear)/log(2.0) ));
+  cerr << "Altered minimum n_dat to remove extra power of two" << endl;
+  // return (unsigned) pow (2.0, 1.0 + ceil( log((double)nsmear)/log(2.0) ));
+  return (unsigned) pow (2.0, ceil( log((double)nsmear)/log(2.0) ));
 }
 
 /*!  Using the get_minimum_ndat method and the max_ndat static attribute,
