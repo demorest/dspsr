@@ -22,6 +22,9 @@ dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
 //return f1->get_info()->get_start_time() < f2->get_info()->get_start_time();
 //}
 
+
+// This is not the best way to do the "operator <" - it should be done in the PseudoFile class
+// This method also exists in the PseudoFile Class so that proper compilers (not gcc version 2) can access it properly
 bool operator < (const dsp::PseudoFile& f1, const dsp::PseudoFile& f2){
   return f1.get_start_time() < f2.get_start_time();
 }
