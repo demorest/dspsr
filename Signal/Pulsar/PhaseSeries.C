@@ -1,6 +1,9 @@
-#include "dsp/PhaseSeries.h"
+#include "Reference.h"
+#include "psrephem.h"
 #include "polyco.h"
 #include "genutil.h"
+
+#include "dsp/PhaseSeries.h"
 
 dsp::PhaseSeries::PhaseSeries ()
 {
@@ -23,6 +26,7 @@ void dsp::PhaseSeries::set_folding_period (double _folding_period)
 {
   folding_period = _folding_period;
   folding_polyco = 0;
+  pulsar_ephemeris = 0;
 }
 
 //! Get the average folding period
@@ -34,20 +38,24 @@ double dsp::PhaseSeries::get_folding_period () const
     return folding_period;
 }
 
-//! Set the phase polynomial(s) with which to fold data
-void dsp::PhaseSeries::set_folding_polyco (const polyco* _folding_polyco)
+//! Set the pulsar ephemeris used to fold with.  User must also supply the polyco that was generated from the ephemeris and used for folding
+void dsp::PhaseSeries::set_pulsar_ephemeris(const psrephem* _pulsar_ephemeris, const polyco* _folding_polyco)
 {
+  pulsar_ephemeris = _pulsar_ephemeris;
   folding_polyco = _folding_polyco;
   folding_period = 0.0;
 }
 
-//! Set the phase polynomial(s) with which to fold data
+//! Inquire the phase polynomial(s) with which to fold data
 const polyco* dsp::PhaseSeries::get_folding_polyco () const
 {
-  if( !folding_polyco )
-    return NULL;
+  return folding_polyco.ptr();
+}
 
-  return folding_polyco;
+//! Inquire the ephemeris used to fold the data
+const psrephem* dsp::PhaseSeries::get_pulsar_ephemeris () const
+{
+  return pulsar_ephemeris.ptr();
 }
 
 //! Get the mid-time of the integration
@@ -114,6 +122,7 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
       cerr << "PhaseSeries::mixable reset" << endl;
 
     Observation::operator = (obs);
+
     end_time = obsEnd;
     start_time = obsStart;
 
@@ -155,6 +164,7 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   end_time           = prof.end_time;
   folding_period     = prof.folding_period;
   folding_polyco     = prof.folding_polyco;
+  pulsar_ephemeris   = prof.pulsar_ephemeris;
   hits               = prof.hits;
 
   return *this;
@@ -176,4 +186,5 @@ dsp::PhaseSeries::operator += (const PhaseSeries& prof)
 
   return *this;
 }
+
 

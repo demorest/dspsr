@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/08/22 15:49:09 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2003/11/01 06:39:00 $
+   $Author: hknight $ */
 
 
 #ifndef __Archiver_h
@@ -101,3 +101,5 @@ namespace dsp {
 }
 
 #endif // !defined(__Archiver_h)
+
+

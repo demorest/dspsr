@@ -1,4 +1,5 @@
 #include "polyco.h"
+#include "psrephem.h"
 
 #include "dsp/Archiver.h"
 #include "dsp/PhaseSeries.h"
@@ -37,7 +38,6 @@ void dsp::Archiver::set_archive (Pulsar::Archive* archive)
 {
   single_archive = archive;
 }
-
 
 //! Set the Response from which Passband Extension will be constructed
 void dsp::Archiver::set_passband (const Response* _passband)
@@ -199,9 +199,12 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 
   set (archive-> get_Integration(0), phase);
 
+  // dsp::PhaseSeries has either (both eph and polyco) or (none)
   // set_model must be called after the Integration::MJD has been set
-  if( phase->get_folding_polyco() )
+  if( phase->get_pulsar_ephemeris() ){
     archive-> set_model ( *(phase->get_folding_polyco()) );
+    archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()) );
+  }
 
   archive-> set_filename (get_filename (phase));
 
@@ -311,4 +314,3 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";
 }}
-

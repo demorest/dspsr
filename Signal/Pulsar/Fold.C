@@ -131,7 +131,7 @@ void dsp::Fold::prepare (const Observation* observation)
     cerr << "dsp::Fold::prepare creating polyco" << endl;
 
   Reference::To<polyco> polly = new polyco;
-  
+
   Tempo::set_polyco ( *polly, *pulsar_ephemeris, time, time,
 		      nspan, ncoef, 8, observation->get_telescope_code() );
 
@@ -442,7 +442,7 @@ void dsp::Fold::transformation ()
   if (folding_period)
     output->set_folding_period( folding_period );
   else
-    output->set_folding_polyco( folding_polyco );
+    output->set_pulsar_ephemeris( pulsar_ephemeris, folding_polyco );
 
   output->set_reference_phase( reference_phase );
 
