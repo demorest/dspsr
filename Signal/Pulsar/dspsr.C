@@ -18,6 +18,7 @@
 #include "dsp/Detection.h"
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
+#include "dsp/IncoherentFilterbank.h"
 
 #include "dsp/Archiver.h"
 
@@ -27,7 +28,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:Ab:d:f:F:hjM:n:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:f:F:hIjM:n:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -53,6 +54,7 @@ void usage ()
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
+    " -I             Over-ride with IncoherentFilterbank class [false]\n"
     "\n"
     "Convolution options:\n"
     " -x nfft        over-ride optimal transform length\n"
@@ -146,6 +148,9 @@ int main (int argc, char** argv)
   // number of seconds to process from data
   double total_seconds = 0.0;
 
+  // If true, a dsp::IncoherentFilterbank is used rather than a dsp::Filterbank
+  bool use_incoherent_filterbank = false;
+
   int c;
   int scanned;
 
@@ -175,7 +180,7 @@ int main (int argc, char** argv)
              << tbc_threshold << endl;
         break;
       }
-
+      
       cerr << "dspsr: error parsing " << optarg << " as"
 	  " two-bit correction nsample, threshold, or cutoff" << endl;
       return -1;
@@ -223,15 +228,19 @@ int main (int argc, char** argv)
       }
       break;
     }
-
+    
     case 'f':
       ffts = atoi (optarg);
       break;
-
+      
     case 'h':
       usage ();
       return 0;
-
+      
+    case 'I':
+      use_incoherent_filterbank = true;
+      break;
+      
     case 'j':
       join_files = true;
       break;
@@ -383,65 +392,100 @@ int main (int argc, char** argv)
 
   dsp::TimeSeries* convolve = voltages;
 
+  bool need_to_detect = true;
+
   if (nchan > 1) {
 
     // output filterbank data
     convolve = new dsp::WeightedTimeSeries;
 
-    if (verbose)
-      cerr << "Creating Filterbank instance" << endl;
+    if( use_incoherent_filterbank ) {
+      if (verbose)
+	cerr << "Creating IncoherentFilterbank instance" << endl;
 
-    // software filterbank constructor
-    dsp::Filterbank* filterbank = new dsp::Filterbank;
-    filterbank->set_input (voltages);
-    filterbank->set_output (convolve);
-    filterbank->set_nchan (nchan);
+      // software filterbank constructor
+      dsp::IncoherentFilterbank* filterbank = new dsp::IncoherentFilterbank;
+      filterbank->set_input (voltages);
+      filterbank->set_output (convolve);
+      filterbank->set_nchan (nchan);
 
-    if (simultaneous) {
-      filterbank->set_response (kernel);
-      filterbank->set_passband (passband);
+      if( npol==1 ){
+	filterbank->set_output_state( Signal::Intensity );
+	need_to_detect = false;
+      }
+      else if( npol==2 ){
+	filterbank->set_output_state( Signal::PPQQ );
+	need_to_detect = false;
+      }
+      else if( npol==4 )
+	filterbank->set_output_state( Signal::Analytic );
+      else {
+	cerr << "dspsr: invalid npol=" << npol << endl;
+	return -1;
+      }
+
+      operations.push_back( filterbank );
     }
+    else{
 
-    operations.push_back (filterbank);
-  }
-
-  if (nchan == 1 || !simultaneous) {
-
-    if (verbose)
-      cerr << "Creating Convolution instance" << endl;
-
-    dsp::Convolution* convolution = new dsp::Convolution;
-
-    convolution->set_response (kernel);
-    convolution->set_passband (passband);
-
-    convolution->set_input  (convolve);  
-    convolution->set_output (convolve);  // inplace
-
-    operations.push_back (convolution);
-  }
-
-  if (verbose)
-    cerr << "Creating Detection instance" << endl;
-  dsp::Detection* detect = new dsp::Detection;
-
-  if (npol == 4) {
-    detect->set_output_state (Signal::Coherence);
-    detect->set_output_ndim (ndim);
-  }
-  else if (npol == 2)
-    detect->set_output_state (Signal::PPQQ);
-  else if (npol == 1)
-    detect->set_output_state (Signal::Intensity);
-  else {
-    cerr << "dspsr: invalid npol=" << npol << endl;
-    return -1;
+      if (verbose)
+	cerr << "Creating Filterbank instance" << endl;
+      
+      // software filterbank constructor
+      dsp::Filterbank* filterbank = new dsp::Filterbank;
+      filterbank->set_input (voltages);
+      filterbank->set_output (convolve);
+      filterbank->set_nchan (nchan);
+      
+      if (simultaneous) {
+	filterbank->set_response (kernel);
+	filterbank->set_passband (passband);
+      }
+      
+      operations.push_back (filterbank);
+    }
   }
     
-  detect->set_input (convolve);
-  detect->set_output (convolve);
+  if (nchan == 1 || !simultaneous) {
+    
+    if (verbose)
+      cerr << "Creating Convolution instance" << endl;
+    
+    dsp::Convolution* convolution = new dsp::Convolution;
+    
+    convolution->set_response (kernel);
+    convolution->set_passband (passband);
+    
+    convolution->set_input  (convolve);  
+    convolution->set_output (convolve);  // inplace
+    
+    operations.push_back (convolution);
+  }
+  
+  if( need_to_detect ) {
+    
+    if (verbose)
+      cerr << "Creating Detection instance" << endl;
+    dsp::Detection* detect = new dsp::Detection;
+    
+    if (npol == 4) {
+      detect->set_output_state (Signal::Coherence);
+      detect->set_output_ndim (ndim);
+    }
+    else if (npol == 2)
+      detect->set_output_state (Signal::PPQQ);
+    else if (npol == 1)
+      detect->set_output_state (Signal::Intensity);
+    else {
+      cerr << "dspsr: invalid npol=" << npol << endl;
+      return -1;
+    } 
 
-  operations.push_back (detect);
+    detect->set_input (convolve);
+    detect->set_output (convolve);
+    
+    operations.push_back (detect);
+  }
 
   if (verbose)
     cerr << "Creating Archiver instance" << endl;
