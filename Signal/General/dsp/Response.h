@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.18 $
-   $Date: 2002/12/11 17:32:59 $
+   $Revision: 1.19 $
+   $Date: 2003/01/07 15:46:21 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -48,6 +48,12 @@ namespace dsp {
     /*! Set the number of complex time samples in the t<0 half of the
       corresponding impulse response function */
     void set_impulse_neg (unsigned _impulse_neg) { impulse_neg =_impulse_neg; }
+
+    //! Set the flag for a bin-centred spectrum
+    void set_dc_centred (bool dc_centred);
+
+    //! Get the flag for a bin-centred spectrum
+    bool get_dc_centred () const { return dc_centred; }
 
     //! Return the minimum useable ndat
     unsigned get_minimum_ndat () const;
