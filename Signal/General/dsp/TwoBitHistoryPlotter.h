@@ -2,6 +2,7 @@
 #define __TwoBitHistoryPlotter_h
 
 #include <sys/time.h>
+#include <vector>
 
 #include "dsp/TwoBitHistory.h"
 #include "dsp/TwoBitStatsPlotter.h"
