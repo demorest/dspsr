@@ -15,6 +15,11 @@ dsp::MultiFile::~MultiFile ()
 {
 }
 
+/*! This method adds to the current set of input files and re-sorts
+  them all files by start time.
+  
+  \post Resets the file pointers 
+*/
 void dsp::MultiFile::open (const vector<string>& new_filenames)
 {
   if (new_filenames.empty())

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.9 $
-   $Date: 2003/07/05 08:18:48 $
-   $Author: hknight $ */
+   $Revision: 1.10 $
+   $Date: 2003/07/28 14:19:40 $
+   $Author: wvanstra $ */
 
 #ifndef __Transformation_h
 #define __Transformation_h
@@ -83,7 +83,7 @@ template <class In, class Out>
 void dsp::Transformation<In, Out>::operation ()
 {
   if (verbose)
-    cerr << "Transformation["+name+"]::operate" << endl;
+    cerr << "dsp::Transformation["+name+"]::operate" << endl;
 
   // If inplace is true, then the input and output should be of the same type....
   if( type==inplace && !input.ptr() && output.ptr() )
@@ -92,28 +92,28 @@ void dsp::Transformation<In, Out>::operation ()
     output = (Out*)input.get();
 
   if (!input)
-    throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "no input");
 
   if (input->get_ndat() < 1)
-    throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "empty input- input=%p input->ndat="UI64,
 		 input.get(),input->get_ndat());
 
   string reason;
   if (!input->state_is_valid (reason))
-    throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid input state: " + reason);
 
   if ( type!=inplace && !output)
-    throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "no output");
 
   //! call the pure virtual method defined by sub-classes
   transformation ();
 
   if ( type!=inplace && !output->state_is_valid (reason))
-    throw Error (InvalidState, string("Transformation["+name+"]::operate").c_str(),
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid output state: " + reason);
 }
 
@@ -127,7 +127,7 @@ void dsp::Transformation<In, Out>::set_input (In* _input)
 
   if ( type == outofplace && input && output
        && (const void*)input == (const void*)output )
-    throw Error (InvalidState, string("Transformation["+name+"]::set_input").c_str(),
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::set_input",
 		 "input must != output");
 
   if( type==inplace )
@@ -141,14 +141,14 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
     cerr << "dsp::Transformation["+name+"]::set_output ("<<_output<<")"<<endl;
 
   if (type == inplace && input.ptr() && (const void*)input.get()!=(const void*)_output )
-    throw Error(InvalidState, string("Transformation["+name+"]::set_output").c_str(),
+    throw Error(InvalidState, "dsp::Transformation["+name+"]::set_output",
 		 "inplace transformation input must equal output");
   
   output = _output;
 
   if ( type == outofplace && input && output 
        && (const void*)input.get() == (const void*)output.get() ){
-    Error er(InvalidState, string("Transformation["+name+"]::set_output").c_str(),
+    Error er(InvalidState, "dsp::Transformation["+name+"]::set_output",
 		 "output must != input");
     cerr << er << endl;
     exit(-1);

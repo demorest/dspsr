@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/07/01 05:23:28 $
-   $Author: hknight $ */
+   $Revision: 1.17 $
+   $Date: 2003/07/28 14:21:21 $
+   $Author: wvanstra $ */
 
 
 #ifndef __MultiFile_h
@@ -29,11 +29,6 @@ namespace dsp {
     virtual ~MultiFile ();
     
     //! Open a number of files and treat them as one logical observation.
-    /*! This method forms the union of the existing filenames and the 
-      new ones, and sort them by start time.
-
-      \post Resets the file pointers
-    */
     virtual void open (const vector<string>& new_filenames);
 
     //! Makes sure only these filenames are open

@@ -22,8 +22,11 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
   // Sub-classes may re-define these
   nsample = 512;
 
-  if (psrdisp_compatible)
+  if (psrdisp_compatible) {
+    cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
+      "   using cutoff sigma of 6.0 instead of 10.0" << endl;
     cutoff_sigma = 6.0;
+  }
   else
     cutoff_sigma = 10.0;
 
@@ -212,17 +215,20 @@ void dsp::TwoBitCorrection::set_limits ()
   // the root mean square deviation
   float nlo_sigma = sqrt( nlo_variance );
 
-  // in psrdisp, sigma was incorrectly set as
-  float old_nlo_sigma = sqrt( float(nsample) );
-
   if (verbose)
     cerr << "  nlo_mean=" << nlo_mean << endl
-         << "  nlo_sigma=" << nlo_sigma << " (old=" << old_nlo_sigma << ")" 
-         << endl;
+         << "  nlo_sigma=" << nlo_sigma << endl;
 
   // backward compatibility
-  if (psrdisp_compatible)
-    nlo_sigma = old_nlo_sigma;
+  if (psrdisp_compatible) {
+
+    // in psrdisp, sigma was incorrectly set as
+    nlo_sigma = sqrt( float(nsample) );
+
+    cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
+      "   setting nlo_sigma to " << nlo_sigma << endl;
+
+  }
 
   n_max = unsigned (nlo_mean + (cutoff_sigma * nlo_sigma));
 
