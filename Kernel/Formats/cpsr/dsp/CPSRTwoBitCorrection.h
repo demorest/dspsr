@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/11/10 01:31:01 $
+   $Revision: 1.12 $
+   $Date: 2002/11/10 21:49:05 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
@@ -32,7 +32,7 @@ namespace dsp {
 
     //! Unpacking algorithm
     void iq_unpack (float* outdata, const unsigned char* raw, 
-		    int64 ndat, int channel, int* weights);
+		    uint64 ndat, unsigned channel, unsigned* weights);
 
     //! Temporary storage of bit-shifted values
     unsigned char* values;

@@ -30,7 +30,7 @@ void dsp::CPSRTwoBitCorrection::unpack ()
     throw Error (InvalidParam, "dsp::CPSRTwoBitCorrection::unpack",
 		 "input not quadrature sampled");
 
-  int64 ndat = input->get_ndat();
+  uint64 ndat = input->get_ndat();
   const unsigned char* rawptr = input->get_rawptr();
 
   for (int ipol=0; ipol<2; ipol++) {
@@ -63,8 +63,9 @@ void dsp::CPSRTwoBitCorrection::unpack ()
 
 void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
 					   const unsigned char* raw,
-					   int64 ndat, 
-					   int channel, int* weights)
+					   uint64 ndat, 
+					   unsigned channel,
+					   unsigned* weights)
 {
   if (!values)
     throw Error (InvalidState, "dsp::CPSRTwoBitCorrection::iq_unpack",
@@ -88,7 +89,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
   int shift;
 
   // switch I and Q
-  int newchan = channel +1 - 2*(channel % 2);
+  unsigned newchan = channel +1 - 2*(channel % 2);
   // int newchan = channel;
   shift = (4 - newchan - 1) * 2;
 
@@ -101,11 +102,11 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
     hist = histograms[channel].begin();
 
   //fprintf (stderr, "tbc: chan: %d\n", newchan);
-  int nsuccess = 0;
+  unsigned nsuccess = 0;
 
   unsigned long n_weights = (unsigned long) ceil (float(ndat)/float(nsample));
 
-  int64 points_left = ndat;
+  uint64 points_left = ndat;
 
   // these aren't true totals, just accurate enough to get the fractional
   // points and judge against the tolerance towards the varying variance
@@ -113,11 +114,11 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
   unsigned long total_points = 0;
 
   for (unsigned long wt=0; wt<n_weights; wt++) {
-    int n_in = 0;
-    int pt   = 0;
+    unsigned n_in = 0;
+    unsigned pt   = 0;
 
-    int points = nsample;
-    if (points > (int) points_left)
+    unsigned points = nsample;
+    if (points > points_left)
       points = points_left;
 
     // retrieve the next points values from the 2bit data
