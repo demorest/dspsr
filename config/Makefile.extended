@@ -203,11 +203,10 @@ $(LOGIN_ARCH)/%.o: %.f
 # The file is linked with LDFLAGS, or exec.LDFLAGS, if defined.
 ##########################################################################
 
-#lib_dir_fl := $(filter -L%,$(LDFLAGS))
-#lib_dirs  := $(lib_dir_fl:-L=)
-#all_libs  := $(foreach dir,$(lib_dirs),$(wildcard $(dir)/*.a))
-#lflags    := $(filter -l%,$(LDFLAGS))
-#libraries := $(lflags:-l%=$(LIBDIR)/%.a)
+libdirs := $(subst -L,,$(filter -L%,$(LDFLAGS)))
+all_libs := $(foreach dir,$(libdirs),$(wildcard $(dir)/*.a))
+lfilt := ${patsubst -l%,\%lib%.a,$(filter -l%,$(LDFLAGS))}
+libraries := $(foreach l,$(lfilt),$(firstword $(filter $l,$(all_libs))))
 
 define check_exec
 if [ ! -x $@ ]; then \
@@ -221,15 +220,15 @@ elif [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
 else echo $($*.LDFLAGS); fi
 endef
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(LIBS)
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(libraries)
 	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(LIBS)
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries)
 	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(LIBS)
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries)
 	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
