@@ -121,7 +121,7 @@ endif
 ##########################################################################
 # update
 
-exists = $(shell if [ ! -z "$(1)" ]; then if [ -e $(1) ];then echo yes;fi;fi)
+exists = $(if $(wildcard $(1)),yes,no)
 
 has_CFITS := $(call exists,$(CFITSDIR))
 has_MPI   := $(call exists,$(MPIDIR))
@@ -152,5 +152,5 @@ LTIMES = -ltimes -lgenutil $(LSLA) -lm
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
 LPSRCHIVE = -lpsrchive -ltempo++ -lpolyco -leph -lCalibration -lgenutil++ \
-	$(LTIMES) $(LFFT)
+	$(LFFT) $(LTIMES)
 
