@@ -247,6 +247,10 @@ void dsp::PuMaFile::parse (const void* header)
   /* int StTime;      Starttime (s after midnight, multiple of 10 s) */
   info.set_start_time( MJD( hdr->obs.StMJD, int(hdr->obs.StTime), 0.0 ) );
 
+  if (verbose)
+    cerr << "dsp::PuMaFile::parse start MJD=" << hdr->obs.StMJD
+         << "d+" << hdr->obs.StTime << "s=" << info.get_start_time() << endl;
+
   /* int Tsamp; Mode 0-4 ; output sample interval in nano sec */
   double sampling_interval = 1e-9 * double(hdr->mode.Tsamp);
   info.set_rate (1.0/sampling_interval);
@@ -255,8 +259,27 @@ void dsp::PuMaFile::parse (const void* header)
   info.set_ndat( info.get_nsamples (hdr->gen.DataBlkSize) );
 
   /* The start time of the observation must be offset by the file number */
-  /* int FileNum;     Which file out of NFiles is this */
-  uint64 offset_samples = uint64(hdr->gen.FileNum) * info.get_ndat();
+  /* int FileNum;     Which file out of NFiles is this - not reliable
+                      as it counts over all bands. */
+
+  uint64 filenum = hdr->gen.FileNum;
+  int scanned = 0;
+
+  char* filenum_str = strchr (hdr->gen.ThisFileName, '.');
+  if (filenum_str)
+    scanned = sscanf (filenum_str+1, UI64, &filenum);
+
+  if (scanned != 1)
+    throw Error (InvalidParam, "dsp::PuMaFile::parse",
+                 "filename=%s not in recognized form", hdr->gen.ThisFileName);
+
+  uint64 offset_samples = filenum * info.get_ndat();
+
+  if (verbose)
+    cerr << "dsp::PuMaFile::parse sampling rate=" << info.get_rate()
+         << " ndat=" << info.get_ndat() << "\n\tfile=" << filenum
+         << " offset=" << offset_samples << "samples = " 
+         << offset_samples/info.get_rate() << "seconds" << endl;
 
   info.change_start_time (offset_samples);
 
