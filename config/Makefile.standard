@@ -149,7 +149,9 @@ ifeq (${PSRSITE},gbt)
 CPPFLAGS += -DGBT=1
 endif
 
-
+ifeq (${PSRSITE},swin)
+CPPFLAGS += -DSWIN=1
+endif
 
 ##########################################################################
 # package detection 
