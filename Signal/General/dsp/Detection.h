@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.9 $
-   $Date: 2004/09/17 05:20:33 $
+   $Revision: 1.10 $
+   $Date: 2004/11/01 23:52:16 $
    $Author: hknight $ */
 
 
@@ -56,8 +56,14 @@ namespace dsp {
     //! Dimension of the output data
     int ndim;
 
+    //! Called by polarimetry to return pointers to the result channels
+    vector<float*> get_result_pointers(unsigned ichan);
+
     //! Perform simple square-law detection
     void square_law ();
+
+    //! Form Stokes I from simple square-law detection and polarisation scrunching
+    void form_stokes_I();
 
     //! Polarization detection (Stokes parameters or Coherency products)
     void polarimetry ();
