@@ -28,7 +28,7 @@ dsp::Fold::~Fold () { }
 void dsp::Fold::prepare ()
 {
   if (!input)
-    throw Error (InvalidState, "Fold::prepare", "no input");
+    throw Error (InvalidState, "dsp::Fold::prepare", "no input");
 
   prepare (input);
 }
@@ -39,13 +39,14 @@ void dsp::Fold::prepare (const Observation* observation)
   string jpulsar = observation->get_source();
 
   if (jpulsar.length() == 0)
-    throw Error (InvalidParam, "Fold::prepare", "empty Observation::source");
+    throw Error (InvalidParam, "dsp::Fold::prepare",
+		 "empty Observation::source");
 
   if (jpulsar[0] != 'J')
     jpulsar = "J" + jpulsar;
 
   if (verbose)
-    cerr << "Fold::prepare source=" << jpulsar << endl;
+    cerr << "dsp::Fold::prepare source=" << jpulsar << endl;
 
   MJD time = observation->get_start_time();
 
@@ -61,7 +62,8 @@ void dsp::Fold::prepare (const Observation* observation)
     pulsar_ephemeris = new psrephem;
 
     if (pulsar_ephemeris->create (jpulsar, 0) < 0)
-      throw_str ("Fold::prepare error psrephem::create ("+jpulsar+")");
+      throw Error (FailedCall, "dsp::Fold::prepare",
+		   "error psrephem::create ("+jpulsar+")");
   }
 
 #if 0
@@ -70,7 +72,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
   dm = ephemeris.get_dm();
   if (verbose)
-    cerr << "Fold::prepare psrephem dm = " << dm << endl;
+    cerr << "dsp::Fold::prepare psrephem dm = " << dm << endl;
 
   // set the source position
   raw.coordinates.setRadians (ephemeris.jra(), ephemeris.jdec());
@@ -82,7 +84,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
     // look up the pulsar in the catalogue
     if (!creadcat (jpulsar.c_str(), psrstat))  {
-      cerr << "Fold::prepare error creadcat (" 
+      cerr << "dsp::Fold::prepare error creadcat (" 
 	   << jpulsar << ")\n";
       return -1;
     }
@@ -102,7 +104,7 @@ void dsp::Fold::prepare (const Observation* observation)
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
   
   if (verbose)
-    cerr << "Fold::prepare Doppler shift from polyco:" << doppler << endl;
+    cerr << "dsp::Fold::prepare Doppler shift from polyco:" << doppler << endl;
 
 #endif
 
@@ -111,7 +113,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
 polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 {
-  if (verbose) cerr << "Fold::choose_polyco checking "
+  if (verbose) cerr << "dsp::Fold::choose_polyco checking "
 		    << polycos.size()
 		    << " specified polycos" << endl;
 
@@ -129,13 +131,13 @@ polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 
 psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
 {
-  if (verbose) cerr << "Fold::choose_ephemeris checking "
+  if (verbose) cerr << "dsp::Fold::choose_ephemeris checking "
 		    << ephemerides.size()
 		    << " specified ephemerides" << endl;
 
   for (unsigned ieph=0; ieph<ephemerides.size(); ieph++) {
 
-    if (verbose) cerr << "Fold::prepare compare " 
+    if (verbose) cerr << "dsp::Fold::prepare compare " 
 		      << pulsar << " and "
 		      << ephemerides[ieph]->psrname() << endl;
 
@@ -208,39 +210,40 @@ const psrephem* dsp::Fold::get_pulsar_ephemeris () const
 
 void dsp::Fold::transformation ()
 {
-  if (!input->get_detected ())
-    throw_str ("Fold::transformation input is not detected");
-
   if (nbin == 0)
-    throw_str ("Fold::transformation nbin not set");
+    throw Error (InvalidState, "dsp::Fold::transformation", "nbin not set");
+
+  if (!input->get_detected ())
+    throw Error (InvalidParam, "dsp::Fold::transformation",
+		 "input is not detected");
 
   if (!built)
     prepare ();
 
+  if (folding_period == 0 && !folding_polyco)
+    throw Error (InvalidState, "dsp::Fold::transformation",
+		 "no folding period or polyco set");
+
   if (verbose)
-    cerr << "Fold::transformation call PhaseSeries::mixable" << endl;
+    cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
   if (!output->mixable (*input, nbin))
-    throw_str ("Fold::transformation cannot mix input with output");
+    throw Error (InvalidParam, "dsp::Fold::transformation",
+		 "input and output are not PhaseSeries::mixable");
 
-  if (folding_period == 0 && !folding_polyco)
-    throw_str ("Fold::transformation no folding period or polyco set");
+  unsigned blocks = input->get_nchan() * input->get_npol();
 
-  int blocks = input->get_nchan() * input->get_npol();
-
-  sampling_interval = 1.0/input->get_rate();
-  start_time = input->get_start_time() + 0.5 * sampling_interval;
-
-  int64 block_size = input->get_datptr (0,1) - input->get_datptr (0,0);
-  int64 block_ndat = block_size / input->get_ndim();
+  uint64 block_size = input->get_datptr (0,1) - input->get_datptr (0,0);
+  uint64 block_ndat = block_size / input->get_ndim();
 
   assert (block_size % input->get_ndim() == 0);
 
-  fold (blocks, block_ndat, input->get_ndim(),
-	input->get_datptr(), output->get_datptr(), output->hits.begin(),
-	input->get_ndat());
+  double integrated = 0.0;
 
-  output->integration_length += double(input->get_ndat())*sampling_interval;
+  fold (integrated, output->get_datptr(), output->hits.begin(),
+	input, blocks, input->get_datptr(), block_ndat, input->get_ndim());
+
+  output->integration_length += integrated;
   
   if (folding_period)
     output->set_folding_period( folding_period );
@@ -251,29 +254,68 @@ void dsp::Fold::transformation ()
 
 /*!  This method creates a folding plan and then folds nblock arrays.
 
-   \pre the nbin, sampling_interval, start_time, and folding_period or
-   folding_polyco attributes must have been set prior to calling this
-   method.
+   \pre the nbin and folding_period or folding_polyco attributes must
+   have been set prior to calling this method.
 
+   \param info Observation telling the start_time and sampling_rate of time
    \param nblock the number of blocks of data to be folded
-   \param ndat the number of time samples in each time block
-   \param ndim the dimension of each time sample
-   \param time base address of nblock contiguous time blocks (of ndat*ndim)
+   \param integration returns the time integrated
    \param phase base address of nblock contiguous phase blocks (of nbin*ndim)
    \param hits array of nbin phase bin counts
-   \param fold_ndat the number of time samples to be folded from each block
+   \param time base address of nblock contiguous time blocks (of ndat*ndim)
+   \param ndat the number of time samples in each time block
+   \param ndim the dimension of each time sample
+   \param weights corresponding to each block of ndatperweight time samples
+   \param ndatperweight number of time samples per weight
+   \param idat_start the time sample at which to start folding (optional)
+   \param fold_ndat the number of time samples to be folded (optional)
 */
-void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
-		      const float* time, float* phase, unsigned* hits,
-		      int64 fold_ndat)
+void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
+		      const Observation* info, unsigned nblock,
+		      const float* time, uint64 ndat, unsigned ndim,
+		      unsigned* weights, unsigned ndatperweight,
+		      uint64 idat_start, uint64 ndat_fold)
 {
-  if (fold_ndat == 0)
-    fold_ndat = ndat;
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Initialize and check state
+  //
+
+  if (!nbin)
+    throw Error (InvalidState, "dsp::Fold::fold", "nbin not set");
+
+  if (!folding_polyco && !folding_period)
+    throw Error (InvalidState, "dsp::Fold::fold",
+		 "no polynomial and no period specified");
+
+  if (ndat_fold == 0)
+    ndat_fold = ndat;
+
+  uint64 idat_end = idat_start + ndat_fold;
+
+  if (idat_end > ndat)
+    throw Error (InvalidParam, "dsp::Fold:fold",
+		 "idat_start="UI64" + ndat_fold="UI64" > ndat="UI64,
+		 idat_start, ndat_fold, ndat);
 
   if (verbose)
-    cerr << "Fold::fold fold_ndat=" << fold_ndat << endl;
+    cerr << "dsp::Fold::fold ndat_fold=" << ndat_fold << endl;
+
+  // interval of each time sample in seconds
+  double sampling_interval = 1.0/info->get_rate();
+
+  // midpoint of the first sample
+  double mid_idat_start = double(idat_start) + 0.5;
+
+  // MJD of midpoint of the first sample
+  MJD start_time = info->get_start_time() + mid_idat_start * sampling_interval;
 
   double phi=0, pfold=0;
+
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Calculate phase gradient across this section of data
+  //
 
   if (folding_period != 0) {
 
@@ -282,7 +324,7 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
     while (phi<0.0) phi += 1.0;
 
     if (verbose)
-      cerr << "Fold::fold CAL period=" << pfold << endl;
+      cerr << "dsp::Fold::fold CAL period=" << pfold << endl;
 
   }
   else {
@@ -293,7 +335,7 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
     if (phi<0.0) phi += 1.0;
     
     if (verbose)
-      cerr << "Fold::fold polyco.period=" << pfold << endl;
+      cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
 
   }
 
@@ -302,37 +344,68 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
   phi *= nphi;
 
   if (verbose)
-    cerr << "Fold::fold phase=" << phi << endl;
+    cerr << "dsp::Fold::fold phase=" << phi << endl;
 
+  // /////////////////////////////////////////////////////////////////////////
   //
-  // MAKE FOLDING PLAN
+  // Construct a folding plan
   //
 
   // allocate storage for phase bin plan
-  unsigned* binplan = (unsigned*) workingspace (fold_ndat * sizeof(unsigned));
+  unsigned* binplan = (unsigned*) workingspace (ndat_fold * sizeof(unsigned));
 
-  // counter through time dimension
-  int64 idat = 0;
-  // counter through phase dimension
+  // index through time dimension
+  uint64 idat = idat_start;
+  // index through phase dimension
   unsigned ibin = 0;
-  // counter through space dimension
+  // index through space dimension
   unsigned idim = 0;
+  // index through weight array
+  unsigned iweight = 0;
+  // idat of last point in current weight
+  unsigned long datendweight = 0;
 
-  for (idat=0; idat < fold_ndat; idat++) {
+  // number of time samples actually folded
+  uint64 ndat_folded = 0;
+
+  if (ndatperweight) {
+    iweight = idat_start / ndatperweight;
+    datendweight = (iweight + 1) * ndatperweight;
+  }
+
+  for (idat=idat_start; idat < idat_end; idat++) {
+
+    if (idat >= datendweight) {
+      iweight ++;
+      datendweight += ndatperweight;
+    }
 
     ibin = unsigned(phi);
     phi += binspersample;
     if (phi >= nphi) phi -= nphi;
 
     assert (ibin < nbin);
-    binplan[idat] = ibin;
+    binplan[idat-idat_start] = ibin;
 
-    hits[ibin]++;
+    if (!ndatperweight || weights[iweight] != 0) {
+      hits[ibin]++;
+      ndat_folded ++;
+    }
 
   }
 
+  // /////////////////////////////////////////////////////////////////////////
   //
-  // FOLD ARRAYS
+  // Calculate the integrated total
+  //
+  integration_length = double(ndat_folded) * sampling_interval;
+  if (verbose)
+    cerr << "dsp::Folding::fold " << integration_length << " seconds" << endl;
+
+  
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Fold arrays
   //
 
   // pointer through phase dimension
@@ -340,24 +413,20 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
   // pointer through dimensions after phase
   float *phdimp;
 
-  unsigned phase_block_size = nbin * ndim;
-
   // pointer through time dimension
   const float *timep;
-
-  int64 time_block_size = ndat * ndim;
-
+  
   for (unsigned iblock=0; iblock<nblock; iblock++) {
 
-    timep = time + time_block_size * iblock;
-    phasep = phase + phase_block_size * iblock;
+    timep = time + (ndat * iblock + idat_start) * ndim;
+    phasep = phase + nbin * iblock * ndim;
 
-    for (idat=0; idat < fold_ndat; idat++) {
+    for (idat=0; idat < ndat_fold; idat++) {
 
       // point to the right phase
       phdimp = phasep + binplan[idat] * ndim;
 
-      // copy the n dimensions
+      // integrate the ndim dimensions
       for (idim=0; idim<ndim; idim++) {
 	phdimp[idim] += *timep;
 	timep ++;
@@ -365,5 +434,5 @@ void dsp::Fold::fold (unsigned nblock, int64 ndat, unsigned ndim,
       
     }
   }
-}
 
+}

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.10 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.11 $
+   $Date: 2002/11/10 11:57:20 $
    $Author: wvanstra $ */
 
 
@@ -80,14 +80,6 @@ namespace dsp {
     //! Add an ephemeris with which to choose to create the phase model
     void add_pulsar_ephemeris (psrephem* pulsar_ephemeris);
 
-    //! Time of first sample to be folded
-    void set_start_time (MJD _start_time)
-    { start_time = _start_time; }
-
-    //! Sampling interval of data to be folded
-    void set_sampling_interval (double _sampling_interval)
-    { sampling_interval = _sampling_interval; }
-
     //! Choose an appropriate ephemeris from those added
     psrephem* choose_ephemeris (const string& pulsar);
 
@@ -95,9 +87,12 @@ namespace dsp {
     polyco* choose_polyco (const MJD& time, const string& pulsar);
 
     //! Fold nblock blocks of data
-    void fold (unsigned nblock, int64 ndat, unsigned ndim,
-	       const float* time, float* phase, unsigned* hits,
-	       int64 ndat_fold=0);
+    void fold (double& integration_length, float* phase, unsigned* hits,
+	       const Observation* info, unsigned nblock,
+	       const float* time, uint64 ndat, unsigned ndim,
+	       unsigned* weights=0, unsigned ndatperweight=0,
+	       uint64 idat_start=0, uint64 ndat_fold=0);
+
 
   protected:
 
@@ -121,14 +116,6 @@ namespace dsp {
 
     //! Number of minutes over which polynomial coefficients are valid
     unsigned nspan;
-
-
-
-    //! Time of first sample to be folded
-    MJD start_time;
-
-    //! Sampling interval of data to be folded
-    double sampling_interval;
 
     //! Flag that the polyco is built for the given ephemeris and input
     bool built;
