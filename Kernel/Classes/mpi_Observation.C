@@ -22,6 +22,7 @@ int mpiPack_size (const dsp::Observation& obs, MPI_Comm comm, int* size)
   MPI_Pack_size (1, MPI_INT, comm, &temp_size);
   total_size += temp_size;  // nchan
   total_size += temp_size;  // npol
+  total_size += temp_size;  // ndim
   total_size += temp_size;  // nbit
 
   mpiPack_size (obs.get_start_time(), comm, &temp_size);
@@ -75,6 +76,9 @@ int mpiPack (const dsp::Observation& obs,
   MPI_Pack (&tempi, 1, MPI_INT, outbuf, outcount, pos, comm);
 
   tempi = obs.get_npol();
+  MPI_Pack (&tempi, 1, MPI_INT, outbuf, outcount, pos, comm);
+
+  tempi = obs.get_ndim();
   MPI_Pack (&tempi, 1, MPI_INT, outbuf, outcount, pos, comm);
 
   tempi = obs.get_nbit();
@@ -145,6 +149,9 @@ int mpiUnpack (void* inbuf, int insize, int* pos, dsp::Observation* obs,
 
   MPI_Unpack (inbuf, insize, pos, &tempi, 1, MPI_INT, comm);
   obs->set_npol (tempi);
+
+  MPI_Unpack (inbuf, insize, pos, &tempi, 1, MPI_INT, comm);
+  obs->set_ndim (tempi);
 
   MPI_Unpack (inbuf, insize, pos, &tempi, 1, MPI_INT, comm);
   obs->set_nbit (tempi);

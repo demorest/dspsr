@@ -8,10 +8,6 @@
 
 bool dsp::Observation::verbose = false;
 
-int* dsp::Observation::get_addr_nchan(){
-  return static_cast<int*>(&nchan);
-}
-
 int64 dsp::Observation::verbose_nbytes (int64 nsamples) const
 {
   fprintf(stderr,"nsamples="I64"\tnbit="I64"\tnpol="I64"\tnchan="I64"\tget_ndim()="I64"\n",
@@ -39,19 +35,88 @@ dsp::Observation::Observation ()
 void dsp::Observation::init ()
 {
   ndat = 0;
-  centre_frequency = 0;
-  bandwidth = 0;
   nchan = 1;
   npol = 1;
+  ndim = -1;
+  nbit = -1;
+
+  centre_frequency = 0;
+  bandwidth = 0;
+
   feedtype = Invalid;
+
   start_time = 0.0;
   rate = 0;
+
   scale = 1;
   state = Unknown;
+
   swap = dc_centred = false;
   telescope = 0;
   source = identifier = mode = machine = "";
   position = sky_coord();
+}
+
+void dsp::Observation::set_sample (State _state,
+				   int _nchan, int _npol,
+				   int _ndim, int _nbit)
+{
+  // check state and dimension information
+  state = _state;
+  nchan = _nchan;
+  npol = _npol;
+  ndim = _ndim;
+  nbit = _nbit;
+
+  string reason;
+  if (!state_is_valid (reason))
+    throw_str ("Observation::set_sample invalid state: " + reason);
+}
+
+/*! 
+  \retval boolean true if the state of the Observation is valid
+  \param reason If the return value is false, a string describing why
+*/
+bool dsp::Observation::state_is_valid (string& reason) const
+{
+  switch (state) {
+  case Nyquist:
+    if (ndim != 1)  {
+      reason = "state=Nyquist and ndim!=1";
+      return false;
+    }
+    break;
+
+  case Analytic:
+    if (ndim != 2) {
+      reason = "state=Analytic and ndim!=2";
+      return false;
+    }
+    break;
+
+  case Detected:
+    break;
+
+  case Coherence:
+  case Stokes:
+    if (ndim*npol != 4) {
+      reason = "state=" + get_state_as_string() + " and ndim*npol!=4";
+      return false;
+    }
+    break;
+
+  default:
+    reason = "unknown state";
+    return false;
+  }
+
+  return true;
+}
+
+
+bool dsp::Observation::get_detected () const
+{
+  return (state == Detected || state == Stokes || state == Coherence);
 }
 
 /* this returns a flag that is true if an Observation may be combined 
@@ -71,6 +136,9 @@ bool dsp::Observation::combinable (const Observation & obs)
     if (npol != obs.npol)
       cerr << "dsp::Observation::combinable different npol:"
 	   << npol << " and " << obs.npol << endl;
+    if (ndim != obs.ndim)
+      cerr << "dsp::Observation::combinable different ndim:"
+	   << ndim << " and " << obs.ndim << endl;
     if (state != obs.state)
       cerr << "dsp::Observation::combinable different state:"
 	   << state << " and " << obs.state << endl;
@@ -83,6 +151,7 @@ bool dsp::Observation::combinable (const Observation & obs)
 	   (bandwidth    == obs.bandwidth)    &&
 	   (nchan == obs.nchan) &&
 	   (npol  == obs.npol)  &&
+	   (ndim  == obs.ndim)  &&
 	   (state == obs.state) &&
 	   (source == obs.source) &&
 	   (swap  == obs.swap) &&
@@ -137,6 +206,11 @@ string dsp::Observation::get_default_id () const
 
 string dsp::Observation::get_state_as_string () const
 {
+  return state2string (state);
+}
+
+string dsp::Observation::state2string (State state)
+{
 #define OBS_OPT(st) case st: return string (#st)
   // possible states of the data
   switch (state) { 
@@ -171,6 +245,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   bandwidth   = in_obs.bandwidth;
   nchan       = in_obs.nchan;
   npol        = in_obs.npol;
+  ndim        = in_obs.ndim;
   nbit        = in_obs.nbit;
   state       = in_obs.state;
   feedtype    = in_obs.feedtype;

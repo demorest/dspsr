@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/09/20 06:02:31 $
+   $Revision: 1.14 $
+   $Date: 2002/10/07 11:48:29 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -86,27 +86,20 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
-    // wipe this- it has been used for debugging
-    int* get_addr_nchan();
-
     //! Set the dimensions of each time sample
     /*! Parameters determine the size and interpretation of each datum */
-    virtual void set_sample (State _state, int _nchan, int _npol, int _nbit)
-      { state=_state; nchan=_nchan; npol=_npol; nbit=_nbit; }
+    virtual void set_sample (State state,
+			     int nchan, int npol, int ndim, int nbit);
 
     //! Set the state of the signal
     void set_state (State _state) { state = _state; }
     //! Return the state of the signal
     State get_state () const { return state; }
 
-    //! Change the state and correct other attributes accordingly
-    virtual void change_state (State new_state);
-
-    //! Returns true if state is Detected, Coherence, or Stokes
-    bool get_detected () const { return state >= Detected; }
-
-    //! Returns the dimension of the data (complex or real)
-    int get_ndim () const { if (state==Analytic) return 2; else return 1; }
+    //! Set the dimension of each datum
+    void set_ndim (int _ndim) { ndim = _ndim; }
+     //! Return the dimension of each datum
+    int get_ndim () const { return ndim; }
 
      //! Set the number of channels into which the band is divided
     void set_nchan (int _nchan) { nchan = _nchan; }
@@ -219,8 +212,19 @@ namespace dsp {
     //! Set the record of what DM the data is dedispersed
     void set_DM_level (double _DM_level) { DM_level = _DM_level; }
 
+    //! Change the state and correct other attributes accordingly
+    virtual void change_state (State new_state);
+
+    //! Return true if the state of the Observation is valid
+    bool state_is_valid (string& reason) const;
+
+    //! Returns true if state is Detected, Coherence, or Stokes
+    bool get_detected () const;
+
     //! Returns a convenient id string for a given MJD
     static string get_default_id (const MJD& mjd);
+
+    static string state2string (State state);
 
     //! Returns default_id (start_time);
     string get_default_id () const;
@@ -273,6 +277,9 @@ namespace dsp {
 
     //! Number of polarizations
     int npol;
+
+    //! Dimension of each datum
+    int ndim;
 
     //! Number of bits per value
     int nbit;
