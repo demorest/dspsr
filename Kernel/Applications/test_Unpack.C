@@ -3,7 +3,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Unpacker.h"
-#include "dsp/TimeSeries.h"
+#include "dsp/WeightedTimeSeries.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -69,7 +69,7 @@ int main (int argc, char** argv)
 
   if (verbose)
     cerr << "Creating TimeSeries instance" << endl;
-  dsp::TimeSeries voltages;
+  dsp::WeightedTimeSeries voltages;
 
   if (verbose)
     cerr << "Creating IOManager instance" << endl;

@@ -1,7 +1,7 @@
 #include "dsp/CPSRTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
+#include "dsp/WeightedTimeSeries.h"
 
-#include "dsp/TimeSeries.h"
 #include "genutil.h"
 
 bool dsp::CPSRTwoBitCorrection::matches (const Observation* observation)
@@ -33,6 +33,9 @@ void dsp::CPSRTwoBitCorrection::unpack ()
   uint64 ndat = input->get_ndat();
   const unsigned char* rawptr = input->get_rawptr();
 
+  // weights are used only if output is a WeightedTimeseries
+  unsigned* weights = 0;
+
   for (int ipol=0; ipol<2; ipol++) {
 
     // for each of in-phase and quadrature components
@@ -45,8 +48,12 @@ void dsp::CPSRTwoBitCorrection::unpack ()
       if (verbose)
 	fprintf (stderr, "dsp::CPSRTwoBitCorrection::unpack"
 		 " into data[%d]=%p (chan:%d)\n", ipol, unpackinto, channel);
-      
-      iq_unpack (unpackinto, rawptr, ndat, channel, NULL);
+
+      // if the output TimeSeries is a weighted output, use its weights array
+      if (weighted_output)
+	weights = weighted_output -> get_weights (0, ipol);
+
+      iq_unpack (unpackinto, rawptr, ndat, channel, weights);
       
     }  // for each of I and Q
 

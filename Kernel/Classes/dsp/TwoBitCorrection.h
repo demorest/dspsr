@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.20 $
-   $Date: 2002/11/10 21:43:58 $
+   $Revision: 1.21 $
+   $Date: 2002/11/11 12:19:32 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -11,15 +11,14 @@
 #include <vector>
 
 #include "dsp/Unpacker.h"
-#include "dsp/BitSeries.h"
-#include "dsp/TimeSeries.h"
 
 #include "environ.h"
 
 namespace dsp {
 
   class TwoBitTable;
-  
+  class WeightedTimeSeries;
+
   //! Converts a TimeSeries from two-bit digitized to floating-point values
   /*! The conversion routines are implemented by the TwoBitCorrection
     sub-classes, which perform the dynamic level-setting technique
@@ -67,6 +66,9 @@ namespace dsp {
 
     //! Get the digitization convention
     TwoBitTable* get_table () const { return table; }
+
+    //! Overload Transformation::set_output to set weighted_output
+    void set_output (TimeSeries* output);
 
     //
     //
@@ -125,6 +127,9 @@ namespace dsp {
 
     //! Two-bit conversion table generator
     Reference::To<TwoBitTable> table;
+
+    //! Set when Transformation::output is a WeightedTimeSeries
+    Reference::To<WeightedTimeSeries> weighted_output;
 
     //! Number of digitizer channels
     unsigned nchannel;

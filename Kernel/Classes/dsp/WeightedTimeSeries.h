@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/11/11 11:56:38 $
+   $Revision: 1.2 $
+   $Date: 2002/11/11 12:19:32 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -49,9 +49,6 @@ namespace dsp {
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (uint64 nsamples);
     
-    //! Append little onto the end of this
-    virtual void append (const TimeSeries* little);
-
     //! Set all values to zero
     virtual void zero ();
 
@@ -68,10 +65,10 @@ namespace dsp {
     uint64 get_nweights () const;
 
     //! Get the weights array for the specfied polarization and frequency
-    unsigned* get_weights (unsigned ichan, unsigned ipol);
+    unsigned* get_weights (unsigned ichan=0, unsigned ipol=0);
 
     //! Get the weights array for the specfied polarization and frequency
-    const unsigned* get_weights (unsigned ichan, unsigned ipol) const;
+    const unsigned* get_weights (unsigned ichan=0, unsigned ipol=0) const;
 
   protected:
 

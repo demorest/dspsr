@@ -76,6 +76,15 @@ void dsp::TwoBitCorrection::set_table (TwoBitTable* _table)
   built = false;
 }
 
+void dsp::TwoBitCorrection::set_output (TimeSeries* _output)
+{
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::set_output (TimeSeries*)" << endl;
+
+  Unpacker::set_output (_output);
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (_output);
+}
+
 //! Initialize and resize the output before calling unpack
 void dsp::TwoBitCorrection::transformation ()
 {
@@ -93,12 +102,17 @@ void dsp::TwoBitCorrection::transformation ()
   // set the Observation information
   output->Observation::operator=(*input);
 
-  WeightedTimeSeries* wout = dynamic_cast<WeightedTimeSeries*> (output.get());
-  if (wout)
-    wout -> set_ndat_per_weight (nsample);
+  if (weighted_output) {
+    weighted_output -> set_ndat_per_weight (nsample);
+    weighted_output -> set_nchan_weight (1);
+    weighted_output -> set_npol_weight (output->get_npol());
+  }
 
   // resize the output 
   output->resize (input->get_ndat());
+
+  if (weighted_output)
+    weighted_output -> neutral_weights ();
 
   // unpack the data
   unpack ();
