@@ -10,6 +10,8 @@
 /*! From JA98, Table 1 */
 const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
 
+bool dsp::TwoBitCorrection::keep_histogram = true;
+
 //! Null constructor
 dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
   : Operation (_name, _type)
@@ -242,7 +244,7 @@ bool dsp::TwoBitCorrection::get_hi (unsigned char val)
   return hi[val];
 }
 
-int dsp::TwoBitCorrection::get_sign (unsigned char val)
+float dsp::TwoBitCorrection::get_sign (unsigned char val)
 {
   float sign [4] = { -1.0, -1.0, 1.0, 1.0 };
   return sign[val];

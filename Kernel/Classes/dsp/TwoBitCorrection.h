@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/07/10 06:59:34 $
+   $Revision: 1.6 $
+   $Date: 2002/07/11 16:06:51 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -38,10 +38,10 @@ namespace dsp {
     virtual ~TwoBitCorrection () { destroy(); }
 
     //! Return a descriptive string
-    virtual const string descriptor () const;
+    //virtual const string descriptor () const;
 
     //! Initialize from a descriptor string as output by above
-    virtual void initialize (const string& descriptor);
+    //virtual void initialize (const string& descriptor);
 
     //! Build the dynamic level setting lookup table
     virtual void build (int nchannel, int nsample, float cutoff_sigma);
@@ -53,7 +53,7 @@ namespace dsp {
     virtual bool get_hi (unsigned char val);
 
     //! Return the sign of the digitized voltage state
-    virtual int get_sign (unsigned char val);
+    virtual float get_sign (unsigned char val);
 
     //! Calculate the sum and sum-squared from each channel of digitized data
     virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
