@@ -131,6 +131,8 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 
 void dsp::Dedispersion::mark (Observation* output)
 {
+  if (verbose)
+    cerr << "dsp::Dedispersion::mark dm="<< dispersion_measure << endl;
   output->change_dispersion_measure (dispersion_measure);
 }
 
@@ -245,7 +247,7 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   if (verbose)
     cerr << "dsp::Dedispersion::smearing_samples\n"
       "  smearing time in the " << side 
-	 << " half of the " << band << ": " << tsmear*1e3 << " ms"
+	 << " half of the " << band << ": " << float(tsmear*1e3) << " ms"
       " (" << int(tsmear * sampling_rate) << " pts).\n";
   
   // add another ten percent, just to be sure that the pollution due
