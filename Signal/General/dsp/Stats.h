@@ -19,9 +19,6 @@ namespace dsp {
     //! Virtual destructor
     virtual ~Stats();
     
-    //! Calculates the maximum sum of any two bins in the given window, and returns the index of the first bin
-    unsigned twobinmaxbin(unsigned ichan, unsigned ipol, unsigned samp_start, unsigned nsamps);
-
     //! Returns mean in given chan,pol
     float get_mean(unsigned ichan, unsigned ipol);
     
@@ -36,6 +33,16 @@ namespace dsp {
 
     //! Over-ride get_input to return a TimeSeries
     TimeSeries* get_input(){ return dynamic_cast<TimeSeries*>(input.get()); }
+
+    //! Calculates the maximum sum of any two bins in the given window, and returns the index of the first bin
+    unsigned twobinmaxbin(unsigned ichan, unsigned ipol, unsigned samp_start, unsigned nsamps);
+
+    //! Returns the maximum bin
+    unsigned onebinmaxbin(unsigned ichan, unsigned ipol, unsigned samp_start, unsigned nsamps);
+
+    //! Calculates the sum of n bins in the window, and returns the index of the first bin
+    unsigned nbinmaxbin(unsigned ichan, unsigned ipol, unsigned samp_start, unsigned nsamps,
+			unsigned bins_to_sum);
 
   protected:
 
@@ -68,3 +75,4 @@ namespace dsp {
 }
 
 #endif
+
