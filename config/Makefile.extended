@@ -231,15 +231,15 @@ elif [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
 else echo $($*.LDFLAGS); fi
 endef
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(libraries)
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(libraries) $(LIBDIR)/$(LIBRARY)
 	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries)
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries) $(LIBDIR)/$(LIBRARY)
 	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries)
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries) $(LIBDIR)/$(LIBRARY)
 	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
