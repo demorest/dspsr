@@ -7,7 +7,7 @@
 //! Default constructor
 dsp::Accumulator::Accumulator() : Transformation<TimeSeries,TimeSeries>("Accumulator",outofplace) {
   append = false;
-  subsize = 0;
+  max_samps = 0;
 }
 
 //! Virtual destructor
@@ -23,11 +23,13 @@ void dsp::Accumulator::reset(){
 //! Do the work
 void dsp::Accumulator::transformation(){
   if( !append ){
-    if( subsize==0 )
+    if( max_samps==0 )
       throw Error(InvalidParam,"dsp::Accumulator::transformation()",
-		  "subsize=0.  You forgot to set it properly");
+		  "max_samps=0.  You forgot to set it properly");
     output->Observation::operator=( *input );
-    output->resize( subsize );
+    fprintf(stderr,"accumulator resizing output to have "UI64" samps\n",
+	    max_samps);
+    output->resize( max_samps );
     output->set_ndat(0);
     append = true;
   }

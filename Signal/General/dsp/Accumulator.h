@@ -23,11 +23,11 @@ namespace dsp {
     //! Reset the output
     void reset();
 
-    //! Set the output subsize
-    void set_subsize(uint64 _subsize){ subsize = _subsize; }
+    //! Set the output max_samps (maximum ndat)
+    void set_max_samps(uint64 _max_samps){ max_samps = _max_samps; }
 
-    //! Inquire the output subsize
-    uint64 get_subsize(){ return subsize; }
+    //! Inquire the output max_samps (maximum ndat)
+    uint64 get_max_samps(){ return max_samps; }
 
   protected:
 
@@ -39,8 +39,8 @@ namespace dsp {
     //! Set to true on reset
     bool append;
 
-    //! The subsize of the output
-    uint64 subsize;
+    //! The maximum ndat of the output
+    uint64 max_samps;
 
   };
 
