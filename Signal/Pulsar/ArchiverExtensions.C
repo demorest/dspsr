@@ -71,7 +71,6 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
     // Filterbank class parameters
     //
     Filterbank* filterbank = dynamic_cast<Filterbank*>( operations[i].get() );
-    Convolution* convolution = 0;
 
     if (filterbank) {
 
@@ -79,36 +78,45 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
       dspR->set_freq_res ( filterbank->get_freq_res() );
       dspR->set_time_res ( filterbank->get_time_res() );
 
-      if ( filterbank->has_response() )
-	convolution = filterbank;
     }
 
     // ////////////////////////////////////////////////////////////////////
     //
     // Convolution class parameters
     //
-    if (!convolution)
-      convolution = dynamic_cast<Convolution*>( operations[i].get() );
+
+    Convolution* convolution = dynamic_cast<Convolution*>(operations[i].get());
 
     if (convolution) {
 
-      const Response* response = convolution->get_response ();
+      if ( !convolution->has_response() )
+        cerr << "dsp::Archiver::set Pulsar::dspReduction Convolution\n   "
+             << convolution->get_name() << " instance with no Response" << endl;
 
-      unsigned nsamp_fft = response->get_ndat();
-      unsigned nsamp_overlap_pos = response->get_impulse_pos ();
-      unsigned nsamp_overlap_neg = response->get_impulse_neg ();
+      else {
 
-      TimeSeries* input = convolution->get_input ();
+        if (verbose) cerr << "dsp::Archiver::set Pulsar::dspReduction "
+                             "Convolution with Response" << endl;
 
-      if (input->get_state() == Signal::Nyquist) {
-	nsamp_fft *= 2;
-	nsamp_overlap_pos *= 2;
-	nsamp_overlap_neg *= 2;
+        const Response* response = convolution->get_response ();
+
+        unsigned nsamp_fft = response->get_ndat();
+        unsigned nsamp_overlap_pos = response->get_impulse_pos ();
+        unsigned nsamp_overlap_neg = response->get_impulse_neg ();
+
+        TimeSeries* input = convolution->get_input ();
+
+        if (input->get_state() == Signal::Nyquist) {
+	  nsamp_fft *= 2;
+	  nsamp_overlap_pos *= 2;
+	  nsamp_overlap_neg *= 2;
+        }
+
+        dspR->set_nsamp_fft ( nsamp_fft );
+        dspR->set_nsamp_overlap_pos ( nsamp_overlap_pos );
+        dspR->set_nsamp_overlap_neg ( nsamp_overlap_neg );
+
       }
-
-      dspR->set_nsamp_fft ( nsamp_fft );
-      dspR->set_nsamp_overlap_pos ( nsamp_overlap_pos );
-      dspR->set_nsamp_overlap_neg ( nsamp_overlap_neg );
 
       // save it for the Passband Extension
       if ( convolution->has_passband() )
@@ -178,13 +186,12 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc)
 
 }
 catch (Error& error) {
-  throw error += "dsp::Archiver::set Pulsar::Passband";
+  throw error += "dsp::Archiver::set Pulsar::TwoBitStats";
 }
 }
 
 
-void dsp::Archiver::set (Pulsar::Passband* pband)
-{ try {
+void dsp::Archiver::set (Pulsar::Passband* pband) try {
 
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Passband Extension" << endl;
@@ -199,21 +206,27 @@ void dsp::Archiver::set (Pulsar::Passband* pband)
   unsigned npol = passband->get_npol ();
   unsigned nband = passband->get_nchan ();
   unsigned nchan = passband->get_ndat ();
-
+  
+  dsp::Response copy (*passband);
+  copy.naturalize ();
+  
+  if (verbose) cerr << "dsp::Archiver::set Pulsar::Passband Extension copy\n"
+		 "  npol=" << npol << " nband=" << nband <<
+		 " nchan/band=" << nchan << endl;
+  
   pband->resize (nchan, npol, nband);
-
+  
   if (passband->get_ndim() != 1)
     throw Error (InvalidState, "dsp::Archiver::set_passband",
 		 "Passband Response ndim != 1");
-
+  
   for (unsigned ipol=0; ipol<npol; ipol++)
     for (unsigned iband=0; iband<nband; iband++)
-      pband->set_passband (passband->get_datptr (iband, ipol), ipol, iband);
-
+      pband->set_passband (copy.get_datptr (iband, ipol), ipol, iband);
+  
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Passband";
-}
 }
 
 
