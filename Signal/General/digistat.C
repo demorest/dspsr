@@ -109,7 +109,12 @@ int main (int argc, char** argv)
         cpgpage();
         plotter->plot();
       }
-      break;
+
+      for (unsigned ipol=0; ipol<voltages->get_npol(); ipol++)  {
+        float mean = voltages->mean(0, ipol);
+        cerr << "mean[" << ipol << "]=" << mean << endl;
+      }
+
     }
 
     if (verbose)

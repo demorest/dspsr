@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/05/08 07:19:46 $
-   $Author: pulsar $ */
+   $Revision: 1.14 $
+   $Date: 2003/05/14 16:15:28 $
+   $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -72,6 +72,9 @@ namespace dsp {
 
     //! Set all values to zero
     virtual void zero ();
+
+    //! Return the mean of the data for the specified channel and poln
+    double mean (unsigned ichan, unsigned ipol);
 
     //! Check that each floating point value is roughly as expected
     virtual void check (float min=-10.0, float max=10.0);

@@ -128,6 +128,20 @@ dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
   return data + (ichan * npol + ipol) * subsize;
 }
 
+double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
+{
+  if (get_ndim() != 1)
+    throw Error (InvalidState, "dsp::TimeSeries::mean", "ndim != 1");
+
+  float* data = get_datptr (ichan, ipol);
+  double mean = 0.0;
+  
+  for (unsigned idat=0; idat<ndat; idat++)
+    mean += data[idat];
+
+  return mean/double(ndat);
+}
+
 //! Return a pointer to the ichan'th frequency ordered channel and pol
 float* dsp::TimeSeries::get_ordered_datptr(unsigned ichan,unsigned ipol){
   if( !swap )
