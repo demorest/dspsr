@@ -3,8 +3,6 @@
 #include "Timeseries.h"
 #include "Error.h"
 
-Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
-
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
 { 
