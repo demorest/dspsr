@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.57 $
-   $Date: 2003/07/28 13:51:28 $
+   $Revision: 1.58 $
+   $Date: 2003/08/05 10:44:55 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -258,6 +258,9 @@ namespace dsp {
     bool combinable (const Observation& obs, bool different_bands=false,
 		     bool combinable_verbose=false,
 		     int ichan=-1,int ipol=-1) const;
+
+    //! Return true if test_rate is withing 1% of the rate attribute
+    virtual bool combinable_rate (double test_rate) const;
 
     //! Return true if the first sample of next follows the last sample of this
     //! If ichan>=0 && ipol>=0 calls combinable() for only that chanpol

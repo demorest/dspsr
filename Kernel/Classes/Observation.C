@@ -168,7 +168,10 @@ bool dsp::Observation::get_detected () const
 /* this returns a flag that is true if the Observations may be combined 
    It doesn't check the start times- you have to do that yourself!
 */
-bool dsp::Observation::combinable (const Observation & obs, bool different_bands, bool combinable_verbose, int ichan, int ipol) const
+bool dsp::Observation::combinable (const Observation & obs,
+				   bool different_bands,
+				   bool combinable_verbose, 
+				   int ichan, int ipol) const
 {
   double eps = 0.000001;
   bool can_combine = true;
@@ -271,7 +274,7 @@ bool dsp::Observation::combinable (const Observation & obs, bool different_bands
     can_combine = false;
   }
   
-  if( fabs(rate-obs.rate)/rate > 0.01 ) { /* ie must be within 1% */
+  if (!combinable_rate (obs.rate)) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different rate:"
 	   << rate << " and " << obs.rate << endl;
@@ -356,6 +359,12 @@ bool dsp::Observation::combinable (const Observation & obs, bool different_bands
   }
   
   return can_combine;
+}
+
+/* return true if the test_rate is within 1% of the rate attribute */
+bool dsp::Observation::combinable_rate (double test_rate) const
+{
+  return fabs(rate-test_rate)/rate < 0.01;
 }
 
 bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_failure, int ichan, int ipol) const
