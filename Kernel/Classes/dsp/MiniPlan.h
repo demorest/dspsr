@@ -3,87 +3,64 @@
 #ifndef __MiniPlan_h_
 #define __MiniPlan_h_
 
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "Header.h"
 #include "Reference.h"
-#include "environ.h"
-#include "MJD.h"
 #include "Printable.h"
+#include "MJD.h"
+#include "environ.h"
+#include "psr_cpp.h"
 
-#include "dsp/Observation.h"
 #include "dsp/TimeSeries.h"
 
 /*!
 
-  Each channel in a dsp::TimeSeries can be divided up short segments
-  of data- subints.  Each of these subints can be digitized separately.
+A MiniPlan consists of a vector of SubInts and common information.
+
+Each SubInt contains just enough information to miniaturise/deminiaturise data, and also stores how that SubInt was generated.  (i.e. when the data used to generate it started and how much of that data was used.)
+
+The MiniPlan also stores the number of bits for miniaturising and a 'sigma_max' parameter.  This is used for setting the levels for miniaturising in terms of how many standard deviations a datum is away from the mean.  The MiniPlan stores the rate of the input data so that the relevant SubInt can be extracted for a particular input time.
+
+The MiniPlan also stores 'requested_duration' and 'requested_scan_samps'.  These determine how long any incoming SubInts being push-backed onto the SubInt vector are to be (requested_duration), and how many samples are needed to generate their means and std devs (requested_scan_samps).
 
 */
 
 namespace dsp {
 
-  class MiniPlan : public Printable {
+  class MiniPlan : public Reference::Able {
 
   public:
     
-    class SubInt : public Reference::Able {
+    //! Static verbosity flag
+    static bool verbose;
+
+    class SubInt : public Printable {
     public:
-      SubInt();
-      SubInt(string line);
-      SubInt(const SubInt&);
-      virtual ~SubInt();
-
-      SubInt& operator=(const SubInt&);
-
-      uint64 get_duration() const { return duration; }
-      MJD get_start_time() const { return start_time; }
-      float get_mean() const { return mmean; }
-      float get_sigma() const { return ssigma; }
-      
-      void set_duration(uint64 _duration);
-      void set_start_time(MJD _start_time){ start_time = _start_time; }
-      void set_mean(float _mean){ mmean = _mean; }
-      void set_sigma(float _sigma){ ssigma = _sigma; }
-
-      string print();
-
-      //! Returns true if the given MJD is between start_time and duration
-      bool covers(MJD time,double rate);
-
-      //! Extends duration to max(ext,duration)
-      void extend(uint64 ext);
-
-    private:
-      uint64 duration; // Must divide 8
+      //! When the SubInt is valid from
       MJD start_time;
-      float mmean;
-      float ssigma;
-    };
-    
-    class SubIntVector : public Reference::Able {
-    public:
-      friend class MiniPlan;
+      //! For how many samples the SubInt is valid for
+      uint64 duration;
+      //! The means for each chan/pol group
+      vector<vector<float> > means;
+      //! The std devs for each chan/pol group
+      vector<vector<float> > sigmas;
+      //! The start time of the data the SubInt was generated from
+      MJD gen_start;
+      //! How many samples were used to generate the SubInt
+      uint64 gen_samps;
 
-      SubIntVector();
-      SubIntVector(const SubIntVector&);
-      virtual ~SubIntVector();
-
-      virtual SubIntVector& operator=(const SubIntVector&);
-
-      virtual void add_subint(Reference::To<SubInt> _subint);
-      
-      //! Shares the references to the subints 
-      virtual void share(SubIntVector& has_subints);
-
-      unsigned size() const;
-
-      string print_subint(unsigned isub);
+      //! Initialise from a vector of chars
+      virtual unsigned read_from_chars(vector<char>& info,unsigned offset);
 
     protected:
-      void resize(unsigned _size);
-
-      vector<Reference::To<SubInt> > subints;
+      //! Does nothing
+      virtual vector<char> null_pad(vector<char>& to_pad){ return to_pad; }
+      //! Worker function for read()
+      virtual vector<char> read_in_chars(int fd);
+      //! Worker function for write_string();
+      virtual string info_string();
     };
 
     //! Default constructor
@@ -96,107 +73,145 @@ namespace dsp {
     MiniPlan(string plan_file);
 
     //! Assignment operator
-    MiniPlan& operator=(const MiniPlan& mp);
-
-    //! Merge together many frequency-contiguous MiniPlans into one
-    //! Does few checks
-    MiniPlan(vector<Reference::To<MiniPlan> > plans);
-
+    virtual MiniPlan& operator=(const MiniPlan& mp);
+    
+    //! Copies everything but the subints vector
+    virtual void copy_attributes(const MiniPlan& mp);
+    
     //! Virtual destructor
     virtual ~MiniPlan();
 
-    SubInt* get_subint(unsigned ichan,unsigned ipol,unsigned isub);
+    //! Returns the Header associated with the MiniPlan
+    virtual Reference::To<Header> MiniPlan2Header();
+
+    //! Initialises the MiniPlan from a Header
+    virtual void Header2MiniPlan(Reference::To<Header> hdr);
 
     uint64 get_requested_scan_samps() const { return requested_scan_samps; }
     uint64 get_requested_duration() const { return requested_duration; }
     float get_sigma_max() const { return sigma_max; }
-
-    void set_requested_scan_samps(uint64 _requested_scan_samps);
-    void set_requested_duration(uint64 _requested_duration);
-    void set_sigma_max(float _sigma_max){ sigma_max = _sigma_max; }
-
-    //! Returns the number of subints stored in each SubIntVector
-    unsigned get_nsubints();
-
-    //! Returns the number of samples (floats) subint 'isub' is past the start
-    uint64 get_ts_offset(unsigned isub);
-   
-    //! Returns the duration of this particular subint
-    uint64 get_duration(unsigned isub);
+    double get_rate() const { return rate; }
+    unsigned get_nchan() const;
+    unsigned get_npol() const;
+    unsigned get_nsub() const;
+    MJD get_start_time() const;
+    MJD get_start_time(unsigned isub) const;
+    MJD get_end_time() const;
+    MJD get_end_time(unsigned isub) const;
     
-    //! Returns the number of bytes in the output BitSeries this particular subint starts at
-    uint64 get_bs_offset(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
-
-    //! Returns the number of bytes in the output MiniSeries this particular subint starts at
-    uint64 get_ms_offset(unsigned isub, unsigned nbit);
+    virtual void set_requested_scan_samps(uint64 _requested_scan_samps);
+    virtual void set_requested_duration(uint64 _requested_duration);
+    virtual void set_sigma_max(float _sigma_max){ sigma_max = _sigma_max; }
 
     //! Returns the lower threshold- points below this are lopped off
-    float get_lower_threshold(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
-
+    virtual float get_lower_threshold(unsigned ichan, unsigned ipol, unsigned isub);
+    
     //! Returns the upper threshold- points above this are lopped off
-    float get_upper_threshold(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
+    virtual float get_upper_threshold(unsigned ichan, unsigned ipol, unsigned isub);
    
     //! Returns the step between digitization levels
-    float get_step(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
+    virtual float get_step(unsigned ichan, unsigned ipol, unsigned isub,
+			   unsigned nbit);
 
     //! Add in subint sets for the given TimeSeries
     //! Each TimeSeries this is called on must be contiguous with the last
-    virtual void add_data(const TimeSeries* data);
+    //! Returns the number of samples that were added in to the plan
+    //! (This is between 0 and data->get_ndat())
+    virtual uint64 add_data(const TimeSeries* data);
+
+    //! Stretch the last subint stored until it has reached the maximum
+    //! number of samples it is allowed to cover (which is derived from
+    //! 'requested_duration')
+    virtual uint64 stretch_last_subint(const TimeSeries* data);
 
     //! Append 'miniplan's subints onto the end of this
-    void append(Reference::To<MiniPlan> miniplan);
-
-    //! Retrieve a reference to the info
-    Reference::To<Observation> get_info(){ return info; }
-
-    //! Read in the MiniPlan from a character array
-    unsigned read_from_chars( vector<char>& info, unsigned offset);
+    virtual void append(Reference::To<MiniPlan> miniplan);
 
     //! Create a new MiniPlan with subints covering the range start->end
-    Reference::To<MiniPlan> extract(MJD start, MJD end, double rate);
-
-    //! Resize the subints_vector
-    void resize(unsigned nchan, unsigned npol);
-
-    unsigned get_nchan() const { return subint_vectors.size(); }
-    unsigned get_npol() const { return subint_vectors[0].size(); }
+    virtual Reference::To<MiniPlan> extract(MJD start, MJD end);
 
     //! Makes the final subints 'ext' samples longer in duration
-    void extend_last_subint(uint64 ext);
+    virtual void extend_last_subint(uint64 ext);
+
+    /*    
+    //! Read in the MiniPlan from a character array
+    virtual unsigned read_from_chars(vector<char>& infochars, unsigned offset);
+    */
+
+    //! Extends the 'duration' attribute of the last SubInt so that it ends at this time
+    virtual void extend(MJD _end_time);
+
+    //! Extends the first subint backwards in time to start at this time
+    virtual void backwards_extend(MJD _start_time);
+
+    //! Hack for debugging.  Should be taken out once MiniPlan is working
+    vector<SubInt>& get_subints(){ return subints; }
+    
+  protected:
+
+    /*
+    //! Worker function for read()
+    virtual vector<char> read_in_chars(int fd);
+    */
+
+    //! Used by constructors
+    virtual void init();
 
     //! Checks that requested_duration and requested_scan_samps are valid;
-    void check_requests(const TimeSeries* data);
-
-    //! Returns the end time of the final subint of the first group
-    MJD get_end_time();
-
-    //! Returns the end time of the particular subint
-    MJD get_end_time(unsigned isub);
-
-    //! Returns the start time of the first subint of the first group
-    MJD get_start_time();
-
-  protected:
+    virtual void check_requests(const TimeSeries* data);
     
-    //! Called by read() to read in the MiniPlan from a file descriptor
-    void read_info(int fd);
-
-    //! Called by write() to write the MiniPlan to disk
-    int64 write_info(int fd);
-
+    /*
     //! Returns a string for print() to print out
-    string info_string();
+    virtual string info_string();
+    */
 
-    //! Add in a subint set for the given TimeSeries
-    virtual void add_subint_set(const TimeSeries* data,uint64 offset);
+    /*
+    //! Pads up the given vector with null characters and returns it
+    //! Called by write_chars() which is called by write()
+    //! Does nothing for MiniPlan class- null characters are written by the Header it writes out
+    virtual vector<char> null_pad(vector<char>& to_pad);
+    */
 
-    //! Helper method for read_info() and read_from_chars()
-    void parse_lines(unsigned nchan, unsigned npol, unsigned nsub,
-		     const vector<string>& lines, unsigned line_offset);
+    /*
+    //! Prints out the subint
+    virtual string print_subint(unsigned isub);
+    */    
 
-    //! Returns the subint that covers 'time'.  Returns -1 for failure
-    int get_covering_subint(MJD time, double rate);
+    /*
+    //! Initialises the subints vector from the 'subint_lines' strings
+    //! Returns the number of lines read
+    virtual unsigned read_subint_lines(vector<string>& subint_lines,unsigned nsub,
+				       unsigned nchan, unsigned npol);
+    */
+
+    //! Scan the attributes stored in the Header in
+    virtual void read_header(Reference::To<Header> hdr,unsigned& nsub,
+			     unsigned& nchan, unsigned& npol);
     
+    //! Returns a Header associated with the non-SubInt attributes
+    virtual Reference::To<Header> get_header();
+
+    //! Add in a SubInt for the given TimeSeries
+    virtual void add_subint(const TimeSeries* data,uint64& offset);
+
+    virtual void set_rate(double _rate){ rate = _rate; }
+
+    //! The SubInts
+    vector<SubInt> subints;
+
+  private:
+
+    //! Returns true if the 'means' and 'sigmas' vectors in the two SubInts are identical
+    bool equal_coeffs(SubInt& s1, SubInt& s2);
+
+    //! Helper utility to check ichan, ipol, isub are valid
+    void bound_checks(unsigned ichan, unsigned ipol, unsigned isub);
+
+    /*
+    //! Worker function for read_in_chars
+    unsigned parse_param(const vector<string>& lines,string param);
+    */
+
     //! Requested number of samples to generate mean etc. from (0 for all) [0]
     uint64 requested_scan_samps;
 
@@ -213,14 +228,12 @@ namespace dsp {
     //! So data outside these ranges gets lopped down to -3 or 3.
     float sigma_max;
 
-    //! Each chan/pol has a SubIntVector 
-    vector<vector<Reference::To<SubIntVector> > > subint_vectors;
-
-    //! The last set of data added in
-    Reference::To<Observation> info;
-
+    //! The rate of the data being digitised
+    double rate;
+    
   };
 
 }
 
 #endif
+
