@@ -200,6 +200,22 @@ $(LOGIN_ARCH)/%.o: %.f $(LOGIN_ARCH)/.exists
 	$(FC) ${INCFLAGS} ${FFLAGS} ${CPPFLAGS} -c -o $@ $<
 
 ##########################################################################
+# this macro creates the source code that defines the variables declared
+# in MakeInfo.h
+##########################################################################
+define MakeInfo
+echo "char* MakeInfo_user = \"$${USER}\";" > MakeInfo.c
+echo "char* MakeInfo_date = \"`date`\";" >> MakeInfo.c
+endef
+
+##########################################################################
+# this macro returns MakeInfo.C if MakeInfo.h is in the source
+##########################################################################
+define eval_MakeInfo
+if [ ! -z "`grep MakeInfo\.h $*.[cC]`" ]; then echo "MakeInfo.c"; fi
+endef
+
+##########################################################################
 # Rules to make (link) an executable (for example: 'exec') 
 # made up of the object file of the same name (exec.o) and, optionally,
 # object files listed in the exec.OBJS macro.  This macro is defined in
@@ -231,17 +247,24 @@ elif [ -z "$($*.LDFLAGS)" ]; then echo $(LDFLAGS); \
 else echo $($*.LDFLAGS); fi
 endef
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(libraries) $(LIBDIR)/$(LIBRARY)
-	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries) $(LIBDIR)/$(LIBRARY)
+	@$(MakeInfo)
+	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS)) \
+		$(shell $(eval_MakeInfo))
+	@rm -f MakeInfo.c
 	@$(check_exec)
 
-$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries) $(LIBDIR)/$(LIBRARY)
-	-$(CCC) ${CCFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+$(BINDIR)/%: $(LOGIN_ARCH)/%.o %.c $(libraries) $(LIBDIR)/$(LIBRARY)
+	@$(MakeInfo)
+	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS)) \
+		$(shell $(eval_MakeInfo))
+	@rm -f MakeInfo.c
 	@$(check_exec)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries) $(LIBDIR)/$(LIBRARY)
 	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
+
 
 ##########################################################################
 # Rules to copy libraries and executables from the user's local "working
@@ -437,7 +460,7 @@ endif # autodepend == yes
 # place files in them are made.  These should remain last in the file,
 # lest they interfere with $< expansion
 ##########################################################################
-$(DEPS) $(SRC_DEPS): $(LOGIN_ARCH)/.exists $(DEPEND)
+$(DEPS) $(SRC_DEPS): $(LOGIN_ARCH)/.exists
 $(INCS): $(INCDIR)/.exists
 $(SHXS): $(SHXDIR)/.exists
 $(LIBS): $(LIBDIR)/.exists
