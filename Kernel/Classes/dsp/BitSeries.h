@@ -1,16 +1,13 @@
 //-*-C++-*-
 
-/*
-
-This class is not pure virtual, but it probably will be in future.
-
-*/
-
 #ifndef __BitSeries_h
 #define __BitSeries_h
 
 #include <memory>
 
+#include "Reference.h"
+
+#include "dsp/MiniPlan.h"
 #include "dsp/Observation.h"
 
 namespace dsp {
@@ -77,6 +74,17 @@ namespace dsp {
     //! Call this when you want the array to still be owned by it's owner
     virtual void attach(unsigned char* _data);
 
+    //! Release control of the data buffer- resizes to zero
+    virtual unsigned char* release(uint64& size);
+    //! For use by MiniSeries to share the data buffer for unpacking
+    void share(unsigned char*& _buffer,uint64& _size) const;
+
+    //! Retrieve a reference to the miniplan 
+    Reference::To<MiniPlan> get_miniplan() const { return miniplan; }
+
+    //! Set the miniplan- usually called by MiniFile loader
+    void set_miniplan(Reference::To<MiniPlan> _miniplan){ miniplan = _miniplan; }
+
   protected:
     //! The data buffer
     unsigned char* data;
@@ -95,6 +103,9 @@ namespace dsp {
 
     //! Number of time samples requested
     uint64 request_ndat;
+
+    //! The MiniPlan, if one is needed to expand into a TimeSeries
+    Reference::To<MiniPlan> miniplan;
 
   };
   
