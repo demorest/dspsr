@@ -161,3 +161,25 @@ void dsp::TimeSeries::append (const dsp::TimeSeries* little)
   set_ndat (get_ndat() + little->get_ndat());
 }
 
+void dsp::TimeSeries::check ()
+{
+  float min = -100.0 * scale;
+  float max = -100.0 * scale;
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+    for (unsigned ipol=0; ipol<get_npol(); ipol++) {
+
+      float* data = get_datptr (ichan, ipol);
+
+      for (uint64 idat=0; ipol<get_ndat(); idat++)
+	for (unsigned idim=0; idim<get_ndim(); idim++) {
+	  if (isnan (*data) || *data < min || *data > max)
+	    cerr << "dsp::TimeSeries::check data ["
+	      "f=" << ichan << ", "
+	      "p=" << ipol << ", "
+	      "t=" << idat << ", "
+	      "d=" << idim << "] = " << *data << endl;
+	  data ++;
+	}
+    }
+}

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.2 $
+   $Date: 2002/11/10 17:16:50 $
    $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
@@ -53,6 +53,9 @@ namespace dsp {
 
     //! Set all values to zero
     virtual void zero ();
+
+    //! Check that each floating point value is roughly as expected
+    virtual void check ();
 
   protected:
     //! The data buffer
