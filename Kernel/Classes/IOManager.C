@@ -48,15 +48,21 @@ void dsp::IOManager::set_output (TimeSeries* _data)
 }
 
 //! Set the Input operator (should not normally need to be used)
-void dsp::IOManager::set_input (Input* _input)
+void dsp::IOManager::set_input (Input* _input, bool set_params)
 {
   input = _input;
 
   if (!input)
     return;
 
-  input->set_block_size (block_size);
-  input->set_overlap (overlap);
+  if (set_params)  {
+    input->set_block_size (block_size);
+    input->set_overlap (overlap);
+  }
+  else {
+    block_size = input->get_block_size ();
+    overlap = input->get_overlap ();
+  }
 
   if (output)
     input->set_output (output);
@@ -115,7 +121,7 @@ void dsp::IOManager::open (const char* id)
 {
   try {
 
-    set_input ( File::create(id) );
+    set_input ( File::create(id), true );
 
   } catch (Error& error) {
     throw error += "dsp::IOManager::open";

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/06/13 15:02:08 $
+   $Revision: 1.9 $
+   $Date: 2003/08/21 09:47:10 $
    $Author: wvanstra $ */
 
 
@@ -42,7 +42,7 @@ namespace dsp {
     Input* get_input () const { return input; }
     
     //! Set the Input operator (should not normally need to be used)
-    void set_input (Input* input);
+    void set_input (Input* input, bool set_params = false);
 
      //! Return pointer to the appropriate Unpacker
     Unpacker* get_unpacker () const { return unpacker; }
