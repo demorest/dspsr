@@ -27,7 +27,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:b:f:F:hjM:n:N:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:f:F:hjM:n:N:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -35,9 +35,10 @@ void usage ()
     "Usage: dspsr [" << args << "] file1 [file2 ...] \n"
     "File handling options:\n"
     " -a archive     set the output archive class name\n"
+    " -A             produce a single archive with multiple Integrations\n"
     " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
-    " -s             generate an archive for each single pulse\n"
+    " -s             generate single pulse Integrations\n"
     " -S seek        Start processing at t=seek seconds\n"
     " -T total       Process only t=total seconds\n"
     "\n"
@@ -124,6 +125,9 @@ int main (int argc, char** argv)
   // form single pulse archives
   bool single_pulse = false;
 
+  // form a single archive with multiple integrations
+  bool single_archive = false;
+
   // treat all files as though they were one contiguous observation
   bool join_files = false;
 
@@ -169,6 +173,10 @@ int main (int argc, char** argv)
       cerr << "dspsr: error parsing " << optarg << " as"
 	  " two-bit correction nsample, threshold, or cutoff" << endl;
       return -1;
+
+    case 'A':
+      single_archive = true;
+      break;
 
     case 'a':
       archive_class = optarg;
@@ -416,8 +424,7 @@ int main (int argc, char** argv)
     cerr << "Creating Archiver instance" << endl;
   dsp::Archiver* archiver = new dsp::Archiver;
 
-  if (verbose)
-    cerr << "Setting Archiver Archive class name to " << archive_class << endl;
+  cerr << "dspsr: Archive class name = " << archive_class << endl;
 
   archiver->set_archive_class (archive_class.c_str());
 
@@ -468,6 +475,9 @@ int main (int argc, char** argv)
 
   archiver->set_operations (operations);
 
+  // single archive instance used when single_pulse && single_archive
+  Reference::To<Pulsar::Archive> archive;
+
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
     if (!join_files && mpi_rank == mpi_root) {
@@ -480,6 +490,14 @@ int main (int argc, char** argv)
       if (verbose)
 	cerr << "data file " << filenames[ifile] << " opened" << endl;
       
+    }
+
+    if (single_pulse && single_archive) {
+
+      cerr << "Creating single pulse single archive" << endl;
+      archive = Pulsar::Archive::new_Archive (archive_class);
+      archiver->set_archive (archive);
+
     }
 
 #if ACTIVATE_MPI
@@ -626,11 +644,17 @@ int main (int argc, char** argv)
       fprintf (stderr, "%25s %25.2g\n", operations[iop]->get_name().c_str(),
 	       (float) operations[iop]->get_total_time());
 
-    if (verbose)
-      cerr << "Creating archive" << endl;
-    archiver->set_profiles (profiles);
-    archiver->unload ();
-
+    if (!single_pulse) {
+      if (verbose)
+	cerr << "Creating archive" << endl;
+      archiver->set_profiles (profiles);
+      archiver->unload ();
+    }
+    else if (archive) {
+      cerr << "Unloading single archive '" << archive->get_filename() << "'" 
+	   << endl;
+      archive->unload ();
+    }
   }
   catch (string& error) {
     cerr << error << endl;
