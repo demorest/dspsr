@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.12 $
-   $Date: 2003/12/09 01:17:57 $
+   $Revision: 1.13 $
+   $Date: 2004/03/30 04:58:40 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -21,6 +21,9 @@
 
 namespace dsp {
 
+  //! All operations must define their behaviour
+  typedef enum { inplace, outofplace, anyplace } Behaviour;
+
   //! Defines the interface by which Transformations are performed on data
   /*! This pure virtual template base class defines the manner in
     which various digital signal processing routines are performed. */
@@ -28,9 +31,6 @@ namespace dsp {
   class Transformation : public Operation {
 
   public:
-
-    //! All operations must define their behaviour
-    enum Behaviour { inplace, outofplace, anyplace };
 
     //! All sub-classes must specify name and capacity for inplace operation
     Transformation (const char* _name, Behaviour _type) : Operation (_name)
