@@ -12,7 +12,10 @@
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/WeightedTimeSeries.h"
 
+#include "dsp/ResponseProduct.h"
 #include "dsp/Dedispersion.h"
+#include "dsp/RFIFilter.h"
+
 #include "dsp/Filterbank.h"
 #include "dsp/Detection.h"
 #include "dsp/SubFold.h"
@@ -40,7 +43,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjm:M:n:N:Oop:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjm:M:n:N:Oop:P:R:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -84,6 +87,7 @@ void usage ()
     "Dedispersion/Convolution options:\n"
     " -D dm          over-ride dispersion measure\n"
     " -x nfft        over-ride optimal transform length\n"
+    " -R             apply RFI filter in frequency domain\n"
     "\n"
     "Detection options:\n"
     " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
@@ -229,6 +233,10 @@ int main (int argc, char** argv)
 
   // Filename of polyphase filterbank coefficients
   char* polyphase_filter = 0;
+
+  // Filter used for RFI mitigation in the frequency domain
+  dsp::RFIFilter* rfi_filter = 0;
+
 
   int c;
   int scanned;
@@ -401,6 +409,10 @@ int main (int argc, char** argv)
            << reference_phase << endl;
       break;
 
+    case 'R':
+      rfi_filter = new dsp::RFIFilter;
+      break;
+
     case 'r':
       scanned = sscanf (optarg, "%d", &mpi_root);
       if (scanned != 1) {
@@ -529,6 +541,17 @@ int main (int argc, char** argv)
   if (fres)
     kernel->set_frequency_resolution (fres);
 
+  dsp::Response* response = kernel;
+
+  if (rfi_filter) {
+
+    dsp::ResponseProduct* product = new dsp::ResponseProduct;
+    product->add_response (kernel);
+    product->add_response (rfi_filter);
+    response = product;
+
+  }
+
   dsp::TimeSeries* convolve = voltages;
 
   bool need_to_detect = true;
@@ -581,7 +604,7 @@ int main (int argc, char** argv)
 	filterbank->set_nchan (nchan);
 	
 	if (simultaneous) {
-	  filterbank->set_response (kernel);
+	  filterbank->set_response (response);
 	  filterbank->set_passband (passband);
 	}
 	
@@ -621,7 +644,7 @@ int main (int argc, char** argv)
     
     dsp::Convolution* convolution = new dsp::Convolution;
     
-    convolution->set_response (kernel);
+    convolution->set_response (response);
     convolution->set_passband (passband);
     
     convolution->set_input  (convolve);  
@@ -764,6 +787,9 @@ int main (int argc, char** argv)
       cerr << "dspsr: setting the start time to " << mjd << endl;
       manager->get_info()->set_start_time( mjd );
     }
+
+    if (rfi_filter)
+      rfi_filter->set_input (manager);
 
     if (single_pulse && single_archive) {
 
