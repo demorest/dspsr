@@ -95,7 +95,8 @@ void dsp::IncoherentFilterbank::transformation(){
     fprintf(stderr,"dsp::IncoherentFilterbank::transformation() will throw away %d samples of the input and not FFT them.  (input->ndat ("UI64") doesn't divide nsamp_fft (%d)\n",
 	    int(input->get_ndat())%nsamp_fft, input->get_ndat(), nsamp_fft);
 
-  output->Observation::operator=(*input);
+  get_output()->copy_configuration( get_input() );
+
   output->set_state( state );
   output->set_ndim( output_ndim );
   output->set_nchan( nchan );
