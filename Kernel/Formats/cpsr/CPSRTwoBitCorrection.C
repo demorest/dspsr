@@ -162,7 +162,7 @@ void dsp::CPSRTwoBitCorrection::build (int nsamp, float sigma)
   CPSRTwoBitCorrection::destroy();
 
   // setup the lookup table
-  TwoBitCorrection::build (nsamp, sigma);
+  TwoBitCorrection::build (nsamp, sigma, TwoBitTable::OffsetBinary, false);
 
   // create the new space
   values = new unsigned char [nsamp];
