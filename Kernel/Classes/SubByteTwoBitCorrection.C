@@ -79,15 +79,24 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
   if (keep_histogram)
     hist = &(histograms[digitizer][0]);
 
-  unsigned long n_weights = (unsigned long) ceil (float(ndat)/float(nsample));
+  unsigned required_nweights = (unsigned) ceil (float(ndat)/float(nsample));
 
-  if (weights && n_weights > nweights)
-    throw Error (InvalidParam, "dsp::SubByteTwoBitCorrection::dig_unpack",
-		 "weights array size=%d < nweights=%d", nweights, n_weights);
+  if (weights)  {
 
+    if (verbose) cerr << "dsp::SubByteTwoBitCorrection::dig_unpack nweights=" 
+		      << nweights << endl;
+
+    if (required_nweights > nweights)
+      throw Error (InvalidParam, "dsp::SubByteTwoBitCorrection::dig_unpack",
+		   "weights array size=%d < nweights=%d",
+		   nweights, required_nweights);
+
+  }
+
+  nweights = required_nweights;
   uint64 points_left = ndat;
 
-  for (unsigned long wt=0; wt<n_weights; wt++) {
+  for (unsigned wt=0; wt<nweights; wt++) {
 
     unsigned points = nsample;
     if (points > points_left)
