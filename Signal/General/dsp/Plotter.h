@@ -51,8 +51,15 @@ namespace dsp {
     void set_ylabel(string _ylabel){ ylabel = _ylabel; }    
     string get_ylabel(){ return ylabel; }
 
-    void set_just_do_basics(bool _just_do_basics){ just_do_basics = _just_do_basics; }    
+    void set_just_do_basics(bool _just_do_basics)
+    { just_do_basics = _just_do_basics; }    
     bool get_just_do_basics(){ return just_do_basics; } 
+
+    //! Decide whether to show the plot number at top of screen
+    void set_show_plot_number(bool _show_plot_number)
+    { show_plot_number = _show_plot_number; }    
+    //! Inquire whether to show the plot number at top of screen
+    bool get_show_plot_number(){ return show_plot_number; } 
 
   protected:
     
@@ -73,6 +80,9 @@ namespace dsp {
     //! When set to true, a call to plot() just does BasicPlotter::plot()
     bool just_do_basics;
 
+    //! If true, (plot XXX) is shown as part of title [true]
+    bool show_plot_number;
+
   };
 
 }
@@ -89,6 +99,7 @@ dsp::Plotter<DataType>::Plotter() : BasicPlotter<DataType>() {
   ylabel = "Intensity";
 
   just_do_basics = false;
+  show_plot_number = true;
 
   BasicPlotter<DataType>::mutated = true;
 }
@@ -378,7 +389,9 @@ bool dsp::Plotter<DataType>::plot_background(){
   last_params->do_cpgswin();
   cpgbox("BCNST",0.0,0,"BCNST",0.0,0);
   
-  string title = base_title + "  (plot " + make_string(last_params->get_plot_in_hierachy()) + ")";
+  string title = base_title;
+  if( show_plot_number )
+    title += "  (plot " + make_string(last_params->get_plot_in_hierachy()) + ")";
 
   if( BasicPlotter<DataType>::inputs[0]->get_domain().substr(0,7)=="Fourier" && xlabel == "Time (s)" )
     xlabel = "Frequency (Hz)";
