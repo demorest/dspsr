@@ -44,7 +44,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIl:jm:M:n:N:Oop:P:RsS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjJl:m:M:n:N:Oop:P:RsS:t:T:vVx:";
 
 void usage ()
 {
@@ -77,13 +77,14 @@ void usage ()
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
     "Filterbank options:\n"
-    " -F nchan       create an nchan-channel filterbank\n"
+    " -F nchan       create an nchan-channel filterbank and dedisperse after (ie triple)  You also need '-J' for a plain incoherent filterbank with no coherent dedispersion\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
 #if ACTIVATE_MKL
     " -I             over-ride with IncoherentFilterbank class [false]\n"
 #endif
     " -o             set psrfft up to generate optimized transforms [false]\n" 
+    " -J             Disable dedispersion [dedispersion enabled]\n"
     "\n"
     "Dedispersion/Convolution options:\n"
     " -D dm          over-ride dispersion measure\n"
@@ -240,6 +241,9 @@ int main (int argc, char** argv)
   // Filter used for RFI mitigation in the frequency domain
   dsp::RFIFilter* rfi_filter = 0;
 
+  // Disables coherent dedispersion
+  bool disable_dedispersion = false;
+
   //
   bool persistent = false;
 
@@ -372,6 +376,10 @@ int main (int argc, char** argv)
 
     case 'j':
       join_files = true;
+      break;
+
+    case 'J':
+      disable_dedispersion = true;
       break;
 
     case 'l':
@@ -646,7 +654,7 @@ int main (int argc, char** argv)
 
 #endif
 
-  if (nchan == 1 || !simultaneous) {
+  if( !disable_dedispersion && (nchan == 1 || !simultaneous) ){
     
     if (verbose)
       cerr << "Creating Convolution instance" << endl;
@@ -975,7 +983,7 @@ int main (int argc, char** argv)
 
         if (verbose) cerr << "dspsr: calling " 
                           << active_operations[iop]->get_name() << endl;
-
+	
         active_operations[iop]->operate ();
         if (iop==0 && offset_clock!=0.0)
            voltages->change_start_time(int64(offset_clock*voltages->get_rate()));
