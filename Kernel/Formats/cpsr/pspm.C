@@ -129,13 +129,46 @@ double PSPMduration (const PSPM_SEARCH_HEADER* hdr)
 
 bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
 {
-  return ( (hdr->header_version > 0) &&
-	   (hdr->scan_file_number > 0) &&
-           (hdr->bit_mode > 0) &&
-           (hdr->scan_num > 0) &&
-           (hdr->num_chans > 0) &&
-           (hdr->file_size > 32768) &&
-           (hdr->tape_num > 0) &&
-           (hdr->tape_file_number > 0) );
+  if (hdr->header_version < 0) {
+    fprintf (stderr, "PSPMverify: invalid header_version:%d\n",
+	     (int)hdr->header_version);
+    return false;
+  }
+  if (hdr->scan_file_number < 0) {
+    fprintf (stderr, "PSPMverify: invalid scan_file_number:%d\n",
+	     (int)hdr->scan_file_number);
+    return false;
+  }
+  if (hdr->bit_mode < 0) {
+    fprintf (stderr, "PSPMverify: invalid bit_mode:%d\n",
+	     (int)hdr->bit_mode);
+    return false;
+  }
+  if (hdr->scan_num < 0) {
+    fprintf (stderr, "PSPMverify: invalid scan_num:%d\n",
+	     (int)hdr->scan_num);
+    return false;
+  }
+  if (hdr->num_chans < 0) {
+    fprintf (stderr, "PSPMverify: invalid num_chans:%d\n",
+	     (int)hdr->num_chans);
+    return false;
+  }
+  if (hdr->file_size < 32768) {
+    fprintf (stderr, "PSPMverify: invalid file_size:%d\n",
+	     (int)hdr->file_size);
+    return false;
+  }
+  if (hdr->tape_num < 0) {
+    fprintf (stderr, "PSPMverify: invalid tape_num:%d\n",
+	     (int)hdr->tape_num);
+    return false;
+  }
+  if (hdr->tape_file_number < 0) {
+    fprintf (stderr, "PSPMverify: invalid tape_file_number:%d\n",
+	     (int)hdr->tape_file_number);
+    return false;
+  }
+  return true;
 }
 
