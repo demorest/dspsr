@@ -496,15 +496,11 @@ void dsp::Fold::transformation ()
   else if( pulsar_ephemeris )
     output->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
-  if( archive_filename.size() > 0 ){
+  if( archive_filename.size() > 0 )
     output->set_archive_filename( archive_filename );
-    fprintf(stderr,"dsp::Fold Have set archive_filename to '%s'\n",archive_filename.c_str());
-  }
 
-  if( archive_filename_extension.size() > 0 ){
+  if( archive_filename_extension.size() > 0 )
     output->set_archive_filename_extension( archive_filename_extension );
-    fprintf(stderr,"dsp::Fold yayayaya Have set archive_filename_extension to '%s'\n",archive_filename_extension.c_str());
-  }
 
 }
 
