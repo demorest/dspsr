@@ -6,11 +6,9 @@
 #include "TwoBitCorrection.h"
 #include "genutil.h"
 
-// #define _DEBUG 1
-
-// From Jenet&Anderson "The Effects of Digitization on Nonstationary
-// Stochastic Signals with Applications to Pulsar Signal Baseband Recording"
-// Table 1
+/*! From Jenet&Anderson "The Effects of Digitization on Nonstationary
+  Stochastic Signals with Applications to Pulsar Signal Baseband
+  Recording", Table 1 */
 const double dsp::TwoBitCorrection::optimal_2bit_threshold = 0.9674;
 
 //! Null constructor

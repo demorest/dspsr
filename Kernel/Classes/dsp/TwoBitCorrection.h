@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/07/02 08:05:21 $
+   $Revision: 1.2 $
+   $Date: 2002/07/02 08:24:21 $
    $Author: pulsar $ */
 
 #ifndef __TwoBitCorrection_h
@@ -15,12 +15,11 @@
 
 namespace dsp {
   
-  //! Converts a Timeseries containing digitized bits to floating point
-  /*! Thus far, only 2-bit sampling has been used and only 2-bit
-    conversion routines have been written.  These routines are
-    implemented by the TwoBitCorrection sub-classes and mostly perform
-    dynamic level-setting in order to correct for the effects of
-    digitization */
+  //! Converts a Timeseries from 2-bit digitized to floating point values
+  /*! The conversion routines are implemented by the TwoBitCorrection
+    sub-classes, which perform the dynamic level-setting technique
+    described by Jenet & Anderson (1998, PASP, 110, 1467) in order to
+    correct for the effects of digitization */
   class TwoBitCorrection: public Operation {
 
   public:
