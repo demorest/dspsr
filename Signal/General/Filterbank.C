@@ -162,6 +162,9 @@ void dsp::Filterbank::operation ()
 
   output->rescale (scalefac);
 
+  if (verbose)
+    cerr << "Filterbank::operation scale="<< output->get_scale() <<endl;
+
   // output data will have new sampling rate
   // NOTE: that nsamp_fft already contains the extra factor of two required
   // when the input Timeseries is Signal::Nyquist (real) sampled
