@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.33 $
-   $Date: 2004/11/02 14:02:00 $
-   $Author: wvanstra $ */
+   $Revision: 1.34 $
+   $Date: 2004/11/03 01:30:31 $
+   $Author: hknight $ */
 
 
 
@@ -50,7 +50,7 @@ namespace dsp {
     static bool power_of_two;
 
     //! Constructor
-    Fold ();
+    Fold (bool _dont_set_limits = false);
     
     //! Destructor
     virtual ~Fold ();
@@ -247,6 +247,9 @@ namespace dsp {
 
     //! The folding period last used in the fold method
     double pfold;
+
+    //! If true, set_limits() returns straight away
+    bool dont_set_limits;
 
   };
 }

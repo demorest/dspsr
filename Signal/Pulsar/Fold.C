@@ -14,7 +14,7 @@
 
 #include "dsp/Fold.h"
 
-dsp::Fold::Fold () :
+dsp::Fold::Fold (bool _dont_set_limits) :
   Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
 {
   // reducer relies on these defaults being what they are
@@ -35,6 +35,8 @@ dsp::Fold::Fold () :
   built = false;
 
   idat_start = ndat_fold = 0;
+
+  dont_set_limits = _dont_set_limits;
 }
 
 //! Makes sure parameters are initialised
@@ -693,6 +695,9 @@ double dsp::Fold::get_pfold(MJD start_time){
 //! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
 void dsp::Fold::set_limits (const Observation* input)
 {
+  if( dont_set_limits )
+    return;
+
   idat_start = 0;
   ndat_fold = input->get_ndat();
 
