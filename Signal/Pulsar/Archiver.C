@@ -232,13 +232,7 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
   integration-> set_epoch ( phase->get_mid_time() );
   integration-> set_duration ( phase->get_integration_length() );
 
-  integration-> set_centre_frequency ( phase->get_centre_frequency() );
-  integration-> set_bandwidth ( phase->get_bandwidth() );
-  integration-> set_dispersion_measure ( phase->get_dispersion_measure() );
-    
   integration-> set_folding_period ( phase->get_folding_period () );
-  integration-> set_basis ( phase->get_basis() );
-  integration-> set_state ( phase->get_state() );
 
   unsigned offchan = 0;
   if ( phase->get_swap() )
