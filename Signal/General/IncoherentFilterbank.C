@@ -24,6 +24,7 @@ dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,T
   state = Signal::Intensity;
   unroll_level = 16;
 
+  wsave = 0;
   wsave_size = 0;
   destroy_input = false;
 }
@@ -153,22 +154,21 @@ void dsp::IncoherentFilterbank::form_stokesI(){
    
   register float* det = big_scratch;
 
-  fprintf(stderr,"Have allocated 2 small scratch buffers, big_scratch=%p input->get_datptr(0,0)=%p\n",
-	  big_scratch,input->get_datptr(0,0));
+  //fprintf(stderr,"Have allocated 2 small scratch buffers, big_scratch=%p input->get_datptr(0,0)=%p\n",
+  //  big_scratch,input->get_datptr(0,0));
 
   fft_loop_timer.start();
   for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
-    
     // (1) memcpy to scratch	
     memcpy(scratch0.get(),in0+ipart*nsamp_fft,n_memcpy);
-    memcpy(scratch1.get(),in1+ipart*nsamp_fft,n_memcpy);
-    
+    memcpy(scratch1.get(),in1+ipart*nsamp_fft,n_memcpy);    
+
     // (2) FFT	
     fft_timer.start();
-    scfft1dc(scratch0.get(), nsamp_fft, 1, wsave.get() ); 
-    scfft1dc(scratch1.get(), nsamp_fft, 1, wsave.get() ); 
+    scfft1dc(scratch0.get(), nsamp_fft, 1, wsave ); 
+    scfft1dc(scratch1.get(), nsamp_fft, 1, wsave ); 
     fft_timer.stop();
-
+    
     // (3) SLD and add polarisations back
     // MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0
     register const float* real0 = scratch0.get();
@@ -182,9 +182,11 @@ void dsp::IncoherentFilterbank::form_stokesI(){
   }
   fft_loop_timer.stop();
 
-  fprintf(stderr,"Finished FFTing and detecting stage... going to repack\n");
+  if( verbose )
+    fprintf(stderr,"Finished FFTing and detecting stage... going to repack\n");
 
   // (4) Convert the BitSeries to a TimeSeries in output's data array 
+
   conversion_timer.start();
   for( unsigned ichan=0; ichan<nchan; ++ichan){
     register float* to = output->get_datptr(ichan,0);
@@ -195,7 +197,7 @@ void dsp::IncoherentFilterbank::form_stokesI(){
       to[ipart] = from[i];
   }
   conversion_timer.stop();
-
+  
   if( !destroy_input )
     delete [] big_scratch;
 
@@ -213,7 +215,6 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
   const int npart = input->get_ndat()/nsamp_fft;
 
   const size_t n_memcpy = nsamp_fft*sizeof(float);
-  const unsigned stride = nsamp_fft; 
 
   auto_ptr<float> scratch(new float[nsamp_fft+2]);
 
@@ -229,10 +230,10 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
     fft_loop_timer.start();
     for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
       // (1) memcpy to scratch	
-      memcpy(scratch.get(),in+ipart*stride,n_memcpy);
+      memcpy(scratch.get(),in+ipart*nsamp_fft,n_memcpy);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scratch.get(), nsamp_fft, 1, wsave.get() ); 
+      scfft1dc(scratch.get(), nsamp_fft, 1, wsave ); 
       fft_timer.stop();
       // (3) SLD back
       // MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0
@@ -290,7 +291,7 @@ void dsp::IncoherentFilterbank::form_undetected(){
       memcpy(scr,in+ipart*nsamp_fft,nsamp_fft);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scr, nsamp_fft, 1, wsave.get() ); 
+      scfft1dc(scr, nsamp_fft, 1, wsave ); 
       fft_timer.stop();
     }
     fft_loop_timer.stop();
@@ -332,20 +333,27 @@ void dsp::IncoherentFilterbank::acquire_plan(){
   int real2complex = 2/input->get_ndim();
   
   // The size of wsave required by MKL is 2n+4
-  uint64 magic_size = 2*input->get_nchan()*real2complex + 4;
+  uint64 magic_size = 2*nchan*real2complex + 4;
 
-  if( wsave_size == magic_size ){
+  if( wsave && wsave_size == magic_size ){
     // wsave is already the correct size!
     return;
   }
 
-  auto_ptr<float> temp(new float[magic_size]);
-  wsave = temp;
+  free_plan();
+  wsave = new float[magic_size];
+  wsave_size = magic_size;
 
   if( verbose )
-    fprintf(stderr,"Acquiring wsave with n=%d\n",nchan*real2complex);
-  scfft1dc(input->get_datptr(0,0),nchan*real2complex,0,wsave.get() );
+    fprintf(stderr,"Have allocated "UI64" floats for wsave=%p and n=%d\n",
+	    magic_size,wsave,nchan*real2complex);
+
+  scfft1dc(input->get_datptr(0,0),nchan*real2complex,0,wsave );
   if( verbose )
     fprintf(stderr,"wsave acquired\n");
 }
+
+
+
+
 

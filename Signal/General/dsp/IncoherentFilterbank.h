@@ -38,7 +38,7 @@ namespace dsp{
     uint64 get_plansize(){ return wsave_size; }
 
     //! Free up the memory used by the current plan
-    void free_plan(){ sink(wsave); wsave_size = 0; }
+    void free_plan(){ if(wsave) delete [] wsave; wsave = 0; wsave_size = 0; }
     
     //! Set the number of channels
     void set_nchan(unsigned _nchan){ nchan = _nchan; }
@@ -81,7 +81,7 @@ namespace dsp{
     unsigned nchan;
 
     //! Memory used by MKL to store transform coefficients (ie the plan)
-    auto_ptr<float> wsave; 
+    float* wsave; 
     
     //! The size of the memory allocated to wsave;
     uint64 wsave_size;
