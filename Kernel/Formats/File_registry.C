@@ -78,13 +78,18 @@ static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
 static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
 #endif
 
-// these are defined in libdsp.a
-#include "dsp/CoherentFBFile.h"
-static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> register_coherentfbfile;
+#if DSP_K5
+#include "dsp/K5File.h"
+static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
+#endif
+
+#if DSP_BCPM
+#include "dsp/BCPMFile.h"
+static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
+#endif
+
 #include "dsp/BitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfile;
-//#include "dsp/MiniFile.h"
-//static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 
 #if DSP_MARK4
 #include "dsp/Mark4File.h"
