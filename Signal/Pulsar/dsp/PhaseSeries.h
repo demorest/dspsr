@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/11/01 06:39:00 $
+   $Revision: 1.11 $
+   $Date: 2003/12/09 01:08:55 $
    $Author: hknight $ */
 
 #ifndef __PhaseSeries_h
@@ -80,6 +80,20 @@ namespace dsp {
     //! Over-ride Observation::combinable_rate
     bool combinable_rate (double test_rate) const { return true; }
 
+    //! Store what the output Archive's filename should be
+    void set_archive_filename(string _archive_filename)
+    { archive_filename = _archive_filename; }
+
+    //! Inquire what the output Archive's filename is going to be (if anything)
+    string get_archive_filename() const { return archive_filename; }
+
+    //! Store what the output Archive's filename extension should be
+    void set_archive_filename_extension(string _archive_filename_extension)
+    { archive_filename_extension = _archive_filename_extension; }
+
+    //! Inquire what the output Archive's filename extension is going to be (if anything)
+    string get_archive_filename_extension() const { return archive_filename_extension; }
+
   protected:
 
     //! Period at which CAL data is folded
@@ -106,6 +120,12 @@ namespace dsp {
     //! Return true when Observation can be integrated (and prepare for it)
     bool mixable (const Observation& obs, unsigned nbin,
 		  int64 istart=0, int64 fold_ndat=0);
+
+    //! The Archive::unload_filename attribute
+    string archive_filename;
+
+    //! This filename extension will be added onto the Archive::unload_filename attribute
+    string archive_filename_extension;
 
   };
 

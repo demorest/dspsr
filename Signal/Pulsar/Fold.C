@@ -2,15 +2,17 @@
 
 #include <assert.h>
 
-#include "dsp/Fold.h"
 #include "dsp/WeightedTimeSeries.h"
 
 #include "Error.h"
 
-#include "psrephem.h"
+#include "MatchingEphemeris.h"
+#include "MatchingPolyco.h"
 #include "tempo++.h"
 #include "genutil.h"
 #include "string_utils.h"
+
+#include "dsp/Fold.h"
 
 dsp::Fold::Fold () 
   : Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace) 
@@ -24,6 +26,8 @@ dsp::Fold::Fold ()
 
   ncoef = 15;
   nspan = 120;
+
+  dispersion_measure = -1.0;
 
   if (psrdisp_compatible) {
     cerr << "dsp::Fold psrdisp compatibility\n"
@@ -53,16 +57,19 @@ void dsp::Fold::prepare (const Observation* observation)
   if (verbose)
     cerr << "dsp::Fold::prepare" << endl;
 
-  if (folding_period) {
-    cerr << "dsp::Fold::prepare folding_period=" << folding_period << endl;
-    return;
-  }
-
   string jpulsar = observation->get_source();
-
+  
   if (jpulsar.length() == 0)
     throw Error (InvalidParam, "dsp::Fold::prepare",
 		 "empty Observation::source");
+
+  if( folding_period > 0.0 && (folding_period_source==jpulsar || folding_period_source==string()) ){
+    fprintf(stderr,"Already got folding_period so returning straight away from dsp::Fold::prepare()\n");
+    pulsar_ephemeris = 0;
+    folding_polyco = 0;
+    built = true;
+    return;
+  }
 
   if (jpulsar[0] != 'J')
     jpulsar = "J" + jpulsar;
@@ -70,27 +77,27 @@ void dsp::Fold::prepare (const Observation* observation)
   if (verbose)
     cerr << "dsp::Fold::prepare source=" << jpulsar << endl;
 
-  MJD time = observation->get_start_time();
+  // Preference 1: correct polyco already generated
+  folding_polyco = choose_polyco (observation->get_start_time(), jpulsar);
 
-  // optional: choose from provided polyco instances
-  folding_polyco = choose_polyco (time, jpulsar);
-  
   if (folding_polyco)
     return;
 
-  // default: create a polyco by calling tempo
+  // Preference 2a: Correct ephemeris already generated
   pulsar_ephemeris = choose_ephemeris (jpulsar);
 
-  if (!pulsar_ephemeris) {
-    Reference::To<psrephem> ephemeris = new psrephem;
+  fprintf(stderr,"dsp::Fold::prepare ephemeris already generated\n");
 
-    if (ephemeris->create (jpulsar, 0) < 0)
-      throw Error(FailedCall,"dsp::Fold::prepare",
-		  "Failed to create ephemeris for jpulsar '%s'",
-		  jpulsar.c_str());
-
-    pulsar_ephemeris = ephemeris;
+  // Preference 2b: Generate correct ephemeris
+  if (!pulsar_ephemeris){
+    fprintf(stderr,"dsp::Fold::prepare ephemeris generating ephemeris\n");
+    Reference::To<MatchingEphemeris> mephem = new MatchingEphemeris(jpulsar.c_str(), 0);
+    add_pulsar_ephemeris( mephem );
+    pulsar_ephemeris = mephem;
   }
+
+  fprintf(stderr,"dsp::Fold::prepare got pulsar_ephemeris->get_psrname='%s'\n",
+	  pulsar_ephemeris->psrname().c_str());
 
 #if 0
 
@@ -124,12 +131,12 @@ void dsp::Fold::prepare (const Observation* observation)
   if (verbose)
     cerr << "dsp::Fold::prepare creating polyco" << endl;
 
-  Reference::To<polyco> polly = new polyco;
+  // Preference 2: Generate correct polyco from ephemeris and add it to the list of polycos to choose from
+  folding_polyco = get_folding_polyco(pulsar_ephemeris,observation);
 
-  Tempo::set_polyco ( *polly, *pulsar_ephemeris, time, time,
-		      nspan, ncoef, 8, observation->get_telescope_code() );
-
-  folding_polyco = polly;
+  fprintf(stderr,"dsp::Fold got folding_polyco with name '%s'\n",
+	  folding_polyco->get_psrname().c_str());
+  //exit(0);
 
 #if 0
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
@@ -149,6 +156,26 @@ void dsp::Fold::prepare (const Observation* observation)
   built = true;
 } 
 
+Reference::To<polyco> dsp::Fold::get_folding_polyco(const psrephem* pephemeris,
+						    const Observation* observation){
+  Reference::To<MatchingPolyco> mpoly = new MatchingPolyco;
+  
+  MatchingEphemeris* mephem = dynamic_cast<MatchingEphemeris*>(const_cast<psrephem*>(pephemeris));
+  if( mephem )
+    mpoly->set_matching_sources( mephem->get_matching_sources() );
+  
+  polycos.push_back( mpoly.get() );
+  
+  Reference::To<polyco> the_folding_polyco = mpoly.get();
+  
+  MJD time = observation->get_start_time();
+
+  Tempo::set_polyco ( *the_folding_polyco.get(), *pephemeris, time, time,
+		      nspan, ncoef, 8, observation->get_telescope_code() );
+  
+  return the_folding_polyco;
+}
+
 polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 {
   if (verbose) cerr << "dsp::Fold::choose_polyco checking "
@@ -157,7 +184,11 @@ polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 
   for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++){
 
-    if( polycos[ipoly]->i_nearest(time,pulsar) >= 0 ){
+    MatchingPolyco* mpoly = dynamic_cast<MatchingPolyco*>(polycos[ipoly].ptr());
+
+    if( mpoly && mpoly->matches(time,pulsar) )
+      return polycos[ipoly];
+    else if( polycos[ipoly]->i_nearest(time,pulsar) >= 0 ){
       if (verbose)
 	cerr << "PSR: " << pulsar << " found in polyco entry\n";
       return polycos[ipoly];
@@ -180,7 +211,11 @@ psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
 		      << pulsar << " and "
 		      << ephemerides[ieph]->psrname() << endl;
 
-    if (pulsar.find (ephemerides[ieph]->psrname()) != string::npos) {
+    MatchingEphemeris* mephem = dynamic_cast<MatchingEphemeris*>(ephemerides[ieph].ptr());
+
+    if( mephem && mephem->matches(pulsar) )
+      return ephemerides[ieph];
+    else if (pulsar.find (ephemerides[ieph]->psrname()) != string::npos) {
       if (verbose)
 	cerr << "PSR: " << pulsar << " matches parfile entry\n";
       return ephemerides[ieph];
@@ -285,9 +320,16 @@ void dsp::Fold::set_reference_phase (double phase)
 //! Set the period at which to fold data (in seconds)
 void dsp::Fold::set_folding_period (double _folding_period)
 {
+  folding_period_source = string();
   folding_period = _folding_period;
   folding_polyco = 0;
   built = true;
+}
+
+//! Set the period at which to fold data, but only do it for this source (in seconds)
+void dsp::Fold::set_folding_period (double folding_period, string _folding_period_source){
+  set_folding_period( folding_period );
+  folding_period_source = _folding_period_source;
 }
 
 //! Get the average folding period
@@ -359,12 +401,14 @@ void dsp::Fold::set_input (TimeSeries* _input)
 
 //! Add a phase model with which to choose to fold the data
 void dsp::Fold::add_folding_polyco (polyco* folding_polyco){
-  polycos.push_back( folding_polyco );
+  if( folding_polyco )
+    polycos.push_back( folding_polyco );
 }
 
 //! Add an ephemeris with which to choose to create the phase model
 void dsp::Fold::add_pulsar_ephemeris (psrephem* pulsar_ephemeris){
-  ephemerides.push_back( pulsar_ephemeris );
+  if( pulsar_ephemeris )
+    ephemerides.push_back( pulsar_ephemeris );
 }
 
 void dsp::Fold::transformation ()
@@ -390,7 +434,7 @@ void dsp::Fold::transformation ()
 		 output->get_reference_phase(), get_reference_phase() );
 
   // Temporarily make sure the DMs are the same
-  if( pulsar_ephemeris )
+  if( pulsar_ephemeris || dispersion_measure >= 0 )
     output->set_dispersion_measure( input->get_dispersion_measure() ); 
 
   if (verbose)
@@ -447,8 +491,23 @@ void dsp::Fold::transformation ()
   output->set_rate (1.0/sampling_interval);
 
   // Set things out of the pulsar ephemeris
-  if( pulsar_ephemeris )
+  if( dispersion_measure > 0.0 ){
+    output->set_dispersion_measure( dispersion_measure );
+    fprintf(stderr,"folder has set DM to be %f\n",dispersion_measure);
+  }
+  else if( pulsar_ephemeris )
     output->set_dispersion_measure( pulsar_ephemeris->get_dm() );
+
+  if( archive_filename.size() > 0 ){
+    output->set_archive_filename( archive_filename );
+    fprintf(stderr,"dsp::Fold Have set archive_filename to '%s'\n",archive_filename.c_str());
+  }
+
+  if( archive_filename_extension.size() > 0 ){
+    output->set_archive_filename_extension( archive_filename_extension );
+    fprintf(stderr,"dsp::Fold yayayaya Have set archive_filename_extension to '%s'\n",archive_filename_extension.c_str());
+  }
+
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
@@ -528,14 +587,14 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
     phi   = fmod (start_time.in_seconds(), folding_period) / folding_period;
 
     if (verbose)
-      cerr << "dsp::Fold::fold CAL period=" << pfold << endl;
+      cerr << "dsp::Fold::fold constant folding period=" << pfold << endl;
 
   }
   else {
     // find the period and phase at the mid time of the first sample
     pfold = folding_polyco->period(start_time);
     phi   = folding_polyco->phase(start_time).fracturns();
-    
+
     if (verbose)
       cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
 

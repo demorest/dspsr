@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.23 $
-   $Date: 2003/11/26 08:34:48 $
-   $Author: wvanstra $ */
+   $Revision: 1.24 $
+   $Date: 2003/12/09 01:08:55 $
+   $Author: hknight $ */
 
 
 #ifndef __Fold_h
@@ -11,6 +11,7 @@
 
 #include <vector>
 
+#include "dsp/Observation.h"
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
@@ -77,21 +78,44 @@ namespace dsp {
     //! Get the number of minutes over which polynomial coefficients are valid
     unsigned get_nspan () const { return nspan; }
 
-    //! Set the period at which to fold data (in seconds)
+    //! Set the period at which to fold data for all sources (in seconds- negative for don't use)
     void set_folding_period (double folding_period);
+    //! Set the period at which to fold data, but only do it for this source (in seconds)
+    void set_folding_period (double folding_period, string _folding_period_source);
+
     //! Get the period at which to fold data (in seconds)
     double get_folding_period () const;
 
-    //! Get the phase model with which to fold data
+    //! Get the phase model which is currently being used to fold data
     const polyco* get_folding_polyco () const;
 
-    //! Get the ephemeris with which to create the phase model
+    //! Get the ephemeris which is currently being used to create the phase model
     const psrephem* get_pulsar_ephemeris () const;
 
     //! Set the reference phase (phase of bin zero)
     void set_reference_phase (double phase);
     //! Get the reference phase (phase of bin zero)
     double get_reference_phase () const { return reference_phase; }
+
+    //! Set the DM to go in the output PhaseSeries (A negative DM signifies to just use the ephemeris DM)
+    void set_dispersion_measure(double _dispersion_measure)
+    { dispersion_measure = _dispersion_measure; }
+
+    //! Inquire the DM to go in the output PhaseSeries (A negative DM signifies to just use the ephemeris DM)
+    double get_dispersion_measure(){ return dispersion_measure; }
+
+    //! Give the output PhaseSeries the filename its Archive should be written to
+    void set_archive_filename(string _archive_filename){ archive_filename = _archive_filename; }
+
+    //! Inquire the filename the Archive will be written to, if any specified
+    string get_archive_filename(){ return archive_filename; }
+
+    //! Give the output PhaseSeries the filename extension its Archive will be given
+    void set_archive_filename_extension(string _archive_filename_extension)
+    { archive_filename_extension = _archive_filename_extension; }
+
+    //! Inquire the filename extension the Archive will be given, if any specified
+    string get_archive_filename_extension(){ return archive_filename_extension; }    
 
     //! Overload Transformation::set_input to set weighted_input
     void set_input (TimeSeries* input);
@@ -133,8 +157,11 @@ namespace dsp {
     //! Used by the MultiFold class
     uint64 get_ndat_fold(){ return ndat_fold; }
 
-    //! Period at which to fold data (CAL)
+    //! Period at which to fold data
     double folding_period;
+
+    //! The source name for which to fold at 'folding_period'.  If this is null then all sources are folded at 'folding_period'
+    string folding_period_source;
 
     //! Set when Tranformation::input is a Weighted TimeSeries
     Reference::To<const WeightedTimeSeries> weighted_input;
@@ -157,6 +184,16 @@ namespace dsp {
     //! Flag that the polyco is built for the given ephemeris and input
     bool built;
 
+    //! The DM to go in the output PhaseSeries
+    //! If less than zero, the ephemeris DM is used
+    double dispersion_measure;
+
+    //! Used to specify the final output Archive filename
+    string archive_filename;
+
+    //! Used to specify the final output Archive filename extension
+    string archive_filename_extension;
+
     //! Polycos from which to choose
     vector< Reference::To<polyco> > polycos;
 
@@ -169,13 +206,17 @@ namespace dsp {
     //! INTERNAL: the number of time samples to fold
     uint64 ndat_fold;
 
+  private:
+
+    // Generates folding_polyco from the given ephemeris
+    Reference::To<polyco> get_folding_polyco(const psrephem* pephemeris,
+					     const Observation* observation);
+
     //! Set the phase model with which to fold data
     void set_folding_polyco (const polyco* folding_polyco);
 
     //! Set the ephemeris with which to create the phase model
     void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
-
-  private:
 
     //! Phase model with which to fold data (PSR)
     Reference::To<const polyco> folding_polyco;

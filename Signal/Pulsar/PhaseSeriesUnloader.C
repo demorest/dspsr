@@ -16,11 +16,17 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
+  if( data->get_archive_filename() != string() )
+    return make_unique(data->get_archive_filename(),"",data);
+
   string filename;
+  string fname_extension = filename_extension;
+
+  if( data->get_archive_filename_extension() != string() )
+    fname_extension = data->get_archive_filename_extension();
 
   if ( filename_pattern.empty() )
-    filename = data->get_default_id () + filename_extension;
-
+    filename = data->get_default_id () + fname_extension;
   else {
 
     char* fname = new char[FILENAME_MAX];
@@ -38,6 +44,16 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
       throw Error (FailedSys, "dsp::PhaseSeriesUnloader::get_filename",
 		   "error MJD::datestr(" + filename_pattern + ")");
   }
+  
+  fprintf(stderr,"dsp::PhaseSeriesUnloader::get_filename() after second bit filename='%s'\n",
+	  filename.c_str());
+
+  return make_unique(filename,fname_extension,data);
+}
+
+string dsp::PhaseSeriesUnloader::make_unique(string filename,string fname_extension,
+					     const PhaseSeries* data) const{
+  string unique_filename = filename;
 
   if (data->get_integration_length() < 1.0) {
 
@@ -49,16 +65,16 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
       Phase phase = poly->phase ( data->get_start_time() );
       phase = (phase + 0.5-data->get_reference_phase()).Ceil();
 
-      filename = stringprintf ("pulse_"I64, phase.intturns());
-      filename += filename_extension;
+      unique_filename = stringprintf ("pulse_"I64, phase.intturns());
+      unique_filename += fname_extension;
     }
     else
       cerr << "WARNING: integration length < 1 sec.\n"
-	"'" << filename << "' may not be unique." << endl;
+	"'" << unique_filename << "' may not be unique." << endl;
 
   }
 
-  return filename;
+  return unique_filename;
 }
 
 //! Set the PhaseSeries from which Profile data will be constructed

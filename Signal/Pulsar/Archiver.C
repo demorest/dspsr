@@ -206,7 +206,10 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
     archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()), false );
   }
 
+  fprintf(stderr,"Archiver going to set archive filename\n");
   archive-> set_filename (get_filename (phase));
+  fprintf(stderr,"Archiver set archive filename to '%s'\n",archive->get_filename().c_str());
+  //  exit(0);
 
 }
 catch (Error& error) {
