@@ -14,18 +14,19 @@ dsp::Archiver::~Archiver ()
 {
 }
 
-void dsp::Archiver::set_agent (Pulsar::Archive::Agent* _agent)
+void dsp::Archiver::set_archive_class (const char* _archive_class_name)
 {
-  agent = _agent;
+  archive_class_name = _archive_class_name;
 }
 
 
 void dsp::Archiver::unload (const PhaseSeries* data)
 {
-  if (!agent)
-    throw Error (InvalidState, "dsp::Archiver::unload", "no Archive::Agent");
+  if (archive_class_name.size() == 0)
+    throw Error (InvalidState, "dsp::Archiver::unload", 
+		 "Archive class name not specified");
 
-  Pulsar::Archive* archive = agent->new_Archive ();
+  Pulsar::Archive* archive = Pulsar::Archive::new_Archive (archive_class_name);
 
   set (archive, data);
 
