@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.12 $
-   $Date: 2003/09/27 08:43:07 $
+   $Revision: 1.13 $
+   $Date: 2003/10/25 07:21:52 $
    $Author: hknight $ */
 
 
@@ -26,7 +26,7 @@ namespace dsp {
 
     //! Set this to 'false' if you don't need to yamasaki verify
     static bool want_to_yamasaki_verify;
-    
+
   protected:
 
     //! Open the file
