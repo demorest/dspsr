@@ -11,11 +11,17 @@
 #include <unistd.h>
 #include <errno.h>
 
+extern "C" void pumadump (const Header_type *hdr, FILE* fptr, Boolean verb);
 
 dsp::PuMaFile::PuMaFile (const char* filename)
   : File ("PuMa")
 {
   //! The PuMa header
+  unsigned header_size = sizeof (Header_type);
+
+  if (header_size != 4504)
+    throw Error (InvalidState, "dsp::PuMaFile", "sizeof (Header_type) != 4504");
+
   header = malloc (sizeof(Header_type));
 
   if (filename)
@@ -29,7 +35,7 @@ dsp::PuMaFile::~PuMaFile ()
 
 bool dsp::PuMaFile::is_valid (const char* filename) const
 { 
-  return false;
+  return true; // false;
 }
 
 void dsp::PuMaFile::open_file (const char* filename)
@@ -42,11 +48,11 @@ void dsp::PuMaFile::open_file (const char* filename)
     throw Error (FailedSys, "dsp::PuMaFile::open",
 		 "failed fopen(%s)", filename);
  
-  Header_type* hdr = (Header_type*) hdr;
+  Header_type* hdr = (Header_type*) header;
 
   // call the parsing routine from the puma library
   prheader (hdr, fptr);
-  
+
   if (verbose)
     cerr << "dsp::PuMaFile::open_file Skipping adjustments" << endl;
   
@@ -54,14 +60,19 @@ void dsp::PuMaFile::open_file (const char* filename)
   
   /* int ParBlkSize; Number of bytes in second (parameter) block */
   unsigned nadjust = hdr->gen.ParBlkSize / (sizeof(Adjustments));
+
   fseek(fptr, nadjust*sizeof(Adjustments), SEEK_CUR);
-  
   header_bytes = ftell (fptr);
-  
   fclose (fptr);
-  
-  set_info (hdr);
-  
+
+  if (verbose)
+    cerr << "dsp::PuMaFile::open_file parse header" << endl;
+
+  parse (hdr);
+
+  if (verbose)
+    cerr << "dsp::PuMaFile::open_file call open(" << filename << ")" << endl;
+
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
     throw Error (FailedSys, "dsp::PuMaFile::open", 
@@ -71,34 +82,42 @@ void dsp::PuMaFile::open_file (const char* filename)
     cerr << "dsp::PuMaFile::open exit" << endl;
 }
   
-void dsp::PuMaFile::set_info (const void* header)
+void dsp::PuMaFile::parse (const void* header)
 {
+  Error::verbose = true;
   const Header_type* hdr = (const Header_type*) header;
 
   /* Boolean Raw;    In case of raw data */
   if (hdr->redn.Raw != true)
-    throw Error (InvalidState, "dsp::PuMaFile::set_info",
+    throw Error (InvalidState, "dsp::PuMaFile::parse",
 		 "Data file does not contain raw data");
+
+  if (verbose)
+    pumadump (hdr, stderr, verbose);
 
   /* Boolean Cluster[MAXFREQBANDS]; Is Data from this cluster in this file? */
   unsigned iband = MAXFREQBANDS;
   
   for (unsigned i=0; i < MAXFREQBANDS; i++)
-    if (hdr->gen.Cluster[iband] == true) {
+    if (hdr->gen.Cluster[i]) {
       if (iband != MAXFREQBANDS)
-	throw Error (InvalidState, "parsePuMaHeader",
-		     "More than one cluster in data file");
+	throw Error (InvalidState, "dsp::PuMaFile::parse",
+		     "More than one cluster in data file (%d and %d)",
+		     iband, i);
       iband = i;
     }
   
   if (iband == MAXFREQBANDS)
-    throw Error (InvalidState, "parsePuMaHeader", "Cluster not set");
-  
+    throw Error (InvalidState, "dsp::PuMaFile::parse", "Cluster not set");
+
+  if (verbose)
+    cerr << "dsp::PuMaFile::parse Cluster " << iband << " in this file" << endl;
+
   /* Until further notice */
   info.set_basis (Signal::Linear);
 
   /* char ObsType[TXTLEN]; Research/test/calibration */
-  cerr << "parsePuMaHeader type = " << hdr->obs.ObsType << endl;
+  cerr << "dsp::PuMaFile::parse type = " << hdr->obs.ObsType << endl;
   info.set_type (Signal::Pulsar);
 
   unsigned npol_observed = 0;
@@ -141,15 +160,14 @@ void dsp::PuMaFile::set_info (const void* header)
   }
   else
     invalid = true;
-  
+
   if (invalid)
-    throw Error (InvalidState, "parsePuMaHeader", "unknown Mode");
+    throw Error (InvalidState, "dsp::PuMaFile::parse", "unknown Mode");
 
   if (info.get_state() == Signal::Nyquist)
-    info.set_mode ("Mode 0");
+    info.set_mode( string("Mode 0") );
   else
-    info.set_mode ("Mode 1");
-
+    info.set_mode( string("Mode 1") );
 
   info.set_npol (npol_observed);
 
@@ -159,33 +177,39 @@ void dsp::PuMaFile::set_info (const void* header)
   
   /* for now data is always real-valued */
   info.set_ndim (1);
-  
+
   /* int BitsPerSamp; Number of output bits ; 1,2,4,8 */
   info.set_nbit (hdr->mode.BitsPerSamp);
 
-  /* int DataBlkSize; Number of bytes in data block */
-  info.set_ndat( info.get_nsamples (hdr->gen.DataBlkSize) );
-  
+  if (verbose)
+    cerr << "dsp::PuMaFile::parse " << info.get_nbyte() << " bytes/sample" 
+         << endl;
+
+#if 0
   string Westerbork = "WESTERBORK";
     
   /* char Name[NAMELEN];  Name of the observatory  */
   if (hdr->obsy.Name != Westerbork)
-    throw Error (InvalidState, "parsePuMaHeader",
-		 "Observatory name != " + Westerbork);
-  
+    Error (InvalidState, "dsp::PuMaFile::parse",
+		 "Observatory name='%s' != '%s'",
+		 hdr->obsy.Name, Westerbork.c_str());
+#endif
+
   // Always Westerbork for now
   info.set_telescope_code ('i');
-  
+
   /* char Pulsar[NAMELEN]; Using the Taylor (1993) convention.
      e.g. "PSR J0218+4232" */
   string pulsar = hdr->src.Pulsar;
   
   // strip off the "PSR"
   stringtok (&pulsar, " ");
-  cerr << "parsePuMaHeader source='" << pulsar << "'" << endl;
+
+  if (verbose)
+    cerr << "dsp::PuMaFile::parse source='" << pulsar << "'" << endl;
   
   info.set_source (pulsar);
-  
+
   sky_coord position;
   
   /* double RA;  RA of the target (in radians)  */
@@ -206,20 +230,29 @@ void dsp::PuMaFile::set_info (const void* header)
   /* double Width; Width of the band (in MHz): 2.5, 5.0 or 10.0 */
   info.set_bandwidth( sign * hdr->WSRT.Band[iband].Width );
 
-  /* int DataMJD;     MJD of first sample of this data block */
-  /* double DataTime; Time of first sample (fraction of day) */
-  info.set_start_time( MJD( hdr->gen.DataMJD, hdr->gen.DataTime ) );
-  
+  /* int StMJD;       MJD at start of observation */
+  /* int StTime;      Starttime (s after midnight, multiple of 10 s) */
+  info.set_start_time( MJD( hdr->obs.StMJD, int(hdr->obs.StTime), 0.0 ) );
+
   /* int Tsamp; Mode 0-4 ; output sample interval in nano sec */
   double sampling_interval = 1e-9 * double(hdr->mode.Tsamp);
   info.set_rate (1.0/sampling_interval);
-  
+
+  /* int DataBlkSize; Number of bytes in data block */
+  info.set_ndat( info.get_nsamples (hdr->gen.DataBlkSize) );
+
+  /* The start time of the observation must be offset by the file number */
+  /* int FileNum;     Which file out of NFiles is this */
+  uint64 offset_samples = uint64(hdr->gen.FileNum) * info.get_ndat();
+
+  info.change_start_time (offset_samples);
+
   info.set_scale (1.0);
   
   info.set_swap (false);
   
   info.set_dc_centred (false);
-  
+
   /* char ScanNum[NAMELEN]; FileSeriesNumber(FF)+Cluster(C). */
   info.set_identifier (hdr->gen.ScanNum);
   
@@ -228,10 +261,10 @@ void dsp::PuMaFile::set_info (const void* header)
   
   info.set_dispersion_measure (0);
   info.set_between_channel_dm (0);
-    
+
+  if (verbose)
+    info.obs2file (stderr);
 }
-
-
   
 
 #if FUTURE_WORK
