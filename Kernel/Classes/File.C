@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-
 //! Constructor
 dsp::File::File (const char* name) : Seekable (name)
 { 
@@ -42,8 +41,12 @@ void dsp::File::init()
 }
 
 //! Return a pointer to a new instance of the appropriate sub-class
-dsp::File* dsp::File::create (const char* filename)
+dsp::File* dsp::File::create (const char* filename, int _bs_index)
 { 
+  if( verbose )
+    fprintf(stderr,"In dsp::File::create() with filename='%s' and _bs_index=%d\n",
+	    filename,_bs_index);
+
   // check if file can be opened for reading
   FILE* fptr = fopen (filename, "r");
   if (!fptr) throw Error (FailedSys, "dsp::File::create",
@@ -56,17 +59,15 @@ dsp::File* dsp::File::create (const char* filename)
 		      << " registered sub-classes" << endl;
 
     for (unsigned ichild=0; ichild < registry.size(); ichild++) {
+      if( verbose )
+	fprintf(stderr,"Testing child %d: '%s'\n",
+		ichild,registry[ichild]->get_name().c_str());
 
-      if ( registry[ichild]->is_valid (filename) ) {
-	
+      if ( registry[ichild]->is_valid (filename,_bs_index) ) {	
 	File* child = registry.create (ichild);
-	
-	child-> open( filename );
-	
-	return child;
-	
+	child->open( filename,_bs_index );	
+	return child;	
       }
-
     }
     
   } catch (Error& error) {
@@ -81,23 +82,34 @@ dsp::File* dsp::File::create (const char* filename)
     msg += registry[ichild]->get_name() + " ";
 
   throw Error (InvalidParam, "dsp::File::create", msg);
-
 }
 
-
-void dsp::File::open (const char* filename)
+void dsp::File::open (const char* filename,int _bs_index)
 {
-  open (filename, 0);
-}
+  bs_index = _bs_index;
 
+  if( verbose )
+    fprintf(stderr,"\nIn dsp::File::open (char*) with filename='%s' and bs_index=%d\n",
+	    filename,bs_index);
+
+  const PseudoFile* null_ptr = 0;
+  open (filename, null_ptr );
+}
 
 void dsp::File::open (const PseudoFile& file)
 {
+  if( verbose )
+    fprintf(stderr,"\nIn dsp::File::open (pseudofile) with filename='%s'\n",
+	    file.filename.c_str());
+
   open (0, &file);
 }
 
 void dsp::File::open (const char* filename, const PseudoFile* file)
 {
+  if( verbose )
+    fprintf(stderr,"In dsp::File::open() with bs_index=%d\n",bs_index);
+
   close ();
 
   if (filename) {
@@ -111,6 +123,8 @@ void dsp::File::open (const char* filename, const PseudoFile* file)
   else if (file) {
 
     filename = file->filename.c_str();
+    bs_index = file->bs_index;
+
     fd = ::open (filename, O_RDONLY);
     if (fd < 0)
       throw Error (FailedSys, "dsp::File::open PseudoFile", 
