@@ -128,6 +128,9 @@ namespace dsp {
     //! End of data
     bool end_of_data;
 
+    //! End of data has been sent to this node
+    vector<bool> eod_sent;
+
     //! The source from which input data will be read
     Reference::To<Input> input;
 

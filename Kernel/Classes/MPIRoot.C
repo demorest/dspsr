@@ -179,10 +179,6 @@ void dsp::MPIRoot::prepare ()
     cerr << "dsp::MPIRoot::prepare rank=" << mpi_rank << " block_size="
 	 << get_block_size() << endl;
 
-  if (data_request != MPI_REQUEST_NULL)
-    MPI_Request_free (&data_request);
-
-  data_request = MPI_REQUEST_NULL;
   ready = 0;
 
   if (get_block_size ())
@@ -190,8 +186,19 @@ void dsp::MPIRoot::prepare ()
 
   end_of_data = false;
 
-  if (mpi_rank == mpi_root)
+  if (mpi_rank == mpi_root) {
+
+    eod_sent.resize (mpi_size);
+
+    for (int inode=0; inode<mpi_size; inode++)
+      eod_sent[inode] = false;
+
+    // don't need to send to self
+    eod_sent[mpi_rank] = true;
+
     request_ready ();
+
+  }
 
   else if (ready)
     request_data ();
@@ -295,8 +302,20 @@ void dsp::MPIRoot::check_block_size (const char* method)
 int dsp::MPIRoot::next_destination ()
 {
   ensure_root ("dsp::MPIRoot::next_destination");
+
   wait (ready_request, true);
-  request_ready();
+
+  bool post_another_request = false;
+
+  for (int inode=0; inode<mpi_size; inode++)
+    if (!eod_sent[inode])
+      post_another_request = true;
+
+  if (post_another_request)
+    request_ready();
+  else
+    end_of_data = true;
+
   return status.MPI_SOURCE;
 }
 
@@ -370,8 +389,11 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
 
     datptr = (char*) data->get_rawptr();
   }
-  else if (verbose)
-    cerr << "dsp::MPIRoot::send_data sending end of data" << endl;
+  else {
+    if (verbose)
+      cerr << "dsp::MPIRoot::send_data sending end of data" << endl;
+    eod_sent[dest] = true;
+  }
 
   if (nbytes > data_size)
     throw Error (InvalidParam, "dsp::MPIRoot::send_data",
@@ -416,12 +438,19 @@ void dsp::MPIRoot::request_data ()
   MPI_Irecv (pack_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag, comm, 
              &data_request);
 
+  if (data_request == MPI_REQUEST_NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::request_data",
+                 "Unexpected MPI_REQUEST_NULL from MPI_Irecv");
+
   if (ready_request != MPI_REQUEST_NULL)
     throw Error (InvalidState, "dsp::MPIRoot::request_data",
                  "ready_request already pending");
 
   // post send ready-to-receive request
   MPI_Isend (&ready, 1, MPI_INT, mpi_root, mpi_tag, comm, &ready_request);
+  if (ready_request == MPI_REQUEST_NULL)
+    throw Error (InvalidState, "dsp::MPIRoot::request_data",
+                 "Unexpected MPI_REQUEST_NULL from MPI_Isend");
 }
 
 
@@ -471,7 +500,7 @@ void dsp::MPIRoot::load_data (BitSeries* data)
 
   if (pack_buf == NULL)
     throw Error (InvalidState, "dsp::MPIRoot::load_data", 
-		 "buffer not prepared.  call bcast_setup first.");
+		 "pack buffer not ready");
 
   int received = receive_data ();
 
@@ -500,6 +529,13 @@ void dsp::MPIRoot::load_data (BitSeries* data)
   Input::set_block_size (request_ndat);
 
   data->set_ndat( data->get_nsamples(received) );
+
+  // extra sanity check
+  if (data->get_nbytes() != unsigned(received))
+    throw Error (InvalidState, "dsp::MPIRoot::load_data", 
+		 "BitSeries::nbytes=%d != received=%d",
+		 data->get_nbytes(), received);
+
   data->set_start_time( info.get_start_time() );
   data->change_start_time( start_sample );
 
