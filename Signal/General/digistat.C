@@ -53,7 +53,7 @@ int main (int argc, char** argv)
     case 'c':
       scanned = sscanf (optarg, "%f", &tbc_cutoff);
       if (scanned != 1) {
-        cerr << "dspsr: error parsing " << optarg << " as"
+        cerr << "digistat: error parsing " << optarg << " as"
           " dynamic output level assignment cutoff" << endl;
         return -1;
       }
@@ -66,7 +66,7 @@ int main (int argc, char** argv)
     case 'n':
       scanned = sscanf (optarg, "%u", &tbc_nsample);
       if (scanned != 1) {
-	cerr << "dspsr: error parsing " << optarg << " as"
+	cerr << "digistat: error parsing " << optarg << " as"
 	  " number of samples used to estimate undigitized power" << endl;
 	return -1;
       }
@@ -75,7 +75,7 @@ int main (int argc, char** argv)
     case 's':
       scanned = sscanf (optarg, "%f", &time_per_plot);
       if (scanned != 1) {
-        cerr << "dspsr: error parsing " << optarg << " as"
+        cerr << "digistat: error parsing " << optarg << " as"
           " time per plot" << endl;
         return -1;
       }
@@ -84,7 +84,7 @@ int main (int argc, char** argv)
     case 't':
       scanned = sscanf (optarg, "%f", &tbc_threshold);
       if (scanned != 1) {
-        cerr << "dspsr: error parsing " << optarg << " as"
+        cerr << "digistat: error parsing " << optarg << " as"
           " sampling threshold" << endl;
         return -1;
       }
@@ -99,10 +99,10 @@ int main (int argc, char** argv)
     case 'w':
       scanned = sscanf (optarg, "%f", &time_per_point);
       if (scanned != 1) {
-        cerr << "dspsr: error parsing " << optarg << " as"
-          " time per point" << endl;
+        cerr << "digistat: error parsing -w " << optarg << endl;
         return -1;
       }
+      cerr << "digistat: time per point=" << time_per_point << " s" << endl;
       break;
 
 
@@ -186,7 +186,7 @@ int main (int argc, char** argv)
     uint64 block_size = uint64(samples);
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
 
-    cerr << samples << " samples per " << time_per_plot << " s plot" << endl;
+    cerr << block_size << " samples per " << time_per_plot << " s plot" << endl;
 
     manager->set_block_size (block_size);
 
