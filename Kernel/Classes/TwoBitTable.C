@@ -1,8 +1,10 @@
+#include <stdio.h>
+#include <iostream>
 #include "TwoBitTable.h"
 
 dsp::TwoBitTable::TwoBitTable (Type type)
 {
-  // 256 possible unsigned chars * 4 floats per bytes
+  // 256 possible unsigned chars * 4 floats per byte
   table = new float [ 256 * 4 ];
   lo_val = 0.25;
   generate (table, type, lo_val, 3.0*lo_val);
@@ -25,6 +27,11 @@ void dsp::TwoBitTable::generate (float* table, Type type, float lo, float hi)
   float voltages[4];
   dsp::TwoBitTable::four_vals (voltages, type, lo, hi);
 
+#ifdef _DEBUG
+  fprintf (stderr, "TwoBitTable::generate: %f %f %f %f\n", 
+	   voltages[0],voltages[1],voltages[2],voltages[3]);
+#endif
+
   float* tabval = table;
 
   unsigned char bits = 0x00;
@@ -34,9 +41,15 @@ void dsp::TwoBitTable::generate (float* table, Type type, float lo, float hi)
     // the most significant two bits are considered to be first
     for (int shift=6; shift >= 0; shift-=2) {
       *tabval = voltages[(bits>>shift)&mask];
+#ifdef _DEBUG
+      fprintf (stderr, "%f ", *tabval);
+#endif
       tabval ++;
     }
     bits ++;
+#ifdef _DEBUG
+    fprintf (stderr, "\n");
+#endif
   }
 }
 
@@ -45,24 +58,25 @@ void dsp::TwoBitTable::four_vals (float* vals, Type type, float lo, float hi)
   switch (type) {
 
   case OffsetBinary:
-    vals[0x00] = -hi;
-    vals[0x01] = -lo;
-    vals[0x10] = lo;
-    vals[0x11] = hi;
+    //cerr << "TwoBitTable::four_vals Offset Binary" << endl;
+    vals[0] = -hi;
+    vals[1] = -lo;
+    vals[2] = lo;
+    vals[3] = hi;
     break;
     
   case SignMagnitude:
-    vals[0x00] = lo;
-    vals[0x01] = hi;
-    vals[0x10] = -lo;
-    vals[0x11] = -hi;
+    vals[0] = lo;
+    vals[1] = hi;
+    vals[2] = -lo;
+    vals[3] = -hi;
     break;
     
   case TwosComplement:
-    vals[0x00] = lo;
-    vals[0x01] = hi;
-    vals[0x10] = -hi;
-    vals[0x11] = -lo;
+    vals[0] = lo;
+    vals[1] = hi;
+    vals[2] = -hi;
+    vals[3] = -lo;
     break;
 
   default:
