@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/05/17 09:48:33 $
-   $Author: pulsar $ */
+   $Revision: 1.16 $
+   $Date: 2003/07/01 05:14:56 $
+   $Author: hknight $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -43,8 +43,14 @@ namespace dsp {
     //! Add each value in data to this
     virtual TimeSeries& operator += (const TimeSeries& data);
 
+    //! Multiple each value by this scalar
+    virtual TimeSeries& operator *= (float mult);
+
     //! Hack together 2 different bands (not pretty)
     virtual void hack_together(vector<TimeSeries*> bands);
+
+    //! Convenience interface to the above hack_together
+    virtual void hack_together(TimeSeries* band1, TimeSeries* band2);
 
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
