@@ -70,7 +70,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // CPSR2 data is single-channel
   //
-  nchan = 1;
+  set_nchan(1);
 
   // //////////////////////////////////////////////////////////////////////
   //
