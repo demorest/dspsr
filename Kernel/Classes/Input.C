@@ -6,11 +6,37 @@
 
 bool dsp::Input::verbose = false;
 
-void dsp::Input::init()
+dsp::Input::Input ()
 {
   block_size = overlap = 0;
   next_sample = 0;
 }
+
+dsp::Input::~Input ()
+{
+}
+
+//! Load data into the Timeseries specified with set_output
+void dsp::Input::operate ()
+{
+  if (verbose)
+    cerr << "Input::operate" << endl;
+  
+  if (!output)
+    throw Error (InvalidState, "Input::operate", "no output Timeseries");
+
+  load (output);
+}
+
+//! Set the Timeseries to which data will be loaded
+void dsp::Input::set_output (Timeseries* data)
+{
+  if (!output || output != data) {
+    output = data;
+    output -> input_sample = -1;
+  }
+}
+
 
 /*! Set the Observation attributes of data and load the next block of data
  */

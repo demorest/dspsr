@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/10/19 06:45:06 $
+   $Revision: 1.6 $
+   $Date: 2002/10/21 05:58:44 $
    $Author: pulsar $ */
 
 
@@ -29,16 +29,22 @@ namespace dsp {
     static bool verbose;
     
     //! Constructor
-    Input () { init(); }
+    Input ();
     
     //! Destructor
-    virtual ~Input () { }
+    virtual ~Input ();
     
     //! End of data
     virtual bool eod() = 0;
     
     //! Load Timeseries data
     virtual void load (Timeseries* data);
+
+    //! Load data into the Timeseries specified with set_output
+    virtual void operate ();
+
+    //! Set the Timeseries to which data will be loaded
+    virtual void set_output (Timeseries* data);
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
@@ -89,14 +95,14 @@ namespace dsp {
     uint64 recycle_data (Timeseries* data);
 
   private:
-    //! Initialize all attributes with null values
-    void init();
-    
     //! Stop watch records the amount of time spent in load method
     RealTimer load_time;
 
     //! First time sample to be read on the next call to load_data
     uint64 next_sample;
+
+    //! The Timeseries to which data will be loaded on next call to operate
+    Reference::To<Timeseries> output;
 
   };
 
