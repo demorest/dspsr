@@ -144,14 +144,13 @@ void dsp::IncoherentFilterbank::form_stokesI(){
     
     // (3) SLD and add polarisations back
     register const float* real0 = scratch0.get();
-    register const float* imag0 = scratch0.get()+1;
+    register const float* imag0 = real0 + nsamp_fft/2+1;
     
     register const float* real1 = scratch1.get();
-    register const float* imag1 = scratch1.get()+1;  
+    register const float* imag1 = real1 + nsamp_fft/2+1;
     
-    register unsigned j=0; 
-    for( unsigned i=0; i<nchan; ++i, j+=2)
-      det[i] = real0[j]*real0[j] + imag0[j]*imag0[j]  + real1[j]*real1[j] + imag1[j]*imag1[j];
+    for( unsigned i=0; i<nchan; ++i)
+      det[i] = real0[i]*real0[i] + imag0[i]*imag0[i]  + real1[i]*real1[i] + imag1[i]*imag1[i];
   }
   
   // (4) Convert the BitSeries to a TimeSeries in output's data array 
@@ -194,12 +193,10 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
       scfft1dc(scratch.get(), nsamp_fft, 1, wsave->begin()); 
       // (3) SLD back
       register const float* real = scratch.get();
-      register const float* imag = scratch.get()+1;
+      register const float* imag = real + nsamp_fft+1;
       
-      register unsigned j=0;
-      
-      for( unsigned i=0; i<nchan; ++i, j+=2)
-	det[i] = real[j]*real[j] + imag[j]*imag[j];
+      for( unsigned i=0; i<nchan; ++i)
+	det[i] = real[i]*real[i] + imag[i]*imag[i];
     }
   
     // (4) Convert the BitSeries to a TimeSeries in output's data array 
@@ -244,6 +241,20 @@ void dsp::IncoherentFilterbank::form_undetected(){
     }
   }
 
+  /* (4) Convert to a TimeSeries */
+  for( unsigned ipol=0; ipol<2; ipol++){
+    float* from = input->get_datptr(0,ipol);
+    float* to = output->get_datptr(0,ipol);
+
+    register unsigned from_i = 0;
+    register unsigned input_stride = nchan;
+    register unsigned npt = 2*npart;
+
+    for( unsigned ipt=0; ipt<npt; ++ipt, from_i += input_stride )
+      to[ipt] = from[from_i];
+  }
+
+  /* old way- for if you were using scfft1d instead of scfft1dc
   // (4) Convert the BitSeries to a TimeSeries
   Reference::To<dsp::BitSeries> bs(new dsp::BitSeries);
   bs->Observation::operator=( *input );
@@ -264,7 +275,7 @@ void dsp::IncoherentFilterbank::form_undetected(){
 
   order->operate();
 
-  output->attach( (float*)bs->get_rawptr() );
+  output->attach( (float*)bs->get_rawptr() );*/
 }
 
 void dsp::IncoherentFilterbank::acquire_plan(){
