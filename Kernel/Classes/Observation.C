@@ -465,7 +465,7 @@ void dsp::Observation::set_default_basis ()
 		 "unrecognized telescope: %c\n", telescope);
 }
 
-string dsp::Observation::get_default_id (const MJD& mjd)
+string dsp::Observation::get_default_id (const MJD& mjd, const Observation* obs)
 {
   static char id [15];
   utc_t startutc = UTC_INIT;
@@ -473,12 +473,15 @@ string dsp::Observation::get_default_id (const MJD& mjd)
   mjd.UTC (&startutc, NULL);
   utc2str (id, startutc, "yyyydddhhmmss");
 
+  if( obs && obs->get_identifier() != string() && obs->get_identifier()[0] != '2' && obs->get_identifier()[0] != '1' )
+    return obs->get_identifier()[0] + string(id);
+
   return string (id);
 }
 
 string dsp::Observation::get_default_id () const
 {
-  return get_default_id (start_time);
+  return get_default_id (start_time,this);
 }
 
 string dsp::Observation::get_state_as_string () const

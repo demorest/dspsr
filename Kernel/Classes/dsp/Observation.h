@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.66 $
-   $Date: 2004/04/21 09:52:18 $
+   $Revision: 1.67 $
+   $Date: 2004/04/24 12:03:36 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -214,7 +214,8 @@ namespace dsp {
     bool get_detected () const;
 
     //! Returns a convenient id string for a given MJD
-    static string get_default_id (const MJD& mjd);
+    //! The supplied dsp::Observation is for pinching the 'm'/'n' part of the 'identifier' attribute
+    static string get_default_id (const MJD& mjd, const Observation* obs=0);
 
     //! Returns default_id (start_time);
     string get_default_id () const;
