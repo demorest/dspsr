@@ -920,7 +920,7 @@ Phase dsp::Observation::samp2phase(uint64 samp){
 
   Reference::To<psrephem> eph(new psrephem);
 
-  if( !eph->create(get_source()) )
+  if( eph->create(get_source()) < 0 )
     throw Error(InvalidState,"dsp::Observation::samp2phase(uint64)",
                 "Could not create ephemeris for source '%s'",
                 get_source().c_str());
