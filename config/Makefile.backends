@@ -14,175 +14,175 @@ BACKENDS :=
 
 ##############################################################################
 #
-# Uncomment the following line to compile PMDAQ specific code
+# PMDAQ specific code
 #
-#PMDAQ:=yes
-
 ifeq ($(PMDAQ),yes)
-CPPFLAGS += -D_DSP_PMDAQ=1
+
+CPPFLAGS += -DDSP_PMDAQ=1
 CLASSES += PMDAQFile PMDAQ_Observation OneBitCorrection
 BACKENDS += PMDAQ
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile CPSR2 specific code
+# CPSR2 specific code
 #
-#CPSR2:=yes
-
 ifeq ($(CPSR2),yes)
-CPPFLAGS += -D_DSP_CPSR2=1
+
+CPPFLAGS += -DDSP_CPSR2=1
 CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation
 BACKENDS += CPSR2
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile CPSR2 specific code
+# CPSR2 specific code
 #
-#CPSR2_4bit:=yes
-
 ifeq ($(CPSR2_4bit),yes)
-CPPFLAGS += -D_DSP_CPSR2_4bit=1
+
+CPPFLAGS += -DDSP_CPSR2_4bit=1
 CLASSES += CPSR2FourBitUnpacker 
 BACKENDS += CPSR2_4bit
+
 endif
 
 
 ##############################################################################
 #
-# Uncomment the following line to compile CPSR specific code
+# CPSR specific code
 #
-#CPSR:=yes
-
 ifeq ($(CPSR),yes)
-CPPFLAGS += -D_DSP_CPSR=1
+
+CPPFLAGS += -DDSP_CPSR=1
 CLASSES += CPSRFile CPSRTwoBitCorrection 
 BACKENDS += CPSR
 LBACKENDS += -lcpsr_obs
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile S2 specific code
+# S2 specific code
 #
-#S2:=yes
-
 ifeq ($(S2),yes)
-CPPFLAGS += -D_DSP_S2=1
+
+CPPFLAGS += -DDSP_S2=1
 CLASSES += S2File S2TwoBitCorrection S2TwoBitTable
 BACKENDS += S2
 LBACKENDS += -ls2_obs
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile PuMa specific code
+# PuMa specific code
 #
-#PuMa:=yes
-
 ifeq ($(PuMa),yes)
-CPPFLAGS += -D_DSP_PuMa=1
+
+CPPFLAGS += -DDSP_PuMa=1
 BACKENDS += PuMa
 INCFLAGS += -I${DEVEL_INSTALL}/include
-LBACKENDS += -ldsp_PuMa -L${DEVEL_INSTALL}/lib -lpuma -lputils
+LBACKENDS += -ldsp_PuMa -ldsp -L${DEVEL_INSTALL}/lib -lpuma -lputils
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile Mark4 specific code
+# Mark4 specific code
 # 
 # Don't be misled by the name, it is really the Mark4 encoders that are giving
 # the file this name. This is because the Mark5 recorders - currently - use
 # Mark4 formatters and record the data like a tape drive would (without parity)
 #
-#MARK4:=yes
-
 ifeq ($(MARK4),yes)
-CPPFLAGS += -D_DSP_MARK4=1
+
+CPPFLAGS += -DDSP_MARK4=1
 BACKENDS += MARK4
 LBACKENDS += -ldsp_Mark4
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile Maxim specific code, for use
+# Maxim specific code, for use
 # with the Vela glitch monitoring system on the 14m dish in Hobart.
 #
 # WARNING: Don't use SMRO and Maxim at the same time. Their file type
 #          tests are identical.
 #
-#Maxim:=yes
-
 ifeq ($(Maxim),yes)
-CPPFLAGS += -D_DSP_Maxim=1
+
+CPPFLAGS += -DDSP_Maxim=1
 BACKENDS += Maxim
 LBACKENDS += -ldsp_Maxim
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile SMRO specific code
+# SMRO specific code
 # 
 # WARNING: Don't use SMRO and VSIB at the same time, VSIB is being phased out
 #
-#SMRO:=yes
-
 ifeq ($(SMRO),yes)
-CPPFLAGS += -D_DSP_SMRO=1
+
+CPPFLAGS += -DDSP_SMRO=1
 BACKENDS += SMRO
 LBACKENDS += -ldsp_SMRO
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile Japanese K5 support
+# Japanese K5 support
 # 
-#K5:=yes
-
 ifeq ($(K5),yes)
-CPPFLAGS += -D_DSP_K5=1
+
+CPPFLAGS += -DDSP_K5=1
 BACKENDS += K5
 LBACKENDS += -ldsp_K5
+
 endif
 
 
 ##############################################################################
 #
-# Uncomment the following line to compile VSIB specific code
+# VSIB specific code
 #
 # This should not be considered anymore as the better version of smro will be 
 # its replacement.
 #
-#VSIB:=yes
-
 ifeq ($(VSIB),yes)
-CPPFLAGS += -D_DSP_VSIB=1
+
+CPPFLAGS += -DDSP_VSIB=1
 BACKENDS += VSIB
 LBACKENDS += -ldsp_VSIB
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile Spigot specific code
+# Spigot specific code
 #
-#SPIGOT:=yes
-
 ifeq ($(SPIGOT),yes)
-CPPFLAGS += -D_DSP_SPIGOT=1
+
+CPPFLAGS += -DDSP_SPIGOT=1
 BACKENDS += Spigot
 LBACKENDS += -ldsp_Spigot $(LCFITSIO)
+
 endif
 
 ##############################################################################
 #
-# Uncomment the following line to compile BCPM specific code
+# BCPM specific code
 #
-#BCPM:=yes
-
 ifeq ($(BCPM),yes)
-CPPFLAGS += -D_DSP_BCPM=1
+
+CPPFLAGS += -DDSP_BCPM=1
 BACKENDS += BCPM
 LBACKENDS += -ldsp_BCPM
+
 endif
 
