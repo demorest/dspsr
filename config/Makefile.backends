@@ -16,9 +16,10 @@ BACKENDS :=
 #
 # Uncomment the following line to compile PMDAQ specific code
 #
-PMDAQ:=yes
+#PMDAQ:=yes
 
 ifeq ($(PMDAQ),yes)
+CPPFLAGS += -D_DSP_PMDAQ=1
 CLASSES += PMDAQFile PMDAQ_Observation OneBitCorrection
 BACKENDS += PMDAQ
 endif
@@ -27,9 +28,10 @@ endif
 #
 # Uncomment the following line to compile CPSR2 specific code
 #
-CPSR2:=yes
+#CPSR2:=yes
 
 ifeq ($(CPSR2),yes)
+CPPFLAGS += -D_DSP_CPSR2=1
 CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation
 BACKENDS += CPSR2
 endif
@@ -41,6 +43,7 @@ endif
 #CPSR2_4bit:=yes
 
 ifeq ($(CPSR2_4bit),yes)
+CPPFLAGS += -D_DSP_CPSR2_4bit=1
 CLASSES += CPSR2FourBitUnpacker 
 BACKENDS += CPSR2_4bit
 endif
@@ -50,9 +53,10 @@ endif
 #
 # Uncomment the following line to compile CPSR specific code
 #
-CPSR:=yes
+#CPSR:=yes
 
 ifeq ($(CPSR),yes)
+CPPFLAGS += -D_DSP_CPSR=1
 CLASSES += CPSRFile CPSRTwoBitCorrection 
 BACKENDS += CPSR
 LBACKENDS += -lcpsr_obs
@@ -65,6 +69,7 @@ endif
 #S2:=yes
 
 ifeq ($(S2),yes)
+CPPFLAGS += -D_DSP_S2=1
 CLASSES += S2File S2TwoBitCorrection S2TwoBitTable
 BACKENDS += S2
 LBACKENDS += -ls2_obs
@@ -77,6 +82,7 @@ endif
 #PuMa:=yes
 
 ifeq ($(PuMa),yes)
+CPPFLAGS += -D_DSP_PuMa=1
 BACKENDS += PuMa
 INCFLAGS += -I${DEVEL_INSTALL}/include
 LBACKENDS += -ldsp_PuMa -L${DEVEL_INSTALL}/lib -lpuma -lputils
@@ -93,6 +99,7 @@ endif
 #MARK4:=yes
 
 ifeq ($(MARK4),yes)
+CPPFLAGS += -D_DSP_MARK4=1
 BACKENDS += MARK4
 LBACKENDS += -ldsp_Mark4
 endif
@@ -108,6 +115,7 @@ endif
 #Maxim:=yes
 
 ifeq ($(Maxim),yes)
+CPPFLAGS += -D_DSP_Maxim=1
 BACKENDS += Maxim
 LBACKENDS += -ldsp_Maxim
 endif
@@ -121,6 +129,7 @@ endif
 #SMRO:=yes
 
 ifeq ($(SMRO),yes)
+CPPFLAGS += -D_DSP_SMRO=1
 BACKENDS += SMRO
 LBACKENDS += -ldsp_SMRO
 endif
@@ -135,6 +144,7 @@ endif
 #VSIB:=yes
 
 ifeq ($(VSIB),yes)
+CPPFLAGS += -D_DSP_VSIB=1
 BACKENDS += VSIB
 LBACKENDS += -ldsp_VSIB
 endif
@@ -146,6 +156,7 @@ endif
 #SPIGOT:=yes
 
 ifeq ($(SPIGOT),yes)
+CPPFLAGS += -D_DSP_SPIGOT=1
 BACKENDS += Spigot
 LBACKENDS += -ldsp_Spigot $(LCFITSIO)
 endif
@@ -157,6 +168,7 @@ endif
 #BCPM:=yes
 
 ifeq ($(BCPM),yes)
+CPPFLAGS += -D_DSP_BCPM=1
 BACKENDS += BCPM
 LBACKENDS += -ldsp_BCPM
 endif
