@@ -18,8 +18,6 @@ dsp::BitSeries::BitSeries ()
 
   request_offset = 0;
   request_ndat = 0;
-
-  subheader_bytes = data_bytes = bytes_since_subheader = 0;
 }
 
 //! Destructor

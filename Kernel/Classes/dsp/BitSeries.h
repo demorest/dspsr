@@ -82,21 +82,6 @@ namespace dsp {
     //! For use by MiniSeries to share the data buffer for unpacking
     void share(unsigned char*& _buffer,uint64& _size) const;
 
-    //! Set subheader_bytes
-    uint64 get_subheader_bytes() const { return subheader_bytes; }
-    //! Get subheader_bytes
-    void set_subheader_bytes(uint64 _subheader_bytes){ subheader_bytes = _subheader_bytes; }
-
-    //! Set data_bytes
-    uint64 get_data_bytes() const { return data_bytes; }
-    //! Get data_bytes
-    void set_data_bytes(uint64 _data_bytes){ data_bytes = _data_bytes; }
-
-    //! Set bytes_since_subheader
-    uint64 get_bytes_since_subheader() const { return bytes_since_subheader; }
-    //! Get bytes_since_subheader
-    void set_bytes_since_subheader(uint64 _bytes_since_subheader){ bytes_since_subheader = _bytes_since_subheader; }
-
   protected:
     //! The data buffer
     unsigned char* data;
@@ -116,15 +101,6 @@ namespace dsp {
 
     //! Number of time samples requested
     uint64 request_ndat;
-
-    //! Number of data bytes in a data-block
-    uint64 data_bytes;
-
-    //! Number of bytes in each subheader
-    uint64 subheader_bytes;
-    
-    //! The number of bytes since the start of the last subheader
-    uint64 bytes_since_subheader;
 
   };
   
