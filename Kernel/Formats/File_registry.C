@@ -41,6 +41,11 @@ static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
+#if DSP_Maxim
+#include "dsp/MaximFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
+#endif
+
 #if DSP_SMRO
 #include "dsp/SMROFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_smro;

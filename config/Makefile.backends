@@ -62,7 +62,7 @@ endif
 #
 # Uncomment the following line to compile S2 specific code
 #
-S2:=yes
+#S2:=yes
 
 ifeq ($(S2),yes)
 CLASSES += S2File S2TwoBitCorrection S2TwoBitTable
@@ -74,7 +74,7 @@ endif
 #
 # Uncomment the following line to compile PuMa specific code
 #
-# PuMa:=yes
+#PuMa:=yes
 
 ifeq ($(PuMa),yes)
 BACKENDS += PuMa
@@ -95,6 +95,21 @@ endif
 ifeq ($(MARK4),yes)
 BACKENDS += MARK4
 LBACKENDS += -ldsp_Mark4
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile Maxim specific code, for use
+# with the Vela glitch monitoring system on the 14m dish in Hobart.
+#
+# WARNING: Don't use SMRO and Maxim at the same time. Their file type
+#          tests are identical.
+#
+#Maxim:=yes
+
+ifeq ($(Maxim),yes)
+BACKENDS += Maxim
+LBACKENDS += -ldsp_Maxim
 endif
 
 ##############################################################################
