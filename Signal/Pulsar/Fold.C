@@ -85,11 +85,11 @@ void dsp::Fold::prepare (const Observation* observation)
 
 #if 0
 
-  TODO - ephemeris and coordinates in archive
-
   dm = ephemeris.get_dm();
   if (verbose)
     cerr << "dsp::Fold::prepare psrephem dm = " << dm << endl;
+
+  TODO - ephemeris and coordinates in archive
 
   // set the source position
   raw.coordinates.setRadians (ephemeris.jra(), ephemeris.jdec());
@@ -423,6 +423,10 @@ void dsp::Fold::transformation ()
   // set the sampling rate of the output PhaseSeries
   double sampling_interval = pfold / double(folding_nbin);
   output->set_rate (1.0/sampling_interval);
+
+  // Set things out of the pulsar ephemeris
+  if( pulsar_ephemeris )
+    output->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
 }
 
