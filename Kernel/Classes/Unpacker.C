@@ -6,7 +6,7 @@
 void dsp::Unpacker::transformation ()
 {
   if (verbose)
-    cerr << "Unpacker::transformation" << endl;;
+    cerr << "dsp::Unpacker::transformation" << endl;;
 
   // set the Observation information
   output->Observation::operator=(*input);
@@ -22,13 +22,13 @@ void dsp::Unpacker::transformation ()
   output->set_ndat (input->get_request_ndat());
 
   if (verbose)
-    cerr << "Unpacker::transformation exit" << endl;;
+    cerr << "dsp::Unpacker::transformation exit" << endl;;
 }
 
 //! Specialize the unpacker to the Observation
 void dsp::Unpacker::match (const Observation* observation)
 {
   if (verbose)
-    cerr << "Unpacker::match" << endl;
+    cerr << "dsp::Unpacker::match" << endl;
 }
 

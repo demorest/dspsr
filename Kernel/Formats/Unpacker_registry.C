@@ -46,12 +46,9 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::PuMaTwoBitCorrection>  puma;
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
 {
-  if(verbose)
-    fprintf(stderr,"\nIn dsp::Unpacker::create ()\n");
-
   try {
 
-    if (verbose) cerr << "Unpacker::create with " << registry.size()
+    if (verbose) cerr << "dsp::Unpacker::create with " << registry.size()
                       << " registered sub-classes" << endl;
 
     for (unsigned ichild=0; ichild < registry.size(); ichild++)
@@ -66,11 +63,9 @@ dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
 
       }
   } catch (Error& error) {
-    throw error += "Unpacker::create";
+    throw error += "dsp::Unpacker::create";
   }
 
-  throw Error (InvalidState, "Unpacker::create",
+  throw Error (InvalidState, "dsp::Unpacker::create",
                "no unpacker for machine=" + observation->get_machine());
 }
-
-
