@@ -54,13 +54,21 @@ void dsp::IOManager::set_input (Input* _input)
 {
   input = _input;
 
-  if (input) {
-    input->set_block_size (block_size);
-    input->set_overlap (overlap);
-    if (output)
-      input->set_output (output);
-    name = "IOManager:" + input->get_name();
-  }
+  if (!input)
+    return;
+
+  input->set_block_size (block_size);
+  input->set_overlap (overlap);
+
+  if (output)
+    input->set_output (output);
+
+  name = "IOManager:" + input->get_name();
+
+  set_unpacker ( Unpacker::create( input->get_info() ) );
+
+  info = *( input->get_info() );
+
 }
 
 //! Set the Unpacker (should not normally need to be used)
@@ -130,13 +138,11 @@ void dsp::IOManager::open (const char* id)
   try {
 
     set_input ( File::create(id) );
-    set_unpacker ( Unpacker::create (input->get_info()) );
 
   } catch (Error& error) {
     throw error += "dsp::IOManager::open";
   }
 
-  info = *( input->get_info() );
 }
 
 
