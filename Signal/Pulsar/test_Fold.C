@@ -26,6 +26,8 @@ void usage ()
 int main (int argc, char** argv) 
 
 { try {
+  Error::verbose = true;
+  //  Error::complete_abort = true;
 
   char* metafile = 0;
   bool verbose = false;
@@ -100,13 +102,15 @@ int main (int argc, char** argv)
   detect.set_output_ndim (ndim);
   detect.set_input (&voltages);
   detect.set_output (&voltages);
+    //detect.set_output (new dsp::TimeSeries);
 
   if (verbose)
     cerr << "Creating Fold instance" << endl;
   dsp::Fold fold;
 
   fold.set_nbin (nbin);
-  fold.set_input (&voltages);
+
+  fold.set_input (detect.get_output());
   fold.set_output (&profiles);
 
   dsp::Operation::record_time = true;
@@ -163,7 +167,8 @@ int main (int argc, char** argv)
   catch (string& error) {
     cerr << error << endl;
   }
-  
+
+  fprintf(stderr,"biyee!\n");
   return 0;
 }
 
@@ -181,5 +186,5 @@ catch (...) {
   cerr << "unknown exception thrown." << endl;
   return -1;
 }
-
+ fprintf(stderr,"At end of main()\n"); 
 }
