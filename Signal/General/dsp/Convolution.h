@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/04/28 06:28:55 $
-   $Author: pulsar $ */
+   $Revision: 1.14 $
+   $Date: 2003/06/16 21:46:31 $
+   $Author: wvanstra $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
@@ -68,8 +68,8 @@ namespace dsp {
     //! Set the apodization function
     virtual void set_apodization (Apodization* function);
 
-    //! Set the bandpass integrator
-    virtual void set_bandpass (Response* bandpass);
+    //! Set the passband integrator
+    virtual void set_passband (Response* passband);
 
     //! Return a pointer to the frequency response function
     virtual const Response* get_response() const;
@@ -85,8 +85,8 @@ namespace dsp {
     //! Apodization function (time domain window)
     Reference::To<Apodization> apodization;
 
-    //! Integrated bandpass
-    Reference::To<Response> bandpass;
+    //! Integrated passband
+    Reference::To<Response> passband;
 
   };
   

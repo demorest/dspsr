@@ -33,10 +33,10 @@ void dsp::Convolution::set_apodization (Apodization* _function)
   apodization = _function; 
 }
 
-//! Set the bandpass integrator
-void dsp::Convolution::set_bandpass (Response* _bandpass)
+//! Set the passband integrator
+void dsp::Convolution::set_passband (Response* _passband)
 {
-  bandpass = _bandpass; 
+  passband = _passband; 
 }
 
 /*!
@@ -62,8 +62,8 @@ void dsp::Convolution::transformation ()
 
   response->match (input);
 
-  if (bandpass)
-    bandpass->match (response);
+  if (passband)
+    passband->match (response);
 
   // response must have at least two points in it
   if (response->get_ndat() < 2)
@@ -234,8 +234,8 @@ void dsp::Convolution::transformation ()
 
 	  response->operate (spectrum[0], spectrum[1], ichan);
 
-	  if (bandpass)
-	    bandpass->integrate (spectrum[0], spectrum[1], ichan);
+	  if (passband)
+	    passband->integrate (spectrum[0], spectrum[1], ichan);
 
 	}
 	
@@ -243,8 +243,8 @@ void dsp::Convolution::transformation ()
 
 	  response->operate (spectrum[ipol], ipol, ichan);
 
-	  if (bandpass)
-	    bandpass->integrate (spectrum[ipol], ipol, ichan);
+	  if (passband)
+	    passband->integrate (spectrum[ipol], ipol, ichan);
 
 	}
 	
