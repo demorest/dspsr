@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/09/18 13:59:38 $
+   $Revision: 1.4 $
+   $Date: 2002/09/18 14:56:07 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -88,9 +88,6 @@ namespace dsp {
 
     //! Return the number of complex samples of smearing in the specified half
     unsigned smearing_samples (int half = -1) const;
-
-    //! Return the optimal frequency resolution
-    unsigned optimal_frequency_resolution ();
 
     //! Compute the phases for a dedispersion kernel
     static void build (vector<float>& phases,

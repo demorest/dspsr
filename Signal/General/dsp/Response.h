@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/09/18 13:50:10 $
+   $Revision: 1.4 $
+   $Date: 2002/09/18 14:56:07 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -21,6 +21,9 @@ namespace dsp {
   class Response : public Shape {
 
   public:
+
+    //! Maximum ndat allowed
+    static unsigned ndat_max;
 
     //! null constructor
     Response();
@@ -44,6 +47,15 @@ namespace dsp {
     /*! Set the number of complex time samples in the t<0 half of the
       corresponding impulse response function */
     void set_impulse_neg (unsigned _impulse_neg) { impulse_neg =_impulse_neg; }
+
+    //! Return the minimum useable ndat
+    unsigned get_minimum_ndat () const;
+
+    //! Resize with ndat set to the optimal value
+    void set_optimal_ndat ();
+
+    //! Given impulse_pos and impulse_neg, check that ndat is large enough
+    void check_ndat () const;
 
     //! Construct frequency response from complex phasors
     void set (const vector<complex<float> >& phasors);

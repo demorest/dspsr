@@ -11,6 +11,11 @@
 
 //#define _DEBUG
 
+/*! If specified, this attribute restricts the value for ndat chosen by 
+  the set_optimal_ndat method, enabling the amount of RAM used by the calling
+  process to be limited. */
+unsigned dsp::Response::ndat_max = 0;
+
 dsp::Response::Response ()
 {
   impulse_pos = impulse_neg = 0;
@@ -79,6 +84,55 @@ void dsp::Response::naturalize ()
   }
 }
 
+/*!  Using the impulse_pos and impulse_neg attributes, this method
+  determines the minimum acceptable ndat for use in convolution.  This
+  is given by the smallest power of two greater than or equal to the
+  twice the sum of impulse_pos and impulse_neg. */
+unsigned dsp::Response::get_minimum_ndat () const
+{
+  unsigned nsmear = impulse_pos + impulse_neg;
+  
+  if (nsmear == 0)
+    return 0;
+
+  return (unsigned) pow (2.0, 1.0 + ceil( log(nsmear)/log(2.0) ));
+}
+
+/*!  Using the get_minimum_ndat method and the max_ndat static attribute,
+  this method determines the optimal ndat for use in convolution. */
+void dsp::Response::set_optimal_ndat ()
+{
+  unsigned ndat_min = get_minimum_ndat ();
+
+  if (verbose) 
+    cerr << "Response::set_optimal_ndat Minimum ndat=" << ndat_min << endl;
+  
+  if (ndat_max && ndat_max < ndat_min)
+    throw_str ("Response::set_optimal_ndat specified maximum ndat (%d)" 
+	       " < required minimum ndat (%d)", ndat_max, ndat_min);
+
+  int optimal_ndat = optimal_fft_length (ndat_min, ndat_max, verbose);
+      
+  resize (npol, nchan, optimal_ndat, ndim);
+}
+
+
+void dsp::Response::check_ndat () const
+{
+  if (ndat_max && ndat > ndat_max)
+    throw_str ("Response::check_ndat specified maximum ndat (%d)" 
+	       " < specified ndat (%d)", ndat_max, ndat);
+
+  unsigned ndat_min = get_minimum_ndat ();
+
+  if (verbose) 
+    cerr << "Response::check_ndat minimum ndat=" << ndat_min << endl;
+  
+  if (ndat < ndat_min)
+    throw_str ("Response::check_ndat specified ndat (%d)" 
+	       " < required minimum ndat (%d)", ndat, ndat_min);
+}
+  
 
 // /////////////////////////////////////////////////////////////////////////
 

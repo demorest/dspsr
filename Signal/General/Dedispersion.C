@@ -113,13 +113,16 @@ void dsp::Dedispersion::build ()
   if (built)
     return;
 
-  // set impulse_neg and impulse_pos
-  // HERE
+  // higher frequencies (upper half) arrive sooner (t<0)
+  impulse_neg = smearing_samples (1);
+  // lower frequencies (lower half) arrive later (t>0)
+  impulse_pos = smearing_samples (-1);
 
-  if (!frequency_resolution_set) {
-    // determine the best frequency resolution for the job
+  if (!frequency_resolution_set)
+    set_optimal_ndat ();
+  else
+    check_ndat ();
 
-  }
 
   vector<float> phases (ndat * nchan);
 
@@ -134,6 +137,11 @@ void dsp::Dedispersion::build ()
   set (phasors);
 }
 
+/*!
+  return x squared
+  */
+template <typename T> inline T sqr (T x) { return x*x; }
+
 /*
   \param cfreq centre frequency, in MHz
   \param bw bandwidth, in MHz
@@ -145,7 +153,7 @@ double dsp::Dedispersion::smearing_time (double cfreq, double bw) const
   double f_upper = cfreq + bw/2.0;
 
   double dispersion = dispersion_measure/dm_dispersion;
-  return dispersion * (1.0/(f_lower*f_lower)-1.0/(f_upper*f_upper));
+  return dispersion * (1.0/sqr(f_lower)-1.0/sqr(f_upper));
 }
 
 unsigned dsp::Dedispersion::smearing_samples (int half) const
@@ -193,8 +201,6 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   double effective_smear = tsmear * 2.1;
   
   // smear across one channel in number of time samples.
-  // Q:Why divide by nchan?  
-  // A:Because the time resolution is decreased in each sub-channel
   unsigned nsmear = unsigned (effective_smear * sampling_rate);
   
   if (verbose) 
@@ -231,7 +237,7 @@ void dsp::Dedispersion::build (vector<float>& phases,
                                    // quadrature nyquist data eg fb.
   double delay = 0.0;
 
-  double DM = dm * 1e6 / dm_dispersion;
+  double dispersion_per_MHz = 1e6 * dm / dm_dispersion;
 
   phases.resize (npts * nchan);
 
@@ -239,149 +245,22 @@ void dsp::Dedispersion::build (vector<float>& phases,
 
     double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
    
-    // Compute the DM delay in microseconds
     if (dmcorr) {
-      delay = DM * ( 1.0/(chan_cfreq*chan_cfreq)
-		     -1.0/(highest_freq*highest_freq));
+      // Compute the DM delay in microseconds
+      delay = dispersion_per_MHz * ( 1.0/sqr(chan_cfreq) -
+				     1.0/sqr(highest_freq) );
       // Modulo one sample and invert it
       delay = - fmod(delay, samp_int);
     }
 
-    double coeff = -sign * 2*M_PI * DM / (chan_cfreq * chan_cfreq);
+    double coeff = -sign * 2*M_PI * dispersion_per_MHz / sqr(chan_cfreq);
 
     unsigned spt = ichan * npts;
     for (unsigned ipt = 0; ipt < npts; ipt++) {
       // FFTX - not the mean of the bin, but the offset from the DC bin
       double freq = double(ipt) * binwidth - 0.5*chanwidth;
-      phases[spt+ipt] = coeff*freq*freq/(chan_cfreq+freq)-2.0*M_PI*freq*delay;
+      phases[spt+ipt] = coeff*sqr(freq)/(chan_cfreq+freq)-2.0*M_PI*freq*delay;
     }
   }
 }
 
-#if 0
-
-unsigned dsp::Dedispersion::optimal_frequency_resolution ()
-{
-  // Calculate the smearing time over the band of one sub-channel,
-  // the one with the lowest centre frequency, in seconds.
-  // This will determine the number of points "nsmear" that must be
-  // thrown away for each FFT.
-    
-  double abs_bw = fabs (bandwidth);
-  double ch_abs_bw = abs_bw / double(nchan);
-  double lower_ch_cfreq = centre_frequency - (abs_bw - ch_abs_bw) / 2.0;
-
-  if (verbose) {
-    string band = "entire band";
-    if (nchan>1)
-      band = "worst channel";
-    cerr << "Smearing across the " << band
-	 << ": " << smearing_time (lower_ch_cfreq, ch_abs_bw)*1e3
-	 << " ms" << endl;
-  }
-
-  // Smearing part one - just to ensure that the cyclical properties
-  // of convolution via FFT are minimized, find the smearing in the lower
-  // half of the band in one channel...
-  ch_abs_bw /= 2.0;
-  lower_ch_cfreq -= ch_abs_bw;
-    
-  double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
-  
-  // the sampling rate of the resulting complex time samples
-  double sampling_rate = ch_abs_bw * 1e6;
-
-  if (verbose)
-    cerr << "Smear time in lower half of band " << tsmear*1e3 << "ms"
-      " (" << int(tsmear * sampling_rate) << " pts).\n";
-  
-  // Smearing part two - ... multiply this smearing by two and 
-  // add another ten percent while at it, just to be sure that mixing
-  // due to cyclical convolution is minimized
-  double effective_smear = tsmear * 2.1;
-  
-  // smear across one channel in number of time samples.
-  // Q:Why divide by nchan?  
-  // A:Because the time resolution is decreased in each sub-channel
-  unsigned nsmear = unsigned (effective_smear * sampling_rate);
-  
-  if (verbose) 
-    cerr << "Start with smear time=" << effective_smear*1e3 << "ms"
-      " (" << nsmear << "pts)." << endl;
-  
-  // round the number of points dropped to an even number
-  if (nsmear % 2)
-    nsmear ++;
-  
-  //if dealing with real-sampled data, nsmear should be a multiple of four
-  //if (raw.get_state() == observation::Nyquist && nsmear % 4)
-  //nsmear += 2;
-  
-  // recalculate the smearing time simply for display of new value
-  effective_smear = double (nsmear) / sampling_rate;
-  if (verbose) 
-    cerr << "Rounded smear time is " << effective_smear*1e3 << "ms"
-      " (" << nsmear << "pts)." << endl;
-  
-  int nfft_min = 0;
-  if (nsmear != 0)
-    // the minimum FFT length should be at least twice nsmear
-    nfft_min = (int) pow (2.0, 1.0 + ceil(log(double(nsmear))/log(2.0)));
-  
-  if (verbose) fprintf (stderr, "Minimum FFT-length: %dpts.\n", nfft_min);
-  
-
-  float minram = nfft_min * nchan * (rampersample + ramperfftpoint);
-  if (maxram < minram) {
-    cerr << "Pulsar_Processor::plan Not enough RAM (" << maxram/1e6 << " MB)"
-      " for one FFT\n"
-      "Minimum fft length: " << nfft_min << " (" << nchan << " chan)"
-      "requires at least: " << minram/1e6 << " MB.\n"
-      "**********************************************\n"
-      "RAM usage (in bytes) per data point in one FFT\n"
-	 << ramreason << endl;
-    return -1;
-  }
-  
-  if (n_fft > 1) {
-    if (n_fft > nfft_max) {
-      fprintf (stderr, 
-	       "Pulsar_Processor::plan Supplied nfft:%d greater than RAM allows:%d\n",
-	       n_fft, nfft_max);
-      return -1;
-    }
-    if (n_fft < nfft_min) {
-      fprintf (stderr, 
-	       "Pulsar_Processor::plan Supplied nfft:%d less than cyclical wrap:%d\n",
-	       n_fft, nfft_min);
-      return -1;
-    }
-    nfft = n_fft;
-  }
-  else {
-    if (nsmear == 0) {
-      cerr << "\nEffective smearing = " << effective_smear*1e6 << 
-	" microseconds is less than time resolution.\n"
-	"De-dispersion disabled.\n\n";
-      // set nfft to 1 in case there is still nchan
-      if (nchan>1)
-	nfft = 1;
-      else
-	nfft = 0;
-      convolve = 0;
-    }
-    else {
-      nfft = optimal_fft_length (nsmear, nfft_max, verbose);
-      
-      if (nfft < 0) {
-	cerr << "Pulsar_Processor::plan optimal_fft_length ("
-	     << nsmear << "->" << nfft_max << ") failed\n";
-	return -1;
-      }
-    }
-  }
-
-}
-#endif
- 
-  
