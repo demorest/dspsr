@@ -31,9 +31,9 @@ namespace dsp {
     //! Returns the rank of the next node ready to receive data
     int next_destination ();
 
-    //! Return the current ready_request
-    MPI_Request* get_ready_request();
-    
+    //! request data from the root
+    void request_data ();
+
   };
 
 }

@@ -15,7 +15,7 @@ dsp::MPITrans::MPITrans (MPI_Comm _comm)
   : MPIRoot (_comm)
 {
   
-  //  active_request = false;
+  auto_request = false;
 
 }
 
@@ -47,10 +47,10 @@ int dsp::MPITrans::next_destination ()
   
 }
 
-
-MPI_Request* dsp::MPITrans::get_ready_request()
+void dsp::MPITrans::request_data ()
 {
-
-  return &ready_request;
+  
+  MPIRoot::request_data ();
   
 }
+
