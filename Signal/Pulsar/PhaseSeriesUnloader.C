@@ -27,7 +27,7 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
     fname_extension = data->get_archive_filename_extension();
 
   if ( filename_pattern.empty() ){
-    filename = data->get_identifier () + fname_extension;
+    filename = data->get_default_id() + fname_extension;
   }
   else {
     char* fname = new char[FILENAME_MAX];
