@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.33 $
-   $Date: 2002/11/12 09:15:05 $
-   $Author: wvanstra $ */
+   $Revision: 1.34 $
+   $Date: 2002/11/21 02:02:14 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -197,7 +197,7 @@ namespace dsp {
     //! Set the record of what DM the data is dedispersed
     void set_dispersion_measure (double dm) { dispersion_measure = dm; }
 
-    //! Whether data is in 'Time' or 'Fourier' domain 
+    //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     string get_domain(){ return domain; }
 
     //! Whether data is in 'Time' or 'Fourier' domain 
@@ -328,9 +328,8 @@ namespace dsp {
     //! The DM TimeSeries has been dedispersed to
     double dispersion_measure;
 
-    //! Whether data is in 'Time' or 'Fourier' domain 
+    //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     string domain;
-
   };
 
 }
