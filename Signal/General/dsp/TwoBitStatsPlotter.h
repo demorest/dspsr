@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/07/12 14:15:23 $
+   $Revision: 1.2 $
+   $Date: 2002/07/15 06:35:28 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitStatsPlotter_h
@@ -28,6 +28,12 @@ namespace dsp {
     //! Set the data to be plotted
     void set_data (const TwoBitCorrection* stats);
 
+    //! Set the device-normalized coordinates of viewport frame
+    void set_viewport (float xmin, float xmax, float ymin, float ymax);
+
+    //! Set the plot colour used for each digitizer channel
+    void set_colours (const vector<int>& colours);
+
     //! Plot the data in the currently open viewport
     void plot ();
 
@@ -37,7 +43,10 @@ namespace dsp {
     //! Plot vertical bars to indicate the cut-off thresholds
     bool show_cutoff_sigma;
 
-    //! Plot the two polarizations beside eachother
+    //! Plot vertical bars to indicate the cut-off thresholds
+    bool plot_only_range;
+
+   //! Plot the two polarizations beside eachother
     bool horizontal;
 
     //! Plot the entire x-axis of the histogram
@@ -66,6 +75,12 @@ namespace dsp {
     //! Colour used when plotting histogram from each channel
     vector <int> colours;
 
+    //! Device normalized coordinates of viewport frame
+    float vpxmin;
+    float vpxmax;
+    float vpymin;
+    float vpymax;
+
     //! Data to be plotted
     const TwoBitCorrection* data;
 
@@ -76,11 +91,6 @@ namespace dsp {
     void pglabel ();
 
     void pgplot (int poln);
-
-    void pgplots (float vpxmin, float vpxmax, float vpymin, float vpymax);
-
-    // allow the user to modify the colour used for each channel
-    void set_colours (const vector<int>& colours);
 
     int  get_theory_colour () { return theory_colour; };
 

@@ -8,12 +8,25 @@
 
 #include "TwoBitStatsPlotter.h"
 #include "TwoBitCorrection.h"
+#include "genutil.h"
 
 void dsp::TwoBitStatsPlotter::init ()
 {
   theory_calculated = false;
   theory_max = 0.0;
   data = 0;
+
+  show_cutoff_sigma = true;
+  plot_only_range = false;
+  horizontal = true;
+
+  full_xscale = false;
+  hist_min = 0.01;
+
+  vpxmin = 0.1;
+  vpxmax = 0.9;
+  vpymin = 0.1;
+  vpymax = 0.9;
 }
 
 void dsp::TwoBitStatsPlotter::set_data (const TwoBitCorrection* stats)
@@ -213,8 +226,16 @@ void dsp::TwoBitStatsPlotter::pglabel()
   //  cpgmtxt("T", .5, 0.5, 0.5, "theory");
 }
 
-void dsp::TwoBitStatsPlotter::pgplots (float vpxmin, float vpxmax,
-				       float vpymin, float vpymax)
+void dsp::TwoBitStatsPlotter::set_viewport (float _vpxmin, float _vpxmax,
+					    float _vpymin, float _vpymax)
+{
+  vpxmin = _vpxmin;
+  vpxmax = _vpxmax;
+  vpymin = _vpymin;
+  vpymax = _vpymax;
+}
+
+void dsp::TwoBitStatsPlotter::plot ()
 {
   if (!data)
     return;
@@ -303,11 +324,8 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
 
     maxel = max_element(histogram.begin(), histogram.end());
     
-    if (maxel == histogram.end()) {
-      string error ("TwoBitStatsPlotter::pgplot: empty range quadrature");
-      cerr << error << endl;
-      throw(error);
-    }
+    if (maxel == histogram.end())
+      throw_str ("TwoBitStatsPlotter::pgplot: empty range channel %d", ichan);
     
     ymax = max (ymax, *maxel);
     
@@ -338,11 +356,11 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
   int n_min = data->get_nmin ();
   int n_max = data->get_nmax ();
 
-  if (show_cutoff_sigma)  {
+  if (plot_only_range)  {
     hp_min = n_min - 10;
     hp_max = n_max + 10;
   }
-  else {
+  else  {
     // definitely keep the theory in sight
     hp_min=0; hp_max=nsample-1;
     for (; hp_min<nsample; hp_min++)
@@ -381,10 +399,12 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
   cpgpt (plot_theory, -1);
 
   // draw the cut-off sigma lines
-  cpgmove (n_min, 0.0);
-  cpgdraw (n_min, theory_max * nweights);
-  cpgmove (n_max, 0.0);
-  cpgdraw (n_max, theory_max * nweights);
+  if (show_cutoff_sigma) {
+    cpgmove (n_min, 0.0);
+    cpgdraw (n_min, theory_max * nweights);
+    cpgmove (n_max, 0.0);
+    cpgdraw (n_max, theory_max * nweights);
+  }
 
   // plot the actual distribution of number of ones
   float midheight = ymax/2.0;
