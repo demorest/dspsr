@@ -85,7 +85,9 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     return;
 
   if (size == 0) {
+    //    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() calling new float["UI64"]\n", require);
     buffer = new float[require];
+    //if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() have called new float["UI64"]\n", require);
     size = require;
   }
 
@@ -178,6 +180,9 @@ dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 
 dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
 {
+  if( get_ndat()==0 )
+    return operator=( add );
+
   if (!combinable (add))
     throw Error (InvalidState, "TimeSeries::operator+=",
 		 "TimeSeries are not combinable");
@@ -202,6 +207,29 @@ dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
   return *this;
 }
 
+dsp::TimeSeries& dsp::TimeSeries::operator *= (float mult){
+  if( verbose )
+    fprintf(stderr,"In dsp::TimeSeries::operator*=()\n");
+  //  exit(0);
+
+  if( fabs(mult-1.0) < 1.0e-9 )
+    return *this;
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++){
+    for (unsigned ipol=0; ipol<get_npol(); ipol++) {
+      float* dat = get_datptr(ichan,ipol);
+      unsigned npts = unsigned(get_ndat()*get_ndim());
+
+      for( unsigned i=0; i<npts; ++i)
+	dat[i] *= mult;
+    }
+  }
+  
+  rescale( mult );
+
+  return *this;
+}
+
 void dsp::TimeSeries::zero ()
 {
   uint64 npt = get_ndat() * get_ndim();
@@ -211,6 +239,15 @@ void dsp::TimeSeries::zero ()
       for (uint64 ipt=0; ipt<npt; ipt++)
         dat[ipt]=0.0;
     }
+}
+
+//! Convenience function for initialising new TimeSeries from 2 old ones
+void dsp::TimeSeries::hack_together(TimeSeries* band1, TimeSeries* band2){
+  vector<TimeSeries*> buddies(2);
+  buddies[0] = band1;
+  buddies[1] = band2;
+
+  hack_together(buddies);
 }
 
 //! Hack together 2 different bands (not pretty)
@@ -229,6 +266,14 @@ void dsp::TimeSeries::hack_together(vector<TimeSeries*> bands){
   if( bands.empty() )
     throw Error(InvalidState,"dsp::TimeSeries::hack_together()",
 		"input vector is empty");
+  for( unsigned i=0; i<bands.size(); i++){
+    if( !bands[i] )
+      throw Error(InvalidParam,"dsp::TimeSeries::hack_together()",
+		  "Null TimeSeries passed into this method! (%d)",i);
+    if( bands[i]==this )
+      throw Error(InvalidParam,"dsp::TimeSeries::hack_together()",
+		  "You are trying to do an inplace hack_together.  The input bands must come from different TimeSeries instantiations to the output TimeSeries");
+  }
 
   // Sort the TimeSeries's
   vector<TimeSeriesPtr> to_sort(bands.size());
