@@ -8,7 +8,10 @@ dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
     if (verbose) cerr << "dsp::Unpacker::create with " << registry.size()
                       << " registered sub-classes" << endl;
 
-    for (unsigned ichild=0; ichild < registry.size(); ichild++)
+    for (unsigned ichild=0; ichild < registry.size(); ichild++){
+      if( verbose )
+	fprintf(stderr,"Testing child %d: %s\n",ichild,
+		registry[ichild]->get_name().c_str());
       if ( registry[ichild]->matches (observation) ) {
 
         Unpacker* child = registry.create (ichild);
@@ -19,6 +22,8 @@ dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
         return child;
 
       }
+    }
+
   } catch (Error& error) {
     throw error += "dsp::Unpacker::create";
   }
