@@ -3,7 +3,6 @@
 #include "dsp/BitSeries.h"
 #include "dsp/File.h"
 #include "dsp/Unpacker.h"
-#include "dsp/TwoBitCorrection.h"
 #include "Error.h"
 
 #include "genutil.h"
@@ -11,7 +10,6 @@
 void dsp::IOManager::init()
 {
   block_size = overlap = 0;
-  nsample = 512;
 }
 
 //! Constructor
@@ -82,13 +80,6 @@ void dsp::IOManager::set_unpacker (Unpacker* _unpacker)
     if (data)
       unpacker -> set_output (data);
   }
-
-  TwoBitCorrection* tbc = dynamic_cast<TwoBitCorrection*> (_unpacker);
-
-  if (tbc) {
-    tbc -> set_cutoff_sigma (3.0);
-    tbc -> set_nsample (nsample);
-  }
 }
 
 //! Set the number of time samples to load on each call to load_data
@@ -107,19 +98,6 @@ void dsp::IOManager::set_overlap (uint64 _overlap)
     input->set_overlap (overlap);
 }
     
-
-//! Set the number of samples used to estimate undigitized power
-void dsp::IOManager::set_nsample (int _nsample)
-{ 
-  nsample = _nsample;
-
-  if (unpacker) {
-    TwoBitCorrection* tbc = dynamic_cast<TwoBitCorrection*> (unpacker.get());
-    if (tbc)
-      tbc -> set_nsample (nsample);
-  }
-}
-
 //! Prepare the appropriate Input and Unpacker
 /*!
 

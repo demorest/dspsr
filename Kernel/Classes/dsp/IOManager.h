@@ -1,17 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.8 $
+   $Date: 2003/06/13 15:02:08 $
    $Author: wvanstra $ */
 
 
 #ifndef __IOManager_h
 #define __IOManager_h
 
-#include "Error.h"
-
 #include "dsp/Input.h"
+#include "Error.h"
 
 namespace dsp {
 
@@ -77,12 +76,6 @@ namespace dsp {
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap);
     
-    //! Get the number of samples used to estimate undigitized power
-    virtual int get_nsample () const { return nsample; }
-
-    //! Set the number of samples used to estimate undigitized power
-    virtual void set_nsample (int _nsample);
-
   protected:
 
     //! Define abstract method of the Input base class
@@ -96,9 +89,6 @@ namespace dsp {
 
     //! Number of time samples by which data blocks overlap
     uint64 overlap;
-
-    //! Number of samples used to estimate undigitized power
-    int nsample;
 
     //! Appropriate Input subclass
     Reference::To<Input> input;
