@@ -122,6 +122,7 @@ DEPS := ${DEP_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
 ##########################################################################
 
 ifdef NAMESPACE
+OLDINC := ${INCLUDES:%=$(INCDIR)/%} 
 INCDIR := $(INCDIR)/$(NAMESPACE)
 INSTALL_INCDIR := $(INSTALL_INCDIR)/$(NAMESPACE)
 endif
@@ -407,6 +408,16 @@ veryclean:
 
 cvsck:
 	@-cvs status | grep atus | grep -v Up
+
+ifdef NAMESPACE
+
+# clean out the old includes
+include: rmoldinc
+
+rmoldinc:
+	@rm -f $(OLDINC)
+
+endif
 
 ##########################################################################
 ##########################################################################
