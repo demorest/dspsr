@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/08/15 09:05:27 $
+   $Revision: 1.6 $
+   $Date: 2002/10/07 01:48:37 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
@@ -21,7 +21,7 @@ namespace dsp {
   public:
 
     //! Constructor
-    CPSRTwoBitCorrection (int nsample = 512, float cutoff_sigma = 3.0);
+    CPSRTwoBitCorrection ();
 
     ~CPSRTwoBitCorrection () { destroy(); }
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/10/04 10:41:29 $
+   $Revision: 1.6 $
+   $Date: 2002/10/07 01:48:37 $
    $Author: wvanstra $ */
 
 
@@ -59,7 +59,7 @@ namespace dsp {
     //! Generate a look-up table for 2-bit to floating point conversion
     void four_vals (float* vals) const;
 
-    //! Return the 2-bit number from byte corresponding to sample
+    //! Extract from byte the 2-bit number corresponding to sample
     virtual unsigned twobit (unsigned byte, unsigned sample) const;
 
   protected:

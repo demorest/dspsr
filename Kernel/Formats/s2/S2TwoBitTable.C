@@ -11,7 +11,7 @@
   \param byte the byte pattern containing four time samples
   \param sample the sample to extract from the byte 
 */
-unsigned dsp::TwoBitTable::twobit (unsigned byte, unsigned sample) const
+unsigned dsp::S2TwoBitTable::twobit (unsigned byte, unsigned sample) const
 {
   unsigned char shifts[4] = { 0, 2, 1, 3 };
 

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/08/15 09:05:27 $
+   $Revision: 1.12 $
+   $Date: 2002/10/07 01:48:37 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -27,6 +27,9 @@ namespace dsp {
 
     //! Optimal fraction of total power for two-bit sampling threshold
     static const double optimal_threshold;
+
+    //! Number of unique bit combinations in an 8-bit byte (256)
+    static const unsigned unique_bytes;
 
     //! Maintain a diagnostic histogram of digitizer statistics
     static bool keep_histogram;
@@ -60,10 +63,10 @@ namespace dsp {
     int get_nchannel () const { return nchannel; }
 
     //! Set the digitization convention
-    void set_type (TwoBitTable::Type type);
+    void set_table (TwoBitTable* table);
 
     //! Get the digitization convention
-    TwoBitTable::Type get_type () const { return type; }
+    TwoBitTable* get_table () const { return table; }
 
     //
     //
@@ -103,7 +106,7 @@ namespace dsp {
     //! Generate dynamic level setting and scattered power correction lookup
     static void generate (float* dls, float* spc,
 			  int n_min, int n_max, int n_tot,
-			  TwoBitTable::Type type, bool huge);
+			  TwoBitTable* table, bool huge);
 
   protected:
 
@@ -113,11 +116,15 @@ namespace dsp {
     //! Build the two-bit correction look-up table and allocate histograms
     virtual void build ();
 
-    //! Unpacking algorithm is defined by sub-classes
-    virtual void unpack () = 0;
+    //! Unpacking algorithm may be re-defined by sub-classes
+    virtual void unpack ();
 
-    //! Digitization convention
-    TwoBitTable::Type type;
+    //! Unpack a single polarization from raw into data
+    virtual void poln_unpack (float* data, const unsigned char* raw, 
+			      uint64 ndat, unsigned long* hist, unsigned gap);
+
+    //! Two-bit conversion table generator
+    Reference::To<TwoBitTable> table;
 
     //! Number of digitizer channels
     int nchannel;
@@ -146,10 +153,11 @@ namespace dsp {
     //! Values used in Dynamic Level Setting
     vector< float > dls_lookup;
 
+    //! Number of low-voltage states in a given byte
+    vector< unsigned char > nlo_lookup;
+
     //! Set limits using current attributes
     void set_limits ();
-
-    
 
   };
   

@@ -3,18 +3,14 @@
 #include "genutil.h"
 
 //! Null constructor
-dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection (int _nsample,
-						 float _cutoff_sigma)
-  : TwoBitCorrection ("CPSRTwoBitCorrection", outofplace)
+dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection ()
+  : TwoBitCorrection ("CPSRTwoBitCorrection")
 {
   values = 0;
 
   nchannel = 4;
-  type = TwoBitTable::OffsetBinary;
   channels_per_byte = 4;
-
-  nsample = _nsample;
-  cutoff_sigma = _cutoff_sigma;
+  table = new TwoBitTable (TwoBitTable::OffsetBinary);
 }
 
 void dsp::CPSRTwoBitCorrection::unpack ()

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/10/04 10:35:41 $
+   $Revision: 1.2 $
+   $Date: 2002/10/07 01:48:37 $
    $Author: wvanstra $ */
 
 #ifndef __S2TwoBitCorrection_h
@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "TwoBitCorrection.h"
-#include "environ.h"
 
 namespace dsp {
 
@@ -23,17 +22,12 @@ namespace dsp {
   public:
 
     //! Constructor
-    S2TwoBitCorrection (unsigned nsample = 512, float cutoff_sigma = 3.0);
-
-    ~S2TwoBitCorrection () { }
-
+    S2TwoBitCorrection (TwoBitTable::Type type = TwoBitTable::SignMagnitude);
 
   protected:
 
     //! Unpacking interface
     void unpack ();
-
-
   };
   
 }

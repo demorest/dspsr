@@ -1,10 +1,13 @@
-
 #include "S2TwoBitCorrection.h"
+#include "S2TwoBitTable.h"
 
-
-dsp::S2TwoBitCorrection::S2TwoBitCorrection (unsigned nsample,
-					     float cutoff_sigma)
+dsp::S2TwoBitCorrection::S2TwoBitCorrection (TwoBitTable::Type type)
+  : TwoBitCorrection ("CPSR2TwoBitCorrection")
 {
+  nchannel = 2;
+  channels_per_byte = 1;
+
+  table = new S2TwoBitTable (type);
 }
 
 void dsp::S2TwoBitCorrection::unpack ()
@@ -14,63 +17,6 @@ void dsp::S2TwoBitCorrection::unpack ()
 
 #if 0
 
-s2_2bit_correct::PackType s2_2bit_correct::packtype = s2_2bit_correct::AT;
-s2_2bit_correct::ResyncType s2_2bit_correct::resynctype = s2_2bit_correct::OFF;
-
-int raw_2Bit_Value(int sign, int mag)
-{
-  int value = 0;
-
-  if(mag==1 && sign==1)
-    value = 3;
-  else if(mag==0 && sign==1)
-    value = 1;
-  else if(mag==1 && sign==0)
-    value = -1;
-  else
-    value = -3;
- 
-  return value;
-}
-
-void init_lookupAT (float * voltages) {
-  unsigned int mask = 0x00000001;
-  float sign, magnitude;
-  int count = 0;
-
-  for (unsigned int i=0;i<256;i++){
-    sign = 1.0 - 2.0 * (mask & (i>>0));
-    magnitude = 1.0 + 2.0 * (mask & (i>>4));
-    voltages[count++] = sign * magnitude;
-    sign = 1.0 - 2.0 * (mask & (i>>2));
-    magnitude = 1.0 + 2.0 * (mask & (i>>6));
-    voltages[count++] = sign * magnitude;
-    sign = 1.0 - 2.0 * (mask & (i>>1));
-    magnitude = 1.0 + 2.0 * (mask & (i>>5));
-    voltages[count++] = sign * magnitude;
-    sign = 1.0 - 2.0 * (mask & (i>>3));
-    magnitude = 1.0 + 2.0 * (mask & (i>>7));
-    voltages[count++] = sign * magnitude;
-  }
-}
-
-// same as above but this code works for VLBA coding schemes not Normal AT
-//
-void init_lookupVLBA (float * voltages) {
-  unsigned int mask = 0x00000001;
-  int count = 0;
-
-  for (unsigned int i=0;i<256;i++){
-    voltages[count] = raw_2Bit_Value(mask & (i>>0), mask & (i>>4));
-    count++;
-    voltages[count] = raw_2Bit_Value(mask & (i>>2), mask & (i>>6));
-    count++;
-    voltages[count] = raw_2Bit_Value(mask & (i>>1), mask & (i>>5));
-    count++;
-    voltages[count] = raw_2Bit_Value(mask & (i>>3), mask & (i>>7));
-    count++;
-  }
-}
 
 //
 s2_2bit_correct::s2_2bit_correct (int ppwt, float co_sigma)

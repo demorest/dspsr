@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitTable.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/10/04 10:30:44 $
+   $Revision: 1.2 $
+   $Date: 2002/10/07 01:48:37 $
    $Author: wvanstra $ */
 
 
@@ -25,6 +25,9 @@ namespace dsp {
     //! Constructor
     S2TwoBitTable (Type type) : TwoBitTable (type) { }
     
+    //! Destructor
+    ~S2TwoBitTable () { }
+ 
     //! Return the 2-bit number from byte corresponding to sample
     virtual unsigned twobit (unsigned byte, unsigned sample) const;
 
