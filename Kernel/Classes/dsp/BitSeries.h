@@ -38,6 +38,10 @@ namespace dsp {
     //! Set this equal to data
     virtual BitSeries& operator = (const BitSeries& data);
 
+    //! Same as operator= but takes a pointer
+    virtual void copy(const BitSeries* bs)
+    { operator=( *bs ); }
+
     //! Set the Observation component of this equal to obs
     BitSeries& operator = (const Observation& obs)
     { Observation::operator= (obs); return *this; }

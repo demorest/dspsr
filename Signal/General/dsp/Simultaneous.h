@@ -42,6 +42,9 @@ namespace dsp {
     template<class T>
     T* get();
 
+    //! Prompts the thread to exit
+    void stop_thread();
+    
   protected:
 
     //! Does the work
@@ -61,20 +64,6 @@ namespace dsp {
     //! (If necessary)
     bool copy_ringbuffer_into_output();
 
-    //! Returns a free buffer from the input ringbuffer
-    Reference::To<dsp::BasicBuffer> get_input_buffer();
-
-    //! Returns a full buffer from the output ringbuffer
-    Reference::To<BasicBuffer> get_output_buffer();
-
-    //! Worker function for get_input_buffer() and get_output_buffer()
-    Reference::To<BasicBuffer>
-    get_buffer(BasicBuffer::BufferStatus status,
-	       vector<Reference::To<BasicBuffer> >& buffers);
-
-    //! Calls wait_on_mutex() for the appropriate mutex and cond
-    void wait_for_buffer(BasicBuffer::BufferStatus status);
-
     //! Spawns the extra thread if using threads
     void start_thread();
 
@@ -89,9 +78,6 @@ namespace dsp {
     
     //! Returns whether or not the user has said to stop
     bool can_run();
-    
-    //! Broadcasts the fact that a buffer status has changed to all threads
-    void broadcast_status(BasicBuffer::BufferStatus status);
     
     //! Checks stuff before operate()
     void checks();
@@ -141,9 +127,21 @@ namespace dsp {
     //! Returns a new Buffer of the requisite type
     Reference::To<BasicBuffer> new_buffer(string typestring);
 
+    //! pops a free/full input/output buffer as soon as one is available
+    Reference::To<BasicBuffer> pop_free_input_buffer();
+    Reference::To<BasicBuffer> pop_full_input_buffer();
+    Reference::To<BasicBuffer> pop_free_output_buffer();
+    Reference::To<BasicBuffer> pop_full_output_buffer();
+    
+    //! Waits around until a free/full input/output buffer is available
+    void wait_for_free_input_buffer();
+    void wait_for_full_input_buffer();
+    void wait_for_free_output_buffer();
+    void wait_for_full_output_buffer();
+
     //! Called by constructor to initialise stuff
     void init();  
-    
+
     //! The class being run simultaneously
     Reference::To<Operation> op;
 
@@ -156,17 +154,35 @@ namespace dsp {
 
     //! Ordered list of who is to be used next
     queue<Reference::To<BasicBuffer> > free_input_buffers;
-    queue<Reference::To<BasicBuffer> > full_output_buffers;
-    queue<Reference::To<BasicBuffer> > free_input_buffers;
+    queue<Reference::To<BasicBuffer> > full_input_buffers;
+    queue<Reference::To<BasicBuffer> > free_output_buffers;
     queue<Reference::To<BasicBuffer> > full_output_buffers;
 
+    //! Has the actual Buffers that the Operation was originally set up with
+    Reference::To<BasicBuffer> op_input;
+    Reference::To<BasicBuffer> op_output;
+
     //! Mutexes and conds
-    pthread_mutex_t free_mutex;
-    pthread_cond_t free_cond;
-    pthread_mutex_t full_mutex;
-    pthread_cond_t full_cond;
+    pthread_mutex_t free_input_buffers_mutex;
+    pthread_mutex_t full_input_buffers_mutex;
+    pthread_mutex_t free_output_buffers_mutex;
+    pthread_mutex_t full_output_buffers_mutex;
+
+    pthread_mutex_t free_input_mutex;
+    pthread_mutex_t full_input_mutex;
+    pthread_mutex_t free_output_mutex;
+    pthread_mutex_t full_output_mutex;
+
+    pthread_cond_t free_input_cond;
+    pthread_cond_t full_input_cond;
+    pthread_cond_t free_output_cond;
+    pthread_cond_t full_output_cond;
+
     pthread_mutex_t synch_mutex;
     pthread_cond_t synch_cond;
+
+    pthread_mutex_t running_mutex;
+    pthread_cond_t running_cond;
 
     //! Time-out time on call to pthread_cond_wait (in seconds) [1.0]
     float wait_time;
@@ -182,12 +198,6 @@ namespace dsp {
 
     //! Whether to synchronise work with the main thread [false]
     bool synch;
-
-    //! Has the Operation's input
-    Reference::To<BasicBuffer> op_input;
-    //! Has the Operation's output
-    Reference::To<BasicBuffer> op_output;
-
   };
 
 }

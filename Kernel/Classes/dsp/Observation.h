@@ -41,6 +41,10 @@ namespace dsp {
     //! Assignment operator
     Observation& operator= (const Observation&);
 
+    //! Same as operator= but takes a pointer
+    virtual void copy(const Observation* obs)
+    { operator=( *obs ); }
+
     //! Swaps the 2 Observations.  Returns '*this'
     Observation& swap_data(Observation& obs);
 

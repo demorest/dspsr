@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.25 $
-   $Date: 2004/11/01 23:44:04 $
+   $Revision: 1.26 $
+   $Date: 2005/01/19 06:40:03 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -46,6 +46,10 @@ namespace dsp {
 
     //! Set this equal to copy
     virtual TimeSeries& operator = (const TimeSeries& copy);
+
+    //! Same as operator= but takes a pointer
+    virtual void copy(const TimeSeries* ts)
+    { operator=( *ts ); }
 
     //! Add each value in data to this
     virtual TimeSeries& operator += (const TimeSeries& data);

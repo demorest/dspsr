@@ -57,6 +57,10 @@ namespace dsp {
     //! Set this equal to copy
     virtual DataSeries& operator = (const DataSeries& copy);
 
+    //! Same as operator= but takes a pointer
+    virtual void copy(const DataSeries* ds)
+    { operator=( *ds ); }
+
     //! Enforces that ndat*ndim must be an integer number of bytes
     virtual void set_ndat(uint64 _ndat);
 

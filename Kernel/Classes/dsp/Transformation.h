@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.26 $
-   $Date: 2005/01/02 02:41:53 $
+   $Revision: 1.27 $
+   $Date: 2005/01/19 06:40:02 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -15,23 +15,45 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "psr_cpp.h"
 #include "environ.h"
 #include "Error.h"
+
+namespace dsp {
+  class TransformationBase;
+  template <class In, class Out>
+  class Transformation;
+}
 
 #include "dsp/Operation.h"
 #include "dsp/Observation.h"
 #include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
+#include "dsp/MiniSeries.h"
 
 namespace dsp {
 
   //! All operations must define their behaviour
   typedef enum { inplace, outofplace, anyplace } Behaviour;
 
+  class TransformationBase : public Operation {
+  public:
+    TransformationBase(const char* _name);
+    virtual ~TransformationBase();
+
+    virtual void vset_input(void* _input) = 0;
+    virtual void vset_output(void* _output) = 0;
+    virtual void* vget_input() = 0;
+    virtual void* vget_output() = 0;
+    virtual string get_input_typestring() = 0;
+    virtual string get_output_typestring() = 0;
+  };
+
   //! Defines the interface by which Transformations are performed on data
   /*! This pure virtual template base class defines the manner in
     which various digital signal processing routines are performed. */
   template <class In, class Out>
-  class Transformation : public Operation {
+  class Transformation : public TransformationBase {
 
   public:
 
@@ -114,6 +136,17 @@ namespace dsp {
     //! Child classes should over-ride this if they want to add a dspExtension history object to the output
     virtual void add_history(){ }
 
+    //! Returns the input type as a string
+    virtual string get_input_typestring();
+
+    //! Returnst the output type as a string
+    virtual string get_output_typestring();
+
+    virtual void vset_input(void* _input);
+    virtual void vset_output(void* _output);
+    virtual void* vget_input();
+    virtual void* vget_output();
+ 
   protected:
 
     //! Return false if the input doesn't have enough data to proceed
@@ -224,7 +257,7 @@ namespace dsp {
 
 //! All sub-classes must specify name and capacity for inplace operation
 template<class In, class Out>
-dsp::Transformation<In,Out>::Transformation(const char* _name, Behaviour _type, bool _time_conserved) : Operation (_name)
+dsp::Transformation<In,Out>::Transformation(const char* _name, Behaviour _type, bool _time_conserved) : TransformationBase (_name)
 {
   type = _type;
   free_scratch_space = false;
@@ -665,5 +698,50 @@ void dsp::Transformation<In,Out>::set_process_samps_once(bool _process_samps_onc
   
   process_samps_once = _process_samps_once; 
 }
+
+//! Returns the input type as a string
+template <class In, class Out>
+string dsp::Transformation<In,Out>::get_input_typestring(){
+  if( typeid(input.ptr()) == typeid(TimeSeries*) )
+    return "TimeSeries";
+  if( typeid(input.ptr()) == typeid(MiniSeries*) )
+    return "MiniSeries";
+  if( typeid(input.ptr()) == typeid(BitSeries*) )
+    return "BitSeries";
+  return typeid(input.ptr()).name();
+}
+
+//! Returnst the output type as a string
+template <class In, class Out>
+string dsp::Transformation<In,Out>::get_output_typestring(){
+  if( typeid(output.ptr()) == typeid(TimeSeries*) )
+    return "TimeSeries";
+  if( typeid(output.ptr()) == typeid(MiniSeries*) )
+    return "MiniSeries";
+  if( typeid(output.ptr()) == typeid(BitSeries*) )
+    return "BitSeries";
+  return typeid(output.ptr()).name();
+}
+
+template <class In, class Out>
+void dsp::Transformation<In,Out>::vset_input(void* _input){
+  set_input( (In*)_input );
+}
+
+template <class In, class Out>
+void dsp::Transformation<In,Out>::vset_output(void* _output){
+  set_output( (Out*)_output );
+}
+
+template <class In, class Out>
+void* dsp::Transformation<In,Out>::vget_input(){
+  return (void*)get_input();
+}
+
+template <class In, class Out>
+void* dsp::Transformation<In,Out>::vget_output(){
+  return (void*)get_output();
+}
+
 
 #endif

@@ -10,40 +10,36 @@
 #include "environ.h"
 #include "Reference.h"
 
+#include "dsp/BasicBuffer.h"
+
 namespace dsp {
   
   template<class Container>
-    class Buffer : public Reference::Able {
+    class Buffer : public BasicBuffer {
     public:
-      enum BufferStatus{ free, full };
-
-      Reference::To<Container> container;
-
-      //! A class like RingBuffer doesn't actually need this, but I guess it's  nice to have is as an extra safety feature for debugging
-      BufferStatus status;
-
-      //! The file the Buffer was loaded from
-      std::string filename;
-
-      //! The offset from the start of the file that the Buffer starts from
-      uint64 offset;
-
-      Buffer<Container>& operator=(const Buffer<Container>& buf);
-
       Buffer(const Buffer<Container>& buf);
       Buffer();
 
-      ~Buffer();
+      virtual ~Buffer();
+
+      Buffer<Container>& operator=(const Buffer<Container>& buf);
+
+      virtual Container* get_container(){ return container; }
+      virtual void set_container(Container* _container)
+      { container = _container; }
+      
+      virtual void vset_container(void* _container);
+      virtual void* vget_container();
+
+    protected:
+
+      Reference::To<Container> container;
   };
 
 }
 
 template<class Container>
-dsp::Buffer<Container>::Buffer(){
-  status = free;
-  offset = 0;
-  filename = "unset";
-
+dsp::Buffer<Container>::Buffer() : BasicBuffer() {
   container = new Container;
 }
 
@@ -56,14 +52,22 @@ template<class Container>
 dsp::Buffer<Container>::~Buffer(){ }
 
 template<class Container>
-dsp::Buffer<Container>& dsp::Buffer<Container>::operator=(const dsp::Buffer<Container>& buf){
-  status = buf.status;
-  offset = buf.offset;
-  filename = buf.filename;
+dsp::Buffer<Container>& dsp::Buffer<Container>::operator=(const Buffer<Container>& buf){
+  BasicBuffer::operator=( buf );
 
   container = buf.container;
   
   return *this;
+}
+
+template<class Container>
+void dsp::Buffer<Container>::vset_container(void* _container){
+  set_container( (Container*)_container );
+}
+
+template<class Container>
+void* dsp::Buffer<Container>::vget_container(){
+  return (void*)get_container();
 }
 
 #endif
