@@ -74,8 +74,8 @@ void dsp::FourBitUnpacker::unpack ()
 
   const unsigned char* from = rawptr;
 
-  unsigned ipol = get_output_ipol ();
-  int nchan = output->get_nchan();
+  //unsigned ipol = get_output_ipol ();
+  //int nchan = output->get_nchan();
  
   if (verbose)
     cerr << "dsp::FourBitUnpacker::unpack into simple unpack";
@@ -106,7 +106,7 @@ void dsp::FourBitUnpacker::simple_unpack (
   int nchan = output->get_nchan();
   unsigned bytes = input->get_ndat()*nchan/samples_per_byte;
   int tsamp = 0;
-  float *thr = output->get_thresh();
+  //float *thr = output->get_thresh();
  
   if (verbose){
     fprintf(stderr,"input_data=%p\n",input_data);
