@@ -4,6 +4,7 @@
 #define __MPIRoot_h
 
 #include <mpi.h>
+
 #define ACTIVATE_MPI 1
 #include "dsp/Input.h"
 
@@ -17,24 +18,25 @@ namespace dsp {
     //! Construct from MPI_Bcast
     MPIRoot (MPI_Comm comm);
 
-    //! Prepare for sending or receiving from root node
-    void bcast_setup (int root_node);
-
     //! Destructor
     virtual ~MPIRoot ();
     
+    //! Prepare for sending or receiving from root node
+    void bcast_setup (int root_node);
+
     //! End of data
-    virtual bool eod();
+    bool eod();
     
     //! Send the next block using MPI_Isend
-    void send_data (BitSeries* data, int dest, int nbytes);
+    void send_data (BitSeries* data, int dest, int nbytes = 0);
 
     //! Load the next block using MPI_Irecv
     void load_data (BitSeries* data);
 
     //! MPI load does not support seeking
-    virtual void seek (int64 offset, int whence = 0)
-    { throw string ("MPIRoot::seek cannot seek"); }
+    void seek (int64 offset, int whence = 0);
+
+    void serve_data (Input* input, BitSeries* data = 0);
 
   protected:
 

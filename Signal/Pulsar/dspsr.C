@@ -4,7 +4,12 @@
 #include "dsp/IOManager.h"
 #include "dsp/MultiFile.h"
 
+#if ACTIVATE_MPI
+#include "dsp/MPIRoot.h"
+#endif
+
 #include "dsp/Unpacker.h"
+#include "dsp/BitSeries.h"
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/WeightedTimeSeries.h"
 
@@ -59,6 +64,33 @@ void usage ()
 int main (int argc, char** argv) 
 
 { try {
+
+  // rank of the node on which this processor is running
+  int mpi_rank = 0;
+  // number of nodes in the processing group
+  int mpi_size = 1;
+  // rank of the root node (the one that loads from file)
+  int mpi_root = 0;
+
+#if ACTIVATE_MPI
+
+  MPI_Init (&argc, &argv);
+
+  MPI_Comm_rank (MPI_COMM_WORLD, &mpi_rank);
+  MPI_Comm_size (MPI_COMM_WORLD, &mpi_size);
+
+  int  name_length;
+  char mpi_name [MPI_MAX_PROCESSOR_NAME];
+
+  MPI_Get_processor_name (mpi_name, &name_length);
+
+  // MPI error return variables
+  // int  mpi_err;
+  // char mpi_errstr [MPI_MAX_ERROR_STRING];
+
+  MPI_Errhandler_set (MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
+#endif
 
   bool verbose = false;
 
@@ -207,6 +239,19 @@ int main (int argc, char** argv)
       }
       break;
 
+    case 'r':
+      scanned = sscanf (optarg, "%d", &mpi_root);
+      if (scanned != 1) {
+        cerr << "dspsr: Error parsing " << optarg << " as MPI root node"
+	     << endl;
+	return -1;
+      }
+      break;
+      if (mpi_root < 0 || mpi_root >= mpi_size) {
+	cerr << "dspsr: Invalid MPI root node = " << mpi_root << endl;
+	return -1;
+      }
+
     case 'S':
       scanned = sscanf (optarg, "%lf", &seek_seconds);
       if (scanned != 1) {
@@ -285,6 +330,21 @@ int main (int argc, char** argv)
   manager->set_output (voltages);
 
   operations.push_back (manager);
+
+#if ACTIVATE_MPI
+
+  dsp::MPIRoot* mpi_data = 0;
+
+  if (mpi_size > 1) {
+
+    if (verbose)
+      cerr << "Creating MPIRoot instance" << endl;
+    
+    mpi_data = new dsp::MPIRoot (MPI_COMM_WORLD);
+
+  }    
+
+#endif
 
   if (verbose)
     cerr << "Creating Dedispersion instance" << endl;
@@ -389,46 +449,51 @@ int main (int argc, char** argv)
 
   if (join_files) {
 
+    if (mpi_rank == mpi_root) {
+
       if (verbose)
-	  cerr << "Opening Multfile" << endl;
+	cerr << "Opening Multfile" << endl;
+
       dsp::MultiFile* multifile = new dsp::MultiFile;
       multifile->open (filenames);
-
       manager->set_input (multifile);
 
-      // kludge to make the following loop operate only once
-      filenames.resize(1);
+    }
+
+    // kludge to make the following loop operate only once
+    filenames.resize(1);
+
   }
 
   archiver->set_operations (operations);
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
-    if (!join_files) {
-      if (verbose)
-        cerr << "opening data file " << filenames[ifile] << endl;
+    if (!join_files && mpi_rank == mpi_root) {
 
+      if (verbose)
+	cerr << "opening data file " << filenames[ifile] << endl;
+      
       manager->open (filenames[ifile]);
-
+      
       if (verbose)
-        cerr << "data file " << filenames[ifile] << " opened" << endl;
+	cerr << "data file " << filenames[ifile] << " opened" << endl;
+      
     }
 
-    // In the case of unpacking two-bit data, set the corresponding parameters
+#if ACTIVATE_MPI
 
-    dsp::TwoBitCorrection* tbc;
-    tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+    if (mpi_size > 1 && mpi_rank != mpi_root) {
 
-    if ( tbc && tbc_nsample )
-      tbc -> set_nsample ( tbc_nsample );
+      // the processing nodes must wait here for the root node to
+      // inform them of the buffer size
+      
+      mpi_data -> bcast_setup (mpi_root);
+      manager->set_input (mpi_data);
 
-    if ( tbc && tbc_threshold )
-      tbc -> set_threshold ( tbc_threshold );
-
-    if ( tbc && tbc_cutoff )
-      tbc -> set_cutoff_sigma ( tbc_cutoff );
-
-    profiles->zero();
+    }    
+    
+#endif 
 
     fold->prepare ( manager->get_info() );
 
@@ -447,53 +512,79 @@ int main (int argc, char** argv)
 
     unsigned fft_size = nfft * nchan * real_complex;
 
-    if (dsp::psrdisp_compatible && tbc) {
-
-      unsigned ppwt = tbc->get_nsample();
-      unsigned extra = ppwt - (block_size % ppwt);
-
-      cerr << "dspsr: psrdisp compatibilty\n"
-	"   adding " << extra << " samples to make block_size a multiple of " 
-	   << ppwt << endl;
-
-      block_size += extra;
-      overlap += extra;
-
-    }
-
     cerr << "FFTsize=" << fft_size << endl;
     cerr << "Blocksz=" << block_size << endl;
     cerr << "Overlap=" << overlap << endl;
 
-    if (seek_seconds)
-      manager->seek_seconds (seek_seconds);
+    unsigned nblocks_tot = 0;
 
-    if (total_seconds)
-      manager->set_total_seconds (seek_seconds + total_seconds);
+    if (mpi_rank == mpi_root) {
 
-    manager->set_block_size ( block_size );
-    manager->set_overlap ( overlap );
+      if (seek_seconds)
+	manager->seek_seconds (seek_seconds);
+      
+      if (total_seconds)
+	manager->set_total_seconds (seek_seconds + total_seconds);
 
-    unsigned ndat_good = block_size - overlap;
-    unsigned nblocks_tot = manager->get_total_samples() / ndat_good;
-    if (manager->get_total_samples() % ndat_good)
-      nblocks_tot ++;
+      manager->set_block_size ( block_size );
+      manager->set_overlap ( overlap );
 
-    cerr << "processing ";
-    if (blocks)
-      cerr << blocks << " out of ";
-    cerr << nblocks_tot << " blocks of " << block_size << " time samples\n";
-    if (blocks)
-      nblocks_tot = blocks;
+      unsigned ndat_good = block_size - overlap;
+      nblocks_tot = manager->get_total_samples() / ndat_good;
+      if (manager->get_total_samples() % ndat_good)
+	nblocks_tot ++;
 
-    fprintf (stderr, "(nfft:%d  ngood:%d  ffts/job:%d  jobs:%d)\n",
-             nfft, nfft-nfilt, ffts, nblocks_tot);
-    if (nchan > 1)
-    fprintf (stderr, "(nchan:%d -- Resolution:: spectral:%d  temporal:%d)\n",
-             nchan, fres, 1);
+
+      cerr << "processing ";
+      if (blocks)
+	cerr << blocks << " out of ";
+      cerr << nblocks_tot << " blocks of " << block_size << " time samples\n";
+      if (blocks)
+	nblocks_tot = blocks;
+      
+      fprintf (stderr, "(nfft:%d  ngood:%d  ffts/job:%d  jobs:%d)\n",
+	       nfft, nfft-nfilt, ffts, nblocks_tot);
+      if (nchan > 1)
+	fprintf (stderr,
+		 "(nchan:%d -- Resolution:: spectral:%d  temporal:%d)\n",
+		 nchan, fres, 1);
+
+
+#if ACTIVATE_MPI
+
+      if (mpi_size > 1) {
+    
+	mpi_data -> copy (manager);
+	mpi_data -> bcast_setup (mpi_root);
+
+	mpi_data -> serve_data ( manager->get_input() );
+
+	return 0;
+      }    
+    
+#endif   
+
+    }
+    
+    // In the case of unpacking two-bit data, set the corresponding parameters
+    
+    dsp::TwoBitCorrection* tbc;
+    tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+    
+    if ( tbc && tbc_nsample )
+      tbc -> set_nsample ( tbc_nsample );
+
+    if ( tbc && tbc_threshold )
+      tbc -> set_threshold ( tbc_threshold );
+
+    if ( tbc && tbc_cutoff )
+      tbc -> set_cutoff_sigma ( tbc_cutoff );
+
+    profiles->zero();
 
     int block=0;
     int last_percent = -1;
+
     while (!manager->eod()) {
 
       try {
@@ -509,20 +600,24 @@ int main (int argc, char** argv)
 
       block++;
 
-      int percent = int (100.0*float(block)/float(nblocks_tot));
+      if (mpi_rank == mpi_root) {
 
-      if (percent > last_percent) {
-        cerr << "Finished " << percent << "%\r";
-        last_percent = percent;
+	int percent = int (100.0*float(block)/float(nblocks_tot));
+	
+	if (percent > last_percent) {
+	  cerr << "Finished " << percent << "%\r";
+	  last_percent = percent;
+	}
+	
+	if (blocks && block==blocks)
+	  break;
+
       }
-
-      if (blocks && block==blocks)
-	break;
 
     }
 
     if (verbose)
-	cerr << "end of data" << endl;
+      cerr << "end of data" << endl;
 
     fprintf (stderr, "%25s %25s\n", "Operation", "Time Spent");
     for (unsigned iop=0; iop < operations.size(); iop++)

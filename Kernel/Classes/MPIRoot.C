@@ -22,7 +22,7 @@ int mpiPack_size (const dsp::MPIRoot& loader, MPI_Comm comm, int* size)
   int total_size = 0;
   int temp_size = 0;
 
-  mpiPack_size ((const dsp::Observation&) loader, comm, &temp_size);
+  mpiPack_size (*loader.get_info(), comm, &temp_size);
   total_size += temp_size;
 
   MPI_Pack_size (1, MPI_UInt64, comm, &temp_size); 
@@ -40,7 +40,7 @@ int mpiPack_size (const dsp::MPIRoot& loader, MPI_Comm comm, int* size)
 int mpiPack (const dsp::MPIRoot& loader,
 	     void* outbuf, int outcount, int* position, MPI_Comm comm)
 {
-  mpiPack ((const dsp::Observation&) loader, outbuf, outcount, position, comm);
+  mpiPack (*loader.get_info(), outbuf, outcount, position, comm);
 
   uint64 block_size;
   block_size = loader.get_block_size ();
@@ -57,7 +57,9 @@ int mpiPack (const dsp::MPIRoot& loader,
 int mpiUnpack (void* inbuf, int insize, int* position, 
 	       dsp::MPIRoot* loader, MPI_Comm comm)
 {
-  mpiUnpack (inbuf, insize, position, (dsp::Observation*) loader, comm);
+  dsp::Observation* obs = const_cast<dsp::Observation*> (loader->get_info());
+
+  mpiUnpack (inbuf, insize, position, obs, comm);
 
   uint64 block_size;
   MPI_Unpack (inbuf, insize, position, &block_size, 1, MPI_UInt64, comm);
@@ -87,8 +89,15 @@ dsp::MPIRoot::MPIRoot (MPI_Comm _comm)
   async_buf_size = 0;
   pack_size = 0;
 
-  end_of_data = false;
+  end_of_data = true;
 }
+
+
+dsp::MPIRoot::~MPIRoot ()
+{
+  if (async_buf) delete [] async_buf; async_buf = NULL;
+}
+
 
 // ////////////////////////////////////////////////////////////////////////////
 //
@@ -101,9 +110,10 @@ void dsp::MPIRoot::bcast_setup (int root_node)
   mpi_root = root_node;
 
   if (mpi_self == mpi_root && info.get_nbytes(get_block_size()) > MAXINT)
-    throw_str ("MPIRoot::bcast_setup block_size="UI64" will result\n"
-	       "\t\tin buffer size greater than MAXINT:%d\n",
-	       get_block_size(), MAXINT);
+    throw Error (InvalidState, "dsp::MPIRoot::bcast_setup",
+		 "block_size="UI64" will result\n"
+		 "\t\tin buffer size greater than MAXINT=%d\n",
+		 get_block_size(), MAXINT);
 
   mpiBcast (this, 1, mpi_root, comm);
 
@@ -127,6 +137,14 @@ void dsp::MPIRoot::bcast_setup (int root_node)
     // post the first receive request
     MPI_Irecv (async_buf, pack_size, MPI_PACKED, mpi_root, mpi_tag,
                comm, &request);
+
+  end_of_data = false;
+}
+
+//! End of data
+bool dsp::MPIRoot::eod()
+{
+  return end_of_data;
 }
 
 // ////////////////////////////////////////////////////////////////////////////
@@ -147,10 +165,11 @@ void dsp::MPIRoot::size_asyncspace ()
     if (async_buf) delete [] async_buf; async_buf = NULL;
 
     async_buf = new char [pack_size];
-    if (async_buf == NULL) {
-      throw_str ("MPIRoot::%d:size_asyncspace - error allocate "I64" bytes",
-		 mpi_self, pack_size);
-    }
+    if (async_buf == NULL)
+      throw Error (BadAllocation, "dsp::MPIRoot::size_asyncspace",
+		   "mpi_self=%d - error allocate "I64" bytes",
+		   mpi_self, pack_size);
+
     async_buf_size = pack_size;
   }
 }
@@ -200,10 +219,21 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest, int nbytes)
   if ((dest == mpi_self) || (dest < 0) || (dest >= mpi_size))
     throw_str ("MPIRoot::send_data invalid dest");
 
-  if (nbytes < 0 || nbytes > (int) data->get_nbytes() || nbytes > pack_size)
-    throw_str ("MPIRoot::send_data invalid nbytes=%d"
-	       " (input.nbytes=%d pack_size=%d)",
-	       nbytes, (int) data->get_nbytes(), pack_size);
+  if (nbytes < 0) {
+    if (verbose)
+      cerr << "dsp::MPIRoot::send_data sending end of data" << endl;
+    nbytes = 0;
+  }
+
+  if (unsigned(nbytes) > data->get_nbytes())
+    throw Error (InvalidParam, "dsp::MPIRoot::send_data",
+		 "invalid nbytes=%d > data.nbytes=%d",
+		 nbytes, (int) data->get_nbytes());
+
+  if (data->get_nbytes() > unsigned(pack_size))
+    throw Error (InvalidParam, "dsp::MPIRoot::send_data",
+		 "invalid data.nbytes=%d > pack_size=%d)",
+		 data->get_nbytes(), pack_size);
 
   // ensure that the asynchronous send/recv buffer is free
   wait ();
@@ -221,8 +251,8 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest, int nbytes)
 	     comm, &request);
 
   if (request == MPI_REQUEST_NULL)
-    throw_str ("MPIRoot::send_data"
-	       " Unexpected MPI_REQUEST_NULL from MPI_Isend");
+    throw Error (InvalidState, "dsp::MPIRoot::send_data"
+		 "Unexpected MPI_REQUEST_NULL from MPI_Isend");
 
 }
 
@@ -233,7 +263,8 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest, int nbytes)
 void dsp::MPIRoot::load_data (BitSeries* data)
 {
   if (async_buf == NULL)
-    throw_str ("MPIRoot::load_data not prepared");
+    throw Error (InvalidState, "dsp::MPIRoot::load_data", 
+		 "buffer not prepared.  call bcast_setup first.");
 
   if (request == MPI_REQUEST_NULL)
     // no receives have yet been posted!  get on it
@@ -267,3 +298,39 @@ void dsp::MPIRoot::load_data (BitSeries* data)
              comm, &request);
 
 }
+
+
+void dsp::MPIRoot::seek (int64 offset, int whence)
+{
+  throw Error (InvalidState, "dsp::MPIRoot::seek", "cannot seek");
+}
+
+void dsp::MPIRoot::serve_data (Input* input, BitSeries* data)
+{
+  if (mpi_size == 1)
+    throw Error (InvalidState, "dsp::MPIRoot::serve_data", "mpi_size == 1");
+
+  if (!data)
+    data = new dsp::BitSeries;
+
+  input->set_output (data);
+  
+
+  while (!input->eod ()) {
+
+    input->operate ();
+
+    // TODO: send data to those nodes that request data
+    int destination = -1;
+
+    send_data (data, destination);
+
+  }
+
+  // after end of data, send empty buffer to each node
+  for (int irank=0; irank < mpi_size; irank++)
+    if (irank != mpi_self)
+      send_data (data, irank, 0);
+
+}
+
