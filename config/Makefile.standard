@@ -47,8 +47,36 @@ SWINBURNE_REPOSITORY = mania.physics.swin.edu.au:/psr/cvsroot
 
 ##########################################################################
 # MPI
-IMPI = -I${PSRPKGS}/src/mpich/include
-LMPI = define LMPI in Makefile.${LOGIN_ARCH}
+LMPI = -lmpich
+
+##########################################################################
+# FFTW and pulsar group wrappers
+LFFT = -lpsrfft -lrfftw -lfftw
+
+##########################################################################
+# OpenGL 3D stuff
+LO3D = -lGL $(LXMU) $(LX11)
+
+##########################################################################
+# PGPLOT, C-wrappers, Motif/PGPLOT
+LPGPLOT = -lpgplot $(LX11) $(LF77)
+LCPGPLOT= -lcpgplot $(LPGPLOT)
+LXMPGPLOT = -lXmPgplot $(LMOTIF) $(LCPGPLOT)
+
+LX11 = -lX11
+LXMU = -lXmu
+LMOTIF = -lXm -lXt
+
+##########################################################################
+# Qt Qt/Xt Qt/Motif/PGPLOT
+IQT := -I${PSRPKGS}/${LOGIN_ARCH}/qt/include
+LQT := -L${PSRPKGS}/${LOGIN_ARCH}/qt/lib -lqt
+LQXT = $(LQT) -lqxt
+LQXMPGPLOT = $(LQXT) $(LXMPGPLOT)
+
+LENDIAN = -lendian
+LDIALOG = -ldialog
+F77LIBS = $(LF77)  # LF77 defined in architecture-dependent Makefile
 
 ##########################################################################
 # GTK-- :: enabled only when environment variable is "yes"
@@ -56,11 +84,6 @@ ifeq ($(PSRGTKMM),yes)
 GTKMM_CCFLAGS := ${shell ${PSRPKGS}/${LOGIN_ARCH}/bin/gtkmm-config --cflags}
 LGTKMM := ${shell ${PSRPKGS}/${LOGIN_ARCH}/bin/gtkmm-config --libs}
 endif
-
-##########################################################################
-# Qt
-IQT := -I${PSRPKGS}/${LOGIN_ARCH}/qt/include
-LQT := -L${PSRPKGS}/${LOGIN_ARCH}/qt/lib -lqt
 
 ##########################################################################
 # SLA LIB
