@@ -11,18 +11,18 @@
 //! Null constructor
 dsp::BitSeries::BitSeries ()
 {
+  data = 0;
   size = 0;
   input_sample = -1;
+
+  request_offset = 0;
+  request_ndat = 0;
 }
 
 //! Destructor
 dsp::BitSeries::~BitSeries ()
 {
-  if (data.get()){
-    sink(data);
-    auto_ptr<unsigned char> temp;
-    data = temp;
-  }
+  if (data) delete [] data; data = 0;
   size = 0;
 }
 
@@ -38,27 +38,24 @@ void dsp::BitSeries::resize (int64 nsamples)
   int64 require = nbytes (nsamples);
 
   if (require < 0)
-    throw_str ("BitSeries::resize invalid size="I64, require);
+    throw Error (InvalidParam, "BitSeries::resize",
+		 "invalid size="I64, require);
 
   if (!require || require > size) {
-    if (data.get()){
-      sink(data);
-      auto_ptr<unsigned char> temp;
-      data = temp;
-    }
+    if (data) delete data; data = 0;
     size = 0;
     //! data has been deleted. input sample is no longer valid
     input_sample = -1;
   }
 
-  ndat = nsamples;
+  request_ndat = ndat = nsamples;
+  request_offset = 0;
 
   if (!require)
     return;
 
   if (size == 0) {
-    auto_ptr<unsigned char> temp(new unsigned char [require]);
-    data = temp;
+    data = new unsigned char [require];
     size = require;
   }
 
@@ -85,13 +82,13 @@ dsp::BitSeries::operator = (const BitSeries& basicseries)
 //! Return pointer to the specified data block
 unsigned char* dsp::BitSeries::get_datptr(uint64 sample)
 {
-  return data.get() + nbytes(sample);
+  return data + nbytes(sample);
 }
 
 //! Return pointer to the specified data block
 const unsigned char* dsp::BitSeries::get_datptr(uint64 sample) const
 {
-  return data.get() + nbytes(sample);
+  return data + nbytes(sample);
 }
 
 void dsp::BitSeries::append (const dsp::BitSeries* little)
@@ -133,6 +130,6 @@ void dsp::BitSeries::attach(auto_ptr<unsigned char> _data){
     throw Error(InvalidState,"dsp::BitSeries::attach()",
 		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
 
-  sink(data);
-  data = _data;
+  if (data) delete [] data; data = 0;
+  data = _data.release();
 }

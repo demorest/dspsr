@@ -46,11 +46,16 @@ namespace dsp {
     { Observation::operator= (obs); return *this; }
 
     //! Return pointer to the raw data buffer
-    virtual unsigned char* get_rawptr () { return data.get(); }
+    virtual unsigned char* get_rawptr () { return data; }
 
     //! Return pointer to the raw data buffer
-    virtual const unsigned char* get_rawptr () const { return data.get(); }
+    virtual const unsigned char* get_rawptr () const { return data; }
 
+    //! Offset (owing to resolution) to the requested time sample
+    unsigned get_request_offset () const { return request_offset; }
+
+    //! Number of time samples requested
+    uint64 get_request_ndat () const { return request_ndat; }
 
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
     virtual unsigned char* get_datptr (uint64 sample);
@@ -71,13 +76,19 @@ namespace dsp {
 
   protected:
     //! The data buffer
-    auto_ptr<unsigned char> data;
+    unsigned char* data;
 
     //! The size of the data buffer (not necessarily ndat)
     int64 size;
 
     //! Sample offset from start of source; attribute used by Input class
     int64 input_sample;
+
+    //! Offset (owing to resolution) to the requested time sample
+    unsigned request_offset;
+
+    //! Number of time samples requested
+    uint64 request_ndat;
 
   };
   
