@@ -33,11 +33,14 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     throw_str ("CPSR2_Observation - failed read TELESCOPE");
 
   string tel = hdrstr;
-  if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS")
+  if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS") 
     set_telescope_code (7);
-  else
+  else if ( !strcasecmp (hdrstr, "GBT") || tel == "GBT")
+    set_telescope_code (1);
+  else {
+    cerr << "CPSR2_Observation:: Warning using code" << hdrstr[0] << endl;
     set_telescope_code (hdrstr[0]);
-
+  }
   // //////////////////////////////////////////////////////////////////////
   //
   // SOURCE
