@@ -104,6 +104,8 @@ dsp::MPIRoot::MPIRoot (MPI_Comm _comm)
   min_header_size = 0;
   data_size = 0;
 
+  auto_request = true;
+
   // compute the MPI_Pack_size of the header information
   int temp_size = 0;
   MPI_Pack_size (1, MPI_Int64, comm, &temp_size);
@@ -153,8 +155,10 @@ void dsp::MPIRoot::set_block_size (uint64 _size)
 
   if (!end_of_data && resize_required)  {
     size_pack_buffer ();
-    if (ready && mpi_rank != mpi_root)
+    if (ready && mpi_rank != mpi_root && auto_request){
+      cerr << "dsp::MPIRoot::set_block_size REQUESTING DATA" << endl;
       request_data();
+    }
   }
 }
 
@@ -200,14 +204,17 @@ void dsp::MPIRoot::prepare ()
 
   }
 
-  else if (ready)
+  else if (ready && auto_request){
+    cerr << "dsp::MPIRoot::prepare REQUESTING DATA" << endl;
     request_data ();
+  }
 }
 
 
 //! End of data
 bool dsp::MPIRoot::eod()
 {
+
   if (!end_of_data && mpi_rank != mpi_root)
     receive_data ();
 
@@ -427,6 +434,8 @@ void dsp::MPIRoot::request_data ()
 {
   ensure_receptive ("dsp::MPIRoot::request_data");
 
+  cerr << "*" << endl;
+  
   if (data_request != MPI_REQUEST_NULL)
     throw Error (InvalidState, "dsp::MPIRoot::request_data",
                  "data_request already pending");
@@ -537,7 +546,10 @@ void dsp::MPIRoot::load_data (BitSeries* data)
   data->change_start_time( start_sample );
 
   // request the next block of data
-  request_data ();
+  if(auto_request){
+    cerr << "dsp::MPIRoot::load_data REQUESTING DATA" << endl;
+    request_data ();
+  }
 }
 
 

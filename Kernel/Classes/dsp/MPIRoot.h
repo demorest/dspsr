@@ -98,6 +98,9 @@ namespace dsp {
     //! Tag used for all communication
     int mpi_tag;
 
+    //! Automatically request the next data chunk
+    bool auto_request;
+
     //! Handle to the asynchronous send/recv of data
     MPI_Request data_request;
 
