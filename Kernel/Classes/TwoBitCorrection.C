@@ -232,6 +232,8 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
   static float root_pi = sqrt(M_PI);
   static float root2   = sqrt(2.0);
 
+  TwoBitTable table (type);
+
   for (int nlo=n_min; nlo <= n_max; nlo++)  {
   
     /* Refering to JA98, nlo is the number of samples between x2 and x4, 
@@ -241,15 +243,18 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
     float lo, hi, A;
     output_levels (p_in, lo, hi, A);
 
+    table.set_lo_val (lo);
+    table.set_hi_val (hi);
+
     if (huge) {
       /* Generate the 256 sets of four output floating point values
 	 corresponding to each byte */
-      dsp::TwoBitTable::generate (dls, type, lo, hi);
+      table.generate (dls);
       dls += 256 * 4;
     }
     else {
       // Generate the four output levels corresponding to each 2-bit number
-      dsp::TwoBitTable::four_vals (dls, type, lo, hi);
+      table.four_vals (dls);
       dls += 4;
     }
 
