@@ -91,8 +91,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
     if (verbose) cerr << "dsp::Fold::prepare generating ephemeris" << endl;
 
-    Reference::To<MatchingEphemeris> mephem;
-    mephem = new MatchingEphemeris(jpulsar.c_str(), 0);
+    Reference::To<MatchingEphemeris> mephem(new MatchingEphemeris(jpulsar.c_str(), 0));
     add_pulsar_ephemeris( mephem );
     pulsar_ephemeris = mephem;
 
@@ -501,19 +500,21 @@ void dsp::Fold::transformation ()
    \pre the folding_nbin and folding_period or folding_polyco attributes must
    have been set prior to calling this method.
 
-   \param info Observation telling the start_time and sampling_rate of time
-   \param nblock the number of blocks of data to be folded
-   \param integration returns the time integrated
+   \param integration_length returns the time integrated 
    \param phase base address of nblock contiguous phase blocks (of nbin*ndim)
    \param hits array of nbin phase bin counts
+   \param info Observation telling the start_time and sampling_rate of time
+   \param nblock the number of blocks of data to be folded
    \param time base address of nblock contiguous time blocks (of ndat*ndim)
    \param ndat the number of time samples in each time block
    \param ndim the dimension of each time sample
    \param weights corresponding to each block of ndatperweight time samples
    \param ndatperweight number of time samples per weight
    \param idat_start the time sample at which to start folding (optional)
-   \param fold_ndat the number of time samples to be folded (optional)
+   \param ndat_fold the number of time samples to be folded (optional)
+
 */
+
 void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 		      const Observation* info, unsigned nblock,
 		      const float* time, uint64 ndat, unsigned ndim,
@@ -710,4 +711,5 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   } // for each block
 
 }
+
 
