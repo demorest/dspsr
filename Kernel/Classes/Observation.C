@@ -741,11 +741,19 @@ void dsp::Observation::file_seek(int fd,int64 offset,int whence){
 
 //! Determines the version of the dsp::Observation printout
 float dsp::Observation::get_version(int fd){
+  //fprintf(stderr,"get_version1\n");
+  
   string firstline = read_line(fd);
 
-  if( firstline == "dsp::Observation_data" ) // Pre-Header days of dsp::Observation
+  //fprintf(stderr,"get_version2 with line '%s'\n",firstline.c_str());
+
+  vector<string> words = stringdecimate(firstline," \t");
+
+  if( words.size() != 3 ) // Pre-Header days of dsp::Observation
     return 1.0;  
   
+  //  fprintf(stderr,"get_version3\n");
+
   float version = Header::parse_version(firstline);
 
   // Rewind the file descriptor by the first line and the newline character
@@ -756,13 +764,19 @@ float dsp::Observation::get_version(int fd){
 
 //! Opposite of obs2file
 void dsp::Observation::file2obs(int fd, int64 offset, int whence){
+  //fprintf(stderr,"file2obs1\n");
+
   file_seek( fd, offset, whence);
 
+  //fprintf(stderr,"file2obs2\n");
+
   if( get_version(fd) < 2.0 ){
+    //fprintf(stderr,"file2obs3\n");
     old_file2obs(fd);
     return;
   }    
 
+  //fprintf(stderr,"file2obs4\n");
   Reference::To<Header> hdr(new Header(fd) );
 
   Header2obs(hdr);
