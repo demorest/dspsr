@@ -4,12 +4,12 @@
 
 #include "genutil.h"
 
+#include "dsp/TimeSeries.h"
+#include "dsp/Operation.h"
 #include "dsp/SLDetect.h"
 
-dsp::SLDetect::SLDetect () 
-  : Transformation <TimeSeries, TimeSeries> ("SLDetect", anyplace)
-{
-}
+dsp::SLDetect::SLDetect (Behaviour _type) 
+  : Transformation <TimeSeries, TimeSeries> ("SLDetect", _type){ }
 
 void dsp::SLDetect::transformation ()
 {

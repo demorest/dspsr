@@ -14,7 +14,7 @@ namespace dsp {
 
   public:
 
-    SLDetect ();
+    SLDetect(Behaviour _type=anyplace);
         
   protected:
     //! The transformation loads the next block of data
