@@ -1,0 +1,70 @@
+#-*-Makefile-*- helps emacs recognize that this file is a Makefile
+
+##############################################################################
+#
+# This Makefile contains specializations for each location
+#
+##############################################################################
+
+LBACKENDS := 
+
+##############################################################################
+#
+# Uncomment the following line to compile PMDAQ specific code
+#
+PMDAQ:=yes
+
+ifeq ($(PMDAQ),yes)
+CLASSES += PMDAQFile PMDAQ_Observation
+CPPFLAGS += -D_DSP_PMDAQ=1
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile CPSR2 specific code
+#
+CPSR2:=yes
+
+ifeq ($(CPSR2),yes)
+CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation
+CPPFLAGS += -D_DSP_CPSR2=1
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile CPSR specific code
+#
+CPSR:=yes
+
+ifeq ($(CPSR),yes)
+CLASSES += CPSRFile CPSRTwoBitCorrection 
+CPPFLAGS += -D_DSP_CPSR=1
+LBACKENDS += -lcpsr_obs
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile S2 specific code
+#
+S2:=yes
+
+ifeq ($(S2),yes)
+CLASSES += S2File S2TwoBitCorrection S2TwoBitTable
+CPPFLAGS += -D_DSP_S2=1
+LBACKENDS += -ls2_obs
+endif
+
+##############################################################################
+#
+# Uncomment the following line to compile PuMa specific code
+#
+# PuMa:=yes
+
+ifeq ($(PuMa),yes)
+CPPFLAGS += -D_DSP_PuMa=1
+LBACKENDS += -lpuma_obs
+endif
+
+
+
+
