@@ -147,7 +147,8 @@ bool dsp::Plotter<DataType>::plot(){
       plot_background();
       for( unsigned iplotdata=0; iplotdata<plotdatas.size(); iplotdata++){
 	cpgsci(1);
-	//set_colour_index(iplotdata);
+	if( plotdatas.size() > 1 )
+	  set_colour_index(iplotdata);
 	if( Ready::verbose || Operation::verbose )
 	  fprintf(stderr,"dsp::Plotter::plot() calling plotdatas[%d]->plot()\n",
 		  iplotdata);
@@ -368,14 +369,12 @@ bool dsp::Plotter<DataType>::plot_background(){
   last_params->do_cpgswin();
   cpgbox("BCNST",0.0,0,"BCNST",0.0,0);
   
-  string title = base_title + make_string(last_params->get_plot_in_hierachy());
+  string title = base_title + "  (plot " + make_string(last_params->get_plot_in_hierachy()) + ")";
 
   if( inputs[0]->get_domain().substr(0,7)=="Fourier" && xlabel == "Time (s)" )
     xlabel = "Frequency (Hz)";
   else if( inputs[0]->get_domain()=="Time" && xlabel == "Frequency (Hz)" ) 
     xlabel = "Time (s)";
-
-  title="";
 
   cpglab(xlabel.c_str(),ylabel.c_str(),title.c_str());
 
