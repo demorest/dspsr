@@ -328,9 +328,11 @@ endif # install_yes != install
 
 ##########################################################################
 # Explicit rule to fetch a source code file from the cvs repository if it 
-# cannot be found in the current working directory. (must follow 'all'!)
+# cannot be found in the current working directory...  the NONMODULE
+# macro can be used to disable this fetch.  eg 'NONMODULE = ephio.h'
 ##########################################################################
-$(make_install) $(ALL_SRCS):
+MODULE += $(ALL_SRCS) $(INCLUDES) $(make_install)
+$(filter-out $(NONMODULE), $(MODULE)):
 	cvs update $@
 	@if [ ! -f $@ ]; then \
 		echo "$@ not found in CVS repository"; \
