@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaFile.h,v $
-   $Revision: 1.4 $
-   $Date: 2003/09/27 08:59:21 $
-   $Author: hknight $ */
+   $Revision: 1.5 $
+   $Date: 2003/11/25 08:56:25 $
+   $Author: wvanstra $ */
 
 
 #ifndef __dsp_PuMaFile_h
@@ -31,7 +31,7 @@ namespace dsp {
   protected:
 
     //! Open the file
-    void open_file (const char* filename,int NOT_USED=-1);
+    void open_file (const char* filename);
 
     //! Set the Input::info attribute, given a loaded Header_type object
     void parse (const void* hdr);
