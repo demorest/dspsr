@@ -134,7 +134,8 @@ void dsp::TimeSeries::seek (int64 offset)
 unsigned char* dsp::TimeSeries::get_data(){
   if( !data && !buffer )
     throw Error(InvalidState,"dsp::TimeSeries::get_data()",
-		"Neither data nor buffer is defined");
+		"Neither data nor buffer is defined.  ndat="UI64,
+		get_ndat());
   if( !data )
     data = (float*)buffer;
   return ((unsigned char*)data);
@@ -143,8 +144,9 @@ unsigned char* dsp::TimeSeries::get_data(){
 //! Returns a uchar pointer to the first piece of data
 const unsigned char* dsp::TimeSeries::const_get_data() const{
   if( !data && !buffer )
-    throw Error(InvalidState,"dsp::TimeSeries::get_data()",
-		"Neither data nor buffer is defined");
+    throw Error(InvalidState,"dsp::TimeSeries::const_get_data()",
+		"Neither data nor buffer is defined.  ndat="UI64,
+		get_ndat());
   if( !data )
     return ((const unsigned char*)buffer);
 
