@@ -6,7 +6,7 @@
 
 #include "SLDetect.h"
 
-dsp::SLDetect::SLDetect( Behaviour _type) : Operation ("SLDetect", _type){
+dsp::SLDetect::SLDetect( Behaviour _type=Operation::anyplace) : Operation ("SLDetect", _type){
 }
 
 void dsp::SLDetect::operation ()

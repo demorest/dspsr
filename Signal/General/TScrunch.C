@@ -7,7 +7,7 @@
 #include "Operation.h"
 #include "TScrunch.h"
 
-dsp::TScrunch::TScrunch(Behaviour _type) : Operation("TScrunch", _type){
+dsp::TScrunch::TScrunch(Behaviour _type=Operation::anyplace) : Operation("TScrunch", _type){
   ScrunchFactor = -1;
   TimeRes = -1.0;
   use_tres = false;
