@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/pspmXfer.h,v $
-   $Revision: 1.1 $
-   $Date: 2001/08/02 08:35:38 $
+   $Revision: 1.2 $
+   $Date: 2001/08/02 10:56:22 $
    $Author: wvanstra $ */
 
 #ifndef __pspmXfer_h
@@ -34,6 +34,7 @@ class pspmXfer {
   string tape;        // device name of tape
   string ext;         // extension to place on trigger file
   string xref;        // if pspm.name == xref, then check FPTM log
+  bool   only_xref;   // only transfer file if it can be xrefd
 
   double leave_alone; // number of bytes to leave vacant on file systems
 

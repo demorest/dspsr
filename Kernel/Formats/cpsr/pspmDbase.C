@@ -31,7 +31,7 @@ const char* pspmDbase::server::default_name()
     if (!psrhome)
       throw string ("pspmDbase::server::default PSRHOME not defined");
     default_fname = psrhome;
-    default_fname += "/runtime/cpsr/hdrlog.txt";
+    default_fname += "/runtime/cpsr/header.entries";
   }
   return default_fname.c_str();
 }
