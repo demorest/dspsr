@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/11/10 17:54:35 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2002/11/19 06:32:26 $
+   $Author: hknight $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -41,15 +41,17 @@ namespace dsp {
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (uint64 nsamples);
-    
+
     //! Return pointer to the specified block of time samples
     virtual float* get_datptr (unsigned ichan=0,unsigned ipol=0);
 
     //! Return pointer to the specified block of time samples
     virtual const float* get_datptr (unsigned ichan=0,unsigned ipol=0) const;
 
-    //! Append little onto the end of this
-    virtual void append (const TimeSeries* little);
+    //! Append little onto the end of 'this'
+    //! Return value indicates whether 'this' can be further appended
+    //! ie 'false' indicates it's full.
+    virtual bool append (const TimeSeries* little);
 
     //! Set all values to zero
     virtual void zero ();

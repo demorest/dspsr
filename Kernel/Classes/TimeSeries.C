@@ -131,15 +131,31 @@ void dsp::TimeSeries::zero ()
     }
 }
 
-void dsp::TimeSeries::append (const dsp::TimeSeries* little)
+//! return value is whether timeseries can still be appended to
+bool dsp::TimeSeries::append (const dsp::TimeSeries* little)
 {
+  bool ret = true;
+
   uint64 ncontain = get_ndat() * get_ndim();
   uint64 ncopy = little->get_ndat() * little->get_ndim();
 
-  if ( subsize < ncontain + ncopy )
+  if( verbose ){
+    fprintf(stderr,"ncopy="UI64"\n",ncopy);
+    fprintf(stderr,"ncontain="UI64"\n",ncontain);
+    fprintf(stderr,"subsize="UI64"\n",subsize);
+  }
+
+  if( ncontain==subsize )
     throw Error (InvalidRange, "dsp::TimeSeries::append",
-		 "insufficient capacity="UI64" to append ndat="UI64,
+		 "Capacity="UI64" is already totally full- none of ndat="UI64" can be appended at all",
 		 subsize, ncopy + ncontain);
+
+  if ( subsize <= ncontain + ncopy ){
+    ncopy = subsize - ncontain;
+    fprintf(stderr,"dsp::TimeSeries::append()- this append will fill up the timeseries from ndat="UI64" with ncopy="UI64" to ndat="UI64".\n",
+	    get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
+    ret = false;
+  }
 
   if ( get_ndat() == 0 ) {
     Observation::operator=(*little);
@@ -161,7 +177,9 @@ void dsp::TimeSeries::append (const dsp::TimeSeries* little)
     }
   }
 
-  set_ndat (get_ndat() + little->get_ndat());
+  set_ndat (get_ndat() + ncopy/little->get_ndim());
+
+  return ret;
 }
 
 void dsp::TimeSeries::check (float min, float max)
