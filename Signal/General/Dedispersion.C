@@ -131,7 +131,7 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 
 void dsp::Dedispersion::mark (Observation* output)
 {
-  output->set_dispersion_measure (dispersion_measure);
+  output->change_dispersion_measure (dispersion_measure);
 }
 
 void dsp::Dedispersion::build ()
