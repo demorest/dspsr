@@ -52,7 +52,8 @@ void dsp::Mark4File::open_file (const char* filename)
   //  cerr << endl << "Counting channels ..." << endl;
   channels = count_channels (fd);
   //  cerr << "Located " << channels << " channels" << endl << endl;
-
+  
+  //  cout << "Channels: " << channels << endl;
 
   // testing
   //  cerr << "LOCATING SYNC..." << endl;
@@ -100,8 +101,11 @@ void dsp::Mark4File::open_file (const char* filename)
   
   info.set_npol(2);
   info.set_nbit(2);
+
   info.set_nchan(1);
   
+  //ASSUMES THE DATA IS 16MHz channels
+  //  info.set_nchan(int(channels/16));
   unsigned bits_per_byte = 8;
   resolution = bits_per_byte / info.get_nbit();
   
@@ -110,7 +114,7 @@ void dsp::Mark4File::open_file (const char* filename)
   stat (filename, &file_info);
   
   // This needs to include information about the headers in Mark4-VLBA modes
-  info.set_ndat( int64((file_info.st_size)/info.get_npol() )*16/(info.get_nbit()*info.get_npol()));
+  info.set_ndat( int64((file_info.st_size)/info.get_npol() )*16/(info.get_nbit()*info.get_npol()*info.get_nchan()));
   
   uint64 last_sync = find_sync(fd,file_info.st_size-2500*channels);
   //  cout << last_sync << "\t" << decode_date(last_sync).printall() << endl;
@@ -118,9 +122,11 @@ void dsp::Mark4File::open_file (const char* filename)
   double initial_offset_time = ((first_sync-8*channels)/(info.get_npol()))
                                 *(8/info.get_nbit())/info.get_rate();
 
+  //  cout << info.get_start_time().printall() << "\t" << first_sync << "\t" << initial_offset_time << endl;
+
   info.set_start_time(info.get_start_time() - initial_offset_time);
   
-  cout << "FS: " << ((first_sync-8*channels)/(info.get_npol()))*(8/info.get_nbit())/info.get_rate() << endl;
+  //  cout << "FS: " << ((first_sync-8*channels)/(info.get_npol()))*(8/info.get_nbit())/info.get_rate() << endl;
 }
 
 
