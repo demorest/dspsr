@@ -21,7 +21,10 @@
 #include "dsp/Detection.h"
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
+
+#if ACTIVATE_MKL
 #include "dsp/IncoherentFilterbank.h"
+#endif
 
 #include "dsp/Archiver.h"
 
@@ -58,7 +61,9 @@ void usage ()
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
+#if ACTIVATE_MKL
     " -I             Over-ride with IncoherentFilterbank class [false]\n"
+#endif
     "\n"
     "Convolution options:\n"
     " -x nfft        over-ride optimal transform length\n"
@@ -152,8 +157,10 @@ int main (int argc, char** argv)
   // number of seconds to process from data
   double total_seconds = 0.0;
 
+#if ACTIVATE_MKL
   // If true, a dsp::IncoherentFilterbank is used rather than a dsp::Filterbank
   bool use_incoherent_filterbank = false;
+#endif
 
   // Pulsar name
   string pulsar_name;
@@ -243,11 +250,13 @@ int main (int argc, char** argv)
     case 'h':
       usage ();
       return 0;
-      
+
+#if ACTIVATE_MKL      
     case 'I':
       use_incoherent_filterbank = true;
       break;
-      
+#endif      
+
     case 'j':
       join_files = true;
       break;
@@ -410,6 +419,7 @@ int main (int argc, char** argv)
     // output filterbank data
     convolve = new dsp::WeightedTimeSeries;
 
+#if ACTIVATE_MKL
     if( use_incoherent_filterbank ) {
       if (verbose)
 	cerr << "Creating IncoherentFilterbank instance" << endl;
@@ -437,9 +447,11 @@ int main (int argc, char** argv)
 
       operations.push_back( filterbank );
     }
-    else{
-
-      if (verbose)
+    else
+#endif
+      {
+	
+	if (verbose)
 	cerr << "Creating Filterbank instance" << endl;
       
       // software filterbank constructor
