@@ -48,6 +48,8 @@ void dsp::MultiFile::load (vector<string>& filenames)
 
   info = *(files[0]->get_info());
   info.set_ndat (total_ndat);
+
+  reset();
 }
 
 //! Load bytes from file
