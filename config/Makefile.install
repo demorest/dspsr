@@ -25,18 +25,15 @@
 	@touch $*/.exists
 
 ##########################################################################
-# Rules to copy header files to include/ and installed include/ directories
+# Variable that defines how header files are copied to their read-only
+# include/ location.  (used in Makefile.extended rules)
 ##########################################################################
-
 define copy_header
 if [ -f $@ ]; then $(RM) $@; fi
 echo "copying $< to $@"
 cp $< $@
 chmod a-w $@
 endef
-
-$(INSTALL_INCDIR)/% : ./% $(INSTALL_INCDIR)/.exists
-	@$(copy_header)
 
 ##########################################################################
 # The rest of this file applies only when 'install' appears as a target
@@ -96,18 +93,26 @@ ERROR:=environment variable PSRHOME is not defined
 endif
 
 ##########################################################################
-# Rules to copy libraries and executables from the user's local "working
-# copy" directories to the installed "group copy" directories found in
-# Makefile.install
+# Static pattern rules to copy libraries and executables from the user's 
+# local "working copy" directories to the installed "group copy" dirs.
 ##########################################################################
 
-$(INSTALL_BINDIR)/% : $(BINDIR)/% $(INSTALL_BINDIR).exists
+$(INSTALL_BINS) : $(INSTALL_BINDIR)/.exists
+$(INSTALL_BINS) : $(INSTALL_BINDIR)/% : $(BINDIR)/%
 	@echo "copying $< to $@"
 	@cp $< $@
 
-$(INSTALL_LIBDIR)/% : $(LIBDIR)/% $(INSTALL_BINDIR).exists
+$(INSTALL_LIBS) : $(INSTALL_LIBDIR)/.exists
+$(INSTALL_LIBS) : $(INSTALL_LIBDIR)/%.a : $(LIBDIR)/%.a 
 	@echo "copying $< to $@"
 	@cp $< $@
+
+##########################################################################
+# Static pattern rule to copy header files to installed include/ directory
+##########################################################################
+
+$(INSTALL_INCS) : $(INSTALL_INCDIR)/% : ./% $(INSTALL_INCDIR)/.exists
+	@$(copy_header)
 
 endif # install_yes == install
 
