@@ -239,7 +239,7 @@ $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries)
 
 # pattern rule for object with no source code file of same name
 $(BINDIR)/%: $(libraries)
-	-$(CC) ${CFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
+	-$(CCC) ${CCFLAGS} -o $@ $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
 ##########################################################################
