@@ -162,11 +162,8 @@ void dsp::Dedispersion::mark (Observation* output)
   output->change_dispersion_measure (dispersion_measure);
 }
 
-void dsp::Dedispersion::build ()
+void dsp::Dedispersion::prepare ()
 {
-  if (built)
-    return;
-
   // The signal at sky frequencies lower than the centre frequency
   // arrives later.  So the finite impulse response (FIR) of the
   // dispersion relation, d(t), should have non-zero values for t>0 up
@@ -188,6 +185,15 @@ void dsp::Dedispersion::build ()
     set_optimal_ndat ();
   else
     check_ndat ();
+}
+
+void dsp::Dedispersion::build ()
+{
+  if (built)
+    return;
+
+  // prepare internal variables
+  prepare ();
 
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);

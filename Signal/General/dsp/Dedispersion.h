@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/01/11 07:09:44 $
-   $Author: wvanstra $ */
+   $Revision: 1.17 $
+   $Date: 2003/01/11 07:28:47 $
+   $Author: pulsar $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
@@ -107,6 +107,9 @@ namespace dsp {
 
     //! Compute the phases for a dedispersion kernel
     void build (vector<float>& phases, unsigned npts, unsigned nchan);
+
+    //! Prepare for building
+    void prepare ();
 
   protected:
 
