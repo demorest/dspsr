@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.24 $
-   $Date: 2004/11/01 22:21:50 $
+   $Revision: 1.25 $
+   $Date: 2004/11/01 23:44:04 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -54,7 +54,8 @@ namespace dsp {
     virtual TimeSeries& operator *= (float mult);
 
     //! Copy the configuration of another TimeSeries instance (not the data)
-    virtual void copy_configuration (const TimeSeries* copy);
+    //! This doesn't copy nchan, npol or ndim if data is being preserved
+    virtual void copy_configuration (const Observation* copy);
 
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
