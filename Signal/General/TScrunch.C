@@ -73,11 +73,11 @@ void dsp::TScrunch::transformation ()
   const unsigned nscrunchings = input->get_ndat()/sfactor;
 
   if( input.get() != output.get() ){
-    output->Observation::operator=( *input );
+    get_output()->copy_configuration( get_input() );
     //    fprintf(stderr,"resizing to "UI64" / %d = "UI64"\n",
     //    input->get_ndat(), sfactor,
     //    uint64(input->get_ndat()/ sfactor));
-    output->resize( input->get_ndat()/sfactor );
+    get_output()->resize( get_input()->get_ndat()/sfactor );
   }
 
   output->rescale( sfactor );
