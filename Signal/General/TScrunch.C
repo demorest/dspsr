@@ -74,9 +74,9 @@ void dsp::TScrunch::transformation ()
 
   if( input.get() != output.get() ){
     output->Observation::operator=( *input );
-    fprintf(stderr,"resizing to "UI64" / %d = "UI64"\n",
-	    input->get_ndat(), sfactor,
-	    uint64(input->get_ndat()/ sfactor));
+    //    fprintf(stderr,"resizing to "UI64" / %d = "UI64"\n",
+    //    input->get_ndat(), sfactor,
+    //    uint64(input->get_ndat()/ sfactor));
     output->resize( input->get_ndat()/sfactor );
   }
 
