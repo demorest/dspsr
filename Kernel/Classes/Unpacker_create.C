@@ -1,0 +1,29 @@
+#include "dsp/Unpacker.h"
+
+//! Return a pointer to a new instance of the appropriate sub-class
+dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
+{
+  try {
+
+    if (verbose) cerr << "dsp::Unpacker::create with " << registry.size()
+                      << " registered sub-classes" << endl;
+
+    for (unsigned ichild=0; ichild < registry.size(); ichild++)
+      if ( registry[ichild]->matches (observation) ) {
+
+        Unpacker* child = registry.create (ichild);
+        child-> match( observation );
+
+        if (verbose)
+          cerr << "dsp::Unpacker::create return new sub-class" << endl;
+        return child;
+
+      }
+  } catch (Error& error) {
+    throw error += "dsp::Unpacker::create";
+  }
+
+  throw Error (InvalidState, "dsp::Unpacker::create",
+               "no unpacker for machine=" + observation->get_machine());
+}
+
