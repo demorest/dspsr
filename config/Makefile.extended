@@ -4,6 +4,8 @@
 .SUFFIXES:
 .SUFFIXES: .o .c .C .f .h .dep .odep
 
+.PRECIOUS: ${LOGIN_ARCH}/%.o
+
 # Ensure that the proper shell is used
 SHELL = /bin/sh
 ##########################################################################
@@ -250,14 +252,6 @@ moc_%.C: %.h
 	$(QTMOC) $< -o $@
 
 ##########################################################################
-##########################################################################
-
-###  STANDARD TARGETS
-
-##########################################################################
-##########################################################################
-
-##########################################################################
 # Rule to make the standard targets "phony".  eg. no file 'all'
 ##########################################################################
 .PHONY: ${TARGETS} %.srcs error
@@ -287,27 +281,21 @@ $(MAKECMDGOALS):error
 
 else
 
-ifeq ($(install_yes),install)
-
-install: $(INSTALL_INCS) $(INSTALL_LIBS) $(INSTALL_BINS)
-
-else
+###  NO ERRORS: DEFINE STANDARD TARGETS
+##########################################################################
+##########################################################################
 
 all: libs $(BINS)
 
 include: $(INCS)
 
-##########################################################################
-# Static pattern rule to copy include files in pwd to include/ directory
-$(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
-	@$(copy_header)
-
-# copy the include files only after successful compilation
 libs: $(LIBS) include
 
 test: $(TESTBINS)
 	@if [ -z "$(TESTBINS)" ]; then echo No tests to perform; \
 	else for test in "$(TESTBINS)"; do ($$test || exit 1); done; fi;
+
+install: $(INSTALL_INCS) $(INSTALL_LIBS) $(INSTALL_BINS)
 
 clean:
 	$(RM) $(LOGIN_ARCH)/*.o
@@ -315,10 +303,18 @@ clean:
 veryclean:
 	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS)
 
-endif # install_yes != install
+##########################################################################
+##########################################################################
+
+###  STATIC PATTERN RULES and EXPLICIT RULES (must follow default targets)
+##########################################################################
+##########################################################################
 
 ##########################################################################
+# Static pattern rule to copy include files in pwd to include/ directory
 ##########################################################################
+$(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
+	@$(copy_header)
 
 ##########################################################################
 # These static pattern rules allow one to type 'make exec' or 'make lib.a'
