@@ -24,7 +24,7 @@ INCFLAGS= -I. -I${INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
 
 ifneq (${PSREXPORT},1)
-INCFLAGS += -L${INSTALL_INCDIR}
+INCFLAGS += -I${INSTALL_INCDIR}
 endif
 
 LDFLAGS = -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
