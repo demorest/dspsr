@@ -11,8 +11,6 @@ dsp::ChannelOrder::ChannelOrder() : Transformation<BitSeries,TimeSeries>("Channe
 dsp::ChannelOrder::~ChannelOrder(){ }
 
 void dsp::ChannelOrder::transformation(){
-  //fprintf(stderr,"hello1\n");
-
   if( verbose )
     fprintf(stderr,"In dsp::ChannelOrder::transformation() with input->ndat="UI64"\n",
 	    input->get_ndat());
@@ -55,7 +53,7 @@ void dsp::ChannelOrder::transformation(){
     for( unsigned idim=0; idim<output->get_ndim(); idim++){
       for( unsigned ipol=0; ipol<output->get_npol(); ipol++){
 	for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
-	  float* in = (float*)input->get_rawptr() + idim + input->get_ndim()*         (ipol + input->get_npol()*ichan);
+	  float* in = (float*)input->get_rawptr() + idim + input->get_ndim() * (ipol + input->get_npol()*ichan);
 	  float* out = (float*)output->get_datptr(ichan,ipol)+idim;
 	  
 	  register const unsigned isamp_end = output->get_ndat()*output->get_ndim(); 
