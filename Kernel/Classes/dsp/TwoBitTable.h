@@ -1,13 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/08/15 09:06:55 $
+   $Revision: 1.5 $
+   $Date: 2002/10/04 10:41:29 $
    $Author: wvanstra $ */
 
 
 #ifndef __TwoBitTable_h
 #define __TwoBitTable_h
+
+#include "Reference.h"
 
 namespace dsp {
 
@@ -15,7 +17,7 @@ namespace dsp {
   /*! 
 
   */
-  class TwoBitTable {
+  class TwoBitTable : public Reference::Able {
 
   public:
 
@@ -25,30 +27,57 @@ namespace dsp {
     TwoBitTable (Type type);
     
     //! Destructor
-    ~TwoBitTable ();
+    virtual ~TwoBitTable ();
 
-    //! Returns a pointer to the first of four values represented by one byte
-    const float* get_four_vals (unsigned byte) const
-    {
-      return table + 4 * byte; 
-    }
+    //! Build a two-bit table with the current attributes
+    void build ();
+
+    //! Returns a pointer to four floating-point values represented by one byte
+    const float* get_four_vals (unsigned byte);
+
+    //! Set the value of the low voltage state
+    void set_lo_val (float lo_val);
 
     //! Return the value of the low voltage state
     float get_lo_val () const { return lo_val; }
 
-    //! Initialize a look-up table for byte to 4xfloating point conversion
-    static void generate (float* table, Type type, float lo, float hi);
+    //! Set the value of the high voltage state
+    void set_hi_val (float hi_val);
 
-    //! Initialize a look-up table for 2-bit to floating point conversion
-    static void four_vals (float* vals, Type type, float lo, float hi);
+    //! Return the value of the high voltage state
+    float get_hi_val () const { return hi_val; }
+
+    //! Set the digitization convention
+    void set_type (Type type);
+
+    //! Return the digitization convention
+    Type get_type () const { return type; }
+
+    //! Generate a look-up table for byte to 4xfloating point conversion
+    void generate (float* table) const;
+
+    //! Generate a look-up table for 2-bit to floating point conversion
+    void four_vals (float* vals) const;
+
+    //! Return the 2-bit number from byte corresponding to sample
+    virtual unsigned twobit (unsigned byte, unsigned sample) const;
 
   protected:
 
     //! For each unsigned char, values of the four output voltage states
     float* table;
 
-    //! Low voltage
+    //! Flag that the lookup table has been built for specified attributes
+    bool built;
+    
+    //! Value of voltage in low state
     float lo_val;
+
+    //! Value of voltage in high state
+    float hi_val;
+
+    //! Digitization convention
+    Type type;
 
   private:
     TwoBitTable () { /* allow no one to contruct without a type */ }
