@@ -5,6 +5,7 @@
 #include "Error.h"
 #include "RealTimer.h"
 #include "genutil.h"
+#include "string_utils.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -80,7 +81,7 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
   
   string msg = filename;
 
-  msg += " not a recognized file format\n\tRegistered Formats: ";
+  msg += " not a recognized file format\n\t" + make_string(registry.size()) + " registered Formats: ";
 
   for (unsigned ichild=0; ichild < registry.size(); ichild++)
     msg += registry[ichild]->get_name() + " ";
