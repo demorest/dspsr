@@ -1,13 +1,15 @@
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspm++.h,v $
-   $Revision: 1.2 $
-   $Date: 2000/01/13 10:09:30 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2000/01/17 03:32:44 $
+   $Author: pulsar $ */
 
 #ifndef __PSPM_H
 #define __PSPM_H
 
 #include <string>
+
 #include "MJD.h"
+#include "psr_cpp.h"
 
 #define cpsr 1
 #include "pspm_search_header.h"

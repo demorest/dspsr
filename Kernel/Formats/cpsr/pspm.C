@@ -9,7 +9,7 @@
 
 #include "pspm_search_header.h"
 #include "machine_endian.h"
-#include "pspm.h"
+#include "pspm++.h"
 #include "genutil.h"
 
 // #if (sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZES)
