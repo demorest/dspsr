@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.16 $
-   $Date: 2003/01/09 10:16:47 $
+   $Revision: 1.17 $
+   $Date: 2003/01/09 10:42:22 $
    $Author: wvanstra $ */
 
 #ifndef __Input_h
@@ -64,10 +64,10 @@ namespace dsp {
     virtual const Observation* get_info () const { return &info; }
 
     //! Get the next time sample to be loaded
-    uint64 get_load_sample ();
+    uint64 get_load_sample () const { return load_sample; }
 
     //! Get the number of samples to be loaded
-    uint64 get_load_size ();
+    uint64 get_load_size () const { return load_size; }
 
   protected:
 
