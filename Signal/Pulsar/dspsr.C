@@ -242,7 +242,7 @@ int main (int argc, char** argv)
 
     if (simultaneous) {
       filterbank->set_response (kernel);
-      filterbank->set_bandpass (passband);
+      filterbank->set_passband (passband);
     }
 
     operations.push_back (filterbank);
@@ -256,7 +256,7 @@ int main (int argc, char** argv)
     dsp::Convolution* convolution = new dsp::Convolution;
 
     convolution->set_response (kernel);
-    convolution->set_bandpass (passband);
+    convolution->set_passband (passband);
 
     convolution->set_input  (convolve);  
     convolution->set_output (convolve);  // inplace

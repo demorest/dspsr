@@ -111,14 +111,14 @@ void dsp::Filterbank::transformation ()
 		     "matrix convolution and input.npol != 2");
   }
 
-  if (bandpass) {
+  if (passband) {
 
     if (response)
-      bandpass -> match (response);
+      passband -> match (response);
 
     else {
-      bandpass->resize (input->get_npol(), nchan, freq_res, 1);
-      bandpass->match (input);
+      passband->resize (input->get_npol(), nchan, freq_res, 1);
+      passband->match (input);
     }
 
   }
@@ -290,8 +290,8 @@ void dsp::Filterbank::transformation ()
 
 	if (matrix_convolution) {
 
-	  if (bandpass && itres==0)
-	    bandpass->integrate (complex_spectrum[0], complex_spectrum[1]);
+	  if (passband && itres==0)
+	    passband->integrate (complex_spectrum[0], complex_spectrum[1]);
 
 	  // cross filt can be set only if there is a response
 	  response->operate (complex_spectrum[0], complex_spectrum[1]);
@@ -300,8 +300,8 @@ void dsp::Filterbank::transformation ()
 	
 	else {
 
-	  if (bandpass && itres==0)
-	    bandpass->integrate (complex_spectrum[ipol], ipol);
+	  if (passband && itres==0)
+	    passband->integrate (complex_spectrum[ipol], ipol);
 
 	  if (response)
 	    response->operate (complex_spectrum[ipol], ipol);
