@@ -1,26 +1,23 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/10/07 01:48:37 $
+   $Revision: 1.7 $
+   $Date: 2002/10/07 11:46:43 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
 #define __CPSRTwoBitCorrection_h
 
-#include <vector>
-
 #include "TwoBitCorrection.h"
-#include "environ.h"
 
 namespace dsp {
   
-  //! Converts a CPSR Timeseries from 2-bit digitized to floating point values
+  //! Converts CPSR data from 2-bit digitized to floating point values
   class CPSRTwoBitCorrection: public TwoBitCorrection {
 
   public:
 
-    //! Constructor
+    //! Constructor initializes base class atributes
     CPSRTwoBitCorrection ();
 
     ~CPSRTwoBitCorrection () { destroy(); }
