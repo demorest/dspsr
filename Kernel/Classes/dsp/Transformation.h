@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/09/02 08:32:06 $
+   $Revision: 1.12 $
+   $Date: 2003/12/09 01:17:57 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -52,6 +52,12 @@ namespace dsp {
  
     //! Return pointer to the container into which output data will be written
     virtual Out* get_output () const { return output; }
+
+    //! Returns true if input is set
+    virtual bool has_input(){ return input.ptr(); }
+
+    //! Returns true if output is set
+    virtual bool has_output(){ return output.ptr(); }
 
     //! Return the Transformation type
     Behaviour get_type() { return type; }
