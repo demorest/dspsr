@@ -368,10 +368,10 @@ void dsp::TwoBitStatsPlotter::pgplot (int poln)
     // definitely keep the theory in sight
     hp_min=0; hp_max=nsample-1;
     for (; hp_min<nsample; hp_min++)
-      if (theory[hp_min] > theory_max*hist_min)
+      if (theory[unsigned(hp_min)] > theory_max*hist_min)
 	break;
     for (; hp_max>0; hp_max--)
-      if (theory[hp_max] > theory_max*hist_min)
+      if (theory[unsigned(hp_max)] > theory_max*hist_min)
 	break;
   }
 
