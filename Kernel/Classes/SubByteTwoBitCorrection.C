@@ -64,7 +64,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
 		 "number of digitizers per byte = %d must be > 1", ndig);
 
   unsigned isamp=0;
-  unsigned shift[2];
+  unsigned shift[4];
 
   for (unsigned isamp=0; isamp<samples_per_byte; isamp++)
     shift[isamp] = get_shift (digitizer, isamp);
