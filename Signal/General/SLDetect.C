@@ -109,7 +109,8 @@ void dsp::SLDetect::transformation ()
   // Bad:
   //  output->resize( output->get_ndat() );
   // Good: (ndim has changed so subsize changes:)
-  // wrong: subsize is the number of floats in a data block
+  // WvS: subsize is the number of *floats* in a data block and need not
+  //      necessarily equal ndat
   // output->set_subsize( (output->get_ndat()*output->get_nbit())/8 );
   
     if(verbose)
