@@ -34,20 +34,38 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
 //! Set the number of time samples used to estimate undigitized power
 void dsp::TwoBitCorrection::set_nsample (int _nsample)
 {
-  built = (nsample == _nsample);
+  if( built )
+    built = (nsample == _nsample);
+
+  if( verbose )
+    fprintf(stderr,"dsp::TwoBitCorrection::set_nsample() has set built=%d\n",built);
+
   nsample = _nsample;
 }
 
 //! Set the cut off power for impulsive interference excision
 void dsp::TwoBitCorrection::set_cutoff_sigma (float _cutoff_sigma)
 {
-  built = (cutoff_sigma == _cutoff_sigma);
+  float eps = 1.0e-6;
+
+  if( built )
+    built = (fabs(cutoff_sigma-_cutoff_sigma)<eps);
+
+  if( verbose )
+    fprintf(stderr,"dsp::TwoBitCorrection::set_cutoff_sigma() has set built=%d\n",built);
+
   cutoff_sigma = _cutoff_sigma;
 }
 
 void dsp::TwoBitCorrection::set_type (TwoBitTable::Type _type)
 {
-  built = (type == _type);
+
+  if( built )
+    built = (type == _type);
+
+  if( verbose )
+    fprintf(stderr,"dsp::TwoBitCorrection::set_type() has set built=%d\n",built);
+
   type = _type;
 }
 
@@ -58,8 +76,13 @@ void dsp::TwoBitCorrection::operation ()
     throw_str ("TwoBitCorrection::operation input not 2-bit digitized");
 
   // build the two-bit lookup table
-  if (!built)
+  if (!built){
+    fprintf(stderr,"dsp::TwoBitCorrection::operation () Calling build\n");
     build ();
+  }
+  else{
+    fprintf(stderr,"dsp::TwoBitCorrection::operation () Not calling build\n");
+  }
 
   // set the Observation information
   output->Observation::operator=(*input);
