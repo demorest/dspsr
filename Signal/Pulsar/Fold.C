@@ -59,11 +59,13 @@ void dsp::Fold::prepare (const Observation* observation)
   pulsar_ephemeris = choose_ephemeris (jpulsar);
 
   if (!pulsar_ephemeris) {
-    pulsar_ephemeris = new psrephem;
+    Reference::To<psrephem> ephemeris = new psrephem;
 
-    if (pulsar_ephemeris->create (jpulsar, 0) < 0)
+    if (ephemeris->create (jpulsar, 0) < 0)
       throw Error (FailedCall, "dsp::Fold::prepare",
 		   "error psrephem::create ("+jpulsar+")");
+
+    pulsar_ephemeris = ephemeris;
   }
 
 #if 0
@@ -95,10 +97,12 @@ void dsp::Fold::prepare (const Observation* observation)
 
 #endif
 
-  folding_polyco = new polyco;
+  Reference::To<polyco> polly = new polyco;
 
-  Tempo::set_polyco ( *folding_polyco, *pulsar_ephemeris, time, time,
+  Tempo::set_polyco ( *polly, *pulsar_ephemeris, time, time,
 		      nspan, ncoef, 8, observation->get_telescope() );
+
+  folding_polyco = polly;
 
 #if 0
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
@@ -169,7 +173,7 @@ double dsp::Fold::get_folding_period () const
 }
 
 //! Set the phase polynomial(s) with which to fold data
-void dsp::Fold::set_folding_polyco (polyco* _folding_polyco)
+void dsp::Fold::set_folding_polyco (const polyco* _folding_polyco)
 {
   folding_polyco = _folding_polyco;
   folding_period = 0.0;
@@ -194,7 +198,7 @@ void dsp::Fold::set_nspan (unsigned _nspan)
   built = false;
 }
 
-void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
+void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
 {
   if (pulsar_ephemeris == ephemeris)
     return;

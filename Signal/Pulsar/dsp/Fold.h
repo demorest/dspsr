@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/11/10 11:57:20 $
+   $Revision: 1.12 $
+   $Date: 2002/11/10 15:41:54 $
    $Author: wvanstra $ */
 
 
@@ -65,12 +65,12 @@ namespace dsp {
     double get_folding_period () const;
 
     //! Set the phase model with which to fold data
-    void set_folding_polyco (polyco* folding_polyco);
+    void set_folding_polyco (const polyco* folding_polyco);
     //! Get the phase model with which to fold data
     const polyco* get_folding_polyco () const;
 
     //! Set the ephemeris with which to create the phase model
-    void set_pulsar_ephemeris (psrephem* pulsar_ephemeris);
+    void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
     //! Get the ephemeris with which to create the phase model
     const psrephem* get_pulsar_ephemeris () const;
 
@@ -103,10 +103,10 @@ namespace dsp {
     double folding_period;
 
     //! Phase model with which to fold data (PSR)
-    Reference::To<polyco> folding_polyco;
+    Reference::To<const polyco> folding_polyco;
 
     //! Ephemeris with which to create the phase model
-    Reference::To<psrephem> pulsar_ephemeris;
+    Reference::To<const psrephem> pulsar_ephemeris;
 
     //! Number of phase bins into which the data will be integrated
     unsigned nbin;

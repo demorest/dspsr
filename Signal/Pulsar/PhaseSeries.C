@@ -34,7 +34,7 @@ double dsp::PhaseSeries::get_folding_period () const
 }
 
 //! Set the phase polynomial(s) with which to fold data
-void dsp::PhaseSeries::set_folding_polyco (polyco* _folding_polyco)
+void dsp::PhaseSeries::set_folding_polyco (const polyco* _folding_polyco)
 {
   folding_polyco = _folding_polyco;
   folding_period = 0.0;
