@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.49 $
-   $Date: 2003/05/08 14:14:05 $
+   $Revision: 1.50 $
+   $Date: 2003/05/18 11:32:16 $
    $Author: pulsar $ */
 
 #ifndef __Observation_h
@@ -288,7 +288,7 @@ namespace dsp {
     void set_default_basis ();
 
     //! Returns all information contained in this class into the string info_string
-    bool obs2string(string& info_string);
+    bool obs2string(string& info_string) const;
     
     //! Writes of all information contained in this class into the fptr at the current file offset.  Does no seeking etc.
     bool obs2file(FILE* fptr);
