@@ -327,20 +327,20 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
   if (start_time == MJD::zero)
     throw Error (InvalidState, "dsp::SubFold::set_boundaries",
 		 "Observation start time not set");
-
-  if (subint_turns && folding_polyco && start_phase == Phase::zero) {
+ 
+  if (subint_turns && get_folding_polyco() && start_phase == Phase::zero) {
 
     // On the first call to set_boundaries, initialize to start at
     // Fold::reference_phase
 
-    start_phase = folding_polyco->phase(start_time);
+    start_phase = get_folding_polyco()->phase(start_time);
 
     if (start_phase.fracturns() > reference_phase)
       ++ start_phase;
 
     start_phase = Phase (start_phase.intturns(), reference_phase);
 
-    start_time = folding_polyco->iphase (start_phase);
+    start_time = get_folding_polyco()->iphase (start_phase);
 
   }
 
@@ -372,16 +372,16 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
 
   // sub-integration length specified in turns
 
-  if (!folding_polyco)
+  if (!get_folding_polyco())
     throw Error (InvalidState, "dsp::SubFold::set_boundaries",
 		 "sub-integration length specified in turns "
 		 "but no folding period or polyco");
 
   if (verbose)
     cerr << "dsp::SubFold::set_boundaries using polynomial: "
-      "avg. period=" << folding_polyco->period(fold_start) << endl;
+      "avg. period=" << get_folding_polyco()->period(fold_start) << endl;
 
-  Phase input_phase = folding_polyco->phase (fold_start);
+  Phase input_phase = get_folding_polyco()->phase (fold_start);
 
   double turns = (input_phase - start_phase).in_turns();
 
@@ -389,8 +389,8 @@ void dsp::SubFold::set_boundaries (const MJD& input_start)
   uint64 subint = uint64 (turns/subint_turns);
 
   input_phase = start_phase + subint * subint_turns;
-  lower = folding_polyco->iphase (input_phase);
+  lower = get_folding_polyco()->iphase (input_phase);
   
   input_phase += int(subint_turns);
-  upper = folding_polyco->iphase (input_phase);
+  upper = get_folding_polyco()->iphase (input_phase);
 }
