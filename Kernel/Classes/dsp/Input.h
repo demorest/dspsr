@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/01/09 10:42:22 $
-   $Author: wvanstra $ */
+   $Revision: 1.18 $
+   $Date: 2003/01/09 11:53:33 $
+   $Author: hknight $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -65,6 +65,10 @@ namespace dsp {
 
     //! Get the next time sample to be loaded
     uint64 get_load_sample () const { return load_sample; }
+
+    //! Artificially pretend you've got fewer samples than you really do.
+    //! This is generally handy for debugging
+    void kludge_total_samples(uint64 s){ info.set_ndat(s); }
 
     //! Get the number of samples to be loaded
     uint64 get_load_size () const { return load_size; }
