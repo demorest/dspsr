@@ -121,10 +121,8 @@ void dsp::Shape::resize (unsigned _npol, unsigned _nchan,
   unsigned new_bufsize = ndim * ndat * nchan * npol;
 
   // only reallocate the array if necessary
-  // BAD BAD BAD- dedispersion assumes contiguity in
-  // MultiFilterbank::transformation() and Dedispersion::operate()
-  //  if (!borrowed && bufsize >= new_bufsize)
-  //return;
+  if (!borrowed && bufsize >= new_bufsize)
+    return;
 
   if (!borrowed && buffer!=NULL) delete [] buffer; buffer = NULL;
 
