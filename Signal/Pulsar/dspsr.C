@@ -40,7 +40,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:op:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:Oop:P:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -53,7 +53,8 @@ void usage ()
     " -E filename    set the output archive filename (including extension)\n"
     " -j             join files into contiguous observation\n"
     " -M metafile    load filenames from metafile\n"
-    " -N name        Over-ride name of pulsar with this name\n"
+    " -N name        set the source name\n"
+    " -O             run in backward-compatibility psrdisp mode\n"
     " -s             generate single pulse Integrations\n"
     " -S seek        Start processing at t=seek seconds\n"
     " -t gulps       Stop processing after this many gulps\n"
@@ -166,7 +167,7 @@ int main (int argc, char** argv)
   float tbc_threshold = 0.0;
 
   // class name of the archives to be produced
-  string archive_class = "TimerArchive";
+  string archive_class = "Baseband";
 
   // filename extension of the output archives
   string archive_extension;
@@ -332,6 +333,10 @@ int main (int argc, char** argv)
 
     case 'N':
       pulsar_name = optarg;
+      break;
+
+    case 'O':
+      dsp::psrdisp_compatible = true;
       break;
 
     case 'o':
@@ -910,7 +915,9 @@ int main (int argc, char** argv)
       // archive->pscrunch ();
       // archive->fscrunch ();
 
-      archive->set_backend( archive->get_backend() + ":dspsr");
+      // BackendExtension
+      // archive->set_backend( archive->get_backend() + ":dspsr");
+
       archive->unload ();
 
     }

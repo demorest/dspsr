@@ -9,7 +9,7 @@
 #include "dsp/Fold.h"
 #include "dsp/Archiver.h"
 
-#include "Pulsar/TimerArchive.h"
+#include "Pulsar/BasebandArchive.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -247,7 +247,7 @@ int main (int argc, char** argv)
   fold.set_output (&profiles);
 
   dsp::Archiver archiver;
-  Pulsar::TimerArchive archive;
+  Pulsar::BasebandArchive archive;
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) {
     

@@ -9,7 +9,7 @@
 #include "dsp/Fold.h"
 #include "dsp/Archiver.h"
 
-#include "Pulsar/TimerArchive.h"
+#include "Pulsar/BasebandArchive.h"
 
 #include "string_utils.h"
 #include "dirutil.h"
@@ -168,7 +168,7 @@ int main (int argc, char** argv)
     dsp::WeightedTimeSeries* combined_voltages = voltages;
     vector<dsp::PhaseSeries*> psrprofiles;
     vector<dsp::Fold*> folders;
-    vector<Pulsar::TimerArchive*> archives;
+    vector<Pulsar::BasebandArchive*> archives;
      
 
     if (pulsarnames.size()>0) {
@@ -178,7 +178,7 @@ int main (int argc, char** argv)
          folders.back()->set_input(combined_voltages);
          folders.back()->set_output(psrprofiles.back());
          folders.back()->set_nbin (nbin);
-         archives.push_back(new Pulsar::TimerArchive);
+         archives.push_back(new Pulsar::BasebandArchive);
        }
     }
     
