@@ -568,6 +568,14 @@ void dsp::Observation::change_start_time (int64 samples)
   start_time += double(samples)/rate;
 }
 
+//! Constructs the CPSR2-header parameter, OFFSET
+uint64 dsp::Observation::get_offset(){
+  MJD obs_start(identifier);
+  double time_offset = (get_start_time()-obs_start).in_seconds();
+
+  return get_nbytes(uint64(time_offset*rate));
+}
+
 //! Returns all information contained in this class into the string info_string
 bool dsp::Observation::obs2string(string& ss){
   string ui64(UI64);

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.46 $
-   $Date: 2003/03/07 00:04:50 $
+   $Revision: 1.47 $
+   $Date: 2003/03/13 23:36:28 $
    $Author: pulsar $ */
 
 #ifndef __Observation_h
@@ -272,6 +272,9 @@ namespace dsp {
     //! Return the number of samples in nbytes bytes
     uint64 get_nsamples (uint64 nbytes) const
       { return (nbytes * 8)/(nbit*npol*nchan*get_ndim()); }
+
+    //! Constructs the CPSR2-header parameter, OFFSET
+    uint64 get_offset();
 
     //! Returns true if the signal may be integrated
     /* This returns a flag that is true if the Observations may be combined 
