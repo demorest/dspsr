@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.4 $
-   $Date: 2001/08/02 08:29:22 $
+   $Revision: 1.5 $
+   $Date: 2004/12/27 15:31:39 $
    $Author: wvanstra $ */
 
 #ifndef __pspmDbase_h
@@ -17,15 +17,15 @@ namespace pspmDbase {
   class entry {
 
   public:
-    int32     scan;        // scan number
-    int32     num;         // scan file number
+    int32       scan;      // scan number
+    int32       num;       // scan file number
 
-    int32     tape;        // tape number
-    int32     file;        // file number
+    int32       tape;      // tape number
+    int32       file;      // file number
 
-    MJD       start;       // MJD of start time
-    int       ttelid;      // tempo telescope code
-    string    name;        // name of source
+    MJD         start;     // MJD of start time
+    int         ttelid;    // tempo telescope code
+    std::string name;      // name of source
     double    frequency;   // MHz
     double    bandwidth;   // MHz (-ve for lower sideband)
     double    tsamp;       // sampling period in microseconds
@@ -44,7 +44,7 @@ namespace pspmDbase {
     // load from ascii string
     void load (const char* str);
     // unload ascii string
-    void unload (string& str);
+    void unload (std::string& str);
 
     // create from PSPM_SEARCH_HEADER
     void create (void* hdr);
@@ -60,8 +60,8 @@ namespace pspmDbase {
     friend bool operator < (const entry& e1, const entry& e2)
       { return e1.scan < e2.scan || (e1.scan == e2.scan && e1.num < e2.num); }
 
-    string tapename ();   // returns CPSR1234
-    string identifier (); // returns CPSR1234.32
+    std::string tapename ();   // returns CPSR1234
+    std::string identifier (); // returns CPSR1234.32
   };
 
   // returns an entry from the default database
@@ -73,7 +73,7 @@ namespace pspmDbase {
     // light-weight on RAM (internal=false), or 
     // light-weight on NFS (internal=true)
     bool internal;
-    vector<entry> entries;
+    std::vector<entry> entries;
 
     server () { internal = true; }
     ~server () {}

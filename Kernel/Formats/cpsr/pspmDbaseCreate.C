@@ -1,5 +1,8 @@
-#include <iostream>
 #include "pspmDbase.h"
+
+#include <iostream>
+
+using namespace std;
 
 int usage ()
 {
@@ -12,8 +15,7 @@ int usage ()
   return -1;
 }
 
-int main (int argc, char** argv)
-{ try {
+int main (int argc, char** argv) try {
 
   if (argc<2 || string(argv[1])=="-h") {
     return usage ();
@@ -33,8 +35,8 @@ int main (int argc, char** argv)
   dbase.unload ("hdrlog.txt");
   return 0;
 }
- catch (string err) {
-   cerr << "pspmDbaseCreate error: '" << err << "'" << endl;
-   return -1;
- }
+catch (string err) {
+  cerr << "pspmDbaseCreate error: '" << err << "'" << endl;
+  return -1;
 }
+
