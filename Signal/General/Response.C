@@ -92,6 +92,11 @@ void dsp::Response::match (const Observation* input, unsigned channels)
   }
 }
 
+void dsp::Response::mark (Observation* output)
+{
+  
+}
+
 void dsp::Response::naturalize ()
 {
   if ( whole_swapped )

@@ -183,6 +183,8 @@ void dsp::Convolution::transformation ()
   if (verbose)
     cerr << "Convolution::transformation scale="<< output->get_scale() <<endl;
 
+  response->mark (output);
+
   unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
   
   unsigned cross_pol = 1;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.9 $
-   $Date: 2002/11/09 15:55:25 $
+   $Revision: 1.10 $
+   $Date: 2002/11/28 16:43:50 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -28,6 +28,9 @@ namespace dsp {
 
     //! Match the dedispersion kernel to the input Observation
     virtual void match (const Observation* input, unsigned channels=0);
+
+    //! Set the dispersion measure attribute in the output Observation
+    virtual void mark (Observation* output);
 
     //! Return a descriptive string
     //virtual const string descriptor () const;

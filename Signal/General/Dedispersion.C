@@ -109,6 +109,10 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
     cerr << "dsp::Dedispersion::match input.nchan=" << input->get_nchan()
 	 << " channels=" << channels << endl;
   
+  if ( input->get_dispersion_measure() != 0.0 )
+    throw Error (InvalidState, "dsp::Dedispersion::match",
+		 "unsure how to dedisperse stuff that's already dedispersed");
+
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
 
@@ -124,6 +128,10 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
   Response::match (input, channels);
 }
 
+void dsp::Response::mark (Observation* output)
+{
+  output->set_dispersion_measure (dispersion_measure);
+}
 
 void dsp::Dedispersion::build ()
 {
