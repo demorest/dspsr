@@ -253,10 +253,10 @@ int main (int argc, char** argv)
 
   if (verbose)
     cerr << "Creating TimerArchive instance" << endl;
-  Pulsar::TimerArchive archive;
 
+  Pulsar::TimerArchive archive; 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) {
-
+    
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
 
@@ -352,12 +352,19 @@ int main (int argc, char** argv)
       fprintf(stderr,"No DM or ephemeris was specified.  Header DM will be zero\n");
       archive.set_dispersion_measure( header_dm );
     }
+    string extn  ;
+    if (pulsar_name != "") {
+      extn = "_" + pulsar_name; 
+    }
     
-    string filename = profiles.get_default_id () + ".ar";
-    
+
+    string filename = profiles.get_default_id () + extn + ".ar";
+ 
     if (verbose) cerr << "Unloading archive: " << filename<< endl;
-    fprintf(stderr,"Directly before archive.unload()\n");
+      fprintf(stderr,"Directly before archive.unload()\n");
     archive.Archive::unload (filename);
+    
+    
   }    
 
   } catch (Error& error) {
@@ -369,8 +376,8 @@ int main (int argc, char** argv)
   } catch (...) {
     cerr << "unknown exception thrown." << endl;
     return -1;
-  }
-  
+  } 
+
   return 0;
 }
 
