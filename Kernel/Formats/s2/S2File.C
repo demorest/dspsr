@@ -1,3 +1,5 @@
+#include <string>
+
 #include "dsp/S2File.h"
 #include "dsp/Telescope.h"
 #include "Error.h"
@@ -5,6 +7,8 @@
 // S2 header and unpacking routines
 #include "tci_file.h"
 #include "genutil.h"
+
+#define _DEBUG
 
 dsp::S2File::S2File (const char* filename)
   : File ("S2")
@@ -32,6 +36,8 @@ void dsp::S2File::open_file (const char* filename)
   tci_fd   s2file;
   tci_hdr  header;
 
+  load_S2info(filename);
+
   if (tci_file_open (filename, &s2file, &header, 'r') != 0)
     throw Error (FailedCall, "dsp::S2File::open",
 		 "tci_file_open (%s)", filename);
@@ -47,11 +53,12 @@ void dsp::S2File::open_file (const char* filename)
   str2utc (&utc, header.hdr_time);  
   info.set_start_time (utc);
 
+
 #ifdef _DEBUG
   char buffer [50];
   fprintf (stderr, "dsp::S2File::open source_start_time: %s->%s->%s \n",
 	   header.hdr_time, utc2str(buffer, utc, "yyyy-ddd-hh:mm:ss"),
-	   info.get_start_time.printall());
+	   info.get_start_time().printall());
 #endif
   
   info.set_mode (header.hdr_s2mode);
@@ -62,7 +69,7 @@ void dsp::S2File::open_file (const char* filename)
   if (!bitspersample) {
     cerr << "dsp::S2File::open - trouble finding bits/sample in " 
 	 << header.hdr_s2mode
-	 << "\nS2File::open -  setting to 2 bit/sample" << endl;
+	 << "\ndsp::S2File::open -  setting to 2 bit/sample" << endl;
     info.set_nbit (2);
   }
   else
@@ -70,7 +77,10 @@ void dsp::S2File::open_file (const char* filename)
 
   info.set_npol (2);
   
-  if (strlen(header.hdr_usr_field2) < 8)
+  if ( extra_hdr.source.length() < 1 ){
+    info.set_source (extra_hdr.source.c_str());
+  } 
+  else if (strlen(header.hdr_usr_field2) < 8)
     cerr << "dsp::S2File::open Warning: TCI header field2 ("
 	 << header.hdr_usr_field2 << ") lacks source" << endl;
 	 
@@ -79,7 +89,10 @@ void dsp::S2File::open_file (const char* filename)
 
   double centre_frequency = 0.0;
 
-  if (sscanf (header.hdr_usr_field3, "%lf", &(centre_frequency)) != 1) {
+  if (extra_hdr.freq != 0.0){
+    centre_frequency = extra_hdr.freq;
+  }
+  else if (sscanf (header.hdr_usr_field3, "%lf", &(centre_frequency)) != 1) {
     cerr << "dsp::S2File::open Warning: TCI header field3 ("
 	 << header.hdr_usr_field3 << ") lacks frequency" << endl;
     centre_frequency = 0.0;
@@ -95,12 +108,17 @@ void dsp::S2File::open_file (const char* filename)
   info.set_bandwidth (16.0);
   
   info.set_machine ("S2");
-  info.set_telescope (Telescope::Parkes);
+  if(extra_hdr.telid > ' ' )
+    info.set_telescope ((char)extra_hdr.telid);
+  else
+    info.set_telescope (Telescope::Parkes);
+  
   info.set_default_basis();
+
 
   // tci_file_open returns file size in Words (16 bits)
   info.set_ndat ( int64(s2file.fsz) * 16 / (info.get_nbit()*info.get_npol()) );
-
+  
   if (verbose)
     cerr << "dsp::S2File::open " << s2file.fsz * 2 << " bytes = "
 	 << info.get_ndat() << " time samples" << endl;
@@ -110,5 +128,72 @@ void dsp::S2File::open_file (const char* filename)
 
   if (verbose)
     cerr << "dsp::S2File::open return" << endl;
+}
+
+void dsp::S2File::load_S2info (const char *filename)
+{
+  FILE *S2Info;
+  static char* linebuf= new char[40];
+  char* whitespace = "\n\t ";
+    
+  string *info_file = new string(filename);
+  
+  // replace the ".psr" in the filename with ".info" for the INFO file
+  int ext_pos = info_file->find_last_of(".");
+  info_file->erase(ext_pos+1, 3);
+  info_file->append("info");
+  
+  if (verbose)
+    cerr << "Will attempt to open " << *info_file << " as S2 Extra Information file" << endl;
+  
+  S2Info = fopen(info_file->c_str(), "r");
+  
+  if(S2Info == NULL)
+    throw Error (FailedCall, "dsp::S2File::load_S2info",
+		 "no extra info file found (%s)", filename);
+  
+  while(fgets(linebuf, 40, S2Info) != NULL) {
+    char* key   = strtok (linebuf, whitespace);
+    char* value = NULL;
+    if (!key)
+      continue;
+    value = strtok (NULL, whitespace);
+    if (!value)
+      continue;
+    
+    if (strcmp (key, "SOURCE") == 0) {
+      extra_hdr.source = value;
+    }
+    else if (strcmp (key, "TELID") == 0) {
+      if (sscanf (value, "%c", &extra_hdr.telid) < 1)  {
+	perror ("obshandle::load_S2info: error parsing TELESCOPE CODE");
+	break;
+      }
+    }
+    else if (strcmp (key, "FREQ") == 0) {
+      if (sscanf (value, "%lf", &extra_hdr.freq) < 1) {
+	perror ("obshandle::load_S2info: error parsing FREQUENCY");
+	break;
+      }
+    }
+    else if (strcmp (key, "CALPERIOD") == 0) {
+      if (sscanf (value, "%lf", &extra_hdr.calperiod) < 1) {
+	perror ("obshandle::load_S2info: error parsing CALPERIOD");
+	break;
+      }
+    }
+    else if (strcmp (key, "TAPEID") == 0) {
+      extra_hdr.tapeid = value;
+    }
+  } /* while */
+
+  fclose (S2Info);
+
+  if(verbose){
+    cerr << "Source: " << extra_hdr.source << endl;
+    cerr << "Telid : " << (char)extra_hdr.telid  << endl;
+    cerr << "Freq  : " << extra_hdr.freq   << endl;
+    cerr << "Tapeid: " << extra_hdr.tapeid << endl;
+  }
 }
 

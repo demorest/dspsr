@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/12 00:24:07 $
-   $Author: wvanstra $ */
+   $Revision: 1.8 $
+   $Date: 2002/12/09 08:31:31 $
+   $Author: cwest $ */
 
 
 #ifndef __S2File_h
@@ -28,7 +28,23 @@ namespace dsp {
   protected:
     //! Open the file
     void open_file (const char* filename);
+    
+  private:
+    
+        //! Loads the extra S2 "filename.info" header file
+    void load_S2info (const char* filename);
 
+    //! Structure to be used with the load_S2info function
+    typedef struct {
+      string source;
+      char telid;
+      double freq;
+      double calperiod;
+      string tapeid;
+    }S2_Extra_Hdr;
+
+    S2_Extra_Hdr extra_hdr;
+    
   };
 
 }
