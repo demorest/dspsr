@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.18 $
-   $Date: 2003/08/05 10:10:53 $
+   $Revision: 1.19 $
+   $Date: 2003/08/26 11:43:56 $
    $Author: wvanstra $ */
 
 
@@ -83,7 +83,7 @@ namespace dsp {
     const psrephem* get_pulsar_ephemeris () const;
 
     //! Set the reference phase (phase of bin zero)
-    void set_reference_phase (double phase) { reference_phase = phase; }
+    void set_reference_phase (double phase);
     //! Get the reference phase (phase of bin zero)
     double get_reference_phase () const { return reference_phase; }
 
