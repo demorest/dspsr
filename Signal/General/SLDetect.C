@@ -12,8 +12,8 @@ dsp::SLDetect::SLDetect( Behaviour _type) : Operation ("SLDetect", _type){
 void dsp::SLDetect::operation ()
 {
   if( verbose ){
-    fprintf(stderr," In %s::operation()\n",get_name().c_str());
-    fprintf(stderr,"after sld input has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d\n",
+    fprintf(stderr,"\nIn %s::operation()\n",get_name().c_str());
+    fprintf(stderr,"In SLDetect::Operation input has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d\n",
 	    input->get_ndim(), input->get_ndat(), input->get_npol(), input->get_nchan(),input->get_nbit());    
   }
 
@@ -73,14 +73,23 @@ void dsp::SLDetect::operation ()
 
   /* just to make sure that output has all the correct values */
   output->Observation::operator=( *input );
-  output->set_state( Signal::Intensity );
+
+  if( input->get_npol()==2 )
+    output->set_state( Signal::PPQQ );
+  else if( input->get_npol()==1 ){
+    fprintf(stderr,"dsp::SLDetect input had 1 polarisation- assuming this is total power over all polarisations\n"
+	    "ie setting output->state to Signal::Intensity\n");
+    output->set_state( Signal::Intensity );
+  }
+
   output->resize( output->get_ndat() );
 
   if(verbose)
-    fprintf(stderr,"after sld output has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d\n",
-	    output->get_ndim(), output->get_ndat(), output->get_npol(), output->get_nchan(),output->get_nbit());
+    fprintf(stderr,"after sld output has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d state=%s\n",
+	    output->get_ndim(), output->get_ndat(), output->get_npol(), output->get_nchan(),output->get_nbit(),
+	    output->get_state_as_string().c_str());
 
   if( verbose )
-    fprintf(stderr,"Exiting from %s::operation()\n",get_name().c_str());
+    fprintf(stderr,"Exiting from %s::operation()\n\n",get_name().c_str());
 }
 
