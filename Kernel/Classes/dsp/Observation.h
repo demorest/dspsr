@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.42 $
-   $Date: 2003/01/09 12:54:37 $
-   $Author: wvanstra $ */
+   $Revision: 1.43 $
+   $Date: 2003/01/14 00:35:15 $
+   $Author: pulsar $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -137,6 +137,9 @@ namespace dsp {
     //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (unsigned ichan) const;
 
+    //! Returns the centre frequency of the ichan'th frequency ordered channel in MHz
+    double get_ordered_cfreq(unsigned ichan);
+
     //! Return the centre frequency of the highest frequency channel below the maximum stated in MHz
     double get_highest_frequency(double max_freq=1.0e9, unsigned chanstart=0,unsigned chanend=99999);
 
@@ -238,12 +241,6 @@ namespace dsp {
 
     //! Returns the centre frequency of the first channel in MHz
     double get_base_frequency () const;
-
-    //! Return the centre frequency of the highest frequency channel
-    double get_highest_frequency();
-
-    //! Return the centre frequency of the lowest frequency channel
-    double get_lowest_frequency();
 
     //! Returns the minimum and maximum centre frequencies in MHz
     void get_minmax_frequencies (double& min, double& max) const;
@@ -367,7 +364,7 @@ namespace dsp {
     //! Coordinates of the source
     sky_coord coordinates;
 
-    //! The DM TimeSeries has been dedispersed to (in-channel smearing)
+    //! The DM TimeSeries has been dedispersed to (in-channel smearing) (latest ChannelSum only)
     double dispersion_measure;
 
     //! The DM the channels have been shifted by

@@ -364,19 +364,21 @@ bool dsp::Observation::contiguous (const Observation & obs) const
 {
   double difference = (get_end_time() - obs.get_start_time()).in_seconds();
 
-  bool ret = ( combinable(obs) && fabs(difference) < 1e3/rate );
+  bool ret = ( combinable(obs) && (difference-1.0/rate) < 0.9/rate );
 
-  if ( !ret && verbose ) {
+  if ( !ret ) {
     fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
     fprintf(stderr,"combinable(obs)=%d\n",combinable(obs));
-    fprintf(stderr,"get_start_time().in_seconds()=%f\n",
+    fprintf(stderr,"get_start_time().in_seconds()    =%f\n",
 	    get_start_time().in_seconds());    
-    fprintf(stderr,"get_end_time().in_seconds()=%f\n",
+    fprintf(stderr,"get_end_time().in_seconds()      =%f\n",
 	    get_end_time().in_seconds());    
     fprintf(stderr,"obs.get_start_time().in_seconds()=%f\n",
 	    obs.get_start_time().in_seconds());
-    fprintf(stderr,"difference=%f\n",fabs(difference));
+    fprintf(stderr,"difference                       =%f\n",fabs(difference));
     fprintf(stderr,"difference needed to be less than %f\n",1e3/rate);    
+    fprintf(stderr,"ndat="UI64" and rate=%f.  obs.ndat="UI64" obs.rate=%f\n",
+	    ndat,rate,obs.ndat,obs.rate);
   } 
 
   return ret;
@@ -496,6 +498,11 @@ double dsp::Observation::get_centre_frequency (unsigned ichan) const
   return get_base_frequency() + channel * bandwidth / double(nchan);
 }
 
+//! Returns the centre frequency of the ichan'th frequency ordered channel in MHz
+double dsp::Observation::get_ordered_cfreq(unsigned ichan){
+  return centre_frequency - fabs(bandwidth)/2.0 + fabs(bandwidth)/(2.0*nchan) + ichan*fabs(bandwidth)/double(nchan);
+}
+
 // returns the centre_frequency of the first channel
 double dsp::Observation::get_base_frequency () const
 {
@@ -536,10 +543,14 @@ void dsp::Observation::change_start_time (int64 samples)
 
 //! Returns all information contained in this class into the string info_string
 bool dsp::Observation::obs2string(string& ss){
+  string ui64(UI64);
+  ui64.replace(0,1,"%16");
+
   char dummy[256];
+  char loony[256];
 
   sprintf(dummy,"dsp::Observation_data\n"); ss+= dummy;
-  sprintf(dummy,"NDAT\t"UI64"\n",ndat); ss += dummy;
+  sprintf(loony,"NDAT\t%s\n",ui64.c_str()); sprintf(dummy,loony,ndat); ss += dummy;
   sprintf(dummy,"TELESCOPE\t%c\n",telescope); ss += dummy;
   sprintf(dummy,"SOURCE\t%s\n",source.c_str()); ss += dummy;
   sprintf(dummy,"CENTRE_FREQUENCY\t%.16f\n",centre_frequency); ss += dummy;
@@ -608,7 +619,15 @@ bool dsp::Observation::file2obs(FILE* fptr){
     return false;
   }
 
-  fscanf(fptr,"NDAT\t"UI64"\n",&ndat); if(verbose) fprintf(stderr,"Got ndat="UI64"\n",ndat); 
+  string ui64(UI64);
+  ui64.replace(0,1,"%16");
+  sprintf(moron,"NDAT\t%s\n",ui64.c_str());
+
+  int ret = fscanf(fptr,moron,&ndat); if(verbose) fprintf(stderr,"Got ndat="UI64"\n",ndat); 
+  if( ret!=1 )
+    throw Error(FailedCall,"dsp::Observation::file2obs()",
+		"Failed to fscanf ndat\n");
+
   fscanf(fptr,"TELESCOPE\t%c\n",&telescope);  if(verbose) fprintf(stderr,"Got telescope=%c\n",telescope); 
   retrieve_cstring(fptr,"SOURCE\t",dummy); source = dummy;  if(verbose) fprintf(stderr,"Got source=%s\n",source.c_str()); 
   fscanf(fptr,"CENTRE_FREQUENCY\t%lf\n",&centre_frequency);  if(verbose) fprintf(stderr,"Got centre_frequency=%f\n",centre_frequency); 
