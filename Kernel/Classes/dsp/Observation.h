@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/08/14 18:17:35 $
-   $Author: hknight $ */
+   $Revision: 1.9 $
+   $Date: 2002/08/15 09:06:28 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -32,7 +32,7 @@
   The main DSP algorithms are implemented by dsp::Operation and its
   sub-classes.  These operate on dsp::Timeseries and can:
   <UL>
-  <LI> convert digitized data to floating points (dsp::Converter class)
+  <LI> convert digitized data to floating points (dsp::TwoBitCorrection class)
   <LI> coherently dedisperse data (dsp::Convolution class)
   <LI> fold data using polyco (dsp::Fold class)
   <LI> etc...
@@ -135,6 +135,16 @@ namespace dsp {
     //! Return the number of time samples in container
     int64 get_ndat () const { return ndat; }
 
+    //! Set the tempo telescope code
+    void set_telescope (char telescope);
+    //! Return the tempo telescope code
+    char get_telescope () const { return telescope; }
+
+    //! Set the source name
+    void set_source (string _source) { source = _source; }
+    //! Return the source name
+    string get_source () const { return source; }
+
     //! Set the centre frequency of the band-limited signal in MHz
     void set_centre_frequency (double cf) { centre_frequency = cf; }
     //! Return the centre frequency of the band-limited signal in MHz
@@ -185,16 +195,6 @@ namespace dsp {
     void set_dc_centred (bool _dc_centred) { dc_centred = _dc_centred; }
     //! Return true if centre channel is centred on centre frequency
     bool get_dc_centred () const { return dc_centred; }
-
-    //! Set the tempo telescope code
-    void set_telescope (char telescope);
-    //! Return the tempo telescope code
-    char get_telescope () const { return telescope; }
-
-    //! Set the source name
-    void set_source (string _source) { source = _source; }
-    //! Return the source name
-    string get_source () const { return source; }
 
     //! Set the observation identifier
     void set_identifier (string _identifier) { identifier = _identifier; }
@@ -253,6 +253,12 @@ namespace dsp {
     //! Number of time samples in container
     int64 ndat;
 
+    //! Tempo telescope code
+    char telescope;
+
+    //! Source name.  If a pulsar, should be J2000
+    string source;
+
     //! Centre frequency of band-limited signal in MHz
     double centre_frequency;
 
@@ -274,12 +280,12 @@ namespace dsp {
     //! Type of receiver feeds
     Feed feedtype;
 
-    //! Start time of the leading edge of the first time sample
-    MJD start_time;
-    
     //! Time samples per second in Hz
     double rate;
 
+    //! Start time of the leading edge of the first time sample
+    MJD start_time;
+    
     //! Amount by which data has been scaled
     double scale;
 
@@ -288,12 +294,6 @@ namespace dsp {
 
     //! Flag set when centre channel is centred on centre frequency
     bool dc_centred;
-
-    //! Tempo telescope code
-    char telescope;
-
-    //! Source name.  If a pulsar, should be J2000
-    string source;
 
     //! Observation identifier
     string identifier;
