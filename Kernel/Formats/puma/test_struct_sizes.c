@@ -1,10 +1,14 @@
 #include <stdio.h>
-#include <libpuma.h>
+
+#include "libpuma.h"
 
 int main ()
 {
   char* ptr1 = 0;
   char* ptr2 = 0;
+
+  General_type general;
+  Mode_type mode;
 
   if (sizeof (Telescope_type) !=   144) {
     fprintf (stderr, "sizeof (Telescope) = %d != 32\n",
@@ -18,8 +22,6 @@ int main ()
     return -1;
   }
   
-  General_type general;
-    
   ptr1 = (char*) &general;
   ptr2 = (char*) &(general.DataMJD);
   fprintf (stderr, "General_type.DataMJD = %d\n", ptr2-ptr1);
@@ -59,8 +61,6 @@ int main ()
     return -1;
   }
   
-  Mode_type mode;
-    
   ptr1 = (char*) &mode;
 
   ptr2 = (char*) &(mode.FIRFactor);
