@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/08/25 12:55:17 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2004/09/17 05:20:33 $
+   $Author: hknight $ */
 
 
 #ifndef __Detection_h
@@ -64,6 +64,13 @@ namespace dsp {
 
     //! Set the state of the output TimeSeries
     void resize_output ();
+
+    //! Converts a detected input to a different state
+    void redetect();
+
+    //! Throws an Error if something is wrong
+    void checks();
+
   };
 
 }

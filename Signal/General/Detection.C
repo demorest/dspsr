@@ -45,34 +45,25 @@ void dsp::Detection::transformation ()
     cerr << "dsp::Detection::transformation output state="
 	 << Signal::state_string(state) << endl;
 
-  if( input.get()==output.get() && state==input->get_state() ) {
-    if (verbose) cerr 
-      << "dsp::Detection::transformation inplace and no state change" << endl;
+  checks();
+
+  if( state==input->get_state() ) {
+    if( input.get()==output.get() ) {
+      if (verbose)
+	cerr << "dsp::Detection::transformation inplace and no state change" << endl;
+    }
+    else {
+      if (verbose)
+	cerr << "dsp::Detection::transformation no state change- just copying input" << endl;
+      output->operator=( *input );
+    }
+
     return;
   }
 
-  if (state == Signal::Stokes || state == Signal::Coherence) {
-
-    if (input->get_npol() != 2)
-      throw Error (InvalidState, "dsp::Detection::transformation",
-		   "invalid npol=%d for %s formation",
-		   input->get_npol(), Signal::state_string(state));
-
-    if (input->get_state() != Signal::Analytic)
-      throw Error (InvalidState, "dsp::Detection::transformation",
-		   "invalid state=%s for %s formation",
-		   input->get_state_as_string().c_str(),
-		   Signal::state_string(state));
-
-    // Signal::Coherence product and Signal::Stokes parameter
-    // formation can be performed in three ways, corresponding to
-    // ndim = 1,2,4
-
-    if (!(ndim==1 || ndim==2 || ndim==4))
-      throw Error (InvalidState, "dsp::Detection::transformation",
-		   "invalid ndim=%d for %s formation",
-		   ndim, Signal::state_string(state));
-    
+  if( get_input()->get_detected() ){
+    redetect();
+    return;
   }
 
   bool inplace = (input.get() == output.get());
@@ -249,3 +240,41 @@ void dsp::Detection::polarimetry ()
   }
 }
 
+void dsp::Detection::redetect(){
+  Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
+  pscrunch->set_input( get_input() );
+  pscrunch->set_output( get_output() );
+  
+  pscrunch->operate();
+}
+
+void dsp::Detection::checks(){
+  if( get_input()->get_detected() &&  state != Signal::Intensity )
+    throw Error(InvalidState,"dsp::Detection::checks()",
+		"Sorry, but this class currently can only redetect data to Stokes I (You had input='%s' and output='%s')",
+		State2string(get_input()->get_state()).c_str(),
+		State2string(state).c_str());
+  
+  if (state == Signal::Stokes || state == Signal::Coherence) {
+    if (input->get_npol() != 2)
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid npol=%d for %s formation",
+		   input->get_npol(), Signal::state_string(state));
+    
+    if (input->get_state() != Signal::Analytic)
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid state=%s for %s formation",
+		   input->get_state_as_string().c_str(),
+		   Signal::state_string(state));
+    
+    // Signal::Coherence product and Signal::Stokes parameter
+    // formation can be performed in three ways, corresponding to
+    // ndim = 1,2,4
+    
+    if (!(ndim==1 || ndim==2 || ndim==4))
+      throw Error (InvalidState, "dsp::Detection::transformation",
+		   "invalid ndim=%d for %s formation",
+		   ndim, Signal::state_string(state));
+  }    
+  
+}
