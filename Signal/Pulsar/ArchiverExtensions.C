@@ -147,9 +147,23 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc)
     return;
   }
 
-  //tbc->resize (nchan, npol, nband);
+  unsigned ndig = twobit->get_ndig ();
+  unsigned nsample = twobit->get_nsample ();
 
-  //tbc->set_histogram (twobit->get_datptr (iband, ipol), ipol, iband);
+  tbc->resize (nsample, ndig);
+
+  tbc->set_threshold ( twobit->get_threshold() );
+  tbc->set_cutoff_sigma ( twobit->get_cutoff_sigma() );
+
+  // temporary space
+  vector<float> histogram;
+
+  for (unsigned idig=0; idig<ndig; idig++) {
+
+    twobit->get_histogram (histogram, idig);
+    tbc->set_histogram (histogram, idig);
+
+  }
 
 }
 catch (Error& error) {
