@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/09 15:55:27 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/11/21 02:25:31 $
+   $Author: hknight $ */
 
 
 #ifndef __MultiFile_h
@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "dsp/Seekable.h"
+#include "dsp/File.h"
 
 namespace dsp {
 
