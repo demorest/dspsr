@@ -31,7 +31,8 @@ void dsp::TScrunch::transformation ()
       return;
     }
     else if(ScrunchFactor==1){
-      fprintf(stderr,"ScrunchFactor=1 so no need to scrunch!\n");
+      if( verbose )
+	fprintf(stderr,"ScrunchFactor=1 so no need to scrunch!\n");
       if( input.get() != output.get() )
 	output->operator=( *input );
       return;
