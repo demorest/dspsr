@@ -55,7 +55,8 @@ void dsp::Seekable::load_data (Timeseries* data)
   if (!read_size)
     return;
 
-  if (read_sample != current_sample) {
+  // If current_sample == 0, ensure that we seek past the header!
+  if (current_sample == 0 || read_sample != current_sample) {
 
     uint64 toseek_bytes = data->nbytes (read_sample);
 
