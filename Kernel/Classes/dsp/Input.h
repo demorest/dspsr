@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.22 $
-   $Date: 2003/05/14 04:13:41 $
-   $Author: pulsar $ */
+   $Revision: 1.23 $
+   $Date: 2003/07/05 08:26:34 $
+   $Author: hknight $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -42,6 +42,9 @@ namespace dsp {
 
     //! Set the BitSeries to which data will be loaded
     virtual void set_output (BitSeries* data);
+
+    //! Retrieve a pointer to the output.  (May be null so watch out!)
+    virtual BitSeries* get_output(){ return output.ptr(); }
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
