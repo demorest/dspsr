@@ -6,10 +6,6 @@
   Static instances of this template class should be given a unique
   name and enclosed within preprocessor directives that make the
   instantiation optional.  There are plenty of examples in the source code.
-
-  \note HSK 9/12/02 CoherentFBUnpacker comes first as basically if
-  data has been rewritten to disk it should be unpacked by that packing,
-  rather than whatever unpacker it originally got unpacked as.
 */
 
 #include "dsp/Unpacker.h"
@@ -17,8 +13,6 @@
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 
-#include "dsp/CoherentFBUnpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::CoherentFBUnpacker> cfb;
 #include "dsp/NullUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
 #include "dsp/MiniUnpack.h"
