@@ -173,6 +173,7 @@ template class FilterBank< float >;
 dsp::PolyPhaseFilterbank::PolyPhaseFilterbank ()
 {
   filterbank = 0;
+  C_filterbank = 0;
   nchan = 0;
 }
 
@@ -255,6 +256,8 @@ void dsp::PolyPhaseFilterbank::transformation ()
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
 
+    cerr << "import ndat=" << ndat << endl;
+
     // import the data to a Blitz++ array
     float* data = const_cast<float*>(input->get_datptr (0, ipol));
 
@@ -278,6 +281,9 @@ void dsp::PolyPhaseFilterbank::transformation ()
       result = C_filterbank->filter (A);
 
     }
+
+    cerr << "result.extent(0)=" << result.extent(blitz::firstDim)
+         << "result.extent(1)=" << result.extent(blitz::secondDim) << endl;
 
     // copy result into output
     data = (float*) result.data();
