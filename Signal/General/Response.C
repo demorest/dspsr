@@ -115,7 +115,9 @@ void dsp::Response::match (const Response* response)
   if (matches (response))
     return;
 
-  cerr << "dsp::Response::match Response" << endl;
+  if (verbose)
+    cerr << "dsp::Response::match Response" << endl;
+
   resize (npol, response->get_nchan(),
 	  response->get_ndat(), ndim);
   
@@ -168,13 +170,18 @@ void dsp::Response::naturalize ()
   twice the sum of impulse_pos and impulse_neg. */
 unsigned dsp::Response::get_minimum_ndat () const
 {
-  unsigned nsmear = impulse_pos + impulse_neg;
+  double impulse_tot = impulse_pos + impulse_neg;
   
-  if (nsmear == 0)
+  if (impulse_tot == 0)
     return 0;
-  cerr << "Altered minimum n_dat to remove extra power of two" << endl;
-  // return (unsigned) pow (2.0, 1.0 + ceil( log((double)nsmear)/log(2.0) ));
-  return (unsigned) pow (2.0, ceil( log((double)nsmear)/log(2.0) ));
+
+  unsigned min = unsigned( pow (2.0, ceil( log(impulse_tot)/log(2.0) )) );
+
+  if (verbose)
+    cerr << "dsp::Response::get_minimum_ndat impulse_tot=" << impulse_tot 
+	 << " min power of two=" << min << endl;
+
+  return min;
 }
 
 /*!  Using the get_minimum_ndat method and the max_ndat static attribute,
