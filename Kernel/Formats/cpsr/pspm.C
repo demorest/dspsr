@@ -127,3 +127,15 @@ double PSPMduration (const PSPM_SEARCH_HEADER* hdr)
   return npts * hdr->samp_rate / 1e6;
 }
 
+bool PSPMverify (const PSPM_SEARCH_HEADER* hdr)
+{
+  return ( (hdr->header_version > 0) &&
+	   (hdr->scan_file_number > 0) &&
+           (hdr->bit_mode > 0) &&
+           (hdr->scan_num > 0) &&
+           (hdr->num_chans > 0) &&
+           (hdr->file_size > 32768) &&
+           (hdr->tape_num > 0) &&
+           (hdr->tape_file_number > 0) );
+}
+
