@@ -15,7 +15,7 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
     if (poly) {
       // add pulse number to the output archive
       Phase phase = poly->phase ( data->get_start_time() );
-      phase = (phase + 0.5).Ceil();
+      phase = (phase + 0.5-data->get_reference_phase()).Ceil();
 
       filename += stringprintf ("."I64, phase.intturns());
     }
