@@ -72,6 +72,9 @@ namespace dsp {
     //! Instantiate from a file
     MiniPlan(string plan_file);
 
+    //! Clone
+    virtual MiniPlan* clone() const { return new MiniPlan(*this); }
+
     //! Assignment operator
     virtual MiniPlan& operator=(const MiniPlan& mp);
     

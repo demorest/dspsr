@@ -548,7 +548,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   extensions.resize( 0 );
 
   for( unsigned iext=0; iext<in_obs.get_nextensions(); iext++)
-    add( in_obs.get_extension( iext );
+    add( in_obs.get_extension(iext)->clone() );
 
   return *this;
 }
@@ -909,7 +909,7 @@ void dsp::Observation::old_file2obs(int fd){
 
 //! Adds a dspExtension
 void dsp::Observation::add(dspExtension* extension){
-  if( extension->must_have_only_one() )
+  if( extension->must_only_have_one() )
     for( unsigned i=0; i<extensions.size(); i++)
       if( extensions[i]->get_name()==extension->get_name() )
 	throw Error(InvalidState,"dsp::Observation::add()",
@@ -941,7 +941,7 @@ bool dsp::Observation::has(string extension_name){
 }
 
 //! Returns the number of dspExtensions currently stored
-void dsp::Observation::get_nextensions(){
+unsigned dsp::Observation::get_nextensions() const {
   return extensions.size();
 }
 

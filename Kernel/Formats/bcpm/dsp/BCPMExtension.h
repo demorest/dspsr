@@ -17,7 +17,7 @@ namespace dsp{
     BCPMExtension();
 
     //! Copy constructor
-    BCPMExtension(const BCPMExtension& b){ copy(b); }
+    BCPMExtension(const BCPMExtension& b) : dspExtension("BCPMExtension") { copy(b); }
 
     //! Virtual destructor
     virtual ~BCPMExtension();

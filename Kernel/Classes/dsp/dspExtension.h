@@ -29,13 +29,10 @@ namespace dsp{
     virtual dspExtension* new_extension() const = 0;
 
     //! If true, then you can only have one of this type of dspExtension per Observation instantiation
-    bool must_only_have_one(){ return can_only_have_one; }
+    bool must_only_have_one() const { return can_only_have_one; }
 
     //! Delete this if dspExtension inherits from Printable
     string get_name() const { return name; }
-
-    //! Delete this if dspExtension inherits from Printable
-    void set_name(string _name){ name = _name; }
 
   private:
 

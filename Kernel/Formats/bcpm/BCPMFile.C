@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <strtok.h>
+#include <string.h>
 
 #include "sky_coord.h"
 #include "Types.h"
@@ -19,11 +19,16 @@
 #include "genutil.h"
 #include "environ.h"
 #include "machine_endian.h"
+#include "f772c.h"
 
 #include "bpphdr.h"
 
 #include "dsp/BCPMExtension.h"
 #include "dsp/BCPMFile.h"
+
+extern "C" {
+  void F772C(indexx)(int* n,float* arrin, int* indx);
+}
 
 //! Construct and open file
 dsp::BCPMFile::BCPMFile (const char* filename) : File ("BCPM"){
@@ -57,11 +62,11 @@ void dsp::BCPMFile::switch_endianess(){
   ChangeEndian(bpp_search.mb_end_address);
   ChangeEndian(bpp_search.mb_start_board);
   ChangeEndian(bpp_search.mb_end_board);
-  for (i=0;i<MAXNUMCB;i++) 
+  for (unsigned i=0;i<MAXNUMCB;i++) 
     ChangeEndian(bpp_search.cb_id[i]);
-  for (i=0;i<MAX_NUM_LO_BOARDS;i++) 
+  for (unsigned i=0;i<MAX_NUM_LO_BOARDS;i++) 
     ChangeEndian(bpp_search.aib_los[i]);
-  for (i=0;i<FB_CHAN_PER_BRD;i++)
+  for (unsigned i=0;i<FB_CHAN_PER_BRD;i++)
     ChangeEndian(bpp_search.dfb_sram_freqs[i]);
   ChangeEndian(bpp_search.ra_1950);
   ChangeEndian(bpp_search.dec_1950);
@@ -73,7 +78,7 @@ void dsp::BCPMFile::switch_endianess(){
 //! Open the file
 void dsp::BCPMFile::open_file (const char* filename){
   FILE* fptr = fd_utils::fopen(filename,"r");
-  fd_utils::fread(&bpp_search,BPP_HEADER_SIZE,1,fptr);
+  fread(&bpp_search,BPP_HEADER_SIZE,1,fptr);
   fd_utils::fclose(fptr);
 
   switch_endianess();
@@ -87,7 +92,7 @@ void dsp::BCPMFile::open_file (const char* filename){
     throw Error(InvalidParam,"dsp::BCPMFile::open_file()",
 		"bpp_search.cb_sum_polarizations is false");
 
-  get_info()->set_telescope( 6 );
+  get_info()->set_telescope_code( char(6) );
   get_info()->set_machine( "BCPM" );
   get_info()->set_bandwidth( bpp_search.bandwidth );
   get_info()->set_ndim( 1 );
@@ -110,16 +115,17 @@ void dsp::BCPMFile::open_file (const char* filename){
 
   {
     /* parse search date dayno:year */
-    string date = bpp_search.date;
-    string dayno = strtok(date.c_str(),":");
+    char cdate[4096];
+    sprintf(cdate,"%s",bpp_search.date);
+    string dayno = strtok(cdate,":");
     string year = strtok(NULL,":");
     
     /* parse UT start time hh:mm:ss */
     string start_time = bpp_search.start_time;
-    string utcstring = year + "-" dayno + "-" + start_time;
+    string utcstring = year + "-" + dayno + "-" + start_time;
     
     utc_t my_utc;
-    str2utc(&my_utc, uststring.c_str());
+    str2utc(&my_utc, utcstring.c_str());
     get_info()->set_start_time( my_utc );
 
     char id[15];
@@ -132,15 +138,15 @@ void dsp::BCPMFile::open_file (const char* filename){
     string decb = make_string(bpp_search.dec_1950);
       
     sky_coord coords;
-    coords.setHMSDMS(rab,decb);
+    coords.setHMSDMS(rab.c_str(),decb.c_str());
 
     get_info()->set_coordinates( coords );
   }
 
   {
-    uint64 file_bytes = filesize(filename.c_str());
+    uint64 file_bytes = filesize(filename);
     uint64 data_bytes = file_bytes - BPP_HEADER_SIZE;
-    get_info()->set_ndat( get_nsamples(data_bytes) );
+    get_info()->set_ndat( get_info()->get_nsamples(data_bytes) );
   }
 
   double centre_frequency = 0.0;
@@ -203,7 +209,7 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
   int nchans = (mb_end_addr/2-mb_start_addr/2+1)*(mb_end_brd-mb_start_brd+1)*4;
   float* fmhz   = (float *) malloc(nchans*sizeof(float));
   vector<int> table(nchans);
-  unsigned long* nridx  = (unsigned long *) malloc(nchans*sizeof(unsigned long));
+  int* nridx  = (int*) malloc(nchans*sizeof(int));
 
   double rf_lo_mhz = rf_lo/1.e6;
 
@@ -248,10 +254,11 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
   }
 
   /* produce lookup table which gives channels in order of descending freq */
-  indexx(96,fmhz-1,nridx-1);
+  int ninetysix = 96;
+  F772C(indexx)(&ninetysix,fmhz-1,nridx-1);
   if (nchans==192) {
     nifs=2;
-    indexx(96,fmhz+96-1,nridx+96-1);
+    F772C(indexx)(&ninetysix,fmhz+96-1,nridx+96-1);
     for (i=96; i<192; i++) 
       nridx[i] += 96;
   }

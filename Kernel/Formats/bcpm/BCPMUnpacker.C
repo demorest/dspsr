@@ -12,8 +12,6 @@
 #include "dsp/BCPMExtension.h"
 #include "dsp/BCPMUnpacker.h"
 
-typedef float[512] float512;
-
 //! Null constructor
 dsp::BCPMUnpacker::BCPMUnpacker (const char* _name) : Unpacker (_name){ }
 
@@ -40,10 +38,10 @@ void dsp::BCPMUnpacker::unpack (){
   get_output()->set_nbit( 32 );
   get_output()->resize( get_input()->get_ndat() );
 
-  vector<int>& chtab = get_input()->get<BCPMExtension>()->chtab;
+  const vector<int>& chtab = get_input()->get<BCPMExtension>()->chtab;
   const unsigned nchan = get_input()->get_nchan();
   vector<float> tempblock(nchan);
-  unsigned char* raw = get_rawptr();
+  const unsigned char* raw = get_input()->get_rawptr();
 
   static float512 lookup = get_lookup();
 
@@ -51,7 +49,7 @@ void dsp::BCPMUnpacker::unpack (){
   for( unsigned i=0; i<nchan; i++)
     datptrs[i] = get_output()->get_datptr(i,0);
 
-  float* in = raw;
+  unsigned char* in = (unsigned char*)raw;
 
 #if MACHINE_LITTLE_ENDIAN
   vector<unsigned char> temp_buffer(nchan/2);
@@ -67,8 +65,8 @@ void dsp::BCPMUnpacker::unpack (){
 
     unsigned j = 0;
     for( unsigned i=0; i<nchan/2; i++){
-      tempblock[j++] = lookup[in[i]];
-      tempblock[j++] = lookup[256+in[i]];
+      tempblock[j++] = lookup.data[in[i]];
+      tempblock[j++] = lookup.data[256+in[i]];
     }
     
     for( unsigned k=0; k<nchan; k++)
@@ -80,18 +78,18 @@ void dsp::BCPMUnpacker::unpack (){
 }
 
 //! Generates the lookup table
-float* dsp::BCPMUnpacker::get_lookup(){
+dsp::BCPMUnpacker::float512 dsp::BCPMUnpacker::get_lookup(){
   float512 lookup;
   
   float lower = 0.0;
   float step = 1.0;
   
   for( unsigned char i=0; i<255; ++i){
-    lookup[i] =     lower + step*float((i >> 4) & 15);
-    lookup[256+i] = lower + step*float( i       & 15);
+    lookup.data[i] =     lower + step*float((i >> 4) & 15);
+    lookup.data[256+i] = lower + step*float( i       & 15);
   }
-  lookup[255] =     lower + 15.*step;
-  lookup[256+255] = lower + 15.*step;
+  lookup.data[255] =     lower + 15.*step;
+  lookup.data[256+255] = lower + 15.*step;
   
   return lookup;
 }

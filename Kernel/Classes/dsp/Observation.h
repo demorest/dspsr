@@ -357,7 +357,7 @@ namespace dsp {
     Reference::To<dspExtension> remove_extension(string ext_name);
 
     //! Returns the number of dspExtensions currently stored
-    void get_nextensions();
+    unsigned get_nextensions() const;
 
     //! Returns the i'th dspExtension stored
     dspExtension* get_extension(unsigned iext);
@@ -497,7 +497,7 @@ namespace dsp {
 //! Returns a pointer to the dspExtension
 //! If the dspExtension is not stored this throws an Error
 template<class ExtensionType>
-dsp::ExtensionType* dsp::Observation::get(){
+ExtensionType* dsp::Observation::get(){
   ExtensionType* ret = 0;
 
   for( unsigned i=0; i<extensions.size(); i++){
@@ -516,7 +516,7 @@ dsp::ExtensionType* dsp::Observation::get(){
 //! Returns a pointer to the dspExtension
 //! If the dspExtension is not stored this throws an Error
 template<class ExtensionType>
-const dsp::ExtensionType* dsp::Observation::get() const{
+const ExtensionType* dsp::Observation::get() const{
   ExtensionType* ret = 0;
 
   for( unsigned i=0; i<extensions.size(); i++){
@@ -537,7 +537,7 @@ const dsp::ExtensionType* dsp::Observation::get() const{
 template<class ExtensionType>
 bool dsp::Observation::has() const{
   for( unsigned i=0; i<extensions.size(); i++)
-    if( dynamic_cast<ExtensionType*>(extensions[i]) )
+    if( dynamic_cast<ExtensionType*>(extensions[i].get()) )
       return true;
 
   return false;

@@ -9,6 +9,10 @@ namespace dsp {
 
   class BCPMUnpacker : public Unpacker {
 
+    typedef struct {
+      float data[512];
+    } float512;
+
   public:
 
     //! Null constructor
@@ -26,7 +30,7 @@ namespace dsp {
     void unpack ();
 
     //! Generates the lookup table
-    float* get_lookup();
+    float512 get_lookup();
 
   };
   

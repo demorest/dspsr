@@ -19,7 +19,7 @@ namespace dsp {
     MiniExtension();
 
     //! Copy constructor
-    MiniExtension(const MiniExtension& m){ copy(m); }
+    MiniExtension(const MiniExtension& m) : dspExtension("MiniExtension") { copy(m); }
 
     //! Virtual destructor
     virtual ~MiniExtension();
@@ -37,7 +37,7 @@ namespace dsp {
     MiniPlan* get_miniplan(){ return miniplan.ptr(); }
 
     //! Returns a pointer to the MiniPlan
-    const MiniPlan* get_miniplan() const{ return miniplan.ptr(); }
+    const MiniPlan* get_miniplan() const { return miniplan.ptr(); }
 
     //! Set the MiniPlan
     void set_miniplan(MiniPlan* _miniplan){ miniplan = _miniplan; }
