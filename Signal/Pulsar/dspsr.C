@@ -40,7 +40,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:c:C:d:D:e:E:f:F:hiIjm:M:n:N:Oop:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:hiIjm:M:n:N:Oop:P:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -216,6 +216,9 @@ int main (int argc, char** argv)
   double dispersion_measure = 0.0;
   bool dm_set = false;
 
+  // bandwidth
+  double bandwidth = 0.0;
+
   // Pulsar name
   string pulsar_name;
   // Folding period
@@ -268,6 +271,10 @@ int main (int argc, char** argv)
 
     case 'b':
       nbin = atoi (optarg);
+      break;
+
+    case 'B':
+      bandwidth = atof (optarg);
       break;
 
     case 'C':
@@ -725,6 +732,13 @@ int main (int argc, char** argv)
       if (verbose)
 	cerr << "data file " << filenames[ifile] << " opened" << endl;
       
+    }
+
+    if (bandwidth != 0) {
+      cerr << "dspsr: over-riding bandwidth"
+              " old=" << manager->get_info()->get_bandwidth() <<
+              " new=" << bandwidth << endl;
+      manager->get_info()->set_bandwidth (bandwidth);
     }
 
     // Make sure the source name used to construct kernel is set correctly
