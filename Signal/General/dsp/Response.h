@@ -1,15 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/12/09 11:43:38 $
-   $Author: wvanstra $ */
+   $Revision: 1.14 $
+   $Date: 2002/12/09 11:54:25 $
+   $Author: pulsar $ */
 
 #ifndef __Response_h
 #define __Response_h
 
 #include <vector>
 #include <complex>
+#include <string>
 
 #include "dsp/Shape.h"
 #include "Jones.h"
@@ -83,6 +84,9 @@ namespace dsp {
 
     //! Re-organize frequency bins to reflect natural ordering (DC->Nyq)
     void naturalize ();
+
+    //! Enable Response to be used in Transformation template
+    virtual bool state_is_valid (string& reason) { return true; }
 
   protected:
 
