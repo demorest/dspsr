@@ -145,13 +145,28 @@ int main (int argc, char** argv)
     while (!manager.eod()) {
 
       manager.load (&voltages);
+
+      cerr << "check voltages " << voltages.get_state_as_string() 
+           << " block " << block << endl;
+      voltages.check();
       
-      if (!voltages.get_detected())
+      if (!voltages.get_detected())  {
         detect.operate ();
+        cerr << "check voltages " << voltages.get_state_as_string()
+             << " block " << block << endl;
+        voltages.check();
+      }
 
       fold.operate ();
 
+      cerr << "check profiles " << profiles.get_state_as_string()
+           << " block " << block << endl;
+
       block++;
+
+      cerr << "+/-" << block*block_size << endl;
+      profiles.check(-block*block_size, block*block_size);
+
       cerr << "finished " << block << " blocks\r";
       if (block == blocks) break;
     }
