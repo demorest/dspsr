@@ -61,6 +61,9 @@ int64 dsp::CPSR2TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   if (!table)
     table = new TwoBitTable (TwoBitTable::OffsetBinary);
 
+  if (!histograms)
+    histograms = new unsigned long [nsample * nchannel];
+
   if (lu_sum == NULL) {
 
     //if (verbose)
