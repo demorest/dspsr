@@ -131,6 +131,9 @@ include $(make_install)
 ##########################################################################
 /usr/include/cxx/%:
 
+%.h:
+	@$(GREP) $@ ${LOGIN_ARCH}/*.dep|$(AWK) -F: '{print "rm -rf "$$1}'|sh
+
 ##########################################################################
 # Rules to make the header file dependency list in the appropriate 
 # architecture specific subdirectory.

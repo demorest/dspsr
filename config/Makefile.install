@@ -25,16 +25,21 @@
 	@touch $*/.exists
 
 ##########################################################################
-# Rule to copy header files to installed and local include/ directories
-# found in Makefile.install
+# Rules to copy header files to include/ and installed include/ directories
 ##########################################################################
 
-$(INCDIR)/% $(INSTALL_INCDIR)/% : ./% $(INCDIR)/.exists
-	@if [ -f $@ ]; then $(RM) $@; fi
-	@echo "copying $< to $@"
-	@cp $< $@
-	@chmod a-w $@
+define copy_header
+if [ -f $@ ]; then $(RM) $@; fi
+echo "copying $< to $@"
+cp $< $@
+chmod a-w $@
+endef
 
+$(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
+	@$(copy_header)
+
+$(INSTALL_INCDIR)/% : ./% $(INSTALL_INCDIR)/.exists
+	@$(copy_header)
 
 ##########################################################################
 # The rest of this file applies only when 'install' appears as a target
