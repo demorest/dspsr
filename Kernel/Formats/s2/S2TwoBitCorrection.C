@@ -35,6 +35,8 @@ void dsp::S2TwoBitCorrection::match (char telescope)
   switch ( telescope ) {
 
   case Telescope::Parkes:
+    if (verbose)
+      cerr << "dsp::S2TwoBitCorrection::match Parkes (AT)" << endl;
     resynch_period = 10.0;
     resynch_start = 9.949;
     resynch_end = 0.0001;
@@ -43,6 +45,8 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     break;
     
   case Telescope::ATCA:
+    if (verbose)
+      cerr << "dsp::S2TwoBitCorrection::match ATCA (AT)" << endl;
     resynch_period = 10.0;
     resynch_start = 9.940;
     resynch_end = 0.15;
@@ -51,8 +55,16 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     break;
     
   case Telescope::Tidbinbilla:
-  case Telescope::Arecibo:
+    if (verbose)
+      cerr << "dsp::S2TwoBitCorrection::match Tidbinbilla (VLBA)" << endl;
     table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
+    break;
+
+  case Telescope::Arecibo:
+    if (verbose)
+      cerr << "dsp::S2TwoBitCorrection::match Arecibo (VLBA)" << endl;
+    table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
+    break;
     
   default:
     throw Error (InvalidParam, "S2TwoBitCorrection::match",
