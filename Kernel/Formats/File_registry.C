@@ -31,7 +31,10 @@ static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 // This is defined in libdsp.a
 // It comes before CPSRFile as PSPMverify seems to think MultiBitSeriesFiles are CPSR files
 #include "dsp/MultiBitSeriesFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile> multibitseries_file;
+static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile> register_multibitseriesfile;
+
+#include "dsp/MiniFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 
 #if DSP_CPSR
 #include "dsp/CPSRFile.h"
@@ -60,12 +63,13 @@ static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
 
 // these are defined in libdsp.a
 #include "dsp/CoherentFBFile.h"
-static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> coherentfb;
+static Registry::List<dsp::File>::Enter<dsp::CoherentFBFile> register_coherentfbfile;
 #include "dsp/BitSeriesFile.h"
-static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> bitseries_file;
+static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfile;
+//#include "dsp/MiniFile.h"
+//static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 
 #if DSP_S2
 #include "dsp/S2File.h"
 static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
 #endif
-
