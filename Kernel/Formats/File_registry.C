@@ -1,13 +1,22 @@
+/*! \file File_registry.C
+  \brief Register dsp::File-derived classes for use in this file
+    
+  Classes that inherit dsp::File may be registered for use by
+  utilizing the Registry::List<dsp::File>::Enter<Type> template class.
+  Static instances of this template class should be given a unique
+  name and enclosed within preprocessor directives that make the
+  instantiation optional.  There are plenty of examples in the source code.
 
-/* NOTE: DO_NOT change the order without testing all file types.
-   S2 should remain last as it doesn't do proper "is_valid()" tests.
-   Ensure that anything you add does do proper "is_valid()" tests
+  \note Do not change the order in which registry entries are made
+  without testing all of the file types.  The S2 should remain last as
+  it doesn't perform a proper is_valid() test.  Ensure that anything
+  added does perform a proper is_valid() test.
 */
 
-// Based on Makefile.local, backends.h #defines the DSP_Backend macros
 
 #include "dsp/File.h"
 
+//! Based on Makefile.local, backends.h #defines the DSP_Backend macros
 #include "backends.h"
 #include "Error.h"
 
@@ -44,50 +53,4 @@ static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile>  bitseries_file;
 #include "dsp/S2File.h"
 static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
 #endif
-
-//! Return a pointer to a new instance of the appropriate sub-class
-dsp::File* dsp::File::create (const char* filename)
-{ 
-  // check if file can be opened for reading
-  FILE* fptr = fopen (filename, "r");
-  if (!fptr) throw Error (FailedSys, "dsp::File::create",
-			  "cannot open '%s'", filename);
-  fclose (fptr);
-
-  try {
-
-    if (verbose) cerr << "dsp::File::create with " << registry.size() 
-		      << " registered sub-classes" << endl;
-
-    for (unsigned ichild=0; ichild < registry.size(); ichild++) {
-
-      if ( registry[ichild]->is_valid (filename) ) {
-	
-	File* child = registry.create (ichild);
-	
-	child-> open( filename );
-	
-	return child;
-	
-      }
-
-    }
-    
-  } catch (Error& error) {
-    throw error += "dsp::File::create";
-  }
-  
-  string msg = filename;
-
-  msg += " not a recognized file format\n\tRegistered Formats: ";
-
-  for (unsigned ichild=0; ichild < registry.size(); ichild++)
-    msg += registry[ichild]->get_name() + " ";
-
-  throw Error (InvalidParam, "dsp::File::create", msg);
-
-}
-
-
-
 
