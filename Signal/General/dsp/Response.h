@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.19 $
-   $Date: 2003/01/07 15:46:21 $
+   $Revision: 1.20 $
+   $Date: 2003/01/07 16:25:12 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -50,7 +50,7 @@ namespace dsp {
     void set_impulse_neg (unsigned _impulse_neg) { impulse_neg =_impulse_neg; }
 
     //! Set the flag for a bin-centred spectrum
-    void set_dc_centred (bool dc_centred);
+    virtual void set_dc_centred (bool dc_centred);
 
     //! Get the flag for a bin-centred spectrum
     bool get_dc_centred () const { return dc_centred; }

@@ -76,6 +76,15 @@ void dsp::Dedispersion::set_Doppler_shift (double _Doppler_shift)
   Doppler_shift = _Doppler_shift;
 }
 
+//! Set the flag for a bin-centred spectrum
+void dsp::Dedispersion::set_dc_centred (bool _dc_centred)
+{
+  if (dc_centred != _dc_centred)
+    built = false;
+
+  dc_centred = _dc_centred;
+}
+
 //! Set the flag to add fractional inter-channel delay
 void dsp::Dedispersion::set_fractional_delay (bool _fractional_delay)
 {

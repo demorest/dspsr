@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/12/11 17:34:39 $
+   $Revision: 1.14 $
+   $Date: 2003/01/07 16:25:12 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -41,6 +41,9 @@ namespace dsp {
     //! Set the dimensions of the data
     virtual void resize (unsigned npol, unsigned nchan,
 			 unsigned ndat, unsigned ndim);
+
+    //! Set the flag for a bin-centred spectrum
+    virtual void set_dc_centred (bool dc_centred);
 
     //! Set the centre frequency of the band-limited signal in MHz
     void set_centre_frequency (double centre_frequency);

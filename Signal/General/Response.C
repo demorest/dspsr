@@ -131,6 +131,12 @@ void dsp::Response::mark (Observation* output)
   
 }
 
+//! Set the flag for a bin-centred spectrum
+void dsp::Response::set_dc_centred (bool _dc_centred)
+{
+  dc_centred = _dc_centred;
+}
+
 void dsp::Response::naturalize ()
 {
   cerr << "dsp::Response::naturalize" << endl;
