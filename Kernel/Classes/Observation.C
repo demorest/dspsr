@@ -217,91 +217,146 @@ bool dsp::Observation::combinable (const Observation & obs) const
   double eps = 0.000001;
   bool can_combine = true;
 
-  if (telescope != obs.telescope){
-    cerr << "dsp::Observation::combinable different telescope:"
-	 << telescope << " and " << obs.telescope << endl;
-  can_combine = false; }
-  if (source != obs.source){
-    cerr << "dsp::Observation::combinable different source:"
-	 << source << " and " << obs.source << endl;
-  can_combine = false; }
-  if( fabs(centre_frequency-obs.centre_frequency) > eps ){
-    cerr << "dsp::Observation::combinable different frequencies:"
-	 << centre_frequency << " and " << obs.centre_frequency << endl;
-  can_combine = false; }
-  if( fabs(bandwidth-obs.bandwidth) > eps ){
-  cerr << "dsp::Observation::combinable different bandwidth:"
-	 << bandwidth << " and " << obs.bandwidth << endl;
-  can_combine = false; }
-  if (nchan != obs.nchan){
-    cerr << "dsp::Observation::combinable different nchan:"
-	 << nchan << " and " << obs.nchan << endl;
-  can_combine = false; }
-  if (npol != obs.npol){
-    cerr << "dsp::Observation::combinable different npol:"
-	 << npol << " and " << obs.npol << endl;
-  can_combine = false; }
-  if (ndim != obs.ndim){
-    cerr << "dsp::Observation::combinable different ndim:"
-	 << ndim << " and " << obs.ndim << endl;
-  can_combine = false; }
-  if (nbit != obs.nbit){
-    cerr << "dsp::Observation::combinable different nbit:"
-	 << nbit << " and " << obs.nbit << endl;
-  can_combine = false; }
-  if (type != obs.type){
-    cerr << "dsp::Observation::combinable different type:"
-	 << type << " and " << obs.type << endl;
-  can_combine = false; }
-  if (state != obs.state){
-    cerr << "dsp::Observation::combinable different state:"
-	 << state << " and " << obs.state << endl;
-  can_combine = false; }
-  if (basis != obs.basis){
-    cerr << "dsp::Observation::combinable different feeds:"
-	 << basis << " and " << obs.basis << endl;
-  can_combine = false; }
-  if( fabs(rate-obs.rate)/rate > 0.01 ){ /* ie must be within 1% */
-    cerr << "dsp::Observation::combinable different rate:"
-	 << rate << " and " << obs.rate << endl;
-  can_combine = false; }
-  if( fabs(scale-obs.scale) > eps ){
-    cerr << "dsp::Observation::combinable different scale:"
-	 << scale << " and " << obs.scale << endl;
-  can_combine = false; }
-  if (swap != obs.swap){
-    cerr << "dsp::Observation::combinable different swap:"
-	 << swap << " and " << obs.swap << endl;
-  can_combine = false; }
-  if (dc_centred != obs.dc_centred){
-    cerr << "dsp::Observation::combinable different dc_centred:"
-	 << dc_centred << " and " << obs.dc_centred << endl;
-  can_combine = false; }
-  if (identifier != obs.identifier){
-    cerr << "dsp::Observation::combinable different identifier:"
-	 << identifier << " and " << obs.identifier << endl;
-  can_combine = false; }
-  if (mode != obs.mode){
-    cerr << "dsp::Observation::combinable different mode:"
-	 << mode << " and " << obs.mode << endl;
-  can_combine = false; }
-  if (machine != obs.machine){
-    cerr << "dsp::Observation::combinable different machine:"
-	 << machine << " and " << obs.machine << endl;
-  can_combine = false; }
-  if( domain != obs.domain ){
-    cerr << "dsp::Observation::combinable different domains:"
-	 << domain << " and " << obs.domain << endl;
-    can_combine = false; }
-  if( fabs(dispersion_measure - obs.dispersion_measure) > eps){
-    cerr << "dsp::Observation::combinable different dispersion measure:"
-	 << dispersion_measure << " and " << obs.dispersion_measure << endl;
-    can_combine = false; }
-  if( fabs(between_channel_dm - obs.between_channel_dm) > eps){
-    cerr << "dsp::Observation::combinable different dispersion measure:"
-	 << between_channel_dm << " and " << obs.between_channel_dm << endl;
-    can_combine = false; }
+  if (telescope != obs.telescope) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different telescope:"
+	   << telescope << " and " << obs.telescope << endl;
+    can_combine = false;
+  }
 
+  if (source != obs.source) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different source:"
+	   << source << " and " << obs.source << endl;
+    can_combine = false;
+  }
+
+  if( fabs(centre_frequency-obs.centre_frequency) > eps ) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different frequencies:"
+	   << centre_frequency << " and " << obs.centre_frequency << endl;
+    can_combine = false;
+  }
+
+  if( fabs(bandwidth-obs.bandwidth) > eps ) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different bandwidth:"
+	   << bandwidth << " and " << obs.bandwidth << endl;
+    can_combine = false;
+  }
+
+  if (nchan != obs.nchan) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different nchan:"
+	   << nchan << " and " << obs.nchan << endl;
+    can_combine = false;
+  }
+
+  if (npol != obs.npol) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different npol:"
+	   << npol << " and " << obs.npol << endl;
+    can_combine = false;
+  }
+
+  if (ndim != obs.ndim) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different ndim:"
+	   << ndim << " and " << obs.ndim << endl;
+    can_combine = false;
+  }
+
+  if (nbit != obs.nbit) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different nbit:"
+	   << nbit << " and " << obs.nbit << endl;
+    can_combine = false;
+  }
+
+  if (type != obs.type) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different type:"
+	   << type << " and " << obs.type << endl;
+    can_combine = false;
+  }
+
+  if (state != obs.state) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different state:"
+	   << state << " and " << obs.state << endl;
+    can_combine = false;
+  }
+
+  if (basis != obs.basis) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different feeds:"
+	   << basis << " and " << obs.basis << endl;
+    can_combine = false;
+  }
+  
+  if( fabs(rate-obs.rate)/rate > 0.01 ) { /* ie must be within 1% */
+    if (verbose)
+      cerr << "dsp::Observation::combinable different rate:"
+	   << rate << " and " << obs.rate << endl;
+    can_combine = false;
+  }
+  
+  if( fabs(scale-obs.scale) > eps ) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different scale:"
+	   << scale << " and " << obs.scale << endl;
+    can_combine = false;
+  }
+  
+  if (swap != obs.swap) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different swap:"
+	   << swap << " and " << obs.swap << endl;
+    can_combine = false;
+  }
+  
+  if (dc_centred != obs.dc_centred) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different dc_centred:"
+	   << dc_centred << " and " << obs.dc_centred << endl;
+    can_combine = false;
+  }
+  
+  if (mode != obs.mode) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different mode:"
+	   << mode << " and " << obs.mode << endl;
+    can_combine = false;
+  }
+  
+  if (machine != obs.machine) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different machine:"
+	   << machine << " and " << obs.machine << endl;
+    can_combine = false;
+  }
+  
+  if( domain != obs.domain ) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different domains:"
+	   << domain << " and " << obs.domain << endl;
+    can_combine = false;
+  }
+  
+  if( fabs(dispersion_measure - obs.dispersion_measure) > eps) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different dispersion measure:"
+	   << dispersion_measure << " and " << obs.dispersion_measure << endl;
+    can_combine = false;
+  }
+  
+  if( fabs(between_channel_dm - obs.between_channel_dm) > eps) {
+    if (verbose)
+      cerr << "dsp::Observation::combinable different dispersion measure:"
+	   << between_channel_dm << " and " << obs.between_channel_dm << endl;
+    can_combine = false;
+  }
+  
   return can_combine;
 }
 
@@ -311,12 +366,15 @@ bool dsp::Observation::contiguous (const Observation & obs) const
 
   bool ret = ( combinable(obs) && fabs(difference) < 1e3/rate );
 
-  if( !ret ){
+  if ( !ret && verbose ) {
     fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
     fprintf(stderr,"combinable(obs)=%d\n",combinable(obs));
-    fprintf(stderr,"get_start_time().in_seconds()=%f\n",get_start_time().in_seconds());    
-    fprintf(stderr,"get_end_time().in_seconds()=%f\n",get_end_time().in_seconds());    
-    fprintf(stderr,"obs.get_start_time().in_seconds()=%f\n",obs.get_start_time().in_seconds());
+    fprintf(stderr,"get_start_time().in_seconds()=%f\n",
+	    get_start_time().in_seconds());    
+    fprintf(stderr,"get_end_time().in_seconds()=%f\n",
+	    get_end_time().in_seconds());    
+    fprintf(stderr,"obs.get_start_time().in_seconds()=%f\n",
+	    obs.get_start_time().in_seconds());
     fprintf(stderr,"difference=%f\n",fabs(difference));
     fprintf(stderr,"difference needed to be less than %f\n",1e3/rate);    
   } 
