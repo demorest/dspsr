@@ -22,7 +22,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:b:f:F:hjM:n:N:p:PsS:t:T:vV";
+static char* args = "2:a:b:f:F:hjM:n:N:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -46,6 +46,9 @@ void usage ()
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
     "\n"
+    "Dedispersion options:\n"
+    " -x nfft        over-ride optimal transform length\n"
+    "\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins\n"
     " -p phase       reference phase of pulse profile bin zero\n"
@@ -63,6 +66,7 @@ int main (int argc, char** argv)
   int blocks = 0;
   int ndim = 4;
   int nchan = 1;
+  int set_nfft = 0;
 
   int nbin = 0;
   double reference_phase = 0.0;
@@ -237,6 +241,10 @@ int main (int argc, char** argv)
       verbose = true;
       break;
 
+    case 'x': 
+      set_nfft = atoi (optarg);
+      break;
+
     default:
       cerr << "invalid param '" << c << "'" << endl;
     }
@@ -281,6 +289,9 @@ int main (int argc, char** argv)
   if (verbose)
     cerr << "Creating Dedispersion instance" << endl;
   dsp::Dedispersion* kernel = new dsp::Dedispersion;
+
+  if (set_nfft)
+    kernel->set_frequency_resolution (set_nfft);
 
   if (verbose)
     cerr << "Creating Response (passband) instance" << endl;
@@ -417,7 +428,7 @@ int main (int argc, char** argv)
     if ( tbc && tbc_cutoff )
       tbc -> set_cutoff_sigma ( tbc_cutoff );
 
-
+    profiles->zero();
 
     fold->prepare ( manager->get_info() );
 
