@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.3 $
-   $Date: 2003/06/16 16:32:27 $
+   $Revision: 1.4 $
+   $Date: 2003/06/16 21:47:41 $
    $Author: wvanstra $ */
 
 
@@ -13,6 +13,8 @@
 #include "dsp/PhaseSeriesUnloader.h"
 
 namespace dsp {
+
+  class Response;
 
   //! Class to unload PhaseSeries data in a Pulsar::Archive
   /*! 
@@ -31,11 +33,26 @@ namespace dsp {
     //! Destructor
     virtual ~Archiver ();
 
-    //! Unloads PhaseSeries data to a new Archive instance
-    void unload (const PhaseSeries* data);
+    //! Set the Response from which Passband Extension will be constructed
+    void set_passband (const Response* passband);
 
-    //! Set the name of the Archive class to be used in creating new instances
+    //! Unloads all available data to a new Archive instance
+    void unload ();
+
+    //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const char* archive_class_name);
+
+
+  protected:
+
+    //! Name of the Pulsar::Archive class used to create new instances
+    string archive_class_name;
+
+    //! Response from which Passband Extension will be constructed
+    Reference::To<const Response> passband;
+
+    //! Set the Response from which Passband Extension will be constructed
+    void set_passband (Pulsar::Archive* archive);
 
     void set (Pulsar::Archive* archive, const PhaseSeries* phase);
 
@@ -43,10 +60,6 @@ namespace dsp {
 
     void set (Pulsar::Profile* profile, const PhaseSeries* phase,
 		      unsigned ichan, unsigned ipol, unsigned idim);
-
-
-  protected:
-    string archive_class_name;
 
   };
 

@@ -2,10 +2,14 @@
 
 #include "dsp/Archiver.h"
 #include "dsp/PhaseSeries.h"
+#include "dsp/Response.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Integration.h"
 #include "Pulsar/Profile.h"
+
+#include "Pulsar/Passband.h"
+
 #include "Error.h"
 
 bool dsp::Archiver::verbose = false;
@@ -20,19 +24,32 @@ void dsp::Archiver::set_archive_class (const char* _archive_class_name)
 }
 
 
-void dsp::Archiver::unload (const PhaseSeries* data)
+//! Set the Response from which Passband Extension will be constructed
+void dsp::Archiver::set_passband (const Response* _passband)
+{
+  passband = _passband;
+}
+
+void dsp::Archiver::unload ()
 {
   if (archive_class_name.size() == 0)
     throw Error (InvalidState, "dsp::Archiver::unload", 
 		 "Archive class name not specified");
 
+  if (!profiles)
+    throw Error (InvalidState, "dsp::Archiver::unload",
+		 "Profile data not provided");
+
   Pulsar::Archive* archive = Pulsar::Archive::new_Archive (archive_class_name);
 
-  set (archive, data);
+  set (archive, profiles);
 
   if (verbose)
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
+  
+  if (passband)
+    set_passband (archive);
 
   archive -> unload();
 
@@ -189,3 +206,52 @@ catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";
 }}
 
+
+void dsp::Archiver::set_passband (Pulsar::Archive* arch)
+{ try {
+
+  if (verbose)
+    cerr << "dsp::Archiver::set_passband Pulsar::Archive" << endl;
+
+  unsigned next = arch->get_nextension ();
+
+  Pulsar::Archive::Extension* ext = 0;
+  Pulsar::Passband* pband = 0;
+
+  for (unsigned iext=0; iext<next; iext++)  {
+
+    ext = const_cast<Pulsar::Archive::Extension*>( arch->get_extension(iext) );
+
+    pband = dynamic_cast<Pulsar::Passband*>( ext );
+
+    if (pband)
+      break;
+  }
+
+  if (!pband) {
+    if (verbose)
+      cerr << "dsp::Archiver::set_passband no Passband Extension" << endl;
+
+    return;
+  }
+
+  // terminology differs between dsp::Shape and the Pulsar::Passband Extension
+  unsigned npol = passband->get_npol ();
+  unsigned nband = passband->get_nchan ();
+  unsigned nchan = passband->get_ndat ();
+
+  pband->resize (nchan, npol, nband);
+
+  if (passband->get_ndim() != 1)
+    throw Error (InvalidState, "dsp::Archiver::set_passband",
+		 "Passband Response ndim != 1");
+
+  for (unsigned ipol=0; ipol<npol; ipol++)
+    for (unsigned iband=0; iband<nband; iband++)
+      pband->set_passband (passband->get_datptr (iband, ipol), ipol, iband);
+
+}
+catch (Error& error) {
+  throw error += "dsp::Archiver::set Pulsar::Archive";
+}
+}
