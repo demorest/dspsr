@@ -185,7 +185,7 @@ endif
 # macro definitions for various "home-grown" libraries
 ##########################################################################
 
-LTIMES = -ltimes -lgenutil $(LSLA) -lm
+LTIMES = -ltimes -lunits $(LSLA) -lm
 
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil++ -lgenutil \
 	-lpsrfft $(LFFT) $(LTIMES)
