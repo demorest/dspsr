@@ -160,12 +160,13 @@ void dsp::MultiFile::ensure_contiguity()
 
     const Observation* obs1 = &files[ifile-1];
     const Observation* obs2 = &files[ifile];
-
-    fprintf(stderr,"Going to return contiguous() with obs1.start=%s obs1.end=%s obs2.start=%s obs2.end=%s\n",
-	    obs1->get_start_time().printall(),
-	    obs1->get_end_time().printall(),
-	    obs2->get_start_time().printall(),
-	    obs2->get_end_time().printall());
+    
+    if( verbose )
+      fprintf(stderr,"dsp::MultiFile::ensure_contiguity() Going to call contiguous() with obs1.start=%s obs1.end=%s obs2.start=%s obs2.end=%s\n",
+	      obs1->get_start_time().printall(),
+	      obs1->get_end_time().printall(),
+	      obs2->get_start_time().printall(),
+	      obs2->get_end_time().printall());
 
     if ( !obs1->contiguous(*obs2) ){
       char cstr[4096];
@@ -273,4 +274,13 @@ void dsp::MultiFile::set_loader (unsigned index)
 
   current_index = index;
   current_filename = files[index].filename;
+}
+
+uint64 dsp::MultiFile::get_next_sample(){
+  uint64 samples_over = 0;
+
+  for( unsigned i=0; i<current_index; i++)
+    samples_over += files[i].get_ndat();
+
+  return get_load_sample()-samples_over;
 }

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/05/18 11:33:49 $
+   $Revision: 1.15 $
+   $Date: 2003/05/24 00:29:44 $
    $Author: pulsar $ */
 
 
@@ -65,6 +65,9 @@ namespace dsp {
 
     //! Find out the index of current file is
     unsigned get_index() const { return current_index; }
+
+    //! Inquire the next sample to load for the current file
+    uint64 get_next_sample();
 
   protected:
     
