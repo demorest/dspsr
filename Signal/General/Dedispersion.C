@@ -121,7 +121,7 @@ void dsp::Dedispersion::build ()
   else
     check_ndat ();
 
-
+  // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
 
   build (phases, centre_frequency, bandwidth, 
@@ -133,6 +133,8 @@ void dsp::Dedispersion::build ()
     phasors[ipt] = complex<float>(polar (float(1.0), phases[ipt]));
 
   set (phasors);
+
+  built = true;
 }
 
 /*!
@@ -189,30 +191,25 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
   
   if (verbose)
-    cerr << "Smear time in the " << side << " half of the " << band 
-	 << tsmear*1e3 << "ms"
+    cerr << "Smear time in the " << side << " half of the " << band << ": "
+	 << tsmear*1e3 << " ms"
       " (" << int(tsmear * sampling_rate) << " pts).\n";
 
-  // Smearing part two - ... multiply this smearing by two and 
   // add another ten percent while at it, just to be sure that mixing
   // due to cyclical convolution is minimized
-  double effective_smear = tsmear * 2.1;
+  tsmear *= 1.1;
   
   // smear across one channel in number of time samples.
-  unsigned nsmear = unsigned (effective_smear * sampling_rate);
-  
-  if (verbose) 
-    cerr << "Start with smear time=" << effective_smear*1e3 << "ms"
-      " (" << nsmear << "pts)." << endl;
+  unsigned nsmear = unsigned (tsmear * sampling_rate);
   
   // recalculate the smearing time simply for display of new value
-  effective_smear = double (nsmear) / sampling_rate;
+  tsmear = double (nsmear) / sampling_rate;
   if (verbose) 
-    cerr << "Rounded smear time is " << effective_smear*1e3 << "ms"
-      " (" << nsmear << "pts)." << endl;
+    cerr << "Effective smear time: " << tsmear*1e3 << " ms"
+      " (" << nsmear << " pts)." << endl;
 
   return nsmear;
-  }
+}
 
 
 void dsp::Dedispersion::build (vector<float>& phases,
