@@ -136,11 +136,15 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
     if (hist)
       hist [n_in] ++;
 
-    if (weights && (weights[wt]==0 || n_in<n_min || n_in>n_max)) {
+    if ( (weights && weights[wt]==0) || n_in<n_min || n_in>n_max ) {
 
-      // cerr << "iq:w[" << wt << "]=0 ";
+#ifdef _DEBUG
+      cerr << "iq:w[" << wt << "]=0 ";
+#endif
 
-      weights[wt] = 0;
+      if (weights)
+        weights[wt] = 0;
+
       // reduce the risk of other functions accessing un-initialized 
       // segments of the array
       for (pt=0; pt<points; pt++) {
@@ -154,8 +158,10 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
       for (pt=0; pt<points; pt++) {
 	*datptr = corrected [values[pt]];
 
+#ifdef _DEBUG
 	if (*datptr > 5 || *datptr < -5)
-	  cerr << "b:" << *datptr << endl;
+	  cerr << "b:" << *datptr << " n:" << n_in << " max:" << n_max << " min:" << n_min << endl;
+#endif
 
 	datptr += 2;
       }
