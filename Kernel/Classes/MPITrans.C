@@ -65,3 +65,18 @@ void dsp::MPITrans::request_ready (int node)
   // post the receive ready-for-data request
   MPI_Irecv (&ready, 1, MPI_INT, node, mpi_tag, comm, &ready_request);
 }
+
+void dsp::MPITrans::shutdown ()
+{
+
+  cout << mpi_rank << ": Shutdown called" << endl;
+  if ( mpi_rank == mpi_root )
+    return;
+  else{
+    if( ready_request != MPI_REQUEST_NULL){
+      cout << mpi_rank << ": Shutdown executed" << endl;
+      MPI_Cancel(&ready_request);
+    }
+  }
+  
+}

@@ -36,6 +36,9 @@ namespace dsp {
 
     //! request ready-for-data from a specific node
     void request_ready (int node);
+    
+    //! Shutdown any remaining requests 
+    void shutdown();
 
   };
 
