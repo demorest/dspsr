@@ -55,7 +55,8 @@ void dsp::Seekable::load_data (BitSeries* data)
 
   uint64 read_size = get_load_size() - recycled;
 
-  if (verbose) cerr << "dsp::Seekable::load_data"
+  if (verbose)
+    cerr << "dsp::Seekable::load_data"
 		 "\n   recycled=" << recycled << 
 		 "\n   read_size=" << read_size << 
 		 "\n   read_sample=" << read_sample << endl;
@@ -63,8 +64,9 @@ void dsp::Seekable::load_data (BitSeries* data)
   // check that the amount to read does not surpass the end of data
   if (info.get_ndat()) {
 
-    if (verbose) cerr << "   total ndat=" << info.get_ndat() 
-                      << " read_sample=" << read_sample << endl;
+    if (verbose)
+      cerr << "   total ndat=" << info.get_ndat() 
+	   << " read_sample=" << read_sample << endl;
 
     if( read_sample > info.get_ndat() )
       throw Error(InvalidState,"dsp::Seekable::load_data ()",
@@ -72,13 +74,15 @@ void dsp::Seekable::load_data (BitSeries* data)
 
     uint64 samples_left = info.get_ndat() - read_sample;
 
-    if (verbose) cerr << "dsp::Seekable::load_data " << samples_left 
-		      << " samples remaining" << endl;
+    if (verbose)
+      cerr << "dsp::Seekable::load_data " << samples_left 
+	   << " samples remaining" << endl;
 
     if (samples_left <= read_size) {
 
-      if (verbose) cerr << "dsp::Seekable::load_data end of data read_size="
-			<< samples_left << endl;
+      if (verbose)
+	cerr << "dsp::Seekable::load_data end of data read_size="
+	     << samples_left << endl;
 
       read_size = samples_left;
       end_of_data = true;
@@ -88,8 +92,10 @@ void dsp::Seekable::load_data (BitSeries* data)
   }
 
   // exit if there is nothing left to read
-  if (!read_size)
+  if (!read_size){
+    data->set_ndat (recycled);
     return;
+  }
 
   if (read_sample != current_sample) {
 
