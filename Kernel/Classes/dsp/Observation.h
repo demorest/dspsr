@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.43 $
-   $Date: 2003/01/14 00:35:15 $
-   $Author: pulsar $ */
+   $Revision: 1.44 $
+   $Date: 2003/01/15 04:15:58 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -137,7 +137,7 @@ namespace dsp {
     //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (unsigned ichan) const;
 
-    //! Returns the centre frequency of the ichan'th frequency ordered channel in MHz
+    //! Returns the centre frequency of the ichan'th frequency ordered channel in MHz.
     double get_ordered_cfreq(unsigned ichan);
 
     //! Return the centre frequency of the highest frequency channel below the maximum stated in MHz
@@ -146,9 +146,9 @@ namespace dsp {
     //! Return the centre frequency of the lowest frequency channel in MHz
     double get_lowest_frequency(double min_freq=0.0, unsigned chanstart=0,unsigned chanend=99999);
 
-    //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
+    //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)  lsb means that the highest RF frequency is in channel 0
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
-    //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
+    //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)  lsb means that the highest RF frequency is in channel 0
     double get_bandwidth () const { return bandwidth; }
 
     //! Set the start time of the leading edge of the first time sample

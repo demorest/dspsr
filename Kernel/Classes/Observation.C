@@ -498,9 +498,9 @@ double dsp::Observation::get_centre_frequency (unsigned ichan) const
   return get_base_frequency() + channel * bandwidth / double(nchan);
 }
 
-//! Returns the centre frequency of the ichan'th frequency ordered channel in MHz
+//! Returns the centre frequency of the ichan'th frequency ordered channel in MHz.
 double dsp::Observation::get_ordered_cfreq(unsigned ichan){
-  return centre_frequency - fabs(bandwidth)/2.0 + fabs(bandwidth)/(2.0*nchan) + ichan*fabs(bandwidth)/double(nchan);
+  return get_centre_frequency(ichan);
 }
 
 // returns the centre_frequency of the first channel
