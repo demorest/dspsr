@@ -93,6 +93,7 @@ int main(int argc, char ** argv)
   float smear_us = kernel.get_smearing_time () * 1e6;
 
   cerr << "\nOutput parameters:\n"
+    "Dispersion delay:   " << kernel.delay_time() << " s\n"
     "Smearing time:      " << smear_us << " us\n";
 
   if (nchan > 1)  {
@@ -104,6 +105,7 @@ int main(int argc, char ** argv)
 
   cerr << "\nMinimum Kernel Length " << kernel.get_minimum_ndat () << endl;
   cerr << "Optimal Kernel Length " << kernel.get_ndat () << endl;
+
 
   return 0;
 
