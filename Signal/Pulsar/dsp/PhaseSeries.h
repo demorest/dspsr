@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/10/11 02:31:14 $
+   $Revision: 1.3 $
+   $Date: 2002/10/12 00:54:05 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -45,7 +45,7 @@ namespace dsp {
     //! Set the phase polynomial(s) with which to fold data
     void set_folding_polyco (polyco* folding_polyco);
     //! Get the phase polynomial(s) with which to fold data
-    polyco* get_folding_polyco () const;
+    const polyco* get_folding_polyco () const;
 
     //! Get the number of seconds integrated
     double get_integration_length () const { return integration_length; }
@@ -59,7 +59,7 @@ namespace dsp {
     unsigned get_hit (unsigned ibin) const { return hits[ibin]; }
 
     //! Get the mid-time of the integration
-    MJD get_midtime () const;
+    MJD get_mid_time () const;
 
     //! Reset all phase bin totals to zero
     void zero ();

@@ -40,8 +40,17 @@ void dsp::PhaseSeries::set_folding_polyco (polyco* _folding_polyco)
   folding_period = 0.0;
 }
 
+//! Set the phase polynomial(s) with which to fold data
+const polyco* dsp::PhaseSeries::get_folding_polyco () const
+{
+  if (!folding_polyco)
+    throw_str ("PhaseSeries::get_folding_polyco polyco not set");
+
+  return folding_polyco;
+}
+
 //! Get the mid-time of the integration
-MJD dsp::PhaseSeries::get_midtime () const
+MJD dsp::PhaseSeries::get_mid_time () const
 {
   MJD midtime = 0.5 * (start_time + end_time);
 
