@@ -83,8 +83,7 @@ void dsp::Fold::prepare (const Observation* observation)
     throw Error (InvalidParam, "dsp::Fold::prepare",
 		 "empty Observation::source");
 
-  if( folding_period > 0.0 && (folding_period_source==jpulsar 
-                               || folding_period_source==string()) )
+  if( folding_period > 0 && (folding_period_source==jpulsar || folding_period_source==string()) )
   {
     if (verbose)
       cerr << "dsp::Fold::prepare using folding_period=" << folding_period << endl;
@@ -279,30 +278,26 @@ bool dsp::Fold::power_of_two = true;
   folding may be set through the Fold::maximum_nbin attribute. */
 unsigned dsp::Fold::choose_nbin ()
 {
-  double folding_period = get_folding_period ();
+  double the_folding_period = get_folding_period ();
 
   if (verbose)
-    cerr << "dsp::Fold::choose_nbin folding_period=" << folding_period << endl;
+    cerr << "dsp::Fold::choose_nbin the_folding_period=" << the_folding_period << endl;
 
-  if (folding_period <= 0.0)
+  if (the_folding_period <= 0.0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
 		 "no folding period or polyco set");
 
   double sampling_period = 1.0 / input->get_rate();
   double binwidth = minimum_bin_width * sampling_period;
 
-  unsigned sensible_nbin = unsigned (folding_period / binwidth);
+  unsigned sensible_nbin = unsigned (the_folding_period / binwidth);
 
-  if (power_of_two) {
+  if (power_of_two)
     // make sensible_nbin the largest power of two less than the maximum  
-    sensible_nbin = (unsigned)
-      pow ( 2.0, floor(log(folding_period/binwidth)/log(2.0)) );
-  }
+    sensible_nbin = (unsigned)  pow ( 2.0, floor(log(the_folding_period/binwidth)/log(2.0)) );
 
   if (requested_nbin > 1) {
-
     // the Fold::set_nbin method has been called
-
     if (verbose) cerr << "dsp::Fold::choose_nbin using requested nbin="
 		      << requested_nbin << endl;
 
@@ -311,31 +306,23 @@ unsigned dsp::Fold::choose_nbin ()
 	   << requested_nbin << " > sensible nbin=" << sensible_nbin << "."
 	"  Where:\n"
 	"  sampling period     = " << sampling_period*1e3 << " ms and\n"
-	"  requested bin width = " << folding_period/requested_nbin*1e3 << 
+	"  requested bin width = " << the_folding_period/requested_nbin*1e3 << 
 	" ms\n" << endl;
     }
-
     folding_nbin = requested_nbin;
-
   }
   else {
     // the Fold::set_nbin method has not been called.  choose away ...
-
     if (maximum_nbin && sensible_nbin > maximum_nbin) {
-
       if (verbose) cerr << "dsp::Fold::choose_nbin using maximum nbin=" 
 			<< maximum_nbin << endl;
       folding_nbin = maximum_nbin;
-
     }
     else {
-
       if (verbose) cerr << "dsp::Fold::choose_nbin using sensible nbin=" 
 			<< sensible_nbin << endl;
       folding_nbin = sensible_nbin;
-
     }
-
   }
 
   return folding_nbin;

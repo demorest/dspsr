@@ -23,6 +23,9 @@ bool dsp::Operation::verbose = false;
 //! Global instantiation count
 int dsp::Operation::instantiation_count = 0;
 
+//! Used internally- classes can set this to non-zero in operation() if they fail
+int dsp::Operation::operation_status = 0;
+
 //! Only ever called by TimeKeeper class
 void dsp::Operation::set_timekeeper(TimeKeeper* _timekeeper)
 { timekeeper = _timekeeper; }
@@ -69,11 +72,16 @@ bool dsp::Operation::operate ()
   if( !can_operate() )
     return false;
 
+  operation_status = 0;
+
   //! call the pure virtual method defined by sub-classes
   operation();
 
   if (record_time)
     optime.stop();
+
+  if( operation_status != 0 )
+    return false;
 
   return true;
 }

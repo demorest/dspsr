@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.31 $
-   $Date: 2004/11/01 23:50:22 $
+   $Revision: 1.32 $
+   $Date: 2004/11/02 10:16:43 $
    $Author: hknight $ */
 
 
@@ -81,8 +81,11 @@ namespace dsp {
     //! Set the period at which to fold data, but only do it for this source (in seconds)
     void set_folding_period (double folding_period, string _folding_period_source);
 
-    //! Get the period at which to fold data (in seconds)
+    //! Get the period at which data is being folded at (in seconds)
     double get_folding_period () const;
+
+    //! Returns true if data will be folded at a constant period
+    bool has_folding_period() const { return (folding_period>0); }
 
     //! Get the phase model which is currently being used to fold data
     const polyco* get_folding_polyco () const;

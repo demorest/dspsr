@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.26 $
-   $Date: 2004/11/01 23:48:26 $
+   $Revision: 1.27 $
+   $Date: 2004/11/02 10:16:43 $
    $Author: hknight $ */
 
 #ifndef __Operation_h
@@ -43,6 +43,9 @@ namespace dsp {
 
     //! Global verbosity flag
     static bool verbose;
+
+    //! Used internally- classes can set this to non-zero in operation() if they fail
+    static int operation_status;
 
     //! Counts how many Operation instantiations there have been
     //! Used for setting the unique instantiation ID
