@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.25 $
-   $Date: 2004/12/12 23:36:18 $
+   $Revision: 1.26 $
+   $Date: 2005/01/02 02:41:53 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -469,9 +469,10 @@ void dsp::Transformation<In, Out>::operation ()
   }
 
   transformation ();
-  if( verbose && ts_out )
-    fprintf(stderr,"TRANS (%s) after transformation() got ndat="UI64"\n",
-	    get_name().c_str(),ts_out->get_ndat());
+  if( verbose )
+    if( ts_out )
+      fprintf(stderr,"TRANS (%s) after transformation() got ndat="UI64"\n",
+	      get_name().c_str(),ts_out->get_ndat());
 
   seek_back_over_surplus_samps(surplus_samples);
 
@@ -607,7 +608,7 @@ void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
   
   if( !ts )
     throw Error(InvalidState,"dsp::Transformation<In,Out>::save_data()",
-		"Input is not a TimeSeries- this hasn't been coded for!");
+		"Output is not a TimeSeries- this hasn't been coded for!");
 
   if( last_nsamps==0 ){
     ts->set_ndat(0);
@@ -616,7 +617,8 @@ void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
 
   dsp::TimeSeries* out = dynamic_cast<dsp::TimeSeries*>(get_output());
 
-  ts->copy_configuration( out );
+  ts->copy_configuration( out ); // Gets weights
+  ts->Observation::operator=( *out ); // Gets ndim
   ts->change_start_time( out->get_ndat() - last_nsamps );
   ts->resize(last_nsamps);
 
@@ -628,9 +630,10 @@ void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
   for( unsigned ichan=0; ichan<ts->get_nchan(); ichan++){
     for( unsigned ipol=0; ipol<ts->get_npol(); ipol++){
       float* to = ts->get_datptr(ichan,ipol);
-      float* from = out->get_datptr(ichan,ipol) + out->get_ndat() - last_nsamps;
+      uint64 float_offset = (out->get_ndat() - last_nsamps)*out->get_ndim();
+      float* from = out->get_datptr(ichan,ipol) + float_offset;
 
-      for( uint64 i=0; i<last_nsamps; i++)
+      for( uint64 i=0; i<last_nsamps*out->get_ndim(); i++)
 	to[i] = from[i];
     }
   }
