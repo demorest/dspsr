@@ -88,7 +88,7 @@ void dsp::Input::load (BitSeries* data)
   }
 
   if (verbose)
-    cerr << "dsp::Input::load (BitSeries* = " << data << ")" << endl;
+    cerr << "\n\ndsp::Input::load (BitSeries* = " << data << ")" << endl;
 
   if (!data)
     throw Error (InvalidParam, "dsp::Input::load", "invalid data reference");
@@ -117,7 +117,7 @@ void dsp::Input::load (BitSeries* data)
   data->change_start_time (load_sample);
 
   if (verbose)
-    cerr << "dsp::Input::load [INTERNAL] load_size=" << load_size 
+    cerr << "dsp::Input::load [INTERNAL] block_size = " << get_block_size() << " load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
   data->resize (load_size);
@@ -142,8 +142,12 @@ void dsp::Input::load (BitSeries* data)
 
   uint64 available = data->get_ndat() - resolution_offset;
 
-  if (available < block_size) {
+  //fprintf(stderr,"data->input_sample="UI64" input=%p request_offset="UI64" request_ndat="UI64" to_seek="UI64" available="UI64"\n",
+  //  uint64(data->input_sample), data->input,
+  //  uint64(data->request_offset),
+  //  uint64(data->request_ndat), uint64(to_seek), uint64(available));
 
+  if (available < block_size) {
     // should be the end of data
 
     data->request_ndat = available;
@@ -178,6 +182,7 @@ void dsp::Input::load (BitSeries* data)
     if (record_time)
       optime.stop();
   }
+
 }
 
 /*! 
@@ -192,7 +197,7 @@ void dsp::Input::load (BitSeries* data)
 void dsp::Input::seek (int64 offset, int whence)
 {
   if (verbose)
-    cerr << "dsp::Input::seek [EXTERNAL] offset=" << offset << endl;
+    fprintf(stderr,"dsp::Input::seek [EXTERNAL] offset="I64" name=%s\n",offset,get_name().c_str());
 
   // the next sample required by the user
   uint64 next_sample = load_sample + resolution_offset;
