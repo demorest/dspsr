@@ -95,12 +95,11 @@ void dsp::Archiver::unload ()
     set (pband);
 
   if( reducing_program != string() )
-      archive->set_backend( archive->get_backend() + " : " + reducing_program);
-  
+    archive->set_backend( archive->get_backend() + " : " + reducing_program);
+
   if (!single_archive) {
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
-
     
     archive -> unload();
   }
@@ -195,6 +194,8 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_iono_rm_corrected (false);
   archive-> set_ism_rm_corrected (false);
   archive-> set_parallactic_corrected (false);
+
+  archive-> set_backend( phase->get_machine() );
 
   set (archive-> get_Integration(0), phase);
 
