@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/12/09 13:33:24 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2003/01/11 07:19:51 $
+   $Author: pulsar $ */
 
 #ifndef __Shape_h
 #define __Shape_h
@@ -66,12 +66,12 @@ namespace dsp {
     const Shape& operator += (const Shape&);
 
     //! Provide access to the data for the specified polarization
-    float* get_datptr (unsigned ipol, unsigned ichan=0) {
+    float* get_datptr (unsigned ichan, unsigned ipol) {
       return buffer + offset * ipol + ndat*ndim * ichan;
     }
 
     //! Provide access to the data for the specified polarization
-    const float* get_datptr (int ipol, unsigned ichan=0) const {
+    const float* get_datptr (unsigned ichan, unsigned ipol) const {
       return buffer + offset * ipol + ndat*ndim * ichan;
     }
 
