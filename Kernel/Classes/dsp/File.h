@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.24 $
-   $Date: 2004/03/18 03:12:47 $
+   $Revision: 1.25 $
+   $Date: 2004/05/02 17:43:53 $
    $Author: hknight $ */
 
 
@@ -103,6 +103,9 @@ namespace dsp {
     header ndat matches the file size.  Requires 'info' parameters
     nchan, npol, and ndim as well as header_bytes to be correctly set */
     virtual int64 fstat_file_ndat(uint64 tailer_bytes=0);
+
+    //! Over-ride this function to pad data via HoleyFile
+    virtual int64 pad_bytes(unsigned char* buffer, int64 bytes);
 
     /** @name Derived Class Defined
      *  These attributes must be set by the open_file method of the

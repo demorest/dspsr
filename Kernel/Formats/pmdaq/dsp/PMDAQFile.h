@@ -31,6 +31,9 @@ namespace dsp {
 
   protected:
 
+    //! Pads gaps in data
+    virtual int64 pad_bytes(unsigned char* buffer, int64 bytes);
+
     //! Open the file
     void open_file (const char* filename);
 

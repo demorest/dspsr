@@ -322,6 +322,18 @@ int64 dsp::PMDAQFile::seek_bytes (uint64 bytes){
   return (bytes);
 }
 
+//! Pads gaps in data
+int64 dsp::PMDAQFile::pad_bytes(unsigned char* buffer, int64 bytes){
+  if( get_info()->get_nbit() != 1 )
+    return File::pad_bytes(buffer,bytes);
+
+  // Perhaps this will work- ones and zeros in alternate channels???
+  register const unsigned char pad_val = 1 + 4 + 16 + 64;
+  for( int64 i=0; i<bytes; ++i)
+    buffer[i] = pad_val;
+  
+  return bytes;
+}
 
 
 

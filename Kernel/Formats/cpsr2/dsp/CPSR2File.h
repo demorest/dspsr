@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/10/25 07:21:52 $
+   $Revision: 1.14 $
+   $Date: 2004/05/02 17:42:37 $
    $Author: hknight $ */
 
 
@@ -29,6 +29,9 @@ namespace dsp {
 
   protected:
 
+    //! Pads gaps in data
+    virtual int64 pad_bytes(unsigned char* buffer, int64 bytes);
+      
     //! Open the file
     virtual void open_file (const char* filename);
 
