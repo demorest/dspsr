@@ -11,7 +11,7 @@ void dsp::CPSRTwoBitCorrection::unpack ()
     throw_str ("TwoBitCorrection::operation input not quadrature sampled");
 
   int64 ndat = input->get_ndat();
-  unsigned char* rawptr = input->get_rawptr();
+  const unsigned char* rawptr = input->get_rawptr();
 
   for (int ipol=0; ipol<2; ipol++) {
 
@@ -41,8 +41,9 @@ void dsp::CPSRTwoBitCorrection::unpack ()
 
 }
 
-void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata, void* raw,
-					   unsigned long ndat, 
+void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
+					   const unsigned char* raw,
+					   int64 ndat, 
 					   int channel, int* weights)
 {
 
@@ -67,8 +68,8 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata, void* raw,
   // int newchan = channel;
   shift = (4 - newchan - 1) * 2;
 
-  unsigned char*  rawptr = (unsigned char*) raw;
-  float*          datptr = outdata;
+  const unsigned char* rawptr = raw;
+  float* datptr = outdata;
 
   // although I and Q are switched here, the histogram is queried as expected
   unsigned long*  hist = 0;
@@ -80,7 +81,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata, void* raw,
 
   unsigned long n_weights = (unsigned long) ceil (float(ndat) / float(nsample));
 
-  unsigned long points_left = ndat;
+  int64 points_left = ndat;
 
   // these aren't true totals, just accurate enough to get the fractional
   // points and judge against the tolerance towards the varying variance
