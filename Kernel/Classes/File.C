@@ -41,6 +41,50 @@ void dsp::File::init()
   info.init();
 }
 
+//! Return a pointer to a new instance of the appropriate sub-class
+dsp::File* dsp::File::create (const char* filename)
+{ 
+  // check if file can be opened for reading
+  FILE* fptr = fopen (filename, "r");
+  if (!fptr) throw Error (FailedSys, "dsp::File::create",
+			  "cannot open '%s'", filename);
+  fclose (fptr);
+
+  try {
+
+    if (verbose) cerr << "dsp::File::create with " << registry.size() 
+		      << " registered sub-classes" << endl;
+
+    for (unsigned ichild=0; ichild < registry.size(); ichild++) {
+
+      if ( registry[ichild]->is_valid (filename) ) {
+	
+	File* child = registry.create (ichild);
+	
+	child-> open( filename );
+	
+	return child;
+	
+      }
+
+    }
+    
+  } catch (Error& error) {
+    throw error += "dsp::File::create";
+  }
+  
+  string msg = filename;
+
+  msg += " not a recognized file format\n\tRegistered Formats: ";
+
+  for (unsigned ichild=0; ichild < registry.size(); ichild++)
+    msg += registry[ichild]->get_name() + " ";
+
+  throw Error (InvalidParam, "dsp::File::create", msg);
+
+}
+
+
 void dsp::File::open (const char* filename)
 {
   open (filename, 0);
