@@ -3,9 +3,10 @@
 #include "polyco.h"
 #include "genutil.h"
 
+#include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 
-dsp::PhaseSeries::PhaseSeries ()
+dsp::PhaseSeries::PhaseSeries () : TimeSeries()
 {
   integration_length = 0;
   folding_period = 0;
