@@ -1,6 +1,6 @@
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspm++.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/11/28 14:03:18 $
+   $Revision: 1.7 $
+   $Date: 2002/11/28 14:05:02 $
    $Author: wvanstra $ */
 
 #ifndef __PSPM_H
@@ -32,7 +32,7 @@ double PSPMduration (const PSPM_SEARCH_HEADER* header);
 
 // this function will perform some sanity checks and "correct"
 // (ie. set to default) certain values if inconsistencies are found.
-bool   PSPMverify (PSPM_SEARCH_HEADER* hdr, bool verbose);
+bool   PSPMverify (PSPM_SEARCH_HEADER* hdr, bool verbose = false);
 
 string PSPMidentifier (const PSPM_SEARCH_HEADER* hdr);
 string PSPMsource (const PSPM_SEARCH_HEADER* hdr);
