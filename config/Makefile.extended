@@ -144,8 +144,8 @@ mdtemp :=${LOGIN_ARCH}/.mdtemp
 define header_depend
 @$(RM) $(mdtemp); touch $(mdtemp)
 @echo makedepend $<
-@$(MAKEDEPEND) $(mdtemp) ${MDFLAGS} ${CPPFLAGS} $<
-@sed 's/$*\.o/$(LOGIN_ARCH)\/$*\.o $(LOGIN_ARCH)\/$*\.dep/g' $(mdtemp) > $@
+@$(MAKEDEPEND) $(mdtemp) ${MDFLAGS} ${CPPFLAGS} $< 2> /dev/null
+@sed 's/$*\.o/$(LOGIN_ARCH)\/$*\.o/g' $(mdtemp) > $@
 endef
 
 ##########################################################################
@@ -366,7 +366,6 @@ LOBJS:=${patsubst %.c,%.o,${patsubst %.f,%.o,${patsubst %.C,%.o,${LIB_SRCS}}}}
 LIB_OBJS := ${LOBJS:%=${LOGIN_ARCH}/%}
 
 $(ONELIB) : $(LIB_OBJS)
-	@echo $(LIB_SRCS)
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
 
