@@ -273,6 +273,11 @@ void dsp::PuMaFile::parse (const void* header)
     throw Error (InvalidParam, "dsp::PuMaFile::parse",
                  "filename=%s not in recognized form", hdr->gen.ThisFileName);
 
+  uint64 two100MB = 200 * 1000 * 1000;
+  if (filenum > 0 && hdr->gen.DataBlkSize < two100MB)
+    throw Error (InvalidState, "dsp::PuMaFile::parse",
+                 "refusing to process last file in set - offset unknown");
+    
   uint64 offset_samples = filenum * info.get_ndat();
 
   if (verbose)
