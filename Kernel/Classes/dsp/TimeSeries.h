@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.14 $
-   $Date: 2003/05/14 16:15:28 $
-   $Author: wvanstra $ */
+   $Revision: 1.15 $
+   $Date: 2003/05/17 09:48:33 $
+   $Author: pulsar $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -102,6 +102,9 @@ namespace dsp {
 
     //! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
     virtual void normalise();
+
+    //! Returns the maximum bin of channel 0, pol 0
+    virtual unsigned get_maxbin();
 
     /*! This:
       (1) Puts the first 'this->ndat-ts->ndat' timesamples of 'this' into the last possible spots of 'this'

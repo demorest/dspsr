@@ -530,6 +530,11 @@ void dsp::TimeSeries::normalise(){
 
 }
 
+//! Returns the maximum bin of channel 0, pol 0
+unsigned dsp::TimeSeries::get_maxbin(){
+  return find_binmax(get_datptr(0,0),get_datptr(0,0)+get_ndat());
+}
+
 void dsp::TimeSeries::rotate_backwards_onto(TimeSeries* ts){
   if( !ts )
     throw Error(InvalidState,"dsp::TimeSeries::rotate_backwards_onto()",
