@@ -40,7 +40,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:p:P:sS:t:T:vVx:";
+static char* args = "2:a:Ab:d:D:e:E:f:F:hiIjM:n:N:op:P:sS:t:T:vVx:";
 
 void usage ()
 {
@@ -72,6 +72,7 @@ void usage ()
 #if ACTIVATE_MKL
     " -I             Over-ride with IncoherentFilterbank class [false]\n"
 #endif
+    " -o             Set psrfft up to generate optimized transforms [false]\n" 
     "\n"
     "Dedispersion/Convolution options:\n"
     " -D dm          over-ride dispersion measure\n"
@@ -331,6 +332,10 @@ int main (int argc, char** argv)
 
     case 'N':
       pulsar_name = optarg;
+      break;
+
+    case 'o':
+      fft::plans.optimize = true;
       break;
 
     case 'P':
