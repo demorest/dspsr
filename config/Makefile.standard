@@ -5,7 +5,7 @@
 ##########################################################################
 # the standard targets
 ##########################################################################
-TARGETS := include libs all test install clean veryclean
+TARGETS := include libs all test install clean veryclean cvsck
 
 ##########################################################################
 # the standard macro definitions

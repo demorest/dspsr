@@ -144,7 +144,7 @@ mdtemp :=${LOGIN_ARCH}/.mdtemp
 define header_depend
 @$(RM) $(mdtemp); touch $(mdtemp)
 @echo makedepend $<
-@$(MAKEDEPEND) $(mdtemp) ${MDFLAGS} ${CPPFLAGS} $< 2> /dev/null
+@-$(MAKEDEPEND) $(mdtemp) ${MDFLAGS} ${CPPFLAGS} $< 2> /dev/null
 @sed 's/$*\.o/$(LOGIN_ARCH)\/$*\.o/g' $(mdtemp) > $@
 endef
 
@@ -299,6 +299,9 @@ clean:
 veryclean:
 	$(RM) -r $(LOGIN_ARCH) $(CCTEMPLATES) $(LIBS) $(INCS)
 
+cvsck:
+	@-cvs status | grep atus | grep -v Up
+
 ##########################################################################
 ##########################################################################
 
@@ -366,19 +369,19 @@ LOBJS:=${patsubst %.c,%.o,${patsubst %.f,%.o,${patsubst %.C,%.o,${LIB_SRCS}}}}
 LIB_OBJS := ${LOBJS:%=${LOGIN_ARCH}/%}
 
 $(ONELIB) : $(LIB_OBJS)
-	$(AR) $(ARFLAGS) $@ $?
+	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
 
 ##########################################################################
-# Special cases: if the make target is depend, clean or veryclean, then 
-# certain automatic dependencies need to be relaxed
+# Special cases:  for certain targets, the whole makedepend system should
+# be relaxed.
 ##########################################################################
 autodepend:=yes
-ifneq (${strip $(MAKECMDGOALS)},)
-ifneq ($(filter include clean veryclean,$(MAKECMDGOALS)),)
+no_makedepend_targets := include clean veryclean cvsck
+
+ifneq ($(filter $(no_makedepend_targets),$(MAKECMDGOALS)),)
 autodepend:=no
-endif # MAKECMDGOALS contains include, clean or veryclean
-endif # MAKECMDGOALS != ""
+endif # MAKECMDGOALS contains no_makedepend_targets
 
 #############################################################################
 # If autodepend is not disabled, include the .dep and .sdep files
