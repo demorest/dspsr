@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <assert.h>
 #include <math.h>
@@ -26,7 +25,7 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
   n_max = 0;
 }
 
-//! The operation loads the next block of data and sets the observation info
+//! Initialize and resize the output before calling unpack
 void dsp::TwoBitCorrection::operation ()
 {
   if (input->get_nbit() != 2)
@@ -35,7 +34,7 @@ void dsp::TwoBitCorrection::operation ()
   // set the Observation information
   output->Observation::operator=(*input);
 
-  // output will be floating point values
+  // output will contain floating point values
   output->set_nbit (8 * sizeof(float));
 
   // resize the output 
