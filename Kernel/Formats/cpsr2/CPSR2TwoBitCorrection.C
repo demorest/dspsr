@@ -13,9 +13,6 @@ bool dsp::CPSR2TwoBitCorrection::matches (const Observation* observation)
 dsp::CPSR2TwoBitCorrection::CPSR2TwoBitCorrection ()
   : TwoBitCorrection ("CPSR2TwoBitCorrection")
 {
-  nchannel = 2;
-  channels_per_byte = 1;
-
   table = new TwoBitTable (TwoBitTable::OffsetBinary);
 }
 

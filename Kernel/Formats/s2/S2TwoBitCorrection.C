@@ -17,9 +17,6 @@ bool dsp::S2TwoBitCorrection::matches (const Observation* observation)
 dsp::S2TwoBitCorrection::S2TwoBitCorrection (char telescope)
   : TwoBitCorrection ("S2TwoBitCorrection")
 {
-  nchannel = 2;
-  channels_per_byte = 1;
-
   resynch_period = resynch_start = resynch_end = 0.0;
 
   match (telescope);
