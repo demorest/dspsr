@@ -22,30 +22,30 @@ LIBDIR := ${LOCAL_ROOT}/lib/${LOGIN_ARCH}
 INCDIR := ${LOCAL_ROOT}/include
 SHXDIR := ${LOCAL_ROOT}/csh_script
 
-INCFLAGS= -I. -I${INCDIR} -I${PSRPKGS}/include \
+INCFLAGS := -I. -I${INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
 
 ifneq (${PSREXPORT},1)
 INCFLAGS += -I${INSTALL_INCDIR}
 endif
 
-LDFLAGS = -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
+LDFLAGS := -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
 
 ifneq (${PSREXPORT},1)
 LDFLAGS += -L${INSTALL_LIBDIR}
 endif
 
-MDFLAGS = -D__cplusplus
-AR      = ar
-RANLIB  = ranlib
-ARFLAGS = crv
-RM    = rm -f
-AWK   = awk
-GREP  = grep
-QTMOC = moc
-MAKEDEPEND = makedepend -Y -f 
+MDFLAGS := -D__cplusplus
+AR      := ar
+RANLIB  := ranlib
+ARFLAGS := crv
+RM    := rm -f
+AWK   := awk
+GREP  := grep
+QTMOC := moc
+MAKEDEPEND := makedepend -Y -f 
 
-SWINBURNE_REPOSITORY = pentane.ssi.swin.edu.au:/nfs/cluster/psr/cvsroot
+SWINBURNE_REPOSITORY := pulsar.swin.edu.au:/psr/cvsroot
 
 ##########################################################################
 # package-specific macro definitions
