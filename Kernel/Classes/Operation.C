@@ -1,16 +1,22 @@
 #include <stdio.h>
 
 #include "dsp/TimeKeeper.h"
+
 #include "dsp/Operation.h"
 #include "Error.h"
 
+dsp::TimeKeeper* say_wazzup(){
+  //fprintf(stderr,"wazzup\n");
+  return 0;
+}
+ 
+dsp::TimeKeeper* dsp::Operation::timekeeper = say_wazzup();
+ 
 //! Global flag tells all Operations to record the time spent operating
 bool dsp::Operation::record_time = false;
 
 //! Global verbosity flag
 bool dsp::Operation::verbose = false;
-
-dsp::TimeKeeper* dsp::Operation::timekeeper = 0;
 
 //! Only ever called by TimeKeeper class
 void dsp::Operation::set_timekeeper(TimeKeeper* _timekeeper)
@@ -81,4 +87,8 @@ void* dsp::Operation::workingspace (size_t nbytes)
 
   return working_space;
 }
+
+
+
+
 
