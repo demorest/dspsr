@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/09/18 14:56:07 $
+   $Revision: 1.5 $
+   $Date: 2002/09/18 15:24:09 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -19,9 +19,6 @@ namespace dsp {
   class Dedispersion: public Response {
 
   public:
-
-    //! Verbose flag
-    static bool verbose;
 
     //! Conversion factor between dispersion measure, DM, and dispersion, D
     static const double dm_dispersion;

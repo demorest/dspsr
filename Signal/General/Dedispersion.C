@@ -3,8 +3,6 @@
 #include "Dedispersion.h"
 #include "Timeseries.h"
 
-bool dsp::Dedispersion::verbose = false;
-
 /*! 
   \f$ DM\,({\rm pc\,cm^{-3}})=2.410000\times 10^{-4}D\,({\rm s\,MHz^{2}}) \f$
 */
