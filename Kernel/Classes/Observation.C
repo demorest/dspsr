@@ -288,6 +288,18 @@ bool dsp::Observation::combinable (const Observation & obs) const
     cerr << "dsp::Observation::combinable different machine:"
 	 << machine << " and " << obs.machine << endl;
   can_combine = false; }
+  if( domain != obs.domain ){
+    cerr << "dsp::Observation::combinable different domains:"
+	 << domain << " and " << obs.domain << endl;
+    can_combine = false; }
+  if( fabs(dispersion_measure - obs.dispersion_measure) > eps){
+    cerr << "dsp::Observation::combinable different dispersion measure:"
+	 << dispersion_measure << " and " << obs.dispersion_measure << endl;
+    can_combine = false; }
+  if( fabs(between_channel_dm - obs.between_channel_dm) > eps){
+    cerr << "dsp::Observation::combinable different dispersion measure:"
+	 << between_channel_dm << " and " << obs.between_channel_dm << endl;
+    can_combine = false; }
 
   return can_combine;
 }
@@ -394,6 +406,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_centre_frequency ( in_obs.get_centre_frequency() );
   set_bandwidth   ( in_obs.get_bandwidth() );
   set_dispersion_measure   ( in_obs.get_dispersion_measure() );
+  set_between_channel_dm( in_obs.get_between_channel_dm() );
 
   set_start_time  ( in_obs.get_start_time() );
 
@@ -492,7 +505,8 @@ bool dsp::Observation::obs2string(string& ss){
   sprintf(dummy,"DECJ\t%s\n",coordinates.dec().getDMS().c_str()); ss += dummy;
   
   sprintf(dummy,"DISPERSION_MEASURE\t%.16f\n",dispersion_measure); ss += dummy;
-  sprintf(dummy,"DOMAIN\t%s\n",domain.c_str());
+  sprintf(dummy,"BETWEEN_CHANNEL_DM\t%.16f\n",between_channel_dm); ss += dummy;
+  sprintf(dummy,"DOMAIN\t%s\n",domain.c_str()); ss += dummy;
 
   return true;
 }
@@ -565,7 +579,8 @@ bool dsp::Observation::file2obs(FILE* fptr){
   fscanf(fptr,"DECJ\t%s\n",moron);
   coordinates.setHMSDMS(dummy,moron);
   
-  fscanf(fptr,"DISPERSION_MEASURE\t%lf\n",&dispersion_measure); 
+  fscanf(fptr,"DISPERSION_MEASURE\t%lf\n",&dispersion_measure);
+  fscanf(fptr,"BETWEEN_CHANNEL_DM\t%lf\n",&between_channel_dm);
   fscanf(fptr,"DOMAIN\t%s\n",dummy); domain = dummy;
 
   return true;

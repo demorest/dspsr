@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/12/06 19:44:37 $
+   $Revision: 1.12 $
+   $Date: 2002/12/07 19:02:36 $
    $Author: hknight $ */
 
 #ifndef __Response_h
@@ -11,6 +11,8 @@
 #include <vector>
 #include <complex>
 #include <string>
+
+#include <stdio.h>
 
 #include "dsp/Shape.h"
 #include "Jones.h"
@@ -89,7 +91,7 @@ namespace dsp {
     void naturalize ();
 
     //! Returns how much multiplying by this response will alter your dispersion measure.
-    virtual double get_dispersion_measure(){ return 0.0; }
+    virtual double get_dispersion_measure() const{ return 0.0; }
 
   protected:
 
