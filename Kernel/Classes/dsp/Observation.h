@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.67 $
-   $Date: 2004/04/24 12:03:36 $
+   $Revision: 1.68 $
+   $Date: 2004/10/17 03:39:35 $
    $Author: hknight $ */
 
 #ifndef __Observation_h
@@ -18,6 +18,11 @@
 #include "sky_coord.h"
 #include "Types.h"
 #include "MJD.h"
+#include "environ.h"
+#include "Phase.h"
+#include "poly.h"
+#include "polyco.h"
+
 #include "dsp/dsp.h"
 
 namespace dsp {
@@ -323,6 +328,15 @@ namespace dsp {
 
     //! Returns the version number to put in the Header when writing out
     float get_version() const { return 2.0; }
+
+    //! Returns the phase of a particular sample at the centre frequency
+    //! (Uses the given polyco)
+    Phase samp2phase(Reference::To<polyco> p,uint64 samp);
+
+    //! Returns the phase of a particular sample at the centre frequency
+    //! Only call this if it is a one-off call as it generates a polyco every time you call it
+    //! (Throws an Error if a polyco can't be generated from the sourcename)
+    Phase samp2phase(uint64 samp);
 
   protected:
 

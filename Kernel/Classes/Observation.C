@@ -8,9 +8,7 @@
 
 #include <string>
 
-#include "dsp/Observation.h"
 #include "Telescope.h"
-
 #include "angle.h"
 #include "MJD.h"
 #include "Types.h"
@@ -20,6 +18,14 @@
 #include "string_utils.h"
 #include "Error.h"
 #include "Reference.h"
+#include "Phase.h"
+#include "poly.h"
+#include "polyco.h"
+#include "tempo++.h"
+#include "psrephem.h"
+#include "environ.h"
+
+#include "dsp/Observation.h"
 
 bool dsp::Observation::verbose = false;
 
@@ -894,12 +900,37 @@ void dsp::Observation::old_file2obs(int fd){
 
 }
 
+//! Returns the phase of a particular sample at the centre frequency
+//! (Uses the given polyco)
+Phase dsp::Observation::samp2phase(Reference::To<polyco> p,uint64 samp){
+  if( !p )
+    throw Error(InvalidParam,"dsp::Observation::samp2phase()",
+                "Polyco pointer supplied was null!");
 
+  return p->phase( get_start_time() + double(samp)/get_rate(),
+                   get_centre_frequency());
+}
 
+//! Returns the phase of a particular sample at the centre frequency
+//! Only call this if it is a one-off call as it generates a polyco every time you call it
+//! (Throws an Error if a polyco can't be generated from the sourcename)
+Phase dsp::Observation::samp2phase(uint64 samp){
+  static const int nspan = 60;
+  static const int ncoef = 15;
 
+  Reference::To<psrephem> eph(new psrephem);
 
+  if( !eph->create(get_source()) )
+    throw Error(InvalidState,"dsp::Observation::samp2phase(uint64)",
+                "Could not create ephemeris for source '%s'",
+                get_source().c_str());
 
+  Reference::To<polyco> p(new polyco);
 
+  MJD time = get_start_time();
 
+  Tempo::set_polyco( *p, *eph, time, time, nspan,ncoef, 8,
+                     get_telescope_code());
 
-
+  return samp2phase(p,samp);
+}
