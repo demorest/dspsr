@@ -1,17 +1,20 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.17 $
-   $Date: 2003/05/14 04:10:16 $
-   $Author: pulsar $ */
+   $Revision: 1.18 $
+   $Date: 2003/07/21 10:01:06 $
+   $Author: hknight $ */
 
 #ifndef __Operation_h
 #define __Operation_h
 
 #include <string>
+#include <vector>
 
 #include "RealTimer.h"
 #include "Reference.h"
+
+#include "dsp/Time.h"
 
 namespace dsp {
   class Operation;
@@ -26,6 +29,7 @@ namespace dsp {
     digital signal processing routines are performed on baseband data */
 
   class Operation : public Reference::Able {
+    friend class TimeKeeper;
 
   public:
 
@@ -34,6 +38,10 @@ namespace dsp {
 
     //! Global verbosity flag
     static bool verbose;
+
+    //! Counts how many Operation instantiations there have been
+    //! Used for setting the unique instantiation ID
+    static int instantiation_count;
 
     //! All sub-classes must specify a unique name
     Operation (const char* name);
@@ -58,6 +66,9 @@ namespace dsp {
     static void set_timekeeper(TimeKeeper* _timekeeper);
     static void unset_timekeeper();
 
+    //! Inquire the unique instantiation id
+    int get_id(){ return id; }
+
     //! Pointer to the timekeeper
     static TimeKeeper* timekeeper;
   protected:
@@ -79,9 +90,19 @@ namespace dsp {
     //! Return pointer to memory resource shared by operations
     static void* workingspace (size_t nbytes);
 
-    //! Stop watch records the amount of time spent performing this operation
-    RealTimer optime;
+    //! Called by TimeKeeper to print out times etc.
+    Time get_operation_time();
+    vector<Time> get_extra_times();
+    void cease_timing();
 
+    //! Stop watch records the amount of time spent performing this operation
+    OperationTimer optime;
+
+    //! More stop watches for recording miscellaneous timings
+    vector<OperationTimer> timers;
+
+    //! Unique instantiation id
+    int id;
   };
   
 }
