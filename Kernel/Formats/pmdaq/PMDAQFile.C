@@ -25,7 +25,12 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
 int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 {
 
-  string hdr_name = string(filename) + ".hdr";
+  string str_filename = string (filename);
+  int pos = str_filename.find_first_of(".",0);
+  string hdr_name = str_filename.substr(0,pos) + ".hdr";
+
+  cerr << "dsp::PMDAQFile::get_header looks for header called " <<
+    hdr_name << endl;
 
   int fd = ::open (hdr_name.c_str(), O_RDONLY);
 
@@ -63,12 +68,12 @@ bool dsp::PMDAQFile::is_valid (const char* filename) const
   // First three chars should be "PMD"
   // But is that good enough?
 
-  cout << "The 3 chars are: ";
-  cout << char(pmdaq_header[4]) << pmdaq_header[5] << pmdaq_header[6] << endl;
-
-  fprintf(stderr,"3 chars are '%c' '%c' '%c'\n",
+  if (verbose) {
+    cout << "The 3 chars are: ";
+    cout << char(pmdaq_header[4])<<pmdaq_header[5]<<pmdaq_header[6] << endl;
+    fprintf(stderr,"3 chars are '%c' '%c' '%c'\n",
 	  pmdaq_header[4],pmdaq_header[5],pmdaq_header[6]);
-
+  }
   if (strncmp(&pmdaq_header[4],"PMD",3)!=0){
     fprintf(stderr,"false 2\n");
     return false;
@@ -93,9 +98,9 @@ void dsp::PMDAQFile::open_file (const char* filename)
 
   info = data;
 
-  // Open the data file, which is filename, + .dat
+  // Open the data file, which is now just filename.
 
-  string data_name = string(filename) + ".dat";
+  string data_name = string(filename);
 
   fd = ::open (data_name.c_str(), O_RDONLY);
 
@@ -131,8 +136,8 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 
   int position = (absolute_position%(HEADER_BYTES+DATA_BYTES+TRAILER_BYTES));
 
-  if (verbose) cerr << "absolute position is "<< absolute_position << endl;
-  if (verbose) cerr << "         position is "<< position << endl;
+  //if (verbose) cerr << "absolute position is "<< absolute_position << endl;
+  //if (verbose) cerr << "         position is "<< position << endl;
 
   if ((position < HEADER_BYTES) && (bytes < DATA_BYTES)) {
     // skip until end of header
