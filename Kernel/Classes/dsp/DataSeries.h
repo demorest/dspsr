@@ -23,7 +23,11 @@ namespace dsp {
   class DataSeries : public Observation {
     
   public:
-    
+
+    uint64 hack_get_size(){ return size; }
+    unsigned char* hack_get_buffer(){ return buffer; }
+    uint64 hack_get_subsize(){ return subsize; }
+
     //! Counts number of DataSeries's in existence
     static int instantiation_count;
     //! Stores the cumulative amount of memory used
