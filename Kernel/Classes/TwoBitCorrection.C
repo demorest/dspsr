@@ -430,6 +430,7 @@ void dsp::TwoBitCorrection::unpack ()
 
   // weights are used only if output is a WeightedTimeseries
   unsigned* weights = 0;
+  unsigned nweights = 0;
 
   for (unsigned idig=0; idig<ndig; idig++) {
 
@@ -445,10 +446,12 @@ void dsp::TwoBitCorrection::unpack ()
       hist = &(histograms[idig][0]);
 
     // if the output TimeSeries is a weighted output, use its weights array
-    if (weighted_output)
+    if (weighted_output) {
       weights = weighted_output -> get_weights (0, ipol);
+      nweights = weighted_output -> get_nweights ();
+    }
 
-    dig_unpack (into, from, ndat, idig, weights);
+    dig_unpack (into, from, ndat, idig, weights, nweights);
       
   }  // for each polarization
 
