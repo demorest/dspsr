@@ -58,6 +58,12 @@ void dsp::Detection::transformation ()
   if (input->get_nbit() != sizeof(float) * 8)
     throw_str ("Detection::transformation input not floating point");
 
+  if( input.get()==output.get() && state==input->get_state() ){
+    if( verbose )
+      fprintf(stderr,"dsp::Detection::transformation(): Inplace operation with no change of state- no work to do- returning"); 
+    return;
+  }
+
   if (state == Signal::Stokes || state == Signal::Coherence) {
 
     if (input->get_npol() != 2)
