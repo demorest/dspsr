@@ -168,148 +168,167 @@ bool dsp::Observation::get_detected () const
 /* this returns a flag that is true if the Observations may be combined 
    It doesn't check the start times- you have to do that yourself!
 */
-bool dsp::Observation::combinable (const Observation & obs, bool different_bands) const
+bool dsp::Observation::combinable (const Observation & obs, bool different_bands, bool combinable_verbose, int ichan, int ipol) const
 {
   double eps = 0.000001;
   bool can_combine = true;
 
   if (telescope != obs.telescope) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different telescope:"
 	   << telescope << " and " << obs.telescope << endl;
     can_combine = false;
   }
 
   if (source != obs.source) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different source:"
 	   << source << " and " << obs.source << endl;
     can_combine = false;
   }
 
   if( !different_bands ){
-    if( fabs(centre_frequency-obs.centre_frequency) > eps ) {
-      if (verbose)
-	cerr << "dsp::Observation::combinable different frequencies:"
-	     << centre_frequency << " and " << obs.centre_frequency << endl;
-      can_combine = false;
+    if( ichan<0 ){
+      if( fabs(centre_frequency-obs.centre_frequency) > eps ) {
+	if (verbose || combinable_verbose)
+	  cerr << "dsp::Observation::combinable different frequencies:"
+	       << centre_frequency << " and " << obs.centre_frequency << endl;
+	can_combine = false;
+      }
+    }
+    else{
+      if( fabs(get_centre_frequency(ichan)-obs.centre_frequency) > eps ) {
+	if (verbose || combinable_verbose)
+	  cerr << "dsp::Observation::combinable different frequencies in channel"
+	       << ichan << ":" << get_centre_frequency(ichan)
+	       << " and " << obs.centre_frequency << endl;
+	can_combine = false;
+      }
     }
   }  
 
-  if( fabs(bandwidth-obs.bandwidth) > eps ) {
-    if (verbose)
+  if( ichan>=0 ){
+    if( fabs(bandwidth/float(nchan) - obs.bandwidth) > eps ) {
+      if (verbose || combinable_verbose)
+	cerr << "dsp::Observation::combinable different channel bandwidth:"
+	     << bandwidth/float(nchan) << " and " << obs.bandwidth << endl;
+      can_combine = false;
+    }
+  }
+  else if( fabs(bandwidth-obs.bandwidth) > eps ) {
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different bandwidth:"
 	   << bandwidth << " and " << obs.bandwidth << endl;
     can_combine = false;
   }
 
-  if (nchan != obs.nchan) {
-    if (verbose)
+  if (nchan != obs.nchan && ichan<0) {
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different nchan:"
 	   << nchan << " and " << obs.nchan << endl;
     can_combine = false;
   }
-
-  if (npol != obs.npol) {
-    if (verbose)
+ 
+  if (npol != obs.npol && ipol<0 ) {
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different npol:"
 	   << npol << " and " << obs.npol << endl;
     can_combine = false;
   }
 
   if (ndim != obs.ndim) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different ndim:"
 	   << ndim << " and " << obs.ndim << endl;
     can_combine = false;
   }
 
   if (nbit != obs.nbit) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different nbit:"
 	   << nbit << " and " << obs.nbit << endl;
     can_combine = false;
   }
 
   if (type != obs.type) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different type:"
 	   << type << " and " << obs.type << endl;
     can_combine = false;
   }
 
   if (state != obs.state) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different state:"
 	   << state << " and " << obs.state << endl;
     can_combine = false;
   }
 
   if (basis != obs.basis) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different feeds:"
 	   << basis << " and " << obs.basis << endl;
     can_combine = false;
   }
   
   if( fabs(rate-obs.rate)/rate > 0.01 ) { /* ie must be within 1% */
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different rate:"
 	   << rate << " and " << obs.rate << endl;
     can_combine = false;
   }
   
   if( fabs(scale-obs.scale) > eps*fabs(scale) ) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different scale:"
 	   << scale << " and " << obs.scale << endl;
     can_combine = false;
   }
   
   if (swap != obs.swap) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different swap:"
 	   << swap << " and " << obs.swap << endl;
     can_combine = false;
   }
   
-  if (dc_centred != obs.dc_centred) {
-    if (verbose)
+  if (dc_centred != obs.dc_centred && ichan<0) {
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different dc_centred:"
 	   << dc_centred << " and " << obs.dc_centred << endl;
     can_combine = false;
   }
   
   if (mode != obs.mode) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different mode:"
 	   << mode << " and " << obs.mode << endl;
     can_combine = false;
   }
   
   if (machine != obs.machine) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different machine:"
 	   << machine << " and " << obs.machine << endl;
     can_combine = false;
   }
   
   if( domain != obs.domain ) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different domains:"
 	   << domain << " and " << obs.domain << endl;
     can_combine = false;
   }
   
   if( fabs(dispersion_measure - obs.dispersion_measure) > eps) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different dispersion measure:"
 	   << dispersion_measure << " and " << obs.dispersion_measure << endl;
     can_combine = false;
   }
   
   if( fabs(between_channel_dm - obs.between_channel_dm) > eps) {
-    if (verbose)
+    if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different dispersion measure:"
 	   << between_channel_dm << " and " << obs.between_channel_dm << endl;
     can_combine = false;
@@ -328,7 +347,7 @@ bool dsp::Observation::combinable (const Observation & obs, bool different_bands
       bands_meet = true;
     
     if( !bands_meet ){
-      if( verbose )
+      if( verbose || combinable_verbose )
 	fprintf(stderr,"dsp::Observation::combinable bands don't meet- this is centred at %f with bandwidth %f.  obs is centred at %f with bandwidth %f\n",
 		get_centre_frequency(), fabs(get_bandwidth()),
 		obs.get_centre_frequency(), fabs(obs.get_bandwidth()));
@@ -339,7 +358,7 @@ bool dsp::Observation::combinable (const Observation & obs, bool different_bands
   return can_combine;
 }
 
-bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_failure) const
+bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_failure, int ichan, int ipol) const
 {
   if( verbose )
     fprintf(stderr,"In dsp::Observation::contiguous() with this=%p and obs=%p\n",
@@ -354,11 +373,13 @@ bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_fail
 	    difference,0.9/rate);
   }
 
-  bool ret = ( combinable(obs) && difference < 0.9/rate );
+  bool combine = obs.combinable(*this,false,verbose_on_failure,ichan,ipol);
+
+  bool ret = ( combine && difference < 0.9/rate );
 
   if ( !ret && verbose_on_failure ) {
     fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
-    fprintf(stderr,"combinable(obs)=%d\n",combinable(obs));
+    fprintf(stderr,"combinable(obs)=%d\n",combine);
     fprintf(stderr,"get_start_time().in_seconds()    =%f\n",
 	    get_start_time().in_seconds());    
     fprintf(stderr,"get_end_time().in_seconds()      =%f\n",
