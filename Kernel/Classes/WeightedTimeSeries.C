@@ -12,7 +12,7 @@ dsp::WeightedTimeSeries::WeightedTimeSeries()
   weight_subsize = 0;
 }
 
-void dsp::WeightedTimeSeries::copy_configuration (const TimeSeries* copy)
+void dsp::WeightedTimeSeries::copy_configuration (const Observation* copy)
 {
   TimeSeries::copy_configuration (copy);
 
@@ -361,6 +361,9 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
     cerr << "dsp::WeightedTimeSeries::scrunch_weights nscrunch=" << nscrunch
 	 << " ndat_per_weight=" << ndat_per_weight
 	 << " nweights=" << nweights_tot << endl;
+
+  if (!ndat_per_weight)
+    return;
 
   // the points per weight after time resolution decreases
   double points_per_weight = double(ndat_per_weight) / double(nscrunch);

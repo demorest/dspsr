@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.6 $
-   $Date: 2004/10/19 12:17:24 $
+   $Revision: 1.7 $
+   $Date: 2004/11/02 11:03:26 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -28,7 +28,7 @@ namespace dsp {
     virtual WeightedTimeSeries& operator += (const WeightedTimeSeries& data);
 
     //! Copy the configuration of another TimeSeries instance
-    virtual void copy_configuration (const TimeSeries* copy);
+    virtual void copy_configuration (const Observation* copy);
 
     //! Set the number of time samples per weight
     /*! Set ndat_per_weight to zero to effect no weighting of data */
