@@ -218,7 +218,9 @@ void dsp::TwoBitCorrection::build ()
 
   nlo_lookup.resize (TwoBitTable::unique_bytes);
 
-  float lo_valsq = table->get_lo_val() * table->get_lo_val();
+  // flatten the table again (precision errors cause mismatch of lo_valsq)
+  table->set_lo_val (1.0);
+  float lo_valsq = 1.0;
 
   for (unsigned byte = 0; byte < TwoBitTable::unique_bytes; byte++) {
 
