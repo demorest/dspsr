@@ -335,7 +335,7 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
 
   set_ndat (get_ndat() + ncopy/little->get_ndim());
 
-  //if( verbose )
+  if( verbose )
     fprintf(stderr,"Returning from dsp::TimeSeries::append() with "UI64"\n",
 	    ncopy / uint64(get_ndim()));
 	    
@@ -381,13 +381,13 @@ uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsi
 
 void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
 				    const TimeSeries* little){
-  //if( verbose ){
+  if( verbose ){
     fprintf(stderr,"ncopy="UI64"\n",ncopy);
     fprintf(stderr,"ncontain="UI64"\n",ncontain);
     fprintf(stderr,"subsize (in samples)="UI64"\n",subsize_samples());
     fprintf(stderr,"nchan=%d npol=%d\n",nchan,npol);
     fprintf(stderr,"subsize="UI64"\n",subsize);
-    //}
+  }
 
   if ( subsize_samples() <= ncontain + ncopy ){
     ncopy = subsize_samples() - ncontain;
