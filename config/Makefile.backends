@@ -196,3 +196,15 @@ LBACKENDS += -ldsp_BCPM
 
 endif
 
+##############################################################################
+#
+# MINI specific code
+#
+ifeq ($(MINI),yes)
+
+CPPFLAGS += -DDSP_MINI=1
+BACKENDS += MINI
+LBACKENDS += -ldsp_MINI
+
+endif
+
