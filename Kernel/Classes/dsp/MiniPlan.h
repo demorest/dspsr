@@ -116,25 +116,25 @@ namespace dsp {
     unsigned get_nsubints();
 
     //! Returns the number of samples (floats) subint 'isub' is past the start
-    inline uint64 get_ts_offset(unsigned isub);
+    uint64 get_ts_offset(unsigned isub);
    
     //! Returns the duration of this particular subint
-    inline uint64 get_duration(unsigned isub);
+    uint64 get_duration(unsigned isub);
     
     //! Returns the number of bytes in the output BitSeries this particular subint starts at
-    inline uint64 get_bs_offset(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
+    uint64 get_bs_offset(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
 
     //! Returns the number of bytes in the output MiniSeries this particular subint starts at
-    inline uint64 get_ms_offset(unsigned isub, unsigned nbit);
+    uint64 get_ms_offset(unsigned isub, unsigned nbit);
 
     //! Returns the lower threshold- points below this are lopped off
-    inline float get_lower_threshold(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
+    float get_lower_threshold(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
 
     //! Returns the upper threshold- points above this are lopped off
-    inline float get_upper_threshold(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
+    float get_upper_threshold(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
    
     //! Returns the step between digitization levels
-    inline float get_step(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
+    float get_step(unsigned ichan, unsigned ipol, unsigned isub, unsigned nbit);
 
     //! Add in subint sets for the given TimeSeries
     //! Each TimeSeries this is called on must be contiguous with the last
@@ -197,7 +197,7 @@ namespace dsp {
     //! Requested number of samples to generate mean etc. from (0 for all) [0]
     uint64 requested_scan_samps;
 
-    //! Requested number of samples to pump into a single subint (0 for as big as the first TimeSeries added in.) [-1]
+    //! Requested number of samples to pump into a single subint (0 for as big as the first TimeSeries added in.) [0]
     uint64 requested_duration;
 
     //! The (positive) cutoff for digitisation.  Any samples higher than this will be lopped down to size [8.0];
