@@ -21,7 +21,7 @@
 
 %/.exists :
 	@if [ ! -d $* ]; then echo Creating $* subdirectory; mkdir -p $*; fi
-	-@chmod 770 $*
+	-@chmod -f 770 $*
 	@touch $*/.exists
 
 ##########################################################################
