@@ -1,16 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.13 $
-   $Date: 2002/10/07 02:13:22 $
-   $Author: wvanstra $ */
+   $Revision: 1.14 $
+   $Date: 2002/10/15 13:13:02 $
+   $Author: pulsar $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
 #include <vector>
 
-#include "Operation.h"
+#include "Unpacker.h"
 #include "environ.h"
 
 namespace dsp {
@@ -22,7 +22,7 @@ namespace dsp {
     sub-classes, which perform the dynamic level-setting technique
     described by Jenet & Anderson (1998, PASP, 110, 1467; hereafter
     JA98) in order to correct for the effects of digitization */
-  class TwoBitCorrection: public Operation {
+  class TwoBitCorrection: public Unpacker {
 
   public:
 
@@ -33,8 +33,7 @@ namespace dsp {
     static bool keep_histogram;
 
     //! Null constructor
-    TwoBitCorrection (const char* name = "TwoBitCorrection",
-		      Behaviour type = outofplace);
+    TwoBitCorrection (const char* name = "TwoBitCorrection");
 
     //! Virtual destructor
     virtual ~TwoBitCorrection ();

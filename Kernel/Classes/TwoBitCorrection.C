@@ -15,8 +15,7 @@ const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
 bool dsp::TwoBitCorrection::keep_histogram = true;
 
 //! Null constructor
-dsp::TwoBitCorrection::TwoBitCorrection (const char* _name, Behaviour _type)
-  : Operation (_name, _type)
+dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
 {
   // Sub-classes must define these three variables
   nchannel = -1;
@@ -90,17 +89,7 @@ void dsp::TwoBitCorrection::operation ()
   if (!built)
     build ();
 
-  // set the Observation information
-  output->Observation::operator=(*input);
-
-  // output will contain floating point values
-  output->set_nbit (8 * sizeof(float));
-
-  // resize the output 
-  output->resize (input->get_ndat());
-
-  // unpack the data
-  unpack ();
+  Unpacker::operation ();
 }
 
 
