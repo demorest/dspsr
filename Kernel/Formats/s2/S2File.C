@@ -126,6 +126,12 @@ void dsp::S2File::open_file (const char* filename)
   fd = s2file.fd;
   header_bytes = s2file.base;
 
+  // cannot load less than a byte. set the time sample resolution accordingly
+  unsigned bits_per_byte = 8;
+  resolution = bits_per_byte / info.get_nbit();
+  if (resolution == 0)
+    resolution = 1;
+
   if (verbose)
     cerr << "dsp::S2File::open return" << endl;
 }
