@@ -100,8 +100,14 @@ void dsp::Fold::prepare (const Observation* observation)
 
   }
 
-  if (verbose) cerr << "dsp::Fold::prepare pulsar_ephemeris psrname='"
-	  << pulsar_ephemeris->psrname() << "'\n";
+  if( get_dispersion_measure() > 0.0 )
+    pulsar_ephemeris->set_dm( get_dispersion_measure() );
+
+  if (verbose)
+    fprintf(stderr,"dsp::Fold::prepare pulsar_ephemeris psrname='%s' dm=%f (%f)\n",
+	    pulsar_ephemeris->psrname().c_str(),
+	    pulsar_ephemeris->get_dm(),
+	    get_dispersion_measure());
 
 #if 0
 
@@ -375,10 +381,13 @@ void dsp::Fold::set_nspan (unsigned _nspan)
   built = false;
 }
 
-void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
+void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
 {
   if (pulsar_ephemeris == ephemeris)
     return;
+
+  //  Reference::To<const psrephem> grrr(ephemeris);
+  //pulsar_ephemeris = grrr;
 
   pulsar_ephemeris = ephemeris;
   built = false;
@@ -500,7 +509,6 @@ void dsp::Fold::transformation ()
 
   if( archive_filename_extension.size() > 0 )
     output->set_archive_filename_extension( archive_filename_extension );
-
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
@@ -685,7 +693,6 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   if (verbose)
     cerr << "dsp::Folding::fold " << integration_length << " seconds" << endl;
 
-  
   // /////////////////////////////////////////////////////////////////////////
   //
   // Fold arrays
@@ -700,12 +707,10 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
   const float *timep;
   
   for (unsigned iblock=0; iblock<nblock; iblock++) {
-
     timep = time + (ndat * iblock + idat_start) * ndim;
     phasep = phase + folding_nbin * iblock * ndim;
 
     for (idat=0; idat < ndat_fold; idat++) {
-
       // point to the right phase
       phdimp = phasep + binplan[idat] * ndim;
 
@@ -714,9 +719,8 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 	phdimp[idim] += *timep;
 	timep ++;
       }
-      
+     
     } // for each idat
-
   } // for each block
 
 }
