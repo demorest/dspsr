@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.10 $
-   $Date: 2003/12/10 06:19:32 $
+   $Revision: 1.11 $
+   $Date: 2004/03/16 04:11:31 $
    $Author: hknight $ */
 
 
@@ -69,7 +69,16 @@ namespace dsp {
     //! Add the PhaseSeries data to the Pulsar::Archive instance
     void add (Pulsar::Archive* archive, const PhaseSeries* phase);
 
+    //! Set the name of the program to go in the 'backend' variable of the output archive
+    void set_reducing_program(string _reducing_program){ reducing_program = _reducing_program; }
+
+    //! Inquire the name of the program to go in the 'backend' variable of the output archive
+    string get_reducing_program(){ return reducing_program; }
+
   protected:
+
+    //!  The name of the program to go in the 'backend' variable of the output archive.  Set to "" if no program name required
+    string reducing_program;
 
     //! Name of the Pulsar::Archive class used to create new instances
     string archive_class_name;

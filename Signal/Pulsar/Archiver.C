@@ -94,10 +94,14 @@ void dsp::Archiver::unload ()
   if (pband)
     set (pband);
 
+  if( reducing_program != string() )
+      archive->set_backend( archive->get_backend() + " : " + reducing_program);
+  
   if (!single_archive) {
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
-  
+
+    
     archive -> unload();
   }
 
