@@ -23,6 +23,7 @@ The 'values' are truncated so that the same number of characters are in the line
 #include "Error.h"
 #include "Reference.h"
 #include "string_utils.h"
+#include "dirutil.h"
 
 #include "dsp/File.h"
 #include "dsp/CPSR2File.h"
@@ -250,13 +251,15 @@ void parse_it(int argc,char** argv,
     }
   }
 
+  for (int ai=optind; ai<argc; ai++)
+    dirglob (&filenames, argv[ai]);
 }
 
 void usage(){
   cout << "cpsr2_change_header - by HSK 11 July 2003" << endl;
   cout << "A program to edit the headers of cpsr2 and/or .bs files\n" << endl;
   cout << "Note: for each '-k' call, the keyword, a space(s), and then the value are written out.  If there are not enough chars available in the line, the value is cocatenated.   BEWARE!\n" << endl;
-  cout << "Usage: cpsr2_change_header -[" << args << "]" << endl;
+  cout << "Usage: cpsr2_change_header -[" << args << "] filename1 filename2..." << endl;
   cout << " f filename            Process this filename ('-f' or '-m' req) {fm}\n"
        << " h                     This help page\n"
        << " k keyword value       Replace the line starting with 'keyword' with 'keyword value'\n"
