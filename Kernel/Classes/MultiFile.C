@@ -16,7 +16,7 @@ bool operator < (const Reference::To<dsp::File>& f1,
   return f1->get_info()->get_start_time() < f2->get_info()->get_start_time();
 }
 
-void dsp::MultiFile::load (vector<string>& filenames)
+void dsp::MultiFile::open (vector<string>& filenames)
 {
   if (filenames.empty())
     throw Error (InvalidParam, "dsp::Multifile::load", "no filenames");

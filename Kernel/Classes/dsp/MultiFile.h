@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/01/09 11:52:16 $
-   $Author: hknight $ */
+   $Revision: 1.9 $
+   $Date: 2003/01/13 11:44:03 $
+   $Author: pulsar $ */
 
 
 #ifndef __MultiFile_h
@@ -29,8 +29,8 @@ namespace dsp {
     //! Destructor
     virtual ~MultiFile () { }
     
-    //! Load a number of files and treat them as one logical observation
-    void load (vector<string>& filenames);
+    //! Open a number of files and treat them as one logical observation
+    void open (vector<string>& filenames);
 
     //! Retrieve a pointer to one of the File instances
     File* get_file(unsigned ifile){ return files[ifile]; }
