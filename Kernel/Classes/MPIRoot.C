@@ -100,7 +100,7 @@ void dsp::MPIRoot::bcast_setup (int root_node)
 {
   mpi_root = root_node;
 
-  if (mpi_self == mpi_root && info.nbytes(get_block_size()) > MAXINT)
+  if (mpi_self == mpi_root && info.get_nbytes(get_block_size()) > MAXINT)
     throw_str ("MPIRoot::bcast_setup block_size="UI64" will result\n"
 	       "\t\tin buffer size greater than MAXINT:%d\n",
 	       get_block_size(), MAXINT);
@@ -140,7 +140,7 @@ void dsp::MPIRoot::size_asyncspace ()
   pack_size = temp_size;
 
   // the total size of nbytes has already been double checked in bcast_setup
-  MPI_Pack_size (info.nbytes(get_block_size()), MPI_CHAR, comm, &temp_size);
+  MPI_Pack_size (info.get_nbytes(get_block_size()), MPI_CHAR, comm, &temp_size);
   pack_size += temp_size;
   
   if (async_buf_size < pack_size) {
@@ -200,10 +200,10 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest, int nbytes)
   if ((dest == mpi_self) || (dest < 0) || (dest >= mpi_size))
     throw_str ("MPIRoot::send_data invalid dest");
 
-  if (nbytes < 0 || nbytes > (int) data->nbytes() || nbytes > pack_size)
+  if (nbytes < 0 || nbytes > (int) data->get_nbytes() || nbytes > pack_size)
     throw_str ("MPIRoot::send_data invalid nbytes=%d"
 	       " (input.nbytes=%d pack_size=%d)",
-	       nbytes, (int) data->nbytes(), pack_size);
+	       nbytes, (int) data->get_nbytes(), pack_size);
 
   // ensure that the asynchronous send/recv buffer is free
   wait ();
