@@ -15,8 +15,11 @@ Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 
 #include "dsp/NullUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
+
+#if DSP_MINI
 #include "dsp/MiniUnpack.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> register_miniunpack;
+#endif
 
 #include "dsp/backends.h"
 

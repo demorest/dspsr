@@ -39,8 +39,10 @@ static Registry::List<dsp::File>::Enter<dsp::EightBitFile> register_eightbitcpsr
 #include "dsp/MultiBitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile> register_multibitseriesfile;
 
+#if DSP_MINI
 #include "dsp/MiniFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
+#endif
 
 #if DSP_CPSR
 #include "dsp/CPSRFile.h"
