@@ -7,7 +7,6 @@
 
 #include "Reference.h"
 
-#include "dsp/MiniPlan.h"
 #include "dsp/Observation.h"
 
 namespace dsp {
