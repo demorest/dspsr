@@ -257,7 +257,7 @@ void dsp::PuMaFile::parse (const void* header)
   info.set_identifier (hdr->gen.ScanNum);
   
   /* char Platform[NAMELEN]; Name of machine: "PuMa" or "FFB" */
-  info.set_machine (hdr->gen.Platform);
+  info.set_machine ("PuMa"); // (hdr->gen.Platform);
   
   info.set_dispersion_measure (0);
   info.set_between_channel_dm (0);
