@@ -703,7 +703,7 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
 
   if (bad_weights && verbose)
     cerr << "dsp::Fold::fold " << bad_weights
-         << "/" << n_weights << " bad weights" << endl;
+         << "/" << n_weights << " total bad weights" << endl;
 
   // /////////////////////////////////////////////////////////////////////////
   //
