@@ -22,8 +22,8 @@ dsp::Response::Response ()
 
   whole_swapped = chan_swapped = bin_centred = false;
 
-  npol = 1;
-  ndim = 2;
+  npol = 2;
+  ndim = 1;
   nchan = 1;
 }
 
@@ -102,7 +102,9 @@ bool dsp::Response::matches (const Response* response)
     whole_swapped == response->whole_swapped &&
     chan_swapped == response->chan_swapped &&
     bin_centred == response->bin_centred &&
-    Shape::matches (response);
+    nchan == response->get_nchan() &&
+    ndat == response->get_ndat();
+    // Shape::matches (response);
 }
 
 //! Match the frequency response to another Response
@@ -111,7 +113,8 @@ void dsp::Response::match(const Response* response)
   if (matches (response))
     return;
 
-  resize (response->get_npol(), response->get_nchan(),
+  cerr << "dsp::Response::match Response" << endl;
+  resize (npol, response->get_nchan(),
 	  response->get_ndat(), ndim);
   
   whole_swapped = response->whole_swapped;
