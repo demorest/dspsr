@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.15 $
-   $Date: 2003/05/07 01:43:07 $
-   $Author: pulsar $ */
+   $Revision: 1.16 $
+   $Date: 2003/07/01 05:27:36 $
+   $Author: hknight $ */
 
 
 #ifndef __File_h
@@ -20,6 +20,7 @@ namespace dsp {
   class File : public Seekable
   {
     friend class MultiFile;
+    friend class HoleyFile;
     
   public:
     
@@ -61,14 +62,14 @@ namespace dsp {
     //! Return a PseudoFile constructed from this File
     PseudoFile get_pseudofile();
 
-  protected:
-    
-    //! Called by the wrapper-function, open
-    virtual void open_file (const char* filename) = 0;
-
     //! Open from a PseudoFile
     /*! Resets attributes without calling open_file */
     void open (const PseudoFile& file);
+
+  protected:
+    
+    //! Called by the wrapper-function, open
+    virtual void open_file (const char* filename) = 0;  
 
     //! Return ndat given the file and header sizes, nchan, npol, and ndim
     /*! Called by open_file for some file types, to determine that the
