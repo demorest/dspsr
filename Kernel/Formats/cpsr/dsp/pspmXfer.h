@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/pspmXfer.h,v $
-   $Revision: 1.3 $
-   $Date: 2001/08/05 18:01:06 $
+   $Revision: 1.4 $
+   $Date: 2001/09/28 11:10:42 $
    $Author: wvanstra $ */
 
 #ifndef __pspmXfer_h
@@ -45,7 +45,10 @@ class pspmXfer {
   int  obstype;       // 0=pulsar 1=cal
   // same like above, but for a source name
   string source;
-  // wether to keep or leave either of above, if specified
+  // same as above, for xfering only hydracal
+  bool hydra;
+
+  // wether to keep or leave observations above, if specified
   bool keep;
 
   pspmXfer ();
