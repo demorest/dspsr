@@ -112,6 +112,9 @@ void dsp::Seekable::load_data (BitSeries* data)
     throw Error (FailedCall, "dsp::Seekable::load_data", "load_bytes error");
 
   if ((uint64)bytes_read < toread_bytes) {
+    if (verbose)
+      cerr << "dsp::Seekable::load_data end of data bytes_read=" << bytes_read
+           << " < bytes_toread=" << toread_bytes << endl;
     end_of_data = true;
     read_size = data->get_nsamples (bytes_read);
   }

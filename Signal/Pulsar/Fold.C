@@ -98,6 +98,9 @@ void dsp::Fold::prepare (const Observation* observation)
 
 #endif
 
+  if (verbose)
+    cerr << "dsp::Fold::prepare creating polyco" << endl;
+
   Reference::To<polyco> polly = new polyco;
 
   Tempo::set_polyco ( *polly, *pulsar_ephemeris, time, time,

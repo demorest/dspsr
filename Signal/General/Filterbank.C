@@ -141,7 +141,7 @@ void dsp::Filterbank::transformation ()
 
   if (npart == 0)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
-		 "input.ndat="I64" too small (nfft=%d",
+		 "input.ndat="I64" < nfft=%d",
 		 input->get_ndat(), nsamp_fft);
 
   // prepare the output TimeSeries
