@@ -123,7 +123,8 @@ void dsp::SubFold::transformation ()
       if (verbose)
 	cerr << ":dsp::SubFold::transformation unload subint" << endl;
 
-      unloader->unload (output);
+      unloader->set_profiles(output);
+      unloader->unload();
       output->zero();
     }
 

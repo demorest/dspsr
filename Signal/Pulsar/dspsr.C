@@ -428,8 +428,8 @@ int main (int argc, char** argv)
 
     if (verbose)
       cerr << "Creating archive" << endl;
-    archiver->unload (profiles);
-
+    archiver->set_profiles (profiles);
+    archiver->unload ();
 
   }
   catch (string& error) {
