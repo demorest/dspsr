@@ -46,39 +46,39 @@ void dsp::Seekable::load_data (BitSeries* data)
 
   if (verbose)
     cerr << "dsp::Seekable::load_data"
-      " load_size=" << get_load_size() << 
-      " load_sample=" << get_load_sample() <<
-      " current_sample=" << current_sample << endl;
+      "\n   load_size=" << get_load_size() << 
+      "\n   load_sample=" << get_load_sample() <<
+      "\n   current_sample=" << current_sample << endl;
 
   uint64 recycled = recycle_data (data);
 
   uint64 read_sample = get_load_sample() + recycled;
 
-  if( verbose )
-    fprintf(stderr,"dsp::seekable::load_data(): Got read_sample = get_load_sample() + recycled = "UI64" + "UI64" = "UI64"\n",
-	    get_load_sample(),recycled,read_sample);
-
-  if (verbose)
-    cerr << "dsp::Seekable::load_data recycled="
-	 << recycled << endl;
-
   uint64 read_size = get_load_size() - recycled;
+
+  if (verbose) cerr << "dsp::Seekable::load_data"
+		 "\n   recycled=" << recycled << 
+		 "\n   read_size=" << read_size << 
+		 "\n   read_sample=" << read_sample << endl;
 
   // check that the amount to read does not surpass the end of data
   if (info.get_ndat()) {
+
     uint64 samples_left = info.get_ndat() - read_sample;
 
-    if( verbose )
-      fprintf(stderr,"dsp::Seekable::load_data() there are ndat-read_sample="UI64" samples left available\n",
-	      samples_left);
+    if (verbose) cerr << "dsp::Seekable::load_data " << samples_left 
+		      << " samples available" << endl;
 
     if (samples_left <= read_size) {
-      if (verbose)
-	cerr << "dsp::Seekable::load_data end of data read_size="
-	     << samples_left << endl;
+
+      if (verbose) cerr << "dsp::Seekable::load_data end of data read_size="
+			<< samples_left << endl;
+
       read_size = samples_left;
       end_of_data = true;
+
     }
+
   }
 
   // exit if there is nothing left to read
