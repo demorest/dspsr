@@ -79,25 +79,17 @@ void dsp::Archiver::unload ()
   }
 
   // set any available extensions
+  Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
+  if (dspR)
+    set (dspR);
 
-  unsigned next = archive->get_nextension ();
-  Pulsar::Archive::Extension* ext = 0;
+  Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
+  if (tbc)
+    set (tbc);
 
-  for (unsigned iext=0; iext<next; iext++)  {
-    ext=const_cast<Pulsar::Archive::Extension*>(archive->get_extension(iext));
-
-    Pulsar::dspReduction* dspR = dynamic_cast<Pulsar::dspReduction*>( ext );
-    if (dspR)
-      set (dspR);
-
-    Pulsar::TwoBitStats* tbc = dynamic_cast<Pulsar::TwoBitStats*>( ext );
-    if (tbc)
-      set (tbc);
-
-    Pulsar::Passband* pband = dynamic_cast<Pulsar::Passband*>( ext );
-    if (pband)
-      set (pband);
-  }
+  Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
+  if (pband)
+    set (pband);
 
   if (!single_archive) {
     cerr << "dsp::Archiver::unload archive '"
