@@ -117,6 +117,9 @@ void dsp::TwoBitCorrection::transformation ()
   // unpack the data
   unpack ();
 
+  if (weighted_output)
+    weighted_output -> mask_weights ();
+
   if (verbose)
     cerr << "dsp::TwoBitCorrection::transformation exit" << endl;
 }
