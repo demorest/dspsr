@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/08/20 04:58:18 $
+   $Revision: 1.2 $
+   $Date: 2002/09/17 11:17:51 $
    $Author: wvanstra $ */
 
 #ifndef __Shape_h
@@ -43,6 +43,9 @@ namespace dsp {
 
     //! Scrunch each dimension to a new ndat
     void scrunch_to (unsigned ndat);
+
+    //! Rotate data so that Shape[i] = Shape[i+npt]
+    void rotate (int npt);
 
     //! Set all values to zero
     void zero ();

@@ -153,6 +153,50 @@ void dsp::Shape::scrunch_to (unsigned new_ndat)
   offset = npts;
 }
 
+
+//! Rotate data so that Shape[i] = Shape[i+npt]
+// restriction: ndat % npt must equal zero
+void dsp::Shape::rotate (int rotbin)
+{
+  unsigned pts = nchan * ndat * ndim;
+  unsigned nrot = abs(rotbin);
+
+  float temp = 0;
+
+  float* p1=0;
+  float* p2=0;
+
+  for (unsigned ipol=0; ipol < npol; ipol++) {
+
+    float* buf = buffer + offset * ipol;
+
+    for (unsigned irot=0; irot<nrot; irot++) {
+
+      temp = buf[irot];
+
+      for (unsigned ipt=0; ipt<pts-nrot; ipt+=nrot) {
+	
+	p1 = buf + (irot + ipt) % pts;
+	p2 = buf + (rotbin + irot + ipt + pts) % pts;
+
+	if (rotbin < 0) {
+	  float temp2 = *p2;
+	  *p2 = temp;
+	  temp = temp2;
+	}
+	else
+	  *p1 = *p2;
+      }
+
+      if (rotbin < 0)
+	buf[irot] = temp;
+      else
+	*p2 = temp;
+
+    }
+  }
+}
+
 void dsp::Shape::zero ()
 {
   for (unsigned ifilt=0; ifilt<bufsize; ifilt++)
