@@ -138,7 +138,8 @@ catch (Error& error) {
 }
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
-{ try {
+{ 
+  try {
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
