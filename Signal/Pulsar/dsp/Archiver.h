@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.12 $
-   $Date: 2004/05/24 02:17:04 $
+   $Revision: 1.13 $
+   $Date: 2004/09/08 04:16:41 $
    $Author: hknight $ */
 
 
@@ -69,12 +69,6 @@ namespace dsp {
     //! Add the PhaseSeries data to the Pulsar::Archive instance
     void add (Pulsar::Archive* archive, const PhaseSeries* phase);
 
-    //! Set the name of the program to go in the 'backend' variable of the output archive
-    void set_reducing_program(string _reducing_program){ reducing_program = _reducing_program; }
-
-    //! Inquire the name of the program to go in the 'backend' variable of the output archive
-    string get_reducing_program(){ return reducing_program; }
-
     //! Quick hack until a dsp::Observation can store _properly_ the ChannelSum history
     //! In particular it will need to store whether the 'channel_align' flag was enabled
     //! and therefore whether the archive was dedispersed
@@ -82,11 +76,16 @@ namespace dsp {
     
     //! Retrieves this hack attribute that indicates whether the archive is dedispersed already
     bool get_archive_dedispersed(){ return archive_dedispersed; }
+ 
+    //! If true, a dspReduction extension is added to the archive with this string
+    void set_archive_software(string _archive_software)
+    { archive_software = _archive_software; }
+
+    //! If true, a dspReduction extension is added to the archive with this string
+    string get_archive_software()
+    { return archive_software; }
 
   protected:
-
-    //!  The name of the program to go in the 'backend' variable of the output archive.  Set to "" if no program name required
-    string reducing_program;
 
     //! Name of the Pulsar::Archive class used to create new instances
     string archive_class_name;
@@ -122,6 +121,8 @@ namespace dsp {
     //! Hack attribute that indicates whether the archive is dedispersed already [false]
     bool archive_dedispersed;
 
+    //! String to go in the dspReduction Extension of output archive ["Software Unknown"]
+    string archive_software;
   };
 
 }
