@@ -20,7 +20,7 @@ dsp::Response::Response ()
 {
   impulse_pos = impulse_neg = 0;
 
-  whole_swapped = chan_swapped = bin_centred = false;
+  whole_swapped = chan_swapped = dc_centred = false;
 
   npol = 2;
   ndim = 1;
