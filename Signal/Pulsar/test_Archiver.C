@@ -45,11 +45,11 @@ int main (int argc, char** argv)
   int ndim = 4;
   int nbin = 1024;
 
-  bool use_header_dm = false;
-  float header_dm;
+  bool dm_supplied = false;
+  float header_dm = 0.0;
   
   bool use_fold_period = false;
-  double fold_period;
+  double fold_period = 0.0;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -74,7 +74,7 @@ int main (int argc, char** argv)
       block_size = atoi (optarg);
       break;
     case 'd':
-      use_header_dm = true;
+      dm_supplied = true;
       header_dm = atof(optarg);
       break;
     case 't':
@@ -120,7 +120,7 @@ int main (int argc, char** argv)
   // Loader
   dsp::IOManager manager;
   manager.set_block_size (block_size);  
-
+  
   if (verbose)
     cerr << "Creating Detection instance" << endl;
   dsp::Detection detect;
@@ -135,8 +135,11 @@ int main (int argc, char** argv)
   dsp::Fold fold;
 
   fold.set_nbin (nbin);
-  if( use_fold_period )
+  if( use_fold_period ){
+    fprintf(stderr,"Going to call set_folding_period()\n");
     fold.set_folding_period( fold_period );
+    fprintf(stderr,"Called set_folding_period()\n");
+  }
   fold.set_input (&voltages);
   fold.set_output (&profiles);
 
@@ -212,15 +215,27 @@ int main (int argc, char** argv)
 	 << fold.get_total_time() << " seconds" << endl;
 
     archiver.set (&archive, &profiles);
-    if( !use_header_dm )
-      archive.set_dispersion_measure(fold.get_pulsar_ephemeris()->get_dm());
-    else
+
+    fprintf(stderr,"In main(), but out of archiver.set()\n");
+
+    if( dm_supplied ){
+      fprintf(stderr,"A dm was specified on command line\n");
       archive.set_dispersion_measure( header_dm );
+    }
+    else if( fold.get_pulsar_ephemeris() ){
+      fprintf(stderr,"No dm was specified on command line\n");
+      archive.set_dispersion_measure(fold.get_pulsar_ephemeris()->get_dm());
+    }
+    else{
+      fprintf(stderr,"No DM or ephemeris was specified.  Header DM will be zero\n");
+      archive.set_dispersion_measure( header_dm );
+    }
 
     string filename = profiles.get_default_id () + ".ar";
 
     if (verbose) cerr << "Unloading archive: " << filename<< endl;
-    archive.Archive::unload ();
+    fprintf(stderr,"Directly before archive.unload()\n");
+    archive.Archive::unload (filename);
 
   }
   catch (string& error) {
