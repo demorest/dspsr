@@ -200,7 +200,7 @@ int main (int argc, char** argv)
     string filename = profiles.get_default_id () + ".ar";
 
     if (verbose) cerr << "Unloading archive: " << filename<< endl;
-    archive.unload (filename.c_str());
+    archive.Archive::unload ();
 
   }
   catch (string& error) {
