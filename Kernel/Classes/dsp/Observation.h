@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.44 $
-   $Date: 2003/01/15 04:15:58 $
-   $Author: hknight $ */
+   $Revision: 1.45 $
+   $Date: 2003/02/07 05:50:39 $
+   $Author: cwest $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -102,7 +102,7 @@ namespace dsp {
 
     //! Set the number of bits per value
     virtual void set_nbit (unsigned _nbit) { nbit = _nbit; }
-    //! Return the number of polarizations
+    //! Return the number of bits per value
     unsigned get_nbit () const { return nbit; }
 
     //! Set the number of time samples in container
