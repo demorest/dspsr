@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <math.h>
 
+// #define _DEBUG 1
+
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 #include "dsp/WeightedTimeSeries.h"
@@ -20,8 +22,10 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) : Unpacker (_name)
   // Sub-classes may re-define these
   nsample = 512;
   cutoff_sigma = 3.0;
-  table = NULL;
   threshold = optimal_threshold;
+
+  // Sub-classes must define this or set_table must be called
+  table = NULL;
 
   // These are set in set_limits()
   n_min = 0;
@@ -475,6 +479,12 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     throw Error (InvalidState, "dsp::TwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be == 1", ndig);
 
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::dig_unpack out=" << output_data <<
+      " in=" << input_data << " ndat=" << ndat <<
+      "\n   digitizer=" << digitizer << " weights=" << weights <<
+      " nweights=" << nweights << endl;
+
   // 4 floating-point samples per byte
   const unsigned samples_per_byte = TwoBitTable::vals_per_byte;
 
@@ -492,7 +502,7 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   if (weights && n_weights > nweights)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::dig_unpack",
-		 "weights array size=%d < number of weights=%d", nweights, n_weights);
+		 "weights array size=%d < nweights=%d", nweights, n_weights);
 
   unsigned long bytes_left = ndat / samples_per_byte;
   unsigned long bytes_per_weight = nsample / samples_per_byte;
@@ -525,18 +535,32 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     if (hist)
       hist [n_lo] ++;
 
-    if (n_lo<n_min || n_lo>n_max) {
+    // test if the number of low voltage states is outside the
+    // acceptable limit or if this section of data has been previously
+    // flagged bad (for example, due to bad data in the other polarization)
+    if ( n_lo<n_min || n_lo>n_max || (weights && weights[wt] == 0) ) {
+
+#ifdef _DEBUG
+      cerr << "w[" << wt << "]=0 ";
+#endif
+      
+      if (weights)
+        weights[wt] = 0;
+      
+      // reduce the risk of other functions accessing un-initialized 
+      // segments of the array
       for (bt=0; bt<bytes*samples_per_byte; bt++) {
 	*output_data = 0.0;
 	output_data += output_incr;
       }
+      
     }
-
+    
     else {
-
+      
       input_data_ptr = input_data;
       section = &(dls_lookup[0]) + (n_lo-n_min) * lookup_block_size;
-
+      
       for (bt=0; bt<bytes; bt++) {
 	fourval = section + unsigned(*input_data_ptr) * samples_per_byte;
 	for (pt=0; pt<samples_per_byte; pt++) {
@@ -546,15 +570,18 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 	input_data_ptr += input_incr;
       }
 
+      if (weights)
+	weights[wt] = n_lo;
+      
     }
-
+    
     bytes_left -= bytes;
     input_data += bytes * input_incr;
   }
-
+  
 }
-
-
+  
+  
 int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 {
   static float* lu_sum = 0;
