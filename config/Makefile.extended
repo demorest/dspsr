@@ -8,16 +8,16 @@
 
 # Ensure that the proper shell is used
 SHELL = /bin/sh
-##########################################################################
-##########################################################################
 
+##########################################################################
+##########################################################################
 ###  MACRO DEFINITIONS
 ##########################################################################
 ##########################################################################
 
 ##########################################################################
 # The following lines create the BINS macro, upon which the "all" target 
-# depends and the EXECUTABLES macrso used in the calculation of the
+# depends and the EXECUTABLES macro used in the calculation of the
 # SRC_DEPS macro.
 # PROGRAMS and EXECUTABLES macros are defined in the user Makefile
 ##########################################################################
@@ -36,7 +36,7 @@ BINS:=$(EXECUTABLES:%=$(BINDIR)/%)
 # macro functionality
 ##########################################################################
 
-# expand each exec.srcs macro to exec.srcs="blah.c"
+# expand each exec.srcs macro to e.g. exec.srcs"blah.c more.C"
 SRCS_EXP := $(foreach exec,$(EXECUTABLES),$(exec).srcs\"${$(exec).srcs}\")
 # strip out those expansions with empty ""
 SRCS_CLEAN := $(strip $(filter-out %\"\",$(SRCS_EXP)))
@@ -82,6 +82,13 @@ DEPS := ${DEP_C_SRCS:%.C=./$(LOGIN_ARCH)/%.dep} \
 INCS:=${INCLUDES:%=$(INCDIR)/%}
 
 ##########################################################################
+# The following lines create the SHXS macro,
+# upon which the "scripts" target depends.
+# SCRIPTS macro is previously defined in the user Makefile
+##########################################################################
+SHXS:=${SCRIPTS:%=$(SHXDIR)/%}
+
+##########################################################################
 # The following lines create the LIBS macro,
 # upon which the "libs" target depends.
 # LIBRARY and LIBRARIES macros are previously defined in the user Makefile
@@ -109,8 +116,8 @@ MDFLAGS += -DGTK_MAJOR_VERSION=2 # makedepend is stupid
 endif
 
 ##########################################################################
-# The INSTALL_INCS, INSTALL_LIBS and INSTALL_BINS macros are constructed
-# in a separate Makefile that specializes in installations
+# The INSTALL_INCS, INSTALL_SHXS, INSTALL_LIBS and INSTALL_BINS macros
+# are constructed in a separate Makefile that specializes in installations
 ##########################################################################
 make_install := $(LOCAL_ROOT)/include/Makefile.install
 include $(make_install)
@@ -184,13 +191,13 @@ SRC2OBJ := sed -e 's/\.c/\.o/g' -e 's/\.C/\.o/g' -e 's/\.f/\.o/g'
 # architecture-dependent subdirectory. 
 ##########################################################################
 
-$(LOGIN_ARCH)/%.o: %.c
+$(LOGIN_ARCH)/%.o: %.c $(LOGIN_ARCH)/.exists
 	$(CC) ${INCFLAGS} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
 
-$(LOGIN_ARCH)/%.o: %.C
+$(LOGIN_ARCH)/%.o: %.C $(LOGIN_ARCH)/.exists
 	$(CCC) ${INCFLAGS} ${CCFLAGS} ${CPPFLAGS} -c -o $@ $<
 
-$(LOGIN_ARCH)/%.o: %.f
+$(LOGIN_ARCH)/%.o: %.f $(LOGIN_ARCH)/.exists
 	$(FC) ${INCFLAGS} ${FFLAGS} ${CPPFLAGS} -c -o $@ $<
 
 ##########################################################################
@@ -235,11 +242,6 @@ $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.C $(libraries)
 
 $(BINDIR)/%: $(LOGIN_ARCH)/%.o %.f $(libraries)
 	-$(FC) ${FFLAGS} -o $@ $< $($*.OBJS) $(shell $(eval_LDFLAGS))
-	@$(check_exec)
-
-# pattern rule for object with no source code file of same name
-$(BINDIR)/%: $(libraries)
-	-$(CCC) ${CCFLAGS} -o $@ $($*.OBJS) $(shell $(eval_LDFLAGS))
 	@$(check_exec)
 
 ##########################################################################
@@ -293,15 +295,17 @@ else
 ##########################################################################
 ##########################################################################
 
-all: libs $(BINS)
+all: libs $(BINS) scripts
 
 include: $(INCS)
 
 libs: $(LIBS) include
 
+scripts: $(SHXS)
+
 test: $(RUNTESTS)
 
-install: $(INSTALL_INCS) $(INSTALL_LIBS) $(INSTALL_BINS)
+install: $(INSTALL_INCS) $(INSTALL_SHXS) $(INSTALL_LIBS) $(INSTALL_BINS)
 
 clean:
 	$(RM) $(LOGIN_ARCH)/*.o
@@ -337,8 +341,14 @@ $(RUNTESTS) : %.runtest : $(BINDIR)/%
 ##########################################################################
 # Static pattern rule to copy include files in pwd to include/ directory
 ##########################################################################
-$(INCS) : $(INCDIR)/% : ./% $(INCDIR)/.exists
+$(INCS) : $(INCDIR)/% : ./%
 	@$(copy_header)
+
+##########################################################################
+# Static pattern rule to copy scripts in pwd to csh_script/ directory
+##########################################################################
+$(SHXS) : $(SHXDIR)/% : ./%
+	@$(copy_script)
 
 ##########################################################################
 # These static pattern rules allow one to type 'make exec' or 'make lib.a'
@@ -357,7 +367,7 @@ $(LIBRARIES) : %.a : $(LIBDIR)/%.a
 # cannot be found in the current working directory...  the NONMODULE
 # macro can be used to disable this fetch.  eg 'NONMODULE = ephio.h'
 ##########################################################################
-MODULE += $(ALL_SRCS) $(INCLUDES) $(make_install)
+MODULE += $(ALL_SRCS) $(INCLUDES) $(SCRIPTS) $(make_install)
 $(filter-out $(NONMODULE), $(MODULE)):
 	cvs update $@
 	@if [ ! -f $@ ]; then \
@@ -373,13 +383,13 @@ endif # install_yes != install
 # explicit make rules in the user's make file.
 ##########################################################################
 
-ONELIB := ${LIBDIR}/${LIBRARY}
+ONELIB := $(LIBDIR)/$(LIBRARY)
 
-LOBJS:=${patsubst %.c,%.o,${patsubst %.f,%.o,${patsubst %.C,%.o,${LIB_SRCS}}}}
-LIB_OBJS := ${LOBJS:%=${LOGIN_ARCH}/%}
+LOBJS:=$(patsubst %.c,%.o,$(patsubst %.f,%.o,$(patsubst %.C,%.o,$(LIB_SRCS))))
+LIB_OBJS := $(LOBJS:%=$(LOGIN_ARCH)/%)
 
 $(ONELIB) : $(LIB_OBJS)
-	$(AR) $(ARFLAGS) $@ $^
+	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
 	$(RANLIB) $@
 
 ##########################################################################
@@ -387,7 +397,7 @@ $(ONELIB) : $(LIB_OBJS)
 # be relaxed.
 ##########################################################################
 autodepend:=yes
-no_makedepend_targets := include clean veryclean cvsck
+no_makedepend_targets := include scripts clean veryclean cvsck
 
 ifneq ($(filter $(no_makedepend_targets),$(MAKECMDGOALS)),)
 autodepend:=no
@@ -397,9 +407,6 @@ endif # MAKECMDGOALS contains no_makedepend_targets
 # If autodepend is not disabled, include the .dep and .sdep files
 #############################################################################
 ifeq ($(autodepend),yes)
-
-REQD_DIRS := $(INCDIR) $(LIBDIR) $(BINDIR) $(LOGIN_ARCH)
-Makefile $(DEPS) $(SRC_DEPS): $(REQD_DIRS:%=%/.exists)
 
 ifneq ($(SRC_DEPS),)
 -include $(SRC_DEPS)
@@ -412,6 +419,17 @@ endif # DEPS != ""
 endif # MAKEDEP != no
 
 endif # autodepend == yes
+
+##########################################################################
+# Rules to ensure that directories are created before attempts to
+# place files in them are made.  These should remain last in the file,
+# lest they interfere with $< expansion
+##########################################################################
+$(DEPS) $(SRC_DEPS): $(LOGIN_ARCH)/.exists
+$(INCS): $(INCDIR)/.exists
+$(SHXS): $(SHXDIR)/.exists
+$(LIBS): $(LIBDIR)/.exists
+$(BINS): $(BINDIR)/.exists
 
 endif # no errors
 

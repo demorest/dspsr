@@ -20,12 +20,12 @@
 ##########################################################################
 
 %/.exists :
-	@if [ ! -d $* ]; then echo Creating $* subdirectory; mkdir -p $*; fi
+	@if [ ! -d $* ]; then echo Creating directory:$*; mkdir -p $*; fi
 	-@chmod -f 770 $*
 	@touch $*/.exists
 
 ##########################################################################
-# Variable that defines how header files are copied to their read-only
+# Function that defines how header files are copied to their read-only
 # include/ location.  (used in Makefile.extended rules)
 ##########################################################################
 define copy_header
@@ -33,6 +33,18 @@ if [ -f $@ ]; then $(RM) $@; fi
 echo "copying $< to $@"
 cp -fp $< $@
 chmod a-w $@
+endef
+
+##########################################################################
+# Function that defines how scripts are copied to their read-only
+# csh_script/ location.  (used in Makefile.extended rules)
+##########################################################################
+define copy_script
+if [ -f $@ ]; then $(RM) $@; fi
+echo "copying $< to $@"
+cp -fp $< $@
+chmod a-w $@
+chmod a+x $@
 endef
 
 ##########################################################################
@@ -75,6 +87,13 @@ install_INCS:=$(INCLUDES)
 endif
 
 ##########################################################################
+# Check for 'make install scripts'
+install_scripts_yes := ${findstring scripts, $(INSTALL_TARGETS)}
+ifeq ($(install_scripts_yes),scripts)
+install_SHXS:=$(SCRIPTS)
+endif
+
+##########################################################################
 # Check for 'make install all'
 install_all_yes := ${findstring all, $(INSTALL_TARGETS)}
 ifeq ($(install_all_yes),all)
@@ -96,6 +115,7 @@ endif
 INSTALL_LIBS:=${install_LIBS:%=$(INSTALL_LIBDIR)/%}
 INSTALL_BINS:=${install_BINS:%=$(INSTALL_BINDIR)/%}
 INSTALL_INCS:=${install_INCS:%=$(INSTALL_INCDIR)/%}
+INSTALL_SHXS:=${install_SHXS:%=$(INSTALL_SHXDIR)/%}
 
 ##########################################################################
 # ensure that make knows where to install
@@ -108,12 +128,10 @@ endif
 # local "working copy" directories to the installed "group copy" dirs.
 ##########################################################################
 
-$(INSTALL_BINS) : $(INSTALL_BINDIR)/.exists
 $(INSTALL_BINS) : $(INSTALL_BINDIR)/% : $(BINDIR)/%
 	@echo "copying $< to $@"
 	@cp $< $@
 
-$(INSTALL_LIBS) : $(INSTALL_LIBDIR)/.exists
 $(INSTALL_LIBS) : $(INSTALL_LIBDIR)/%.a : $(LIBDIR)/%.a 
 	@echo "copying $< to $@"
 	@cp $< $@
@@ -122,8 +140,19 @@ $(INSTALL_LIBS) : $(INSTALL_LIBDIR)/%.a : $(LIBDIR)/%.a
 # Static pattern rule to copy header files to installed include/ directory
 ##########################################################################
 
-$(INSTALL_INCS) : $(INSTALL_INCDIR)/% : ./% $(INSTALL_INCDIR)/.exists
+$(INSTALL_INCS) : $(INSTALL_INCDIR)/% : ./%
 	@$(copy_header)
 
-endif # install_yes == install
+##########################################################################
+# Static pattern rule to copy scripts to installed csh_script/ directory
+##########################################################################
 
+$(INSTALL_SHXS) : $(INSTALL_SHXDIR)/% : ./%
+	@$(copy_script)
+
+$(INSTALL_INCS) : $(INSTALL_INCDIR)/.exists
+$(INSTALL_SHXS) : $(INSTALL_SHXDIR)/.exists
+$(INSTALL_LIBS) : $(INSTALL_LIBDIR)/.exists
+$(INSTALL_BINS) : $(INSTALL_BINDIR)/.exists
+
+endif # install_yes == install

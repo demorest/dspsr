@@ -5,7 +5,7 @@
 ##########################################################################
 # the standard targets
 ##########################################################################
-TARGETS := include libs all test install clean veryclean cvsck
+TARGETS := include libs scripts all test install clean veryclean cvsck
 
 ##########################################################################
 # the standard macro definitions
@@ -13,10 +13,12 @@ TARGETS := include libs all test install clean veryclean cvsck
 INSTALL_BINDIR := ${PSRHOME}/bin/${LOGIN_ARCH}
 INSTALL_LIBDIR := ${PSRHOME}/lib/${LOGIN_ARCH}
 INSTALL_INCDIR := ${PSRHOME}/include
+INSTALL_SHXDIR := ${PSRHOME}/csh_script
 
 BINDIR := ${LOCAL_ROOT}/bin/${LOGIN_ARCH}
 LIBDIR := ${LOCAL_ROOT}/lib/${LOGIN_ARCH}
 INCDIR := ${LOCAL_ROOT}/include
+SHXDIR := ${LOCAL_ROOT}/csh_script
 
 INCFLAGS= -I. -I${INCDIR} -I${INSTALL_INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
