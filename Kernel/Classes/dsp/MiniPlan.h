@@ -92,8 +92,11 @@ namespace dsp {
     //! Copy constructor- copies instances
     MiniPlan(const MiniPlan& mp);
 
+    //! Instantiate from a file
+    MiniPlan(string plan_file);
+
     //! Assignment operator
-    MiniPlan& operator=(const MiniPlan&);
+    MiniPlan& operator=(const MiniPlan& mp);
 
     //! Merge together many frequency-contiguous MiniPlans into one
     //! Does few checks
