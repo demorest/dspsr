@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.4 $
-   $Date: 2003/11/26 16:38:13 $
+   $Revision: 1.5 $
+   $Date: 2004/10/19 10:06:00 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -78,6 +78,9 @@ namespace dsp {
 
     //! Flag all weights in corrupted transforms
     void convolve_weights (unsigned nfft, unsigned nkeep);
+
+    //! Scrunch the weights
+    void scrunch_weights (unsigned nscrunch);
 
   protected:
 

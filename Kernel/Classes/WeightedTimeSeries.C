@@ -112,7 +112,7 @@ void dsp::WeightedTimeSeries::resize_weights ()
   
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights nweights=" << nweights
-	 << " require=" << require << endl;
+	 << " require=" << require << " have=" << weight_size << endl;
 
   if (!require || require > weight_size) {
     if (verbose)
@@ -273,21 +273,16 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 
   float weights_per_dat = 1.0 / ndat_per_weight;
 
+  unsigned total_bad = 0;
   unsigned start_idat = 0;
-  unsigned start_weight = 0;
 
-  unsigned end_weight = 0;
-  unsigned iweight = 0;
-
-  unsigned count = 0;
-  unsigned zero_weights = 0;
-
-  bool finish_previous_zero = false;
+  unsigned zero_start = 0;
+  unsigned zero_end = 0;
 
   while (nweights_tot) {
 
-    start_weight = unsigned( start_idat * weights_per_dat );
-    end_weight = (unsigned) ceil ((start_idat+nfft) * weights_per_dat);
+    unsigned start_weight = unsigned(start_idat * weights_per_dat);
+    unsigned end_weight = unsigned(ceil ((start_idat+nfft) * weights_per_dat));
 
     if (end_weight > nweights_tot) {
       if (verbose)
@@ -296,52 +291,115 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
       break;
     }
 
-    zero_weights = 0;
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::convolve_weights start_weight="
+	   << start_weight << " end_weight=" << end_weight << endl;
 
+    unsigned zero_weights = 0;
+    unsigned iweight = 0;
     for (iweight=start_weight; iweight<end_weight; iweight++)
       if (weights[iweight] == 0)
 	zero_weights ++;
-
-    if (finish_previous_zero) {
-      weights[start_weight] = 0;
-      finish_previous_zero = false;
-    }
-
+    
     /* If there exists bad data in the transform, the whole transform
        must be flagged as invalid; otherwise, the FFT will mix the bad
-       data into the good data.  However, we cannot flag all of the
-       data to the end of the transform, as this may affect the next
-       test.  Therefore, flag only the first weight of the lot and
-       flag the rest later. */
+       data into the good data.  However, we cannot immediately flag
+       the current transform, as this will affect the next test.
+       Therefore, flag only the previous data set and set the flag for
+       the next loop. */
 
-    if (zero_weights > 0) {
+    for (iweight=zero_start; iweight < zero_end; iweight++) {
+      weights[iweight] = 0;
+      total_bad ++;
+    }
+
+    if (zero_weights == 0)
+      zero_start = zero_end = 0;
+
+    else {
 
       if (verbose)
-        cerr << "dsp::WeightedTimeSeries::convolve_weights test "
-          "start_weight=" << start_weight << " end_weight=" << end_weight
-             << "\ndsp::WeightedTimeSeries::convolve_weights transform=" 
-             << count << " bad weights=" << zero_weights << endl;
+        cerr << "dsp::WeightedTimeSeries::convolve_weights bad weights="
+	     << zero_weights << endl;
 
-      end_weight = unsigned( (start_idat+nkeep) * weights_per_dat );
+      zero_start = start_weight;
+      zero_end = unsigned( ceil((start_idat+nkeep) * weights_per_dat) );
 
       if (verbose)
 	cerr << "dsp::WeightedTimeSeries::convolve_weights"
-	  " setting " << end_weight-start_weight << " bad weights" << endl;
-
-      for (iweight=start_weight; iweight<end_weight; iweight++)
-	weights[iweight] = 0;
-
-      finish_previous_zero = true;
+	  " flagging " << zero_end-zero_start << " bad weights" << endl;
 
     }
 
     start_idat += nkeep;
-    count ++;
 
   } 
 
-  if (finish_previous_zero)
+  for (unsigned iweight=zero_start; iweight < zero_end; iweight++) {
     weights[iweight] = 0;
+    total_bad ++;
+  }
+
+  if (total_bad && verbose)
+    cerr << "dsp::WeightedTimeSeries::convolve_weights " << total_bad <<
+      "/" << nweights_tot << " total bad weights" << endl;
 
 }
 
+void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
+{
+  uint64 nweights_tot = get_nweights();
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::scrunch_weights nscrunch=" << nscrunch
+	 << " ndat_per_weight=" << ndat_per_weight
+	 << " nweights=" << nweights_tot << endl;
+
+  // the points per weight after time resolution decreases
+  float points_per_weight = float(ndat_per_weight) / float(nscrunch);
+
+  if (points_per_weight >= 1.0) {
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::scrunch_weights new points_per_weight="
+	   << points_per_weight << endl;
+    ndat_per_weight = unsigned (points_per_weight);
+    return;
+  }
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::scrunch_weights"
+      " scrunching to 1 point per wieght" << endl;
+
+  // reduce the number of weights by scrunching
+  unsigned long new_nweights = nweights_tot / nscrunch;
+  unsigned extra = nweights_tot % nscrunch;
+
+  if (extra)
+    new_nweights ++;
+
+  for (unsigned iwt=0; iwt < new_nweights; iwt++) {
+    
+    unsigned* indi_weight = weights + iwt * nscrunch;
+    
+    if ((iwt+1)*nscrunch > nweights_tot)
+      nscrunch = extra;
+    
+    for (unsigned ivt=0; ivt < nscrunch; ivt++) {
+      if (*indi_weight == 0) {
+	weights[iwt] = 0;
+	break;
+      }
+      else if (ivt == 0)
+	weights[iwt] = *indi_weight;
+      else
+	weights[iwt] += *indi_weight;
+
+      indi_weight ++;
+    }
+
+    weights[iwt] /= nscrunch;
+  }
+
+  ndat_per_weight = 1;
+
+}
