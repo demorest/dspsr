@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.9 $
-   $Date: 2003/05/17 09:55:15 $
-   $Author: pulsar $ */
+   $Revision: 1.10 $
+   $Date: 2003/07/05 08:23:06 $
+   $Author: hknight $ */
 
 
 #ifndef __Seekable_h
@@ -54,7 +54,7 @@ namespace dsp {
     
     //! Conserve access to resources by re-using data already in BitSeries
     virtual uint64 recycle_data (BitSeries* data);
-    
+
     //! end of data reached
     bool end_of_data;
     

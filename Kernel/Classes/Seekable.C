@@ -42,6 +42,8 @@ bool dsp::Seekable::eod()
 
 void dsp::Seekable::load_data (BitSeries* data)
 {
+  //  verbose = true;
+
   if (verbose)
     cerr << "dsp::Seekable::load_data"
       " load_size=" << get_load_size() << 
@@ -65,6 +67,11 @@ void dsp::Seekable::load_data (BitSeries* data)
   // check that the amount to read does not surpass the end of data
   if (info.get_ndat()) {
     uint64 samples_left = info.get_ndat() - read_sample;
+
+    if( verbose )
+      fprintf(stderr,"dsp::Seekable::load_data() there are ndat-read_sample="UI64" samples left available\n",
+	      samples_left);
+
     if (samples_left <= read_size) {
       if (verbose)
 	cerr << "dsp::Seekable::load_data end of data read_size="
@@ -126,6 +133,8 @@ void dsp::Seekable::load_data (BitSeries* data)
   current_sample += read_size;
 
   data->set_ndat (recycled + read_size);
+
+  // verbose = false;
 }
 
 /*!  Based on the next time sample, get_load_sample, and the number of
