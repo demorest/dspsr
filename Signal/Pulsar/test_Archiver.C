@@ -239,22 +239,14 @@ int main (int argc, char** argv)
   dsp::Fold fold;
 
   fold.set_nbin (nbin);
-  if( use_fold_period ){
-    fprintf(stderr,"Going to call set_folding_period()\n");
+  if( use_fold_period )
     fold.set_folding_period( fold_period );
-    fprintf(stderr,"Called set_folding_period()\n");
-  }
   fold.set_input( combined_voltages );
   fold.set_output (&profiles);
 
-  if (verbose)
-    cerr << "Creating Archiver instance" << endl;
   dsp::Archiver archiver;
+  Pulsar::TimerArchive archive;
 
-  if (verbose)
-    cerr << "Creating TimerArchive instance" << endl;
-
-  Pulsar::TimerArchive archive; 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) {
     
     if (verbose)
@@ -279,21 +271,11 @@ int main (int argc, char** argv)
 	buddy_manager.load( buddy_voltages );
 
       if( want_buddies ){
-	vector<dsp::TimeSeries*> buddies;
-	buddies.push_back( voltages );
-	buddies.push_back( buddy_voltages );
-	// combined_voltages just has the null weightings so far, so using this TimeSeries method is ok.
-
-	fprintf(stderr,"before combined voltages->ndat="UI64"\n",
+	fprintf(stderr,"before combining bands voltages->ndat="UI64"\n",
 		voltages->get_ndat());
-
-	combined_voltages->hack_together( buddies );
-	if( verbose )
-	  fprintf(stderr,"Have hacked together\n");
-
-	//string ss;
-	//combined_voltages->obs2string(ss);
-	//fprintf(stderr,"%s\n",ss.c_str());
+	
+	// combined_voltages just has the null weightings so far, so using this TimeSeries method is ok.
+	combined_voltages->hack_together(voltages,buddy_voltages);
       }
 
       if( pulsar_name!=string("") )
@@ -376,9 +358,11 @@ int main (int argc, char** argv)
   } catch (...) {
     cerr << "unknown exception thrown." << endl;
     return -1;
-  } 
+  }
+  
+ fprintf(stderr,"biyee!\n"); 
+ exit(0);
 
-  return 0;
 }
 
 void get_filenames(vector<string>& filenames, char* optarg){
@@ -394,3 +378,15 @@ void get_filenames(vector<string>& filenames, char* optarg){
   }
   fclose(fptr);
 }
+
+
+
+
+
+
+
+
+
+
+
+
