@@ -3,7 +3,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Unpacker.h"
-#include "dsp/TimeSeries.h"
+#include "dsp/WeightedTimeSeries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Detection.h"
 #include "dsp/Fold.h"
@@ -91,8 +91,8 @@ int main (int argc, char** argv)
   }
 
   if (verbose)
-    cerr << "Creating TimeSeries instance" << endl;
-  dsp::TimeSeries voltages;
+    cerr << "Creating WeightedTimeSeries instance" << endl;
+  dsp::WeightedTimeSeries voltages;
 
   if (verbose)
     cerr << "Creating PhaseSeries instance" << endl;
