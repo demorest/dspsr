@@ -7,13 +7,13 @@
 #include <vector>
 
 #include "genutil.h"
+#include "Types.h"
 
 #include "dsp/TimeSeries.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Transformation.h"
 
-/* The IncoherentFilterbank is designed for searching and thus square law detects + pscrunches the data.  If you want to form Stokes parameters then it is suggested that you work out how you do it and then implement it.
-
+/*
 NOTE: This transformation DESTROYS your input data
 
 NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces nchan+1 channels.  I have chosen to throw away the last (Nyquist) channel, to be consistent with dsp::Observation::get_base_frequency().  I don't actually understand it myself.  HSK 16/1/03
@@ -21,6 +21,8 @@ NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces
 */
 
 namespace dsp{
+
+  //  NOTE: This transformation DESTROYS your input data
 
   class IncoherentFilterbank : public Transformation<TimeSeries,TimeSeries>{
 
@@ -44,6 +46,12 @@ namespace dsp{
     //! Inquire the number of channels in the filterbank
     unsigned get_nchan(){ return nchan; }
 
+    //! Set the output state- one of Intensity, PPQQ, Analytic
+    void set_output_state(Signal::State _state){ state = _state; }
+
+    //! Inquire the output state- default is Intensity
+    Signal::State get_output_state(){ return state; }
+
   protected:
 
     //! Perform the operation
@@ -57,6 +65,18 @@ namespace dsp{
 
     //! Memory used by MKL to store transform coefficients (ie the plan)
     auto_ptr<vector<float> > wsave; 
+
+    //! The output's state (ie the number of polarisations)
+    Signal::State state;
+
+    //! Worker function for state=Signal::Intensity
+    virtual void form_stokesI();
+
+    //! Worker function for state=Signal::PPQQ
+    virtual void form_PPQQ();
+
+    //! Worker function for state=Signal::Analytic
+    virtual void form_undetected();
 
   };
 
