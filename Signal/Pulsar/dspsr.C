@@ -110,9 +110,9 @@ int main (int argc, char** argv)
       Pulsar::Archive::set_verbosity (3);
       dsp::Observation::verbose = true;
       dsp::Operation::verbose = true;
-      dsp::Archiver::verbose = true;
       dsp::Shape::verbose = true;
     case 'v':
+      dsp::Archiver::verbose = true;
       verbose = true;
       break;
 
@@ -322,6 +322,8 @@ int main (int argc, char** argv)
       // kludge to make the following loop operate only once
       filenames.resize(1);
   }
+
+  archiver->set_operations (operations);
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
