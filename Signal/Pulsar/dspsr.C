@@ -341,6 +341,7 @@ int main (int argc, char** argv)
       cerr << "Creating MPIRoot instance" << endl;
     
     mpi_data = new dsp::MPIRoot (MPI_COMM_WORLD);
+    mpi_data -> set_root (mpi_root);
 
   }    
 
@@ -488,7 +489,7 @@ int main (int argc, char** argv)
       // the processing nodes must wait here for the root node to
       // inform them of the buffer size
       
-      mpi_data -> bcast_setup (mpi_root);
+      mpi_data -> prepare ();
       manager->set_input (mpi_data);
 
     }    
@@ -555,9 +556,10 @@ int main (int argc, char** argv)
       if (mpi_size > 1) {
     
 	mpi_data -> copy (manager);
-	mpi_data -> bcast_setup (mpi_root);
+	mpi_data -> prepare ();
 
-	mpi_data -> serve_data ( manager->get_input() );
+	mpi_data -> set_Input ( manager->get_input() );
+	mpi_data -> serve ();
 
 	return 0;
       }    
