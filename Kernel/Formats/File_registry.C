@@ -28,7 +28,6 @@ dsp::File* dsp::File::create (const char* filename)
 
 	File* child = registry.create (ichild);
 	child-> open( filename );
-	child-> reset ();
 	return child;
 
       }
