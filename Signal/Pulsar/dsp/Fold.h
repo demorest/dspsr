@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.25 $
-   $Date: 2003/12/10 00:36:33 $
+   $Revision: 1.26 $
+   $Date: 2004/02/09 07:06:39 $
    $Author: hknight $ */
 
 
@@ -19,11 +19,10 @@
 
 class polyco;
 class psrephem;
-#if HSKTEST
+
 namespace dsp {
   class MultiFold;
 }
-#endif
 
 namespace dsp {
 
