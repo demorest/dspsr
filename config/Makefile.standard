@@ -50,6 +50,7 @@ MAKEDEPEND := makedepend -Y -f
 
 # dynamic shared object linker
 DSO = $(CCC) -shared -o
+LDSO := -fPIC -Wl,--export-dynamic -ldl
 
 SWINBURNE_REPOSITORY := pulsar.swin.edu.au:/psr/cvsroot
 
@@ -144,11 +145,10 @@ endif
 ##########################################################################
 # macro definitions for various "home-grown" libraries
 ##########################################################################
+
 LTIMES = -ltimes -lgenutil $(LSLA) -lm
+
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
-LPSRCHIVE = -lpsrchive -fPIC -Wl,--export-dynamic -ldl
-
-LPSRCHIVE += -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
-
+LPSRCHIVE = -lpsrchive -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
 
