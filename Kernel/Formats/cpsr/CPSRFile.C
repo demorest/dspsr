@@ -180,7 +180,7 @@ void dsp::CPSRFile::open (const char* filename)
 	+1.0/60.0*floor(fmod(fabs(header->user_dec),10000.0)/100.0)
 	+1.0/3600.0*fmod(fabs(header->user_dec),100.0));
   
-  info.set_position (sky_coord(ra_deg, dec_deg));
+  info.set_coordinates (sky_coord(ra_deg, dec_deg));
 
   info.set_source (hdr.name);
 
