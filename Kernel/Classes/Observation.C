@@ -73,6 +73,16 @@ void dsp::Observation::set_sample (State _state,
     throw_str ("Observation::set_sample invalid state: " + reason);
 }
 
+void dsp::Observation::set_state (State _state)
+{
+  state = _state;
+
+  if (state == Nyquist)
+    ndim = 1;
+  else if (state == Analytic)
+    ndim = 2;
+}
+
 /*! 
   \retval boolean true if the state of the Observation is valid
   \param reason If the return value is false, a string describing why

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.14 $
-   $Date: 2002/10/07 11:48:29 $
+   $Revision: 1.15 $
+   $Date: 2002/10/07 15:51:45 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -92,7 +92,7 @@ namespace dsp {
 			     int nchan, int npol, int ndim, int nbit);
 
     //! Set the state of the signal
-    void set_state (State _state) { state = _state; }
+    void set_state (State _state);
     //! Return the state of the signal
     State get_state () const { return state; }
 
