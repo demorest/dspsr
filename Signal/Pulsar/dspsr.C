@@ -339,6 +339,7 @@ int main (int argc, char** argv)
       break;
 
     case 'P':
+      cerr << "dspsr: Loading ephemeris from " << optarg << endl;
       ephemerides.push_back ( new psrephem (optarg) );
       break;
 
@@ -884,10 +885,12 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "end of data" << endl;
 
-    fprintf (stderr, "%25s %25s\n", "Operation", "Time Spent");
+    fprintf (stderr, "%15s %15s %15s\n", "Operation","Time Spent","Discarded");
     for (unsigned iop=0; iop < operations.size(); iop++)
-      fprintf (stderr, "%25s %25.2g\n", operations[iop]->get_name().c_str(),
-	       (float) operations[iop]->get_total_time());
+      fprintf (stderr, "%15s %15.2g %15d\n",
+               operations[iop]->get_name().c_str(),
+	       (float) operations[iop]->get_total_time(),
+               (int) operations[iop]->get_discarded_weights());
 
     if (!single_pulse) {
 
