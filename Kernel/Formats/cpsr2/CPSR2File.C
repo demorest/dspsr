@@ -10,24 +10,53 @@
 #include "yamasaki_verify.h"
 #include "genutil.h"
 
-void dsp::CPSR2File::open (const char* filename)
+int dsp::CPSR2File::get_header (char* cpsr2_header, const char* filename)
 {
-  header_bytes = CPSR2_HEADER_SIZE;
+  int fd = ::open (filename, O_RDONLY);
 
-  fd = std::open (filename, O_RDONLY);
-  if (fd < 0)
-    throw_str ("CPSR2File::open - failed open(%s): %s", 
+  if (fd < 0) {
+    if (verbose)
+      fprintf (stderr, "CPSR2File::get_header - failed open(%s): %s", 
 	       filename, strerror(errno));
-
-  char cpsr2_header [CPSR2_HEADER_SIZE];
+    return -1;
+  }
 
   int retval = read (fd, cpsr2_header, CPSR2_HEADER_SIZE);
 
-  // close the file in case things go wrong
-  std::close (fd);    
+  ::close (fd);    
 
-  if (retval < CPSR2_HEADER_SIZE)
-    throw_str ("CPSR2File::open - failed read: %s", strerror(errno));
+  if (retval < CPSR2_HEADER_SIZE) {
+    if (verbose)
+      fprintf (stderr, "CPSR2File::get_header - failed read: %s",
+	       strerror(errno));
+
+    return -1;
+  }
+
+  return 0;
+}
+
+static char cpsr2_header [CPSR2_HEADER_SIZE];
+
+bool dsp::CPSR2File::is_valid (const char* filename)
+{
+  if (get_header (cpsr2_header, filename) < 0)
+    return false;
+
+  // verify that the buffer read contains a valid CPSR2 header
+  float version;
+  if (ascii_header_get (cpsr2_header, "CPSR2_HEADER_VERSION",
+			"%f", &version) < 0)
+    return false;
+
+  return true;
+}
+
+void dsp::CPSR2File::open (const char* filename)
+{  
+  if (get_header (cpsr2_header, filename) < 0)
+    throw_str ("CPSR2File::open - failed get_header(%s): %s",
+	       filename, strerror(errno));
   
   CPSR2_Observation data (cpsr2_header);
 
@@ -42,5 +71,13 @@ void dsp::CPSR2File::open (const char* filename)
     throw_str ("CPSR2File::open - failed open(%s): %s", 
 	       filename, strerror(errno));
 
+  // set the number of bytes in header attribute
+  header_bytes = CPSR2_HEADER_SIZE;
+
+  // set the file pointers
+  reset();
+
+  if (verbose)
+    cerr << "Returning from CPSR2File::open" << endl;
 }
 
