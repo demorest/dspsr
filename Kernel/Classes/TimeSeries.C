@@ -281,8 +281,8 @@ void dsp::TimeSeries::hack_together(vector<TimeSeries*> bands){
     //    iband,bands[iband]->get_centre_frequency());
   }
 
-  double min_cfreq = findmin(cfreqs.begin(),cfreqs.end());
-  double max_cfreq = findmax(cfreqs.begin(),cfreqs.end());
+  double min_cfreq = findmin(&(cfreqs[0]),&(cfreqs[0])+cfreqs.size());
+  double max_cfreq = findmax(&(cfreqs[0]),&(cfreqs[0])+cfreqs.size());
 
   set_centre_frequency(0.5*(max_cfreq-min_cfreq)+min_cfreq);
   //fprintf(stderr,"cf=0.5*(%f-%f)+%f = %f\n",
@@ -533,10 +533,10 @@ void dsp::TimeSeries::rotate_backwards_onto(TimeSeries* ts){
       
       // Step (1) rotate samples forward.  (The lazy memory inefficient way)
       const float* from1 = get_datptr(ichan,ipol);
-      float* to1 = storage.begin();
+      float* to1 = &(storage[0]);
       memcpy(to1,from1,storage.size()*sizeof(float));
 
-      const float* from2 = storage.begin();
+      const float* from2 = &(storage[0]);
       float* to2 = get_datptr(ichan,ipol) + ts->ndat*ndim;
       memcpy(to2,from2,storage.size()*sizeof(float));
 

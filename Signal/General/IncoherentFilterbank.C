@@ -154,8 +154,8 @@ void dsp::IncoherentFilterbank::form_stokesI(){
     
     // (2) FFT	
     fft_timer.start();
-    scfft1dc(scratch0.get(), nsamp_fft, 1, wsave->begin()); 
-    scfft1dc(scratch1.get(), nsamp_fft, 1, wsave->begin()); 
+    scfft1dc(scratch0.get(), nsamp_fft, 1, &((*wsave)[0])); 
+    scfft1dc(scratch1.get(), nsamp_fft, 1, &((*wsave)[0])); 
     fft_timer.stop();
 
     // (3) SLD and add polarisations back
@@ -210,7 +210,7 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
       memcpy(scratch.get(),in+ipart*stride,n_memcpy);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scratch.get(), nsamp_fft, 1, wsave->begin()); 
+      scfft1dc(scratch.get(), nsamp_fft, 1, &((*wsave)[0])); 
       fft_timer.stop();
       // (3) SLD back
       register const float* real = scratch.get();
@@ -260,7 +260,7 @@ void dsp::IncoherentFilterbank::form_undetected(){
       memcpy(scr,store,n_memcpy);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scr, nsamp_fft, 1, wsave->begin()); 
+      scfft1dc(scr, nsamp_fft, 1, &((*wsave)[0])); 
       fft_timer.stop();
       // (3) copy back
       memcpy(store,scr,n_memcpy);
@@ -393,7 +393,7 @@ void dsp::IncoherentFilterbank::acquire_plan(){
   //  wsave.get(),(*(wsave.get())).size(),wsave->size());
 
   //fprintf(stderr,"Acquiring wsave with n=%d\n",2*nchan*2/input->get_ndim());
-  scfft1dc(input->get_datptr(0,0),nchan*2/input->get_ndim(),0, wsave->begin());
+  scfft1dc(input->get_datptr(0,0),nchan*2/input->get_ndim(),0, &((*wsave)[0]));
   //fprintf(stderr,"wsave acquired\n");
 }
 

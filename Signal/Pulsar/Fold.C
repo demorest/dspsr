@@ -269,7 +269,7 @@ void dsp::Fold::transformation ()
     ndatperweight = weighted_input->get_ndat_per_weight();
   }
 
-  fold (integrated, output->get_datptr(), output->hits.begin(),
+  fold (integrated, output->get_datptr(), &(output->hits[0]),
 	input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
 	weights, ndatperweight, idat_start, ndat_fold);
 

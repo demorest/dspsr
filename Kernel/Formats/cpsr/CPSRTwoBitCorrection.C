@@ -106,7 +106,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
   // although I and Q are switched here, the histogram is queried as expected
   unsigned long*  hist = 0;
   if (keep_histogram)
-    hist = histograms[channel].begin();
+    hist = &(histograms[channel][0]);
 
   //fprintf (stderr, "tbc: chan: %d\n", newchan);
   unsigned nsuccess = 0;
@@ -161,7 +161,7 @@ void dsp::CPSRTwoBitCorrection::iq_unpack (float* outdata,
     }
 
     else {
-      float* corrected = dls_lookup.begin() + (n_in-n_min) * 4;
+      float* corrected = &(dls_lookup[0]) + (n_in-n_min) * 4;
       for (pt=0; pt<points; pt++) {
 	*datptr = corrected [values[pt]];
 

@@ -66,7 +66,7 @@ void dsp::TwoBitCorrection::set_cutoff_sigma (float _cutoff_sigma)
 
 void dsp::TwoBitCorrection::set_table (TwoBitTable* _table)
 {
-  if (table == _table)
+  if (table.get() == _table)
     return;
 
   if (verbose)
@@ -135,7 +135,7 @@ void dsp::TwoBitCorrection::set_limits ()
 
   float n_ave = float(nsample) * fraction_ones;
   // the root mean square deviation
-  float n_sigma = sqrt(nsample);
+  float n_sigma = sqrt( float(nsample) );
 
   n_max = unsigned (n_ave + (cutoff_sigma * n_sigma));
 
@@ -244,7 +244,7 @@ void dsp::TwoBitCorrection::build ()
   if (verbose) cerr << "dsp::TwoBitCorrection::build allocate buffers\n";
   dls_lookup.resize (n_range * size);
 
-  generate (dls_lookup.begin(), 0, n_min, n_max, nsample, table, huge);
+  generate (&(dls_lookup[0]), 0, n_min, n_max, nsample, table, huge);
 
   histograms.resize (nchannel);
   for (unsigned ichan=0; ichan < nchannel; ichan++)
@@ -279,9 +279,6 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
 				      unsigned n_min, unsigned n_max, unsigned n_tot,
 				      TwoBitTable* table, bool huge)
 {
-  static float root_pi = sqrt(M_PI);
-  static float root2   = sqrt(2.0);
-
   for (unsigned nlo=n_min; nlo <= n_max; nlo++)  {
   
     /* Refering to JA98, nlo is the number of samples between x2 and x4, 
@@ -392,7 +389,7 @@ void dsp::TwoBitCorrection::unpack ()
     unsigned long* hist = 0;
 
     if (keep_histogram)
-      hist = histograms[ipol].begin();
+      hist = &(histograms[ipol][0]);
 
     poln_unpack (into, from, ndat, hist, npol);
       
@@ -458,7 +455,7 @@ void dsp::TwoBitCorrection::poln_unpack (float* data,
     else {
 
       rawptr = raw;
-      section = dls_lookup.begin() + (n_lo-n_min) * lookup_block_size;
+      section = &(dls_lookup[0]) + (n_lo-n_min) * lookup_block_size;
 
       for (bt=0; bt<bytes; bt++) {
 	fourval = section + unsigned(*rawptr) * samples_per_byte;
@@ -561,7 +558,7 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 
   for (unsigned ipol=0; ipol < npol; ipol++) {
 
-    unsigned long* hist = histograms[ipol].begin();
+    unsigned long* hist = &(histograms[ipol][0]);
 
     double sum = 0;
     double sumsq = 0;
