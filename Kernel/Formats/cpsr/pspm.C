@@ -233,14 +233,13 @@ bool PSPMverify (PSPM_SEARCH_HEADER* hdr, bool verbose)
   }
   
   // what can you do?
-  double rate = 1.0 / (hdr->samp_rate);  // samples per microsecond
-  double bw = fabs (hdr->bw);      // bandwidth in MHz
+  float rate = 1.0 / (hdr->samp_rate);  // samples per microsecond
+  float bw = fabs (hdr->bw);      // bandwidth in MHz
   if (bw != rate) {
-    fprintf (stderr, "PSPMverify: Nyquist mismatch: bw=%lf MHz."
-	     "  sampling rate=%lf\n", bw, rate);
-    // reset to default
-    hdr->bw = -20.0;
-    hdr->samp_rate = 0.05;
+    if (verbose)
+      fprintf (stderr, "PSPMverify: Nyquist mismatch: bw=%f MHz."
+	       "  sampling rate=%f\n", bw, rate);
+    return false;
   }
   return true;
 }
