@@ -1,5 +1,8 @@
-#include "dsp/TimeSeries.h"
+#include "environ.h"
+
 #include "Error.h"
+
+#include "dsp/TimeSeries.h"
 
 dsp::TimeSeries::TimeSeries()
 {
