@@ -1,4 +1,5 @@
 #include "dsp/SpigotFile.h"
+#include "FITSError.h"
 
 #include <fitsio.h>
 
@@ -100,7 +101,7 @@ void dsp::SpigotFile::open_file (const char* filename)
 void dsp::SpigotFile::parse (void* header)
 {
   int status = 0;
-  fitsfile* fptr = header;
+  fitsfile* fptr = reinterpret_cast<fitsfile*> (header);
 
   /* Until further notice */
   info.set_basis (Signal::Linear);
@@ -157,7 +158,7 @@ void dsp::SpigotFile::parse (void* header)
   //
 
   int nbit;
-  fits_read_key (fptr, TINT, "BITS", &nchan, comment, &status);
+  fits_read_key (fptr, TINT, "BITS", &nbit, comment, &status);
   info.set_nbit (nbit);
 
   if (verbose)
@@ -239,11 +240,11 @@ void dsp::SpigotFile::parse (void* header)
   fits_read_key (fptr, TLONG, "SEC-OBS", &time_obs, comment, &status);
 
   MJD mjd_obs( (time_t) time_obs );
-  cerr << "dsp::SpigotFile::parse start = " << mjd_obs << endl;
-  info.set_start_time( mjd );
 
-  fits_read_key (fptr, TSTRING, "MJD-OBS", tempstr.get(), comment, &status);
-  cerr << "dsp::SpigotFile::parse mjd = " << tempstr.get() << endl;
+  if (verbose)
+    cerr << "dsp::SpigotFile::parse start = " << mjd_obs << endl;
+
+  info.set_start_time( mjd_obs );
 
   //
   // sampling rate
@@ -274,65 +275,5 @@ void dsp::SpigotFile::parse (void* header)
   info.set_dispersion_measure (0);
   info.set_between_channel_dm (0);
 
-  if (verbose)
-    info.obs2file (stderr);
-}
-  
-
-#if FUTURE_WORK
-
-//! Produce a string of the form ".00001.1.puma"
-string dsp::SpigotFile::make_fname_extension (int itimediv, int iband)
-{
-  return stringprintf (".%05d.%1d.puma", itimediv, iband);
 }
 
-FILE* dsp::SpigotFile::::openFile (int itimediv, int iband, Header_type *hdrptr)
-{
-  // construct file name and open file
-  string fname = fprefix + make_fname_extension (itimediv, iband);
-
-  if (verbose)
-    cerr << "dsp::SpigotFile::::openFile '" << fname << "'" << endl;
-
-  FILE *f = fopen(fname, "r");
-  // read in header
-  Header_type  hdr;
-  if (hdrptr==NULL)
-    hdrptr = &hdr;
-
-  prheader (hdrptr, f);
-
-  if (verbose)
-    cerr << "dsp::SpigotFile::::openFile Skipping adjustments" << endl;
-
-  // skip over adjustments
-  int nadjust = hdrptr->gen.ParBlkSize / (sizeof(Adjustments));
-  fseek(f, nadjust*sizeof(Adjustments), SEEK_CUR);
-
-  return f;
-}
-
-// function to open all the files for a given time division
-void dsp::SpigotFile::openFiles(int timediv)
-{
-  int i;
-
-  for (i=0; i < nbands; i++)
-  {
-    band_fptr[i] = openFile(timediv, ibandstart+i);
-    band_samplestart_offset[i] = ftell(band_fptr[i]);
-  }
-  current_offset = offset_bydiv[timediv];
-  current_div = timediv;
-}
-
-void dsp::SpigotFile::closeFiles()
-{
-  int i;
-
-  for (i=0; i < nbands; i++)
-    fclose (band_fptr[i]);
-}
-
-#endif

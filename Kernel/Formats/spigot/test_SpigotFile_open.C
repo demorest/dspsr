@@ -1,7 +1,9 @@
 #include "dsp/SpigotFile.h"
+#include "dirutil.h"
 
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
+#include <unistd.h>
 
 void usage ()
 {
@@ -50,14 +52,14 @@ int main (int argc, char** argv)
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) {
 
-    if ( !file.is_valid( filename ) )
+    string filename = filenames[ifile];
+
+    if ( !file.is_valid( filename.c_str() ) )
       cerr << "test: " << filename << " not a Spigot file" << endl;
 
     file.open( filename );
 
     cerr << "test: " << filename << " opened" << endl;
-
-    file.obs2file (stderr);
 
   }
 
