@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.32 $
-   $Date: 2002/11/12 04:51:35 $
-   $Author: hknight $ */
+   $Revision: 1.33 $
+   $Date: 2002/11/12 09:15:05 $
+   $Author: wvanstra $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -257,6 +257,9 @@ namespace dsp {
     //! Writes of all information contained in this class into the fptr at the current file offset
     bool retrieve(FILE* fptr);
 
+    //! Set all attributes to null default
+    void init ();
+
   protected:
 
     //! Number of time samples in container
@@ -328,8 +331,6 @@ namespace dsp {
     //! Whether data is in 'Time' or 'Fourier' domain 
     string domain;
 
-    //! Set all attributes to null default
-    void init ();
   };
 
 }
