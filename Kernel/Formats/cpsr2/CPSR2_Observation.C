@@ -219,6 +219,6 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     ra = dec = 0.0;
   }
 
-  position.setRadians(ra, dec);
+  coordinates.setRadians(ra, dec);
 }
 

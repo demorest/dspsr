@@ -67,7 +67,7 @@ int mpiPack (const dsp::Observation& obs,
   temp = obs.get_scale();
   MPI_Pack (&temp, 1, MPI_DOUBLE, outbuf, outcount, pos, comm);
 
-  obs.get_position().getRadians (&temp, &temp2);
+  obs.get_coordinates().getRadians (&temp, &temp2);
   MPI_Pack (&temp, 1, MPI_DOUBLE, outbuf, outcount, pos, comm);
   MPI_Pack (&temp2, 1, MPI_DOUBLE, outbuf, outcount, pos, comm);
 
@@ -138,9 +138,9 @@ int mpiUnpack (void* inbuf, int insize, int* pos, dsp::Observation* obs,
 
   MPI_Unpack (inbuf, insize, pos, &temp, 1, MPI_DOUBLE, comm);
   MPI_Unpack (inbuf, insize, pos, &temp2, 1, MPI_DOUBLE, comm);
-  sky_coord position;
-  position.setRadians(temp, temp2);
-  obs->set_position (position);
+  sky_coord coordinates;
+  coordinates.setRadians(temp, temp2);
+  obs->set_coordinates (coordinates);
 
   int tempi;
 

@@ -56,7 +56,7 @@ void dsp::Observation::init ()
   swap = dc_centred = false;
   telescope = 0;
   source = identifier = mode = machine = "";
-  position = sky_coord();
+  coordinates = sky_coord();
 }
 
 void dsp::Observation::set_sample (Signal::State _state,
@@ -266,15 +266,15 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   if (this == &in_obs)
     return *this;
 
-  ndat        = in_obs.ndat;
   centre_frequency = in_obs.centre_frequency;
   bandwidth   = in_obs.bandwidth;
   nchan       = in_obs.nchan;
   npol        = in_obs.npol;
+  ndat        = in_obs.ndat;
   ndim        = in_obs.ndim;
   nbit        = in_obs.nbit;
   state       = in_obs.state;
-  basis    = in_obs.basis;
+  basis       = in_obs.basis;
 
   start_time  = in_obs.start_time;
 
@@ -290,7 +290,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   machine     = in_obs.machine;
   mode        = in_obs.mode;
 
-  position    = in_obs.position;
+  coordinates = in_obs.coordinates;
 
   return *this;
 }

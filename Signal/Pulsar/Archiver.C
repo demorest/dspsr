@@ -32,7 +32,7 @@ void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
   archive-> set_state ( phase->get_state() );
 
   archive-> set_source ( phase->get_source() );
-
+  archive-> set_coordinates ( phase->get_coordinates() );
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
   archive-> set_dispersion_measure ( phase->get_dispersion_measure() );

@@ -51,12 +51,14 @@ void dsp::Fold::prepare ()
 
 #if 0
 
+  TODO - ephemeris and coordinates in archive
+
   dm = ephemeris.get_dm();
   if (verbose)
     cerr << "Fold::prepare psrephem dm = " << dm << endl;
 
   // set the source position
-  raw.position.setRadians (ephemeris.jra(), ephemeris.jdec());
+  raw.coordinates.setRadians (ephemeris.jra(), ephemeris.jdec());
 
   // No longer using the catalogue!!
   if (psrstat != NULL) {

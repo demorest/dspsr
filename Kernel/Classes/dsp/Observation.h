@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.19 $
-   $Date: 2002/10/12 01:05:32 $
+   $Revision: 1.20 $
+   $Date: 2002/10/13 01:13:05 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -185,9 +185,9 @@ namespace dsp {
     string get_mode () const { return mode; }
 
     //! Set the coordinates of the source
-    void set_position (sky_coord _position) { position = _position; }
+    void set_coordinates (sky_coord _coordinates) { coordinates=_coordinates; }
     //! Return the coordinates of the source
-    sky_coord get_position () const { return position; }
+    sky_coord get_coordinates () const { return coordinates; }
 
     //! Set the instrument used to record signal
     void set_machine (string _machine) { machine = _machine; }
@@ -304,7 +304,7 @@ namespace dsp {
     string machine;
 
     //! Coordinates of the source
-    sky_coord position;
+    sky_coord coordinates;
 
     //! The DM Timeseries has been dedispersed to
     double dispersion_measure;
