@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/11/10 12:57:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.13 $
+   $Date: 2002/12/04 01:09:35 $
+   $Author: hknight $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -57,6 +57,9 @@ namespace dsp {
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap) { overlap = _overlap; }
     
+    //! Change the number of samples the overlap is
+    virtual void change_overlap(uint64 _extra_overlap) { overlap += _extra_overlap; }
+
     //! Return the total number of time samples available
     virtual uint64 get_total_samples () const { return info.get_ndat(); }
 
@@ -65,6 +68,9 @@ namespace dsp {
 
     //! Get the information about the data source
     virtual const Observation* get_info () const { return &info; }
+
+    //! Get the next time sample
+    uint64 get_next_sample () { return next_sample; }
 
   protected:
 
@@ -82,13 +88,10 @@ namespace dsp {
 
     //! Number of time samples to load on each load_block
     uint64 block_size;
-
+        
     //! Number of time samples by which data blocks overlap
     uint64 overlap;
-
-    //! Get the next time sample
-    uint64 get_next_sample () { return next_sample; }
-
+    
     //! First time sample to be read on the next call to load_data
     uint64 next_sample;
     

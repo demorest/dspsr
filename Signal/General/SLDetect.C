@@ -3,13 +3,15 @@
 #include <iostream>
 
 #include "genutil.h"
+#include "environ.h"
 
 #include "dsp/TimeSeries.h"
 #include "dsp/Operation.h"
 #include "dsp/SLDetect.h"
 
 dsp::SLDetect::SLDetect (Behaviour _type) 
-  : Transformation <TimeSeries, TimeSeries> ("SLDetect", _type){ }
+  : Transformation <TimeSeries, TimeSeries> ("SLDetect", _type)
+{ }
 
 void dsp::SLDetect::transformation ()
 {
@@ -40,59 +42,67 @@ void dsp::SLDetect::transformation ()
 	      "ie setting output->state to Signal::Intensity\n");
       output->set_state( Signal::Intensity );
     }
-    output->resize( input->get_ndat() );
+
+    uint64 new_output_ndat = input->get_ndat();
+
+    /* this will wipe existing data if space has not been preallocated */
+    output->resize( new_output_ndat );
   }
 
-  // increments values to be squared.
-  register float* in_ptr = const_cast<float*>(input->get_datptr(0,0));
-  register float* out_ptr = output->get_datptr(0,0);
-  // When in_ptr=dend, we are on our last timesample to SLD
-  register float* dend = in_ptr + input->get_npol()*input->get_nchan()*input->get_ndim()*input->get_ndat(); 
+  for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
+    for( unsigned ipol=0;ipol<input->get_npol();ipol++){
 
-  if(verbose)
-    fprintf(stderr,"For calculating dend npol=%d nchan=%d ndim=%d ndat="I64"\n",
-	    input->get_npol(),input->get_nchan(),input->get_ndim(),input->get_ndat());
+      // increments values to be squared.
+      register const float* in_ptr = input->get_datptr(ichan,ipol);
+      register float* out_ptr = output->get_datptr(ichan,ipol);
 
-  if(verbose){
-    cerr << "in_ptr="<<in_ptr<<"\n";
-    cerr << "out_ptr="<<out_ptr<<"\n";
-    cerr << "dend="<<dend<<"\n";
-    cerr << "dend-in_ptr="<<dend-in_ptr<<"\n";
-  }
-  else if(verbose)
-    fprintf(stderr,"input.get()==output.get()\n");
-  /* See ~hknight/h_code/test2Aug02.C to see the test I
-     ran to find the quickest way of doing the squaring.
-     Not that this is the fastest though- but it's hopefully
-     less confusing.
-  */
-  
-  if( input->get_state()==Signal::Nyquist ){
-    if(verbose)
-      fprintf(stderr,"SLDetect case is an %s transformation on Nyquist data\n",
-	      input.get()==output.get()?"inplace":"outofplace"); 
+      // When in_ptr=dend, we are on our last timesample to SLD
+      register const float* dend = in_ptr + input->get_ndim()*input->get_ndat(); 
+
+      if(verbose)
+	fprintf(stderr,"For calculating dend ndim=%d ndat="I64"\n",
+		input->get_ndim(),input->get_ndat());
+
+      if(verbose){
+	cerr << "in_ptr="<<in_ptr<<"\n";
+	cerr << "out_ptr="<<out_ptr<<"\n";
+	cerr << "dend="<<dend<<"\n";
+	cerr << "dend-in_ptr="<<dend-in_ptr<<"\n";
+      /* See ~hknight/h_code/test2Aug02.C to see the test I
+	 ran to find the quickest way of doing the squaring.
+	 Not that this is the fastest though- but it's hopefully
+	 less confusing.
+      */
+      }  
+
+      if( input->get_state()==Signal::Nyquist ){
+	if(verbose)
+	  fprintf(stderr,"SLDetect case is an %s transformation on Nyquist data\n",
+		  input.get()==output.get()?"inplace":"outofplace"); 
     
-    do{
-      *out_ptr = *in_ptr * *in_ptr;
-      out_ptr++;
-      in_ptr++;
-    } while( in_ptr != dend );
-  }
-
-  else if( input->get_state()==Signal::Analytic ){
-    if(verbose)
-      fprintf(stderr,"SLDetect case is an %s transformation on Analytic data\n",
-	      input.get()==output.get()?"inplace":"outofplace");
-
-    do{
-      *out_ptr = *in_ptr * *in_ptr;  // Re*Re
-      in_ptr++;
+	while( in_ptr != dend ){
+	  *out_ptr = *in_ptr * *in_ptr;
+	  out_ptr++;
+	  in_ptr++;
+	} 
+      }
       
-      *out_ptr += *in_ptr * *in_ptr; // Add in Im*Im
-      in_ptr++;
-      out_ptr++;
-    } while( in_ptr!=dend );
-  }
+      else if( input->get_state()==Signal::Analytic ){
+	if(verbose)
+	  fprintf(stderr,"SLDetect case is an %s transformation on Analytic data\n",
+		  input.get()==output.get()?"inplace":"outofplace");
+	
+	while( in_ptr!=dend ){
+	  *out_ptr = *in_ptr * *in_ptr;  // Re*Re
+	  in_ptr++;
+	  
+	  *out_ptr += *in_ptr * *in_ptr; // Add in Im*Im
+	  in_ptr++;
+	  out_ptr++;
+	} 
+      }
+    }  // for each ipol
+  }  // for each ichan
 
   // Set new state if output==input
   if( input->get_npol()==2 )
@@ -107,13 +117,6 @@ void dsp::SLDetect::transformation ()
     fprintf(stderr,"\n\nNear end of SLDetection, state is '%s'\n",
 	    output->get_state_as_string().c_str());
 
-  // Bad:
-  //  output->resize( output->get_ndat() );
-  // Good: (ndim has changed so subsize changes:)
-  // WvS: subsize is the number of *floats* in a data block and need not
-  //      necessarily equal ndat
-  // output->set_subsize( (output->get_ndat()*output->get_nbit())/8 );
-  
   if(verbose)
     fprintf(stderr,"after sld output has ndim=%d ndat="I64" npol=%d nchan=%d nbit=%d state=%s\n",
 	    output->get_ndim(), output->get_ndat(), output->get_npol(), output->get_nchan(),output->get_nbit(),

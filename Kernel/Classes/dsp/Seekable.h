@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/10 12:57:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.8 $
+   $Date: 2002/12/04 01:09:35 $
+   $Author: hknight $ */
 
 
 #ifndef __Seekable_h
@@ -34,6 +34,9 @@ namespace dsp {
     
     //! Reset the file pointers
     virtual void reset ();
+
+    //! Inquire current time sample
+    virtual uint64 get_current_sample(){ return current_sample; }
 
   protected:
     

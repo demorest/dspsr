@@ -8,18 +8,17 @@
 
 namespace dsp {
 
-  //! Simply Square Law detects TimeSeries in-place.
+  //! Simply Square Law detects TimeSeries.  When working 
 
   class SLDetect : public Transformation <TimeSeries, TimeSeries> {
 
   public:
 
     SLDetect(Behaviour _type=anyplace);
-        
+       
   protected:
     //! The transformation loads the next block of data
     virtual void transformation ();
-
   };
 
 }

@@ -64,13 +64,13 @@ bool dsp::CPSR2File::is_valid (const char* filename) const
 void dsp::CPSR2File::open_file (const char* filename)
 {  
   if (get_header (cpsr2_header, filename) < 0)
-    throw Error (FailedCall, "dsp::CPSR2File::open",
+    throw Error (FailedCall, "dsp::CPSR2File::open_file()",
 		 "get_header(%s) failed", filename);
   
   CPSR2_Observation data (cpsr2_header);
 
   if (yamasaki_verify (filename, data.offset_bytes, CPSR2_HEADER_SIZE) < 0)
-    throw Error (FailedCall, "dsp::CPSR2File::open",
+    throw Error (FailedCall, "dsp::CPSR2File::open_file()",
 		 "yamasaki_verify(%s) failed", filename);
 
   info = data;
@@ -78,7 +78,7 @@ void dsp::CPSR2File::open_file (const char* filename)
   // re-open the file
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
-    throw Error (FailedSys, "dsp::CPSR2File::open", 
+    throw Error (FailedSys, "dsp::CPSR2File::open_file()", 
 		 "open(%s) failed", filename);
 
 

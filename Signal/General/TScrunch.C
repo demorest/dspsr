@@ -10,6 +10,7 @@ dsp::TScrunch::TScrunch()
   ScrunchFactor = -1;
   TimeRes = -1.0;
   use_tres = false;
+  do_only_full_scrunches = false;
 }
 
 /* returns the ScrunchFactor determined by this tres */
@@ -65,13 +66,17 @@ void dsp::TScrunch::transformation ()
     fprintf(stderr,"There will be "I64" normal scrunches of ScrunchFactor="I64" and "I64" points in final scrunch\n",
 	    normal_scrunches, ScrunchFactor, nfinal);
 
-  int64 output_ndat = normal_scrunches;
-  if( nfinal>0 )
+  uint64 output_ndat = normal_scrunches;
+  if( nfinal>0 && !do_only_full_scrunches )
     output_ndat++;
 
   if( get_input() != get_output() ){
     output->Observation::operator=( *input );
-    output->resize( output_ndat ); 
+    if( verbose )
+      fprintf(stderr,"Going to resize output to "UI64"\n",output_ndat);
+    output->resize( output_ndat );
+    if( verbose )
+      fprintf(stderr,"Resized output to size "UI64"\n",output->get_ndat());
     output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output->get_ndat())) );
   }
 
@@ -123,7 +128,7 @@ void dsp::TScrunch::transformation ()
       }
   
       /* e.g. if input->ndat=101 and ScrunchFactor==3 then this is doing those last 2 points */
-      if( nfinal ){
+      if( nfinal && !do_only_full_scrunches ){
 	*scr = *un_scr;
 	onetoomany_un = un_scr + nfinal;
 	
@@ -139,7 +144,7 @@ void dsp::TScrunch::transformation ()
   } // for each ichan
 
   /* make sure output has correct parameters */
-  output->rescale( double(output_ndat) / double(input->get_ndat()) );
+  output->rescale( double(input->get_ndat()) / double(output_ndat) );
 
   if( verbose )
     fprintf(stderr,"TScrunch:: input->rate=%f\tinput=>ndat="I64"\toutput_ndat="I64"\n",
