@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.18 $
-   $Date: 2002/10/11 02:31:14 $
+   $Revision: 1.19 $
+   $Date: 2002/10/12 01:05:32 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -111,6 +111,11 @@ namespace dsp {
     void set_telescope (char telescope);
     //! Return the tempo telescope code
     char get_telescope () const { return telescope; }
+
+    //! Set the source type
+    void set_type (Signal::Source _type) { type = _type; }
+    //! Return the source type
+    Signal::Source get_type () const { return type; }
 
     //! Set the source name
     void set_source (string _source) { source = _source; }
@@ -265,7 +270,10 @@ namespace dsp {
     //! Number of bits per value
     int nbit;
 
-    //! Signal::State of the signal
+    //! Type of signal source
+    Signal::Source type;
+
+    //! State of the signal
     Signal::State state;
 
     //! Type of receiver feeds

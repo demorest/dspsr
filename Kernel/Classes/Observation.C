@@ -44,12 +44,13 @@ void dsp::Observation::init ()
   bandwidth = 0;
 
   basis = Signal::Linear;
+  state = Signal::Intensity;
+  type = Signal::Pulsar;
 
   start_time = 0.0;
   rate = 0;
 
   scale = 1;
-  state = Signal::Intensity;
 
   swap = dc_centred = false;
   telescope = 0;
