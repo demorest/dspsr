@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/10/25 06:47:42 $
-   $Author: hknight $ */
+   $Revision: 1.14 $
+   $Date: 2003/11/26 16:37:23 $
+   $Author: wvanstra $ */
 
 
 #ifndef __IOManager_h
@@ -82,6 +82,13 @@ namespace dsp {
 
     //! Set the number of time samples by which consecutive blocks overlap
     virtual void set_overlap (uint64 _overlap);
+
+    //! Return the number of invalid timesample weights encountered
+    virtual uint64 get_discarded_weights () const;
+
+    //! Reset the count of invalid timesample weights encountered
+    virtual void reset_discarded_weights ();
+
 
   protected:
 

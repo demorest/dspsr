@@ -132,7 +132,27 @@ void dsp::IOManager::set_overlap (uint64 _overlap)
   if (input)
     input->set_overlap (overlap);
 }
-    
+
+//! Return the number of invalid timesample weights encountered
+uint64 dsp::IOManager::get_discarded_weights () const
+{
+  if (unpacker)
+    return unpacker->get_discarded_weights();
+
+  if (verbose)
+    cerr << "dsp::IOManager::get_discarded_weights no unpacker" << endl;
+
+  return 0;
+}
+
+//! Reset the count of invalid timesample weights encountered
+void dsp::IOManager::reset_discarded_weights ()
+{
+  if (unpacker)
+    unpacker->reset_discarded_weights();
+}
+
+ 
 //! Prepare the appropriate Input and Unpacker
 /*!
 
