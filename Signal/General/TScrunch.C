@@ -153,7 +153,8 @@ void dsp::TScrunch::transformation ()
     fprintf(stderr,"TScrunch:: input->rate=%f\tinput=>ndat="I64"\toutput_ndat="I64"\n",
 	    input->get_rate(), input->get_ndat(), output_ndat);
 
-  output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output_ndat)) );
+  output->set_rate( input->get_rate()/ScrunchFactor );
+  //output->set_rate( input->get_rate()/(double(input->get_ndat())/double(output_ndat)) );
   
   // This is usually very bad but should work (and is needed) in both the inplace and outofplace situations:
   output->resize(output_ndat);
