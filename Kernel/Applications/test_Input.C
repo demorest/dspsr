@@ -139,7 +139,7 @@ int main (int argc, char** argv)
 	       << " != BitSeries::request_ndat=" 
 	       << data_small->get_request_ndat() << endl;
 
-	uint64 expected_offset = ismall * expected_incr;
+	uint64 expected_offset = (ismall * expected_incr) % resolution;
 
 	if (data_small->get_request_offset() != expected_offset)
 	  cerr << "ERROR: BitSeries::request_offset="
