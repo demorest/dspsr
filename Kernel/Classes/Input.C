@@ -36,6 +36,9 @@ void dsp::Input::operation ()
 //! Set the BitSeries to which data will be loaded
 void dsp::Input::set_output (BitSeries* data)
 {
+  if (verbose)
+    cerr << "dsp::Input::set_output (BitSeries* = " << data << ")" << endl;
+
   if (!output || output != data) {
     output = data;
     output -> input_sample = -1;
@@ -66,8 +69,8 @@ void dsp::Input::load (BitSeries* data)
 
   if (verbose)
     cerr << "dsp::Input::load [EXTERNAL] block_size=" << block_size
-         << " overlap=" << overlap
-	 << " next=" << load_sample+resolution_offset << endl;
+	 << " next_sample=" << load_sample+resolution_offset
+         << " (overlap=" << overlap << ")" << endl;
 
   // set the Observation information
   data->Observation::operator=(info);
