@@ -517,6 +517,7 @@ LOBJS := $(call src2obj,$(LIB_SRCS))
 LIB_OBJS := $(LOBJS:%=$(LOGIN_ARCH)/%)
 
 $(ONELIB) : $(LIB_OBJS)
+	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
 	$(RANLIB) $@
 
