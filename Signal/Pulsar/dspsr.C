@@ -27,7 +27,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "2:a:Ab:f:F:hjM:n:N:p:PsS:t:T:vVx:";
+static char* args = "2:a:Ab:d:f:F:hjM:n:N:p:PsS:t:T:vVx:";
 
 void usage ()
 {
@@ -52,9 +52,11 @@ void usage ()
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
     "\n"
-    "Dedispersion options:\n"
+    "Convolution options:\n"
     " -x nfft        over-ride optimal transform length\n"
     "\n"
+    "Detection options:\n"
+    " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins\n"
     " -p phase       reference phase of pulse profile bin zero\n"
@@ -99,6 +101,7 @@ int main (int argc, char** argv)
   int blocks = 0;
   int ndim = 4;
   int nchan = 1;
+  int npol = 4;
   int set_nfft = 0;
 
   int nbin = 0;
@@ -184,6 +187,10 @@ int main (int argc, char** argv)
 
     case 'b':
       nbin = atoi (optarg);
+      break;
+
+    case 'd':
+      npol = atoi (optarg);
       break;
 
     case 'F': {
@@ -415,8 +422,19 @@ int main (int argc, char** argv)
     cerr << "Creating Detection instance" << endl;
   dsp::Detection* detect = new dsp::Detection;
 
-  detect->set_output_state (Signal::Coherence);
-  detect->set_output_ndim (ndim);
+  if (npol == 4) {
+    detect->set_output_state (Signal::Coherence);
+    detect->set_output_ndim (ndim);
+  }
+  else if (npol == 2)
+    detect->set_output_state (Signal::PPQQ);
+  else if (npol == 1)
+    detect->set_output_state (Signal::Intensity);
+  else {
+    cerr << "dspsr: invalid npol=" << npol << endl;
+    return -1;
+  }
+    
   detect->set_input (convolve);
   detect->set_output (convolve);
 
