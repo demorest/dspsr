@@ -150,5 +150,6 @@ LTIMES = -ltimes -lgenutil $(LSLA) -lm
 
 LARCHIVE = -larchive -ltempo++ -lpolyco -leph -lgenutil $(LFFT) $(LTIMES)
 
-LPSRCHIVE = -lpsrchive -ltempo++ -lpolyco -leph -lgenutil++ $(LTIMES) $(LFFT)
+LPSRCHIVE = -lpsrchive -ltempo++ -lpolyco -leph -lCalibration -lgenutil++ \
+	$(LTIMES) $(LFFT)
 
