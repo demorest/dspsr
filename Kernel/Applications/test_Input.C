@@ -128,8 +128,6 @@ int main (int argc, char** argv)
       if (data_large->get_request_offset() != 0)
 	cerr << "ERROR: BitSeries::request_offset != 0 [large]" << endl;
 
-      unsigned expected_incr = resolution - modres;
-
       for (unsigned ismall=0; ismall<resolution; ismall++) {
 
 	input_small->operate();
@@ -139,7 +137,7 @@ int main (int argc, char** argv)
 	       << " != BitSeries::request_ndat=" 
 	       << data_small->get_request_ndat() << endl;
 
-	uint64 expected_offset = (ismall * expected_incr) % resolution;
+	uint64 expected_offset = (ismall * modres) % resolution;
 
 	if (data_small->get_request_offset() != expected_offset)
 	  cerr << "ERROR: BitSeries::request_offset="
