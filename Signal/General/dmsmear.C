@@ -35,7 +35,7 @@ int main(int argc, char ** argv)
   bool   triple = false;
 
   int c;
-  while ((c = getopt(argc, argv, "d:b:f:n:tv")) != -1)
+  while ((c = getopt(argc, argv, "hd:b:f:n:tv")) != -1)
     switch (c) {
 
     case 'b':
@@ -49,6 +49,10 @@ int main(int argc, char ** argv)
     case 'f':
       centrefreq = atof (optarg);
       break;
+
+    case 'h':
+      usage ();
+      return 0;
 
     case 'n':
       nchan = atoi (optarg);
