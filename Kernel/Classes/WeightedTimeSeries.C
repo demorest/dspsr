@@ -33,11 +33,17 @@ void dsp::WeightedTimeSeries::set_nchan_weight (unsigned _nchan_weight)
 //! Get the number of weights
 uint64 dsp::WeightedTimeSeries::get_nweights () const
 {
+  return get_nweights (ndat);
+}
+
+//! Get the number of weights
+uint64 dsp::WeightedTimeSeries::get_nweights (uint64 nsamples) const
+{
   if (ndat_per_weight == 0)
     return 0;
   
-  uint64 nweights = ndat / ndat_per_weight;
-  if (ndat % ndat_per_weight)
+  uint64 nweights = nsamples / ndat_per_weight;
+  if (nsamples % ndat_per_weight)
     nweights ++;
   
   return nweights;
@@ -196,5 +202,94 @@ void dsp::WeightedTimeSeries::mask_weights ()
 	wptr[iwt] = 0;
     }
   }
+}
+
+void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
+{
+  if (ndat_per_weight >= nfft) {
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::convolve_weights ndat_per_weight="
+	   << ndat_per_weight << " >= nfft=" << nfft << endl;
+
+    // the fft happens within one weight, no "convolution" required
+    return;
+  }
+
+  uint64 nweights_tot = get_nweights();
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::convolve_weights nfft=" << nfft
+	 << " nkeep=" << nkeep << " ndat_per_weight=" << ndat_per_weight
+	 << " nweights=" << nweights_tot << endl;
+
+  float weights_per_dat = 1.0 / ndat_per_weight;
+
+  unsigned start_idat = 0;
+  unsigned start_weight = 0;
+
+  unsigned end_weight = 0;
+  unsigned iweight = 0;
+
+  unsigned count = 0;
+  unsigned zero_weights = 0;
+
+  bool finish_previous_zero = false;
+
+  while (nweights_tot) {
+
+    start_weight = unsigned( start_idat * weights_per_dat );
+    end_weight = (unsigned) ceil ((start_idat+nfft) * weights_per_dat);
+
+    if (end_weight > nweights_tot) {
+      if (verbose)
+	cerr << "dsp::WeightedTimeSeries::convolve_weights end_weight="
+	     << end_weight << " > nweights=" << nweights_tot << endl;
+      break;
+    }
+
+    zero_weights = 0;
+
+    for (iweight=start_weight; iweight<end_weight; iweight++)
+      if (weights[iweight] == 0)
+	zero_weights ++;
+
+    if (finish_previous_zero) {
+      weights[start_weight] = 0;
+      finish_previous_zero = false;
+    }
+
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::convolve_weights"
+	" transform=" << count << "bad weights=" << zero_weights << endl;
+
+    /* If there exists bad data in the transform, the whole transform
+       must be flagged as invalid; otherwise, the FFT will mix the bad
+       data into the good data.  However, we cannot flag all of the
+       data to the end of the transform, as this may affect the next
+       test.  Therefore, flag only the first weight of the lot and
+       flag the rest later. */
+
+    if (zero_weights > 0) {
+
+      if (verbose)
+	cerr << "dsp::WeightedTimeSeries::convolve_weights"
+	  " setting all bad weights in transform " << count << endl;
+
+      end_weight = unsigned( (start_idat+nkeep) * weights_per_dat );
+      finish_previous_zero = true;
+
+      for (iweight=start_weight; iweight<end_weight; iweight++)
+	weights[iweight] = 0;
+
+    }
+
+    start_idat += nkeep;
+    count ++;
+
+  } 
+
+  if (finish_previous_zero)
+    weights[iweight] = 0;
+
 }
 

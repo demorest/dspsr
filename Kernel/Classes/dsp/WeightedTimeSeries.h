@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/11/11 12:19:32 $
+   $Revision: 1.3 $
+   $Date: 2003/11/26 15:26:21 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -64,6 +64,9 @@ namespace dsp {
     //! Get the number of weights
     uint64 get_nweights () const;
 
+    //! Get the number of weights required for a given number of samples
+    uint64 get_nweights (uint64 nsample) const;
+
     //! Get the weights array for the specfied polarization and frequency
     unsigned* get_weights (unsigned ichan=0, unsigned ipol=0);
 
@@ -72,8 +75,8 @@ namespace dsp {
 
   protected:
 
-    void scrunch_weight_check (unsigned nscrunch);
-    void convolve_weights (int nfft, int nkeep);
+    //! Flag all weights in corrupted transforms
+    void convolve_weights (unsigned nfft, unsigned nkeep);
 
     //! Number of polarizations with independent weights
     unsigned npol_weight;
