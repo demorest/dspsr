@@ -260,7 +260,6 @@ dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
 dsp::TimeSeries& dsp::TimeSeries::operator *= (float mult){
   if( verbose )
     fprintf(stderr,"In dsp::TimeSeries::operator*=()\n");
-  //  exit(0);
 
   if( fabs(mult-1.0) < 1.0e-9 )
     return *this;
