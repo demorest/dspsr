@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/07/17 07:32:52 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2002/08/14 18:19:01 $
+   $Author: hknight $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -62,10 +62,16 @@ namespace dsp {
     //! Return pointer to the container into which output data will be written
     virtual Timeseries* get_output () const;
 
+    Behaviour get_type(){ return type; }
+
+    string get_name(){ return name; }
+
   protected:
 
     //! Perform operation on data.  Defined by sub-classes
     virtual void operation () = 0;
+    //! operation() sets this to true if it fails 
+    bool operation_failed;
 
     //! Only the Loader class should over-ride this method
     /*! The Loader class need not have an input Timeseries, and also
@@ -94,13 +100,13 @@ namespace dsp {
     //! Return pointer to memory resource shared by operations
     static void* workingspace (size_t nbytes);
 
+
   private:
     //! Stop watch records the amount of time spent performing this operation
     RealTimer optime;
 
     //! Behaviour of operation
     Behaviour type;
-
   };
   
 }
