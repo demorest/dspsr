@@ -328,12 +328,19 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   
   // smear across one channel in number of time samples.
   unsigned nsmear = unsigned (ceil(tsmear * sampling_rate));
-  
-  // recalculate the smearing time simply for display of new value
-  tsmear = double (nsmear) / sampling_rate;
-  if (verbose) 
+ 
+  if (psrdisp_compatible) {
+    cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
+      "   rounding smear samples down instead of up" << endl;
+     nsmear = unsigned (tsmear * sampling_rate);
+  }
+
+  if (verbose) {
+    // recalculate the smearing time simply for display of new value
+    tsmear = double (nsmear) / sampling_rate;
     cerr << "dsp::Dedispersion::smearing_samples effective smear time: "
 	 << tsmear*1e3 << " ms (" << nsmear << " pts)." << endl;
+  }
 
   return nsmear;
 }
