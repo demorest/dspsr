@@ -276,4 +276,3 @@ void dsp::SpigotFile::parse (void* header)
   info.set_between_channel_dm (0);
 
 }
-
