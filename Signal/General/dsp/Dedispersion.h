@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.11 $
-   $Date: 2002/12/04 01:15:20 $
-   $Author: hknight $ */
+   $Revision: 1.12 $
+   $Date: 2002/12/09 16:46:08 $
+   $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
@@ -61,7 +61,7 @@ namespace dsp {
     void set_dispersion_measure (double dm);
 
     //! Get the dispersion measure in \f${\rm pc\,cm}^{-3}\f$
-    virtual double get_dispersion_measure () const { return dispersion_measure; }
+    double get_dispersion_measure () const { return dispersion_measure; }
 
     //! Set the Doppler shift due to the Earth's motion
     void set_Doppler_shift (double Doppler_shift);
@@ -100,7 +100,8 @@ namespace dsp {
     static void build (vector<float>& phases,
 		       double centrefreq, double bw, 
 		       float dm, double doppler,
-		       unsigned npts, unsigned nchan, bool dmcorr);
+		       unsigned npts, unsigned nchan, 
+		       bool bin_centred, bool dmcorr);
 
   protected:
 

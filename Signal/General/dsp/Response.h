@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.16 $
-   $Date: 2002/12/09 15:38:27 $
+   $Revision: 1.17 $
+   $Date: 2002/12/09 16:46:08 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -111,8 +111,8 @@ namespace dsp {
     //! Toggled every time Response::swap(true) is called (default: false)
     bool chan_swapped;
 
-    //! Toggled when Response::rotate
-    bool chan_shifted;
+    //! Toggled when built for a bin-centred spectrum
+    bool bin_centred;
 
   };
 

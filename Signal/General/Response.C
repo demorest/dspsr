@@ -20,7 +20,7 @@ dsp::Response::Response ()
 {
   impulse_pos = impulse_neg = 0;
 
-  whole_swapped = chan_swapped = chan_shifted = false;
+  whole_swapped = chan_swapped = bin_centred = false;
 
   npol = 1;
   ndim = 2;
@@ -65,7 +65,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
   else  {
 
     // if the filterbank channels are centred on DC
-    if ( input->get_dc_centred() && !chan_shifted ) {
+    if ( input->get_dc_centred() && !bin_centred ) {
       if (verbose)
 	cerr << "dsp::Response::match rotate half channel" << endl;
 
@@ -73,7 +73,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
         swap (true);
 
       rotate (-int(ndat/2));
-      chan_shifted = true;
+      bin_centred = true;
     }
 
     // if the input Observation is multi-channel, complex sampled data,
@@ -101,7 +101,7 @@ bool dsp::Response::matches (const Response* response)
   return
     whole_swapped == response->whole_swapped &&
     chan_swapped == response->chan_swapped &&
-    chan_shifted == response->chan_shifted &&
+    bin_centred == response->bin_centred &&
     Shape::matches (response);
 }
 
@@ -116,7 +116,7 @@ void dsp::Response::match(const Response* response)
   
   whole_swapped = response->whole_swapped;
   chan_swapped = response->chan_swapped;
-  chan_shifted = response->chan_shifted;
+  bin_centred = response->bin_centred;
   
   zero();
 }
@@ -134,9 +134,9 @@ void dsp::Response::naturalize ()
   if ( chan_swapped )
     swap (true);
 
-  if ( chan_shifted ) {
+  if ( bin_centred ) {
     rotate (ndat/2);
-    chan_shifted = false;
+    bin_centred = false;
   }
 }
 

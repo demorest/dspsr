@@ -117,6 +117,14 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
 
+  // If the input is already a filterbank, then the frequency channels will
+  // be centred on the bin, not the edge of the bin
+  if (input->get_nchan() % 2) {
+    if (!bin_centred)
+      built = false;
+    bin_centred = true;
+  }
+
   if (!channels)
     channels = input->get_nchan();
 
@@ -178,7 +186,7 @@ void dsp::Dedispersion::build ()
 
   build (phases, centre_frequency, bandwidth, 
 	 dispersion_measure, Doppler_shift,
-	 ndat, nchan, fractional_delay);
+	 ndat, nchan, bin_centred, fractional_delay);
 
   vector<complex<float> > phasors (ndat * nchan);
   for (unsigned ipt=0; ipt<phases.size(); ipt++)
@@ -191,7 +199,7 @@ void dsp::Dedispersion::build ()
 
   resize (npol, _nchan, _ndat, ndim);
 
-  whole_swapped = chan_swapped = chan_shifted = false;
+  whole_swapped = chan_swapped = false;
 
   built = true;
 }
@@ -270,7 +278,8 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 void dsp::Dedispersion::build (vector<float>& phases,
 			       double centrefreq, double bw, 
 			       float dm, double doppler,
-			       unsigned npts, unsigned nchan, bool dmcorr)
+			       unsigned npts, unsigned nchan,
+			       bool bin_centred, bool dmcorr)
 {
   centrefreq /= doppler;
   bw /= doppler;
@@ -279,9 +288,13 @@ void dsp::Dedispersion::build (vector<float>& phases,
   double chanwidth = bw / double(nchan);
   double binwidth = chanwidth / double(npts);
 
-  double lower_cfreq = centrefreq - 0.5*(bw-chanwidth);
+  double lower_cfreq = 0.0;
+  if (bin_centred)
+    lower_cfreq = centrefreq - 0.5*bw;
+  else
+    lower_cfreq = centrefreq - 0.5*bw*(1.0-1.0/double(nchan));
 
-  double highest_freq = centrefreq + 0.5*fabs(bw) - 0.5*chanwidth;
+  double highest_freq = centrefreq + 0.5*fabs(bw-chanwidth);
 
   double samp_int = 1.0/chanwidth; // sampint in microseconds, for
                                    // quadrature nyquist data eg fb.
