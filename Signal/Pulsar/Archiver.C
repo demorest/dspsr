@@ -23,6 +23,7 @@ bool dsp::Archiver::verbose = false;
 
 dsp::Archiver::Archiver ()
 {
+  archive_software = "Software Unknown";
   archive_dedispersed = false;
 }
 
@@ -152,7 +153,6 @@ catch (Error& error) {
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 { try {
-
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
