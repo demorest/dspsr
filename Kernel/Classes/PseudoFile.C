@@ -2,16 +2,26 @@
 
 #include "Reference.h"
 #include "MJD.h"
+#include "Error.h"
 
+#include "dsp/MiniPlan.h"
 #include "dsp/PseudoFile.h"
 #include "dsp/File.h"
+#include "dsp/MiniFile.h"
 
-dsp::PseudoFile::PseudoFile (const dsp::File* f)
+dsp::PseudoFile::PseudoFile (File* f)
 {
   Observation::operator = ( *f->get_info() );
   filename = f->get_filename();
   header_bytes = f->get_header_bytes();
   bs_index = f->get_bs_index();
+  subsize = 0;
+
+  MiniFile* minifile = dynamic_cast<MiniFile*>(f);
+  if( minifile ){
+    miniplan = minifile->get_miniplan();
+    subsize = minifile->get_subsize();
+  }
 }
 
 bool dsp::PseudoFile::operator < (const PseudoFile& in) const
