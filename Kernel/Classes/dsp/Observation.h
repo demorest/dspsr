@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.12 $
-   $Date: 2002/09/19 07:59:56 $
+   $Revision: 1.13 $
+   $Date: 2002/09/20 06:02:31 $
    $Author: wvanstra $ */
 
 #ifndef __Observation_h
@@ -149,9 +149,9 @@ namespace dsp {
     //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (int ichan) const;
 
-    //! Set the bandwidth of signal in MHz
+    //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
-    //! Return the bandwidth of signal in MHz
+    //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double get_bandwidth () const { return bandwidth; }
 
     //! Set the type of receiver feeds
@@ -265,7 +265,7 @@ namespace dsp {
     //! Centre frequency of band-limited signal in MHz
     double centre_frequency;
 
-    //! Bandwidth of signal in MHz
+    //! Bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double bandwidth;
 
     //! Number of frequency channels across bandwidth
