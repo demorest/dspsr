@@ -40,7 +40,7 @@ namespace dsp {
     void operate (float* indata, float* outdata = 0) const;
 
     //! Returns SUM i=1..N {window[i] * data[i]}
-    double integrated_product (float* data, int incr=1) const;
+    double integrated_product (float* data, unsigned incr=1) const;
 
   protected:
     Type type;
