@@ -16,7 +16,6 @@
 #include "dsp/Transformation.h"
 
 /*
-NOTE: This transformation DESTROYS your input data
 
 NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces nchan+1 channels.  I have chosen to throw away the last (Nyquist) channel, to be consistent with dsp::Observation::get_base_frequency().  HSK
 
