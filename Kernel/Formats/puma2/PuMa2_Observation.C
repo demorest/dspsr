@@ -168,7 +168,6 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   // until otherwise, the band is centred on the centre frequency
   //
   dc_centred = true;
-  centre_frequency_offset = 0;
 
   // //////////////////////////////////////////////////////////////////////
   //
