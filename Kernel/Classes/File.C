@@ -1,7 +1,11 @@
 #include "dsp/File.h"
 #include "dsp/PseudoFile.h"
-#include "Error.h"
 
+#include "Reference.h"
+#include "Error.h"
+#include "RealTimer.h"
+
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -118,9 +122,15 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
     cerr << "dsp::File::load_bytes nbytes=" << bytes << endl;
 
   ssize_t bytes_read = read (fd, buffer, bytes);
+  
   if (bytes_read < 0)
     perror ("dsp::File::load_bytes read error");
 
+  if( uint64(lseek(fd,0,SEEK_CUR)) == get_info()->get_nbytes()+uint64(header_bytes) )
+    end_of_data = true;
+  else
+    end_of_data = false;
+  
   return bytes_read;
 }
 
@@ -139,8 +149,14 @@ int64 dsp::File::seek_bytes (uint64 bytes)
   int64 retval = lseek (fd, bytes, SEEK_SET);
   if (retval < 0) {
     perror ("dsp::File::seek_bytes lseek error");
+    fprintf(stderr,"Called lseek(%d,"UI64",SEEK_SET)\n",fd,bytes);
     return -1;
   }
+
+  if( uint64(retval) == get_info()->get_nbytes()+uint64(header_bytes) )
+    end_of_data = true;
+  else
+    end_of_data = false;
 
   // return absolute data byte offset from the start of file
   return retval - header_bytes;
