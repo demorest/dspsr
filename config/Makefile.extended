@@ -437,7 +437,7 @@ endif # autodepend == yes
 # place files in them are made.  These should remain last in the file,
 # lest they interfere with $< expansion
 ##########################################################################
-$(DEPS) $(SRC_DEPS): $(LOGIN_ARCH)/.exists
+$(DEPS) $(SRC_DEPS): $(LOGIN_ARCH)/.exists $(DEPEND)
 $(INCS): $(INCDIR)/.exists
 $(SHXS): $(SHXDIR)/.exists
 $(LIBS): $(LIBDIR)/.exists
