@@ -23,7 +23,7 @@ bool dsp::CPSRFile::is_valid (const char* filename)
   PSPM_SEARCH_HEADER* header = pspm_read (fd);
   std::close (fd);
 
-  if (header)
+  if (!header)
     return false;
 
   return true;
@@ -66,8 +66,8 @@ static pspmDbase::server cpsr_hdr;
 
 void dsp::CPSRFile::open (const char* filename)
 {
-  if( verbose )
-    fprintf(stderr,"In CPSRFile::open()\n");
+  if (verbose)
+    cerr << "CPSRFile::open" << endl;
 
   if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
     fprintf (stderr, "CPSRFile:: PSPM header size is invalid.\n");
@@ -217,6 +217,6 @@ void dsp::CPSRFile::open (const char* filename)
   reset();
 
   if (verbose)
-    cerr << "Returning from CPSRFile::open" << endl;
+    cerr << "CPSRFile::open exit" << endl;
 }
 
