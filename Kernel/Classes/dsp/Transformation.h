@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.17 $
-   $Date: 2004/10/25 07:51:56 $
+   $Revision: 1.18 $
+   $Date: 2004/10/26 09:04:34 $
    $Author: hknight $ */
 
 #ifndef __Transformation_h
@@ -175,8 +175,9 @@ namespace dsp {
     void rounding_stuff(dsp::TimeSeries* ts_out);
 
     //! Called after transformation() to allow the prepended data to be seen by the next Transformation
-    void deprepend_data(dsp::TimeSeries* ts_out,int64 samples_seeked,
-			double time_in, double rate_in, double time_surplus);
+    void deprepend_data(dsp::TimeSeries* ts_out,int64 samples_prepended,
+			double time_in, double rate_in, double time_surplus,
+			bool seeked_data_being_saved);
 
     //! Seeks over any samples that have already been processed
     //! Returns how many samples were seeked over
@@ -259,17 +260,21 @@ bool dsp::Transformation<In,Out>::can_operate() {
 
 //! Prints a string used by Haydon for debugging
 template <class In, class Out>
-void dsp::Transformation<In,Out>::debug_print(dsp::Observation* ts_in,string str,bool want_print){
-  if( !want_print || !ts_in )
+void dsp::Transformation<In,Out>::debug_print(dsp::Observation* obs_in,string str,bool want_print){
+  if( !want_print || !obs_in )
     return;
   if( verbose ){
     MJD st = MJD("52644.180875615555578");
     fprintf(stderr,"TRANS (%s): At %s.  Input start (%s) is at %f samples past start MJD; ndat="UI64"\n",
 	    str.c_str(),
 	    get_name().c_str(),
-	    ts_in->get_start_time().printdays(15).c_str(),
-	    (ts_in->get_start_time()-st).in_seconds()*ts_in->get_rate(),
-	    ts_in->get_ndat());
+	    obs_in->get_start_time().printdays(15).c_str(),
+	    (obs_in->get_start_time()-st).in_seconds()*obs_in->get_rate(),
+	    obs_in->get_ndat());
+    TimeSeries* ts_in = dynamic_cast<TimeSeries*>(obs_in);
+    if( ts_in )
+      fprintf(stderr,"TRANS (%s): At %s.  samps_offset="I64"\n",
+	      str.c_str(),get_name().c_str(),ts_in->get_samps_offset());
   }
 }
 
@@ -342,14 +347,16 @@ void dsp::Transformation<In,Out>::rounding_stuff(dsp::TimeSeries* ts_out){
 
 //! Called after transformation() to allow the prepended data to be seen by the next Transformation
 template <class In, class Out>
-void dsp::Transformation<In,Out>::deprepend_data(dsp::TimeSeries* ts_out,int64 samples_seeked,double time_in,double rate_in,double time_surplus){
+void dsp::Transformation<In,Out>::deprepend_data(dsp::TimeSeries* ts_out,int64 samples_prepended,double time_in,
+						 double rate_in,double time_surplus, bool seeked_data_being_saved){
   if( !ts_out )
     return;
   
-  if( samples_seeked > 0 )
-    ts_out->seek( -samples_seeked );
-  
-  ts_out->set_preserve_seeked_data( false );
+  if( samples_prepended > 0 )
+    ts_out->seek( -samples_prepended );
+
+  if( seeked_data_being_saved )
+    ts_out->set_preserve_seeked_data( false );
   
   double time_out = ts_out->get_duration();
   if( verbose )
@@ -380,7 +387,7 @@ int64 dsp::Transformation<In,Out>::seek_over_surplus_samps(){
   if( samps_surplus != 0 ){
     if( verbose ){
       MJD st = MJD("52644.180875615555578");    
-      fprintf(stderr,"dsp::Transformation::seek_over_surplus_samps() (%s) eopd=%f ts_in->st=%f seeking over %f seconds or "I64" surplus samps\n",
+      fprintf(stderr,"TRANS::seek_over_surplus_samps() (%s) eopd=%f ts_in->st=%f seeking over %f seconds or "I64" surplus samps\n",
 	      get_name().c_str(),
 	      (end_of_processed_data-st).in_seconds(),
 	      (ts_in->get_start_time()-st).in_seconds(),
@@ -430,7 +437,7 @@ void dsp::Transformation<In, Out>::operation ()
 {
   dsp::Observation* obs_in = (dsp::Observation*)dynamic_cast<const dsp::Observation*>(get_input());
 
-  debug_print(obs_in,"start of operation",true);
+  debug_print(obs_in,"start of operation",verbose);
 
   checks();
 
@@ -449,16 +456,17 @@ void dsp::Transformation<In, Out>::operation ()
 
   int64 surplus_samples = seek_over_surplus_samps();
 
-  debug_print(obs_in,"before transformation",false);
+  debug_print(obs_in,"before transformation",verbose);
   transformation ();
-  debug_print(ts_out,"after transformation",false);
+  debug_print(ts_out,"after transformation",verbose);
 
   seek_back_over_surplus_samps(surplus_samples);
 
   rounding_stuff(ts_out);
 
   deprepend_data(ts_out,samples_prepended,time_in,rate_in,
-		 double(surplus_samples)/rate_in);
+		 double(surplus_samples)/rate_in,
+		 samples_prepended!=0);
 
   workout_end_of_processed_data(input_start_time,double(samples_prepended)/rate_in,
 				double(surplus_samples)/rate_in);
@@ -472,7 +480,7 @@ void dsp::Transformation<In, Out>::operation ()
 
   set_valid_data_is_saved();
 
-  debug_print(ts_out,"end of operation()",true);
+  debug_print(ts_out,"end of operation()",verbose);
 }
 
 //! Does all the swap buffer stuff
@@ -495,6 +503,9 @@ void dsp::Transformation<In,Out>::swap_buffer_stuff(){
 //! Prepends the output buffer with the saved data
 template <class In, class Out>
 uint64 dsp::Transformation<In, Out>::prepend_data(dsp::TimeSeries* ts_out){
+  if( verbose )
+    fprintf(stderr,"TRANS: (%s) entered prepend_data()\n",get_name().c_str());
+
   if( !ts_out )
     throw Error(InvalidState,"dsp::Transformation::prepend_data()",
 		"BUG!  Valid data is saved, but the output is not a TimeSeries!");
@@ -507,7 +518,7 @@ uint64 dsp::Transformation<In, Out>::prepend_data(dsp::TimeSeries* ts_out){
 		typeid(saved_data.ptr()).name(),get_name().c_str());
   
   ts_out->operator=( *sd );
- 
+
   uint64 samples_seeked = ts_out->get_ndat();    
   ts_out->seek( ts_out->get_ndat() );
   
@@ -668,23 +679,13 @@ void dsp::Transformation<In, Out>::prepend_output(dsp::TimeSeries* ts_out){
     return;
   }   
 
-  //  fprintf(stderr,"TRANS 1. output ndat="UI64" sd ndat="UI64" sd subsize_samples="UI64"\n",
-  //  ts_out->get_ndat(),
-  //  sd->get_ndat(),
-  //  sd->subsize_samples());
-  
-  if( sd->subsize_samples() < sd->get_ndat() + ts_out->get_ndat() ){
+  if( sd->maximum_ndat() < sd->get_ndat() + ts_out->get_ndat() ){
     Reference::To<dsp::TimeSeries> temp(new dsp::TimeSeries);
     temp->Observation::operator=( *sd );
     temp->resize( sd->get_ndat() + ts_out->get_ndat() );
     temp->set_ndat( 0 );
     temp->append( sd );
     temp->swap_data( *sd );
-    
-    //    fprintf(stderr,"TRANS 2. output ndat="UI64" sd ndat="UI64" sd subsize_samples="UI64"\n",
-    //    ts_out->get_ndat(),
-    //    sd->get_ndat(),
-    //    sd->subsize_samples());
   }
   sd->append( ts_out );
   //  fprintf(stderr,"TRANS 3. output ndat="UI64" sd ndat="UI64"\n",
