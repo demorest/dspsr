@@ -8,6 +8,8 @@
 dsp::Accumulator::Accumulator() : Transformation<TimeSeries,TimeSeries>("Accumulator",outofplace) {
   append = false;
   max_samps = 0;
+  max_ndat = 0;
+  never_drop_samples = false;
 }
 
 //! Virtual destructor
@@ -29,11 +31,48 @@ void dsp::Accumulator::transformation(){
     output->Observation::operator=( *input );
     fprintf(stderr,"accumulator resizing output to have "UI64" samps\n",
 	    max_samps);
-    output->resize( max_samps );
+    if( max_ndat > max_samps )
+      output->resize( max_ndat );
+    else
+      output->resize( max_samps );
     output->set_ndat(0);
     append = true;
   }
 
-  output->append( input );
+  if( get_output()->get_ndat() + get_input()->get_ndat() > get_output()->maximum_ndat() ){
+    fprintf(stderr,"\nARRRGGHH dsp::Accumulator::transformation(): this append of "UI64" samps will bring output ndat from "UI64" to "UI64" samps but it only has room for "UI64" samps!\n\n",
+	    get_input()->get_ndat(),
+	    get_output()->get_ndat(),
+	    get_input()->get_ndat() + get_output()->get_ndat(),
+	    get_output()->maximum_ndat());
+    
+    if( never_drop_samples ){
+      fprintf(stderr,"\nWARNING: dsp::Accumulator::transformation(): never_drop_samples=true so accomodating\n\n");
+    
+      Reference::To<dsp::TimeSeries> dummy(new dsp::TimeSeries);
+      dummy->copy_configuration( get_output() ); 
+      dummy->resize( get_output()->get_ndat() + get_input()->get_ndat() );
+      dummy->set_ndat( 0 );
+      dummy->append( get_output() );
+      dummy->append( get_input() );
+
+      get_output()->swap_data( *dummy );
+      return;
+    }
+    
+    throw Error(InvalidState,"dsp::Accumulator::transformation()",
+		"This method throws an Error in this situation.  If this is a problem you may like to recode it.  If you are running 'reducer' you may wish to use --dumpsize_buffer to increase the capacity of your Accumulator, or your dumpsize may be a silly number");
+  }
+
+  get_output()->append( input );
+}
+
+//! Returns true if its time to write out the buffer
+bool dsp::Accumulator::full(){
+  if( !has_output() )
+    throw Error(InvalidState,"dsp::Accumulator::full()",
+		"Your output is null so inquiring whether or not it is full is not really a valid question");
+
+  return get_output()->get_ndat() >= max_samps;
 }
 

@@ -21,13 +21,28 @@ namespace dsp {
     virtual ~Accumulator();
 
     //! Reset the output
-    void reset();
+    virtual void reset();
 
-    //! Set the output max_samps (maximum ndat)
+    //! Set the output max_samps (ndat at which full() returns true)
     void set_max_samps(uint64 _max_samps){ max_samps = _max_samps; }
 
-    //! Inquire the output max_samps (maximum ndat)
+    //! Inquire the output max_samps (ndat at which full() returns true)
     uint64 get_max_samps(){ return max_samps; }
+
+    //! Returns true if its time to write out the buffer
+    virtual bool full();
+
+    //! Set the maximum size of the output buffer in samples [max_samps]
+    void set_max_ndat(uint64 _max_ndat){ max_ndat = _max_ndat; }
+
+    //! Inquire the maximum size of the output buffer in samples [0 meaning max_samps]
+    uint64 get_max_ndat(){ return max_ndat; }
+
+    //! Choose whether to guarantee to never drop a sample
+    void set_never_drop_samples(bool _never_drop_samples){ never_drop_samples = _never_drop_samples; }
+
+    //! Inquire whether it is guaranteed that you'll never drop a sample
+    bool get_never_drop_samples(){ return never_drop_samples; }
 
   protected:
 
@@ -39,8 +54,19 @@ namespace dsp {
     //! Set to true on reset
     bool append;
 
-    //! The maximum ndat of the output
+    //! If this is set to true, the Accumulator is guaranteed to never drop a sample
+    //! However, you run the risk of slow running and using lots of RAM [false]
+    bool never_drop_samples;
+
+    //! The ndat at which full() returns true
     uint64 max_samps;
+
+    //! The maximum size of the output buffer in samples [max_samps]
+    //! If calls to operate() go above this limit one of 3 things can happen:
+    //! (a) an Error is thrown (default)
+    //! (b) the output buffer is expanded to encompass the append (never_drop_samples==true)
+    //! (c) Samples are dropped
+    uint64 max_ndat;
 
   };
 
