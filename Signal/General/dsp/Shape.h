@@ -1,15 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/09/17 11:17:51 $
+   $Revision: 1.3 $
+   $Date: 2002/11/11 11:57:27 $
    $Author: wvanstra $ */
 
 #ifndef __Shape_h
 #define __Shape_h
 
 #ifdef MPI
-#include "mpi.h"
+#include <mpi.h>
 #endif
 
 #include "ReferenceAble.h"
