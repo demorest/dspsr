@@ -221,7 +221,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   bool has_position;
 
   has_position = (str2ra  (&ra,  &header[78]) == 0);
-  has_position = (str2dec (&dec, &header[94]) == 0);
+  has_position = (str2dec2 (&dec, &header[94]) == 0);
 
   if (!has_position) {
     ra = dec = 0.0;

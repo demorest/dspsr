@@ -243,7 +243,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   }
 
   if (has_position){
-    has_position = (str2dec (&dec, hdrstr) == 0);
+    has_position = (str2dec2 (&dec, hdrstr) == 0);
     //fprintf(stderr,"4 has_position=%d dec=%f\n",has_position,dec);
   }
 
