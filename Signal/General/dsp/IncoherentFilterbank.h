@@ -24,8 +24,6 @@ NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces
 
 namespace dsp{
 
-  //  NOTE: This transformation DESTROYS your input data
-
   class IncoherentFilterbank : public Transformation<TimeSeries,TimeSeries>{
 
   public:
@@ -64,6 +62,12 @@ namespace dsp{
     
     //! Set loop unroll level for forming incoherent filterbank
     void set_unroll_level(unsigned _unroll_level){ unroll_level = _unroll_level; }
+
+    //! Inquire whether input can be destroyed upon call to operate()
+    bool get_destroy_input(){ return destroy_input; }
+    
+    //! Set whether input can be destroyed upon call to operate()
+    void set_destroy_input(bool _destroy_input){ destroy_input = _destroy_input; }
 
   protected:
 
@@ -106,8 +110,13 @@ namespace dsp{
     //! Loop unroll level for forming undetected filterbank
     unsigned unroll_level;
 
+    //! If set to true, the input data array may be destroyed on the call to operation()
+    bool destroy_input;
+
   };
 
 }
 
 #endif
+
+

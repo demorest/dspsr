@@ -25,6 +25,7 @@ dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,T
   unroll_level = 16;
 
   wsave_size = 0;
+  destroy_input = false;
 }
 
 dsp::IncoherentFilterbank::~IncoherentFilterbank(){ free_plan(); }
@@ -136,13 +137,24 @@ void dsp::IncoherentFilterbank::form_stokesI(){
 
   const size_t n_memcpy = nsamp_fft*sizeof(float);
 
+  if( verbose )
+    fprintf(stderr,"dsp::IncoherentFilterbank::form_stokesI() nsamp_fft=%d npart=%d n_memcpy=%d\n",
+	    nsamp_fft,npart,n_memcpy);
+
   auto_ptr<float> scratch0(new float[nsamp_fft+2]);
   auto_ptr<float> scratch1(new float[nsamp_fft+2]);
   
   const float* in0 = input->get_datptr(0,0);
   const float* in1 = input->get_datptr(0,1);
   
-  register float* det = (float*)in0;
+  float* big_scratch = (float*)in0;
+  if( !destroy_input ) 
+    big_scratch = new float[nchan*npart];
+   
+  register float* det = big_scratch;
+
+  fprintf(stderr,"Have allocated 2 small scratch buffers, big_scratch=%p input->get_datptr(0,0)=%p\n",
+	  big_scratch,input->get_datptr(0,0));
 
   fft_loop_timer.start();
   for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
@@ -170,23 +182,30 @@ void dsp::IncoherentFilterbank::form_stokesI(){
   }
   fft_loop_timer.stop();
 
+  fprintf(stderr,"Finished FFTing and detecting stage... going to repack\n");
+
   // (4) Convert the BitSeries to a TimeSeries in output's data array 
-  register const unsigned from_stride = nchan;
-  
   conversion_timer.start();
   for( unsigned ichan=0; ichan<nchan; ++ichan){
     register float* to = output->get_datptr(ichan,0);
-    register const float* from = in0+ichan;
+    register const float* from = big_scratch+ichan;
     register unsigned i=0;
     
-    for( int ipart=0; ipart<npart; ++ipart, i += from_stride )
+    for( int ipart=0; ipart<npart; ++ipart, i += nchan )
       to[ipart] = from[i];
   }
   conversion_timer.stop();
 
+  if( !destroy_input )
+    delete [] big_scratch;
+
+  if( verbose ) fprintf(stderr,"Returning from form_stokesI()\n");
+
 }
 
 void dsp::IncoherentFilterbank::form_PPQQ(){
+  if( verbose ) fprintf(stderr,"In form_PPQQ()\n");
+
   // Number of floats in the forward FFT
   const int nsamp_fft = nchan * 2/input->get_ndim();
 
@@ -200,12 +219,15 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
 
   for( unsigned ipol=0; ipol<2; ipol++){  
     const float* in = input->get_datptr(0,ipol);
+
+    float* big_scratch = (float*)input->get_datptr(0,ipol);
+    if( !destroy_input )
+      big_scratch = new float[nchan*npart]; 
     
-    register float* det = (float*)in;
-    register const unsigned det_stride = nchan;
+    register float* det = big_scratch;
 
     fft_loop_timer.start();
-    for( int ipart=0; ipart<npart; ++ipart, det+=det_stride ){
+    for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
       // (1) memcpy to scratch	
       memcpy(scratch.get(),in+ipart*stride,n_memcpy);
       // (2) FFT	
@@ -223,23 +245,28 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
     fft_loop_timer.stop();
 
     // (4) Convert the BitSeries to a TimeSeries in output's data array 
-    register const unsigned from_stride = nchan;
-    
     conversion_timer.start();
     for( unsigned ichan=0; ichan<nchan; ++ichan){
       register float* to = output->get_datptr(ichan,ipol);
-      register const float* from = in+ichan;
+      register const float* from = big_scratch+ichan;
       register unsigned i = 0;
       
-      for( int ipart=0; ipart<npart; ++ipart, i += from_stride )
+      for( int ipart=0; ipart<npart; ++ipart, i += nchan )
 	to[ipart] = from[i];
     }
     conversion_timer.stop();
+
+    if( !destroy_input )
+      delete [] big_scratch;
   }    
+
+  if( verbose ) fprintf(stderr,"Returning from form_PPQQ()\n");
 
 }
 
 void dsp::IncoherentFilterbank::form_undetected(){
+  if( verbose ) fprintf(stderr,"In form_undetected()\n");
+
   // Number of floats in the forward FFT
   const int nsamp_fft = nchan * 2/input->get_ndim();
 
@@ -298,6 +325,7 @@ void dsp::IncoherentFilterbank::form_undetected(){
 
   }
 
+  if( verbose ) fprintf(stderr,"Returning from form_undetected()\n");
 }
 
 void dsp::IncoherentFilterbank::acquire_plan(){
