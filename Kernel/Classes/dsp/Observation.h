@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Observation.h,v $
-   $Revision: 1.52 $
-   $Date: 2003/06/11 10:25:07 $
-   $Author: wvanstra $ */
+   $Revision: 1.53 $
+   $Date: 2003/06/26 03:22:27 $
+   $Author: hknight $ */
 
 #ifndef __Observation_h
 #define __Observation_h
@@ -214,6 +214,7 @@ namespace dsp {
     string get_mode () const { return mode; }
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
+    //! Also, H_BandPass sets this as bandpass
     string get_domain() const { return domain; }
 
     //! Whether data is in 'Time' or 'Fourier' domain 
@@ -254,7 +255,7 @@ namespace dsp {
 
     //! Return the end time of the trailing edge of the last time sample
     virtual MJD get_end_time () const
-    { return start_time + double(ndat + 1) / rate; }
+    { return start_time + double(ndat) / rate; }
 
     //! Multiply scale by factor
     void rescale (double factor) { scale *= factor; }
@@ -287,7 +288,7 @@ namespace dsp {
     bool combinable (const Observation& obs, bool different_bands=false) const;
 
     //! Return true if the first sample of next follows the last sample of this
-    bool contiguous (const Observation& next) const;
+    bool contiguous (const Observation& next, bool verbose_on_failure=true) const;
 
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();

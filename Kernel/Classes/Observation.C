@@ -157,53 +157,9 @@ void dsp::Observation::set_state (Signal::State _state)
 */
 bool dsp::Observation::state_is_valid (string& reason) const
 {
-  switch (state) {
-  case Signal::Nyquist:
-    if (ndim != 1)  {
-      reason = "state=" + get_state_as_string() + " and ndim!=1";
-      return false;
-    }
-    break;
-
-  case Signal::Analytic:
-    if (ndim != 2) {
-      reason = "state=" + get_state_as_string() + " and ndim!=2";
-      return false;
-    }
-    break;
-
-  case Signal::Invariant:
-  case Signal::Intensity:
-    if (npol != 1) {
-      reason = "state=" + get_state_as_string() + " and npol!=1";
-      return false;
-    }
-    break;
-
-  case Signal::PPQQ:
-    if (npol != 2) {
-      reason = "state=" + get_state_as_string() + " and npol!=2";
-      return false;
-    }
-    break;
-
-  case Signal::Coherence:
-  case Signal::Stokes:
-    if (ndim*npol != 4) {
-      reason = "state=" + get_state_as_string() + " and ndim*npol!=4";
-      return false;
-    }
-    break;
-
-  default:
-    reason = "unknown state";
-    return false;
-  }
-
-  return true;
+  return Signal::valid_state(get_state(),get_ndim(),get_npol(),reason);
 }
-
-
+  
 bool dsp::Observation::get_detected () const
 {
   return (state != Signal::Nyquist && state != Signal::Analytic);
@@ -303,7 +259,7 @@ bool dsp::Observation::combinable (const Observation & obs, bool different_bands
     can_combine = false;
   }
   
-  if( fabs(scale-obs.scale) > eps ) {
+  if( fabs(scale-obs.scale) > eps*fabs(scale) ) {
     if (verbose)
       cerr << "dsp::Observation::combinable different scale:"
 	   << scale << " and " << obs.scale << endl;
@@ -383,7 +339,7 @@ bool dsp::Observation::combinable (const Observation & obs, bool different_bands
   return can_combine;
 }
 
-bool dsp::Observation::contiguous (const Observation & obs) const
+bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_failure) const
 {
   if( verbose )
     fprintf(stderr,"In dsp::Observation::contiguous() with this=%p and obs=%p\n",
@@ -394,13 +350,13 @@ bool dsp::Observation::contiguous (const Observation & obs) const
   if( verbose ){
     fprintf(stderr,"Got difference=%f seconds and rate=%f\n",
 	    difference,rate);
-    fprintf(stderr,"(difference-1.0/rate)=%f   0.9/rate=%f\n",
-	    (difference-1.0/rate),0.9/rate);
+    fprintf(stderr,"difference=%f   0.9/rate=%f\n",
+	    difference,0.9/rate);
   }
 
-  bool ret = ( combinable(obs) && (difference-1.0/rate) < 0.9/rate );
+  bool ret = ( combinable(obs) && difference < 0.9/rate );
 
-  if ( !ret ) {
+  if ( !ret && verbose_on_failure ) {
     fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
     fprintf(stderr,"combinable(obs)=%d\n",combinable(obs));
     fprintf(stderr,"get_start_time().in_seconds()    =%f\n",
