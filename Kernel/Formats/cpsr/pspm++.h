@@ -1,6 +1,6 @@
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspm++.h,v $
-   $Revision: 1.4 $
-   $Date: 2001/07/31 09:31:56 $
+   $Revision: 1.5 $
+   $Date: 2002/05/25 10:16:54 $
    $Author: wvanstra $ */
 
 #ifndef __PSPM_H
@@ -14,7 +14,16 @@
 #define cpsr 1
 #include "pspm_search_header.h"
 
-// these function return some parameter that must be derived from the
+/*
+ * CPSR Sideband modes copied from pspm.h
+ */
+#define UNKNOWN_SIDEBAND        0
+#define SSB_LOWER               1
+#define SSB_UPPER               2
+#define DSB_SKYFREQ             3
+#define DSB_REVERSED            4
+
+// these functions return some parameters that must be derived from the
 // fields in a PSPM_SEARCH_HEADER struct.  Most others are trivially
 // obtained directly from the fields
 
