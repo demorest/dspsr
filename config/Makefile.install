@@ -1,0 +1,57 @@
+##########################################################################
+#
+# Special handling of the MAKECMDGOALS macro is performed during
+# 'make install' ...  so it gets its own Makefile.install.
+# This file works with Makefile.extended and doesn't do much on its own
+#
+##########################################################################
+
+##########################################################################
+# strip out 'install' and set the default list of things to install
+INSTALL_TARGETS := ${strip ${filter-out install,$(MAKECMDGOALS)}}
+install_LIBS:=$(LIBRARIES)
+install_BINS:=$(EXECUTABLES)
+install_INCS:=$(INCLUDES)
+
+ifneq ($(INSTALL_TARGETS),)
+
+##########################################################################
+# A target was specified, as in 'make install blah'...  set the list
+# of things to install accordingly
+install_LIBS:=${strip ${filter %.a,$(INSTALL_TARGETS)}}
+install_INCS:=${strip ${filter %.h %.inc,$(INSTALL_TARGETS)}}
+not_BINS:= libs include $(install_LIBS) $(install_INCS)
+install_BINS:=${strip ${filter-out $(not_BINS),$(INSTALL_TARGETS)}}
+
+##########################################################################
+# Check for 'make install libs'
+install_libs_yes := ${strip ${filter libs,$(INSTALL_TARGETS)}}
+ifeq ($(install_libs_yes),libs)
+install_LIBS:=$(LIBRARIES)
+endif
+
+##########################################################################
+# Check for 'make install include'
+install_incs_yes := ${strip ${filter include,$(INSTALL_TARGETS)}}
+ifeq ($(install_incs_yes),include)
+install_INCS:=$(INCLUDES)
+endif
+
+##########################################################################
+# this simple rule ensures that the rest of the targets in MAKECMDGOALS
+# are effectively ignored.
+$(INSTALL_TARGETS):
+	@echo nothing > /dev/null
+
+endif
+
+INSTALL_LIBS:=${install_LIBS:%=$(INSTALL_LIBDIR)/%}
+INSTALL_BINS:=${install_BINS:%=$(INSTALL_BINDIR)/%}
+INSTALL_INCS:=${install_INCS:%=$(INSTALL_INCDIR)/%}
+
+##########################################################################
+# ensure that make knows where to install
+ifeq (${strip ${PSRHOME}},)
+ERROR:=environment variable PSRHOME is not defined
+endif
+

@@ -1,0 +1,74 @@
+##########################################################################
+# the standard Makefile 
+##########################################################################
+
+##########################################################################
+# the standard targets
+##########################################################################
+TARGETS := include depend libs all install clean veryclean
+
+##########################################################################
+# the standard macro definitions
+##########################################################################
+INSTALL_BINDIR := ${PSRHOME}/bin/${LOGIN_ARCH}
+INSTALL_LIBDIR := ${PSRHOME}/lib/${LOGIN_ARCH}
+INSTALL_INCDIR := ${PSRHOME}/include
+
+BINDIR := ${LOCAL_ROOT}/bin/${LOGIN_ARCH}
+LIBDIR := ${LOCAL_ROOT}/lib/${LOGIN_ARCH}
+INCDIR := ${LOCAL_ROOT}/include
+
+INCFLAGS= -I. -I${INCDIR} -I${INSTALL_INCDIR} -I${PSRPKGS}/include \
+	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
+
+LDFLAGS = -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
+
+ifneq (${PSREXPORT},1)
+LDFLAGS += -L${INSTALL_LIBDIR}
+endif
+
+MDFLAGS = -D__cplusplus
+AR      = ar
+RANLIB  = ranlib
+ARFLAGS = crv
+RM    = rm -f
+AWK   = awk
+GREP  = grep
+QTMOC = moc
+MAKEDEPEND = makedepend -f 
+
+##########################################################################
+# package-specific macro definitions
+##########################################################################
+
+##########################################################################
+# MPI
+IMPI = -I${PSRPKGS}/src/mpich/include
+LMPI = define LMPI in Makefile.${LOGIN_ARCH}
+
+##########################################################################
+# GTK-- :: enabled only when environment variable is "yes"
+ifeq ($(PSRGTKMM),yes)
+GTKMM_CCFLAGS := ${shell ${PSRPKGS}/${LOGIN_ARCH}/bin/gtkmm-config --cflags}
+LGTKMM := ${shell ${PSRPKGS}/${LOGIN_ARCH}/bin/gtkmm-config --libs}
+endif
+
+##########################################################################
+# Qt
+IQT := -I${PSRPKGS}/${LOGIN_ARCH}/qt/include
+LQT := -L${PSRPKGS}/${LOGIN_ARCH}/qt/lib -lqt
+
+##########################################################################
+# SLA LIB
+LSLA := -lsla
+
+##########################################################################
+# OS-specific
+##########################################################################
+
+ifeq (${strip ${LOGIN_ARCH}},)
+ERROR:=environment variable LOGIN_ARCH is not defined
+else
+include ${LOCAL_ROOT}/include/Makefile.${LOGIN_ARCH}
+endif
+
