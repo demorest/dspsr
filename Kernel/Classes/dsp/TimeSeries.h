@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.6 $
-   $Date: 2002/12/04 01:11:00 $
-   $Author: hknight $ */
+   $Revision: 1.7 $
+   $Date: 2003/01/08 13:41:03 $
+   $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -95,7 +95,7 @@ namespace dsp {
 
   protected:
     //! The data buffer
-    auto_ptr<float> data;
+    float* data;
 
     //! The number of floats of the data buffer 
     uint64 size;

@@ -12,15 +12,12 @@ dsp::TimeSeries::TimeSeries()
 {
   size = 0;
   subsize = 0;
-  nbit = 32;
+  nbit = 8 * sizeof(float);
 }
 
-dsp::TimeSeries::~TimeSeries(){
-  if (data.get()){
-    sink(data);
-    auto_ptr<float> temp;
-    data = temp;
-  }
+dsp::TimeSeries::~TimeSeries()
+{
+  if (data) delete [] data; data = 0;
   size = 0;
   subsize = 0;
 }
@@ -28,9 +25,7 @@ dsp::TimeSeries::~TimeSeries(){
 void dsp::TimeSeries::set_nbit (unsigned _nbit)
 {
   if (verbose)
-    cerr << "dsp::TimeSeries::set_nbit ignored" << endl;
-  //fprintf(stderr,"\nnbit was going to change: %d->%d (this=%p)\n",
-  //  nbit,_nbit,this);
+    cerr << "dsp::TimeSeries::set_nbit (" << _nbit << ") ignored" << endl;
 }
 
 //! Allocate the space required to store nsamples time samples.
@@ -57,57 +52,34 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     cerr << "dsp::TimeSeries::resize() has got require="<<require<<endl;
 
   if (!require || require > size) {
-    if (data.get()){
-      sink(data);
-      auto_ptr<float> temp;
-      data = temp;
-    }
+    if (data) delete data; data = 0;
     size = subsize = 0;
   }
 
-  //cerr << "hi1\n";
-
   ndat = nsamples;
-
-  //cerr << "hi2\n";
 
   if (!require)
     return;
 
-  //cerr << "hi3\n";
-
   if (size == 0) {
-    //    fsleep(5.0);
-    //cerr << "hi3.1 with require="<<require<<"\n";
-    //float* blab = new float[38];
-    //cerr << "hi3.1.1\n";
-    auto_ptr<float> temp(new float[require]);
-    //cerr << "hi3.2\n";
-    data = temp;
-    //cerr << "hi3.3\n";
+    data = new float[require];
     size = require;
-    //cerr << "hi3.4\n";
-    //cerr << "blab="<<blab<<endl;
   }
 
-  //cerr << "hi4\n";
-
   subsize = ndim * nsamples;
-
-  //cerr << "hi5\n";
 }
 
 //! Return pointer to the specified data block
 float* dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol)
 {
-  return data.get() + (ichan * npol + ipol) * subsize;
+  return data + (ichan * npol + ipol) * subsize;
 }
 
 //! Return pointer to the specified data block
 const float*
 dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
 {
-  return data.get() + (ichan * npol + ipol) * subsize;
+  return data + (ichan * npol + ipol) * subsize;
 }
 
 
@@ -256,8 +228,8 @@ void dsp::TimeSeries::attach(auto_ptr<float> _data){
     throw Error(InvalidState,"dsp::TimeSeries::attach()",
 		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
 
-  sink(data);
-  data = _data;
+  if (data) delete [] data;
+  data = _data.get();
 }
 
 bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){
