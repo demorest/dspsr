@@ -16,6 +16,8 @@
 
 #include "Error.h"
 
+#include <assert.h>
+
 bool dsp::Archiver::verbose = false;
 
 dsp::Archiver::Archiver ()
