@@ -142,7 +142,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // OFFSET
   //
-  uint64 offset_bytes = 0;
+  offset_bytes = 0;
   if (ascii_header_get (header, "OFFSET", UI64, &offset_bytes) < 0)
     throw_str ("CPSR2_Observation - failed read OFFSET");
 

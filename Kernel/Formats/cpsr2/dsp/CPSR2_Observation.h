@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.2 $
-   $Date: 2002/08/15 07:07:54 $
+   $Revision: 1.3 $
+   $Date: 2002/08/15 09:04:30 $
    $Author: wvanstra $ */
 
 #ifndef __CPSR2_Observation_h
@@ -25,6 +25,8 @@ namespace dsp {
     //! Construct from a CPSR2 ASCII header block
     CPSR2_Observation (const char* header=0);
 
+    //! Number of bytes offset from the beginning of acquisition
+    uint64 offset_bytes;
   };
   
 }
