@@ -91,8 +91,8 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, int nbin,
 
   if (verbose)
     cerr << "PhaseSeries::mixable"
-         << "\n obs start=" << obs.get_start_time() 
-	 << "\n cur start=" << obsStart << endl;
+         << "\n  mix->start=" << obsStart
+	 << "\n this->start=" << get_start_time() << endl;
 
   MJD obsEnd;
 
