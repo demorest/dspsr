@@ -47,7 +47,7 @@ SWINBURNE_REPOSITORY = mania.physics.swin.edu.au:/psr/cvsroot
 
 ##########################################################################
 # MPI
-LMPI = -lmpich
+LMPI = -lmpich $(LSOCK)
 
 ##########################################################################
 # FFTW and pulsar group wrappers
