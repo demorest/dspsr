@@ -16,8 +16,12 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
-  if( data->get_archive_filename() != string() )
+
+  if( data->get_archive_filename() != string() ){
+    fprintf(stderr,"dsp::PhaseSeriesUnloader::get_filename() got archive_filename as '%s'- calling make_unique()\n",
+	      data->get_archive_filename().c_str());
     return make_unique(data->get_archive_filename(),"",data);
+  }
 
   string filename;
   string fname_extension = filename_extension;
@@ -25,10 +29,10 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
   if( data->get_archive_filename_extension() != string() )
     fname_extension = data->get_archive_filename_extension();
 
-  if ( filename_pattern.empty() )
+  if ( filename_pattern.empty() ){
     filename = data->get_default_id () + fname_extension;
+  }
   else {
-
     char* fname = new char[FILENAME_MAX];
     char* retval = data->get_start_time().datestr ( fname, FILENAME_MAX,
 						    filename_pattern.c_str() );
@@ -44,9 +48,9 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
       throw Error (FailedSys, "dsp::PhaseSeriesUnloader::get_filename",
 		   "error MJD::datestr(" + filename_pattern + ")");
   }
-  
-  fprintf(stderr,"dsp::PhaseSeriesUnloader::get_filename() after second bit filename='%s'\n",
-	  filename.c_str());
+
+  fprintf(stderr,"dsp::PhaseSeriesUnloader::get_filename() returning make_unique on filename of '%s' (fname_extension='%s'\n",
+	  filename.c_str(),fname_extension.c_str());
 
   return make_unique(filename,fname_extension,data);
 }
