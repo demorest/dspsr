@@ -136,6 +136,19 @@ endif
 
 ##############################################################################
 #
+# Uncomment the following line to compile Japanese K5 support
+# 
+#K5:=yes
+
+ifeq ($(K5),yes)
+CPPFLAGS += -D_DSP_K5=1
+BACKENDS += K5
+LBACKENDS += -ldsp_K5
+endif
+
+
+##############################################################################
+#
 # Uncomment the following line to compile VSIB specific code
 #
 # This should not be considered anymore as the better version of smro will be 

@@ -51,6 +51,11 @@ static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
 static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_smro;
 #endif
 
+#if DSP_K5
+#include "dsp/K5File.h"
+static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
+#endif
+
 #if DSP_VSIB
 #include "dsp/VSIBFile.h"
 static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;

@@ -45,6 +45,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::MaximUnpacker> maxim;
 static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection>  smro;
 #endif
 
+#if DSP_K5
+#include "dsp/K5TwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::K5TwoBitCorrection>  k5;
+#endif
+
 #if DSP_VSIB
 #include "dsp/VSIBTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
