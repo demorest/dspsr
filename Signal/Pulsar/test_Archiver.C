@@ -15,7 +15,7 @@
 #include "dirutil.h"
 #include "Error.h"
 
-static char* args = "b:B:n:t:vV";
+static char* args = "b:d:B:n:p:t:vV";
 
 void usage ()
 {
@@ -23,8 +23,10 @@ void usage ()
     "Usage: test_Fold [" << args << "] file1 [file2 ...] \n"
     " -b nbin\n"
     " -B block_size  (in number of time samples)\n"
+    " -d dm          DM to put in archive header [use psrinfo]\n"
     " -t blocks      (stop before the end of the file)\n"
     " -n [1|2|4]     ndim kludge when forming stokes\n"
+    " -p period      Fold at this period in seconds (for search data) [use ephemerides]\n"
        << endl;
 }
 
@@ -42,6 +44,12 @@ int main (int argc, char** argv)
   int blocks = 0;
   int ndim = 4;
   int nbin = 1024;
+
+  bool use_header_dm = false;
+  float header_dm;
+  
+  bool use_fold_period = false;
+  double fold_period;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -65,13 +73,20 @@ int main (int argc, char** argv)
     case 'B':
       block_size = atoi (optarg);
       break;
-
+    case 'd':
+      use_header_dm = true;
+      header_dm = atof(optarg);
+      break;
     case 't':
       blocks = atoi (optarg);
       break;
 
     case 'n':
       ndim = atoi (optarg);
+      break;
+    case 'p':
+      use_fold_period = true;
+      fold_period = atof(optarg);
       break;
 
     default:
@@ -120,6 +135,8 @@ int main (int argc, char** argv)
   dsp::Fold fold;
 
   fold.set_nbin (nbin);
+  if( use_fold_period )
+    fold.set_folding_period( fold_period );
   fold.set_input (&voltages);
   fold.set_output (&profiles);
 
@@ -195,7 +212,10 @@ int main (int argc, char** argv)
 	 << fold.get_total_time() << " seconds" << endl;
 
     archiver.set (&archive, &profiles);
-    archive.set_dispersion_measure(fold.get_pulsar_ephemeris()->get_dm());
+    if( !use_header_dm )
+      archive.set_dispersion_measure(fold.get_pulsar_ephemeris()->get_dm());
+    else
+      archive.set_dispersion_measure( header_dm );
 
     string filename = profiles.get_default_id () + ".ar";
 
