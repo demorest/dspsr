@@ -160,9 +160,10 @@ void dsp::Convolution::operation ()
   output->Observation::operator= (*input);
 
   // valid time samples convolved
-  // if output == input, this should not result in lost data as npart*ngood
-  // should be smaller than input.ndat
-  output->resize (npart * nsamp_good);
+  if (input == output)
+    output->set_ndat (npart * nsamp_good);
+  else
+    output->resize (npart * nsamp_good);
 
   // output data is complex
   // notice that nsamp_good is the number of input time samples.
