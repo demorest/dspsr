@@ -8,6 +8,7 @@
 #include <utility>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 #include <stdio.h>
 #include <cpgplot.h>
@@ -102,7 +103,7 @@ bool dsp::Plotter<DataType>::open_plotwindow(){
 template<class DataType>
 bool dsp::Plotter<DataType>::plot(){
   if(Ready::verbose || Operation::verbose)
-    fprintf(stderr,"In dsp::Plotter::plot()\n");
+    fprintf(stderr,"In dsp::Plotter::plot()\n\n\n\n\n\n\n\n");
 
   if( !EnsureReadiness() ){
     fprintf(stderr,"dsp::Plotter::plot() failed to ensure readiness\n");
@@ -134,7 +135,11 @@ bool dsp::Plotter<DataType>::plot(){
     if( mutated ){
       plot_background();
       for( unsigned iplotdata=0; iplotdata<plotdatas.size(); iplotdata++){
-	set_colour_index(iplotdata);
+	cpgsci(1);
+	//set_colour_index(iplotdata);
+	if( Ready::verbose || Operation::verbose )
+	  fprintf(stderr,"dsp::Plotter::plot() calling plotdatas[%d]->plot()\n",
+		  iplotdata);
 	plotdatas[iplotdata]->plot(params.back());
       }
     }
@@ -176,7 +181,7 @@ bool dsp::Plotter<DataType>::user_input(){
   if(Ready::verbose || Operation::verbose)
     cerr<<"After cpgcurs user_char is '"<<user_char<<"'\n\n";
 
-  if(user_char=='z'){
+  if(user_char=='z' || user_char=='A'){
     if(Ready::verbose || Operation::verbose)
 	cerr<<"Detected a 'z' at x='"<<x<<"' and y='"<<y<<"'\n";
     xref=x;
@@ -260,7 +265,8 @@ bool dsp::Plotter<DataType>::user_input(){
   
     plot_background();
     for( unsigned iplotdata=0; iplotdata<plotdatas.size(); iplotdata++){
-      set_colour_index(iplotdata);
+      cpgsci(1);
+      //set_colour_index(iplotdata);
       plotdatas[iplotdata]->plot(params.back());
     }
    
@@ -299,6 +305,7 @@ bool dsp::Plotter<DataType>::plot_background(){
   
   plot::PlotParams* last_params = &params.back();
 
+  /*
   // Draw lower 'reminder' boxes
   cpgsvp (0.0, 1.0, 0.1, 0.2);
   cpgswin(0.0, 10.0, 0.0, 1.0);
@@ -341,9 +348,12 @@ bool dsp::Plotter<DataType>::plot_background(){
   cpgdraw(9.0,1.0);
   cpgmtxt("B",-3.0,0.95,0.5,"Ultimate");
   cpgmtxt("B",-1.5,0.95,0.5,"Quit [Q]");
-  
+  */
+
   // Get ready to plot graph
-  cpgsvp (0.2, 0.8, 0.3, 0.9);/*set viewport- XLEFT,XRIGHT,YBOT,YTOP*/
+  //cpgsvp (0.2, 0.8, 0.3, 0.9);/*set viewport- XLEFT,XRIGHT,YBOT,YTOP*/
+  cpgsvp( 0.1,0.9,0.1,0.9);
+
   last_params->do_cpgswin();
   cpgbox("BCNST",0.0,0,"BCNST",0.0,0);
   
@@ -353,6 +363,8 @@ bool dsp::Plotter<DataType>::plot_background(){
     xlabel = "Frequency (Hz)";
   else if( inputs[0]->get_domain()=="Time" && xlabel == "Frequency (Hz)" ) 
     xlabel = "Time (s)";
+
+  title="";
 
   cpglab(xlabel.c_str(),ylabel.c_str(),title.c_str());
 
@@ -383,14 +395,13 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
   if(y<yref){ float tmp=y; y=yref; yref=tmp; }
   
   /* so xref=min & x=max */
-  DataType* newie = NULL;
   int status_to_left,status_to_right,orig_data_status;
 
   for(int dataset=0;dataset< int(plotdatas.size()); dataset++){
-    if( newie ){
-      delete newie; newie = 0;
-    }
-    
+    if(Ready::verbose || Operation::verbose)
+      fprintf(stderr,"Working with dataset %d/%d\n",
+	      dataset+1,plotdatas.size());
+
     orig_data_status = plotdatas[dataset]->get_data_is_good();
 
     /* do the lhs split */
@@ -406,29 +417,41 @@ bool dsp::Plotter<DataType>::highlight(float& x, float& y){
 	    dataset,xref);
 
     // if successful, newie will come out before xpos
-    if( plotdatas[dataset]->split(newie,xref,status_to_left,status_to_right) ){
-      DataType* pooey = new DataType;
-      pooey->operator=( *newie );
-      plotdatas.insert(plotdatas.begin()+dataset,pooey);
+    void* ans = plotdatas[dataset]->split(xref,status_to_left,status_to_right);
+    fprintf(stderr,"Got ans=%p\n",ans);
+    exit(0);
+
+    auto_ptr<DataType> newie( dynamic_cast<DataType*>(plotdatas[dataset]->split(xref,status_to_left,status_to_right)) );
+    fprintf(stderr,"dsp::Plotter::highlight():: out of split with newie.get()=%p\n",newie.get());
+
+    if( newie.get() ){
+      if( Operation::verbose )
+	fprintf(stderr,"Successfully out of plotdatas[%d]->split() with newie=%p\n",dataset,newie.get());
+      plotdatas.insert(plotdatas.begin()+dataset,newie->clone());
       fprintf(stderr,
 	      "highlight:: have inserted newie before dataset %d\n",
 	      dataset);
       dataset++;
     }
+    fprintf(stderr,"yo1\n");
 
     /* do the rhs split */
     status_to_left = plotdatas[dataset]->get_data_is_good();
     status_to_right = orig_data_status;
     
-    if( newie ){
-      delete newie; newie = 0;
+    if( newie.get() ){
+      sink(newie);
+      auto_ptr<DataType> temp;
+      newie = temp;
     }
 
-    fprintf(stderr,"calling split 2nd time with rhs limit=%f\n",x);
-    if( plotdatas[dataset]->split(newie,x,status_to_left,status_to_right) ){
-      DataType* pooey = new DataType;
-      pooey->operator=( *newie );
-      plotdatas.insert(plotdatas.begin()+dataset,pooey);
+    fprintf(stderr,"calling split 2nd time with rhs limit=%f and plotdatas.size()=%d and dataset=%d\n",
+	    x,plotdatas.size(),dataset);
+    auto_ptr<DataType> temp( dynamic_cast<DataType*>(plotdatas[dataset]->split(x,status_to_left,status_to_right)) );
+    newie = temp;
+
+    if( newie.get() ){
+      plotdatas.insert(plotdatas.begin()+dataset,newie->clone());
       fprintf(stderr,"inserted before dataset %d\n",dataset);
       dataset++;
     }

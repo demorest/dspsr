@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.9 $
-   $Date: 2003/02/13 01:35:08 $
+   $Revision: 1.10 $
+   $Date: 2003/03/14 00:59:43 $
    $Author: pulsar $ */
 
 
@@ -26,6 +26,9 @@ namespace dsp {
 
     //! Return a pointer to an possibly identical instance of a CPSR2File
     virtual CPSR2File* clone(bool identical=true);
+
+    //! Set this to 'false' if you don't need to yamasaki verify
+    static bool want_to_yamasaki_verify;
     
   protected:
 
@@ -34,7 +37,6 @@ namespace dsp {
 
     //! Read the CPSR2 ascii header from filename
     static int get_header (char* cpsr2_header, const char* filename);
-
   };
 
 }

@@ -12,6 +12,8 @@
 #include "yamasaki_verify.h"
 #include "genutil.h"
 
+bool dsp::CPSR2File::want_to_yamasaki_verify = true;
+
 dsp::CPSR2File::CPSR2File (const char* filename)
   : File ("CPSR2")
 {
@@ -84,9 +86,10 @@ void dsp::CPSR2File::open_file (const char* filename,PseudoFile* _info)
   
     CPSR2_Observation data (cpsr2_header);
     
-    if (yamasaki_verify (filename, data.offset_bytes, CPSR2_HEADER_SIZE) < 0)
-      throw Error (FailedCall, "dsp::CPSR2File::open_file()",
-		   "yamasaki_verify(%s) failed", filename);
+    if( want_to_yamasaki_verify )
+      if (yamasaki_verify (filename, data.offset_bytes, CPSR2_HEADER_SIZE) < 0)
+	throw Error (FailedCall, "dsp::CPSR2File::open_file()",
+		     "yamasaki_verify(%s) failed", filename);
 
     info = data; 
 

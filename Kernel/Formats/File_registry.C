@@ -32,14 +32,38 @@ dsp::File* dsp::File::create (const char* filename)
     if (verbose) cerr << "File::create with " << registry.size() 
 		      << " registered sub-classes" << endl;
 
-    for (unsigned ichild=0; ichild < registry.size(); ichild++)
+    for (unsigned ichild=0; ichild < registry.size(); ichild++){
+      //fprintf(stderr,"dsp::File::create() trying ichild %d\n",ichild);
       if ( registry[ichild]->is_valid (filename) ) {
+	//fprintf(stderr,"dsp::File::create() successful with ichild %d\n",ichild);
 
 	File* child = registry.create (ichild);
+	if( verbose ){
+	  if( dynamic_cast<CPSR2File*>(child) )
+	    fprintf(stderr,"dsp::File::create() created instance of a CPSR2File\n");
+	  else if( dynamic_cast<CPSRFile*>(child) )
+	    fprintf(stderr,"dsp::File::create() created instance of a CPSRFile\n");
+	  else if( dynamic_cast<PMDAQFile*>(child) )
+	    fprintf(stderr,"dsp::File::create() created instance of a PMDAQFile\n");
+	  else if( dynamic_cast<CoherentFBFile*>(child) )
+	    fprintf(stderr,"dsp::File::create() created instance of a CoherentFBFile\n");
+	  else if( dynamic_cast<BitSeriesFile*>(child) )
+	    fprintf(stderr,"dsp::File::create() created instance of a BitSeriesFile\n");
+	  else if( dynamic_cast<S2File*>(child) )
+	    fprintf(stderr,"dsp::File::create() created instance of a S2File\n");
+	  else
+	    fprintf(stderr,"dsp::File::create() created unknown instantiation!\n");
+	}
+
+	//fprintf(stderr,"dsp::File::create() calling child->open()\n");
 	child-> open( filename );
+	//fprintf(stderr,"dsp::File::create() called child->open().  Returning.\n");
+
 	return child;
 
       }
+    }
+
   } catch (Error& error) {
     throw error += "File::create";
   }
