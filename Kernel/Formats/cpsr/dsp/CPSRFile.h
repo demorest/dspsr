@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2002/09/19 07:59:56 $
+   $Revision: 1.2 $
+   $Date: 2002/10/04 10:37:32 $
    $Author: wvanstra $ */
 
 
@@ -13,11 +13,17 @@
 
 namespace dsp {
 
-  //! Loads Timeseries data from file
+  //! Loads Timeseries data from a CPSR data file
   class CPSRFile : public File 
   {
   public:
-    
+
+    //! Returns true if filename appears to name a valid CPSR file
+    static bool is_valid (const char* filename);
+
+    //! Construct and open file
+    CPSRFile (const char* filename = 0);
+
     //! Open the file
     void open (const char* filename);
     

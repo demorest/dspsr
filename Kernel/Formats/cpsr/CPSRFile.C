@@ -13,6 +13,30 @@
 #include "pspm++.h"
 #include "genutil.h"
 
+
+bool dsp::CPSRFile::is_valid (const char* filename)
+{
+  int fd = std::open (filename, O_RDONLY);
+  if (fd < 0)
+    return false;
+
+  PSPM_SEARCH_HEADER* header = pspm_read (fd);
+  std::close (fd);
+
+  if (header)
+    return false;
+
+  return true;
+}
+
+//! Construct and open file
+dsp::CPSRFile::CPSRFile (const char* filename)
+{ 
+  tapenum = filenum = -1;
+  if (filename)
+    open (filename);
+}
+
 // #define _DEBUG 1
 
 //
@@ -192,7 +216,7 @@ void dsp::CPSRFile::open (const char* filename)
   // set the file pointers
   reset();
 
-  if( verbose )
-    fprintf(stderr,"Returning from CPSRFile::open()\n");
+  if (verbose)
+    cerr << "Returning from CPSRFile::open" << endl;
 }
 
