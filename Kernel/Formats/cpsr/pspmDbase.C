@@ -40,7 +40,6 @@ void pspmDbase::entry::create (void* vhdr)
 #endif
 
   // set the field values
-
   scan      = hdr->scan_num;
   num       = hdr->scan_file_number;
   tape      = hdr->tape_num;
@@ -78,7 +77,7 @@ static char src[32];
 
 void pspmDbase::entry::load (const char* str) 
 {
-  int scan = sscanf (str,
+  int s = sscanf (str,
 		     I32" "I32" "I32" "I32
 		     " %s %s"
 		     " %lf %lf %lf"
@@ -88,7 +87,7 @@ void pspmDbase::entry::load (const char* str)
 		     &frequency, &bandwidth, &tsamp,
 		     &ttelid, &ndigchan, &nbit, &ndat);
 
-  if (scan != 13)
+  if (s != 13)
     throw_str ("pspmDbase::entry::load error parsing '%s'", str);
 
   start.Construct(mjdstr);
@@ -98,15 +97,16 @@ void pspmDbase::entry::load (const char* str)
 // unload ascii string
 void pspmDbase::entry::unload (string& str)
 {
-  int scan = sprintf (buffer,
+  strcpy (mjdstr, start.printdays(15).c_str());
+  int s = sprintf (buffer, 
 		      I32" "I32" "I32" "I32
 		      " %s %s"
 		      " %lf %lf %lf"
 		      " %d %d %d "I64,
 		      scan, num, tape, file,
-		      start.printdays(15).c_str(), name.c_str(), 
+		      mjdstr, name.c_str(), 
 		      frequency, bandwidth, tsamp,
-		      ttelid, ndigchan, nbit, ndat);
+		      ttelid, ndigchan, nbit, ndat );
   str = buffer;
 };
 

@@ -274,11 +274,6 @@ PSPM_SEARCH_HEADER* pspm_read (int fd)
   }
   PSPMfromBigEndian (static_header);
 
-  if (!PSPMverify(static_header)) {
-    fprintf (stderr, "pspm_read::corrupted header\n");
-    return 0;
-  }
-
   return static_header;
 }
 
