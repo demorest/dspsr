@@ -80,7 +80,17 @@ void dsp::OneBitCorrection::unpack ()
 
 #define MM 512
 #define NN 16
-      
+   
+  /*
+
+    NN is the number of channels we do in one go- it should be a power of two between 1 and 32 as there are 32 channels in a uint32
+
+    MM is the number of timesamples we do at any one time- when you have to write out to one of the output datptrs you may as well write several in one go as you have to copy a block of memory anyway.
+
+    How the algorithm works is you want to output MM timesamples into each of NN output arrays.  For each timesample all NN channels are in one uint32, so you boolean 'and' ('&' operator) NN masks for that uint32.  Each time you do a boolean 'and' you'll either get zero (0.0) or non-zero (1.0).  You do one mask at a time for the MM values of one channel though.
+
+   */
+   
   unsigned masks[NN];
   
   for( unsigned i=0; i<NN; i++)
