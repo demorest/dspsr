@@ -3,7 +3,7 @@
 
 bool dsp::PuMaTwoBitCorrection::matches (const Observation* observation)
 {
-  return observation->get_machine() == "PuMa";
+  return observation->get_machine() == "PuMa" && observation->get_nbit() == 2;
 }
 
 //! Null constructor
