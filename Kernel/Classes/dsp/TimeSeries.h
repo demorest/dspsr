@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.22 $
-   $Date: 2004/04/21 09:56:32 $
+   $Revision: 1.23 $
+   $Date: 2004/10/25 02:32:40 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -107,7 +107,16 @@ namespace dsp {
 
     //! Returns the maximum bin of channel 0, pol 0
     virtual unsigned get_maxbin();
-    
+
+    //! Called by Transformation::operation() to ensure that saved data
+    //! stays saved and is not wiped over.
+    //! Variable is reset to false after call to transformation()
+    void set_preserve_seeked_data(bool _psd){ preserve_seeked_data = _psd; }
+   
+    //! Inquire whether the data that has been seeked over top of
+    //! will be saved on a resize.
+    bool get_preserve_seeked_data(){ return preserve_seeked_data; }
+
   protected:
 
     //! Returns a uchar pointer to the first piece of data
@@ -121,6 +130,13 @@ namespace dsp {
     
     //! Pointer into buffer, offset to the first time sample requested by user
     float* data;
+
+  private:
+
+    //! Variable used by Transformation::operation() to ensure that saved data
+    //! stays saved and is not wiped over.
+    //! Variable is reset to false after call to transformation()
+    bool preserve_seeked_data;
 
   };
 
