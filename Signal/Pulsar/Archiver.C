@@ -101,7 +101,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 { try {
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile"
-      " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << endl;
+      " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << "\r";
 
   unsigned nbin = phase->get_nbin();
   unsigned npol = phase->get_npol();
@@ -120,8 +120,6 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
   unsigned zeroes = 0;
 
   double scale = phase->get_scale ();
-  if (verbose)
-    cerr << "dsp::Archiver::set Pulsar::Profile scale=" << scale << endl;
 
   if (scale == 0 || isnan(scale))
     throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Profile",
@@ -142,7 +140,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 
   if (zeroes)
     cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
-	 << " bins with zero hits!" << endl;
+	 << " bins with zero hits!" << "\r";
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";
