@@ -10,6 +10,7 @@ bool dsp::PuMaTwoBitCorrection::matches (const Observation* observation)
 dsp::PuMaTwoBitCorrection::PuMaTwoBitCorrection ()
   : SubByteTwoBitCorrection ("PuMaTwoBitCorrection")
 {
+  threshold = 1.5;
   table = new TwoBitTable (TwoBitTable::OffsetBinary);
 }
 

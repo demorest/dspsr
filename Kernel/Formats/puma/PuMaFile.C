@@ -20,7 +20,7 @@ dsp::PuMaFile::PuMaFile (const char* filename)
   unsigned header_size = sizeof (Header_type);
 
   if (header_size != 4504)
-    throw Error (InvalidState, "dsp::PuMaFile", "sizeof (Header_type) != 4504");
+    throw Error (InvalidState, "dsp::PuMaFile", "sizeof(Header_type) != 4504");
 
   header = malloc (sizeof(Header_type));
 
@@ -117,7 +117,7 @@ void dsp::PuMaFile::parse (const void* header)
   info.set_basis (Signal::Linear);
 
   /* char ObsType[TXTLEN]; Research/test/calibration */
-  cerr << "dsp::PuMaFile::parse type = " << hdr->obs.ObsType << endl;
+  // cerr << "dsp::PuMaFile::parse type = " << hdr->obs.ObsType << endl;
   info.set_type (Signal::Pulsar);
 
   unsigned npol_observed = 0;
@@ -203,7 +203,7 @@ void dsp::PuMaFile::parse (const void* header)
   string pulsar = hdr->src.Pulsar;
   
   // strip off the "PSR"
-  stringtok (&pulsar, " ");
+  stringtok (&pulsar, " _");
 
   if (verbose)
     cerr << "dsp::PuMaFile::parse source='" << pulsar << "'" << endl;
