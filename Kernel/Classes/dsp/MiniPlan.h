@@ -133,11 +133,6 @@ namespace dsp {
     //! Makes the final subints 'ext' samples longer in duration
     virtual void extend_last_subint(uint64 ext);
 
-    /*    
-    //! Read in the MiniPlan from a character array
-    virtual unsigned read_from_chars(vector<char>& infochars, unsigned offset);
-    */
-
     //! Extends the 'duration' attribute of the last SubInt so that it ends at this time
     virtual void extend(MJD _end_time);
 
