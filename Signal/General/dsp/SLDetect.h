@@ -13,7 +13,7 @@ namespace dsp {
 
   public:
 
-    SLDetect(Behaviour _type);
+    SLDetect(Behaviour _type=Operation::anyplace);
         
   protected:
     //! The operation loads the next block of data

@@ -13,7 +13,7 @@ namespace dsp {
 
   public:
 
-    TScrunch(Behaviour _type);// : Operation ("TScrunch", _type);
+    TScrunch(Behaviour _type=Operation::anyplace);// : Operation ("TScrunch", _type);
     
     void set_ScrunchFactor( int _ScrunchFactor){ ScrunchFactor = _ScrunchFactor; use_tres = false; }
     int64 get_ScrunchFactor(){ return ScrunchFactor; }
