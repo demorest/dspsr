@@ -697,14 +697,14 @@ void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
     assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
 
-    if (ndatperweight && weights[iweight] != 0)  {
+    if (!ndatperweight || weights[iweight] != 0)  {
       hits[ibin]++;
       ndat_folded ++;
     }
 
   }
 
-  if (bad_weights)
+  if (bad_weights && verbose)
     cerr << "dsp::Fold::fold " << bad_weights
          << "/" << n_weights << " bad weights" << endl;
 
