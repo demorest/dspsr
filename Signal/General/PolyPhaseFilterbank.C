@@ -1,4 +1,4 @@
-//  PolyPhaseFilterbank.cc:
+//  FilterBank.cc:
 //
 //  Copyright (C) 2002
 //  ASTRON (Netherlands Foundation for Research in Astronomy)
@@ -25,7 +25,7 @@
 #include "PolyPhaseFilterbank.h"
 
 template<class Type>
-PolyPhaseFilterbank<Type>::PolyPhaseFilterbank(string CoefficientFile, int OverlapSamples, int Real)
+FilterBank<Type>::FilterBank(string CoefficientFile, int OverlapSamples, int Real)
 {
   // Open a stream to the file where the filter coefficients are located
   ifstream CoeffFile(CoefficientFile.c_str(), ifstream::in);
@@ -48,7 +48,7 @@ PolyPhaseFilterbank<Type>::PolyPhaseFilterbank(string CoefficientFile, int Overl
 
 
 template<class Type>
-PolyPhaseFilterbank<Type>::~PolyPhaseFilterbank()
+FilterBank<Type>::~FilterBank()
 {
   fftw_destroy_plan(fftplancomplex);
   rfftwnd_destroy_plan(fftplanreal);
@@ -56,10 +56,10 @@ PolyPhaseFilterbank<Type>::~PolyPhaseFilterbank()
 
 
 template<class Type>
-Array<complex<float>, 2> PolyPhaseFilterbank<Type>::filter(Array<Type, 1> Input)
+blitz::Array<complex<float>, 2> FilterBank<Type>::filter(blitz::Array<Type, 1> Input)
 {
-  Array<complex<float>, 2> PolyPhaseFilterbankOutput(itsNumberOfBands, 1);
-  Array<complex<float>, 1> Temp(itsNumberOfBands / 2);
+  blitz::Array<complex<float>, 2> FilterBankOutput(itsNumberOfBands, 1);
+  blitz::Array<complex<float>, 1> Temp(itsNumberOfBands / 2);
 
   if (itsOverlapSamples > 0)
   {
@@ -72,17 +72,17 @@ Array<complex<float>, 2> PolyPhaseFilterbank<Type>::filter(Array<Type, 1> Input)
   }
 
   // Convolve the rearrangedsignals with the filtercoefficients
-  Array<Type, 1> ConvolvedSignal = Convolve();
+  blitz::Array<Type, 1> ConvolvedSignal = Convolve();
 
   // Do a FFT n the convolved signal and return the output
-  PolyPhaseFilterbankOutput = FFT(ConvolvedSignal);
+  FilterBankOutput = FFT(ConvolvedSignal);
 
-  return PolyPhaseFilterbankOutput;
+  return FilterBankOutput;
 }
 
 
 template<class Type>
-void PolyPhaseFilterbank<Type>::ReArrange(Array<Type, 1> Input) // This function might be not necessary instead use ReArrange with overlap with overlap = 0
+void FilterBank<Type>::ReArrange(blitz::Array<Type, 1> Input) // This function might be not necessary instead use ReArrange with overlap with overlap = 0
 {
   // The input must be number of bands long!
   for (int i = 0; i < itsNumberOfBands; ++i)
@@ -95,7 +95,7 @@ void PolyPhaseFilterbank<Type>::ReArrange(Array<Type, 1> Input) // This function
 
 
 template<class Type>
-void PolyPhaseFilterbank<Type>::ReArrangeWithOverlap(Array<Type, 1> Input)
+void FilterBank<Type>::ReArrangeWithOverlap(blitz::Array<Type, 1> Input)
 {
   // The input must be number of bands - number of overlap samples) long
   int PreviousMatrixPosition = (itsMatrixPosition == 0) ? itsOrder - 1 : itsMatrixPosition - 1;
@@ -115,10 +115,10 @@ void PolyPhaseFilterbank<Type>::ReArrangeWithOverlap(Array<Type, 1> Input)
 
 
 template<class Type>
-Array<Type, 1> PolyPhaseFilterbank<Type>::Convolve()
+blitz::Array<Type, 1> FilterBank<Type>::Convolve()
 {
-  Array<Type, 1> ConvolvedSignal(itsNumberOfBands);
-  ConvolvedSignal(Range(Range::all())) = 0;
+  blitz::Array<Type, 1> ConvolvedSignal(itsNumberOfBands);
+  ConvolvedSignal(blitz::Range(blitz::Range::all())) = 0;
 
   for (int b = 0; b < itsNumberOfBands; ++b)
   {
@@ -137,32 +137,162 @@ Array<Type, 1> PolyPhaseFilterbank<Type>::Convolve()
 
 
 template<>
-Array<complex<float>, 2> PolyPhaseFilterbank< complex<float> >::FFT(Array<complex<float>, 1> ConvolvedSignal)
+blitz::Array<complex<float>, 2> FilterBank< complex<float> >::FFT(blitz::Array<complex<float>, 1> ConvolvedSignal)
 {
-  Array<complex<float>, 2> PolyPhaseFilterbankOutput(itsNumberOfBands, 1);
+  blitz::Array<complex<float>, 2> FilterBankOutput(itsNumberOfBands, 1);
 
-  fftw_one(fftplancomplex, (fftw_complex*)ConvolvedSignal.data(), (fftw_complex*)PolyPhaseFilterbankOutput.data());
+  fftw_one(fftplancomplex, (fftw_complex*)ConvolvedSignal.data(), (fftw_complex*)FilterBankOutput.data());
 
-  PolyPhaseFilterbankOutput /= itsNumberOfBands;
+  FilterBankOutput /= itsNumberOfBands;
 
-  return PolyPhaseFilterbankOutput;
+  return FilterBankOutput;
 }
 
 template<>
-Array<complex<float>, 2> PolyPhaseFilterbank<float>::FFT(Array<float, 1> ConvolvedSignal)
+blitz::Array<complex<float>, 2> FilterBank<float>::FFT(blitz::Array<float, 1> ConvolvedSignal)
 {
-  Array<complex<float>, 2> PolyPhaseFilterbankOutput(itsNumberOfBands, 1);
+  blitz::Array<complex<float>, 2> FilterBankOutput(itsNumberOfBands, 1);
 
-  rfftwnd_one_real_to_complex(fftplanreal, ConvolvedSignal.data(), (fftw_complex*)PolyPhaseFilterbankOutput.data());
+  rfftwnd_one_real_to_complex(fftplanreal, ConvolvedSignal.data(), (fftw_complex*)FilterBankOutput.data());
 
-  PolyPhaseFilterbankOutput /= itsNumberOfBands;
+  FilterBankOutput /= itsNumberOfBands;
 
   // mirror the first part of FFT to second part
-  PolyPhaseFilterbankOutput(Range(itsNumberOfBands / 2 + 2, itsNumberOfBands - 1), 0) =
-              (PolyPhaseFilterbankOutput(Range(1, itsNumberOfBands / 2 - 1), 0)).reverse(0);
+  FilterBankOutput(blitz::Range(itsNumberOfBands/2+2, itsNumberOfBands - 1), 0)
+    = (FilterBankOutput(blitz::Range(1, itsNumberOfBands/2-1), 0)).reverse(0);
 
-  return PolyPhaseFilterbankOutput;
+  return FilterBankOutput;
 }
 
-// template class PolyPhaseFilterbank< complex<float> >;
-template class PolyPhaseFilterbank< float >;
+// template class FilterBank< complex<float> >;
+template class FilterBank< float >;
+
+
+
+
+dsp::PolyPhaseFilterbank::PolyPhaseFilterbank ()
+{
+  filterbank = 0;
+  nchan = 0;
+}
+
+
+dsp::PolyPhaseFilterbank::~PolyPhaseFilterbank ()
+{
+  if (filterbank)
+    delete filterbank;
+
+  if (C_filterbank)
+    delete C_filterbank;
+}
+
+
+void dsp::PolyPhaseFilterbank::load_coefficients (string CoefficientFile)
+{
+  filterbank = new FilterBank<float> (CoefficientFile);
+}
+
+
+//! Perform the convolution transformation on the input TimeSeries
+void dsp::PolyPhaseFilterbank::transformation ()
+{
+  unsigned ndat = input->get_ndat();
+
+  if (input->get_state() == Signal::Nyquist && !filterbank)
+    throw Error (InvalidState, "dsp::PolyPhaseFilterbank::transformation",
+		 "Real input and no real polyphase filterbank loaded");
+
+  if (input->get_state() == Signal::Analytic && !C_filterbank)
+    throw Error (InvalidState, "dsp::PolyPhaseFilterbank::transformation",
+		 "Complex input and no complex polyphase filterbank loaded");
+
+  unsigned nsamp_fft = nchan;
+
+  // prepare the output TimeSeries
+  output->Observation::operator= (*input);
+
+  // output data will be complex
+  output->set_state (Signal::Analytic);
+
+  // output data will be multi-channel
+  output->set_nchan (nchan);
+
+  // resize to new number of valid time samples
+  output->resize (ndat/nchan);
+
+  double scalefac = 1.0;
+
+  // maybe needs rescaling
+
+  output->rescale (scalefac);
+  
+  if (verbose) cerr << "dsp::Filterbank::transformation"
+		 " scale=" << output->get_scale() << endl;
+
+  // output data will have new sampling rate
+  // NOTE: that nsamp_fft already contains the extra factor of two required
+  // when the input TimeSeries is Signal::Nyquist (real) sampled
+  double ratechange = 1.0 / double (nsamp_fft);
+  output->set_rate (input->get_rate() * ratechange);
+
+  // complex to complex FFT produces a band swapped result
+  if (input->get_state() == Signal::Analytic)
+    output->set_swap (true);
+
+  // if freq_res is even, then each sub-band will be centred on a frequency
+  // that lies on a spectral bin *edge* - not the centre of the spectral bin
+  // output->set_dc_centred (freq_res%2);
+
+  // increment the start time by the number of samples dropped from the fft
+  // output->change_start_time (nfilt_pos);
+
+  // enable the Response to record its effect on the output Timeseries
+  if (response)
+    response->mark (output);
+
+  unsigned npol = input->get_npol();
+  unsigned out_nbyte = output->get_ndat() * 2 * sizeof(float);
+
+  for (unsigned ipol=0; ipol<npol; ipol++) {
+
+    // import the data to a Blitz++ array
+    float* data = const_cast<float*>(input->get_datptr (0, ipol));
+
+    blitz::Array<complex<float>,2> result;
+
+    if (input->get_state() == Signal::Nyquist) {
+
+      blitz::Array<float,1> A (data,
+			       blitz::shape(ndat),
+			       blitz::neverDeleteData);
+
+      result = filterbank->filter (A);
+
+    } 
+    else {
+
+      blitz::Array<complex<float>,1> A ((complex<float>*) data,
+					blitz::shape(ndat),
+					blitz::neverDeleteData);
+
+      result = C_filterbank->filter (A);
+
+    }
+
+    // copy result into output
+    data = (float*) result.data();
+
+    for (unsigned ichan=0; ichan < nchan; ichan++) {
+
+      float* out_ptr = output->get_datptr (ichan, ipol);
+      memcpy (out_ptr, data, out_nbyte);
+
+    }
+
+
+  } // for each polarization
+    
+  if (verbose)
+    cerr << "dsp::Filterbank::transformation exit." << endl;
+}
+
