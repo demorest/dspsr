@@ -60,8 +60,12 @@ void dsp::WeightedTimeSeries::resize (uint64 nsamples)
   TimeSeries::resize (nsamples);
   
   uint64 nweights = get_nweights ();
-  uint64 require = nweights * npol * get_nchan();
+  uint64 require = nweights * get_npol_weight() * get_nchan_weight();
   
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::resize nweights=" << nweights
+	 << " require=" << require << endl;
+
   if (!require || require > weight_size) {
     if (weights) delete [] weights; weights = 0;
     weight_size = weight_subsize = 0;
@@ -170,6 +174,10 @@ void dsp::WeightedTimeSeries::mask_weights ()
 {
   uint64 nweights = get_nweights ();
   unsigned nparts = get_npol_weight() * get_nchan_weight();
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::mask_weights nweights=" << nweights
+	 << " nparts=" << nparts << endl;
 
   // collect all of the bad weights in the first array
   for (unsigned ipart=1; ipart<nparts; ipart++) {
