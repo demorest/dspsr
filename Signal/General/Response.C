@@ -519,7 +519,7 @@ void dsp::Response::set (const vector<Jones<float> >& response)
 
     for (int j=0; j<2; j++)
       for (int i=0; i<2; i++) {
-	complex<double> element = response[idat].j( (i+j)%2, j );
+	complex<double> element = response[idat]( (i+j)%2, j );
 	// Re
 	*f = element.real();
 	f++;
