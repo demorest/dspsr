@@ -95,7 +95,7 @@ void usage ()
     " -R             apply RFI filter in frequency domain\n"
     "\n"
     "Detection options:\n"
-    " -d npol        1=PP+QQ, 2=PP,QQ, 4=PP,QQ,PQ,QP\n"
+    " -d npol        1=PP+QQ, 2=PP,QQ, 3 = (PP+QQ)^2 4=PP,QQ,PQ,QP\n"
     " -n ndim        ndim of detected TimeSeries [4]\n"
     " -L nlag        form nlag ACF of the undetected data (using nlag*2 PSD)\n"
     " -L nlag:nchan  form nlag ACF of the undetected data (using nchan PSD)\n"
@@ -743,6 +743,8 @@ int main (int argc, char** argv) try {
 	detect->set_output_ndim (1);
       }
     }
+    else if (npol == 3)
+      detect->set_output_state (Signal::NthPower);
     else if (npol == 2)
       detect->set_output_state (Signal::PPQQ);
     else if (npol == 1)

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.10 $
-   $Date: 2004/11/01 23:52:16 $
-   $Author: hknight $ */
+   $Revision: 1.11 $
+   $Date: 2005/04/13 08:02:52 $
+   $Author: sord $ */
 
 
 #ifndef __Detection_h
@@ -64,6 +64,9 @@ namespace dsp {
 
     //! Form Stokes I from simple square-law detection and polarisation scrunching
     void form_stokes_I();
+
+    //! Form Stokes I to the Nth power from simple square-law detection and polarisation scrunching
+    void form_nthpower(int _n=2);
 
     //! Polarization detection (Stokes parameters or Coherency products)
     void polarimetry ();

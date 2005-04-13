@@ -26,6 +26,7 @@ void dsp::Detection::set_output_state (Signal::State _state)
   switch (_state)  {
   case Signal::Intensity:  // Square-law detected total power (1 pol)
   case Signal::PPQQ:       // Square-law detected, two polarizations
+  case Signal::NthPower:    // Square-law total power to the nth power
     ndim = 1;
   case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
   case Signal::Stokes:     // Stokes I,Q,U,V
@@ -90,6 +91,9 @@ void dsp::Detection::transformation ()
 
     else if (state==Signal::Intensity)
       form_stokes_I();
+    
+    else if (state==Signal::NthPower)
+      form_nthpower();
 
     else
       understood = false;
@@ -192,6 +196,61 @@ void dsp::Detection::form_stokes_I(){
       
       for( uint64 i=0; i<ndat; i++)
 	out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
+    }
+  }
+  
+}
+  
+
+void dsp::Detection::form_nthpower(int _n){
+  if( verbose ) fprintf(stderr,"In dsp::Detection::nthpower()\n");
+ 
+  if( get_input() == get_output() ){
+    square_law();
+    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
+    pscrunch->set_input( get_output() );
+    pscrunch->set_output( get_output() );
+    pscrunch->operate();
+    return;
+  }
+
+  unsigned input_ndim = get_input()->get_ndim();
+
+  get_output()->copy_configuration( get_input() );
+  get_output()->set_npol( 1 );
+  get_output()->set_ndim( 1 );
+  get_output()->set_state( Signal::NthPower );
+  
+  get_output()->resize( get_input()->get_ndat() );
+
+  if( input_ndim==1 ){ // Signal::Nyquist
+    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
+      float* pol0 = get_input()->get_datptr(ichan,0);
+      float* pol1 = get_input()->get_datptr(ichan,1);    
+      float* out = get_output()->get_datptr(ichan,0);
+      
+      uint64 ndat = get_input()->get_ndat();
+      double temp; 
+      for( uint64 i=0; i<ndat; i++){
+        temp = SQR(pol0[i]) + SQR(pol1[i]);
+	out[i] = (float) pow(temp,(double) _n)+10;
+      }
+     
+    }
+  }
+  else{ // Signal::Analytic
+    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
+      float* pol0 = get_input()->get_datptr(ichan,0);
+      float* pol1 = get_input()->get_datptr(ichan,1);    
+      float* out = get_output()->get_datptr(ichan,0);
+      
+      uint64 ndat = get_input()->get_ndat();
+      double temp; 
+      for( uint64 i=0; i<ndat; i++){
+        temp = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]);
+	out[i] = (float) pow(temp,(double) _n);
+      }
+ 
     }
   }
   
