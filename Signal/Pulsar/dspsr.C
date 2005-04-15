@@ -606,6 +606,7 @@ int main (int argc, char** argv) try {
   }
 
   dsp::TimeSeries* convolve = voltages;
+  dsp::TimeSeries* detected = NULL;
 
   bool need_to_detect = true;
 
@@ -753,10 +754,15 @@ int main (int argc, char** argv) try {
       cerr << "dspsr: invalid npol=" << npol << endl;
       return -1;
     } 
-
-    detect->set_input (convolve);
-    detect->set_output (convolve);
-    
+    if (npol == 3) {
+      fprintf(stderr,"NPOL == 3 this is a special case: forming higher power of total intensity\n");
+      detected = new dsp::WeightedTimeSeries;
+      detect->set_output (detected);
+    }
+    else {
+      detect->set_input (convolve);
+      detect->set_output (detected);
+    }
     operations.push_back (detect);
   }
 
@@ -819,7 +825,11 @@ int main (int argc, char** argv) try {
   for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
     fold->add_pulsar_ephemeris ( ephemerides[ieph] );
 
-  fold->set_input (convolve);
+  if (!detected)
+    fold->set_input (convolve);
+  else 
+    fold->set_input (detected);
+
   fold->set_output (profiles);
 
   operations.push_back (fold);
