@@ -188,7 +188,14 @@ try {
   archive-> set_telescope_code ( phase->get_telescope_code() );
 
   archive-> set_type ( phase->get_type() );
-  archive-> set_state ( phase->get_state() );
+  if (phase->get_state() == Signal::NthPower) {
+    fprintf(stderr, "Pulsar::Archiver:set State is NthPower - setting Archive state to Intensity\n");
+    archive->set_state (Signal::Intensity);
+  }
+  else {
+    archive-> set_state ( phase->get_state() );
+  }
+
   archive-> set_scale ( Signal::FluxDensity );
 
   archive-> set_source ( phase->get_source() );
