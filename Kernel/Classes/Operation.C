@@ -122,7 +122,7 @@ void* dsp::Operation::workingspace (size_t nbytes)
 
   if (working_size < nbytes) {
     if (working_space) free(working_space); working_space = 0;
-    working_space = memalign(16, nbytes);
+    working_space = (char*)memalign(16, nbytes);
 
     if (!working_space)
       throw Error (BadAllocation, "Operation::workingspace",
