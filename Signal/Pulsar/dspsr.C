@@ -757,11 +757,12 @@ int main (int argc, char** argv) try {
     if (npol == 3) {
       fprintf(stderr,"NPOL == 3 this is a special case: forming higher power of total intensity\n");
       detected = new dsp::WeightedTimeSeries;
+      detect->set_input (convolve);
       detect->set_output (detected);
     }
     else {
       detect->set_input (convolve);
-      detect->set_output (detected);
+      detect->set_output (convolve);
     }
     operations.push_back (detect);
   }
@@ -825,7 +826,7 @@ int main (int argc, char** argv) try {
   for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
     fold->add_pulsar_ephemeris ( ephemerides[ieph] );
 
-  if (!detected)
+  if (!detected && (npol != 3))
     fold->set_input (convolve);
   else 
     fold->set_input (detected);

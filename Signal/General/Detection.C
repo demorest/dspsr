@@ -49,12 +49,12 @@ void dsp::Detection::transformation ()
 {
   MJD st("52644.176409458518541");
 
-  if( 1 )
+  if( verbose )
     fprintf(stderr,"In dsp::Detection::transformation() with input ndat="UI64" (st=%f)\n",
 	    get_input()->get_ndat(),
 	    (get_input()->get_start_time()-st).in_seconds());
 
-  if (1)
+  if (verbose)
     cerr << "dsp::Detection::transformation output state="
 	 << Signal::state_string(state) << " and input state=" 
 	 << Signal::state_string(get_input()->get_state())
@@ -216,7 +216,8 @@ void dsp::Detection::form_nthpower(int _n){
     return;
   }
   
-  fprintf(stderr,"In dsp::Detection::nthpower forming 2nd moment\n");
+  if (verbose)
+	fprintf(stderr,"In dsp::Detection::nthpower forming 2nd moment\n");
   unsigned input_ndim = get_input()->get_ndim();
 
   get_output()->copy_configuration( get_input() );
