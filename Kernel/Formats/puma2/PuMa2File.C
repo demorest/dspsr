@@ -8,7 +8,11 @@
 bool dsp::PuMa2File::want_to_check_bocf = true;
 
 int puma2_check_bocf (const char* filename, uint64 offset_bytes,
-		       uint64 search_offset);
+		       uint64 search_offset)
+{
+  cerr << "puma2_check_bocf: WARNING not implemented" << endl;
+  return 0;
+}
 
 
 dsp::PuMa2File::PuMa2File (const char* filename) : File ("PuMa2")
