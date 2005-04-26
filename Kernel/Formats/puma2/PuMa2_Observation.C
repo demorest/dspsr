@@ -36,7 +36,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   else if ( !strcasecmp (hdrstr, "GBT") || tel == "GBT")
     set_telescope_code (1);
   else if ( !strcasecmp (hdrstr, "westerbork") || tel == "WSRT")
-    set_telescope_code (11);
+    set_telescope_code ('i');
   else {
     cerr << "PuMa2_Observation:: Warning using code" << hdrstr[0] << endl;
     set_telescope_code (hdrstr[0]);
