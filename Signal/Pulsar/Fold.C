@@ -298,6 +298,13 @@ unsigned dsp::Fold::choose_nbin ()
     // make sensible_nbin the largest power of two less than the maximum  
     sensible_nbin = (unsigned)  pow ( 2.0, floor(log(the_folding_period/binwidth)/log(2.0)) );
 
+  if (sensible_nbin == 0) {
+    cerr << "dsp::Fold::choose_nbin WARNING no phase resolution\n"
+        "  sampling period = " << sampling_period*1e3 << " ms and\n"
+        "  folding period  = " << the_folding_period*1e3 << " ms" << endl;
+    sensible_nbin = 1;
+  }
+
   if (requested_nbin > 1) {
     // the Fold::set_nbin method has been called
     if (verbose) cerr << "dsp::Fold::choose_nbin using requested nbin="
