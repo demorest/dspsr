@@ -464,6 +464,8 @@ void dsp::Observation::set_default_basis ()
     basis = Signal::Circular;
   else if (telescope == Telescope::Hobart)
     basis = Signal::Circular;
+  else if (telescope == Telescope::WSRT)
+    basis = Signal::Linear;
   else if (telescope == Telescope::GreenBank) {
     fprintf(stderr,"WARNING Assuming GBT is Circular\n");
     basis = Signal::Circular;
