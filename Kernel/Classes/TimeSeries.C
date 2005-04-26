@@ -75,11 +75,13 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
   if( data && buffer && verbose )
-    fprintf(stderr,"Hi from dsp::TimeSeries::resize("UI64") with offset="I64" or "I64" floats\n",
-	    nsamples,int64((data-(float*)buffer)),get_samps_offset());
+    cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
+         << int64((data-(float*)buffer)) << " = " 
+         << get_samps_offset() << " floats" << endl;
 
   if( !get_preserve_seeked_data() ){
-    if( verbose ) fprintf(stderr,"dsp::TimeSeries::resize() won't preserve data\n");
+    if( verbose ) 
+      cerr << "dsp::TimeSeries::resize won't preserve data" << endl;
     DataSeries::resize(nsamples);
     data = (float*)buffer;
     return;
@@ -530,8 +532,9 @@ void dsp::TimeSeries::check (float min, float max)
 }
 
 //! Delete the current data buffer and attach to this one
-//! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
-//! Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it.
+/*! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
+ Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it. */
+
 void dsp::TimeSeries::attach(auto_ptr<float> _data){
   if( !_data.get() )
     throw Error(InvalidState,"dsp::TimeSeries::attach()",
