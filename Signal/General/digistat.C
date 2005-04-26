@@ -1,8 +1,3 @@
-#include <iostream>
-#include <unistd.h>
-
-#include <cpgplot.h>
-
 #include "dsp/TwoBitStatsPlotter.h"
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/BitSeries.h"
@@ -13,6 +8,11 @@
 
 #include "string_utils.h"
 #include "dirutil.h"
+
+#include <cpgplot.h>
+
+#include <iostream>
+#include <unistd.h>
 
 static char* args = "c:hn:s:t:vVw:";
 
@@ -38,7 +38,7 @@ int main (int argc, char** argv)
   bool display = true;
   bool verbose = false;
 
-  unsigned tbc_nsample = 512;
+  unsigned tbc_nsample = 0;
   float tbc_cutoff = 0.0;
   float tbc_threshold = 0.0;
 
@@ -144,13 +144,10 @@ int main (int argc, char** argv)
 
   manager->set_output (voltages);
 
-  // plots two-bit digitization statistics
-  Reference::To<dsp::TwoBitStatsPlotter> plotter = new dsp::TwoBitStatsPlotter;
-  
+  // plots digitization statistics
+  Reference::To<dsp::BitStatsPlotter> plotter;
   Reference::To<dsp::TwoBitCorrection> correct;
-
-  plotter->set_viewport (0.7, 0.95, 0.1, 0.9);
-  plotter->horizontal = false;
+  Reference::To<dsp::HistUnpacker> unpack;
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
@@ -159,24 +156,46 @@ int main (int argc, char** argv)
     if (verbose)
       cerr << "digistat: file " << filenames[ifile] << " opened" << endl;
 
-    // create a new unpacker, appropriate to the backend
     correct = dynamic_cast<dsp::TwoBitCorrection*>(manager->get_unpacker());
-    if (!correct) {
-      cerr << "digistat: " << filenames[ifile] <<
-	" does not contain two-bit data" << endl;
-      continue;
+
+    if (correct) {
+
+	// plots two-bit digitization statistics
+	plotter = new dsp::TwoBitStatsPlotter;
+	plotter->set_data( correct );
+
+	if ( tbc_nsample )
+	    correct -> set_nsample ( tbc_nsample );
+	
+	if ( tbc_threshold )
+	    correct -> set_threshold ( tbc_threshold );
+	
+	if ( tbc_cutoff )
+	    correct -> set_cutoff_sigma ( tbc_cutoff );
+
+        unpack = correct;
+
     }
 
-    if ( tbc_nsample )
-      correct -> set_nsample ( tbc_nsample );
+    else {
 
-    if ( tbc_threshold )
-      correct -> set_threshold ( tbc_threshold );
+	unpack = dynamic_cast<dsp::HistUnpacker*>(manager->get_unpacker());
+	
+	if (unpack) {
+	    plotter = new dsp::BitStatsPlotter;
+	    plotter->set_data( unpack );
+	}
+	else {
+	    cerr << "digistat: Unpacker does not maintain a histogram" << endl;
+	    plotter = 0;
+        }
 
-    if ( tbc_cutoff )
-      correct -> set_cutoff_sigma ( tbc_cutoff );
+    }
 
-    plotter->set_data (correct);
+    if (plotter) {
+      plotter->set_viewport (0.7, 0.95, 0.1, 0.9);
+      plotter->horizontal = false;
+    }
 
     cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
     cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
@@ -186,8 +205,7 @@ int main (int argc, char** argv)
     uint64 block_size = uint64(samples);
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
 
-    cerr << block_size << " samples per " << time_per_plot << " s plot" << endl;
-
+    cerr << block_size << " samples per " << time_per_plot << "s plot" << endl;
     manager->set_block_size (block_size);
 
     // set the number of samples to average
@@ -207,11 +225,12 @@ int main (int argc, char** argv)
 
     while (!manager->eod()) {
 
-      correct->zero_histogram ();
+      if (unpack)
+        unpack->zero_histogram ();
       
       manager->load (voltages);
 
-      if (display)  {
+      if (display && plotter)  {
         cpgpage();
         plotter->plot();
       }
