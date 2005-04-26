@@ -50,10 +50,10 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
 		 "not built");
 
-  unsigned char mask2 = 0x03;
+  const unsigned char mask2 = 0x03;
 
-  unsigned ndig = get_ndig_per_byte();
-  unsigned samples_per_byte = TwoBitTable::vals_per_byte / ndig;
+  const unsigned ndig = get_ndig_per_byte();
+  const unsigned samples_per_byte = TwoBitTable::vals_per_byte / ndig;
 
   if (ndig < 2)
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
@@ -68,12 +68,14 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
   const unsigned char* input_data_ptr = input_data;
 
   float* output_data_ptr = output_data;
-  unsigned output_incr = get_output_incr ();
+
+  const unsigned output_incr = get_output_incr ();
+  const unsigned nsample = get_nsample ();
 
   // although I and Q are switched here, the histogram is queried as expected
   unsigned long*  hist = 0;
   if (keep_histogram)
-    hist = &(histograms[digitizer][0]);
+    hist = get_histogram (digitizer);
 
   unsigned required_nweights = (unsigned) ceil (float(ndat)/float(nsample));
 
@@ -91,13 +93,14 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
   nweights = required_nweights;
   uint64 points_left = ndat;
 
+  unsigned points = nsample;
+
   for (unsigned wt=0; wt<nweights; wt++) {
 
-    unsigned points = nsample;
     if (points > points_left)
       points = points_left;
 
-    unsigned pt   = 0;
+    unsigned pt = 0;
 
     // retrieve the next points values from the 2bit data
     while (pt < points) {
@@ -165,7 +168,7 @@ void dsp::SubByteTwoBitCorrection::build ()
   TwoBitCorrection::build ();
 
   // create the new space
-  values = new unsigned char [nsample];
+  values = new unsigned char [get_nsample()];
 }
 
 void dsp::SubByteTwoBitCorrection::nlo_build ()

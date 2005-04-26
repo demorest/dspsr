@@ -1,16 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.26 $
-   $Date: 2004/05/16 02:58:41 $
-   $Author: sord $ */
+   $Revision: 1.27 $
+   $Date: 2005/04/26 13:05:54 $
+   $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
 #include <vector>
 
-#include "dsp/Unpacker.h"
+#include "dsp/HistUnpacker.h"
 
 #include "environ.h"
 
@@ -27,17 +27,14 @@ namespace dsp {
     from different convertors (ie. different polarizations and/or
     in-phase and quadrature components) are mixed within each byte, it
     is recommended to inherit the SubByteTwoBitCorrection class. */
-  class TwoBitCorrection: public Unpacker {
+  class TwoBitCorrection: public HistUnpacker {
 
   public:
 
     //! Optimal fraction of total power for two-bit sampling threshold
     static const double optimal_threshold;
 
-    //! Maintain a diagnostic histogram of digitizer statistics
-    static bool keep_histogram;
-
-    //! two bit correct, set to false to turn off the Jenet and Anderson correction
+    //! Perform the Jenet and Anderson correction
     static bool change_levels;
 
     //! Null constructor
@@ -45,9 +42,6 @@ namespace dsp {
 
     //! Virtual destructor
     virtual ~TwoBitCorrection ();
-
-    //! Get the number of digitizers
-    virtual unsigned get_ndig () const;
 
     //! Get the number of digitizer outputs in one byte
     virtual unsigned get_ndig_per_byte () const;
@@ -75,9 +69,6 @@ namespace dsp {
 
     //! Set the number of time samples used to estimate undigitized power
     void set_nsample (unsigned nsample);
-
-    //! Get the number of time samples used to estimate undigitized power
-    unsigned get_nsample () const { return nsample; }
 
     //! Set the sampling threshold as a fraction of the noise power
     void set_threshold (float threshold);
@@ -116,21 +107,9 @@ namespace dsp {
     //! Get the maxumum number of ones in nsample points
     unsigned get_nmax() const { return n_max; }
 
-    //! Get the histogram for the given digitizer
-    template <typename T> void get_histogram (vector<T>& data, unsigned idig) const;
-
-    //! Get the centroid of the histogram for the given digitizer
-    double get_histogram_mean (unsigned idig) const;
-
-    //! Get the total number of samples in the histogram
-    unsigned long get_histogram_total (unsigned idig) const;
-
-    //! Reset histogram counts to zero
-    void zero_histogram ();
-
     //! Return a pointer to a new instance of the appropriate sub-class
     static TwoBitCorrection* create (const BitSeries& input,
-				     unsigned nsample=0, float cutoff_sigma=3.0);
+				     unsigned nsample=0, float cutoff_rms=3.0);
 
     //! Return the high and low output voltage values
     static void output_levels (float p_in, float& lo, float& hi, float& A);
@@ -168,9 +147,6 @@ namespace dsp {
     //! Sampling threshold as a fraction of the noise power
     float threshold;
 
-    //! Number of samples used to estimate undigitized power
-    unsigned nsample;
-
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
 
@@ -182,9 +158,6 @@ namespace dsp {
 
     //! Lookup table and histogram dimensions reflect the attributes
     bool built;
-
-    //! Histograms of number of ones in nsample points
-    vector< vector< unsigned long > > histograms;
 
     //! Values used in Dynamic Level Setting
     vector< float > dls_lookup;
@@ -200,15 +173,6 @@ namespace dsp {
 
   };
   
-}
-
-template <typename T> 
-void dsp::TwoBitCorrection::get_histogram (vector<T>& data, unsigned idig) const
-{
-  data.resize (nsample);
-
-  for (unsigned i=0; i<nsample; i++)
-    data[i] = T(histograms[idig][i]);
 }
 
 #endif
