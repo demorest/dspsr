@@ -42,7 +42,39 @@ dsp::PuMaFile::~PuMaFile ()
 
 bool dsp::PuMaFile::is_valid (const char* filename,int) const
 { 
-  return true; // false;
+  if (verbose)
+    cerr << "dsp::PuMaFile::is_valid (" << filename << ")" << endl;
+
+  FILE* fptr = fopen (filename, "r");
+  if (!fptr)
+    throw Error (FailedSys, "dsp::PuMaFile::is_valid",
+                 "failed fopen(%s)", filename);
+
+  Header_type* hdr = (Header_type*) header;
+
+  // call the parsing routine from the puma library
+  prheader (hdr, fptr);
+
+  if (strncmp (hdr->gen.HdrVer, "DPC", 3) != 0) {
+    if (verbose)
+      cerr << "dsp::PuMaFile::is_valid HdrVer does not contain DPC" << endl;
+    fclose (fptr);
+    return false;
+  }
+
+  if (verbose)
+    cerr << "dsp::PuMaFile::open_file Skipping adjustments" << endl;
+
+  // skip over adjustments
+
+  /* int ParBlkSize; Number of bytes in second (parameter) block */
+  unsigned nadjust = hdr->gen.ParBlkSize / (sizeof(Adjustments));
+
+  fseek(fptr, nadjust*sizeof(Adjustments), SEEK_CUR);
+  const_cast<PuMaFile*>(this)->header_bytes = ftell (fptr);
+  fclose (fptr);
+
+  return true;
 }
 
 void dsp::PuMaFile::open_file (const char* filename)
@@ -50,31 +82,14 @@ void dsp::PuMaFile::open_file (const char* filename)
   if (verbose)
     cerr << "dsp::PuMaFile::open_file " << filename << endl;
 
-  FILE* fptr = fopen (filename, "r");
-  if (!fptr)
-    throw Error (FailedSys, "dsp::PuMaFile::open",
-		 "failed fopen(%s)", filename);
- 
-  Header_type* hdr = (Header_type*) header;
-
-  // call the parsing routine from the puma library
-  prheader (hdr, fptr);
-
-  if (verbose)
-    cerr << "dsp::PuMaFile::open_file Skipping adjustments" << endl;
-  
-  // skip over adjustments
-  
-  /* int ParBlkSize; Number of bytes in second (parameter) block */
-  unsigned nadjust = hdr->gen.ParBlkSize / (sizeof(Adjustments));
-
-  fseek(fptr, nadjust*sizeof(Adjustments), SEEK_CUR);
-  header_bytes = ftell (fptr);
-  fclose (fptr);
+  if (!is_valid(filename))
+    throw Error (InvalidParam, "dsp::PuMaFile::open_file",
+                 "not a valid PuMa file");
 
   if (verbose)
     cerr << "dsp::PuMaFile::open_file parse header" << endl;
 
+  Header_type* hdr = (Header_type*) header;
   parse (hdr);
 
   if (verbose)
@@ -274,7 +289,7 @@ void dsp::PuMaFile::parse (const void* header)
                  "filename=%s not in recognized form", hdr->gen.ThisFileName);
 
   uint64 two100MB = 200 * 1000 * 1000;
-  if (filenum > 0 && hdr->gen.DataBlkSize < two100MB)
+  if (filenum > 0 && uint64(hdr->gen.DataBlkSize) < two100MB)
     throw Error (InvalidState, "dsp::PuMaFile::parse",
                  "refusing to process last file in set - offset unknown");
     
