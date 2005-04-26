@@ -504,6 +504,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'V':
+      cerr << "dspsr: Entering very verbose mode" << endl;
       Pulsar::Archive::set_verbosity (3);
       dsp::Observation::verbose = true;
       dsp::Operation::verbose = true;
@@ -589,7 +590,10 @@ int main (int argc, char** argv) try {
 
   if (verbose)
     cerr << "Creating Response (passband) instance" << endl;
-  dsp::Response* passband = new dsp::Response;
+  dsp::Response* passband = 0;
+
+  if (!single_pulse)
+    passband = new dsp::Response;
 
   if (fres)
     kernel->set_frequency_resolution (fres);
