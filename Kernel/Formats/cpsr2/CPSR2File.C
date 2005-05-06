@@ -91,7 +91,7 @@ void dsp::CPSR2File::open_file (const char* filename)
   }
 
 
-  if( want_to_yamasaki_verify )
+  if( want_to_yamasaki_verify && filesize(filename) > 50 * 1024 * 1024 )
     if (yamasaki_verify (filename, data.offset_bytes, CPSR2_HEADER_SIZE) < 0)
       throw Error (FailedCall, "dsp::CPSR2File::open_file",
 		   "yamasaki_verify(%s) failed", filename);
