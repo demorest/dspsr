@@ -1,11 +1,14 @@
 #include "dsp/Filterbank.h"
 #include "dsp/WeightedTimeSeries.h"
-
-#include "fftm.h"
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
 
 #include "genutil.h"
+
+//#define RUNTIME_FFT
+
+#include "FTransform.h"
+#include "fftm.h"
 
 // #define _DEBUG
 
@@ -301,13 +304,17 @@ void dsp::Filterbank::transformation ()
 	    apodization -> operate (time_dom_ptr, windowed_time_domain);
 	    time_dom_ptr = windowed_time_domain;
 	  }
-
+#ifdef RUNTIME_FFT
+	  if (input->get_state() == Signal::Nyquist)
+	    FTransform::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+	  else
+	    FTransform::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+#else
 	  if (input->get_state() == Signal::Nyquist)
 	    fft::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
-
 	  else
 	    fft::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
-
+#endif
 	}
 
 	if (matrix_convolution) {
@@ -352,9 +359,11 @@ void dsp::Filterbank::transformation ()
 	  // for each channel
   
 	  for (ichan=0; ichan < nchan; ichan++) {
-
+#ifdef RUNTIME_FFT
+	    FTransform::bcc1d (freq_res, complex_time, freq_dom_ptr);
+#else
 	    fft::bcc1d (freq_res, complex_time, freq_dom_ptr);
-
+#endif
 	    freq_dom_ptr += freq_res*2;
 
 	    data_into = output->get_datptr (ichan, ipol) + out_offset+itres*2;
