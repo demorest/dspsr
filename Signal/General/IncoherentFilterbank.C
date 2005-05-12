@@ -1,6 +1,5 @@
 #include <memory>
-#include <vector>
- 
+#include <vector> 
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,16 +8,13 @@
 #include "Types.h"
 #include "RealTimer.h"
 #include "Reference.h"
+#include "FTransform.h"
 
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
 #include "dsp/ChannelOrder.h"
 
 #include "dsp/IncoherentFilterbank.h"
-
-extern "C" { 
-  void scfft1dc(float* data, int nfft, int isign, float* wsave);
-}
 
 dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank", outofplace,true){
   nchan = 0;
@@ -33,6 +29,8 @@ dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,T
 dsp::IncoherentFilterbank::~IncoherentFilterbank(){ free_plan(); }
 
 void dsp::IncoherentFilterbank::transformation(){
+  fprintf(stderr,"b1\n\n\n\n");
+
   //
   // Initial error checking
   //
@@ -69,11 +67,8 @@ void dsp::IncoherentFilterbank::transformation(){
   // The multiplicative factor in going real->complex
   int real2complex = 2/input->get_ndim();
 
-  // Number of floats in the forward FFT
-  int nsamp_fft = nchan * real2complex;
-
   // Number of forward FFTs
-  int npart = input->get_ndat()/nsamp_fft;
+  int npart = (input->get_ndat()*input->get_ndim()) / (2*nchan);
 
   // Number of output polarisations
   int output_npol, output_ndim;
@@ -86,14 +81,6 @@ void dsp::IncoherentFilterbank::transformation(){
   else
     throw Error(InvalidState,"dsp::IncoherentFilterbank::transformation()",
 		"You need to call dsp::IncoherentFilterbank::set_state() with an argument of: Signal::Intensity, Signal::PPQQ or Signal::Analytic");
-
-  if( verbose )
-    fprintf(stderr,"nchan=%d nsamp_fft=%d npart=%d\n",
-	    nchan,nsamp_fft,npart);
-
-  if( input->get_ndat()%nsamp_fft )
-    fprintf(stderr,"dsp::IncoherentFilterbank::transformation() will throw away %d samples of the input and not FFT them.  (input->ndat ("UI64") doesn't divide nsamp_fft (%d)\n",
-	    int(input->get_ndat())%nsamp_fft, input->get_ndat(), nsamp_fft);
 
   get_output()->copy_configuration( get_input() );
   get_output()->set_state( state );
@@ -111,11 +98,8 @@ void dsp::IncoherentFilterbank::transformation(){
 	    npart,output->get_nchan(),output->get_npol(),output->get_ndim());
   output->resize( npart );
 
-  // Set up wsave 
-  acquire_plan();
-
   //
-  // Do the work (destroys input array!)
+  // Do the work
   //
   if( state==Signal::Intensity )
     form_stokesI();
@@ -123,127 +107,91 @@ void dsp::IncoherentFilterbank::transformation(){
     form_PPQQ();
   else if( state==Signal::Analytic )
     form_undetected();
- 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::IncoherentFilterbank::transformation()\n");
+  else
+    throw Error(InvalidState,"dsp::IncoherentFilterbank()",
+		"state '%s' not recognised",State2string(state).c_str());
 }
   
 void dsp::IncoherentFilterbank::form_stokesI(){
-  if( verbose )
-    fprintf(stderr,"In dsp::IncoherentFilterbank::form_stokesI()\n");
+  const int npart = (input->get_ndat()*input->get_ndim()) / (2*nchan);
 
-  // Number of floats in the forward FFT
-  const int nsamp_fft = nchan * 2/input->get_ndim();
-
-  // Number of forward FFTs
-  const int npart = input->get_ndat()/nsamp_fft;
-
-  const size_t n_memcpy = nsamp_fft*sizeof(float);
-
-  if( verbose )
-    fprintf(stderr,"dsp::IncoherentFilterbank::form_stokesI() nsamp_fft=%d npart=%d n_memcpy=%d\n",
-	    nsamp_fft,npart,n_memcpy);
-
-  auto_ptr<float> scratch0(new float[nsamp_fft+2]);
-  auto_ptr<float> scratch1(new float[nsamp_fft+2]);
+  vector<float> time0(nchan*2+2);
+  vector<float> time1(nchan*2+2);
+  vector<float> sp0(nchan*2+2); // sp = spectra
+  vector<float> sp1(nchan*2+2);
+  vector<float> detected(npart*nchan);
   
   const float* in0 = input->get_datptr(0,0);
   const float* in1 = input->get_datptr(0,1);
-  
-  float* big_scratch = (float*)in0;
-  if( !destroy_input ) 
-    big_scratch = new float[nchan*npart];
-   
-  register float* det = big_scratch;
 
-  //fprintf(stderr,"Have allocated 2 small scratch buffers, big_scratch=%p input->get_datptr(0,0)=%p\n",
-  //  big_scratch,input->get_datptr(0,0));
+  float* det = &*detected.begin();
+
+  FTransform::fft_call forwards = FTransform::frc1d;
+  if( input->get_ndim() == 2 )  forwards = FTransform::fcc1d;
+  unsigned fft_sz = nchan;
+  if( input->get_ndim() == 1 )  fft_sz *= 2;
 
   fft_loop_timer.start();
   for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
     // (1) memcpy to scratch	
-    memcpy(scratch0.get(),in0+ipart*nsamp_fft,n_memcpy);
-    memcpy(scratch1.get(),in1+ipart*nsamp_fft,n_memcpy);    
+    memcpy( &*time0.begin(), in0+ipart*nchan*2, nchan*2*sizeof(float));
+    memcpy( &*time1.begin(), in1+ipart*nchan*2, nchan*2*sizeof(float));    
 
     // (2) FFT	
     fft_timer.start();
-    scfft1dc(scratch0.get(), nsamp_fft, 1, wsave ); 
-    scfft1dc(scratch1.get(), nsamp_fft, 1, wsave ); 
+    forwards( fft_sz, &*sp0.begin(), &*time0.begin());
+    forwards( fft_sz, &*sp1.begin(), &*time1.begin());
     fft_timer.stop();
-    
+
     // (3) SLD and add polarisations back
-    // MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0
-    register const float* real0 = scratch0.get();
-    register const float* imag0 = real0 + nsamp_fft/2+1;
-    
-    register const float* real1 = scratch1.get();
-    register const float* imag1 = real1 + nsamp_fft/2+1;
-    
-    for( unsigned i=0; i<nchan; ++i)
-      det[i] = SQR(real0[i]) + SQR(imag0[i]) + SQR(real1[i]) + SQR(imag1[i]);
+    for( unsigned i=0; i<nchan; i++)
+      det[i] = SQR(sp0[2*i]) + SQR(sp0[2*i+1]) + SQR(sp1[2*i]) + SQR(sp1[2*i+1]);
   }
   fft_loop_timer.stop();
 
-  if( verbose )
-    fprintf(stderr,"Finished FFTing and detecting stage... going to repack\n");
-
   // (4) Convert the BitSeries to a TimeSeries in output's data array 
-
   conversion_timer.start();
   for( unsigned ichan=0; ichan<nchan; ++ichan){
     register float* to = output->get_datptr(ichan,0);
-    register const float* from = big_scratch+ichan;
+    register const float* from = &*detected.begin()+ichan;
     register unsigned i=0;
     
     for( int ipart=0; ipart<npart; ++ipart, i += nchan )
       to[ipart] = from[i];
   }
   conversion_timer.stop();
-  
-  if( !destroy_input )
-    delete [] big_scratch;
-
-  if( verbose ) fprintf(stderr,"Returning from form_stokesI()\n");
 
 }
 
 void dsp::IncoherentFilterbank::form_PPQQ(){
-  if( verbose ) fprintf(stderr,"In form_PPQQ()\n");
+  const int npart = (input->get_ndat()*input->get_ndim()) / (2*nchan);
 
-  // Number of floats in the forward FFT
-  const int nsamp_fft = nchan * 2/input->get_ndim();
+  vector<float> time0(nchan*2+2);
+  vector<float> sp0(nchan*2+2); // sp = spectra
+  vector<float> detected(npart*nchan);
 
-  // Number of forward FFTs
-  const int npart = input->get_ndat()/nsamp_fft;
+  FTransform::fft_call forwards = FTransform::frc1d;
+  if( input->get_ndim() == 2 )  forwards = FTransform::fcc1d;
+  unsigned fft_sz = nchan;
+  if( input->get_ndim() == 1 )  fft_sz *= 2;
 
-  const size_t n_memcpy = nsamp_fft*sizeof(float);
+  fft_loop_timer.start();
+  for( unsigned ipol=0; ipol<input->get_npol(); ipol++){
+    const float* in0 = input->get_datptr(0,ipol);
+    float* det = &*detected.begin();
 
-  auto_ptr<float> scratch(new float[nsamp_fft+2]);
-
-  for( unsigned ipol=0; ipol<2; ipol++){  
-    const float* in = input->get_datptr(0,ipol);
-
-    float* big_scratch = (float*)input->get_datptr(0,ipol);
-    if( !destroy_input )
-      big_scratch = new float[nchan*npart]; 
-    
-    register float* det = big_scratch;
-
-    fft_loop_timer.start();
     for( int ipart=0; ipart<npart; ++ipart, det+=nchan ){
       // (1) memcpy to scratch	
-      memcpy(scratch.get(),in+ipart*nsamp_fft,n_memcpy);
+      memcpy( &*time0.begin(), in0+ipart*nchan*2, nchan*2*sizeof(float));
+
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scratch.get(), nsamp_fft, 1, wsave ); 
+      forwards( fft_sz, &*sp0.begin(), &*time0.begin());
       fft_timer.stop();
-      // (3) SLD back
-      // MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0
-      register const float* real = scratch.get();
-      register const float* imag = real + nsamp_fft/2+1;
-      
-      for( unsigned i=0; i<nchan; ++i)
-	det[i] = real[i]*real[i] + imag[i]*imag[i];
+
+      // (3) SLD
+      for( unsigned i=0; i<nchan; i++)
+	det[i] = SQR(sp0[2*i]) + SQR(sp0[2*i+1]);
     }
     fft_loop_timer.stop();
 
@@ -251,108 +199,95 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
     conversion_timer.start();
     for( unsigned ichan=0; ichan<nchan; ++ichan){
       register float* to = output->get_datptr(ichan,ipol);
-      register const float* from = big_scratch+ichan;
-      register unsigned i = 0;
+      register const float* from = &*detected.begin()+ichan;
+      register unsigned i=0;
       
       for( int ipart=0; ipart<npart; ++ipart, i += nchan )
 	to[ipart] = from[i];
     }
-    conversion_timer.stop();
-
-    if( !destroy_input )
-      delete [] big_scratch;
-  }    
-
-  if( verbose ) fprintf(stderr,"Returning from form_PPQQ()\n");
+    conversion_timer.stop();    
+  }
 
 }
 
 void dsp::IncoherentFilterbank::form_undetected(){
-  if( verbose ) fprintf(stderr,"In form_undetected()\n");
+  fprintf(stderr,"c1\n");
 
-  // Number of floats in the forward FFT
-  const int nsamp_fft = nchan * 2/input->get_ndim();
+  const int npart = (input->get_ndat()*input->get_ndim()) / (2*nchan);
 
-  // Number of forward FFTs
-  const unsigned npart = input->get_ndat()/nsamp_fft;
+  vector<float> time0(nchan*2+2);
+  vector<float> sp0(nchan*2+2); // sp = spectra
+  vector<float> undetected(npart*nchan*2);
 
-  // Number of floats out per forward FFT
-  // ( MKL packs output as DC, r1, r2, ... , r(n/2), 0 , i1, i2, ... , i(n/2-1), 0 )
-  register const int floats_out = nsamp_fft+2;
+  FTransform::fft_call forwards = FTransform::frc1d;
+  if( input->get_ndim() == 2 )  forwards = FTransform::fcc1d;
+  unsigned fft_sz = nchan;
+  if( input->get_ndim() == 1 )  fft_sz *= 2;
 
-  auto_ptr<float> scratch(new float[floats_out*npart]);
+  fft_loop_timer.start();
+  for( unsigned ipol=0; ipol<input->get_npol(); ipol++){
+    fprintf(stderr,"c2\n");
+    const float* in0 = input->get_datptr(0,ipol);
+    float* undet = &*undetected.begin();
 
-  for( unsigned ipol=0; ipol<2; ipol++){
+    for( int ipart=0; ipart<npart; ++ipart, undet+=nchan*2 ){
+      // (1) memcpy to scratch	
+      memcpy( &*time0.begin(), in0+ipart*nchan*2, nchan*2*sizeof(float));
 
-    fft_loop_timer.start();
-    float* in = input->get_datptr(0,ipol);
-
-    for( unsigned ipart=0; ipart<npart; ++ipart){
-      // (1) memcpy to scratch
-      register float* scr = scratch.get() +ipart*floats_out;
-      memcpy(scr,in+ipart*nsamp_fft,nsamp_fft);
       // (2) FFT	
       fft_timer.start();
-      scfft1dc(scr, nsamp_fft, 1, wsave ); 
+      forwards( fft_sz, &*sp0.begin(), &*time0.begin());
       fft_timer.stop();
+
+      // (3) Copy into 'undetected'
+      memcpy( undet, &*sp0.begin(), nchan*2*sizeof(float));
     }
     fft_loop_timer.stop();
 
-    // (3) Do the conversion back to a TimeSeries
+    int method = 2;
+    if( method==1 ){
+    // (4) Convert the BitSeries to a TimeSeries in output's data array 
     conversion_timer.start();
-
-    // For each set of output channels...
-    for( unsigned ichan=0; ichan<output->get_nchan(); ichan+=unroll_level){
-      register float* from_re = scratch.get();
+    for( unsigned ichan=0; ichan<nchan; ++ichan){
+      register float* to = output->get_datptr(ichan,ipol);
+      register const float* from = &*undetected.begin()+ichan*2;
+      register unsigned i=0;
       
-      float** to = new float*[unroll_level];
+      for( int ipart=0; ipart<npart; ipart++, i += nchan ){
+	to[2*ipart]   = from[2*i];
+	to[2*ipart+1] = from[2*i+1];
+      }
+    }
+    conversion_timer.stop();    
+    }
+    else{
+
+    fprintf(stderr,"c3 unroll_level=%d\n",unroll_level);
+    // (4) Convert the BitSeries to a TimeSeries in output's data array 
+    // For each set of output channels...
+    for( unsigned ichan=0; ichan<nchan; ichan+=unroll_level){
+      register float* from = &*undetected.begin() + ichan*2;
+    
+      vector<float*> to(unroll_level);
       for( unsigned i=0; i<unroll_level; i++)
 	to[i] = output->get_datptr(ichan+i,ipol);
-      
+    
       register unsigned from_i = 0;
-      register const unsigned imag_offset = nsamp_fft/2+1;
-      register const unsigned nfloats = npart*2;
-
+      
       // For each set of complex values out...
-      for( unsigned i=0; i<nfloats; i+=2, from_i += floats_out ){
+      for( int ipart=0; ipart<npart; ipart++, from_i += nchan*2 ){
 	// For each output channel in the group copy the imaginary and real bits over...
 	for( unsigned ito=0; ito<unroll_level; ++ito){
-	  to[ito][i] = from_re[from_i+ito];
-	  to[ito][i+1] = from_re[from_i+ito+imag_offset];
+	  to[ito][2*ipart]   = from[from_i+2*ito];
+	  to[ito][2*ipart+1] = from[from_i+2*ito+1];
 	}
-      }
-
-      delete [] to;
+      }  
     }
     conversion_timer.stop();
-
+    fprintf(stderr,"c4\n");
+    }
   }
-
-  if( verbose ) fprintf(stderr,"Returning from form_undetected()\n");
-}
-
-void dsp::IncoherentFilterbank::acquire_plan(){
-  int real2complex = 2/input->get_ndim();
   
-  // The size of wsave required by MKL is 2n+4
-  uint64 magic_size = 2*nchan*real2complex + 4;
-
-  if( wsave && wsave_size == magic_size ){
-    // wsave is already the correct size!
-    return;
-  }
-
-  free_plan();
-  wsave = new float[magic_size];
-  wsave_size = magic_size;
-
-  if( verbose )
-    fprintf(stderr,"Have allocated "UI64" floats for wsave=%p and n=%d\n",
-	    magic_size,wsave,nchan*real2complex);
-
-  scfft1dc(input->get_datptr(0,0),nchan*real2complex,0,wsave );
-  if( verbose )
-    fprintf(stderr,"wsave acquired\n");
 }
 
 
