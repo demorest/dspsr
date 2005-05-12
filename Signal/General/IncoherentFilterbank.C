@@ -29,8 +29,6 @@ dsp::IncoherentFilterbank::IncoherentFilterbank () : Transformation<TimeSeries,T
 dsp::IncoherentFilterbank::~IncoherentFilterbank(){ free_plan(); }
 
 void dsp::IncoherentFilterbank::transformation(){
-  fprintf(stderr,"b1\n\n\n\n");
-
   //
   // Initial error checking
   //
@@ -211,8 +209,6 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
 }
 
 void dsp::IncoherentFilterbank::form_undetected(){
-  fprintf(stderr,"c1\n");
-
   const int npart = (input->get_ndat()*input->get_ndim()) / (2*nchan);
 
   vector<float> time0(nchan*2+2);
@@ -226,7 +222,6 @@ void dsp::IncoherentFilterbank::form_undetected(){
 
   fft_loop_timer.start();
   for( unsigned ipol=0; ipol<input->get_npol(); ipol++){
-    fprintf(stderr,"c2\n");
     const float* in0 = input->get_datptr(0,ipol);
     float* undet = &*undetected.begin();
 
@@ -262,7 +257,6 @@ void dsp::IncoherentFilterbank::form_undetected(){
     }
     else{
 
-    fprintf(stderr,"c3 unroll_level=%d\n",unroll_level);
     // (4) Convert the BitSeries to a TimeSeries in output's data array 
     // For each set of output channels...
     for( unsigned ichan=0; ichan<nchan; ichan+=unroll_level){
@@ -284,7 +278,6 @@ void dsp::IncoherentFilterbank::form_undetected(){
       }  
     }
     conversion_timer.stop();
-    fprintf(stderr,"c4\n");
     }
   }
   
