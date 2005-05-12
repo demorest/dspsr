@@ -73,9 +73,6 @@ namespace dsp{
     //! Perform the operation
     virtual void transformation ();
 
-    //! Acquire the plan (wsave)
-    void acquire_plan();
-
     //! Number of channels into which the input will be divided
     unsigned nchan;
 
