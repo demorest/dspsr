@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.29 $
-   $Date: 2005/03/29 11:48:36 $
-   $Author: wvanstra $ */
+   $Revision: 1.30 $
+   $Date: 2005/05/18 06:40:04 $
+   $Author: hknight $ */
 
 #ifndef __Transformation_h
 #define __Transformation_h
@@ -136,6 +136,9 @@ namespace dsp {
     //! Inquire whether you are going to skip over samples that have been processed already (requires time_conserved==true; Observation->Observation to be meaningful)
     bool get_process_samps_once(){ return process_samps_once; }
 
+    //! Returns time prepended
+    double get_duration_prepended(){ return duration_prepended; }
+
     //! Child classes should over-ride this if they want to add a dspExtension history object to the output
     virtual void add_history(){ }
 
@@ -263,6 +266,9 @@ namespace dsp {
 
     //! Stores where the last point that was fully processed in the last input TimeSeries ended
     MJD end_of_processed_data;
+
+    //! Stores how much time was prepended [0]
+    double duration_prepended;
 
   };
   
@@ -509,7 +515,7 @@ dsp::Transformation<In,Out>::pre_transformation_stuff(int64& surplus_samples, in
 						      double& time_in, double& rate_in,
 						      MJD& input_start_time)
 {
-  dsp::Observation* obs_in = (dsp::Observation*)dynamic_cast<const dsp::Observation*>(get_input());
+  Observation* obs_in = (Observation*)dynamic_cast<const Observation*>(get_input());
 
   if( verbose )
     if( obs_in )
@@ -522,13 +528,16 @@ dsp::Transformation<In,Out>::pre_transformation_stuff(int64& surplus_samples, in
   // input_start_time is the earliest start time for dsp::BandCombiner
   input_start_time = get_input_start_time(obs_in); 
 
-  dsp::TimeSeries* ts_out = dynamic_cast<dsp::TimeSeries*>(get_output());
+  TimeSeries* ts_out = dynamic_cast<TimeSeries*>(get_output());
 
   if( valid_data_is_saved && ts_out ){
     samples_prepended = prepend_data( ts_out );
-    time_in += samples_prepended / ts_out->get_rate();
+    duration_prepended = samples_prepended / ts_out->get_rate();
+    time_in += duration_prepended;
   }
-
+  else
+    duration_prepended = 0.0;
+    
   surplus_samples = seek_over_surplus_samps();
 
   if( surplus_samples < 0 ){
