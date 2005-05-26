@@ -442,7 +442,8 @@ void dsp::TwoBitCorrection::unpack ()
     throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
 		 "input ndat="I64" != %dn", ndat, samples_per_byte);
   
-  if (input->get_state() != Signal::Nyquist && input->get_state() != Signal::Analytic)
+  if (input->get_state() != Signal::Nyquist && 
+      input->get_state() != Signal::Analytic)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
 		 "input is detected");
 
