@@ -21,12 +21,10 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 
 void dsp::Filterbank::transformation ()
 {
-  MJD st("52644.176409458518541");
-
   if (verbose)
-    fprintf(stderr,"In dsp::Filterbank::transformation() with input ndat="UI64" output ndim=%d (st=%f)\n",
-	    get_input()->get_ndat(),get_output()->get_ndim(),
-	    (get_input()->get_start_time()-st).in_seconds());
+    cerr << "dsp::Filterbank::transformation input ndat="
+	 << get_input()->get_ndat() << " output ndim=" 
+	 << get_output()->get_ndim() << endl;
 
   if (nchan < 2)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
@@ -101,7 +99,7 @@ void dsp::Filterbank::transformation ()
   }
 
   // number of timesamples between start of each big fft
-  int nsamp_step = nsamp_fft - nsamp_overlap;
+  unsigned nsamp_step = nsamp_fft - nsamp_overlap;
 
   // matrix convolution
   bool matrix_convolution = false;
@@ -135,12 +133,12 @@ void dsp::Filterbank::transformation ()
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
   // this may be in addition to any overlap necessary due to convolution.
   // nsamp_step is analogous to ngood in Convolution::transformation
-  int nsamp_tres = nchan / time_res;
+  const unsigned nsamp_tres = nchan / time_res;
   if (nsamp_tres < 1)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
 		 "time resolution:%d > no.channels:%d\n", time_res, nchan);
 
-  unsigned ndat = input->get_ndat();
+  const uint64 ndat = input->get_ndat();
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
