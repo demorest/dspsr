@@ -894,6 +894,15 @@ int main (int argc, char** argv) try {
     if( pulsar_name!=string() )
       manager->get_info()->set_source( pulsar_name );   
 
+
+    // Is this a CAL?
+    if (manager->get_info()->get_type() == Signal::PolnCal) {
+       double calperiod = 1.0/manager->get_info()->get_calfreq();
+       fold->set_folding_period(calperiod,manager->get_info()->get_source());
+       if (verbose)
+         cerr << manager->get_info()->obs2string() <<  endl;
+    }
+
     if( mjd_string != 0 ) {
       MJD mjd (mjd_string);
       cerr << "dspsr: setting the start time to " << mjd << endl;
@@ -957,7 +966,11 @@ int main (int argc, char** argv) try {
     else {
 
       active_operations = operations;
-
+      bool dm_kludge = false;
+      if (dm == 0) {
+	 dm = 0.001;
+	 dm_kludge = true;
+      }
       kernel->set_dispersion_measure (dm);
       kernel->match ( manager->get_info(), nchan);
       
@@ -974,6 +987,10 @@ int main (int argc, char** argv) try {
       cerr << "FFTsize=" << fft_size << endl;
       cerr << "Blocksz=" << block_size << endl;
       cerr << "Overlap=" << overlap << endl;
+      
+      if (dm_kludge) {
+	kernel->set_dispersion_measure(0.0);
+      }
       
     }
 
