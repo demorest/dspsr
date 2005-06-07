@@ -199,6 +199,12 @@ namespace dsp {
     //! Return the observation mode
     string get_mode () const { return mode; }
 
+    //! Set the cal frequency
+    void set_calfreq (double _calfreq) {calfreq = _calfreq;}
+
+    //! get the calfreq
+    double get_calfreq() const {return calfreq;} 
+
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     //! Also, H_BandPass sets this as bandpass
     string get_domain() const { return domain; }
@@ -472,6 +478,9 @@ namespace dsp {
 
     //! Number of bits per value
     unsigned nbit;
+
+    //! The calfrequency
+    double calfreq;
 
   };
 

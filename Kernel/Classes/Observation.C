@@ -39,6 +39,8 @@ void dsp::Observation::init ()
   Observation::set_npol( 1 );
   Observation::set_ndim( 1 );
   Observation::set_nbit( 0 );
+  Observation::set_calfreq(0.0);
+
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -464,8 +466,6 @@ void dsp::Observation::set_default_basis ()
     basis = Signal::Circular;
   else if (telescope == Telescope::Hobart)
     basis = Signal::Circular;
-  else if (telescope == Telescope::WSRT)
-    basis = Signal::Linear;
   else if (telescope == Telescope::GreenBank) {
     fprintf(stderr,"WARNING Assuming GBT is Circular\n");
     basis = Signal::Circular;
@@ -543,6 +543,7 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_identifier  ( in_obs.get_identifier() );
   set_machine     ( in_obs.get_machine() );
   set_mode        ( in_obs.get_mode() );
+  set_calfreq     ( in_obs.get_calfreq());
 
   set_domain( in_obs.get_domain() );
   set_last_ondisk_format( in_obs.get_last_ondisk_format() );
@@ -663,6 +664,7 @@ Reference::To<Header> dsp::Observation::obs2Header(Header* hdr) const{
   h->add_token("IDENTIFIER",identifier);
   h->add_token("MODE",mode);
   h->add_token("MACHINE",machine);
+  h->add_token("CALFREQ",get_calfreq());
 
   // COORDINATES is stored as RAJ and DECJ
   h->add_token("RAJ",coordinates.ra().getHMS());
@@ -706,6 +708,7 @@ bool dsp::Observation::obs2string(string& info_string) const{
   sprintf(dummy,"IDENTIFIER\t%s\n",identifier.c_str()); ss += dummy;
   sprintf(dummy,"MODE\t%s\n",mode.c_str()); ss += dummy;
   sprintf(dummy,"MACHINE\t%s\n",machine.c_str()); ss += dummy;
+  sprintf(dummy,"CALFREQ\t%.16f\n",get_calfreq()); ss += dummy;
 
   // COORDINATES is stored as RAJ and DECJ
   sprintf(dummy,"RAJ\t%s\n",coordinates.ra().getHMS().c_str()); ss += dummy;
@@ -816,6 +819,7 @@ void dsp::Observation::Header2obs(Reference::To<Header> h){
   identifier = h->retrieve_token<string>("IDENTIFIER");
   mode = h->retrieve_token<string>("MODE");
   machine = h->retrieve_token<string>("MACHINE");
+  set_calfreq(h->retrieve_token<double>("CALFREQ") );
 
   // COORDINATES are stored as RAJ and DECJ
   string raj = h->retrieve_token<string>("RAJ");

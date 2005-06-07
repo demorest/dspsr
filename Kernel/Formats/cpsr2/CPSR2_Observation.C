@@ -3,6 +3,7 @@
 
 #include "string_utils.h"
 #include "genutil.h"
+#include "Types.h"
 #include "coord.h"
 
 dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
@@ -49,6 +50,40 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     throw_str ("CPSR2_Observation - failed read SOURCE");
 
   set_source (hdrstr);
+
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // MODE
+  //
+  if (ascii_header_get(header, "MODE", "%s", hdrstr) < 0)
+    throw_str ("CPSR2_Observation - failed read MODE");
+
+  if (strncmp(hdrstr,"PSR",3) == 0) {
+    cerr << "Source is Pulsar" << endl;
+    set_type(Signal::Pulsar);
+  }
+  else if (strncmp(hdrstr,"CAL",3) == 0) {
+    cerr << "Source is CAL" << endl;
+    set_type(Signal::PolnCal);
+  }
+  else if (strncmp(hdrstr,"LEV",3) == 0) {
+    cerr << "Source is LEVCAL" << endl;
+    set_type(Signal::PolnCal);
+  }
+  else {
+    cerr << "Unknown mode or source type, assuming Pulsar" << endl;
+    set_type(Signal::Pulsar);
+  }
+  if (get_type() == Signal::PolnCal) {
+
+    double calfreq;
+    if (ascii_header_get (header, "CALFREQ", "%lf", &calfreq) < 0)
+      throw_str ("CPSR2_Observation - failed read FREQ");
+    set_calfreq(calfreq);
+    cerr << "Set CALFREQ to " << get_calfreq() << endl;
+
+  }
 
   // //////////////////////////////////////////////////////////////////////
   //
