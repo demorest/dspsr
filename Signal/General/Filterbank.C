@@ -386,9 +386,8 @@ void dsp::Filterbank::transformation ()
   } // for each big fft (ipart)
 
   if (verbose)
-    fprintf(stderr,"Returning from dsp::Filterbank::transformation() with output ndat="UI64" st=%f\n",
-	    get_output()->get_ndat(),
-	    (get_output()->get_start_time()-st).in_seconds());
+    fprintf(stderr,"Returning from dsp::Filterbank::transformation() with output ndat="UI64"\n",
+	    get_output()->get_ndat());
 }
 
 #if 0
