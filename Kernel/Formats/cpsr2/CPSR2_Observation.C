@@ -56,9 +56,8 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   // MODE
   //
-  if (ascii_header_get(header, "MODE", "%s", hdrstr) < 0)
-    throw_str ("CPSR2_Observation - failed read MODE");
-
+  ascii_header_get(header, "MODE", "%s", hdrstr);
+    
   if (strncmp(hdrstr,"PSR",3) == 0) {
     cerr << "Source is Pulsar" << endl;
     set_type(Signal::Pulsar);
