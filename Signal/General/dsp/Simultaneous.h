@@ -12,6 +12,7 @@
 #include "dsp/BasicBuffer.h"
 #include "dsp/Operation.h"
 #include "dsp/Buffer.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
@@ -22,6 +23,8 @@ namespace dsp {
   class Simultaneous : public Operation {
 
   public:
+
+    TimeSeries* last_on;
 
     //! Null constructor
     Simultaneous();
