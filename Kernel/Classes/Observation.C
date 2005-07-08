@@ -329,11 +329,16 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
   
-  if (mode != obs.mode) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different mode:"
-	   << mode << " and " << obs.mode << endl;
-    can_combine = false;
+  if (mode != obs.mode ) {
+    string s1 = mode.substr(0,5);
+    string s2 = obs.mode.substr(0,5);
+
+    if( !(s1==s2 && s1=="2-bit") ){
+      if (verbose || combinable_verbose)
+	cerr << "dsp::Observation::combinable different mode: '"
+	     << mode << "' and '" << obs.mode << "'" << endl;
+      can_combine = false;
+    }
   }
   
   if (machine != obs.machine) {
