@@ -2,14 +2,14 @@
 #include <assert.h>
 #include <math.h>
 
-// #define _DEBUG 1
-
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 #include "dsp/WeightedTimeSeries.h"
 
 #include "Error.h"
 #include "ierf.h"
+
+// #define _DEBUG 1
 
 /*! From JA98, Table 1 */
 const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
@@ -466,6 +466,11 @@ void dsp::TwoBitCorrection::unpack ()
     unsigned ipol = get_output_ipol (idig);
 
     float* into = output->get_datptr (0, ipol) + get_output_offset (idig);
+
+#ifdef _DEBUG
+    cerr << "dsp::TwoBitCorrection::unpack idig=" << idig << "/" << ndig
+	 << " from=" << (void*)from << " to=" << into << endl;
+#endif
 
     unsigned long* hist = 0;
 

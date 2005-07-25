@@ -101,7 +101,6 @@ void usage ()
     " -L nlag:nchan  form nlag ACF of the undetected data (using nchan PSD)\n"
     " -l nlag        form lag spectrum of detected data\n"
     "\n"
-    " -L nlag        form nlag ACF of the undetected data (using nlag*2 PSD)\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins \n"
     " -p phase       reference phase of pulse profile bin zero \n"

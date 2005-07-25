@@ -1,6 +1,8 @@
 #include "dsp/SubByteTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 
+// #define _DEBUG 1
+
 dsp::SubByteTwoBitCorrection::SubByteTwoBitCorrection (const char* name)
   : TwoBitCorrection (name)
 {
@@ -62,8 +64,13 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
   unsigned isamp=0;
   unsigned shift[4];
 
-  for (unsigned isamp=0; isamp<samples_per_byte; isamp++)
+  for (unsigned isamp=0; isamp<samples_per_byte; isamp++) {
     shift[isamp] = get_shift (digitizer, isamp);
+#ifdef _DEBUG
+    cerr << "dsp::SubByteTwoBitCorrection::dig_unpack shift[" << isamp 
+	 << "]=" << shift[isamp] << endl;
+#endif
+  }
 
   const unsigned char* input_data_ptr = input_data;
 
