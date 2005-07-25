@@ -18,6 +18,7 @@ dsp::TwoBitStatsPlotter::TwoBitStatsPlotter ()
 
   show_cutoff_sigma = true;
   plot_only_range = false;
+  hist_min = 0.01;
 }
 
 dsp::TwoBitStatsPlotter::~TwoBitStatsPlotter ()
