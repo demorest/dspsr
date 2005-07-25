@@ -11,7 +11,7 @@
 
 namespace dsp {
 
-  //! Loads TimeSeries data from a PMDAQ data file
+  //! Loads BitSeries data from a PMDAQ data file
   class PMDAQFile : public File 
   {
   public:

@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.12 $
-   $Date: 2004/12/12 05:50:17 $
-   $Author: hknight $ */
+   $Revision: 1.13 $
+   $Date: 2005/07/25 18:42:28 $
+   $Author: wvanstra $ */
 
 
 #ifndef __CPSRFile_h
@@ -13,7 +13,7 @@
 
 namespace dsp {
 
-  //! Loads TimeSeries data from a CPSR data file
+  //! Loads BitSeries data from a CPSR data file
   class CPSRFile : public File 
   {
   public:
