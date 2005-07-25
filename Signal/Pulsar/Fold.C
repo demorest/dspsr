@@ -283,20 +283,28 @@ unsigned dsp::Fold::choose_nbin ()
   double the_folding_period = get_folding_period ();
 
   if (verbose)
-    cerr << "dsp::Fold::choose_nbin the_folding_period=" << the_folding_period << endl;
+    cerr << "dsp::Fold::choose_nbin folding_period=" 
+	 << the_folding_period << endl;
 
   if (the_folding_period <= 0.0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
 		 "no folding period or polyco set");
 
   double sampling_period = 1.0 / input->get_rate();
+
+  if (sampling_period < 0)
+    throw Error (InvalidState, "dsp::Fold::choose_nbin",
+		 "input has a negative sampling rate");
+
   double binwidth = minimum_bin_width * sampling_period;
 
   unsigned sensible_nbin = unsigned (the_folding_period / binwidth);
 
-  if (power_of_two)
+  if (power_of_two) {
+    double log2bin = log(the_folding_period/binwidth) / log(2.0);
     // make sensible_nbin the largest power of two less than the maximum  
-    sensible_nbin = (unsigned)  pow ( 2.0, floor(log(the_folding_period/binwidth)/log(2.0)) );
+    sensible_nbin = (unsigned) pow (2.0, floor(log2bin));
+  }
 
   if (sensible_nbin == 0) {
     cerr << "dsp::Fold::choose_nbin WARNING no phase resolution\n"
