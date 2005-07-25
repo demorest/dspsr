@@ -1,12 +1,5 @@
 #include "dsp/BitStatsPlotter.h"
 #include "dsp/HistUnpacker.h"
-//#include "genutil.h"
-
-//#include <iostream>
-//#include <algorithm>
-
-//#include <math.h>
-//#include <stdio.h>
 
 #include <cpgplot.h>
 
@@ -29,12 +22,12 @@ dsp::BitStatsPlotter::~BitStatsPlotter ()
 
 string dsp::BitStatsPlotter::get_xlabel () const
 {
-    return "Sample value";
+  return "Sample value";
 }
 
 string dsp::BitStatsPlotter::get_ylabel () const
 {
-    return "Number of weights";
+  return "Number of weights";
 }
 
 void dsp::BitStatsPlotter::set_data (const HistUnpacker* stats)
@@ -222,8 +215,6 @@ void dsp::BitStatsPlotter::pgplot (unsigned poln)
 	  break;
     }
   }
-  
-
 
   // set the world coordinates for the histograms and draw a box
 #ifdef DEBUG
