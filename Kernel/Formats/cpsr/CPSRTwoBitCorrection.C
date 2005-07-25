@@ -13,12 +13,7 @@ dsp::CPSRTwoBitCorrection::CPSRTwoBitCorrection ()
   : SubByteTwoBitCorrection ("CPSRTwoBitCorrection")
 {
   table = new TwoBitTable (TwoBitTable::OffsetBinary);
-}
-
-/*! CPSR has four digitizers: 2 polns, I and Q */
-unsigned dsp::CPSRTwoBitCorrection::get_ndig () const
-{
-  return 4;
+  set_ndig (4);
 }
 
 /*! Each 2-bit sample from each digitizer is packed into one byte */

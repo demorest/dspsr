@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.13 $
-   $Date: 2003/05/13 15:09:11 $
+   $Revision: 1.14 $
+   $Date: 2005/07/25 17:48:45 $
    $Author: wvanstra $ */
 
 #ifndef __CPSRTwoBitCorrection_h
@@ -22,9 +22,6 @@ namespace dsp {
 
     //! Return true if CPSRTwoBitCorrection can convert the Observation
     virtual bool matches (const Observation* observation);
-
-    //! Over-ride the TwoBitCorrection default
-    virtual unsigned get_ndig () const;
 
     //! Over-ride the TwoBitCorrection default
     virtual unsigned get_ndig_per_byte () const;
