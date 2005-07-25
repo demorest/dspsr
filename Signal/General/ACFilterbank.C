@@ -206,29 +206,29 @@ cerr << "dsp::ACFilterbank copy half" << endl;
       memcpy (spectrum1, input_ptr, nbytes_half);
 
 #ifdef _DEBUG
-cerr << "dsp::ACFilterbank conjugate" << endl;
-#endif
-
-      // complex conjugate
-      for (idat=1; idat<nchan; idat+=2)
-	spectrum1[idat] = -spectrum1[idat];
-
-#ifdef _DEBUG
 cerr << "dsp::ACFilterbank zero pad" << endl;
 #endif
 
       // zero pad the rest
-      for (idat=nchan; idat<nchan*2; idat++)
+      for (idat=nchan; idat<out_step; idat++)
 	spectrum1[idat] = 0.0;
 
 #ifdef _DEBUG
-cerr << "dsp::ACFilterbank FFT padded conjugate nfft=" << nsamp_fft << endl;
+cerr << "dsp::ACFilterbank FFT zero-padded nfft=" << nsamp_fft << endl;
 #endif
 
       if (input->get_state() == Signal::Nyquist)
 	fft::frc1d (nsamp_fft, spectrum2, spectrum1);
       else
 	fft::fcc1d (nsamp_fft, spectrum2, spectrum1);
+
+#ifdef _DEBUG
+cerr << "dsp::ACFilterbank conjugate result" << endl;
+#endif
+
+      // complex conjugate
+      for (idat=1; idat<out_step; idat+=2)
+	spectrum2[idat] = -spectrum2[idat];
 
 #ifdef _DEBUG
 cerr << "dsp::ACFilterbank FFT data" << endl;
