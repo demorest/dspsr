@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "dsp/CPSR2TwoBitCorrection.h"
 #include "dsp/Observation.h"
 #include "dsp/TwoBitTable.h"
