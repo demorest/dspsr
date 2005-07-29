@@ -1,14 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ACFilterbank.h,v $
-   $Revision: 1.3 $
-   $Date: 2005/03/25 08:54:20 $
+   $Revision: 1.4 $
+   $Date: 2005/07/29 17:37:47 $
    $Author: wvanstra $ */
 
 #ifndef __ACFilterbank_h
 #define __ACFilterbank_h
 
 #include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
