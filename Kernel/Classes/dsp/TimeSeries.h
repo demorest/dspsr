@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.26 $
-   $Date: 2005/01/19 06:40:03 $
-   $Author: hknight $ */
+   $Revision: 1.27 $
+   $Date: 2005/07/29 21:01:05 $
+   $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -61,6 +61,10 @@ namespace dsp {
     //! This doesn't copy nchan, npol or ndim if data is being preserved
     virtual void copy_configuration (const Observation* copy);
 
+    //! Copy the data of another TimeSeries instance
+    void copy_data (const TimeSeries* data, 
+		    uint64 idat_start = 0, uint64 ndat = 0);
+
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
 
@@ -83,14 +87,14 @@ namespace dsp {
     //! Offset the base pointer by offset time samples
     virtual void seek (int64 offset);
 
-    //! Append little onto the end of 'this'
-    //! If it is zero, then none were and we assume 'this' is full
-    //! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
-    //! If it is equal to little->get_ndat(), it may/may not be full.
-    virtual uint64 append (const TimeSeries* little);
+    //! Append the given TimeSeries to the end of 'this'
+    virtual uint64 append (const TimeSeries*);
 
     //! Only append the one chan/pol pair
-    virtual uint64 append(const TimeSeries* little,unsigned ichan,unsigned ipol);
+    virtual uint64 append (const TimeSeries*, unsigned ichan, unsigned ipol);
+
+    //! Copy data from given TimeSeries in front of the current position
+    void prepend (const dsp::TimeSeries*, uint64 pre_ndat = 0);
 
     //! Set all values to zero
     virtual void zero ();
@@ -102,12 +106,10 @@ namespace dsp {
     virtual void check (float min=-10.0, float max=10.0);
 
     //! Delete the current data buffer and attach to this one
-    //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
-    //! Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it.
-    virtual void attach(auto_ptr<float> _data);
+    virtual void attach (auto_ptr<float> _data);
 
     //! Call this when you do not want to transfer ownership of the array
-    virtual void attach(float* _data);
+    virtual void attach (float* _data);
 
     //! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
     virtual void normalise();
@@ -136,7 +138,7 @@ namespace dsp {
     //! Returns a uchar pointer to the first piece of data
     virtual unsigned char* get_data();
     //! Returns a uchar pointer to the first piece of data
-    virtual const unsigned char* const_get_data() const;
+    virtual const unsigned char* get_data() const;
 
     //! Called by append()
     void append_checks(uint64& ncontain,uint64& ncopy,
@@ -145,12 +147,25 @@ namespace dsp {
     //! Pointer into buffer, offset to the first time sample requested by user
     float* data;
 
+
+
+    //! Change the amount of memory reserved at the start of the buffer
+    void change_reserve (int64 change);
+
+    friend class InputBuffering;
+
   private:
 
     //! Variable used by Transformation::operation() to ensure that saved data
     //! stays saved and is not wiped over.
     //! Variable is reset to false after call to transformation()
     bool preserve_seeked_data;
+
+    //! Reserve space for this many timesamples preceding the base address
+    uint64 reserve_ndat;
+
+    //! The base address
+    // float* base;
 
   };
 

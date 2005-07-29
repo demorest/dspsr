@@ -39,7 +39,8 @@ dsp::TimeSeries::TimeSeries(const TimeSeries& ts) : DataSeries() {
 void dsp::TimeSeries::init(){
   DataSeries::init();
   DataSeries::set_nbit( 8 * sizeof(float) );
-  data = 0;  
+  // BASE base = data = 0;  
+  reserve_ndat = 0;
   set_preserve_seeked_data( false );
 }
 
@@ -81,9 +82,11 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 
   if( !get_preserve_seeked_data() ){
     if( verbose ) 
-      cerr << "dsp::TimeSeries::resize won't preserve data" << endl;
-    DataSeries::resize(nsamples);
-    data = (float*)buffer;
+      cerr << "dsp::TimeSeries::resize not preserving; reserving "
+           << reserve_ndat << endl;
+    DataSeries::resize(nsamples+reserve_ndat);
+    data = (float*)buffer + reserve_ndat;
+    // BASE base = data;
     return;
   }
 
@@ -211,18 +214,23 @@ void dsp::TimeSeries::seek (int64 offset)
 
   if (offset > int64(get_ndat()))
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
-		 "offset="I64" > ndat="UI64" In English: you've tried to seek past the end of the data", offset, get_ndat());
+		 "offset="I64" > ndat="UI64";"
+                 " attempt to seek past end of data",
+                 offset, get_ndat());
 
   float* fbuffer = (float*)buffer;
 
-  int64 current_offset = int64(data - fbuffer) * int64(get_ndim());
+  int64 current_offset = int64(data - fbuffer) / int64(get_ndim());
 
   if (-offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
-		 "offset="I64" > current_offset="I64" In English: you've tried to seek before the start of the data", offset, current_offset);
+		 "offset="I64" > current_offset="I64";"
+                 " attempt to seek before start of data", 
+                 offset, current_offset);
 
   data += offset * int64(get_ndim());
   set_ndat( get_ndat() - offset );
+
   change_start_time (offset);
 }
 
@@ -238,7 +246,7 @@ unsigned char* dsp::TimeSeries::get_data(){
 }
 
 //! Returns a uchar pointer to the first piece of data
-const unsigned char* dsp::TimeSeries::const_get_data() const{
+const unsigned char* dsp::TimeSeries::get_data() const{
   if( !data && !buffer )
     throw Error(InvalidState,"dsp::TimeSeries::const_get_data()",
 		"Neither data nor buffer is defined.  ndat="UI64,
@@ -376,11 +384,46 @@ void dsp::TimeSeries::zero ()
 
 }
 
-//! return value is number of timesamples actually appended.
-//! If it is zero, then none were and we assume 'this' is full
-//! If it is nonzero, but not equal to little->get_ndat(), then 'this' is full too
-//! If it is equal to little->get_ndat(), it may/may not be full.
-uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little){
+
+void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat)
+{
+  if (!pre)
+    return;
+
+  if (!pre_ndat)
+    pre_ndat = pre->get_ndat();
+
+  seek (-int64(pre_ndat));
+
+  copy_data (pre, 0, pre_ndat);
+}
+
+void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy, 
+				 uint64 idat_start, uint64 copy_ndat)
+{
+  if (!copy_ndat || !copy)
+    return;
+
+  uint64 offset = idat_start * get_ndim();
+  uint64 byte_count = copy_ndat * get_ndim() * sizeof(float);
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++) {
+    for (unsigned ipol=0; ipol<get_npol(); ipol++) {
+      float* to = get_datptr (ichan, ipol);
+      const float* from = copy->get_datptr(ichan,ipol) + offset;
+      memcpy (to, from, byte_count);
+    }
+  }
+}
+
+/*! 
+  \retval number of timesamples actually appended.  
+  If zero, then none were and we assume 'this' is full.
+  If nonzero, but not equal to little->get_ndat(), then 'this' is full too.
+  If equal to little->get_ndat(), it may/may not be full.
+*/
+uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
+{
   if( verbose )
     fprintf(stderr,"In dsp::TimeSeries::append()\n");
 
@@ -532,10 +575,12 @@ void dsp::TimeSeries::check (float min, float max)
 }
 
 //! Delete the current data buffer and attach to this one
-/*! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
- Also do not try to delete the old memory once you have called this- the TimeSeries::data member now owns it. */
-
-void dsp::TimeSeries::attach(auto_ptr<float> _data){
+/*! This is dangerous as it ASSUMES new data buffer has been
+ pre-allocated and is big enough.  Beware of segmentation faults when
+ using this routine.  Also do not try to delete the old memory once
+ you have called this- the TimeSeries::data member now owns it. */
+void dsp::TimeSeries::attach (auto_ptr<float> _data)
+{
   if( !_data.get() )
     throw Error(InvalidState,"dsp::TimeSeries::attach()",
 		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
@@ -643,6 +688,20 @@ void dsp::TimeSeries::set_ndim(unsigned _ndim){
   DataSeries::set_ndim(_ndim);
 }
 
+void dsp::TimeSeries::change_reserve (int64 change)
+{
+  if (change < 0) {
+    uint64 decrease = -change;
+    if (decrease > reserve_ndat)
+    throw Error (InvalidState, "dsp::TimeSeries::change_reserve",
+		 "decrease="I64"; reserve_ndat="UI64, 
+		 decrease, reserve_ndat);
+
+    reserve_ndat -= decrease;
+  }
+  else
+    reserve_ndat += change;
+}
 
 //-------------------------------------------------------------------
 
