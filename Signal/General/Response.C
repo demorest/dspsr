@@ -42,6 +42,9 @@ dsp::Response::Response (const Response& response)
 //! Assignment operator
 const dsp::Response& dsp::Response::operator = (const Response& response)
 {
+  if (this == &response)
+    return *this;
+
   Shape::operator = ( response );
 
   impulse_pos = response.impulse_pos;
@@ -50,6 +53,7 @@ const dsp::Response& dsp::Response::operator = (const Response& response)
   chan_swapped = response.chan_swapped;
   dc_centred = response.dc_centred;
 
+  changed.send (*this);
   return *this;
 }
 
@@ -72,6 +76,7 @@ const dsp::Response& dsp::Response::operator *= (const Response& response)
     for (unsigned ichan=0; ichan < nchan; ichan++)
       response.operate (buffer + offset*ipol + ichan*ndat*ndim, ipol, ichan);
 
+  changed.send (*this);
   return *this;
 }
 

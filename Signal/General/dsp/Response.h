@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.22 $
-   $Date: 2004/11/22 22:31:53 $
+   $Revision: 1.23 $
+   $Date: 2005/07/29 17:38:46 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -13,6 +13,7 @@
 #include <string>
 
 #include "dsp/Shape.h"
+#include "Callback.h"
 #include "Jones.h"
 
 namespace dsp {
@@ -114,6 +115,9 @@ namespace dsp {
 
     //! Enable Response to be used in Transformation template
     virtual bool state_is_valid (std::string& reason) { return true; }
+
+    //! Called when the Response has been changed
+    Callback<Response> changed;
 
   protected:
 
