@@ -1,12 +1,18 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.32 $
-   $Date: 2005/07/03 06:05:18 $
-   $Author: hknight $ */
+   $Revision: 1.33 $
+   $Date: 2005/07/29 17:37:55 $
+   $Author: wvanstra $ */
 
-#ifndef __Transformation_h
-#define __Transformation_h
+#ifndef __baseband_dsp_Transformation_h
+#define __baseband_dsp_Transformation_h
+
+#include "dsp/Operation.h"
+#include "dsp/Observation.h"
+#include "dsp/BufferingPolicy.h"
+
+#include "Error.h"
 
 #include <string>
 #include <iostream>
@@ -15,151 +21,133 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "psr_cpp.h"
-#include "environ.h"
-#include "Error.h"
-
-namespace dsp {
-  class TransformationBase;
-  template <class In, class Out>
-  class Transformation;
-}
-
-#include "dsp/Operation.h"
-#include "dsp/Observation.h"
-#include "dsp/TimeSeries.h"
-#include "dsp/BitSeries.h"
-#include "dsp/MiniSeries.h"
-
 namespace dsp {
 
-  //! All operations must define their behaviour
-  typedef enum { inplace, outofplace, anyplace } Behaviour;
-
+  //! Base class of all Transformation classes
+  /*! This interface is highly dangerous and should never be used */
   class TransformationBase : public Operation {
   public:
-    TransformationBase(const char* _name);
-    virtual ~TransformationBase();
+    TransformationBase (const char* name) : Operation (name) {}
+    virtual ~TransformationBase () {}
 
-    virtual void vset_input(void* _input) = 0;
-    virtual void vset_output(void* _output) = 0;
-    virtual void* vget_input() = 0;
-    virtual void* vget_output() = 0;
-    virtual string get_input_typestring() = 0;
-    virtual string get_output_typestring() = 0;
+  protected:
+    //! Add friend classes only as absolutely necessary
+    friend class Simultaneous;
+    friend class ProcessingStep;
 
-    // check that input and output states are valid
-    static bool check_state;
+    virtual void vset_input (void* _input) = 0;
+    virtual void vset_output (void* _output) = 0;
+    virtual void* vget_input () = 0;
+    virtual void* vget_output () = 0;
+    virtual string get_input_typestring () = 0;
+    virtual string get_output_typestring () = 0;
+
   };
+
+  template <class In>
+  class HasInput {
+
+  public:
+
+    //! Virtual destructor required
+    virtual ~HasInput () { }
+
+    //! Set the container from which input data will be read
+    virtual void set_input (In* _input) { input = _input; }
+
+    //! Return pointer to the container from which input data will be read
+    In* get_input () const { return input; }
+ 
+    //! Returns true if input is set
+    bool has_input() const { return input.ptr(); }
+
+  protected:
+
+    //! Container from which input data will be read
+    Reference::To <In> input;
+
+  };
+
+
+  template <class Out>
+  class HasOutput {
+
+  public:
+
+    //! Virtual destructor required
+    virtual ~HasOutput () { }
+
+    //! Set the container into which output data will be written
+    virtual void set_output (Out* _output) { output = _output; }
+
+    //! Return pointer to the container into which output data will be written
+    Out* get_output () const { return output; }
+
+    //! Returns true if output is set
+    bool has_output() const { return output.ptr(); }
+
+  protected:
+
+    //! Container into which output data will be written
+    Reference::To <Out> output;
+
+  };
+
+
+  //! All Transformations must define their behaviour
+  typedef enum { inplace, outofplace, anyplace } Behaviour;
 
   //! Defines the interface by which Transformations are performed on data
   /*! This pure virtual template base class defines the manner in
-    which various digital signal processing routines are performed. */
+    which data container classes are connected to various digital
+    signal processing operations. */
   template <class In, class Out>
-  class Transformation : public TransformationBase {
+  class Transformation : public TransformationBase,
+			 public HasInput<In>,
+			 public HasOutput<Out>
+  {
 
   public:
 
-    //! Start time of first TimeSeries->TimeSeries operation
-    MJD st;
-
     //! All sub-classes must specify name and capacity for inplace operation
-    Transformation (const char* _name, Behaviour _type, bool _time_conserved=false);
+    Transformation (const char* _name, Behaviour _type,
+		    bool _time_conserved=false);
 
-    //! Virtual destructor
-    virtual ~Transformation () { }
+    //! Destructor
+    ~Transformation () { }
 
     //! Set the container from which input data will be read
-    //! Over-ride this to check input is of right type (use dynamic_cast)
-    virtual void set_input (In* input);
+    void set_input (In* input);
 
     //! Set the container into which output data will be written
-    //! Over-ride this to check output is of right type (use dynamic_cast)
-    virtual void set_output (Out* output);
-
-    //! Return pointer to the container from which input data will be read
-    virtual In* get_input () const { return input; }
- 
-    //! Return pointer to the container into which output data will be written
-    virtual Out* get_output () const { return output; }
-
-    //! Returns true if input is set
-    virtual bool has_input(){ return input.ptr(); }
-
-    //! Returns true if output is set
-    virtual bool has_output(){ return output.ptr(); }
+    void set_output (Out* output);
 
     //! Return the Transformation type
     Behaviour get_type() { return type; }
 
-    //! Setting this determines whether you want to swap 'input' and 'output' before returning
-    //! You might set this to true when you have a class that must be outofplace, but you want
-    //!   your output to go into the same TimeSeries as your input.
-    void set_swap_buffers(bool _swap_buffers){ swap_buffers = _swap_buffers; }
+    //! Set the policy for buffering input and/or output data
+    virtual void set_buffering_policy (BufferingPolicy* policy)
+    { buffering_policy = policy; }
 
-    //! Inquire whether the 'input' and 'output' will be swapped before returning
-    bool get_swap_buffers(){ return swap_buffers; }
-
-    //! Setting this determines whether you want to delete the unused output buffer
-    //! Use this when you have 'swap_buffers' set to true, and you don't want the TimeSeries that was used as output
-    void set_free_scratch_space(bool _free_scratch_space){ free_scratch_space = _free_scratch_space; }
-
-    //! Inquire whether you want to delete the unused output buffer
-    bool get_free_scratch_space(){ return free_scratch_space; }
+    BufferingPolicy* get_buffering_policy () const { return buffering_policy; }
+ 
+    //! Returns true if buffering_policy is set
+    bool has_buffering_policy() const { return buffering_policy.ptr(); }
 
     //! Reset minimum_samps_can_process
-    void reset_min_samps(){ minimum_samps_can_process = -1; }
-
-    //! Save the last_nsamps into the saved_data buffer
-    //! DO NOT try and save data for Transformations that accumulate their output- save_data will not work
-    virtual void save_data(uint64 last_nsamps); 
-
-    //! Deletes the saved_data buffer
-    virtual void delete_saved_data();
-
-    //! Returns how many samples were lost in the last call to operation()
-    virtual int64 get_input_samps_lost();
-
-    //! Inquire whether valid data is saved already
-    //! DO NOT try and save data for Transformations that accumulate their output- save_data will not work
-    bool get_valid_data_is_saved(){ return valid_data_is_saved; }
-
-    //! Set the new rounding factor
-    void set_rounding(uint64 _rounding){ rounding = _rounding; }
-
-    //! Inquire the new rounding factor
-    uint64 get_rounding(){ return rounding; }
+    void reset_min_samps()
+    { minimum_samps_can_process = -1; }
 
     //! Inquire whether the class conserves time
     bool get_time_conserved(){ return time_conserved; }
 
-    //! Decide whether you want to skip over samples that have been processed already (requires time_conserved==true; TimeSeries->TimeSeries)
-    void set_process_samps_once(bool _process_samps_once);
-
-    //! Inquire whether you are going to skip over samples that have been processed already (requires time_conserved==true; Observation->Observation to be meaningful)
-    bool get_process_samps_once(){ return process_samps_once; }
-
-    //! Returns time prepended
-    double get_duration_prepended(){ return duration_prepended; }
-
-    //! Child classes should over-ride this if they want to add a dspExtension history object to the output
+    //! to add a dspExtension history object to the output
     virtual void add_history(){ }
 
-    //! Returns the input type as a string
-    virtual string get_input_typestring();
-
-    //! Returnst the output type as a string
-    virtual string get_output_typestring();
-
-    //! Rewinds 'end_of_processed_data' by the requested number of seconds
-    virtual void rewind_eopd(double seconds);
-
-    virtual void vset_input(void* _input);
-    virtual void vset_output(void* _output);
-    virtual void* vget_input();
-    virtual void* vget_output();
- 
   protected:
+
+    //! The buffering policy in place (if any)
+    Reference::To<BufferingPolicy> buffering_policy;
 
     //! Return false if the input doesn't have enough data to proceed
     virtual bool can_operate();
@@ -170,111 +158,54 @@ namespace dsp {
     //! Declare that sub-classes must define a transformation method
     virtual void transformation () = 0;
 
-    //! Prepends the output with the 'saved_data' buffer after the call to transformation()
-    //! Not used now
-    void prepend_output(TimeSeries* ts_out);
-
-    //! Prepends the output with the 'saved_data' buffer before the call to transformation()
-    virtual uint64 prepend_data(TimeSeries* ts_out);
-
-    //! Does all the swap buffer stuff
-    void swap_buffer_stuff();
-
-    //! Sets the valid_data_is_saved flag to false after a transformation
-    virtual void set_valid_data_is_saved(){ valid_data_is_saved = false; }
-
-    //! If the input is a dsp::Observation, this returns the input start time
-    //! Over-ridden by BandCombiner class
-    virtual MJD get_input_start_time(Observation* ts_in);
-
-    //! Does stuff after the call to transformation()
-    virtual void post_transformation_stuff(int64 surplus_samples,int64 samples_prepended,
-					   double time_in, double rate_in,
-					   MJD input_start_time);
-
-    //! Does stuff before the call to transformation()
-    virtual bool pre_transformation_stuff(int64& surplus_samps, int64& samples_prepended,
-					  double& time_in, double& rate_in,
-					  MJD& input_start_time);
-
-    //! Container from which input data will be read
-    Reference::To <In> input;
-
-    //! Container into which output data will be written
-    Reference::To <Out> output;
-
-    //! Swap 'input' and 'output' before returning (simulates an inplace operation but can be faster) (Only for TimeSeries's)
-    //! You might set this to true when you have a class that must be outofplace, but you want
-    //!   your output to go into the same TimeSeries as your input.
-    bool swap_buffers;
-
-    //! If 'swap_buffers' is true, and 'free_scratch_space' is true, then the 'output' is resized to zero to free up memory (Only for TimeSeries's)
-    //! Use this when you have 'swap_buffers' set to true, and you don't want the TimeSeries that was used as output
-    bool free_scratch_space;
-
-    //! If >= zero, and input doesn't have this many samples, operate() returns false
+    //! If input doesn't have this many samples, operate() returns false
     int64 minimum_samps_can_process;
 
-    //! This buffer saves data from last time
-    //! DO NOT try and save data for Transformations that accumulate their output- save_data will not work
-    Reference::To<TimeSeries> saved_data;
+    /** @name TransformationBase interface
+     *  These kludgey methods should never be used by anyone.
+     */
+    //@{
 
-    //! Stores how many samples were lost in the last call to operation()
-    int64 input_samps_lost;
+    virtual string get_input_typestring()
+    { return typeid(this->input.ptr()).name(); }
 
-    //! Gets set to true whenever valid data is copied over into the 'saved_data' buffer
-    bool valid_data_is_saved;
+    virtual string get_output_typestring()
+    { return typeid(this->output.ptr()).name(); }
+
+    virtual void vset_input(void* _input)
+    { this->set_input( (In*)_input ); }
+
+    virtual void vset_output(void* _output)
+    { this->set_output( (Out*)_output ); }
+
+    virtual void* vget_input()
+    { return const_cast<void*>((const void*)this->get_input()); }
+
+    virtual void* vget_output()
+    { return this->get_output(); }
+
+    //@}
 
   private:
 
     //! Makes sure input & output are okay before calling transformation()
     void checks();
 
-    //! If the input is a dsp::Observation, this returns the input duration
-    double get_time_in(Observation* ts_in);
-
-    //! If the input is a dsp::Observation, this returns the input rate
-    double get_rate_in(Observation* ts_in);
-
-    //! Handles the rounding stuff
-    virtual void rounding_stuff(TimeSeries* ts_out);
-
-    //! Called after transformation() to allow the prepended data to be seen by the next Transformation
-    virtual void deprepend_data(TimeSeries* ts_out,int64 samples_prepended,
-				double time_in, double rate_in, double time_surplus,
-				bool seeked_data_being_saved);
-
-    //! Seeks over any samples that have already been processed
-    //! Returns how many samples were seeked over
-    int64 seek_over_surplus_samps();
-
-    //! Makes sure the input isn't changed by the seeking over of surplus samples
-    void seek_back_over_surplus_samps(int64 surplus_samples);
-
-    //! After transformation() this works out what the MJD of the last sample processed was
-    void workout_end_of_processed_data(MJD input_start_time, double time_prepended,
-				       double time_surplus);
-
     //! Behaviour of Transformation
     Behaviour type;
 
-    //! If output is a TimeSeries, its ndat is rounded off to divide this number
+    //! If output is a container, its ndat is rounded off to divide this number
     uint64 rounding;
 
     //! Returns true if the Transformation definitely conserves time
-    //! (i.e. it conserves time if the number of seconds in the output corresponds to the number of seconds in the input processed)
-    //! Acceleration classes don't conserve time
-    //! This must be set in the constructor to be true if it is true- some constructors may conserve time but may not yet have had their constructors change to reflect this [false]
+    /*! (i.e. it conserves time if the number of seconds in the output
+      corresponds to the number of seconds in the input processed).
+      Acceleration classes don't conserve time. This must be set in
+      the constructor to be true if it is true- some constructors may
+      conserve time but may not yet have had their constructors change
+      to reflect this [false] */
     bool time_conserved;
 
-    //! Whether or not any samps that have already been processed will be automatically skipped over.  (Only for Observation->Observation) [false]
-    bool process_samps_once;
-
-    //! Stores where the last point that was fully processed in the last input TimeSeries ended
-    MJD end_of_processed_data;
-
-    //! Stores how much time was prepended [0]
-    double duration_prepended;
 
   };
   
@@ -282,383 +213,95 @@ namespace dsp {
 
 //! All sub-classes must specify name and capacity for inplace operation
 template<class In, class Out>
-dsp::Transformation<In,Out>::Transformation(const char* _name, Behaviour _type, bool _time_conserved) : TransformationBase (_name)
+dsp::Transformation<In,Out>::Transformation(const char* _name, 
+					    Behaviour _type,
+					    bool _time_conserved)
+  : TransformationBase (_name)
 {
   type = _type;
-  free_scratch_space = false;
-  swap_buffers = false;
   reset_min_samps();
-  input_samps_lost = 0;
-  rounding = 0;
-  valid_data_is_saved = false; 
   time_conserved = _time_conserved;
-  set_process_samps_once( false );
-  end_of_processed_data = MJD::zero;
 }
 
 //! Return false if the input doesn't have enough data to proceed
 template<class In, class Out>
-bool dsp::Transformation<In,Out>::can_operate() {
-  if( type==inplace && !has_input() && has_output() )
-    input = (In*)output.get();
-  
-  if( has_input() && minimum_samps_can_process >= 0 ){
-    if( int64(get_input()->get_ndat()) < minimum_samps_can_process ){
-      if( verbose )
-	fprintf(stderr,"dsp::Transformation<In,Out> (%s) has input of "I64" samples.  Minimum samps can process is "I64"\n",
-		get_name().c_str(),
-		int64(get_input()->get_ndat()),
-		minimum_samps_can_process);
-      return false;
-    }
-  }
+bool dsp::Transformation<In,Out>::can_operate()
+{
+  /* This is neither type-safe nor run-time safe - WvS
+     if( type==inplace && !has_input() && has_output() )
+       input = (In*)output.get();
+  */
 
-  return true;
+  if (!this->has_input())
+    return false;
+
+  if (minimum_samps_can_process < 0)
+    return true;
+
+  if (int64(this->get_input()->get_ndat()) >= minimum_samps_can_process)
+    return true;
+
+  if( verbose )
+    cerr << "dsp::Transformation<In,Out> (" << get_name() << ")"
+      " has input of " << this->get_input()->get_ndat() << " samples."
+      "  Minimum is " << minimum_samps_can_process << endl;
+
+  return false;
 }
 
 //! Makes sure input & output are okay before calling transformation()
 template <class In, class Out>
 void dsp::Transformation<In, Out>::checks(){
   // If inplace is true, then the input and output should be of the same type....
-  if( type==inplace && !input.ptr() && output.ptr() )
-    input = (In*)output.get();
-  if( type==inplace && !output.ptr() && input.ptr() )
-    output = (Out*)input.get();
+  if( type==inplace && !this->input.ptr() && this->output.ptr() )
+    this->input = (In*)this->output.get();
+  if( type==inplace && !this->output.ptr() && this->input.ptr() )
+    this->output = (Out*)this->input.get();
   
-  if (!input)
+  if (!this->input)
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "no input");
 
-  if (input->get_ndat() < 1)
+  if (this->input->get_ndat() < 1)
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "empty input- input=%p input->ndat="UI64,
-		 input.get(),input->get_ndat());
+		 this->input.get(),this->input->get_ndat());
 
   string reason;
-  if (check_state && !input->state_is_valid (reason))
+  if (check_state && !this->input->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid input state: " + reason);
 
-  if ( type!=inplace && !output)
+  if ( type!=inplace && !this->output)
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "no output");
-}
-
-//! If the input is a dsp::Observation, this returns the input duration
-template <class In, class Out>
-double dsp::Transformation<In, Out>::get_time_in(dsp::Observation* ts_in){
-  if( ts_in )
-    return ts_in->get_duration();
-  return 0.0;
-}
-
-//! If the input is a dsp::Observation, this returns the input rate
-template <class In, class Out>
-double dsp::Transformation<In, Out>::get_rate_in(dsp::Observation* ts_in){
-  if( ts_in )
-    return ts_in->get_rate();
-  return 0.0;
-}
-
-//! If the input is a dsp::Observation, this returns the input start time
-template <class In, class Out>
-MJD dsp::Transformation<In, Out>::get_input_start_time(dsp::Observation* ts_in){
-  if( ts_in )
-    return ts_in->get_start_time();
-  return MJD::zero;
-}
-
-//! Handles the rounding stuff
-template <class In, class Out>
-void dsp::Transformation<In,Out>::rounding_stuff(dsp::TimeSeries* ts_out){
-  if( !ts_out )
-    return;
-  if( rounding > 0 ){
-    uint64 old_ndat = ts_out->get_ndat();
-    ts_out->set_ndat( ts_out->get_ndat() - ts_out->get_ndat()%rounding );
-    if( verbose )
-      fprintf(stderr,"TRANS %s rounding_stuff() has wiped "UI64" samps\n",
-	      get_name().c_str(),
-	      old_ndat - ts_out->get_ndat());
-  }
-}
-
-//! Called after transformation() to allow the prepended data to be seen by the next Transformation
-template <class In, class Out>
-void dsp::Transformation<In,Out>::deprepend_data(dsp::TimeSeries* ts_out,int64 samples_prepended,double time_in,
-						 double rate_in,double time_surplus, bool seeked_data_being_saved){
-  if( ts_out ){
-    if( samples_prepended > 0 ){
-      ts_out->seek( -samples_prepended );
-      
-      if( verbose )
-	fprintf(stderr,"TRANS deprepend_data (%s) have seeked back "I64" samps offset="I64"\n",
-		get_name().c_str(),samples_prepended,ts_out->get_samps_offset());
-    }
-
-    if( seeked_data_being_saved )
-      ts_out->set_preserve_seeked_data( false );
-  }  
-
-  Observation* obs_out = dynamic_cast<Observation*>(get_output());
-  Observation* obs_in = (Observation*)dynamic_cast<const Observation*>(get_input());
-
-  if( !obs_out || !obs_in )
-    return;
-
-  double time_out = obs_out->get_duration();
-  if( verbose )
-    fprintf(stderr,"TRANS deprepend_data (%s): time_in=%f time_out=%f time_surplus=%f so input_samps_lost=nint64(%f*%f)\n",
-	    get_name().c_str(), time_in, time_out, time_surplus,
-	    (time_in-time_surplus)-time_out, rate_in);
-
-  input_samps_lost = nint64( (time_in-time_surplus-time_out)*rate_in );
-}
-
-//! Seeks over any samples that have already been processed
-template <class In, class Out>
-int64 dsp::Transformation<In,Out>::seek_over_surplus_samps(){
-  TimeSeries* ts_in = (TimeSeries*)dynamic_cast<const TimeSeries*>(get_input());
-  Observation* obs_out = (TimeSeries*)dynamic_cast<const TimeSeries*>(get_output());
-  
-  if( !process_samps_once || !ts_in || !obs_out || end_of_processed_data==MJD::zero || !get_time_conserved() || (void*)get_input()==(void*)get_output() )
-    return 0;
-  
-  double secs_surplus = (end_of_processed_data - ts_in->get_start_time()).in_seconds();
-  int64 samps_surplus = nint64(secs_surplus * ts_in->get_rate());
-  
-  if( verbose )
-    fprintf(stderr,"TRANS (%s) seek_over_surplus_samps() got eopd=%f start_time=%f so samps_surplus="I64"\n",
-	    get_name().c_str(),
-	    (end_of_processed_data-st).in_seconds(),
-	    (ts_in->get_start_time()-st).in_seconds(),
-	    samps_surplus);
-
-  if( samps_surplus < 0 )
-    throw Error(InvalidState,"dsp::Transformation::seek_over_surplus_samps()",
-		"Your last processing call ended at %f.  This is %f seconds ("I64" samps) before current input starts",
-		(end_of_processed_data-st).in_seconds(),
-		fabs(secs_surplus), -samps_surplus);
-
-  if( samps_surplus != 0 ){
-    if( samps_surplus > int64(ts_in->get_ndat()) ){
-      fprintf(stderr,"dsp::Transformation::seek_over_surplus_samps(): (%s) Wanted to seek over "I64" samps but input ndat was only "UI64".  Returning -1",
-	      get_name().c_str(),
-	      samps_surplus, ts_in->get_ndat());
-      return -1;
-    }
-    ts_in->seek( samps_surplus );
-  }
-
-  return samps_surplus;
-}
-
-//! After transformation() this works out what the MJD of the last sample processed was
-template <class In, class Out>
-void dsp::Transformation<In, Out>::workout_end_of_processed_data(MJD input_start_time, double time_prepended,
-								 double time_surplus)
-{
-  if( !get_time_conserved() )
-    return;
-  
-  TimeSeries* ts_in = (TimeSeries*)dynamic_cast<const TimeSeries*>(get_input());
-  Observation* obs_out = (Observation*)dynamic_cast<const Observation*>(get_output());
-  if( !ts_in || !obs_out )
-    return;
-
-  end_of_processed_data = input_start_time + obs_out->get_duration() - time_prepended + time_surplus;
-
-  if( verbose )
-    fprintf(stderr,"TRANS (%s) setting eopd to input_start_time + out_dur + time_prepended + time_surplus = %f + %f - %f + %f = %f\n",
-	    get_name().c_str(),
-	    (input_start_time-st).in_seconds(),
-	    obs_out->get_duration(),
-	    time_prepended,
-	    time_surplus,
-	    (end_of_processed_data-st).in_seconds());
-
-}
-
-//! Makes sure the input isn't changed by the seeking over of surplus samples
-template <class In, class Out>
-void dsp::Transformation<In, Out>::seek_back_over_surplus_samps(int64 surplus_samples){
-  dsp::TimeSeries* ts_in = (TimeSeries*)dynamic_cast<const TimeSeries*>(get_input());
-  
-  if( ts_in )
-    ts_in->seek( -surplus_samples );
 }
 
 //! Define the Operation pure virtual method
 template <class In, class Out>
 void dsp::Transformation<In, Out>::operation ()
 {
-  TimeSeries* ts = (TimeSeries*)dynamic_cast<const TimeSeries*>(get_input());
-  if( st==MJD() ){
-    if( ts )
-      st = ts->get_start_time();
-  }
-  if( ts && verbose )
-    fprintf(stderr,"TRANS (%s) input start time=%f\n",
-	    get_name().c_str(),(ts->get_start_time()-st).in_seconds());
-
   checks();
 
-  double time_in = 0.0;
-  double rate_in = 0.0;
-
-  MJD input_start_time;
-
-  int64 samples_prepended = 0;
-  int64 surplus_samples = 0;
-
-  if( !pre_transformation_stuff(surplus_samples, samples_prepended, time_in, rate_in, input_start_time) )
-    return;
-
-  if( verbose && ts )
-    fprintf(stderr,"TRANS (%s) going into transformation() input_start_time=%f input->get_start_time()=%f\n",
-	    get_name().c_str(),
-	    (input_start_time-st).in_seconds(),
-	    (((Observation*)get_input())->get_start_time()-st).in_seconds());
+  if (buffering_policy)
+    buffering_policy -> pre_transformation ();
 
   transformation ();
 
-  post_transformation_stuff(surplus_samples, samples_prepended, time_in, rate_in, input_start_time);
-  add_history();  
+  if (buffering_policy)
+    buffering_policy -> post_transformation ();
 
-  TimeSeries* tso = (TimeSeries*)dynamic_cast<const TimeSeries*>(get_output());
-  if( tso && verbose )
-    fprintf(stderr,"TRANS (%s) output start time=%f\n",
-	    get_name().c_str(),(tso->get_start_time()-st).in_seconds());
-}
-
-//! Does stuff before the call to transformation()
-template <class In, class Out>
-bool
-dsp::Transformation<In,Out>::pre_transformation_stuff(int64& surplus_samples, int64& samples_prepended,
-						      double& time_in, double& rate_in,
-						      MJD& input_start_time)
-{
-  Observation* obs_in = (Observation*)dynamic_cast<const Observation*>(get_input());
-
-  if( verbose )
-    if( obs_in )
-      fprintf(stderr,"TRANS (%s) at start of operation input ndat="UI64"\n",get_name().c_str(),obs_in->get_ndat());
-  
-  time_in = get_time_in(obs_in);
-  rate_in = get_rate_in(obs_in);
-
-  // Used by workout_end_of_processed_data() only
-  // input_start_time is the earliest start time for dsp::BandCombiner
-  input_start_time = get_input_start_time(obs_in); 
-  if( verbose && obs_in )
-    fprintf(stderr,"TRANS (%s) just set input_start_time to %f input->get_start_time()=%f\n",
-	    get_name().c_str(),
-	    (input_start_time-st).in_seconds(),
-	    (obs_in->get_start_time()-st).in_seconds());
-
-  TimeSeries* ts_out = dynamic_cast<TimeSeries*>(get_output());
-
-  if( valid_data_is_saved && ts_out ){
-    samples_prepended = prepend_data( ts_out );
-    duration_prepended = samples_prepended / ts_out->get_rate();
-    time_in += duration_prepended;
-  }
-  else
-    duration_prepended = 0.0;
-    
-  surplus_samples = seek_over_surplus_samps();
-
-  if( surplus_samples < 0 ){
-    operation_status = -1;
-    return false;
-  }
-
-  return true;
-}   
-
-//! Does stuff after the call to transformation()
-template <class In, class Out>
-void
-dsp::Transformation<In,Out>::post_transformation_stuff(int64 surplus_samples,int64 samples_prepended,
-						       double time_in, double rate_in,
-						       MJD input_start_time)
-{
-  dsp::TimeSeries* ts_out = dynamic_cast<dsp::TimeSeries*>(get_output());
-  
-  if( verbose )
-    if( ts_out )
-      fprintf(stderr,"TRANS (%s) after transformation() got ndat="UI64"\n",
-	      get_name().c_str(),ts_out->get_ndat());
-  
-  seek_back_over_surplus_samps(surplus_samples);
-  
-  rounding_stuff(ts_out);
-  
-  deprepend_data(ts_out,samples_prepended,time_in,rate_in,
-		 double(surplus_samples)/rate_in,
-		 samples_prepended!=0);
-  
-  if( ts_out )
-    workout_end_of_processed_data(input_start_time,double(samples_prepended)/ts_out->get_rate(),
-				  double(surplus_samples)/rate_in);
-  
   string reason;
-  if ( check_state && type!=inplace && !output->state_is_valid (reason))
+  if (check_state && type!=inplace && !this->output->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+name+"]::operate",
 		 "invalid output state: " + reason);
-  
-  swap_buffer_stuff();
-  
-  set_valid_data_is_saved();
 
-  if( verbose )
-    if( ts_out )
-      fprintf(stderr,"TRANS (%s) at end of operation ndat="UI64"\n",
-	      get_name().c_str(),ts_out->get_ndat());
+  add_history();  
+
 }
 
-//! Does all the swap buffer stuff
-template <class In, class Out>
-void dsp::Transformation<In,Out>::swap_buffer_stuff(){
-  if( !swap_buffers )
-    return;
 
-  // Perhaps a better idea would be each class having a 'name' attribute?
-  if( sizeof(In)==sizeof(TimeSeries) && sizeof(Out)==sizeof(TimeSeries) ){
-    TimeSeries* in = (TimeSeries*)input.ptr();
-    TimeSeries* out = (TimeSeries*)output.ptr();
-    
-    in->swap_data( *out );
-    if( free_scratch_space )
-      out->resize(0);
-  }
-}
 
-//! Prepends the output buffer with the saved data
-template <class In, class Out>
-uint64 dsp::Transformation<In, Out>::prepend_data(dsp::TimeSeries* ts_out){
-  if( verbose )
-    fprintf(stderr,"TRANS: (%s) entered prepend_data()\n",get_name().c_str());
-
-  if( !ts_out )
-    throw Error(InvalidState,"dsp::Transformation::prepend_data()",
-		"BUG!  Valid data is saved, but the output is not a TimeSeries!");
-  
-  dsp::TimeSeries* sd = saved_data.get();
-  
-  ts_out->operator=( *sd );
-
-  uint64 samples_seeked = ts_out->get_ndat();
-  ts_out->seek( ts_out->get_ndat() );
-  
-  ts_out->set_preserve_seeked_data( true );
-
-  if( verbose )
-    fprintf(stderr,"TRANS: (%s) prepend_data(): returning a prepend data buffer of ndat="UI64"\n",
-	    get_name().c_str(),samples_seeked);
-
-  return samples_seeked;
-}
 
 template <class In, class Out>
 void dsp::Transformation<In, Out>::set_input (In* _input)
@@ -666,15 +309,15 @@ void dsp::Transformation<In, Out>::set_input (In* _input)
   if (verbose)
     cerr << "dsp::Transformation["+name+"]::set_input ("<<_input<<")"<<endl;
 
-  input = _input;
+  this->input = _input;
 
-  if ( type == outofplace && input && output
-       && (const void*)input == (const void*)output )
+  if ( type == outofplace && this->input && this->output
+       && (const void*)this->input == (const void*)this->output )
     throw Error (InvalidState, "dsp::Transformation["+name+"]::set_input",
 		 "input must != output");
 
   if( type==inplace )
-    output = (Out*)_input;
+    this->output = (Out*)_input;
 }
 
 template <class In, class Out>
@@ -683,161 +326,23 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
   if (verbose)
     cerr << "dsp::Transformation["+name+"]::set_output ("<<_output<<")"<<endl;
 
-  if (type == inplace && input.ptr() && (const void*)input.get()!=(const void*)_output )
-    throw Error(InvalidState, "dsp::Transformation["+name+"]::set_output",
+  if (type == inplace && this->input 
+      && (const void*)this->input != (const void*)_output )
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::set_output",
 		 "inplace transformation input must equal output");
   
-  output = _output;
-
-  if ( type == outofplace && input && output 
-       && (const void*)input.get() == (const void*)output.get() ){
-    Error er(InvalidState, "dsp::Transformation["+name+"]::set_output",
+  if ( type == outofplace && this->input && this->output 
+       && (const void*)this->input.get() == (const void*)_output )
+    throw Error (InvalidState, "dsp::Transformation["+name+"]::set_output",
 		 "output must != input");
-    cerr << er << endl;
-    exit(-1);
-  }
 
-  if( type == inplace && !input.ptr() )
-    input = (In*)_output;
+  this->output = _output;
+
+  if( type == inplace && !this->has_input() )
+    this->input = (In*)_output;
 
 }
 
-//! Save the last_nsamps into the saved_data buffer
-template <class In, class Out>
-void dsp::Transformation<In,Out>::save_data(uint64 last_nsamps){
-  if( verbose )
-    fprintf(stderr,"TRANS (%s) in save_data("UI64")\n",
-	    get_name().c_str(),last_nsamps);
 
-  if( sizeof(*get_output()) != sizeof(TimeSeries) )
-    throw Error(InvalidState,"dsp::Transformation<In,Out>::save_data()",
-		"Output is not a TimeSeries- this hasn't been coded for!");
-
-  if( !saved_data )
-    saved_data = new TimeSeries; 
-
-  dsp::TimeSeries* ts = saved_data.get();
-  
-  if( last_nsamps==0 ){
-    ts->set_ndat(0);
-    return;
-  }
-
-  dsp::TimeSeries* out = dynamic_cast<dsp::TimeSeries*>(get_output());
-
-  ts->copy_configuration( out ); // Gets weights
-  ts->Observation::operator=( *out ); // Gets ndim
-  ts->change_start_time( out->get_ndat() - last_nsamps );
-  ts->resize(last_nsamps);
-
-  if( last_nsamps > out->get_ndat() )
-    throw Error(InvalidState,"dsp::Transformation<In,Out>::save_data()",
-		"last_nsamps provided ("UI64") is greater than output's ndat! (output's ndat="UI64")",
-		last_nsamps, out->get_ndat());
-
-  for( unsigned ichan=0; ichan<ts->get_nchan(); ichan++){
-    for( unsigned ipol=0; ipol<ts->get_npol(); ipol++){
-      float* to = ts->get_datptr(ichan,ipol);
-      uint64 float_offset = (out->get_ndat() - last_nsamps)*out->get_ndim();
-      float* from = out->get_datptr(ichan,ipol) + float_offset;
-
-      for( uint64 i=0; i<last_nsamps*out->get_ndim(); i++)
-	to[i] = from[i];
-    }
-  }
-
-  valid_data_is_saved = true;
-}
-
-//! Returns how many samples were lost in the last call to operation()
-template <class In, class Out>
-int64 dsp::Transformation<In,Out>::get_input_samps_lost(){
-  if( !has_input() )
-    throw Error(InvalidState,"dsp::Transformation::get_input_samps_lost()",
-		"No input defined");
-  
-  dsp::Observation* ts = (dsp::Observation*)dynamic_cast<const dsp::Observation*>( get_input() );
-  if( !ts )
-    throw Error(InvalidState,"dsp::Transformation::get_input_samps_lost()",
-		"This method only works if the input is of type dsp::Observation");
-  
-  return input_samps_lost;
-}
-
-//! Decide whether you want to skip over samples that have been processed already (requires time_conserved==true; TimeSeries->TimeSeries)
-template <class In, class Out>
-void dsp::Transformation<In,Out>::set_process_samps_once(bool _process_samps_once){
-  if( _process_samps_once == true && !get_time_conserved() )
-    throw Error(InvalidState,"dsp::Transformation::set_process_samps_once()",
-		"process_samps_once can't be set to true if time_conserved is false- it just hasn't been programmed for");
-  
-  process_samps_once = _process_samps_once; 
-}
-
-//! Returns the input type as a string
-template <class In, class Out>
-string dsp::Transformation<In,Out>::get_input_typestring(){
-  if( typeid(input.ptr()) == typeid(TimeSeries*) )
-    return "TimeSeries";
-  if( typeid(input.ptr()) == typeid(MiniSeries*) )
-    return "MiniSeries";
-  if( typeid(input.ptr()) == typeid(BitSeries*) )
-    return "BitSeries";
-  return typeid(input.ptr()).name();
-}
-
-//! Returnst the output type as a string
-template <class In, class Out>
-string dsp::Transformation<In,Out>::get_output_typestring(){
-  if( typeid(output.ptr()) == typeid(TimeSeries*) )
-    return "TimeSeries";
-  if( typeid(output.ptr()) == typeid(MiniSeries*) )
-    return "MiniSeries";
-  if( typeid(output.ptr()) == typeid(BitSeries*) )
-    return "BitSeries";
-  return typeid(output.ptr()).name();
-}
-
-template <class In, class Out>
-void dsp::Transformation<In,Out>::vset_input(void* _input){
-  set_input( (In*)_input );
-}
-
-template <class In, class Out>
-void dsp::Transformation<In,Out>::vset_output(void* _output){
-  set_output( (Out*)_output );
-}
-
-template <class In, class Out>
-void* dsp::Transformation<In,Out>::vget_input(){
-  return (void*)get_input();
-}
-
-template <class In, class Out>
-void* dsp::Transformation<In,Out>::vget_output(){
-  return (void*)get_output();
-}
-
-//! Deletes the saved_data buffer
-template<class In, class Out>
-void dsp::Transformation<In,Out>::delete_saved_data(){
-  saved_data = 0; 
-}
-
-//! Rewinds 'end_of_processed_data' by the requested number of seconds
-template<class In, class Out>
-void dsp::Transformation<In,Out>::rewind_eopd(double seconds){
-  Observation* obs_in = (Observation*)dynamic_cast<const Observation*>(get_input());  
-  if( obs_in ){
-    if( verbose )
-      fprintf(stderr,"TRANS (%s) rewinding eopd by %f seconds (%f (%s) to %f)\n",
-	      get_name().c_str(), seconds,
-	      (end_of_processed_data-st).in_seconds(),
-	      end_of_processed_data.printdays(15).c_str(),
-	      (end_of_processed_data-st).in_seconds()-seconds);
-  }
-
-  end_of_processed_data -= seconds;
-}
 
 #endif
