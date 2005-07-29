@@ -1,31 +1,19 @@
 #include "dsp/IOManager.h"
-#include "dsp/TimeSeries.h"
-#include "dsp/BitSeries.h"
 #include "dsp/File.h"
+#include "dsp/BitSeries.h"
 #include "dsp/Unpacker.h"
+#include "dsp/TimeSeries.h"
+
 #include "Error.h"
-
-#include "genutil.h"
-
-void dsp::IOManager::init()
-{
-  block_size = overlap = 0;
-}
+//#include "genutil.h"
 
 //! Constructor
-dsp::IOManager::IOManager () : Input ("IOManager")
+dsp::IOManager::IOManager () : Operation ("IOManager")
 {
-  init();
 }
 
 dsp::IOManager::~IOManager()
 {
-}
-
-//! set end_of_data
-void dsp::IOManager::set_eod(bool _eod){
-  if(input)
-    input->set_eod(_eod);
 }
 
 void dsp::IOManager::set_output (BitSeries* raw)
@@ -33,7 +21,7 @@ void dsp::IOManager::set_output (BitSeries* raw)
   if (verbose)
     cerr << "dsp::IOManager::set_output (BitSeries*) " << raw << endl;
 
-  Input::set_output (raw);
+  output = raw;
 
   if (input)
     input -> set_output (raw);
@@ -54,21 +42,12 @@ void dsp::IOManager::set_output (TimeSeries* _data)
 }
 
 //! Set the Input operator (should not normally need to be used)
-void dsp::IOManager::set_input (Input* _input, bool set_params)
+void dsp::IOManager::set_input (Input* _input)
 {
   input = _input;
 
   if (!input)
     return;
-
-  if (set_params)  {
-    input->set_block_size (block_size);
-    input->set_overlap (overlap);
-  }
-  else {
-    block_size = input->get_block_size ();
-    overlap = input->get_overlap ();
-  }
 
   if (output)
     input->set_output (output);
@@ -76,9 +55,16 @@ void dsp::IOManager::set_input (Input* _input, bool set_params)
   name = "IOManager:" + input->get_name();
 
   set_unpacker ( Unpacker::create( input->get_info() ) );
+}
 
-  info = *( input->get_info() );
+const dsp::Observation* dsp::IOManager::get_info () const
+{
+  return input->get_info();
+}
 
+dsp::Observation* dsp::IOManager::get_info ()
+{
+  return input->get_info();
 }
 
 //! Return pointer to the appropriate Input
@@ -117,40 +103,6 @@ dsp::Unpacker* dsp::IOManager::get_unpacker ()
 }
 
 
-//! Set the number of time samples to load on each call to load_data
-void dsp::IOManager::set_block_size (uint64 _block_size) 
-{ 
-  block_size = _block_size;
-  if (input)
-    input->set_block_size (block_size);
-}
-    
-//! Set the number of time samples by which consecutive blocks overlap
-void dsp::IOManager::set_overlap (uint64 _overlap) 
-{ 
-  overlap = _overlap;
-  if (input)
-    input->set_overlap (overlap);
-}
-
-//! Return the number of invalid timesample weights encountered
-uint64 dsp::IOManager::get_discarded_weights () const
-{
-  if (unpacker)
-    return unpacker->get_discarded_weights();
-
-  if (verbose)
-    cerr << "dsp::IOManager::get_discarded_weights no unpacker" << endl;
-
-  return 0;
-}
-
-//! Reset the count of invalid timesample weights encountered
-void dsp::IOManager::reset_discarded_weights ()
-{
-  if (unpacker)
-    unpacker->reset_discarded_weights();
-}
 
  
 //! Prepare the appropriate Input and Unpacker
@@ -166,11 +118,11 @@ void dsp::IOManager::reset_discarded_weights ()
 
   \pre This function is not fully implemented.
 */
-void dsp::IOManager::open (const char* id, int bs_index) 
+void dsp::IOManager::open (const string& id)
 {
   try {
 
-    set_input ( File::create(id,bs_index), true );
+    set_input ( File::create(id) );
 
   } catch (Error& error) {
     throw error += "dsp::IOManager::open";
@@ -208,34 +160,5 @@ void dsp::IOManager::operation ()
     throw Error (InvalidState, "dsp::IOManager::load", "no unpacker");
 
   unpacker->operate ();
-}
-
-
-void dsp::IOManager::load_data (BitSeries* data)
-{
-  if (!input)
-    throw Error (InvalidState, "dsp::IOManager::load", "no input");
-
-  input->set_output (data);
-  input->operate ();
-}
-
-
-//! End of data
-bool dsp::IOManager::eod()
-{
-  if (!input)
-    return true;
-
-  return input->eod();
-}
-    
-//! Seek to the specified time sample
-void dsp::IOManager::seek (int64 offset, int whence)
-{
-  if (!input)
-    return;
-
-  input->seek (offset, whence);
 }
 

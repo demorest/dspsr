@@ -206,7 +206,6 @@ int main (int argc, char** argv)
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
 
     cerr << block_size << " samples per " << time_per_plot << "s plot" << endl;
-    manager->set_block_size (block_size);
 
     // set the number of samples to average
     samples = manager->get_info()->get_rate() * time_per_point + 0.5;
@@ -223,7 +222,7 @@ int main (int argc, char** argv)
 
     double current_time = 0.0;
 
-    while (!manager->eod()) {
+    while (!manager->get_input()->eod()) {
 
       if (unpack)
         unpack->zero_histogram ();

@@ -170,7 +170,7 @@ int main (int argc, char** argv) try {
   int nchan = 1;
   int npol = 4;
   int nlag = 0;
-  int nlag_acf = 0;
+  unsigned nlag_acf = 0;
   int nchan_acf = 0;
   int set_nfft = 0;
 

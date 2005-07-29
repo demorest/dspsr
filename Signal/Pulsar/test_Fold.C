@@ -7,6 +7,7 @@
 #include "Error.h"
 
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/Unpacker.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
@@ -104,8 +105,6 @@ int main (int argc, char** argv)
   if (verbose)
     cerr << "Creating IOManager instance" << endl;
   dsp::IOManager manager;
-
-  manager.set_block_size (block_size);
   
   if (verbose)
     cerr << "Creating Detection instance" << endl;
@@ -136,6 +135,7 @@ int main (int argc, char** argv)
       cerr << "opening data file " << filenames[ifile] << endl;
 
     manager.open (filenames[ifile]);
+    manager.get_input()->set_block_size (block_size);
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
@@ -146,7 +146,7 @@ int main (int argc, char** argv)
 
     int block=0;
 
-    while (!manager.eod()) {
+    while (!manager.get_input()->eod()) {
 
       manager.load (&voltages);
 

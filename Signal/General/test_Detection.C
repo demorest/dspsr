@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Detection.h"
 #include "dsp/Unpacker.h"
@@ -77,7 +78,6 @@ int main (int argc, char** argv)
 
   // interface manages the creation of data loading and converting classes
   dsp::IOManager manager;
-  manager.set_block_size (block_size);
 
   if (verbose)
     cerr << "Creating Detection instance" << endl;
@@ -96,13 +96,14 @@ int main (int argc, char** argv)
       cerr << "opening data file " << filenames[ifile] << endl;
 
     manager.open (filenames[ifile]);
+    manager.get_input()->set_block_size (block_size);
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
     int block=0;
 
-    while (!manager.eod()) {
+    while (!manager.get_input()->eod()) {
 
       manager.load (&voltages);
 

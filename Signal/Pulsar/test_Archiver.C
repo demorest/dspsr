@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/Unpacker.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/PhaseSeries.h"
@@ -219,13 +220,10 @@ int main (int argc, char** argv)
   // Loader
   fprintf(stderr,"Creating instance of IOManager\n");
   dsp::IOManager manager;
-  fprintf(stderr,"IOManager done.  setting block size\n");
-  manager.set_block_size (block_size);
   fprintf(stderr,"block size done.  calling manager.open()\n");
   manager.open( filenames.front() );
 
   dsp::IOManager buddy_manager;
-  buddy_manager.set_block_size (block_size);
 
   // Detector
   dsp::Detection* detect = new dsp::Detection;
@@ -255,8 +253,12 @@ int main (int argc, char** argv)
       cerr << "opening data file " << filenames[ifile] << endl;
 
     manager.open (filenames[ifile]);
-    if( want_buddies )
+    manager.get_input()->set_block_size (block_size);
+
+    if( want_buddies ) {
       buddy_manager.open (buddy_filenames[ifile]);
+      buddy_manager.get_input()->set_block_size (block_size);
+    }
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
@@ -273,7 +275,7 @@ int main (int argc, char** argv)
 
     int block=0;
 
-    while (!manager.eod()) {
+    while (!manager.get_input()->eod()) {
 
       manager.load (voltages);
       fprintf(stderr,"After load voltages->ndat="UI64"\n",

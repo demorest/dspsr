@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/Unpacker.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/PhaseSeries.h"
@@ -185,8 +186,8 @@ int main (int argc, char** argv)
     // Loader
     
     dsp::IOManager manager;
-    manager.set_block_size (block_size);
     manager.open( filenames.front() );
+    manager.get_input()->set_block_size (block_size);
 
 
     if (verbose)
@@ -205,7 +206,7 @@ int main (int argc, char** argv)
 
     int block=0;
 
-    while (!manager.eod()) {
+    while (!manager.get_input()->eod()) {
 
       manager.load (voltages);
       

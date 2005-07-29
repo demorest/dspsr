@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/Unpacker.h"
 #include "dsp/WeightedTimeSeries.h"
 
@@ -76,7 +77,6 @@ int main (int argc, char** argv)
 
   // Loader
   dsp::IOManager manager;
-  manager.set_block_size (block_size);  
 
   dsp::Operation::record_time = true;
 
@@ -86,13 +86,14 @@ int main (int argc, char** argv)
       cerr << "opening data file " << filenames[ifile] << endl;
 
     manager.open (filenames[ifile]);
+    manager.get_input()->set_block_size (block_size);  
 
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
     int block=0;
 
-    while (!manager.eod()) {
+    while (!manager.get_input()->eod()) {
 
       manager.load (&voltages);
       

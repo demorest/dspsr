@@ -1,19 +1,20 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.16 $
-   $Date: 2004/10/19 10:05:51 $
+   $Revision: 1.17 $
+   $Date: 2005/07/29 17:38:13 $
    $Author: wvanstra $ */
 
 
 #ifndef __IOManager_h
 #define __IOManager_h
 
-#include "dsp/Input.h"
-#include "Error.h"
+#include "dsp/Operation.h"
 
 namespace dsp {
 
+  class Observation;
+  class Input;
   class BitSeries;
   class Unpacker;
   class TimeSeries;
@@ -22,7 +23,7 @@ namespace dsp {
   /*! This class defines a common interface to backend-specific file
     formats by constructing the appropriate header-loading and
     data-unpacking routines.  */
-  class IOManager : public Input {
+  class IOManager : public Operation {
 
   public:
     
@@ -33,17 +34,18 @@ namespace dsp {
     virtual ~IOManager ();
     
     //! Prepare the appropriate Input and Unpacker
-    virtual void open (const char* id, int bs_index=0);
+    virtual void open (const string& id);
 
-    //! Prepare the appropriate Input and Unpacker
-    void open (const string& id, int bs_index=0) { open (id.c_str(),bs_index); }
+    //! Get the information about the data source
+    const Observation* get_info () const;
+    Observation* get_info ();
 
     //! Return pointer to the appropriate Input
     const Input* get_input () const;
     Input* get_input ();
  
     //! Set the Input operator (should not normally need to be used)
-    void set_input (Input* input, bool set_params = false);
+    void set_input (Input* input);
 
      //! Return pointer to the appropriate Unpacker
     const Unpacker* get_unpacker () const;
@@ -59,55 +61,14 @@ namespace dsp {
     // (should not normally need to be used)
     virtual void set_output (BitSeries* output);
 
-    //! Get the information about the data source
-    Observation* get_info () { return input->get_info(); }
-
-    //! Get the information about the data source
-    const Observation* get_info () const { return input->get_info(); }
-
-    //! End of data
-    virtual bool eod();
-    
     //! Load and convert the next block of data
     virtual void load (TimeSeries* data);
-
-    //! Seek to the specified time sample
-    virtual void seek (int64 offset, int whence = 0);
-    
-    //! Get the number of time samples to load on each call to load_data
-    virtual uint64 get_block_size () const { return block_size; }
-    //! Set the number of time samples to load on each call to load_data
-    virtual void set_block_size (uint64 _size);
-    
-    //! Return the number of time samples by which consecutive blocks overlap
-    virtual uint64 get_overlap () const { return overlap; }
-
-    //! Set the number of time samples by which consecutive blocks overlap
-    virtual void set_overlap (uint64 _overlap);
-
-    //! Return the number of invalid timesample weights encountered
-    virtual uint64 get_discarded_weights () const;
-
-    //! Reset the count of invalid timesample weights encountered
-    virtual void reset_discarded_weights ();
 
 
   protected:
 
-    //! set end_of_data flag in the loader
-    virtual void set_eod(bool _eod);
-
-    //! Define abstract method of the Input base class
-    void load_data (BitSeries* data);
-
     //! Load the BitSeries and/or TimeSeries specified with set_output
     virtual void operation ();
-
-    //! Number of time samples to load on each load_block
-    uint64 block_size;
-
-    //! Number of time samples by which data blocks overlap
-    uint64 overlap;
 
     //! Appropriate Input subclass
     Reference::To<Input> input;
@@ -116,11 +77,11 @@ namespace dsp {
     Reference::To<Unpacker> unpacker;
 
     //! The container in which the TimeSeries data is unpacked
+    Reference::To<BitSeries> output;
+
+    //! The container in which the TimeSeries data is unpacked
     Reference::To<TimeSeries> data;
 
-  private:
-    void init();
-    
   };
 
 }
