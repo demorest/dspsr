@@ -32,7 +32,10 @@ namespace dsp {
     
     //! The next start sample
     uint64 next_start_sample;
-    
+
+    //! The requested number of samples to be reserved in the input
+    uint64 requested_reserve;
+
     //! The target with input TimeSeries to be buffered
     HasInput<TimeSeries>* target;
     
