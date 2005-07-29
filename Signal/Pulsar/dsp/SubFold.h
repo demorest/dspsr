@@ -1,15 +1,17 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.4 $
-   $Date: 2004/11/02 14:02:22 $
+   $Revision: 1.5 $
+   $Date: 2005/07/29 17:39:11 $
    $Author: wvanstra $ */
 
 #ifndef __SubFold_h
 #define __SubFold_h
 
 #include "dsp/Fold.h"
+
 #include "Phase.h"
+#include "Callback.h"
 
 namespace dsp {
 
@@ -35,11 +37,20 @@ namespace dsp {
     //! Destructor
     ~SubFold ();
     
-    //! Set the file unloader
-    void set_unloader (PhaseSeriesUnloader* unloader);
+    /** @name PhaseSeries events
+     *  The attached callback methods should be of the form:
+     *
+     *  void method (const PhaseSeries& data);
+     */
+    //@{
 
-    //! Get the file unloader
-    PhaseSeriesUnloader* get_unloader () const;
+    //! Attach methods to receive completed PhaseSeries instances
+    Callback<PhaseSeries> complete;
+
+    //! Attach methods to receive partially completed PhaseSeries instances
+    Callback<PhaseSeries> partial;
+
+    //@}
 
     //! Set the start time from which to begin counting sub-integrations
     void set_start_time (MJD start_time);
@@ -59,8 +70,24 @@ namespace dsp {
     //! Get the number of turns to fold into each sub-integration
     unsigned get_subint_turns () const { return subint_turns; }
 
+    //! Prepare to fold with the current attributes
+    void prepare ();
+
+    /** @name deprecated methods 
+     *  Use of these methods is deprecated in favour of attaching
+     *  callback methods to the completed event. */
+    //@{
+
+    //! Set the file unloader
+    void set_unloader (PhaseSeriesUnloader* unloader);
+
+    //! Get the file unloader
+    PhaseSeriesUnloader* get_unloader () const;
+
     //! Decide wether or not to keep the folded profile
     virtual bool keep (PhaseSeries* data) { return true; }
+
+    //@}
 
   protected:
 

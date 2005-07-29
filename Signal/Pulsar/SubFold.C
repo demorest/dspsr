@@ -6,6 +6,8 @@
 #include "polyco.h"
 #include "Error.h"
 
+#include <assert.h>
+
 dsp::SubFold::SubFold ()
 {
   subint_seconds = 0;
@@ -104,8 +106,7 @@ void dsp::SubFold::transformation ()
 	  cerr << "dsp::SubFold::transformation"
 	    " storing incomplete sub-integration" << endl;
 
-	subints.push_back (output);
-	output = new PhaseSeries;
+	partial.send (*output);
 
       }
       continue;
@@ -113,6 +114,8 @@ void dsp::SubFold::transformation ()
 
     if (verbose)
       cerr << "dsp::SubFold::transformation sub-integration completed" << endl;
+
+    complete.send (*output);
 
     if (!keep(output)) {
       if (verbose)
@@ -127,15 +130,10 @@ void dsp::SubFold::transformation ()
 
       unloader->set_profiles(output);
       unloader->unload();
-      output->zero();
     }
 
-    else {
-      if (verbose)
-	cerr << "dsp::SubFold::transformation storing sub-integration" << endl;
-      subints.push_back (output);
-      output = new PhaseSeries;
-    }
+    output->zero();
+
 
   }
 }
