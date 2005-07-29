@@ -9,34 +9,36 @@
 namespace dsp {
 
   //! Buffers the Transformation input
-  class InputBuffering : 
-  public Transformation<TimeSeries,TimeSeries>::BufferingPolicy {
+  class InputBuffering : public BufferingPolicy {
 
-    public:
+  public:
+    
+    //! Default constructor
+    InputBuffering (HasInput<TimeSeries>* target = 0);
 
-      //! Set the input to be buffered
-      void set_input (TimeSeries* input);
-
-      //! Set the first sample to be used from the input next time
-      void set_input_next_start (uint64 next_start_sample);
-
-      //! Perform all buffering tasks required before transformation
-      void pre_transformation ();
-
-      //! Perform all buffering tasks required after transformation
-      void post_transformation ();
-
-    protected:
-
-      //! The next start sample
-      uint64 next_start_sample;
-
-      //! The input to be buffered
-      Reference::To<TimeSeries> input;
-
-      //! The buffer
-      Reference::To<TimeSeries> buffer;
-
+    //! Set the target with input TimeSeries to be buffered
+    void set_target (HasInput<TimeSeries>* input);
+    
+    //! Set the first sample to be used from the input next time
+    void set_next_start (uint64 next_start_sample);
+    
+    //! Perform all buffering tasks required before transformation
+    void pre_transformation ();
+    
+    //! Perform all buffering tasks required after transformation
+    void post_transformation ();
+    
+  protected:
+    
+    //! The next start sample
+    uint64 next_start_sample;
+    
+    //! The target with input TimeSeries to be buffered
+    HasInput<TimeSeries>* target;
+    
+    //! The buffer
+    Reference::To<TimeSeries> buffer;
+    
   };
 
 }

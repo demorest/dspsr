@@ -1,13 +1,18 @@
 #include "dsp/InputBuffering.h"
 
-//! Set the input to be buffered
-void dsp::InputBuffering::set_input (TimeSeries* _input)
+dsp::InputBuffering::InputBuffering (HasInput<TimeSeries>* _target)
 {
+  target = _target;
+}
 
+//! Set the target with input TimeSeries to be buffered
+void dsp::InputBuffering::set_target (HasInput<TimeSeries>* _target)
+{
+  target = _target;
 }
 
 //! Set the first sample to be used from the input next time
-void dsp::InputBuffering::set_input_next_start (uint64 next)
+void dsp::InputBuffering::set_next_start (uint64 next)
 {
   next_start_sample = next;
 }
