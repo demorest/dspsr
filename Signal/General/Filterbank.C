@@ -23,8 +23,7 @@ void dsp::Filterbank::transformation ()
 {
   if (verbose)
     cerr << "dsp::Filterbank::transformation input ndat="
-	 << get_input()->get_ndat() << " output ndim=" 
-	 << get_output()->get_ndim() << endl;
+	 << get_input()->get_ndat() << endl;
 
   if (nchan < 2)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
@@ -38,19 +37,32 @@ void dsp::Filterbank::transformation ()
 
   if (response) {
 
+    if (verbose)
+      cerr << "dsp::Filterbank call Response::match" << endl;
+
     // convolve the data with a frequency response function during
     // filterbank construction...
 
     response -> match (input, nchan);
     if (response->get_nchan() != nchan)
       throw Error (InvalidState, "dsp::Filterbank::transformation",
-		   "Response.nchan=%d != nchan=%d",
+		   "response.nchan=%d != nchan=%d",
 		   response->get_nchan(), nchan);
 
     nfilt_pos = response->get_impulse_pos ();
     nfilt_neg = response->get_impulse_neg ();
 
     freq_res = response->get_ndat();
+
+    if (verbose)
+      cerr << "dsp::Filterbank Response nfilt_pos=" << nfilt_pos 
+	   << " nfilt_neg=" << nfilt_neg 
+	   << " freq_res=" << response->get_ndat()
+	   << " ndim=" << response->get_ndim() << endl;
+
+    if (freq_res == 0)
+      throw Error (InvalidState, "dsp::Filterbank::transformation",
+		   "Response.ndat = 0");
 
   }
 
@@ -206,6 +218,13 @@ void dsp::Filterbank::transformation ()
   // if freq_res is even, then each sub-band will be centred on a frequency
   // that lies on a spectral bin *edge* - not the centre of the spectral bin
   output->set_dc_centred (freq_res%2);
+
+#if 0
+  // the centre frequency of each sub-band will be offset
+  double channel_bandwidth = input->get_bandwidth() / nchan;
+  double shift = double(freq_res-1)/double(freq_res);
+  output->set_centre_frequency_offset ( 0.5*channel_bandwidth*shift );
+#endif
 
   // complex to complex FFT produces a band swapped result
   if (input->get_state() == Signal::Analytic)
