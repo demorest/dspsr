@@ -11,22 +11,21 @@ namespace dsp {
   //! Buffers the Transformation output
   /*! DO NOT try to buffer the output of Transformations that accumulate
     their output - save_data will not work */
-  class OutputBuffering : 
-    public Transformation<TimeSeries,TimeSeries>::BufferingPolicy {
-    
+  class OutputBufferBase : public BufferingPolicy {
+
   public:
     
     //! Default constructor
-    OutputBuffering (Transformation<TimeSeries,TimeSeries>* xform);
+    OutputBufferBase ();
 
     //! Destructor
-    ~OutputBuffering ();
+    virtual ~OutputBufferBase ();
 
     //! Set the output to be buffered
     void set_output (TimeSeries* output);
 
     //! Set the input
-    void set_input (TimeSeries* input);
+    void set_input (const Observation* input);
     
     //! Perform all buffering tasks required before transformation
     void pre_transformation ();
@@ -34,11 +33,20 @@ namespace dsp {
     //! Perform all buffering tasks required after transformation
     void post_transformation ();
 
+    //! The start time of the next operation is essentially ignored
+    void set_next_start (uint64) { }
+
     //! Returns the input start time (over-ridden by BandCombiner class)
     virtual MJD get_input_start_time ();
 
     //! Returns how many samples were lost
     virtual int64 get_input_samps_lost();
+
+    //! Save the last_nsamps into the buffer
+    virtual void save_data (uint64 last_nsamps); 
+
+    //! Rewinds 'end_of_processed_data' by the requested number of seconds
+    void rewind_eopd (double seconds);
 
     //! Skip over samples that have already been processed
     /*! requires time_conserved==true */
@@ -79,7 +87,7 @@ namespace dsp {
     Reference::To<TimeSeries> output;
 
     //! The input
-    Reference::To<TimeSeries> input;
+    Reference::To<const Observation> input;
     
     //! The buffer
     Reference::To<TimeSeries> buffer;
@@ -92,9 +100,6 @@ namespace dsp {
 
     //! Valid data has been copied over into the buffer
     bool valid_data_is_saved;
-
-    //! Save the last_nsamps into the buffer
-    virtual void save_data (uint64 last_nsamps); 
 
     //! Deletes the saved_data buffer
     virtual void delete_saved_data();
@@ -136,13 +141,13 @@ namespace dsp {
     //! Seeks over any samples that have already been processed
     int64 seek_over_surplus_samps();
 
+    //! Makes sure the input isn't changed by seeking over surplus samples
+    void seek_back_over_surplus_samps ();
+
     //! Works out what the MJD of the last sample processed was
     void workout_end_of_processed_data (MJD input_start_time,
 					double time_prepended,
 					double time_surplus);
-
-    //! Rewinds 'end_of_processed_data' by the requested number of seconds
-    void rewind_eopd (double seconds);
 
     //! Does all the swap buffer stuff
     void swap_buffer_stuff();
@@ -163,7 +168,61 @@ namespace dsp {
     virtual void deprepend_data (double time_surplus);
 
   };
-  
+
+
+  //! Enables OutputBuffering for a variety of Transformations
+  template <class In>
+  class OutputBuffering : public OutputBufferBase
+  {
+
+  public:
+
+    //! Default constructor
+    OutputBuffering (Transformation<In,TimeSeries>* xform);
+
+    //! Perform all buffering tasks required before transformation
+    void pre_transformation () { OutputBufferBase::pre_transformation(); }
+    
+    //! Perform all buffering tasks required after transformation
+    void post_transformation () { OutputBufferBase::post_transformation(); }
+
+  };
+
+  template<class In>
+  void output_save (dsp::Transformation<In,dsp::TimeSeries>* tr, int64 ndat)
+  {
+    dsp::OutputBuffering<In>* policy = 0;
+
+    if (tr->has_buffering_policy()) {
+      BufferingPolicy* bp = tr->get_buffering_policy();
+      policy = dynamic_cast<dsp::OutputBuffering<In>*>( bp );
+    }
+
+    if (!policy) {
+      policy = new dsp::OutputBuffering<In>(tr);
+      tr->set_buffering_policy( policy );
+    }
+    
+    policy->save_data (ndat);
+  }
+
 }
+
+
+template <class In>
+dsp::OutputBuffering<In>::OutputBuffering (Transformation<In,TimeSeries>* tr)
+{
+  if (!tr)
+    throw Error (InvalidParam, "dsp::OutputBuffering<In>",
+		 "no Transformation");
+
+  if (tr->has_input())
+    input = tr->get_input();
+  if (tr->has_output())
+    output = tr->get_output();
+
+  time_conserved = tr->get_time_conserved ();
+}
+
 
 #endif // !defined(__OutputBuffering_h)

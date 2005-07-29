@@ -1,20 +1,7 @@
 #include "dsp/OutputBuffering.h"
 
-typedef dsp::Transformation<dsp::TimeSeries,dsp::TimeSeries> Xform;
-
-dsp::OutputBuffering::OutputBuffering (Xform* xform)
+dsp::OutputBufferBase::OutputBufferBase ()
 {
-  if (!xform)
-    throw Error (InvalidParam, "dsp::OutputBuffering",
-		 "");
-
-  if (xform->has_input())
-    input = xform->get_input();
-  if (xform->has_output())
-    output = xform->get_output();
-
-  time_conserved = xform->get_time_conserved ();
-
   free_scratch_space = false;
   swap_buffers = false;
   input_samps_lost = 0;
@@ -24,35 +11,35 @@ dsp::OutputBuffering::OutputBuffering (Xform* xform)
   end_of_processed_data = MJD::zero;
 }
 
-dsp::OutputBuffering::~OutputBuffering ()
+dsp::OutputBufferBase::~OutputBufferBase ()
 {
 }
 
 //! Set the input
-void dsp::OutputBuffering::set_input (TimeSeries* _input)
+void dsp::OutputBufferBase::set_input (const Observation* _input)
 {
   input = _input;
 }
 
 //! Set the output to be buffered
-void dsp::OutputBuffering::set_output (TimeSeries* _output)
+void dsp::OutputBufferBase::set_output (TimeSeries* _output)
 {
   output = _output;
 }
 
-void dsp::OutputBuffering::delete_saved_data()
+void dsp::OutputBufferBase::delete_saved_data()
 {
   buffer = 0; 
 }
 
 //! Returns the input start time
-MJD dsp::OutputBuffering::get_input_start_time ()
+MJD dsp::OutputBufferBase::get_input_start_time ()
 {
   return input->get_start_time(); 
 }
 
 //! Perform all buffering tasks required before transformation
-void dsp::OutputBuffering::pre_transformation ()
+void dsp::OutputBufferBase::pre_transformation ()
 {
   time_in = input->get_duration();
   rate_in = input->get_rate();
@@ -65,7 +52,7 @@ void dsp::OutputBuffering::pre_transformation ()
     start_of_data = input_start_time;
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::pre_transformation input start time="
+    cerr << "dsp::OutputBufferBase::pre_transformation input start time="
 	 << (input_start_time-start_of_data).in_seconds() << endl;
 
   if (valid_data_is_saved) {
@@ -79,21 +66,26 @@ void dsp::OutputBuffering::pre_transformation ()
   surplus_samples = seek_over_surplus_samps();
 
   if (surplus_samples < 0)
-    throw Error (InvalidState, "dsp::OutputBuffering::pre_transformation",
+    throw Error (InvalidState, "dsp::OutputBufferBase::pre_transformation",
 		 "Error calling seek_over_surplus_samps");
 }   
 
+void dsp::OutputBufferBase::seek_back_over_surplus_samps ()
+{
+  const TimeSeries* ts_in = dynamic_cast<const TimeSeries*>(input.get());
+  if (ts_in)
+    const_cast<TimeSeries*>(ts_in)->seek (-surplus_samples);
+}
 
 //! Perform all buffering tasks required after transformation
-void dsp::OutputBuffering::post_transformation ()
+void dsp::OutputBufferBase::post_transformation ()
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::post_transformation START output ndat="
+    cerr << "dsp::OutputBufferBase::post_transformation START output ndat="
 	 << output->get_ndat() << endl;
   
-  // used to be seek_back_over_surplus_samps
-  input->seek (-surplus_samples);
-  
+  seek_back_over_surplus_samps ();
+
   rounding_stuff ();
   
   deprepend_data (double(surplus_samples)/rate_in);
@@ -107,28 +99,28 @@ void dsp::OutputBuffering::post_transformation ()
   valid_data_is_saved = false;
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::post_transformation END output ndat="
+    cerr << "dsp::OutputBufferBase::post_transformation END output ndat="
 	 << output->get_ndat() << " start time="
 	 << (output->get_start_time()-start_of_data).in_seconds() << endl;
 
 }
 
 
-void dsp::OutputBuffering::swap_buffer_stuff()
+void dsp::OutputBufferBase::swap_buffer_stuff()
 {
   if (!swap_buffers)
     return;
 
-  input->swap_data (*output);
+  const_cast<Observation*>(input.get())->swap_data (*output);
 
   if (free_scratch_space)
     output->resize(0);
 }
 
-uint64 dsp::OutputBuffering::prepend_data ()
+uint64 dsp::OutputBufferBase::prepend_data ()
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::prepend_data START" << endl;
+    cerr << "dsp::OutputBufferBase::prepend_data START" << endl;
   
   output->operator= (*buffer);
 
@@ -137,7 +129,7 @@ uint64 dsp::OutputBuffering::prepend_data ()
   output->set_preserve_seeked_data (true);
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::prepend_data copied " << samples_seeked
+    cerr << "dsp::OutputBufferBase::prepend_data copied " << samples_seeked
 	 << " samples";
 
   return samples_seeked;
@@ -145,10 +137,10 @@ uint64 dsp::OutputBuffering::prepend_data ()
 
 
 //! Save the last_nsamps into the buffer buffer
-void dsp::OutputBuffering::save_data (uint64 last_nsamps)
+void dsp::OutputBufferBase::save_data (uint64 last_nsamps)
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::save_data last_nsamps=" 
+    cerr << "dsp::OutputBufferBase::save_data last_nsamps=" 
 	 << last_nsamps << endl;
 
   if (!buffer)
@@ -165,7 +157,7 @@ void dsp::OutputBuffering::save_data (uint64 last_nsamps)
   buffer->resize(last_nsamps);
 
   if (last_nsamps > output->get_ndat())
-    throw Error (InvalidState,"dsp::OutputBuffering::save_data",
+    throw Error (InvalidState,"dsp::OutputBufferBase::save_data",
 		"last_nsamps="UI64" > output ndat="UI64,
 		last_nsamps, output->get_ndat());
 
@@ -188,16 +180,16 @@ void dsp::OutputBuffering::save_data (uint64 last_nsamps)
 
 //! Rewinds 'end_of_processed_data' by the requested number of seconds
 
-void dsp::OutputBuffering::rewind_eopd (double seconds)
+void dsp::OutputBufferBase::rewind_eopd (double seconds)
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::rewind_eopd by " << seconds << "s" << endl;
+    cerr << "dsp::OutputBufferBase::rewind_eopd by " << seconds << "s" << endl;
   end_of_processed_data -= seconds;
 }
 
 
 //! Handles the rounding stuff
-void dsp::OutputBuffering::rounding_stuff ()
+void dsp::OutputBufferBase::rounding_stuff ()
 {
   if (!rounding)
     return;
@@ -206,19 +198,19 @@ void dsp::OutputBuffering::rounding_stuff ()
   output->set_ndat (output->get_ndat() - output->get_ndat()%rounding);
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::rounding_stuff has wiped "
+    cerr << "dsp::OutputBufferBase::rounding_stuff has wiped "
 	 << old_ndat - output->get_ndat() << " samples" << endl;
 }
 
 
-void dsp::OutputBuffering::deprepend_data (double time_surplus)
+void dsp::OutputBufferBase::deprepend_data (double time_surplus)
 {
   if (samples_prepended > 0) {
 
     output->seek (-samples_prepended);
       
     if (Operation::verbose)
-      cerr << "dsp::OutputBuffering::deprepend_data seeked back "
+      cerr << "dsp::OutputBufferBase::deprepend_data seeked back "
 	   << samples_prepended << " samples; offset=" 
 	   << output->get_samps_offset() << endl;
   }
@@ -229,7 +221,7 @@ void dsp::OutputBuffering::deprepend_data (double time_surplus)
   double time_out = output->get_duration();
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::deprepend_data"
+    cerr << "dsp::OutputBufferBase::deprepend_data"
       " time_in=" << time_in << " time_out=" << time_out <<
       " time_surplus=" << time_surplus << " so input_samps_lost=nint64("
 	 << (time_in-time_surplus)-time_out << "*" << rate_in << ")" << endl;
@@ -238,9 +230,11 @@ void dsp::OutputBuffering::deprepend_data (double time_surplus)
 }
 
 //! Seeks over any samples that have already been processed
-int64 dsp::OutputBuffering::seek_over_surplus_samps ()
+int64 dsp::OutputBufferBase::seek_over_surplus_samps ()
 {
-  if (!process_samps_once || end_of_processed_data==MJD::zero 
+  const TimeSeries* ts_in = dynamic_cast<const TimeSeries*>(input.get());
+
+  if (!ts_in || !process_samps_once || end_of_processed_data==MJD::zero 
       || time_conserved || input==output)
     return 0;
   
@@ -249,40 +243,41 @@ int64 dsp::OutputBuffering::seek_over_surplus_samps ()
   int64 samps_surplus = nint64(secs_surplus * input->get_rate());
   
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::seek_over_surplus_samps " << 
+    cerr << "dsp::OutputBufferBase::seek_over_surplus_samps " << 
       samps_surplus << " samples" << endl;
 
   if (samps_surplus < 0)
-    throw Error(InvalidState,"dsp::OutputBuffering::seek_over_surplus_samps",
+    throw Error(InvalidState,"dsp::OutputBufferBase::seek_over_surplus_samps",
 		"Your last processing call ended at %f.\n\t"
 		"This is %f seconds ("I64" samps) before current input starts",
 		(end_of_processed_data-start_of_data).in_seconds(),
 		fabs(secs_surplus), -samps_surplus);
 
   if (samps_surplus > int64(input->get_ndat())){
-    cerr << "dsp::OutputBuffering::seek_over_surplus_samps"
+    cerr << "dsp::OutputBufferBase::seek_over_surplus_samps"
       " surpuls=" << samps_surplus << " > input ndat=" << input->get_ndat()
 	 << endl;
     return -1;
   }
 
-  input->seek (samps_surplus);
+  const_cast<TimeSeries*>(ts_in)->seek (samps_surplus);
   return samps_surplus;
 }
 
 void
-dsp::OutputBuffering::workout_end_of_processed_data (MJD input_start_time,
+dsp::OutputBufferBase::workout_end_of_processed_data (MJD input_start_time,
 						     double time_prepended,
 						     double time_surplus)
 {
   if (!time_conserved)
     return;
   
-  end_of_processed_data = input_start_time + output->get_duration() - time_prepended + time_surplus;
+  end_of_processed_data = input_start_time + output->get_duration() 
+    - time_prepended + time_surplus;
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBuffering::workout_end_of_processed_data "
-      "= input_start_time + out_dur + time_prepended + time_surplus "
+    cerr << "dsp::OutputBufferBase::workout_end_of_processed_data "
+      "= input_start_time + out_dur - time_prepended + time_surplus "
       "= " << (input_start_time-start_of_data).in_seconds() << " + "
 	 << output->get_duration() << " - " 
 	 << time_prepended << " + "
