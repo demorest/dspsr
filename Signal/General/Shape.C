@@ -1,8 +1,8 @@
-#include <assert.h>
-
 #include "dsp/Shape.h"
 #include "genutil.h"
 #include "Error.h"
+
+#include <assert.h>
 
 bool dsp::Shape::verbose = false;
 
@@ -246,6 +246,11 @@ void dsp::Shape::rotate (int rotbin)
 
     }
   }
+}
+
+void dsp::Shape::zero_dimensions ()
+{
+  npol = nchan = ndat = ndim = 0;
 }
 
 void dsp::Shape::zero ()

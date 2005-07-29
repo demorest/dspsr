@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/12/11 18:36:03 $
+   $Revision: 1.9 $
+   $Date: 2005/07/29 17:39:03 $
    $Author: wvanstra $ */
 
 #ifndef __Shape_h
@@ -59,6 +59,9 @@ namespace dsp {
     //! Set all values to zero
     void zero ();
 
+    //! Set all dimnensions to zero; allocated memory unaffected
+    void zero_dimensions ();
+
     //! Borrow the data from the specified channel of another Shape
     void borrow (const Shape&, unsigned ichan=0);
    
@@ -84,7 +87,7 @@ namespace dsp {
   protected:
 
     //! Data points
-    float*   buffer;
+    float* buffer;
 
     //! Size of the data buffer
     unsigned bufsize;
