@@ -1,28 +1,22 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.27 $
-   $Date: 2004/11/02 10:16:43 $
-   $Author: hknight $ */
+   $Revision: 1.28 $
+   $Date: 2005/07/29 17:38:30 $
+   $Author: wvanstra $ */
 
 #ifndef __Operation_h
 #define __Operation_h
 
-#include <string>
-#include <vector>
+#include "dsp/dsp.h"
+#include "dsp/Time.h"
 
 #include "RealTimer.h"
 #include "Reference.h"
 #include "environ.h"
 
-#include "dsp/Time.h"
-#include "dsp/dsp.h"
-
-namespace dsp {
-  class Operation;
-}
-
-#include "dsp/TimeKeeper.h"
+#include <string>
+#include <vector>
 
 namespace dsp {
   
@@ -31,6 +25,7 @@ namespace dsp {
     digital signal processing routines are performed on baseband data */
 
   class Operation : public Reference::Able {
+
     friend class TimeKeeper;
 
   public:
@@ -44,8 +39,11 @@ namespace dsp {
     //! Global verbosity flag
     static bool verbose;
 
-    //! Used internally- classes can set this to non-zero in operation() if they fail
+    //! Operations can set this to non-zero in operation() if they fail
     static int operation_status;
+
+    //! Operations should perform internal consistency checks
+    static bool check_state;
 
     //! Counts how many Operation instantiations there have been
     //! Used for setting the unique instantiation ID

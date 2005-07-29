@@ -24,7 +24,8 @@ bool dsp::Operation::verbose = false;
 //! Global instantiation count
 int dsp::Operation::instantiation_count = 0;
 
-//! Used internally- classes can set this to non-zero in operation() if they fail
+bool dsp::Operation::check_state = true;
+
 int dsp::Operation::operation_status = 0;
 
 //! Only ever called by TimeKeeper class
