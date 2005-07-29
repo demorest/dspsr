@@ -47,7 +47,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjJl:L:m:M:n:N:Oop:P:RsS:t:T:vVx:";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjJk:l:L:m:M:n:N:Oop:P:RsS:t:T:vVx:z";
 
 void usage ()
 {
@@ -56,19 +56,19 @@ void usage ()
     "File handling options:\n"
     " -a archive     set the output archive class name\n"
     " -e ext         set the output archive filename extension\n"
-    " -E filename    set the output archive filename (including extension)\n"
+    " -O filename    set the output archive filename (including extension)\n"
     " -M metafile    load filenames from metafile\n"
-    " -O             run in backward-compatibility psrdisp mode\n"
     " -S seek        start processing at t=seek seconds\n"
     " -T total       process only t=total seconds\n"
     " -g ffts        perform this many forward FFTs per block [16]\n"
     " -t gulps       stop processing after this many gulps\n"
+    " -z             run in psrdisp backward-compatibility mode\n"
     "\n"
     "Source options:\n"
-    " -N name        set the source name\n"
     " -B bandwidth   set the bandwidth\n"
     " -f frequency   set the centre frequency\n"
-    " -c period      fold with constant period\n"
+    " -k telid       set the tempo telescope code\n"
+    " -N name        set the source name\n"
     "\n"
     "Clock/Time options:\n"
     " -C offset      adjust clock by offset seconds\n"
@@ -103,8 +103,10 @@ void usage ()
     "\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins \n"
+    " -c period      fold with constant period\n"
     " -p phase       reference phase of pulse profile bin zero \n"
-    " -P psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
+    " -E psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
+    " -P psr.poly    add the folding polynomial, psr.poly, for use \n"
     "\n"
     "Single Pulse options:\n"
     " -A             produce a single archive with multiple Integrations\n"
@@ -180,6 +182,9 @@ int main (int argc, char** argv) try {
   // the ephemerides from which to choose when creating a folding polyco
   vector< psrephem* > ephemerides;
 
+  // the polynomials from which to choose a folding polyco
+  vector< polyco* > polycos;
+
   int ffts = 1;
   int fres = 0;
 
@@ -227,6 +232,9 @@ int main (int argc, char** argv) try {
 
   // set the MJD
   char* mjd_string = 0;
+
+  // set the telescope code
+  char telescope_code = 0;
 
 #if ACTIVATE_MKL
   // If true, a dsp::IncoherentFilterbank is used rather than a dsp::Filterbank
@@ -325,12 +333,13 @@ int main (int argc, char** argv) try {
       npol = atoi (optarg);
       break;
 
-    case 'E':
-      archive_filename = optarg;
-      break;
-
     case 'e':
       archive_extension = optarg;
+      break;
+
+    case 'E':
+      cerr << "dspsr: Loading ephemeris from " << optarg << endl;
+      ephemerides.push_back ( new psrephem (optarg) );
       break;
 
     case 'F': {
@@ -393,6 +402,10 @@ int main (int argc, char** argv) try {
       disable_dedispersion = true;
       break;
 
+    case 'k':
+      telescope_code = optarg[0];
+      break;
+
     case 'l':
       nlag = atoi (optarg);
       break;
@@ -438,7 +451,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'O':
-      dsp::psrdisp_compatible = true;
+      archive_filename = optarg;
       break;
 
     case 'o':
@@ -446,8 +459,8 @@ int main (int argc, char** argv) try {
       break;
 
     case 'P':
-      cerr << "dspsr: Loading ephemeris from " << optarg << endl;
-      ephemerides.push_back ( new psrephem (optarg) );
+      cerr << "dspsr: Loading polyco from " << optarg << endl;
+      polycos.push_back ( new polyco (optarg) );
       break;
 
     case 'p':
@@ -515,6 +528,10 @@ int main (int argc, char** argv) try {
 
     case 'x': 
       set_nfft = atoi (optarg);
+      break;
+
+    case 'z':
+      dsp::psrdisp_compatible = true;
       break;
 
     default:
@@ -829,6 +846,9 @@ int main (int argc, char** argv) try {
   for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
     fold->add_pulsar_ephemeris ( ephemerides[ieph] );
 
+  for (unsigned ipoly=0; ipoly < polycos.size(); ipoly++)
+    fold->add_folding_polyco ( polycos[ipoly] );
+
   if (!detected && (npol != 3))
     fold->set_input (convolve);
   else 
@@ -887,6 +907,13 @@ int main (int argc, char** argv) try {
               " old=" << manager->get_info()->get_centre_frequency() <<
               " new=" << centre_frequency << endl;
       manager->get_info()->set_centre_frequency (centre_frequency);
+    }
+
+    if (telescope_code != 0) {
+      cerr << "dspsr: over-riding telescope code"
+              " old=" << manager->get_info()->get_telescope_code() <<
+              " new=" << telescope_code << endl;
+      manager->get_info()->set_telescope_code (telescope_code);
     }
 
     // Make sure the source name used to construct kernel is set correctly
