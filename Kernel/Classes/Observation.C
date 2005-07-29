@@ -476,11 +476,12 @@ void dsp::Observation::set_default_basis ()
     basis = Signal::Circular;
   }
   else
-    throw Error (InvalidState, "Observation::set_default_basis",
-		 "unrecognized telescope: %c\n", telescope);
+    cerr << Error (InvalidState, "Observation::set_default_basis",
+		   "unrecognized telescope: %c\n", telescope);
 }
 
-string dsp::Observation::get_default_id (const MJD& mjd, const Observation* obs)
+string 
+dsp::Observation::get_default_id (const MJD& mjd, const Observation* obs)
 {
   char id [15];
   utc_t startutc = UTC_INIT;
