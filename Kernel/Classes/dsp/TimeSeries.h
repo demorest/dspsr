@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.27 $
-   $Date: 2005/07/29 21:01:05 $
+   $Revision: 1.28 $
+   $Date: 2005/08/01 22:16:26 $
    $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
@@ -62,8 +62,8 @@ namespace dsp {
     virtual void copy_configuration (const Observation* copy);
 
     //! Copy the data of another TimeSeries instance
-    void copy_data (const TimeSeries* data, 
-		    uint64 idat_start = 0, uint64 ndat = 0);
+    virtual void copy_data (const TimeSeries* data, 
+			    uint64 idat_start = 0, uint64 ndat = 0);
 
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
@@ -151,6 +151,9 @@ namespace dsp {
 
     //! Change the amount of memory reserved at the start of the buffer
     void change_reserve (int64 change);
+
+    //! Get the amount of memory reserved at the start of the buffer
+    uint64 get_reserve () const { return reserve_ndat; }
 
     friend class InputBuffering;
 
