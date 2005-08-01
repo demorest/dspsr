@@ -2,6 +2,7 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Apodization.h"
 #include "dsp/Response.h"
+#include "dsp/InputBuffering.h"
 
 #include "fftm.h"
 #include "genutil.h"
@@ -9,9 +10,11 @@
 
 //#define DEBUG
 
-dsp::Convolution::Convolution (const char* _name, Behaviour _type, bool _time_conserved)
+dsp::Convolution::Convolution (const char* _name, Behaviour _type,
+			       bool _time_conserved)
   : Transformation<TimeSeries,TimeSeries> (_name, _type, _time_conserved)
 {
+  set_buffering_policy (new InputBuffering (this));
 }
 
 dsp::Convolution::~Convolution ()
@@ -175,6 +178,9 @@ void dsp::Convolution::transformation ()
 
   if (verbose)
     cerr << "Convolution::transformation npart=" << npart << endl;
+
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (nsamp_good * npart);
 
   float* spectrum[2];
   spectrum[0] = float_workingspace (pts_reqd);

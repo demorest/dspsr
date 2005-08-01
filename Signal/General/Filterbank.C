@@ -2,6 +2,7 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
+#include "dsp/InputBuffering.h"
 
 #include "genutil.h"
 
@@ -17,6 +18,8 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
   nchan = 0;
   time_res = 1;
   freq_res = 1;
+
+  set_buffering_policy (new InputBuffering (this));
 }
 
 void dsp::Filterbank::transformation ()
@@ -164,6 +167,9 @@ void dsp::Filterbank::transformation ()
 		 input->get_ndat(), nsamp_fft);
 
   minimum_samps_can_process = nsamp_fft;
+
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
 
   // prepare the output TimeSeries
   {

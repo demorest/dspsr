@@ -165,7 +165,8 @@ int main (int argc, char** argv) try {
   bool verbose = false;
 
   // number of time samples loaded from file at a time
-  int blocks = 0;
+  uint64 block_size = 1024*1024;
+
   int ndim = 4;
   int nchan = 1;
   int npol = 4;
@@ -512,7 +513,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 't':
-      blocks = atoi (optarg);
+      block_size = atoi (optarg);
       break;
 
     case 'V':
@@ -974,53 +975,21 @@ int main (int argc, char** argv) try {
       dm = dispersion_measure;
     }
 
-    unsigned nblocks_tot = 0;
-    unsigned block_size = ffts;
-    unsigned overlap = 0;
-    unsigned nfft = 0;
-    unsigned nfilt = 0;
+    if (kernel)
+      kernel->set_dispersion_measure (dm);
 
     vector<dsp::Operation*> active_operations;
 
-    if (manager->get_info()->get_detected()) {
-
+    if (!manager->get_info()->get_detected())
+      active_operations = operations;
+    else {
       active_operations.push_back (manager);
       active_operations.push_back (fold);
-
-    }
-
-    else {
-
-      active_operations = operations;
-      bool dm_kludge = false;
-      if (dm == 0) {
-	 dm = 0.001;
-	 dm_kludge = true;
-      }
-      kernel->set_dispersion_measure (dm);
-      kernel->match ( manager->get_info(), nchan);
-      
-      nfft = kernel->get_ndat();
-      nfilt = kernel->get_impulse_pos() + kernel->get_impulse_neg();
-      
-      unsigned real_complex = 2 / manager->get_info()->get_ndim();
-      
-      block_size = ((nfft-nfilt) * ffts + nfilt) * nchan * real_complex;
-      overlap = nfilt * nchan * real_complex;
-      
-      unsigned fft_size = nfft * nchan * real_complex;
-
-      cerr << "FFTsize=" << fft_size << endl;
-      cerr << "Blocksz=" << block_size << endl;
-      cerr << "Overlap=" << overlap << endl;
-      
-      if (dm_kludge) {
-	kernel->set_dispersion_measure(0.0);
-      }
-      
     }
 
     archiver->set_operations (active_operations);
+
+    unsigned nblocks_tot = 0;
 
     if (mpi_rank == mpi_root) {
 
@@ -1031,20 +1000,10 @@ int main (int argc, char** argv) try {
 	manager->get_input()->set_total_seconds (seek_seconds + total_seconds);
 
       manager->get_input()->set_block_size ( block_size );
-      manager->get_input()->set_overlap ( overlap );
 
-      unsigned ndat_good = block_size - overlap;
-      nblocks_tot = manager->get_input()->get_total_samples() / ndat_good;
-      if (manager->get_input()->get_total_samples() % ndat_good)
-	nblocks_tot ++;
+      nblocks_tot = manager->get_input()->get_total_samples() / block_size;
 
-      cerr << "processing ";
-      if (blocks)
-	cerr << blocks << " out of ";
-      cerr << nblocks_tot << " blocks of " << block_size << " time samples\n";
-      if (blocks)
-	nblocks_tot = blocks;
-      
+#if 0      
       if (nfft) {
 
 	fprintf (stderr, "(nfft:%d  ngood:%d  ffts/job:%d  jobs:%d)\n",
@@ -1055,6 +1014,7 @@ int main (int argc, char** argv) try {
 		   nchan, fres, 1);
 	
       }
+#endif
 
 #if ACTIVATE_MPI
 
@@ -1144,9 +1104,6 @@ int main (int argc, char** argv) try {
 	  last_percent = percent;
 	}
 	
-	if (blocks && block==blocks)
-	  break;
-
       }
 
     }
