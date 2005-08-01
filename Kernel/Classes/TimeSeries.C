@@ -85,7 +85,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
       cerr << "dsp::TimeSeries::resize not preserving; reserving "
            << reserve_ndat << endl;
     DataSeries::resize(nsamples+reserve_ndat);
-    data = (float*)buffer + reserve_ndat;
+    data = (float*)buffer + reserve_ndat * get_ndim();
     // BASE base = data;
     return;
   }
@@ -285,36 +285,32 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   return mean/double(get_ndat());
 }
 
-void dsp::TimeSeries::copy_configuration (const Observation* copy){
+void dsp::TimeSeries::copy_configuration (const Observation* copy)
+{
   if( copy==this )
     return;
 
-  if( !get_preserve_seeked_data() || get_samps_offset() == 0 ){
+  if (!get_preserve_seeked_data() || get_samps_offset() == 0) {
     Observation::operator=( *copy );
     return;
   }
 
-  if( verbose )
-    fprintf(stderr,"dsp::TimeSeries::copy_configuration() not copying nchan, npol, ndim, state\n");
+  if (verbose)
+    cerr << "dsp::TimeSeries::copy_configuration"
+      " not copying nchan, npol, ndim, state" << endl;
 
-  Observation* input = (Observation*)copy;
+  unsigned input_nchan = get_nchan();
+  unsigned input_npol = get_npol();
+  unsigned input_ndim = get_ndim();
+  Signal::State input_state = get_state();
 
-  unsigned input_nchan = input->get_nchan();
-  unsigned input_npol = input->get_npol();
-  unsigned input_ndim = input->get_ndim();
-  Signal::State input_state = input->get_state();
+  Observation::operator=( *copy );
 
-  input->set_npol( get_npol() );
-  input->set_ndim( get_ndim() );
-  input->set_state( get_state() );
-  input->set_nchan( get_nchan() );
+  set_nchan( input_nchan );
+  set_npol( input_npol );
+  set_ndim( input_ndim );
+  set_state( input_state );
 
-  Observation::operator=( *input );
-
-  input->set_nchan( input_nchan );
-  input->set_npol( input_npol );
-  input->set_ndim( input_ndim );
-  input->set_state( input_state );
 }
 
 dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
@@ -690,6 +686,9 @@ void dsp::TimeSeries::set_ndim(unsigned _ndim){
 
 void dsp::TimeSeries::change_reserve (int64 change)
 {
+  if (verbose)
+    cerr << "dsp::TimeSeries::change_reserve (" << change << ")" << endl;
+
   if (change < 0) {
     uint64 decrease = -change;
     if (decrease > reserve_ndat)
