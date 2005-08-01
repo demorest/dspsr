@@ -186,11 +186,14 @@ void dsp::Fold::prepare (const Observation* observation)
   built = true;
 } 
 
-Reference::To<polyco> dsp::Fold::get_folding_polyco(const psrephem* pephemeris,
-						    const Observation* observation){
+Reference::To<polyco>
+dsp::Fold::get_folding_polyco(const psrephem* pephem,
+			      const Observation* observation)
+{
   Reference::To<MatchingPolyco> mpoly = new MatchingPolyco;
   
-  MatchingEphemeris* mephem = dynamic_cast<MatchingEphemeris*>(const_cast<psrephem*>(pephemeris));
+  const MatchingEphemeris* mephem = 0;
+  mephem = dynamic_cast<const MatchingEphemeris*>(pephem);
 
   if( mephem )
     mpoly->set_matching_sources( mephem->get_matching_sources() );
@@ -201,7 +204,7 @@ Reference::To<polyco> dsp::Fold::get_folding_polyco(const psrephem* pephemeris,
   
   MJD time = observation->get_start_time();
 
-  Tempo::set_polyco ( *the_folding_polyco.get(), *pephemeris, time, time,
+  Tempo::set_polyco ( *the_folding_polyco.get(), *pephem, time, time,
 		      nspan, ncoef, 8, observation->get_telescope_code() );
   
   return the_folding_polyco;
@@ -495,11 +498,13 @@ void dsp::Fold::transformation ()
 
   const unsigned* weights = 0;
   unsigned ndatperweight = 0;
+  unsigned weight_idat = 0;
 
   if (weighted_input) {
 
     weights = weighted_input->get_weights();
     ndatperweight = weighted_input->get_ndat_per_weight();
+    weight_idat = weighted_input->get_weight_idat();
 
     if (verbose)
       cerr << "dsp::Fold::transformation WeightedTimeSeries "
@@ -513,7 +518,7 @@ void dsp::Fold::transformation ()
   //fold (integrated, output->get_datptr(), &(output->hits[0]),
   //	input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
   //	weights, ndatperweight, idat_start, ndat_fold);
-  fold (weights, ndatperweight);
+  fold (weights, ndatperweight, weight_idat);
   
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
@@ -559,7 +564,9 @@ void dsp::Fold::transformation ()
 
 */
 
-void dsp::Fold::fold (const unsigned* weights, unsigned ndatperweight)
+void dsp::Fold::fold (const unsigned* weights, 
+		      unsigned ndatperweight,
+		      unsigned weight_idat)
 {
   if (!folding_nbin) {
     if (!requested_nbin)
@@ -603,13 +610,16 @@ void dsp::Fold::fold (const unsigned* weights, unsigned ndatperweight)
     cerr << "dsp::Fold::fold ndatperweight=" << ndatperweight 
          << " idat_start=" << idat_start << " ndat_fold=" << ndat_fold << endl;
 
+  bool bad_data = false;
+
   if (ndatperweight) {
-    iweight = idat_start / ndatperweight;
-    idat_nextweight = (iweight + 1) * ndatperweight;
+    iweight = (idat_start + weight_idat) / ndatperweight;
+    idat_nextweight = (iweight + 1) * ndatperweight - weight_idat;
 
     if (weights[iweight] == 0)  {
       discarded_weights ++;
       bad_weights ++;
+      bad_data = true;
     }
   }
 
@@ -618,20 +628,17 @@ void dsp::Fold::fold (const unsigned* weights, unsigned ndatperweight)
   double phase_per_sample = sampling_interval / pfold;
   unsigned* hits = &(get_output()->hits[0]);
    
-  bool bad_data = false;
-
   for (uint64 idat=idat_start; idat < idat_end; idat++) {
+
     if (ndatperweight && idat >= idat_nextweight) {
       iweight ++;
-
       if (weights[iweight] == 0) {
 	bad_data = true;
 	discarded_weights ++;
 	bad_weights ++;
       }
-      else {
+      else
 	bad_data = false;
-      }
       idat_nextweight += ndatperweight;
     }
 
@@ -642,9 +649,8 @@ void dsp::Fold::fold (const unsigned* weights, unsigned ndatperweight)
     assert (ibin < folding_nbin);
     binplan[idat-idat_start] = ibin;
 
-    if (bad_data){
+    if (bad_data)
       binplan[idat-idat_start] = folding_nbin;
-    }
     else {
       hits[ibin]++;
       ndat_folded ++;

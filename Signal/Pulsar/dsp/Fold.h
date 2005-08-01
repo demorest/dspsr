@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.34 $
-   $Date: 2004/11/03 01:30:31 $
-   $Author: hknight $ */
+   $Revision: 1.35 $
+   $Date: 2005/08/01 22:16:16 $
+   $Author: wvanstra $ */
 
 
 
@@ -151,7 +151,9 @@ namespace dsp {
     virtual void transformation ();
 
     //! Fold nblock blocks of data
-    virtual void fold (const unsigned* weights, unsigned ndatperweight);
+    virtual void fold (const unsigned* weights,
+		       unsigned ndatperweight,
+		       unsigned weight_idat);
 
     //! Set the idat_start and ndat_fold attributes
     virtual void set_limits (const Observation* input);
