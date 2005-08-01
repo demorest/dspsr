@@ -47,6 +47,12 @@ void dsp::InputBuffering::post_transformation ()
 
   target->get_input()->change_reserve (to_save - requested_reserve);
 
+  if (!to_save)
+    return;
+
+  if (!buffer)
+    buffer = new TimeSeries;
+
   buffer->set_nchan( target->get_input()->get_nchan() );
   buffer->set_npol ( target->get_input()->get_npol() );
   buffer->set_ndim ( target->get_input()->get_ndim() );
