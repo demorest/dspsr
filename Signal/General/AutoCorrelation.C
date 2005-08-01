@@ -13,7 +13,6 @@ void dsp::AutoCorrelation::transformation ()
     cerr << "dsp::AutoCorrelation::transformation input ndat=" 
 	 << get_input()->get_ndat() << endl;
 
-  Signal::State state = input->get_state();
   uint64   ndat  = input->get_ndat();
   unsigned npol  = input->get_npol();
   unsigned nchan = input->get_nchan();
@@ -45,7 +44,6 @@ void dsp::AutoCorrelation::transformation ()
   output->copy_configuration (input);
   get_output()->set_nchan( nchan );
   get_output()->set_npol( npol );
-  get_output()->set_state( state );
   get_output()->set_ndim( nlag );
   get_output()->set_domain( "Lag" );
 
