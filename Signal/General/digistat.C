@@ -30,10 +30,8 @@ void usage ()
        << endl;
 }
 
-int main (int argc, char** argv) 
-
-{ try {
-
+int main (int argc, char** argv) try 
+{
   char* metafile = 0;
   bool display = true;
   bool verbose = false;
@@ -323,7 +321,6 @@ int main (int argc, char** argv)
   return 0;
 }
 
-
 catch (Error& error) {
   cerr << error << endl;
   return -1;
@@ -339,4 +336,3 @@ catch (...) {
   return -1;
 }
 
-}
