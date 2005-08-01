@@ -179,8 +179,10 @@ void dsp::Convolution::transformation ()
   if (verbose)
     cerr << "Convolution::transformation npart=" << npart << endl;
 
-  if (has_buffering_policy())
+  if (has_buffering_policy()) {
     get_buffering_policy()->set_next_start (nsamp_good * npart);
+    get_buffering_policy()->set_minimum_samples (nsamp_fft);
+  }
 
   float* spectrum[2];
   spectrum[0] = float_workingspace (pts_reqd);

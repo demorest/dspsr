@@ -16,6 +16,8 @@ void dsp::InputBuffering::set_target (HasInput<TimeSeries>* _target)
 //! Set the first sample to be used from the input next time
 void dsp::InputBuffering::set_next_start (uint64 next)
 {
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::set_next_start " << next << endl;
   next_start_sample = next;
 }
 
@@ -25,12 +27,11 @@ void dsp::InputBuffering::pre_transformation ()
   if (!requested_reserve || !buffer)
     return;
 
-  if (requested_reserve != buffer->get_ndat())
-    throw Error (InvalidState, "dsp::InputBuffering::pre_transformation",
-		 "requested_reserve="UI64" != buffer ndat="UI64, 
-		 requested_reserve, buffer->get_ndat());
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::pre_transformation prepend "
+	 << buffer->get_ndat() << " samples" << endl;
 
-  const_cast<TimeSeries*>(target->get_input())->prepend(buffer);
+  const_cast<TimeSeries*>( target->get_input() )->prepend (buffer);
 }
 
 //! Perform all buffering tasks required after transformation
@@ -43,21 +44,33 @@ void dsp::InputBuffering::post_transformation ()
 		 "next_start_sample="UI64" != input ndat="UI64, 
 		 next_start_sample, ndat);
 
-  int64 to_save = ndat - next_start_sample;
+  uint64 buffer_ndat = ndat - next_start_sample;
 
-  target->get_input()->change_reserve (to_save - requested_reserve);
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::post_transformation saving "
+	 << buffer_ndat << " samples" << endl;
 
-  if (!to_save)
+  if (!buffer_ndat)
     return;
 
+  if (minimum_samples < buffer_ndat)
+    minimum_samples = buffer_ndat;
+
+  if (requested_reserve < minimum_samples) {
+    target->get_input()->change_reserve (minimum_samples-requested_reserve);
+    requested_reserve = minimum_samples;
+  }
+
   if (!buffer)
-    buffer = new TimeSeries;
+    buffer = target->get_input()->null_clone();
 
   buffer->set_nchan( target->get_input()->get_nchan() );
   buffer->set_npol ( target->get_input()->get_npol() );
   buffer->set_ndim ( target->get_input()->get_ndim() );
-  buffer->resize( to_save );
-  buffer->copy_data( target->get_input(), 0, to_save );
+  buffer->resize( minimum_samples );
+  buffer->copy_data( target->get_input(), next_start_sample, buffer_ndat );
+  buffer->resize( buffer_ndat );
+
 }
 
 

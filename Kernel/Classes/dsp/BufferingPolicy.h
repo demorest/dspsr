@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BufferingPolicy.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/07/29 17:37:43 $
+   $Revision: 1.2 $
+   $Date: 2005/08/01 22:16:06 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_BufferingPolicy_h
@@ -27,6 +27,9 @@ namespace dsp {
 
     //! Set the first sample to be used from the input next time
     virtual void set_next_start (uint64 next_start_sample) = 0;
+
+    //! Set the minimum number of samples that can be processed
+    virtual void set_minimum_samples (uint64 minimum_samples) = 0;
 
   };
 

@@ -25,8 +25,8 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 void dsp::Filterbank::transformation ()
 {
   if (verbose)
-    cerr << "dsp::Filterbank::transformation input ndat="
-	 << get_input()->get_ndat() << endl;
+    cerr << "dsp::Filterbank::transformation input ndat=" << input->get_ndat()
+	 << " (output ndat=" << output->get_ndat() << ")" << endl;
 
   if (nchan < 2)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
@@ -166,18 +166,18 @@ void dsp::Filterbank::transformation ()
 		 "input.ndat="I64" < nfft=%d",
 		 input->get_ndat(), nsamp_fft);
 
-  minimum_samps_can_process = nsamp_fft;
 
-  if (has_buffering_policy())
+  if (has_buffering_policy()) {
     get_buffering_policy()->set_next_start (nsamp_step * npart);
+    get_buffering_policy()->set_minimum_samples (nsamp_fft);
+  }
 
   // prepare the output TimeSeries
   {
-    get_output()->copy_configuration ( get_input() );
-    get_output()->set_nchan( nchan );
-    get_output()->set_ndim( 2 );
-    get_output()->set_state( Signal::Analytic);
-    get_output()->set_npol( get_input()->get_npol() );
+    output->copy_configuration ( get_input() );
+    output->set_nchan( nchan );
+    output->set_ndim( 2 );
+    output->set_state( Signal::Analytic);
   }
 
   WeightedTimeSeries* weighted_output;
@@ -411,8 +411,8 @@ void dsp::Filterbank::transformation ()
   } // for each big fft (ipart)
 
   if (verbose)
-    fprintf(stderr,"Returning from dsp::Filterbank::transformation() with output ndat="UI64"\n",
-	    get_output()->get_ndat());
+    cerr << "dsp::Filterbank::transformation return with output ndat="
+	 << output->get_ndat() << endl;
 }
 
 #if 0
