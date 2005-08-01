@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.7 $
-   $Date: 2004/11/02 11:03:26 $
+   $Revision: 1.8 $
+   $Date: 2005/08/01 22:16:31 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -18,8 +18,12 @@ namespace dsp {
   class WeightedTimeSeries : public TimeSeries {
 
   public:
-    //! Null constructor
+
+    //! Default constructor
     WeightedTimeSeries ();
+
+    //! Copy constructor
+    WeightedTimeSeries (const WeightedTimeSeries&);
 
     //! Set this equal to copy
     virtual WeightedTimeSeries& operator = (const WeightedTimeSeries& copy);
@@ -27,48 +31,67 @@ namespace dsp {
     //! Add each value in data to this
     virtual WeightedTimeSeries& operator += (const WeightedTimeSeries& data);
 
-    //! Copy the configuration of another TimeSeries instance
-    virtual void copy_configuration (const Observation* copy);
-
     //! Set the number of time samples per weight
     /*! Set ndat_per_weight to zero to effect no weighting of data */
-    virtual void set_ndat_per_weight (unsigned ndat_per_weight);
+    void set_ndat_per_weight (unsigned ndat_per_weight);
 
     //! Get the number of time samples per weight
     unsigned get_ndat_per_weight () const { return ndat_per_weight; }
 
     //! Set the number of polarizations with independent weights
-    virtual void set_npol_weight (unsigned npol_weight);
+    void set_npol_weight (unsigned npol_weight);
 
     //! Get the number of polarizations with independent weights
     unsigned get_npol_weight () const { return npol_weight; }
 
     //! Set the number of frequency channels with independent weights
-    virtual void set_nchan_weight (unsigned nchan_weight);
+    void set_nchan_weight (unsigned nchan_weight);
 
     //! Get the number of frequency channels with independent weights
     unsigned get_nchan_weight () const { return nchan_weight; }
 
+    //! Cloner (calls new)
+    virtual WeightedTimeSeries* clone();
+
+    //! Returns a null-instantiation (calls new)
+    virtual WeightedTimeSeries* null_clone();
+
+    //! Copy the configuration of another WeightedTimeSeries instance
+    virtual void copy_configuration (const Observation* copy);
+
+    //! Copy the data of another WeightedTimeSeries instance
+    virtual void copy_data (const TimeSeries* data, 
+			    uint64 idat_start = 0, uint64 ndat = 0);
+
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (uint64 nsamples);
     
+    //! Offset the base pointer by offset time samples
+    virtual void seek (int64 offset);
+
     //! Set all values to zero
     virtual void zero ();
 
+    //! Maybe copy the weights from copy
+    void copy_weights (const Observation* copy);
+
     //! For each zero weight, sets all weights to zero
-    virtual void mask_weights ();
+    void mask_weights ();
 
     //! Check that each floating point value is zeroed if weight is zero
-    virtual void check_weights ();
+    void check_weights ();
 
     //! Set all weights to one
-    virtual void neutral_weights ();
+    void neutral_weights ();
 
     //! Get the number of weights
     uint64 get_nweights () const;
 
     //! Get the number of weights required for a given number of samples
     uint64 get_nweights (uint64 nsample) const;
+
+    //! Get the offset into the current weight of the first time sample
+    uint64 get_weight_idat () const { return weight_idat; }
 
     //! Get the number of zero weights in the ichan == ipol == 0 array
     uint64 get_nzero () const;
@@ -97,14 +120,22 @@ namespace dsp {
     unsigned ndat_per_weight;
 
     //! Copy the weights from copy
-    void copy_weights (const WeightedTimeSeries& copy);
+    void copy_weights (const WeightedTimeSeries* copy,
+		       uint64 idat_start = 0, uint64 copy_ndat = 0);
 
     //! Resize the weights array
     void resize_weights ();
 
   private:
-    //! The weights buffer
+
+    //! The base of the weights buffer
+    unsigned* base;
+
+    //! The pointer to the current start of weights buffer (can be seeked)
     unsigned* weights;
+
+    //! The index into the first weight of the first time sample
+    uint64 weight_idat;
 
     //! The size of the buffer
     uint64 weight_size;

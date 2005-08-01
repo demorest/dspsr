@@ -7,43 +7,51 @@ dsp::WeightedTimeSeries::WeightedTimeSeries()
   nchan_weight = 1;
   ndat_per_weight = 0;
 
+  base = NULL;
   weights = NULL;
+  weight_idat = 0;
   weight_size = 0;
   weight_subsize = 0;
+}
+
+dsp::WeightedTimeSeries::WeightedTimeSeries (const WeightedTimeSeries& wts)
+{
+  operator=(wts);
 }
 
 void dsp::WeightedTimeSeries::copy_configuration (const Observation* copy)
 {
   TimeSeries::copy_configuration (copy);
+  copy_weights (copy);
+}
 
+void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
+{
   const WeightedTimeSeries* weighted_copy;
   weighted_copy = dynamic_cast< const WeightedTimeSeries* > (copy);
 
   if (!weighted_copy) {
     if (verbose)
-      cerr << "dsp::WeightedTimeSeries::copy_configuration "
-              "copying a non-WeightedTimeSeries" << endl;
-
+      cerr << "dsp::WeightedTimeSeries::copy_weights "
+	"not a WeightedTimeSeries" << endl;
     ndat_per_weight = 0;
     return;
   }
 
-  if (weighted_copy == this)  {
-    if (verbose) cerr << "dsp::WeightedTimeSeries::copy_configuration"
-                         " copying self" << endl;
+  if (weighted_copy == this)
     return;
-  }
-
-  set_npol_weight  ( weighted_copy->get_npol_weight() );
-  set_nchan_weight ( weighted_copy->get_nchan_weight() );
-  set_ndat_per_weight ( weighted_copy->get_ndat_per_weight() );
 
   if (verbose) cerr << "dsp::WeightedTimeSeries::copy_configuration"
-                       " resize weights" << endl;
+		 " resize weights (ndat=" << get_ndat() << ")" << endl;
 
-  resize_weights ();
+  copy_weights (weighted_copy);
+}
 
-  copy_weights (*weighted_copy);
+void dsp::WeightedTimeSeries::copy_data (const TimeSeries* copy, 
+					 uint64 istart, uint64 ndat)
+{
+  TimeSeries::copy_data (copy, istart, ndat);
+  copy_weights (dynamic_cast<const WeightedTimeSeries*>(copy), istart, ndat);
 }
 
 //! Set the number of time samples per weight
@@ -78,13 +86,23 @@ uint64 dsp::WeightedTimeSeries::get_nweights (uint64 nsamples) const
  
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::get_nweights ndat_per_weight=" 
-         << ndat_per_weight << " ndat=" << get_ndat() << endl;
+         << ndat_per_weight << " nsamples=" << nsamples << endl;
  
-  uint64 nweights = get_ndat() / ndat_per_weight;
-  if (get_ndat() % ndat_per_weight)
+  uint64 nweights = nsamples / ndat_per_weight;
+  if (nsamples % ndat_per_weight)
     nweights ++;
   
   return nweights;
+}
+
+dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::clone()
+{
+  return new WeightedTimeSeries(*this);
+}
+
+dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::null_clone()
+{
+  return new WeightedTimeSeries;
 }
 
 //! Allocate the space required to store nsamples time samples
@@ -107,7 +125,7 @@ void dsp::WeightedTimeSeries::resize (uint64 nsamples)
 
 void dsp::WeightedTimeSeries::resize_weights ()
 { 
-  uint64 nweights = get_nweights ();
+  uint64 nweights = get_nweights () + get_nweights(get_reserve());
   uint64 require = nweights * get_npol_weight() * get_nchan_weight();
   
   if (verbose)
@@ -118,22 +136,56 @@ void dsp::WeightedTimeSeries::resize_weights ()
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::resize_weights delete" << endl;
 
-    if (weights) delete [] weights; weights = 0;
+    if (base) delete [] base; base = weights = 0;
     weight_size = weight_subsize = 0;
   }
   
   if (!require)
     return;
   
-  if (weight_size == 0) {
+  if (!weight_size) {
     if (verbose)
-      cerr << "dsp::WeightedTimeSeries::resize_weights new " << require << endl;
+      cerr << "dsp::WeightedTimeSeries::resize_weights new " << require <<endl;
 
-    weights = new unsigned [require];
+    base = new unsigned [require];
     weight_size = require;
   }
   
   weight_subsize = nweights;
+  weights = base + get_nweights(get_reserve());
+  weight_idat = 0;
+}
+
+//! Offset the base pointer by offset time samples
+void dsp::WeightedTimeSeries::seek (int64 offset)
+{
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::seek (" << offset << ") "
+      " base=" << base << " weights=" << weights << " diff=" << 
+      weights - base << endl;
+ 
+  if (!offset)
+    return;
+
+  TimeSeries::seek (offset);
+
+  offset += weight_idat;
+
+  if (offset > 0) {
+    weights += offset / ndat_per_weight;
+    weight_idat = offset % ndat_per_weight;
+  }
+  else if (offset < 0) {
+    weights += offset/ndat_per_weight - 1;
+    weight_idat = ndat_per_weight + offset % ndat_per_weight;
+    if (weight_idat == ndat_per_weight) {
+      weight_idat = 0;
+      weights ++;
+    }
+  }
+
+  assert (weights >= base);
+  assert (weight_idat < ndat_per_weight);
 }
 
 //! Return pointer to the specified data block
@@ -158,20 +210,40 @@ dsp::WeightedTimeSeries::operator = (const WeightedTimeSeries& copy)
   return *this;
 }
 
-void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries& copy)
+void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
+					    uint64 idat_start, uint64 ndat)
 {
+  if (!copy)
+    return;
+
+  set_npol_weight  ( copy->get_npol_weight() );
+  set_nchan_weight ( copy->get_nchan_weight() );
+  set_ndat_per_weight ( copy->get_ndat_per_weight() );
+
+  resize_weights ();
+
+  uint64 weight_offset = 0;
   uint64 nweights = get_nweights ();
 
+  if (ndat) {
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::copy_weights ndat=" << ndat 
+	   << " idat=" << idat_start << " weight_idat=" << weight_idat << endl;
+    weight_offset = (idat_start + copy->weight_idat) / ndat_per_weight;
+    nweights = get_nweights (ndat + weight_idat);
+  }
+
   if (verbose)
-    cerr << "dsp::WeightedTimeSeries::copy_weights nweights=" << nweights
-         << " nchan=" << get_nchan_weight() << " npol=" << get_npol_weight()
+    cerr << "dsp::WeightedTimeSeries::copy_weights"
+      " nweights=" << nweights << " offset=" << weight_offset <<
+      " (nchan=" << get_nchan_weight() << " npol=" << get_npol_weight() << ")"
          << endl;
   
   for (unsigned ichan=0; ichan<get_nchan_weight(); ichan++)
     for (unsigned ipol=0; ipol<get_npol_weight(); ipol++) {
       
       unsigned* data1 = get_weights (ichan, ipol);
-      const unsigned* data2 = copy.get_weights (ichan, ipol);
+      const unsigned* data2 = copy->get_weights (ichan, ipol) + weight_offset;
       
       for (uint64 iwt=0; iwt<nweights; iwt++)
         data1[iwt] = data2[iwt];
@@ -220,7 +292,7 @@ void dsp::WeightedTimeSeries::check_weights ()
 void dsp::WeightedTimeSeries::neutral_weights ()
 {
   for (uint64 i=0; i<weight_size; i++)
-    weights[i] = 1;
+    base[i] = 1;
 }
 
 uint64 dsp::WeightedTimeSeries::get_nzero () const
