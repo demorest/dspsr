@@ -67,6 +67,8 @@ void dsp::DataSeries::resize (uint64 nsamples){
   resize(nsamples,dummy);
 }
 
+#define INTERACTIVE_MEMORY 0
+
 void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 {
   if (verbose)
@@ -97,7 +99,11 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 	old_buffer = buffer;
       }
       else{
-	delete [] buffer;
+#if INTERACTIVE_MEMORY
+	cerr << "dsp::DataSeries::resize delete " << size << " bytes" << endl;
+	getchar();
+#endif
+	free (buffer);
 	memory_used -= size;
       }
       buffer = 0;
@@ -112,6 +118,10 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 
   if (size == 0) {
     // Add '8' (2 floats) on for FFTs that require 2 extra floats in the allocated memory
+#if INTERACTIVE_MEMORY
+    cerr << "dsp::DataSeries::resize allocate " << require << " bytes" << endl;
+    getchar();
+#endif
     buffer = (unsigned char*) memalign (16, require + 8);
     //    fprintf(stderr,"dsp::DataSeries::resize() have resized buffer to be of size "UI64".  buffer=%p\n",
     //    require,buffer);
@@ -126,8 +136,10 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 		"BUG! subsize*get_npol()*get_nchan() > size ("UI64" * %d * %d > "UI64")\n",
 		subsize,get_npol(),get_nchan(),size);
 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::DataSeries::resize() with "UI64" bytes allocated.  subsize="UI64" bytes\n",size,subsize);
+  if (verbose)
+    cerr << "dsp::DataSeries::resize " << size << " bytes allocated"
+      " (subsize=" << subsize << " bytes)" << endl;
+
 }
 
 //! Returns a uchar pointer to the first piece of data
