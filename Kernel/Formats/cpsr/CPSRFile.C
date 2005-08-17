@@ -192,9 +192,14 @@ void dsp::CPSRFile::open_file (const char* filename)
     
   /* IMPORTANT: tsamp is the sampling period in microseconds */
   info.set_rate (1e6/hdr.tsamp);
-
   info.set_bandwidth (hdr.bandwidth);
     
+  // CBR linefeed data has incorrect bandwidth of 8 MHz
+  if( info.get_bandwidth() < 9.9 )
+    info.set_bandwidth( 10.0 );
+  if( info.get_rate() < 9.9e6 )
+    info.set_rate( 10.0e6 );
+
   // IMPORTANT: both telescope and centre_freq should be set before calling
   // default_basis
   info.set_telescope_code (hdr.ttelid);
