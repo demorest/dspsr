@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "dsp/WeightedTimeSeries.h"
 #include "Error.h"
 
