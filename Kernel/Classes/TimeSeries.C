@@ -39,7 +39,7 @@ dsp::TimeSeries::TimeSeries(const TimeSeries& ts) : DataSeries() {
 void dsp::TimeSeries::init(){
   DataSeries::init();
   DataSeries::set_nbit( 8 * sizeof(float) );
-  // BASE base = data = 0;  
+  data = 0;  
   reserve_ndat = 0;
   set_preserve_seeked_data( false );
 }
@@ -86,7 +86,6 @@ void dsp::TimeSeries::resize (uint64 nsamples)
            << reserve_ndat << endl;
     DataSeries::resize(nsamples+reserve_ndat);
     data = (float*)buffer + reserve_ndat * get_ndim();
-    // BASE base = data;
     return;
   }
 
@@ -684,6 +683,7 @@ void dsp::TimeSeries::set_ndim(unsigned _ndim){
   DataSeries::set_ndim(_ndim);
 }
 
+/*! This method is used by the InputBuffering policy */
 void dsp::TimeSeries::change_reserve (int64 change)
 {
   if (verbose)
