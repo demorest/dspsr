@@ -14,7 +14,8 @@ dsp::Convolution::Convolution (const char* _name, Behaviour _type,
 			       bool _time_conserved)
   : Transformation<TimeSeries,TimeSeries> (_name, _type, _time_conserved)
 {
-  set_buffering_policy (new InputBuffering (this));
+  if (preserve_data)
+    set_buffering_policy (new InputBuffering (this));
 }
 
 dsp::Convolution::~Convolution ()

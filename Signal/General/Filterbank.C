@@ -19,7 +19,8 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
   time_res = 1;
   freq_res = 1;
 
-  set_buffering_policy (new InputBuffering (this));
+  if (preserve_data)
+    set_buffering_policy (new InputBuffering (this));
 }
 
 void dsp::Filterbank::transformation ()

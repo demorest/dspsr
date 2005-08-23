@@ -157,6 +157,10 @@ int main (int argc, char** argv) try {
 
 #endif
 
+  // enable input buffering
+  if (mpi_size == 1)
+    dsp::Operation::preserve_data = true;
+
 #ifdef ENABLE_SIMD
   if (fft::SIMD_aware)
     fft::enable_SIMD();

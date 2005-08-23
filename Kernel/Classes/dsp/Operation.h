@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.28 $
-   $Date: 2005/07/29 17:38:30 $
+   $Revision: 1.29 $
+   $Date: 2005/08/23 13:01:37 $
    $Author: wvanstra $ */
 
 #ifndef __Operation_h
@@ -44,6 +44,9 @@ namespace dsp {
 
     //! Operations should perform internal consistency checks
     static bool check_state;
+
+    //! If necessary, operations should buffer their input to prevent data loss
+    static bool preserve_data;
 
     //! Counts how many Operation instantiations there have been
     //! Used for setting the unique instantiation ID
