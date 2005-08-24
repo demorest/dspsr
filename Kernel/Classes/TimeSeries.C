@@ -75,10 +75,16 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
 */
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
-  if( data && buffer && verbose )
+  if( verbose )
+    fprintf(stderr,"In dsp::TimeSeries::resize() with data=%p and buffer=%p\n",
+	    data,buffer);
+
+  if( data && buffer && verbose ){
     cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
-         << int64((data-(float*)buffer)) << " = " 
-         << get_samps_offset() << " floats" << endl;
+         << int64((data-(float*)buffer)) << endl;
+    cerr << "get_samps_offset() = " 
+         << get_samps_offset() << " floats get_preserve_seeked_data=" << get_preserve_seeked_data() << endl;
+  }
 
   if( !get_preserve_seeked_data() ){
     if( verbose ) 
@@ -129,7 +135,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   seek( samps_offset );
   set_start_time( true_start_time );
 
-  //fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64" floats and first val=%f\n",
+  //  fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64" floats and first val=%f\n",
   //  nsamples,int64((data-(float*)buffer)),
   //  get_datptr(0,0)[0]);
 
@@ -217,9 +223,7 @@ void dsp::TimeSeries::seek (int64 offset)
                  " attempt to seek past end of data",
                  offset, get_ndat());
 
-  float* fbuffer = (float*)buffer;
-
-  int64 current_offset = int64(data - fbuffer) / int64(get_ndim());
+  int64 current_offset = get_seekage();
 
   if (-offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
@@ -246,6 +250,17 @@ unsigned char* dsp::TimeSeries::get_data(){
 
 //! Returns a uchar pointer to the first piece of data
 const unsigned char* dsp::TimeSeries::get_data() const{
+  if( !data && !buffer )
+    throw Error(InvalidState,"dsp::TimeSeries::const_get_data()",
+		"Neither data nor buffer is defined.  ndat="UI64,
+		get_ndat());
+  if( !data )
+    return ((const unsigned char*)buffer);
+  return ((const unsigned char*)data);
+}
+
+//! Returns a uchar pointer to the first piece of data
+const unsigned char* dsp::TimeSeries::const_get_data() const{
   if( !data && !buffer )
     throw Error(InvalidState,"dsp::TimeSeries::const_get_data()",
 		"Neither data nor buffer is defined.  ndat="UI64,
@@ -284,8 +299,7 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   return mean/double(get_ndat());
 }
 
-void dsp::TimeSeries::copy_configuration (const Observation* copy)
-{
+void dsp::TimeSeries::copy_configuration (const Observation* copy){
   if( copy==this )
     return;
 
@@ -294,22 +308,28 @@ void dsp::TimeSeries::copy_configuration (const Observation* copy)
     return;
   }
 
+  Observation* input = (Observation*)copy;
+  
+  unsigned input_nchan = input->get_nchan();
+  unsigned input_npol = input->get_npol();
+  unsigned input_ndim = input->get_ndim();
+  Signal::State input_state = input->get_state();
+
+  input->set_npol( get_npol() );
+  input->set_ndim( get_ndim() );
+  input->set_state( get_state() );
+  input->set_nchan( get_nchan() );
+
+  Observation::operator=( *input );
+
+  input->set_nchan( input_nchan );
+  input->set_npol( input_npol );
+  input->set_ndim( input_ndim );
+  input->set_state( input_state );
+
   if (verbose)
     cerr << "dsp::TimeSeries::copy_configuration"
       " not copying nchan, npol, ndim, state" << endl;
-
-  unsigned input_nchan = get_nchan();
-  unsigned input_npol = get_npol();
-  unsigned input_ndim = get_ndim();
-  Signal::State input_state = get_state();
-
-  Observation::operator=( *copy );
-
-  set_nchan( input_nchan );
-  set_npol( input_npol );
-  set_ndim( input_ndim );
-  set_state( input_state );
-
 }
 
 dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
@@ -700,6 +720,13 @@ void dsp::TimeSeries::change_reserve (int64 change)
   }
   else
     reserve_ndat += change;
+}
+
+//! Returns how many samples have been seeked over
+uint64 dsp::TimeSeries::get_seekage(){     
+  float* fbuffer = (float*)buffer;
+  
+  return uint64(data - fbuffer) / uint64(get_ndim());
 }
 
 //-------------------------------------------------------------------
