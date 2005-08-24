@@ -1,18 +1,12 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.33 $
-   $Date: 2005/07/29 17:37:55 $
-   $Author: wvanstra $ */
+   $Revision: 1.34 $
+   $Date: 2005/08/24 05:51:05 $
+   $Author: hknight $ */
 
 #ifndef __baseband_dsp_Transformation_h
 #define __baseband_dsp_Transformation_h
-
-#include "dsp/Operation.h"
-#include "dsp/Observation.h"
-#include "dsp/BufferingPolicy.h"
-
-#include "Error.h"
 
 #include <string>
 #include <iostream>
@@ -20,6 +14,29 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+#include "Error.h"
+
+namespace dsp {
+  class TransformationBase;
+
+  template <class Out>
+  class HasOutput;
+
+  template <class In>
+  class HasInput;
+
+  template <class In, class Out>
+  class Transformation;
+}
+
+#include "dsp/Operation.h"
+#include "dsp/Observation.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BufferingPolicy.h"
+#include "dsp/InputBuffering.h"
+#include "dsp/OutputBuffering.h"
 
 namespace dsp {
 
@@ -29,6 +46,10 @@ namespace dsp {
   public:
     TransformationBase (const char* name) : Operation (name) {}
     virtual ~TransformationBase () {}
+
+    typedef enum { no_buffering_policy, input_buffering_policy, output_buffering_policy } DefaultBufferingPolicy;
+
+    static DefaultBufferingPolicy default_buffering_policy;
 
   protected:
     //! Add friend classes only as absolutely necessary
@@ -129,7 +150,10 @@ namespace dsp {
     virtual void set_buffering_policy (BufferingPolicy* policy)
     { buffering_policy = policy; }
 
-    BufferingPolicy* get_buffering_policy () const { return buffering_policy; }
+    BufferingPolicy* get_buffering_policy () const;
+
+    //! Convenience method
+    Reference::To<OutputBuffering<In> > get_outputbuffering();
  
     //! Returns true if buffering_policy is set
     bool has_buffering_policy() const { return buffering_policy.ptr(); }
@@ -218,9 +242,23 @@ dsp::Transformation<In,Out>::Transformation(const char* _name,
 					    bool _time_conserved)
   : TransformationBase (_name)
 {
+  if( Operation::verbose )
+    fprintf(stderr,"In Transformation constructor for '%s'\n",_name);
+
   type = _type;
   reset_min_samps();
   time_conserved = _time_conserved;
+
+  if( default_buffering_policy == output_buffering_policy ){
+    Transformation<In,TimeSeries>* tr = dynamic_cast<Transformation<In,TimeSeries>*>(this);
+    if( tr && _type != inplace )
+      buffering_policy = new OutputBuffering<In>(tr);
+  }
+  else if( default_buffering_policy == input_buffering_policy ){
+    Transformation<TimeSeries,TimeSeries>* tr = dynamic_cast<Transformation<TimeSeries,TimeSeries>*>(this);
+    if( tr && _type != inplace )
+      buffering_policy = new InputBuffering(tr);
+  }
 }
 
 //! Return false if the input doesn't have enough data to proceed
@@ -297,11 +335,7 @@ void dsp::Transformation<In, Out>::operation ()
 		 "invalid output state: " + reason);
 
   add_history();  
-
 }
-
-
-
 
 template <class In, class Out>
 void dsp::Transformation<In, Out>::set_input (In* _input)
@@ -343,6 +377,31 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
 
 }
 
+//! Convenience method
+template <class In, class Out>
+Reference::To<dsp::OutputBuffering<In> >
+dsp::Transformation<In,Out>::get_outputbuffering(){
+  if( Operation::verbose )
+    fprintf(stderr,"dsp::Transformation<In,Out>::get_outputbuffering() for '%s' with %p\n",
+	    get_name().c_str(),buffering_policy.ptr());
 
+  if( !has_buffering_policy() )
+    buffering_policy = new OutputBuffering<In>(this);
+  else if( buffering_policy->get_name() != "OutputBuffering" )
+    throw Error(InvalidState,"dsp::Transformation::get_outputbuffering()",
+		"Buffering policy was not of correct OutputBuffering type! (this = '%s') (It was '%s')",
+		get_name().c_str(),buffering_policy->get_name().c_str());
+
+  OutputBuffering<In>* ret = dynamic_cast<OutputBuffering<In>*>(buffering_policy.get());
+
+  Reference::To<dsp::OutputBuffering<In> > retb = ret;
+
+  return retb;
+}
+
+template <class In, class Out>
+dsp::BufferingPolicy* dsp::Transformation<In,Out>::get_buffering_policy () const {
+  return buffering_policy;
+}
 
 #endif
