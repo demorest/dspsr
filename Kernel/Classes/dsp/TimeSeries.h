@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.28 $
-   $Date: 2005/08/01 22:16:26 $
-   $Author: wvanstra $ */
+   $Revision: 1.29 $
+   $Date: 2005/08/24 05:51:56 $
+   $Author: hknight $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -126,6 +126,9 @@ namespace dsp {
     //! will be saved on a resize.
     bool get_preserve_seeked_data(){ return preserve_seeked_data; }
 
+    //! Returns how many samples have been seeked over
+    uint64 get_seekage();
+
     //! Over-rides DataSeries::set_nchan()- this only allows a change if preserve_seeked_data is false
     void set_nchan(unsigned _nchan);
     //! Over-rides DataSeries::set_npol()- this only allows a change if preserve_seeked_data is false
@@ -139,6 +142,9 @@ namespace dsp {
     virtual unsigned char* get_data();
     //! Returns a uchar pointer to the first piece of data
     virtual const unsigned char* get_data() const;
+
+    //! Please leave this in- it is required to get dsp::DataSeries::get_samps_offset() to work
+    virtual const unsigned char* const_get_data() const;
 
     //! Called by append()
     void append_checks(uint64& ncontain,uint64& ncopy,
