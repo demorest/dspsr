@@ -249,8 +249,6 @@ void dsp::OutputBuffering<In>::set_input(){
 		"Parent has no input set!");
     
   input = parent->get_input();
-  fprintf(stderr,"dsp::OutputBuffering<In>::set_input() (%s) have set input to be '%p'\n",
-	  get_parent_name().c_str(), input.ptr());
 }
 
 template <class In>
