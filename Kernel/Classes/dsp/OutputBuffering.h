@@ -3,6 +3,16 @@
 #ifndef __OutputBuffering_h
 #define __OutputBuffering_h
 
+#include "environ.h"
+
+namespace dsp {
+  class OutputBufferBase;
+
+  //! Enables OutputBuffering for a variety of Transformations
+  template <class In>
+  class OutputBuffering;
+}
+
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 
@@ -43,7 +53,7 @@ namespace dsp {
     virtual MJD get_input_start_time ();
 
     //! Returns how many samples were lost
-    virtual int64 get_input_samps_lost();
+    virtual int64 get_input_samps_lost ();
 
     //! Save the last_nsamps into the buffer
     virtual void save_data (uint64 last_nsamps); 
@@ -81,7 +91,14 @@ namespace dsp {
     //! Returns the time prepended
     double get_duration_prepended() { return duration_prepended; }
 
+    //! Returns parents name
+    virtual string get_parent_name() = 0;
+
   protected:
+
+    //! Derived classes set this from the parent
+    virtual void set_output() = 0;
+    virtual void set_input() = 0;
     
     //! The next start sample
     uint64 next_start_sample;
@@ -189,6 +206,20 @@ namespace dsp {
     //! Perform all buffering tasks required after transformation
     void post_transformation () { OutputBufferBase::post_transformation(); }
 
+    //! Returns parents name
+    virtual string get_parent_name(){ return parent->get_name(); }
+
+  protected:
+
+    //! Set output from the parent
+    virtual void set_output();
+
+    //! Set input from the parent
+    virtual void set_input();
+
+    //! The parent
+    Reference::To<Transformation<In,TimeSeries> > parent;
+
   };
 
   template<class In>
@@ -211,6 +242,25 @@ namespace dsp {
 
 }
 
+template <class In>
+void dsp::OutputBuffering<In>::set_input(){
+  if( !parent->has_input() )
+    throw Error(InvalidState,"dsp::OutputBuffering<In>::set_input()",
+		"Parent has no input set!");
+    
+  input = parent->get_input();
+  fprintf(stderr,"dsp::OutputBuffering<In>::set_input() (%s) have set input to be '%p'\n",
+	  get_parent_name().c_str(), input.ptr());
+}
+
+template <class In>
+void dsp::OutputBuffering<In>::set_output(){
+  if( !parent->has_output() )
+    throw Error(InvalidState,"dsp::OutputBuffering<In>::set_output()",
+		"Parent has no output set!");
+
+  output = parent->get_output();
+}
 
 template <class In>
 dsp::OutputBuffering<In>::OutputBuffering (Transformation<In,TimeSeries>* tr)
@@ -224,8 +274,12 @@ dsp::OutputBuffering<In>::OutputBuffering (Transformation<In,TimeSeries>* tr)
   if (tr->has_output())
     output = tr->get_output();
 
+  parent = tr;
+
   time_conserved = tr->get_time_conserved ();
+
+  name = "OutputBuffering";
 }
 
-
 #endif // !defined(__OutputBuffering_h)
+
