@@ -1,13 +1,16 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BufferingPolicy.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/08/01 22:16:06 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2005/08/24 05:54:21 $
+   $Author: hknight $ */
 
 #ifndef __baseband_dsp_BufferingPolicy_h
 #define __baseband_dsp_BufferingPolicy_h
 
+#include <string>
+
+#include "psr_cpp.h"
 #include "ReferenceAble.h"
 
 namespace dsp {
@@ -30,6 +33,14 @@ namespace dsp {
 
     //! Set the minimum number of samples that can be processed
     virtual void set_minimum_samples (uint64 minimum_samples) = 0;
+
+    //! Returns the name
+    string get_name(){ return name; }
+
+  protected:
+
+    //! Descriptive name
+    string name;
 
   };
 
