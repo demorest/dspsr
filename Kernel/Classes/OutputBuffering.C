@@ -9,6 +9,7 @@ dsp::OutputBufferBase::OutputBufferBase ()
   valid_data_is_saved = false; 
   set_process_samps_once (false);
   end_of_processed_data = MJD::zero;
+  samples_prepended = 0;
 }
 
 dsp::OutputBufferBase::~OutputBufferBase ()
@@ -41,6 +42,13 @@ MJD dsp::OutputBufferBase::get_input_start_time ()
 //! Perform all buffering tasks required before transformation
 void dsp::OutputBufferBase::pre_transformation ()
 {
+  set_input();
+  set_output();
+
+  if( Operation::verbose )
+    fprintf(stderr,"Entered dsp::OutputBufferBase::pre_transformation() (%s) this=%p input=%p\n",
+	    get_parent_name().c_str(),this,input.get());
+
   time_in = input->get_duration();
   rate_in = input->get_rate();
 
@@ -52,27 +60,45 @@ void dsp::OutputBufferBase::pre_transformation ()
     start_of_data = input_start_time;
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::pre_transformation input start time="
-	 << (input_start_time-start_of_data).in_seconds() << endl;
+    cerr << "dsp::OutputBufferBase::pre_transformation " << get_parent_name() << " input start time="
+	 << (input_start_time-start_of_data).in_seconds() << " valid_data_is_saved=" << valid_data_is_saved << endl;
+
+  if( valid_data_is_saved )
+    fprintf(stderr,"dsp::OutputBufferBase::pre_transformation (%s) has a save_data buffer with ndat="UI64"\n",
+	    get_parent_name().c_str(), buffer.ptr() ? buffer->get_ndat() : 0);
 
   if (valid_data_is_saved) {
-    samples_prepended = prepend_data ();
+    samples_prepended = prepend_data ();   
+    if( Operation::verbose )
+      fprintf(stderr,"dsp::OutputBufferBase::pre_transformation() (%s) just called prepend_data() to get samples_prepended="I64"\n",
+	      get_parent_name().c_str(),samples_prepended);
+
     duration_prepended = samples_prepended / output->get_rate();
     time_in += duration_prepended;
   }
   else
     duration_prepended = 0.0;
-    
+
   surplus_samples = seek_over_surplus_samps();
 
   if (surplus_samples < 0)
     throw Error (InvalidState, "dsp::OutputBufferBase::pre_transformation",
-		 "Error calling seek_over_surplus_samps");
+		 "Error calling seek_over_surplus_samps (%s)",
+		 get_parent_name().c_str());
+  
+  if( Operation::verbose )
+    fprintf(stderr,"dsp::OutputBufferBase::pre_transformation(%s) at end output is currently at a seekage of "UI64" samps\n",
+	    get_parent_name().c_str(),output->get_seekage());  
+
+  if( Operation::verbose )
+    fprintf(stderr,"Exiting dsp::OutputBufferBase::pre_transformation() (%s) this=%p input=%p\n",
+	    get_parent_name().c_str(),this,input.get());
 }   
 
 void dsp::OutputBufferBase::seek_back_over_surplus_samps ()
 {
   const TimeSeries* ts_in = dynamic_cast<const TimeSeries*>(input.get());
+
   if (ts_in)
     const_cast<TimeSeries*>(ts_in)->seek (-surplus_samples);
 }
@@ -81,8 +107,16 @@ void dsp::OutputBufferBase::seek_back_over_surplus_samps ()
 void dsp::OutputBufferBase::post_transformation ()
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::post_transformation START output ndat="
+  fprintf(stderr,"Entering dsp::OutputBufferBase::post_transformation() (%s) this=%p input=%p\n",
+	  get_parent_name().c_str(),this,input.get());
+
+  if (Operation::verbose)
+    cerr << "dsp::OutputBufferBase::post_transformation (" << get_parent_name() << ") START output ndat="
 	 << output->get_ndat() << endl;
+
+  if( Operation::verbose )
+    fprintf(stderr,"dsp::OutputBufferBase::post_transformation(%s) at start output is currently at a seekage of "UI64" samps\n",
+	    get_parent_name().c_str(),output->get_seekage());
   
   seek_back_over_surplus_samps ();
 
@@ -99,12 +133,14 @@ void dsp::OutputBufferBase::post_transformation ()
   valid_data_is_saved = false;
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::post_transformation END output ndat="
+    cerr << "dsp::OutputBufferBase::post_transformation (" << get_parent_name() << ") END output ndat="
 	 << output->get_ndat() << " start time="
 	 << (output->get_start_time()-start_of_data).in_seconds() << endl;
 
+  if (Operation::verbose)
+    fprintf(stderr,"Exiting dsp::OutputBufferBase::post_transformation() (%s) this=%p input=%p\n",
+	    get_parent_name().c_str(),this,input.get());
 }
-
 
 void dsp::OutputBufferBase::swap_buffer_stuff()
 {
@@ -120,7 +156,7 @@ void dsp::OutputBufferBase::swap_buffer_stuff()
 uint64 dsp::OutputBufferBase::prepend_data ()
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::prepend_data START" << endl;
+    cerr << "dsp::OutputBufferBase::prepend_data " << get_parent_name() << " START" << endl;
   
   output->operator= (*buffer);
 
@@ -130,23 +166,22 @@ uint64 dsp::OutputBufferBase::prepend_data ()
 
   if (Operation::verbose)
     cerr << "dsp::OutputBufferBase::prepend_data copied " << samples_seeked
-	 << " samples";
+	 << " samples for " << get_parent_name() << endl;
 
   return samples_seeked;
 }
-
 
 //! Save the last_nsamps into the buffer buffer
 void dsp::OutputBufferBase::save_data (uint64 last_nsamps)
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::save_data last_nsamps=" 
-	 << last_nsamps << endl;
+    fprintf(stderr,"dsp::OutputBufferBase::save_data (%s) last_nsamps="UI64"\n",
+	    get_parent_name().c_str(),last_nsamps);
 
   if (!buffer)
     buffer = new TimeSeries; 
 
-  if (last_nsamps)  {
+  if( !last_nsamps ){
     buffer->set_ndat (0);
     return;
   }
@@ -175,18 +210,13 @@ void dsp::OutputBufferBase::save_data (uint64 last_nsamps)
   valid_data_is_saved = true;
 }
 
-
-
-
 //! Rewinds 'end_of_processed_data' by the requested number of seconds
-
 void dsp::OutputBufferBase::rewind_eopd (double seconds)
 {
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::rewind_eopd by " << seconds << "s" << endl;
+    cerr << "dsp::OutputBufferBase::rewind_eopd by " << seconds << "s for " << get_parent_name() << endl;
   end_of_processed_data -= seconds;
 }
-
 
 //! Handles the rounding stuff
 void dsp::OutputBufferBase::rounding_stuff ()
@@ -202,17 +232,18 @@ void dsp::OutputBufferBase::rounding_stuff ()
 	 << old_ndat - output->get_ndat() << " samples" << endl;
 }
 
-
 void dsp::OutputBufferBase::deprepend_data (double time_surplus)
 {
-  if (samples_prepended > 0) {
+  if( Operation::verbose )
+    fprintf(stderr,"dsp::OutputBufferBase::deprepend_data() (%s) ready to seek back with samples_prepended="I64"\n",
+	    get_parent_name().c_str(),samples_prepended);
 
+  if (samples_prepended > 0) {
     output->seek (-samples_prepended);
-      
     if (Operation::verbose)
       cerr << "dsp::OutputBufferBase::deprepend_data seeked back "
 	   << samples_prepended << " samples; offset=" 
-	   << output->get_samps_offset() << endl;
+	   << output->get_samps_offset() << " for " << get_parent_name() << endl;
   }
   
   if (samples_prepended != 0)
@@ -221,7 +252,7 @@ void dsp::OutputBufferBase::deprepend_data (double time_surplus)
   double time_out = output->get_duration();
 
   if (Operation::verbose)
-    cerr << "dsp::OutputBufferBase::deprepend_data"
+    cerr << "dsp::OutputBufferBase::deprepend_data " << get_parent_name() << 
       " time_in=" << time_in << " time_out=" << time_out <<
       " time_surplus=" << time_surplus << " so input_samps_lost=nint64("
 	 << (time_in-time_surplus)-time_out << "*" << rate_in << ")" << endl;
@@ -244,7 +275,7 @@ int64 dsp::OutputBufferBase::seek_over_surplus_samps ()
   
   if (Operation::verbose)
     cerr << "dsp::OutputBufferBase::seek_over_surplus_samps " << 
-      samps_surplus << " samples" << endl;
+      samps_surplus << " samples for " << get_parent_name() << endl;
 
   if (samps_surplus < 0)
     throw Error(InvalidState,"dsp::OutputBufferBase::seek_over_surplus_samps",
@@ -256,11 +287,12 @@ int64 dsp::OutputBufferBase::seek_over_surplus_samps ()
   if (samps_surplus > int64(input->get_ndat())){
     cerr << "dsp::OutputBufferBase::seek_over_surplus_samps"
       " surpuls=" << samps_surplus << " > input ndat=" << input->get_ndat()
-	 << endl;
+	 << " for " << get_parent_name() << endl;
     return -1;
   }
 
   const_cast<TimeSeries*>(ts_in)->seek (samps_surplus);
+
   return samps_surplus;
 }
 
@@ -282,5 +314,14 @@ dsp::OutputBufferBase::workout_end_of_processed_data (MJD input_start_time,
 	 << output->get_duration() << " - " 
 	 << time_prepended << " + "
 	 << time_surplus <<
-      " = " << (end_of_processed_data-start_of_data).in_seconds() << endl;
+      " = " << (end_of_processed_data-start_of_data).in_seconds() <<
+      " for " << get_parent_name() << endl;
+}
+
+int64 dsp::OutputBufferBase::get_input_samps_lost(){
+  if( !input.ptr() )
+    throw Error(InvalidState,"dsp::OutputBufferBase::get_input_samps_lost()",
+		"No input defined (this=%s=%p='%s')",get_parent_name().c_str(),this,typeid(*this).name());
+    
+  return input_samps_lost;
 }
