@@ -5,6 +5,7 @@ dsp::InputBuffering::InputBuffering (HasInput<TimeSeries>* _target)
   target = _target;
   next_start_sample = 0;
   requested_reserve = 0;
+  name = "InputBuffering";
 }
 
 //! Set the target with input TimeSeries to be buffered

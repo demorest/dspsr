@@ -3,6 +3,10 @@
 #ifndef __InputBuffering_h
 #define __InputBuffering_h
 
+namespace dsp {
+  class InputBuffering;
+}
+
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 
