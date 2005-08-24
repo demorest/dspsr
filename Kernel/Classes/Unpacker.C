@@ -34,3 +34,7 @@ void dsp::Unpacker::match (const Observation* observation)
   if (verbose)
     cerr << "dsp::Unpacker::match" << endl;
 }
+
+//! Constructor
+dsp::Unpacker::Unpacker (const char* name)
+  : Transformation <const BitSeries, TimeSeries> (name, outofplace,true){ }
