@@ -15,9 +15,7 @@
 
 #include "Error.h"
 
-
-void dsp::Archiver::set (Pulsar::dspReduction* dspR)
-{ try {
+void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
 
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::dspReduction Extension" << endl;
@@ -154,13 +152,13 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR)
       dspR->set_scale ( profiles->get_scale() );
   }
 
-}catch (Error& error) {
+}
+catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::dspReduction";
 }
-}
 
-void dsp::Archiver::set (Pulsar::TwoBitStats* tbc)
-{ try {
+
+void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try {
 
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::TwoBitStats Extension" << endl;
@@ -193,7 +191,6 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc)
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::TwoBitStats";
-}
 }
 
 
