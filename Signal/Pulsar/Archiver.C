@@ -15,6 +15,7 @@
 #include "Pulsar/TwoBitStats.h"
 #include "Pulsar/Passband.h"
 #include "Pulsar/Telescope.h"
+#include "Pulsar/Receiver.h"
 
 #include "Error.h"
 
@@ -227,6 +228,9 @@ try {
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
   telescope->set_coordinates (phase -> get_telescope_code());
+
+  // default Receiver extension
+  archive -> getadd<Pulsar::Receiver>();
 
   for (unsigned iext=0; iext < extensions.size(); iext++)
     archive -> add_extension ( extensions[iext] );
