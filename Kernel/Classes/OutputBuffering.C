@@ -63,7 +63,7 @@ void dsp::OutputBufferBase::pre_transformation ()
     cerr << "dsp::OutputBufferBase::pre_transformation " << get_parent_name() << " input start time="
 	 << (input_start_time-start_of_data).in_seconds() << " valid_data_is_saved=" << valid_data_is_saved << endl;
 
-  if( valid_data_is_saved )
+  if( valid_data_is_saved && Operation::verbose )
     fprintf(stderr,"dsp::OutputBufferBase::pre_transformation (%s) has a save_data buffer with ndat="UI64"\n",
 	    get_parent_name().c_str(), buffer.ptr() ? buffer->get_ndat() : 0);
 
