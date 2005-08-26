@@ -3,6 +3,8 @@
 #ifndef __OutputBuffering_h
 #define __OutputBuffering_h
 
+#include <string>
+
 #include "environ.h"
 
 namespace dsp {
@@ -15,6 +17,8 @@ namespace dsp {
 
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
+#include "dsp/Observation.h"
+#include "dsp/BitSeries.h"
 
 namespace dsp {
 
@@ -248,7 +252,15 @@ void dsp::OutputBuffering<In>::set_input(){
     throw Error(InvalidState,"dsp::OutputBuffering<In>::set_input()",
 		"Parent has no input set!");
     
-  input = parent->get_input();
+  string ss = typeid(In).name();
+  
+  if( ss.find("const",0) != string::npos && ss.find("BitSeries",0) != string::npos ){
+    const BitSeries* in = (const BitSeries*)parent->get_input();
+    input = (const Observation*)in;
+  }
+  else{
+    input = (Observation*)parent->get_input();
+  }
 }
 
 template <class In>
@@ -267,9 +279,21 @@ dsp::OutputBuffering<In>::OutputBuffering (Transformation<In,TimeSeries>* tr)
     throw Error (InvalidParam, "dsp::OutputBuffering<In>",
 		 "no Transformation");
 
-  if (tr->has_input())
-    input = tr->get_input();
-  if (tr->has_output())
+  if (tr->has_input()){
+    // GRRRRR people that put in const's everywhere are very annoying!!!!
+    
+    string ss = typeid(In).name();
+
+    if( ss.find("const",0) != string::npos && ss.find("BitSeries",0) != string::npos ){
+      const BitSeries* in = (const BitSeries*)tr->get_input();
+      input = (const Observation*)in;
+    }
+    else{
+      input = (Observation*)tr->get_input();
+    }
+  }
+
+  if (tr->has_output())    
     output = tr->get_output();
 
   parent = tr;
