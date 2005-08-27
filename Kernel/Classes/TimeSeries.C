@@ -87,11 +87,16 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   }
 
   if( !get_preserve_seeked_data() ){
-    if( verbose ) 
-      cerr << "dsp::TimeSeries::resize not preserving; reserving "
-           << reserve_ndat << endl;
+
+    if (verbose) cerr << "dsp::TimeSeries::resize not preserving; reserving "
+		      << reserve_ndat << endl;
+
     DataSeries::resize(nsamples+reserve_ndat);
+
+    // offset the data pointer and reset the number of samples
     data = (float*)buffer + reserve_ndat * get_ndim();
+    set_ndat( nsamples );
+
     return;
   }
 
@@ -223,50 +228,51 @@ void dsp::TimeSeries::seek (int64 offset)
                  " attempt to seek past end of data",
                  offset, get_ndat());
 
-  int64 current_offset = get_seekage();
+  float* fbuffer = (float*)buffer;
 
-  if (-offset > current_offset)
+  int64 current_offset = int64(data - fbuffer);
+  int64 float_offset = offset * int64(get_ndim());
+
+  if (-float_offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
 		 "offset="I64" > current_offset="I64";"
                  " attempt to seek before start of data", 
-                 offset, current_offset);
+                 offset, current_offset/get_ndim());
+  
+  data += float_offset;
+  assert (data >= fbuffer);
 
-  data += offset * int64(get_ndim());
   set_ndat( get_ndat() - offset );
-
   change_start_time (offset);
 }
 
 //! Returns a uchar pointer to the first piece of data
-unsigned char* dsp::TimeSeries::get_data(){
-  if( !data && !buffer )
-    throw Error(InvalidState,"dsp::TimeSeries::get_data()",
-		"Neither data nor buffer is defined.  ndat="UI64,
-		get_ndat());
-  if( !data )
-    data = (float*)buffer;
+unsigned char* dsp::TimeSeries::get_data()
+{
+  if (!data)
+    throw Error (InvalidState,"dsp::TimeSeries::get_data",
+		"Data buffer not initialized.  ndat="UI64, get_ndat());
+
   return ((unsigned char*)data);
 }
 
 //! Returns a uchar pointer to the first piece of data
-const unsigned char* dsp::TimeSeries::get_data() const{
-  if( !data && !buffer )
-    throw Error(InvalidState,"dsp::TimeSeries::const_get_data()",
-		"Neither data nor buffer is defined.  ndat="UI64,
-		get_ndat());
-  if( !data )
-    return ((const unsigned char*)buffer);
+const unsigned char* dsp::TimeSeries::get_data() const
+{
+  if (!data)
+    throw Error (InvalidState,"dsp::TimeSeries::const_get_data()",
+		"Data buffer not initialized.  ndat="UI64, get_ndat());
+
   return ((const unsigned char*)data);
 }
 
 //! Returns a uchar pointer to the first piece of data
-const unsigned char* dsp::TimeSeries::const_get_data() const{
-  if( !data && !buffer )
-    throw Error(InvalidState,"dsp::TimeSeries::const_get_data()",
-		"Neither data nor buffer is defined.  ndat="UI64,
-		get_ndat());
-  if( !data )
-    return ((const unsigned char*)buffer);
+const unsigned char* dsp::TimeSeries::const_get_data() const
+{
+  if (!data)
+    throw Error (InvalidState,"dsp::TimeSeries::const_get_data()",
+		"Data buffer not initialized.  ndat="UI64, get_ndat());
+
   return ((const unsigned char*)data);
 }
 
@@ -408,8 +414,10 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat)
   if (!pre_ndat)
     pre_ndat = pre->get_ndat();
 
-  seek (-int64(pre_ndat));
+  if (verbose)
+    cerr << "dsp::TimeSeries::prepend " << pre_ndat << " samples" << endl;
 
+  seek (-int64(pre_ndat));
   copy_data (pre, 0, pre_ndat);
 }
 
@@ -418,6 +426,19 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
 {
   if (!copy_ndat || !copy)
     return;
+
+  if (verbose)
+    cerr << "dsp::TimeSeries::copy_data to ndat=" << get_ndat()
+	 << " from ndat=" << copy->get_ndat() << " idat_start=" << idat_start 
+	 << " copy_ndat=" << copy_ndat << endl;
+
+  if (copy_ndat > get_ndat())
+    throw Error (InvalidParam, "dsp::TimeSeries::copy_data",
+		 "copy ndat="UI64" > this ndat="UI64, copy_ndat, get_ndat());
+
+  if (copy->get_ndim() != get_ndim())
+    throw Error (InvalidParam, "dsp::TimeSeries::copy_data",
+		 "copy ndim=%u > this ndim=%u", copy->get_ndim(), get_ndim());
 
   uint64 offset = idat_start * get_ndim();
   uint64 byte_count = copy_ndat * get_ndim() * sizeof(float);
