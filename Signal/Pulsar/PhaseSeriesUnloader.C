@@ -7,6 +7,7 @@
 dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
 {
   filename_extension = ".ar";
+  force_filename = false;
 }
     
 //! Destructor
@@ -48,29 +49,35 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
   return make_unique(filename,fname_extension,data);
 }
 
-string dsp::PhaseSeriesUnloader::make_unique(string filename,string fname_extension,
-					     const PhaseSeries* data) const{
+string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
+					      const string& fname_extension,
+					      const PhaseSeries* data) const
+{
   string unique_filename = filename;
 
-  if (data->get_integration_length() < 1.0 && !force_filename) {
+  if (dsp::Observation::verbose)
+    cerr << "dsp::PhaseSeriesUnloader::make_unique filename=" << filename
+	 << " ext=" << fname_extension << " force=" << force_filename 
+	 << " length=" << data->get_integration_length() << endl;
 
-    // small files need a more unique filename
+  if (force_filename || data->get_integration_length() > 1.0)
+    return unique_filename;
 
-    const polyco* poly = data->get_folding_polyco();
-    if (poly) {
-      // add pulse number to the output archive
-      Phase phase = poly->phase ( data->get_start_time() );
-      phase = (phase + 0.5-data->get_reference_phase()).Ceil();
+  // small files need a more unique filename
 
-      unique_filename = stringprintf ("pulse_"I64, phase.intturns());
-      unique_filename += fname_extension;
-    }
-    else
-      cerr << "WARNING: integration length < 1 sec.\n"
-	"'" << unique_filename << "' may not be unique." << endl;
-
+  const polyco* poly = data->get_folding_polyco();
+  if (poly) {
+    // add pulse number to the output archive
+    Phase phase = poly->phase ( data->get_start_time() );
+    phase = (phase + 0.5-data->get_reference_phase()).Ceil();
+    
+    unique_filename = stringprintf ("pulse_"I64, phase.intturns());
+    unique_filename += fname_extension;
   }
-
+  else
+    cerr << "WARNING: integration length < 1 sec.\n"
+      "'" << unique_filename << "' may not be unique." << endl;
+  
   return unique_filename;
 }
 
