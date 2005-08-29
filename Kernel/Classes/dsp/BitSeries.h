@@ -83,11 +83,15 @@ namespace dsp {
     void share(unsigned char*& _buffer,uint64& _size) const;
 
   protected:
+
+    friend class Unpacker;
+
     //! The data buffer
     unsigned char* data;
 
     //! The size (in bytes) of the allocated data buffer
-    //! Note that more space may have been allocated than used by the 'ndat' samples
+    /*! Note that more space may have been allocated than indicated by
+      the ndat attribute */
     int64 size;
 
     //! Sample offset from start of source; attribute used by Input class
