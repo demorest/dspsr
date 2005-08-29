@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.11 $
-   $Date: 2005/08/24 04:38:35 $
-   $Author: hknight $ */
+   $Revision: 1.12 $
+   $Date: 2005/08/29 16:58:48 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Unpacker_h
@@ -43,8 +43,8 @@ namespace dsp {
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
 
-
    protected:
+
     //! The operation unpacks n-bit into floating point TimeSeries
     virtual void transformation ();
     
@@ -63,6 +63,17 @@ namespace dsp {
 
     //! List of registered sub-classes
     static Registry::List<Unpacker> registry;
+
+    //! Provide BitSeries::input attribute access to derived classes
+    template<class T>
+    T* get_Input () const {
+      T* ptr = dynamic_cast<T*>( get_input()->input );
+      if (!ptr)
+	throw Error (InvalidState, "Unpacker::get_source",
+		     "BitSeries::input is not of required type");
+      return ptr;
+    }
+
 
   };
 
