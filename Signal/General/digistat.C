@@ -149,6 +149,7 @@ int main (int argc, char** argv) try
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
 
+    cerr << "digistat: opening file " << filenames[ifile] << endl;
     manager->open (filenames[ifile]);
 
     if (verbose)
@@ -198,12 +199,19 @@ int main (int argc, char** argv) try
     cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
     cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
 
+    if (manager->get_info()->get_rate() <= 0.0)  {
+      cerr << "digistat: invalid sampling rate" << endl;
+      return -1;
+    }
+
     // set the number of samples to load
     double samples = manager->get_info()->get_rate() * time_per_plot + 0.5;
     uint64 block_size = uint64(samples);
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
 
     cerr << block_size << " samples per " << time_per_plot << "s plot" << endl;
+
+    manager->get_input()->set_block_size( block_size );
 
     // set the number of samples to average
     samples = manager->get_info()->get_rate() * time_per_point + 0.5;
