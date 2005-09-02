@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.34 $
-   $Date: 2005/08/24 05:51:05 $
+   $Revision: 1.35 $
+   $Date: 2005/09/02 07:59:05 $
    $Author: hknight $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -45,7 +45,7 @@ namespace dsp {
   class TransformationBase : public Operation {
   public:
     TransformationBase (const char* name) : Operation (name) {}
-    virtual ~TransformationBase () {}
+    virtual ~TransformationBase ();
 
     typedef enum { no_buffering_policy, input_buffering_policy, output_buffering_policy } DefaultBufferingPolicy;
 
@@ -71,7 +71,7 @@ namespace dsp {
   public:
 
     //! Virtual destructor required
-    virtual ~HasInput () { }
+    virtual ~HasInput ();
 
     //! Set the container from which input data will be read
     virtual void set_input (In* _input) { input = _input; }
@@ -96,7 +96,7 @@ namespace dsp {
   public:
 
     //! Virtual destructor required
-    virtual ~HasOutput () { }
+    virtual ~HasOutput ();
 
     //! Set the container into which output data will be written
     virtual void set_output (Out* _output) { output = _output; }
@@ -135,7 +135,7 @@ namespace dsp {
 		    bool _time_conserved=false);
 
     //! Destructor
-    ~Transformation () { }
+    virtual ~Transformation ();
 
     //! Set the container from which input data will be read
     void set_input (In* input);
@@ -403,5 +403,28 @@ template <class In, class Out>
 dsp::BufferingPolicy* dsp::Transformation<In,Out>::get_buffering_policy () const {
   return buffering_policy;
 }
+
+template <class In, class Out>
+dsp::Transformation<In,Out>::~Transformation(){
+  if( Operation::verbose ){
+    fprintf(stderr,"Transformation (%s) destructor entered input=%p output=%p\n",
+	    get_name().c_str(),input.ptr(),output.ptr());
+    if( input.ptr() )
+      fprintf(stderr,"Transformation (%s) destructor input has %d refs\n",
+	      get_name().c_str(), input->get_reference_count());
+    if( output.ptr() )
+      fprintf(stderr,"Transformation (%s) destructor output has %d refs\n",
+	      get_name().c_str(), output->get_reference_count());
+  }
+}
+
+template <class Out>
+dsp::HasOutput<Out>::~HasOutput(){ }
+
+template <class In>
+dsp::HasInput<In>::~HasInput(){ }
+
+
+
 
 #endif
