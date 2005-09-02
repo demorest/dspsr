@@ -57,7 +57,7 @@ dsp::Operation::Operation (const char* _name)
 
 dsp::Operation::~Operation ()
 {
-  if( timekeeper )
+  if( timekeeper && record_time )
     timekeeper->im_dying(this);
 }
 
