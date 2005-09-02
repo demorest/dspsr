@@ -1,17 +1,21 @@
+#include <assert.h>
+#include <stdio.h>
+#include <malloc.h>
+
 #include "dsp/DataSeries.h"
 #include "Error.h"
-
-#include <malloc.h>
 
 int dsp::DataSeries::instantiation_count = 0;
 int64 dsp::DataSeries::memory_used = 0;
 
 dsp::DataSeries::DataSeries() : Observation() {
-  init();
+  initi();
 }
 
-void dsp::DataSeries::init(){
+void dsp::DataSeries::initi(){
   instantiation_count++;
+  //  fprintf(stderr,"New dataseries: %p count=%d\n", this,
+  //  instantiation_count);
 
   Observation::init();
   
@@ -22,13 +26,16 @@ void dsp::DataSeries::init(){
 }
   
 dsp::DataSeries::DataSeries(const DataSeries& ms) {
-  init();
+  initi();
   operator=(ms);
 }
 
 dsp::DataSeries::~DataSeries(){
+  //  fprintf(stderr,"In DataSeries destructor ndat="UI64" %p\n",get_ndat(), this);
   resize(0);
   instantiation_count--;
+  //  fprintf(stderr,"dsp::DataSeries::~DataSeries() count now %d\n",
+  //  instantiation_count);
 }
 
 //! Enforces that ndat*ndim must be an integer number of bytes
@@ -73,7 +80,8 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 {
   if (verbose)
     cerr << "dsp::DataSeries::resize (" << nsamples << ") nbit="
-         << get_nbit() << " ndim=" << get_ndim() << endl;
+         << get_nbit() << " ndim=" << get_ndim()
+	 << " ndat=" << get_ndat() << endl;
 
   // Number of bits needed to allocate a single pol/chan group
   uint64 nbits_required = nsamples * get_nbit() * get_ndim();
@@ -123,6 +131,12 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
     getchar();
 #endif
     buffer = (unsigned char*) memalign (16, require + 8);
+
+    if( !buffer )
+      throw Error(InvalidState,"dsp::DataSeries::resize()",
+		  "Could not allocate another "UI64" bytes!",
+		  require+8);
+
     //    fprintf(stderr,"dsp::DataSeries::resize() have resized buffer to be of size "UI64".  buffer=%p\n",
     //    require,buffer);
     size = require;
@@ -139,7 +153,6 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
   if (verbose)
     cerr << "dsp::DataSeries::resize " << size << " bytes allocated"
       " (subsize=" << subsize << " bytes)" << endl;
-
 }
 
 //! Returns a uchar pointer to the first piece of data
@@ -149,7 +162,6 @@ unsigned char* dsp::DataSeries::get_data(){
 
 //! Returns a uchar pointer to the first piece of data
 const unsigned char* dsp::DataSeries::const_get_data() const{
-  //  fprintf(stderr,"b1\n");
   return buffer;
 }
 
@@ -186,6 +198,8 @@ dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol) const
 
 dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
 {
+  //  fprintf(stderr,"Entered dsp::DataSeries::operator =()\n");
+
   if (this == &copy)
     return *this;
 
@@ -203,6 +217,8 @@ dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
     }
   }
   
+  //  fprintf(stderr,"Returning from dsp::DataSeries::operator =()\n");
+
   return *this;
 }
 

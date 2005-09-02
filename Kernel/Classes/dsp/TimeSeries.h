@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.29 $
-   $Date: 2005/08/24 05:51:56 $
+   $Revision: 1.30 $
+   $Date: 2005/09/02 08:00:12 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -30,7 +30,7 @@ namespace dsp {
     TimeSeries(const TimeSeries& ts);
 
     //! Called by constructor to initialise variables
-    virtual void init();
+    void initj();
 
     //! Cloner (calls new)
     virtual TimeSeries* clone();

@@ -30,15 +30,14 @@ bool dsp::ChannelPtr::operator < (const ChannelPtr& c) const{
 }
 
 dsp::TimeSeries::TimeSeries() : DataSeries() {
-  init();
+  initj();
 }
   
 dsp::TimeSeries::TimeSeries(const TimeSeries& ts) : DataSeries() {
   operator=(ts);
 }
 
-void dsp::TimeSeries::init(){
-  DataSeries::init();
+void dsp::TimeSeries::initj(){
   DataSeries::set_nbit( 8 * sizeof(float) );
   data = 0;  
   reserve_ndat = 0;
@@ -53,7 +52,10 @@ dsp::TimeSeries* dsp::TimeSeries::null_clone(){
   return new TimeSeries;
 }
 
-dsp::TimeSeries::~TimeSeries(){ }
+dsp::TimeSeries::~TimeSeries(){
+  //  fprintf(stderr,"In TimeSeries destructor ndat="UI64"\n",
+  //  get_ndat());
+}
 
 void dsp::TimeSeries::set_nbit (unsigned _nbit)
 {
@@ -77,21 +79,23 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
   if( verbose )
-    fprintf(stderr,"In dsp::TimeSeries::resize() with data=%p and buffer=%p\n",
-	    data,buffer);
+    fprintf(stderr,"In dsp::TimeSeries::resize("UI64") with data=%p and buffer=%p ndat="UI64"\n",
+	    nsamples,data,buffer,get_ndat());
 
-  if( data && buffer && verbose ){
-    cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
-         << int64((data-(float*)buffer)) << endl;
-    cerr << "get_samps_offset() = " 
-         << get_samps_offset() << " floats get_preserve_seeked_data=" << get_preserve_seeked_data() << endl;
-  }
+    if( data && buffer ){
+      if( verbose ){
+	cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
+	     << int64((data-(float*)buffer)) << endl;
+	cerr << "get_samps_offset() = " 
+	     << get_samps_offset() << " floats get_preserve_seeked_data=" << get_preserve_seeked_data() << endl;
+      }
+    }  
 
   if( !get_preserve_seeked_data() ){
-
-    if (verbose) cerr << "dsp::TimeSeries::resize not preserving; reserving "
-		      << reserve_ndat << endl;
-
+    if (verbose)
+      cerr << "dsp::TimeSeries::resize not preserving; reserving "
+	   << reserve_ndat << endl;
+    
     DataSeries::resize(nsamples+reserve_ndat);
 
     // offset the data pointer and reset the number of samples
@@ -135,7 +139,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     }
   }
 
-  delete [] old_buffer;
+  free( old_buffer );
   memory_used -= old_size;
 
   seek( samps_offset );
@@ -145,9 +149,10 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   //  nsamples,int64((data-(float*)buffer)),
   //  get_datptr(0,0)[0]);
 
-  if( data && buffer && verbose )
-    fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64" or "I64" floats\n",
-	    nsamples,int64((data-(float*)buffer)),get_samps_offset());
+  if( data && buffer )
+    if( verbose )
+      fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64" or "I64" floats\n",
+	      nsamples,int64((data-(float*)buffer)),get_samps_offset());
 }
 
 dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
@@ -156,21 +161,22 @@ dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
   //  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
 
   if( !get_preserve_seeked_data() ){
-    //fprintf(stderr,"dsp::TimeSeries::operator=() won't preserve data\n");
+    //    fprintf(stderr,"dsp::TimeSeries::operator=() won't preserve data\n");
     DataSeries::operator=(copy);
+    //    fprintf(stderr,"dsp::TimeSeries::operator=() done DataSeries::operator=(copy)\n");
     data = (float*)buffer;
-    //fprintf(stderr,"dsp::TimeSeries::operator=() returning\n");
+    //    fprintf(stderr,"dsp::TimeSeries::operator=() returning\n");
     return *this;
   }
 
-  //  fprintf(stderr,"dsp::TimeSeries::operator=() will preserve data... calling resize()\n");
+  //    fprintf(stderr,"dsp::TimeSeries::operator=() will preserve data... calling resize()\n");
   resize( copy.get_ndat() );
   set_ndat( 0 );
-  //  fprintf(stderr,"dsp::TimeSeries::operator=()... calling append()\n");
+  //fprintf(stderr,"dsp::TimeSeries::operator=()... calling append()\n");
   append( &copy );
 
-  //  fprintf(stderr,"Bye from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
-  //	  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
+  //    fprintf(stderr,"Bye from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
+  //  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
 
   return *this;
 }
@@ -261,7 +267,7 @@ unsigned char* dsp::TimeSeries::get_data()
 const unsigned char* dsp::TimeSeries::get_data() const
 {
   if (!data)
-    throw Error (InvalidState,"dsp::TimeSeries::const_get_data()",
+    throw Error (InvalidState,"dsp::TimeSeries::get_data() const",
 		"Data buffer not initialized.  ndat="UI64, get_ndat());
 
   return ((const unsigned char*)data);

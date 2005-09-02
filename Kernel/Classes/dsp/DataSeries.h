@@ -40,7 +40,7 @@ namespace dsp {
     DataSeries(const DataSeries& ds);
 
     //! Called by constructor to initialise variables
-    virtual void init();
+    void initi();
 
     //! Cloner (calls new)
     virtual DataSeries* clone() = 0;

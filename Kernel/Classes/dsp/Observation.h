@@ -337,7 +337,7 @@ namespace dsp {
     void Header2obs(Reference::To<Header> hdr);
 
     //! Set all attributes to null default
-    virtual void init ();
+    void init ();
 
     //! Returns the version number to put in the Header when writing out
     float get_version() const { return 2.0; }
