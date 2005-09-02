@@ -31,8 +31,9 @@ unsigned dsp::TScrunch::get_sfactor(){
   }
   else{
     if( TimeRes < 0.0 )
-      throw_str ("dsp::TScrunch: invalid time resolution:%f",
-		 TimeRes);
+      throw Error(InvalidState,"dsp::Tscrunch::get_sfactor()",
+		  "invalid time resolution: '%f'",
+		  TimeRes);
     double in_tsamp = 1.0e6/input->get_rate();  // in microseconds
     ScrunchFactor = int64(TimeRes/in_tsamp + 0.00001);
     
@@ -68,7 +69,9 @@ void dsp::TScrunch::transformation ()
 		input->get_ndat(),sfactor);
 
   if( !input->get_detected() )
-    throw_str ("dsp::TScrunch: invalid input state: " + input->get_state_as_string());
+    throw Error(InvalidState,"dsp::TScrunch::transformation()",
+		"invalid input state: '%s'",
+		input->get_state_as_string().c_str());
 
   const unsigned nscrunchings = input->get_ndat()/sfactor;
 
