@@ -222,7 +222,7 @@ namespace dsp {
     virtual void set_input();
 
     //! The parent
-    Reference::To<Transformation<In,TimeSeries> > parent;
+    Transformation<In,TimeSeries>* parent;
 
   };
 

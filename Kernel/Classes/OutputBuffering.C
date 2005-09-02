@@ -76,8 +76,10 @@ void dsp::OutputBufferBase::pre_transformation ()
     duration_prepended = samples_prepended / output->get_rate();
     time_in += duration_prepended;
   }
-  else
+  else{
     duration_prepended = 0.0;
+    samples_prepended = 0;
+  }
 
   surplus_samples = seek_over_surplus_samps();
 
