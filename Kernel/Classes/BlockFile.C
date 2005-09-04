@@ -1,0 +1,102 @@
+#include "dsp/BlockFile.h"
+
+//! Load bytes from file
+int64 dsp::BlockFile::load_bytes (unsigned char* buffer, uint64 bytes)
+{
+  if (verbose)
+    cerr << "dsp::BlockFile::load_bytes() nbytes=" << bytes << endl;
+
+  uint64 block_data_bytes = block_bytes-block_header_bytes-block_tailer_bytes;
+  uint64 to_load = bytes;
+
+  while (to_load) {
+  
+    uint64 to_read = block_data_bytes - current_block_byte;
+    if (to_read > to_load)
+      to_read = to_load;
+
+    ssize_t bytes_read = read (fd, buffer, to_read);
+ 
+    if (bytes_read < 0)
+      throw Error (FailedSys, "dsp::BlockFile::load_bytes", "read(%d)", fd);
+
+    to_load -= bytes_read;
+    buffer += bytes_read;
+    current_block_byte += bytes_read;
+
+    if (current_block_byte == block_data_bytes) {
+
+      if (lseek (fd, block_header_bytes + block_tailer_bytes, SEEK_CUR) < 0)
+	throw Error (FailedSys, "dsp::BlockFile::load_bytes", "seek(%d)", fd);
+
+      current_block_byte = 0;
+
+    }
+
+    // probably the end of file
+    if (uint64(bytes_read) < to_read)
+      break;
+  }
+
+  return bytes - to_load;
+}
+
+//! Adjust the file pointer
+int64 dsp::BlockFile::seek_bytes (uint64 nbytes)
+{
+  if (verbose)
+    cerr << "dsp::BlockFile::seek_bytes nbytes=" << nbytes << endl;
+  
+  if (fd < 0)
+    throw Error (InvalidState, "dsp::BlockFile::seek_bytes", "invalid fd");
+
+  uint64 block_data_bytes = block_bytes-block_header_bytes-block_tailer_bytes;
+
+  uint64 current_block = nbytes / block_data_bytes;
+  current_block_byte = nbytes % block_data_bytes;
+
+  uint64 passed_blocks = 0;
+
+  if (current_block > 0)
+    passed_blocks = current_block - 1;
+
+  uint64 tot_header_bytes = current_block * block_header_bytes;
+  uint64 tot_tailer_bytes = passed_blocks * block_tailer_bytes;
+
+  uint64 to_byte = nbytes + header_bytes + tot_header_bytes + tot_tailer_bytes;
+
+  if (lseek (fd, to_byte, SEEK_SET) < 0)
+    throw Error (FailedSys, "dsp::BlockFile::seek_bytes",
+		 "lseek ("UI64")", to_byte);
+
+  return nbytes;
+}
+
+int64 dsp::BlockFile::fstat_file_ndat (uint64 tailer_bytes)
+{
+  struct stat file_stats;
+
+  if (fstat(fd, &file_stats) != 0)
+    throw Error (FailedCall, "dsp::BlockFile::fstat_file_ndat","fstat(%d)",fd);
+
+  int64 actual_file_sz = file_stats.st_size - header_bytes - tailer_bytes;
+
+  uint64 nblocks = actual_file_sz / block_bytes;
+  uint64 extra = actual_file_sz % block_bytes;
+
+  uint64 block_data_bytes = block_bytes-block_header_bytes-block_tailer_bytes;
+
+  uint64 data_bytes = nblocks * block_data_bytes;
+
+  if (extra > block_header_bytes) {
+    extra -= block_header_bytes;
+    if (extra > block_data_bytes)
+      extra = block_data_bytes;
+    data_bytes += extra;
+  }
+
+  uint64 bits_per_samp
+    = info.get_nchan()*info.get_npol()*info.get_ndim()*info.get_nbit();
+  
+  return (data_bytes*8)/bits_per_samp;
+}
