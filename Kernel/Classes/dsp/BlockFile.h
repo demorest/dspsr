@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/09/04 19:27:22 $
+   $Revision: 1.2 $
+   $Date: 2005/09/04 19:38:38 $
    $Author: wvanstra $ */
 
 
@@ -24,6 +24,9 @@ namespace dsp {
     
     //! Destructor
     ~BlockFile ();
+
+    //! Get the number of data bytes per block (frame)
+    uint64 get_block_data_bytes () const;
 
   protected:
 

@@ -1,12 +1,41 @@
 #include "dsp/BlockFile.h"
 
+//! Constructor
+dsp::BlockFile::BlockFile (const char* name) : File (name)
+{
+  block_bytes = 0;
+  block_header_bytes = 0;
+  block_tailer_bytes = 0;
+}
+
+//! Destructor
+dsp::BlockFile::~BlockFile ()
+{
+}
+
+uint64 dsp::BlockFile::get_block_data_bytes() const
+{
+  if (!block_bytes)
+    throw Error (InvalidState, "dsp::BlockFile::get_block_data_bytes",
+		 "undefined block size");
+
+  uint64 non_data_bytes = block_header_bytes + block_tailer_bytes;
+
+  if (non_data_bytes > block_bytes)
+    throw Error (InvalidState, "dsp::BlockFile::get_block_data_bytes",
+		 "block_bytes="UI64" < header+tailer_bytes="UI64,
+		 block_bytes, non_data_bytes);
+
+  return block_bytes - non_data_bytes;
+}
+
 //! Load bytes from file
 int64 dsp::BlockFile::load_bytes (unsigned char* buffer, uint64 bytes)
 {
   if (verbose)
     cerr << "dsp::BlockFile::load_bytes() nbytes=" << bytes << endl;
 
-  uint64 block_data_bytes = block_bytes-block_header_bytes-block_tailer_bytes;
+  uint64 block_data_bytes = get_block_data_bytes ();
   uint64 to_load = bytes;
 
   while (to_load) {
@@ -50,7 +79,7 @@ int64 dsp::BlockFile::seek_bytes (uint64 nbytes)
   if (fd < 0)
     throw Error (InvalidState, "dsp::BlockFile::seek_bytes", "invalid fd");
 
-  uint64 block_data_bytes = block_bytes-block_header_bytes-block_tailer_bytes;
+  uint64 block_data_bytes = get_block_data_bytes ();
 
   uint64 current_block = nbytes / block_data_bytes;
   current_block_byte = nbytes % block_data_bytes;
@@ -84,7 +113,7 @@ int64 dsp::BlockFile::fstat_file_ndat (uint64 tailer_bytes)
   uint64 nblocks = actual_file_sz / block_bytes;
   uint64 extra = actual_file_sz % block_bytes;
 
-  uint64 block_data_bytes = block_bytes-block_header_bytes-block_tailer_bytes;
+  uint64 block_data_bytes = get_block_data_bytes ();
 
   uint64 data_bytes = nblocks * block_data_bytes;
 
