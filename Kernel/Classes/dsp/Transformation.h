@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.35 $
-   $Date: 2005/09/02 07:59:05 $
-   $Author: hknight $ */
+   $Revision: 1.36 $
+   $Date: 2005/09/06 19:17:15 $
+   $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_Transformation_h
 #define __baseband_dsp_Transformation_h
@@ -408,13 +408,15 @@ template <class In, class Out>
 dsp::Transformation<In,Out>::~Transformation(){
   if( Operation::verbose ){
     fprintf(stderr,"Transformation (%s) destructor entered input=%p output=%p\n",
-	    get_name().c_str(),input.ptr(),output.ptr());
-    if( input.ptr() )
+	    get_name().c_str(),this->input.ptr(),this->output.ptr());
+#if THIS_GETS_FIXED
+    if( this->input.ptr() )
       fprintf(stderr,"Transformation (%s) destructor input has %d refs\n",
-	      get_name().c_str(), input->get_reference_count());
-    if( output.ptr() )
+	      get_name().c_str(), this->input->get_reference_count());
+    if( this->output.ptr() )
       fprintf(stderr,"Transformation (%s) destructor output has %d refs\n",
-	      get_name().c_str(), output->get_reference_count());
+	      get_name().c_str(), this->output->get_reference_count());
+#endif
   }
 }
 
