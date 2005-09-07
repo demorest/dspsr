@@ -84,15 +84,13 @@ int64 dsp::BlockFile::seek_bytes (uint64 nbytes)
   uint64 current_block = nbytes / block_data_bytes;
   current_block_byte = nbytes % block_data_bytes;
 
-  uint64 passed_blocks = 0;
-
-  if (current_block > 0)
-    passed_blocks = current_block - 1;
-
-  uint64 tot_header_bytes = current_block * block_header_bytes;
-  uint64 tot_tailer_bytes = passed_blocks * block_tailer_bytes;
+  uint64 tot_header_bytes = (current_block+1) * block_header_bytes;
+  uint64 tot_tailer_bytes = current_block * block_tailer_bytes;
 
   uint64 to_byte = nbytes + header_bytes + tot_header_bytes + tot_tailer_bytes;
+
+  if (verbose)
+    cerr << "dsp::BlockFile::seek_bytes SEEK_SET to " << to_byte << endl;
 
   if (lseek (fd, to_byte, SEEK_SET) < 0)
     throw Error (FailedSys, "dsp::BlockFile::seek_bytes",
