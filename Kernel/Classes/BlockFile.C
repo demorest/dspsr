@@ -81,8 +81,16 @@ int64 dsp::BlockFile::seek_bytes (uint64 nbytes)
 
   uint64 block_data_bytes = get_block_data_bytes ();
 
+  if (verbose)
+    cerr << "dsp::BlockFile::seek_bytes block_bytes=" << block_bytes
+         << " block_header_bytes=" << block_header_bytes
+         << " block_tailer_bytes=" << block_tailer_bytes << endl;
+
   uint64 current_block = nbytes / block_data_bytes;
   current_block_byte = nbytes % block_data_bytes;
+
+  if (verbose)
+    cerr << "dsp::BlockFile::seek_bytes current_block="<< current_block <<endl;
 
   uint64 tot_header_bytes = (current_block+1) * block_header_bytes;
   uint64 tot_tailer_bytes = current_block * block_tailer_bytes;
