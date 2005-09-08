@@ -171,6 +171,9 @@ void dsp::WeightedTimeSeries::seek (int64 offset)
 
   TimeSeries::seek (offset);
 
+  if (!ndat_per_weight)
+    return;
+
   offset += weight_idat;
 
   if (offset > 0) {
@@ -223,6 +226,9 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
   set_ndat_per_weight ( copy->get_ndat_per_weight() );
 
   resize_weights ();
+
+  if (!ndat_per_weight)
+    return;
 
   uint64 weight_offset = 0;
   uint64 nweights = get_nweights ();
