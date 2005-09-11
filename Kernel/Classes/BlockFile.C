@@ -1,3 +1,11 @@
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <unistd.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "dsp/BlockFile.h"
 
 //! Constructor
