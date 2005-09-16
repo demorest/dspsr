@@ -14,7 +14,20 @@
 #include "dsp/TimeSeries.h"
 
 bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
-{ return c1.ts==c2.ts && c1.ptr==c2.ptr && c1.ichan==c2.ichan && c1.ipol==c2.ipol; } 
+{
+  if( c1.ts != c2.ts )
+    return false;
+  if( c1.ichan != c2.ichan )
+    return false;
+  if( c1.ipol != c2.ipol )
+    return false;
+
+  if( !c1.has_ptr() && !c2.has_ptr() )
+    return true;
+
+  return c1.get_const_ptr() == c2.get_const_ptr();
+} 
+
 bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
 { return !(c1==c2); }
 
@@ -26,7 +39,7 @@ bool dsp::TimeSeriesPtr::operator < (const TimeSeriesPtr& tsp) const{
 }
 
 bool dsp::ChannelPtr::operator < (const ChannelPtr& c) const{
-  return ts->get_centre_frequency(ichan) < c.ts->get_centre_frequency(c.ichan);
+  return centre_frequency < c.centre_frequency;
 }
 
 dsp::TimeSeries::TimeSeries() : DataSeries() {
@@ -801,7 +814,14 @@ void dsp::ChannelPtr::init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
   ts=_ts;
   ichan=_ichan;
   ipol = _ipol;
-  ptr=ts->get_datptr(ichan,ipol);
+  if( ts ){
+    ptr=ts->get_datptr(ichan,ipol);
+    centre_frequency = _ts->get_centre_frequency(_ichan);
+  }
+  else{
+    ptr = 0;
+    centre_frequency = 0.0;
+  }
 }
 
 dsp::ChannelPtr& dsp::ChannelPtr::operator=(const ChannelPtr& c){
@@ -809,6 +829,7 @@ dsp::ChannelPtr& dsp::ChannelPtr::operator=(const ChannelPtr& c){
   ptr=c.ptr;
   ichan=c.ichan;
   ipol=c.ipol;
+  centre_frequency = c.centre_frequency;
   return *this;
 }
 
@@ -817,6 +838,7 @@ dsp::ChannelPtr::ChannelPtr()
   ts = 0;
   ptr = 0;
   ichan=ipol=0;
+  centre_frequency = 0.0;
 }
 
 dsp::ChannelPtr::ChannelPtr(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
@@ -840,5 +862,23 @@ float& dsp::ChannelPtr::operator[](unsigned index){
 }
 
 float dsp::ChannelPtr::get_centre_frequency(){
-  return ts->get_centre_frequency(ichan);
+  return centre_frequency;
+}
+
+float*& dsp::ChannelPtr::get_ptr(){
+  if( !ptr )
+    throw Error(InvalidState,"dsp::ChannelPtr::get_ptr()",
+		"ptr not set!");
+  return ptr;
+}
+
+const float* dsp::ChannelPtr::get_const_ptr() const{
+  if( !ptr )
+    throw Error(InvalidState,"dsp::ChannelPtr::get_ptr()",
+		"ptr not set!");
+  return ptr;
+}
+
+bool dsp::ChannelPtr::has_ptr() const{
+  return ptr;
 }

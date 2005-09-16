@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.30 $
-   $Date: 2005/09/02 08:00:12 $
+   $Revision: 1.31 $
+   $Date: 2005/09/16 06:54:28 $
    $Author: hknight $ */
 
 #ifndef __TimeSeries_h
@@ -201,10 +201,10 @@ namespace dsp {
   class ChannelPtr{
   public :
     TimeSeries* ts;
-    float* ptr;
     unsigned ichan;
     unsigned ipol;
-
+    double centre_frequency;
+    
     void init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol);
 
     ChannelPtr& operator=(const ChannelPtr& c);
@@ -215,12 +215,19 @@ namespace dsp {
     ChannelPtr(const ChannelPtr& c);
     ~ChannelPtr();
     
+    float*& get_ptr();
+    const float* get_const_ptr() const;
+    bool has_ptr() const;
+    void set_ptr(float* _ptr){ ptr = _ptr; }
+
     bool operator < (const ChannelPtr& c) const;
 
     float& operator[](unsigned index);
 
     float get_centre_frequency();
 
+  private:
+    float* ptr;
   };
   
 }
