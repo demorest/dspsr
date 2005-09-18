@@ -34,8 +34,10 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #endif
 
 #if DSP_CPSR
-#include "dsp/CPSRTwoBitCorrection.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
+//#include "dsp/CPSRTwoBitCorrection.h"
+//static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
+#include "dsp/DumbCPSRUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::DumbCPSRUnpacker>  cpsr;
 #endif
 
 #if DSP_CPSR2_8bit
