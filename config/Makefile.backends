@@ -19,7 +19,7 @@ BACKENDS :=
 ifeq ($(PMDAQ),yes)
 
 CPPFLAGS += -DDSP_PMDAQ=1
-CLASSES += PMDAQFile PMDAQ_Observation OneBitCorrection
+CLASSES += PMDAQFile PMDAQ_Observation OneBitCorrection PMDAQ_Extension
 BACKENDS += PMDAQ
 
 endif
@@ -66,7 +66,8 @@ endif
 ifeq ($(CPSR),yes)
 
 CPPFLAGS += -DDSP_CPSR=1
-CLASSES += CPSRFile CPSRTwoBitCorrection 
+#CLASSES += CPSRFile CPSRTwoBitCorrection 
+CLASSES += CPSRFile DumbCPSRUnpacker
 BACKENDS += CPSR
 LBACKENDS += -lcpsr_obs
 
