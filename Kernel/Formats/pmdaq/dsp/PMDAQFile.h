@@ -47,7 +47,7 @@ namespace dsp {
     virtual int64 seek_bytes (uint64 bytes);
 
     //! Initialises 'pmdaq_header' with the header info
-    static int get_header (char* pmdaq_header, const char* filename); 
+    int get_header (char* pmdaq_header, const char* filename); 
 
   private:
 
@@ -75,14 +75,18 @@ namespace dsp {
     //! Sets the end_of_data flag
     int64 cleanup(uint64 bytes_loaded);
 
-    // Member functions:
-
     //! What band the cf/bandwidth should be extracted from
     bool using_second_band;
 
     //! Should be the same number as return value from lseek(fd,0,SEEK_CUR)- ie number of bytes from start of file
     int64 absolute_position;
 
+    uint64 header_bytes;
+    uint64 data_bytes;
+    uint64 trailer_bytes;
+    //#define header_bytes 4
+    //#define data_bytes (48*1024)
+    //#define trailer_bytes 4
   };
 
 }

@@ -33,11 +33,13 @@ namespace dsp {
     //! Inquire the first on-disk channel to load [0]
     unsigned get_first_chan(){ return first_chan; }
     //! Set the the first on-disk channel to load (0 or 256 at present for two filter observations) [0]
+    //! 18 Sep 2005- Shouldn't need to call this- it should be auto-set now
     void set_first_chan(unsigned _first_chan){ first_chan = _first_chan; }
 
     //! Inquire the on-disk channel at which to stop loading [99999]
     unsigned get_end_chan(){ return end_chan; }
     //! Set the the on-disk channel at which to stop loading (e.g. 192 or 512) [99999]
+    //! 18 Sep 2005- Shouldn't need to call this- it should be auto-set now
     void set_end_chan(unsigned _end_chan){ end_chan = _end_chan; }
     
     /*

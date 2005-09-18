@@ -13,6 +13,12 @@
 
 #include "genutil.h"
 
+#include "dsp/Observation.h"
+#include "dsp/BitSeries.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/PMDAQFile.h"
+#include "dsp/PMDAQ_Extension.h"
+
 //! Null constructor
 dsp::OneBitCorrection::OneBitCorrection (const char* _name)
   : Unpacker (_name)
@@ -56,6 +62,11 @@ void dsp::OneBitCorrection::transformation ()
 
   // set the Observation information
   output->Observation::operator=(*input);
+
+  if( input->has<PMDAQ_Extension>() ){
+    set_first_chan( input->get<PMDAQ_Extension>()->get_chan_begin() );
+    set_end_chan( input->get<PMDAQ_Extension>()->get_chan_end() );
+  }
 
   unsigned end_channel = min(input->get_nchan(),end_chan);
   output->set_nchan( end_channel - first_chan );

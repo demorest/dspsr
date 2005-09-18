@@ -11,7 +11,12 @@
 dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 {
   if (header == NULL)
-    throw_str ("PMDAQ_Observation - no header!");
+    throw Error(InvalidState,"PMDAQ_Observation::PMDAQ_Observation",
+		"no header passed in!");
+
+  int jump = 0;
+  if( header[0] == 'P' )
+    jump = -4;
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -21,33 +26,28 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   int nscanned;
 
-  nscanned = sscanf(&header[10],"%f4.1",&version);
+  nscanned = sscanf(&header[10+jump],"%f4.1",&version);
   if (nscanned != 1) {
     throw_str ("PMDAQ_Observation - failed read PMDAQ_HEADER_VERSION");
   }
-
-  //
-  // no idea about the size of the data
-  //
-  set_ndat( 0 );
 
   // //////////////////////////////////////////////////////////////////////
   //
   // TELESCOPE
   //
 
-  if (strncmp(&header[592],"PARKES",6)==0)
+  if (strncmp(&header[592+jump],"PARKES",6)==0)
     set_telescope_code (7);
   else
     throw_str ("PMDAQ_Observation - failed to recognise telescope %10.10s\n",
-	       &header[592]);
+	       &header[592+jump]);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // SOURCE
   //
   char pmdaq_source_name[13];
-  sscanf(&header[528],"%s",pmdaq_source_name);
+  sscanf(&header[528+jump],"%s",pmdaq_source_name);
 
   set_source (pmdaq_source_name);
 
@@ -55,16 +55,16 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   //
   // nchan(s), centre_frequency(s), bandwidth(s) 
   //
-  unsigned nfilters = read_header<unsigned>(header,206,2);
+  unsigned nfilters = read_header<unsigned>(header,206+jump,2);
 
-  double chanbw1 = read_header<double>(header,208,8);
-  double chanbw2 = read_header<double>(header,216,8);
+  double chanbw1 = read_header<double>(header,208+jump,8);
+  double chanbw2 = read_header<double>(header,216+jump,8);
 
-  unsigned nchan1 = read_header<unsigned>(header,224,4);
-  unsigned nchan2 = read_header<unsigned>(header,228,4);
+  unsigned nchan1 = read_header<unsigned>(header,224+jump,4);
+  unsigned nchan2 = read_header<unsigned>(header,228+jump,4);
 
-  double freq_chan1_1 = read_header<double>(header,232,12);
-  double freq_chan1_2 = read_header<double>(header,244,12);
+  double freq_chan1_1 = read_header<double>(header,232+jump,12);
+  double freq_chan1_2 = read_header<double>(header,244+jump,12);
 
   if( nfilters==1 ){
     set_nchan( nchan1 );
@@ -126,7 +126,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   //
   double sampling_interval;
 
-  nscanned = sscanf(&header[256],"%lf",&sampling_interval);
+  nscanned = sscanf(&header[jump+256],"%lf",&sampling_interval);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read sampling interval\n");
   }
@@ -142,7 +142,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   // MJD_START
   //
 
-  // MXB MJD is at header[40], UT is at header[48]
+  // MXB MJD is at header[jump+40], UT is at header[jump+48]
 
   int int_MJD;
   int hh,mm;
@@ -150,19 +150,19 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   // The approximately one millionth UT to secs parser.
 
-  nscanned = sscanf(&header[40],"%d",&int_MJD);
+  nscanned = sscanf(&header[jump+40],"%d",&int_MJD);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read integer part of MJD\n");
   }
-  nscanned = sscanf(&header[49],"%2d",&hh);
+  nscanned = sscanf(&header[jump+49],"%2d",&hh);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read hours in ut start\n");
   }
-  nscanned = sscanf(&header[52],"%2d",&mm);
+  nscanned = sscanf(&header[jump+52],"%2d",&mm);
   if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read minutes in ut start\n%2.2s\n",&header[51]);
+    throw_str("PMDAQ_Observation - failed to read minutes in ut start\n%2.2s\n",&header[jump+51]);
   }
-  nscanned = sscanf(&header[55],"%9lf",&secs);
+  nscanned = sscanf(&header[jump+55],"%9lf",&secs);
   if (nscanned != 1) {
     throw_str("PMDAQ_Observation - failed to read seconds in ut start\n");
   }
@@ -181,7 +181,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   
   uint64 offset_blocks = 0;
 
-  string to_scan(&header[24],8);
+  string to_scan(&header[jump+24],8);
 
   if( sscanf(to_scan.c_str(),UI64,&offset_blocks)!=1 )
     throw Error(FailedCall,"dsp::PMDAQ_Observation::PMDAQ_Observation()",
@@ -220,8 +220,8 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   double ra, dec;
   bool has_position;
 
-  has_position = (str2ra  (&ra,  &header[78]) == 0);
-  has_position = (str2dec2 (&dec, &header[94]) == 0);
+  has_position = (str2ra  (&ra,  &header[jump+78]) == 0);
+  has_position = (str2dec2 (&dec, &header[jump+94]) == 0);
 
   if (!has_position) {
     ra = dec = 0.0;

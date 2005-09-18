@@ -9,14 +9,13 @@
 #include "Error.h"
 #include "environ.h"
 
+#include "dsp/BitSeries.h"
+#include "dsp/Observation.h"
+#include "dsp/PMDAQ_Extension.h"
 #include "dsp/PMDAQFile.h"
 #include "dsp/PMDAQ_Observation.h"
 
 #define PMDAQ_HEADER_SIZE 648
-
-#define HEADER_BYTES 4
-#define DATA_BYTES (48*1024)
-#define TRAILER_BYTES 4
 
 dsp::PMDAQFile::PMDAQFile (const char* filename) 
   : File ("PMDAQ")
@@ -25,14 +24,36 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
 
   if (filename)
     open (filename);
+
+  header_bytes = 4;
+  data_bytes = 48*1024;
+  trailer_bytes = 4;
 }
-
-// Loads header into character array pmdaq_header from file filename.
-
-// Takes root name as the name, ie takes SWT001 and adds .hdr to it.
 
 int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 {
+  ////////////////////////////////////////////////////////
+  // See if file has been dumped straight to disk using dd
+  {
+    int fd = ::open(filename,O_RDONLY);
+    if( fd < 0 )
+      throw Error(InvalidState,"dsp::PMDAQFile::get_header()",
+		  "File '%s' does not even exist!",
+		  filename);
+    
+    if( ::read( fd, pmdaq_header, 640) == 640 ){
+      if( pmdaq_header[0] == 'P' && pmdaq_header[1] == 'M' && pmdaq_header[2] == 'D' ){
+	header_bytes = 640;
+	data_bytes = 48*1024;
+	trailer_bytes = 0;
+	return 0;
+      }
+    }
+    ::close(fd);
+  }
+
+  ////////////////////////////////////////////////////////
+  // See if sc_td has been used to get file onto disk
   string str_filename = string (filename);
   int pos = str_filename.find_last_of(".",str_filename.size()-1);
   string hdr_name = str_filename.substr(0,pos) + ".hdr";
@@ -68,23 +89,13 @@ static char pmdaq_header [PMDAQ_HEADER_SIZE];
 
 bool dsp::PMDAQFile::is_valid (const char* filename,int) const
 {
-  if (get_header (pmdaq_header, filename) < 0){
-    if(verbose) fprintf(stderr,"false 1\n");
-    return false;
-  }
+  Reference::To<PMDAQFile> dummy = new PMDAQFile;
 
-  // verify that the buffer read contains a valid PMDAQ header
-  // First three chars should be "PMD"
-  // But is that good enough?
-
-  if (verbose) 
-    fprintf(stderr,"3 chars are '%c' '%c' '%c'\n",
-	  pmdaq_header[4],pmdaq_header[5],pmdaq_header[6]);
-  
-  if (strncmp(&pmdaq_header[4],"PMD",3)!=0){
-    fprintf(stderr,"false 2\n");
+  if ( dummy->get_header (pmdaq_header, filename) < 0)
     return false;
-  }
+    
+  if (strncmp(&pmdaq_header[4],"PMD",3)!=0)
+    return false;
 
   if (verbose) printf("File %s is valid PMDAQ data!\n",filename);
   return true;
@@ -93,7 +104,7 @@ bool dsp::PMDAQFile::is_valid (const char* filename,int) const
 void dsp::PMDAQFile::work_out_ndat(const char* filename){
   uint64 fsize = filesize(filename);
 
-  uint64 chunk_size = uint64(HEADER_BYTES+DATA_BYTES+TRAILER_BYTES);
+  uint64 chunk_size = header_bytes+data_bytes+trailer_bytes;
 
   if( fsize%chunk_size )
     throw Error(InvalidState,"dsp::PMDAQFile::work_out_ndat()",
@@ -102,7 +113,7 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 
   uint64 nblocks = fsize/chunk_size;
 
-  uint64 data_bytes = nblocks*DATA_BYTES;
+  uint64 data_bytes = nblocks*data_bytes;
 
   info.set_ndat( info.get_nsamples(data_bytes) );
 
@@ -113,9 +124,25 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 
 // If user has requested channels that lie in the second observing band on disk, modify the bandwidth and centre frequency of output
 void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
-  if( !data->has_two_filters() || !using_second_band )
+  if( !data->has_two_filters() )
     return;
   
+  if( !get_output() )
+    throw Error(InvalidState,"dsp::PMDAQFile::modify_info()",
+		"You must set the output before trying to open the file");
+
+  Reference::To<PMDAQ_Extension> ext = new PMDAQ_Extension;
+  get_output()->add( ext );
+
+  if( !using_second_band ){
+    ext->set_chan_begin( 0 );
+    ext->set_chan_end( data->get_freq1_channels() );
+    return;
+  }
+
+  ext->set_chan_begin( data->get_freq1_channels() );
+  ext->set_chan_end( data->get_freq1_channels() + data->get_freq2_channels() );
+
   info.set_centre_frequency( data->get_second_centre_frequency() );
   info.set_bandwidth( data->get_second_bandwidth() );
 }
@@ -123,8 +150,9 @@ void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
 void dsp::PMDAQFile::open_file (const char* filename)
 {  
   if (get_header (pmdaq_header, filename) < 0)
-    throw_str ("PMDAQFile::open - failed get_header(%s): %s",
-	       filename, strerror(errno));
+    throw Error(InvalidState,"PMDAQFile::open",
+		"failed get_header(%s): %s",
+		filename, strerror(errno));
   
   PMDAQ_Observation data(pmdaq_header);
   
@@ -149,16 +177,15 @@ void dsp::PMDAQFile::open_file (const char* filename)
 
 // Loads bytes bytes from current location
 // Needs to know where you are currently up to.
-
 uint64 dsp::PMDAQFile::load_partial_chunk(unsigned char*& buffer, uint64 bytes){
-  int position = (absolute_position%(HEADER_BYTES+DATA_BYTES+TRAILER_BYTES));
+  int64 position = absolute_position % int64(header_bytes+data_bytes+trailer_bytes);
   
-  if( position < HEADER_BYTES || position >= HEADER_BYTES+DATA_BYTES )
+  if( position < int64(header_bytes) || position >= int64(header_bytes+data_bytes) )
     return 0;
   
-  int part_chunk_of_48k = HEADER_BYTES+DATA_BYTES - position;
+  int64 part_chunk_of_48k = int64(header_bytes+data_bytes) - position;
   
-  int to_load = min(part_chunk_of_48k,int(bytes));
+  int64 to_load = min(part_chunk_of_48k,int64(bytes));
   
   if( read (fd, buffer, to_load) != to_load )
     throw Error(FailedCall,"dsp::PMDAQFile::load_partial_chunk()",
@@ -167,7 +194,7 @@ uint64 dsp::PMDAQFile::load_partial_chunk(unsigned char*& buffer, uint64 bytes){
   absolute_position += to_load;
   buffer += to_load;
   
-  return to_load;
+  return uint64(to_load);
 }
 
 int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
@@ -187,7 +214,7 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
   if( bytes_loaded==bytes )
     return cleanup(bytes_loaded);
 
-  unsigned nchunks = (bytes-bytes_loaded)/DATA_BYTES;
+  unsigned nchunks = (bytes-bytes_loaded)/data_bytes;
 
   // Load full chunks
   for( unsigned ichunk=0; ichunk<nchunks; ichunk++){
@@ -207,10 +234,10 @@ int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 }
 
 int64 dsp::PMDAQFile::cleanup(uint64 bytes_loaded){
-  uint64 file_blocks = info.get_nbytes()/DATA_BYTES;
-  uint64 file_size = file_blocks * (DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+  uint64 file_blocks = info.get_nbytes()/data_bytes;
+  uint64 file_size = file_blocks * (data_bytes + header_bytes + trailer_bytes);
 
-  if( int64(absolute_position) >= int64(file_size-TRAILER_BYTES) )
+  if( int64(absolute_position) >= int64(file_size-trailer_bytes) )
     end_of_data = true;
   else
     end_of_data = false;
@@ -219,20 +246,20 @@ int64 dsp::PMDAQFile::cleanup(uint64 bytes_loaded){
 }
 
 uint64 dsp::PMDAQFile::bytes_available(){
-  uint64 file_blocks = info.get_nbytes()/DATA_BYTES;
-  uint64 file_size = file_blocks * (DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+  uint64 file_blocks = info.get_nbytes()/data_bytes;
+  uint64 file_size = file_blocks * (data_bytes + header_bytes + trailer_bytes);
   
-  uint64 partial_chunk_bytes = absolute_position%(DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+  uint64 partial_chunk_bytes = absolute_position%(data_bytes + header_bytes + trailer_bytes);
 
   uint64 extra_bytes = 0;
 
-  if( partial_chunk_bytes > HEADER_BYTES && partial_chunk_bytes <= HEADER_BYTES+DATA_BYTES )
-    extra_bytes = DATA_BYTES - (partial_chunk_bytes - HEADER_BYTES);
+  if( partial_chunk_bytes > header_bytes && partial_chunk_bytes <= header_bytes+data_bytes )
+    extra_bytes = data_bytes - (partial_chunk_bytes - header_bytes);
 
   uint64 absolute_bytes_left = file_size - absolute_position;
-  uint64 blocks_left = absolute_bytes_left/(DATA_BYTES + HEADER_BYTES + TRAILER_BYTES);
+  uint64 blocks_left = absolute_bytes_left/(data_bytes + header_bytes + trailer_bytes);
 
-  uint64 bytes_in_blocks_left = blocks_left * DATA_BYTES;
+  uint64 bytes_in_blocks_left = blocks_left * data_bytes;
 
   uint64 data_bytes_left = bytes_in_blocks_left + extra_bytes;
 
@@ -248,19 +275,19 @@ uint64 dsp::PMDAQFile::bytes_available(){
 }
 
 void dsp::PMDAQFile::seek_ahead(){
-  int position = (absolute_position%(HEADER_BYTES+DATA_BYTES+TRAILER_BYTES));
+  int64 position = absolute_position % int64(header_bytes+data_bytes+trailer_bytes);
   
-  int to_seek = 0;
+  int64 to_seek = 0;
 
-  if( position >= HEADER_BYTES+DATA_BYTES )
-    to_seek = (HEADER_BYTES+DATA_BYTES+TRAILER_BYTES - position) + HEADER_BYTES;
-  else if( position > HEADER_BYTES )
+  if( position >= int64(header_bytes+data_bytes) )
+    to_seek = ( int64(header_bytes+data_bytes+trailer_bytes) - position) + header_bytes;
+  else if( position > int64(header_bytes) )
     throw Error(InvalidState,"dsp::PMDAQFile::seek_ahead()",
 		"position is in middle of a chunk- it's supposed to be in the header/trailer before calling this routine");
-  else if( position == HEADER_BYTES )
+  else if( position == int64(header_bytes) )
     return;
   else
-    to_seek = HEADER_BYTES - position;
+    to_seek = int64(header_bytes) - position;
 
   if( lseek (fd, to_seek, SEEK_CUR) != absolute_position+to_seek )
     throw Error(FailedCall,"dsp::PMDAQFile::seek_ahead()",
@@ -281,32 +308,31 @@ uint64 dsp::PMDAQFile::load_last_chunk(unsigned char*& buffer, uint64 bytes){
 }
 
 uint64 dsp::PMDAQFile::load_chunk(unsigned char*& buffer){
-  uint64 bytes_read = read (fd, buffer, DATA_BYTES);
+  uint64 bytes_read = read (fd, buffer, data_bytes);
 
-  if( bytes_read != DATA_BYTES )
+  if( bytes_read != data_bytes )
     throw Error(FailedCall,"dsp::PMDAQFile::load_chunk()",
 		"Failed to read full chunk (only loaded "UI64" bytes of file '%s' filesize="I64" curr_pos="I64")",
 		bytes_read,get_filename().c_str(),
 		int64(filesize(get_filename().c_str())),
 		int64(lseek(fd,0,SEEK_CUR)));
   
-  absolute_position += DATA_BYTES;
-  buffer += DATA_BYTES;
+  absolute_position += data_bytes;
+  buffer += data_bytes;
 
-  return DATA_BYTES;
+  return data_bytes;
 }
 
 // Seeks to the "bytes" byte in file allowing for 4byte headers + footers
-
 int64 dsp::PMDAQFile::seek_bytes (uint64 bytes){
   // Work out absolute_position based upon header, data & footer size.
   // Then goto it.
   
-  int number_of_48ks = bytes / (DATA_BYTES);
-  int residual = bytes - number_of_48ks * DATA_BYTES;
+  int number_of_48ks = bytes / (data_bytes);
+  int residual = bytes - number_of_48ks * data_bytes;
   
-  int64 number_to_skip = number_of_48ks * (DATA_BYTES + HEADER_BYTES + TRAILER_BYTES) 
-    + HEADER_BYTES + residual;
+  int64 number_to_skip = number_of_48ks * (data_bytes + header_bytes + trailer_bytes) 
+    + header_bytes + residual;
   
   // skip number_to_skip bytes
   
