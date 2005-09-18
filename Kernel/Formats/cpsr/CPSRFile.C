@@ -195,10 +195,12 @@ void dsp::CPSRFile::open_file (const char* filename)
   info.set_bandwidth (hdr.bandwidth);
     
   // CBR linefeed data has incorrect bandwidth of 8 MHz
-  if( info.get_bandwidth() < 9.9 )
+  if( fabs(info.get_bandwidth()) < 9.9 ){
     info.set_bandwidth( 10.0 );
-  if( info.get_rate() < 9.9e6 )
     info.set_rate( 10.0e6 );
+    fprintf(stderr,"Detected CBR file with incorrect bandwidth of file '%s' of '%f'- set rate to %f and bw to %f\n",
+	    filename, hdr.bandwidth, info.get_rate(), info.get_bandwidth());
+  }
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
   // default_basis
