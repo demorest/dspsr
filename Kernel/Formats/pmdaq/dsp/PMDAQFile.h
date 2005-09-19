@@ -49,6 +49,11 @@ namespace dsp {
     //! Initialises 'pmdaq_header' with the header info
     int get_header (char* pmdaq_header, const char* filename); 
 
+    void set_chan_begin(unsigned _chan_begin){ chan_begin = _chan_begin; }
+    unsigned get_chan_begin() const { return chan_begin; }
+    void set_chan_end(unsigned _chan_end){ chan_end = _chan_end; }
+    unsigned get_chan_end() const { return chan_end; }
+
   private:
 
     //! If user has use of the second observing band on disk, modify the bandwidth and centre frequency of output
@@ -87,6 +92,9 @@ namespace dsp {
     //#define header_bytes 4
     //#define data_bytes (48*1024)
     //#define trailer_bytes 4
+
+    int chan_begin;
+    int chan_end;
   };
 
 }
