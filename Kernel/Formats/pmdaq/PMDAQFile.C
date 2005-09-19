@@ -17,11 +17,11 @@
 
 #define PMDAQ_HEADER_SIZE 648
 
+bool dsp::PMDAQFile::using_second_band = false;
+
 dsp::PMDAQFile::PMDAQFile (const char* filename) 
   : File ("PMDAQ")
 {
-  using_second_band = false;
-
   if (filename)
     open (filename);
 
@@ -127,6 +127,10 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 
 // If user has requested channels that lie in the second observing band on disk, modify the bandwidth and centre frequency of output
 void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
+  fprintf(stderr,"In dsp::PMDAQFile::modify_info() with %d and %d cf=%f bw=%d\n",
+	  data->has_two_filters(), using_second_band,
+	  info.get_centre_frequency(), info.get_bandwidth());
+
   if( !data->has_two_filters() )
     return;
   
@@ -141,6 +145,9 @@ void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
 
   info.set_centre_frequency( data->get_second_centre_frequency() );
   info.set_bandwidth( data->get_second_bandwidth() );
+
+  fprintf(stderr,"In dsp::PMDAQFile::modify_info() have set chan_begin to %d chan_end to %d cf=%f bw=%f\n",
+	  chan_begin, chan_end, info.get_centre_frequency(), info.get_bandwidth());
 }
 
 void dsp::PMDAQFile::open_file (const char* filename)
@@ -205,7 +212,9 @@ uint64 dsp::PMDAQFile::load_partial_chunk(unsigned char*& buffer, uint64 bytes){
 int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 {
   if( verbose )
-    fprintf(stderr,"load_bytes(): Got bytes=min("UI64" , "UI64") = "UI64"\n",
+    fprintf(stderr,"load_bytes(): got info.cf=%f output.cf=%f Got bytes=min("UI64" , "UI64") = "UI64"\n",
+	    info.get_centre_frequency(),
+	    output->get_centre_frequency(),
 	    bytes,bytes_available(),min(bytes, bytes_available()));
 
   if( !get_output()->has<PMDAQ_Extension>() && chan_end > chan_begin && chan_begin >= 0 ){

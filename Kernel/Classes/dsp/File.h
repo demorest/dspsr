@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.25 $
-   $Date: 2004/05/02 17:43:53 $
+   $Revision: 1.26 $
+   $Date: 2005/09/19 06:45:16 $
    $Author: hknight $ */
 
 
@@ -79,7 +79,7 @@ namespace dsp {
 
     //! Return the name of the file from which this instance was created
     string get_filename () const { return current_filename; }
-    string get_current_filename(){ return current_filename; }
+    string get_current_filename() const { return current_filename; }
 
     //! Inquire how many bytes are in the header
     int get_header_bytes() const{ return header_bytes; }

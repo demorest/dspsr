@@ -95,6 +95,11 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
     set_bandwidth (chanbw1 * nchan1); 
     second_bandwidth = chanbw2 * nchan2; 
+
+    fprintf(stderr,"Got 2 filters for pmdaq file with nchan1=%d nchan2=%d cf1=%f cf2=%f bw1=%f bw2=%f\n",
+	    nchan1, nchan2,
+	    freq_chan1_1 - 0.5 * chanbw1 + nchan1/2 * chanbw1, freq_chan1_2 - 0.5 * chanbw2 + nchan2/2 * chanbw2,
+	    chanbw1 * nchan1, chanbw2 * nchan2);
   }
 
   // //////////////////////////////////////////////////////////////////////

@@ -22,12 +22,8 @@ namespace dsp {
     //! Returns true if filename appears to name a valid PMDAQ file
     bool is_valid (const char* filename,int NOT_USED=-1) const;
 
-    //! Set which band the bandwidth/centre frequency will be extracted from
-    void set_using_second_band(bool _using_second_band)
-    { using_second_band = _using_second_band; }
-    
-    //! Inquire which band the bandwidth/centre frequency will be extracted from
-    bool get_using_second_band(){ return using_second_band; } 
+    //! Which band the bandwidth/centre frequency will be extracted from
+    static bool using_second_band;
 
   protected:
 
@@ -79,9 +75,6 @@ namespace dsp {
 
     //! Sets the end_of_data flag
     int64 cleanup(uint64 bytes_loaded);
-
-    //! What band the cf/bandwidth should be extracted from
-    bool using_second_band;
 
     //! Should be the same number as return value from lseek(fd,0,SEEK_CUR)- ie number of bytes from start of file
     int64 absolute_position;
