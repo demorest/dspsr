@@ -28,6 +28,9 @@ dsp::PMDAQFile::PMDAQFile (const char* filename)
   header_bytes = 4;
   data_bytes = 48*1024;
   trailer_bytes = 4;
+
+  chan_begin = -1;
+  chan_end = -1;
 }
 
 int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
@@ -94,7 +97,7 @@ bool dsp::PMDAQFile::is_valid (const char* filename,int) const
   if ( dummy->get_header (pmdaq_header, filename) < 0)
     return false;
     
-  if (strncmp(&pmdaq_header[4],"PMD",3)!=0)
+  if (strncmp(&pmdaq_header[4],"PMD",3)!=0 && strncmp(&pmdaq_header[0],"PMD",3)!=0 )
     return false;
 
   if (verbose) printf("File %s is valid PMDAQ data!\n",filename);
@@ -113,13 +116,13 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 
   uint64 nblocks = fsize/chunk_size;
 
-  uint64 data_bytes = nblocks*data_bytes;
+  uint64 the_data_bytes = nblocks*data_bytes;
 
-  info.set_ndat( info.get_nsamples(data_bytes) );
+  info.set_ndat( info.get_nsamples(the_data_bytes) );
 
   if( verbose )
-    fprintf(stderr,"dsp::PMDAQFile::work_out_ndat() have set ndat to "UI64"\n",
-	    info.get_ndat());
+    fprintf(stderr,"dsp::PMDAQFile::work_out_ndat(%s) YO have set ndat to "UI64" as data_bytes="UI64" fsize="UI64" chunk_size="UI64" nblocks="UI64"\n",
+	    filename,info.get_ndat(),data_bytes,fsize,chunk_size,nblocks);
 }
 
 // If user has requested channels that lie in the second observing band on disk, modify the bandwidth and centre frequency of output
@@ -127,21 +130,14 @@ void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
   if( !data->has_two_filters() )
     return;
   
-  if( !get_output() )
-    throw Error(InvalidState,"dsp::PMDAQFile::modify_info()",
-		"You must set the output before trying to open the file");
-
-  Reference::To<PMDAQ_Extension> ext = new PMDAQ_Extension;
-  get_output()->add( ext );
-
   if( !using_second_band ){
-    ext->set_chan_begin( 0 );
-    ext->set_chan_end( data->get_freq1_channels() );
+    set_chan_begin( 0 );
+    set_chan_end( data->get_freq1_channels() );
     return;
   }
 
-  ext->set_chan_begin( data->get_freq1_channels() );
-  ext->set_chan_end( data->get_freq1_channels() + data->get_freq2_channels() );
+  set_chan_begin( data->get_freq1_channels() );
+  set_chan_end( data->get_freq1_channels() + data->get_freq2_channels() );
 
   info.set_centre_frequency( data->get_second_centre_frequency() );
   info.set_bandwidth( data->get_second_bandwidth() );
@@ -187,21 +183,37 @@ uint64 dsp::PMDAQFile::load_partial_chunk(unsigned char*& buffer, uint64 bytes){
   
   int64 to_load = min(part_chunk_of_48k,int64(bytes));
   
-  if( read (fd, buffer, to_load) != to_load )
+  int64 ret = ::read (fd, buffer, to_load);
+
+  if( ret != to_load )
     throw Error(FailedCall,"dsp::PMDAQFile::load_partial_chunk()",
-		"Failed to read in partial chunk of file");
+		"Failed to read in partial chunk of file (requested "I64" got "I64") (absolute_position="I64" position="I64" part_chunk="I64" to_load="I64")",
+		to_load, ret,
+		absolute_position, position,
+		part_chunk_of_48k, to_load);
   
   absolute_position += to_load;
   buffer += to_load;
   
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::load_partial_chunk() successfully loaded "I64" bytes bringing absolute_position to "I64"\n",
+	    to_load, absolute_position);
+
   return uint64(to_load);
 }
 
 int64 dsp::PMDAQFile::load_bytes (unsigned char * buffer, uint64 bytes)
 {
   if( verbose )
-    fprintf(stderr,"Got bytes=min("UI64" , "UI64") = "UI64"\n",
+    fprintf(stderr,"load_bytes(): Got bytes=min("UI64" , "UI64") = "UI64"\n",
 	    bytes,bytes_available(),min(bytes, bytes_available()));
+
+  if( !get_output()->has<PMDAQ_Extension>() && chan_end > chan_begin && chan_begin >= 0 ){
+    Reference::To<PMDAQ_Extension> ext = new PMDAQ_Extension;
+    get_output()->add( ext );
+    ext->set_chan_begin( chan_begin );
+    ext->set_chan_end( chan_end );
+  }
 
   bytes = min(bytes, bytes_available());
 
@@ -237,7 +249,7 @@ int64 dsp::PMDAQFile::cleanup(uint64 bytes_loaded){
   uint64 file_blocks = info.get_nbytes()/data_bytes;
   uint64 file_size = file_blocks * (data_bytes + header_bytes + trailer_bytes);
 
-  if( int64(absolute_position) >= int64(file_size-trailer_bytes) )
+  if( absolute_position >= int64(file_size-header_bytes-trailer_bytes) )
     end_of_data = true;
   else
     end_of_data = false;
@@ -249,25 +261,26 @@ uint64 dsp::PMDAQFile::bytes_available(){
   uint64 file_blocks = info.get_nbytes()/data_bytes;
   uint64 file_size = file_blocks * (data_bytes + header_bytes + trailer_bytes);
   
-  uint64 partial_chunk_bytes = absolute_position%(data_bytes + header_bytes + trailer_bytes);
+  uint64 partial_chunk_bytes = absolute_position % (data_bytes + header_bytes + trailer_bytes);
 
   uint64 extra_bytes = 0;
 
   if( partial_chunk_bytes > header_bytes && partial_chunk_bytes <= header_bytes+data_bytes )
     extra_bytes = data_bytes - (partial_chunk_bytes - header_bytes);
 
-  uint64 absolute_bytes_left = file_size - absolute_position;
-  uint64 blocks_left = absolute_bytes_left/(data_bytes + header_bytes + trailer_bytes);
+  int64 absolute_bytes_left = file_size - absolute_position;
+  int64 blocks_left = absolute_bytes_left/(data_bytes + header_bytes + trailer_bytes);
 
-  uint64 bytes_in_blocks_left = blocks_left * data_bytes;
+  int64 bytes_in_blocks_left = blocks_left * data_bytes;
 
-  uint64 data_bytes_left = bytes_in_blocks_left + extra_bytes;
+  int64 data_bytes_left = bytes_in_blocks_left + extra_bytes;
 
   if( verbose )
-    fprintf(stderr,"dsp::PMDAQFile::bytes_available() Got absolute_position="UI64" file_blocks="UI64" file_size="UI64" partial_chunk_bytes="UI64" extra_bytes="UI64" absolute_bytes_left="UI64" blocks_left="UI64" bytes_in_blocks_left="UI64" data_bytes_left="UI64"\n",
+    fprintf(stderr,"dsp::PMDAQFile::bytes_available() Got absolute_position="I64" file_blocks="I64" file_size="I64" partial_chunk_bytes="I64" extra_bytes="I64" absolute_bytes_left="I64"-"I64"="I64" blocks_left="I64" bytes_in_blocks_left="I64" data_bytes_left="I64"\n",
 	    absolute_position,
 	    file_blocks, file_size, partial_chunk_bytes,
-	    extra_bytes, absolute_bytes_left,
+	    extra_bytes, 
+	    file_size, absolute_position, absolute_bytes_left,
 	    blocks_left, bytes_in_blocks_left,
 	    data_bytes_left);
 
@@ -294,6 +307,9 @@ void dsp::PMDAQFile::seek_ahead(){
 		"failed to seek the correct number of bytes");
 
   absolute_position += to_seek;
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::seek_ahead() seeked to get absolute_position="I64"\n",
+	    absolute_position);
 }
 
 uint64 dsp::PMDAQFile::load_last_chunk(unsigned char*& buffer, uint64 bytes){
@@ -303,12 +319,16 @@ uint64 dsp::PMDAQFile::load_last_chunk(unsigned char*& buffer, uint64 bytes){
   
   absolute_position += bytes;
   buffer += bytes;
+
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::load_last_chunk() now got absolute_position="I64"\n",
+	    absolute_position);
   
   return bytes;
 }
 
 uint64 dsp::PMDAQFile::load_chunk(unsigned char*& buffer){
-  uint64 bytes_read = read (fd, buffer, data_bytes);
+  uint64 bytes_read = ::read (fd, buffer, data_bytes);
 
   if( bytes_read != data_bytes )
     throw Error(FailedCall,"dsp::PMDAQFile::load_chunk()",
@@ -319,21 +339,33 @@ uint64 dsp::PMDAQFile::load_chunk(unsigned char*& buffer){
   
   absolute_position += data_bytes;
   buffer += data_bytes;
+  
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::load_chunk() successfully loaded chunk of size "I64" bringing absolute_position to "I64"\n",
+	    int64(data_bytes), absolute_position);
 
   return data_bytes;
 }
 
 // Seeks to the "bytes" byte in file allowing for 4byte headers + footers
 int64 dsp::PMDAQFile::seek_bytes (uint64 bytes){
+  if( verbose )
+    fprintf(stderr,"Entered dsp::PMDAQFile::seek_bytes ("UI64")\n",
+	    bytes);
+
   // Work out absolute_position based upon header, data & footer size.
   // Then goto it.
   
-  int number_of_48ks = bytes / (data_bytes);
-  int residual = bytes - number_of_48ks * data_bytes;
+  int64 number_of_48ks = bytes / (data_bytes);
+  int64 residual = bytes - number_of_48ks * data_bytes;
   
   int64 number_to_skip = number_of_48ks * (data_bytes + header_bytes + trailer_bytes) 
     + header_bytes + residual;
   
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::seek_bytes ("UI64") number_of_48ks="I64" residual="I64" number_to_skip = "I64" * "I64" + "I64" + "I64"\n",
+	    bytes, number_of_48ks, residual, number_of_48ks, data_bytes + header_bytes + trailer_bytes, header_bytes, residual);
+
   // skip number_to_skip bytes
   
   int64 retval = lseek (fd, number_to_skip, SEEK_SET);
@@ -345,6 +377,10 @@ int64 dsp::PMDAQFile::seek_bytes (uint64 bytes){
   }
   
   absolute_position = number_to_skip;
+  if( verbose )
+    fprintf(stderr,"dsp::PMDAQFile::seek_bytes("UI64") now got absolute_position="I64"\n",
+	    bytes, absolute_position);
+
   return (bytes);
 }
 
