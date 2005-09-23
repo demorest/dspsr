@@ -118,20 +118,17 @@ void dsp::Fold::prepare (const Observation* observation)
 
     if (verbose) cerr << "dsp::Fold::prepare generating ephemeris" << endl;
 
-    Reference::To<MatchingEphemeris> mephem(new MatchingEphemeris(jpulsar.c_str(), 0));
+    Reference::To<MatchingEphemeris> mephem;
+    mephem = new MatchingEphemeris (jpulsar.c_str(), 0);
     add_pulsar_ephemeris( mephem );
     pulsar_ephemeris = mephem;
 
   }
 
-  if( get_dispersion_measure() > 0.0 )
-    pulsar_ephemeris->set_dm( get_dispersion_measure() );
-
   if (verbose)
-    fprintf(stderr,"dsp::Fold::prepare pulsar_ephemeris psrname='%s' dm=%f (%f)\n",
-	    pulsar_ephemeris->psrname().c_str(),
-	    pulsar_ephemeris->get_dm(),
-	    get_dispersion_measure());
+    cerr << "dsp::Fold::prepare pulsar_ephemeris psrname='" 
+	 << pulsar_ephemeris->psrname() << "' dm=" 
+	 << pulsar_ephemeris->get_dm() << endl;
 
 #if 0
 
@@ -210,7 +207,7 @@ dsp::Fold::get_folding_polyco(const psrephem* pephem,
   return the_folding_polyco;
 }
 
-polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
+const polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 {
   if (verbose) cerr << "dsp::Fold::choose_polyco checking "
 		    << polycos.size()
@@ -218,9 +215,11 @@ polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 
   for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++){
     if( verbose )
-      fprintf(stderr,"dsp::Fold::choose_polyco checking polyco %d of source %s\n",ipoly,polycos[ipoly]->get_psrname().c_str());
+      cerr << "dsp::Fold::choose_polyco checking polyco " << ipoly 
+	   << " of source " << polycos[ipoly]->get_psrname() << endl;
 
-    MatchingPolyco* mpoly = dynamic_cast<MatchingPolyco*>(polycos[ipoly].ptr());
+    const MatchingPolyco* mpoly;
+    mpoly = dynamic_cast<const MatchingPolyco*>(polycos[ipoly].ptr());
 
     if( mpoly && mpoly->matches(time,pulsar) )
       return polycos[ipoly];
@@ -235,7 +234,7 @@ polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
   return 0;
 }
 
-psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
+const psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
 {
   if (verbose) cerr << "dsp::Fold::choose_ephemeris checking "
 		    << ephemerides.size()
@@ -247,7 +246,8 @@ psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
 		      << pulsar << " and "
 		      << ephemerides[ieph]->psrname() << endl;
 
-    MatchingEphemeris* mephem = dynamic_cast<MatchingEphemeris*>(ephemerides[ieph].ptr());
+    const MatchingEphemeris* mephem;
+    mephem = dynamic_cast<const MatchingEphemeris*>(ephemerides[ieph].ptr());
 
     if( mephem && mephem->matches(pulsar) )
       return ephemerides[ieph];
@@ -411,9 +411,9 @@ void dsp::Fold::set_nspan (unsigned _nspan)
   built = false;
 }
 
-void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
+void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
 {
-  if (pulsar_ephemeris.ptr() == ephemeris)
+  if (pulsar_ephemeris == ephemeris)
     return;
 
   pulsar_ephemeris = ephemeris;
@@ -422,7 +422,7 @@ void dsp::Fold::set_pulsar_ephemeris (psrephem* ephemeris)
 
 const psrephem* dsp::Fold::get_pulsar_ephemeris () const
 {
-  return pulsar_ephemeris.ptr();
+  return pulsar_ephemeris;
 }
 
 void dsp::Fold::set_input (TimeSeries* _input)
@@ -439,13 +439,15 @@ void dsp::Fold::set_input (TimeSeries* _input)
 }
 
 //! Add a phase model with which to choose to fold the data
-void dsp::Fold::add_folding_polyco (polyco* folding_polyco){
+void dsp::Fold::add_folding_polyco (const polyco* folding_polyco)
+{
   if( folding_polyco )
     polycos.push_back( folding_polyco );
 }
 
 //! Add an ephemeris with which to choose to create the phase model
-void dsp::Fold::add_pulsar_ephemeris (psrephem* pulsar_ephemeris){
+void dsp::Fold::add_pulsar_ephemeris (const psrephem* pulsar_ephemeris)
+{
   if( pulsar_ephemeris )
     ephemerides.push_back( pulsar_ephemeris );
 }
