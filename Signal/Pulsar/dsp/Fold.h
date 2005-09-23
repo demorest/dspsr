@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.36 $
-   $Date: 2005/09/23 21:49:42 $
+   $Revision: 1.37 $
+   $Date: 2005/09/23 21:55:03 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -189,10 +189,6 @@ namespace dsp {
 
     //! Flag that the polyco is built for the given ephemeris and input
     bool built;
-
-    //! The DM to go in the output PhaseSeries
-    //! If less than zero, the ephemeris DM is used
-    double dispersion_measure;
 
     //! Used to specify the final output Archive filename
     string archive_filename;

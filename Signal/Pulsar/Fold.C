@@ -30,8 +30,6 @@ dsp::Fold::Fold (bool _dont_set_limits) :
   ncoef = 0; // Defaults to 15
   nspan = 0; // Defaults to 120
 
-  dispersion_measure = -1.0;
-
   built = false;
 
   idat_start = ndat_fold = 0;
@@ -478,8 +476,7 @@ void dsp::Fold::transformation ()
 		 output->get_reference_phase(), get_reference_phase() );
 
   // Temporarily make sure the DMs are the same
-  if( pulsar_ephemeris || dispersion_measure >= 0 )
-    output->set_dispersion_measure( input->get_dispersion_measure() ); 
+  output->set_dispersion_measure( input->get_dispersion_measure() ); 
 
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
@@ -534,9 +531,7 @@ void dsp::Fold::transformation ()
   output->set_rate (1.0/sampling_interval);
 
   // Set things out of the pulsar ephemeris
-  if( dispersion_measure > 0.0 )
-    get_output()->set_dispersion_measure( dispersion_measure );
-  else if( pulsar_ephemeris )
+  if( pulsar_ephemeris )
     get_output()->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
   if( archive_filename.size() > 0 )
