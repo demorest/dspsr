@@ -80,7 +80,7 @@ void usage ()
     " -2t<threshold> sampling threshold at record time\n"
     "\n"
     "Filterbank options:\n"
-    " -F nchan       create an nchan-channel filterbank and dedisperse after (ie triple)  You also need '-J' for a plain incoherent filterbank with no coherent dedispersion\n"
+    " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
 #if ACTIVATE_MKL
@@ -977,6 +977,7 @@ int main (int argc, char** argv) try {
       cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
 	   << dispersion_measure << endl;
       dm = dispersion_measure;
+      const_cast<psrephem*>(fold->get_pulsar_ephemeris())->set_dm(dm);
     }
 
     if (kernel)
