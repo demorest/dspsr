@@ -119,7 +119,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   if (input_end < lower || input_start > upper) {
 
     if (Operation::verbose) cerr << "dsp::TimeDivide::bound"
-	     " input not from this sub-integration" << endl;
+	     " input not from this division" << endl;
 
     /*  
 	This state (in_next == true && end_reached == false) indicates
@@ -158,8 +158,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   
   if (idat_start >= input_ndat) {
 
-    // The current data end before the start of the current
-    // sub-integration
+    // The current data end before the start of the current division
 
     if (Operation::verbose)
       cerr << "dsp::TimeDivide::bound data end before start of"
@@ -213,13 +212,13 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   else if (idat_end < input_ndat) {
 
     // The current input TimeSeries extends more than the current
-    // sub-integration.  The in_next flag indicates that the input
+    // division.  The in_next flag indicates that the input
     // TimeSeries should be used again.
 
     if (Operation::verbose)
       cerr << "dsp::TimeDivide::bound input data ends "
            << (input_end-divide_end).in_seconds()*1e3 <<
-        " ms after current sub-integration" << endl;
+        " ms after current division" << endl;
 
     in_next = true;
 
@@ -229,19 +228,19 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   //////////////////////////////////////////////////////////////////////////
   //
-  // determine if the end of the current sub-integration has been reached
+  // determine if the end of the current division has been reached
   //
 
   double samples_to_end = (upper - divide_end).in_seconds() * sampling_rate;
 
   if (Operation::verbose)
-    cerr << "dsp::TimeDivide::bound " << samples_to_end << " samples to"
-      " end of current sub-integration" << endl;
+    cerr << "dsp::TimeDivide::bound " << samples_to_end << 
+      " samples to end of current division" << endl;
 
   if (samples_to_end < 0.5) {
 
     if (Operation::verbose)
-      cerr << "dsp::TimeDivide::bound end of sub-integration" << endl;
+      cerr << "dsp::TimeDivide::bound end of division" << endl;
 
     end_reached = true;
     set_boundaries (divide_end + 0.5/sampling_rate);
@@ -249,14 +248,16 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   }
 
   if (Operation::verbose) {
-    double used = double(ndat)/sampling_rate;
-    double available = double(input_ndat)/sampling_rate;
-    cerr << "dsp::TimeDivide::bound division " << used*1e3 << "/"
-	 << available*1e3 << " ms (" << ndat << "/" << input_ndat
-	 << " samples)" << endl;
+    double start = 1e3*idat_start/sampling_rate;
+    double used = 1e3*ndat/sampling_rate;
+    double available = 1e3*input_ndat/sampling_rate;
+    cerr << "dsp::TimeDivide::bound using "
+	 << used << "/" << available << " from " << start << " ms\n  (" 
+	 << ndat << "/" << input_ndat << " from " << idat_start << " samps)"
+	 << endl;
   }
 
-  current_end = input_start + idat_end;
+  current_end = input_start + idat_end/sampling_rate;
   in_current = true;
 }
 
@@ -295,7 +296,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 
   if (division_seconds > 0) {
 
-    // sub-integration length specified in seconds
+    // division length specified in seconds
     double seconds = (divide_start - start_time).in_seconds();
 
     // assumption: integer cast truncates
@@ -311,7 +312,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     throw Error (InvalidState, "dsp::TimeDivide::set_boundaries",
 		 "division length not specified");
 
-  // sub-integration length specified in turns
+  // division length specified in turns
 
   if (!poly)
     throw Error (InvalidState, "dsp::TimeDivide::set_boundaries",
@@ -319,8 +320,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 		 "but no folding polyco");
 
   if (Operation::verbose)
-    cerr << "dsp::TimeDivide::set_boundaries using polynomial: "
-      "avg. period=" << poly->period(divide_start) << endl;
+    cerr << "dsp::TimeDivide::set_boundaries using polynomial:\n"
+      "  avg. period=" << poly->period(divide_start) << endl;
 
   Phase input_phase = poly->phase (divide_start);
 
