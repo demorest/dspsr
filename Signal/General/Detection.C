@@ -1,5 +1,3 @@
-#include <memory>
-
 #include "dsp/Detection.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Transformation.h"
@@ -11,6 +9,8 @@
 #include "genutil.h"
 #include "cross_detect.h"
 #include "stokes_detect.h"
+
+#include <memory>
 
 //! Constructor
 dsp::Detection::Detection () 
@@ -134,12 +134,18 @@ void dsp::Detection::resize_output ()
   else if(state==Signal::Intensity )
     output_npol = 1;
 
-  get_output()->copy_configuration( get_input() );
+  if (get_output() != get_input())
+    get_output()->copy_configuration( get_input() );
+
   get_output()->set_npol( output_npol );
   get_output()->set_state( state );
   get_output()->set_ndim( output_ndim );
 
-  get_output()->resize( get_input()->get_ndat() );
+  if (get_output() != get_input())
+    get_output()->resize( get_input()->get_ndat() );
+  else
+    get_output()->reshape();
+
 }
 
 void dsp::Detection::square_law ()
