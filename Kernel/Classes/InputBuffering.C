@@ -14,45 +14,30 @@ void dsp::InputBuffering::set_target (HasInput<TimeSeries>* _target)
   target = _target;
 }
 
-//! Set the first sample to be used from the input next time
+/*! Copy remaining data from the target Transformation's input to buffer */
 void dsp::InputBuffering::set_next_start (uint64 next)
 {
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::set_next_start " << next << endl;
+
   next_start_sample = next;
-}
 
-//! Perform all buffering tasks required before transformation
-void dsp::InputBuffering::pre_transformation ()
-{
-  if (!requested_reserve || !buffer)
-    return;
-
-  if (Operation::verbose)
-    cerr << "dsp::InputBuffering::pre_transformation prepend "
-	 << buffer->get_ndat() << " samples" << endl;
-
-  const_cast<TimeSeries*>( target->get_input() )->prepend (buffer);
-}
-
-//! Perform all buffering tasks required after transformation
-void dsp::InputBuffering::post_transformation ()
-{
   uint64 ndat = target->get_input()->get_ndat();
 
-  if (next_start_sample > ndat)
-    throw Error (InvalidState, "dsp::InputBuffering::post_transformation",
-		 "next_start_sample="UI64" != input ndat="UI64, 
-		 next_start_sample, ndat);
-
   uint64 buffer_ndat = ndat - next_start_sample;
+
+  if (next_start_sample > ndat)
+    buffer_ndat = 0;
 
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::post_transformation saving "
 	 << buffer_ndat << " samples" << endl;
 
-  if (!buffer_ndat)
+  if (!buffer_ndat) {
+    if (buffer)
+      buffer->set_ndat (0);
     return;
+  }
 
   if (minimum_samples < buffer_ndat)
     minimum_samples = buffer_ndat;
@@ -70,8 +55,25 @@ void dsp::InputBuffering::post_transformation ()
   buffer->set_ndim ( target->get_input()->get_ndim() );
   buffer->resize( minimum_samples );
   buffer->copy_data( target->get_input(), next_start_sample, buffer_ndat );
-  buffer->resize( buffer_ndat );
+  buffer->set_ndat( buffer_ndat );
+}
 
+/*! Prepend buffered data to target Transformation's input TimeSeries */
+void dsp::InputBuffering::pre_transformation ()
+{
+  if (!requested_reserve || !buffer)
+    return;
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::pre_transformation prepend "
+	 << buffer->get_ndat() << " samples" << endl;
+
+  const_cast<TimeSeries*>( target->get_input() )->prepend (buffer);
+}
+
+/*! No action required after transformation */
+void dsp::InputBuffering::post_transformation ()
+{
 }
 
 
