@@ -1,18 +1,15 @@
-#include <string>
-
-#include <assert.h>
-
+#include "dsp/Fold.h"
 #include "dsp/WeightedTimeSeries.h"
-
-#include "Error.h"
 
 #include "MatchingEphemeris.h"
 #include "MatchingPolyco.h"
 #include "tempo++.h"
 #include "genutil.h"
 #include "string_utils.h"
+#include "Error.h"
 
-#include "dsp/Fold.h"
+#include <string>
+#include <assert.h>
 
 dsp::Fold::Fold (bool _dont_set_limits) :
   Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
@@ -41,7 +38,8 @@ dsp::Fold::Fold (bool _dont_set_limits) :
 // This is called from prepare() rather than the constructor so that reducer
 // can set parameters (globally) if they have not been initialised locally for a given
 // dsp::Fold
-void dsp::Fold::initialise(){
+void dsp::Fold::initialise()
+{
   if( ncoef==0 )
     ncoef = 15;
 
@@ -388,7 +386,12 @@ void dsp::Fold::set_folding_polyco (const polyco* _folding_polyco)
 
 const polyco* dsp::Fold::get_folding_polyco () const
 {
-  return folding_polyco.ptr();
+  return folding_polyco;
+}
+
+bool dsp::Fold::has_folding_polyco () const
+{
+  return folding_polyco;
 }
 
 void dsp::Fold::set_ncoef (unsigned _ncoef)
@@ -491,33 +494,25 @@ void dsp::Fold::transformation ()
 
   set_limits (input);
 
-  //  uint64 block_size = input->get_datptr (0,1) - input->get_datptr (0,0);
-  //uint64 block_ndat = block_size / input->get_ndim();
-  //assert (block_size % input->get_ndim() == 0);
-
+  uint64 nweights = 0;
   const unsigned* weights = 0;
   unsigned ndatperweight = 0;
   unsigned weight_idat = 0;
 
   if (weighted_input) {
 
+    nweights = weighted_input->get_nweights();
     weights = weighted_input->get_weights();
     ndatperweight = weighted_input->get_ndat_per_weight();
     weight_idat = weighted_input->get_weight_idat();
 
     if (verbose)
-      cerr << "dsp::Fold::transformation WeightedTimeSeries "
-              " ndatperweight=" << ndatperweight << endl;
+      cerr << "dsp::Fold::transformation WeightedTimeSeries weights="
+	   << weights << " ndatperweight=" << ndatperweight << endl;
 
   }
 
-  //double integrated = 0.0;
-  //unsigned blocks = get_input()->get_nchan() * get_input()->get_npol();
-  //uint64 block_ndat = get_input()->maximum_ndat();
-  //fold (integrated, output->get_datptr(), &(output->hits[0]),
-  //	input, blocks, input->get_datptr(), block_ndat, input->get_ndim(),
-  //	weights, ndatperweight, idat_start, ndat_fold);
-  fold (weights, ndatperweight, weight_idat);
+  fold (nweights, weights, ndatperweight, weight_idat);
   
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
@@ -561,7 +556,8 @@ void dsp::Fold::transformation ()
 
 */
 
-void dsp::Fold::fold (const unsigned* weights, 
+void dsp::Fold::fold (uint64 nweights,
+		      const unsigned* weights, 
 		      unsigned ndatperweight,
 		      unsigned weight_idat)
 {
@@ -604,15 +600,23 @@ void dsp::Fold::fold (const unsigned* weights,
   unsigned bad_weights = 0;
 
   if (verbose)
-    cerr << "dsp::Fold::fold ndatperweight=" << ndatperweight 
-         << " idat_start=" << idat_start << " ndat_fold=" << ndat_fold << endl;
+    cerr << "dsp::Fold::fold idat_start=" << idat_start 
+	 << " ndat_fold=" << ndat_fold << endl;
 
   bool bad_data = false;
 
   if (ndatperweight) {
+
     iweight = (idat_start + weight_idat) / ndatperweight;
+
     idat_nextweight = (iweight + 1) * ndatperweight - weight_idat;
 
+    if (verbose)
+      cerr << "dsp::Fold::fold ndatperweight=" << ndatperweight 
+	   << " weight_idat=" << weight_idat << " iweight=" << iweight 
+	   << " nweights=" << nweights << endl;
+
+    assert (iweight < nweights);
     if (weights[iweight] == 0)  {
       discarded_weights ++;
       bad_weights ++;
@@ -629,6 +633,7 @@ void dsp::Fold::fold (const unsigned* weights,
 
     if (ndatperweight && idat >= idat_nextweight) {
       iweight ++;
+      assert (iweight < nweights);
       if (weights[iweight] == 0) {
 	bad_data = true;
 	discarded_weights ++;
@@ -692,7 +697,7 @@ void dsp::Fold::fold (const unsigned* weights,
 
 }
 
-double dsp::Fold::get_phi(MJD start_time)
+double dsp::Fold::get_phi (const MJD& start_time)
 {
   if ( folding_period > 0.0 &&
        ( folding_period_source==get_input()->get_source()
@@ -703,14 +708,17 @@ double dsp::Fold::get_phi(MJD start_time)
   return folding_polyco->phase(start_time).fracturns()  - reference_phase;
 }
 
-double dsp::Fold::get_pfold(MJD start_time){
-  if( (folding_period > 0.0 && ( folding_period_source==get_input()->get_source() || folding_period_source==string() )))
+double dsp::Fold::get_pfold (const MJD& start_time)
+{
+  if (folding_period > 0.0 && 
+      ( folding_period_source.empty() ||
+	folding_period_source == get_input()->get_source() ))
     return folding_period;
   
   return folding_polyco->period(start_time);
 }
 
-//! Sets the 'idat_start' variable based on how much before the folded data ends the input starts
+/*! sets idat_start to zero and ndat_fold to input->get_ndat() */
 void dsp::Fold::set_limits (const Observation* input)
 {
   if( dont_set_limits )
@@ -740,230 +748,231 @@ void dsp::Fold::set_limits (const Observation* input)
   */
 }
 
- void dsp::Fold::fold (double& integration_length, float* phase, unsigned* hits,
-                     const Observation* info, unsigned nblock,
-                     const float* time, uint64 ndat, unsigned ndim,
-                     const unsigned* weights, unsigned ndatperweight,
-                     uint64 idat_start, uint64 ndat_fold)
- {
-   // /////////////////////////////////////////////////////////////////////////
-   //
-   // Initialize and check state
-   //
+void dsp::Fold::fold (double& integration_length, float* phase,
+		      unsigned* hits,
+		      const Observation* info, unsigned nblock,
+		      const float* time, uint64 ndat, unsigned ndim,
+		      const unsigned* weights, unsigned ndatperweight,
+		      uint64 idat_start, uint64 ndat_fold)
+{
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Initialize and check state
+  //
+  
+  if (!folding_nbin) {
+    
+    if (!requested_nbin)
+      throw Error (InvalidState, "dsp::Fold::fold", "nbin not set");
+    
+    folding_nbin = requested_nbin;
+  }
+  
+  if (!folding_polyco && !folding_period)
+    throw Error (InvalidState, "dsp::Fold::fold",
+		 "no polynomial and no period specified");
+  
+  if (ndat_fold == 0)
+    ndat_fold = ndat;
+  
+  uint64 idat_end = idat_start + ndat_fold;
+  
+  if (idat_end > ndat)
+    throw Error (InvalidParam, "dsp::Fold:fold",
+		 "idat_start="UI64" + ndat_fold="UI64" > ndat="UI64,
+		 idat_start, ndat_fold, ndat);
+  
+  if (verbose)
+    cerr << "dsp::Fold::fold ndat_fold=" << ndat_fold << endl;
+  
+  // interval of each time sample in seconds
+  double sampling_interval = 1.0/info->get_rate();
+  
+  // midpoint of the first sample
+  double mid_idat_start = double(idat_start) + 0.5;
+  
+  // MJD of midpoint of the first sample
+  MJD start_time = info->get_start_time() + mid_idat_start * sampling_interval;
+  
+  double phi=0;
+  pfold = 0;
+  
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Calculate phase gradient across this section of data
+  //
+  
+  if (folding_period > 0.0 && ( folding_period_source==info->get_source()
+				|| folding_period_source==string() ))
+    {
+      pfold = folding_period;
+      phi   = fmod (start_time.in_seconds(), folding_period) / folding_period;
+      
+      if (verbose)
+	cerr << "dsp::Fold::fold constant folding period=" << pfold << endl;
+    }
 
-   if (!folding_nbin) {
+  else
+    {
+      // find the period and phase at the mid time of the first sample
+      pfold = folding_polyco->period(start_time);
+      phi   = folding_polyco->phase(start_time).fracturns();
 
-     if (!requested_nbin)
-       throw Error (InvalidState, "dsp::Fold::fold", "nbin not set");
+      if (verbose)
+	cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
+    }
 
-     folding_nbin = requested_nbin;
-   }
+  // adjust to reference phase
+  phi -= reference_phase;
 
-   if (!folding_polyco && !folding_period)
-     throw Error (InvalidState, "dsp::Fold::fold",
-                "no polynomial and no period specified");
+  if (verbose)
+    cerr << "dsp::Fold::fold phase=" << phi << endl;
 
-   if (ndat_fold == 0)
-     ndat_fold = ndat;
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Construct a folding plan
+  //
 
-   uint64 idat_end = idat_start + ndat_fold;
+  // allocate storage for phase bin plan
+  unsigned* binplan = (unsigned*) workingspace (ndat_fold * sizeof(unsigned));
 
-   if (idat_end > ndat)
-     throw Error (InvalidParam, "dsp::Fold:fold",
-                "idat_start="UI64" + ndat_fold="UI64" > ndat="UI64,
-                idat_start, ndat_fold, ndat);
+  // index through time dimension
+  uint64 idat = idat_start;
+  // index through phase dimension
+  unsigned ibin = 0;
+  // index through space dimension
+  unsigned idim = 0;
+  // index through weight array
+  unsigned iweight = 0;
+  // idat of last point in current weight
+  uint64 idat_nextweight = 0;
 
-   if (verbose)
-     cerr << "dsp::Fold::fold ndat_fold=" << ndat_fold << endl;
+  // number of time samples actually folded
+  uint64 ndat_folded = 0;
 
-   // interval of each time sample in seconds
-   double sampling_interval = 1.0/info->get_rate();
+  // number of bad weights encountered this run
+  unsigned bad_weights = 0;
 
-   // midpoint of the first sample
-   double mid_idat_start = double(idat_start) + 0.5;
+  if (ndatperweight) {
 
-   // MJD of midpoint of the first sample
-   MJD start_time = info->get_start_time() + mid_idat_start * sampling_interval;
+    iweight = idat_start / ndatperweight;
+    idat_nextweight = (iweight + 1) * ndatperweight;
 
-   double phi=0;
-   pfold = 0;
+    if (verbose)
+      cerr << "dsp::Fold::fold ndatperweight=" << ndatperweight
+	   << " iweight=" << iweight << " idat_next=" << idat_nextweight
+	   << endl;
 
-   // /////////////////////////////////////////////////////////////////////////
-   //
-   // Calculate phase gradient across this section of data
-   //
+    if (weights[iweight] == 0)  {
+      discarded_weights ++;
+      bad_weights ++;
+    }
+  }
 
-   if (folding_period > 0.0 && ( folding_period_source==info->get_source()
-                               || folding_period_source==string() ))
-     {
-       pfold = folding_period;
-       phi   = fmod (start_time.in_seconds(), folding_period) / folding_period;
+  double double_nbin = double (folding_nbin);
+  double phase_per_sample = sampling_interval / pfold;
 
-       if (verbose)
-       cerr << "dsp::Fold::fold constant folding period=" << pfold << endl;
-     }
+  bool bad_data = false;
 
-   else
-     {
-       // find the period and phase at the mid time of the first sample
-       pfold = folding_polyco->period(start_time);
-       phi   = folding_polyco->phase(start_time).fracturns();
+  for (idat=idat_start; idat < idat_end; idat++) {
 
-       if (verbose)
-       cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
-     }
+    if (ndatperweight && idat >= idat_nextweight) {
 
-   // adjust to reference phase
-   phi -= reference_phase;
+      iweight ++;
 
-   if (verbose)
-     cerr << "dsp::Fold::fold phase=" << phi << endl;
+      if (verbose)
+	cerr << "dsp::Fold::fold iweight=" << iweight;
 
-   // /////////////////////////////////////////////////////////////////////////
-   //
-   // Construct a folding plan
-   //
+      if (weights[iweight] == 0) {
 
-   // allocate storage for phase bin plan
-   unsigned* binplan = (unsigned*) workingspace (ndat_fold * sizeof(unsigned));
+	bad_data = true;
+	discarded_weights ++;
+	bad_weights ++;
 
-   // index through time dimension
-   uint64 idat = idat_start;
-   // index through phase dimension
-   unsigned ibin = 0;
-   // index through space dimension
-   unsigned idim = 0;
-   // index through weight array
-   unsigned iweight = 0;
-   // idat of last point in current weight
-   uint64 idat_nextweight = 0;
+	if (verbose)
+	  cerr << " bad=" << bad_weights << endl;
 
-   // number of time samples actually folded
-   uint64 ndat_folded = 0;
+      }
+      else {
 
-   // number of bad weights encountered this run
-   unsigned bad_weights = 0;
+	bad_data = false;
+	if (verbose)
+	  cerr << endl;
 
-   if (ndatperweight) {
-
-     iweight = idat_start / ndatperweight;
-     idat_nextweight = (iweight + 1) * ndatperweight;
-
-     if (verbose)
-       cerr << "dsp::Fold::fold ndatperweight=" << ndatperweight
-          << " iweight=" << iweight << " idat_next=" << idat_nextweight
-          << endl;
-
-     if (weights[iweight] == 0)  {
-       discarded_weights ++;
-       bad_weights ++;
-     }
-   }
-
-   double double_nbin = double (folding_nbin);
-   double phase_per_sample = sampling_interval / pfold;
-
-   bool bad_data = false;
-
-   for (idat=idat_start; idat < idat_end; idat++) {
-
-     if (ndatperweight && idat >= idat_nextweight) {
-
-       iweight ++;
-
-       if (verbose)
-       cerr << "dsp::Fold::fold iweight=" << iweight;
-
-       if (weights[iweight] == 0) {
-
-       bad_data = true;
-         discarded_weights ++;
-       bad_weights ++;
-
-       if (verbose)
-         cerr << " bad=" << bad_weights << endl;
-
-       }
-       else {
-
-         bad_data = false;
-         if (verbose)
-         cerr << endl;
-
-       }
-
-
-       idat_nextweight += ndatperweight;
+      }
 
 
-     }
+      idat_nextweight += ndatperweight;
 
-     // ensure that phi runs from 0 to 1
-     phi -= floor (phi);
 
-     ibin = unsigned (phi * double_nbin);
+    }
 
-     phi += phase_per_sample;
+    // ensure that phi runs from 0 to 1
+    phi -= floor (phi);
 
-     assert (ibin < folding_nbin);
-     binplan[idat-idat_start] = ibin;
+    ibin = unsigned (phi * double_nbin);
 
-     if (bad_data)
-       binplan[idat-idat_start] = folding_nbin;
-     else {
-       hits[ibin]++;
-       ndat_folded ++;
-     }
+    phi += phase_per_sample;
 
-   }
+    assert (ibin < folding_nbin);
+    binplan[idat-idat_start] = ibin;
 
-   if (bad_weights && verbose)
-     cerr << "dsp::Fold::fold " << bad_weights
-          << "/" << iweight+1 << " total bad weights" << endl;
+    if (bad_data)
+      binplan[idat-idat_start] = folding_nbin;
+    else {
+      hits[ibin]++;
+      ndat_folded ++;
+    }
 
-   // /////////////////////////////////////////////////////////////////////////
-   //
-   // Calculate the integrated total
-   //
-   integration_length = double(ndat_folded) * sampling_interval;
-   //  fprintf(stderr,"dsp::Fold::Fold has integration_length = %f * %f = %f\n",
-   //  double(ndat_folded), sampling_interval, integration_length);
-   if (verbose)
-     cerr << "dsp::Folding::fold " << integration_length << " seconds" << endl;
+  }
 
-   // /////////////////////////////////////////////////////////////////////////
-   //
-   // Fold arrays
-   //
+  if (bad_weights && verbose)
+    cerr << "dsp::Fold::fold " << bad_weights
+	 << "/" << iweight+1 << " total bad weights" << endl;
 
-   // pointer through phase dimension
-   float *phasep;
-   // pointer through dimensions after phase
-   float *phdimp;
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Calculate the integrated total
+  //
+  integration_length = double(ndat_folded) * sampling_interval;
+  //  fprintf(stderr,"dsp::Fold::Fold has integration_length = %f * %f = %f\n",
+  //  double(ndat_folded), sampling_interval, integration_length);
+  if (verbose)
+    cerr << "dsp::Folding::fold " << integration_length << " seconds" << endl;
 
-   // pointer through time dimension
-   const float *timep;
+  // /////////////////////////////////////////////////////////////////////////
+  //
+  // Fold arrays
+  //
 
-   for (unsigned iblock=0; iblock<nblock; iblock++) {
-     timep = time + (ndat * iblock + idat_start) * ndim;
-     phasep = phase + folding_nbin * iblock * ndim;
+  // pointer through phase dimension
+  float *phasep;
+  // pointer through dimensions after phase
+  float *phdimp;
 
-     for (idat=0; idat < ndat_fold; idat++) {
+  // pointer through time dimension
+  const float *timep;
 
-       if (binplan[idat] != folding_nbin) {
+  for (unsigned iblock=0; iblock<nblock; iblock++) {
+    timep = time + (ndat * iblock + idat_start) * ndim;
+    phasep = phase + folding_nbin * iblock * ndim;
 
-       // point to the right phase
-       phdimp = phasep + binplan[idat] * ndim;
+    for (idat=0; idat < ndat_fold; idat++) {
 
-       // integrate the ndim dimensions
-       for (idim=0; idim<ndim; idim++)
-         phdimp[idim] += timep[idim];
+      if (binplan[idat] != folding_nbin) {
 
-       }
+	// point to the right phase
+	phdimp = phasep + binplan[idat] * ndim;
 
-       timep += ndim;
+	// integrate the ndim dimensions
+	for (idim=0; idim<ndim; idim++)
+	  phdimp[idim] += timep[idim];
 
-     } // for each idat
-   } // for each block
- }
+      }
+
+      timep += ndim;
+
+    } // for each idat
+  } // for each block
+}
 

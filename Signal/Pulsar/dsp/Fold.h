@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.37 $
-   $Date: 2005/09/23 21:55:03 $
+   $Revision: 1.38 $
+   $Date: 2005/09/27 08:14:57 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -84,6 +84,9 @@ namespace dsp {
     //! Get the phase model which is currently being used to fold data
     const polyco* get_folding_polyco () const;
 
+    //! Returns true if data will be folded using polyco
+    bool has_folding_polyco () const;
+
     //! Get the ephemeris used to create the phase model
     const psrephem* get_pulsar_ephemeris () const;
 
@@ -141,9 +144,8 @@ namespace dsp {
     virtual void transformation ();
 
     //! Fold nblock blocks of data
-    virtual void fold (const unsigned* weights,
-		       unsigned ndatperweight,
-		       unsigned weight_idat);
+    virtual void fold (uint64 nweights, const unsigned* weights,
+		       unsigned ndatperweight, unsigned weight_idat);
 
     //! Set the idat_start and ndat_fold attributes
     virtual void set_limits (const Observation* input);
@@ -158,15 +160,16 @@ namespace dsp {
     uint64 get_ndat_fold(){ return ndat_fold; }
 
     //! Called by fold to return pfold
-    double get_pfold(MJD start_time);
+    double get_pfold (const MJD& start_time);
     
     //! Called by new_fold() to return phi
-    double get_phi(MJD start_time);
+    double get_phi (const MJD& start_time);
 
     //! Period at which to fold data
     double folding_period;
 
-    //! The source name for which to fold at 'folding_period'.  If this is null then all sources are folded at 'folding_period'
+    //! The source name for which to fold at folding_period.
+    /*! If this is not set, then all sources are folded at folding_period */
     string folding_period_source;
 
     //! Set when Tranformation::input is a Weighted TimeSeries
