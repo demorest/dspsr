@@ -1,17 +1,16 @@
-#include <stdio.h>
-#include <assert.h>
-
-#include <algorithm>
-#include <memory>
+#include "dsp/TimeSeries.h"
 
 #include "environ.h"
 #include "genutil.h"
 #include "fsleep.h"
 #include "minmax.h"
-
 #include "Error.h"
 
-#include "dsp/TimeSeries.h"
+#include <algorithm>
+#include <memory>
+
+#include <stdio.h>
+#include <assert.h>
 
 bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
 {
@@ -42,32 +41,37 @@ bool dsp::ChannelPtr::operator < (const ChannelPtr& c) const{
   return centre_frequency < c.centre_frequency;
 }
 
-dsp::TimeSeries::TimeSeries() : DataSeries() {
-  initj();
+dsp::TimeSeries::TimeSeries () : DataSeries()
+{
+  init ();
 }
   
-dsp::TimeSeries::TimeSeries(const TimeSeries& ts) : DataSeries() {
+dsp::TimeSeries::TimeSeries (const TimeSeries& ts) : DataSeries() 
+{
+  init ();
   operator=(ts);
 }
 
-void dsp::TimeSeries::initj(){
+void dsp::TimeSeries::init ()
+{
   DataSeries::set_nbit( 8 * sizeof(float) );
   data = 0;  
   reserve_ndat = 0;
   set_preserve_seeked_data( false );
 }
 
-dsp::TimeSeries* dsp::TimeSeries::clone(){
-  return new TimeSeries(*this);
+dsp::TimeSeries* dsp::TimeSeries::clone ()
+{
+  return new TimeSeries (*this);
 }
 
-dsp::TimeSeries* dsp::TimeSeries::null_clone(){
+dsp::TimeSeries* dsp::TimeSeries::null_clone ()
+{
   return new TimeSeries;
 }
 
-dsp::TimeSeries::~TimeSeries(){
-  //  fprintf(stderr,"In TimeSeries destructor ndat="UI64"\n",
-  //  get_ndat());
+dsp::TimeSeries::~TimeSeries()
+{
 }
 
 void dsp::TimeSeries::set_nbit (unsigned _nbit)
@@ -86,25 +90,27 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
   is not modified.  Only the interpretation of the size of each data block
   is changed.
   <LI> nsamples > previous resize(nsamples), the data buffer may be deleted
-  and the current data fill be lost.
+  and the current data fill be lost
+
+  If the reshape flag is set, the reserve_ndat is ignored.
   </UL>
 */
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
-  if( verbose )
-    fprintf(stderr,"In dsp::TimeSeries::resize("UI64") with data=%p and buffer=%p ndat="UI64"\n",
-	    nsamples,data,buffer,get_ndat());
+  if (verbose) {
+    cerr << "dsp::TimeSeries::resize(" << nsamples << ") data=" << data
+	 << " buffer=" << (void*)buffer << " ndat=" << get_ndat() << endl;
 
-    if( data && buffer ){
-      if( verbose ){
-	cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
+    if (data && buffer) {
+      cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
 	     << int64((data-(float*)buffer)) << endl;
-	cerr << "get_samps_offset() = " 
-	     << get_samps_offset() << " floats get_preserve_seeked_data=" << get_preserve_seeked_data() << endl;
-      }
-    }  
+      cerr << "get_samps_offset() = " 
+	   << get_samps_offset() << " floats get_preserve_seeked_data="
+	   << get_preserve_seeked_data() << endl;
+    }
+  }  
 
-  if( !get_preserve_seeked_data() ){
+  if (!get_preserve_seeked_data()) {
     if (verbose)
       cerr << "dsp::TimeSeries::resize not preserving; reserving "
 	   << reserve_ndat << endl;
@@ -764,7 +770,8 @@ void dsp::TimeSeries::change_reserve (int64 change)
 }
 
 //! Returns how many samples have been seeked over
-uint64 dsp::TimeSeries::get_seekage(){     
+uint64 dsp::TimeSeries::get_seekage ()
+{     
   float* fbuffer = (float*)buffer;
   
   return uint64(data - fbuffer) / uint64(get_ndim());
