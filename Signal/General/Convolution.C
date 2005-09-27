@@ -181,8 +181,8 @@ void dsp::Convolution::transformation ()
     cerr << "Convolution::transformation npart=" << npart << endl;
 
   if (has_buffering_policy()) {
-    get_buffering_policy()->set_next_start (nsamp_good * npart);
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
+    get_buffering_policy()->set_next_start (nsamp_good * npart);
   }
 
   float* spectrum[2];
@@ -200,10 +200,12 @@ void dsp::Convolution::transformation ()
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
-  get_output()->set_nchan( get_input()->get_nchan() ); // nchan doesn't change
-  get_output()->set_npol( get_input()->get_npol() );   // npol doesn't change
+
   get_output()->set_state( Signal::Analytic );
   get_output()->set_ndim( 2 );
+
+  if ( state == Signal::Nyquist )
+    get_output()->set_rate( 0.5*get_input()->get_rate() );
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
@@ -213,23 +215,14 @@ void dsp::Convolution::transformation ()
       weighted_output->scrunch_weights (2);
   }
 
-  if( state == Signal::Analytic ){
-    // Case 1. Analytic->Analytic:
-    if (input.get() == output.get())
-      output->set_ndat (npart * nsamp_good);
-    else
-      output->resize (npart * nsamp_good);
-  }
-  else{
-    // Case 2. Nyquist->Analytic:
-    get_output()->set_rate( 0.5*get_input()->get_rate() );
-
-    // nsamp_good is number of input timesamples
-    if( get_input() != get_output() )
-      get_output()->resize( (npart*nsamp_good) / 2 );
-    else
-      get_output()->set_ndat( (npart*nsamp_good) / 2 );
-  }
+  uint64 output_ndat = npart * nsamp_good;
+  if ( state == Signal::Nyquist )
+    output_ndat /= 2;
+    
+  if( get_input() != get_output() )
+    output->resize (output_ndat);
+  else
+    output->set_ndat (output_ndat);
     
   get_output()->check_sanity();
 

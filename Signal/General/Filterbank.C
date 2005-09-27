@@ -169,8 +169,8 @@ void dsp::Filterbank::transformation ()
 
 
   if (has_buffering_policy()) {
-    get_buffering_policy()->set_next_start (nsamp_step * npart);
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
   }
 
   // prepare the output TimeSeries
