@@ -108,10 +108,14 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
       }
       else{
 #if INTERACTIVE_MEMORY
-	cerr << "dsp::DataSeries::resize delete " << size << " bytes" << endl;
+	cerr << "dsp::DataSeries::resize free " << size << " bytes at "
+	     << (void*)buffer << endl;
 	getchar();
 #endif
 	free (buffer);
+#if INTERACTIVE_MEMORY
+	cerr << "dsp::DataSeries::resize freed" << endl;
+#endif
 	memory_used -= size;
       }
       buffer = 0;
@@ -125,33 +129,41 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
     return;
 
   if (size == 0) {
+
     // Add '8' (2 floats) on for FFTs that require 2 extra floats in the allocated memory
+
 #if INTERACTIVE_MEMORY
     cerr << "dsp::DataSeries::resize allocate " << require << " bytes" << endl;
     getchar();
 #endif
     buffer = (unsigned char*) memalign (16, require + 8);
+#if INTERACTIVE_MEMORY
+    cerr << "dsp::DataSeries::resize allocated at " << (void*) buffer << endl;
+#endif
 
     if( !buffer )
       throw Error(InvalidState,"dsp::DataSeries::resize()",
 		  "Could not allocate another "UI64" bytes!",
 		  require+8);
 
-    //    fprintf(stderr,"dsp::DataSeries::resize() have resized buffer to be of size "UI64".  buffer=%p\n",
-    //    require,buffer);
     size = require;
     memory_used += size;
   }
 
-  subsize = (get_ndim() * nsamples * get_nbit())/8;
+  reshape ();
+}
+
+void dsp::DataSeries::reshape ()
+{
+  subsize = (get_ndim() * get_ndat() * get_nbit()) / 8;
   
-  if( subsize*get_npol()*get_nchan() > size )
-    throw Error(InvalidState,"dsp::DataSeries::resize()",
-		"BUG! subsize*get_npol()*get_nchan() > size ("UI64" * %d * %d > "UI64")\n",
-		subsize,get_npol(),get_nchan(),size);
+  if (subsize*get_npol()*get_nchan() > size)
+    throw Error (InvalidState, "dsp::DataSeries::reshape",
+		 "subsize="UI64" * npol=%d * nchan=%d > size="UI64,
+		 subsize, get_npol(), get_nchan(), size);
 
   if (verbose)
-    cerr << "dsp::DataSeries::resize " << size << " bytes allocated"
+    cerr << "dsp::DataSeries::reshape size=" << size << " bytes"
       " (subsize=" << subsize << " bytes)" << endl;
 }
 
