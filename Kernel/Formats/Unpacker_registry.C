@@ -18,31 +18,29 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
 
 #if DSP_MINI
 #include "dsp/MiniUnpack.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> register_miniunpack;
+static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> miniunpack;
 #endif
 
 #include "dsp/backends.h"
-
-#if DSP_CPSR2_4bit
-#include "dsp/CPSR2FourBitUnpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2FourBitUnpacker> cpsr2_4bit;
-#endif
 
 #if DSP_CPSR2
 #include "dsp/CPSR2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #endif
 
-#if DSP_CPSR
-//#include "dsp/CPSRTwoBitCorrection.h"
-//static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
-#include "dsp/DumbCPSRUnpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::DumbCPSRUnpacker>  cpsr;
+#if DSP_CPSR2_4bit
+#include "dsp/CPSR2FourBitUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2FourBitUnpacker> cpsr2_4;
 #endif
 
 #if DSP_CPSR2_8bit
 #include "dsp/CPSR2_8bitUnpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2_8bitUnpacker> cpsr2_8bit;
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2_8bitUnpacker> cpsr2_8;
+#endif
+
+#if DSP_CPSR
+#include "dsp/CPSRTwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 #endif
 
 #if DSP_Maxim
