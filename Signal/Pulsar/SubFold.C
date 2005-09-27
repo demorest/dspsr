@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeriesUnloader.h"
 
@@ -10,8 +8,7 @@
 
 dsp::SubFold::SubFold ()
 {
-  subint_seconds = 0;
-  subint_turns = 0;
+  built = false;
 }
 
 dsp::SubFold::~SubFold ()
@@ -32,33 +29,39 @@ dsp::PhaseSeriesUnloader* dsp::SubFold::get_unloader () const
 
 
 //! Set the start time from which to begin counting sub-integrations
-void dsp::SubFold::set_start_time (MJD _start_time)
+void dsp::SubFold::set_start_time (const MJD& start_time)
 {
-  if (start_time == _start_time)
-    return;
-
-  start_time = _start_time;
-  start_phase = Phase::zero;
+  divider.set_start_time (start_time);
 }
 
 //! Set the interval over which to fold each sub-integration (in seconds)
-void dsp::SubFold::set_subint_seconds (double _subint_seconds)
+void dsp::SubFold::set_subint_seconds (double subint_seconds)
 {
-  if (subint_seconds == _subint_seconds)
-    return;
-
-  subint_seconds = _subint_seconds;
-  subint_turns = 0;
+  divider.set_seconds (subint_seconds);
 }
 
 //! Set the number of pulses to fold into each sub-integration
-void dsp::SubFold::set_subint_turns (unsigned _subint_turns)
+void dsp::SubFold::set_subint_turns (unsigned subint_turns)
 {
-  if (subint_turns == _subint_turns)
-    return;
+  divider.set_turns (subint_turns);
+}
 
-  subint_turns = _subint_turns;
-  subint_seconds = 0;
+void dsp::SubFold::prepare ()
+{
+  if (verbose)
+    cerr << "dsp::SubFold::prepare call Fold::prepare" << endl;
+
+  Fold::prepare ();
+
+  // if unspecified, the first TimeSeries to be folded will define the
+  // start time from which to begin cutting up the observation
+  if (divider.get_start_time() == MJD::zero)
+    divider.set_start_time (input->get_start_time());
+
+  if (has_folding_polyco())
+    divider.set_polyco (get_folding_polyco());
+
+  built = true;
 }
 
 
@@ -67,26 +70,29 @@ void dsp::SubFold::transformation ()
   if (verbose)
     cerr << "dsp::SubFold::transformation" << endl;
 
-  if (subint_turns == 0 && subint_seconds == 0.0)
+  if (divider.get_turns() == 0 && divider.get_seconds() == 0.0)
     throw Error (InvalidState, "dsp::SubFold::tranformation",
 		 "sub-integration length not specified");
 
-
-  // if unspecified, the first TimeSeries to be folded will define the
-  // start time from which to begin cutting up the observation
-  if (start_time == MJD::zero)
-    set_start_time (input->get_start_time());
+  if (!built)
+    prepare ();
 
   // flag that the input TimeSeries contains data for another sub-integration
   bool more_data = true;
 
   while (more_data) {
 
-    // flag that the current profile should be unloaded after the next fold
-    bool subint_full = false;
+    divider.set_bounds( get_input() );
 
-    // SubFold::bound sets the Fold::idat_start and Fold::ndat_fold attributes
-    bool fold = bound (more_data, subint_full);
+    more_data = divider.get_in_next ();
+    bool fold = divider.get_in_current ();
+
+    // flag that the current profile should be unloaded after the next fold
+    bool subint_full = divider.get_end_reached();
+
+    // set the Fold::idat_start and Fold::ndat_fold attributes
+    idat_start = divider.get_idat_start ();
+    ndat_fold = divider.get_ndat ();
 
     if (fold)
       Fold::transformation ();
@@ -102,13 +108,17 @@ void dsp::SubFold::transformation ()
 	// uncontiguous data, which can arise when processing in
 	// parallel
 
-	if (verbose)
-	  cerr << "dsp::SubFold::transformation"
-	    " storing incomplete sub-integration" << endl;
-
-	partial.send (*output);
+	if (output->get_integration_length()) {
+	  if (verbose)
+	    cerr << "dsp::SubFold::transformation"
+	      " storing incomplete sub-integration" << endl;
+	  
+	  partial.send (*output);
+	  
+	}
 
       }
+
       continue;
     }
 
@@ -146,289 +156,4 @@ void dsp::SubFold::set_limits (const Observation* input)
    Fold::set_limits. */
 }
 
-/*! This method sets the idat_start and ndat_fold attributes of the
-  Fold base class */
-bool dsp::SubFold::bound (bool& more_data, bool& subint_full)
-{
-  more_data = false;
-  subint_full = false;
 
-  double sampling_rate = input->get_rate();
-  uint64 input_ndat = input->get_ndat();
-
-  MJD input_start = input->get_start_time();
-  MJD input_end   = input->get_end_time();
-
-  bool contains_data = (output->get_integration_length () > 0);
-
-  //////////////////////////////////////////////////////////////////////////
-  //
-  // determine the MJD at which to start folding 
-  //
-  MJD fold_start;
-
-  if (!contains_data) {
-
-    // The current sub-integration contains no data.  Set new
-    // boundaries and start folding with the first sample of the input
-    // TimeSeries within the boundaries.
-
-    if (lower == MJD::zero)
-      set_boundaries (input_start);
-
-    fold_start = std::max (lower, input_start);
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound start new sub-integration at" 
-	   << "\n        start = " << fold_start
-	   << "\n subint start = " << lower
-	   << "\n  input start = " << input_start
-	   << endl;
-
-  }
-
-  // The current sub-integration contains data.  Check that the
-  // input TimeSeries has data within the current boundaries.
-
-  if (input_end < lower || input_start > upper) {
-
-    if (verbose) cerr << "dsp::SubFold::bound"
-	     " input not from this sub-integration" << endl;
-
-    /*  
-     This state: (more_data == true && subint_full == false)
-     indicates that the output PhaseSeries may be only partially
-     full.  The output should be reset and this method should be 
-     called again.  However, if the output contains no data, and
-     the current input is not within the current boundaries, then
-     it should be discarded.
-     */
-
-    if (contains_data)
-      more_data = true;
-
-    lower = MJD::zero;
-    return false;
-
-  }
- 
-  if (contains_data)  {
-   
-    MJD output_end = output->get_end_time();
-
-    fold_start = std::max (output_end, input_start);
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound continue folding at" 
-	   << "\n        start = " << fold_start
-	   << "\n   output end = " << output_end
-	   << "\n  input start = " << input_start
-	   << endl;
-
-  }
-
-
-  //////////////////////////////////////////////////////////////////////////
-  //
-  // determine how far into the current input TimeSeries to start
-  //
-  MJD offset = fold_start - input_start;
-
-  double start_sample = offset.in_seconds() * sampling_rate;
-
-  //cerr << "start_sample=" << start_sample << endl;
-  start_sample = rint (start_sample);
-  //cerr << "rint(start_sample)=" << start_sample << endl;
-
-  assert (start_sample >= 0);
-
-  idat_start = (uint64) start_sample;
-
-  if (verbose)
-    cerr << "dsp::SubFold::bound start offset " << offset.in_seconds()*1e3
-	 << " ms (" << idat_start << "pts)" << endl;
-  
-  if (idat_start >= input_ndat) {
-
-    // The current data end before the start of the current
-    // sub-integration
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound data end before start of current subint=" 
-	   << fold_start << endl;
-
-    return false;
-
-  }
-
-  //////////////////////////////////////////////////////////////////////////
-  //
-  // determine how far into the current input TimeSeries to end
-  //
-  MJD fold_end = std::min (input_end, upper);
-
-  if (verbose)
-    cerr << "dsp::SubFold::bound end folding at "
-         << "\n          end = " << fold_end
-         << "\n   subint end = " << upper
-         << "\n    input end = " << input_end
-         << endl;
-
-  offset = fold_end - input_start;
-
-  double end_sample = offset.in_seconds() * sampling_rate;
-
-  //cerr << "end_sample=" << end_sample << endl;
-  end_sample = rint (end_sample);
-  //cerr << "rint(end_sample)=" << end_sample << endl;
-
-  assert (end_sample >= 0);
-
-  uint64 idat_end = (uint64) end_sample;
-
-  if (verbose)
-    cerr << "dsp::SubFold::bound end offset " << offset.in_seconds()*1e3
-	 << " ms (" << idat_end << "pts)" << endl;
-  
-  if (idat_end > input_ndat) {
-
-    // this can happen owing to rounding in the above call to rint()
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound fold"
-	"\n   end_sample=rint(" << end_sample << ")=" << idat_end << 
-	" > input ndat=" << input_ndat << endl;
-
-    idat_end = input_ndat;
-
-  }
-  else if (idat_end < input_ndat) {
-
-    // The current input TimeSeries extends more than the current
-    // sub-integration.  The more_data flag indicates that the input
-    // TimeSeries should be used again.
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound input data ends "
-           << (input_end-fold_end).in_seconds()*1e3 <<
-        " ms after current sub-integration" << endl;
-
-    more_data = true;
-
-  }
-
-  ndat_fold = idat_end - idat_start;
-
-  //////////////////////////////////////////////////////////////////////////
-  //
-  // determine if the end of the current sub-integration has been reached
-  //
-
-  double samples_to_end = (upper - fold_end).in_seconds() * sampling_rate;
-
-  if (verbose)
-    cerr << "dsp::SubFold::bound " << samples_to_end << " samples to"
-      " end of current sub-integration" << endl;
-
-  if (samples_to_end < 0.5) {
-
-    if (verbose)
-      cerr << "dsp::SubFold::bound end of sub-integration" << endl;
-
-    subint_full = true;
-    set_boundaries (fold_end + 0.5/sampling_rate);
-
-  }
-
-  if (verbose) {
-    double used = double(ndat_fold)/sampling_rate;
-    double available = double(input_ndat)/sampling_rate;
-    cerr << "dsp::SubFold::bound fold " << used*1e3 << "/"
-	 << available*1e3 << " ms (" << ndat_fold << "/" << input_ndat
-	 << " samples)" << endl;
-  }
-
-  return true;
-}
-
-
-void dsp::SubFold::set_boundaries (const MJD& input_start)
-{
-  if (start_time == MJD::zero)
-    throw Error (InvalidState, "dsp::SubFold::set_boundaries",
-		 "Observation start time not set");
- 
-  if (subint_turns && get_folding_polyco() && start_phase == Phase::zero) {
-
-    // On the first call to set_boundaries, initialize to start at
-    // Fold::reference_phase
-
-    if (verbose)
-      cerr << "dsp::SubFold::set_boundaries first call\n\treference_phase="
-           << reference_phase << " start_time=" << start_time << endl;
-
-    start_phase = get_folding_polyco()->phase(start_time);
-
-    if (start_phase.fracturns() > reference_phase)
-      ++ start_phase;
-
-    start_phase = Phase (start_phase.intturns(), reference_phase);
-
-    start_time = get_folding_polyco()->iphase (start_phase);
-
-    if (verbose)
-      cerr << "dsp::SubFold::set_boundaries first call\n\tstart_phase="
-           << start_phase << " start_time=" << start_time << endl;
-
-  }
-
-  MJD fold_start = std::max (start_time, input_start);
-
-  if (subint_turns && folding_period != 0) {
-    // folding a specified number of turns at a constant period is
-    // equivalent to folding a specified number of seconds
-    subint_seconds = folding_period * double(subint_turns);
-  }
-
-  if (subint_seconds > 0) {
-
-    // sub-integration length specified in seconds
-    double seconds = (fold_start - start_time).in_seconds();
-
-    // assumption: integer cast truncates
-    uint64 subint = uint64 (seconds/subint_seconds);
-
-    lower = start_time + double(subint) * seconds;
-    upper = lower + seconds;
-
-    return;
-  }
-
-  if (!subint_turns)
-    throw Error (InvalidState, "dsp::SubFold::set_boundaries",
-		 "sub-integration length not specified");
-
-  // sub-integration length specified in turns
-
-  if (!get_folding_polyco())
-    throw Error (InvalidState, "dsp::SubFold::set_boundaries",
-		 "sub-integration length specified in turns "
-		 "but no folding period or polyco");
-
-  if (verbose)
-    cerr << "dsp::SubFold::set_boundaries using polynomial: "
-      "avg. period=" << get_folding_polyco()->period(fold_start) << endl;
-
-  Phase input_phase = get_folding_polyco()->phase (fold_start);
-
-  double turns = (input_phase - start_phase).in_turns();
-
-  // assumption: integer cast truncates
-  uint64 subint = uint64 (turns/subint_turns);
-
-  input_phase = start_phase + subint * subint_turns;
-  lower = get_folding_polyco()->iphase (input_phase);
-  
-  input_phase += int(subint_turns);
-  upper = get_folding_polyco()->iphase (input_phase);
-}

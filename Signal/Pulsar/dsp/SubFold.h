@@ -1,14 +1,15 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.5 $
-   $Date: 2005/07/29 17:39:11 $
+   $Revision: 1.6 $
+   $Date: 2005/09/27 08:15:17 $
    $Author: wvanstra $ */
 
 #ifndef __SubFold_h
 #define __SubFold_h
 
 #include "dsp/Fold.h"
+#include "dsp/TimeDivide.h"
 
 #include "Phase.h"
 #include "Callback.h"
@@ -53,25 +54,22 @@ namespace dsp {
     //@}
 
     //! Set the start time from which to begin counting sub-integrations
-    void set_start_time (MJD start_time);
+    void set_start_time (const MJD& start_time);
 
     //! Get the start time from which to begin counting sub-integrations
-    MJD get_start_time () const { return start_time; }
+    MJD get_start_time () const { return divider.get_start_time(); }
 
     //! Set the number of seconds to fold into each sub-integration
     void set_subint_seconds (double subint_seconds);
 
     //! Get the number of seconds to fold into each sub-integration
-    double get_subint_seconds () const { return subint_seconds; }
+    double get_subint_seconds () const { return divider.get_seconds(); }
 
     //! Set the number of turns to fold into each sub-integration
     void set_subint_turns (unsigned subint_turns);
 
     //! Get the number of turns to fold into each sub-integration
-    unsigned get_subint_turns () const { return subint_turns; }
-
-    //! Prepare to fold with the current attributes
-    void prepare ();
+    unsigned get_subint_turns () const { return unsigned(divider.get_turns());}
 
     /** @name deprecated methods 
      *  Use of these methods is deprecated in favour of attaching
@@ -103,31 +101,14 @@ namespace dsp {
     //! File unloading flag
     Reference::To<PhaseSeriesUnloader> unloader;
     
-    //! The start time from which to begin counting sub-integrations
-    MJD start_time;
+    //! The time divider
+    TimeDivide divider;
 
-    //! Interval over which to fold each sub-integration (in seconds)
-    double subint_seconds;
+    //! Initialize the time divider
+    void prepare ();
 
-    //! Number of turns to fold into each sub-integration
-    unsigned subint_turns;
-
-    //! Calculates the boundaries within which to fold the input TimeSeries
-    bool bound (bool& more_data, bool& subint_full);
-
-    //! Calculates the boundaries of the sub-integration containing time
-    void set_boundaries (const MJD& time);
-
-  private:
-
-    //! The start of the current sub-integration
-    MJD lower;
-
-    //! The end of the current sub-integration
-    MJD upper;
-
-    //! The phase at which folding starts
-    Phase start_phase;
+    //! Flag set when time divider is initialized
+    bool built;
 
   };
 
