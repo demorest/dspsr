@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.8 $
-   $Date: 2005/08/01 22:16:31 $
+   $Revision: 1.9 $
+   $Date: 2005/09/27 08:15:34 $
    $Author: wvanstra $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -124,7 +124,7 @@ namespace dsp {
 		       uint64 idat_start = 0, uint64 copy_ndat = 0);
 
     //! Resize the weights array
-    void resize_weights ();
+    void resize_weights (uint64 nsamples);
 
   private:
 

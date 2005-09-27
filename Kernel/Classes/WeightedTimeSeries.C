@@ -52,8 +52,20 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
 void dsp::WeightedTimeSeries::copy_data (const TimeSeries* copy, 
 					 uint64 istart, uint64 ndat)
 {
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_data TimeSeries::copy_data" << endl;
+
   TimeSeries::copy_data (copy, istart, ndat);
-  copy_weights (dynamic_cast<const WeightedTimeSeries*>(copy), istart, ndat);
+
+  const WeightedTimeSeries* wt = dynamic_cast<const WeightedTimeSeries*>(copy);
+
+  if (!wt || wt == this)
+    return;
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_data call copy_weights" << endl;
+
+  copy_weights (wt, istart, ndat);
 }
 
 //! Set the number of time samples per weight
@@ -122,12 +134,12 @@ void dsp::WeightedTimeSeries::resize (uint64 nsamples)
     cerr << "dsp::WeightedTimeSeries::resize (" << nsamples << ")" << endl;
   
   TimeSeries::resize (nsamples);
-  resize_weights ();
+  resize_weights (nsamples);
 }
 
-void dsp::WeightedTimeSeries::resize_weights ()
+void dsp::WeightedTimeSeries::resize_weights (uint64 nsamples)
 { 
-  uint64 nweights = get_nweights () + get_nweights(get_reserve());
+  uint64 nweights = get_nweights(nsamples) + get_nweights(get_reserve());
   uint64 require = nweights * get_npol_weight() * get_nchan_weight();
   
   if (verbose)
@@ -135,10 +147,13 @@ void dsp::WeightedTimeSeries::resize_weights ()
 	 << " require=" << require << " have=" << weight_size << endl;
 
   if (!require || require > weight_size) {
-    if (verbose)
-      cerr << "dsp::WeightedTimeSeries::resize_weights delete" << endl;
 
-    if (base) delete [] base; base = weights = 0;
+    if (base) {
+      if (verbose)
+	cerr << "dsp::WeightedTimeSeries::resize_weights delete" << endl;
+      delete [] base; base = weights = 0;
+    }
+
     weight_size = weight_subsize = 0;
   }
   
@@ -155,6 +170,11 @@ void dsp::WeightedTimeSeries::resize_weights ()
   
   weight_subsize = nweights;
   weights = base + get_nweights(get_reserve());
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::resize_weights base=" << base
+	 << " weights=" << weights << endl;
+
   weight_idat = 0;
 }
 
@@ -196,6 +216,9 @@ void dsp::WeightedTimeSeries::seek (int64 offset)
 //! Return pointer to the specified data block
 unsigned* dsp::WeightedTimeSeries::get_weights (unsigned ichan, unsigned ipol)
 {
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::get_weights weights=" << weights
+	 << " ichan=" << ichan << " ipol=" << ipol << endl;
   return weights + (ichan * npol_weight + ipol) * weight_subsize;
 }
 
@@ -224,8 +247,7 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
   set_npol_weight  ( copy->get_npol_weight() );
   set_nchan_weight ( copy->get_nchan_weight() );
   set_ndat_per_weight ( copy->get_ndat_per_weight() );
-
-  resize_weights ();
+  resize_weights ( ndat );
 
   if (!ndat_per_weight)
     return;
@@ -299,6 +321,10 @@ void dsp::WeightedTimeSeries::check_weights ()
 //! Set all weights to one
 void dsp::WeightedTimeSeries::neutral_weights ()
 {
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::neutral_weights " << weight_size 
+	 << " weights" << endl;
+
   for (uint64 i=0; i<weight_size; i++)
     base[i] = 1;
 }
@@ -357,10 +383,12 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 
   uint64 nweights_tot = get_nweights();
 
-  if (verbose)
+  if (verbose) {
+    uint64 nzero = get_nzero ();
     cerr << "dsp::WeightedTimeSeries::convolve_weights nfft=" << nfft
-	 << " nkeep=" << nkeep << " ndat_per_weight=" << ndat_per_weight
-	 << " nweights=" << nweights_tot << endl;
+	 << " nkeep=" << nkeep << "\n  ndat_per_weight=" << ndat_per_weight
+	 << " nweights=" << nweights_tot << " bad=" << nzero << endl;
+  }
 
   double weights_per_dat = 1.0 / ndat_per_weight;
 
@@ -370,6 +398,7 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
   uint64 total_bad = 0;
   uint64 zero_start = 0;
   uint64 zero_end = 0;
+
 
   for (uint64 start_idat=0; start_idat < end_idat; start_idat += nkeep) {
 
@@ -427,9 +456,11 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
     total_bad ++;
   }
 
-  if (total_bad && verbose)
-    cerr << "dsp::WeightedTimeSeries::convolve_weights " << get_nzero() <<
-      "/" << nweights_tot << " total bad weights" << endl;
+  if (verbose) {
+    uint64 nzero = get_nzero ();
+    cerr << "dsp::WeightedTimeSeries::convolve_weights bad=" << nzero <<
+      "/" << nweights_tot << endl;
+  }
 
 }
 
