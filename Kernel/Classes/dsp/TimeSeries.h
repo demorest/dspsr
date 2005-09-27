@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.31 $
-   $Date: 2005/09/16 06:54:28 $
-   $Author: hknight $ */
+   $Revision: 1.32 $
+   $Date: 2005/09/27 08:15:29 $
+   $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -21,16 +21,11 @@ namespace dsp {
 
   public:
 
-    //    float* hack_get_data(){ return data; }
-
     //! Null constructor
     TimeSeries ();
 
     //! Copy constructor
     TimeSeries(const TimeSeries& ts);
-
-    //! Called by constructor to initialise variables
-    void initj();
 
     //! Cloner (calls new)
     virtual TimeSeries* clone();
@@ -153,8 +148,6 @@ namespace dsp {
     //! Pointer into buffer, offset to the first time sample requested by user
     float* data;
 
-
-
     //! Change the amount of memory reserved at the start of the buffer
     void change_reserve (int64 change);
 
@@ -173,8 +166,9 @@ namespace dsp {
     //! Reserve space for this many timesamples preceding the base address
     uint64 reserve_ndat;
 
-    //! The base address
-    // float* base;
+    //! Called by constructor to initialise variables
+    void init ();
+
 
   };
 
