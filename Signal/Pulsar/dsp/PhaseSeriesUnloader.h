@@ -1,9 +1,10 @@
+
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.8 $
-   $Date: 2005/08/28 05:08:46 $
-   $Author: hknight $ */
+   $Revision: 1.9 $
+   $Date: 2005/09/28 22:08:28 $
+   $Author: wvanstra $ */
 
 #ifndef __PhaseSeriesUnloader_h
 #define __PhaseSeriesUnloader_h
@@ -59,8 +60,9 @@ namespace dsp {
   protected:
 
     //! Helper function that makes sure a given filename is unique
-    std::string make_unique(const std::string& filename, const std::string& fname_extension,
-			    const PhaseSeries* data) const;
+    std::string make_unique (const std::string& filename,
+			     const std::string& fname_extension,
+			     const PhaseSeries* data) const;
 
     //! PhaseSeries from which Profile data will be constructed
     Reference::To<const PhaseSeries> profiles;
