@@ -67,7 +67,7 @@ endif
 ifeq ($(CPSR),yes)
 
 CPPFLAGS += -DDSP_CPSR=1
-CLASSES += CPSRFile CPSRTwoBitCorrection 
+CLASSES += CPSRFile CPSRTwoBitCorrection DumbCPSRUnpacker
 BACKENDS += CPSR
 LBACKENDS += -lcpsr_obs
 
