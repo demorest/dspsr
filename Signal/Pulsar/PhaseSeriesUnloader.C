@@ -67,12 +67,19 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
 
   const polyco* poly = data->get_folding_polyco();
   if (poly) {
+
     // add pulse number to the output archive
     Phase phase = poly->phase ( data->get_start_time() );
-    phase = (phase + 0.5-data->get_reference_phase()).Ceil();
+
+    if (dsp::Observation::verbose)
+      cerr << "dsp::PhaseSeriesUnloader::make_unique phase=" << phase 
+	   << " ref=" << data->get_reference_phase() << endl;
+
+    phase = (phase + 0.5-data->get_reference_phase()).Floor();
     
     unique_filename = stringprintf ("pulse_"I64, phase.intturns());
     unique_filename += fname_extension;
+
   }
   else
     cerr << "WARNING: integration length < 1 sec.\n"
