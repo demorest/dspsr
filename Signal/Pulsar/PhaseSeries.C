@@ -91,12 +91,15 @@ void dsp::PhaseSeries::zero ()
     cerr << "PhaseSeries::zero" << endl;
 
   integration_length = 0.0;
-
-  unsigned ipt=0; 
-  for (ipt=0; ipt<hits.size(); ipt++)
-    hits[ipt]=0;
-
+  set_hits (0);
   TimeSeries::zero ();
+}
+
+//! Set the hits in all bins
+void dsp::PhaseSeries::set_hits (unsigned value)
+{
+  for (unsigned ipt=0; ipt<hits.size(); ipt++)
+    hits[ipt] = value;
 }
 
 bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,

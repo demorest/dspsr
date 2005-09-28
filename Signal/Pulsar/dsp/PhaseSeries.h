@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.13 $
-   $Date: 2005/03/29 11:48:22 $
+   $Revision: 1.14 $
+   $Date: 2005/09/28 22:08:16 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -66,13 +66,20 @@ namespace dsp {
     //! Get the number of seconds integrated
     double get_integration_length () const { return integration_length; }
 
-    virtual MJD get_end_time () const { return end_time; }
+    //! Get the end time
+    MJD get_end_time () const { return end_time; }
+
+    //! Set the end time
+    void set_end_time (const MJD& mjd) { end_time = mjd; }
 
     //! Get the number of phase bins
     unsigned get_nbin () const { return get_ndat(); }
 
     //! Get the hit for the given bin
     unsigned get_hit (unsigned ibin) const { return hits[ibin]; }
+
+    //! Set the hits in all bins
+    void set_hits (unsigned value);
 
     //! Get the mid-time of the integration
     MJD get_mid_time () const;
