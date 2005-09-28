@@ -46,6 +46,11 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
   if (verbose) cerr << "dsp::WeightedTimeSeries::copy_configuration"
 		 " resize weights (ndat=" << get_ndat() << ")" << endl;
 
+  set_npol_weight  ( weighted_copy->get_npol_weight() );
+  set_nchan_weight ( weighted_copy->get_nchan_weight() );
+  set_ndat_per_weight ( weighted_copy->get_ndat_per_weight() );
+  resize_weights ( weighted_copy->get_ndat() );
+
   copy_weights (weighted_copy);
 }
 
@@ -89,7 +94,10 @@ void dsp::WeightedTimeSeries::set_nchan_weight (unsigned _nchan_weight)
 //! Get the number of weights
 uint64 dsp::WeightedTimeSeries::get_nweights () const
 {
-  return get_nweights (get_ndat());
+  uint64 nweights = get_nweights (get_ndat());
+  if (weight_idat)
+    nweights ++;
+  return nweights;
 }
 
 //! Get the number of weights
@@ -116,7 +124,11 @@ dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::clone()
 
 dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::null_clone()
 {
-  return new WeightedTimeSeries;
+  WeightedTimeSeries* retval = new WeightedTimeSeries;
+  retval->npol_weight = npol_weight;
+  retval->nchan_weight = nchan_weight;
+  retval->ndat_per_weight = ndat_per_weight;
+  return retval;
 }
 
 //! Allocate the space required to store nsamples time samples
@@ -243,11 +255,6 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
 {
   if (!copy)
     return;
-
-  set_npol_weight  ( copy->get_npol_weight() );
-  set_nchan_weight ( copy->get_nchan_weight() );
-  set_ndat_per_weight ( copy->get_ndat_per_weight() );
-  resize_weights ( ndat );
 
   if (!ndat_per_weight)
     return;
