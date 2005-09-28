@@ -348,6 +348,11 @@ namespace dsp {
     ExtensionType* get();
 
     //! Returns a pointer to the dspExtension
+    //! If the dspExtension is not stored this adds a new null-instatntiated one
+    template<class ExtensionType>
+    ExtensionType* getadd();
+
+    //! Returns a pointer to the dspExtension
     //! If the dspExtension is not stored this throws an Error
     template<class ExtensionType>
     const ExtensionType* get() const;
@@ -543,6 +548,21 @@ const ExtensionType* dsp::Observation::get() const{
 	      extensions.size(), typeid(ret).name());
   
   return 0;
+}
+
+//! Returns a pointer to the dspExtension
+//! If the dspExtension is not stored this adds a new null-instatntiated one
+template<class ExtensionType>
+ExtensionType*
+dsp::Observation::getadd()
+{
+  if( has<ExtensionType>() )
+    return get<ExtensionType>();
+
+  ExtensionType* ext = new ExtensionType;
+  add( ext );
+  
+  return ext;
 }
 
 //! Returns true if the given dspExtension is stored
