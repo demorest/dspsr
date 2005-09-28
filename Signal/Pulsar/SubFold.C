@@ -85,42 +85,31 @@ void dsp::SubFold::transformation ()
     divider.set_bounds( get_input() );
 
     more_data = divider.get_in_next ();
-    bool fold = divider.get_in_current ();
+
+    if (divider.get_new_division() && output->get_integration_length()) {
+
+      /* A new division has been started and there is still data in
+	 the current integration.  This is a sign that the current
+	 input comes from uncontiguous data, which can arise when
+	 processing in parallel. */
+
+      if (verbose)
+	cerr << "dsp::SubFold::transformation"
+	  " storing incomplete sub-integration" << endl;
+	  
+      partial.send (*output);
+      output->zero();
+
+    }
+
+    if (!divider.get_is_valid())
+      continue;
+
+    Fold::transformation ();
 
     // flag that the current profile should be unloaded after the next fold
-    bool subint_full = divider.get_end_reached();
-
-    // set the Fold::idat_start and Fold::ndat_fold attributes
-    idat_start = divider.get_idat_start ();
-    ndat_fold = divider.get_ndat ();
-
-    if (fold)
-      Fold::transformation ();
-
-    if (!subint_full)  {
-
-      // the current sub-integration is not yet full ...
-
-      if (more_data) {
-
-	// ... however, the current input TimeSeries has data to
-	// contribute.  This is a sign that the current input comes from
-	// uncontiguous data, which can arise when processing in
-	// parallel
-
-	if (output->get_integration_length()) {
-	  if (verbose)
-	    cerr << "dsp::SubFold::transformation"
-	      " storing incomplete sub-integration" << endl;
-	  
-	  partial.send (*output);
-	  
-	}
-
-      }
-
+    if (!divider.get_end_reached())
       continue;
-    }
 
     if (verbose)
       cerr << "dsp::SubFold::transformation sub-integration completed" << endl;
@@ -148,12 +137,11 @@ void dsp::SubFold::transformation ()
   }
 }
 
+/*! sets the Fold::idat_start and Fold::ndat_fold attributes */
 void dsp::SubFold::set_limits (const Observation* input)
 {
-  /* Limits are set by the SubFold::bound method.  However,
-   Fold::transformation calls this virtual method when it is called in
-   SubFold::transformation.  Therefore, it is necessary to disable
-   Fold::set_limits. */
+  idat_start = divider.get_idat_start ();
+  ndat_fold = divider.get_ndat ();
 }
 
 

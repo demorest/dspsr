@@ -6,15 +6,18 @@
 
 #include <assert.h>
 
+// #define _DEBUG 1
+
 dsp::TimeDivide::TimeDivide ()
 {
   division_seconds = 0;
   division_turns = 0;
+  phase_bin = 0;
 
-  in_current = false;
+  is_valid = false;
   in_next = false;
   end_reached = false;
-  contiguous = false;
+  new_division = false;
 }
 
 dsp::TimeDivide::~TimeDivide ()
@@ -28,6 +31,7 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
 
   start_time  = _start_time;
   start_phase = Phase::zero;
+  is_valid = false;
 }
 
 void dsp::TimeDivide::set_seconds (double seconds)
@@ -67,10 +71,6 @@ void dsp::TimeDivide::set_reference_phase (double phase)
 
 void dsp::TimeDivide::set_bounds (const Observation* input)
 {
-  in_current = false;
-  in_next = false;
-  end_reached = false;
-
   double sampling_rate = input->get_rate();
   uint64 input_ndat = input->get_ndat();
 
@@ -81,28 +81,27 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   //
   // determine the MJD at which to start
   //
-  MJD divide_start;
+  MJD divide_start = input_start;
 
-  if (!contiguous) {
+  if (is_valid) {
 
-    /* Set new boundaries and start the division with the first sample
-       of the input Observation within the boundaries. */
+#ifdef _DEBUG
+    static MJD last_input_end;
+    if (last_input_end != input_end) {
 
-    set_boundaries (input_start);
+      if (last_input_end != MJD::zero) {
+	double seconds = (last_input_end - input_start).in_seconds();
+	double samps = seconds * sampling_rate;
 
-    divide_start = std::max (lower, input_start);
+	if (fabs(samps) > 0.25)
+	  cerr << "discontiguous by " << samps << " samples = "
+	       << seconds*1e3 << " ms" << endl;
+      }
 
-    if (Operation::verbose)
-      cerr << "dsp::TimeDivide::bound start new division at" 
-	   << "\n          start = " << divide_start
-	   << "\n division start = " << lower
-	   << "\n    input start = " << input_start
-	   << endl;
+      last_input_end = input_end;
+    }
+#endif
 
-  }
-
-  else {
-   
     divide_start = std::max (current_end, input_start);
 
     if (Operation::verbose)
@@ -114,27 +113,35 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   }
 
-  // Check that the Observation is within the current boundaries.
+  new_division = false;
+  end_reached = false;
+  in_next = false;
 
-  if (input_end < lower || input_start > upper) {
+  if (input_end < lower || divide_start+0.5/sampling_rate > upper) {
 
-    if (Operation::verbose) cerr << "dsp::TimeDivide::bound"
-	     " input not from this division" << endl;
-
-    /*  
-	This state (in_next == true && end_reached == false) indicates
-	that the output PhaseSeries may be only partially full.  The
-	output should be reset and this method should be called again.
+    /*
+      This state occurs when either:
+      1) this method is first called (no boundaries set)
+      2) the 
     */
 
-    in_next = true;
-    contiguous = false;
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::bound start new division" << endl;
 
-    return;
+    new_division = true;
+
+    set_boundaries (divide_start + 0.5/sampling_rate);
+
   }
 
-  // the current observation is within the current boundaries
-  contiguous = true;
+  divide_start = std::max (lower, divide_start);
+
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::bound start division at" 
+	 << "\n          start = " << divide_start
+	 << "\n division start = " << lower
+	 << "\n    input start = " << input_start
+	 << endl;
 
   //////////////////////////////////////////////////////////////////////////
   //
@@ -155,15 +162,15 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
 	 << " ms (" << idat_start << "pts)" << endl;
-  
+
   if (idat_start >= input_ndat) {
 
     // The current data end before the start of the current division
 
     if (Operation::verbose)
-      cerr << "dsp::TimeDivide::bound data end before start of"
-	" current division=" << divide_start << endl;
+      cerr << "dsp::TimeDivide::bound input ends before division starts"<<endl;
 
+    is_valid = false;
     return;
 
   }
@@ -238,13 +245,10 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
       " samples to end of current division" << endl;
 
   if (samples_to_end < 0.5) {
-
     if (Operation::verbose)
       cerr << "dsp::TimeDivide::bound end of division" << endl;
 
     end_reached = true;
-    set_boundaries (divide_end + 0.5/sampling_rate);
-
   }
 
   if (Operation::verbose) {
@@ -253,12 +257,12 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
     double available = 1e3*input_ndat/sampling_rate;
     cerr << "dsp::TimeDivide::bound using "
 	 << used << "/" << available << " from " << start << " ms\n  (" 
-	 << ndat << "/" << input_ndat << " from " << idat_start << " samps)"
-	 << endl;
+	 << ndat << "/" << input_ndat << " from " << idat_start << " to "
+	 << idat_start + ndat - 1 << " inclusive.)" << endl;
   }
 
+  is_valid = true;
   current_end = input_start + idat_end/sampling_rate;
-  in_current = true;
 }
 
 
@@ -279,10 +283,65 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 
     start_phase = poly->phase(start_time);
 
-    if (start_phase.fracturns() > reference_phase)
-      ++ start_phase;
+    if (division_turns < 1.0) {
 
-    start_phase = Phase (start_phase.intturns(), reference_phase);
+#ifdef _DEBUG
+      cerr << "START PHASE=" << start_phase << endl;
+#endif
+
+      /* Find X, where:
+	 X = required start_phase
+	 y = current start_phase
+	 D = division_turns
+	 R = reference_phase
+
+	 X > y
+	 X = R + N*D
+	 X < y + D
+      */
+
+      // X - R
+      double XminusR = start_phase.fracturns() - reference_phase;
+
+      // ensure that N > 0
+      if (start_phase.fracturns() < reference_phase) {
+	XminusR += 1.0;
+	-- start_phase;
+      }
+
+#ifdef _DEBUG
+      cerr << "OFFSET FROM REFERENCE=" << XminusR << endl;
+#endif
+
+      // N = (X-R)/D
+      unsigned N = (unsigned) ceil (XminusR / division_turns);
+
+#ifdef _DEBUG
+      cerr << "NEXT PHASE BIN=" << N << endl;
+#endif
+
+      // X = R + N*D
+      double X = reference_phase + N * division_turns;
+
+#ifdef _DEBUG
+      cerr << "START PHASE OF NEXT PHASE BIN=" << X << endl;
+#endif
+
+      start_phase = Phase (start_phase.intturns(), X);
+
+#ifdef _DEBUG
+      cerr << "START PHASE=" << start_phase << endl;
+#endif
+
+    }
+    else {
+
+      if (start_phase.fracturns() > reference_phase)
+	++ start_phase;
+
+      start_phase = Phase (start_phase.intturns(), reference_phase);
+
+    }
 
     start_time = poly->iphase (start_phase);
 
@@ -333,6 +392,19 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   input_phase = start_phase + division * division_turns;
   lower = poly->iphase (input_phase);
   
-  input_phase += int(division_turns);
+  if (division_turns < 1.0) {
+    Phase profile_phase = input_phase - reference_phase + 0.5 * division_turns;
+    phase_bin = unsigned( profile_phase.fracturns() / division_turns );
+
+#ifdef _DEBUG
+    cerr << "division=" << division << " phase=" << profile_phase
+	 << " bin=" << phase_bin << endl;
+#endif
+
+  }
+
+  input_phase += division_turns;
   upper = poly->iphase (input_phase);
+
 }
+

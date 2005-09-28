@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/09/24 12:56:00 $
+   $Revision: 1.2 $
+   $Date: 2005/09/28 22:08:40 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -70,7 +70,10 @@ namespace dsp {
     void set_bounds (const Observation*);
     
     //! Return true if the last bound Observation covers the current division
-    bool get_in_current () const { return in_current; }
+    bool get_is_valid () const { return is_valid; }
+
+    //! Return true if the last bound Observation covers a new division
+    bool get_new_division () const { return new_division; }
 
     //! Return true if the last bound Observation covers the next division
     bool get_in_next () const { return in_next; }
@@ -84,12 +87,18 @@ namespace dsp {
     //! Get the number of time samples in the current division
     uint64 get_ndat () const { return ndat; }
 
+    //! Get the phase bin of the current division (turns < 1)
+    unsigned get_phase_bin () const { return phase_bin; }
+
     //@}
 
   protected:
 
-    //! The start time from which to begin counting sub-integrations
+    //! The start time from which to begin dividing time
     MJD start_time;
+
+    //! The corresponding phase at which to begin dividing time
+    Phase start_phase;
 
     //! Number of seconds in each division
     double division_seconds;
@@ -102,9 +111,6 @@ namespace dsp {
 
     //! The reference phase
     double reference_phase;
-
-    //! Calculates the boundaries within which to fold the input TimeSeries
-    bool bound (bool& more_data, bool& end_reached);
 
     //! Calculates the boundaries of the sub-integration containing time
     void set_boundaries (const MJD& time);
@@ -120,11 +126,9 @@ namespace dsp {
     //! The end of the last Observation bound in this division
     MJD current_end;
 
-    //! The phase at which the current division starts
-    Phase start_phase;
 
     //! Flag set when the divided time range is within the current division
-    bool in_current;
+    bool is_valid;
 
     //! Flag set when the divided time range extends past the current division
     bool in_next;
@@ -133,13 +137,18 @@ namespace dsp {
     bool end_reached;
 
     //! Flag set when the current observation appears contiguous
-    bool contiguous;
+    bool new_division;
+
 
     //! The first time sample in the current division
     uint64 idat_start;
 
     //! The number of time samples in the current division
     uint64 ndat;
+
+    //! The phase bin of the current division (division_turns < 1)
+    unsigned phase_bin;
+
   };
 
 }
