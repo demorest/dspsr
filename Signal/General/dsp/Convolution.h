@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.16 $
-   $Date: 2004/10/25 02:42:55 $
+   $Revision: 1.17 $
+   $Date: 2005/09/28 03:45:14 $
    $Author: hknight $ */
 
 #ifndef __Convolution_h
@@ -82,6 +82,9 @@ namespace dsp {
 
     //! Return a pointer to the integrated passband
     virtual const Response* get_passband() const;
+
+    //! Adds to the DedispersionHistory
+    virtual void add_history();
 
   protected:
 
