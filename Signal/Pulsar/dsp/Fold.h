@@ -1,16 +1,13 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.38 $
-   $Date: 2005/09/27 08:14:57 $
+   $Revision: 1.39 $
+   $Date: 2005/09/28 22:08:06 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
 
-#include <vector>
-
-#include "dsp/Observation.h"
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
