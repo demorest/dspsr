@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.36 $
-   $Date: 2005/09/06 19:17:15 $
-   $Author: wvanstra $ */
+   $Revision: 1.37 $
+   $Date: 2005/09/28 03:43:43 $
+   $Author: hknight $ */
 
 #ifndef __baseband_dsp_Transformation_h
 #define __baseband_dsp_Transformation_h
@@ -166,7 +166,7 @@ namespace dsp {
     bool get_time_conserved(){ return time_conserved; }
 
     //! to add a dspExtension history object to the output
-    virtual void add_history(){ }
+    virtual void add_history();
 
   protected:
 
@@ -418,6 +418,13 @@ dsp::Transformation<In,Out>::~Transformation(){
 	      get_name().c_str(), this->output->get_reference_count());
 #endif
   }
+}
+
+//! to add a dspExtension history object to the output
+template <class In, class Out>
+void dsp::Transformation<In,Out>::add_history()
+{
+  /* do nothing by default */
 }
 
 template <class Out>
