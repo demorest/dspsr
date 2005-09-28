@@ -28,6 +28,9 @@ namespace dsp {
 	//! Return a new null-constructed instance
 	virtual dspExtension* new_extension() const;
 
+        //! Dump out to a string
+        virtual string dump_string() const;
+
 	//! Add in a dedispersion operation
 	void add(string classname, float dm);
 
