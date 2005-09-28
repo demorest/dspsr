@@ -1,6 +1,8 @@
 #include "dsp/SubByteTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 
+#include <iostream>
+
 // #define _DEBUG 1
 
 dsp::SubByteTwoBitCorrection::SubByteTwoBitCorrection (const char* name)
@@ -33,7 +35,8 @@ unsigned dsp::SubByteTwoBitCorrection::get_input_incr () const
 }
 
 /*! By default, MSB y1 x1 y0 x0 LSB */
-unsigned dsp::SubByteTwoBitCorrection::get_shift (unsigned idig, unsigned samp) const
+unsigned
+dsp::SubByteTwoBitCorrection::get_shift (unsigned idig, unsigned samp) const
 {
   return (idig + samp * 2) * 2;
 }
@@ -61,7 +64,6 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be > 1", ndig);
 
-  unsigned isamp=0;
   unsigned shift[4];
 
   for (unsigned isamp=0; isamp<samples_per_byte; isamp++) {
@@ -111,7 +113,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* output_data,
 
     // retrieve the next points values from the 2bit data
     while (pt < points) {
-      for (isamp=0; isamp<samples_per_byte; isamp++) {
+      for (unsigned isamp=0; isamp<samples_per_byte; isamp++) {
 	values[pt] = ((*input_data_ptr) >> shift[isamp]) & mask2;
 	pt++;
       }
