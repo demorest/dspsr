@@ -167,13 +167,32 @@ void dsp::DataSeries::reshape ()
       " (subsize=" << subsize << " bytes)" << endl;
 }
 
+void dsp::DataSeries::reshape (unsigned _npol, unsigned _ndim)
+{
+  unsigned _total = _npol * _ndim;
+  unsigned total = get_npol() * get_ndim();
+
+  if (total != _total)
+    throw Error (InvalidParam, "dsp::DataSeries::reshape",
+		 "current npol=%d*ndim=%d = %d != new npol=%d*ndim=%d = %d",
+		 get_npol(), get_ndim(), total, _npol, _ndim, _total);
+
+  subsize *= get_npol();
+  subsize /= _npol;
+
+  set_npol (_npol);
+  set_ndim (_ndim);
+}
+
 //! Returns a uchar pointer to the first piece of data
-unsigned char* dsp::DataSeries::get_data(){
+unsigned char* dsp::DataSeries::get_data()
+{
   return buffer;
 }
 
 //! Returns a uchar pointer to the first piece of data
-const unsigned char* dsp::DataSeries::const_get_data() const{
+const unsigned char* dsp::DataSeries::get_data() const
+{
   return buffer;
 }
 
@@ -189,7 +208,7 @@ unsigned char* dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol)
 		"Your ipol (%d) was >= npol (%d)",
 		ipol,get_npol()); 
 
-  return ((unsigned char*)get_data()) + (ichan*get_npol()+ipol)*subsize;
+  return get_data() + (ichan*get_npol()+ipol)*subsize;
 }
 
 //! Return pointer to the specified data block
@@ -205,7 +224,7 @@ dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol) const
 		"Your ipol (%d) was >= npol (%d)",
 		ipol,get_npol()); 
 
-  return ((const unsigned char*)const_get_data()) + (ichan*get_npol()+ipol)*subsize;
+  return get_data() + (ichan*get_npol()+ipol)*subsize;
 }
 
 dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
@@ -251,7 +270,7 @@ dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
 
 //! Returns the number of samples that have been seeked over
 int64 dsp::DataSeries::get_samps_offset() const {
-  uint64 bytes_offset = ((unsigned char*)const_get_data()) - buffer; 
+  uint64 bytes_offset = get_data() - buffer; 
   uint64 samps_offset = (bytes_offset * 8)/(get_nbit()*get_ndim());
   //  fprintf(stderr,"\ndsp::DataSeries::get_samps_offset() got bytes_offset="UI64" nbit=%d ndim=%d so samp offset="UI64"\n",
   //  bytes_offset,get_nbit(),get_ndim(),samps_offset);
@@ -260,7 +279,7 @@ int64 dsp::DataSeries::get_samps_offset() const {
 
 //! Returns the maximum ndat possible with current offset of data from base pointer
 uint64 dsp::DataSeries::maximum_ndat() const {
-  uint64 bytes_offset = ((unsigned char*)const_get_data()) - buffer; 
+  uint64 bytes_offset = get_data() - buffer; 
   uint64 bits_avail = (subsize-bytes_offset) * 8;
   //  fprintf(stderr,"dsp::DataSeries::maximum_ndat() got bytes_offset="UI64" subsize="UI64" bits_avail="UI64" returning "UI64"/(%d*%d)="UI64"\n",
   //  bytes_offset,subsize,bits_avail,bits_avail,get_ndim(),get_nbit(),bits_avail/(get_ndim()*get_nbit()));

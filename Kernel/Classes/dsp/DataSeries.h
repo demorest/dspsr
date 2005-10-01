@@ -77,6 +77,9 @@ namespace dsp {
     //! Reshape the buffer to match the current attributes
     void reshape ();
 
+    //! Reshape the buffer to match the specified attributes
+    void reshape (unsigned npol, unsigned ndim);
+
     //! Return pointer to the specified block of time samples
     virtual unsigned char* get_udatptr (unsigned ichan=0,unsigned ipol=0);
 
@@ -107,7 +110,7 @@ namespace dsp {
     //! Returns a uchar pointer to the first piece of data
     virtual unsigned char* get_data();
     //! Returns a uchar pointer to the first piece of data
-    virtual const unsigned char* const_get_data() const;
+    virtual const unsigned char* get_data() const;
 
     //! The data buffer
     unsigned char* buffer;
