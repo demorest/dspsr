@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.32 $
-   $Date: 2005/09/27 08:15:29 $
+   $Revision: 1.33 $
+   $Date: 2005/10/01 21:53:44 $
    $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h
@@ -138,9 +138,6 @@ namespace dsp {
     //! Returns a uchar pointer to the first piece of data
     virtual const unsigned char* get_data() const;
 
-    //! Please leave this in- it is required to get dsp::DataSeries::get_samps_offset() to work
-    virtual const unsigned char* const_get_data() const;
-
     //! Called by append()
     void append_checks(uint64& ncontain,uint64& ncopy,
 		       const TimeSeries* little);
@@ -165,6 +162,9 @@ namespace dsp {
 
     //! Reserve space for this many timesamples preceding the base address
     uint64 reserve_ndat;
+
+    //! Number of floats reserved
+    uint64 reserve_nfloat;
 
     //! Called by constructor to initialise variables
     void init ();

@@ -55,8 +55,11 @@ dsp::TimeSeries::TimeSeries (const TimeSeries& ts) : DataSeries()
 void dsp::TimeSeries::init ()
 {
   DataSeries::set_nbit( 8 * sizeof(float) );
-  data = 0;  
+  data = 0;
+
   reserve_ndat = 0;
+  reserve_nfloat = 0;
+
   set_preserve_seeked_data( false );
 }
 
@@ -111,14 +114,19 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   }  
 
   if (!get_preserve_seeked_data()) {
+
     if (verbose)
       cerr << "dsp::TimeSeries::resize not preserving; reserving "
-	   << reserve_ndat << endl;
+	   << reserve_ndat << " samples" << endl;
     
-    DataSeries::resize(nsamples+reserve_ndat);
+    uint64 fake_ndat = reserve_nfloat / get_ndim();
+    if (reserve_nfloat % get_ndim())
+      fake_ndat ++;
+
+    DataSeries::resize(nsamples+fake_ndat);
 
     // offset the data pointer and reset the number of samples
-    data = (float*)buffer + reserve_ndat * get_ndim();
+    data = (float*)buffer + reserve_nfloat;
     set_ndat( nsamples );
 
     return;
@@ -270,6 +278,7 @@ void dsp::TimeSeries::seek (int64 offset)
 
   set_ndat( get_ndat() - offset );
   change_start_time (offset);
+
 }
 
 //! Returns a uchar pointer to the first piece of data
@@ -287,16 +296,6 @@ const unsigned char* dsp::TimeSeries::get_data() const
 {
   if (!data)
     throw Error (InvalidState,"dsp::TimeSeries::get_data() const",
-		"Data buffer not initialized.  ndat="UI64, get_ndat());
-
-  return ((const unsigned char*)data);
-}
-
-//! Returns a uchar pointer to the first piece of data
-const unsigned char* dsp::TimeSeries::const_get_data() const
-{
-  if (!data)
-    throw Error (InvalidState,"dsp::TimeSeries::const_get_data()",
 		"Data buffer not initialized.  ndat="UI64, get_ndat());
 
   return ((const unsigned char*)data);
@@ -455,7 +454,8 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
 
   if (verbose)
     cerr << "dsp::TimeSeries::copy_data to ndat=" << get_ndat()
-	 << " from ndat=" << copy->get_ndat() << " idat_start=" << idat_start 
+	 << " from ndat=" << copy->get_ndat() 
+	 << "\n  idat_start=" << idat_start 
 	 << " copy_ndat=" << copy_ndat << endl;
 
   if (copy_ndat > get_ndat())
@@ -759,14 +759,18 @@ void dsp::TimeSeries::change_reserve (int64 change)
   if (change < 0) {
     uint64 decrease = -change;
     if (decrease > reserve_ndat)
-    throw Error (InvalidState, "dsp::TimeSeries::change_reserve",
-		 "decrease="I64"; reserve_ndat="UI64, 
-		 decrease, reserve_ndat);
+      throw Error (InvalidState, "dsp::TimeSeries::change_reserve",
+		   "decrease="I64"; reserve_ndat="UI64, 
+		   decrease, reserve_ndat);
 
     reserve_ndat -= decrease;
+    reserve_nfloat -= decrease * get_ndim();
   }
-  else
+  else {
     reserve_ndat += change;
+    reserve_nfloat += change * get_ndim();
+  }
+
 }
 
 //! Returns how many samples have been seeked over
