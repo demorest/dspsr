@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.14 $
-   $Date: 2005/09/28 22:08:16 $
+   $Revision: 1.15 $
+   $Date: 2005/10/01 21:53:34 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
@@ -77,6 +77,9 @@ namespace dsp {
 
     //! Get the hit for the given bin
     unsigned get_hit (unsigned ibin) const { return hits[ibin]; }
+
+    //! Get the hits array
+    unsigned* get_hits () { return &hits[0]; }
 
     //! Set the hits in all bins
     void set_hits (unsigned value);
