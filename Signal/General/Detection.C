@@ -119,6 +119,8 @@ void dsp::Detection::resize_output ()
   if (verbose)
     cerr << "dsp::Detection::resize_output" << endl;
 
+  bool inplace = input.get() == output.get();
+
   unsigned output_ndim = 1;
   unsigned output_npol = input->get_npol();
 
@@ -129,22 +131,23 @@ void dsp::Detection::resize_output ()
       cerr << "dsp::Detection::resize_output state: "
 	   << Signal::state_string(state) << " ndim=" << ndim << endl;
   }
-  else if(state==Signal::PPQQ)
+  else if (state==Signal::PPQQ)
     output_npol = 2;
-  else if(state==Signal::Intensity )
+  else if (state==Signal::Intensity)
     output_npol = 1;
 
-  if (get_output() != get_input())
+  if (!inplace)
     get_output()->copy_configuration( get_input() );
 
-  get_output()->set_npol( output_npol );
   get_output()->set_state( state );
-  get_output()->set_ndim( output_ndim );
 
-  if (get_output() != get_input())
+  if (!inplace) {
+    get_output()->set_npol( output_npol );
+    get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
+  }
   else
-    get_output()->reshape();
+    get_output()->reshape ( output_npol, output_ndim );
 
 }
 
@@ -275,20 +278,22 @@ void dsp::Detection::polarimetry ()
   unsigned input_npol = get_input()->get_npol();
   unsigned input_ndim = get_input()->get_ndim();
 
-  if( ndim != 1 && get_input()->get_state()==Signal::Nyquist )
-    throw Error(InvalidState,"dsp::Detection::polarimetry ()",
-		"This function throws this Error if ndim!=1 and input state is Nyquist as I can't be bothered checking to see if other ndims work HSK 2 November 2004");
+  if (ndim != 1 && get_input()->get_state()==Signal::Nyquist)
+    throw Error (InvalidState, "dsp::Detection::polarimetry",
+		 "Cannot detect Nyquist input when ndim == 1");
 
-  if ( get_input() != get_output() )
+  bool inplace = input.get() == output.get();
+
+  if (verbose)
+    cerr << "dsp::Detection::polarimetry "
+	 << ((inplace) ? "in" : "outof") << "place" << endl;
+
+  if (!inplace)
     resize_output ();    
 
   uint64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
-  bool inplace = (input.get() == output.get());
-  if( verbose )
-    fprintf(stderr,"dsp::Detection::polarimetry () inplace=%d\n",inplace);
-  
   uint64 required_space = 0;
   uint64 copy_bytes = 0;
 
@@ -315,9 +320,13 @@ void dsp::Detection::polarimetry ()
       copyq = copyp + input_ndim * ndat;
   }
 
+  float* r[4];
+
   for (unsigned ichan=0; ichan<nchan; ichan++) {
+
     const float* p = input->get_datptr (ichan, 0);
     const float* q = input->get_datptr (ichan, 1);
+
     if (inplace && ndim != 2) {
       memcpy (copyp, p, copy_bytes);
       p = copyp;
@@ -327,7 +336,8 @@ void dsp::Detection::polarimetry ()
 	q = copyq;
       }
     }
-    vector<float*> r = get_result_pointers(ichan);
+
+    get_result_pointers (ichan, inplace, r);
 
     if (input_ndim == 2) {
 
@@ -363,42 +373,45 @@ void dsp::Detection::polarimetry ()
     fprintf(stderr,"Returning from dsp::Detection::polarimetry()\n");
 }
 
-vector<float*> dsp::Detection::get_result_pointers(unsigned ichan){
-  vector<float*> r(4);
-  uint64 ndat = get_input()->get_ndat();
-  bool inplace = (get_input()==get_output());
-
-  r[0] = get_output()->get_datptr(ichan,0);
-
+void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace, 
+					  float* r[4])
+{
   switch (ndim) {
+
+    // Stokes I,Q,U,V in separate arrays
   case 1:
     if( inplace ){
-      r[1] = r[0] + ndat;
-      r[2] = r[1] + ndat;
-      r[3] = r[2] + ndat;
+      r[0] = get_output()->get_datptr (ichan,0);
+      r[2] = get_output()->get_datptr (ichan,0);
+      uint64 diff = uint64(r[2] - r[0])/2;
+      r[1] = r[0] + diff;
+      r[3] = r[2] + diff;
     }
     else{
-      r[1] = get_output()->get_datptr(ichan,1);
-      r[2] = get_output()->get_datptr(ichan,2);
-      r[3] = get_output()->get_datptr(ichan,3);
+      r[0] = get_output()->get_datptr (ichan,0);
+      r[1] = get_output()->get_datptr (ichan,1);
+      r[2] = get_output()->get_datptr (ichan,2);
+      r[3] = get_output()->get_datptr (ichan,3);
     }
     break;
+
+    // Stokes I,Q and Stokes U,V in separate arrays
   case 2:
+    r[0] = get_output()->get_datptr (ichan,0);
     r[1] = r[0] + 1;
-    if( inplace ) // Insanity
-      r[2] = r[0] + ndat * 2;
-    else
-      r[2] = get_output()->get_datptr(ichan,1);
+    r[2] = get_output()->get_datptr (ichan,1);
     r[3] = r[2] + 1;
     break;
+
+    // Stokes I,Q,U,V in one array
   case 4:
+    r[0] = get_output()->get_datptr (ichan,0);
     r[1] = r[0] + 1;
     r[2] = r[1] + 1;
     r[3] = r[2] + 1;
     break;
   }
   
-  return r;
 }
 
 void dsp::Detection::redetect(){

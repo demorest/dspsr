@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.11 $
-   $Date: 2005/04/13 08:02:52 $
-   $Author: sord $ */
+   $Revision: 1.12 $
+   $Date: 2005/10/01 21:53:22 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Detection_h
@@ -57,7 +57,7 @@ namespace dsp {
     int ndim;
 
     //! Called by polarimetry to return pointers to the result channels
-    vector<float*> get_result_pointers(unsigned ichan);
+    void get_result_pointers (unsigned ichan, bool inplace, float* r[4]);
 
     //! Perform simple square-law detection
     void square_law ();
