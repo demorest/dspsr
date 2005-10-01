@@ -151,7 +151,14 @@ void dsp::WeightedTimeSeries::resize (uint64 nsamples)
 
 void dsp::WeightedTimeSeries::resize_weights (uint64 nsamples)
 { 
-  uint64 nweights = get_nweights(nsamples) + get_nweights(get_reserve());
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::resize_weights nsamples=" << nsamples
+	 << " weight_idat=" << weight_idat << " reserve=" << get_reserve()
+	 << endl;
+
+  uint64 nweights = get_nweights(nsamples);
+  nweights += get_nweights(get_reserve());
+
   uint64 require = nweights * get_npol_weight() * get_nchan_weight();
   
   if (verbose)
@@ -195,7 +202,7 @@ void dsp::WeightedTimeSeries::seek (int64 offset)
 {
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::seek (" << offset << ") "
-      " base=" << base << " weights=" << weights << " diff=" << 
+      "base=" << base << " weights=" << weights << " diff=" << 
       weights - base << endl;
  
   if (!offset)
@@ -208,17 +215,33 @@ void dsp::WeightedTimeSeries::seek (int64 offset)
 
   offset += weight_idat;
 
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::seek weight_idat=" << weight_idat
+	 << " new offset=" << offset << endl;
+
   if (offset > 0) {
+
     weights += offset / ndat_per_weight;
     weight_idat = offset % ndat_per_weight;
+
   }
   else if (offset < 0) {
-    weights += offset/ndat_per_weight - 1;
-    weight_idat = ndat_per_weight + offset % ndat_per_weight;
-    if (weight_idat == ndat_per_weight) {
+
+    uint64 back = -offset;
+    uint64 wback = back/ndat_per_weight;
+    uint64 wleft = back%ndat_per_weight;
+
+    if (!wleft)
       weight_idat = 0;
-      weights ++;
+    else {
+      wback ++;
+      weight_idat = ndat_per_weight - wleft;
     }
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::seek wback=" << wback
+	   << " new weight_idat=" << weight_idat << endl;
+
+    weights -= wback;
   }
 
   assert (weights >= base);
@@ -251,7 +274,8 @@ dsp::WeightedTimeSeries::operator = (const WeightedTimeSeries& copy)
 }
 
 void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
-					    uint64 idat_start, uint64 ndat)
+					    uint64 idat_start, 
+					    uint64 copy_ndat)
 {
   if (!copy)
     return;
@@ -259,28 +283,35 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
   if (!ndat_per_weight)
     return;
 
-  uint64 weight_offset = 0;
-  uint64 nweights = get_nweights ();
+  if (!copy_ndat)
+    copy_ndat = copy->get_ndat();
 
-  if (ndat) {
-    if (verbose)
-      cerr << "dsp::WeightedTimeSeries::copy_weights ndat=" << ndat 
-	   << " idat=" << idat_start << " weight_idat=" << weight_idat << endl;
-    weight_offset = (idat_start + copy->weight_idat) / ndat_per_weight;
-    nweights = get_nweights (ndat + weight_idat);
-  }
+  uint64 iwt_start = (idat_start + copy->weight_idat) / ndat_per_weight;
+  uint64 idat_wt_start = (idat_start + copy->weight_idat) % ndat_per_weight;
+  uint64 nweights = get_nweights (copy_ndat + idat_wt_start);
+
+  uint64 copy_nweights = copy->get_nweights();
+  uint64 have_nweights = get_nweights();
 
   if (verbose)
-    cerr << "dsp::WeightedTimeSeries::copy_weights"
-      " nweights=" << nweights << " offset=" << weight_offset <<
-      " (nchan=" << get_nchan_weight() << " npol=" << get_npol_weight() << ")"
-         << endl;
-  
+    cerr << "dsp::WeightedTimeSeries::copy_weights copy_ndat=" << copy_ndat 
+	 << " idat_start=" << idat_start
+	 << "\n  OR nweights=" << nweights 
+	 << " iwt_start=" << iwt_start
+	 << "\n  FROM ndat=" << copy->get_ndat()
+	 << " nweights=" << copy_nweights
+	 << " weight_idat=" << copy->weight_idat << endl;
+	 
+  assert (iwt_start + nweights <= copy_nweights);
+
+  if (nweights > have_nweights)
+    nweights = have_nweights;
+
   for (unsigned ichan=0; ichan<get_nchan_weight(); ichan++)
     for (unsigned ipol=0; ipol<get_npol_weight(); ipol++) {
       
       unsigned* data1 = get_weights (ichan, ipol);
-      const unsigned* data2 = copy->get_weights (ichan, ipol) + weight_offset;
+      const unsigned* data2 = copy->get_weights (ichan, ipol) + iwt_start;
       
       for (uint64 iwt=0; iwt<nweights; iwt++)
         data1[iwt] = data2[iwt];
