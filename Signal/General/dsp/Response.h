@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.23 $
-   $Date: 2005/07/29 17:38:46 $
+   $Revision: 1.24 $
+   $Date: 2005/10/03 02:58:07 $
    $Author: wvanstra $ */
 
 #ifndef __Response_h
@@ -41,6 +41,15 @@ namespace dsp {
 
     //! Multiplication operator
     const Response& operator *= (const Response&);
+
+    //! Calculate the impulse_pos and impulse_neg attributes
+    virtual void prepare (const Observation* input, unsigned channels=0);
+
+    //! Match the frequency response to the input Observation
+    virtual void match (const Observation* input, unsigned channels=0);
+
+    //! Match the frequency response to another Response
+    virtual void match (const Response* response);
 
     //! Get the size of the positive half of the impulse response, \f$m_+\f$
     /*! Get the number of complex time samples in the t>0 half of the
@@ -97,12 +106,6 @@ namespace dsp {
 
     //! Integrate coherency matrix of vector spectrum into self
     void integrate (float* spectrum1, float* spectrum2, int ichan=-1);
-
-    //! Match the frequency response to the input Observation
-    virtual void match (const Observation* input, unsigned channels=0);
-
-    //! Match the frequency response to another Response
-    virtual void match (const Response* response);
 
     //! Returns true if the dimension and ordering match
     virtual bool matches (const Response* response);

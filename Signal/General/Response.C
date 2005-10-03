@@ -80,6 +80,14 @@ const dsp::Response& dsp::Response::operator *= (const Response& response)
   return *this;
 }
 
+//! Calculate the impulse_pos and impulse_neg attributes
+void dsp::Response::prepare (const Observation* input, unsigned channels)
+{
+  impulse_neg = impulse_pos = 0;
+}
+
+
+
 /*! The ordering of frequency channels in the response function depends 
   upon:
   <UL>
