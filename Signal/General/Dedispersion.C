@@ -120,6 +120,64 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
   frequency_resolution_set = true;
 }
 
+
+void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
+{
+  if (verbose)
+    cerr << "dsp::Dedispersion::prepare input.nchan=" << input->get_nchan()
+	 << " channels=" << channels << endl;
+  
+  if ( input->get_dispersion_measure() != 0.0 )
+    throw Error (InvalidState, "dsp::Dedispersion::prepare",
+		 "unsure how to dedisperse stuff that's already dedispersed");
+
+  set_centre_frequency ( input->get_centre_frequency() );
+  set_bandwidth ( input->get_bandwidth() );
+  set_dc_centred ( input->get_dc_centred() );
+
+  if (!channels)
+    channels = input->get_nchan();
+
+  set_nchan (channels);
+
+  prepare ();
+}
+
+/*! The signal at sky frequencies lower than the centre frequency
+  arrives later.  So the finite impulse response (FIR) of the
+  dispersion relation, d(t), should have non-zero values for t>0 up to
+  the smearing time in the lower half of the band.  However, this
+  class represents the inverse, or dedispersion, frequency response
+  function, the FIR of which is given by h(t)=d^*(-t).  Therefore,
+  h(t) has non-zero values for t>0 up to the smearing time in the
+  upper half of the band.
+
+  Noting that the first impulse_pos complex time samples are discarded
+  from each cyclical convolution result, it may also be helpful to
+  note that each time sample depends upon the preceding impulse_pos
+  points.
+*/
+void dsp::Dedispersion::prepare ()
+{
+
+  impulse_pos = smearing_samples (1);
+  impulse_neg = smearing_samples (-1);
+
+  if (psrdisp_compatible) {
+    cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
+      "   using symmetric impulse response function" << endl;
+    impulse_pos = impulse_neg;
+  }
+
+#if 0
+  // test the effect of a possibly common error in the interpretation of HR75
+  impulse_pos += impulse_neg;
+  impulse_neg = 0;
+#endif
+
+}
+
+
 /*! Builds a frequency response function (kernel) suitable for phase-coherent
   dispersion removal, based on the centre frequency, bandwidth, and number
   of channels in the input Observation. 
@@ -132,33 +190,10 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
  */
 void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 {
-  if (verbose)
-    cerr << "dsp::Dedispersion::match input.nchan=" << input->get_nchan()
-	 << " channels=" << channels << endl;
-  
-  if ( input->get_dispersion_measure() != 0.0 )
-    throw Error (InvalidState, "dsp::Dedispersion::match",
-		 "unsure how to dedisperse stuff that's already dedispersed");
+  prepare (input, channels);
 
-  set_centre_frequency ( input->get_centre_frequency() );
-  set_bandwidth ( input->get_bandwidth() );
-
-  // If the input is already a filterbank, then the frequency channels will
-  // be centred on the bin, not the edge of the bin
-  if (input->get_dc_centred()) {
-    if (!dc_centred)
-      built = false;
-    dc_centred = true;
-  }
-
-  if (!channels)
-    channels = input->get_nchan();
-
-  if (channels != nchan)
-    built = false;
-
-  nchan = channels;
-  build ();
+  if (!built)
+    build ();
 
   Response::match (input, channels);
 }
@@ -170,66 +205,28 @@ void dsp::Dedispersion::mark (Observation* output)
   output->change_dispersion_measure (dispersion_measure);
 }
 
-void dsp::Dedispersion::prepare ()
-{
-  // The signal at sky frequencies lower than the centre frequency
-  // arrives later.  So the finite impulse response (FIR) of the
-  // dispersion relation, d(t), should have non-zero values for t>0 up
-  // to the smearing time in the lower half of the band.  However,
-  // this class represents the inverse, or dedispersion, frequency
-  // response function, the FIR of which is given by h(t)=d^*(-t).
-  // Therefore, h(t) has non-zero values for t>0 up to the smearing
-  // time in the upper half of the band.
-
-  // Noting that the first impulse_pos complex time samples are
-  // discarded from each cyclical convolution result, it may also be
-  // helpful to note that each time sample depends upon the preceding
-  // impulse_pos points.
-
-  impulse_pos = smearing_samples (1);
-  impulse_neg = smearing_samples (-1);
-
-#if 0
-  // testing a possibly common error in the interpretation of HR75
-  impulse_pos += impulse_neg;
-  impulse_neg = 0;
-#endif
-
-  if (psrdisp_compatible) {
-    cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
-      "   using symmetric impulse response function" << endl;
-    impulse_pos = impulse_neg;
-  }
-
-  if (!frequency_resolution_set)
-    set_optimal_ndat ();
-  else
-    check_ndat ();
-}
-
 void dsp::Dedispersion::build ()
 {
   if (built)
     return;
 
   // prepare internal variables
-  prepare ();
+  if (!frequency_resolution_set)
+    set_optimal_ndat ();
+  else
+    check_ndat ();
 
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
 
   build (phases, ndat, nchan);
 
-  vector<complex<float> > phasors (ndat * nchan);
-  for (unsigned ipt=0; ipt<phases.size(); ipt++)
-    phasors[ipt] = complex<float>(polar (float(1.0), phases[ipt]));
+  resize (1, nchan, ndat, 2);
+  complex<float>* phasors = reinterpret_cast< complex<float>* > ( buffer );
+  uint64 npt = ndat * nchan;
 
-  unsigned _ndat = ndat;
-  unsigned _nchan = nchan;
-
-  set (phasors);
-
-  resize (npol, _nchan, _ndat, ndim);
+  for (unsigned ipt=0; ipt<npt; ipt++)
+    phasors[ipt] = polar (float(1.0), phases[ipt]);
 
   whole_swapped = chan_swapped = false;
 
@@ -394,7 +391,9 @@ void dsp::Dedispersion::build (vector<float>& phases,
   for (unsigned ichan = 0; ichan < _nchan; ichan++) {
 
     double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
-   
+
+    // cerr << "chan_cfreq=" << chan_cfreq << endl;
+
     if (fractional_delay) {
       // Compute the DM delay in microseconds; when multiplied by the
       // frequency in MHz, the powers of ten cancel each other

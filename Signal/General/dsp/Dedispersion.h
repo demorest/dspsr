@@ -1,20 +1,22 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.21 $
-   $Date: 2004/11/22 22:31:53 $
+   $Revision: 1.22 $
+   $Date: 2005/10/03 02:57:27 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
 
 #include "dsp/Response.h"
+#include "dsp/SampleDelayFunction.h"
 
 namespace dsp {
   
-  //! Phase-coherent dedispersion frequency response function
-  /* This class implements the phase-coherent dedispersion kernel, or the
-     frequency response of the interstellar medium.  Not tested. */
+  //! Phase-coherent dispersion removal frequency response function
+  /* This class implements the phase-coherent dedispersion kernel, as
+     determined by the frequency response of the interstellar
+     medium. */
 
   class Dedispersion: public Response {
 
@@ -23,23 +25,23 @@ namespace dsp {
     //! Conversion factor between dispersion measure, DM, and dispersion, D
     static const double dm_dispersion;
 
-    //! Fractional smearing added to ensure that cyclical convolution is reduced
+    //! Fractional smearing added to reduce cyclical convolution effects
     static float smearing_buffer;
 
     //! Null constructor
     Dedispersion ();
+
+    //! Set up and calculate the impulse_pos and impulse_neg attributes
+    void prepare (const Observation* input, unsigned channels);
+
+    //! Calculate the impulse_pos and impulse_neg attributes
+    void prepare ();
 
     //! Match the dedispersion kernel to the input Observation
     virtual void match (const Observation* input, unsigned channels=0);
 
     //! Set the dispersion measure attribute in the output Observation
     virtual void mark (Observation* output);
-
-    //! Return a descriptive string
-    //virtual const std::string descriptor () const;
-
-    //! Initialize from a descriptor string as output by above
-    //virtual void initialize (const std::string& descriptor);
 
     //! Set the dimensions of the data
     virtual void resize (unsigned npol, unsigned nchan,
@@ -117,11 +119,40 @@ namespace dsp {
     //! Compute the phases for a dedispersion kernel
     void build (std::vector<float>& phases, unsigned npts, unsigned nchan);
 
-    //! Prepare for building
-    void prepare ();
-
     //! Build the dedispersion frequency response kernel
     virtual void build ();
+
+    class SampleDelay : public SampleDelayFunction {
+
+    public:
+
+      //! Default constructor
+      SampleDelay ();
+
+      //! Set up the dispersion delays
+      bool match (const Observation* obs);
+
+      //! Return the dispersion delay for the given frequency channel
+      int64 get_delay (unsigned ichan, unsigned ipol);
+
+    protected:
+
+      //! Centre frequency of the band-limited signal in MHz
+      double centre_frequency;
+
+      //! Bandwidth of signal in MHz
+      double bandwidth;
+
+      //! Dispersion measure (in \f${\rm pc cm}^{-3}\f$)
+      double dispersion_measure;
+
+      //! The sampling rate (in Hz)
+      double sampling_rate;
+
+      //! The dispersive delays
+      std::vector<int64> delays;
+
+    };
 
   protected:
 
