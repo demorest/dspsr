@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.39 $
-   $Date: 2005/09/28 22:08:06 $
-   $Author: wvanstra $ */
+   $Revision: 1.40 $
+   $Date: 2005/10/05 02:39:14 $
+   $Author: hknight $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
@@ -135,6 +135,11 @@ namespace dsp {
 	       const unsigned* weights=0, unsigned ndatperweight=0,
 	       uint64 idat_start=0, uint64 ndat_fold=0);
 
+    void set_dispersion_measure(float _dispersion_measure)
+    { dispersion_measure = _dispersion_measure; }
+    float get_dispersion_measure() const
+    { return dispersion_measure; }
+
   protected:
 
     //! The transformation folds the data into the profile
@@ -234,6 +239,9 @@ namespace dsp {
 
     //! If true, set_limits() returns straight away
     bool dont_set_limits;
+
+    //! Dispersion measure to install in output/ephemeris
+    double dispersion_measure;
 
   };
 }

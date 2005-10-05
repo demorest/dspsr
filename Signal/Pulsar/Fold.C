@@ -32,6 +32,8 @@ dsp::Fold::Fold (bool _dont_set_limits) :
   idat_start = ndat_fold = 0;
 
   dont_set_limits = _dont_set_limits;
+
+  dispersion_measure = -1.0;
 }
 
 //! Makes sure parameters are initialised
@@ -157,6 +159,9 @@ void dsp::Fold::prepare (const Observation* observation)
 
   if (verbose)
     cerr << "dsp::Fold::prepare creating polyco" << endl;
+
+  if( dispersion_measure > 0.0 && pulsar_ephemeris.ptr() )
+    (const_cast<psrephem*>(pulsar_ephemeris.ptr()))->set_dm( dispersion_measure );
 
   // Preference 2: Generate correct polyco from ephemeris and add it to the list of polycos to choose from
   folding_polyco = get_folding_polyco(pulsar_ephemeris,observation);
@@ -524,6 +529,9 @@ void dsp::Fold::transformation ()
   // set the sampling rate of the output PhaseSeries
   double sampling_interval = pfold / double(folding_nbin);
   output->set_rate (1.0/sampling_interval);
+
+  if( dispersion_measure > 0.0 )
+    get_output()->set_dispersion_measure( dispersion_measure );
 
   // Set things out of the pulsar ephemeris
   if( pulsar_ephemeris )
