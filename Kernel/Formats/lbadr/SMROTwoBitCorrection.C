@@ -13,36 +13,40 @@ dsp::SMROTwoBitCorrection::SMROTwoBitCorrection ()
   : SubByteTwoBitCorrection ("SMROTwoBitCorrection")
 {
   //threshold = 1.5;
+#ifdef SIGN_MAG
   table = new TwoBitTable (TwoBitTable::SignMagnitude);
-  //  table = new TwoBitTable (TwoBitTable::OffsetBinary);
+#endif
+#ifdef OFFSET_BIN
+  table = new TwoBitTable (TwoBitTable::OffsetBinary);
+#endif
   table->set_flip(true);
 }
 
 /*! SMRO has four digitizers: Potentially 4 channels */
 unsigned dsp::SMROTwoBitCorrection::get_ndig () const
 {
+#ifdef CHAN8
+  return 8;
+#endif
+#ifdef CHAN4
   return 4;
+#endif
+#ifdef CHAN2
+  return 2;   // TWO CHANNELS
+#endif
 }
 
 /*! Each 2-bit sample from each digitizer is packed into one byte */
 unsigned dsp::SMROTwoBitCorrection::get_ndig_per_byte () const
 { 
+#ifdef CHAN8
   return 4;
+#endif
+#ifdef CHAN4
+  return 4;
+#endif
+#ifdef CHAN2
+  return 2;   // TWO CHANNELS
+#endif
 }
 
-/*! Override the dig_unpack to change the number of polns */
-/*void dsp::SMROTwoBitCorrection::dig_unpack (float* output_data,
-					const unsigned char* input_data, 
-					uint64 ndat,
-					unsigned digitizer,
-					unsigned* weights,
-					unsigned nweights)
-{
-  dsp::SubByteTwoBitCorrection::dig_unpack(output_data, input_data, ndat, digitizer, weights, nweights);
-  
-  cout << "yes" << endl;
-  observation->set_nchan(2);
-  observation->set_npol(2);
-  
-}
-*/

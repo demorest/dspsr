@@ -1,3 +1,4 @@
+#include "SMRO.h"
 #include "dsp/SMROFile.h"
 
 #include "Error.h"
@@ -93,16 +94,34 @@ void dsp::SMROFile::open_file (const char* filename)
 
   info.set_start_time(utc);
   info.set_nbit(2);
+#ifdef CHAN8
+  info.set_npol(8);
+#endif
+#ifdef CHAN4
   info.set_npol(4);
+#endif
+#ifdef CHAN2
+  info.set_npol(2);
+#endif
   info.set_nchan(1);
   
   info.set_state(Signal::Nyquist);
-
-  //info.set_rate(64000000);
-  info.set_rate(32000000);
   info.set_machine("SMRO");
+
+#ifdef MHZ32
+  info.set_rate(64000000);
+  info.set_bandwidth(32.0);
+#endif
+
+#ifdef MHZ4
+  info.set_rate(8000000);
+  info.set_bandwidth(4.0);
+#endif
+
+#ifdef MHZ16
+  info.set_rate(32000000);
   info.set_bandwidth(16.0);
-  //info.set_bandwidth(32.0);
+#endif
 
   //info.set_centre_frequency(1384.0);
   info.set_centre_frequency(2282.0);
@@ -119,7 +138,15 @@ void dsp::SMROFile::open_file (const char* filename)
   
   info.set_ndat( int64((file_info.st_size - header_bytes) )* 8 / (info.get_nbit()*info.get_npol()*info.get_nchan()) );
   
+#ifdef CHAN8
+  unsigned bits_per_byte = 16;
+#endif
+#ifdef CHAN4
   unsigned bits_per_byte = 8;
+#endif
+#ifdef CHAN2
+  unsigned bits_per_byte = 4;
+#endif
   resolution = bits_per_byte / info.get_nbit();
   if (resolution == 0)
       resolution = 1;

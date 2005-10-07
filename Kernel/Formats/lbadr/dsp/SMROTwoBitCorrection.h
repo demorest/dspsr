@@ -1,13 +1,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROTwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/01/17 03:14:43 $
+   $Revision: 1.3 $
+   $Date: 2005/10/07 04:18:59 $
    $Author: cwest $ */
 
 #ifndef __SMROTwoBitCorrection_h
 #define __SMROTwoBitCorrection_h
 
+#include "SMRO.h"
 #include "dsp/SubByteTwoBitCorrection.h"
 
 namespace dsp {
