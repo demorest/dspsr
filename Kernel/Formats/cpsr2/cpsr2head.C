@@ -69,10 +69,10 @@ int main(int argc,char** argv){
 }
 
 void usage(){
-  cout << "cpsr2head- scans headers of cpsr2 files\n";
+  cerr << "cpsr2head- scans headers of cpsr2 files\n";
 
-  cout << "Usage: cpsr2head -[" << args << "] file1 file2...\n";
-  cout << " h                 This help page\n"
+  cerr << "Usage: cpsr2head -[" << args << "] file1 file2...\n";
+  cerr << " h                 This help page\n"
        << " k keyword         Keyword [req] ('-k' can be used multiple times)\n"
        << " l                 Print 'UNKNOWN' in field if keyword not found\n"
        << " m metafile        Metafile to parse [no metafile] ('-m' or files required)\n"
@@ -122,5 +122,19 @@ void parse_it(int argc, char** argv,
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
