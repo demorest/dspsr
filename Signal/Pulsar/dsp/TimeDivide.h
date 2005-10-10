@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/09/28 22:08:40 $
+   $Revision: 1.3 $
+   $Date: 2005/10/10 22:14:12 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -68,6 +68,9 @@ namespace dsp {
 
     //! Calculate the boundaries of the current division
     void set_bounds (const Observation*);
+
+    //! Call this method if, after calling set_bounds, the data were not used
+    void discard_bounds (const Observation*);
     
     //! Return true if the last bound Observation covers the current division
     bool get_is_valid () const { return is_valid; }
