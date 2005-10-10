@@ -117,7 +117,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   end_reached = false;
   in_next = false;
 
-  if (input_end < lower || divide_start+0.5/sampling_rate > upper) {
+  if (input_end < lower || divide_start+0.6/sampling_rate > upper) {
 
     /*
       This state occurs when either:
@@ -151,9 +151,9 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   double start_sample = offset.in_seconds() * sampling_rate;
 
-  //cerr << "start_sample=" << start_sample << endl;
+  // cerr << "start_sample=" << start_sample << endl;
   start_sample = rint (start_sample);
-  //cerr << "rint(start_sample)=" << start_sample << endl;
+  // cerr << "rint(start_sample)=" << start_sample << endl;
 
   assert (start_sample >= 0);
 
@@ -192,9 +192,9 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   double end_sample = offset.in_seconds() * sampling_rate;
 
-  //cerr << "end_sample=" << end_sample << endl;
+  // cerr << "end_sample=" << end_sample << endl;
   end_sample = rint (end_sample);
-  //cerr << "rint(end_sample)=" << end_sample << endl;
+  // cerr << "rint(end_sample)=" << end_sample << endl;
 
   assert (end_sample >= 0);
 
@@ -203,7 +203,11 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
 	 << " ms (" << idat_end << "pts)" << endl;
-  
+ 
+  if (idat_end <= idat_start)
+    throw Error (InvalidState, "dsp::TimeDivide::bound",
+		 "idat_end="UI64" <= idat_start="UI64, idat_end, idat_start);
+
   if (idat_end > input_ndat) {
 
     // this can happen owing to rounding in the above call to rint()
@@ -265,6 +269,11 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   current_end = input_start + idat_end/sampling_rate;
 }
 
+void dsp::TimeDivide::discard_bounds (const Observation* input)
+{
+  double sampling_rate = input->get_rate();
+  current_end -= ndat/sampling_rate;
+}
 
 void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 {
