@@ -6,7 +6,7 @@
 
 #include "genutil.h"
 
-//#define RUNTIME_FFT
+#define RUNTIME_FFT
 
 #include "FTransform.h"
 #include "fftm.h"
@@ -307,14 +307,11 @@ void dsp::Filterbank::transformation ()
   float* data_from = NULL;
 
   for (ipart=0; ipart<npart; ipart++) {
-
     in_offset = ipart * in_step;
     out_offset = ipart * out_step;
 
     for (ipol=0; ipol < npol; ipol++) {
-
       for (itres=0; itres < time_res; itres ++) {
-
 	tres_offset = itres * tres_step;
 
 	for (jpol=0; jpol<cross_pol; jpol++) {
