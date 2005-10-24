@@ -556,10 +556,16 @@ template<class ExtensionType>
 ExtensionType*
 dsp::Observation::getadd()
 {
-  if( has<ExtensionType>() )
-    return get<ExtensionType>();
+  // STUPID compiler won't compile this:
+  //  if( has<ExtensionType>() )
+  //return get<ExtensionType>();
 
-  ExtensionType* ext = new ExtensionType;
+  for( unsigned i=0; i<extensions.size(); i++)
+    if( dynamic_cast<ExtensionType*>(extensions[i].get()) )
+      return dynamic_cast<ExtensionType*>(extensions[i].get());
+
+  Reference::To<ExtensionType> ext = new ExtensionType;
+
   add( ext );
   
   return ext;
