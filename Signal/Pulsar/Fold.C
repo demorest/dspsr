@@ -426,9 +426,17 @@ void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
   built = false;
 }
 
-const psrephem* dsp::Fold::get_pulsar_ephemeris () const
+psrephem* dsp::Fold::get_pulsar_ephemeris ()
 {
-  return pulsar_ephemeris;
+  if( has_input() && !pulsar_ephemeris.ptr() )
+    pulsar_ephemeris = choose_ephemeris(input->get_source());
+
+  if( !pulsar_ephemeris.ptr() )
+    throw Error(InvalidState,"dsp::Fold::get_pulsar_ephemeris ()",
+		"pulsar_ephemeris=0 and couldn't get one from ephemerides (input=%d) ephemerides.size()=%d",
+		has_input(), ephemerides.size());
+
+  return (psrephem*)pulsar_ephemeris.ptr();
 }
 
 void dsp::Fold::set_input (TimeSeries* _input)

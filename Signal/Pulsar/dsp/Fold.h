@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.40 $
-   $Date: 2005/10/05 02:39:14 $
+   $Revision: 1.41 $
+   $Date: 2005/10/24 05:27:43 $
    $Author: hknight $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -85,7 +85,13 @@ namespace dsp {
     bool has_folding_polyco () const;
 
     //! Get the ephemeris used to create the phase model
-    const psrephem* get_pulsar_ephemeris () const;
+    //   const psrephem* get_pulsar_ephemeris () const;
+
+    //! Get the ephemeris used to create the phase model
+    psrephem* get_pulsar_ephemeris ();
+
+    //! use to see whether pulsar eph is stored
+    bool has_pulsar_ephemeris() const { return pulsar_ephemeris.ptr(); }
 
     //! Set the ephemeris with which to create a new phase model
     void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
