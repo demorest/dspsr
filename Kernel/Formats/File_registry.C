@@ -102,6 +102,11 @@ static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfi
 static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
 #endif
 
+#if DSP_MARK5
+#include "dsp/Mark5File.h"
+static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
+#endif
+
 #if DSP_S2
 #include "dsp/S2File.h"
 static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;

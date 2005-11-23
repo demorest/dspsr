@@ -80,6 +80,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection> mark4;
 #endif
 
+#if DSP_MARK5
+#include "dsp/Mark5Unpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5Unpacker> mark5_unpacker;
+#endif
+
 #if DSP_S2
 #include "dsp/S2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>  s2;
