@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "fcntl.h"
-
+#include "fd_utils.h"
 
 void extractnibbles64(const unsigned long long *data, int track, int numnibbles,
 			char *nibbles)
@@ -97,12 +97,24 @@ dsp::Mark5File::~Mark5File ( )
 
 bool dsp::Mark5File::is_valid(const char* filename, int) const
 {
-	int filed = ::open64(filename, O_RDONLY);
+	char headername[256];
 	
-	if (filed == -1)
-		throw Error (FailedSys, "dsp::Mark5File::open",
-			"failed open64(%s)", filename);
-			
+	strcpy(headername,filename);
+	strcat(headername,".hdr");
+
+	FILE* fptr = fopen(headername,"r");
+
+	if( !fptr )
+	  return false;
+
+	char header[1024];
+	int dummy_fanout = 0;
+	fread(header,sizeof(char),1024,fptr);
+	fclose(fptr);
+
+	if (ascii_header_get (header,"FANOUT","%d",&dummy_fanout) < 0)
+	  return false;
+	
 	return true;
 	/*		
 	int chans = count_channels(filed);   
