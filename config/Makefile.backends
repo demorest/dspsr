@@ -129,6 +129,18 @@ endif
 
 ##############################################################################
 #
+# Mark5 specific code sent to HSK by JP
+# 
+ifeq ($(MARK5),yes)
+
+CPPFLAGS += -DDSP_MARK5=1
+BACKENDS += MARK5
+LBACKENDS += -ldsp_Mark5
+
+endif
+
+##############################################################################
+#
 # Maxim specific code, for use
 # with the Vela glitch monitoring system on the 14m dish in Hobart.
 #
