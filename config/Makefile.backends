@@ -31,7 +31,7 @@ endif
 ifeq ($(CPSR2),yes)
 
 CPPFLAGS += -DDSP_CPSR2=1
-CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation
+CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation DumbCPSR2Unpacker
 BACKENDS += CPSR2
 PROGRAMS += cpsr2_change_header.C
 
@@ -50,12 +50,12 @@ endif
 
 ##############################################################################
 #
-# CPSR2 specific code
+# CPSR2 4-bit specific code
 #
 ifeq ($(CPSR2_4bit),yes)
 
 CPPFLAGS += -DDSP_CPSR2_4bit=1
-CLASSES += CPSR2FourBitUnpacker 
+CLASSES += CPSR2FourBitUnpacker
 BACKENDS += CPSR2_4bit
 
 endif

@@ -24,6 +24,8 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> miniunpack;
 #include "dsp/backends.h"
 
 #if DSP_CPSR2
+//#include "dsp/DumbCPSR2Unpacker.h"
+//static Registry::List<dsp::Unpacker>::Enter<dsp::DumbCPSR2Unpacker> dumb_cpsr2_unpacker;
 #include "dsp/CPSR2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #endif
