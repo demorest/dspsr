@@ -1,6 +1,9 @@
-#include "Mark5Unpacker.h"
+#include <typeinfo>
+
 #include "Error.h"
-#include "Mark5File.h"
+
+#include "dsp/Mark5Unpacker.h"
+#include "dsp/Mark5File.h"
 
 // modelled on CPSR2_8bitunpacker.C
 
@@ -50,7 +53,6 @@ void dsp::Mark5Unpacker::unpack()
 	//		 ---
 	//
 	// /////////////////////////////////////////////////
-	
 	
 	Mark5File* file = get_Input<Mark5File>();
 
