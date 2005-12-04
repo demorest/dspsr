@@ -1,17 +1,25 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.12 $
-   $Date: 2005/08/29 16:58:48 $
-   $Author: wvanstra $ */
+   $Revision: 1.13 $
+   $Date: 2005/12/04 23:55:57 $
+   $Author: hknight $ */
 
 
 #ifndef __Unpacker_h
 #define __Unpacker_h
 
+#include <typeinfo>
+
+namespace dsp {
+  class Unpacker;
+}
+
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
+#include "dsp/HoleyFile.h"
+#include "dsp/MultiFile.h"
 
 #include "Registry.h"
 
@@ -67,11 +75,37 @@ namespace dsp {
     //! Provide BitSeries::input attribute access to derived classes
     template<class T>
     T* get_Input () const {
-      T* ptr = dynamic_cast<T*>( get_input()->input );
-      if (!ptr)
-	throw Error (InvalidState, "Unpacker::get_source",
-		     "BitSeries::input is not of required type");
-      return ptr;
+      {
+	T* ptr = dynamic_cast<T*>( get_input()->input );
+	if( ptr )
+	  return ptr;
+      }
+
+      HoleyFile* hf = dynamic_cast<HoleyFile*>(get_input()->input);
+	
+      if( hf ){
+	T* ptr = dynamic_cast<T*>( hf->get_loader() );
+	
+	if( ptr )
+	  return ptr;
+      }
+
+      MultiFile* mf = dynamic_cast<MultiFile*>(get_input()->input);
+	
+      if( mf ){
+	T* ptr = dynamic_cast<T*>( mf->get_loader() );
+	
+	if( ptr )
+	  return ptr;
+      }
+
+      throw Error (InvalidState, "Unpacker::get_Input()",
+		   "Yo BitSeries::input is not of required type- it is of type '%s' this type='%s'.  Value='%p'.  Its name=%s. hf=%p mf=%p",
+		   typeid(get_input()->input).name(),
+		   typeid(T*).name(),get_input()->input,
+		   get_input()->input->get_name().c_str(),
+		   hf, mf);
+      return 0;
     }
 
 
