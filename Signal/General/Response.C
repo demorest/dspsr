@@ -316,7 +316,20 @@ vector<float> dsp::Response::get_passband (unsigned ipol, int ichan) const
 
 void dsp::Response::operate (float* data, unsigned ipol, int ichan) const
 {
+  if( ichan < 0 )
+    operate(data,ipol,ichan,nchan);
+  else
+    operate(data,ipol,ichan,1);
+}
+
+//! Multiply spectrum by complex frequency response
+void
+dsp::Response::operate (float* spectrum, unsigned poln, int ichan_start, unsigned nchan_op) const
+{
   assert (ndim == 2);
+
+  unsigned ipol = poln;
+  float* data = spectrum;
 
   // one filter may apply to two polns
   if (ipol >= npol)
@@ -324,14 +337,16 @@ void dsp::Response::operate (float* data, unsigned ipol, int ichan) const
 
   // do all channels at once if ichan < 0
   unsigned npts = ndat;
-  if (ichan < 0) {
+  if (ichan_start < 0) {
     npts *= nchan;
-    ichan = 0;
+    ichan_start = 0;
   }
-    
+  else
+    npts *= nchan_op;
+
   register float* d_from = data;
   register float* d_to = data;
-  register float* f_p = buffer + offset * ipol + ichan * ndat * ndim;
+  register float* f_p = buffer + offset * ipol + ichan_start * ndat * ndim;
 
 #ifdef _DEBUG
   cerr << "dsp::Response::operate nchan=" << nchan << " ipol=" << ipol 
@@ -356,7 +371,6 @@ void dsp::Response::operate (float* data, unsigned ipol, int ichan) const
     *d_to = f_i * d_r + f_r * d_i; d_to ++;
   }
 }
-
 
 // /////////////////////////////////////////////////////////////////////////
 

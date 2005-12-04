@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.24 $
-   $Date: 2005/10/03 02:58:07 $
-   $Author: wvanstra $ */
+   $Revision: 1.25 $
+   $Date: 2005/12/04 23:57:05 $
+   $Author: hknight $ */
 
 #ifndef __Response_h
 #define __Response_h
@@ -97,6 +97,9 @@ namespace dsp {
 
     //! Multiply spectrum by complex frequency response
     void operate (float* spectrum, unsigned poln=0, int ichan=-1) const;
+
+    //! Multiply spectrum by complex frequency response
+    void operate (float* spectrum, unsigned poln, int ichan_start, unsigned nchan_op) const;
 
     //! Multiply spectrum vector by complex matrix frequency response
     void operate (float* spectrum1, float* spectrum2, int ichan=-1) const;
