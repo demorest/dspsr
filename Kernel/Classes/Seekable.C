@@ -147,6 +147,9 @@ void dsp::Seekable::load_data (BitSeries* data)
 
   data->set_ndat (recycled + read_size);
 
+  if( real_source != "" )
+    data->set_source( real_source );
+
   // verbose = false;
 }
 
