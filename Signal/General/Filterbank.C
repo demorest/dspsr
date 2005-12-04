@@ -27,11 +27,22 @@ void dsp::Filterbank::transformation ()
 {
   if (verbose)
     cerr << "dsp::Filterbank::transformation input ndat=" << input->get_ndat()
-	 << " (output ndat=" << output->get_ndat() << ")" << endl;
+	 << " (output ndat=" << output->get_ndat() << ")"
+	 << " input->nchan=" << input->get_nchan()
+	 << endl;
 
-  if (nchan < 2)
+  if (nchan <= input->get_nchan() )
     throw Error (InvalidState, "dsp::Filterbank::transformation",
-		 "invalid number of channels = %d", nchan);
+		 "Number of output channels (%d) is <= the number of input channels (%d)",
+		 nchan, input->get_nchan());
+
+  if( nchan % input->get_nchan() != 0 )
+    throw Error (InvalidState, "dsp::Filterbank::transformation",
+		 "Your output nchan (%d) didn't divide your input nchan (%d)",
+		 nchan, input->get_nchan());
+
+  //! Number of channels outputted per input channel
+  unsigned nchan_subband = nchan / input->get_nchan();
 
   //! Complex samples dropped from beginning of cyclical convolution result
   unsigned nfilt_pos = 0;
@@ -71,7 +82,7 @@ void dsp::Filterbank::transformation ()
   }
 
   // number of complex values in the result of the first fft
-  unsigned n_fft = nchan * freq_res;
+  unsigned n_fft = nchan_subband * freq_res;
 
   // number of complex samples invalid in result of small ffts
   unsigned n_filt = nfilt_pos + nfilt_neg;
@@ -83,12 +94,12 @@ void dsp::Filterbank::transformation ()
 
   if (input->get_state() == Signal::Nyquist) {
     nsamp_fft = 2 * n_fft;
-    nsamp_overlap = 2 * n_filt * nchan;
+    nsamp_overlap = 2 * n_filt * nchan_subband;
   }
 
   else if (input->get_state() == Signal::Analytic) {
     nsamp_fft = n_fft;
-    nsamp_overlap = n_filt * nchan;
+    nsamp_overlap = n_filt * nchan_subband;
   }
 
   else
@@ -97,6 +108,10 @@ void dsp::Filterbank::transformation ()
 
   // if given, test the validity of the window function
   if (apodization) {
+    if( input->get_nchan() > 1 )
+      throw Error(InvalidState,"dsp::Filterbank::transformation",
+		  "I don't use apodization windows so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
+		  input->get_nchan());
 
     if (apodization->get_ndat() != nsamp_fft)
       throw Error (InvalidState, "dsp::Filterbank::transformation",
@@ -129,12 +144,21 @@ void dsp::Filterbank::transformation ()
       fprintf (stderr, "dsp::Filterbank::transformation with %s convolution\n",
 	       (matrix_convolution)?"matrix":"complex");
 
+    if( matrix_convolution && input->get_nchan() > 1 )
+      throw Error(InvalidState,"dsp::Filterbank::transformation",
+		  "I don't use matrix convolution so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
+		  input->get_nchan());
+
     if (matrix_convolution && input->get_npol() != 2)
 	throw Error (InvalidState, "dsp::Filterbank::transformation",
 		     "matrix convolution and input.npol != 2");
   }
 
   if (passband) {
+    if( matrix_convolution && input->get_nchan() > 1 )
+      throw Error(InvalidState,"dsp::Filterbank::transformation",
+		  "I don't use passbands in this class so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
+		  input->get_nchan());
 
     if (response)
       passband -> match (response);
@@ -149,16 +173,16 @@ void dsp::Filterbank::transformation ()
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
   // this may be in addition to any overlap necessary due to convolution.
   // nsamp_step is analogous to ngood in Convolution::transformation
-  const unsigned nsamp_tres = nchan / time_res;
+  const unsigned nsamp_tres = nchan_subband / time_res;
   if (nsamp_tres < 1)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
-		 "time resolution:%d > no.channels:%d\n", time_res, nchan);
+		 "time resolution:%d > no.channels per input channel:%d\n", time_res, nchan_subband);
 
   const uint64 ndat = input->get_ndat();
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
-  unsigned npart = (ndat-(nchan-nsamp_tres)-nsamp_overlap)/nsamp_step;
+  unsigned npart = (ndat-(nchan_subband-nsamp_tres)-nsamp_overlap)/nsamp_step;
   // points kept from each small fft
   unsigned nkeep = freq_res - n_filt;
 
@@ -249,7 +273,7 @@ void dsp::Filterbank::transformation ()
     response->mark (output);
 
   // initialize scratch space for FFTs
-  unsigned bigfftsize = nchan * freq_res * 2;
+  unsigned bigfftsize = nchan_subband * freq_res * 2;
   // also need space to hold backward FFTs
   unsigned scratch_needed = bigfftsize + 2 * freq_res;
 
@@ -306,107 +330,106 @@ void dsp::Filterbank::transformation ()
   float* data_into = NULL;
   float* data_from = NULL;
 
-  for (ipart=0; ipart<npart; ipart++) {
-    in_offset = ipart * in_step;
-    out_offset = ipart * out_step;
+  for( unsigned i_input_chan=0; i_input_chan < input->get_nchan(); i_input_chan++){
 
-    for (ipol=0; ipol < npol; ipol++) {
-      for (itres=0; itres < time_res; itres ++) {
-	tres_offset = itres * tres_step;
-
-	for (jpol=0; jpol<cross_pol; jpol++) {
-	  if (matrix_convolution)
-	    ipol = jpol;
+    for (ipart=0; ipart<npart; ipart++) {
+      in_offset = ipart * in_step;
+      out_offset = ipart * out_step;
+      
+      for (ipol=0; ipol < npol; ipol++) {
+	for (itres=0; itres < time_res; itres ++) {
+	  tres_offset = itres * tres_step;
 	  
-	  time_dom_ptr = const_cast<float*>(input->get_datptr (0, ipol));
-	  time_dom_ptr += in_offset + tres_offset;
-	  
-	  if (apodization) {
-	    apodization -> operate (time_dom_ptr, windowed_time_domain);
-	    time_dom_ptr = windowed_time_domain;
-	  }
-#ifdef RUNTIME_FFT
-	  if (input->get_state() == Signal::Nyquist)
-	    FTransform::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
-	  else
-	    FTransform::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
-#else
-	  if (input->get_state() == Signal::Nyquist)
-	    fft::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
-	  else
-	    fft::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
-#endif
-	}
-
-	if (matrix_convolution) {
-
-	  if (passband && itres==0)
-	    passband->integrate (complex_spectrum[0], complex_spectrum[1]);
-
-	  // cross filt can be set only if there is a response
-	  response->operate (complex_spectrum[0], complex_spectrum[1]);
-
-	}
-	
-	else {
-
-	  if (passband && itres==0)
-	    passband->integrate (complex_spectrum[ipol], ipol);
-
-	  if (response)
-	    response->operate (complex_spectrum[ipol], ipol);
-
-	}
-	
-	for (jpol=0; jpol<cross_pol; jpol++) {
-	  if (matrix_convolution)
-	    ipol = jpol;
-	  
-	  freq_dom_ptr = complex_spectrum[ipol];
-	  
-	  if (freq_res == 1) {
-	    for (ichan=0; ichan < nchan; ichan++) {
-	      data_into = output->get_datptr (ichan, ipol) + out_offset + itres*2;
-
-	      *data_into = *freq_dom_ptr;     // copy the Re[z]
-	      data_into++; freq_dom_ptr ++;
-	      *data_into = *freq_dom_ptr;     // copy the Im[z]
-	      freq_dom_ptr ++;
+	  for (jpol=0; jpol<cross_pol; jpol++) {
+	    if (matrix_convolution)
+	      ipol = jpol;
+	    
+	    time_dom_ptr = const_cast<float*>(input->get_datptr (i_input_chan, ipol));
+	    time_dom_ptr += in_offset + tres_offset;
+	    
+	    if (apodization) {
+	      apodization -> operate (time_dom_ptr, windowed_time_domain);
+	      time_dom_ptr = windowed_time_domain;
 	    }
-	    continue;
+#ifdef RUNTIME_FFT
+	    if (input->get_state() == Signal::Nyquist)
+	      FTransform::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+	    else
+	      FTransform::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+#else
+	    if (input->get_state() == Signal::Nyquist)
+	      fft::frc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+	    else
+	      fft::fcc1d (nsamp_fft, complex_spectrum[ipol], time_dom_ptr);
+#endif
+	}
+	  
+	  if (matrix_convolution) {    
+	    if (passband && itres==0)
+	      passband->integrate (complex_spectrum[0], complex_spectrum[1]);
+	    
+	    // cross filt can be set only if there is a response
+	    response->operate (complex_spectrum[0], complex_spectrum[1]);	    
+	  }
+	  else {	   
+	    if (passband && itres==0)
+	      passband->integrate (complex_spectrum[ipol], ipol);
+	    if (response)
+	      response->operate (complex_spectrum[ipol], ipol,
+				 i_input_chan*nchan_subband, nchan_subband);	    
 	  }
 	  
-	  // freq_res > 1 requires a backward fft into the time domain
-	  // for each channel
-  
-	  for (ichan=0; ichan < nchan; ichan++) {
-#ifdef RUNTIME_FFT
-	    FTransform::bcc1d (freq_res, complex_time, freq_dom_ptr);
-#else
-	    fft::bcc1d (freq_res, complex_time, freq_dom_ptr);
-#endif
-	    freq_dom_ptr += freq_res*2;
-
-	    data_into = output->get_datptr (ichan, ipol) + out_offset+itres*2;
-	    data_from = complex_time + nfilt_pos*2;  // complex nos.
-
-	    for (ipt=0; ipt < nkeep; ipt++) {
-	      *data_into = *data_from;     // copy the Re[z]
-	      data_into ++; data_from ++;
-	      *data_into = *data_from;     // copy the Im[z]
-	      data_into ++; data_from ++;
-	      data_into += tres_skip;      // leave space for the in-betweeners
+	  for (jpol=0; jpol<cross_pol; jpol++) {
+	    if (matrix_convolution)
+	      ipol = jpol;
+	    
+	    freq_dom_ptr = complex_spectrum[ipol];
+	    
+	    if (freq_res == 1) {
+	      for (ichan=0; ichan < nchan_subband; ichan++) {
+		data_into = output->get_datptr (i_input_chan*nchan_subband+ichan, ipol) + out_offset + itres*2;
+		
+		*data_into = *freq_dom_ptr;     // copy the Re[z]
+		data_into++; freq_dom_ptr ++;
+		*data_into = *freq_dom_ptr;     // copy the Im[z]
+		freq_dom_ptr ++;
+	      }
+	      continue;
 	    }
 	    
-	  } // for each channel
-
-	} // for each cross poln
-
-      } // for each element of finer time resolution
+	    // freq_res > 1 requires a backward fft into the time domain
+	    // for each channel
+	    
+	    for (ichan=0; ichan < nchan_subband; ichan++) {
+#ifdef RUNTIME_FFT
+	      FTransform::bcc1d (freq_res, complex_time, freq_dom_ptr);
+#else
+	      fft::bcc1d (freq_res, complex_time, freq_dom_ptr);
+#endif
+	      freq_dom_ptr += freq_res*2;
+	      
+	      data_into = output->get_datptr (i_input_chan*nchan_subband+ichan, ipol) + out_offset+itres*2;
+	      data_from = complex_time + nfilt_pos*2;  // complex nos.
+	      
+	      for (ipt=0; ipt < nkeep; ipt++) {
+		*data_into = *data_from;     // copy the Re[z]
+		data_into ++; data_from ++;
+		*data_into = *data_from;     // copy the Im[z]
+		data_into ++; data_from ++;
+		data_into += tres_skip;      // leave space for the in-betweeners
+	      }
+	      
+	    } // for each channel
+	    
+	  } // for each cross poln
+	  
+	} // for each element of finer time resolution
+	
+      } // for each polarization
       
-    } // for each polarization
+    } // for each big fft (ipart)
     
-  } // for each big fft (ipart)
+  } // for each input channel
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation return with output ndat="
