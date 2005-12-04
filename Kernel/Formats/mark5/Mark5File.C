@@ -160,7 +160,7 @@ void dsp::Mark5File::open_file(const char* filename)
 	// initmodbits64
 	// 	if (!modbits64) initmodbits64();
 	int i, n, k;
-	static unsigned int ff[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+	unsigned int ff[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
 	
 	fd = ::open64(filename,O_RDONLY);
