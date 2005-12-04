@@ -1,15 +1,19 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.20 $
-   $Date: 2003/10/24 11:22:20 $
-   $Author: wvanstra $ */
+   $Revision: 1.21 $
+   $Date: 2005/12/04 23:58:12 $
+   $Author: hknight $ */
 
 
 #ifndef __MultiFile_h
 #define __MultiFile_h
 
 #include <vector>
+
+namespace dsp {
+  class MultiFile;
+}
 
 #include "dsp/Observation.h"
 #include "dsp/Seekable.h"
