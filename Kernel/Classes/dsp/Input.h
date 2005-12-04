@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.30 $
-   $Date: 2004/11/01 16:49:35 $
-   $Author: wvanstra $ */
+   $Revision: 1.31 $
+   $Date: 2005/12/04 23:58:50 $
+   $Author: hknight $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -108,6 +108,12 @@ namespace dsp {
     //! Convenience method used to set the number of seconds
     void set_total_seconds (double seconds);
 
+    //! Change the source name after each call to operate()
+    void set_real_source(string _real_source){ real_source = _real_source; }
+    //! Inquire what source name will be changed to after each call to operate ["" meaning no change]
+    //! get_info()->get_source() will return the sourcename if this is ""
+    string get_real_source(){ return real_source; }
+
   protected:
 
     //! Set the 'end_of_data' flag in dsp::Seekable
@@ -140,6 +146,9 @@ namespace dsp {
     //! The ndat of the BitSeries last loaded
     //! Used by Seekable::recycle_data() and set by load()
     uint64 last_load_ndat;
+
+    //! If not "" then the source of the output gets changed to this after loading [""]
+    string real_source;
 
   private:
 

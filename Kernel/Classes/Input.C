@@ -109,6 +109,9 @@ void dsp::Input::operation ()
   seek( to_seek, SEEK_CUR);
   set_eod( at_eod );
 
+  if( real_source != "" )
+    output->set_source( real_source );
+
   if (verbose)
     cerr << "dsp::Input::operation exit with load_sample="<< load_sample <<endl;
 }
