@@ -292,7 +292,8 @@ unsigned dsp::Fold::choose_nbin ()
 
   if (the_folding_period <= 0.0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
-		 "no folding period or polyco set");
+		 "no folding period or polyco set. eph=%p",
+		 pulsar_ephemeris.ptr());
 
   double sampling_period = 1.0 / input->get_rate();
 
