@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.13 $
-   $Date: 2005/12/04 23:55:57 $
+   $Revision: 1.14 $
+   $Date: 2005/12/05 00:47:24 $
    $Author: hknight $ */
 
 
@@ -74,14 +74,18 @@ namespace dsp {
 
     //! Provide BitSeries::input attribute access to derived classes
     template<class T>
-    T* get_Input () const {
+    T* get_Input () {
+
+      const Input* ii = get_input()->get_loader();
+      Input* iii = (Input*)(ii);
+      
       {
-	T* ptr = dynamic_cast<T*>( get_input()->input );
+	T* ptr = dynamic_cast<T*>( iii );
 	if( ptr )
 	  return ptr;
       }
 
-      HoleyFile* hf = dynamic_cast<HoleyFile*>(get_input()->input);
+      HoleyFile* hf = dynamic_cast<HoleyFile*>( iii );
 	
       if( hf ){
 	T* ptr = dynamic_cast<T*>( hf->get_loader() );
@@ -90,7 +94,7 @@ namespace dsp {
 	  return ptr;
       }
 
-      MultiFile* mf = dynamic_cast<MultiFile*>(get_input()->input);
+      MultiFile* mf = dynamic_cast<MultiFile*>( iii );
 	
       if( mf ){
 	T* ptr = dynamic_cast<T*>( mf->get_loader() );
@@ -101,9 +105,9 @@ namespace dsp {
 
       throw Error (InvalidState, "Unpacker::get_Input()",
 		   "Yo BitSeries::input is not of required type- it is of type '%s' this type='%s'.  Value='%p'.  Its name=%s. hf=%p mf=%p",
-		   typeid(get_input()->input).name(),
-		   typeid(T*).name(),get_input()->input,
-		   get_input()->input->get_name().c_str(),
+		   typeid(iii).name(),
+		   typeid(T*).name(),iii,
+		   iii->get_name().c_str(),
 		   hf, mf);
       return 0;
     }

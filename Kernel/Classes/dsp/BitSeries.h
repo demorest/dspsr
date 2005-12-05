@@ -82,6 +82,8 @@ namespace dsp {
     //! For use by MiniSeries to share the data buffer for unpacking
     void share(unsigned char*& _buffer,uint64& _size) const;
 
+    const Input* get_loader() const { return input; }
+
   protected:
 
     friend class Unpacker;
@@ -97,14 +99,14 @@ namespace dsp {
     //! Sample offset from start of source; attribute used by Input class
     int64 input_sample;
 
-    //! The Input instance to last set input_sample
-    Input* input;
-
     //! Offset (owing to resolution) to the requested time sample
     unsigned request_offset;
 
     //! Number of time samples requested
     uint64 request_ndat;
+
+    //! The Input instance to last set input_sample
+    Input* input;
 
   };
   
