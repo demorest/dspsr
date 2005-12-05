@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/09/04 19:38:38 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2005/12/05 00:05:25 $
+   $Author: hknight $ */
 
 
 #ifndef __dsp_BlockFile_h
@@ -22,8 +22,8 @@ namespace dsp {
     //! Constructor
     BlockFile (const char* name);
     
-    //! Destructor
-    ~BlockFile ();
+    //! Virtual destructor
+    virtual ~BlockFile ();
 
     //! Get the number of data bytes per block (frame)
     uint64 get_block_data_bytes () const;

@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.17 $
-   $Date: 2005/09/28 03:45:14 $
+   $Revision: 1.18 $
+   $Date: 2005/12/05 00:05:18 $
    $Author: hknight $ */
 
 #ifndef __Convolution_h
@@ -54,7 +54,7 @@ namespace dsp {
     Convolution (const char* name = "Convolution", Behaviour type = anyplace,bool _time_conserved=false);
 
     //! Destructor
-    ~Convolution ();
+    virtual ~Convolution ();
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
