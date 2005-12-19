@@ -17,6 +17,8 @@
 #include "Pulsar/Telescope.h"
 #include "Pulsar/Receiver.h"
 
+#include "Pulsar/FITSHdrExtension.h"
+
 #include "Error.h"
 
 #include <assert.h>
@@ -181,6 +183,15 @@ try {
 	 << " nbin=" << nbin << endl;
 
   archive-> resize (nsub, effective_npol, nchan, nbin);
+
+  Pulsar::FITSHdrExtension* ext;
+  ext = archive->get<Pulsar::FITSHdrExtension>();
+  
+  if (ext) {
+    ext->start_time = phase->get_start_time();
+    // This is a bit of an assumption...
+    ext->set_coord_mode("J2000");
+  }
 
   /*! Install the given ephemeris and calls update_model
   archive-> set_ephemeris (const psrephem& ephemeris);
