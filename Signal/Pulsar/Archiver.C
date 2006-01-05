@@ -22,6 +22,7 @@
 #include "Error.h"
 
 #include <assert.h>
+#include <time.h>
 
 #ifdef sun
 #include <ieeefp.h>
@@ -188,11 +189,36 @@ try {
   ext = archive->get<Pulsar::FITSHdrExtension>();
   
   if (ext) {
-    ext->start_time = phase->get_start_time();
-    // This is a bit of an assumption...
-    ext->set_coord_mode("J2000");
-  }
 
+    // Make sure the start time is aligned with pulse phase zero
+    // as this is what the PSRFITS format expects.
+
+    MJD initial = phase->get_start_time();
+
+    Phase inphs = phase->get_folding_polyco()->phase(initial);
+
+    double dtime = inphs.fracturns() * phase->get_folding_period();
+    initial -= dtime;
+
+    ext->start_time = initial;
+
+    // In keeping with tradition, I'll set this to a value that should
+    // work in most places for the next 50 years or so ;)
+
+    ext->set_coord_mode("J2000");
+
+    // Set the ASCII date stamp from the system clock (in UTC)
+
+    time_t thetime;
+    time(&thetime);
+    string time_str = asctime(gmtime(&thetime));
+
+    // Cut off the line feed character
+    time_str = time_str.substr(0,time_str.length() - 1);
+
+    ext->set_date_str(time_str);
+  }
+  
   /*! Install the given ephemeris and calls update_model
   archive-> set_ephemeris (const psrephem& ephemeris);
   */
