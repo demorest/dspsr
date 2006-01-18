@@ -51,7 +51,7 @@ unsigned dsp::TScrunch::get_sfactor(){
 void dsp::TScrunch::transformation ()
 {
   if( verbose )
-    fprintf(stderr,"\nIn %s::transformation()\n",get_name().c_str());
+    fprintf(stderr,"\nIn %s::transformation() with sf=%d\n",get_name().c_str(),int(ScrunchFactor));
 
   if( UsingScrunchFactor() && ScrunchFactor==1 ){
     if( verbose )
