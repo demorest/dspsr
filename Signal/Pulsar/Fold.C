@@ -79,9 +79,12 @@ void dsp::Fold::prepare (const Observation* observation)
 
   string jpulsar = observation->get_source();
   
-  if (jpulsar.length() == 0)
+  if (jpulsar.length() == 0){
+    cerr << observation->obs2string() << endl;
     throw Error (InvalidParam, "dsp::Fold::prepare",
-		 "empty Observation::source");
+		 "empty Observation::source observation=%p",
+		 observation);
+  }
 
   if( folding_period > 0 && (folding_period_source==jpulsar || folding_period_source==string()) )
   {
