@@ -93,7 +93,7 @@ LO3D = -lGL $(LXMU) $(LX11)
 
 ##########################################################################
 # PGPLOT, C-wrappers, Motif/PGPLOT
-LPGPLOT = -L${PGPLOT_DIR} -lpgplot $(LX11) $(LF77)
+LPGPLOT = -L${PGPLOT_DIR} -lpgplot -lpng $(LX11) $(LF77)
 LCPGPLOT = -L${PGPLOT_DIR} -lcpgplot $(LPGPLOT)
 
 LX11 = -lX11
