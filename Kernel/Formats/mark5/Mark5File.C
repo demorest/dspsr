@@ -290,9 +290,8 @@ void dsp::Mark5File::open_file(const char* filename)
   	info.set_centre_frequency (freq);
 	
 	//
-	// until otherwise, the band is centred on the centre frequency
-	//
-	info.set_dc_centred(true);
+	// WvS - flag means that even number of channels are result of FFT
+	// info.set_dc_centred(true);
 
 	// ///////////////////////////////////////////////////////////////
 	// BW

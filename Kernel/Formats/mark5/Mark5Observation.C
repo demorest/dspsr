@@ -76,11 +76,9 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
     	throw_str ("Mark5_Observation - failed read FREQ");
 
   	set_centre_frequency (freq);
-	
-	//
-	// until otherwise, the band is centred on the centre frequency
-	//
-	dc_centred = true;
+
+	// WvS - flag means that even number of channels are result of FFT
+	// dc_centred = true;
 
 	// ///////////////////////////////////////////////////////////////
 	// BW
