@@ -30,7 +30,7 @@ void dsp::InputBuffering::set_next_start (uint64 next)
     buffer_ndat = 0;
 
   if (Operation::verbose)
-    cerr << "dsp::InputBuffering::post_transformation saving "
+    cerr << "dsp::InputBuffering::set_next_start saving "
 	 << buffer_ndat << " samples" << endl;
 
   if (!buffer_ndat) {
