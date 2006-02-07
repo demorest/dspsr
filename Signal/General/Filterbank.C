@@ -161,10 +161,10 @@ void dsp::Filterbank::transformation ()
     if (response)
       passband -> match (response);
 
-    else {
-      passband->resize (input->get_npol(), nchan, freq_res, 1);
+    passband->resize (input->get_npol(), input->get_nchan(), n_fft, 1);
+
+    if (!response)
       passband->match (input);
-    }
 
   }
 
@@ -373,14 +373,16 @@ cerr << "f[r|c]c1d done" << endl;
 
 	}
 	  
-	  if (matrix_convolution) {    
+	  if (matrix_convolution) {
+
 	    if (passband && itres==0)
-	      passband->integrate (c_spectrum[0], c_spectrum[1]);
-	    
+	      passband->integrate (c_spectrum[0], c_spectrum[1], input_ichan);
+
 	    // cross filt can be set only if there is a response
-	    response->operate (c_spectrum[0], c_spectrum[1]);	    
+	    response->operate (c_spectrum[0], c_spectrum[1]);
+
 	  }
-	  else {	   
+	  else {
 
 #ifdef _DEBUG
 cerr << "integrate passband" << endl;
