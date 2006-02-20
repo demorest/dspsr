@@ -141,6 +141,18 @@ endif
 
 ##############################################################################
 #
+# Arecibo-loader specific code sent to HSK by JP
+# 
+ifeq ($(ARECIBO),yes)
+
+CPPFLAGS += -DDSP_ARECIBO=1
+BACKENDS += ARECIBO
+LBACKENDS += -ldsp_Arecibo
+
+endif
+
+##############################################################################
+#
 # Maxim specific code, for use
 # with the Vela glitch monitoring system on the 14m dish in Hobart.
 #

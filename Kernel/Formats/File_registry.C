@@ -64,6 +64,11 @@ static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_smro;
 static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;
 #endif
 
+#if DSP_DUMBLBA
+#include "dsp/DumbLBAFile.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::DumbLBAFile> file_register_dumblba;
+#endif
+
 #if DSP_PMDAQ
 #include "dsp/PMDAQFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
@@ -105,6 +110,11 @@ static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
 #if DSP_MARK5
 #include "dsp/Mark5File.h"
 static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
+#endif
+
+#if DSP_MARK5
+#include "dsp/AreciboFile.h"
+static Registry::List<dsp::File>::Enter<dsp::AreciboFile> register_arecibo;
 #endif
 
 #if DSP_S2
