@@ -972,3 +972,13 @@ const dsp::dspExtension* dsp::Observation::get_extension(unsigned iext) const{
 		"You requested extension '%d' but there are only %d extensions stored",iext,extensions.size());
   return extensions[iext].get();
 }
+
+//! Return the end time of the trailing edge of the last time sample
+// Returns correct answer if ndat=rate=0 and avoids division by zero
+MJD 
+dsp::Observation::get_end_time () const
+{
+  if( ndat==0 )
+    return start_time;
+  return start_time + double(ndat) / rate;
+}

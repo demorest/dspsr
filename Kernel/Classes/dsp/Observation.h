@@ -255,8 +255,7 @@ namespace dsp {
 
     //! Return the end time of the trailing edge of the last time sample
     // Returns correct answer if ndat=rate=0 and avoids division by zero
-    virtual MJD get_end_time () const
-    { if( ndat==0 ) return start_time; return start_time + double(ndat) / rate; }
+    virtual MJD get_end_time () const;
 
     //! Multiply scale by factor
     void rescale (double factor) { scale *= factor; }
