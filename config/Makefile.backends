@@ -6,7 +6,7 @@
 #
 ##############################################################################
 
-# add backend-specific libraries to LDFLAGS
+# add backend-specific libraries to LMBFLAGS
 LBACKENDS := 
 
 # add backend macros to backends.h
@@ -178,6 +178,18 @@ ifeq ($(SMRO),yes)
 CPPFLAGS += -DDSP_SMRO=1
 BACKENDS += SMRO
 LBACKENDS += -ldsp_SMRO
+
+endif
+
+##############################################################################
+#
+# Dumb loader for LBA data (SMRO) specific code
+# 
+ifeq ($(DUMBLBA),yes)
+
+CPPFLAGS += -DDSP_DUMBLBA=1
+BACKENDS += DUMBLBA
+LBACKENDS += -ldsp_DUMBLBA
 
 endif
 

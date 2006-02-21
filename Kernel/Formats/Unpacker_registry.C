@@ -64,7 +64,7 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
 
 #if DSP_DUMBLBA
 #include "dsp/DumbLBAUnpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::DumbLBAUnpacker> unpacker_register_dumblba;
+static Registry::List<dsp::Unpacker>::Enter<dsp::Dumb_LBAUnpacker> unpacker_register_dumblba;
 #endif
 
 #if DSP_K5

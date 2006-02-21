@@ -64,14 +64,14 @@ static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_smro;
 static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;
 #endif
 
-#if DSP_DUMBLBA
-#include "dsp/DumbLBAFile.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::DumbLBAFile> file_register_dumblba;
-#endif
-
 #if DSP_PMDAQ
 #include "dsp/PMDAQFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
+#endif
+
+#if DSP_DUMBLBA
+#include "dsp/DumbLBAFile.h"
+static Registry::List<dsp::File>::Enter<dsp::Dumb_LBAFile> file_register_dumblba;
 #endif
 
 #if DSP_PuMa
