@@ -112,7 +112,7 @@ static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
 static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
 #endif
 
-#if DSP_MARK5
+#if DSP_Arecibo
 #include "dsp/AreciboFile.h"
 static Registry::List<dsp::File>::Enter<dsp::AreciboFile> register_arecibo;
 #endif
