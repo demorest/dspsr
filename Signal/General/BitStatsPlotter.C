@@ -77,27 +77,27 @@ void dsp::BitStatsPlotter::check_colours ()
   }
 }
 
-void dsp::BitStatsPlotter::pglabel()
+void dsp::BitStatsPlotter::label()
 {
   if (!data)
     return;
 
   check_colours ();
   cpgsci (1);
-  cpgsch (0.75);
-
-  unsigned ndig = data->get_ndig ();
+  cpgsch (0.8);
 
   string xlabel = get_xlabel();
   string ylabel = get_ylabel();
 
   cpglab (xlabel.c_str(), ylabel.c_str(), " ");
 
-  if (ndig == 4) {
+  if (data->has_input() && data->get_input()->get_state()==Signal::Analytic) {
+
     cpgsci (colours[0]);
     cpgmtxt("T", .5, 0.0, 0.0, "In-phase");
     cpgsci (colours[1]);
     cpgmtxt("T", .5, 1.0, 1.0, "Quadrature");
+
     if (colours[0] != colours[2]) {
       cpgsci (1);
       cpgmtxt("T", .5, 0.5, 0.5, "Left");
@@ -108,6 +108,7 @@ void dsp::BitStatsPlotter::pglabel()
       cpgsci (colours[3]);
       cpgmtxt("T", 1.5, 1.0, 1.0, "Quadrature");
     }
+
   }
 
 }
@@ -121,13 +122,8 @@ void dsp::BitStatsPlotter::set_viewport (float _vpxmin, float _vpxmax,
   vpymax = _vpymax;
 }
 
-void dsp::BitStatsPlotter::plot (unsigned ichan)
+void dsp::BitStatsPlotter::plot ()
 {
-  if (!data)
-    return;
-
-  check_colours ();
-
   unsigned ndig = data->get_ndig ();
 
   float x1=vpxmax;
@@ -147,61 +143,83 @@ void dsp::BitStatsPlotter::plot (unsigned ichan)
       y2 += adjust;
     }
 
-  char label [64];
-
   // plot the labels
   cpgsvp (vpxmin, vpxmax, vpymin, vpymax);
-  pglabel ();
-  
+  label ();
+
   cpgsvp (vpxmin, x1, y2, vpymax);
-  pgplot (ichan*2);
-  cpgsci (1);
-  cpgsch (0.8);
+  plot (0,0);
 
-  sprintf (label, "Channel %d - Poln 0", ichan);
-  cpgmtxt("T", -1.5, 0.05, 0.0, label);
-  
   cpgsvp (x2, vpxmax, vpymin, y1);
-  pgplot (ichan*2+1);
-  cpgsci (1);
-  cpgsch (0.8);
+  plot (0,1);
 
-  sprintf (label, "Channel %d - Poln 1", ichan);
-  cpgmtxt("T", -1.5, 0.05, 0.0, label);
 }
 
-void dsp::BitStatsPlotter::pgplot (unsigned channel)
+
+
+void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
 {
   if (!data)
     return;
 
-  cerr << "dsp::BitStatsPlotter::pgplot channel=" << channel << endl;
+  cerr << "dsp::BitStatsPlotter::plot"
+    " ichan=" << ichan << " ipol=" << ipol << endl;
 
   check_colours ();
 
   unsigned nsample = data->get_nsample();
   unsigned ndig = data->get_ndig ();
   
-  int istat = channel;
-  int iendt = channel;
+  unsigned nplot = 1;
 
-  // find the range of the data to be plotted
-  vector<float>::iterator maxel;
+  // plot histograms for in-phase and quadrature components
+  if (data->has_input() && data->get_input()->get_state() == Signal::Analytic)
+    nplot = 2;
+
+  int idig[2] = {-1, -1};
+
   float ymax = 0.0;
-  int imax=0, imin=nsample-1;
 
-  int idig = 0;
+  int imin = nsample-1;
+  int imax = 0;
 
+  unsigned iplot=0; 
 
-  for (idig=istat; idig <= iendt; idig++) {
+  for (iplot=0; iplot < nplot; iplot++) {
 
-    cerr << "dsp::BitStatsPlotter::pgplot idig=" << idig << endl;
-    data->get_histogram (histogram, idig);
+    // find the digitizer channel
+    for (unsigned jdig=0; jdig < ndig; jdig++) {
+
+      if (data->get_output_ichan(jdig)  == ichan &&
+	  data->get_output_ipol(jdig)   == ipol &&
+	  data->get_output_offset(jdig) == iplot)
+	{
+	  if (idig[iplot] != -1)
+	    throw Error (InvalidState, "dsp::BitStatsPlotter::plot",
+			 "Both digitizer channels %d and %d match "
+			 "ichan=%d ipol=%d ioff=%d",
+			 idig[iplot], jdig, ichan, ipol, iplot);
+	  idig[iplot] = jdig;
+	}
+    }
+
+    if (idig[iplot] == -1)
+      throw Error (InvalidState, "dsp::BitStatsPlotter::plot",
+		   "No digitizer channel matches "
+		   "ichan=%d ipol=%d ioff=%d",
+		   ichan, ipol, iplot);
+
+    // find the range of the data to be plotted
+    vector<float>::iterator maxel;
+
+    cerr << "dsp::BitStatsPlotter::plot idig=" << idig[iplot] << endl;
+    data->get_histogram (histogram, idig[iplot]);
 
     maxel = max_element(histogram.begin(), histogram.end());
     
     if (maxel == histogram.end())
-      throw_str ("BitStatsPlotter::pgplot: empty range idig=%d", idig);
+      throw Error (InvalidParam, "BitStatsPlotter::plot",
+		   "empty range idig=%d", idig[iplot]);
     
     ymax = max (ymax, *maxel);
     
@@ -218,12 +236,6 @@ void dsp::BitStatsPlotter::pgplot (unsigned channel)
   }
 
   // set the world coordinates for the histograms and draw a box
-#ifdef DEBUG
-  fprintf (stderr, "histogram (%d->%d) ymax: %f\n", imin, imax, ymax);
-#endif
-
-  cpgsch(0.5);
-
   if (!special (imin, imax, ymax)) {
     ymax *= 1.05;
     cpgswin (imin, imax, ymax*hist_min, ymax);
@@ -231,19 +243,25 @@ void dsp::BitStatsPlotter::pgplot (unsigned channel)
 
   cpgsci (1);
   cpgsls (1);
+  cpgsch (0.8);
   cpgbox  ("bcnst",0.0,0,"bcnvst",0.0,0);
+
+  char label [64];
+  sprintf (label, "Chan:%d - Poln:%d", ichan, ipol);
+
+  cpgmtxt("T", -1.5, 0.05, 0.0, label);
 
   // plot the actual distribution of number of ones
   float midheight = ymax/2.0;
 
-  for (idig=istat; idig <= iendt; idig++) {
+  for (iplot=0; iplot < nplot; iplot++) {
 
-    data->get_histogram (histogram, idig);
+    data->get_histogram (histogram, idig[iplot]);
 
-    cpgsci (colours[idig]);
+    cpgsci (colours[iplot]);
     cpgpt (histogram, 2);
     
-    float fractone = data->get_histogram_mean (idig);
+    float fractone = data->get_histogram_mean (idig[iplot]);
     cpgsls (4);
     cpgmove (fractone*float(nsample), 0.0);
     cpgdraw (fractone*float(nsample), midheight);

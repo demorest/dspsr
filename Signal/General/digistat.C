@@ -191,11 +191,6 @@ int main (int argc, char** argv) try
 
     }
 
-    if (plotter) {
-      plotter->set_viewport (0.7, 0.95, 0.1, 0.9);
-      plotter->horizontal = false;
-    }
-
     cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
     cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
 
@@ -237,14 +232,17 @@ int main (int argc, char** argv) try
 
       for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan) {
 
-	if (display && plotter)  {
+	if (display && plotter)
 	  cpgpage();
-	  plotter->plot(ichan);
-	}
 	
 	float bottom = 0.52;
 
 	for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol) {
+
+	  if (display && plotter) {
+	    cpgsvp (0.7, 0.95, bottom, bottom+0.40);
+	    plotter->plot (ichan,ipol);
+	  }
 
 	  float* data = voltages->get_datptr (ichan, ipol);
 	  uint64 ndat = voltages->get_ndat();
@@ -311,10 +309,17 @@ int main (int argc, char** argv) try
 	  cpgpt(npoints, xaxis, rms, -1);
 	  
 	  bottom = 0.08;
+
 	}
 	
+	if (display && plotter) {
+	  cpgsvp (0.7, 0.95, bottom, 0.92);
+	  plotter->label ();
+	}
+
       }
 
+      
       current_time += time_per_plot;
 
     }

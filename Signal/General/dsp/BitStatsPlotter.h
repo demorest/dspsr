@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BitStatsPlotter.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/02/23 17:51:37 $
+   $Revision: 1.3 $
+   $Date: 2006/02/23 22:22:01 $
    $Author: wvanstra $ */
 
 #ifndef __BitStatsPlotter_h
@@ -30,14 +30,14 @@ namespace dsp {
     //! Set the data to be plotted
     virtual void set_data (const HistUnpacker* stats);
 
-    //! Set the device-normalized coordinates of viewport frame
-    void set_viewport (float xmin, float xmax, float ymin, float ymax);
-
     //! Set the plot colour used for each digitizer
     void set_colours (const std::vector<int>& colours);
 
-    //! Plot the data in the currently open viewport
-    void plot (unsigned ichan);
+    //! Plot the histogram for the specified frequency channel and polarization
+    void plot (unsigned ichan, unsigned ipol);
+
+    //! Label the plot
+    void label ();
 
     //! The label on the x-axis
     virtual std::string get_xlabel () const;
@@ -45,14 +45,28 @@ namespace dsp {
     //! The label on the y-axis
     virtual std::string get_ylabel () const;
 
-    //! Plot the two polarizations beside eachother
-    bool horizontal;
-
     //! Plot the entire x-axis of the histogram
     bool full_xscale;
 
     //! Fraction of histogram maximum below which points are ignored
     float hist_min;
+
+    /** @name Backward Compatibility
+     *  These methods remain only to provide backward compatibility
+     *  with older software.
+     */
+    //@{
+
+    //! Set the device-normalized coordinates of viewport frame
+    void set_viewport (float xmin, float xmax, float ymin, float ymax);
+
+    //! Plot the two polarizations beside eachother
+    bool horizontal;
+
+    //! Plot two polarizations in the current viewport
+    void plot ();
+
+    //@}
 
   protected:
 
@@ -84,10 +98,6 @@ namespace dsp {
     //! Data to be plotted
     Reference::To<const HistUnpacker> data;
 
-    //! Label the plot
-    void pglabel ();
-
-    void pgplot (unsigned ipol);
 
   };
   
