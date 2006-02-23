@@ -1,7 +1,7 @@
 #include "dsp/Mark5TwoBitCorrection.h"
 #include "dsp/Mark5File.h"
 
-#include "dsp/SubByte_implementation.h"
+#include "dsp/SubByte_dig_unpack.h"
 #include "dsp/TwoBitMask.h"
 
 #include "vlba_stream.h"
