@@ -85,6 +85,11 @@ unsigned dsp::TwoBitCorrection::get_output_ipol (unsigned idig) const
   return idig;
 }
 
+/*! By default, there is only one frequency channel */
+unsigned dsp::TwoBitCorrection::get_output_ichan (unsigned idig) const
+{
+  return 0;
+}
 
 //! Set the number of time samples used to estimate undigitized power
 void dsp::TwoBitCorrection::set_nsample (unsigned _nsample)
@@ -171,7 +176,7 @@ void dsp::TwoBitCorrection::transformation ()
   if (weighted_output) {
     weighted_output -> set_ndat_per_weight (get_nsample());
     weighted_output -> set_nchan_weight (1);
-    weighted_output -> set_npol_weight (output->get_npol());
+    weighted_output -> set_npol_weight (input->get_npol());
   }
 
   // resize the output 
@@ -461,21 +466,23 @@ void dsp::TwoBitCorrection::unpack ()
 
   for (unsigned idig=0; idig<ndig; idig++) {
 
-    const unsigned char* from = rawptr + get_input_offset (idig);
-
     unsigned ipol = get_output_ipol (idig);
+    unsigned ichan = get_output_ichan (idig);
+    unsigned input_offset = get_input_offset (idig);
 
-    float* into = output->get_datptr (0, ipol) + get_output_offset (idig);
+#ifdef _DEBUG
+    cerr << "idig=" << idig << " ichan=" << ichan << " ipol=" << ipol 
+	 << " input offset=" << input_offset << endl;
+#endif
+
+    const unsigned char* from = rawptr + input_offset;
+
+    float* into = output->get_datptr (ichan, ipol) + get_output_offset (idig);
 
 #ifdef _DEBUG
     cerr << "dsp::TwoBitCorrection::unpack idig=" << idig << "/" << ndig
 	 << " from=" << (void*)from << " to=" << into << endl;
 #endif
-
-    unsigned long* hist = 0;
-
-    if (keep_histogram)
-      hist = get_histogram (idig);
 
     // if the output TimeSeries is a weighted output, use its weights array
     if (weighted_output) {
