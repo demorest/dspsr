@@ -24,8 +24,6 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> miniunpack;
 #include "dsp/backends.h"
 
 #if DSP_CPSR2
-//#include "dsp/DumbCPSR2Unpacker.h"
-//static Registry::List<dsp::Unpacker>::Enter<dsp::DumbCPSR2Unpacker> dumb_cpsr2_unpacker;
 #include "dsp/CPSR2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #endif
@@ -41,10 +39,8 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2_8bitUnpacker> cpsr2_8;
 #endif
 
 #if DSP_CPSR
-#include "dsp/DumbCPSRUnpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::DumbCPSRUnpacker>  cpsr;
-//#include "dsp/CPSRTwoBitCorrection.h"
-//static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
+#include "dsp/CPSRTwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 #endif
 
 #if DSP_Maxim
@@ -89,7 +85,9 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection> mark4;
 
 #if DSP_MARK5
 #include "dsp/Mark5Unpacker.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5Unpacker> mark5_unpacker;
+static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5Unpacker> mark5_general;
+#include "dsp/Mark5TwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5TwoBitCorrection> mark5;
 #endif
 
 #if DSP_ARECIBO
