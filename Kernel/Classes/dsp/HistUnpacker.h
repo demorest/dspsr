@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/04/26 13:05:32 $
+   $Revision: 1.2 $
+   $Date: 2006/02/23 22:22:08 $
    $Author: wvanstra $ */
 
 #ifndef __HistUnpacker_h
@@ -36,6 +36,15 @@ namespace dsp {
     virtual void set_nsample (unsigned nsample);
     //! Get the number of samples in the histogram
     unsigned get_nsample () const { return nsample; }
+
+    //! Get the offset (number of floats) into output for the given digitizer
+    virtual unsigned get_output_offset (unsigned idig) const;
+
+    //! Get the output polarization for the given digitizer
+    virtual unsigned get_output_ipol (unsigned idig) const;
+
+    //! Get the output frequency channel for the given digitizer;
+    virtual unsigned get_output_ichan (unsigned idig) const;
 
     //! Get the histogram for the given digitizer
     template <typename T>

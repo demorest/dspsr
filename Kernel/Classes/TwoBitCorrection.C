@@ -67,28 +67,10 @@ unsigned dsp::TwoBitCorrection::get_input_incr () const
   return 2;
 }
 
-/*! By default, there is no need to offset the output from each digitizer */
-unsigned dsp::TwoBitCorrection::get_output_offset (unsigned idig) const
-{
-  return 0;
-}
-
-/*! By default, there is no need to interleave the output from each digitizer */
+/*! By default, the output from each digitizer is contiguous */
 unsigned dsp::TwoBitCorrection::get_output_incr () const
 {
   return 1;
-}
-
-/*! By default, there is a 1-to-1 relationship between digitizer and polarization */
-unsigned dsp::TwoBitCorrection::get_output_ipol (unsigned idig) const
-{
-  return idig;
-}
-
-/*! By default, there is only one frequency channel */
-unsigned dsp::TwoBitCorrection::get_output_ichan (unsigned idig) const
-{
-  return 0;
 }
 
 //! Set the number of time samples used to estimate undigitized power

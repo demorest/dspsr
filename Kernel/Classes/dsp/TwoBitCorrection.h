@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.28 $
-   $Date: 2006/02/23 17:52:04 $
+   $Revision: 1.29 $
+   $Date: 2006/02/23 22:22:08 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitCorrection_h
@@ -48,15 +48,6 @@ namespace dsp {
 
     //! Get the offset (number of bytes) into input for the given digitizer
     virtual unsigned get_input_offset (unsigned idig) const;
-
-    //! Get the offset (number of floats) into output for the given digitizer
-    virtual unsigned get_output_offset (unsigned idig) const;
-
-    //! Get the output polarization for the given digitizer
-    virtual unsigned get_output_ipol (unsigned idig) const;
-
-    //! Get the output frequency channel for the given digitizer;
-    virtual unsigned get_output_ichan (unsigned idig) const;
 
     //! Get the offset to the next byte containing the current digitizer data
     virtual unsigned get_input_incr () const;

@@ -42,6 +42,24 @@ void dsp::HistUnpacker::set_nsample (unsigned _nsample)
   resize ();
 }
 
+/*! By default, there is no need to offset the output from each digitizer */
+unsigned dsp::HistUnpacker::get_output_offset (unsigned idig) const
+{
+  return 0;
+}
+
+/*! By default, there is one digitizer for each polarization */
+unsigned dsp::HistUnpacker::get_output_ipol (unsigned idig) const
+{
+  return idig;
+}
+
+/*! By default, there is only one frequency channel */
+unsigned dsp::HistUnpacker::get_output_ichan (unsigned idig) const
+{
+  return 0;
+}
+
 void dsp::HistUnpacker::resize ()
 {
   histograms.resize (ndig);
