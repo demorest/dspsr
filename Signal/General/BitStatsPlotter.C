@@ -121,7 +121,7 @@ void dsp::BitStatsPlotter::set_viewport (float _vpxmin, float _vpxmax,
   vpymax = _vpymax;
 }
 
-void dsp::BitStatsPlotter::plot ()
+void dsp::BitStatsPlotter::plot (unsigned ichan)
 {
   if (!data)
     return;
@@ -147,45 +147,43 @@ void dsp::BitStatsPlotter::plot ()
       y2 += adjust;
     }
 
+  char label [64];
+
   // plot the labels
   cpgsvp (vpxmin, vpxmax, vpymin, vpymax);
   pglabel ();
   
   cpgsvp (vpxmin, x1, y2, vpymax);
-  pgplot (0);
+  pgplot (ichan*2);
   cpgsci (1);
   cpgsch (0.8);
-  cpgmtxt("T", -1.5, 0.05, 0.0, "Left Polarization");
+
+  sprintf (label, "Channel %d - Poln 0", ichan);
+  cpgmtxt("T", -1.5, 0.05, 0.0, label);
   
   cpgsvp (x2, vpxmax, vpymin, y1);
-  pgplot (1);
+  pgplot (ichan*2+1);
   cpgsci (1);
   cpgsch (0.8);
-  cpgmtxt("T", -1.5, 0.05, 0.0, "Right Polarization");
+
+  sprintf (label, "Channel %d - Poln 1", ichan);
+  cpgmtxt("T", -1.5, 0.05, 0.0, label);
 }
 
-void dsp::BitStatsPlotter::pgplot (unsigned poln)
+void dsp::BitStatsPlotter::pgplot (unsigned channel)
 {
   if (!data)
     return;
+
+  cerr << "dsp::BitStatsPlotter::pgplot channel=" << channel << endl;
 
   check_colours ();
 
   unsigned nsample = data->get_nsample();
   unsigned ndig = data->get_ndig ();
   
-  int istat = 0;
-  int iendt = 0;
-
-  if (poln == 4)
-    iendt = ndig -1;
-  else {
-    istat = poln * (ndig / 2);
-    if (ndig == 4)
-      iendt = istat + 1;
-    else
-      iendt = istat;
-  }
+  int istat = channel;
+  int iendt = channel;
 
   // find the range of the data to be plotted
   vector<float>::iterator maxel;
@@ -193,8 +191,11 @@ void dsp::BitStatsPlotter::pgplot (unsigned poln)
   int imax=0, imin=nsample-1;
 
   int idig = 0;
+
+
   for (idig=istat; idig <= iendt; idig++) {
 
+    cerr << "dsp::BitStatsPlotter::pgplot idig=" << idig << endl;
     data->get_histogram (histogram, idig);
 
     maxel = max_element(histogram.begin(), histogram.end());

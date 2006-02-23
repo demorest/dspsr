@@ -235,80 +235,84 @@ int main (int argc, char** argv) try
       
       manager->load (voltages);
 
-      if (display && plotter)  {
-        cpgpage();
-        plotter->plot();
-      }
+      for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan) {
 
-      float bottom = 0.52;
-
-      for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol) {
-
-	float* data = voltages->get_datptr (0, ipol);
-	uint64 ndat = voltages->get_ndat();
-	uint64 idat = 0;
-
-	for (unsigned ipt=0; ipt<npoints; ipt++) {
-
-	  xaxis[ipt] = current_time + double(ipt)*time_per_point;
-
-	  mean[ipt] = 0;
-	  rms [ipt] = 0;
-	  unsigned count = 0;
-
-	  for (uint64 jdat=0; jdat<point_size && idat<ndat; jdat++)  {
-	    float sample = data[idat]; idat ++;
-	    mean[ipt] += sample;
-	    rms [ipt] += sample*sample;
-	    count ++;
-	  }
-
-	  mean[ipt] /= count;
-	  rms[ipt]  /= count;
-	  rms[ipt]  = sqrt(rms[ipt] - mean[ipt]*mean[ipt]);
-
+	if (display && plotter)  {
+	  cpgpage();
+	  plotter->plot(ichan);
 	}
+	
+	float bottom = 0.52;
 
-	float min = 0.0;
-	float max = 0.0;
-	float buf = 0.0;
+	for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol) {
 
-	// plot the mean
+	  float* data = voltages->get_datptr (ichan, ipol);
+	  uint64 ndat = voltages->get_ndat();
+	  uint64 idat = 0;
 
-	minmaxval (npoints, mean, &min, &max);
-	buf = (max-min) * 0.05;
+	  for (unsigned ipt=0; ipt<npoints; ipt++) {
 
-	cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
-	cpgsvp (0.1, 0.63, bottom, bottom+0.20);
-	cpgsci(1);
+	    xaxis[ipt] = current_time + double(ipt)*time_per_point;
 
-	if (ipol==1) {
-	  cpglab("Seconds from start of file", "", "");
-          cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
-        }
-        else
-          cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
-        cpgmtxt("L",3.5,.5,.5,"mean");
+	    mean[ipt] = 0;
+	    rms [ipt] = 0;
+	    unsigned count = 0;
+	    
+	    for (uint64 jdat=0; jdat<point_size && idat<ndat; jdat++)  {
+	      float sample = data[idat]; idat ++;
+	      mean[ipt] += sample;
+	      rms [ipt] += sample*sample;
+	    count ++;
+	    }
+	    
+	    mean[ipt] /= count;
+	    rms[ipt]  /= count;
+	    rms[ipt]  = sqrt(rms[ipt] - mean[ipt]*mean[ipt]);
+	    
+	  }
+	  
+	  float min = 0.0;
+	  float max = 0.0;
+	  float buf = 0.0;
 
-	cpgsci(5);
-	cpgpt(npoints, xaxis, mean, -1);
-
-
-	// plot the rms
-
-	minmaxval (npoints, rms, &min, &max);
-	buf = (max-min) * 0.05;
-
-	cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
-	cpgsvp (0.1, 0.63, bottom+0.20, bottom+0.40);
-	cpgsci(1);
-	cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
-        cpgmtxt("L",3.5,.5,.5,"rms");
-
-	cpgsci(6);
-	cpgpt(npoints, xaxis, rms, -1);
-
-        bottom = 0.08;
+	  // plot the mean
+	  
+	  minmaxval (npoints, mean, &min, &max);
+	  buf = (max-min) * 0.05;
+	  
+	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
+	  cpgsvp (0.1, 0.63, bottom, bottom+0.20);
+	  cpgsci(1);
+	  
+	  if (ipol==1) {
+	    cpglab("Seconds from start of file", "", "");
+	    cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
+	  }
+	  else
+	    cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
+	  cpgmtxt("L",3.5,.5,.5,"mean");
+	  
+	  cpgsci(5);
+	  cpgpt(npoints, xaxis, mean, -1);
+	  
+	  
+	  // plot the rms
+	  
+	  minmaxval (npoints, rms, &min, &max);
+	  buf = (max-min) * 0.05;
+	  
+	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
+	  cpgsvp (0.1, 0.63, bottom+0.20, bottom+0.40);
+	  cpgsci(1);
+	  cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
+	  cpgmtxt("L",3.5,.5,.5,"rms");
+	  
+	  cpgsci(6);
+	  cpgpt(npoints, xaxis, rms, -1);
+	  
+	  bottom = 0.08;
+	}
+	
       }
 
       current_time += time_per_plot;

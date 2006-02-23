@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BitStatsPlotter.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/04/26 13:26:26 $
+   $Revision: 1.2 $
+   $Date: 2006/02/23 17:51:37 $
    $Author: wvanstra $ */
 
 #ifndef __BitStatsPlotter_h
@@ -37,7 +37,7 @@ namespace dsp {
     void set_colours (const std::vector<int>& colours);
 
     //! Plot the data in the currently open viewport
-    void plot ();
+    void plot (unsigned ichan);
 
     //! The label on the x-axis
     virtual std::string get_xlabel () const;
