@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2003/09/22 10:02:59 $
+   $Revision: 1.3 $
+   $Date: 2006/02/23 17:51:58 $
    $Author: wvanstra $ */
 
 #ifndef __SubByteTwoBitCorrection_h
@@ -40,7 +40,17 @@ namespace dsp {
 
   protected:
 
-    //! Unpacking algorithm
+    //! Template unpacking algorithm
+    template<class Rule>
+    void dig_unpack (Rule& rule,
+		     float* output_data,
+		     const unsigned char* input_data, 
+		     uint64 ndat,
+		     unsigned digitizer,
+		     unsigned* weights = 0,
+		     unsigned nweights = 0);
+
+    //! Default unpacking algorithm
     void dig_unpack (float* output_data,
 		     const unsigned char* input_data, 
 		     uint64 ndat,
