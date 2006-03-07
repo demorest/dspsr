@@ -33,7 +33,6 @@ ifeq ($(CPSR2),yes)
 CPPFLAGS += -DDSP_CPSR2=1
 CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation DumbCPSR2Unpacker
 BACKENDS += CPSR2
-PROGRAMS += cpsr2_change_header.C
 
 endif
 
