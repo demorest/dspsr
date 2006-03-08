@@ -209,9 +209,9 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   */
 
   //
-  // until otherwise, the band is centred on the centre frequency
+  // i.e. centre frequency is true centre frequency
   //
-  dc_centred = true;
+  dc_centred = false;
 
   // make an identifier name
   set_identifier ("f" + get_default_id());
