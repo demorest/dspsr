@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.29 $
-   $Date: 2005/08/23 13:01:37 $
+   $Revision: 1.30 $
+   $Date: 2006/03/25 12:30:42 $
    $Author: wvanstra $ */
 
 #ifndef __Operation_h
@@ -20,6 +20,8 @@
 
 namespace dsp {
   
+  class TimeKeeper;
+
   //! Defines the interface by which operations are performed on data
   /*! This pure virtual base class defines the manner in which various
     digital signal processing routines are performed on baseband data */

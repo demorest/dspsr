@@ -11,6 +11,8 @@
 
 namespace dsp {
   
+  class Input;
+
   //! A container for storing digitized (generally not floating point) data   
   /*! A BitSeries is a container that can be used to store data from
   some device.  In general, devices are considered to produce data as
