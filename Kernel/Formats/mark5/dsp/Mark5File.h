@@ -3,12 +3,12 @@
 #ifndef __Mark5File_h
 #define __Mark5File_h
 
-#include "dsp/File.h"
+#include "dsp/BlockFile.h"
 
 namespace dsp {
 
   //! Loads BitSeries data from a MkV file
-  class Mark5File : public File
+  class Mark5File : public BlockFile
   {
   public:
 	  

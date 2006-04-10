@@ -20,7 +20,7 @@
 #include <string.h>
 
 dsp::Mark5File::Mark5File (const char* filename,const char* headername)
-  : File ("Mark5")
+  : BlockFile ("Mark5")
 {
   stream = 0;
 }
@@ -98,6 +98,10 @@ void dsp::Mark5File::open_file (const char* filename)
 
   fd = vlba_stream->infile;
 
+  header_bytes = vlba_stream->startoffset;
+  block_bytes = FRAMESIZE;
+  block_header_bytes = FRAMESIZE - PAYLOADSIZE;
+
   // instruct the loader to only take gulps in 32/16 lots of nbits
   // necessary since Mk5 files are written in 64-/32-bit words
   cerr << "TRACKS = " << vlba_stream->tracks << endl;
@@ -109,8 +113,13 @@ void dsp::Mark5File::open_file (const char* filename)
   cerr << "SAMPRATE = " << vlba_stream->samprate << endl;
   info.set_rate ( vlba_stream->samprate );
 
-  cerr << "Assuming MJD offset of 53000" << endl;
-  vlba_stream->mjd += 53000.0;
+  int refmjd = 0;
+  if (ascii_header_get (header,"REFMJD","%d",&refmjd) < 0)
+   throw Error (InvalidParam, "Mark5File::open_file", 
+		 "failed read REFMJD");
+
+  cerr << "REFMJD " << refmjd << endl;
+  vlba_stream->mjd += refmjd;
 
   cerr << "MJD = " << vlba_stream->mjd << endl;
   cerr << "SEC = " << vlba_stream->sec << endl;
