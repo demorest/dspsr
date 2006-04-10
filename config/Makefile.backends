@@ -140,13 +140,15 @@ endif
 
 ##############################################################################
 #
-# Arecibo-loader specific code sent to HSK by JP
-# 
-ifeq ($(ARECIBO),yes)
+# Fadc specific code
+#
+# This works for FADC continuously sampled data from Fadc only
+#
+ifeq ($(Fadc),yes)
 
-CPPFLAGS += -DDSP_ARECIBO=1
-BACKENDS += ARECIBO
-LBACKENDS += -ldsp_Arecibo
+CPPFLAGS += -DDSP_Fadc=1
+BACKENDS += Fadc
+LBACKENDS += -ldsp_Fadc -ldsp
 
 endif
 
