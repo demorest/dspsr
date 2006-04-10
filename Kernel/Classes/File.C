@@ -160,22 +160,7 @@ dsp::PseudoFile dsp::File::get_pseudofile(){
 
 void dsp::File::set_total_samples ()
 {
-  if (fd < 0)
-    throw Error (InvalidState, "dsp::File::set_total_samples", "fd < 0");
-
-  struct stat buf;
-  if (fstat (fd, &buf) < 0)
-    throw Error (FailedSys, "dsp::File::set_total_samples",
-		 "fstat(%s)", current_filename.c_str());
-
-  if (buf.st_size < header_bytes)
-    throw Error (InvalidState, "dsp::File::set_total_samples",
-		 "file size=%d < header size=%d",
-		 buf.st_size, header_bytes);
-
-  uint64 total_bytes = buf.st_size - header_bytes;
-
-  info.set_ndat (info.get_nsamples (total_bytes));
+  info.set_ndat (fstat_file_ndat());
 }
 
 //! Load bytes from file
@@ -237,21 +222,25 @@ int64 dsp::File::seek_bytes (uint64 bytes)
   return retval - header_bytes;
 }
 
-/* Do an fstat on the current file descriptor to see if purported ndat is correct */
-int64 dsp::File::fstat_file_ndat(uint64 tailer_bytes){
-  struct stat file_stats;
+/* Determine the number of time samples from the size of the file */
+int64 dsp::File::fstat_file_ndat (uint64 tailer_bytes)
+{
+  if (fd < 0)
+    throw Error (InvalidState, "dsp::File::fstat_file_ndat", "fd < 0");
 
-  int ret = fstat(fd, &file_stats);
+  struct stat buf;
+  if (fstat (fd, &buf) < 0)
+    throw Error (FailedSys, "dsp::File::fstat_file_ndat",
+                 "fstat(%s)", current_filename.c_str());
 
-  if( ret!=0 )
-    throw Error(FailedCall,"dsp::File::fstat_file_ndat()",
-		"fstat on file failed.  Return value=%d\n",ret);
+  if (uint64(buf.st_size) < header_bytes + tailer_bytes)
+    throw Error (InvalidState, "dsp::File::fstat_file_ndat",
+                 "file size=%d < header size=%d + tailer_size=%d",
+                 buf.st_size, header_bytes, tailer_bytes);
 
-  int64 actual_file_sz = file_stats.st_size;
+  uint64 total_bytes = buf.st_size - header_bytes - tailer_bytes;
 
-  int64 bytes_per_samp = info.get_nchan()*info.get_npol()*info.get_ndim()*info.get_nbit()/8;
-  
-  return (actual_file_sz - header_bytes - tailer_bytes)/bytes_per_samp;
+  return info.get_nsamples (total_bytes);
 }
 
 //! Over-ride this function to pad data via HoleyFile
