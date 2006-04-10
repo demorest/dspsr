@@ -117,6 +117,11 @@ int64 dsp::BlockFile::seek_bytes (uint64 nbytes)
 
 int64 dsp::BlockFile::fstat_file_ndat (uint64 tailer_bytes)
 {
+  if (verbose)
+    cerr << "dsp::BlockFile::fstat_file_ndat header=" << header_bytes
+	 << " block=" << block_bytes 
+	 << " data=" << get_block_data_bytes() << endl;
+
   struct stat file_stats;
 
   if (fstat(fd, &file_stats) != 0)
@@ -138,8 +143,5 @@ int64 dsp::BlockFile::fstat_file_ndat (uint64 tailer_bytes)
     data_bytes += extra;
   }
 
-  uint64 bits_per_samp
-    = info.get_nchan()*info.get_npol()*info.get_ndim()*info.get_nbit();
-  
-  return (data_bytes*8)/bits_per_samp;
+  return info.get_nsamples (data_bytes);
 }
