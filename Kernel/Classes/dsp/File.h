@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.26 $
-   $Date: 2005/09/19 06:45:16 $
-   $Author: hknight $ */
+   $Revision: 1.27 $
+   $Date: 2006/04/11 21:27:32 $
+   $Author: wvanstra $ */
 
 
 #ifndef __File_h
@@ -76,6 +76,9 @@ namespace dsp {
 
     //! Close the file
     virtual void close ();
+
+    //! Reopen the file
+    virtual void reopen ();
 
     //! Return the name of the file from which this instance was created
     string get_filename () const { return current_filename; }

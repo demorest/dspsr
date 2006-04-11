@@ -45,9 +45,9 @@ void dsp::File::init()
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::File* dsp::File::create (const char* filename, int _bs_index)
 { 
-  if( verbose )
-    fprintf(stderr,"In dsp::File::create() with filename='%s' and _bs_index=%d\n",
-	    filename,_bs_index);
+  if (verbose)
+    cerr << "dsp::File::create filename='" << filename 
+	 << "' bs_index=" << _bs_index << endl;
 
   // check if file can be opened for reading
   FILE* fptr = fopen (filename, "r");
@@ -61,12 +61,12 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 		      << " registered sub-classes" << endl;
 
     for (unsigned ichild=0; ichild < registry.size(); ichild++) {
-      if( verbose )
+      if (verbose)
 	fprintf(stderr,"Testing child %d: '%s'\n",
 		ichild,registry[ichild]->get_name().c_str());
 
       if ( registry[ichild]->is_valid (filename,_bs_index) ) {	
-	if( verbose )
+	if (verbose)
 	  fprintf(stderr,"%s::is_valid() returned true\n",
 		  registry[ichild]->get_name().c_str());
 	File* child = registry.create (ichild);
@@ -93,7 +93,7 @@ void dsp::File::open (const char* filename,int _bs_index)
 {
   bs_index = _bs_index;
 
-  if( verbose )
+  if (verbose)
     fprintf(stderr,"\nIn dsp::File::open (char*) with filename='%s' and bs_index=%d\n",
 	    filename,bs_index);
 
@@ -103,7 +103,7 @@ void dsp::File::open (const char* filename,int _bs_index)
 
 void dsp::File::open (const PseudoFile& file)
 {
-  if( verbose )
+  if (verbose)
     fprintf(stderr,"\nIn dsp::File::open (pseudofile) with filename='%s'\n",
 	    file.filename.c_str());
 
@@ -112,10 +112,8 @@ void dsp::File::open (const PseudoFile& file)
 
 void dsp::File::open (const char* filename, const PseudoFile* file)
 {
-  if( verbose )
-    fprintf(stderr,"In dsp::File::open() with bs_index=%d\n",bs_index);
-
-  close ();
+  if (verbose)
+    cerr << "dsp::File::open bs_index=" << bs_index << endl;
 
   if (filename) {
 
@@ -126,6 +124,8 @@ void dsp::File::open (const char* filename, const PseudoFile* file)
 
   }
   else if (file) {
+
+    close ();
 
     filename = file->filename.c_str();
     bs_index = file->bs_index;
@@ -147,11 +147,27 @@ void dsp::File::open (const char* filename, const PseudoFile* file)
   reset ();
 }
 
-void dsp::File::close()
+void dsp::File::close ()
+{
+  if (fd < 0)
+    throw Error (InvalidState, "dsp::File::close", "not open");
+
+  int err = ::close (fd);
+  if (err < 0)
+    throw Error (FailedSys, "dsp::File::close", "failed close(%d)", fd);
+
+  fd = -1;
+}
+
+void dsp::File::reopen ()
 {
   if (fd >= 0)
-    ::close (fd);
-  init ();
+    throw Error (InvalidState, "dsp::File::reopen", "already open");
+
+  fd = ::open (current_filename.c_str(), O_RDONLY);
+  if (fd < 0)
+    throw Error (FailedSys, "dsp::File::reopen",
+		 "failed open(%s)", current_filename.c_str());
 }
 
 dsp::PseudoFile dsp::File::get_pseudofile(){
@@ -179,7 +195,7 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
   int64 new_pos = lseek(fd,0,SEEK_CUR);
   uint64 end_pos = get_info()->get_nbytes() + uint64(header_bytes);
 
-  if( verbose )
+  if (verbose)
     fprintf(stderr,"dsp::File::load_bytes() ::read() returned "I64" old_pos="I64" new_pos="I64" end_pos="UI64"\n",
 	    int64(bytes_read), old_pos, new_pos, end_pos);
 
