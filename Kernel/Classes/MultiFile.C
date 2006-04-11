@@ -29,22 +29,22 @@ void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
   // construct a list of the files we already have open
   vector<string> old_filenames (files.size());
   for (unsigned i=0; i<files.size(); i++)
-    old_filenames[i] = files[i].filename;
-
-  // If there is no loader, create one from the first file
-  if (!loader)
-    loader = File::create( new_filenames[0],bs_index );
+    old_filenames[i] = files[i]->get_filename();
 
   // open up each of the new files and add it to our list of files
   for( unsigned i=0; i<new_filenames.size(); i++){
     if( !is_one_of(new_filenames[i],old_filenames) ){
 
-      loader->open( new_filenames[i],bs_index );
-      files.push_back( PseudoFile( loader ) );
+      // If there is no loader, create one from the first file
+      loader = File::create( new_filenames[i], bs_index );
 
-      if( verbose )
+      files.push_back( loader );
+
+      loader->close();
+
+      if (verbose)
 	cerr << "dsp::MultiFile::open new PseudoFile = " 
-	     << files.back().filename << endl;
+	     << files.back()->get_filename() << endl;
     }
   }
 
@@ -52,58 +52,24 @@ void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
   setup();
 }
 
-void dsp::MultiFile::open(const vector<PseudoFile*>& pseudos){
-  if (pseudos.empty())
-    throw Error (InvalidParam, "dsp::Multifile::open",
-		 "An empty list of PseudoFiles has been given to this method");
-
-  // construct a list of the files we already have open
-  vector<string> old_filenames (files.size());
-  for (unsigned i=0; i<files.size(); i++)
-    old_filenames[i] = files[i].filename;
-
-  // If there is no loader, create one from the first pseudo
-  if (!loader){
-    loader = File::create( pseudos.front()->filename, pseudos.front()->bs_index );
-    loader->open( *pseudos.front() );
-  }
-
-  // Add each element of 'pseudos' to our list of PseudoFiles
-  for( unsigned i=0; i<pseudos.size(); i++){
-    if( !pseudos[i] )
-      throw Error(InvalidState,"dsp::MultiFile::open()",
-		  "pseudos[%d] was NULL",i);
-    if( is_one_of(pseudos[i]->filename,old_filenames) )
-      continue;
-
-    files.push_back( *pseudos[i] );
-
-    if( verbose )
-      cerr << "dsp::MultiFile::open new PseudoFile = " 
-	   << files.back().filename << endl;
-  } 
-
-  ensure_contiguity();
-  setup();
-}
-
 void dsp::MultiFile::setup ()
 {
-  info = files.front();
+  info = *(files[0]->get_info());
 
   uint64 total_ndat = 0;
   for( unsigned i=0; i<files.size(); i++)
-    total_ndat += files[i].get_ndat();
+    total_ndat += files[i]->get_info()->get_ndat();
 
   info.set_ndat (total_ndat);
 
   // MultiFile must reflect the time sample resolution of the underlying device
   resolution = loader->resolution;
 
-  loader->open (files.front());
+  loader = files[0];
+  loader->reopen();
 
   current_index = 0;
-  current_filename = files.front().filename;
+  current_filename = files[0]->get_filename();
 
   reset();
 }
@@ -113,7 +79,7 @@ void dsp::MultiFile::have_open (const vector<string>& filenames,int bs_index)
 {
   // Erase any files we already have open that we don't want open
   for( unsigned ifile=0; ifile<files.size(); ifile++){
-    if( !is_one_of(files[ifile].filename,filenames) ){
+    if( !is_one_of(files[ifile]->get_filename(),filenames) ){
       files.erase(files.begin()+ifile);
       ifile--;
     }
@@ -135,7 +101,7 @@ void dsp::MultiFile::erase_files()
 void dsp::MultiFile::erase_files(const vector<string>& erase_filenames)
 {
   for( unsigned ifile=0; ifile<files.size(); ifile++){
-    if( is_one_of(files[ifile].filename,erase_filenames) ){
+    if( is_one_of(files[ifile]->get_filename(),erase_filenames) ){
       files.erase( files.begin()+ifile );
       ifile--;
     }
@@ -150,39 +116,44 @@ void dsp::MultiFile::erase_files(const vector<string>& erase_filenames)
   setup();
 }
 
+bool time_order (const dsp::File* a, const dsp::File* b)
+{
+  return a->get_info()->get_start_time() < b->get_info()->get_start_time();
+}
+
 void dsp::MultiFile::ensure_contiguity()
 {
-  if( verbose )
+  if (verbose)
     cerr << "dsp::MultiFile::ensure_contiguity enter" << endl;
 
-  sort( files.begin(), files.end() );
+  sort( files.begin(), files.end(), time_order );
 
   for (unsigned ifile=1; ifile<files.size(); ifile++) {
-    if( verbose )
+    if (verbose)
       cerr << "dsp::MultiFile::ensure_contiguity files " << ifile-1 
 	   << " and " << ifile << endl;
 
-    Observation* obs1 = &files[ifile-1];
-    Observation* obs2 = &files[ifile];
+    Observation* obs1 = files[ifile-1]->get_info();
+    Observation* obs2 = files[ifile]->get_info();;
 
-    if( verbose )
-      fprintf(stderr,"dsp::MultiFile::ensure_contiguity() Going to call contiguous() with obs1.start=%s obs1.end=%s obs2.start=%s obs2.end=%s\n",
-	      obs1->get_start_time().printall(),
-	      obs1->get_end_time().printall(),
-	      obs2->get_start_time().printall(),
-	      obs2->get_end_time().printall());
+    if (verbose)
+      cerr << "dsp::MultiFile::ensure_contiguity"
+	" obs.start=" << obs1->get_start_time() << 
+	" obs1.end=" << obs1->get_end_time() << 
+	" obs2.start=" << obs2->get_start_time() << 
+	" obs2.end=" << obs2->get_end_time() << endl;
 
     if ( !obs1->contiguous(*obs2) ){
       char cstr[4096];
       sprintf(cstr,"file %d (%s) is not contiguous with file %d (%s)",
-	      ifile-1,files[ifile-1].filename.c_str(),
-	      ifile,files[ifile].filename.c_str());
+	      ifile-1,files[ifile-1]->get_filename().c_str(),
+	      ifile,files[ifile]->get_filename().c_str());
       throw Error (InvalidParam, "dsp::Multifile::ensure_contiguity",cstr);
     }
 
   }
 
-  if( verbose )
+  if (verbose)
     cerr << "dsp::MultiFile::ensure_contiguity return" << endl;
 }
 
@@ -246,7 +217,7 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
   for (index = 0; index < files.size(); index++) {
 
     // Number of bytes stored in this file
-    uint64 file_bytes = files[index].get_nbytes();
+    uint64 file_bytes = files[index]->get_info()->get_nbytes();
 
     if (bytes < total_bytes + file_bytes)
       break;
@@ -274,14 +245,15 @@ void dsp::MultiFile::set_loader (unsigned index)
   if (index == current_index)
     return;
 
-  loader->open (files[index]);
+  loader = files[index];
 
   // MiniFile requires loader to know what output->get_rawptr() is
   // (ASSUMPTION: output is what is getting loaded into rather than some other BitSeries via load())
   loader->set_output( get_output() );
+  loader->reopen();
 
   current_index = index;
-  current_filename = files[index].filename;
+  current_filename = files[index]->get_filename();
 }
 
 bool dsp::MultiFile::has_loader ()
@@ -293,19 +265,3 @@ dsp::File* dsp::MultiFile::get_loader ()
 {
   return loader;
 }
-
-// HSK 24 June 2003 This function is a disaster- what it's original intention is unclear to me.  What about loader->get_next_sample()- wouldn't that return the same thing?
-uint64 dsp::MultiFile::get_next_sample(){
-  uint64 samples_over = 0;
-
-  for( unsigned i=0; i<current_index; i++)
-    samples_over += files[i].get_ndat();
-
-  if( verbose )
-    fprintf(stderr,"dsp::MultiFile::get_next_sample() got get_load_sample()="UI64" and samples_over="UI64" and current_index=%d\n",
-	    get_load_sample(), samples_over,current_index);
-
-  //return get_load_sample();
-  return get_load_sample()-samples_over;
-}
-
