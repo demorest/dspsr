@@ -98,9 +98,8 @@ void dsp::Mark5File::open_file (const char* filename)
 
   fd = vlba_stream->infile;
 
-  header_bytes = vlba_stream->startoffset;
-  block_bytes = FRAMESIZE;
-  block_header_bytes = FRAMESIZE - PAYLOADSIZE;
+  // store the file pointer for use during reopen, if necessary
+  reopen_seek = lseek (fd, 0, SEEK_CUR);
 
   // instruct the loader to only take gulps in 32/16 lots of nbits
   // necessary since Mk5 files are written in 64-/32-bit words
@@ -126,12 +125,6 @@ void dsp::Mark5File::open_file (const char* filename)
 
   info.set_start_time( MJD(vlba_stream->mjd, vlba_stream->sec, 0) );
 
-  //
-  // no idea about the size of the data
-  //
-	
-  info.set_ndat(0);
-	
   // ///////////////////////////////////////////////////////////////
   // TELESCOPE
   //
@@ -204,7 +197,18 @@ void dsp::Mark5File::open_file (const char* filename)
 
   info.set_state (Signal::Nyquist);
 	  
-	
+  // ///////////////////////////////////////////////////////////////
+  // NDAT
+  // Compute using BlockFile::fstat_file_ndat
+  //
+  header_bytes = vlba_stream->startoffset;
+  block_bytes = FRAMESIZE;
+  block_header_bytes = FRAMESIZE - PAYLOADSIZE;
+
+  set_total_samples();
+
+  header_bytes = block_header_bytes = 0;
+
   //
   // call this only after setting frequency and telescope
   //
@@ -336,3 +340,13 @@ int64 dsp::Mark5File::seek_bytes (uint64 nbytes)
 }
 
 
+void dsp::Mark5File::reopen ()
+{
+  File::reopen();
+
+  static_cast<struct VLBA_stream*>(stream)->infile = fd;
+
+  if (lseek (fd, reopen_seek, SEEK_SET) < 0)
+    throw Error (FailedSys, "dsp::Mark5File::reopen",
+		 "failed lseek(%u)", reopen_seek);
+}

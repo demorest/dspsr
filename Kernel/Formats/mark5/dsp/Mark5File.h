@@ -28,12 +28,17 @@ namespace dsp {
 
     //! Open the file
     void open_file (const char* filename);
-		
+
+    //! Reopen the file
+    void reopen ();
+
     int64 load_bytes (unsigned char* buffer, uint64 nbytes);
     
     int64 seek_bytes (uint64 bytes);
 
     void* stream;
+
+    uint64 reopen_seek;
 
   };
 
