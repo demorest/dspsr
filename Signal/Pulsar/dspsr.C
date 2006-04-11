@@ -61,7 +61,7 @@ void usage ()
     " -S seek        start processing at t=seek seconds\n"
     " -T total       process only t=total seconds\n"
     " -g ffts        perform this many forward FFTs per block [16]\n"
-    " -t gulps       stop processing after this many gulps\n"
+    " -t block_size  process this many samples per block \n"
     " -z             run in psrdisp backward-compatibility mode\n"
     "\n"
     "Source options:\n"
