@@ -105,12 +105,14 @@ void dsp::PhaseSeries::set_hits (unsigned value)
 bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
 				int64 istart, int64 fold_ndat)
 {
+  static MJD st = obs.get_start_time(); 
   MJD obsStart = obs.get_start_time() + double (istart) / obs.get_rate();
 
   if (verbose)
     cerr << "PhaseSeries::mixable"
-         << "\n  mix->start=" << obsStart
-	 << "\n this->start=" << get_start_time() << endl;
+         << "\n  mix->start=" << (obsStart-st).in_seconds()
+	 << "\n istart=" << istart
+	 << "\n this->start=" << (get_start_time()-st).in_seconds() << endl;
 
   MJD obsEnd;
 
