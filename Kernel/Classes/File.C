@@ -150,8 +150,8 @@ void dsp::File::open (const char* filename, const PseudoFile* file)
 void dsp::File::close ()
 {
   if (fd < 0)
-    throw Error (InvalidState, "dsp::File::close", "not open");
-
+    return;
+    
   int err = ::close (fd);
   if (err < 0)
     throw Error (FailedSys, "dsp::File::close", "failed close(%d)", fd);
