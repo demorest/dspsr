@@ -284,6 +284,8 @@ try {
   if (verbose) cerr << "dsp::Archiver set archive filename to '"
 		    << archive->get_filename() << "'" << endl;
 
+  //  fprintf(stderr,"At end of archset amps[0]=%f\n",
+  //  archive->get_Profile(0,0,0)->get_amps()[0]);
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Archive";
@@ -387,28 +389,45 @@ try {
   if (scale == 0 || !finite(scale))
     throw Error (InvalidParam, string(), "invalid scale=%lf", scale);
 
+  /*
+  static unsigned ientries = 0;
+  if( ichan==0 && ipol==0 ){
+    ientries++;
+    unsigned zero_count = 0;
+    for (unsigned ibin = 0; ibin<nbin; ibin++)
+      if( phase->get_hit(ibin) == 0 )
+	zero_count++;
+        fprintf(stderr,"set entry %d idim=%d ndim=%d zc=%d\n",ientries,idim, phase->get_ndim(),zero_count);
+  }
+  */
+
   for (unsigned ibin = 0; ibin<nbin; ibin++) {
-
     if (phase->get_hit(ibin) == 0) {
-
       zeroes ++;
       *to = 0.0;
-
+      //      if( ibin==0 && ichan==0 && ipol==0 )
+      //fprintf(stderr,"no hits!\n");
     }
     else {
-
       if (!finite(*from))
 	throw Error (InvalidParam, string(),
 		     "invalid data[ichan=%d][ipol=%d][idim=%d][ibin=%d]=%f",
 		     ichan, ipol, idim, ibin, *from);
 
-      *to = *from / (scale * double( phase->get_hit(ibin) ));
+      //      if( ibin==0 && ichan==0 && ipol==0 ){
+      //fprintf(stderr,"ibin=0 from=%f to=%f\n",
+      //	*from, *from / (scale * double( phase->get_hit(ibin))));
+      //}
 
+      *to = *from / (scale * double( phase->get_hit(ibin) ));
     }
 
     to ++;
     from += ndim;
   }
+
+  //if( ichan==0 && ipol==0 )
+  //fprintf(stderr,"amps[0]=%f\n",profile->get_amps()[0]);
 
   if (zeroes && verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
