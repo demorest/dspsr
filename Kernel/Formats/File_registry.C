@@ -74,6 +74,11 @@ static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
 static Registry::List<dsp::File>::Enter<dsp::Dumb_LBAFile> file_register_dumblba;
 #endif
 
+#if DSP_MWA
+#include "dsp/MWAFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MWAFile> file_register_mwa;
+#endif
+
 #if DSP_PuMa
 #include "dsp/PuMaFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;

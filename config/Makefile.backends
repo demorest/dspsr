@@ -196,6 +196,18 @@ endif
 
 ##############################################################################
 #
+# Loader for MWA (Mileura) specific code
+# 
+ifeq ($(MWA),yes)
+
+CPPFLAGS += -DDSP_MWA=1
+BACKENDS += MWA
+LBACKENDS += -ldsp_MWA
+
+endif
+
+##############################################################################
+#
 # Japanese K5 support
 # 
 ifeq ($(K5),yes)
