@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.12 $
-   $Date: 2005/10/01 21:53:22 $
-   $Author: wvanstra $ */
+   $Revision: 1.13 $
+   $Date: 2006/05/01 06:45:02 $
+   $Author: hknight $ */
 
 
 #ifndef __Detection_h
@@ -79,6 +79,9 @@ namespace dsp {
 
     //! Throws an Error if something is wrong
     void checks();
+
+    //! Quick and dirty method for detecting to PP or QQ
+    void onepol_detect();
 
   };
 

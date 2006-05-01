@@ -26,7 +26,9 @@ void dsp::Detection::set_output_state (Signal::State _state)
   switch (_state)  {
   case Signal::Intensity:  // Square-law detected total power (1 pol)
   case Signal::PPQQ:       // Square-law detected, two polarizations
-  case Signal::NthPower:    // Square-law total power to the nth power
+  case Signal::NthPower:   // Square-law total power to the nth power
+  case Signal::PP_State:   // Just PP
+  case Signal::QQ_State:   // Just QQ
     ndim = 1;
   case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
   case Signal::Stokes:     // Stokes I,Q,U,V
@@ -95,6 +97,9 @@ void dsp::Detection::transformation ()
     else if (state==Signal::NthPower)
       form_nthpower();
 
+    else if( state==Signal::PP_State || state==Signal::QQ_State )
+      onepol_detect();
+
     else
       understood = false;
 
@@ -160,6 +165,33 @@ void dsp::Detection::square_law ()
   sld->set_input( input );
   sld->set_output( output ); 
   sld->operate();  
+}
+
+//! Quick and dirty method for detecting to PP or QQ
+void
+dsp::Detection::onepol_detect()
+{
+  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
+  sld->set_input( input );
+  sld->set_output( new dsp::TimeSeries ); 
+  sld->operate();  
+
+  output->Observation::operator=( *sld->get_output() );
+  output->set_npol( 1 );
+  output->set_state( state );
+  output->resize( output->get_ndat() );
+
+  unsigned goodpol = 0;
+  if( state==Signal::QQ_State )
+    goodpol = 1;
+
+  for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
+    float* in = sld->get_output()->get_datptr(ichan,goodpol);
+    float* out= get_output()->get_datptr(ichan,0);
+
+    memcpy(out,in,output->get_ndat()*sizeof(float));
+  }
+
 }
 
 void dsp::Detection::form_stokes_I(){
@@ -453,5 +485,5 @@ void dsp::Detection::checks(){
 		   "invalid ndim=%d for %s formation",
 		   ndim, Signal::state_string(state));
   }    
-  
+
 }

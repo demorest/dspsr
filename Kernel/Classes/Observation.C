@@ -152,6 +152,10 @@ void dsp::Observation::set_state (Signal::State _state)
     set_ndim(1);
     set_npol( 2 );
   }
+  else if (state == Signal::PP_State || state==Signal::QQ_State){
+    set_ndim( 1 );
+    set_npol( 1 );
+  }
   else if (state == Signal::Coherence){
     /* best not to muck with kludges */
   }
