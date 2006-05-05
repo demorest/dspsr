@@ -226,8 +226,11 @@ try {
   archive-> set_telescope_code ( phase->get_telescope_code() );
 
   archive-> set_type ( phase->get_type() );
-  if (phase->get_state() == Signal::NthPower) {
-    fprintf(stderr, "Pulsar::Archiver:set State is NthPower - setting Archive state to Intensity\n");
+  if (phase->get_state() == Signal::NthPower ||
+      phase->get_state() == Signal::PP_State ||
+      phase->get_state() == Signal::QQ_State ) {
+    fprintf(stderr, "Pulsar::Archiver:set State is %s - setting Archive state to Intensity\n",
+	    State2string(phase->get_state()).c_str());
     archive->set_state (Signal::Intensity);
   }
   else {
