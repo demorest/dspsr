@@ -9,6 +9,7 @@
 #include "genutil.h"
 #include "cross_detect.h"
 #include "stokes_detect.h"
+#include "minmax.h"
 
 #include <memory>
 
@@ -176,9 +177,13 @@ dsp::Detection::onepol_detect()
   sld->set_output( new dsp::TimeSeries ); 
   sld->operate();  
 
-  output->Observation::operator=( *sld->get_output() );
-  output->set_npol( 1 );
-  output->set_state( state );
+  {
+    Reference::To<Observation> onepol = new Observation( *sld->get_output() );
+    onepol->set_npol( 1 );
+    onepol->set_state( state );
+    output->Observation::operator=( *onepol );
+  }    
+
   output->resize( output->get_ndat() );
 
   unsigned goodpol = 0;
@@ -195,8 +200,9 @@ dsp::Detection::onepol_detect()
 }
 
 void dsp::Detection::form_stokes_I(){
-  if( verbose ) fprintf(stderr,"In dsp::Detection::form_stokes_I()\n");
- 
+  if( verbose ) 
+    fprintf(stderr,"In dsp::Detection::form_stokes_I()\n");
+
   if( get_input() == get_output() ){
     square_law();
     Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
@@ -235,8 +241,37 @@ void dsp::Detection::form_stokes_I(){
       
       uint64 ndat = get_input()->get_ndat();
       
-      for( uint64 i=0; i<ndat; i++)
-	out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
+      bool normalise = false;
+
+      if( normalise ){
+	vector<float> p0(ndat);
+	vector<float> p1(ndat);
+	
+	for( uint64 i=0; i<ndat; i++){
+	  p0[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]);
+	  p1[i] = SQR(pol1[2*i]) + SQR(pol1[2*i+1]);
+	}
+	
+	float mean0 = findmean( &*p0.begin(), &*p0.end());
+	float mean1 = findmean( &*p1.begin(), &*p1.end());
+	float sigma0 = findsigma( &*p0.begin(), &*p0.end(),mean0);
+	float sigma1 = findsigma( &*p1.begin(), &*p1.end(),mean1);
+	
+	for( uint64 i=0; i<ndat; i++){
+	  p0[i] -= mean0;
+	  p0[i] /= sigma0;
+	  p1[i] -= mean1;
+	  p1[i] /= sigma1;
+	}
+	
+	for( uint64 i=0; i<ndat; i++)
+	  out[i] = p0[i] + p1[i];
+      }
+      else{
+	for( uint64 i=0; i<ndat; i++)
+	  out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
+      }
+
     }
   }
   
