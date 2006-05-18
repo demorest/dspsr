@@ -1,0 +1,37 @@
+#include "ASPUnpacker.h"
+#include "Error.h"
+
+//! Constructor
+dsp::ASPUnpacker::ASPUnpacker (const char* name) : HistUnpacker (name)
+{
+  set_nsample (256);
+}
+
+bool dsp::ASPUnpacker::matches (const Observation* observation)
+{
+  return observation->get_machine() == "ASP" 
+    && observation->get_nbit() == 8
+    && observation->get_state() == Signal::Nyquist;
+}
+
+void dsp::ASPUnpacker::unpack ()
+{
+  const uint64 ndat = input->get_ndat();
+  const unsigned npol = input->get_npol();
+  const unsigned char mask = 0x7f;
+
+  for (unsigned ipol=0; ipol<npol; ipol++) {
+
+    const char* from = reinterpret_cast<const char*>(input->get_rawptr()+ipol);
+    float* into = output->get_datptr (0, ipol);
+    unsigned long* hist = get_histogram (ipol);
+
+    for (unsigned bt = 0; bt < ndat; bt++) {
+      hist[ *from & mask ] ++;
+      into[bt] = float(int( *from ));
+      from += npol;
+    }
+
+  }
+}
+
