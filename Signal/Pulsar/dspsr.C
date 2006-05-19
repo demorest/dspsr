@@ -831,7 +831,17 @@ int main (int argc, char** argv) try {
 
   if (single_pulse) {
     dsp::SubFold* subfold = new dsp::SubFold;
-    subfold -> set_subint_turns (1);
+
+    if (total_seconds) {
+      cerr << "dspsr: sub-integration length "<< total_seconds <<" s" << endl;
+      subfold -> set_subint_seconds (total_seconds);
+      total_seconds = 0;
+    }
+    else  {
+      cerr << "dspsr: single pulse" << endl;
+      subfold -> set_subint_turns (1);
+    }
+
     subfold -> set_unloader (archiver);
 
     fold = subfold;
