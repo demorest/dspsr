@@ -125,8 +125,15 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
       2) the 
     */
 
-    if (Operation::verbose)
+    if (Operation::verbose)  {
       cerr << "dsp::TimeDivide::bound start new division" << endl;
+      if (input_end < lower)
+        cerr << "      input end = " << input_end << " precedes\n"
+                " division start = " << lower << endl;
+       else
+        cerr << "          start = " << divide_start << " is after\n"
+                "   division end = " << upper << endl;
+    }
 
     new_division = true;
 
@@ -370,8 +377,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     // assumption: integer cast truncates
     uint64 division = uint64 (seconds/division_seconds);
 
-    lower = start_time + double(division) * seconds;
-    upper = lower + seconds;
+    lower = start_time + double(division) * division_seconds;
+    upper = lower + division_seconds;
 
     return;
   }
