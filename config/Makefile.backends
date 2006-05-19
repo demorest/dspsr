@@ -128,13 +128,25 @@ endif
 
 ##############################################################################
 #
-# Mark5 specific code sent to HSK by JP
+# Mark5 specific code by Willem van Straten
 # 
 ifeq ($(MARK5),yes)
 
 CPPFLAGS += -DDSP_MARK5=1
 BACKENDS += MARK5
 LBACKENDS += -ldsp_Mark5
+
+endif
+
+##############################################################################
+#
+# ASP specific code by Willem van Straten
+#
+ifeq ($(ASP),yes)
+
+CPPFLAGS += -DDSP_ASP=1
+BACKENDS += ASP
+LBACKENDS += -ldsp_ASP
 
 endif
 

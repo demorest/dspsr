@@ -117,6 +117,11 @@ static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
 static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
 #endif
 
+#if DSP_ASP
+#include "dsp/ASPFile.h"
+static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
+#endif
+
 #if DSP_Fadc
 #include "dsp/FadcFile.h"
 static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
