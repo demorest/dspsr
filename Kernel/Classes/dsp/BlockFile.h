@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.3 $
-   $Date: 2005/12/05 00:05:25 $
-   $Author: hknight $ */
+   $Revision: 1.4 $
+   $Date: 2006/05/19 17:51:25 $
+   $Author: wvanstra $ */
 
 
 #ifndef __dsp_BlockFile_h
@@ -58,6 +58,8 @@ namespace dsp {
       other than the sampled data, this method should be overloaded
       and the additional information should be skipped. */
     virtual int64 seek_bytes (uint64 bytes);
+
+    virtual void skip_extra ();
     
   private:
 

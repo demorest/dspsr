@@ -63,9 +63,7 @@ int64 dsp::BlockFile::load_bytes (unsigned char* buffer, uint64 bytes)
 
     if (current_block_byte == block_data_bytes) {
 
-      if (lseek (fd, block_header_bytes + block_tailer_bytes, SEEK_CUR) < 0)
-	throw Error (FailedSys, "dsp::BlockFile::load_bytes", "seek(%d)", fd);
-
+      skip_extra ();
       current_block_byte = 0;
 
     }
@@ -76,6 +74,12 @@ int64 dsp::BlockFile::load_bytes (unsigned char* buffer, uint64 bytes)
   }
 
   return bytes - to_load;
+}
+
+void dsp::BlockFile::skip_extra ()
+{
+  if (lseek (fd, block_header_bytes + block_tailer_bytes, SEEK_CUR) < 0)
+    throw Error (FailedSys, "dsp::BlockFile::load_bytes", "seek(%d)", fd);
 }
 
 //! Adjust the file pointer
