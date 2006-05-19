@@ -58,7 +58,7 @@ void dsp::SubFold::prepare ()
   if (divider.get_start_time() == MJD::zero)
     divider.set_start_time (input->get_start_time());
 
-  if (has_folding_polyco())
+  if (has_folding_polyco() && divider.get_turns())
     divider.set_polyco (get_folding_polyco());
 
   built = true;
