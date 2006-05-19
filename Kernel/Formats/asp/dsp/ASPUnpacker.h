@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/asp/dsp/ASPUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/05/18 00:18:02 $
+   $Revision: 1.2 $
+   $Date: 2006/05/19 01:54:24 $
    $Author: wvanstra $ */
 
 #ifndef __ASPUnpacker_h
@@ -27,6 +27,9 @@ namespace dsp {
 
     //! Return true if we can convert the Observation
     virtual bool matches (const Observation* observation);
+
+    unsigned get_output_offset (unsigned idig) const;
+    unsigned get_output_ipol (unsigned idig) const;
 
   };
 

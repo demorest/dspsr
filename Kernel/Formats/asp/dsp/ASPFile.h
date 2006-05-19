@@ -26,6 +26,8 @@ namespace dsp {
     //! Open the file
     void open_file (const char* filename);
 
+    void skip_extra ();
+
   };
 
 }

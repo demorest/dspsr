@@ -9,7 +9,6 @@ struct data2rcv {
  double fMJD;
  long long ipts1,ipts2; /* Actual position of the start and end in the data time serie */
  int  FreqChanNo;
- unsigned char buf[SBLKMAX];
 };
 
 #endif

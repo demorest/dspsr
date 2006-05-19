@@ -5,33 +5,52 @@
 dsp::ASPUnpacker::ASPUnpacker (const char* name) : HistUnpacker (name)
 {
   set_nsample (256);
+  set_ndig (4);
 }
 
 bool dsp::ASPUnpacker::matches (const Observation* observation)
 {
   return observation->get_machine() == "ASP" 
-    && observation->get_nbit() == 8
-    && observation->get_state() == Signal::Nyquist;
+    && observation->get_nbit() == 8;
+}
+
+/*! The quadrature components must be offset by one */
+unsigned dsp::ASPUnpacker::get_output_offset (unsigned idig) const
+{
+  return idig % 2;
+}
+
+/*! The first two digitizer channels are poln0, the last two are poln1 */
+unsigned dsp::ASPUnpacker::get_output_ipol (unsigned idig) const
+{
+  return idig / 2;
 }
 
 void dsp::ASPUnpacker::unpack ()
 {
   const uint64 ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
-  const unsigned char mask = 0x7f;
+  const unsigned ndim = input->get_ndim();
+
+  // cerr << "npol=" << npol << " ndim=" << ndim << endl;
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
+    for (unsigned idim=0; idim<ndim; idim++) {
 
-    const char* from = reinterpret_cast<const char*>(input->get_rawptr()+ipol);
-    float* into = output->get_datptr (0, ipol);
-    unsigned long* hist = get_histogram (ipol);
+      // cerr << "ipol=" << ipol << " idim=" << idim << endl;
 
-    for (unsigned bt = 0; bt < ndat; bt++) {
-      hist[ *from & mask ] ++;
-      into[bt] = float(int( *from ));
-      from += npol;
+      unsigned off = ipol * ndim + idim;
+
+      const char* from = reinterpret_cast<const char*>(input->get_rawptr()+off);
+      float* into = output->get_datptr (0, ipol) + idim;
+      unsigned long* hist = get_histogram (off);
+  
+      for (unsigned bt = 0; bt < ndat; bt++) {
+        hist[ (unsigned char) *from ] ++;
+        into[bt] = float(int( *from ));
+        from += npol;
+      }
     }
-
   }
 }
 
