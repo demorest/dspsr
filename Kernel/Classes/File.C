@@ -168,6 +168,8 @@ void dsp::File::reopen ()
   if (fd < 0)
     throw Error (FailedSys, "dsp::File::reopen",
 		 "failed open(%s)", current_filename.c_str());
+
+  seek_bytes (0);
 }
 
 dsp::PseudoFile dsp::File::get_pseudofile(){
