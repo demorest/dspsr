@@ -2,6 +2,8 @@
 #include "dsp/SampleDelayFunction.h"
 #include "dsp/InputBuffering.h"
 
+#include <assert.h>
+
 dsp::SampleDelay::SampleDelay ()
   : Transformation<TimeSeries,TimeSeries> ("SampleDelay", anyplace)
 {
