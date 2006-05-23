@@ -18,8 +18,11 @@
 
 #include "dsp/AutoCorrelation.h"
 #include "dsp/Filterbank.h"
-
 #include "dsp/ACFilterbank.h"
+
+#include "dsp/SampleDelay.h"
+
+#include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/Detection.h"
 
 #include "dsp/SubFold.h"
@@ -47,7 +50,7 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:hiIjJk:l:L:m:M:n:N:Oop:P:RsS:t:T:vVx:z";
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:z";
 
 void usage ()
 {
@@ -62,6 +65,7 @@ void usage ()
     " -T total       process only t=total seconds\n"
     " -g ffts        perform this many forward FFTs per block [16]\n"
     " -t block_size  process this many samples per block \n"
+    " -W             no WeightedTimeSeries\n"
     " -z             run in psrdisp backward-compatibility mode\n"
     "\n"
     "Source options:\n"
@@ -83,6 +87,7 @@ void usage ()
     " -F nchan       create an nchan-channel filterbank\n"
     " -F nchan:redn  reduce spectral leakage function bandwidth by redn\n"
     " -F nchan:D     perform simultaneous coherent dedispersion\n"
+    " -G nbin        create phase-locked filterbank with nbin phase bins\n"
 #if ACTIVATE_MKL
     " -I             over-ride with IncoherentFilterbank class [false]\n"
 #endif
@@ -109,9 +114,10 @@ void usage ()
     " -P psr.poly    add the folding polynomial, psr.poly, for use \n"
     "\n"
     "Single Pulse options:\n"
-    " -A             produce a single archive with multiple Integrations\n"
-    " -j             join files into contiguous observation\n"
-    " -s             generate single pulse Integrations\n"
+    " -A             produce a single archive with multiple Integrations \n"
+    " -j             join files into contiguous observation \n"
+    " -K             remove inter-channel dispersion delays \n"
+    " -s             generate single pulse Integrations \n"
        << endl;
 }
 
@@ -126,6 +132,24 @@ void info ()
   cerr << "dspsr " << dsp::version << " <" << fft::id << mpimsg 
        << "> compiled by " << MakeInfo_user << " on " << MakeInfo_date
        << endl;
+}
+
+// use WeightedTimeSeries
+static bool weighted_time_series = true;
+static bool verbose = false;
+
+dsp::TimeSeries* new_time_series ()
+{
+  if (weighted_time_series) {
+    if (verbose)
+      cerr << "Creating WeightedTimeSeries instance" << endl;
+    return new dsp::WeightedTimeSeries;
+  }
+  else {
+    if (verbose)
+      cerr << "Creating TimeSeries instance" << endl;
+    return new dsp::TimeSeries;
+  }
 }
 
 int main (int argc, char** argv) try {
@@ -165,8 +189,6 @@ int main (int argc, char** argv) try {
   if (fft::SIMD_aware)
     fft::enable_SIMD();
 #endif
-
-  bool verbose = false;
 
   // number of time samples loaded from file at a time
   uint64 block_size = 1024*1024;
@@ -258,6 +280,12 @@ int main (int argc, char** argv) try {
   string pulsar_name;
   // Folding period
   double folding_period = 0.0;
+
+  dsp::SampleDelay* sample_delay = 0;
+
+  // phase-locked filterbank phase bins
+  unsigned plfb_nbin = 0;
+  unsigned plfb_nchan = 0;
 
   // Filename of polyphase filterbank coefficients
   char* polyphase_filter = 0;
@@ -379,6 +407,25 @@ int main (int argc, char** argv) try {
       centre_frequency = atof (optarg);
       break;
 
+    case 'G': {
+      char* pfr = strchr (optarg, ':');
+      if (pfr) {
+        *pfr = '\0';
+        pfr++;
+        if (sscanf (pfr, "%u", &plfb_nchan) < 1) {
+          fprintf (stderr, "Cannot parse '%s' as "
+                   "phase-locked filterbank nchan\n", pfr);
+        return -1;
+        }
+      }
+      if (sscanf (optarg, "%u", &plfb_nbin) < 1) {
+        fprintf (stderr, "Cannot parse '%s' as "
+                 "phase-locked filterbank nbin\n", optarg);
+        return -1;
+      }
+      break;
+    }
+
     case 'g':
       ffts = atoi (optarg);
       break;
@@ -409,6 +456,10 @@ int main (int argc, char** argv) try {
 
     case 'k':
       telescope_code = optarg[0];
+      break;
+
+    case 'K':
+      sample_delay = new dsp::SampleDelay;
       break;
 
     case 'l':
@@ -531,6 +582,10 @@ int main (int argc, char** argv) try {
       verbose = true;
       break;
 
+    case 'W':
+      weighted_time_series = false;
+      break;
+
     case 'x': 
       set_nfft = atoi (optarg);
       break;
@@ -567,9 +622,7 @@ int main (int argc, char** argv) try {
     return -1;
   }
 
-  if (verbose)
-    cerr << "Creating WeightedTimeSeries instance" << endl;
-  dsp::TimeSeries* voltages = new dsp::WeightedTimeSeries;
+  dsp::TimeSeries* voltages = new_time_series();
 
   if (verbose)
     cerr << "Creating PhaseSeries instance" << endl;
@@ -638,7 +691,7 @@ int main (int argc, char** argv) try {
   if (nchan > 1) {
 
     // output filterbank data
-    convolve = new dsp::WeightedTimeSeries;
+    convolve = new_time_series ();
 
 #if ACTIVATE_MKL
     if( use_incoherent_filterbank ) {
@@ -736,7 +789,7 @@ int main (int argc, char** argv) try {
   if (nchan_acf > 1 && nlag_acf > 1) {
 
     // output ACFilterbank data
-    convolve = new dsp::WeightedTimeSeries;
+    convolve = new_time_series ();
 
     if (verbose)
       cerr << "Creating ACFilterbank instance" << endl;
@@ -752,8 +805,37 @@ int main (int argc, char** argv) try {
     need_to_detect = false;
 
   }
+
+  if (sample_delay) {
+
+    sample_delay->set_input (convolve);
+    sample_delay->set_output (convolve);
+    sample_delay->set_function (new dsp::Dedispersion::SampleDelay);
+    kernel->set_fractional_delay (true);
+
+    operations.push_back (sample_delay);
+
+  }
+
+  dsp::PhaseLockedFilterbank* phased_filterbank = 0;
+
+  if (plfb_nbin) {
+
+    cerr << "dspsr: Creating phase locked filterbank with nbin="
+         << plfb_nbin << endl;
+
+    phased_filterbank = new dsp::PhaseLockedFilterbank;
+    phased_filterbank->set_nbin (plfb_nbin);
+    if (plfb_nchan)
+      phased_filterbank->set_nchan (plfb_nchan);
+    phased_filterbank->set_input (convolve);
+
+    operations.push_back (phased_filterbank);
+    need_to_detect = false;
+
+  }
   
-  if( need_to_detect ) {
+  if (need_to_detect)  {
     
     if (verbose)
       cerr << "Creating Detection instance" << endl;
@@ -781,7 +863,7 @@ int main (int argc, char** argv) try {
     } 
     if (npol == 3) {
       fprintf(stderr,"NPOL == 3 this is a special case: forming higher power of total intensity\n");
-      detected = new dsp::WeightedTimeSeries;
+      detected = new_time_series ();
       detect->set_input (convolve);
       detect->set_output (detected);
     }
@@ -871,7 +953,13 @@ int main (int argc, char** argv) try {
 
   fold->set_output (profiles);
 
-  operations.push_back (fold);
+  if (!phased_filterbank)
+    operations.push_back (fold);
+  else {
+    cerr << "Setting phase locked filterbank output" << endl;
+    phased_filterbank->set_output (profiles);
+    phased_filterbank->divider.set_reference_phase (reference_phase);
+  }
 
   dsp::Operation::record_time = true;
 
@@ -976,6 +1064,9 @@ int main (int argc, char** argv) try {
 #endif 
 
     fold->prepare ( manager->get_info() );
+
+    if (phased_filterbank)
+      phased_filterbank->divider.set_polyco( fold->get_folding_polyco() );
 
     double dm = 0.0;
 
@@ -1170,6 +1261,14 @@ int main (int argc, char** argv) try {
       profiles = output;
 
     }
+
+    if (phased_filterbank)  {
+      cerr << "Calling PhaseLockedFilterbank::normalize_output" << endl;
+      phased_filterbank -> normalize_output ();
+    }
+
+    if (sample_delay)
+      archiver->set_archive_dedispersed (true);
 
     if (!single_pulse) {
 
