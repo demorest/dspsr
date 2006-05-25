@@ -37,7 +37,7 @@ void dsp::TestInput::runtest (Input* input_small, Input* input_large)
   input_small->set_output (data_small);
   input_large->set_output (data_large);
 
-  unsigned small_block = block_size;
+  unsigned small_block = unsigned(block_size);
 
   // ensure that the small block size triggers resolution-related code
   unsigned modres = small_block % resolution;

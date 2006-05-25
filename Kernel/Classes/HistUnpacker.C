@@ -81,7 +81,7 @@ void dsp::HistUnpacker::zero_histogram ()
 
 double dsp::HistUnpacker::get_histogram_mean (unsigned idig) const
 {
-  if (idig < 0 || idig >= get_ndig())
+  if ( idig >= get_ndig())
     throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram_mean",
 		 "invalid channel=%d", idig);
 

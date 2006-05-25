@@ -119,11 +119,11 @@ void dsp::OneBitCorrection::unpack ()
   const uint32 * rawptr = (const uint32 *) input->get_rawptr();
 
   // Note that algorithm 1 loses ndat%MM samples
-  const unsigned algorithm = 1;
+  //  unsigned algorithm = 1;
 
   RealTimer rt0;
 
-  if( algorithm==1 ){
+  //  if( algorithm==1 ){
     rt0.start();
 
 #define MM 512
@@ -185,8 +185,6 @@ void dsp::OneBitCorrection::unpack ()
   rt0.stop();
   if( verbose )
     fprintf(stderr,"alg 1: %f secs\n",rt0.get_total());
-
-  }
 
   /*
   else if( algorithm == 2 ){

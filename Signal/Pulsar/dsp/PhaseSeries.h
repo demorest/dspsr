@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.15 $
-   $Date: 2005/10/01 21:53:34 $
-   $Author: wvanstra $ */
+   $Revision: 1.16 $
+   $Date: 2006/05/25 04:19:04 $
+   $Author: hknight $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
@@ -91,7 +91,7 @@ namespace dsp {
     void zero ();
 
     //! Over-ride Observation::combinable_rate
-    bool combinable_rate (double test_rate) const { return true; }
+    bool combinable_rate (double) const { return true; }
 
     //! Store what the output Archive's filename should be
     void set_archive_filename(string _archive_filename)
