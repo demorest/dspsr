@@ -180,7 +180,7 @@ void dsp::Filterbank::transformation ()
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
-  unsigned npart = (ndat-(nchan_subband-nsamp_tres)-nsamp_overlap)/nsamp_step;
+  uint64 npart = (ndat-(nchan_subband-nsamp_tres)-nsamp_overlap)/nsamp_step;
   // points kept from each small fft
   unsigned nkeep = freq_res - n_filt;
 
@@ -315,7 +315,8 @@ void dsp::Filterbank::transformation ()
   unsigned long tres_step = nsamp_tres * input->get_ndim();
 
   // counters
-  unsigned ipt, itres, ipol, jpol, ichan, ipart;
+  unsigned ipt, itres, ipol, jpol, ichan;
+  uint64 ipart;
 
   unsigned npol = input->get_npol();
 

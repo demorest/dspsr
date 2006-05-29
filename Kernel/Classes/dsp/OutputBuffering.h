@@ -51,7 +51,7 @@ namespace dsp {
     void set_next_start (uint64) { }
 
     //! Set the minimum number of samples that can be processed
-    void set_minimum_samples (uint64 minimum_samples) { }
+    void set_minimum_samples (uint64) { }
 
     //! Returns the input start time (over-ridden by BandCombiner class)
     virtual MJD get_input_start_time ();

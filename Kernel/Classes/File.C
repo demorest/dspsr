@@ -189,7 +189,7 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 
   int64 old_pos = lseek(fd,0,SEEK_CUR);
 
-  ssize_t bytes_read = read (fd, buffer, bytes);
+  ssize_t bytes_read = read (fd, buffer, size_t(bytes));
  
   if (bytes_read < 0)
     perror ("dsp::File::load_bytes read error");
@@ -202,7 +202,7 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 	    int64(bytes_read), old_pos, new_pos, end_pos);
 
   if( uint64(new_pos) >= end_pos ){
-    bytes_read = end_pos - old_pos;
+    bytes_read = ssize_t(end_pos - old_pos);
     lseek(fd,end_pos,SEEK_SET);
     end_of_data = true;
   }

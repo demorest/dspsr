@@ -55,14 +55,14 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
   nweights = required_nweights;
   uint64 points_left = ndat;
 
-  unsigned points = nsample;
+  uint64 points = nsample;
 
   for (unsigned wt=0; wt<nweights; wt++) {
 
     if (points > points_left)
       points = points_left;
 
-    unsigned pt = 0;
+    uint64 pt = 0;
 
     // retrieve the next points values from the 2bit data
     while (pt < points) {

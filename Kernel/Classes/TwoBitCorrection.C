@@ -176,7 +176,7 @@ void dsp::TwoBitCorrection::transformation ()
   if (weighted_output) {
 
     weighted_output -> mask_weights ();
-    unsigned nbad = weighted_output -> get_nzero ();
+    uint64 nbad = weighted_output -> get_nzero ();
     discarded_weights += nbad;
 
     if (nbad && verbose)
@@ -444,7 +444,7 @@ void dsp::TwoBitCorrection::unpack ()
 
   // weights are used only if output is a WeightedTimeseries
   unsigned* weights = 0;
-  unsigned nweights = 0;
+  uint64 nweights = 0;
 
   for (unsigned idig=0; idig<ndig; idig++) {
 
@@ -472,7 +472,7 @@ void dsp::TwoBitCorrection::unpack ()
       nweights = weighted_output -> get_nweights ();
     }
 
-    dig_unpack (into, from, ndat, idig, weights, nweights);
+    dig_unpack (into, from, ndat, idig, weights, unsigned(nweights));
       
   }  // for each polarization
 
@@ -521,9 +521,9 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     throw Error (InvalidParam, "dsp::TwoBitCorrection::dig_unpack",
 		 "weights array size=%d < nweights=%d", nweights, n_weights);
 
-  unsigned long bytes_left = ndat / samples_per_byte;
-  unsigned long bytes_per_weight = get_nsample() / samples_per_byte;
-  unsigned long bytes = bytes_per_weight;
+  uint64 bytes_left = ndat / samples_per_byte;
+  uint64 bytes_per_weight = get_nsample() / samples_per_byte;
+  uint64 bytes = bytes_per_weight;
   unsigned bt;
   unsigned pt;
 
@@ -654,14 +654,14 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
   }
 
   // number of weight samples
-  unsigned nweights = input->get_ndat() / get_nsample();
+  uint64 nweights = input->get_ndat() / get_nsample();
 
   unsigned npol = input->get_npol ();
 
-  unsigned nbytes = input->get_nbytes() / npol;
+  uint64 nbytes = input->get_nbytes() / npol;
 
   // number of bytes per weight sample
-  unsigned nbytes_per_weight = nbytes / nweights;
+  uint64 nbytes_per_weight = nbytes / nweights;
 
 
   if (verbose)
@@ -685,11 +685,11 @@ int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
     const unsigned char* data = input->get_rawptr() + ipol;
     unsigned char datum;
 
-    for (unsigned iwt=0; iwt<nweights; iwt++) {
+    for (uint64 iwt=0; iwt<nweights; iwt++) {
 
       unsigned long nlo = 0;
 
-      for (unsigned ipwt=0; ipwt < nbytes_per_weight; ipwt++) {
+      for (uint64 ipwt=0; ipwt < nbytes_per_weight; ipwt++) {
 
 	datum = *data;
 	data += npol;

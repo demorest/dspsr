@@ -85,7 +85,7 @@ dsp::BitSeries::operator = (const BitSeries& bitseries)
   const unsigned char* from = bitseries.get_rawptr();
   unsigned char* to = get_rawptr();
 
-  memcpy(to,from,bitseries.get_nbytes());
+  memcpy(to,from,size_t(bitseries.get_nbytes()));
 
   return *this;
 }
@@ -136,7 +136,7 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
   const unsigned char* from = little->get_datptr(0);
   unsigned char* to = get_datptr(get_ndat());
 
-  memcpy(to,from,get_nbytes());
+  memcpy(to,from,size_t(get_nbytes()));
 
   set_ndat( get_ndat() + little->get_ndat() );
 }

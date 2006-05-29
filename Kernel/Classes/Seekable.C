@@ -208,7 +208,7 @@ uint64 dsp::Seekable::recycle_data (BitSeries* data)
     if (offset_bytes > recycle_bytes)
       offset_bytes = recycle_bytes;
 
-    memcpy (into, from, offset_bytes);
+    memcpy (into, from, size_t(offset_bytes));
 
     recycle_bytes -= offset_bytes;
     into += offset_bytes;

@@ -51,9 +51,9 @@ void dsp::DataSeries::set_ndat(uint64 _ndat){
 void dsp::DataSeries::set_ndim(uint64 _ndim){
   if( _ndim*get_ndat()*get_nbit() % 8 )
     throw Error(InvalidParam,"dsp::DataSeries::set_ndim()",
-		"You've tried to set an ndim (%d) that gives a non-integer number of bytes per pol/chan grouping",
+		"You've tried to set an ndim ("UI64") that gives a non-integer number of bytes per pol/chan grouping",
 		_ndim);
-  Observation::set_ndim( _ndim );
+  Observation::set_ndim( unsigned(_ndim) );
 }
 
 //! Allocate the space required to store nsamples time samples.
@@ -136,7 +136,7 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
     cerr << "dsp::DataSeries::resize allocate " << require << " bytes" << endl;
     getchar();
 #endif
-    buffer = (unsigned char*) memalign (16, require + 8);
+    buffer = (unsigned char*) memalign (16, size_t(require + 8));
 #if INTERACTIVE_MEMORY
     cerr << "dsp::DataSeries::resize allocated at " << (void*) buffer << endl;
 #endif
@@ -244,7 +244,7 @@ dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
       unsigned char* dest = get_udatptr (ichan, ipol);
       const unsigned char* src = copy.get_udatptr (ichan, ipol);
-      memcpy(dest,src,npt);
+      memcpy(dest,src,size_t(npt));
     }
   }
   

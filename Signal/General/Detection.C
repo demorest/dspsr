@@ -194,7 +194,7 @@ dsp::Detection::onepol_detect()
     float* in = sld->get_output()->get_datptr(ichan,goodpol);
     float* out= get_output()->get_datptr(ichan,0);
 
-    memcpy(out,in,output->get_ndat()*sizeof(float));
+    memcpy(out,in,size_t(output->get_ndat()*sizeof(float)));
   }
 
 }
@@ -242,12 +242,13 @@ void dsp::Detection::form_stokes_I(){
       uint64 ndat = get_input()->get_ndat();
       
       bool normalise = false;
+      unsigned undat = unsigned(ndat);
 
       if( normalise ){
-	vector<float> p0(ndat);
-	vector<float> p1(ndat);
+	vector<float> p0(undat);
+	vector<float> p1(undat);
 	
-	for( uint64 i=0; i<ndat; i++){
+	for( unsigned i=0; i<undat; i++){
 	  p0[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]);
 	  p1[i] = SQR(pol1[2*i]) + SQR(pol1[2*i+1]);
 	}
@@ -257,18 +258,18 @@ void dsp::Detection::form_stokes_I(){
 	float sigma0 = findsigma( &*p0.begin(), &*p0.end(),mean0);
 	float sigma1 = findsigma( &*p1.begin(), &*p1.end(),mean1);
 	
-	for( uint64 i=0; i<ndat; i++){
+	for( unsigned i=0; i<undat; i++){
 	  p0[i] -= mean0;
 	  p0[i] /= sigma0;
 	  p1[i] -= mean1;
 	  p1[i] /= sigma1;
 	}
 	
-	for( uint64 i=0; i<ndat; i++)
+	for( unsigned i=0; i<undat; i++)
 	  out[i] = p0[i] + p1[i];
       }
-      else{
-	for( uint64 i=0; i<ndat; i++)
+      else{	
+	for( unsigned i=0; i<undat; i++)
 	  out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
       }
 
@@ -379,7 +380,7 @@ void dsp::Detection::polarimetry ()
     if (ndim == 4)
       required_space = input_ndim * ndat;
     
-    copyp = float_workingspace (required_space);
+    copyp = float_workingspace (unsigned(required_space));
 
     copy_bytes = input_ndim * ndat * sizeof(float);
 
@@ -395,11 +396,11 @@ void dsp::Detection::polarimetry ()
     const float* q = input->get_datptr (ichan, 1);
 
     if (inplace && ndim != 2) {
-      memcpy (copyp, p, copy_bytes);
+      memcpy (copyp, p, size_t(copy_bytes));
       p = copyp;
 
       if (ndim == 1) {
-	memcpy (copyq, q, copy_bytes);
+	memcpy (copyq, q, size_t(copy_bytes));
 	q = copyq;
       }
     }
@@ -410,9 +411,9 @@ void dsp::Detection::polarimetry ()
 
       // ie Analytic
       if (state == Signal::Stokes)
-	stokes_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+	stokes_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
       else
-	cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+	cross_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
 
     }
     else{ // ie Nyquist ndim==1

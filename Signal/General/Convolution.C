@@ -177,7 +177,7 @@ void dsp::Convolution::transformation ()
   unsigned nsamp_good = nsamp_fft-nsamp_overlap;
 
   // number of FFTs for this data block
-  unsigned long npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
+  uint64 npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
 
   if (verbose)
     cerr << "Convolution::transformation npart=" << npart << endl;
@@ -249,13 +249,13 @@ void dsp::Convolution::transformation ()
   float* ptr = 0;
   unsigned jpol=0;
 
-  unsigned long offset;
+  uint64 offset;
   // number of floats to step between each FFT
-  const unsigned long step = nsamp_good * ndim;
+  const uint64 step = nsamp_good * ndim;
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
-      for (unsigned ipart=0; ipart < npart; ipart++)  {
+      for (uint64 ipart=0; ipart < npart; ipart++)  {
 	
 	offset = ipart * step;
 		

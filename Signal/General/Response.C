@@ -258,8 +258,8 @@ void dsp::Response::set_optimal_ndat ()
     throw_str ("Response::set_optimal_ndat specified maximum ndat (%d)" 
 	       " < required minimum ndat (%d)", ndat_max, ndat_min);
 
-  int optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
-					 ndat_max, verbose);
+  int64 optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
+					   ndat_max, verbose);
   if (optimal_ndat < 0)
     throw_str ("Response::set_optimal_ndat optimal_fft_length failed");
 

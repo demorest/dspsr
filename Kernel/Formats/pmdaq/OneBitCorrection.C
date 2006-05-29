@@ -102,7 +102,7 @@ void dsp::OneBitCorrection::unpack ()
     throw Error(InvalidState,"dsp::OneBitCorrection::unpack()",
 		"output doesn't have nbit=32");
 
-  unsigned ndat = input->get_ndat();
+  unsigned ndat = unsigned(input->get_ndat());
   unsigned n_freq = output->get_nchan();
 
   if (n_freq % 32)

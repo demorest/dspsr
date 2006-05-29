@@ -162,7 +162,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     for( unsigned ipol=0; ipol<get_npol(); ipol++){
       float* dat = get_datptr(ichan,ipol);
       float* src = startings[ichan][ipol];
-      memcpy( dat, src, samps_offset*get_ndim()*sizeof(float));
+      memcpy( dat, src, size_t(samps_offset*get_ndim()*sizeof(float)));
     }
   }
 
@@ -473,7 +473,7 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
       float* to = get_datptr (ichan, ipol);
       const float* from = copy->get_datptr(ichan,ipol) + offset;
-      memcpy (to, from, byte_count);
+      memcpy (to, from, size_t(byte_count));
     }
   }
 }
@@ -517,7 +517,7 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
       const float* from = little->get_datptr (ichan,ipol);
       float* to = get_datptr(ichan,ipol) + ncontain*get_ndim();
       
-      memcpy (to, from, ncopy*get_ndim()*sizeof(float));
+      memcpy (to, from, size_t(ncopy*get_ndim()*sizeof(float)));
     }
   }
 
@@ -565,7 +565,7 @@ uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsi
   
   const float* from = little->get_datptr (ichan,ipol);
   float* to = get_datptr(0,0) + ncontain*get_ndim();
-  memcpy (to, from, ncopy*get_ndim()*sizeof(float));
+  memcpy (to, from, size_t(ncopy*get_ndim()*sizeof(float)));
   
   set_ndat (ncontain + ncopy);
 
@@ -702,13 +702,13 @@ void dsp::TimeSeries::normalise(){
       float mmean = many_findmean(dat,dat+get_ndat());
       float ssigma = sqrt( many_findvar( dat, dat+get_ndat(), mmean) );
 
-      register unsigned the_ndat = get_ndat();
+      register uint64 the_ndat = get_ndat();
 
       // HSK TODO: which is quicker- 2 loops or 1???  
-      for( unsigned i=0; i<the_ndat; ++i)
+      for( uint64 i=0; i<the_ndat; ++i)
 	dat[i] -= mmean;
 
-      for( unsigned i=0; i<the_ndat; ++i)
+      for( uint64 i=0; i<the_ndat; ++i)
 	dat[i] /= ssigma;
     }
   }
