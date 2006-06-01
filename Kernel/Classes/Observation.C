@@ -403,49 +403,40 @@ bool dsp::Observation::combinable_rate (double test_rate) const
   return fabs(rate-test_rate)/rate < 0.01;
 }
 
-bool dsp::Observation::contiguous (const Observation & obs, bool verbose_on_failure, int ichan, int ipol) const
+bool dsp::Observation::contiguous (const Observation & obs, 
+                                   bool verbose_on_failure,
+                                   int ichan, int ipol) const
 {
-  if( verbose )
-    fprintf(stderr,"In dsp::Observation::contiguous() with this=%p and obs=%p\n",
-	    this,&obs);
+  if (verbose)
+    cerr << "dsp::Observation::contiguous this=" << this << " obs=" << &obs
+         << endl;
 
-  double difference = fabs((get_end_time() - obs.get_start_time()).in_seconds());
+  double difference = (obs.get_start_time() - get_end_time()).in_seconds();
 
-  if( verbose ){
-    fprintf(stderr,"Got difference=%f seconds and rate=%f\n",
-	    difference,rate);
-    fprintf(stderr,"difference=%f   0.9/rate=%f\n",
-	    difference,0.9/rate);
-  }
+  if (verbose)
+    cerr << "dsp::Observation::contiguous difference=" << difference
+         << "s rate=" << rate << "Hz" << endl;
 
-  bool combine = obs.combinable(*this,false,verbose_on_failure,ichan,ipol);
+  bool combinable = obs.combinable (*this,false,verbose_on_failure,ichan,ipol);
+  bool contiguous = fabs(difference) < 0.9/rate;
 
-  bool ret = ( combine && difference < 0.9/rate );
+  if ( !contiguous && verbose_on_failure ) {
 
-  if ( !ret && verbose_on_failure ) {
-    fprintf(stderr,"dsp::Observation::contiguous() returning false as:\n");
-    fprintf(stderr,"combinable(obs)=%d\n",combine);
-    fprintf(stderr,"get_start_time().in_seconds()    =%.9f\n",
-	    get_start_time().in_seconds());    
-    fprintf(stderr,"get_end_time().in_seconds()      =%.9f\n",
-	    get_end_time().in_seconds());    
-    fprintf(stderr,"obs.get_start_time().in_seconds()=%.9f\n",
-	    obs.get_start_time().in_seconds());
-    fprintf(stderr,"difference                       =%.9f\n",fabs(difference));
-    fprintf(stderr,"difference needed to be less than %.9f\n",0.9/rate);    
-    fprintf(stderr,"get_end_time() is at %f samples; obs.get_start_time() is at %f samples\n",
-	    float(get_ndat()),
-	    (obs.get_start_time()-get_start_time()).in_seconds()*get_rate());
+    cerr << "dsp::Observation::contiguous returning false:\n\t"
+      "this.start_time=" << get_start_time() << "\n\t"
+      "this.end_time  =" << get_end_time() << "\n\t"
+      "that.start_time=" << obs.get_start_time() << "\n\t"
+      "difference=" << difference*1e6 << "us "
+      "needed to be less than " << 0.9e6/rate << "us.\n\t"
+      "At sampling rate=" << rate/1e6 << "MHz, that.start_time is off by "
+         << difference * rate << " samples" << endl;
 
-    fprintf(stderr,"ndat="UI64" and rate=%f.  obs.ndat="UI64" obs.rate=%f\n",
-	    get_ndat(),rate,obs.get_ndat(),obs.rate);
   } 
 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::Observation::contiguous() with %d\n",
-	    ret);
+  if (verbose)
+    cerr << "dsp::Observation::contiguous return" << endl;
 
-  return ret;
+  return contiguous && combinable;
 }
 
 void dsp::Observation::set_telescope_code (char _telescope)
@@ -479,9 +470,17 @@ void dsp::Observation::set_default_basis ()
     fprintf(stderr,"WARNING Assuming GBT is Circular\n");
     basis = Signal::Circular;
   }
-  else
-    cerr << Error (InvalidState, "Observation::set_default_basis",
-		   "unrecognized telescope: %c\n", telescope);
+  else if (telescope == Telescope::WSRT) {
+    basis = Signal::Linear;
+    if (centre_frequency > 2215 && centre_frequency < 2375)
+      basis = Signal::Circular;
+  }
+  else {
+    cerr << "Observation::set_default_basis unrecognized telescope:"
+         << telescope << "; assuming circular" << endl;
+    basis = Signal::Circular;
+  }
+
 }
 
 string 
