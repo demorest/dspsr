@@ -62,10 +62,10 @@ void dsp::PuMa2File::open_file (const char* filename)
   info = data;
 
   unsigned hdr_size;
-  if (ascii_header_get (header.c_str(), "HDR_VERSION", "%u", &hdr_size) < 0)
+  if (ascii_header_get (header.c_str(), "HDR_SIZE", "%u", &hdr_size) < 0)
     throw Error (FailedCall, "dsp::PuMa2File::open_file",
 		 "ascii_header_get(HDR_SIZE) failed");
-  
+  cerr << "header size = " << hdr_size << " bytes" << endl;
   header_bytes = hdr_size;
 
   if( want_to_check_bocf )
