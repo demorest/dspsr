@@ -18,17 +18,16 @@ void dsp::PuMa2Unpacker::unpack ()
 {
   const uint64 ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
-  const unsigned char mask = 0x7f;
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
 
-    const char* from = reinterpret_cast<const char*>(input->get_rawptr()+ipol);
+    const unsigned char* from = input->get_rawptr() + ipol;
     float* into = output->get_datptr (0, ipol);
     unsigned long* hist = get_histogram (ipol);
 
     for (unsigned bt = 0; bt < ndat; bt++) {
-      hist[ *from & mask ] ++;
-      into[bt] = float(int( *from ));
+      hist[ *from ] ++;
+      into[bt] = float(int( (char)*from ));
       from += npol;
     }
 
