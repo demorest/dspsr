@@ -6,7 +6,7 @@
 dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
 {
   if (header == NULL)
-    throw_str ("PuMa2_Observation - no header!");
+    throw Error (InvalidParam, "PuMa2_Observation", "no header!");
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -15,7 +15,8 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   float version;
   if (ascii_header_get (header, 
 			"HDR_VERSION", "%f", &version) < 0)
-    throw_str ("PuMa2_Observation - failed read HDR_VERSION");
+    throw Error (InvalidParam, "PuMa2_Observation",
+		 "failed read HDR_VERSION");
 
   //
   // no idea about the size of the data
@@ -28,7 +29,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   char hdrstr[64];
   if (ascii_header_get (header, "TELESCOPE", "%s", hdrstr) < 0)
-    throw_str ("PuMa2_Observation - failed read TELESCOPE");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read TELESCOPE");
 
   string tel = hdrstr;
   if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS") 
@@ -47,7 +48,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   // SOURCE
   //
   if (ascii_header_get (header, "SOURCE", "%s", hdrstr) < 0)
-    throw_str ("PuMa2_Observation - failed read SOURCE");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read SOURCE");
 
   set_source (hdrstr);
 
@@ -57,7 +58,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   double freq;
   if (ascii_header_get (header, "FREQ", "%lf", &freq) < 0)
-    throw_str ("PuMa2_Observation - failed read FREQ");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read FREQ");
 
   set_centre_frequency (freq);
 
@@ -67,7 +68,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   double bw;
   if (ascii_header_get (header, "BW", "%lf", &bw) < 0)
-    throw_str ("PuMa2_Observation - failed read BW");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read BW");
 
   set_bandwidth (bw);
 
@@ -82,7 +83,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   int scan_npol;
   if (ascii_header_get (header, "NPOL", "%d", &scan_npol) < 0)
-    throw_str ("PuMa2_Observation - failed read NPOL");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read NPOL");
 
   set_npol (scan_npol);
 
@@ -92,7 +93,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   int scan_nbit;
   if (ascii_header_get (header, "NBIT", "%d", &scan_nbit) < 0)
-    throw_str ("PuMa2_Observation - failed read NBIT");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read NBIT");
 
   set_nbit (scan_nbit);
 
@@ -102,7 +103,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   int scan_ndim;
   if (ascii_header_get (header, "NDIM", "%d", &scan_ndim) < 0)
-    throw_str ("PuMa2_Observation - failed read NDIM");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read NDIM");
   set_ndim(scan_ndim);
 
   switch (scan_ndim) {
@@ -111,7 +112,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   case 2:
     set_state (Signal::Analytic); break;
   default:
-    throw_str ("PuMa2_Observation - invalid NDIM=%d\n", get_ndim());
+    throw Error (InvalidParam, "PuMa2_Observation", "invalid NDIM=%d\n", get_ndim());
   }
 
   //
@@ -126,7 +127,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   double sampling_interval;
   if (ascii_header_get (header, "TSAMP", "%lf", &sampling_interval)<0)
-    throw_str ("PuMa2_Observation - failed read TSAMP");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read TSAMP");
 
   /* IMPORTANT: TSAMP is the sampling period in microseconds */
   sampling_interval *= 1e-6;
@@ -138,7 +139,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   // MJD_START
   //
   if (ascii_header_get (header, "MJD_START", "%s", hdrstr) < 0)
-    throw_str ("PuMa2_Observation - failed read MJD_START");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read MJD_START");
 
   MJD recording_start_time (hdrstr);
 
@@ -148,7 +149,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   offset_bytes = 0;
   if (ascii_header_get (header, "OBS_OFFSET", UI64, &offset_bytes) < 0)
-    throw_str ("PuMa2_Observation - failed read OBS_OFFSET");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read OBS_OFFSET");
 
 
   // //////////////////////////////////////////////////////////////////////
@@ -174,7 +175,7 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   // PRIMARY
   //
   if (ascii_header_get (header, "PRIMARY", "%s", hdrstr) < 0)
-    throw_str ("PuMa2_Observation - failed read PRIMARY");
+    throw Error (InvalidParam, "PuMa2_Observation", "failed read PRIMARY");
 
   string primary = hdrstr;
   string prefix = "u";
