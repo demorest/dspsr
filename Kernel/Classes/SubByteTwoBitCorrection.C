@@ -43,6 +43,10 @@ dsp::SubByteTwoBitCorrection::get_shift (unsigned idig, unsigned samp) const
   return (idig + samp * 2) * 2;
 }
 
+/* By default, there is one time sample from each of the four
+   digitizer outputs in each byte.  For an example of code with two
+   samples from each of two digitizers, with bits ordered in a
+   different way, please see mark5/Mark5TwoBitCorrection.C. */
 void dsp::SubByteTwoBitCorrection::dig_unpack (float* outptr,
 					       const unsigned char* inptr,
 					       uint64 ndat,
@@ -52,7 +56,6 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* outptr,
 {
   ShiftMask<1> mask;
   mask.shift[0] = get_shift(digitizer,0);
-
   dig_unpack (mask, outptr, inptr, ndat, digitizer, weights, nweights);
 }
 
