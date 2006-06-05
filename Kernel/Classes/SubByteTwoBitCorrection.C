@@ -54,8 +54,10 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (float* outptr,
 					       unsigned* weights,
 					       unsigned nweights)
 {
-  ShiftMask<1> mask;
+  ShiftMask<2> mask;
   mask.shift[0] = get_shift(digitizer,0);
+  mask.shift[1] = get_shift(digitizer,1);
+
   dig_unpack (mask, outptr, inptr, ndat, digitizer, weights, nweights);
 }
 
