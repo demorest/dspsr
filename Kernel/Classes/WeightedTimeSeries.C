@@ -541,7 +541,7 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
     unsigned* indi_weight = weights + iwt * nscrunch;
     
     if ((iwt+1)*nscrunch > nweights_tot)
-      nscrunch = extra;
+      nscrunch = unsigned(extra);
     
     for (unsigned ivt=0; ivt < nscrunch; ivt++) {
       if (*indi_weight == 0) {

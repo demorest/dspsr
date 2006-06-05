@@ -521,7 +521,7 @@ void dsp::Fold::transformation ()
     nweights = weighted_input->get_nweights();
     weights = weighted_input->get_weights();
     ndatperweight = weighted_input->get_ndat_per_weight();
-    weight_idat = weighted_input->get_weight_idat();
+    weight_idat = unsigned(weighted_input->get_weight_idat());
 
     if (verbose)
       cerr << "dsp::Fold::transformation WeightedTimeSeries weights="
@@ -608,10 +608,10 @@ void dsp::Fold::fold (uint64 nweights,
   pfold = get_pfold(start_time);
 
   // allocate storage for phase bin plan
-  unsigned* binplan = (unsigned*) workingspace (ndat_fold * sizeof(unsigned));
+  unsigned* binplan = (unsigned*) workingspace (size_t(ndat_fold * sizeof(unsigned)));
 
   // index through weight array
-  unsigned iweight = 0;
+  uint64 iweight = 0;
   // idat of last point in current weight
   uint64 idat_nextweight = 0;
   // number of time samples actually folded
@@ -626,7 +626,6 @@ void dsp::Fold::fold (uint64 nweights,
   bool bad_data = false;
 
   if (ndatperweight) {
-
     iweight = (idat_start + weight_idat) / ndatperweight;
 
     idat_nextweight = (iweight + 1) * ndatperweight - weight_idat;
@@ -854,7 +853,7 @@ void dsp::Fold::fold (double& integration_length, float* phase,
   //
 
   // allocate storage for phase bin plan
-  unsigned* binplan = (unsigned*) workingspace (ndat_fold * sizeof(unsigned));
+  unsigned* binplan = (unsigned*) workingspace (size_t(ndat_fold * sizeof(unsigned)));
 
   // index through time dimension
   uint64 idat = idat_start;
@@ -874,8 +873,7 @@ void dsp::Fold::fold (double& integration_length, float* phase,
   unsigned bad_weights = 0;
 
   if (ndatperweight) {
-
-    iweight = idat_start / ndatperweight;
+    iweight = unsigned(idat_start / ndatperweight);
     idat_nextweight = (iweight + 1) * ndatperweight;
 
     if (verbose)

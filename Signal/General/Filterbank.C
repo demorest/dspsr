@@ -321,7 +321,7 @@ void dsp::Filterbank::transformation ()
   unsigned npol = input->get_npol();
 
   // offsets into input and output
-  unsigned long in_offset, tres_offset, out_offset;
+  uint64 in_offset, tres_offset, out_offset;
 
   // some temporary pointers
   float* time_dom_ptr = NULL;  
@@ -428,7 +428,7 @@ cerr << "back into time series" << endl;
 	    // for each channel
 
             unsigned jchan = input_ichan * nchan_subband;
-            unsigned t_off = out_offset + itres*2;
+            unsigned t_off = unsigned(out_offset + itres*2);
 
 	    for (ichan=0; ichan < nchan_subband; ichan++) {
 

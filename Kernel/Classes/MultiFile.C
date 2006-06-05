@@ -145,7 +145,7 @@ void dsp::MultiFile::ensure_contiguity()
 
     if ( !obs1->contiguous(*obs2) ){
       char cstr[4096];
-      sprintf(cstr,"file %d (%s) is not contiguous with file %d (%s)",
+      sprintf(cstr,"file %u (%s) is not contiguous with file %u (%s)",
 	      ifile-1,files[ifile-1]->get_filename().c_str(),
 	      ifile,files[ifile]->get_filename().c_str());
       throw Error (InvalidParam, "dsp::Multifile::ensure_contiguity",cstr);

@@ -263,7 +263,7 @@ void dsp::Response::set_optimal_ndat ()
   if (optimal_ndat < 0)
     throw_str ("Response::set_optimal_ndat optimal_fft_length failed");
 
-  resize (npol, nchan, optimal_ndat, ndim);
+  resize (npol, nchan, unsigned(optimal_ndat), ndim);
 }
 
 

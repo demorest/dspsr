@@ -178,7 +178,10 @@ dsp::PseudoFile dsp::File::get_pseudofile(){
 
 void dsp::File::set_total_samples ()
 {
+  uint64 old_ndat = info.get_ndat();
   info.set_ndat (fstat_file_ndat());
+  fprintf(stderr,"dsp::File::set_total_samples() ndat was "UI64" now "UI64"\n",
+	  old_ndat,info.get_ndat());
 }
 
 //! Load bytes from file
@@ -257,6 +260,8 @@ int64 dsp::File::fstat_file_ndat (uint64 tailer_bytes)
                  buf.st_size, header_bytes, tailer_bytes);
 
   uint64 total_bytes = buf.st_size - header_bytes - tailer_bytes;
+
+  cerr << "dsp::File::fstat_file_ndat(): buf=" << buf.st_size << " header_bytes=" << header_bytes << " tailer_bytes=" << tailer_bytes << " total_bytes=" << total_bytes << endl;
 
   return info.get_nsamples (total_bytes);
 }
