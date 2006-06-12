@@ -31,15 +31,16 @@ void dsp::ASPUnpacker::unpack ()
   const uint64 ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned ndim = input->get_ndim();
+  const unsigned nskip = npol * ndim;
 
-  // cerr << "npol=" << npol << " ndim=" << ndim << endl;
+  //cerr << "npol=" << npol << " ndim=" << ndim << endl;
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
     for (unsigned idim=0; idim<ndim; idim++) {
 
-      // cerr << "ipol=" << ipol << " idim=" << idim << endl;
-
       unsigned off = ipol * ndim + idim;
+
+      //cerr << "ipol=" << ipol << " idim=" << idim << " off=" << off << endl;
 
       const char* from = reinterpret_cast<const char*>(input->get_rawptr()+off);
       float* into = output->get_datptr (0, ipol) + idim;
@@ -48,7 +49,7 @@ void dsp::ASPUnpacker::unpack ()
       for (unsigned bt = 0; bt < ndat; bt++) {
         hist[ (unsigned char) *from ] ++;
         into[bt] = float(int( *from ));
-        from += npol;
+        from += nskip;
       }
     }
   }
