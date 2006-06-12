@@ -75,7 +75,10 @@ void dsp::ASPFile::open_file (const char* filename)
   info.set_state (Signal::Analytic);
   info.set_rate ( header.ch_bw * 1e6 );
 
-  info.set_start_time( MJD((int)block.iMJD, block.fMJD) );
+  MJD epoch ((int)block.iMJD, block.fMJD);
+  epoch += block.ipts1 / info.get_rate();
+
+  info.set_start_time( epoch );
   cerr << "MJD = " << info.get_start_time() << endl;
   cerr << "telescope = " << header.telescope << endl;
   info.set_telescope_code (header.telescope[0]);
