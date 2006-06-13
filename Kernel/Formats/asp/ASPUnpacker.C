@@ -48,8 +48,9 @@ void dsp::ASPUnpacker::unpack ()
   
       for (unsigned bt = 0; bt < ndat; bt++) {
         hist[ (unsigned char) *from ] ++;
-        into[bt] = float(int( *from ));
+        *into = float(int( *from ));
         from += nskip;
+        into += ndim;
       }
     }
   }
