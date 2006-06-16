@@ -109,10 +109,10 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 
   uint64 chunk_size = header_bytes+data_bytes+trailer_bytes;
 
-  if( fsize%chunk_size )
-    throw Error(InvalidState,"dsp::PMDAQFile::work_out_ndat()",
-		"File '%s' is not an integer number of blocks.  This is assumed by load_bytes() (fsize="UI64" chunk_size="UI64" remainder="UI64,
-		filename,fsize,chunk_size,fsize%chunk_size);
+  //  if( fsize%chunk_size )
+  //throw Error(InvalidState,"dsp::PMDAQFile::work_out_ndat()",
+  //	"File '%s' is not an integer number of blocks.  This is assumed by load_bytes() (fsize="UI64" chunk_size="UI64" remainder="UI64,
+  //	filename,fsize,chunk_size,fsize%chunk_size);
 
   uint64 nblocks = fsize/chunk_size;
 
