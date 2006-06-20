@@ -60,16 +60,20 @@ void dsp::OneBitCorrection::transformation ()
   if (verbose)
     cerr << "Inside dsp::OneBitCorrection::transformation" << endl;
 
-  // set the Observation information
-  output->Observation::operator=(*input);
-
   if( input->has<PMDAQ_Extension>() ){
     set_first_chan( input->get<PMDAQ_Extension>()->get_chan_begin() );
     set_end_chan( input->get<PMDAQ_Extension>()->get_chan_end() );
   }
 
   unsigned end_channel = min(input->get_nchan(),end_chan);
-  output->set_nchan( end_channel - first_chan );
+  unsigned required_nchan = end_channel - first_chan;
+
+  // Make sure output nchan doesn't change if it's already been set:
+  {
+    Reference::To<Observation> dummy = new Observation(*input);
+    dummy->set_nchan( required_nchan );
+    output->Observation::operator=(*dummy);
+  }
 
   // output will contain floating point values
   output->set_nbit (8 * sizeof(float));
