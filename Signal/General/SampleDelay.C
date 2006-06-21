@@ -62,7 +62,7 @@ void dsp::SampleDelay::build ()
   for (unsigned ipol=0; ipol < input_npol; ipol++)
     for (unsigned ichan=0; ichan < input_nchan; ichan++) {
       uint64 relative_delay = zero_delay - function->get_delay(ichan, ipol);
-      cerr << "relative_delay=" << relative_delay << endl;
+      // cerr << "relative_delay=" << relative_delay << endl;
       if (relative_delay > total_delay)
 	total_delay = relative_delay;
     }
@@ -96,7 +96,8 @@ void dsp::SampleDelay::transformation ()
   uint64 output_ndat = 0;
 
   if (input_ndat < total_delay)
-    cerr << "dsp::SampleDelay::transformation insufficient data" << endl;
+    cerr << "dsp::SampleDelay::transformation insufficient data\n"
+      "  input ndat=" << input_ndat << " total delay=" << total_delay  << endl;
   else
     output_ndat = input_ndat - total_delay;
 
@@ -144,4 +145,5 @@ void dsp::SampleDelay::transformation ()
 
   }
 
+  function -> mark (output);
 }

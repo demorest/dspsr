@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelayFunction.h,v $
-   $Revision: 1.1 $
-   $Date: 2005/10/03 02:58:47 $
+   $Revision: 1.2 $
+   $Date: 2006/06/21 21:44:01 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_SampleDelayFunction_h
@@ -27,6 +27,9 @@ namespace dsp {
 
     //! Return the delay for the specified channel and polarization
     virtual int64 get_delay (unsigned ichan=0, unsigned ipol=0) = 0;
+
+    //! Add to the history of operations performed on the observation
+    virtual void mark (Observation* observation) { }
 
   };
 
