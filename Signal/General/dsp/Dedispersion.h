@@ -1,8 +1,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.22 $
-   $Date: 2005/10/03 02:57:27 $
+   $Revision: 1.23 $
+   $Date: 2006/06/21 21:43:39 $
    $Author: wvanstra $ */
 
 #ifndef __Dedispersion_h
@@ -134,6 +134,9 @@ namespace dsp {
 
       //! Return the dispersion delay for the given frequency channel
       int64 get_delay (unsigned ichan, unsigned ipol);
+
+      //! Add to the history of operations performed on the observation
+      void mark (Observation* observation);
 
     protected:
 

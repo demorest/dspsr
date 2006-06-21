@@ -49,8 +49,8 @@ bool dsp::Dedispersion::SampleDelay::match (const Observation* obs)
 
     delays[ichan] = int64( delay * sampling_rate );
 
-    cerr << "freq=" << freq << " delay=" << delay*1e3 << " ms = " 
-	 << delays[ichan] << " samps" << endl;
+    // cerr << "freq=" << freq << " delay=" << delay*1e3 << " ms = " 
+	 // << delays[ichan] << " samps" << endl;
 
   }
 
@@ -62,3 +62,9 @@ int64 dsp::Dedispersion::SampleDelay::get_delay (unsigned ichan, unsigned ipol)
 {
   return delays[ichan];
 }
+
+void dsp::Dedispersion::SampleDelay::mark (Observation* observation)
+{
+  observation->set_between_channel_dm (dispersion_measure);
+}
+
