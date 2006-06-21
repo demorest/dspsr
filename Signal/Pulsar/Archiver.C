@@ -21,6 +21,7 @@
 
 #include "Error.h"
 
+#include <iomanip>
 #include <assert.h>
 #include <time.h>
 
@@ -243,10 +244,17 @@ try {
   archive-> set_coordinates ( phase->get_coordinates() );
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
-  archive-> set_dispersion_measure ( phase->get_dispersion_measure() );
+
+  if (phase->get_between_channel_dm () != 0) {
+    archive -> set_dedispersed( true );
+    archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
+  }
+  else {
+    archive-> set_dedispersed( archive_dedispersed );
+    archive-> set_dispersion_measure ( phase->get_dispersion_measure() );
+  }
 
   archive-> set_faraday_corrected (false);
-  archive-> set_dedispersed( archive_dedispersed );
 
   for (unsigned isub=0; isub < nsub; isub++)
     set (archive->get_Integration(isub), phase, isub, nsub);
@@ -408,8 +416,6 @@ try {
     if (phase->get_hit(ibin) == 0) {
       zeroes ++;
       *to = 0.0;
-      //      if( ibin==0 && ichan==0 && ipol==0 )
-      //fprintf(stderr,"no hits!\n");
     }
     else {
       if (!finite(*from))
@@ -417,20 +423,12 @@ try {
 		     "invalid data[ichan=%d][ipol=%d][idim=%d][ibin=%d]=%f",
 		     ichan, ipol, idim, ibin, *from);
 
-      //      if( ibin==0 && ichan==0 && ipol==0 ){
-      //fprintf(stderr,"ibin=0 from=%f to=%f\n",
-      //	*from, *from / (scale * double( phase->get_hit(ibin))));
-      //}
-
       *to = *from / (scale * double( phase->get_hit(ibin) ));
     }
 
     to ++;
     from += ndim;
   }
-
-  //if( ichan==0 && ipol==0 )
-  //fprintf(stderr,"amps[0]=%f\n",profile->get_amps()[0]);
 
   if (zeroes && verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
