@@ -138,18 +138,16 @@ void dsp::MultiFile::ensure_contiguity()
 
     if (verbose)
       cerr << "dsp::MultiFile::ensure_contiguity"
-	" obs.start=" << obs1->get_start_time() << 
-	" obs1.end=" << obs1->get_end_time() << 
-	" obs2.start=" << obs2->get_start_time() << 
-	" obs2.end=" << obs2->get_end_time() << endl;
+	" obs.start  =" << obs1->get_start_time() << 
+	" obs1.end   =" << obs1->get_end_time() << 
+	" obs2.start =" << obs2->get_start_time() << 
+	" obs2.end   =" << obs2->get_end_time() << endl;
 
-    if ( !obs1->contiguous(*obs2) ){
-      char cstr[4096];
-      sprintf(cstr,"file %u (%s) is not contiguous with file %u (%s)",
-	      ifile-1,files[ifile-1]->get_filename().c_str(),
-	      ifile,files[ifile]->get_filename().c_str());
-      throw Error (InvalidParam, "dsp::Multifile::ensure_contiguity",cstr);
-    }
+    if ( !obs1->contiguous(*obs2) )
+      throw Error (InvalidParam, "dsp::Multifile::ensure_contiguity",
+                   "file %d (%s)\n\tis not contiguous with\n\tfile %d (%s)",
+                   ifile-1, files[ifile-1]->get_filename().c_str(),
+                   ifile, files[ifile]->get_filename().c_str()); 
 
   }
 
