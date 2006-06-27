@@ -2,8 +2,8 @@
 
 // Channel modes
 
-//#define CHAN2
-#define CHAN4
+#define CHAN2
+//#define CHAN4
 //#define CHAN8
 
 // Bandwidth

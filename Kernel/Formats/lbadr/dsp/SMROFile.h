@@ -1,9 +1,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/01/17 03:14:27 $
-   $Author: cwest $ */
+   $Revision: 1.3 $
+   $Date: 2006/06/27 01:17:48 $
+   $Author: ahotan $ */
 
 #ifndef __SMROFile_h
 #define __SMROFile_h
@@ -36,13 +36,15 @@ namespace dsp {
 
     //! Pad over top of gaps in data
     int64 pad_bytes(unsigned char* buffer, int64 bytes);
+
+    //! Legacy header format compatibility mode
+    bool legacy;
     
   private:
     
-    //! Holds the start time for the data file.
-    //! Note: This is TEMPORARY and will contact a full header in the future.
-    char timestamp[17]; 
-    
+    //! Holds the header information for the data file.
+    char header[4096]; 
+
   };
 }
 

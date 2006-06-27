@@ -14,8 +14,7 @@
 dsp::SMROFile::SMROFile (const char* filename) 
   : File ("SMRO")
 {
-
-  
+  legacy = false;
 }
 
 dsp::SMROFile::~SMROFile ()
@@ -31,12 +30,16 @@ bool dsp::SMROFile::is_valid (const char* filename, int) const
     throw Error (FailedSys, "dsp::SMROFile::open",
 		 "failed fopen(%s)", filename);
   
-  char hdr[17];
-  read(fd, hdr, 16);
+  char hdr[21];
+  read(fd, hdr, 20);
   
-  // VERY HASTY TEST...
-  if(hdr[8] == ':')
+  // VERY HASTY TEST
+  if(hdr[13] == ':') {     // Current version, 4096-byte ASCII header
     return true;
+  }
+  else if(hdr[8] == ':') { // Legacy version, prior to LBA header upgrade
+    return true;
+  }
   else
     return false;
   
@@ -50,50 +53,114 @@ void dsp::SMROFile::open_file (const char* filename)
   if(fd == -1)
     throw Error (FailedSys, "dsp::SMROFile::open",
 		 "failed fopen(%s)", filename);
-  
-  read(fd, timestamp, 16);
 
-  header_bytes = 16;
+  // First, test for the header format (can't do this in the is_valid
+  // routine, because it is const and we couldn't store the answer).
+
+  char teststr[21];
+  read(fd, teststr, 20);
+
+  if(teststr[13] == ':') {     // Current version, 4096-byte ASCII header
+    legacy = false;
+  }
+  else if(teststr[8] == ':') { // Legacy version, prior to LBA header upgrade
+    legacy = true;
+  }
+  else
+    throw Error (InvalidParam, "dsp::SMROFile::open",
+		 "file %s has unknown header format", filename);
+
+  // Rewind the data stream and begin again, now that we know the format
+
+  ::close(fd);
+  fd = ::open(filename, O_RDONLY);
+
+  if (legacy) {
+    header_bytes = 16;
+  }
+  else {
+    header_bytes = 4096;
+  }
+  
+  read(fd, header, header_bytes);
   
   struct tm date;
   
   char tmp[5];
-  tmp[0] = timestamp[0];
-  tmp[1] = timestamp[1];
-  tmp[2] = timestamp[2];
-  tmp[3] = timestamp[3];
+  if (legacy) {
+    tmp[0] = header[0];
+    tmp[1] = header[1];
+    tmp[2] = header[2];
+    tmp[3] = header[3];
+  }
+  else {
+    tmp[0] = header[5];
+    tmp[1] = header[6];
+    tmp[2] = header[7];
+    tmp[3] = header[8];
+  }
   tmp[4] = '\0';
   date.tm_year = atoi(tmp) - 1900;
 
-  tmp[0] = timestamp[4];
-  tmp[1] = timestamp[5];
+  if (legacy) {
+    tmp[0] = header[4];
+    tmp[1] = header[5];
+  }
+  else {
+    tmp[0] = header[9];
+    tmp[1] = header[10];
+  }
   tmp[2] = '\0';
   tmp[3] = '\0';
   date.tm_mon  = atoi(tmp) - 1;
 
-  tmp[0] = timestamp[6];
-  tmp[1] = timestamp[7];  
+  if (legacy) {
+    tmp[0] = header[6];
+    tmp[1] = header[7];
+  }
+  else {
+    tmp[0] = header[11];
+    tmp[1] = header[12];
+  }
   date.tm_mday = atoi(tmp);
 
-  tmp[0] = timestamp[9];
-  tmp[1] = timestamp[10];  
+  if (legacy) {
+    tmp[0] = header[9];
+    tmp[1] = header[10];
+  }
+  else {
+    tmp[0] = header[14];
+    tmp[1] = header[15];  
+  }
   date.tm_hour = atoi(tmp);
 
-  tmp[0] = timestamp[11];
-  tmp[1] = timestamp[12];  
+  if (legacy) {
+    tmp[0] = header[11];
+    tmp[1] = header[12];
+  }
+  else {
+    tmp[0] = header[16];
+    tmp[1] = header[17];
+  }
   date.tm_min  = atoi(tmp);
 
-  tmp[0] = timestamp[13];
-  tmp[1] = timestamp[14];  
+  if (legacy) {
+    tmp[0] = header[13];
+    tmp[1] = header[14];
+  }
+  else {
+    tmp[0] = header[18];
+    tmp[1] = header[19];  
+  }
   date.tm_sec  = atoi(tmp) ;
 
   utc_t utc;
   
   tm2utc(&utc, date);
 
-
   info.set_start_time(utc);
   info.set_nbit(2);
+
 #ifdef CHAN8
   info.set_npol(8);
 #endif
@@ -103,15 +170,18 @@ void dsp::SMROFile::open_file (const char* filename)
 #ifdef CHAN2
   info.set_npol(2);
 #endif
+
   info.set_nchan(1);
   
   info.set_state(Signal::Nyquist);
   info.set_machine("SMRO");
 
-#ifdef MHZ32
-  info.set_rate(64000000);
-  info.set_bandwidth(32.0);
-#endif
+  // Natively, the LBA DAS outputs 4 channels, which represent orthogonal
+  // polarisations from two different frequency bands. In 16 MHz mode, only
+  // two of the channels (one frequency band and two polarisations) carries
+  // information. The other two are discarded at the recording stage. At the
+  // moment, 4 MHz and 32 MHz mode do not work (they require more complicated
+  // bit masking and shifting to extract the samples in the correct order).
 
 #ifdef MHZ4
   info.set_rate(8000000);
@@ -120,23 +190,38 @@ void dsp::SMROFile::open_file (const char* filename)
 
 #ifdef MHZ16
   info.set_rate(32000000);
-  info.set_bandwidth(16.0);
+  info.set_bandwidth(-16.0);
 #endif
 
-  //info.set_centre_frequency(1384.0);
-  info.set_centre_frequency(2282.0);
+#ifdef MHZ32
+  info.set_rate(64000000);
+  info.set_bandwidth(32.0);
+#endif
 
-  info.set_telescope_code('2');   // 7 for parkes, 6 for tid, 2 for CAT
+  info.set_centre_frequency(1420.0);
+
+  // ///////////////////////////////////////////////////////////////
+  // Change this as required. The default probably won't be correct!
+  // ///////////////////////////////////////////////////////////////
+
+  info.set_telescope_code('4');   // 4 = Hobart, 7 = Parkes, 6 = Tid
+
   info.set_identifier("v" + info.get_default_id());
 
   struct stat file_info;
   
   stat (filename, &file_info);
   
-  // file_info.st_size contains number of bytes in file, subtract header_bytes (16bytes)
-  // This needs to be checked and fixed
+  // To begin, file_info.st_size contains number of bytes in file. 
+  //   Subtract header_bytes, multiply by 8 to get the number of data bits.
+  //   Divide by the number of bits per sample to get the total number of
+  //   samples, then divide by the number of channels used to get the total
+  //   number of unique time samples.
+
+  // This needs to be checked and fixed?
   
-  info.set_ndat( int64((file_info.st_size - header_bytes) )* 8 / (info.get_nbit()*info.get_npol()*info.get_nchan()) );
+  info.set_ndat( int64((file_info.st_size - header_bytes))* 8 / 
+		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
   
 #ifdef CHAN8
   unsigned bits_per_byte = 16;
@@ -147,6 +232,7 @@ void dsp::SMROFile::open_file (const char* filename)
 #ifdef CHAN2
   unsigned bits_per_byte = 4;
 #endif
+
   resolution = bits_per_byte / info.get_nbit();
   if (resolution == 0)
       resolution = 1;
