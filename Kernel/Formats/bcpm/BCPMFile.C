@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "sky_coord.h"
 #include "Types.h"
@@ -89,38 +90,26 @@ void dsp::BCPMFile::open_file (const char* filename){
   if( verbose )
     fprintf(stderr,"Entered dsp::BCPMFile::open_file(%s)\n",filename);
 
-  fprintf(stderr,"hi-2\n");
   FILE* fptr = fd_utils::fopen(filename,"r");
-  fprintf(stderr,"hi-1 with fptr=%p\n",fptr);
-  fd_utils::fread(&bpp_search,BPP_HEADER_SIZE,1,fptr);
-  fprintf(stderr,"hi0 fptr=%p\n",fptr);
-  fprintf(stderr,"Got BPP_HEADER_SIZE=%d\n",BPP_HEADER_SIZE);
-  
-  // This seems to cause a seg fault!
-  //  fd_utils::fclose(fptr);
+  fread(&bpp_search,sizeof(BPP_SEARCH_HEADER),1,fptr);
 
-  fprintf(stderr,"hi1\n");
+  fd_utils::fclose(fptr);
+  
   switch_endianess();
-  fprintf(stderr,"hi2\n");
 
   if (bpp_search.BACKEND_TYPE != 0 && bpp_search.BACKEND_TYPE != 1 && bpp_search.BACKEND_TYPE != 4)
     throw Error(InvalidParam,"dsp::BCPMFile::open_file()",
 		"This header doesn't fulfill the requirement from sigproc that the bpp_search.BACKEND_TYPE is 0 or 1 or 4!  (It is %d)",
 		bpp_search.BACKEND_TYPE);
 
-  fprintf(stderr,"hi3\n");
-
   if( !bpp_search.cb_sum_polarizations )
     throw Error(InvalidParam,"dsp::BCPMFile::open_file()",
 		"bpp_search.cb_sum_polarizations is false");
-
-  fprintf(stderr,"hi4\n");
 
   get_info()->set_telescope_code( char(6) );
   get_info()->set_machine( "BCPM" );
   get_info()->set_nchan( unsigned(bpp_search.num_chans) );
   get_info()->set_bandwidth( get_info()->get_nchan() * 0.000001*bpp_search.bandwidth );
-  fprintf(stderr,"Have set bandwidth to be %f nchan=%d\n",get_info()->get_bandwidth(),get_info()->get_nchan());
   get_info()->set_ndim( 1 );
   get_info()->set_scale( 1.0 );
   get_info()->set_swap( false );
@@ -133,22 +122,19 @@ void dsp::BCPMFile::open_file (const char* filename){
   get_info()->set_type( Signal::Pulsar );
   get_info()->set_state( Signal::Intensity );
   get_info()->set_npol( 1 );
-  fprintf(stderr,"Have set npol to be 1 (%d)\n",get_info()->get_npol());
   get_info()->set_basis( Signal::Circular );
   get_info()->set_rate( 1.0e6/bpp_search.samp_rate );
   get_info()->set_nbit( unsigned(bpp_search.bit_mode) ); 
   get_info()->set_source( bpp_search.target_name );
-
-  fprintf(stderr,"hi5\n");
-
+  
   {
-    /* parse search date dayno:year */
+    // parse search date dayno:year
     char cdate[4096];
     sprintf(cdate,"%s",bpp_search.date);
     string dayno = strtok(cdate,":");
     string year = strtok(NULL,":");
     
-    /* parse UT start time hh:mm:ss */
+    // parse UT start time hh:mm:ss
     string start_time = bpp_search.start_time;
     string utcstring = year + "-" + dayno + "-" + start_time;
     
@@ -161,8 +147,6 @@ void dsp::BCPMFile::open_file (const char* filename){
     get_info()->set_identifier( id );
   }
 
-  fprintf(stderr,"hi6\n");
-
   {
     string rab = make_string(bpp_search.ra_1950);
     string decb = make_string(bpp_search.dec_1950);
@@ -173,15 +157,11 @@ void dsp::BCPMFile::open_file (const char* filename){
     get_info()->set_coordinates( coords );
   }
 
-  fprintf(stderr,"hi7\n");
-
   {
     uint64 file_bytes = filesize(filename);
     uint64 data_bytes = file_bytes - BPP_HEADER_SIZE;
     get_info()->set_ndat( get_info()->get_nsamples(data_bytes) );
   }
-
-  fprintf(stderr,"hi8\n");
 
   double centre_frequency = 0.0;
 
@@ -194,14 +174,12 @@ void dsp::BCPMFile::open_file (const char* filename){
     bpp_search.rf_lo,
     centre_frequency);  
 
-  fprintf(stderr,"hi9\n");
-
+  get_info()->remove_extension("BCPMExtension");
   get_info()->add( b );
   get_info()->set_centre_frequency( centre_frequency );
-  fprintf(stderr,"Have set centre_frequency to be %f\n",get_info()->get_centre_frequency());
-  header_bytes = BPP_HEADER_SIZE;
 
-  fprintf(stderr,"hi10\n");
+  // Note that BPP_HEADER_SIZE is 8 bytes bigger than sizeof(BPP_SEARCH_HEADER) so I'm not sure if this is right
+  header_bytes = BPP_HEADER_SIZE;
 
   fd = fd_utils::open(filename, O_RDONLY);
   
@@ -210,8 +188,6 @@ void dsp::BCPMFile::open_file (const char* filename){
   resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
-
-  fprintf(stderr,"npol = %d\n",get_info()->get_npol());
 
   if( verbose )
     fprintf(stderr,"Returning from dsp::BCPMFile::open_file(%s)\n",filename);
@@ -309,10 +285,10 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
     table[i]=nridx[--n]-1;    
   nchans/=nifs;
 
-  centre_frequency = 0.5*(fmhz[table[0]]+fmhz[table[95]]);
-  for( unsigned i=0; i<96; i++)
-    fprintf(stderr, "bpp_chans: fmhz[%d]=%f fmhz[table[%d]]=fmhz[%d]=%f\n",
-	    i,fmhz[i],i,table[i],fmhz[table[i]]);
+  centre_frequency = 0.5*(fmhz[table[0]]+fmhz[table[95]]); 
+  //  for( unsigned i=0; i<96; i++)
+  //fprintf(stderr, "bpp_chans: fmhz[%d]=%f fmhz[table[%d]]=fmhz[%d]=%f\n",
+  //    i,fmhz[i],i,table[i],fmhz[table[i]]);
 
   free(fmhz);
   free(nridx);
