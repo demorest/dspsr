@@ -64,7 +64,7 @@ int main (int argc, char** argv)
 
   if (filenames.size() == 0) {
     usage ();
-    return -1;
+    return 0;
   }
 
   dsp::TestInput test;
