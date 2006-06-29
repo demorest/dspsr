@@ -1,0 +1,141 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT([DSPSR],[1.0],[straten@sourceforge.net])
+
+AC_CONFIG_AUX_DIR([config])
+AC_CONFIG_SRCDIR([base/TimeSeries.h])
+
+AC_ARG_VAR([PSRHOME],[Standard pulsar home directory])
+AC_ARG_VAR([LOGIN_ARCH],[Architecture-dependent sub-directory of PSRHOME])
+AC_PREFIX_DEFAULT([${PSRHOME:-"/usr/local"}${PSRHOME:+"/$LOGIN_ARCH"}])
+
+if test x"$PSRHOME" = x; then
+  AC_MSG_WARN([The PSRHOME environment variable is not set])
+else
+  if test x"$LOGIN_ARCH" = x; then
+    AC_MSG_WARN([The LOGIN_ARCH environment variable is not set])
+  fi
+fi
+
+AM_INIT_AUTOMAKE([subdir-objects])
+AC_DISABLE_SHARED
+
+# Enable convenience compiler selection
+SWIN_COMPILER
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CXXCPP
+AC_PROG_CC
+AC_PROG_CPP
+AM_PROG_CC_C_O
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+AC_PROG_FC
+AC_F77_WRAPPERS
+_STAR_RESTFP_FIX
+
+#
+# Disable the debugging information option, -g
+#
+SWIN_DEBUG
+
+#
+# Set up for standard pulsar installation
+#
+CPPFLAGS="-I$PSRHOME/packages/$LOGIN_ARCH/include $CPPFLAGS"
+LDFLAGS="-L$PSRHOME/packages/$LOGIN_ARCH/lib $LDFLAGS"
+
+#
+# Checks for essential libraries
+#
+AC_CHECK_LIB([m], [sin])
+SWIN_LIB_FFTW
+SWIN_LIB_MKL
+SWIN_LIB_IPP
+
+#
+# Check that at least one FFT library is available
+#
+if test x"$have_fftw" = xno -a x"$have_fftw3" = xno -a x"$have_mkl" = xno; then
+  AC_MSG_ERROR([No FFTW-2, FFTW-3, nor MKL FFT libraries were found])
+fi
+
+AC_SUBST(FFT_LIBS)
+FFT_LIBS="$MKL_LIBS $FFTW_LIBS $FFTW3_LIBS $IPP_LIBS"
+AC_SUBST(FFT_CFLAGS)
+FFT_CFLAGS="$MKL_CFLAGS $FFTW_CFLAGS $FFTW3_CFLAGS $IPP_CFLAGS"
+
+#
+# Checks for optional libraries
+#
+SWIN_LIB_MPI
+
+#
+# Checks for graphics libraries
+#
+SWIN_LIB_PGPLOT
+
+# 
+# For developers: ensure that the config directory m4 macros are parsed
+#
+ACLOCAL="$ACLOCAL -I config"
+
+#
+# For developers: preserve file modification times
+#
+INSTALL_DATA="${INSTALL} -m 644 -p"
+install_sh="CPPROG='cp -p' ${install_sh}"
+
+# Checks for header files.
+#
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdlib.h string.h strings.h sys/ioctl.h sys/mount.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h values.h])
+
+#
+# Checks for typedefs, structures, and compiler characteristics.
+#
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_CHECK_DECLS([sys_siglist])
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_C_VOLATILE
+
+#
+# Checks for library functions.
+#
+SWIN_FUNC_GETOPT_LONG
+AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_ERROR_AT_LINE
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_LSTAT
+AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+AC_FUNC_MALLOC
+AC_FUNC_MKTIME
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_TYPE_SIGNAL
+AC_FUNC_STAT
+AC_FUNC_STRFTIME
+AC_FUNC_STRTOD
+AC_FUNC_UTIME_NULL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([alarm floor ftruncate getcwd gethostbyaddr gethostbyname gethostname gettimeofday inet_ntoa memmove memset mkdir modf pow regcomp rint rmdir select socket sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr utime])
+
+AM_CONFIG_HEADER([config.h])
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT
+
+make config
+

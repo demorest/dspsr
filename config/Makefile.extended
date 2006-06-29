@@ -189,7 +189,7 @@ endif
 # The INSTALL_INCS, INSTALL_SHXS, INSTALL_LIBS and INSTALL_BINS macros
 # are constructed in a separate Makefile that specializes in installations
 ##########################################################################
-make_install := $(LOCAL_ROOT)/include/Makefile.install
+make_install := $(LOCAL_ROOT)/config/Makefile.install
 include $(make_install)
 
 
