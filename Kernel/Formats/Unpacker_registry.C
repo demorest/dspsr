@@ -16,14 +16,14 @@ Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 #include "dsp/NullUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
 
-#if DSP_MINI
+#if DSP_mini
 #include "dsp/MiniUnpack.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::MiniUnpack> miniunpack;
 #endif
 
 #include "dsp/backends.h"
 
-#if DSP_CPSR2
+#if DSP_cpsr2
 #include "dsp/CPSR2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #endif
@@ -38,22 +38,22 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2FourBitUnpacker> cpsr2_4;
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2_8bitUnpacker> cpsr2_8;
 #endif
 
-#if DSP_CPSR
+#if DSP_cpsr
 #include "dsp/CPSRTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 #endif
 
-#if DSP_Maxim
+#if DSP_maxim
 #include "dsp/MaximUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::MaximUnpacker> maxim;
 #endif
 
-#if DSP_SMRO
+#if DSP_smro
 #include "dsp/SMROTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection>  smro;
 #endif
 
-#if DSP_VSIB
+#if DSP_vsib
 #include "dsp/VSIBTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
 #endif
@@ -63,61 +63,61 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::VSIBTwoBitCorrection>  vsib;
 static Registry::List<dsp::Unpacker>::Enter<dsp::Dumb_LBAUnpacker> unpacker_register_dumblba;
 #endif
 
-#if DSP_K5
+#if DSP_k5
 #include "dsp/K5TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::K5TwoBitCorrection>  k5;
 #endif
 
-#if DSP_BCPM
+#if DSP_bcpm
 #include "dsp/BCPMUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::BCPMUnpacker> registry_bcpm;
 #endif
 
-#if DSP_Spigot
+#if DSP_spigot
 #include "dsp/ACFUnpack.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
 #endif
 
-#if DSP_MARK4
+#if DSP_mark4
 #include "dsp/Mark4TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection> mark4;
 #endif
 
-#if DSP_MARK5
+#if DSP_mark5
 #include "dsp/Mark5Unpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5Unpacker> mark5_general;
 #include "dsp/Mark5TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5TwoBitCorrection> mark5;
 #endif
 
-#if DSP_ASP
+#if DSP_asp
 #include "dsp/ASPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::ASPUnpacker> asp;
 #endif
 
-#if DSP_Fadc
+#if DSP_fadc
 #include "dsp/FadcUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::FadcUnpacker> fadc;
 #include "dsp/FadcTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::FadcTwoBitCorrection> fadc2;
 #endif
 
-#if DSP_S2
+#if DSP_s2
 #include "dsp/S2TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>  s2;
 #endif
 
-#if DSP_PMDAQ
+#if DSP_pmdaq
 #include "dsp/OneBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::OneBitCorrection>  pmdaq;
 #endif
 
-#if DSP_PuMa
+#if DSP_puma
 #include "dsp/PuMaTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::PuMaTwoBitCorrection>  puma;
 #endif
 
-#if DSP_PuMa2
+#if DSP_puma2
 #include "dsp/PuMa2Unpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::PuMa2Unpacker> puma2;
 #endif
