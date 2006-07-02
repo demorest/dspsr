@@ -133,10 +133,10 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([alarm floor ftruncate getcwd gethostbyaddr gethostbyname gethostname gettimeofday inet_ntoa memmove memset mkdir modf pow regcomp rint rmdir select socket sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr utime])
 
 AM_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile
-		backends/Makefile])
+AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT
 
 make config
+make backends
 
