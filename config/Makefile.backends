@@ -23,7 +23,6 @@ MODULES :=
 #
 ifeq ($(ASP),yes)
 
-CPPFLAGS += -DDSP_ASP=1
 MODULES += asp
 BACKENDS += ASP
 LBACKENDS += -ldsp_ASP
@@ -36,7 +35,6 @@ endif
 #
 ifeq ($(BCPM),yes)
 
-CPPFLAGS += -DDSP_BCPM=1
 MODULES += bcpm
 BACKENDS += BCPM
 LBACKENDS += -ldsp_BCPM
@@ -49,7 +47,6 @@ endif
 #
 ifeq ($(CPSR),yes)
 
-CPPFLAGS += -DDSP_CPSR=1
 MODULES += cpsr
 BACKENDS += CPSR
 LBACKENDS += -ldsp_cpsr
@@ -62,7 +59,6 @@ endif
 #
 ifeq ($(CPSR2),yes)
 
-CPPFLAGS += -DDSP_CPSR2=1
 MODULES += cpsr2
 BACKENDS += CPSR2
 LBACKENDS += -ldsp_cpsr2
@@ -77,7 +73,6 @@ endif
 #
 ifeq ($(PMDAQ),yes)
 
-CPPFLAGS += -DDSP_PMDAQ=1
 MODULES += pmdaq
 BACKENDS += PMDAQ
 LBACKENDS += -ldsp_pmdaq
@@ -91,7 +86,6 @@ endif
 #
 ifeq ($(CPSR2_8bit),yes)
 
-CPPFLAGS += -DDSP_CPSR2_8bit=1
 BACKENDS += CPSR2_8bit
 LBACKENDS += -ldsp_CPSR2_8bit
 endif
@@ -102,7 +96,6 @@ endif
 #
 ifeq ($(CPSR2_4bit),yes)
 
-CPPFLAGS += -DDSP_CPSR2_4bit=1
 CLASSES += CPSR2FourBitUnpacker
 BACKENDS += CPSR2_4bit
 
@@ -114,7 +107,6 @@ endif
 #
 ifeq ($(CPSR),yes)
 
-CPPFLAGS += -DDSP_CPSR=1
 CLASSES += CPSRFile CPSRTwoBitCorrection DumbCPSRUnpacker
 BACKENDS += CPSR
 LBACKENDS += -lcpsr_obs
@@ -127,7 +119,6 @@ endif
 #
 ifeq ($(S2),yes)
 
-CPPFLAGS += -DDSP_S2=1
 CLASSES += S2File S2TwoBitCorrection S2TwoBitTable
 BACKENDS += S2
 LBACKENDS += -ls2_obs
@@ -140,7 +131,6 @@ endif
 #
 ifeq ($(PuMa),yes)
 
-CPPFLAGS += -DDSP_PuMa=1
 BACKENDS += PuMa
 INCFLAGS += -I${DEVEL_INSTALL}/include
 LBACKENDS += -ldsp_PuMa -ldsp -L${DEVEL_INSTALL}/lib -lpuma -lputils
@@ -153,7 +143,6 @@ endif
 #
 ifeq ($(PuMa2),yes)
 
-CPPFLAGS += -DDSP_PuMa2=1
 BACKENDS += PuMa2
 LBACKENDS += -ldsp_PuMa2
 
@@ -169,7 +158,6 @@ endif
 #
 ifeq ($(MARK4),yes)
 
-CPPFLAGS += -DDSP_MARK4=1
 BACKENDS += MARK4
 LBACKENDS += -ldsp_Mark4
 
@@ -181,7 +169,6 @@ endif
 # 
 ifeq ($(MARK5),yes)
 
-CPPFLAGS += -DDSP_MARK5=1
 BACKENDS += MARK5
 LBACKENDS += -ldsp_Mark5
 
@@ -196,7 +183,6 @@ endif
 #
 ifeq ($(Fadc),yes)
 
-CPPFLAGS += -DDSP_Fadc=1
 BACKENDS += Fadc
 LBACKENDS += -ldsp_Fadc -ldsp
 
@@ -212,7 +198,6 @@ endif
 #
 ifeq ($(Maxim),yes)
 
-CPPFLAGS += -DDSP_Maxim=1
 BACKENDS += Maxim
 LBACKENDS += -ldsp_Maxim
 
@@ -226,7 +211,6 @@ endif
 #
 ifeq ($(SMRO),yes)
 
-CPPFLAGS += -DDSP_SMRO=1
 BACKENDS += SMRO
 LBACKENDS += -ldsp_SMRO
 
@@ -238,7 +222,6 @@ endif
 # 
 ifeq ($(DUMBLBA),yes)
 
-CPPFLAGS += -DDSP_DUMBLBA=1
 BACKENDS += DUMBLBA
 LBACKENDS += -ldsp_DUMBLBA
 
@@ -250,7 +233,6 @@ endif
 # 
 ifeq ($(MWA),yes)
 
-CPPFLAGS += -DDSP_MWA=1
 BACKENDS += MWA
 LBACKENDS += -ldsp_MWA
 
@@ -262,7 +244,6 @@ endif
 # 
 ifeq ($(K5),yes)
 
-CPPFLAGS += -DDSP_K5=1
 BACKENDS += K5
 LBACKENDS += -ldsp_K5
 
@@ -278,7 +259,6 @@ endif
 #
 ifeq ($(VSIB),yes)
 
-CPPFLAGS += -DDSP_VSIB=1
 BACKENDS += VSIB
 LBACKENDS += -ldsp_VSIB
 
@@ -290,7 +270,6 @@ endif
 #
 ifeq ($(SPIGOT),yes)
 
-CPPFLAGS += -DDSP_SPIGOT=1
 BACKENDS += Spigot
 LBACKENDS += -ldsp_Spigot $(LCFITSIO)
 
@@ -303,7 +282,6 @@ endif
 #
 ifeq ($(MINI),yes)
 
-CPPFLAGS += -DDSP_MINI=1
 BACKENDS += MINI
 LBACKENDS += -ldsp_MINI
 
