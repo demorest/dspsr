@@ -50,10 +50,12 @@ GREP  := grep
 QTMOC := moc
 MAKEDEPEND := makedepend -Y -f
 
+include ${LOCAL_ROOT}/config/Makefile.backends
+-include ${LOCAL_ROOT}/config/Makefile.local
+
 ##########################################################################
 # site-specific third party packages
 ##########################################################################
 
--include ${LOCAL_ROOT}/config/Makefile.local
--include ${LOCAL_ROOT}/config/Makefile.psrchive
+include ${LOCAL_ROOT}/config/Makefile.psrchive
 
