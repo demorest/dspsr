@@ -29,3 +29,17 @@ define pgplot.config
 endef
 endif
 
+backends: backends.list
+
+##############################################################################
+#
+# Rule to patch Makefile.local with new entries in Makefile.local_template
+#
+backends.list : available.backends
+	@if [ ! -f $@ ]; then cp $< $@; fi;
+	@diff $@ $< | grep -A1 -E '^[0-9]+a[0-9]+$$' | patch $@
+	@touch $@
+	@echo "************************************************************"
+	@echo "              backends.list has been updated"
+	@echo "************************************************************"
+

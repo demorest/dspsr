@@ -2,25 +2,55 @@
 
 ##############################################################################
 #
-# This Makefile contains specializations for each location
+# This Makefile contains specializations for each backend
 #
 ##############################################################################
 
-# add backend-specific libraries to LMBFLAGS
+# add backend-specific libraries to LDFLAGS
 LBACKENDS := 
 
 # add backend macros to backends.h
 BACKENDS := 
 
+# add sub-directories to be compiled
+MODULES :=
+
 ##############################################################################
 #
-# PMDAQ specific code
+# ASP specific code by Willem van Straten
 #
-ifeq ($(PMDAQ),yes)
+ifeq ($(ASP),yes)
 
-CPPFLAGS += -DDSP_PMDAQ=1
-CLASSES += PMDAQFile PMDAQ_Observation OneBitCorrection PMDAQ_Extension
-BACKENDS += PMDAQ
+CPPFLAGS += -DDSP_ASP=1
+MODULES += asp
+BACKENDS += ASP
+LBACKENDS += -ldsp_ASP
+
+endif
+
+##############################################################################
+#
+# BCPM specific code
+#
+ifeq ($(BCPM),yes)
+
+CPPFLAGS += -DDSP_BCPM=1
+MODULES += bcpm
+BACKENDS += BCPM
+LBACKENDS += -ldsp_BCPM
+
+endif
+
+##############################################################################
+#
+# CPSR specific code
+#
+ifeq ($(CPSR),yes)
+
+CPPFLAGS += -DDSP_CPSR=1
+MODULES += cpsr
+BACKENDS += CPSR
+LBACKENDS += -ldsp_cpsr
 
 endif
 
@@ -31,10 +61,27 @@ endif
 ifeq ($(CPSR2),yes)
 
 CPPFLAGS += -DDSP_CPSR2=1
-CLASSES += CPSR2File CPSR2TwoBitCorrection CPSR2_Observation DumbCPSR2Unpacker
+MODULES += cpsr2
 BACKENDS += CPSR2
+LBACKENDS += -ldsp_cpsr2
 
 endif
+
+# fadc mark4 mark5 maxim mini mwa puma puma2 s2 smro spigot vsib
+
+##############################################################################
+#
+# PMDAQ specific code
+#
+ifeq ($(PMDAQ),yes)
+
+CPPFLAGS += -DDSP_PMDAQ=1
+MODULES += pmdaq
+BACKENDS += PMDAQ
+LBACKENDS += -ldsp_pmdaq
+
+endif
+
 
 ##############################################################################
 #
@@ -138,17 +185,6 @@ LBACKENDS += -ldsp_Mark5
 
 endif
 
-##############################################################################
-#
-# ASP specific code by Willem van Straten
-#
-ifeq ($(ASP),yes)
-
-CPPFLAGS += -DDSP_ASP=1
-BACKENDS += ASP
-LBACKENDS += -ldsp_ASP
-
-endif
 
 ##############################################################################
 #
@@ -258,17 +294,6 @@ LBACKENDS += -ldsp_Spigot $(LCFITSIO)
 
 endif
 
-##############################################################################
-#
-# BCPM specific code
-#
-ifeq ($(BCPM),yes)
-
-CPPFLAGS += -DDSP_BCPM=1
-BACKENDS += BCPM
-LBACKENDS += -ldsp_BCPM
-
-endif
 
 ##############################################################################
 #

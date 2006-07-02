@@ -55,4 +55,5 @@ MAKEDEPEND := makedepend -Y -f
 ##########################################################################
 
 -include ${LOCAL_ROOT}/config/Makefile.local
+-include ${LOCAL_ROOT}/config/Makefile.psrchive
 
