@@ -138,5 +138,4 @@ AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
 make config
-make backends
 
