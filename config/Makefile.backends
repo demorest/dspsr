@@ -9,7 +9,7 @@
 # parse the selected backends from backends.list
 BACKENDS := $(shell grep -v ^\# $(LOCAL_ROOT)/backends.list)
 
-LDFLAGS += $(addprefix -ldsp_, $(BACKENDS))
+LBACKENDS := $(addprefix -ldsp_, $(BACKENDS)) -ldsp_base
 
 ##############################################################################
 #
@@ -18,15 +18,7 @@ LDFLAGS += $(addprefix -ldsp_, $(BACKENDS))
 ifneq (,$(findstring puma,$(BACKENDS)))
 
 INCFLAGS += -I${DEVEL_INSTALL}/include
-LDFLAGS += -L${DEVEL_INSTALL}/lib -lpuma -lputils
+LBACKENDS += -L${DEVEL_INSTALL}/lib -lpuma -lputils
 
 endif
-
-##############################################################################
-#
-# a test: 'make -f Makefile.backends LOCAL_ROOT=..'
-#
-test_backends:
-	@echo backends = $(BACKENDS)
-	@echo LDFLAGS = $(LDFLAGS)
 
