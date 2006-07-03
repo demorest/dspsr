@@ -6,12 +6,7 @@
 #include <stdlib.h>
 
 #include "environ.h"
-#include "OneBitCorrection.h"
-#include "TimeSeries.h"
-#include "Error.h"
-#include "RealTimer.h"
-
-#include "genutil.h"
+#include "dsp/OneBitCorrection.h"
 
 #include "dsp/Observation.h"
 #include "dsp/BitSeries.h"
