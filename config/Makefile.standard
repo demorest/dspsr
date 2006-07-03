@@ -1,8 +1,9 @@
 #-*-Makefile-*- helps emacs recognize this file as a Makefile
 
 ##########################################################################
-# the standard Makefile 
+# the automake produced Makefile 
 ##########################################################################
+-include ${LOCAL_ROOT}/config/Makefile.local
 
 ##########################################################################
 # the standard targets
@@ -14,31 +15,20 @@ TARGETS := include depend libs dso scripts all test install \
 # the standard macro definitions
 ##########################################################################
 PSRPKGS ?= ${PSRHOME}/packages
+LOGIN_ARCH ?= build
 
-INSTALL_BINDIR := ${PSRHOME}/${LOGIN_ARCH}/bin
-INSTALL_LIBDIR := ${PSRHOME}/${LOGIN_ARCH}/lib
-INSTALL_DSODIR := ${INSTALL_LIBDIR}
-INSTALL_INCDIR := ${PSRHOME}/${LOGIN_ARCH}/include
-INSTALL_SHXDIR := ${PSRHOME}/${LOGIN_ARCH}/csh_script
+INSTALL_BINDIR := ${prefix}/bin
+INSTALL_LIBDIR := ${prefix}/lib
+INSTALL_INCDIR := ${prefix}/include
 
 BINDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/bin
 LIBDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/lib
-DSODIR := ${LIBDIR}
 INCDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/include
-SHXDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/csh_script
 
 INCFLAGS := -I. -I${INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
 
-ifneq (${PSREXPORT},1)
-INCFLAGS += -I${INSTALL_INCDIR}
-endif
-
 LDFLAGS := -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
-
-ifneq (${PSREXPORT},1)
-LDFLAGS += -L${INSTALL_LIBDIR}
-endif
 
 MDFLAGS := -D__cplusplus
 AR      := ar
@@ -50,12 +40,17 @@ GREP  := grep
 QTMOC := moc
 MAKEDEPEND := makedepend -Y -f
 
+##########################################################################
+# backend selection
+##########################################################################
+
 include ${LOCAL_ROOT}/config/Makefile.backends
--include ${LOCAL_ROOT}/config/Makefile.local
 
 ##########################################################################
-# site-specific third party packages
+# PSRCHIVE configuration
 ##########################################################################
 
 include ${LOCAL_ROOT}/config/Makefile.psrchive
+
+NAMESPACE := dsp
 
