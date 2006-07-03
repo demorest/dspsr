@@ -14,7 +14,8 @@ config : $(config)
 # Convert automake variables into Standard Makefile Scheme variables
 #
 $(config): $(srcdir)/Makefile.am
-	@echo "CC := $(CC)" > $@
+	@echo "prefix := $(prefix)" > $@
+	@echo "CC := $(CC)" >> $@
 	@echo "CCC := $(CXX)" >> $@
 	@echo "FC := $(F77)"  >> $@
 	@echo "LF77 := @FLIBS@" >> $@
