@@ -15,7 +15,7 @@ LBACKENDS := $(addprefix -ldsp_, $(BACKENDS)) -ldsp_base
 #
 # PuMa specific code
 #
-ifneq (,$(findstring puma,$(BACKENDS)))
+ifeq (puma,$(filter puma,$(BACKENDS)))
 
 INCFLAGS += -I${DEVEL_INSTALL}/include
 LBACKENDS += -L${DEVEL_INSTALL}/lib -lpuma -lputils
