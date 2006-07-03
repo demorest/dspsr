@@ -1,7 +1,7 @@
 #include "FadcUnpacker.h"
 #include "Error.h"
 
-#include <fstream.h>
+#include <fstream>
 #include "fadc_header.h"
 
 #include <stdio.h>
