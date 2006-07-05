@@ -1,0 +1,24 @@
+#-*-Makefile-*- helps emacs to recognize that this file is a Makefile
+
+##############################################################################
+#
+# Uncomment the following line to compile against static libraries
+#
+# Since psrchive 3.0, static is the only option
+
+PSRCHIVE_STATIC:=yes
+
+
+##############################################################################
+#
+# No need to edit beyond this point
+#
+##############################################################################
+
+
+LPSRCHIVE := $(shell psrchive_ldflags)
+INCFLAGS += $(shell psrchive_cflags)
+
+# link against dynamic loader library (not necessary since 3.0)
+# LPSRCHIVE += $(LDSO)
+
