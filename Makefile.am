@@ -19,7 +19,6 @@ $(config): $(srcdir)/Makefile.am
 	@echo "CCC := $(CXX)" >> $@
 	@echo "FC := $(F77)"  >> $@
 	@echo "LF77 := @FLIBS@" >> $@
-	@echo "F77LIBS := $$(LF77)" >> $@
 	$(pgplot.config)
 
 if HAVE_PGPLOT
