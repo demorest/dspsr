@@ -25,7 +25,7 @@ if HAVE_PGPLOT
 define pgplot.config 
 @echo "has_PGPLOT := yes" >> $@
 @echo "LCPGPLOT := @PGPLOT_LIBS@" >> $@
-@echo "CFLAGS += @PGPLOT_CFLAGS@" >> $@
+@echo "CPPFLAGS += @PGPLOT_CFLAGS@" >> $@
 endef
 endif
 
