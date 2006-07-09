@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2006 by Willem van Straten
+ *   Copyright (C) 2006 by Eric Plum
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
