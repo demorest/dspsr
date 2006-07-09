@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2006 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseLockedFilterbank.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/05/23 22:03:21 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:13 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_PhaseLockedFilterbank_h

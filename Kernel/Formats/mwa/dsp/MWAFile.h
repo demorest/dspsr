@@ -1,4 +1,10 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2006 by Haydon Knight
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 #ifndef __dsp_mwafile_h_
 #define __dsp_mwafile_h_

@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "Reference.h"
 #include "psrephem.h"
 #include "polyco.h"

@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.5 $
-   $Date: 2004/10/18 07:36:12 $
-   $Author: sord $ */
+   $Revision: 1.6 $
+   $Date: 2006/07/09 13:27:07 $
+   $Author: wvanstra $ */
 
 #ifndef __CPSR2_Observation_h
 #define __CPSR2_Observation_h

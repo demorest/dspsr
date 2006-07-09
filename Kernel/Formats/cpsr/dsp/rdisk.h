@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2001 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/rdisk.h,v $
-   $Revision: 1.4 $
-   $Date: 2002/02/04 09:34:17 $
-   $Author: hknight $ */
+   $Revision: 1.5 $
+   $Date: 2006/07/09 13:27:06 $
+   $Author: wvanstra $ */
 
 #ifndef __RDISK_H
 #define __RDISK_H

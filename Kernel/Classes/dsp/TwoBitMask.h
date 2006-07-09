@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2006 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitMask.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/02/23 18:06:09 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:11 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitMask_h

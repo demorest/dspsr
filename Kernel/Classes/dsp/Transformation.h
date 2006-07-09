@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.37 $
-   $Date: 2005/09/28 03:43:43 $
-   $Author: hknight $ */
+   $Revision: 1.38 $
+   $Date: 2006/07/09 13:27:11 $
+   $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_Transformation_h
 #define __baseband_dsp_Transformation_h

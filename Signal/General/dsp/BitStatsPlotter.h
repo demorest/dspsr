@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2005 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BitStatsPlotter.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/02/23 22:22:01 $
+   $Revision: 1.4 $
+   $Date: 2006/07/09 13:27:11 $
    $Author: wvanstra $ */
 
 #ifndef __BitStatsPlotter_h

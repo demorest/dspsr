@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Matthew Bailes
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>

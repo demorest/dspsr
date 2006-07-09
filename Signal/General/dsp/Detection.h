@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.13 $
-   $Date: 2006/05/01 06:45:02 $
-   $Author: hknight $ */
+   $Revision: 1.14 $
+   $Date: 2006/07/09 13:27:12 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Detection_h

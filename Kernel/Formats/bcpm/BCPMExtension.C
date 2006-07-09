@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Haydon Knight
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include <string>
 #include <stdio.h>
 
@@ -21,7 +27,7 @@ void dsp::BCPMExtension::copy(const dsp::BCPMExtension& b){
 
 //! Dump out to a string
 string dsp::BCPMExtension::dump_string() const {
-  string ss = "BCPMExtension MiniExtension.C $Revision: 1.3 $ $Date: 2004/12/13 03:19:36 $:\n";
+  string ss = "BCPMExtension MiniExtension.C $Revision: 1.4 $ $Date: 2006/07/09 13:27:03 $:\n";
 
   char dummy[4096];
 

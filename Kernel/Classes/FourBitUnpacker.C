@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Stephen Ord
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include <iostream>
 #include <assert.h>
 #include <math.h>

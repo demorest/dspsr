@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Craig West
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROFile.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/06/27 01:17:48 $
-   $Author: ahotan $ */
+   $Revision: 1.4 $
+   $Date: 2006/07/09 13:27:08 $
+   $Author: wvanstra $ */
 
 #ifndef __SMROFile_h
 #define __SMROFile_h

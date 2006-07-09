@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2005 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelayFunction.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/06/21 21:44:01 $
+   $Revision: 1.3 $
+   $Date: 2006/07/09 13:27:13 $
    $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_SampleDelayFunction_h

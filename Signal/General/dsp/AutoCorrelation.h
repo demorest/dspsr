@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/AutoCorrelation.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/11/08 13:57:20 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:11 $
    $Author: wvanstra $ */
 
 #ifndef __AutoCorrelation_h

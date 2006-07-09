@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Aidan Hotan
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.17 $
-   $Date: 2005/07/29 17:38:13 $
+   $Revision: 1.18 $
+   $Date: 2006/07/09 13:27:10 $
    $Author: wvanstra $ */
 
 

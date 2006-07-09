@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TestInput.h,v $
-   $Revision: 1.1 $
-   $Date: 2003/08/20 09:17:41 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:10 $
    $Author: wvanstra $ */
 
 #ifndef __TestInput_h

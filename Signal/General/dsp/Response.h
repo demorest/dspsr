@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.25 $
-   $Date: 2005/12/04 23:57:05 $
-   $Author: hknight $ */
+   $Revision: 1.26 $
+   $Date: 2006/07/09 13:27:13 $
+   $Author: wvanstra $ */
 
 #ifndef __Response_h
 #define __Response_h

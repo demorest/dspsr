@@ -1,9 +1,15 @@
 
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.9 $
-   $Date: 2005/09/28 22:08:28 $
+   $Revision: 1.10 $
+   $Date: 2006/07/09 13:27:14 $
    $Author: wvanstra $ */
 
 #ifndef __PhaseSeriesUnloader_h

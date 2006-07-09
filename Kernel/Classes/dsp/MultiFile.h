@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.22 $
-   $Date: 2006/04/11 21:27:38 $
+   $Revision: 1.23 $
+   $Date: 2006/07/09 13:27:10 $
    $Author: wvanstra $ */
 
 

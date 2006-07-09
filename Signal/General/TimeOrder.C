@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Haydon Knight
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"

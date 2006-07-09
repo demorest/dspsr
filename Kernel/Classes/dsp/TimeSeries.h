@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.33 $
-   $Date: 2005/10/01 21:53:44 $
+   $Revision: 1.34 $
+   $Date: 2006/07/09 13:27:10 $
    $Author: wvanstra $ */
 
 #ifndef __TimeSeries_h

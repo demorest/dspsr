@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Aidan Hotan
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/maxim/dsp/MaximUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/08/14 22:50:18 $
-   $Author: ahotan $ */
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:08 $
+   $Author: wvanstra $ */
 
 
 #ifndef __MaximUnpacker_h

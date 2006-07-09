@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.14 $
-   $Date: 2004/11/08 14:03:19 $
+   $Revision: 1.15 $
+   $Date: 2006/07/09 13:27:13 $
    $Author: wvanstra $ */
 
 

@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/PhaseSeries.h"
 #include "polyco.h"

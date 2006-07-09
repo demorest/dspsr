@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/02/23 17:51:58 $
+   $Revision: 1.4 $
+   $Date: 2006/07/09 13:27:10 $
    $Author: wvanstra $ */
 
 #ifndef __SubByteTwoBitCorrection_h

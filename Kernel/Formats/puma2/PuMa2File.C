@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2005 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "dsp/PuMa2File.h"
 #include "dsp/PuMa2_Observation.h"
 #include "ascii_header.h"

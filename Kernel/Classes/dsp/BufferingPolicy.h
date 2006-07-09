@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2005 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BufferingPolicy.h,v $
-   $Revision: 1.3 $
-   $Date: 2005/08/24 05:54:21 $
-   $Author: hknight $ */
+   $Revision: 1.4 $
+   $Date: 2006/07/09 13:27:09 $
+   $Author: wvanstra $ */
 
 #ifndef __baseband_dsp_BufferingPolicy_h
 #define __baseband_dsp_BufferingPolicy_h

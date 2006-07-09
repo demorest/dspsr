@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/spigot/dsp/ACFUnpack.h,v $
-   $Revision: 1.2 $
-   $Date: 2004/01/24 03:00:59 $
+   $Revision: 1.3 $
+   $Date: 2006/07/09 13:27:09 $
    $Author: wvanstra $ */
 
 #ifndef __ACFUnpack_h

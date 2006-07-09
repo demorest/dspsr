@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2000 by Russell Edwards
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 // This is a bunch of CPSR-specific stuff to go with the ObsJoin
 // stuff, see genutil++/obsjoin.{C,h}

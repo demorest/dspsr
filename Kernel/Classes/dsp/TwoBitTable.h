@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.9 $
-   $Date: 2004/06/07 00:31:05 $
-   $Author: cwest $ */
+   $Revision: 1.10 $
+   $Date: 2006/07/09 13:27:11 $
+   $Author: wvanstra $ */
 
 
 #ifndef __TwoBitTable_h

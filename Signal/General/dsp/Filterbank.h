@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.5 $
-   $Date: 2002/11/09 15:55:27 $
+   $Revision: 1.6 $
+   $Date: 2006/07/09 13:27:12 $
    $Author: wvanstra $ */
 
 #ifndef __Filterbank_h

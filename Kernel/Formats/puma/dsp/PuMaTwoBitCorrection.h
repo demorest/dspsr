@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaTwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2003/05/13 15:58:47 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:08 $
    $Author: wvanstra $ */
 
 #ifndef __PuMaTwoBitCorrection_h

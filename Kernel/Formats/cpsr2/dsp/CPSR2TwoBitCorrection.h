@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2TwoBitCorrection.h,v $
-   $Revision: 1.8 $
-   $Date: 2002/11/06 06:30:41 $
-   $Author: hknight $ */
+   $Revision: 1.9 $
+   $Date: 2006/07/09 13:27:07 $
+   $Author: wvanstra $ */
 
 #ifndef __CPSR2TwoBitCorrection_h
 #define __CPSR2TwoBitCorrection_h

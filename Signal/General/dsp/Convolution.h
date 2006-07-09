@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.18 $
-   $Date: 2005/12/05 00:05:18 $
-   $Author: hknight $ */
+   $Revision: 1.19 $
+   $Date: 2006/07/09 13:27:12 $
+   $Author: wvanstra $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h

@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2006 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/asp/dsp/ASPUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/05/19 01:54:24 $
+   $Revision: 1.3 $
+   $Date: 2006/07/09 13:27:03 $
    $Author: wvanstra $ */
 
 #ifndef __ASPUnpacker_h

@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Stephen Ord
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2004/10/18 07:36:12 $
-   $Author: sord $ */
+   $Revision: 1.3 $
+   $Date: 2006/07/09 13:27:10 $
+   $Author: wvanstra $ */
 
 #ifndef __FourBitUnpacker_h
 #define __FourBitUnpacker_h

@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 // This is a bunch of S2-specific stuff to go with the ObsJoin
 // stuff, see genutil++/obsjoin.{C,h}

@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.8 $
-   $Date: 2005/04/26 13:06:16 $
+   $Revision: 1.9 $
+   $Date: 2006/07/09 13:27:13 $
    $Author: wvanstra $ */
 
 #ifndef __TwoBitStatsPlotter_h

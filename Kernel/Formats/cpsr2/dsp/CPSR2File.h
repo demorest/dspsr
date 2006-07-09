@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.15 $
-   $Date: 2005/07/25 18:42:28 $
+   $Revision: 1.16 $
+   $Date: 2006/07/09 13:27:07 $
    $Author: wvanstra $ */
 
 

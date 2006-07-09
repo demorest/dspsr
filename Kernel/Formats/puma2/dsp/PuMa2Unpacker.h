@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2005 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma2/dsp/PuMa2Unpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2005/04/26 13:07:00 $
+   $Revision: 1.3 $
+   $Date: 2006/07/09 13:27:08 $
    $Author: wvanstra $ */
 
 #ifndef __PuMa2Unpacker_h

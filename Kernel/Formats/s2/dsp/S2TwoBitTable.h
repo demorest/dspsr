@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitTable.h,v $
-   $Revision: 1.3 $
-   $Date: 2002/11/03 21:51:49 $
+   $Revision: 1.4 $
+   $Date: 2006/07/09 13:27:09 $
    $Author: wvanstra $ */
 
 

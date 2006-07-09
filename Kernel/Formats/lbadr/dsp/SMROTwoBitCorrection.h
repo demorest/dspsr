@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Craig West
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROTwoBitCorrection.h,v $
-   $Revision: 1.3 $
-   $Date: 2005/10/07 04:18:59 $
-   $Author: cwest $ */
+   $Revision: 1.4 $
+   $Date: 2006/07/09 13:27:08 $
+   $Author: wvanstra $ */
 
 #ifndef __SMROTwoBitCorrection_h
 #define __SMROTwoBitCorrection_h

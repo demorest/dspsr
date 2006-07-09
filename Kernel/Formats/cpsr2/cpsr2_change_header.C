@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Haydon Knight
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 /*
 
 Quick program by HSK 11 July 2003 to change parameters of a header- cpsr2 or .bs

@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.17 $
-   $Date: 2006/05/29 08:08:49 $
-   $Author: hknight $ */
+   $Revision: 1.18 $
+   $Date: 2006/07/09 13:27:13 $
+   $Author: wvanstra $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h

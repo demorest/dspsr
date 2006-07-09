@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2006 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark5/dsp/Mark5TwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/02/23 17:35:02 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:08 $
    $Author: wvanstra $ */
 
 #ifndef __Mark5TwoBitCorrection_h

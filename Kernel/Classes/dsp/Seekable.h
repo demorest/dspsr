@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.11 $
-   $Date: 2003/10/25 06:28:47 $
-   $Author: hknight $ */
+   $Revision: 1.12 $
+   $Date: 2006/07/09 13:27:10 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Seekable_h

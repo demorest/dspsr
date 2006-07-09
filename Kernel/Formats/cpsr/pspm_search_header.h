@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 1999 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 /*
  * PSPM search header definition.
  *
@@ -19,6 +25,9 @@
  *
  *
  * $Log: pspm_search_header.h,v $
+ * Revision 1.3  2006/07/09 13:27:06  wvanstra
+ * copyright notice added: Academic Free License
+ *
  * Revision 1.2  2000/01/24 02:32:59  wvanstra
  * Updated for August 1999 changes to pspm_search_header
  *

@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Craig West
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "SMRO.h"
 #include "dsp/SMROFile.h"
 

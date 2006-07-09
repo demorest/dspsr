@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.14 $
-   $Date: 2005/12/05 00:47:24 $
-   $Author: hknight $ */
+   $Revision: 1.15 $
+   $Date: 2006/07/09 13:27:11 $
+   $Author: wvanstra $ */
 
 
 #ifndef __Unpacker_h

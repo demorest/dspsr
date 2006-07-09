@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.31 $
-   $Date: 2005/12/04 23:58:50 $
-   $Author: hknight $ */
+   $Revision: 1.32 $
+   $Date: 2006/07/09 13:27:10 $
+   $Author: wvanstra $ */
 
 #ifndef __Input_h
 #define __Input_h

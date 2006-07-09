@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2001 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "pspmDbase.h"
 
 #include <iostream>

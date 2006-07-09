@@ -1,6 +1,12 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2000 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspm++.h,v $
-   $Revision: 1.7 $
-   $Date: 2002/11/28 14:05:02 $
+   $Revision: 1.8 $
+   $Date: 2006/07/09 13:27:05 $
    $Author: wvanstra $ */
 
 #ifndef __PSPM_H

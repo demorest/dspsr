@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2001 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.5 $
-   $Date: 2004/12/27 15:31:39 $
+   $Revision: 1.6 $
+   $Date: 2006/07/09 13:27:05 $
    $Author: wvanstra $ */
 
 #ifndef __pspmDbase_h

@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.7 $
-   $Date: 2005/09/28 22:08:40 $
+   $Revision: 1.8 $
+   $Date: 2006/07/09 13:27:14 $
    $Author: wvanstra $ */
 
 #ifndef __SubFold_h

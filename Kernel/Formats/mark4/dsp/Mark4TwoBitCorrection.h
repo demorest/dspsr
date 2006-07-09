@@ -1,9 +1,15 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Craig West
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark4/dsp/Mark4TwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2004/06/10 02:49:14 $
-   $Author: cwest $ */
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:08 $
+   $Author: wvanstra $ */
 
 #ifndef __Mark4TwoBitCorrection_h
 #define __Mark4TwoBitCorrection_h

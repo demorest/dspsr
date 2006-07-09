@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2005 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/05/19 17:51:25 $
+   $Revision: 1.5 $
+   $Date: 2006/07/09 13:27:09 $
    $Author: wvanstra $ */
 
 

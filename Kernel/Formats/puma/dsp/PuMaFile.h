@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2003 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaFile.h,v $
-   $Revision: 1.5 $
-   $Date: 2003/11/25 08:56:25 $
+   $Revision: 1.6 $
+   $Date: 2006/07/09 13:27:08 $
    $Author: wvanstra $ */
 
 

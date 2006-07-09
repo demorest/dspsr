@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2001 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/xfer_tape.h,v $
-   $Revision: 1.1 $
-   $Date: 2001/07/30 02:14:54 $
+   $Revision: 1.2 $
+   $Date: 2006/07/09 13:27:06 $
    $Author: wvanstra $ */
 
 #ifndef __XFER_TAPE_H

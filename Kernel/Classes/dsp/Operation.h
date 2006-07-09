@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.30 $
-   $Date: 2006/03/25 12:30:42 $
+   $Revision: 1.31 $
+   $Date: 2006/07/09 13:27:10 $
    $Author: wvanstra $ */
 
 #ifndef __Operation_h

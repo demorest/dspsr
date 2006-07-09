@@ -1,8 +1,14 @@
 //-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitCorrection.h,v $
-   $Revision: 1.8 $
-   $Date: 2003/10/09 12:54:13 $
+   $Revision: 1.9 $
+   $Date: 2006/07/09 13:27:08 $
    $Author: wvanstra $ */
 
 #ifndef __S2TwoBitCorrection_h

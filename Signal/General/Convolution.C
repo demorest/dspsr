@@ -1,3 +1,9 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 #include "dsp/Convolution.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Apodization.h"

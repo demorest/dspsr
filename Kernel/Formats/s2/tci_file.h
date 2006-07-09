@@ -1,7 +1,16 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Craig West
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
 /*
-$Id: tci_file.h,v 1.1 2002/05/01 01:53:10 cwest Exp $
+$Id: tci_file.h,v 1.2 2006/07/09 13:27:09 wvanstra Exp $
 $Log: tci_file.h,v $
+Revision 1.2  2006/07/09 13:27:09  wvanstra
+copyright notice added: Academic Free License
+
 Revision 1.1  2002/05/01 01:53:10  cwest
 s2 specific code separated from s2/s2tci
 
