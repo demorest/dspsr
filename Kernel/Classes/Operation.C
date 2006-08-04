@@ -49,7 +49,11 @@ void dsp::Operation::unset_timekeeper()
 //! All sub-classes must specify name and capacity for inplace operation
 dsp::Operation::Operation (const char* _name)
 {
-  name = _name;
+  if (_name)
+    name = _name;
+  else
+    name = "Operation";
+
   id = instantiation_count;
   instantiation_count++;
 
