@@ -4,18 +4,15 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Filterbank.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
 #include "dsp/InputBuffering.h"
 
-#include "genutil.h"
-
-#define RUNTIME_FFT
-
 #include "FTransform.h"
-#include "fftm.h"
+#include "genutil.h"
 
 //#define _DEBUG
 
@@ -228,15 +225,15 @@ void dsp::Filterbank::transformation ()
     cerr << "dsp::Filterbank::transformation\n"
       "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
       "  fft::normalization=" <<
-      (fft::get_normalization() == fft::nfft?"fft::nfft":
-      fft::get_normalization() == fft::normal?"fft::normal":
+      (FTransform::get_norm() == FTransform::nfft?"fft::nfft":
+      FTransform::get_norm() == FTransform::normal?"fft::normal":
       "unknown") << endl;
   }
 
-  if (fft::get_normalization() == fft::nfft)
+  if (FTransform::get_norm() == FTransform::nfft)
     scalefac = double(n_fft) * double(freq_res);
 
-  else if (fft::get_normalization() == fft::normal)
+  else if (FTransform::get_norm() == FTransform::normal)
     scalefac = double(n_fft) / double(freq_res);
 
   output->rescale (scalefac);
@@ -362,17 +359,10 @@ cerr << "f[r|c]c1d (" << nsamp_fft << "," << (void*)c_spectrum[ipol]
      << "," << (void*)time_dom_ptr << ")" << endl;
 #endif
 
-#ifdef RUNTIME_FFT
 	    if (input->get_state() == Signal::Nyquist)
 	      FTransform::frc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
 	    else
 	      FTransform::fcc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
-#else
-	    if (input->get_state() == Signal::Nyquist)
-	      fft::frc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
-	    else
-	      fft::fcc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
-#endif
 
 #ifdef _DEBUG
 cerr << "f[r|c]c1d done" << endl;
@@ -443,11 +433,7 @@ cerr << "bcc1d (" << freq_res << "," << (void*)c_time
      << "," << (void*)freq_dom_ptr << ")" << endl;
 #endif
 
-#ifdef RUNTIME_FFT
 	      FTransform::bcc1d (freq_res, c_time, freq_dom_ptr);
-#else
-	      fft::bcc1d (freq_res, c_time, freq_dom_ptr);
-#endif
 
 #ifdef _DEBUG
 cerr << "bcc1d done" << endl;
