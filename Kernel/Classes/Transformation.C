@@ -8,6 +8,14 @@
 #include "dsp/Transformation.h"
 #include "dsp/SetBufferingPolicy.h"
 
-Callback<dsp::TransformationBase*> dsp::TransformationBase::initialization;
+using namespace dsp;
 
-//dsp::TransformationBase::initialization.connect (&SetBufferingPolicy::set);
+Callback<TransformationBase*> TransformationBase::initialization;
+
+static int setup_initialization ()
+{
+  TransformationBase::initialization.connect (SetBufferingPolicy::set);
+}
+
+static int setup = setup_initialization ();
+
