@@ -84,12 +84,21 @@ void dsp::Fold::prepare (const Observation* observation)
   initialise();
 
   string jpulsar = observation->get_source();
-  
+
+  if (!source_name.empty())
+    jpulsar = source_name;
+
   if (jpulsar.length() == 0){
     cerr << observation->obs2string() << endl;
     throw Error (InvalidParam, "dsp::Fold::prepare",
 		 "empty Observation::source observation=%p",
 		 observation);
+  }
+
+  // Is this a CAL?
+  if (observation->get_type() == Signal::PolnCal) {
+    double calperiod = 1.0/observation->get_calfreq();
+    set_folding_period (calperiod, jpulsar);
   }
 
   if( folding_period > 0 && (folding_period_source==jpulsar || folding_period_source==string()) )
@@ -226,7 +235,8 @@ const polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
   for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++){
     if( verbose )
       cerr << "dsp::Fold::choose_polyco checking polyco " << ipoly 
-	   << " of source " << polycos[ipoly]->get_psrname() << endl;
+	   << " of source '" << polycos[ipoly]->get_psrname() << "'"
+	   << " pulsar='" << pulsar << "'" << endl;
 
     const MatchingPolyco* mpoly;
     mpoly = dynamic_cast<const MatchingPolyco*>(polycos[ipoly].ptr());
@@ -376,6 +386,29 @@ void dsp::Fold::set_folding_period (double _folding_period)
   built = true;
 }
 
+//! Set the name of the source
+void dsp::Fold::set_source_name (const std::string& source)
+{
+  source_name = source;
+  if (!source.empty())
+    built = false;
+}
+
+//! Get the name of the source
+std::string dsp::Fold::get_source_name () const
+{
+  if (!source_name.empty())
+    return source_name;
+
+  if (input)
+    return input->get_source();
+
+  if (pulsar_ephemeris)
+    return pulsar_ephemeris->psrname();
+
+  return "";
+}
+
 //! Set the period at which to fold data, but only do it for this source (in seconds)
 void dsp::Fold::set_folding_period (double folding_period, string _folding_period_source){
   set_folding_period( folding_period );
@@ -509,6 +542,10 @@ void dsp::Fold::transformation ()
 
   set_limits (input);
 
+  // temporarily set the output source name equal to the input source name
+  if( !source_name.empty() )
+    get_output()->set_source (input->get_source());
+
   if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold)){
     fprintf(stderr,"Input:\n\n%s\n\n",input->obs2string().c_str());
     fprintf(stderr,"Output:\n\n%s\n\n",output->obs2string().c_str());
@@ -540,7 +577,7 @@ void dsp::Fold::transformation ()
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
   else
-    output->set_pulsar_ephemeris( pulsar_ephemeris, folding_polyco );
+    output->set_pulsar_ephemeris( pulsar_ephemeris.ptr(), folding_polyco.ptr() );
 
   output->set_reference_phase( reference_phase );
 
@@ -560,6 +597,10 @@ void dsp::Fold::transformation ()
 
   if( archive_filename_extension.size() > 0 )
     get_output()->set_archive_filename_extension( archive_filename_extension );
+
+  if( !source_name.empty() )
+    get_output()->set_source (source_name);
+
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.

@@ -14,6 +14,7 @@ dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
 {
   filename_extension = ".ar";
   force_filename = false;
+  source_filename = false;
 }
     
 //! Destructor
@@ -23,13 +24,13 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
-  if( data->get_archive_filename() != string() )
+  if ( data->get_archive_filename() != string() )
     return make_unique(data->get_archive_filename(),"",data);
 
   string filename;
   string fname_extension = filename_extension;
 
-  if( data->get_archive_filename_extension() != string() )
+  if ( data->get_archive_filename_extension() != string() )
     fname_extension = data->get_archive_filename_extension();
 
   if ( filename_pattern.empty() ){
@@ -59,15 +60,26 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
 					      const string& fname_extension,
 					      const PhaseSeries* data) const
 {
+  string path;
+
+  if (!filename_path.empty())
+    path = filename_path + "/";
+
+  if (source_filename)
+    path += data->get_source() + "/";
+
+  if (!this_file_exists(path.c_str()))
+    makedir (path.c_str());
+
   string unique_filename = filename;
 
-  if (dsp::Observation::verbose)
+  if (Observation::verbose)
     cerr << "dsp::PhaseSeriesUnloader::make_unique filename=" << filename
 	 << " ext=" << fname_extension << " force=" << force_filename 
 	 << " length=" << data->get_integration_length() << endl;
 
   if (force_filename || data->get_integration_length() > 1.0)
-    return unique_filename;
+    return path + unique_filename;
 
   // small files need a more unique filename
 
@@ -77,7 +89,7 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
     // add pulse number to the output archive
     Phase phase = poly->phase ( data->get_start_time() );
 
-    if (dsp::Observation::verbose)
+    if (Observation::verbose)
       cerr << "dsp::PhaseSeriesUnloader::make_unique phase=" << phase 
 	   << " ref=" << data->get_reference_phase() << endl;
 
@@ -91,7 +103,7 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
     cerr << "WARNING: integration length < 1 sec.\n"
       "'" << unique_filename << "' may not be unique." << endl;
   
-  return unique_filename;
+  return path + unique_filename;
 }
 
 //! Set the PhaseSeries from which Profile data will be constructed

@@ -56,11 +56,17 @@
 #include "Error.h"
 #include "MakeInfo.h"
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:g:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:z";
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include <unistd.h>
+
+static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:X:z";
 
 void usage ()
 {
-  cout << "dspsr - test baseband/dsp pulsar processing\n"
+  cout << "dspsr - digital signal processing of pulsar signals\n"
     "Usage: dspsr [options] file1 [file2 ...] \n"
     "File handling options:\n"
     " -a archive     set the output archive class name\n"
@@ -69,7 +75,6 @@ void usage ()
     " -M metafile    load filenames from metafile\n"
     " -S seek        start processing at t=seek seconds\n"
     " -T total       process only t=total seconds\n"
-    " -g ffts        perform this many forward FFTs per block [16]\n"
     " -t block_size  process this many samples per block \n"
     " -W             no WeightedTimeSeries\n"
     " -z             run in psrdisp backward-compatibility mode\n"
@@ -118,6 +123,7 @@ void usage ()
     " -p phase       reference phase of pulse profile bin zero \n"
     " -E psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
     " -P psr.poly    add the folding polynomial, psr.poly, for use \n"
+    " -X name        add another pulsar to be folded \n"
     "\n"
     "Single Pulse options:\n"
     " -A             produce a single archive with multiple Integrations \n"
@@ -218,7 +224,6 @@ int main (int argc, char** argv) try {
   // the polynomials from which to choose a folding polyco
   vector< polyco* > polycos;
 
-  int ffts = 1;
   int fres = 0;
 
   // perform coherent dedispersion during filterbank construction
@@ -304,6 +309,9 @@ int main (int argc, char** argv) try {
 
   //
   bool persistent = false;
+
+  // List of additional pulsar names to be folded
+  vector<string> additional_pulsars;
 
   int c;
   int scanned;
@@ -432,10 +440,6 @@ int main (int argc, char** argv) try {
       break;
     }
 
-    case 'g':
-      ffts = atoi (optarg);
-      break;
-      
     case 'h':
       if (mpi_rank == 0)
 	usage ();
@@ -596,6 +600,10 @@ int main (int argc, char** argv) try {
       set_nfft = atoi (optarg);
       break;
 
+    case 'X':
+      additional_pulsars.push_back (optarg);
+      break;
+
     case 'z':
       dsp::psrdisp_compatible = true;
       break;
@@ -629,10 +637,6 @@ int main (int argc, char** argv) try {
   }
 
   dsp::TimeSeries* voltages = new_time_series();
-
-  if (verbose)
-    cerr << "Creating PhaseSeries instance" << endl;
-  dsp::PhaseSeries* profiles = new dsp::PhaseSeries;
 
   vector<dsp::Operation*> operations;
 
@@ -913,57 +917,75 @@ int main (int argc, char** argv) try {
       cerr << "dspsr: Warning: archive extension will be ignored" << endl;
   }
 
-  if (verbose)
-    cerr << "Creating Fold instance" << endl;
-  dsp::Fold* fold;
+  if (additional_pulsars.size())
+    archiver->set_source_filename (true);
 
-  if (single_pulse) {
-    dsp::SubFold* subfold = new dsp::SubFold;
+  unsigned nfold = 1 + additional_pulsars.size();
 
-    if (total_seconds) {
-      cerr << "dspsr: sub-integration length "<< total_seconds <<" s" << endl;
-      subfold -> set_subint_seconds (total_seconds);
-      total_seconds = 0;
+  vector<dsp::Fold*> fold (nfold, 0);
+
+  vector<dsp::PhaseSeries*> profiles (nfold, 0);
+
+  for (unsigned ifold=0; ifold < nfold; ifold++) {
+
+    if (verbose)
+      cerr << "Creating PhaseSeries instance" << endl;
+    profiles[ifold] = new dsp::PhaseSeries;
+
+    if (verbose)
+      cerr << "Creating Fold instance" << endl;
+
+    if (single_pulse) {
+      dsp::SubFold* subfold = new dsp::SubFold;
+
+      if (total_seconds) {
+	cerr << "dspsr: sub-integration length " << total_seconds << " s"
+	     << endl;
+	subfold -> set_subint_seconds (total_seconds);
+	total_seconds = 0;
+      }
+      else  {
+	cerr << "dspsr: single pulse" << endl;
+	subfold -> set_subint_turns (1);
+      }
+
+      subfold -> set_unloader (archiver);
+
+      fold[ifold] = subfold;
     }
-    else  {
-      cerr << "dspsr: single pulse" << endl;
-      subfold -> set_subint_turns (1);
-    }
 
-    subfold -> set_unloader (archiver);
+    else
+      fold[ifold] = new dsp::Fold;
 
-    fold = subfold;
+    if (nbin)
+      fold[ifold]->set_nbin (nbin);
+
+    if (reference_phase)
+      fold[ifold]->set_reference_phase (reference_phase);
+
+    if (folding_period)
+      fold[ifold]->set_folding_period (folding_period);
+
+    for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
+      fold[ifold]->add_pulsar_ephemeris ( ephemerides[ieph] );
+
+    for (unsigned ipoly=0; ipoly < polycos.size(); ipoly++)
+      fold[ifold]->add_folding_polyco ( polycos[ipoly] );
+    
+    if (!detected && (npol != 3))
+      fold[ifold]->set_input (convolve);
+    else 
+      fold[ifold]->set_input (detected);
+
+    fold[ifold]->set_output (profiles[ifold]);
+
+    if (!phased_filterbank)
+      operations.push_back (fold[ifold]);
   }
-  else
-    fold = new dsp::Fold;
 
-  if (nbin)
-    fold->set_nbin (nbin);
-
-  if (reference_phase)
-    fold->set_reference_phase (reference_phase);
-
-  if (folding_period)
-    fold->set_folding_period (folding_period);
-
-  for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
-    fold->add_pulsar_ephemeris ( ephemerides[ieph] );
-
-  for (unsigned ipoly=0; ipoly < polycos.size(); ipoly++)
-    fold->add_folding_polyco ( polycos[ipoly] );
-
-  if (!detected && (npol != 3))
-    fold->set_input (convolve);
-  else 
-    fold->set_input (detected);
-
-  fold->set_output (profiles);
-
-  if (!phased_filterbank)
-    operations.push_back (fold);
-  else {
+  if (phased_filterbank) {
     cerr << "Setting phase locked filterbank output" << endl;
-    phased_filterbank->set_output (profiles);
+    phased_filterbank->set_output (profiles[0]);
     phased_filterbank->divider.set_reference_phase (reference_phase);
   }
 
@@ -1029,15 +1051,6 @@ int main (int argc, char** argv) try {
     if( pulsar_name!=string() )
       manager->get_info()->set_source( pulsar_name );   
 
-
-    // Is this a CAL?
-    if (manager->get_info()->get_type() == Signal::PolnCal) {
-       double calperiod = 1.0/manager->get_info()->get_calfreq();
-       fold->set_folding_period(calperiod,manager->get_info()->get_source());
-       if (verbose)
-         cerr << manager->get_info()->obs2string() <<  endl;
-    }
-
     if( mjd_string != 0 ) {
       MJD mjd (mjd_string);
       cerr << "dspsr: setting the start time to " << mjd << endl;
@@ -1069,14 +1082,19 @@ int main (int argc, char** argv) try {
     
 #endif 
 
-    fold->prepare ( manager->get_info() );
+    fold[0]->prepare ( manager->get_info() );
+
+    for (unsigned ifold=1; ifold < fold.size(); ifold++) {
+      fold[ifold]->set_source_name ( additional_pulsars[ifold-1] );
+      fold[ifold]->prepare ( manager->get_info() );
+    }
 
     if (phased_filterbank)
-      phased_filterbank->divider.set_polyco( fold->get_folding_polyco() );
+      phased_filterbank->divider.set_polyco( fold[0]->get_folding_polyco() );
 
     double dm = 0.0;
 
-    const psrephem* eph = fold->get_pulsar_ephemeris();
+    const psrephem* eph = fold[0]->get_pulsar_ephemeris();
     if (eph)
       dm = eph -> get_dm();
 
@@ -1084,7 +1102,7 @@ int main (int argc, char** argv) try {
       cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
 	   << dispersion_measure << endl;
       dm = dispersion_measure;
-      const_cast<psrephem*>(fold->get_pulsar_ephemeris())->set_dm(dm);
+      // const_cast<psrephem*>(fold->get_pulsar_ephemeris())->set_dm(dm);
     }
 
     if (kernel)
@@ -1096,7 +1114,8 @@ int main (int argc, char** argv) try {
       active_operations = operations;
     else {
       active_operations.push_back (manager);
-      active_operations.push_back (fold);
+      for (unsigned ifold=0; ifold < nfold; ifold++)
+	active_operations.push_back (fold[ifold]);
     }
 
     archiver->set_operations (active_operations);
@@ -1159,7 +1178,8 @@ int main (int argc, char** argv) try {
     if ( tbc && tbc_cutoff )
       tbc -> set_cutoff_sigma ( tbc_cutoff );
 
-    profiles->zero();
+    for (unsigned i=0; i<profiles.size(); i++)
+      profiles[i]->zero();
 
     int block=0;
     int last_percent = -1;
@@ -1234,26 +1254,27 @@ int main (int argc, char** argv) try {
 
       cerr << "Rearranging PhaseSeries data" << endl;
 
-      dsp::PhaseSeries* output = new dsp::PhaseSeries (*profiles);
+      dsp::PhaseSeries* profile = profiles[0];
+      dsp::PhaseSeries* output = new dsp::PhaseSeries (*profile);
 
       cerr << "nchan=" << nlag_acf << endl;
       output->set_nchan( nlag_acf );
       cerr << "ndim=1" << endl;
       output->set_ndim( 1 );
-      cerr << "npol=" <<  2*profiles->get_npol() << endl;
-      output->set_npol( 2*profiles->get_npol() );  // Re,Im * each poln
+      cerr << "npol=" <<  2*profile->get_npol() << endl;
+      output->set_npol( 2*profile->get_npol() );  // Re,Im * each poln
       if (output->get_npol() == 4)
         output->set_state(Signal::Stokes);
-      cerr << "nbin=" << profiles->get_nbin() << endl;
-      output->resize( profiles->get_nbin() );
+      cerr << "nbin=" << profile->get_nbin() << endl;
+      output->resize( profile->get_nbin() );
 
       float* temp = new float [nchan_acf*2];
 
       cerr << "start copying" << endl;
 
-      for (unsigned ipol=0; ipol < profiles->get_npol(); ipol++)  {
-        float* from = profiles->get_datptr(0, ipol);
-        for (unsigned ibin=0; ibin < profiles->get_nbin(); ibin++)  {
+      for (unsigned ipol=0; ipol < profile->get_npol(); ipol++)  {
+        float* from = profile->get_datptr(0, ipol);
+        for (unsigned ibin=0; ibin < profile->get_nbin(); ibin++)  {
           fft::bcc1d (nchan_acf, temp, from);
           for (unsigned ichan=0; ichan < nlag_acf; ichan++)  {
             output->get_datptr (ichan, ipol*2)[ibin] = temp[ichan*2];
@@ -1263,8 +1284,8 @@ int main (int argc, char** argv) try {
         }
       }
 
-      delete profiles;
-      profiles = output;
+      delete profile;
+      profiles[0] = output;
 
     }
 
@@ -1278,11 +1299,15 @@ int main (int argc, char** argv) try {
 
     if (!single_pulse) {
 
-      if (verbose)
-	cerr << "Creating archive" << endl;
-      archiver->set_profiles (profiles);
-      archiver->set_archive_software( "dspsr" );
-      archiver->unload ();
+      for (unsigned i=0; i<profiles.size(); i++) {
+
+	if (verbose)
+	  cerr << "Creating archive " << i+1 << endl;
+	archiver->set_profiles (profiles[i]);
+	archiver->set_archive_software( "dspsr" );
+	archiver->unload ();
+
+      }
 
     }
     else if (archive) {

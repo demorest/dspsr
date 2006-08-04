@@ -34,7 +34,7 @@ namespace dsp{
     virtual dspExtension* new_extension() const = 0;
 
     //! If true, then you can only have one of this type of dspExtension per Observation instantiation
-    virtual bool must_only_have_one() const { return can_only_have_one; }
+    virtual bool must_only_have_one() const;
 
     //! Dump out to a string
     virtual string dump_string() const = 0;

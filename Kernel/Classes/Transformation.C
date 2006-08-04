@@ -1,11 +1,13 @@
 /***************************************************************************
  *
- *   Copyright (C) 2005 by Haydon Knight
+ *   Copyright (C) 2006 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Transformation.h"
+#include "dsp/SetBufferingPolicy.h"
 
-dsp::TransformationBase::DefaultBufferingPolicy dsp::TransformationBase::default_buffering_policy = dsp::TransformationBase::no_buffering_policy;
+Callback<dsp::TransformationBase*> dsp::TransformationBase::initialization;
 
-dsp::TransformationBase::~TransformationBase(){ }
+//dsp::TransformationBase::initialization.connect (&SetBufferingPolicy::set);

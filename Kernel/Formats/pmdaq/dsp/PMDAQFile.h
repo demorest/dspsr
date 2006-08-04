@@ -25,6 +25,9 @@ namespace dsp {
     //! Construct and open file
     PMDAQFile (const char* filename=0);
 
+    //! Destructor
+    virtual ~PMDAQFile();
+
     //! Returns true if filename appears to name a valid PMDAQ file
     bool is_valid (const char* filename,int NOT_USED=-1) const;
 

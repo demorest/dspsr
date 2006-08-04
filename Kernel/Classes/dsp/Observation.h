@@ -25,6 +25,8 @@
 #include "dsp/dspExtension.h"
 #include "dsp/dsp.h"
 
+int this_file_exists (string filename);
+
 namespace dsp {
 
   //! Stores information about digital, band-limited, time-varying signals
@@ -385,6 +387,10 @@ namespace dsp {
     //! Returns the i'th dspExtension stored
     const dspExtension* get_extension(unsigned iext) const;
 
+    //! The title for plots
+    void set_title(string _title){ title = _title; }
+    string get_title(){ return title; }
+
   protected:
 
     /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
@@ -491,6 +497,9 @@ namespace dsp {
 
     //! The calfrequency
     double calfreq;
+
+    //! The title for plots
+    string title;
 
   };
 

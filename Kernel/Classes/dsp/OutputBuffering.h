@@ -9,37 +9,25 @@
 #ifndef __OutputBuffering_h
 #define __OutputBuffering_h
 
-#include <string>
-
-#include "environ.h"
-
-namespace dsp {
-  class OutputBufferBase;
-
-  //! Enables OutputBuffering for a variety of Transformations
-  template <class In>
-  class OutputBuffering;
-}
-
+#include "dsp/BufferingPolicy.h"
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
-#include "dsp/Observation.h"
-#include "dsp/BitSeries.h"
 
 namespace dsp {
 
   //! Buffers the Transformation output
   /*! DO NOT try to buffer the output of Transformations that accumulate
     their output - save_data will not work */
-  class OutputBufferBase : public BufferingPolicy {
+  class OutputBuffering : public BufferingPolicy {
 
   public:
     
     //! Default constructor
-    OutputBufferBase ();
+    OutputBuffering (HasOutput<TimeSeries>* target = 0,
+		     bool _time_conserved = false);
 
     //! Destructor
-    virtual ~OutputBufferBase ();
+    virtual ~OutputBuffering ();
 
     //! Set the output to be buffered
     void set_output (TimeSeries* output);
@@ -101,15 +89,8 @@ namespace dsp {
     //! Returns the time prepended
     double get_duration_prepended() { return duration_prepended; }
 
-    //! Returns parents name
-    virtual string get_parent_name() = 0;
-
   protected:
 
-    //! Derived classes set this from the parent
-    virtual void set_output() = 0;
-    virtual void set_input() = 0;
-    
     //! The next start sample
     uint64 next_start_sample;
     
@@ -199,114 +180,24 @@ namespace dsp {
 
   };
 
-
-  //! Enables OutputBuffering for a variety of Transformations
-  template <class In>
-  class OutputBuffering : public OutputBufferBase
-  {
-
-  public:
-
-    //! Default constructor
-    OutputBuffering (Transformation<In,TimeSeries>* xform);
-
-    //! Perform all buffering tasks required before transformation
-    void pre_transformation () { OutputBufferBase::pre_transformation(); }
-    
-    //! Perform all buffering tasks required after transformation
-    void post_transformation () { OutputBufferBase::post_transformation(); }
-
-    //! Returns parents name
-    virtual string get_parent_name(){ return parent->get_name(); }
-
-  protected:
-
-    //! Set output from the parent
-    virtual void set_output();
-
-    //! Set input from the parent
-    virtual void set_input();
-
-    //! The parent
-    Transformation<In,TimeSeries>* parent;
-
-  };
-
   template<class In>
   void output_save (dsp::Transformation<In,dsp::TimeSeries>* tr, int64 ndat)
   {
-    dsp::OutputBuffering<In>* policy = 0;
+    dsp::OutputBuffering* policy = 0;
 
     if (tr->has_buffering_policy()) {
       BufferingPolicy* bp = tr->get_buffering_policy();
-      policy = dynamic_cast<dsp::OutputBuffering<In>*>( bp );
+      policy = dynamic_cast<dsp::OutputBuffering*>( bp );
     }
 
     if (!policy) {
-      policy = new dsp::OutputBuffering<In>(tr);
+      policy = new dsp::OutputBuffering(tr);
       tr->set_buffering_policy( policy );
     }
     
     policy->save_data (ndat);
   }
 
-}
-
-template <class In>
-void dsp::OutputBuffering<In>::set_input(){
-  if( !parent->has_input() )
-    throw Error(InvalidState,"dsp::OutputBuffering<In>::set_input()",
-		"Parent has no input set!");
-    
-  string ss = typeid(In).name();
-  
-  if( ss.find("const",0) != string::npos && ss.find("BitSeries",0) != string::npos ){
-    const BitSeries* in = (const BitSeries*)parent->get_input();
-    input = (const Observation*)in;
-  }
-  else{
-    input = (Observation*)parent->get_input();
-  }
-}
-
-template <class In>
-void dsp::OutputBuffering<In>::set_output(){
-  if( !parent->has_output() )
-    throw Error(InvalidState,"dsp::OutputBuffering<In>::set_output()",
-		"Parent has no output set!");
-
-  output = parent->get_output();
-}
-
-template <class In>
-dsp::OutputBuffering<In>::OutputBuffering (Transformation<In,TimeSeries>* tr)
-{
-  if (!tr)
-    throw Error (InvalidParam, "dsp::OutputBuffering<In>",
-		 "no Transformation");
-
-  if (tr->has_input()){
-    // GRRRRR people that put in const's everywhere are very annoying!!!!
-    
-    string ss = typeid(In).name();
-
-    if( ss.find("const",0) != string::npos && ss.find("BitSeries",0) != string::npos ){
-      const BitSeries* in = (const BitSeries*)tr->get_input();
-      input = (const Observation*)in;
-    }
-    else{
-      input = (Observation*)tr->get_input();
-    }
-  }
-
-  if (tr->has_output())    
-    output = tr->get_output();
-
-  parent = tr;
-
-  time_conserved = tr->get_time_conserved ();
-
-  name = "OutputBuffering";
 }
 
 #endif // !defined(__OutputBuffering_h)

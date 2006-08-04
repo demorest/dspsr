@@ -21,6 +21,8 @@
 
 bool dsp::CPSR2File::want_to_yamasaki_verify = true;
 
+dsp::CPSR2File::~CPSR2File(){}
+
 dsp::CPSR2File::CPSR2File (const char* filename)
   : File ("CPSR2")
 {

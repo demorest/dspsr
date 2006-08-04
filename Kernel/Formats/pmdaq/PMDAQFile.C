@@ -25,6 +25,9 @@
 
 bool dsp::PMDAQFile::using_second_band = false;
 
+//! Destructor
+dsp::PMDAQFile::~PMDAQFile(){}
+
 dsp::PMDAQFile::PMDAQFile (const char* filename) 
   : File ("PMDAQ")
 {

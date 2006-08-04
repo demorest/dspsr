@@ -43,4 +43,6 @@ void dsp::Unpacker::match (const Observation* observation)
 
 //! Constructor
 dsp::Unpacker::Unpacker (const char* name)
-  : Transformation <const BitSeries, TimeSeries> (name, outofplace,true){ }
+  : Transformation <const BitSeries, TimeSeries> (name, outofplace, true) 
+{
+}

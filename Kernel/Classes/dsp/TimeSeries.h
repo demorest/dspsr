@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.34 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.35 $
+   $Date: 2006/08/04 00:08:09 $
+   $Author: straten $ */
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h
@@ -78,6 +78,9 @@ namespace dsp {
 
     //! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
     virtual void zero_resize(unsigned char*& _buffer, uint64& nbytes);
+
+    //! For nchan=1, npol=1 data this uses the data in 'buffer'
+    TimeSeries& use_data(float* _buffer, uint64 _ndat);
     
     //! Return pointer to the specified data block
     float* get_datptr (unsigned ichan=0, unsigned ipol=0);

@@ -8,9 +8,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.10 $
-   $Date: 2006/07/09 13:27:14 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2006/08/04 00:08:10 $
+   $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
 #define __PhaseSeriesUnloader_h
@@ -54,14 +54,17 @@ namespace dsp {
     void set_extension (const std::string& extension)
     { set_extension (extension.c_str()); }
 
-    //! Set whether you want to allow the archive filename to be
-    //! over-ridden by a pulse number
-    void set_force_filename(bool _force_filename)
+    //! allow the archive filename to be over-ridden by a pulse number
+    void set_force_filename (bool _force_filename)
     { force_filename = _force_filename; }
 
-    //! Inquire whether it is possible for the archive filename to be
-    //! over-ridden by a pulse number
-    bool get_force_filename(){ return force_filename; }
+    bool get_force_filename () const { return force_filename; }
+
+    //! place output files in a sub-directory named by source
+    void set_source_filename (bool _source_filename)
+    { source_filename = _source_filename; }
+
+    bool get_source_filename(){ return source_filename; }
 
   protected:
 
@@ -76,8 +79,14 @@ namespace dsp {
     //! The filename pattern
     std::string filename_pattern;
 
-    //! The filename extension;
+    //! The filename extension
     std::string filename_extension;
+
+    //! The filename path
+    std::string filename_path;
+
+    //! Put each output file in a sub-directory named by source
+    bool source_filename;
 
     //! Force make_unique() to return 'filename' [false]
     bool force_filename;

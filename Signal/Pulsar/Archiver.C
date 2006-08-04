@@ -8,6 +8,7 @@
 #include "psrephem.h"
 
 #include "dsp/Archiver.h"
+#include "dsp/ChannelSum.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Response.h"
 #include "dsp/Operation.h"
@@ -160,7 +161,6 @@ catch (Error& error) {
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 try {
-
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
@@ -251,9 +251,11 @@ try {
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
 
-  if (phase->get_between_channel_dm () != 0) {
-    archive -> set_dedispersed( true );
-    archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
+  // Basically setting the DM to 'between_channel_dm' ruins folding for partially channelsummed archives
+  // So we only do this Willemesque dedispersion
+  if( !ChannelSum::have_been_used && phase->get_between_channel_dm () != 0) {
+      archive -> set_dedispersed( true );
+      archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
   }
   else {
     archive-> set_dedispersed( archive_dedispersed );
@@ -280,8 +282,10 @@ try {
   if (pband)
     set (pband);
 
-  Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
-  telescope->set_coordinates (phase -> get_telescope_code());
+  if( !ChannelSum::have_been_used ){
+    Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
+    telescope->set_coordinates (phase -> get_telescope_code());
+  }
 
   // default Receiver extension
   archive -> getadd<Pulsar::Receiver>();
@@ -291,10 +295,10 @@ try {
 
   // dsp::PhaseSeries has either (both eph and polyco) or (none)
   // set_model must be called after the Integration::MJD has been set
-  if( phase->get_pulsar_ephemeris() ){
+  if( phase->get_folding_polyco() )
     archive-> set_model ( *(phase->get_folding_polyco()) );
+  if( phase->get_pulsar_ephemeris() )
     archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()), false );
-  }
 
   archive-> set_filename (get_filename (phase));
 

@@ -7,10 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.16 $
-   $Date: 2006/07/09 13:27:07 $
-   $Author: wvanstra $ */
-
+   $Revision: 1.17 $
+   $Date: 2006/08/04 00:08:08 $
+   $Author: straten $ */
 
 #ifndef __CPSR2File_h
 #define __CPSR2File_h
@@ -26,6 +25,8 @@ namespace dsp {
    
     //! Construct and open file
     CPSR2File (const char* filename=0);
+
+    virtual ~CPSR2File();
 
     //! Returns true if filename appears to name a valid CPSR2 file
     bool is_valid (const char* filename,int NOT_USED=-1) const;

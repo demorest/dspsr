@@ -121,6 +121,8 @@ void dsp::File::open (const char* filename, const PseudoFile* file)
   if (verbose)
     cerr << "dsp::File::open bs_index=" << bs_index << endl;
 
+  close();
+
   if (filename) {
 
     open_file (filename);
@@ -264,7 +266,11 @@ int64 dsp::File::fstat_file_ndat (uint64 tailer_bytes)
 
   uint64 total_bytes = buf.st_size - header_bytes - tailer_bytes;
 
-  cerr << "dsp::File::fstat_file_ndat(): buf=" << buf.st_size << " header_bytes=" << header_bytes << " tailer_bytes=" << tailer_bytes << " total_bytes=" << total_bytes << endl;
+  if( verbose )
+    cerr << "dsp::File::fstat_file_ndat(): buf=" << buf.st_size
+	 << " header_bytes=" << header_bytes 
+	 << " tailer_bytes=" << tailer_bytes
+	 << " total_bytes=" << total_bytes << endl;
 
   return info.get_nsamples (total_bytes);
 }

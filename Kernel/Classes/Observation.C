@@ -650,7 +650,9 @@ string dsp::Observation::obs2string() const {
 }
 
 //! Returns a Header that stores the info in the class
-Reference::To<Header> dsp::Observation::obs2Header(Header* hdr) const{
+Reference::To<Header>
+dsp::Observation::obs2Header(Header* hdr) const
+{
   Reference::To<Header> h(hdr);
   if( !h.ptr() ){
     h = new Header;
@@ -756,7 +758,7 @@ void dsp::Observation::obs2file(int fd, int64 offset, int whence) const{
 
 //! Opposite of obs2file
 void dsp::Observation::file2obs(string filename, int64 offset){
-  if( !file_exists(filename.c_str()) )
+  if( !this_file_exists(filename.c_str()) )
     throw Error(InvalidParam,"dsp::Observation::file2obs()",
 		"File '%s' does not exist",filename.c_str());
 
@@ -990,4 +992,13 @@ dsp::Observation::get_end_time () const
   if( ndat==0 )
     return start_time;
   return start_time + double(ndat) / rate;
+}
+
+int this_file_exists (string filename)
+{
+  struct stat statistics;
+  if (stat (filename.c_str(), &statistics) < 0) {
+    return 0;
+  }
+  return 1;
 }

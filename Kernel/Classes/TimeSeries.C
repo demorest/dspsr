@@ -89,6 +89,28 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
     cerr << "dsp::TimeSeries::set_nbit (" << _nbit << ") ignored" << endl;
 }
 
+dsp::TimeSeries&
+dsp::TimeSeries::use_data(float* _buffer, uint64 _ndat)
+{
+  if( get_nchan() != 1 || get_npol() != 1 )
+    throw Error(InvalidState,"dsp::TimeSeries::use_data()",
+		"This function is only for nchan=1 npol=1 TimeSeries --- you had %d %d",
+		get_nchan(), get_npol());
+
+  if( !_buffer )
+    throw Error(InvalidState,"dsp::TimeSeries::use_data()",
+		"Input data was null!");
+
+  resize( 0 );
+  buffer = (unsigned char*)_buffer;
+  data = _buffer;
+  size = sizeof(float) * _ndat;
+  subsize = sizeof(float) * _ndat;
+  set_ndat( _ndat );
+
+  return *this;
+}
+
 //! Allocate the space required to store nsamples time samples.
 /*!
   \pre The dimensions of each time sample (nchan, npol, ndim) should

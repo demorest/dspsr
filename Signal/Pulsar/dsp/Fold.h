@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.42 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.43 $
+   $Date: 2006/08/04 00:08:10 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
@@ -20,6 +20,7 @@
 
 class polyco;
 class psrephem;
+class rawprofile;
 
 namespace dsp {
 
@@ -72,6 +73,11 @@ namespace dsp {
     void set_nspan (unsigned nspan);
     //! Get the number of minutes over which polynomial coefficients are valid
     unsigned get_nspan () const { return nspan; }
+
+    //! Set the name of the source
+    void set_source_name (const std::string& name);
+    //! Get the name of the source
+    std::string get_source_name () const;
 
     //! Set the period at which to fold data for all sources (in seconds- negative for don't use)
     void set_folding_period (double folding_period);
@@ -204,6 +210,9 @@ namespace dsp {
     //! Number of minutes over which polynomial coefficients are valid
     unsigned nspan;
 
+    //! The name of the source (overrides input source name)
+    std::string source_name;
+
     //! Flag that the polyco is built for the given ephemeris and input
     bool built;
 
@@ -231,14 +240,14 @@ namespace dsp {
     // dsp::Fold
     void initialise();
 
+    //! Set the phase model with which to fold data
+    void set_folding_polyco (const polyco* folding_polyco);
+
   private:
 
     // Generates folding_polyco from the given ephemeris
     Reference::To<polyco> get_folding_polyco(const psrephem* pephemeris,
 					     const Observation* observation);
-
-    //! Set the phase model with which to fold data
-    void set_folding_polyco (const polyco* folding_polyco);
 
     //! Phase model with which to fold data (PSR)
     Reference::To<const polyco> folding_polyco;

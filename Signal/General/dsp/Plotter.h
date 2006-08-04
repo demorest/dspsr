@@ -67,6 +67,8 @@ namespace dsp {
     //! Inquire whether to show the plot number at top of screen
     bool get_show_plot_number(){ return show_plot_number; } 
 
+    bool disable_viewer_interaction;
+
   protected:
     
     virtual bool open_plotwindow();
@@ -106,6 +108,7 @@ dsp::Plotter<DataType>::Plotter() : BasicPlotter<DataType>() {
 
   just_do_basics = false;
   show_plot_number = true;
+  disable_viewer_interaction = false;
 
   BasicPlotter<DataType>::mutated = true;
 }
@@ -121,6 +124,15 @@ bool dsp::Plotter<DataType>::open_plotwindow(){
     fprintf(stderr,"dsp::Plotter::open_plotwindow() cpgopen call failed\n");
     return false;
   }
+
+  char value[4096];
+  int length = 4095;
+  cpgqinf("DEV/TYPE",value, &length);
+  string plot_device = string(value,value+length);
+  string fourchars = plot_device.substr(plot_device.size()-4,4);
+
+  if( fourchars == "/png" || fourchars=="/PNG" )
+    disable_viewer_interaction = true;
   
   return true;
 }
@@ -176,6 +188,8 @@ bool dsp::Plotter<DataType>::plot(){
     cpgsci(1);
     cpgsls(1);
     cpgsch(1.0);
+    if( disable_viewer_interaction )
+      break;
     user_input();
   }
 
@@ -197,8 +211,12 @@ bool dsp::Plotter<DataType>::user_input(){
   if(Ready::verbose || Operation::verbose)
     fprintf(stderr,"In dsp::Plotter::user_input()\n");
   
-  float x=1.0;      // Used to store x co-ord of cursor upon keypress
-  float y=1.0;      // Used to store y co-ord of cursor upon keypress
+  plot::PlotParams p = params.back();
+
+  // Used to store x co-ord of cursor upon keypress
+  float x = 0.5*(p.get_xmax() - p.get_xmin());
+  // Used to store y co-ord of cursor upon keypress      
+  float y = 0.5*(p.get_ymax() - p.get_ymin());
   float xref;       // Used to store secondary x co-ord of cursor upon e.g. completion of zoom box
   float yref;       // Used to store secondary y co-ord of cursor upon e.g. completion of zoom box
  
@@ -215,7 +233,9 @@ bool dsp::Plotter<DataType>::user_input(){
 
   if(Ready::verbose || Operation::verbose)
     cerr<<"After cpgcurs user_char is '"<<BasicPlotter<DataType>::user_char<<"'\n\n";
-
+  
+  ///////////////////////////////////////////////////////////
+  // Mouseclick to draw a zoom-box
   if(BasicPlotter<DataType>::user_char=='z' || BasicPlotter<DataType>::user_char=='A'){
     if(Ready::verbose || Operation::verbose)
 	cerr<<"Detected a 'z' at x='"<<x<<"' and y='"<<y<<"'\n";
@@ -233,6 +253,9 @@ bool dsp::Plotter<DataType>::user_input(){
     return true;
   }
 
+  ///////////////////////////////////////////////////////////
+  // highlight data
+  /*
   if(BasicPlotter<DataType>::user_char=='n' || BasicPlotter<DataType>::user_char=='d' ){
     highlight(x,y);
     BasicPlotter<DataType>::params.push_back( BasicPlotter<DataType>::params.back() );
@@ -241,14 +264,18 @@ bool dsp::Plotter<DataType>::user_input(){
     BasicPlotter<DataType>::mutated = true;
     return true;
   }
-  
+  */  
+
+  ///////////////////////////////////////////////////////////
+  // Undo to previous level
   if(BasicPlotter<DataType>::user_char=='u' && BasicPlotter<DataType>::params.size()>1){
     BasicPlotter<DataType>::params.pop_back();
-
     BasicPlotter<DataType>::mutated = true;
     return true;
   }
     
+  ///////////////////////////////////////////////////////////
+  // Zoom right
   if(BasicPlotter<DataType>::user_char=='r'){
     BasicPlotter<DataType>::params.push_back(plot::PlotParams(x,
 				x+BasicPlotter<DataType>::params.back().get_xmax()-BasicPlotter<DataType>::params.back().get_xmin(),
@@ -258,7 +285,9 @@ bool dsp::Plotter<DataType>::user_input(){
     BasicPlotter<DataType>::mutated = true;
     return true;
   }
-    
+
+  ///////////////////////////////////////////////////////////
+  // Zoom left
   if(BasicPlotter<DataType>::user_char=='l'){
     BasicPlotter<DataType>::params.push_back(plot::PlotParams(x-(BasicPlotter<DataType>::params.back().get_xmax()-BasicPlotter<DataType>::params.back().get_xmin()),
 				x,
@@ -269,24 +298,34 @@ bool dsp::Plotter<DataType>::user_input(){
     return true;
   }
 
+  ///////////////////////////////////////////////////////////
+  // Undo to top level
   if(BasicPlotter<DataType>::user_char=='o'){
     BasicPlotter<DataType>::params.erase(BasicPlotter<DataType>::params.begin()+1,BasicPlotter<DataType>::params.end());
     BasicPlotter<DataType>::mutated = true;
     return true;
   }
 
+  ///////////////////////////////////////////////////////////
+  // Block new data
+  /*
   if(BasicPlotter<DataType>::user_char=='b'){
     BasicPlotter<DataType>::params.back().switch_block_new_data();
     BasicPlotter<DataType>::mutated = false;
     return true;
   }
+  */
 
+  ///////////////////////////////////////////////////////////
+  // Print out coordinates
   if(BasicPlotter<DataType>::user_char=='c'){
     fprintf(stderr,"x=%f\ty=%f\n",x,y);
     BasicPlotter<DataType>::mutated = false;
     return true;
   }
 
+  ///////////////////////////////////////////////////////////
+  // Output to hardcopy
   if(BasicPlotter<DataType>::user_char=='p'){
     string response = string("dsp_Plotter") + string(".cps/cps");;
     
@@ -316,6 +355,8 @@ bool dsp::Plotter<DataType>::user_input(){
     return true;
   }
 
+  ///////////////////////////////////////////////////////////
+  // Quit out
   if( BasicPlotter<DataType>::user_char=='q' || BasicPlotter<DataType>::user_char=='Q' ){
     return true;
   }
