@@ -4,11 +4,6 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <iostream>
-#include <string>
-#include <vector>
-
-#include <unistd.h>
 
 #include "dsp/IOManager.h"
 #include "dsp/MultiFile.h"
@@ -62,7 +57,8 @@
 
 #include <unistd.h>
 
-static char* args = "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:X:z";
+static char* args =
+"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:X:z";
 
 void usage ()
 {
