@@ -60,9 +60,9 @@ static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
 #endif
 
-#if DSP_smro
+#if DSP_lbadr
 #include "dsp/SMROFile.h"
-static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_smro;
+static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
 #endif
 
 #if DSP_vsib

@@ -54,9 +54,9 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
 static Registry::List<dsp::Unpacker>::Enter<dsp::MaximUnpacker> maxim;
 #endif
 
-#if DSP_smro
+#if DSP_lbadr
 #include "dsp/SMROTwoBitCorrection.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection>  smro;
+static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection>  lbadr;
 #endif
 
 #if DSP_vsib
