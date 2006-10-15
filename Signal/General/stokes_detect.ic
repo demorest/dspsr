@@ -1,0 +1,45 @@
+/*-*-C-*-*/
+
+/* /////////////////////////////////////////////////////////////////////////
+
+This code fragment forms the Stokes vector: S0, S1, S2, S3
+It does the work for stokes_detect and stokes_detect_int.  
+
+This tactic may seem kludgey.  However, I want a fast routine
+(without an extra if/then for every loop)  and I want to be sure
+that I write it only once, eliminating another dimension of possible
+error.
+
+NOTE how the macro CD_OP is #defined in stokes_detect.c before
+#including this code fragment.  Also note the declaration of arguments:
+
+void stokes_detect (unsigned ndat, float* p, float* q,
+                    float* S0, float* S1, float* S2, float* S3, unsigned span)
+
+//////////////////////////////////////////////////////////////////////// */
+
+{
+  register float p_r;
+  register float p_i;
+  register float q_r;
+  register float q_i;
+  register float pp;
+  register float qq;
+  unsigned j;
+
+  for (j=0; j<ndat; j++)  {
+    p_r = *p; p++;
+    p_i = *p; p++;
+
+    q_r = *q; q++;
+    q_i = *q; q++;
+
+    pp = p_r * p_r + p_i * p_i;
+    qq = q_r * q_r + q_i * q_i;
+
+    *S0 CD_OP pp + qq;  S0 += span;
+    *S1 CD_OP pp - qq;  S1 += span;
+    *S2 CD_OP 2.0 * (p_r * q_r + p_i * q_i);  S2 += span;
+    *S3 CD_OP 2.0 * (p_r * q_i - p_i * q_r);  S3 += span;
+  }
+}
