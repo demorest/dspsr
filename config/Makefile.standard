@@ -1,11 +1,6 @@
 #-*-Makefile-*- helps emacs recognize this file as a Makefile
 
 ##########################################################################
-# the automake produced Makefile 
-##########################################################################
--include ${LOCAL_ROOT}/config/Makefile.local
-
-##########################################################################
 # the standard targets
 ##########################################################################
 TARGETS := include depend libs dso scripts all test install \
@@ -41,16 +36,15 @@ QTMOC := moc
 MAKEDEPEND := makedepend -Y -f
 
 ##########################################################################
+# the automake produced Makefile
+##########################################################################
+-include ${LOCAL_ROOT}/config/Makefile.local
+
+##########################################################################
 # backend selection
 ##########################################################################
 
 include ${LOCAL_ROOT}/config/Makefile.backends
-
-##########################################################################
-# PSRCHIVE configuration
-##########################################################################
-
-include ${LOCAL_ROOT}/config/Makefile.psrchive
 
 NAMESPACE := dsp
 

@@ -7,9 +7,7 @@
 #include "dsp/TimeSeries.h"
 
 #include "environ.h"
-#include "genutil.h"
 #include "fsleep.h"
-#include "minmax.h"
 #include "Error.h"
 
 #include <algorithm>
@@ -17,6 +15,8 @@
 
 #include <stdio.h>
 #include <assert.h>
+
+using namespace std;
 
 bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
 {
@@ -705,47 +705,6 @@ bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){
   fprintf(stderr,"fr_min=%p fr_max=%p fr=%p\n",
 	  fr_min,fr_max,fr);
   return false;
-}
-
-bool to_range(unsigned char* too,const dsp::TimeSeries* thiz){
-  unsigned char* too_min = (unsigned char*)thiz->get_datptr(0,0);
-  unsigned char* too_max = (unsigned char*)(thiz->get_datptr(thiz->get_nchan()-1,thiz->get_npol()-1)+thiz->get_ndat());
-  if( too>=too_min && too<too_max)
-    return true;
-  fprintf(stderr,"too_min=%p too_max=%p too=%p\n",
-	  too_min,too_max,too);
-  return false;
-}
-
-//! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
-void dsp::TimeSeries::normalise(){
-  if( get_ndim()!=1 )
-    throw Error(InvalidState,"dsp::TimeSeries::normalise()",
-		"You can only give a real timeseries to this method- ie ndim!=1");
-
-  for( unsigned ichan=0; ichan<get_nchan(); ichan++){
-    for( unsigned ipol=0; ipol<get_npol(); ipol++){
-      float* dat = get_datptr(ichan,ipol);
-
-      float mmean = many_findmean(dat,dat+get_ndat());
-      float ssigma = sqrt( many_findvar( dat, dat+get_ndat(), mmean) );
-
-      register uint64 the_ndat = get_ndat();
-
-      // HSK TODO: which is quicker- 2 loops or 1???  
-      for( uint64 i=0; i<the_ndat; ++i)
-	dat[i] -= mmean;
-
-      for( uint64 i=0; i<the_ndat; ++i)
-	dat[i] /= ssigma;
-    }
-  }
-
-}
-
-//! Returns the maximum bin of channel 0, pol 0
-unsigned dsp::TimeSeries::get_maxbin(){
-  return find_binmax(get_datptr(0,0),get_datptr(0,0)+get_ndat());
 }
 
 //! Over-rides DataSeries::set_nchan()- this only allows a change if preserve_seeked_data is false

@@ -4,16 +4,13 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <vector>
 
-#include <stdio.h>
+#include "dsp/Operation.h"
+#include "dsp/TimeKeeper.h"
+
 #include <malloc.h>
 
-#include "Error.h"
-
-#include "dsp/Time.h"
-#include "dsp/TimeKeeper.h"
-#include "dsp/Operation.h"
+using namespace std;
 
 //! Global time keeper
 dsp::TimeKeeper* dsp::Operation::timekeeper = 0;
@@ -164,7 +161,7 @@ vector<dsp::Time> dsp::Operation::get_extra_times(){
 }
 
 //! Returns the index in the 'timers' array of a particular timer
-int dsp::Operation::timers_index(string op_name){
+int dsp::Operation::timers_index(const string& op_name){
   for( unsigned i=0; i<timers.size(); i++)
     if( timers[i].operation == op_name )
       return i;

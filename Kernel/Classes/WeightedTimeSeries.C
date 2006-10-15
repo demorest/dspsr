@@ -9,6 +9,8 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "Error.h"
 
+using namespace std;
+
 dsp::WeightedTimeSeries::WeightedTimeSeries()
 {
   npol_weight = 1;

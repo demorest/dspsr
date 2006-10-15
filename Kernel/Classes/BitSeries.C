@@ -4,15 +4,12 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <memory>
-
-#include <string.h>
-
-#include "genutil.h"
-#include "string_utils.h"
-#include "Error.h"
 
 #include "dsp/BitSeries.h"
+#include "Error.h"
+#include "tostring.h"
+
+using namespace std;
 
 //! Null constructor
 dsp::BitSeries::BitSeries ()
@@ -122,8 +119,7 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
   if( !get_ndat() ){
     if( size < little->size )
       throw Error(InvalidRange,"dsp::BitSeries::append()",
-		  string("BitSeries does not have required capacity to be appended to (size=")
-		  + make_string(size) + string(")"));
+		  "BitSeries does not have required capacity to be appended to (size=" + tostring(size) + ")");
 
     Observation::operator=(*little);
     set_ndat(0);

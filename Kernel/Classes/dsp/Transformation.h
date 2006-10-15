@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.39 $
-   $Date: 2006/08/04 00:08:09 $
+   $Revision: 1.40 $
+   $Date: 2006/10/15 03:50:14 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -64,8 +64,8 @@ namespace dsp {
     virtual void vset_output (void* _output) = 0;
     virtual void* vget_input () = 0;
     virtual void* vget_output () = 0;
-    virtual string get_input_typestring () = 0;
-    virtual string get_output_typestring () = 0;
+    virtual std::string get_input_typestring () = 0;
+    virtual std::string get_output_typestring () = 0;
 
   };
 
@@ -198,10 +198,10 @@ namespace dsp {
      */
     //@{
 
-    virtual string get_input_typestring()
+    virtual std::string get_input_typestring()
     { return typeid(this->input.ptr()).name(); }
 
-    virtual string get_output_typestring()
+    virtual std::string get_output_typestring()
     { return typeid(this->output.ptr()).name(); }
 
     virtual void vset_input(void* _input)
@@ -274,9 +274,9 @@ bool dsp::Transformation<In,Out>::can_operate()
     return true;
 
   if (TransformationBase::verbose)
-    cerr << "dsp::Transformation<In,Out> (" << Operation::get_name() << ")"
+    std::cerr << "dsp::Transformation<In,Out> (" << Operation::get_name() << ")"
       " has input of " << this->get_input()->get_ndat() << " samples."
-      "  Minimum is " << minimum_samps_can_process << endl;
+      "  Minimum is " << minimum_samps_can_process << std::endl;
 
   return false;
 }
@@ -299,7 +299,7 @@ void dsp::Transformation<In, Out>::vchecks(){
 		 "empty input- input=%p input->ndat="UI64,
 		 this->input.get(),this->input->get_ndat());
 
-  string reason;
+  std::string reason;
   if (this->check_state && !this->input->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::vchecks()",
 		 "invalid input state: " + reason);
@@ -325,7 +325,7 @@ void dsp::Transformation<In, Out>::operation ()
   if (buffering_policy)
     buffering_policy -> post_transformation ();
 
-  string reason;
+  std::string reason;
   if (this->check_state && type!=inplace && !this->output->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::operate",
 		 "invalid output state: " + reason);
@@ -339,7 +339,7 @@ template <class In, class Out>
 void dsp::Transformation<In, Out>::set_input (In* _input)
 {
   if (Operation::verbose)
-    cerr << "dsp::Transformation["+this->get_name()+"]::set_input ("<<_input<<")"<<endl;
+    std::cerr << "dsp::Transformation["+this->get_name()+"]::set_input ("<<_input<<")"<<std::endl;
 
   this->input = _input;
 
@@ -356,7 +356,7 @@ template <class In, class Out>
 void dsp::Transformation<In, Out>::set_output (Out* _output)
 {
   if (Operation::verbose)
-    cerr << "dsp::Transformation["+this->get_name()+"]::set_output ("<<_output<<")"<<endl;
+    std::cerr << "dsp::Transformation["+this->get_name()+"]::set_output ("<<_output<<")"<<std::endl;
 
   if (type == inplace && this->input 
       && (const void*)this->input != (const void*)_output )

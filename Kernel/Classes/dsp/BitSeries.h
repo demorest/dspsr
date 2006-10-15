@@ -11,8 +11,6 @@
 
 #include <memory>
 
-#include "Reference.h"
-
 #include "dsp/Observation.h"
 
 namespace dsp {
@@ -80,7 +78,7 @@ namespace dsp {
     //! Delete the current data buffer and attach to this one
     //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
     //! Also do not try to delete the old memory once you have called this- the BitSeries::data member now owns it.
-    virtual void attach(auto_ptr<unsigned char> _data);
+    virtual void attach(std::auto_ptr<unsigned char> _data);
 
     //! Call this when you want the array to still be owned by it's owner
     virtual void attach(unsigned char* _data);

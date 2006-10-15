@@ -14,7 +14,6 @@
 
 #include <stdio.h>
 
-#include "Header.h"
 #include "Error.h"
 #include "Reference.h"
 #include "sky_coord.h"
@@ -24,8 +23,6 @@
 
 #include "dsp/dspExtension.h"
 #include "dsp/dsp.h"
-
-int this_file_exists (string filename);
 
 namespace dsp {
 
@@ -56,9 +53,6 @@ namespace dsp {
     //! Swaps the 2 Observations.  Returns '*this'
     Observation& swap_data(Observation& obs);
 
-    //! Print the Observation out
-    virtual void print(){ cout << obs2string() << endl; }
-    
     //! Set the type of receiver feeds
     void set_basis (Signal::Basis _basis) { basis = _basis; }
     //! Return the type of receiver feeds
@@ -114,9 +108,9 @@ namespace dsp {
     char get_telescope_code () const { return telescope; }
 
     //! Set the source name
-    void set_source (string _source) { source = _source; }
+    void set_source (const std::string& _source) { source = _source; }
     //! Return the source name
-    string get_source () const { return source; }
+    std::string get_source () const { return source; }
 
     //! Set the coordinates of the source
     void set_coordinates (sky_coord _coordinates) { coordinates=_coordinates; }
@@ -175,14 +169,16 @@ namespace dsp {
     bool get_dc_centred () const { return dc_centred; }
 
     //! Set the observation identifier
-    void set_identifier (string _identifier) { identifier = _identifier; }
+    void set_identifier (const std::string& _identifier)
+    { identifier = _identifier; }
+
     //! Return the observation identifier
-    string get_identifier () const { return identifier; }
+    std::string get_identifier () const { return identifier; }
 
     //! Set the instrument used to record signal
-    void set_machine (string _machine) { machine = _machine; }
+    void set_machine (const std::string& _machine) { machine = _machine; }
     //! Return the instrument used to record signal
-    string get_machine () const { return machine; }
+    std::string get_machine () const { return machine; }
 
     //! Returns the DM to which the data has been dedispersed (in-channel dispersion)
     double get_dispersion_measure () const { return dispersion_measure; }
@@ -203,9 +199,9 @@ namespace dsp {
     void change_between_channel_dm(double dm) { between_channel_dm += dm; }
 
     //! Set the observation mode
-    void set_mode (string _mode) { mode = _mode; }
+    void set_mode (const std::string& _mode) { mode = _mode; }
     //! Return the observation mode
-    string get_mode () const { return mode; }
+    std::string get_mode () const { return mode; }
 
     //! Set the cal frequency
     void set_calfreq (double _calfreq) {calfreq = _calfreq;}
@@ -215,35 +211,35 @@ namespace dsp {
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
     //! Also, H_BandPass sets this as bandpass
-    string get_domain() const { return domain; }
+    std::string get_domain() const { return domain; }
 
     //! Whether data is in 'Time' or 'Fourier' domain 
-    void set_domain(string _domain){ domain = _domain; }
+    void set_domain(const std::string& _domain){ domain = _domain; }
 
     //! Inquire the last format on disk the dat was stored on
-    string get_last_ondisk_format() const { return last_ondisk_format; }
+    std::string get_last_ondisk_format() const { return last_ondisk_format; }
 
     //! Set the last format on disk the dat was stored on
-    void set_last_ondisk_format(string _last_ondisk_format){ last_ondisk_format = _last_ondisk_format; }
+    void set_last_ondisk_format(const std::string& _last_ondisk_format){ last_ondisk_format = _last_ondisk_format; }
 
     //! Change the state and correct other attributes accordingly
     virtual void change_state (Signal::State new_state);
 
     //! Return true if the state of the Observation is valid
-    bool state_is_valid (string& reason) const;
+    bool state_is_valid (std::string& reason) const;
 
     //! Returns true if state is Detected, Coherence, or Stokes
     bool get_detected () const;
 
     //! Returns a convenient id string for a given MJD
     //! The supplied dsp::Observation is for pinching the 'm'/'n' part of the 'identifier' attribute
-    static string get_default_id (const MJD& mjd, const Observation* obs=0);
+    static std::string get_default_id (const MJD& mjd, const Observation* obs=0);
 
     //! Returns default_id (start_time);
-    string get_default_id () const;
+    std::string get_default_id () const;
 
     //! Returns a string describing the state of the data
-    string get_state_as_string () const;
+    std::string get_state_as_string () const;
 
     //! Returns the centre frequency of the first channel in MHz
     double get_base_frequency () const;
@@ -321,33 +317,8 @@ namespace dsp {
     //! Sets the feed type based on the telescope and centre frequency
     void set_default_basis ();
 
-    //! Returns all information contained in this class into the return value
-    string obs2string() const;
-    
-    //! Converts the class information into a Header
-    //! If 'hdr' is non-null, that Header is written to but its size, id and version aren't set
-    Reference::To<Header> obs2Header(Header* hdr=0) const;
-
-    //! Writes all information contained in this class into the specified filename
-    void obs2file(string filename, int64 offset) const;
-    
-    //! Writes all information contained in this class into the file descriptor
-    void obs2file(int fd, int64 offset,int whence=SEEK_SET) const;
-
-    //! Opposite of obs2file
-    void file2obs(string filename, int64 offset=0);
-
-    //! Opposite of obs2file
-    void file2obs(int fd, int64 offset, int whence=SEEK_SET);
-
-    //! Initializes the Observation from a parsed-Header
-    void Header2obs(Reference::To<Header> hdr);
-
     //! Set all attributes to null default
     void init ();
-
-    //! Returns the version number to put in the Header when writing out
-    float get_version() const { return 2.0; }
 
     //! Returns a pointer to the dspExtension
     //! If the dspExtension is not stored this throws an Error
@@ -370,13 +341,13 @@ namespace dsp {
     bool has() const;
 
     //! Returns true if one of the stored dspExtensions has this name
-    bool has(string extension_name);
+    bool has(const std::string& extension_name);
 
     //! Adds a dspExtension
     void add(dspExtension* extension);
 
     //! Removes a dspExtension
-    Reference::To<dspExtension> remove_extension(string ext_name);
+    Reference::To<dspExtension> remove_extension(const std::string& ext_name);
 
     //! Returns the number of dspExtensions currently stored
     unsigned get_nextensions() const;
@@ -387,22 +358,16 @@ namespace dsp {
     //! Returns the i'th dspExtension stored
     const dspExtension* get_extension(unsigned iext) const;
 
-    //! The title for plots
-    void set_title(string _title){ title = _title; }
-    string get_title(){ return title; }
-
   protected:
 
-    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
-    /* HSK 4/12/04 dspExtensions not currently written out */
     //! Extra stuff
-    vector<Reference::To<dspExtension> > extensions;
+    std::vector<Reference::To<dspExtension> > extensions;
     
     //! Tempo telescope code
     char telescope;
 
     //! Source name.  If a pulsar, should be J2000
-    string source;
+    std::string source;
 
     //! Centre frequency of band-limited signal in MHz
     double centre_frequency;
@@ -438,13 +403,13 @@ namespace dsp {
     bool dc_centred;
 
     //! Observation identifier
-    string identifier;
+    std::string identifier;
 
     //! Observation mode
-    string mode;
+    std::string mode;
 
     //! Instrument used to record signal
-    string machine;
+    std::string machine;
 
     //! Coordinates of the source
     sky_coord coordinates;
@@ -456,21 +421,10 @@ namespace dsp {
     double between_channel_dm;
 
     //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
-    string domain;
+    std::string domain;
 
     //! The last format the data was stored as ("raw","CoherentFB","Digi" etc)
-    string last_ondisk_format;
-
-    /* PLEASE: if you add more attributes to the dsp::Observation class then please modify obs2Header(), obs2string(), obs2file(), file2obs() appropriately!  */
-
-    //! Worker function for file2obs that seeks through to correct place in file
-    virtual void file_seek(int fd, int64 offset,int whence);
-  
-    //! Determines the version of the dsp::Observation printout
-    float get_version(int fd);
-
-    //! Old pre-Header version of file2obs()
-    void old_file2obs(int fd);
+    std::string last_ondisk_format;
 
   private:
     /////////////////////////////////////////////////////////////////////
@@ -498,30 +452,6 @@ namespace dsp {
     //! The calfrequency
     double calfreq;
 
-    //! The title for plots
-    string title;
-
-  };
-
-  class ObservationPtr {
-  public:
-    Observation* ptr;
-
-    Observation& operator * () const
-    { if(!ptr) throw Error(InvalidState,"dsp::ObservationPtr::operator*()","You have called operator*() when ptr is NULL"); return *ptr; }
-    Observation* operator -> () const 
-    { if(!ptr) throw Error(InvalidState,"dsp::ObservationPtr::operator*()","You have called operator*() when ptr is NULL"); return ptr; }
-        
-    ObservationPtr& operator=(const ObservationPtr& obs){ ptr = obs.ptr; return *this; }
-
-    ObservationPtr(const ObservationPtr& obs){ ptr = obs.ptr; }
-    ObservationPtr(Observation* _ptr){ ptr = _ptr; }
-    ObservationPtr(){ ptr = 0; }
-
-    bool operator < (const ObservationPtr& obs) const
-    { return ptr->get_centre_frequency() < obs->get_centre_frequency(); }
-
-    ~ObservationPtr(){ }
   };
 
 }

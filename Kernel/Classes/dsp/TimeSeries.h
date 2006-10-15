@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.35 $
-   $Date: 2006/08/04 00:08:09 $
+   $Revision: 1.36 $
+   $Date: 2006/10/15 03:50:14 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -110,7 +110,7 @@ namespace dsp {
     virtual void check (float min=-10.0, float max=10.0);
 
     //! Delete the current data buffer and attach to this one
-    virtual void attach (auto_ptr<float> _data);
+    virtual void attach (std::auto_ptr<float> _data);
 
     //! Call this when you do not want to transfer ownership of the array
     virtual void attach (float* _data);

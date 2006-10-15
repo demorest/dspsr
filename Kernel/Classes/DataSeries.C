@@ -11,6 +11,8 @@
 #include "dsp/DataSeries.h"
 #include "Error.h"
 
+using namespace std;
+
 int dsp::DataSeries::instantiation_count = 0;
 int64 dsp::DataSeries::memory_used = 0;
 

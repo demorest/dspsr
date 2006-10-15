@@ -51,7 +51,13 @@ LDFLAGS="-L$PSRHOME/packages/$LOGIN_ARCH/lib $LDFLAGS"
 #
 # Checks for essential libraries
 #
-AC_CHECK_LIB([m], [sin])
+
+SWIN_LIB_PSRCHIVE([],AC_MSG_ERROR([PSRCHIVE Library not found.
+
+Please see http://psrchive.sourceforge.net
+
+]))
+
 SWIN_LIB_FFTW
 SWIN_LIB_MKL
 SWIN_LIB_IPP
@@ -89,48 +95,10 @@ ACLOCAL="$ACLOCAL -I config"
 INSTALL_DATA="${INSTALL} -m 644 -p"
 install_sh="CPPROG='cp -p' ${install_sh}"
 
-# Checks for header files.
-#
-AC_HEADER_DIRENT
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdlib.h string.h strings.h sys/ioctl.h sys/mount.h sys/param.h sys/socket.h sys/statvfs.h sys/time.h sys/vfs.h unistd.h utime.h values.h])
-
-#
-# Checks for typedefs, structures, and compiler characteristics.
-#
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_C_INLINE
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_CHECK_DECLS([sys_siglist])
-AC_HEADER_TIME
-AC_STRUCT_TM
-AC_C_VOLATILE
-
 #
 # Checks for library functions.
 #
 SWIN_FUNC_GETOPT_LONG
-AC_FUNC_CLOSEDIR_VOID
-AC_FUNC_ERROR_AT_LINE
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_LSTAT
-AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
-AC_FUNC_MALLOC
-AC_FUNC_MKTIME
-AC_FUNC_REALLOC
-AC_FUNC_SELECT_ARGTYPES
-AC_TYPE_SIGNAL
-AC_FUNC_STAT
-AC_FUNC_STRFTIME
-AC_FUNC_STRTOD
-AC_FUNC_UTIME_NULL
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([alarm floor ftruncate getcwd gethostbyaddr gethostbyname gethostname gettimeofday inet_ntoa memmove memset mkdir modf pow regcomp rint rmdir select socket sqrt strcasecmp strchr strcspn strdup strerror strncasecmp strpbrk strrchr strspn strstr utime])
 
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])

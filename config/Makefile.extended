@@ -282,9 +282,11 @@ $(LOGIN_ARCH)/%.ldep: $(LOGIN_ARCH)/.exists
 ##########################################################################
 
 $(LOGIN_ARCH)/%.o: %.c $(LOGIN_ARCH)/.exists
+	echo INCFLAGS=$(INCFLAGS)
 	$(CC) ${INCFLAGS} ${CFLAGS} ${CPPFLAGS} -c -o $@ $<
 
 $(LOGIN_ARCH)/%.o: %.C $(LOGIN_ARCH)/.exists
+	echo INCFLAGS=$(INCFLAGS)
 	$(CCC) ${INCFLAGS} ${CCFLAGS} ${CPPFLAGS} -c -o $@ $<
 
 $(LOGIN_ARCH)/%.o: %.f $(LOGIN_ARCH)/.exists

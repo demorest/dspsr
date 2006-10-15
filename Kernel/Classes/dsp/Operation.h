@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.31 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.32 $
+   $Date: 2006/10/15 03:50:14 $
+   $Author: straten $ */
 
 #ifndef __Operation_h
 #define __Operation_h
@@ -71,7 +71,7 @@ namespace dsp {
     virtual bool operate ();
 
     //! Return the unique name of this operation
-    string get_name() { return name; }
+    std::string get_name() { return name; }
 
     //! Return the total time spent on this Operation in seconds
     double get_total_time () const;
@@ -104,10 +104,10 @@ namespace dsp {
     virtual void operation () = 0;
 
     //! Set the name!
-    virtual void set_name(string _name){ name = _name; }
+    virtual void set_name (const std::string& _name){ name = _name; }
 
     //! Operation name
-    string name;
+    std::string name;
 
     //! Number of time sample weights encountered that are flagged invalid
     uint64 discarded_weights;
@@ -124,17 +124,17 @@ namespace dsp {
     static void* workingspace (size_t nbytes);
 
     //! Returns the index in the 'timers' array of a particular timer
-    int timers_index(string op_name);
+    int timers_index (const std::string& op_name);
 
     //! Called by TimeKeeper to print out times etc.
     Time get_operation_time();
-    vector<Time> get_extra_times();
+    std::vector<Time> get_extra_times();
 
     //! Stop watch records the amount of time spent performing this operation
     OperationTimer optime;
 
     //! More stop watches for recording miscellaneous timings
-    vector<OperationTimer> timers;
+    std::vector<OperationTimer> timers;
 
     //! Unique instantiation id
     int id;

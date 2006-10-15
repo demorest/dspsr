@@ -11,7 +11,6 @@
 
 #include <string>
 
-#include "psr_cpp.h"
 #include "Reference.h"
 
 namespace dsp{
@@ -22,7 +21,7 @@ namespace dsp{
   public:
 
     //! Constructor
-    dspExtension(string _name, bool _can_only_have_one=true);
+    dspExtension (std::string _name, bool _can_only_have_one=true);
 
     //! Virtual destructor
     virtual ~dspExtension();
@@ -37,15 +36,15 @@ namespace dsp{
     virtual bool must_only_have_one() const;
 
     //! Dump out to a string
-    virtual string dump_string() const = 0;
+    virtual std::string dump_string() const = 0;
 
     //! Delete this if dspExtension inherits from Printable
-    string get_name() const { return name; }
+    std::string get_name() const { return name; }
 
   private:
 
     //! Delete this if dspExtension inherits from Printable
-    string name;
+    std::string name;
 
     //! If true, then you can only have one of this type of dspExtension per Observation instantiation
     bool can_only_have_one;
