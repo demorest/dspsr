@@ -4,13 +4,12 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <string>
 
 #include "dsp/PMDAQ_Observation.h"
-
-#include "string_utils.h"
-#include "genutil.h"
+#include "strutil.h"
 #include "coord.h"
+
+using namespace std;
 
 // See /psr/cvshome/hknight/soft_swin/search/sc_td/sc_pmhead.inc for more details on header format
 
@@ -34,7 +33,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   nscanned = sscanf(&header[10+jump],"%f4.1",&version);
   if (nscanned != 1) {
-    throw_str ("PMDAQ_Observation - failed read PMDAQ_HEADER_VERSION");
+    throw Error (InvalidState, "PMDAQ_Observation", "failed read PMDAQ_HEADER_VERSION");
   }
 
   // //////////////////////////////////////////////////////////////////////
@@ -45,7 +44,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   if (strncmp(&header[592+jump],"PARKES",6)==0)
     set_telescope_code (7);
   else
-    throw_str ("PMDAQ_Observation - failed to recognise telescope %10.10s\n",
+    throw Error (InvalidState, "PMDAQ_Observation", "failed to recognise telescope %10.10s\n",
 	       &header[592+jump]);
 
   // //////////////////////////////////////////////////////////////////////
@@ -139,7 +138,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   nscanned = sscanf(&header[jump+256],"%lf",&sampling_interval);
   if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read sampling interval\n");
+    throw Error (InvalidState, "PMDAQ_Observation", "failed to read sampling interval\n");
   }
 
   sampling_interval *= 1e-3;
@@ -163,19 +162,19 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 
   nscanned = sscanf(&header[jump+40],"%d",&int_MJD);
   if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read integer part of MJD\n");
+    throw Error (InvalidState, "PMDAQ_Observation", "failed to read integer part of MJD\n");
   }
   nscanned = sscanf(&header[jump+49],"%2d",&hh);
   if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read hours in ut start\n");
+    throw Error (InvalidState, "PMDAQ_Observation", "failed to read hours in ut start\n");
   }
   nscanned = sscanf(&header[jump+52],"%2d",&mm);
   if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read minutes in ut start\n%2.2s\n",&header[jump+51]);
+    throw Error (InvalidState, "PMDAQ_Observation", "failed to read minutes in ut start\n%2.2s\n",&header[jump+51]);
   }
   nscanned = sscanf(&header[jump+55],"%9lf",&secs);
   if (nscanned != 1) {
-    throw_str("PMDAQ_Observation - failed to read seconds in ut start\n");
+    throw Error (InvalidState, "PMDAQ_Observation", "failed to read seconds in ut start\n");
   }
 
   int int_secs = (int) secs;

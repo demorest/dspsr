@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/rdisk.h,v $
-   $Revision: 1.5 $
-   $Date: 2006/07/09 13:27:06 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2006/10/15 23:26:47 $
+   $Author: straten $ */
 
 #ifndef __RDISK_H
 #define __RDISK_H
@@ -18,29 +18,27 @@
 #include <string>
 #include <vector>
 
-#include "psr_cpp.h"
-
 class rdisk {
 
  public:
-  string machine;
-  string path;
+  std::string machine;
+  std::string path;
 
-  static string rsh;
+  static std::string rsh;
 
   rdisk () {};
-  rdisk (const string& parse) { load (parse); }
+  rdisk (const std::string& parse) { load (parse); }
 
-  void load (const string& parse);
+  void load (const std::string& parse);
 
   // returns the available space in bytes
   double space () const;
 
-  static void load (vector<rdisk>& disks, const char* filename);
+  static void load (std::vector<rdisk>& disks, const char* filename);
 
 };
 
-inline ostream& operator << (ostream& ostr, const rdisk& rd)
+inline std::ostream& operator << (std::ostream& ostr, const rdisk& rd)
 { return ostr << rd.machine << ":" << rd.path; }
 
 #endif

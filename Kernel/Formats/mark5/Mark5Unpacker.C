@@ -9,6 +9,8 @@
 #include "dsp/Mark5TwoBitCorrection.h"
 #include "vlba_stream.h"
 
+using namespace std;
+
 //! Constructor
 dsp::Mark5Unpacker::Mark5Unpacker (const char* _name) : Unpacker (_name)
 {

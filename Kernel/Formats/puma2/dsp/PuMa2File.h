@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma2/dsp/PuMa2File.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2006/10/15 23:26:48 $
+   $Author: straten $ */
 
 
 #ifndef __PuMa2File_h
@@ -40,7 +40,7 @@ namespace dsp {
     virtual void open_file (const char* filename);
 
     //! Read the PuMa2 ascii header from filename
-    static string get_header (const char* filename);
+    static std::string get_header (const char* filename);
 
   };
 

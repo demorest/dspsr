@@ -4,7 +4,6 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <string>
 
 #include "dsp/S2File.h"
 #include "Telescope.h"
@@ -12,7 +11,8 @@
 
 // S2 header and unpacking routines
 #include "tci_file.h"
-#include "genutil.h"
+
+using namespace std;
 
 // #define _DEBUG
 

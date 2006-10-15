@@ -4,21 +4,10 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <iostream>
-
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "environ.h"
 #include "dsp/OneBitCorrection.h"
-
-#include "dsp/Observation.h"
-#include "dsp/BitSeries.h"
-#include "dsp/TimeSeries.h"
-#include "dsp/PMDAQFile.h"
 #include "dsp/PMDAQ_Extension.h"
+
+using namespace std;
 
 //! Null constructor
 dsp::OneBitCorrection::OneBitCorrection (const char* _name)

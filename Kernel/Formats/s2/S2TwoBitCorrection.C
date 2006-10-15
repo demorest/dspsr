@@ -9,7 +9,7 @@
 #include "dsp/Observation.h"
 #include "Error.h"
 
-#include "genutil.h"
+using namespace std;
 
 bool dsp::S2TwoBitCorrection::matches (const Observation* observation)
 {

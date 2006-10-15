@@ -4,24 +4,24 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#include "dsp/CPSRFile.h"
+#include "pspmDbase.h"
+#include "pspm++.h"
+#include "dirutil.h"
+#include "Error.h"
+
+// CPSR header and unpacking routines
+#define cpsr 1
+#include "pspm_search_header.h"
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
 
-#include "environ.h"
-
-// CPSR header and unpacking routines
-#define cpsr 1
-#include "pspm_search_header.h"
-#include "pspmDbase.h"
-
-#include "dsp/CPSRFile.h"
-#include "Error.h"
-
-#include "pspm++.h"
-#include "genutil.h"
+using namespace std;
 
 //! Construct and open file
 dsp::CPSRFile::CPSRFile (const char* filename)

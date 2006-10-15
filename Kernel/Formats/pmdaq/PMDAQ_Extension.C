@@ -4,12 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <string>
-
-#include "environ.h"
-#include "string_utils.h"
 
 #include "dsp/PMDAQ_Extension.h"
+#include "tostring.h"
+
+using namespace std;
 
 //! Null constructor
 dsp::PMDAQ_Extension::PMDAQ_Extension() : dspExtension("PMDAQ_Extension")
@@ -33,8 +32,8 @@ dsp::dspExtension* dsp::PMDAQ_Extension::new_extension() const {
 
 //! Dump out to a string
 string dsp::PMDAQ_Extension::dump_string() const{
-  string s = "pmdaq_begin_chan\t" + make_string(chan_begin) + "\n";
-  s += "pmdaq_end_chan\t" + make_string(chan_end) + "\n";
+  string s = "pmdaq_begin_chan\t" + tostring(chan_begin) + "\n";
+  s += "pmdaq_end_chan\t" + tostring(chan_end) + "\n";
   return s;
 }
 

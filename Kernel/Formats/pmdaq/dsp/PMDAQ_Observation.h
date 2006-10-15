@@ -7,11 +7,8 @@
 #ifndef __PMDAQ_Observation_h
 #define __PMDAQ_Observation_h
 
-#include <string>
-
-#include "string_utils.h"
-
 #include "dsp/Observation.h"
+#include "tostring.h"
 
 namespace dsp {
  
@@ -68,8 +65,8 @@ namespace dsp {
 //! Parses the C string
 template<class T>
 T dsp::PMDAQ_Observation::read_header(const char* header,unsigned startchar, unsigned nchars){
-  string ss = string(header+startchar,header+startchar+nchars);
-  return convert_string<T>(ss);
+  std::string ss (header+startchar,header+startchar+nchars);
+  return fromstring<T>(ss);
 }
 
 #endif

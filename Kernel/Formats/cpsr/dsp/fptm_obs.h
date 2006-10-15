@@ -23,27 +23,29 @@
 class fptm_obs {
 
  public:
-  static string logfilename;
+  static std::string logfilename;
 
   MJD start;
   int obstype;
   double duration;
-  string source;
+  std::string source;
 
   AnglePair coordinates;
   double period;
 
   fptm_obs ();
-  fptm_obs (string* parse);
-  fptm_obs (const MJD& start, double duration, string source, int obstype=0);
+  fptm_obs (std::string* parse);
+  fptm_obs (const MJD& start, double duration, std::string source,
+	    int obstype=0);
 
   bool overlaps (const MJD& tstart, const MJD& tend);
 
-  int load (string* parse, int original=0);
+  int load (std::string* parse, int original=0);
   int unload (FILE* out, int original=0);
 
 };
 
-int relevant (vector<fptm_obs>* observations, const MJD& mjd, double duration);
+int relevant (std::vector<fptm_obs>* observations,
+	      const MJD& mjd, double duration);
 
 #endif

@@ -4,22 +4,20 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+#include "dsp/PMDAQFile.h"
+#include "dsp/PMDAQ_Observation.h"
+#include "dsp/PMDAQ_Extension.h"
+#include "dsp/BitSeries.h"
+#include "dsp/Observation.h"
+
+#include "dirutil.h"
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <errno.h>
-#include <math.h>
 
-#include "genutil.h"
-#include "Error.h"
-#include "environ.h"
-
-#include "dsp/BitSeries.h"
-#include "dsp/Observation.h"
-#include "dsp/PMDAQ_Extension.h"
-#include "dsp/PMDAQFile.h"
-#include "dsp/PMDAQ_Observation.h"
+using namespace std;
 
 #define PMDAQ_HEADER_SIZE 648
 
@@ -178,8 +176,8 @@ void dsp::PMDAQFile::open_file (const char* filename)
   fd = ::open (filename, O_RDONLY);
   
   if (fd < 0)
-    throw_str ("PMDAQFile::open - failed open(%s): %s", 
-	       filename, strerror(errno));
+    throw Error (FailedSys, "PMDAQFile::open",
+		 "failed open(%s)", filename);
   
   absolute_position = 0;
   

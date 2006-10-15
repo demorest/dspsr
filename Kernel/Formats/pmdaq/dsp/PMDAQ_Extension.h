@@ -37,7 +37,7 @@ namespace dsp {
     virtual dspExtension* new_extension() const;
 
     //! Dump out to a string
-    virtual string dump_string() const;
+    virtual std::string dump_string() const;
 
     void set_chan_begin(unsigned _chan_begin){ chan_begin = _chan_begin; }
     unsigned get_chan_begin() const { return chan_begin; }

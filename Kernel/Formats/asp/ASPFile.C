@@ -10,6 +10,11 @@
 
 #include "Error.h"
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
+using namespace std;
+
 dsp::ASPFile::ASPFile (const char* filename,const char* headername)
   : BlockFile ("ASP")
 {

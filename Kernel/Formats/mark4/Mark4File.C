@@ -8,7 +8,6 @@
 #include <iomanip>
 
 #include "Error.h"
-#include "string_utils.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -16,6 +15,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
+
+using namespace std;
 
 dsp::Mark4File::Mark4File (const char* filename) 
   : File ("Mark4")

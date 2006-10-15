@@ -4,12 +4,20 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <algorithm>
-#include <stdio.h>
+
+#include "pspmDbase.h"
+#include "dirutil.h"
+#include "pspm++.h"
+#include "Error.h"
 
 // CPSR hdr and unpacking routines
 #define cpsr 1
 #include "pspm_search_header.h"
+
+#include <algorithm>
+#include <stdio.h>
+
+using namespace std;
 
 // #define _DEBUG 1
 
@@ -22,10 +30,6 @@
 #define	DSB_SKYFREQ		3
 #define	DSB_REVERSED		4
 
-#include "pspmDbase.h"
-#include "genutil.h"
-#include "dirutil.h"
-#include "pspm++.h"
 
 static string default_fname;
 static pspmDbase::server default_server;
@@ -35,7 +39,8 @@ const char* pspmDbase::server::default_name()
   if (default_fname.empty()) {
     char* psrhome = getenv ("PSRHOME");
     if (!psrhome)
-      throw string ("pspmDbase::server::default PSRHOME not defined");
+      throw Error (InvalidState, "pspmDbase::server::default",
+		   "PSRHOME not defined");
     default_fname = psrhome;
     default_fname += "/runtime/cpsr/header.entries";
   }
@@ -116,7 +121,8 @@ void pspmDbase::entry::load (const char* str)
 		     &ttelid, &ndigchan, &nbit, &ndat);
 
   if (s != 13)
-    throw_str ("pspmDbase::entry::load error parsing '%s'", str);
+    throw Error (InvalidParam, "pspmDbase::entry::load",
+		 "error parsing '%s'", str);
 
   start.Construct(mjdstr);
   name = src;
@@ -181,8 +187,8 @@ void pspmDbase::server::create (const char* glob)
   for (unsigned ifile=0; ifile<filenames.size(); ifile++) {
     PSPM_SEARCH_HEADER* hdr = pspm_read (filenames[ifile].c_str());
 
-    if (!hdr) throw "pspmDbase::server::create "
-		"failed pspm_read(" + filenames[ifile] + ")";
+    if (!hdr) throw Error (FailedCall, "pspmDbase::server::create",
+			   "failed pspm_read(" + filenames[ifile] + ")");
 
     try { next.create(hdr); }
     catch (...) { continue; }
@@ -202,7 +208,8 @@ void pspmDbase::server::load (const char* dbase_filename)
 
   FILE* fptr = fopen (dbase_filename, "r");
   if (!fptr)
-    throw_str ("pspmDbase::server::load error fopen(%s)\n", dbase_filename);
+    throw Error (FailedSys, "pspmDbase::server::load",
+		 "error fopen(%s)\n", dbase_filename);
 
   entries.clear();
   entry next;
@@ -223,7 +230,8 @@ void pspmDbase::server::unload (const char* dbase_filename)
 
   FILE* fptr = fopen (dbase_filename, "w");
   if (!fptr)
-    throw_str ("pspmDbase::server::unload error fopen(%s)\n", dbase_filename);
+    throw Error (FailedSys, "pspmDbase::server::unload",
+		 "error fopen(%s)\n", dbase_filename);
 
   string out;
   for (unsigned ie=0; ie<entries.size(); ie++) {
@@ -257,7 +265,7 @@ pspmDbase::entry pspmDbase::server::match (int32 tape, int32 file)
     if (entries[ie].match( tape, file ))
       return entries[ie];
 
-  throw string ("pspmDbase::server::match none found");
+  throw Error (InvalidState, "pspmDbase::server::match", "none found");
 }
 
 pspmDbase::entry
@@ -280,13 +288,13 @@ pspmDbase::server::match (int32 scan, int32 num, int32 tape, int32 file)
   }
 
   if (best < 3)
-    throw string ("pspmDbase::server::match not found");
+    throw Error (InvalidState, "pspmDbase::server::match", "not found");
 
   if (best == 3) {
     cerr << "pspmDbase::server::match partial with " <<ties<< " ties" << endl;
     if (ties) {
       cerr << "pspmDbase::server::match WILLEM, CODE A SOLUTION!" << endl;
-      throw string ("pspmDbase::server::match TIED");
+      throw Error (InvalidState, "pspmDbase::server::match", "TIED");
     }
   }
 

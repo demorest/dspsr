@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.14 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.15 $
+   $Date: 2006/10/15 23:26:49 $
+   $Author: straten $ */
 
 
 #ifndef __S2File_h
@@ -42,11 +42,11 @@ namespace dsp {
 
     //! Structure to be used with the load_S2info function
     typedef struct {
-      string source;
+      std::string source;
       char telid;
       double freq;
       double calperiod;
-      string tapeid;
+      std::string tapeid;
     }S2_Extra_Hdr;
 
     S2_Extra_Hdr extra_hdr;

@@ -10,6 +10,9 @@
 #include "Error.h"
 
 #include <fstream>
+#include <fcntl.h>
+
+using namespace std;
 
 bool dsp::PuMa2File::want_to_check_bocf = true;
 

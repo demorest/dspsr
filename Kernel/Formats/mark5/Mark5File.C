@@ -10,8 +10,7 @@
 #include "Error.h"
 
 #include "coord.h"
-#include "string.h"	
-#include "string_utils.h"
+#include "strutil.h"	
 #include "ascii_header.h"
 
 #include <iomanip>
@@ -24,6 +23,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+
+using namespace std;
 
 dsp::Mark5File::Mark5File (const char* filename,const char* headername)
   : BlockFile ("Mark5")

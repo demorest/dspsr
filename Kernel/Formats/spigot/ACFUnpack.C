@@ -9,8 +9,10 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
 
-#include "fftm.h"
+#include "FTransform.h"
 #include "Error.h"
+
+using namespace std;
 
 //! Null constructor
 dsp::ACFUnpack::ACFUnpack (const char* _name) : Unpacker (_name)
@@ -53,7 +55,7 @@ void dsp::ACFUnpack::unpack ()
     for (ichan=1; ichan<nchan; ichan++)
       input_fft[nchan+ichan] = input_fft[nchan-ichan];
 
-    fft::frc1d (nchan*2, output_fft, input_fft);
+    FTransform::frc1d (nchan*2, output_fft, input_fft);
 
     for (unsigned ichan=0; ichan<nchan; ichan++)
       output->get_datptr (ichan) [idat] = output_fft[ichan*2];

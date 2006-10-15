@@ -7,7 +7,6 @@
 #include "dsp/MaximFile.h"
 
 #include "Error.h"
-#include "string_utils.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -15,6 +14,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
+
+using namespace std;
 
 dsp::MaximFile::MaximFile (const char* filename) 
   : File ("Maxim")

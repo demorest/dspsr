@@ -4,6 +4,14 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#define cpsr 1
+
+#include "pspm_search_header.h"
+#include "machine_endian.h"
+#include "pspm++.h"
+#include "tapepos.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,12 +20,7 @@
 #include <values.h>
 #include <math.h>
 
-#define cpsr 1
-
-#include "pspm_search_header.h"
-#include "machine_endian.h"
-#include "pspm++.h"
-#include "genutil.h"
+using namespace std;
 
 // #if (sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZES)
 // #error Architecture Error! PSPM header size is invalid.

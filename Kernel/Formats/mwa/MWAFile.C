@@ -4,22 +4,14 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#include <string>
-
-#include "Reference.h"
-#include "string_utils.h"
-#include "MJD.h"
-#include "fd_utils.h"
-#include "utc.h"
-#include "Header.h"
-#include "genutil.h"
-
-#include "dsp/File.h"
 #include "dsp/MWAFile.h"
+#include "dirutil.h"
+#include "h_string.h"
+
+#include <sys/stat.h>
+#include <fcntl.h>
+
+using namespace std;
 
 //! Construct and open file
 dsp::MWAFile::MWAFile (const char* filename)
@@ -47,7 +39,7 @@ dsp::MWAFile::is_valid (const char* filename,int) const
   }
 
   string info_file = filename;
-  if( h_chomp(info_file,".mwa") )
+  if( h_backchomp(info_file,".mwa") )
     return true;
 
   return false;

@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+using namespace std;
+
 
 dsp::SpigotFile::SpigotFile (const char* filename)
   : File ("Spigot")

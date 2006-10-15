@@ -8,7 +8,6 @@
 #include "dsp/SMROFile.h"
 
 #include "Error.h"
-#include "string_utils.h"
 
 #include <stdio.h>
 #include <unistd.h>

@@ -8,6 +8,9 @@
 
 #include "ascii_header.h"
 #include "coord.h"
+#include "strutil.h"
+
+using namespace std;
 
 dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
 {
