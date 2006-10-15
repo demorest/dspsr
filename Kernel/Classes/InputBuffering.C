@@ -6,6 +6,8 @@
  ***************************************************************************/
 #include "dsp/InputBuffering.h"
 
+using namespace std;
+
 dsp::InputBuffering::InputBuffering (HasInput<TimeSeries>* _target)
 {
   target = _target;

@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.23 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.24 $
+   $Date: 2006/10/15 04:43:53 $
+   $Author: straten $ */
 
 
 #ifndef __MultiFile_h
@@ -33,10 +33,10 @@ namespace dsp {
     virtual ~MultiFile ();
     
     //! Open a number of files and treat them as one logical observation.
-    virtual void open (const vector<string>& new_filenames, int bs_index = 0);
+    virtual void open (const std::vector<std::string>& new_filenames, int bs_index = 0);
 
     //! Makes sure only these filenames are open
-    virtual void have_open (const vector<string>& filenames, int bs_index = 0);
+    virtual void have_open (const std::vector<std::string>& filenames, int bs_index = 0);
 
     //! Retrieve a pointer to the loader File instance
     File* get_loader ();
@@ -53,10 +53,10 @@ namespace dsp {
 
     //! Erase just some of the list of loadable files
     //! Resets the file pointers regardless
-    virtual void erase_files (const vector<string>& erase_filenames);
+    virtual void erase_files (const std::vector<std::string>& erase_filenames);
 
     //! Find out which file is currently open;
-    string get_current_filename() const { return current_filename; }
+    std::string get_current_filename() const { return current_filename; }
 
     //! Find out the index of current file is
     unsigned get_index() const { return current_index; }
@@ -73,13 +73,13 @@ namespace dsp {
     virtual int64 seek_bytes (uint64 bytes);
 
     //! List of files
-    vector< Reference::To<File> > files;
+    std::vector< Reference::To<File> > files;
 
     //! Currently open File instance
     Reference::To<File> loader;
 
     //! Name of the currently opened file
-    string current_filename;
+    std::string current_filename;
 
     //! initialize variables
     void init();

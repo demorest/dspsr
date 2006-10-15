@@ -4,7 +4,6 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <iostream>
 
 #include "dsp/Input.h"
 #include "dsp/BitSeries.h"
@@ -13,7 +12,8 @@
 #include "environ.h"
 
 #include "Error.h"
-#include "genutil.h"
+
+using namespace std;
 
 dsp::Input::Input (const char* name) : Operation (name)
 {

@@ -11,7 +11,8 @@
 #include "dsp/TimeSeries.h"
 
 #include "Error.h"
-//#include "genutil.h"
+
+using namespace std;
 
 //! Constructor
 dsp::IOManager::IOManager () : Operation ("IOManager")

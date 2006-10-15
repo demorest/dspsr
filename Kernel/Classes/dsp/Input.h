@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.32 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.33 $
+   $Date: 2006/10/15 04:43:53 $
+   $Author: straten $ */
 
 #ifndef __Input_h
 #define __Input_h
@@ -115,10 +115,10 @@ namespace dsp {
     void set_total_seconds (double seconds);
 
     //! Change the source name after each call to operate()
-    void set_real_source(string _real_source){ real_source = _real_source; }
+    void set_real_source (const std::string& src) { real_source = src; }
     //! Inquire what source name will be changed to after each call to operate ["" meaning no change]
     //! get_info()->get_source() will return the sourcename if this is ""
-    string get_real_source(){ return real_source; }
+    std::string get_real_source(){ return real_source; }
 
   protected:
 
@@ -154,7 +154,7 @@ namespace dsp {
     uint64 last_load_ndat;
 
     //! If not "" then the source of the output gets changed to this after loading [""]
-    string real_source;
+    std::string real_source;
 
   private:
 

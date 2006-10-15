@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.18 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.19 $
+   $Date: 2006/10/15 04:43:53 $
+   $Author: straten $ */
 
 
 #ifndef __IOManager_h
@@ -40,7 +40,7 @@ namespace dsp {
     virtual ~IOManager ();
     
     //! Prepare the appropriate Input and Unpacker
-    virtual void open (const string& id);
+    virtual void open (const std::string& id);
 
     //! Get the information about the data source
     const Observation* get_info () const;

@@ -6,6 +6,9 @@
  ***************************************************************************/
 
 #include "dsp/OutputBuffering.h"
+#include "find_nint.h"
+
+using namespace std;
 
 dsp::OutputBuffering::OutputBuffering (HasOutput<TimeSeries>* tr,
 				       bool conserve_time)

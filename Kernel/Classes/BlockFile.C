@@ -14,6 +14,8 @@
 
 #include "dsp/BlockFile.h"
 
+using namespace std;
+
 //! Constructor
 dsp::BlockFile::BlockFile (const char* name) : File (name)
 {

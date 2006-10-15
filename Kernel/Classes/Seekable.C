@@ -4,13 +4,14 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <iostream>
 
 #include "dsp/Seekable.h"
 #include "dsp/BitSeries.h"
 
 #include "environ.h"
 #include "Error.h"
+
+using namespace std;
 
 //! Constructor
 dsp::Seekable::Seekable (const char* name) : Input (name)

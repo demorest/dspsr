@@ -15,6 +15,8 @@
 #include "dsp/Observation.h"
 #include "dsp/PseudoFile.h"
 
+using namespace std;
+
 dsp::PseudoFile::PseudoFile (File* f)
 {
   Observation::operator = ( *f->get_info() );

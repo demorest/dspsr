@@ -7,22 +7,16 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.28 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.29 $
+   $Date: 2006/10/15 04:43:53 $
+   $Author: straten $ */
 
 
 #ifndef __File_h
 #define __File_h
 
-#include "Reference.h"
-
-namespace dsp {
-  class File;
-}
-
-#include "Registry.h"
 #include "dsp/Seekable.h"
+#include "Registry.h"
 
 namespace dsp {
 
@@ -55,7 +49,7 @@ namespace dsp {
     static File* create (const char* filename,int _bs_index=0);
 
     //! Convenience interface to File::create (const char*)
-    static File* create (const string& filename,int _bs_index=0)
+    static File* create (const std::string& filename,int _bs_index=0)
     { return create (filename.c_str(),_bs_index); }
 
     //! Constructor
@@ -73,7 +67,7 @@ namespace dsp {
     virtual void open (const char* filename,int _bs_index=0);
 
     //! Convenience interface to File::open (const char*)
-    void open (const string& filename,int _bs_index=0) 
+    void open (const std::string& filename,int _bs_index=0) 
     { open (filename.c_str(),_bs_index); }
 
     //! Open from a PseudoFile
@@ -87,8 +81,8 @@ namespace dsp {
     virtual void reopen ();
 
     //! Return the name of the file from which this instance was created
-    string get_filename () const { return current_filename; }
-    string get_current_filename() const { return current_filename; }
+    std::string get_filename () const { return current_filename; }
+    std::string get_current_filename() const { return current_filename; }
 
     //! Inquire how many bytes are in the header
     int get_header_bytes() const{ return header_bytes; }
@@ -130,7 +124,7 @@ namespace dsp {
     //@}
 
     //! The name of the currently opened file, set by open()
-    string current_filename;
+    std::string current_filename;
 
     //! Stores the index of the BitSeries to be loaded.  A file loader that whose files can store more than one BitSeries stream should have this number >=0
     int bs_index;

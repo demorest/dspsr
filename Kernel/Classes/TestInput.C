@@ -8,6 +8,8 @@
 #include "dsp/Input.h"
 #include "dsp/BitSeries.h"
 
+using namespace std;
+
 bool dsp::TestInput::verbose = false;
 
 //! Constructor

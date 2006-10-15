@@ -7,10 +7,12 @@
 #include "dsp/MultiFile.h"
 #include "dsp/File.h"
 #include "Error.h"
-#include "genutil.h"
+#include "templates.h"
 
 #include <algorithm>
 #include <math.h>
+
+using namespace std;
 
 dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
 {
@@ -39,7 +41,7 @@ void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
 
   // open up each of the new files and add it to our list of files
   for( unsigned i=0; i<new_filenames.size(); i++){
-    if( !is_one_of(new_filenames[i],old_filenames) ){
+    if( !found(new_filenames[i],old_filenames) ){
 
       // If there is no loader, create one from the first file
       loader = File::create( new_filenames[i], bs_index );
@@ -85,7 +87,7 @@ void dsp::MultiFile::have_open (const vector<string>& filenames,int bs_index)
 {
   // Erase any files we already have open that we don't want open
   for( unsigned ifile=0; ifile<files.size(); ifile++){
-    if( !is_one_of(files[ifile]->get_filename(),filenames) ){
+    if( !found(files[ifile]->get_filename(),filenames) ){
       files.erase(files.begin()+ifile);
       ifile--;
     }
@@ -107,7 +109,7 @@ void dsp::MultiFile::erase_files()
 void dsp::MultiFile::erase_files(const vector<string>& erase_filenames)
 {
   for( unsigned ifile=0; ifile<files.size(); ifile++){
-    if( is_one_of(files[ifile]->get_filename(),erase_filenames) ){
+    if( found(files[ifile]->get_filename(),erase_filenames) ){
       files.erase( files.begin()+ifile );
       ifile--;
     }

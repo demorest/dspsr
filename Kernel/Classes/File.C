@@ -10,8 +10,7 @@
 #include "Reference.h"
 #include "Error.h"
 #include "RealTimer.h"
-#include "genutil.h"
-#include "string_utils.h"
+#include "tostring.h"
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -19,6 +18,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+
+using namespace std;
 
 //! Constructor
 dsp::File::File (const char* name) : Seekable (name)
@@ -87,7 +88,7 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
   
   string msg = filename;
 
-  msg += " not a recognized file format\n\t" + make_string(registry.size()) + " registered Formats: ";
+  msg += " not a recognized file format\n\t" + tostring(registry.size()) + " registered Formats: ";
 
   for (unsigned ichild=0; ichild < registry.size(); ichild++)
     msg += registry[ichild]->get_name() + " ";
