@@ -4,33 +4,18 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <vector>
-#include <string>
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-
-#include "sky_coord.h"
-#include "Types.h"
-#include "utc.h"
-#include "MJD.h"
-#include "string_utils.h"
-#include "fd_utils.h"
-#include "genutil.h"
-#include "environ.h"
-#include "machine_endian.h"
-
+#include "dsp/BCPMFile.h"
+#include "dsp/BCPMExtension.h"
 #include "bpphdr.h"
 
-#include "dsp/BCPMExtension.h"
-#include "dsp/BCPMFile.h"
+#include "fdutil.h"
+WvS FIX LATER
+
+#include <sys/stat.h>
+#include <fcntl.h>
+
+using namespace std;
 
 //#include "f772c.h"
 #ifndef F772C_H

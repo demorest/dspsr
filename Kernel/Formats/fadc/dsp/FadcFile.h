@@ -47,7 +47,7 @@ namespace dsp {
 		virtual void open_file (const char* filename);
 		
 		//! Read the Fadc header
-		static string get_header (const char* filename);
+		static std::string get_header (const char* filename);
 		
 		// also switches sign of the imaginary values
 		void dsp::FadcFile::writeByte(FILE* outfile, two_bit_out two);

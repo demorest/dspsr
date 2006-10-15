@@ -9,11 +9,6 @@
 #ifndef __dsp_BCPMExtension_h_
 #define __dsp_BCPMExtension_h_
 
-#include <vector>
-#include <string>
-
-#include "psr_cpp.h"
-
 #include "dsp/dspExtension.h"
 
 namespace dsp{
@@ -41,10 +36,10 @@ namespace dsp{
     virtual void copy(const BCPMExtension& b);
 
     //! Dump out to a string
-    virtual string dump_string() const;
+    virtual std::string dump_string() const;
     
     //! This stores the ordering of the channels in a BCPM data file
-    vector<int> chtab;
+    std::vector<int> chtab;
 
   };
 

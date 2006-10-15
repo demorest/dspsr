@@ -5,9 +5,8 @@
  *
  ***************************************************************************/
 #include "dsp/PuMaFile.h"
-
+#include "strutil.h"
 #include "Error.h"
-#include "string_utils.h"
 
 #if !defined(MALIGN_DOUBLE)
 #define NO_MALIGN_DOUBLE
@@ -20,6 +19,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+
+using namespace std;
 
 extern "C" void pumadump (const Header_type *hdr, FILE* fptr, Boolean verb);
 

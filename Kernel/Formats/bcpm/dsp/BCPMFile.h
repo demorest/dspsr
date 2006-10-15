@@ -9,12 +9,6 @@
 #ifndef __dsp_BCPMFile_h
 #define __dsp_BCPMFile_h
 
-#include <vector>
-
-#include "environ.h"
-#include "bpphdr.h"
-
-#include "dsp/PseudoFile.h"
 #include "dsp/File.h"
 
 namespace dsp {
@@ -43,7 +37,7 @@ namespace dsp {
     void switch_endianess();
     
     //! Pulled out of sigproc
-    vector<int> bpp_chans(double bw, int mb_start_addr, int mb_end_addr, int mb_start_brd, int mb_end_brd, int *cb_id, double *aib_los, float *dfb_sram_freqs, double rf_lo,double& centre_frequency);
+    std::vector<int> bpp_chans(double bw, int mb_start_addr, int mb_end_addr, int mb_start_brd, int mb_end_brd, int *cb_id, double *aib_los, float *dfb_sram_freqs, double rf_lo,double& centre_frequency);
 
     //! Pads gaps in data.  Untested
     virtual int64 pad_bytes(unsigned char* buffer, int64 bytes);
