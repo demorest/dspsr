@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.14 $
-   $Date: 2006/07/09 13:27:12 $
-   $Author: wvanstra $ */
+   $Revision: 1.15 $
+   $Date: 2006/10/15 21:48:06 $
+   $Author: straten $ */
 
 
 #ifndef __Detection_h
@@ -68,20 +68,11 @@ namespace dsp {
     //! Perform simple square-law detection
     void square_law ();
 
-    //! Form Stokes I from simple square-law detection and polarisation scrunching
-    void form_stokes_I();
-
-    //! Form Stokes I to the Nth power from simple square-law detection and polarisation scrunching
-    void form_nthpower(int _n=2);
-
     //! Polarization detection (Stokes parameters or Coherency products)
     void polarimetry ();
 
     //! Set the state of the output TimeSeries
     void resize_output ();
-
-    //! Converts a detected input to a different state
-    void redetect();
 
     //! Throws an Error if something is wrong
     void checks();

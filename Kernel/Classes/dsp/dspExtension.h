@@ -9,9 +9,8 @@
 #ifndef __dsp_dspExtension_h_
 #define __dsp_dspExtension_h_
 
-#include <string>
-
 #include "Reference.h"
+#include <string>
 
 namespace dsp{
 

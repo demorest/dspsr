@@ -9,16 +9,12 @@
 #ifndef __baseband_dsp_Simultaneous_h_
 #define __baseband_dsp_Simultaneous_h_
 
-#include <vector>
-#include <queue>
-
-#include "psr_cpp.h"
-#include "Reference.h"
-
 #include "dsp/BasicBuffer.h"
 #include "dsp/Operation.h"
 #include "dsp/Buffer.h"
 #include "dsp/TimeSeries.h"
+
+#include <queue>
 
 namespace dsp {
 
@@ -162,10 +158,10 @@ namespace dsp {
     vector<Reference::To<BasicBuffer> > output_buffers;
 
     //! Ordered list of who is to be used next
-    queue<Reference::To<BasicBuffer> > free_input_buffers;
-    queue<Reference::To<BasicBuffer> > full_input_buffers;
-    queue<Reference::To<BasicBuffer> > free_output_buffers;
-    queue<Reference::To<BasicBuffer> > full_output_buffers;
+    std::queue<Reference::To<BasicBuffer> > free_input_buffers;
+    std::queue<Reference::To<BasicBuffer> > full_input_buffers;
+    std::queue<Reference::To<BasicBuffer> > free_output_buffers;
+    std::queue<Reference::To<BasicBuffer> > full_output_buffers;
 
     //! Has the actual Buffers that the Operation was originally set up with
     Reference::To<BasicBuffer> op_input;

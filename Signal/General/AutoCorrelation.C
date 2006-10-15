@@ -7,6 +7,8 @@
 #include "dsp/AutoCorrelation.h"
 #include "dsp/WeightedTimeSeries.h"
 
+using namespace std;
+
 dsp::AutoCorrelation::AutoCorrelation () 
   : Transformation<TimeSeries,TimeSeries> ("AutoCorrelation", anyplace, true)
 {

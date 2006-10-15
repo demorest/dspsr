@@ -40,10 +40,15 @@ static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 static Registry::List<dsp::File>::Enter<dsp::EightBitFile> register_eightbitcpsr2;
 #endif
 
+#if 0
+
+/* Wvs FIX LATER */
 // This is defined in libdsp.a
 // It comes before CPSRFile as PSPMverify seems to think MultiBitSeriesFiles are CPSR files
 #include "dsp/MultiBitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile> register_multibitseriesfile;
+
+#endif
 
 #if DSP_mini
 #include "dsp/MiniFile.h"
@@ -110,8 +115,11 @@ static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
 static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
 #endif
 
+#if 0
+/* Wvs FIX LATER */
 #include "dsp/BitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfile;
+#endif
 
 #if DSP_mark4
 #include "dsp/Mark4File.h"

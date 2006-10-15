@@ -4,14 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <string>
-
-#include "string_utils.h"
-#include "psr_cpp.h"
-#include "format_it.h"
 
 #include "dsp/dspExtension.h"
 #include "dsp/DedispersionHistory.h"
+
+using namespace std;
 
 //! Null constructor
 dsp::DedispersionHistory::DedispersionHistory()
@@ -50,14 +47,16 @@ dsp::DedispersionHistory::add(string classname, float dm)
     dms.push_back( dm );
 }
 
+#include "format_it.h"
+#include "tostring.h"
+
 //! Dump out to a string
-string
-dsp::DedispersionHistory::dump_string() const
+string dsp::DedispersionHistory::dump_string() const
 {
   vector<string> lines;
 
   for( unsigned i=0; i<classes.size(); i++)
-    lines.push_back(classes[i] + " " + make_string(dms[i]) + "\n");
+    lines.push_back(classes[i] + " " + tostring(dms[i]) + "\n");
 
   format_it(lines,3);
 
@@ -67,3 +66,4 @@ dsp::DedispersionHistory::dump_string() const
 
   return s;
 }
+

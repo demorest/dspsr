@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.8 $
-   $Date: 2006/07/09 13:27:14 $
-   $Author: wvanstra $ */
+   $Revision: 1.9 $
+   $Date: 2006/10/15 21:48:08 $
+   $Author: straten $ */
 
 #ifndef __SubFold_h
 #define __SubFold_h
@@ -102,7 +102,7 @@ namespace dsp {
     virtual void set_limits (const Observation* input);
 
     //! If no unloader is set, sub-integrations are stored here
-    vector< Reference::To<PhaseSeries> > subints;
+    std::vector< Reference::To<PhaseSeries> > subints;
 
     //! File unloading flag
     Reference::To<PhaseSeriesUnloader> unloader;

@@ -6,8 +6,12 @@
  ***************************************************************************/
 #include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/PhaseSeries.h"
+
 #include "polyco.h"
-#include "string_utils.h"
+#include "dirutil.h"
+#include "strutil.h"
+
+using namespace std;
 
 //! Constructor
 dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
@@ -24,18 +28,12 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
-  if ( data->get_archive_filename() != string() )
-    return make_unique(data->get_archive_filename(),"",data);
-
   string filename;
   string fname_extension = filename_extension;
 
-  if ( data->get_archive_filename_extension() != string() )
-    fname_extension = data->get_archive_filename_extension();
-
-  if ( filename_pattern.empty() ){
+  if ( filename_pattern.empty() )
     filename = data->get_default_id() + fname_extension;
-  }
+
   else {
     char* fname = new char[FILENAME_MAX];
     char* retval = data->get_start_time().datestr ( fname, FILENAME_MAX,
@@ -68,7 +66,7 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
   if (source_filename)
     path += data->get_source() + "/";
 
-  if (!this_file_exists(path.c_str()))
+  if (!file_is_directory(path.c_str()))
     makedir (path.c_str());
 
   string unique_filename = filename;

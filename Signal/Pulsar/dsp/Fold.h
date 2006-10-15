@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.43 $
-   $Date: 2006/08/04 00:08:10 $
+   $Revision: 1.44 $
+   $Date: 2006/10/15 21:48:07 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -82,7 +82,7 @@ namespace dsp {
     //! Set the period at which to fold data for all sources (in seconds- negative for don't use)
     void set_folding_period (double folding_period);
     //! Set the period at which to fold data, but only do it for this source (in seconds)
-    void set_folding_period (double folding_period, string _folding_period_source);
+    void set_folding_period (double folding_period, std::string _folding_period_source);
 
     //! Get the period at which data is being folded at (in seconds)
     double get_folding_period () const;
@@ -113,6 +113,9 @@ namespace dsp {
     //! Get the reference phase (phase of bin zero)
     double get_reference_phase () const { return reference_phase; }
 
+#if 0
+
+    Wvs FIX LATER ?
     //! Give the output PhaseSeries the filename its Archive should be written to
     void set_archive_filename(string _archive_filename){ archive_filename = _archive_filename; }
 
@@ -126,6 +129,8 @@ namespace dsp {
     //! Inquire the filename extension the Archive will be given, if any specified
     string get_archive_filename_extension(){ return archive_filename_extension; }    
 
+#endif
+
     //! Overload Transformation::set_input to set weighted_input
     void set_input (TimeSeries* input);
 
@@ -136,10 +141,10 @@ namespace dsp {
     void add_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
 
     //! Choose an appropriate ephemeris from those added
-    const psrephem* choose_ephemeris (const string& pulsar);
+    const psrephem* choose_ephemeris (const std::string& pulsar);
 
     //! Choose an appropriate polyco from those added
-    const polyco* choose_polyco (const MJD& time, const string& pulsar);
+    const polyco* choose_polyco (const MJD& time, const std::string& pulsar);
 
     //! Choose an appropriate number of pulse phase bins
     unsigned choose_nbin ();
@@ -190,7 +195,7 @@ namespace dsp {
 
     //! The source name for which to fold at folding_period.
     /*! If this is not set, then all sources are folded at folding_period */
-    string folding_period_source;
+    std::string folding_period_source;
 
     //! Set when Tranformation::input is a Weighted TimeSeries
     Reference::To<const WeightedTimeSeries> weighted_input;
@@ -216,17 +221,20 @@ namespace dsp {
     //! Flag that the polyco is built for the given ephemeris and input
     bool built;
 
+#if 0
+    WvS FIX LATER ?
     //! Used to specify the final output Archive filename
     string archive_filename;
 
     //! Used to specify the final output Archive filename extension
     string archive_filename_extension;
+#endif
 
     //! Polycos from which to choose
-    vector< Reference::To<const polyco> > polycos;
+    std::vector< Reference::To<const polyco> > polycos;
 
     //! Ephemerides from which to choose
-    vector< Reference::To<const psrephem> > ephemerides;
+    std::vector< Reference::To<const psrephem> > ephemerides;
 
     //! INTERNAL: the time sample at which to start folding
     uint64 idat_start;

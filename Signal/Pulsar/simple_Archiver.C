@@ -18,9 +18,11 @@
 
 #include "Pulsar/BasebandArchive.h"
 
-#include "string_utils.h"
+#include "strutil.h"
 #include "dirutil.h"
 #include "Error.h"
+
+using namespace std;
 
 static char* args = "b:B:d:f:F:hm:M:n:N:o:p:P:t:v:V";
 

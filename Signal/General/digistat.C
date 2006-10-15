@@ -12,13 +12,16 @@
 #include "dsp/Input.h"
 #include "Error.h"
 
-#include "string_utils.h"
+#include "strutil.h"
 #include "dirutil.h"
+#include "templates.h"
 
 #include <cpgplot.h>
 
 #include <iostream>
 #include <unistd.h>
+
+using namespace std;
 
 static char* args = "c:hn:s:t:vVw:";
 
@@ -222,10 +225,10 @@ int main (int argc, char** argv) try
     uint64 npoints = block_size / point_size;
     if (block_size % point_size)
       npoints ++;
-
-    float* xaxis = new float[npoints];
-    float* mean  = new float[npoints];
-    float* rms   = new float[npoints];
+    
+    vector<float> xaxis (npoints);
+    vector<float> mean  (npoints);
+    vector<float> rms   (npoints);
 
     double current_time = 0.0;
 
@@ -281,7 +284,7 @@ int main (int argc, char** argv) try
 
 	  // plot the mean
 	  
-	  minmaxval (npoints, mean, &min, &max);
+	  minmaxval (mean, min, max);
 	  buf = (max-min) * 0.05;
 	  
 	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
@@ -297,12 +300,11 @@ int main (int argc, char** argv) try
 	  cpgmtxt("L",3.5,.5,.5,"mean");
 	  
 	  cpgsci(5);
-	  cpgpt(npoints, xaxis, mean, -1);
-	  
+	  cpgpt(npoints, &(xaxis[0]), &(mean[0]), -1);
 	  
 	  // plot the rms
 	  
-	  minmaxval (npoints, rms, &min, &max);
+	  minmaxval (rms, min, max);
 	  buf = (max-min) * 0.05;
 	  
 	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
@@ -312,7 +314,7 @@ int main (int argc, char** argv) try
 	  cpgmtxt("L",3.5,.5,.5,"rms");
 	  
 	  cpgsci(6);
-	  cpgpt(npoints, xaxis, rms, -1);
+	  cpgpt(npoints, &(xaxis[0]), &(rms[0]), -1);
 	  
 	  bottom = 0.08;
 

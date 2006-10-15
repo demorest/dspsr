@@ -7,18 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2006/10/15 21:48:05 $
+   $Author: straten $ */
 
 #ifndef __FourBitUnpacker_h
 #define __FourBitUnpacker_h
 
-#include <vector>
-
 #include "dsp/Unpacker.h"
-
-#include "environ.h"
 
 namespace dsp {
 
@@ -47,7 +43,7 @@ namespace dsp {
     static FourBitUnpacker* create (const BitSeries& input);
 
     //! return the stats from nsample samples
-    int64 stats (vector<double>& mean, vector<double>& var);
+    int64 stats (std::vector<double>& mean, std::vector<double>& var);
 
     //! Number of samples for stats
     unsigned nsamples;

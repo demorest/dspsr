@@ -7,14 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:14 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2006/10/15 21:48:08 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
 #define __baseband_dsp_TimeDivide_h
 
-#include "poly.h"
+#include "polyco.h"
 #include "Reference.h"
 
 namespace dsp {

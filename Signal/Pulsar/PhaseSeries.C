@@ -4,13 +4,13 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "Reference.h"
+
+#include "dsp/PhaseSeries.h"
+
 #include "psrephem.h"
 #include "polyco.h"
-#include "genutil.h"
 
-#include "dsp/TimeSeries.h"
-#include "dsp/PhaseSeries.h"
+using namespace std;
 
 dsp::PhaseSeries::PhaseSeries () : TimeSeries()
 {

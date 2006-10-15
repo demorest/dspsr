@@ -4,26 +4,20 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <memory>
-#include <vector> 
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "Error.h"
-#include "Types.h"
-#include "RealTimer.h"
-#include "Reference.h"
-#include "FTransform.h"
-
-#include "dsp/TimeSeries.h"
-#include "dsp/BitSeries.h"
-#include "dsp/ChannelOrder.h"
 
 #include "dsp/IncoherentFilterbank.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
+
+#include "Error.h"
+#include "FTransform.h"
+#include "templates.h"
+
+using namespace std;
 
 dsp::IncoherentFilterbank::IncoherentFilterbank ()
-  : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank", outofplace,true)
+  : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank",
+					   outofplace, true)
 {
   nchan = 0;
   state = Signal::Intensity;
@@ -37,6 +31,16 @@ dsp::IncoherentFilterbank::IncoherentFilterbank ()
 dsp::IncoherentFilterbank::~IncoherentFilterbank()
 {
   free_plan(); 
+}
+
+uint64 power_of_two (uint64 number)
+{
+  uint64 twos = 1;
+  while (twos < number)
+    twos *= 2;
+  if (twos != number)
+    return 0;
+  return 1;
 }
 
 void dsp::IncoherentFilterbank::transformation()
@@ -127,7 +131,9 @@ void dsp::IncoherentFilterbank::transformation()
     throw Error(InvalidState,"dsp::IncoherentFilterbank()",
 		"state '%s' not recognised",State2string(state).c_str());
 }
-  
+
+typedef void (*fft_call) (size_t nfft, float* into, const float* from);
+
 void dsp::IncoherentFilterbank::form_stokesI(){
   //! Number of channels outputted per input channel
   unsigned nchan_subband = nchan / input->get_nchan();
@@ -147,7 +153,7 @@ void dsp::IncoherentFilterbank::form_stokesI(){
 
     float* det = &*detected.begin();
 
-    FTransform::fft_call forwards = FTransform::frc1d;
+    fft_call forwards = FTransform::frc1d;
     if( input->get_ndim() == 2 )  forwards = FTransform::fcc1d;
     unsigned fft_sz = nchan_subband;
     if( input->get_ndim() == 1 )  fft_sz *= 2;
@@ -166,7 +172,7 @@ void dsp::IncoherentFilterbank::form_stokesI(){
 
       // (3) SLD and add polarisations back
       for( unsigned i=0; i<nchan_subband; i++)
-	det[i] = SQR(sp0[2*i]) + SQR(sp0[2*i+1]) + SQR(sp1[2*i]) + SQR(sp1[2*i+1]);
+	det[i] = sqr(sp0[2*i]) + sqr(sp0[2*i+1]) + sqr(sp1[2*i]) + sqr(sp1[2*i+1]);
     }
     fft_loop_timer.stop();
 
@@ -195,7 +201,7 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
   vector<float> sp0(nchan_subband*2+2); // sp = spectra
   vector<float> detected(npart*nchan_subband);
 
-  FTransform::fft_call forwards = FTransform::frc1d;
+  fft_call forwards = FTransform::frc1d;
   if( input->get_ndim() == 2 )  forwards = FTransform::fcc1d;
   unsigned fft_sz = nchan_subband;
   if( input->get_ndim() == 1 )  fft_sz *= 2;
@@ -218,7 +224,7 @@ void dsp::IncoherentFilterbank::form_PPQQ(){
 
 	// (3) SLD
 	for( unsigned i=0; i<nchan_subband; i++)
-	  det[i] = SQR(sp0[2*i]) + SQR(sp0[2*i+1]);
+	  det[i] = sqr(sp0[2*i]) + sqr(sp0[2*i+1]);
       }
       fft_loop_timer.stop();
 
@@ -248,7 +254,7 @@ void dsp::IncoherentFilterbank::form_undetected(){
   vector<float> sp0(nchan_subband*2+2); // sp = spectra
   vector<float> undetected(npart*nchan_subband*2);
   
-  FTransform::fft_call forwards = FTransform::frc1d;
+  fft_call forwards = FTransform::frc1d;
   if( input->get_ndim() == 2 )  forwards = FTransform::fcc1d;
   unsigned fft_sz = nchan_subband;
   if( input->get_ndim() == 1 )  fft_sz *= 2;

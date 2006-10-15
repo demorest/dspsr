@@ -4,14 +4,12 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <iostream>
-#include <assert.h>
-#include <math.h>
 
 #include "dsp/FourBitTable.h"
 #include "dsp/FourBitUnpacker.h"
 
 #include "Error.h"
+using namespace std;
 
 
 //! Null constructor

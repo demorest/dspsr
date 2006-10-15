@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 bool dsp::HistUnpacker::keep_histogram = true;
 
 //! Null constructor

@@ -4,11 +4,13 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <complex>
 
 #include "dsp/Dedispersion.h"
 #include "dsp/Observation.h"
 #include "Error.h"
+#include <complex>
+
+using namespace std;
 
 /*! Although the value:
 

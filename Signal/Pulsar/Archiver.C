@@ -4,11 +4,8 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "polyco.h"
-#include "psrephem.h"
 
 #include "dsp/Archiver.h"
-#include "dsp/ChannelSum.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Response.h"
 #include "dsp/Operation.h"
@@ -26,6 +23,8 @@
 
 #include "Pulsar/FITSHdrExtension.h"
 
+#include "polyco.h"
+#include "psrephem.h"
 #include "Error.h"
 
 #include <iomanip>
@@ -35,6 +34,8 @@
 #ifdef sun
 #include <ieeefp.h>
 #endif
+
+using namespace std;
 
 bool dsp::Archiver::verbose = false;
 
@@ -251,9 +252,7 @@ try {
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
 
-  // Basically setting the DM to 'between_channel_dm' ruins folding for partially channelsummed archives
-  // So we only do this Willemesque dedispersion
-  if( !ChannelSum::have_been_used && phase->get_between_channel_dm () != 0) {
+  if( archive_dedispersed && phase->get_between_channel_dm () != 0) {
       archive -> set_dedispersed( true );
       archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
   }
@@ -282,10 +281,8 @@ try {
   if (pband)
     set (pband);
 
-  if( !ChannelSum::have_been_used ){
-    Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
-    telescope->set_coordinates (phase -> get_telescope_code());
-  }
+  Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
+  telescope->set_coordinates (phase -> get_telescope_code());
 
   // default Receiver extension
   archive -> getadd<Pulsar::Receiver>();

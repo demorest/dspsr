@@ -7,6 +7,8 @@
 #include "dsp/Dedispersion.h"
 #include "dsp/Observation.h"
 
+using namespace std;
+
 dsp::Dedispersion::SampleDelay::SampleDelay ()
 {
   centre_frequency = 0.0;

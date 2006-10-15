@@ -11,10 +11,10 @@
 #include "dsp/Observation.h"
 
 #include "Error.h"
-#include "spectra.h"
 #include "Jones.h"
-#include "genutil.h"
 #include "cross_detect.h"
+
+using namespace std;
 
 //#define _DEBUG
 
@@ -251,6 +251,9 @@ unsigned dsp::Response::get_minimum_ndat () const
   return min;
 }
 
+extern "C" uint64 
+optimal_fft_length (uint64 nbadperfft, uint64 nfft_max, char verbose);
+
 /*!  Using the get_minimum_ndat method and the max_ndat static attribute,
   this method determines the optimal ndat for use in convolution. */
 void dsp::Response::set_optimal_ndat ()
@@ -261,13 +264,15 @@ void dsp::Response::set_optimal_ndat ()
     cerr << "Response::set_optimal_ndat minimum ndat=" << ndat_min << endl;
   
   if (ndat_max && ndat_max < ndat_min)
-    throw_str ("Response::set_optimal_ndat specified maximum ndat (%d)" 
-	       " < required minimum ndat (%d)", ndat_max, ndat_min);
+    throw Error (InvalidState, "Response::set_optimal_ndat",
+		 "specified maximum ndat (%d) < required minimum ndat (%d)",
+		 ndat_max, ndat_min);
 
   int64 optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
 					   ndat_max, verbose);
   if (optimal_ndat < 0)
-    throw_str ("Response::set_optimal_ndat optimal_fft_length failed");
+    throw Error (InvalidState, "Response::set_optimal_ndat",
+		 "optimal_fft_length failed");
 
   resize (npol, nchan, unsigned(optimal_ndat), ndim);
 }
@@ -276,8 +281,9 @@ void dsp::Response::set_optimal_ndat ()
 void dsp::Response::check_ndat () const
 {
   if (ndat_max && ndat > ndat_max)
-    throw_str ("Response::check_ndat specified maximum ndat (%d)" 
-	       " < specified ndat (%d)", ndat_max, ndat);
+    throw Error (InvalidState, "Response::check_ndat",
+		 "specified maximum ndat (%d) < specified ndat (%d)",
+		 ndat_max, ndat);
 
   unsigned ndat_min = get_minimum_ndat ();
 
@@ -285,9 +291,9 @@ void dsp::Response::check_ndat () const
     cerr << "Response::check_ndat minimum ndat=" << ndat_min << endl;
   
   if (ndat < ndat_min)
-    throw Error(InvalidState,"dsp::Response::check_ndat()",
-		"specified ndat (%d) < required minimum ndat (%d)",
-		ndat, ndat_min);
+    throw Error (InvalidState, "dsp::Response::check_ndat",
+		 "specified ndat (%d) < required minimum ndat (%d)",
+		 ndat, ndat_min);
 }
   
 //! Get the passband
@@ -573,7 +579,8 @@ void dsp::Response::set (const vector<Jones<float> >& response)
 void dsp::Response::swap (bool each_chan)
 {
   if (nchan == 0)
-   throw_str ("dsp::Response::swap invalid nchan=%d", nchan);
+    throw Error (InvalidState, "dsp::Response::swap",
+		 "invalid nchan=%d", nchan);
 
   unsigned half_npts = (ndat * ndim) / 2;
 
@@ -581,7 +588,8 @@ void dsp::Response::swap (bool each_chan)
     half_npts *= nchan;
 
   if (half_npts < 2)
-    throw_str ("dsp::Response::swap invalid npts=%d", half_npts);
+    throw Error (InvalidState, "dsp::Response::swap",
+		 "invalid npts=%d", half_npts);
 
   unsigned ndiv = 1;
   if (each_chan)

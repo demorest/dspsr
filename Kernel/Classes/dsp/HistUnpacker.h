@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2006/10/15 21:48:05 $
+   $Author: straten $ */
 
 #ifndef __HistUnpacker_h
 #define __HistUnpacker_h
@@ -54,7 +54,7 @@ namespace dsp {
 
     //! Get the histogram for the given digitizer
     template <typename T>
-    void get_histogram (vector<T>& data, unsigned idig) const;
+    void get_histogram (std::vector<T>& data, unsigned idig) const;
 
     //! Get the centroid of the histogram for the given digitizer
     double get_histogram_mean (unsigned idig) const;
@@ -80,7 +80,7 @@ namespace dsp {
     unsigned ndig;
 
     //! Histograms of number of ones in nsample points
-    vector< vector< unsigned long > > histograms;
+    std::vector< std::vector< unsigned long > > histograms;
 
     //! Resize the histograms vector to reflect attributes
     void resize ();
@@ -89,8 +89,8 @@ namespace dsp {
   
 }
 
-template <typename T> 
-void dsp::HistUnpacker::get_histogram (vector<T>& data, unsigned idig) const
+template <typename T> void
+dsp::HistUnpacker::get_histogram (std::vector<T>& data, unsigned idig) const
 {
   data.resize (nsample);
 

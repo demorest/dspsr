@@ -5,19 +5,17 @@
  *
  ***************************************************************************/
 #include "dsp/Detection.h"
-#include "dsp/TimeSeries.h"
-#include "dsp/Transformation.h"
 #include "dsp/SLDetect.h"
-#include "dsp/PScrunch.h"
 #include "dsp/Observation.h"
 
 #include "Error.h"
-#include "genutil.h"
 #include "cross_detect.h"
 #include "stokes_detect.h"
-#include "minmax.h"
+#include "templates.h"
 
 #include <memory>
+
+using namespace std;
 
 //! Constructor
 dsp::Detection::Detection () 
@@ -87,22 +85,13 @@ void dsp::Detection::transformation ()
 
   bool understood = true;
 
-  if( get_input()->get_detected() && state==Signal::Intensity )
-    redetect ();
-
-  else if( !get_input()->get_detected() ) {
+  if( !get_input()->get_detected() ) {
 
     if (state==Signal::Coherence || state==Signal::Stokes)
       polarimetry();
 
     else if (state==Signal::PPQQ)
       square_law();
-
-    else if (state==Signal::Intensity)
-      form_stokes_I();
-    
-    else if (state==Signal::NthPower)
-      form_nthpower();
 
     else if( state==Signal::PP_State || state==Signal::QQ_State )
       onepol_detect();
@@ -204,145 +193,6 @@ dsp::Detection::onepol_detect()
   }
 
 }
-
-void dsp::Detection::form_stokes_I(){
-  if( verbose ) 
-    fprintf(stderr,"In dsp::Detection::form_stokes_I()\n");
-
-  if( get_input() == get_output() ){
-    square_law();
-    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-    pscrunch->set_input( get_output() );
-    pscrunch->set_output( get_output() );
-    pscrunch->operate();
-    return;
-  }
-
-  unsigned input_ndim = get_input()->get_ndim();
-
-  get_output()->copy_configuration( get_input() );
-  get_output()->set_npol( 1 );
-  get_output()->set_ndim( 1 );
-  get_output()->set_state( Signal::Intensity );
-  
-  get_output()->resize( get_input()->get_ndat() );
-
-  if( input_ndim==1 ){ // Signal::Nyquist
-    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
-      float* pol0 = get_input()->get_datptr(ichan,0);
-      float* pol1 = get_input()->get_datptr(ichan,1);    
-      float* out = get_output()->get_datptr(ichan,0);
-      
-      uint64 ndat = get_input()->get_ndat();
-      
-      for( uint64 i=0; i<ndat; i++)
-	out[i] = SQR(pol0[i]) + SQR(pol1[i]); 
-    }
-  }
-  else{ // Signal::Analytic
-    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
-      float* pol0 = get_input()->get_datptr(ichan,0);
-      float* pol1 = get_input()->get_datptr(ichan,1);    
-      float* out = get_output()->get_datptr(ichan,0);
-      
-      uint64 ndat = get_input()->get_ndat();
-      
-      bool normalise = false;
-      unsigned undat = unsigned(ndat);
-
-      if( normalise ){
-	vector<float> p0(undat);
-	vector<float> p1(undat);
-	
-	for( unsigned i=0; i<undat; i++){
-	  p0[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]);
-	  p1[i] = SQR(pol1[2*i]) + SQR(pol1[2*i+1]);
-	}
-	
-	float mean0 = findmean( &*p0.begin(), &*p0.end());
-	float mean1 = findmean( &*p1.begin(), &*p1.end());
-	float sigma0 = findsigma( &*p0.begin(), &*p0.end(),mean0);
-	float sigma1 = findsigma( &*p1.begin(), &*p1.end(),mean1);
-	
-	for( unsigned i=0; i<undat; i++){
-	  p0[i] -= mean0;
-	  p0[i] /= sigma0;
-	  p1[i] -= mean1;
-	  p1[i] /= sigma1;
-	}
-	
-	for( unsigned i=0; i<undat; i++)
-	  out[i] = p0[i] + p1[i];
-      }
-      else{	
-	for( unsigned i=0; i<undat; i++)
-	  out[i] = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]); 
-      }
-
-    }
-  }
-  
-}
-  
-
-void dsp::Detection::form_nthpower(int _n){
-  if( verbose ) fprintf(stderr,"In dsp::Detection::nthpower()\n");
- 
-  if( (get_input() == get_output()) && verbose ){
-    fprintf(stderr,"In dsp::Detection::nthpower but calling square-law\n");
-    
-    square_law();
-    Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-    pscrunch->set_input( get_output() );
-    pscrunch->set_output( get_output() );
-    pscrunch->operate();
-    return;
-  }
-  
-  if (verbose)
-    fprintf(stderr,"In dsp::Detection::nthpower forming 2nd moment\n");
-
-  unsigned input_ndim = get_input()->get_ndim();
-
-  get_output()->copy_configuration( get_input() );
-  get_output()->set_npol( 1 );
-  get_output()->set_ndim( 1 );
-  get_output()->set_state( Signal::NthPower );
-  
-  get_output()->resize( get_input()->get_ndat() );
-
-  if( input_ndim==1 ){ // Signal::Nyquist
-    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
-      float* pol0 = get_input()->get_datptr(ichan,0);
-      float* pol1 = get_input()->get_datptr(ichan,1);    
-      float* out = get_output()->get_datptr(ichan,0);
-      
-      uint64 ndat = get_input()->get_ndat();
-      double temp; 
-      for( uint64 i=0; i<ndat; i++){
-        temp = SQR(pol0[i]) + SQR(pol1[i]);
-	out[i] = (float) pow(temp,(double) _n);
-      }
-     
-    }
-  }
-  else{ // Signal::Analytic
-    for( unsigned ichan=0;ichan<input->get_nchan();ichan++){
-      float* pol0 = get_input()->get_datptr(ichan,0);
-      float* pol1 = get_input()->get_datptr(ichan,1);    
-      float* out = get_output()->get_datptr(ichan,0);
-      
-      uint64 ndat = get_input()->get_ndat();
-      double temp; 
-      for( uint64 i=0; i<ndat; i++){
-        temp = SQR(pol0[2*i]) + SQR(pol0[2*i+1]) + SQR(pol1[2*i]) + SQR(pol1[2*i+1]);
-	out[i] = (float) pow(temp,(double) _n);
-      }
- 
-    }
-  }
-  
-}
   
 void dsp::Detection::polarimetry ()
 {
@@ -432,8 +282,8 @@ void dsp::Detection::polarimetry ()
 	float p_r = *p; p++;
 	float q_r = *q; q++;
 	
-	*pp  = SQR(p_r);  pp ++;    /*  p* p      */
-	*qq  = SQR(q_r);  qq ++;    /*  q* q      */
+	*pp  = sqr(p_r);  pp ++;    /*  p* p      */
+	*qq  = sqr(q_r);  qq ++;    /*  q* q      */
 	*Rpq = p_r * q_r; Rpq ++;   /*  Re[p* q]  */
 	*Ipq = 0.0;       Ipq ++;   /*  Im[p* q]  */
       }
@@ -488,14 +338,6 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
   
 }
 
-void dsp::Detection::redetect(){
-  Reference::To<dsp::PScrunch> pscrunch(new dsp::PScrunch);
-  pscrunch->set_input( get_input() );
-  pscrunch->set_output( get_output() );
-  
-  pscrunch->operate();
-}
-
 void dsp::Detection::checks(){
   if( get_input()->get_detected() && state != Signal::Intensity )
     throw Error(InvalidState,"dsp::Detection::checks()",
@@ -503,16 +345,16 @@ void dsp::Detection::checks(){
 		State2string(get_input()->get_state()).c_str(),
 		State2string(state).c_str());
 
-  if( get_input()->get_state()==Signal::Nyquist && get_input()->get_machine()=="CPSR2" )
-    fprintf(stderr,"\n\ndsp::Detection::checks(): input state is Nyquist from CPSR2... continuing... but have you forgotten to add an -F option to form a filterbank or to deconvolve?\n\n");
-  
+
   if (state == Signal::Stokes || state == Signal::Coherence) {
+
     if (get_input()->get_npol() != 2)
       throw Error (InvalidState, "dsp::Detection::transformation",
 		   "invalid npol=%d for %s formation",
 		   input->get_npol(), Signal::state_string(state));
     
-    if (get_input()->get_state() != Signal::Analytic && get_input()->get_state() != Signal::Nyquist)
+    if (get_input()->get_state() != Signal::Analytic && 
+	get_input()->get_state() != Signal::Nyquist)
       throw Error (InvalidState, "dsp::Detection::transformation",
 		   "invalid state=%s for %s formation",
 		   get_input()->get_state_as_string().c_str(),

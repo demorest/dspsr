@@ -7,10 +7,12 @@
 #include "dsp/ACFilterbank.h"
 #include "dsp/WeightedTimeSeries.h"
 
-#include "fftm.h"
-#include "spectra.h"
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
+
+#include "FTransform.h"
+
+using namespace std;
 
 // #define _DEBUG 1
 
@@ -26,6 +28,8 @@ void dsp::ACFilterbank::set_passband (Response* band)
 {
   passband = band;
 }
+
+extern "C" int mfilter (const unsigned npts, float* spectrum, float* filter);
 
 void dsp::ACFilterbank::transformation ()
 {
@@ -132,7 +136,7 @@ cerr << "dsp::ACFilterbank PSD nchan=1 ndim=" << 2*nchan << endl;
   output->resize (npart);
   output->set_rate (input->get_rate() / nsamp_step);
 
-  if (fft::get_normalization() == fft::nfft)
+  if (FTransform::get_norm() == FTransform::unnormalized)
     output->rescale (nsamp_fft);
   
   if (verbose) cerr << "dsp::ACFilterbank::transformation scale="
@@ -224,9 +228,9 @@ cerr << "dsp::ACFilterbank FFT zero-padded nfft=" << nsamp_fft << endl;
 #endif
 
       if (input->get_state() == Signal::Nyquist)
-	fft::frc1d (nsamp_fft, spectrum2, spectrum1);
+	FTransform::frc1d (nsamp_fft, spectrum2, spectrum1);
       else
-	fft::fcc1d (nsamp_fft, spectrum2, spectrum1);
+	FTransform::fcc1d (nsamp_fft, spectrum2, spectrum1);
 
 #ifdef _DEBUG
 cerr << "dsp::ACFilterbank conjugate result" << endl;
@@ -242,9 +246,9 @@ cerr << "dsp::ACFilterbank FFT data" << endl;
  
       // calculate the normal transform
       if (input->get_state() == Signal::Nyquist)
-	fft::frc1d (nsamp_fft, spectrum1, input_ptr);
+	FTransform::frc1d (nsamp_fft, spectrum1, input_ptr);
       else
-	fft::fcc1d (nsamp_fft, spectrum1, input_ptr);
+	FTransform::fcc1d (nsamp_fft, spectrum1, input_ptr);
 
       if (passband) {
 #ifdef _DEBUG
@@ -269,7 +273,7 @@ cerr << "dsp::ACFilterbank form ACF" << endl;
 #endif
 
 	// if forming lags, do the inverse fft and multiplex the lag data
-	fft::bcc1d (nchan, spectrum2, spectrum1);
+	FTransform::bcc1d (nchan, spectrum2, spectrum1);
 	input_ptr = spectrum2;
 
 	for (ilag=0; ilag < nlag; ilag++) {

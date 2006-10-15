@@ -4,11 +4,14 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/SampleDelay.h"
 #include "dsp/SampleDelayFunction.h"
 #include "dsp/InputBuffering.h"
 
 #include <assert.h>
+
+using namespace std;
 
 dsp::SampleDelay::SampleDelay ()
   : Transformation<TimeSeries,TimeSeries> ("SampleDelay", anyplace)

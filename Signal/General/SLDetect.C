@@ -4,16 +4,10 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <stdio.h>
 
-#include <iostream>
-
-#include "genutil.h"
-#include "environ.h"
-
-#include "dsp/TimeSeries.h"
-#include "dsp/Operation.h"
 #include "dsp/SLDetect.h"
+
+using namespace std;
 
 dsp::SLDetect::SLDetect (Behaviour _type) 
   : Transformation <TimeSeries, TimeSeries> ("SLDetect", _type,true)
@@ -28,10 +22,8 @@ void dsp::SLDetect::transformation ()
 	    input->get_ndim(), input->get_ndat(), input->get_npol(), input->get_nchan(),input->get_nbit());    
   }
 
-  if( input->get_detected() ) {
-    fprintf (stderr, "SLDetect::operate data is already detected!\n");
-    throw_str ("SLDetect::operate invalid state");
-  }
+  if( input->get_detected() )
+    throw Error (InvalidState, "SLDetect::operate", "data already detected");
 
   if( input.get() != output.get() ){
     if(verbose)

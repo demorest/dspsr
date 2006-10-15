@@ -17,7 +17,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 					       unsigned nweights)
 {
   if (verbose)
-    cerr << "dsp::SubByteTwoBitCorrection::dig_unpack" << endl;
+    std::cerr << "dsp::SubByteTwoBitCorrection::dig_unpack" << std::endl;
 
   if (!values)
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
@@ -48,8 +48,9 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
   unsigned required_nweights = (unsigned) ceil (float(ndat)/float(nsample));
 
   if (weights)  {
-    if (verbose) cerr << "dsp::SubByteTwoBitCorrection::dig_unpack nweights=" 
-		      << nweights << endl;
+    if (verbose)
+      std::cerr << "dsp::SubByteTwoBitCorrection::dig_unpack nweights=" 
+		<< nweights << std::endl;
 
     if (required_nweights > nweights)
       throw Error (InvalidParam, "dsp::SubByteTwoBitCorrection::dig_unpack",
@@ -93,7 +94,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
     if ( n_in<n_min || n_in>n_max || (weights && weights[wt]==0) ) {
 
 #ifdef _DEBUG
-      cerr << "w[" << wt << "]=0 ";
+      std::cerr << "w[" << wt << "]=0 ";
 #endif
 
       if (weights)

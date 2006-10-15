@@ -4,9 +4,6 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <iostream>
-#include <assert.h>
-#include <math.h>
 
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
@@ -14,6 +11,8 @@
 
 #include "Error.h"
 #include "ierf.h"
+
+using namespace std;
 
 // #define _DEBUG 1
 

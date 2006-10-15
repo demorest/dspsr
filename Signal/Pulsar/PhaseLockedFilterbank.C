@@ -9,6 +9,8 @@
 
 #include "FTransform.h"
 
+using namespace std;
+
 // #define _DEBUG
 
 dsp::PhaseLockedFilterbank::PhaseLockedFilterbank () :
@@ -111,7 +113,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
   }
 
 
-  if (FTransform::get_norm() == FTransform::nfft)
+  if (FTransform::get_norm() == FTransform::unnormalized)
     output->rescale (nchan);
   
   output->set_rate (input->get_rate() / ndat_fft);

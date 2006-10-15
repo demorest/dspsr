@@ -4,11 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "dsp/Unpacker.h"
 #include "Error.h"
+
+using namespace std;
 
 //! Initialize and resize the output before calling unpack
 void dsp::Unpacker::transformation ()

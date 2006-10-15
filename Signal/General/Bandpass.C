@@ -6,7 +6,9 @@
  ***************************************************************************/
 #include "dsp/Bandpass.h"
 #include "dsp/Apodization.h"
-#include "fftm.h"
+#include "FTransform.h"
+
+using namespace std;
 
 dsp::Bandpass::Bandpass () :
   Transformation <const TimeSeries, Response> ("Bandpass", outofplace) 
@@ -115,10 +117,10 @@ void dsp::Bandpass::transformation ()
 
 	  
 	  if (state == Signal::Nyquist)
-	    fft::frc1d (nsamp_fft, spectrum[ipol], ptr);
+	    FTransform::frc1d (nsamp_fft, spectrum[ipol], ptr);
 
 	  else if (state == Signal::Analytic)
-	    fft::fcc1d (nsamp_fft, spectrum[ipol], ptr);
+	    FTransform::fcc1d (nsamp_fft, spectrum[ipol], ptr);
 	  
 	}
 	

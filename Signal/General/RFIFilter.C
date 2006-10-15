@@ -14,6 +14,8 @@
 
 #include "median_smooth.h"
 
+using namespace std;
+
 dsp::RFIFilter::RFIFilter ()
 {
   calculated = false;

@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.15 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.16 $
+   $Date: 2006/10/15 21:48:07 $
+   $Author: straten $ */
 
 
 #ifndef __Archiver_h
@@ -54,10 +54,10 @@ namespace dsp {
     void set_passband (const Response* passband);
 
     //! Set the Operation instances for the dspReduction Extension
-    void set_operations (const vector<Operation*>& operations);
+    void set_operations (const std::vector<Operation*>& operations);
 
     //! Set the name of the Pulsar::Archive class used to create new instances
-    void set_archive_class (const string& archive_class_name);
+    void set_archive_class (const std::string& archive_class_name);
     
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
@@ -83,17 +83,17 @@ namespace dsp {
     bool get_archive_dedispersed(){ return archive_dedispersed; }
  
     //! If true, a dspReduction extension is added to the archive with this string
-    void set_archive_software(string _archive_software)
+    void set_archive_software(std::string _archive_software)
     { archive_software = _archive_software; }
 
     //! If true, a dspReduction extension is added to the archive with this string
-    string get_archive_software()
+    std::string get_archive_software()
     { return archive_software; }
 
   protected:
 
     //! Name of the Pulsar::Archive class used to create new instances
-    string archive_class_name;
+    std::string archive_class_name;
 
     //! The Pulsar::Archive instance to which data will be added
     Reference::To<Pulsar::Archive> single_archive;
@@ -105,10 +105,10 @@ namespace dsp {
     Reference::To<const TwoBitCorrection> twobit;
 
     //! The Operation instances for the dspReduction Extension
-    vector< Reference::To<Operation> > operations;
+    std::vector< Reference::To<Operation> > operations;
 
     //! The Pulsar::Archive::Extension classes to be added to the output
-    vector< Reference::To<Pulsar::Archive::Extension> > extensions;
+    std::vector< Reference::To<Pulsar::Archive::Extension> > extensions;
 
     //! Set the Pulsar::Integration with the PhaseSeries data
     void set (Pulsar::Integration* integration, const PhaseSeries* phase,
@@ -133,7 +133,7 @@ namespace dsp {
     bool archive_dedispersed;
 
     //! String to go in the dspReduction Extension of output archive ["Software Unknown"]
-    string archive_software;
+    std::string archive_software;
   };
 
 }

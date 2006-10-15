@@ -21,6 +21,8 @@
 
 #include "Error.h"
 
+using namespace std;
+
 void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
 
   if (verbose)

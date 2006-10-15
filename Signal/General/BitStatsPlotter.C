@@ -9,6 +9,7 @@
 
 #include <cpgplot.h>
 
+using namespace std;
 
 dsp::BitStatsPlotter::BitStatsPlotter ()
 {

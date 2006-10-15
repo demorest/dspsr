@@ -8,21 +8,14 @@
 #ifndef __Observation_h
 #define __Observation_h
 
-#include <string>
-#include <vector>
-#include <typeinfo>
-
-#include <stdio.h>
+#include "dsp/dspExtension.h"
+#include "dsp/dsp.h"
 
 #include "Error.h"
-#include "Reference.h"
 #include "sky_coord.h"
 #include "Types.h"
 #include "MJD.h"
 #include "environ.h"
-
-#include "dsp/dspExtension.h"
-#include "dsp/dsp.h"
 
 namespace dsp {
 

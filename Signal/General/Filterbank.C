@@ -12,7 +12,8 @@
 #include "dsp/InputBuffering.h"
 
 #include "FTransform.h"
-#include "genutil.h"
+
+using namespace std;
 
 //#define _DEBUG
 
@@ -222,18 +223,23 @@ void dsp::Filterbank::transformation ()
   double scalefac = 1.0;
 
   if (verbose) {
+
+    string norm = "unknown";
+    if (FTransform::get_norm() == FTransform::unnormalized)
+      norm = "unnormalized";
+    else if (FTransform::get_norm() == FTransform::normalized)
+      norm = "normalized";
+	
     cerr << "dsp::Filterbank::transformation\n"
       "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
-      "  fft::normalization=" <<
-      (FTransform::get_norm() == FTransform::nfft?"fft::nfft":
-      FTransform::get_norm() == FTransform::normal?"fft::normal":
-      "unknown") << endl;
+      "  fft::normalization=" << norm << endl;
+
   }
 
-  if (FTransform::get_norm() == FTransform::nfft)
+  if (FTransform::get_norm() == FTransform::unnormalized)
     scalefac = double(n_fft) * double(freq_res);
 
-  else if (FTransform::get_norm() == FTransform::normal)
+  else if (FTransform::get_norm() == FTransform::normalized)
     scalefac = double(n_fft) / double(freq_res);
 
   output->rescale (scalefac);

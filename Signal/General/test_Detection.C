@@ -13,8 +13,10 @@
 #include "dsp/Detection.h"
 #include "dsp/Unpacker.h"
 
-#include "string_utils.h"
+#include "strutil.h"
 #include "dirutil.h"
+
+using namespace std;
 
 static char* args = "b:n:vV";
 

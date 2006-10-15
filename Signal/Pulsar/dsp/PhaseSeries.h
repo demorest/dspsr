@@ -7,16 +7,12 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.18 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.19 $
+   $Date: 2006/10/15 21:48:07 $
+   $Author: straten $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
-
-#include <vector>
-
-#include "Reference.h"
 
 #include "dsp/TimeSeries.h"
 
@@ -99,19 +95,23 @@ namespace dsp {
     //! Over-ride Observation::combinable_rate
     bool combinable_rate (double) const { return true; }
 
+#if 0
+    Wvs FIX LATER ?
     //! Store what the output Archive's filename should be
-    void set_archive_filename(string _archive_filename)
+    void set_archive_filename(std::string _archive_filename)
     { archive_filename = _archive_filename; }
 
     //! Inquire what the output Archive's filename is going to be (if anything)
     string get_archive_filename() const { return archive_filename; }
 
     //! Store what the output Archive's filename extension should be
-    void set_archive_filename_extension(string _archive_filename_extension)
+    void set_archive_filename_extension(std::string _archive_filename_extension)
     { archive_filename_extension = _archive_filename_extension; }
 
     //! Inquire what the output Archive's filename extension is going to be (if anything)
     string get_archive_filename_extension() const { return archive_filename_extension; }
+
+#endif
 
   protected:
 
@@ -128,7 +128,7 @@ namespace dsp {
     double reference_phase;
 
     //! Number of time samples integrated into each phase bin
-    vector<unsigned> hits;
+    std::vector<unsigned> hits;
 
     //! The number of seconds integrated into the profile(s)
     double integration_length;
@@ -140,11 +140,14 @@ namespace dsp {
     bool mixable (const Observation& obs, unsigned nbin,
 		  int64 istart=0, int64 fold_ndat=0);
 
+#if 0
+    WvS FIX LATER ?
     //! The Archive::unload_filename attribute
     string archive_filename;
 
     //! This filename extension will be added onto the Archive::unload_filename attribute
     string archive_filename_extension;
+#endif
 
   };
 

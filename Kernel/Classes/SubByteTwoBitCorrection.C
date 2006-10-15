@@ -11,6 +11,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 // #define _DEBUG 1
 
 dsp::SubByteTwoBitCorrection::SubByteTwoBitCorrection (const char* name)

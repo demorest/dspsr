@@ -6,6 +6,8 @@
  ***************************************************************************/
 #include "dsp/Unpacker.h"
 
+using namespace std;
+
 //! Return a pointer to a new instance of the appropriate sub-class
 dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
 {

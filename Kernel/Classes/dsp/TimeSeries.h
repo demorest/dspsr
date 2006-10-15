@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.36 $
-   $Date: 2006/10/15 03:50:14 $
+   $Revision: 1.37 $
+   $Date: 2006/10/15 21:48:05 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -114,12 +114,6 @@ namespace dsp {
 
     //! Call this when you do not want to transfer ownership of the array
     virtual void attach (float* _data);
-
-    //! Calculates the mean and the std dev of the timeseries, removes the mean, and scales to sigma
-    virtual void normalise();
-
-    //! Returns the maximum bin of channel 0, pol 0
-    virtual unsigned get_maxbin();
 
     //! Called by Transformation::operation() to ensure that saved data
     //! stays saved and is not wiped over.

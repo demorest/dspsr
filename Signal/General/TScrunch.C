@@ -4,15 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <stdio.h>
-
-#include "genutil.h"
 
 #include "dsp/TScrunch.h"
+#include "Error.h"
 
-#if ACTIVATE_IPP
-#include <ipps.h>
-#endif
+using namespace std;
 
 dsp::TScrunch::TScrunch(Behaviour place) 
   : Transformation <TimeSeries, TimeSeries> ("TScrunch", place, true)
@@ -31,8 +27,8 @@ void dsp::TScrunch::set_NewTimeRes( double microseconds ){
 unsigned dsp::TScrunch::get_sfactor(){
   if( UsingScrunchFactor() ){
     if( ScrunchFactor < 1 )
-      throw_str ("dsp::TScrunch: invalid scrunch factor:%d",
-		 ScrunchFactor);
+      throw Error (InvalidState, "dsp::TScrunch",
+		   "invalid scrunch factor:%d", ScrunchFactor);
     TimeRes = 1.0e6/(input->get_rate()*double(ScrunchFactor));
   }
   else{
@@ -100,18 +96,6 @@ void dsp::TScrunch::transformation ()
       float* out = output->get_datptr(ichan, ipol);
       
       unsigned j=0;
-
-      /*
-#if ACTIVATE_IPP
-      //if( sfactor >= 8 ){
-	for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
-	  ippsSum_32f(in+j,sfactor,out+iscrunching,ippAlgHintFast);
-	  j+=sfactor;
-	}
-	continue;
-	//}
-#endif
-      */      
 
       for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
 	unsigned stop = j + sfactor;

@@ -6,16 +6,15 @@
  ***************************************************************************/
 #include "dsp/Fold.h"
 #include "dsp/WeightedTimeSeries.h"
+#include "dsp/MatchingEphemeris.h"
+#include "dsp/MatchingPolyco.h"
 
-#include "MatchingEphemeris.h"
-#include "MatchingPolyco.h"
-#include "tempo++.h"
-#include "genutil.h"
-#include "string_utils.h"
+#include "Predict.h"
 #include "Error.h"
 
-#include <string>
 #include <assert.h>
+
+using namespace std;
 
 dsp::Fold::Fold (bool _dont_set_limits) :
   Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
@@ -88,12 +87,8 @@ void dsp::Fold::prepare (const Observation* observation)
   if (!source_name.empty())
     jpulsar = source_name;
 
-  if (jpulsar.length() == 0){
-    cerr << observation->obs2string() << endl;
-    throw Error (InvalidParam, "dsp::Fold::prepare",
-		 "empty Observation::source observation=%p",
-		 observation);
-  }
+  if (jpulsar.length() == 0)
+    throw Error (InvalidParam, "dsp::Fold::prepare", "empty source name");
 
   // Is this a CAL?
   if (observation->get_type() == Signal::PolnCal) {
@@ -220,9 +215,17 @@ dsp::Fold::get_folding_polyco(const psrephem* pephem,
   
   MJD time = observation->get_start_time();
 
-  Tempo::set_polyco ( *the_folding_polyco.get(), *pephem, time, time,
-		      nspan, ncoef, 8, observation->get_telescope_code() );
-  
+  Tempo::Predict predict;
+  predict.set_nspan ( nspan );
+  predict.set_ncoef ( ncoef );
+  predict.set_maxha ( 8 );
+  predict.set_asite( observation->get_telescope_code() );
+  predict.set_frequency ( 1400.0 );
+  // predict.set_frequency ( observation->get_centre_frequency() ); ???
+  predict.set_parameters ( *pephem );
+
+  *the_folding_polyco = predict.get_polyco (time, time);
+
   return the_folding_polyco;
 }
 
@@ -546,13 +549,9 @@ void dsp::Fold::transformation ()
   if( !source_name.empty() )
     get_output()->set_source (input->get_source());
 
-  if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold)){
-    fprintf(stderr,"Input:\n\n%s\n\n",input->obs2string().c_str());
-    fprintf(stderr,"Output:\n\n%s\n\n",output->obs2string().c_str());
-	    
+  if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold))
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input and output are not PhaseSeries::mixable");
-  }
 
   uint64 nweights = 0;
   const unsigned* weights = 0;
@@ -592,11 +591,14 @@ void dsp::Fold::transformation ()
   if( pulsar_ephemeris )
     get_output()->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
+#if 0
+  WvS FIX LATER ?
   if( archive_filename.size() > 0 )
     get_output()->set_archive_filename( archive_filename );
 
   if( archive_filename_extension.size() > 0 )
     get_output()->set_archive_filename_extension( archive_filename_extension );
+#endif
 
   if( !source_name.empty() )
     get_output()->set_source (source_name);

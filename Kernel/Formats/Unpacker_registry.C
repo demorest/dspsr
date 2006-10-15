@@ -19,8 +19,11 @@
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 
+#if 0
+/* Wvs FIX LATER */
 #include "dsp/NullUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::NullUnpacker> bitseries;
+#endif
 
 #if DSP_mini
 #include "dsp/MiniUnpack.h"

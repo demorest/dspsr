@@ -18,9 +18,11 @@
 
 #include "Pulsar/BasebandArchive.h"
 
-#include "string_utils.h"
+#include "strutil.h"
 #include "dirutil.h"
 #include "Error.h"
+
+using namespace std;
 
 static char* args = "b:B:d:f:F:hm:M:n:N:o:p:P:t:v:V";
 
@@ -393,7 +395,7 @@ void get_filenames(vector<string>& filenames, char* optarg){
   char cfilename[1024];
   while( fgets(cfilename,1023,fptr) ){
     filenames.push_back( cfilename );
-    h_chomp( filenames.back() );
+    h_backchomp( filenames.back() );
     if( filenames.back()==string("") ){
       filenames.pop_back();
       continue;

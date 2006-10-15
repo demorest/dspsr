@@ -12,6 +12,8 @@
 
 #include <assert.h>
 
+using namespace std;
+
 // #define _DEBUG 1
 
 dsp::TimeDivide::TimeDivide ()

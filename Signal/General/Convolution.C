@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Convolution.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Apodization.h"
@@ -12,9 +13,9 @@
 #include "dsp/DedispersionHistory.h"
 #include "dsp/Dedispersion.h"
 
-#include "fftm.h"
-#include "genutil.h"
-#include "Reference.h"
+#include "FTransform.h"
+
+using namespace std;
 
 //#define DEBUG
 
@@ -238,7 +239,7 @@ void dsp::Convolution::transformation ()
   output->change_start_time (nfilt_pos);
 
   // data will be scaled by the FFT
-  if (fft::get_normalization() == fft::nfft)
+  if (FTransform::get_norm() == FTransform::unnormalized)
     // after performing forward and backward FFTs the data will be scaled
     output->rescale (double(nsamp_fft) * double(n_fft));
 
@@ -278,10 +279,10 @@ void dsp::Convolution::transformation ()
 	  }
 
 	  if (state == Signal::Nyquist)
-	    fft::frc1d (nsamp_fft, spectrum[ipol], ptr);
+	    FTransform::frc1d (nsamp_fft, spectrum[ipol], ptr);
 
 	  else if (state == Signal::Analytic)
-	    fft::fcc1d (nsamp_fft, spectrum[ipol], ptr);
+	    FTransform::fcc1d (nsamp_fft, spectrum[ipol], ptr);
 	  
 	}
 	
@@ -314,7 +315,7 @@ void dsp::Convolution::transformation ()
 	  fflush (stderr);
 #endif
 	  // fft back to the complex time domain
-	  fft::bcc1d (n_fft, complex_time, spectrum[ipol]);
+	  FTransform::bcc1d (n_fft, complex_time, spectrum[ipol]);
 	  
 	  // copy the good (complex) data back into the time stream
 	  ptr = output -> get_datptr (ichan, ipol) + offset;

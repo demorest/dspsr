@@ -4,13 +4,13 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeriesUnloader.h"
 
-#include "polyco.h"
 #include "Error.h"
 
-#include <assert.h>
+using namespace std;
 
 dsp::SubFold::SubFold ()
 {

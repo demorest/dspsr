@@ -6,7 +6,6 @@
  ***************************************************************************/
 #include "dsp/TwoBitStatsPlotter.h"
 #include "dsp/TwoBitCorrection.h"
-#include "genutil.h"
 
 #include <iostream>
 #include <algorithm>
@@ -16,6 +15,7 @@
 
 #include <cpgplot.h>
 
+using namespace std;
 
 dsp::TwoBitStatsPlotter::TwoBitStatsPlotter ()
 {

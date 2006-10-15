@@ -45,17 +45,19 @@
 
 #include "Pulsar/Archive.h"
 
-#include "fftm.h"
-#include "string_utils.h"
+#include "FTransform.h"
+#include "strutil.h"
 #include "dirutil.h"
 #include "Error.h"
-#include "MakeInfo.h"
+// Wvs FIX LATER #include "MakeInfo.h"
 
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include <unistd.h>
+
+using namespace std;
 
 static char* args =
 "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:X:z";
@@ -137,9 +139,8 @@ void info ()
   char* mpimsg = "";
 #endif
   
-  cerr << "dspsr " << dsp::version << " <" << fft::id << mpimsg 
-       << "> compiled by " << MakeInfo_user << " on " << MakeInfo_date
-       << endl;
+  cerr << "dspsr " << dsp::version 
+       << " <" << FTransform::get_library() << mpimsg << ">" << endl;
 }
 
 // use WeightedTimeSeries
@@ -517,7 +518,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'o':
-      fft::plans.optimize = true;
+      FTransform::optimize = true;
       break;
 
     case 'P':
@@ -1271,7 +1272,7 @@ int main (int argc, char** argv) try {
       for (unsigned ipol=0; ipol < profile->get_npol(); ipol++)  {
         float* from = profile->get_datptr(0, ipol);
         for (unsigned ibin=0; ibin < profile->get_nbin(); ibin++)  {
-          fft::bcc1d (nchan_acf, temp, from);
+          FTransform::bcc1d (nchan_acf, temp, from);
           for (unsigned ichan=0; ichan < nlag_acf; ichan++)  {
             output->get_datptr (ichan, ipol*2)[ibin] = temp[ichan*2];
             output->get_datptr (ichan, ipol*2+1)[ibin] = temp[ichan*2+1];

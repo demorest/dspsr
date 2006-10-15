@@ -7,18 +7,17 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.30 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.31 $
+   $Date: 2006/10/15 21:48:06 $
+   $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
-#include <vector>
-
 #include "dsp/HistUnpacker.h"
 
 #include "environ.h"
+#include <vector>
 
 namespace dsp {
 
@@ -99,7 +98,7 @@ namespace dsp {
     virtual float get_fraction_low () const;
 
     //! Calculate the sum and sum-squared from each digitizer
-    virtual int64 stats (vector<double>& sum, vector<double>& sumsq);
+    virtual int64 stats (std::vector<double>& sum, std::vector<double>& sumsq);
 
     //! Get the minumum number of ones in nsample points
     unsigned get_nmin() const { return n_min; }
@@ -160,10 +159,10 @@ namespace dsp {
     bool built;
 
     //! Values used in Dynamic Level Setting
-    vector< float > dls_lookup;
+    std::vector< float > dls_lookup;
 
     //! Number of low-voltage states in a given byte
-    vector< unsigned char > nlo_lookup;
+    std::vector< unsigned char > nlo_lookup;
 
     //! Set limits using current attributes
     void set_limits ();

@@ -9,21 +9,17 @@
 #ifndef __IncoherentFilterbank_h
 #define __IncoherentFilterbank_h
 
-#include <memory>
-#include <vector>
-
-#include "genutil.h"
-#include "Types.h"
-
-#include "RealTimer.h"
-
-#include "dsp/TimeSeries.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Transformation.h"
 
+#include "RealTimer.h"
+
 /*
 
-NOTE: According to WvS in his email of 14 January 2003 the FFT actually produces nchan+1 channels.  I have chosen to throw away the last (Nyquist) channel, to be consistent with dsp::Observation::get_base_frequency().  HSK
+NOTE: According to WvS in his email of 14 January 2003 the FFT
+actually produces nchan+1 channels.  I have chosen to throw away the
+last (Nyquist) channel, to be consistent with
+dsp::Observation::get_base_frequency().  HSK
 
 */
 

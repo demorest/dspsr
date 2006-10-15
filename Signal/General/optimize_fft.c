@@ -4,12 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <stdio.h>
-#include <math.h>
 
 #include "environ.h"
 
-#include "spectra.h"
+#include <stdio.h>
+#include <math.h>
 
 uint64 power_of_two (uint64 number)
 {

@@ -4,11 +4,13 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Shape.h"
-#include "genutil.h"
 #include "Error.h"
 
 #include <assert.h>
+
+using namespace std;
 
 bool dsp::Shape::verbose = false;
 
@@ -85,13 +87,17 @@ const dsp::Shape& dsp::Shape::operator *= (float factor)
 const dsp::Shape& dsp::Shape::operator += (const dsp::Shape& ds)
 {
   if (npol != ds.npol)
-    throw_str ("dsp::Shape::operator += npol=%d!=ds.npol=%d", npol,ds.npol);
+    throw Error (InvalidParam, "dsp::Shape::operator +=",
+		 "npol=%d!=ds.npol=%d", npol,ds.npol);
   if (nchan != ds.nchan)
-    throw_str ("dsp::Shape::operator += nchan=%d!=ds.nchan=%d",nchan,ds.nchan);
+    throw Error (InvalidParam, "dsp::Shape::operator +=",
+		 "nchan=%d!=ds.nchan=%d",nchan,ds.nchan);
   if (ndat != ds.ndat)
-    throw_str ("dsp::Shape::operator += ndat=%d!=ds.ndat=%d", ndat,ds.ndat);
+    throw Error (InvalidParam, "dsp::Shape::operator +=",
+		 "ndat=%d!=ds.ndat=%d", ndat,ds.ndat);
   if (ndim != ds.ndim)
-    throw_str ("dsp::Shape::operator += ndim=%d!=ds.ndim=%d", ndim,ds.ndim);
+    throw Error (InvalidParam, "dsp::Shape::operator +=",
+		 "ndim=%d!=ds.ndim=%d", ndim,ds.ndim);
 
   unsigned pts = ndim * ndat * nchan;
 
@@ -150,7 +156,8 @@ bool dsp::Shape::matches (const Shape* shape)
 void dsp::Shape::borrow (const dsp::Shape& data, unsigned ichan)
 {
   if (ichan >= data.nchan)
-    throw_str ("dsp::Shape::external invalid ichan=%d/%d", ichan, data.nchan);
+    throw Error (InvalidParam, "dsp::Shape::borrow",
+		 "invalid ichan=%d/%d", ichan, data.nchan);
 
   // cerr << "dsp::Shape::external ichan=" << ichan << "/" << nchan << endl;
   destroy ();
@@ -172,17 +179,19 @@ void dsp::Shape::scrunch_to (unsigned new_ndat)
     return;
 
   if (borrowed)
-    throw_str ("dsp::Shape::scrunch_to cannot scrunch borrowed data");
+    throw Error (InvalidParam, "dsp::Shape::scrunch_to",
+		 "cannot scrunch borrowed data");
 
   if (new_ndat == 0)
-    throw_str ("dsp::Shape::scrunch_to invalid ndat=0");
+    throw Error (InvalidParam, "dsp::Shape::scrunch_to",
+		 "invalid ndat=0");
 
   if (ndat < new_ndat)
-    throw_str ("dsp::Shape::scrunch_to ndat=%d > current ndat=%d",
-	       new_ndat, ndat);
+    throw Error (InvalidParam, "dsp::Shape::scrunch_to",
+		 "ndat=%d > current ndat=%d", new_ndat, ndat);
 
   if (ndat % new_ndat)
-    throw_str ("dsp::Shape::scrunch_to uneven factor");
+    throw Error (InvalidParam, "dsp::Shape::scrunch_to", "uneven factor");
 
   unsigned sfactor = ndat / new_ndat;
 
