@@ -1,0 +1,42 @@
+/*-*-C-*-*/
+
+/* /////////////////////////////////////////////////////////////////////////
+
+This code fragment forms the products: pp, qq, Re[p* q], Im[p* q]
+where * denotes complex conjugation.   It does the work for cross_detect
+and cross_detect_int.  
+
+This tactic may seem kludgey.  However, I want a fast routine
+(without an extra if/then for every loop)  and I want to be sure
+that I write it only once, eliminating another dimension of possible
+error.
+
+NOTE how the macro CD_OP is #defined in cross_detect.c before
+#including this code fragment.  Also note the declaration of arguments:
+
+void cross_detect (unsigned ndat, float* p, float* q,
+                   float* pp, float* qq, float* Rpq, float* Ipq, 
+                   unsigned span)
+
+//////////////////////////////////////////////////////////////////////// */
+
+{
+  register float p_r;
+  register float p_i;
+  register float q_r;
+  register float q_i;
+  unsigned j;
+
+  for (j=0; j<ndat; j++)  {
+    p_r = *p; p++;
+    p_i = *p; p++;
+
+    q_r = *q; q++;
+    q_i = *q; q++;
+
+    *pp  CD_OP p_r * p_r + p_i * p_i;  pp += span;    /*  p* p      */
+    *qq  CD_OP q_r * q_r + q_i * q_i;  qq += span;    /*  q* q      */
+    *Rpq CD_OP p_r * q_r + p_i * q_i;  Rpq += span;   /*  Re[p* q]  */
+    *Ipq CD_OP p_r * q_i - p_i * q_r;  Ipq += span;   /*  Im[p* q]  */
+  }
+}
