@@ -9,11 +9,8 @@
 #ifndef __dsp_MiniExtension_h_
 #define __dsp_MiniExtension_h_
 
-#include "Reference.h"
-#include "environ.h"
-
-#include "dsp/MiniPlan.h"
 #include "dsp/dspExtension.h"
+#include "dsp/MiniPlan.h"
 
 namespace dsp {
 
@@ -55,7 +52,7 @@ namespace dsp {
     void set_subsize(uint64 _subsize){ subsize = _subsize; }
 
     //! Dump out to a string
-    virtual string dump_string() const;
+    virtual std::string dump_string() const;
 
   protected:
 

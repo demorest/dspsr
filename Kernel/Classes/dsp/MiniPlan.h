@@ -9,27 +9,30 @@
 #ifndef __MiniPlan_h_
 #define __MiniPlan_h_
 
-#include <string>
-#include <vector>
-
-#include "Header.h"
-#include "Reference.h"
-#include "Printable.h"
-#include "MJD.h"
-#include "environ.h"
-#include "psr_cpp.h"
-
 #include "dsp/TimeSeries.h"
+#include "dsp/Header.h"
+#include "dsp/Printable.h"
 
 /*!
 
 A MiniPlan consists of a vector of SubInts and common information.
 
-Each SubInt contains just enough information to miniaturise/deminiaturise data, and also stores how that SubInt was generated.  (i.e. when the data used to generate it started and how much of that data was used.)
+Each SubInt contains just enough information to
+miniaturise/deminiaturise data, and also stores how that SubInt was
+generated.  (i.e. when the data used to generate it started and how
+much of that data was used.)
 
-The MiniPlan also stores the number of bits for miniaturising and a 'sigma_max' parameter.  This is used for setting the levels for miniaturising in terms of how many standard deviations a datum is away from the mean.  The MiniPlan stores the rate of the input data so that the relevant SubInt can be extracted for a particular input time.
+The MiniPlan also stores the number of bits for miniaturising and a
+'sigma_max' parameter.  This is used for setting the levels for
+miniaturising in terms of how many standard deviations a datum is away
+from the mean.  The MiniPlan stores the rate of the input data so that
+the relevant SubInt can be extracted for a particular input time.
 
-The MiniPlan also stores 'requested_duration' and 'requested_scan_samps'.  These determine how long any incoming SubInts being push-backed onto the SubInt vector are to be (requested_duration), and how many samples are needed to generate their means and std devs (requested_scan_samps).
+The MiniPlan also stores 'requested_duration' and
+'requested_scan_samps'.  These determine how long any incoming SubInts
+being push-backed onto the SubInt vector are to be
+(requested_duration), and how many samples are needed to generate
+their means and std devs (requested_scan_samps).
 
 */
 
@@ -49,24 +52,24 @@ namespace dsp {
       //! For how many samples the SubInt is valid for
       uint64 duration;
       //! The means for each chan/pol group
-      vector<vector<float> > means;
+      std::vector<std::vector<float> > means;
       //! The std devs for each chan/pol group
-      vector<vector<float> > sigmas;
+      std::vector<std::vector<float> > sigmas;
       //! The start time of the data the SubInt was generated from
       MJD gen_start;
       //! How many samples were used to generate the SubInt
       uint64 gen_samps;
 
       //! Initialise from a vector of chars
-      virtual unsigned read_from_chars(vector<char>& info,unsigned offset);
+      virtual unsigned read_from_chars(std::vector<char>& info,unsigned offset);
 
     protected:
       //! Does nothing
-      virtual vector<char> null_pad(vector<char>& to_pad){ return to_pad; }
+      virtual std::vector<char> null_pad(std::vector<char>& to_pad){ return to_pad; }
       //! Worker function for read()
-      virtual vector<char> read_in_chars(int fd);
+      virtual std::vector<char> read_in_chars(int fd);
       //! Worker function for write_string();
-      virtual string info_string();
+      virtual std::string info_string();
     };
 
     //! Default constructor
@@ -76,7 +79,7 @@ namespace dsp {
     MiniPlan(const MiniPlan& mp);
 
     //! Instantiate from a file
-    MiniPlan(string plan_file);
+    MiniPlan(std::string plan_file);
 
     //! Clone
     virtual MiniPlan* clone() const { return new MiniPlan(*this); }
@@ -149,7 +152,7 @@ namespace dsp {
     virtual void backwards_extend(MJD _start_time);
 
     //! Hack for debugging.  Should be taken out once MiniPlan is working
-    vector<SubInt>& get_subints(){ return subints; }
+    std::vector<SubInt>& get_subints(){ return subints; }
     
   protected:
 
@@ -201,7 +204,7 @@ namespace dsp {
     virtual void set_rate(double _rate){ rate = _rate; }
 
     //! The SubInts
-    vector<SubInt> subints;
+    std::vector<SubInt> subints;
 
   private:
 
