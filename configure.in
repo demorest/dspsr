@@ -35,7 +35,7 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_FC
 AC_F77_WRAPPERS
-_STAR_RESTFP_FIX
+#_STAR_RESTFP_FIX
 
 #
 # Disable the debugging information option, -g
@@ -110,5 +110,5 @@ AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT
 
-make config
+rm -f config/Makefile.local
 
