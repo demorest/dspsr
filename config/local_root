@@ -1,0 +1,9 @@
+#
+# setenv CONFIG_SITE config/local_root
+#
+# to set LOCAL_ROOT, as defined in the Standard Makefile scheme, 
+# as your default prefix
+#
+
+test "$prefix" = NONE && prefix=`pwd | sed -e s:'psrchive$':$LOGIN_ARCH:`
+

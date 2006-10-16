@@ -1,0 +1,8 @@
+#
+# setenv CONFIG_SITE config/cvshome
+#
+# to set $CVSHOME as your default prefix
+#
+
+test "$prefix" = NONE && test x"$CVSHOME" != x && prefix=$CVSHOME/$LOGIN_ARCH
+
