@@ -12,6 +12,8 @@
 #include "Error.h"
 #include "ierf.h"
 
+#include <assert.h>
+
 using namespace std;
 
 // #define _DEBUG 1
