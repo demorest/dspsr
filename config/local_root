@@ -5,5 +5,5 @@
 # as your default prefix
 #
 
-test "$prefix" = NONE && prefix=`pwd | sed -e s:'psrchive$':$LOGIN_ARCH:`
+test "$prefix" = NONE && prefix=`pwd | sed -e s:'dspsr$':$LOGIN_ARCH:`
 
