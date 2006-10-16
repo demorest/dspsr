@@ -1,5 +1,5 @@
 
-SUBDIRS	= base backends dsp psr
+SUBDIRS	= util base backends dsp psr
 
 libs: install-binSCRIPTS
 	$(MAKE) RECURSIVE_TARGETS="all-recursive libs-recursive" libs-recursive
