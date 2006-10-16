@@ -11,7 +11,7 @@ AC_DEFUN([SWIN_LIB_PSRCHIVE],
   PSRCHIVE_CFLAGS=""
   PSRCHIVE_LIBS=""
 
-  if test x"$with_psrchive_dir" = x"no"; then
+  if test x"$with_psrchive_dir" = xno; then
     # user disabled psrchive. Leave cache alone.
     have_psrchive="User disabled PSRCHIVE."
   else
@@ -19,17 +19,21 @@ AC_DEFUN([SWIN_LIB_PSRCHIVE],
     AC_MSG_CHECKING([for PSRCHIVE installation])
 
     # "yes" is not a specification
-    if test x"$with_psrchive_dir" != xyes; then
-      psrchive_cflags=$with_psrchive_dir/bin/psrchive_cflags
-      psrchive_ldflags=$with_psrchive_dir/bin/psrchive_ldflags
-    else
-      psrchive_cflags=`which psrchive_cflags`
-      psrchive_ldflags=`which psrchive_ldflags`
+    if test x"$with_psrchive_dir" = xyes; then
+      with_psrchive_dir=
     fi
 
-    have_psrchive="no"
+    if test x"$with_psrchive_dir" = x; then
+      psrchive_cflags=`which psrchive_cflags`
+      psrchive_ldflags=`which psrchive_ldflags`
+    else
+      psrchive_cflags=$with_psrchive_dir/bin/psrchive_cflags
+      psrchive_ldflags=$with_psrchive_dir/bin/psrchive_ldflags
+    fi
 
-    if test -x $psrchive_cflags -a -x $psrchive_ldflags ; then
+    have_psrchive="not found"
+
+    if test -x "$psrchive_cflags" -a -x "$psrchive_ldflags" ; then
 
       ac_save_CPPFLAGS="$CPPFLAGS"
       ac_save_LIBS="$LIBS"
@@ -56,17 +60,22 @@ AC_DEFUN([SWIN_LIB_PSRCHIVE],
 
   AC_MSG_RESULT([$have_psrchive])
 
-  if test $have_psrchive = yes; then
+  if test "$have_psrchive" = "yes"; then
     AC_DEFINE([HAVE_PSRCHIVE], [1], [Define if the PSRCHIVE library is present])
     [$1]
   else
-    AC_MSG_WARN([PSRCHIVE library not found])
+    if test "$have_psrchive" = "not found"; then
+      echo
+      AC_MSG_NOTICE([Ensure that PSRCHIVE executables are in PATH.])
+      AC_MSG_NOTICE([Alternatively, use the --with-psrchive-dir option.])
+      echo
+    fi
     [$2]
   fi
 
   AC_SUBST(PSRCHIVE_LIBS)
   AC_SUBST(PSRCHIVE_CFLAGS)
-  AM_CONDITIONAL(HAVE_PSRCHIVE,[test $have_psrchive = yes])
+  AM_CONDITIONAL(HAVE_PSRCHIVE,[test "$have_psrchive" = "yes"])
 
 ])
 
