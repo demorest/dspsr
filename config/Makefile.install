@@ -125,12 +125,6 @@ INSTALL_INCS:=${install_INCS:%=$(INSTALL_INCDIR)/%}
 INSTALL_SHXS:=${install_SHXS:%=$(INSTALL_SHXDIR)/%}
 
 ##########################################################################
-# ensure that make knows where to install
-ifeq (${strip ${PSRHOME}},)
-ERROR:=environment variable PSRHOME is not defined
-endif
-
-##########################################################################
 # Static pattern rules to copy libraries and executables from the user's 
 # local "working copy" directories to the installed "group copy" dirs.
 ##########################################################################
