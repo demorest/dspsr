@@ -5,10 +5,16 @@
  *
  ***************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 #include "dsp/Operation.h"
 #include "dsp/TimeKeeper.h"
-
-#include <malloc.h>
 
 using namespace std;
 
@@ -135,7 +141,12 @@ void* dsp::Operation::workingspace (size_t nbytes)
 
   if (working_size < nbytes) {
     if (working_space) free(working_space); working_space = 0;
+
+#ifdef HAVE_MALLOC_H
     working_space = (char*)memalign(16, nbytes);
+#else
+    working_space = (char*)valloc(nbytes);
+#endif
 
     if (!working_space)
       throw Error (BadAllocation, "Operation::workingspace",

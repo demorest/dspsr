@@ -96,6 +96,11 @@ INSTALL_DATA="${INSTALL} -m 644 -p"
 install_sh="CPPROG='cp -p' ${install_sh}"
 
 #
+# Checks for header files.
+#
+AC_CHECK_HEADERS([malloc.h])
+
+#
 # Checks for library functions.
 #
 SWIN_FUNC_GETOPT_LONG

@@ -4,9 +4,17 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 #include <assert.h>
 #include <stdio.h>
-#include <malloc.h>
 
 #include "dsp/DataSeries.h"
 #include "Error.h"
@@ -144,7 +152,13 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
     cerr << "dsp::DataSeries::resize allocate " << require << " bytes" << endl;
     getchar();
 #endif
+
+#ifdef HAVE_MALLOC_H
     buffer = (unsigned char*) memalign (16, size_t(require + 8));
+else
+    buffer = (unsigned char*) valloc (require + 8);
+#endif
+
 #if INTERACTIVE_MEMORY
     cerr << "dsp::DataSeries::resize allocated at " << (void*) buffer << endl;
 #endif
