@@ -1,7 +1,7 @@
 
 SUBDIRS	= util base backends dsp psr
 
-libs: install-binSCRIPTS
+libs:
 	$(MAKE) RECURSIVE_TARGETS="all-recursive libs-recursive" libs-recursive
 
 all: $(config)
@@ -14,8 +14,11 @@ config := $(srcdir)/config/Makefile.local
 $(config): $(srcdir)/Makefile.am
 	@echo "prefix := $(prefix)" > $@
 	@echo "CC := $(CC)" >> $@
+	@echo "CFLAGS := $(CFLAGS)" >> $@
 	@echo "CCC := $(CXX)" >> $@
+	@echo "CCFLAGS := $(CXXFLAGS)" >> $@
 	@echo "FC := $(F77)"  >> $@
+	@echo "FFLAGS := $(FFLAGS)" >> $@
 	@echo "LF77 := @FLIBS@" >> $@
 	@echo "LPSRCHIVE := @PSRCHIVE_LIBS@" >> $@
 	@echo "INCFLAGS += @PSRCHIVE_CFLAGS@" >> $@
