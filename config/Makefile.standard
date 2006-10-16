@@ -12,10 +12,6 @@ TARGETS := include depend libs dso scripts all test install \
 PSRPKGS ?= ${PSRHOME}/packages
 LOGIN_ARCH ?= build
 
-INSTALL_BINDIR := ${prefix}/bin
-INSTALL_LIBDIR := ${prefix}/lib
-INSTALL_INCDIR := ${prefix}/include
-
 BINDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/bin
 LIBDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/lib
 INCDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/include
@@ -39,6 +35,10 @@ MAKEDEPEND := makedepend -Y -f
 # the automake produced Makefile
 ##########################################################################
 -include ${LOCAL_ROOT}/config/Makefile.local
+
+INSTALL_BINDIR := ${prefix}/bin
+INSTALL_LIBDIR := ${prefix}/lib
+INSTALL_INCDIR := ${prefix}/include
 
 ##########################################################################
 # backend selection
