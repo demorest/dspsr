@@ -179,11 +179,6 @@ RUNTESTS:=$(TESTEXECS:%=%.runtest)
 #########################################################################
 MDFLAGS += ${INCFLAGS}
 
-ifeq ($(PSRGTKMM),yes)
-MDFLAGS += -DGTK_MAJOR_VERSION=2 # makedepend is stupid
-endif
-
-
 
 ##########################################################################
 # The INSTALL_INCS, INSTALL_SHXS, INSTALL_LIBS and INSTALL_BINS macros
