@@ -20,7 +20,7 @@ BINDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/bin
 LIBDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/lib
 INCDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/include
 
-INCFLAGS := -I. -I${INCDIR} -I${PSRPKGS}/include \
+INCFLAGS := -I${INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
 
 LDFLAGS := -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
