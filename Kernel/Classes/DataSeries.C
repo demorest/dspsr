@@ -154,9 +154,19 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 #endif
 
 #ifdef HAVE_MALLOC_H
+
+#if INTERACTIVE_MEMORY
+    cerr << "dsp::DataSeries::resize memalign" << endl;
+#endif
     buffer = (unsigned char*) memalign (16, size_t(require + 8));
-else
+
+#else
+
+#if INTERACTIVE_MEMORY
+    cerr << "dsp::DataSeries::resize valloc" << endl;
+#endif
     buffer = (unsigned char*) valloc (require + 8);
+
 #endif
 
 #if INTERACTIVE_MEMORY
