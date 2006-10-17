@@ -21,7 +21,7 @@ $(config): $(srcdir)/Makefile.am
 	@echo "FFLAGS := $(FFLAGS)" >> $@
 	@echo "LF77 := @FLIBS@" >> $@
 	@echo "LPSRCHIVE := @PSRCHIVE_LIBS@" >> $@
-	@echo "INCFLAGS += @PSRCHIVE_CFLAGS@" >> $@
+	@echo "INCFLAGS += $(DEFS) @PSRCHIVE_CFLAGS@" >> $@
 	$(pgplot.config)
 
 if HAVE_PGPLOT
