@@ -13,18 +13,18 @@
 
 namespace dsp {
 
-  //! Loads BitSeries data from a MkV file
+  //! Loads BitSeries data from a WAPP file
   class WAPPFile : public BlockFile
   {
   public:
 	  
     //! Construct and open file	  
-    WAPPFile (const char* filename=0, const char* headername=0);
+    WAPPFile (const char* filename=0);
 	  
     //! Destructor
     ~WAPPFile ();
 	  
-    //! Returns true if filename is a valid Mk5 file
+    //! Returns true if filename is a valid WAPP file
     bool is_valid (const char* filename, int NOT_USED=-1) const;
 
   protected:
@@ -32,7 +32,8 @@ namespace dsp {
     //! Open the file
     void open_file (const char* filename);
 
-    void skip_extra ();
+    //! The header parser
+    void* header;
 
   };
 

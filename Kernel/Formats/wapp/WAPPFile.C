@@ -11,21 +11,28 @@
 #include "wapp_header.h"
 #include "key.h"
 
+extern "C" double wappcorrect (double mjd);
+
 using namespace std;
 
-dsp::WAPPFile::WAPPFile (const char* filename, const char* headername)
+dsp::WAPPFile::WAPPFile (const char* filename)
   : BlockFile ("WAPP")
 {
+  header = 0;
+  if (filename)
+    open_file (filename);
 }
 
 dsp::WAPPFile::~WAPPFile ( )
 {
+  if (header)
+    close_parse( (HEADERP*) header );
 }
 
 
 bool dsp::WAPPFile::is_valid (const char* filename, int) const
 {
-  struct HEADERP *h = head_parse( filename );
+  struct HEADERP* h = head_parse( filename );
 
   if (!h)
     return false;
@@ -37,32 +44,232 @@ bool dsp::WAPPFile::is_valid (const char* filename, int) const
 void dsp::WAPPFile::open_file (const char* filename)
 {
   struct WAPP_HEADER head;
-  struct HEADERP *h = head_parse( filename );
+  struct HEADERP* h = head_parse( filename );
 
   if (!h)
     throw Error (InvalidParam, "dsp::WAPPFile::open_file",
 		 "not a WAPP file");
 
-#if 0
-  info.set_nbit ();
-  info.set_bandwidth ();
-  info.set_centre_frequency ();
-  info.set_npol ();
-  info.set_state ();
-  info.set_rate ();
-  info.set_start_time ();
-  info.set_telescope_code ();
-  info.set_source ();
+  header = h;
 
-  set_total_samples();
+
+  fetch_hdrval(h,"src_name",&(head.src_name),sizeof(head.src_name));
+
+  fetch_hdrval(h,"obs_type",&(head.obs_type),sizeof(head.obs_type));
+
+  /* user-requested length of this integration (s) */
+  fetch_hdrval(h,"obs_time",&(head.obs_time),sizeof(head.obs_time));
+
+  /* size (in bytes) of this header (nom =1024) */
+  fetch_hdrval(h,"header_size",&(head.header_size),sizeof(head.header_size));
+
+  fetch_hdrval(h,"obs_date",&(head.obs_date),sizeof(head.obs_date));
+
+  fetch_hdrval(h,"start_time",&(head.start_time),sizeof(head.start_time));
+
+
+  /* user-requested sample time (us) */
+  fetch_hdrval(h, "samp_time", &(head.samp_time),sizeof(head.samp_time));
+
+  fetch_hdrval(h,"wapp_time",&(head.wapp_time),sizeof(head.wapp_time));
+
+
+
+  fetch_hdrval(h,"num_lags",&(head.num_lags),sizeof(head.num_lags));
+
+  fetch_hdrval(h,"nifs",&(head.nifs),sizeof(head.nifs));
+
+  /* user-requested: 1 means 3-level; 2 mean 9-level  */
+  fetch_hdrval(h,"level",&(head.level),sizeof(head.level));
+
+  fetch_hdrval(h,"lagformat",&(head.lagformat),sizeof(head.lagformat));
+
+
+  /* if we truncate data (0 no trunc)                 */
+  /* for 16 bit lagmux modes, selects which 16 bits   */
+  /* of the 32 are included as data                   */
+  /* 0 is bits 15-0 1,16-1 2,17-2...7,22-7            */
+  fetch_hdrval(h,"lagtrunc",&(head.lagtrunc),sizeof(head.lagtrunc));
+
+  fetch_hdrval(h,"cent_freq",&(head.cent_freq),sizeof(head.cent_freq));
+
+  fetch_hdrval(h,"bandwidth",&(head.bandwidth),sizeof(head.bandwidth));
+
+  fetch_hdrval(h,"freqinversion",&(head.freqinversion),
+	       sizeof(head.freqinversion));
+
+
+  /* requested ra J2000 (10000*hr+100*min+sec) */
+  fetch_hdrval(h,"src_ra",&(head.src_ra),sizeof(head.src_ra));
+
+  /* requested dec J2000 (10000*deg+100*min+sec) */
+  fetch_hdrval(h,"src_dec",&(head.src_dec),sizeof(head.src_dec));
+
+  fetch_hdrval(h,"start_az",&(head.start_az),sizeof(head.start_az));
+  fetch_hdrval(h,"start_za",&(head.start_za),sizeof(head.start_za));
+  fetch_hdrval(h,"ast", &(head.start_ast),sizeof(head.start_ast));
+  fetch_hdrval(h,"lst", &(head.start_lst),sizeof(head.start_lst));
+
+  /* user-requested: 1 means that data is sum of IFs  */
+  fetch_hdrval(h,"sum",&(head.sum),sizeof(head.sum));
+
+  fetch_hdrval(h,"project_id",&(head.project_id),sizeof(head.project_id));
+  fetch_hdrval(h,"observers",&(head.observers),sizeof(head.observers));
+
+  fetch_hdrval(h,"psr_dm",&(head.psr_dm),sizeof(head.psr_dm));
+
+  fetch_hdrval(h,"dumptime",&(head.dumptime),sizeof(head.dumptime));
+
+#if 0
+  telescope_id=1;
+#endif
+
+  /* get number of bins which will be non zero in folding mode */
+  fetch_hdrval(h,"nbins",&(head.nbins),sizeof(head.nbins));
+
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // mode
+  //
+  /* what kind of observation is this */
+  info.set_mode(head.obs_type);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // source
+  //
+  /* user-supplied source name (usually pulsar name) */
+  info.set_source (head.src_name);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // centre_frequency
+  //
+  /* user-supplied band center frequency (MHz) */
+  info.set_centre_frequency (head.cent_freq);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // bandwidth
+  //
+  /* total bandwidth (MHz) for this observation */
+  double bandwidth = head.bandwidth;
+  /* 1 band is inverted, else band is not inverted    */
+  if (head.freqinversion)
+    bandwidth = -bandwidth;
+  info.set_bandwidth (bandwidth);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // npol
+  //
+  /* user-requested: number of IFs to be recorded     */
+  info.set_npol (head.nifs);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // state
+  //
+  if (head.nifs == 2)
+    info.set_state (Signal::PPQQ);
+  else
+    info.set_state (Signal::Intensity);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // nchan
+  //
+  /* user-requested number of lags per dump per spect */
+  info.set_nchan (head.num_lags);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // nbit
+  //
+  /* 0=16 bit uint lags , 1=32 bit uint lags          */
+  /* 2=32 bit float lags, 3=32 bit float spectra      */
+  switch (head.lagformat) {
+  case 0:
+    info.set_nbit (16);
+    break;
+  case 1:
+    info.set_nbit (32);
+    break;
+  case 3: /* timing mode data - not relevant, but needs to work! */
+    break;
+  case 4:
+    info.set_nbit (8);
+    break;
+  default:
+    throw Error (InvalidState, "dsp::WAPPFile::open_file",
+		 "lagformat variable in header should be 0, 1 or 4");
+    break;
+  }
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // start_time
+  //
+
+  /* built by WAPP from yyyymmdd */  
+  string utc = head.obs_date;  utc += "-";
+
+  /* UT seconds after midnight (start on 1-sec tick) [hh:mm:ss] */
+  utc += head.start_time;
+
+  struct tm time;
+  if (str2tm (&time, utc.c_str()) < 0)
+    throw Error (InvalidState, "dsp::WAPPFile::open_file",
+		 "Could not parse UTC from " + utc);
+
+  MJD mjd (time);
+
+  char buff[64];
+  cerr << "UTC=" << utc << " MJD=" << mjd << " -> "
+       << mjd.datestr (buff, 64, "%Y-%m-%d %H:%M:%S") << endl;
+
+  // from sigproc-2.4
+  /* for data between April 17 and May 8 inclusive, the start times are
+     off by 0.5 days due to the ntp daemon not running... fix here.
+     this also occured on May 17! hopefully will not happen again... */
+  if ( ((mjd.intday() >= 52016) && (mjd.intday() <= 52039)) 
+       || (mjd.intday() == 52046.0)) {
+    cerr << "WARNING: MJD start time off by 0.5 days! fixed..." << endl;
+    MJD half_day (0.5);
+    mjd -= half_day;
+  }
+
+  info.set_start_time (mjd);
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // rate
+  //
+  /* actual sample time (us) i.e. requested+dead time */
+  double tsamp_us = head.wapp_time;
+
+  // from sigproc-2.4
+  tsamp_us += wappcorrect( mjd.in_days() );
+
+  info.set_rate ( 1e6 / tsamp_us );
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // telscope code
+  //
+  info.set_telescope_code (1);  // assume Arecibo
   info.set_default_basis ();
 
-  info.set_mode(string);
-#endif
+  set_total_samples();
 
   string prefix="wapp";
   info.set_identifier(prefix+info.get_default_id() );
   info.set_machine("WAPP");	
 
+  fd = h->fd;
+  header_bytes = lseek(fd,0,SEEK_CUR);
+
+  cerr << "header bytes=" << header_bytes << endl;
 }
 
