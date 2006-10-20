@@ -9,12 +9,15 @@
 #ifndef __WAPPFile_h
 #define __WAPPFile_h
 
-#include "dsp/BlockFile.h"
+#include "dsp/File.h"
+
 
 namespace dsp {
 
+  class WAPPUnpacker;
+
   //! Loads BitSeries data from a WAPP file
-  class WAPPFile : public BlockFile
+  class WAPPFile : public File
   {
   public:
 	  
@@ -28,6 +31,8 @@ namespace dsp {
     bool is_valid (const char* filename, int NOT_USED=-1) const;
 
   protected:
+
+    friend class WAPPUnpacker;
 
     //! Open the file
     void open_file (const char* filename);
