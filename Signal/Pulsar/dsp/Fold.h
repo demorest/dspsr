@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.44 $
-   $Date: 2006/10/15 21:48:07 $
+   $Revision: 1.45 $
+   $Date: 2006/10/20 05:37:56 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -100,7 +100,7 @@ namespace dsp {
     //   const psrephem* get_pulsar_ephemeris () const;
 
     //! Get the ephemeris used to create the phase model
-    psrephem* get_pulsar_ephemeris ();
+    const psrephem* get_pulsar_ephemeris () const;
 
     //! use to see whether pulsar eph is stored
     bool has_pulsar_ephemeris() const { return pulsar_ephemeris.ptr(); }
