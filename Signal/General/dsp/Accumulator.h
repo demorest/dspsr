@@ -9,10 +9,8 @@
 #ifndef __Accumulator_h_
 #define __Accumulator_h_
 
-#include "environ.h"
-
-#include "Transformation.h"
-#include "TimeSeries.h"
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
 
 namespace dsp {
 
