@@ -82,55 +82,65 @@ void dsp::Fold::prepare (const Observation* observation)
 
   initialise();
 
-  string jpulsar = observation->get_source();
+  // The Fold::prepare method may be called with an Observation state
+  // not equal to the state of the input to be folded.  Therefore, the
+  // choice of folding_nbin is postponed until the first call to
+  // Fold::transformation.
+
+  folding_nbin = 0;
+
+  string jbpulsar = observation->get_source();
 
   if (!source_name.empty())
-    jpulsar = source_name;
+    jbpulsar = source_name;
 
-  if (jpulsar.length() == 0)
+  if (jbpulsar.length() == 0)
     throw Error (InvalidParam, "dsp::Fold::prepare", "empty source name");
 
   // Is this a CAL?
   if (observation->get_type() == Signal::PolnCal) {
     double calperiod = 1.0/observation->get_calfreq();
-    set_folding_period (calperiod, jpulsar);
+    set_folding_period (calperiod, jbpulsar);
   }
 
-  if( folding_period > 0 && (folding_period_source==jpulsar || folding_period_source==string()) )
-  {
-    if (verbose)
-      cerr << "dsp::Fold::prepare using folding_period=" << folding_period << endl;
+  if (folding_period > 0 
+      && (folding_period_source==jbpulsar || folding_period_source.empty()) )
+    {
+      if (verbose)
+	cerr << "dsp::Fold::prepare using folding_period="
+	     << folding_period << endl;
     pulsar_ephemeris = 0;
     folding_polyco = 0;
     built = true;
     return;
   }
 
-  if (jpulsar[0] != 'J')
-    jpulsar = "J" + jpulsar;
+  if (jbpulsar[0] != 'J' && jbpulsar.length() > 8)
+    jbpulsar = "J" + jbpulsar;
+  else if (jbpulsar[0] != 'B' && jbpulsar.length() > 6)
+    jbpulsar = "B" + jbpulsar;
 
   if (verbose)
-    cerr << "dsp::Fold::prepare source=" << jpulsar << endl;
+    cerr << "dsp::Fold::prepare source=" << jbpulsar << endl;
 
-  // Preference 1: correct polyco already generated
-  folding_polyco = choose_polyco (observation->get_start_time(), jpulsar);
 
-  if (folding_polyco)
+  folding_polyco = choose_polyco (observation->get_start_time(), jbpulsar);
+
+  pulsar_ephemeris = choose_ephemeris (jbpulsar);
+
+  if (pulsar_ephemeris && folding_polyco) {
+    if (verbose)
+      cerr << "dsp::Fold::prepare using given ephemeris and polyco" << endl;
+    built = true;
     return;
+  }
 
-  // Preference 2a: Correct ephemeris already generated
-  pulsar_ephemeris = choose_ephemeris (jpulsar);
-
-  if( pulsar_ephemeris.ptr() && verbose )
-    fprintf(stderr,"Correct ephemeris already generated\n");
-
-  // Preference 2b: Generate correct ephemeris
-  if (!pulsar_ephemeris.ptr()) {
+  if (!pulsar_ephemeris) {
 
     if (verbose) cerr << "dsp::Fold::prepare generating ephemeris" << endl;
 
     Reference::To<MatchingEphemeris> mephem;
-    mephem = new MatchingEphemeris (jpulsar.c_str(), 0);
+    mephem = new MatchingEphemeris (jbpulsar.c_str(), 0);
     add_pulsar_ephemeris( mephem );
     pulsar_ephemeris = mephem;
 
@@ -158,9 +168,9 @@ void dsp::Fold::prepare (const Observation* observation)
       cerr << "Looking up " << info.source << " in catalogue\n";
 
     // look up the pulsar in the catalogue
-    if (!creadcat (jpulsar.c_str(), psrstat))  {
+    if (!creadcat (jbpulsar.c_str(), psrstat))  {
       cerr << "dsp::Fold::prepare error creadcat (" 
-	   << jpulsar << ")\n";
+	   << jbpulsar << ")\n";
       return -1;
     }
 
@@ -173,11 +183,10 @@ void dsp::Fold::prepare (const Observation* observation)
   if (verbose)
     cerr << "dsp::Fold::prepare creating polyco" << endl;
 
-  if( dispersion_measure > 0.0 && pulsar_ephemeris.ptr() )
-    (const_cast<psrephem*>(pulsar_ephemeris.ptr()))->set_dm( dispersion_measure );
+  if (dispersion_measure > 0.0)
+    const_cast<psrephem*>(pulsar_ephemeris.get())->set_dm(dispersion_measure);
 
-  // Preference 2: Generate correct polyco from ephemeris and add it to the list of polycos to choose from
-  folding_polyco = get_folding_polyco(pulsar_ephemeris,observation);
+  folding_polyco = get_folding_polyco (pulsar_ephemeris, observation);
 
 #if 0
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
@@ -186,13 +195,6 @@ void dsp::Fold::prepare (const Observation* observation)
     cerr << "dsp::Fold::prepare Doppler shift from polyco:" << doppler << endl;
 
 #endif
-
-  // The Fold::prepare method may be called with an Observation state
-  // not equal to the state of the input to be folded.  Therefore, the
-  // choice of folding_nbin is postponed until the first call to
-  // Fold::transformation.
-
-  folding_nbin = 0;
 
   built = true;
 } 
@@ -248,7 +250,8 @@ const polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
       return polycos[ipoly];
     else if( polycos[ipoly]->i_nearest(time,pulsar) >= 0 ){
       if (verbose)
-	cerr << "PSR: " << pulsar << " found in polyco entry\n";
+	cerr << "dsp::Fold::choose_polyco PSR " << pulsar 
+	     << " found in polyco entry" << endl;
       return polycos[ipoly];
     }
 
@@ -265,7 +268,7 @@ const psrephem* dsp::Fold::choose_ephemeris (const string& pulsar)
 
   for (unsigned ieph=0; ieph<ephemerides.size(); ieph++) {
 
-    if (verbose) cerr << "dsp::Fold::prepare compare " 
+    if (verbose) cerr << "dsp::Fold::choose_ephemeris compare " 
 		      << pulsar << " and "
 		      << ephemerides[ieph]->psrname() << endl;
 
@@ -472,17 +475,9 @@ void dsp::Fold::set_pulsar_ephemeris (const psrephem* ephemeris)
   built = false;
 }
 
-psrephem* dsp::Fold::get_pulsar_ephemeris ()
+const psrephem* dsp::Fold::get_pulsar_ephemeris () const
 {
-  if( has_input() && !pulsar_ephemeris.ptr() )
-    pulsar_ephemeris = choose_ephemeris(input->get_source());
-
-  if( !pulsar_ephemeris.ptr() )
-    throw Error(InvalidState,"dsp::Fold::get_pulsar_ephemeris ()",
-		"pulsar_ephemeris=0 and couldn't get one from ephemerides (input=%d) ephemerides.size()=%d",
-		has_input(), ephemerides.size());
-
-  return (psrephem*)pulsar_ephemeris.ptr();
+  return pulsar_ephemeris;
 }
 
 void dsp::Fold::set_input (TimeSeries* _input)
