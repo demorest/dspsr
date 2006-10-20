@@ -20,7 +20,7 @@
  * NOTE - correction is done INPLACE ! Original values are destroyed
  * As reported by M. Lewis -> the polynomial fits are OK, but could be improved
  *------------------------------------------------------------------------*/
-void vanvleck9lev(double *rho,int npts) /* includefile */
+void vanvleck9lev(float *rho,int npts) /* includefile */
 {
   static double coef1[5] = { 1.105842267, -0.053258115, 0.011830276,-0.000916417, 0.000033479 };
 
@@ -91,7 +91,7 @@ void vanvleck9lev(double *rho,int npts) /* includefile */
  * 
  * NOTE - correction is done INPLACE ! Original values are destroyed
  *------------------------------------------------------------------------*/
-int vanvleck3lev(double *rho,int npts) /* includefile */
+int vanvleck3lev(float *rho,int npts) /* includefile */
 {
     static double lo_const[3][4] = {
          { 0.939134371719, -0.567722496249, 1.02542540932, 0.130740914912 },
@@ -115,7 +115,7 @@ int vanvleck3lev(double *rho,int npts) /* includefile */
     double temp_data_1;
     int  ichan,ico,flag_any_high;
 /* Perform Lo correction on All data that is not flaged for high correction --*/
-    zho=(double)rho[0];
+    zho=rho[0];
     
     zho_3=zho*zho*zho;
 
@@ -134,7 +134,7 @@ int vanvleck3lev(double *rho,int npts) /* includefile */
 /* perform correction --*/
     for(ichan=1,flag_any_high=NO; ichan<npts; ichan++)
     {
-        temp_data=(double)rho[ichan];
+        temp_data=rho[ichan];
         if(fabs(temp_data) > 0.199)
         {
             if(flag_any_high==NO)
