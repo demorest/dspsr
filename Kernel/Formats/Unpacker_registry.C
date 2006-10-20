@@ -99,6 +99,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5Unpacker> mark5_general;
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark5TwoBitCorrection> mark5;
 #endif
 
+#if DSP_wapp
+#include "dsp/WAPPUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::WAPPUnpacker> wapp;
+#endif
+
 #if DSP_asp
 #include "dsp/ASPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::ASPUnpacker> asp;
