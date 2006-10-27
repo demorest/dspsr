@@ -22,7 +22,7 @@ AC_DEFUN([SWIN_LIB_FFTW],
 
     AC_MSG_CHECKING([for FFTW-2 library])
 
-    LIBS="-lfftw -lm $ac_save_LIBS"
+    LIBS="-lfftw $ac_save_LIBS"
     AC_TRY_LINK([#include <fftw.h>],
                 [fftw_create_plan (1024, FFTW_FORWARD, FFTW_ESTIMATE);],
                 have_fftw=yes, have_fftw=no)
@@ -31,12 +31,12 @@ AC_DEFUN([SWIN_LIB_FFTW],
 
     if test $have_fftw = yes; then
       AC_DEFINE(HAVE_FFTW,1,[Define if the FFTW library is installed])
-      FFTW_LIBS="-lfftw -lm"
+      FFTW_LIBS="-lfftw"
     fi
 
     AC_MSG_CHECKING([for FFTW-2 real-to-complex library])
 
-    LIBS="-lrfftw -lfftw -lm $ac_save_LIBS"
+    LIBS="-lrfftw -lfftw $ac_save_LIBS"
     AC_TRY_LINK([#include <fftw.h>],
                 [rfftw_create_plan (1024, FFTW_FORWARD, FFTW_ESTIMATE);],
                 have_rfftw=yes, have_rfftw=no)
@@ -45,7 +45,7 @@ AC_DEFUN([SWIN_LIB_FFTW],
 
     if test $have_rfftw = yes; then
       AC_DEFINE(HAVE_RFFTW,1,[Define if the FFTW real library is installed])
-      FFTW_LIBS="-lrfftw -lfftw -lm"
+      FFTW_LIBS="-lrfftw -lfftw"
     fi
 
   fi

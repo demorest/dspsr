@@ -51,7 +51,7 @@ LDFLAGS="-L$PSRHOME/packages/$LOGIN_ARCH/lib $LDFLAGS"
 #
 # Checks for essential libraries
 #
-
+AC_CHECK_LIB([m], [sin])
 SWIN_LIB_PSRCHIVE([],AC_MSG_ERROR([PSRCHIVE Library not found.
 
 Please see http://psrchive.sourceforge.net
