@@ -45,8 +45,13 @@ SWIN_DEBUG
 #
 # Set up for standard pulsar installation
 #
-CPPFLAGS="-I$PSRHOME/packages/$LOGIN_ARCH/include $CPPFLAGS"
-LDFLAGS="-L$PSRHOME/packages/$LOGIN_ARCH/lib $LDFLAGS"
+CPPFLAGS="-I/usr/local/include $CPPFLAGS"
+LDFLAGS="-L/usr/local/lib $LDFLAGS"
+
+if test "$PSRHOME"; then
+ CPPFLAGS="-I$PSRHOME/packages/$LOGIN_ARCH/include $CPPFLAGS"
+ LDFLAGS="-L$PSRHOME/packages/$LOGIN_ARCH/lib $LDFLAGS"
+fi
 
 #
 # Checks for essential libraries
@@ -58,22 +63,6 @@ Please see http://psrchive.sourceforge.net
 
 ]))
 
-SWIN_LIB_FFTW
-SWIN_LIB_MKL
-SWIN_LIB_IPP
-
-#
-# Check that at least one FFT library is available
-#
-if test x"$have_fftw" = xno -a x"$have_fftw3" = xno -a x"$have_mkl" = xno; then
-  AC_MSG_ERROR([No FFTW-2, FFTW-3, nor MKL FFT libraries were found])
-fi
-
-AC_SUBST(FFT_LIBS)
-FFT_LIBS="$MKL_LIBS $FFTW_LIBS $FFTW3_LIBS $IPP_LIBS"
-AC_SUBST(FFT_CFLAGS)
-FFT_CFLAGS="$MKL_CFLAGS $FFTW_CFLAGS $FFTW3_CFLAGS $IPP_CFLAGS"
-
 #
 # Checks for optional libraries
 #
@@ -83,11 +72,6 @@ SWIN_LIB_MPI
 # Checks for graphics libraries
 #
 SWIN_LIB_PGPLOT
-
-# 
-# For developers: ensure that the config directory m4 macros are parsed
-#
-ACLOCAL="$ACLOCAL -I config"
 
 #
 # For developers: preserve file modification times
