@@ -1,4 +1,6 @@
 
+ACLOCAL_AMFLAGS = -I config
+
 SUBDIRS	= util base backends dsp psr
 
 libs:
