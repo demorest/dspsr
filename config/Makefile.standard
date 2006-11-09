@@ -19,8 +19,6 @@ INCDIR := ${LOCAL_ROOT}/${LOGIN_ARCH}/include
 INCFLAGS := -I$(LOCAL_ROOT) -I${INCDIR} -I${PSRPKGS}/include \
 	-I${PSRPKGS}/${LOGIN_ARCH}/include -I/usr/local/include
 
-LDFLAGS := -L${LIBDIR} -L${PSRPKGS}/${LOGIN_ARCH}/lib
-
 MDFLAGS := -D__cplusplus
 AR      := ar
 RANLIB  := ranlib
@@ -35,6 +33,8 @@ MAKEDEPEND := makedepend -Y -f
 # the automake produced Makefile
 ##########################################################################
 -include ${LOCAL_ROOT}/config/Makefile.local
+
+LDFLAGS += -L${LIBDIR}
 
 INSTALL_BINDIR := ${prefix}/bin
 INSTALL_LIBDIR := ${prefix}/lib
