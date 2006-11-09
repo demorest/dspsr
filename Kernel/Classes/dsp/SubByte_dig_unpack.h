@@ -30,12 +30,6 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be > 1", ndig);
 
-
-
-  const unsigned char* input_data_ptr = input_data;
-
-  float* output_data_ptr = output_data;
-
   const unsigned input_incr = get_input_incr ();
   const unsigned output_incr = get_output_incr ();
   const unsigned nsample = get_nsample ();
@@ -61,6 +55,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 
   nweights = required_nweights;
   uint64 points_left = ndat;
+  unsigned bad_weights = 0;
 
   uint64 points = nsample;
 
@@ -74,10 +69,10 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
     // retrieve the next points values from the 2bit data
     while (pt < points) {
       for (unsigned isamp=0; isamp<samples_per_byte; isamp++) {
-	values[pt] = mask.twobit (*input_data_ptr, isamp);
+	values[pt] = mask.twobit (*input_data, isamp);
 	pt++;
       }
-      input_data_ptr += input_incr;
+      input_data += input_incr;
     }
 
     // calculate the weight based on the last nsample pts
@@ -103,17 +98,19 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
       // reduce the risk of other functions accessing un-initialized 
       // segments of the array
       for (pt=0; pt<points; pt++) {
-	*output_data_ptr = 0.0;
-	output_data_ptr += output_incr;
+	*output_data = 0.0;
+	output_data += output_incr;
       }
+
+      bad_weights ++;
 
     }
 
     else {
       float* corrected = &(dls_lookup[0]) + (n_in-n_min) * 4;
       for (pt=0; pt<points; pt++) {
-	*output_data_ptr = corrected [values[pt]];
-	output_data_ptr += output_incr;
+	*output_data = corrected [values[pt]];
+	output_data += output_incr;
       }
       if (weights)
 	weights[wt] += n_in;
@@ -122,5 +119,8 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
     points_left -= points;
   }
 
+  if (verbose && bad_weights)
+    std::cerr << "dsp::SubByteTwoBitCorrection::dig_unpack " << bad_weights
+	      << "/" << nweights << " bad weights" << std::endl;
 
 }
