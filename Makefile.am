@@ -15,6 +15,7 @@ config := $(srcdir)/config/Makefile.local
 #
 $(config): $(srcdir)/Makefile.am
 	@echo "prefix := $(prefix)" > $@
+	@echo "host := $(host)" >> $@
 	@echo "CC := $(CC)" >> $@
 	@echo "CFLAGS := $(CFLAGS)" >> $@
 	@echo "CCC := $(CXX)" >> $@
@@ -22,6 +23,7 @@ $(config): $(srcdir)/Makefile.am
 	@echo "FC := $(F77)"  >> $@
 	@echo "FFLAGS := $(FFLAGS)" >> $@
 	@echo "LF77 := @FLIBS@" >> $@
+	@echo "LDFLAGS := $(LDFLAGS)" >> $@
 	@echo "LPSRCHIVE := @PSRCHIVE_LIBS@" >> $@
 	@echo "INCFLAGS += $(DEFS) @PSRCHIVE_CFLAGS@" >> $@
 	$(pgplot.config)
