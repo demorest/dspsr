@@ -26,6 +26,7 @@ AC_DEFUN([SWIN_COMPILER],
   if test x"$with_compiler" = xgcc-4; then
     AC_MSG_NOTICE([Setting environment variables for Mac GCC 4])
     CXX=g++-4
+    LDFLAGS="-Wl,-bind_at_load"
     CC=gcc-4
     F77=gfortran
   fi
