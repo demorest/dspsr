@@ -22,6 +22,9 @@ fi
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_DISABLE_SHARED
 
+# Enable large-file support
+AC_SYS_LARGEFILE
+
 # Enable convenience compiler selection
 SWIN_COMPILER
 
