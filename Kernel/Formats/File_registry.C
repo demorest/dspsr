@@ -24,15 +24,100 @@
 
 //! Based on backends.list, backends.h #defines the DSP_Backend macros
 #include "backends.h"
-#include "Error.h"
 
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::File> dsp::File::registry;
+
+#if DSP_asp
+#include "dsp/ASPFile.h"
+static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
+#endif
+
+#if DSP_bcpm
+#include "dsp/BCPMFile.h"
+static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
+#endif
+
+#if DSP_cpsr
+#include "dsp/CPSRFile.h"
+static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
+#endif
 
 #if DSP_cpsr2
 #include "dsp/CPSR2File.h"
 static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 #endif
+
+#if DSP_fadc
+#include "dsp/FadcFile.h"
+static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
+#endif
+
+#if DSP_lbadr
+#include "dsp/SMROFile.h"
+static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
+#endif
+
+#if DSP_mark4
+#include "dsp/Mark4File.h"
+static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
+#endif
+
+#if DSP_mark5
+#include "dsp/Mark5File.h"
+static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
+#endif
+
+#if DSP_maxim
+#include "dsp/MaximFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
+#endif
+
+#if DSP_mini
+#include "dsp/MiniFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
+#endif
+
+#if DSP_mwa
+#include "dsp/MWAFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MWAFile> file_register_mwa;
+#endif
+
+#if DSP_pmdaq
+#include "dsp/PMDAQFile.h"
+static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
+#endif
+
+#if DSP_puma
+#include "dsp/PuMaFile.h"
+static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
+#endif
+
+#if DSP_puma2
+#include "dsp/PuMa2File.h"
+static Registry::List<dsp::File>::Enter<dsp::PuMa2File> register_puma2;
+#endif
+
+#if DSP_s2
+#include "dsp/S2File.h"
+static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
+#endif
+
+#if DSP_spigot
+#include "dsp/SpigotFile.h"
+static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
+#endif
+
+#if DSP_wapp
+#include "dsp/WAPPFile.h"
+static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
+#endif
+
+// ///////////////////////////////////////////////////////////////////////////
+//
+// The rest of these need work or seem to have disappeared
+//
+// ///////////////////////////////////////////////////////////////////////////
 
 //Tej's new CPSR2 8 bit File Format:
 #if DSP_CPSR2_8bit
@@ -50,34 +135,9 @@ static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile> register_multib
 
 #endif
 
-#if DSP_mini
-#include "dsp/MiniFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
-#endif
-
-#if DSP_cpsr
-#include "dsp/CPSRFile.h"
-static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
-#endif
-
-#if DSP_maxim
-#include "dsp/MaximFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
-#endif
-
-#if DSP_lbadr
-#include "dsp/SMROFile.h"
-static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
-#endif
-
 #if DSP_vsib
 #include "dsp/VSIBFile.h"
 static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;
-#endif
-
-#if DSP_pmdaq
-#include "dsp/PMDAQFile.h"
-static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
 #endif
 
 #if DSP_DUMBLBA
@@ -85,69 +145,14 @@ static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
 static Registry::List<dsp::File>::Enter<dsp::Dumb_LBAFile> file_register_dumblba;
 #endif
 
-#if DSP_mwa
-#include "dsp/MWAFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MWAFile> file_register_mwa;
-#endif
-
-#if DSP_puma
-#include "dsp/PuMaFile.h"
-static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
-#endif
-
-#if DSP_puma2
-#include "dsp/PuMa2File.h"
-static Registry::List<dsp::File>::Enter<dsp::PuMa2File> register_puma2;
-#endif
-
-#if DSP_spigot
-#include "dsp/SpigotFile.h"
-static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
-#endif
-
 #if DSP_k5
 #include "dsp/K5File.h"
 static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
-#endif
-
-#if DSP_bcpm
-#include "dsp/BCPMFile.h"
-static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
 #endif
 
 #if 0
 /* Wvs FIX LATER */
 #include "dsp/BitSeriesFile.h"
 static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfile;
-#endif
-
-#if DSP_mark4
-#include "dsp/Mark4File.h"
-static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
-#endif
-
-#if DSP_mark5
-#include "dsp/Mark5File.h"
-static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
-#endif
-
-#if DSP_wapp
-#include "dsp/WAPPFile.h"
-static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
-#endif
-
-#if DSP_asp
-#include "dsp/ASPFile.h"
-static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
-#endif
-
-#if DSP_fadc
-#include "dsp/FadcFile.h"
-static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
-#endif
-
-#if DSP_s2
-#include "dsp/S2File.h"
-static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
 #endif
 
