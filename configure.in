@@ -19,11 +19,19 @@ else
   fi
 fi
 
+# Check if the user has set compiler options
+SWIN_OPTIONS_SET
+
 AM_INIT_AUTOMAKE([subdir-objects])
+
+# Create static libraries by default
 AC_DISABLE_SHARED
 
 # Enable large-file support
 AC_SYS_LARGEFILE
+
+# Determine the machine endian
+AC_C_BIGENDIAN
 
 # Enable convenience compiler selection
 SWIN_COMPILER
