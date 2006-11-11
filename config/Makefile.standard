@@ -27,7 +27,6 @@ RM    := rm -rf
 AWK   := awk
 GREP  := grep
 QTMOC := moc
-MAKEDEPEND := makedepend -Y -f
 
 ##########################################################################
 # the automake produced Makefile
@@ -35,6 +34,7 @@ MAKEDEPEND := makedepend -Y -f
 -include ${LOCAL_ROOT}/config/Makefile.local
 
 LDFLAGS += -L${LIBDIR}
+MAKEDEPEND := $(CCC) -MM >
 
 INSTALL_BINDIR := ${prefix}/bin
 INSTALL_LIBDIR := ${prefix}/lib
