@@ -4,19 +4,17 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <vector>
 
-#include <string.h>
-#include <stdio.h>
-
-#include "machine_endian.h"
-#include "Error.h"
+#include "dsp/BCPMUnpacker.h"
+#include "dsp/BCPMExtension.h"
 
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
 
-#include "dsp/BCPMExtension.h"
-#include "dsp/BCPMUnpacker.h"
+#include "machine_endian.h"
+#include "Error.h"
+
+using namespace std;
 
 //! Null constructor
 dsp::BCPMUnpacker::BCPMUnpacker (const char* _name) : Unpacker (_name){ }

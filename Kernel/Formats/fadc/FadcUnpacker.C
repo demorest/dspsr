@@ -12,10 +12,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fftw.h>
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+
+using namespace std;
 
 struct two_bit_swin{
   unsigned lRe0  :2;
@@ -215,7 +216,8 @@ cerr<<"npol = "<<npol<<'\n';
       else 
       {
         cerr<<"FadcUnpacker: I can only unpack 2/4/8 bit data (2 polarizations). This data has: "<<(input->get_nbit())<<" bit values.\n";
-        throw_str ("Fatal Error (Cannot unpack data)");
+        throw Error (InvalidState, "FadcUnpacker", 
+		     "Fatal Error (Cannot unpack data)");
       }
     } // end of 2 polarizations
 
@@ -345,13 +347,13 @@ cerr<<"npol = "<<npol<<'\n';
       else 
       {
         cerr<<"FadcUnpacker: I can only unpack 2/4/8 bit data (1 polarization). This data has: "<<(input->get_nbit())<<" bit values.\n";
-        throw_str ("Fatal Error (Cannot unpack data)");
+        throw Error (InvalidState, "FadcUnpacker", "Fatal Error (Cannot unpack data)");
       }
     } // end of 1 polarization
     else
     {
       cerr<<"FadcUnpacker: I can only unpack data with 1 or 2 polarizations. This data has: "<<npol<<" polarizations.\n";
-      throw_str ("Fatal Error (Cannot unpack data)");
+      throw Error (InvalidState, "FadcUnpacker", "Fatal Error (Cannot unpack data)");
     }
 cerr<<"FadcUnpack: finished\n\n";
 }  // end of unpack

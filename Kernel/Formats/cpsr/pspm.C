@@ -133,9 +133,12 @@ string PSPMsource (const PSPM_SEARCH_HEADER* header)
   return string (header->psr_name);
 }
 
+// defined in mjd.C
+MJD mjd (quadruple mjd);
+
 MJD PSPMstart_time (const PSPM_SEARCH_HEADER* header)
 {
-  MJD start_time (header->mjd_start);
+  MJD start_time = mjd (header->mjd_start);
 
   if (header->ll_file_size == 0) {
     // old style - pre-August 1999

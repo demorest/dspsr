@@ -17,7 +17,9 @@
 #include "ascii_header.h"
 #include "cpsr2_header.h"
 #include "yamasaki_verify.h"
-#include "genutil.h"
+#include "dirutil.h"
+
+using namespace std;
 
 bool dsp::CPSR2File::want_to_yamasaki_verify = true;
 

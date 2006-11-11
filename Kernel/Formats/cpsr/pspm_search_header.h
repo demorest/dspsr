@@ -25,6 +25,9 @@
  *
  *
  * $Log: pspm_search_header.h,v $
+ * Revision 1.4  2006/11/11 20:56:38  straten
+ * compile against psrchive 6.0
+ *
  * Revision 1.3  2006/07/09 13:27:06  wvanstra
  * copyright notice added: Academic Free License
  *
@@ -81,6 +84,7 @@
 #define	POINT_TYPE	2
 
 #include "environ.h"
+#include "quadruple.h"
 
 typedef struct {
 
@@ -163,7 +167,7 @@ typedef struct {
     double chan_spacing;	/* Unused				    */
     int	SIDEBAND;		/* sideband				    */
     int observatory;		/* Observatory code			    */
-    float128 mjd_start;	        /* Start time (MJD)			    */
+    quadruple mjd_start;	/* Start time (MJD)			    */
     /*
      * (long long) file_size and offset where added August 1999 to the
      * source tree. Prior to this time, or when the production binaries

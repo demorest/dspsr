@@ -14,8 +14,9 @@
 
 #include "Error.h"
 #include "cpsr2_utils.h"
-#include "genutil.h"
 #include "dirutil.h"
+
+using namespace std;
 
 char* args = "hlk:m:";
 

@@ -9,6 +9,7 @@
 #ifndef __dsp_BCPMFile_h
 #define __dsp_BCPMFile_h
 
+#include "dsp/bpphdr.h"
 #include "dsp/File.h"
 
 namespace dsp {

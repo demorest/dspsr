@@ -14,6 +14,12 @@
 
 #include <fstream>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+using namespace std;
+
 // All sampleorders in the following 
 // structures have been experimentally determined.
 // So they should all be correct!
@@ -201,14 +207,14 @@ uint64 dsp::FadcFile::fileSize(char* fileName)
 {
    FILE* testFile;
    uint64 sz = 0;
-   if ((testFile = fopen64(fileName, "rb")) == NULL) sz = 0;
+   if ((testFile = fopen(fileName, "rb")) == NULL) sz = 0;
    else if (feof(testFile)) sz = 0;
    else
    {
-      fseeko64(testFile, 0, SEEK_SET);
-      uint64 beg = static_cast <uint64> (ftello64(testFile));
-      fseeko64(testFile, 0, SEEK_END);
-      sz = (static_cast <uint64> (ftello64(testFile))) - beg;
+      fseeko(testFile, 0, SEEK_SET);
+      uint64 beg = static_cast <uint64> (ftello(testFile));
+      fseeko(testFile, 0, SEEK_END);
+      sz = (static_cast <uint64> (ftello(testFile))) - beg;
    }
    fclose(testFile);
 cerr<<"fileSize going to return "<<sz<<"\n";
@@ -280,7 +286,7 @@ int dsp::FadcFile::read_blockMap( long *buffers_per_file, long *bytes_per_buffer
     
     if (fadc_blockmap_get(line, "Each File is", "%ld", buffers_per_file) < 0)
     {
-      cerr<<"FadcFile - failed read buffers_per_file from block.map";
+      cerr<<"FadcFile", "failed read buffers_per_file from block.map";
       //*buffers_per_file = 4;        changed to use number of ADC per Card from Exp file
     }
  
@@ -318,11 +324,11 @@ cerr<<"got header of length = "<<header.length()<<"\n";
   
   int nbit;
   if (fadc_header_get (header.c_str(), "Sample Res. (Bits)", "%d", &nbit) < 0)
-  throw_str ("FadcFile - failed read NBIT");
+  throw Error (InvalidState, "FadcFile", "failed read NBIT");
   
   int nADCperCard;
   if (fadc_header_get (header.c_str(), "Number of ADC", "%d", &nADCperCard) < 0)
-  throw_str ("FadcFile - failed read number of ADC per Card");
+  throw Error (InvalidState, "FadcFile", "failed read number of ADC per Card");
 
   long buffers_per_file=nADCperCard;
   long bytes_per_buffer=0;
@@ -350,7 +356,7 @@ cerr<<"Found "<<nChan<<" digital channels\n";
   if ((nChan != 1)&&(nChan != 2)&&(nChan != 4)) 
   {
     cerr<<"Found "<<nChan<<" digital channels\n";
-    throw_str ("FadcFile - Unexpected Format: Expected 1, 2 or 4 digital channels");
+    throw Error (InvalidState, "FadcFile", "Unexpected Format: Expected 1, 2 or 4 digital channels");
   }
   
   int nPol=0;
@@ -361,12 +367,12 @@ cerr<<"Found "<<nChan<<" digital channels\n";
   else if ((nADCperCard==2)&&(nChan==4))
   {
     nPol=2;
-    throw_str ("FadcFile - Unexpected Format: 2pol, 2frequencies(?) has not been implemented yet. [4 digital channels with 2 ADC per card]");
+    throw Error (InvalidState, "FadcFile", "Unexpected Format: 2pol, 2frequencies(?) has not been implemented yet. [4 digital channels with 2 ADC per card]");
   }
   else
   {
      cerr<<"FadcFile: Unknown data format:   nADCperCard = "<<nADCperCard<<"     nChan = "<<nChan<<"\n";
-     throw_str ("Fatal Error (Unknown data format)");
+     throw Error (InvalidState, "Fatal Error (Unknown data format)");
   }
 cerr<<"Found "<<nPol<<" polarizations\n";
 
@@ -440,7 +446,7 @@ cerr<<"predicted size "<<predicted_size<<'\n';
   //       This assumes that LCP and RCP have the same center freq (look at "Channel 0")
   double centerFreqOverride=0;
   if (fadc_header_get (header.c_str(), "Center Freq (Hz)", "%lf", &centerFreqOverride) < 0)
-    throw_str ("FadcFile - failed read FREQ");
+    throw Error (InvalidState, "FadcFile", "failed read FREQ");
 
   cout<<"\nCenter Frequency according to Exp-File: "<<(centerFreqOverride/1000000.)<<" MHz\nPlease enter center frequency (MHz) or 0 to use Exp-File value: ";
   cin>>centerFreqOverride;
@@ -451,9 +457,9 @@ cerr<<"predicted size "<<predicted_size<<'\n';
   double expBW=0;
   double expSmpRate=0;
   if (fadc_header_get (header.c_str(), "IF Bandwidth (Hz)", "%lf", &expBW) < 0)
-    throw_str ("FadcFile - failed read BW");
+    throw Error (InvalidState, "FadcFile", "failed read BW");
   if (fadc_header_get (header.c_str(), "Sample Rate (Hz)", "%lf", &expSmpRate) < 0)
-    throw_str ("FadcFile - failed read Sampling Rate");
+    throw Error (InvalidState, "FadcFile", "failed read Sampling Rate");
   
   double bwOverride=expSmpRate;  
 
@@ -475,7 +481,7 @@ cerr<<"predicted size "<<predicted_size<<'\n';
   {
 
      if (0 > createDataFile((char*) filenameString.c_str(), firstFile, lastFile, &offset_tsmps_file0, &offset_tsmps, nbit, nPol, nChan, nADCperCard, buffers_per_file, bytes_per_buffer, expect_magic_code))
-        throw_str ("FadcFile - An error occured in createDataFile, see above");
+        throw Error (InvalidState, "FadcFile", "An error occured in createDataFile, see above");
    }
 
   FadcObservation data (header.c_str(), firstFile, lastFile, offset_tsmps_file0, offset_tsmps, centerFreqOverride, bwOverride);
@@ -487,13 +493,13 @@ cerr<<"FadcFile Initialized info\n";
 cerr<<"Trying to open swindata\n";
     // :: means in the global namespace
 //  fd = ::open ("swindata", O_RDONLY);
-  fd = ::open64 ("swindata", O_RDONLY);
+  fd = ::open ("swindata", O_RDONLY);
 cerr<<"fd = "<<fd<<'\n';
   if (fd < 0)
     throw Error (FailedSys, "dsp::FadcFile::open_file()", 
 		 "open(%s) failed", filename);
 
-lseek64(fd, 0, SEEK_SET); // This should not be necessary
+lseek(fd, 0, SEEK_SET); // This should not be necessary
 
 cerr<<"Datafile open\n";  
   // cannot load less than 4 bytes. set the time sample resolution accordingly
@@ -519,7 +525,7 @@ int dsp::FadcFile::createDataFile(char* expFileName, long firstFile, long lastFi
   FILE* outfile;
 
   // create and open file for output
-  outfile = fopen64("swindata", "wb");
+  outfile = fopen("swindata", "wb");
 
   if (outfile==NULL) 
   {

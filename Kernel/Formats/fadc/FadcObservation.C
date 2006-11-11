@@ -8,7 +8,10 @@
 
 #include "fadc_header.h" // needed to read header and block.map
 #include "coord.h"
-#include <fstream.h>
+
+#include <fstream>
+
+using namespace std;
 
 dsp::FadcObservation::FadcObservation (const char* header)
 {
@@ -58,7 +61,7 @@ cerr<<"\nRead block.map\n   buffers_per_file = "<<*buffers_per_file<<"\n   bytes
 dsp::FadcObservation::FadcObservation (const char* header, long firstFile, long lastFile, unsigned long offset_tsmps_file0, unsigned long offset_tsmps, double centerFreqOverride, double bwOverride)
 {
   if (header == NULL)
-    throw_str ("FadcObservation - no header!");
+    throw Error (InvalidState, "FadcObservation", "no header!");
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -66,7 +69,7 @@ dsp::FadcObservation::FadcObservation (const char* header, long firstFile, long 
   //
   char hdrstr[64];
   if (fadc_header_get (header, "Observatory Name", "%s", hdrstr) < 0)
-    throw_str ("FadcObservation - failed read Observatory Name");
+    throw Error (InvalidState, "FadcObservation", "failed read Observatory Name");
   
   string tel = hdrstr;
   if ( tel == "Arecibo" || tel == "AO" || tel=="ARECIBO" || tel=="arecibo" || tel=="Ao" || tel=="ao") 
@@ -83,7 +86,7 @@ cerr<<"FadcObservation: Telescope = "<<tel<<"\n";
   // SOURCE
   //
   if (fadc_header_get (header, "Source Name", "%s", hdrstr) < 0)
-    throw_str ("FadcObservation - failed read SOURCE");
+    throw Error (InvalidState, "FadcObservation", "failed read SOURCE");
 
   set_source (hdrstr);
 cerr<<"FadcObservation: Source = "<<hdrstr<<"\n";
@@ -94,7 +97,7 @@ cerr<<"FadcObservation: Source = "<<hdrstr<<"\n";
   //       This assumes that LCP and RCP have the same center freq (look at "Channel 0")
   double freq;
   if (fadc_header_get (header, "Center Freq (Hz)", "%lf", &freq) < 0)
-    throw_str ("FadcObservation - failed read FREQ");
+    throw Error (InvalidState, "FadcObservation", "failed read FREQ");
 
   cerr<<"Center Frequency according to Exp-File = "<<(freq/1000000.)<<" MHz\n";
   if (centerFreqOverride != 0)
@@ -111,9 +114,9 @@ cerr<<"FadcObservation: Freq MHz = "<<(freq/1000000.)<<"\n";
   //
   double bw, expBW, expSmpRate;
   if (fadc_header_get (header, "IF Bandwidth (Hz)", "%lf", &expBW) < 0)
-    throw_str ("FadcObservation - failed read BW");
+    throw Error (InvalidState, "FadcObservation", "failed read BW");
   if (fadc_header_get (header, "Sample Rate (Hz)", "%lf", &expSmpRate) < 0)
-    throw_str ("FadcObservation - failed read Sampling Rate");
+    throw Error (InvalidState, "FadcObservation", "failed read Sampling Rate");
 
   cerr<<"Bandwidth according to Exp-File = "<<(expBW/1000000.)<<" MHz\n";
   cerr<<"Sampling rate according to Exp-File = "<<(expSmpRate/1000000.)<<" MHz (more likely to be correct)\n";
@@ -138,7 +141,7 @@ cerr<<"FadcObservation: BW = "<<(bw/1000000.)<<"\n";
   //  
   int nADCperCard;
   if (fadc_header_get (header, "Number of ADC", "%d", &nADCperCard) < 0)
-  throw_str ("FadcObservation - failed read number of ADC per Card");
+  throw Error (InvalidState, "FadcObservation", "failed read number of ADC per Card");
 
   int nChan=0;
   // The number of Cards with ADCs is the same as the number of digital channels
@@ -160,7 +163,7 @@ cerr<<"FadcObservation: Found "<<nChan<<" digital channels\n";
   if ((nChan != 1)&&(nChan != 2)&&(nChan != 4)) 
   {
     cerr<<"Found "<<nChan<<" digital channels\n";
-    throw_str ("FadcObservation - Unexpected Format: Expected 1, 2 or 4 digital channels");
+    throw Error (InvalidState, "FadcObservation", "Unexpected Format: Expected 1, 2 or 4 digital channels");
   }
   
   int scan_npol=0;
@@ -171,12 +174,12 @@ cerr<<"FadcObservation: Found "<<nChan<<" digital channels\n";
   else if ((nADCperCard==2)&&(nChan==4))
   {
     scan_npol=2;
-    throw_str ("FadcObservation - Unexpected Format: 2pol, 2frequencies(?) has not been implemented yet. [4 digital channels with 2 ADC per card]");
+    throw Error (InvalidState, "FadcObservation", "Unexpected Format: 2pol, 2frequencies(?) has not been implemented yet. [4 digital channels with 2 ADC per card]");
   }
   else
   {
      cerr<<"FadcObservation: Unknown data format:   nADCperCard = "<<nADCperCard<<"     nChan = "<<nChan<<"\n";
-     throw_str ("Fatal Error (Unknown data format)");
+     throw Error (InvalidState, "Fatal Error (Unknown data format)");
   }
 cerr<<"FadcObservation: Found "<<scan_npol<<" polarizations\n";
 
@@ -188,7 +191,7 @@ cerr<<"FadcObservation: Found "<<scan_npol<<" polarizations\n";
   //        NBIT means bits per value (ie LCP, real)
   int scan_nbit;
   if (fadc_header_get (header, "Sample Res. (Bits)", "%d", &scan_nbit) < 0)
-    throw_str ("FadcObservation - failed read NBIT");
+    throw Error (InvalidState, "FadcObservation", "failed read NBIT");
 
   set_nbit (scan_nbit);
 cerr<<"FadcObservation: Sample Res. Bits = "<<scan_nbit<<"\n";
@@ -214,7 +217,7 @@ cerr<<"FadcObservation: Default basis set\n";
   // samples per second (Hz)
   double sampling_freq;
   if (fadc_header_get (header, "Sample Rate (Hz)", "%lf", &sampling_freq)<0)
-    throw_str ("FadcObservation - failed read sampling frequency");
+    throw Error (InvalidState, "FadcObservation", "failed read sampling frequency");
 
   set_rate (sampling_freq);
 cerr<<"FadcObservation: Sampling Freq Hz = "<<sampling_freq<<"\n";
@@ -225,7 +228,7 @@ cerr<<"FadcObservation: Sampling Freq Hz = "<<sampling_freq<<"\n";
   // Unix time = sec since start of 1970        MJD = days since Nov 17 1858 0:00
   uint64 unix_start;
   if (fadc_header_get (header, "Unix Start Time", UI64, &unix_start) < 0)
-    throw_str ("FadcObservation - failed read Unix Start Time");
+    throw Error (InvalidState, "FadcObservation", "failed read Unix Start Time");
   
   //                      days since 1970   +   days between Nov 17th 1858 and 1/1/1970 0:00
   //                                            45 days in 1858, 111years, 27 times Feb 29th (every four years except 1900)
@@ -297,7 +300,7 @@ cerr<<"FadcObservation: total_samples = "<<total_samples<<'\n';
 
   // make an identifier name
   set_identifier (prefix + get_default_id());
-  set_mode (stringprintf ("%d-bit mode", get_nbit()));
+  set_mode (tostring(get_nbit()) + "-bit mode");
   set_machine ("Fadc");
 cerr<<"FadcObservation: machine set\n";  
   

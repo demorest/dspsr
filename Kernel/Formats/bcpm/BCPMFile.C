@@ -7,11 +7,12 @@
 
 #include "dsp/BCPMFile.h"
 #include "dsp/BCPMExtension.h"
-#include "bpphdr.h"
+#include "tostring.h"
+#include "dirutil.h"
 
-#include "fdutil.h"
-WvS FIX LATER
+#include <fstream>
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -35,6 +36,18 @@ dsp::BCPMFile::BCPMFile (const char* filename) : File ("BCPM"){
 
 //! Destructor
 dsp::BCPMFile::~BCPMFile (){ }
+
+string read_line (const char* filename)
+{
+  ifstream input (filename);
+  if (!input)
+    throw Error (FileNotFound, "read_line",
+                "Failed to open file '%s'", filename);
+
+  string line;
+  getline(input,line);
+  return line;
+}
 
 //! Returns true if filename appears to name a valid BCPM file
 bool dsp::BCPMFile::is_valid (const char* filename,int) const{
@@ -81,10 +94,10 @@ void dsp::BCPMFile::open_file (const char* filename){
   if( verbose )
     fprintf(stderr,"Entered dsp::BCPMFile::open_file(%s)\n",filename);
 
-  FILE* fptr = fd_utils::fopen(filename,"r");
+  FILE* fptr = fopen(filename,"r");
   fread(&bpp_search,sizeof(BPP_SEARCH_HEADER),1,fptr);
 
-  fd_utils::fclose(fptr);
+  fclose(fptr);
   
   switch_endianess();
 
@@ -139,8 +152,8 @@ void dsp::BCPMFile::open_file (const char* filename){
   }
 
   {
-    string rab = make_string(bpp_search.ra_1950);
-    string decb = make_string(bpp_search.dec_1950);
+    string rab = tostring(bpp_search.ra_1950);
+    string decb = tostring(bpp_search.dec_1950);
       
     sky_coord coords;
     coords.setHMSDMS(rab.c_str(),decb.c_str());
@@ -172,7 +185,7 @@ void dsp::BCPMFile::open_file (const char* filename){
   // Note that BPP_HEADER_SIZE is 8 bytes bigger than sizeof(BPP_SEARCH_HEADER) so I'm not sure if this is right
   header_bytes = BPP_HEADER_SIZE;
 
-  fd = fd_utils::open(filename, O_RDONLY);
+  fd = ::open(filename, O_RDONLY);
   
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;

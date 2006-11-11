@@ -7,15 +7,16 @@
 #include "dsp/CPSR2_Observation.h"
 #include "cpsr2_header.h"
 
-#include "string_utils.h"
-#include "genutil.h"
+#include "strutil.h"
 #include "Types.h"
 #include "coord.h"
+
+using namespace std;
 
 dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 {
   if (header == NULL)
-    throw_str ("CPSR2_Observation - no header!");
+    throw Error (InvalidState, "CPSR2_Observation", "no header!");
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -24,7 +25,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   float version;
   if (ascii_header_get (header, 
 			"CPSR2_HEADER_VERSION", "%f", &version) < 0)
-    throw_str ("CPSR2_Observation - failed read CPSR2_HEADER_VERSION");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read CPSR2_HEADER_VERSION");
 
   //
   // no idea about the size of the data
@@ -37,7 +38,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   char hdrstr[64];
   if (ascii_header_get (header, "TELESCOPE", "%s", hdrstr) < 0)
-    throw_str ("CPSR2_Observation - failed read TELESCOPE");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read TELESCOPE");
 
   string tel = hdrstr;
   if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS") 
@@ -53,7 +54,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   // SOURCE
   //
   if (ascii_header_get (header, "SOURCE", "%s", hdrstr) < 0)
-    throw_str ("CPSR2_Observation - failed read SOURCE");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read SOURCE");
 
   set_source (hdrstr);
 
@@ -84,7 +85,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 
     double calfreq;
     if (ascii_header_get (header, "CALFREQ", "%lf", &calfreq) < 0)
-      throw_str ("CPSR2_Observation - failed read FREQ");
+      throw Error (InvalidState, "CPSR2_Observation", "failed read FREQ");
     set_calfreq(calfreq);
     cerr << "Set CALFREQ to " << get_calfreq() << endl;
 
@@ -96,7 +97,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   double freq;
   if (ascii_header_get (header, "FREQ", "%lf", &freq) < 0)
-    throw_str ("CPSR2_Observation - failed read FREQ");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read FREQ");
 
   set_centre_frequency (freq);
 
@@ -106,7 +107,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   double bw;
   if (ascii_header_get (header, "BW", "%lf", &bw) < 0)
-    throw_str ("CPSR2_Observation - failed read BW");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read BW");
 
   set_bandwidth (bw);
 
@@ -121,7 +122,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   int scan_npol;
   if (ascii_header_get (header, "NPOL", "%d", &scan_npol) < 0)
-    throw_str ("CPSR2_Observation - failed read NPOL");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read NPOL");
 
   set_npol (scan_npol);
 
@@ -131,7 +132,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   int scan_nbit;
   if (ascii_header_get (header, "NBIT", "%d", &scan_nbit) < 0)
-    throw_str ("CPSR2_Observation - failed read NBIT");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read NBIT");
 
   set_nbit (scan_nbit);
 
@@ -141,7 +142,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   int scan_ndim;
   if (ascii_header_get (header, "NDIM", "%d", &scan_ndim) < 0)
-    throw_str ("CPSR2_Observation - failed read NDIM");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read NDIM");
   set_ndim(scan_ndim);
 
   switch (scan_ndim) {
@@ -150,7 +151,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   case 2:
     set_state (Signal::Analytic); break;
   default:
-    throw_str ("CPSR2_Observation - invalid NDIM=%d\n", get_ndim());
+    throw Error (InvalidState, "CPSR2_Observation", "invalid NDIM=%d\n", get_ndim());
   }
 
   // ////////////////////////////////////////////////////////////////////
@@ -176,7 +177,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   double sampling_interval;
   if (ascii_header_get (header, "TSAMP", "%lf", &sampling_interval)<0)
-    throw_str ("CPSR2_Observation - failed read TSAMP");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read TSAMP");
 
   /* IMPORTANT: TSAMP is the sampling period in microseconds */
   sampling_interval *= 1e-6;
@@ -188,7 +189,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   // MJD_START
   //
   if (ascii_header_get (header, "MJD_START", "%s", hdrstr) < 0)
-    throw_str ("CPSR2_Observation - failed read MJD_START");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read MJD_START");
 
   MJD recording_start_time (hdrstr);
 
@@ -198,7 +199,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   //
   offset_bytes = 0;
   if (ascii_header_get (header, "OFFSET", UI64, &offset_bytes) < 0)
-    throw_str ("CPSR2_Observation - failed read OFFSET");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read OFFSET");
 
   if (version < 0.2) {
     // //////////////////////////////////////////////////////////////////////
@@ -240,7 +241,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   // PRIMARY
   //
   if (ascii_header_get (header, "PRIMARY", "%s", hdrstr) < 0)
-    throw_str ("CPSR2_Observation - failed read PRIMARY");
+    throw Error (InvalidState, "CPSR2_Observation", "failed read PRIMARY");
 
   string primary = hdrstr;
   string prefix = "u";
