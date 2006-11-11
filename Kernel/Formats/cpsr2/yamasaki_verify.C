@@ -15,7 +15,8 @@
 #include <unistd.h>
 
 #include "yamasaki_verify.h"
-#include "psr_cpp.h"
+
+using namespace std;
 
 bool yamasaki_verbose = false;
 
