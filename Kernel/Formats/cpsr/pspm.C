@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <values.h>
 #include <math.h>
 
 using namespace std;
@@ -25,6 +24,10 @@ using namespace std;
 // #if (sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZES)
 // #error Architecture Error! PSPM header size is invalid.
 // #endif
+
+#ifndef BITSPERBYTE
+#define BITSPERBYTE 8
+#endif
 
 int PSPMdisplay (FILE* out, PSPM_SEARCH_HEADER* header, const char* field)
 {
