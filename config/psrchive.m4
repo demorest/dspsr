@@ -51,10 +51,10 @@ AC_DEFUN([SWIN_LIB_PSRCHIVE],
         PSRCHIVE_LIBS="`$psrchive_ldflags`"
       fi
 
-    fi
+      LIBS="$ac_save_LIBS"
+      CPPFLAGS="$ac_save_CPPFLAGS"
 
-    LIBS="$ac_save_LIBS"
-    CPPFLAGS="$ac_save_CPPFLAGS"
+    fi
 
   fi
 
