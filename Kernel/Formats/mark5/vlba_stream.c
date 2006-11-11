@@ -299,7 +299,7 @@ static int read_frame(struct VLBA_stream *vs, uint32_t *dest)
 		fprintf(stderr, "Continuing to read from file [%d/%d] %s\n", 
 			vs->curfile, vs->nfiles,
 			vs->infiles[vs->curfile]);
-		vs->infile = open64(vs->infiles[vs->curfile], O_RDONLY);
+		vs->infile = open(vs->infiles[vs->curfile], O_RDONLY);
 		if(!vs->infile)
 		{
 			fprintf(stderr, "Cannot open <%s>\n", 
@@ -598,7 +598,7 @@ struct VLBA_stream *VLBA_stream_open(const char *filename,
 
 	if(!modbits) initmodbits();
 
-	in = open64(filename, O_RDONLY);
+	in = open(filename, O_RDONLY);
 	if(!in) 
 	{
 		fprintf(stderr, "Cannot open <%s>\n", filename);
