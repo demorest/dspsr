@@ -19,8 +19,7 @@
 using namespace std;
 
 //#include "f772c.h"
-#ifndef F772C_H
-#define F772C_H
+#ifndef F772C
 #define F772C(x) x##_
 #endif
 
