@@ -107,7 +107,9 @@ void parse_it(int argc, char** argv,
       print_unknown = true;
       break;
     case 'm':
-      parse_metafile(files,optarg);
+      cerr << "-m disabled out of laziness (please contact Willem)" << endl;
+      exit(-1);
+      // parse_metafile(files,optarg);
       break;
     default:
       throw Error(InvalidParam,"parse_it()",
