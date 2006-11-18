@@ -57,10 +57,14 @@
 
 #include <unistd.h>
 
+#ifndef BITSPERBYTE
+#define BITSPERBYTE 8
+#endif
+
 using namespace std;
 
 static char* args =
-"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:vVWx:X:z";
+"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:U:vVWx:X:z";
 
 void usage ()
 {
@@ -73,7 +77,7 @@ void usage ()
     " -M metafile    load filenames from metafile\n"
     " -S seek        start processing at t=seek seconds\n"
     " -T total       process only t=total seconds\n"
-    " -t block_size  process this many samples per block \n"
+    " -U Mbtyes      upper limit on RAM usage in MB\n"
     " -W             no WeightedTimeSeries\n"
     " -z             run in psrdisp backward-compatibility mode\n"
     "\n"
@@ -194,13 +198,11 @@ int main (int argc, char** argv) try {
   if (mpi_size == 1)
     dsp::Operation::preserve_data = true;
 
-#ifdef ENABLE_SIMD
-  if (fft::SIMD_aware)
-    fft::enable_SIMD();
-#endif
-
   // number of time samples loaded from file at a time
-  uint64 block_size = 1024*1024;
+  uint64 block_size = 0;
+
+  // maximum number of bytes to load into RAM (default 256 MB)
+  uint64 maximum_RAM = 256 * 1024 * 1024;
 
   int ndim = 4;
   int nchan = 1;
@@ -576,6 +578,10 @@ int main (int argc, char** argv) try {
 
     case 't':
       block_size = atoi (optarg);
+      break;
+
+    case 'U':
+      maximum_RAM = atoi (optarg) * 1024 * 1024;
       break;
 
     case 'V':
@@ -1044,13 +1050,18 @@ int main (int argc, char** argv) try {
       manager->get_info()->set_telescope_code (telescope_code);
     }
 
-    // Make sure the source name used to construct kernel is set correctly
-    if( pulsar_name!=string() )
+    if (!pulsar_name.empty()) {
+      cerr << "dspsr: over-riding source name"
+              " old=" << manager->get_info()->get_source() <<
+              " new=" << pulsar_name << endl;
       manager->get_info()->set_source( pulsar_name );   
+    }
 
-    if( mjd_string != 0 ) {
+    if (mjd_string != 0) {
       MJD mjd (mjd_string);
-      cerr << "dspsr: setting the start time to " << mjd << endl;
+      cerr << "dspsr: over-riding start time"
+              " old=" << manager->get_info()->get_start_time() <<
+              " new=" << mjd << endl;
       manager->get_info()->set_start_time( mjd );
     }
 
@@ -1078,6 +1089,33 @@ int main (int argc, char** argv) try {
     }    
     
 #endif 
+
+    uint64 this_block_size = block_size;
+    
+    if (!this_block_size) {
+
+      /*
+	This simple calculation of the maximum block size does not
+	consider the RAM required for out of place operations, FFT
+	plans, etc.
+      */
+      
+      dsp::Observation* info = manager->get_info();
+      unsigned nbit  = info->get_nbit();
+      unsigned ndim  = info->get_ndim();
+      unsigned npol  = info->get_npol();
+      unsigned nchan = info->get_nchan();
+      
+      // each nbit number will be unpacked into a float
+      double nbyte = double(nbit)/BITSPERBYTE + sizeof(float);
+      
+      double nbyte_dat = nbyte * ndim * npol * nchan;
+      
+      block_size = (uint64) (maximum_RAM / nbyte_dat);
+      
+      cerr << "dspsr: block_size=" << block_size << " samples" << endl;
+      
+    }
 
     fold[0]->prepare ( manager->get_info() );
 
@@ -1127,9 +1165,8 @@ int main (int argc, char** argv) try {
       if (total_seconds)
 	manager->get_input()->set_total_seconds (seek_seconds + total_seconds);
 
-      manager->get_input()->set_block_size ( block_size );
-
-      nblocks_tot = manager->get_input()->get_total_samples() / block_size;
+      manager->get_input()->set_block_size ( this_block_size );
+      nblocks_tot = manager->get_input()->get_total_samples()/this_block_size;
 
 #if 0      
       if (nfft) {
