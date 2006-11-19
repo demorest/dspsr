@@ -10,9 +10,11 @@
 #include "dsp/File.h"
 #include "dsp/TestInput.h"
 
-#include "string_utils.h"
+#include "strutil.h"
 #include "dirutil.h"
 #include "Error.h"
+
+using namespace std;
 
 static char* args = "b:t:vV";
 
