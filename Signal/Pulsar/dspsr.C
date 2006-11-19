@@ -1111,10 +1111,16 @@ int main (int argc, char** argv) try {
       
       double nbyte_dat = nbyte * ndim * npol * nchan;
       
-      block_size = (uint64) (maximum_RAM / nbyte_dat);
+      this_block_size = (uint64) (maximum_RAM / nbyte_dat);
       
-      cerr << "dspsr: block_size=" << block_size << " samples" << endl;
-      
+      cerr << "dspsr: block size=" << this_block_size << " samples" << endl;
+
+      if (this_block_size == 0) {
+	cerr << "dspsr: insufficient RAM (use -U to increase RAM limit)"
+	     << endl;
+	return -1;
+      }
+
     }
 
     fold[0]->prepare ( manager->get_info() );
