@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.45 $
-   $Date: 2006/10/20 05:37:56 $
+   $Revision: 1.46 $
+   $Date: 2006/11/19 15:39:25 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -31,7 +31,7 @@ namespace dsp {
     This Operation does not modify the TimeSeries.  Rather, it accumulates
     the (folded) average pulse profile data within its data structures.
   */
-  class Fold : public Transformation <const TimeSeries, PhaseSeries> {
+  class Fold : public Transformation <TimeSeries, PhaseSeries> {
 
     friend class MultiFold;
     friend class rawprofile;
@@ -132,7 +132,7 @@ namespace dsp {
 #endif
 
     //! Overload Transformation::set_input to set weighted_input
-    void set_input (TimeSeries* input);
+    void set_input (const TimeSeries* input);
 
     //! Add a phase model with which to choose to fold the data
     void add_folding_polyco (const polyco* folding_polyco);

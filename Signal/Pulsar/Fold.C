@@ -17,7 +17,7 @@
 using namespace std;
 
 dsp::Fold::Fold (bool _dont_set_limits) :
-  Transformation <const TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
+  Transformation <TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
 {
   // reducer relies on these defaults being what they are
   // Be sure to check it works if you change them
@@ -480,14 +480,14 @@ const psrephem* dsp::Fold::get_pulsar_ephemeris () const
   return pulsar_ephemeris;
 }
 
-void dsp::Fold::set_input (TimeSeries* _input)
+void dsp::Fold::set_input (const TimeSeries* _input)
 {
   if (verbose)
     cerr << "dsp::Fold::set_input (TimeSeries* =" << _input << ")" << endl;
 
-  Transformation<const TimeSeries, PhaseSeries>::set_input (_input);
+  Transformation<TimeSeries, PhaseSeries>::set_input (_input);
 
-  weighted_input = dynamic_cast<WeightedTimeSeries*> (_input);
+  weighted_input = dynamic_cast<const WeightedTimeSeries*> (_input);
 
   if (verbose && weighted_input)
     cerr << "dsp::Fold::set_input input is a WeightedTimeSeries" << endl;

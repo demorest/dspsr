@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.15 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.16 $
+   $Date: 2006/11/19 15:39:25 $
+   $Author: straten $ */
 
 
 #ifndef __Unpacker_h
@@ -44,7 +44,7 @@ namespace dsp {
 
     then register the new class in Unpacker_registry.C.
   */
-  class Unpacker : public Transformation <const BitSeries, TimeSeries> {
+  class Unpacker : public Transformation <BitSeries, TimeSeries> {
 
   public:
     

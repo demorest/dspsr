@@ -16,7 +16,7 @@ namespace dsp {
   class Apodization;
 
   //! Produces the bandpass of an undetected timeseries.
-  class Bandpass : public Transformation<const TimeSeries, Response> {
+  class Bandpass : public Transformation<TimeSeries, Response> {
 
   public:
 

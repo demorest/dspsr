@@ -31,13 +31,14 @@ void dsp::Chomper::transformation(){
       throw Error(InvalidParam,"dsp::Chomper::transformation()",
 		  "You wanted to chomp the timeseries to ndat="UI64" but it only had "UI64" points!",
 		  new_ndat, get_input()->get_ndat());
-    get_input()->set_ndat( new_ndat );
+
+    const_cast<TimeSeries*>(get_input())->set_ndat( new_ndat );
   }
 
-  get_input()->set_ndat( get_input()->get_ndat() - get_input()->get_ndat() % rounding );
+  const_cast<TimeSeries*>(get_input())->set_ndat( get_input()->get_ndat() - get_input()->get_ndat() % rounding );
 
   if( !dont_multiply )
-    get_input()->operator*=( multiplier );
+    const_cast<TimeSeries*>(get_input())->operator*=( multiplier );
 
   if( verbose )
     fprintf(stderr,"Returning from dsp::Chomper::Transformation() with output ndat="UI64"\n",

@@ -92,7 +92,7 @@ void dsp::TScrunch::transformation ()
 
   for (unsigned ichan=0; ichan<input->get_nchan(); ichan++) {
     for (unsigned ipol=0; ipol<input->get_npol(); ipol++) {
-      float* in  = input->get_datptr(ichan, ipol);
+      const float* in  = input->get_datptr(ichan, ipol);
       float* out = output->get_datptr(ichan, ipol);
       
       unsigned j=0;

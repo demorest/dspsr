@@ -11,7 +11,7 @@
 using namespace std;
 
 dsp::Bandpass::Bandpass () :
-  Transformation <const TimeSeries, Response> ("Bandpass", outofplace) 
+  Transformation <TimeSeries, Response> ("Bandpass", outofplace) 
 {
   resolution = 0;
   integration_length = 0;

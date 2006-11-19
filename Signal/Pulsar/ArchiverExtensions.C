@@ -116,7 +116,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
         unsigned nsamp_overlap_pos = response->get_impulse_pos ();
         unsigned nsamp_overlap_neg = response->get_impulse_neg ();
 
-        TimeSeries* input = convolution->get_input ();
+        const TimeSeries* input = convolution->get_input ();
 
         if (input->get_state() == Signal::Nyquist) {
 	  nsamp_fft *= 2;
