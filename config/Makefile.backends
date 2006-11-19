@@ -9,7 +9,7 @@
 # parse the selected backends from backends.list
 BACKENDS := $(shell grep -v ^\# $(LOCAL_ROOT)/backends.list)
 
-LBACKENDS := $(addprefix -ldsp_, $(BACKENDS)) -ldsp_base
+LBACKENDS := $(addprefix -ldsp_, $(BACKENDS)) -ldspbase
 
 ##############################################################################
 #
