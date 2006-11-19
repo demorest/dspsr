@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.40 $
-   $Date: 2006/10/15 03:50:14 $
+   $Revision: 1.41 $
+   $Date: 2006/11/19 15:39:20 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -29,10 +29,8 @@ namespace dsp {
 
   //! Base class of all Transformation classes
   /*! This interface is highly dangerous and should never be used */
-  class TransformationBase : public Operation {
+  class TransformationBase {
   public:
-
-    TransformationBase (const char* name = 0) : Operation (name) {}
 
     virtual ~TransformationBase () {}
 
@@ -70,41 +68,31 @@ namespace dsp {
   };
 
   template <class In>
-  class HasInput : public virtual TransformationBase {
+  class HasInput : virtual public TransformationBase {
 
   public:
-
-    HasInput (const char* name) : TransformationBase (name) {}
-
-    //! Virtual destructor required
-    virtual ~HasInput () { }
 
     //! Set the container from which input data will be read
     virtual void set_input (In* _input) { input = _input; }
 
     //! Return pointer to the container from which input data will be read
-    In* get_input () const { return input; }
+    const In* get_input () const { return input; }
  
     //! Returns true if input is set
-    bool has_input() const { return input.ptr(); }
+    bool has_input() const { return input; }
 
   protected:
 
     //! Container from which input data will be read
-    Reference::To <In> input;
+    Reference::To <const In> input;
 
   };
 
 
   template <class Out>
-  class HasOutput : public virtual TransformationBase {
+  class HasOutput : virtual public TransformationBase {
 
   public:
-
-    HasOutput (const char* name) : TransformationBase (name) {}
-
-    //! Virtual destructor required
-    virtual ~HasOutput () { }
 
     //! Set the container into which output data will be written
     virtual void set_output (Out* _output) { output = _output; }
@@ -127,7 +115,8 @@ namespace dsp {
     container classes are connected to various digital signal
     processing operations. */
   template <class In, class Out>
-  class Transformation : public HasInput<In>,
+  class Transformation : public Operation, 
+			 public HasInput<In>,
 			 public HasOutput<Out>
   {
 
@@ -141,7 +130,7 @@ namespace dsp {
     virtual ~Transformation ();
 
     //! Set the container from which input data will be read
-    void set_input (In* input);
+    void set_input (const In* input);
 
     //! Set the container into which output data will be written
     void set_output (Out* output);
@@ -248,7 +237,7 @@ template<class In, class Out>
 dsp::Transformation<In,Out>::Transformation (const char* _name, 
 					     Behaviour _type,
 					     bool _time_conserved)
-  : TransformationBase(_name), HasInput<In> (_name), HasOutput<Out> (_name)
+  : Operation (_name)
 {
   if( Operation::verbose )
     fprintf(stderr,"In Transformation constructor for '%s'\n",_name);
@@ -257,7 +246,7 @@ dsp::Transformation<In,Out>::Transformation (const char* _name,
   reset_min_samps();
   time_conserved = _time_conserved;
 
-  TransformationBase::initialization.send (this);
+  TransformationBase::initialization (this);
 }
 
 //! Return false if the input doesn't have enough data to proceed
@@ -273,7 +262,7 @@ bool dsp::Transformation<In,Out>::can_operate()
   if (int64(this->get_input()->get_ndat()) >= minimum_samps_can_process)
     return true;
 
-  if (TransformationBase::verbose)
+  if (Operation::verbose)
     std::cerr << "dsp::Transformation<In,Out> (" << Operation::get_name() << ")"
       " has input of " << this->get_input()->get_ndat() << " samples."
       "  Minimum is " << minimum_samps_can_process << std::endl;
@@ -336,7 +325,7 @@ void dsp::Transformation<In, Out>::operation ()
 }
 
 template <class In, class Out>
-void dsp::Transformation<In, Out>::set_input (In* _input)
+void dsp::Transformation<In, Out>::set_input (const In* _input)
 {
   if (Operation::verbose)
     std::cerr << "dsp::Transformation["+this->get_name()+"]::set_input ("<<_input<<")"<<std::endl;
