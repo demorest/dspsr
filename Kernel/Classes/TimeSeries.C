@@ -69,12 +69,12 @@ void dsp::TimeSeries::init ()
   set_preserve_seeked_data( false );
 }
 
-dsp::TimeSeries* dsp::TimeSeries::clone ()
+dsp::TimeSeries* dsp::TimeSeries::clone () const
 {
   return new TimeSeries (*this);
 }
 
-dsp::TimeSeries* dsp::TimeSeries::null_clone ()
+dsp::TimeSeries* dsp::TimeSeries::null_clone () const
 {
   return new TimeSeries;
 }
@@ -738,10 +738,12 @@ void dsp::TimeSeries::set_ndim(unsigned _ndim){
 }
 
 /*! This method is used by the InputBuffering policy */
-void dsp::TimeSeries::change_reserve (int64 change)
+void dsp::TimeSeries::change_reserve (int64 change) const
 {
   if (verbose)
     cerr << "dsp::TimeSeries::change_reserve (" << change << ")" << endl;
+
+  TimeSeries* thiz = const_cast<TimeSeries*>(this);
 
   if (change < 0) {
     uint64 decrease = -change;
@@ -750,12 +752,12 @@ void dsp::TimeSeries::change_reserve (int64 change)
 		   "decrease="I64"; reserve_ndat="UI64, 
 		   decrease, reserve_ndat);
 
-    reserve_ndat -= decrease;
-    reserve_nfloat -= decrease * get_ndim();
+    thiz->reserve_ndat -= decrease;
+    thiz->reserve_nfloat -= decrease * get_ndim();
   }
   else {
-    reserve_ndat += change;
-    reserve_nfloat += change * get_ndim();
+    thiz->reserve_ndat += change;
+    thiz->reserve_nfloat += change * get_ndim();
   }
 
 }

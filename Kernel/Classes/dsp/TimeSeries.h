@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.37 $
-   $Date: 2006/10/15 21:48:05 $
+   $Revision: 1.38 $
+   $Date: 2006/11/19 15:39:02 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -34,10 +34,10 @@ namespace dsp {
     TimeSeries(const TimeSeries& ts);
 
     //! Cloner (calls new)
-    virtual TimeSeries* clone();
+    virtual TimeSeries* clone() const;
 
     //! Returns a null-instantiation (calls new)
-    virtual TimeSeries* null_clone();
+    virtual TimeSeries* null_clone() const;
 
     //! Swaps the two TimeSeries's.  Returns '*this'
     virtual TimeSeries& swap_data(TimeSeries& ts);
@@ -149,7 +149,7 @@ namespace dsp {
     float* data;
 
     //! Change the amount of memory reserved at the start of the buffer
-    void change_reserve (int64 change);
+    void change_reserve (int64 change) const;
 
     //! Get the amount of memory reserved at the start of the buffer
     uint64 get_reserve () const { return reserve_ndat; }

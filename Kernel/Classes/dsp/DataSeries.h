@@ -49,10 +49,10 @@ namespace dsp {
     void initi();
 
     //! Cloner (calls new)
-    virtual DataSeries* clone() = 0;
+    virtual DataSeries* clone() const = 0;
 
     //! Returns a null-instantiation (calls new)
-    virtual DataSeries* null_clone() = 0;
+    virtual DataSeries* null_clone() const = 0;
 
     //! Swaps the two DataSeries's.  Returns '*this'
     virtual DataSeries& swap_data(DataSeries& ds);
