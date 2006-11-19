@@ -7,6 +7,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/MultiFile.h"
+#include "dsp/SetBufferingPolicy.h"
 
 #include "dsp/Unpacker.h"
 #include "dsp/BitSeries.h"
@@ -166,6 +167,8 @@ dsp::TimeSeries* new_time_series ()
 }
 
 int main (int argc, char** argv) try {
+
+  dsp::SetBufferingPolicy::policy = dsp::SetBufferingPolicy::Input;
 
   // rank of the node on which this processor is running
   int mpi_rank = 0;
@@ -495,7 +498,7 @@ int main (int argc, char** argv) try {
         }
       }
 
-      dsp::TransformationBase::check_state = false;
+      dsp::Operation::check_state = false;
       break;
     }
 
