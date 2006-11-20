@@ -34,18 +34,6 @@ bool dsp::WAPPUnpacker::matches (const Observation* observation)
   return observation->get_machine() == "WAPP";
 }
 
-/*! The quadrature components must be offset by one */
-unsigned dsp::WAPPUnpacker::get_output_offset (unsigned idig) const
-{
-  return idig % 2;
-}
-
-/*! The first two digitizer channels are poln0, the last two are poln1 */
-unsigned dsp::WAPPUnpacker::get_output_ipol (unsigned idig) const
-{
-  return idig / 2;
-}
-
 /* time between correlator dumps in us */
 #define WAPP_DEAD_TIME 0.34
 
@@ -64,6 +52,10 @@ void dsp::WAPPUnpacker::unpack ()
   const unsigned nbit = input->get_nbit();
   const unsigned nchan = input->get_nchan();
   const unsigned two_nchan = nchan * 2;
+
+  if (verbose)
+    cerr << "dsp::WAPPUnpacker::unpack ndat=" << ndat << " npol=" << npol
+	 << " nbit=" << nbit << " nchan=" << nchan << endl;
 
   struct WAPP_HEADER* head = (struct WAPP_HEADER*) wapp->header;
 

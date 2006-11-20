@@ -25,6 +25,11 @@ void dsp::Unpacker::transformation ()
   // unpack the data
   unpack ();
 
+  if (verbose)
+    cerr << "dsp::Unpacker::transformation"
+      " seek=" << input->get_request_offset() <<
+      " ndat=" << input->get_request_ndat() << endl;;
+
   // The following lines deal with time sample resolution of the data source
   output->seek (input->get_request_offset());
 
