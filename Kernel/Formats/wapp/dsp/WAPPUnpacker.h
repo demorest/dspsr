@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/wapp/dsp/WAPPUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/11/03 23:11:53 $
+   $Revision: 1.2 $
+   $Date: 2006/11/20 16:06:20 $
    $Author: straten $ */
 
 #ifndef __WAPPUnpacker_h
@@ -34,8 +34,8 @@ namespace dsp {
     //! Return true if we can convert the Observation
     virtual bool matches (const Observation* observation);
 
-    unsigned get_output_offset (unsigned idig) const;
-    unsigned get_output_ipol (unsigned idig) const;
+    //unsigned get_output_offset (unsigned idig) const;
+    //unsigned get_output_ipol (unsigned idig) const;
 
   };
 
