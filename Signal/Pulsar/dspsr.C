@@ -65,7 +65,7 @@
 using namespace std;
 
 static char* args =
-"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:Oop:P:RsS:t:T:U:vVWx:X:z";
+"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:O:op:P:RsS:t:T:U:vVWx:X:z";
 
 void usage ()
 {
@@ -315,14 +315,22 @@ int main (int argc, char** argv) try {
   // List of additional pulsar names to be folded
   vector<string> additional_pulsars;
 
+  // Set to true when an option is requested that applies to baseband data only
+  string baseband_options;
+
   int c;
   int scanned;
 
-  while ((c = getopt(argc, argv, args)) != -1)
+  while ((c = getopt(argc, argv, args)) != -1) {
+
+    string stropt = optarg;
+
     switch (c) {
 
       // two-bit correction parameters
     case '2':
+
+      baseband_options += " -2" + stropt;
 
       scanned = sscanf (optarg, "n%u", &tbc_nsample);
       if (scanned == 1)  {
@@ -392,6 +400,9 @@ int main (int argc, char** argv) try {
       break;
 
     case 'F': {
+
+      baseband_options += " -F" + stropt;
+
       char* pfr = strchr (optarg, ':');
       if (pfr) {
 	*pfr = '\0';
@@ -424,6 +435,9 @@ int main (int argc, char** argv) try {
       break;
 
     case 'G': {
+
+      baseband_options += " -G" + stropt;
+
       char* pfr = strchr (optarg, ':');
       if (pfr) {
         *pfr = '\0';
@@ -475,10 +489,13 @@ int main (int argc, char** argv) try {
       break;
 
     case 'l':
+      baseband_options += " -l" + stropt;
       nlag = atoi (optarg);
       break;
 
     case 'L': {
+
+      baseband_options += " -L" + stropt;
 
       if (sscanf (optarg, "%d", &nlag_acf) < 1) {
         cerr << "Error parsing " << optarg << " as number of" 
@@ -543,6 +560,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'R':
+      baseband_options += " -R";
       rfi_filter = new dsp::RFIFilter;
       break;
 
@@ -618,6 +636,8 @@ int main (int argc, char** argv) try {
       cerr << "invalid param '" << c << "'" << endl;
     }
 
+  }
+
   vector<string> filenames;
 
   if (metafile)
@@ -642,7 +662,7 @@ int main (int argc, char** argv) try {
     return -1;
   }
 
-  dsp::TimeSeries* voltages = new_time_series();
+  dsp::TimeSeries* unpacked = new_time_series();
 
   vector<dsp::Operation*> operations;
 
@@ -651,7 +671,7 @@ int main (int argc, char** argv) try {
 
   dsp::IOManager* manager = new dsp::IOManager;
   
-  manager->set_output (voltages);
+  manager->set_output (unpacked);
 
   operations.push_back (manager);
 
@@ -699,7 +719,7 @@ int main (int argc, char** argv) try {
 
   }
 
-  dsp::TimeSeries* convolve = voltages;
+  dsp::TimeSeries* convolve = unpacked;
   dsp::TimeSeries* detected = NULL;
 
   bool need_to_detect = true;
@@ -717,7 +737,7 @@ int main (int argc, char** argv) try {
 
       // software filterbank constructor
       dsp::IncoherentFilterbank* filterbank = new dsp::IncoherentFilterbank;
-      filterbank->set_input (voltages);
+      filterbank->set_input (unpacked);
       filterbank->set_output (convolve);
       filterbank->set_nchan (nchan);
 
@@ -747,7 +767,7 @@ int main (int argc, char** argv) try {
 	
 	// software filterbank constructor
 	dsp::Filterbank* filterbank = new dsp::Filterbank;
-	filterbank->set_input (voltages);
+	filterbank->set_input (unpacked);
 	filterbank->set_output (convolve);
 	filterbank->set_nchan (nchan);
 	
@@ -772,7 +792,7 @@ int main (int argc, char** argv) try {
     // polyphase filterbank constructor
     dsp::PolyPhaseFilterbank* filterbank = new dsp::PolyPhaseFilterbank;
     
-    filterbank->set_input (voltages);
+    filterbank->set_input (unpacked);
     filterbank->set_output (convolve);
 
     filterbank->load_complex_coefficients (polyphase_filter);
@@ -812,7 +832,7 @@ int main (int argc, char** argv) try {
 
     // software filterbank constructor
     dsp::ACFilterbank* filterbank = new dsp::ACFilterbank;
-    filterbank->set_input (voltages);
+    filterbank->set_input (unpacked);
     filterbank->set_output (convolve);
     filterbank->set_nlag (nlag_acf);
     filterbank->set_nchan (nchan_acf);
@@ -1146,7 +1166,6 @@ int main (int argc, char** argv) try {
       cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
 	   << dispersion_measure << endl;
       dm = dispersion_measure;
-      // const_cast<psrephem*>(fold->get_pulsar_ephemeris())->set_dm(dm);
     }
 
     if (kernel)
@@ -1156,10 +1175,21 @@ int main (int argc, char** argv) try {
 
     if (!manager->get_info()->get_detected())
       active_operations = operations;
+
     else {
+
+      if (!baseband_options.empty()) {
+	cerr << "dspsr: input type " << manager->get_input()->get_name()
+	     << " yields detected data and the command line options:"
+	     << endl << endl << baseband_options << endl << endl
+	     << " are specific to baseband (undetected) data" << endl;
+	return -1;
+      }
+
       active_operations.push_back (manager);
       for (unsigned ifold=0; ifold < nfold; ifold++)
 	active_operations.push_back (fold[ifold]);
+
     }
 
     archiver->set_operations (active_operations);
@@ -1237,8 +1267,9 @@ int main (int argc, char** argv) try {
                           << active_operations[iop]->get_name() << endl;
 	
         active_operations[iop]->operate ();
+
         if (iop==0 && offset_clock!=0.0)
-           voltages->change_start_time(int64(offset_clock*voltages->get_rate()));
+           unpacked->change_start_time(int64(offset_clock*unpacked->get_rate()));
 
         if (verbose) cerr << "dspsr: " << active_operations[iop]->get_name() 
                           << " done" << endl;
