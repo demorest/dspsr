@@ -309,21 +309,23 @@ int main (int argc, char** argv) try {
   // Disables coherent dedispersion
   bool disable_dedispersion = false;
 
-  //
+  // Set to true if you want dspsr to carry on after an Error exception
   bool persistent = false;
 
   // List of additional pulsar names to be folded
   vector<string> additional_pulsars;
 
-  // Set to true when an option is requested that applies to baseband data only
+  // Specified command line options that apply to baseband data only
   string baseband_options;
+  string stropt;
 
   int c;
   int scanned;
 
   while ((c = getopt(argc, argv, args)) != -1) {
 
-    string stropt = optarg;
+    if (optarg)
+      stropt = optarg;
 
     switch (c) {
 
@@ -1128,13 +1130,19 @@ int main (int argc, char** argv) try {
       unsigned ndim  = info->get_ndim();
       unsigned npol  = info->get_npol();
       unsigned nchan = info->get_nchan();
-      
+      unsigned res   = manager->get_input()->get_resolution();
+
+      // Any outofplace operation will double the size requirements
+      double copies = 1;
+      if (convolve != unpacked)
+	copies = 2;
+
       // each nbit number will be unpacked into a float
-      double nbyte = double(nbit)/BITSPERBYTE + sizeof(float);
+      double nbyte = double(nbit)/BITSPERBYTE + copies * sizeof(float);
       
       double nbyte_dat = nbyte * ndim * npol * nchan;
       
-      this_block_size = (uint64) (maximum_RAM / nbyte_dat);
+      this_block_size = (uint64(maximum_RAM / nbyte_dat) / res) * res;
       
       cerr << "dspsr: block size=" << this_block_size << " samples" << endl;
 
@@ -1180,9 +1188,9 @@ int main (int argc, char** argv) try {
 
       if (!baseband_options.empty()) {
 	cerr << "dspsr: input type " << manager->get_input()->get_name()
-	     << " yields detected data and the command line options:"
+	     << " yields detected data and the command line option(s):"
 	     << endl << endl << baseband_options << endl << endl
-	     << " are specific to baseband (undetected) data" << endl;
+	     << " are specific to baseband (undetected) data." << endl;
 	return -1;
       }
 
