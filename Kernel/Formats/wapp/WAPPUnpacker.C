@@ -13,6 +13,8 @@
 // from sigproc-2.4
 #include "wapp_header.h"
 
+#include <assert.h>
+
 using namespace std;
 
 // from sigproc.h
