@@ -284,7 +284,7 @@ int main (int argc, char** argv) try
 
 	  // plot the mean
 	  
-	  minmaxval (mean, min, max);
+	  minmax (mean, min, max);
 	  buf = (max-min) * 0.05;
 	  
 	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
@@ -304,7 +304,7 @@ int main (int argc, char** argv) try
 	  
 	  // plot the rms
 	  
-	  minmaxval (rms, min, max);
+	  minmax (rms, min, max);
 	  buf = (max-min) * 0.05;
 	  
 	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
