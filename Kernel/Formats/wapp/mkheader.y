@@ -58,26 +58,26 @@ line : COMMENT
      | STRUCT VAR VAR SEMI
      ;
 
-notchar: typepp
-         { $$ = $1; };
+notchar : typepp
+         { $$ = $1; }
        | UNSIGNED typepp
-         { $$ = $2; };
+         { $$ = $2; }
        | UNSIGNED CHARSTAR
-         { $$ = $2; };
+         { $$ = $2; }
        ;
 
-typepp: DOUBLE
-         { $$ = $1; };
+typepp : DOUBLE
+         { $$ = $1; }
        | FLOAT
-         { $$ = $1; };
+         { $$ = $1; }
        | LONG
-         { $$ = $1; };
+         { $$ = $1; }
        | LONGLONG
-         { $$ = $1; };
+         { $$ = $1; }
        | INTEGER
-         { $$ = $1; };
+         { $$ = $1; }
        | SHORT
-         { $$ = $1; };
+         { $$ = $1; }
        ;
 
 
