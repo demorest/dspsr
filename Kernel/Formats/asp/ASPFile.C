@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "machine_endian.h"
+
 using namespace std;
 
 dsp::ASPFile::ASPFile (const char* filename,const char* headername)
@@ -22,6 +24,40 @@ dsp::ASPFile::ASPFile (const char* filename,const char* headername)
 
 dsp::ASPFile::~ASPFile ( )
 {
+}
+
+void correct_endian (struct asp_params* header)
+{
+  FromLittleEndian (header->n_ds);
+  FromLittleEndian (header->n_chan);
+  FromLittleEndian (header->ch_bw);
+  FromLittleEndian (header->rf);
+  FromLittleEndian (header->band_dir);
+  FromLittleEndian (header->dm);
+  FromLittleEndian (header->fft_len);
+  FromLittleEndian (header->overlap);
+  FromLittleEndian (header->n_bins);
+  FromLittleEndian (header->t_dump);
+  FromLittleEndian (header->n_dump);
+  FromLittleEndian (header->n_samp_dump);
+  FromLittleEndian (header->imjd);
+  FromLittleEndian (header->fmjd);
+  FromLittleEndian (header->cal_scan);
+
+  FromLittleEndian (header->ra);
+  FromLittleEndian (header->dec);
+  FromLittleEndian (header->epoch);
+}
+
+void correct_endian (struct data2rcv* block)
+{
+  FromLittleEndian (block->totalsize);
+  FromLittleEndian (block->NPtsSend);
+  FromLittleEndian (block->iMJD);
+  FromLittleEndian (block->fMJD);
+  FromLittleEndian (block->ipts1);
+  FromLittleEndian (block->ipts2);
+  FromLittleEndian (block->FreqChanNo);
 }
 
 int open_read_header (const char* filename,
@@ -40,12 +76,16 @@ int open_read_header (const char* filename,
 			    "read failed header");
   }
 
+  correct_endian (header);
+
   retval = read (fd, block, sizeof(struct data2rcv));
   if (retval < 0) {
     ::close (fd);
     throw Error (FailedSys, "dsp::ASPFile::open_file",
                             "read failed block header");
   }
+
+  correct_endian (block);
 
   return fd;
 }
@@ -145,6 +185,7 @@ void dsp::ASPFile::skip_extra ()
   if (read (fd, &block, sizeof(struct data2rcv)) < 0)
     throw Error (FailedSys, "dsp::ASPFile::skip_extra", "read");
 
+  // correct_endian (block);
   // cerr << "i_chan = " << block.FreqChanNo << endl;
   // cerr << "ipts1 = " << block.ipts1 << " ipts2=" << block.ipts2 << endl;
 }
