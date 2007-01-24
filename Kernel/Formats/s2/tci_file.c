@@ -6,8 +6,11 @@
  ***************************************************************************/
 
 /*
-$Id: tci_file.c,v 1.2 2006/07/09 13:31:15 wvanstra Exp $
+$Id: tci_file.c,v 1.3 2007/01/24 21:43:41 straten Exp $
 $Log: tci_file.c,v $
+Revision 1.3  2007/01/24 21:43:41  straten
+return error code when hdr_size is incorrect
+
 Revision 1.2  2006/07/09 13:31:15  wvanstra
 copyright notice added: Academic Free License
 
@@ -138,13 +141,13 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
      if ( header->hdr_size < TCI_HEADER_BASE_SIZE )  {
        fprintf (stderr, "TCI_FILE_OPEN: (r) file header too small.\n");
        fprintf (stderr, "TCI_FILE_OPEN: hdr sz = %i.\n",header->hdr_size);
-       header->hdr_size = TCI_HEADER_BASE_SIZE;
+       return -1;
      }
      
      if ( header->hdr_size > tci_file->fsz )  {
        fprintf (stderr, "TCI_FILE_OPEN: (r) Hdr_Sz larger than file.\n");
        fprintf (stderr, "TCI_FILE_OPEN: hdr sz = %i.\n",header->hdr_size);
-       header->hdr_size = TCI_HEADER_BASE_SIZE;
+       return -1;
      }
      
      /* set the values in tci_file... these help simplify seeking thru the
