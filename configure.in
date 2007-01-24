@@ -22,6 +22,9 @@ fi
 # Check if the user has set compiler options
 SWIN_OPTIONS_SET
 
+# Enable convenience compiler selection
+SWIN_COMPILER
+
 AM_INIT_AUTOMAKE([subdir-objects])
 
 # Create static libraries by default
@@ -32,9 +35,6 @@ AC_SYS_LARGEFILE
 
 # Determine the machine endian
 AC_C_BIGENDIAN
-
-# Enable convenience compiler selection
-SWIN_COMPILER
 
 # Checks for programs.
 AC_PROG_CXX
@@ -53,10 +53,20 @@ AC_F77_WRAPPERS
 SWIN_DEBUG
 
 #
-# Set up for standard pulsar installation
+# Set up to use the fink package installation directory
 #
-CPPFLAGS="-I/usr/local/include $CPPFLAGS"
-LDFLAGS="-L/usr/local/lib $LDFLAGS"
+if test -d /sw; then
+  CPPFLAGS="-I/sw/include $CPPFLAGS"
+  LDFLAGS="-L/sw/lib $LDFLAGS"
+else
+  #
+  # Set up to use the standard package installation directory
+  #
+  if test -d /usr/local; then
+    CPPFLAGS="-I/usr/local/include $CPPFLAGS"
+    LDFLAGS="-L/usr/local/lib $LDFLAGS"
+  fi
+fi
 
 if test "$PSRHOME"; then
  CPPFLAGS="-I$PSRHOME/packages/$LOGIN_ARCH/include $CPPFLAGS"
