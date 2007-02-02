@@ -7,6 +7,7 @@
 #include "WAPPUnpacker.h"
 #include "WAPPFile.h"
 
+#include "machine_endian.h"
 #include "FTransform.h"
 #include "Error.h"
 
@@ -115,8 +116,8 @@ void dsp::WAPPUnpacker::unpack ()
     window[ichan]=(hweight+(1.0-hweight)*cos((M_PI*ichan)/nchan));
 
   const unsigned char* from8 = input->get_rawptr();
-  const uint16* from16 = (const uint16*) input->get_rawptr();
-  const uint32* from32 = (const uint32*) input->get_rawptr();
+  uint16* from16 = (uint16*) input->get_rawptr();
+  uint32* from32 = (uint32*) input->get_rawptr();
 
   bool do_vanvleck = true;
 
@@ -134,13 +135,17 @@ void dsp::WAPPUnpacker::unpack ()
 	from8 += nchan;
 	break;
       case 16:
-	for (ichan=0; ichan<nchan; ichan++)
+	for (ichan=0; ichan<nchan; ichan++) {
+          FromLittleEndian(from16[ichan]);
 	  acf[ichan] = scale * double(from16[ichan]) - 1.0;
+        }
 	from16 += nchan;
 	break;
       case 32:
-	for (ichan=0; ichan<nchan; ichan++)
+	for (ichan=0; ichan<nchan; ichan++) {
+          FromLittleEndian(from32[ichan]);
 	  acf[ichan] = scale * double(from32[ichan]) - 1.0;
+        }
 	from32 += nchan;
 	break;
       }
@@ -150,10 +155,10 @@ void dsp::WAPPUnpacker::unpack ()
       power = 0.1872721836/power/power;
       if (ipol<2) {
 	if (do_vanvleck) { 
-	  if (head->level==3) {
+	  if (head->level==1) {
 	    /* apply standard 3-level van vleck correction */
 	    vanvleck3lev(acf,nchan);
-	  } else if (head->level==9) {
+	  } else if (head->level==2) {
 	    /* apply 9-level van vleck correction */
 	    vanvleck9lev(acf,nchan);
 	  }
