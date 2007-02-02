@@ -10,12 +10,19 @@ void readheader(int fd, WAPP_HEADER* hdr)
 {
   char c;
   int bytes_read;
-  for(int i=0;i<7813;++i)
+  bool skip=1;
+  while(skip)
+  {
     if((bytes_read=read(fd,(char *)(&c),sizeof(c)))==-1)
       throw Error(FailedSys,"readheader","Unable to read from input file");
-  bytes_read=read(fd,(char *)(&(*hdr)),sizeof(*hdr));
+    if(c==(char)(0))
+      skip=0;
+  }
+  bytes_read=read(fd,(char *)(&(hdr->header_version)),sizeof(hdr->header_version));
   FromLittleEndian(hdr->header_version);
+  bytes_read=read(fd,(char *)(&(hdr->header_size)),sizeof(hdr->header_size));
   FromLittleEndian(hdr->header_size);
+  bytes_read=read(fd,(char *)(&(hdr->obs_type)),hdr->header_size-sizeof(hdr->header_size)-sizeof(hdr->header_version));
   FromLittleEndian(hdr->obs_time);
   FromLittleEndian(hdr->samp_time);
   FromLittleEndian(hdr->wapp_time);
@@ -38,7 +45,8 @@ void readheader(int fd, WAPP_HEADER* hdr)
   FromLittleEndian(hdr->dumptime);
   FromLittleEndian(hdr->nbins);
   if(hdr->header_version!=7)
-    throw Error(InvalidState,"readheader","Header versions do not match!");
+    throw Error(InvalidState,"readheader","Header version %d do not match 7!",
+                hdr->header_version);
   if(hdr->header_size!=2440)
     throw Error(InvalidState,"readheader","Header size incorrect!");
 }
