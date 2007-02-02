@@ -11,7 +11,15 @@
 // from sigproc-2.4
 #include "key.h"
 // from sigproc-2.4
+
+#define KEVINS_CODE
+#ifdef KEVINS_CODE
+#include "wapp_head.h"
+#else
 #include "wapp_header.h"
+#endif
+
+#include <fcntl.h>
 
 extern "C" double wappcorrect (double mjd);
 
@@ -33,12 +41,32 @@ dsp::WAPPFile::~WAPPFile ( )
 
 bool dsp::WAPPFile::is_valid (const char* filename, int) const
 {
+#ifdef KEVINS_CODE
+  struct WAPP_HEADER header;
+  int fd;
+  fd=::open(filename,O_RDONLY);
+  if(fd==-1)
+    return false;
+  try
+  {
+    readheader(fd,&header);
+  }
+  catch(Error& error)
+  {
+    if (verbose)
+      cerr << "dsp::WAPPFile::is_valid " << error.get_message() << endl;
+    ::close(fd);
+    return false;
+  }  
+  ::close(fd);
+#else
   struct HEADERP* h = head_parse( filename );
 
   if (!h)
     return false;
 
   close_parse( h );
+#endif
   return true;
 }
 
@@ -46,15 +74,22 @@ bool dsp::WAPPFile::is_valid (const char* filename, int) const
 
 void dsp::WAPPFile::open_file (const char* filename)
 {
+  header = malloc(sizeof(struct WAPP_HEADER));
+
+  struct WAPP_HEADER* head = (struct WAPP_HEADER*) header;
+
+#ifdef KEVINS_CODE
+  fd=::open(filename,O_RDONLY);
+  if(fd==-1)
+    throw Error(FailedSys,"DSP::WAPPFile::Open_File","Could not open %s",filename);
+  readheader(fd,head);
+#else
   struct HEADERP* h = head_parse( filename );
 
   if (!h)
     throw Error (InvalidParam, "dsp::WAPPFile::open_file",
 		 "not a WAPP file");
 
-  header = malloc(sizeof(struct WAPP_HEADER));
-
-  struct WAPP_HEADER* head = (struct WAPP_HEADER*) header;
 
   fetch(src_name);
   fetch(obs_type);
@@ -117,6 +152,10 @@ void dsp::WAPPFile::open_file (const char* filename)
   fetch(nbins);
 
   // close_parse(h);
+  fd = h->fd;
+#endif
+
+  cerr << "LEVEL=" << head->level << endl;
 
   // ////////////////////////////////////////////////////////////////////
   //
@@ -163,7 +202,9 @@ void dsp::WAPPFile::open_file (const char* filename)
   //
   // state
   //
-  if (head->nifs == 2)
+  if (head->nifs == 4)
+    info.set_state (Signal::Coherence);
+  else if (head->nifs == 2)
     info.set_state (Signal::PPQQ);
   else
     info.set_state (Signal::Intensity);
@@ -198,6 +239,8 @@ void dsp::WAPPFile::open_file (const char* filename)
 		 "lagformat variable in header should be 0, 1 or 4");
     break;
   }
+
+  cerr << "WAPP nbit=" << info.get_nbit() << endl;
 
   // ////////////////////////////////////////////////////////////////////
   //
@@ -257,7 +300,6 @@ void dsp::WAPPFile::open_file (const char* filename)
   info.set_identifier(prefix+info.get_default_id() );
   info.set_machine("WAPP");	
 
-  fd = h->fd;
   header_bytes = lseek(fd,0,SEEK_CUR);
 
   cerr << "header bytes=" << header_bytes << endl;
