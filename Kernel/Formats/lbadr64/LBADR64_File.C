@@ -1,0 +1,190 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2004 by Craig West & Aidan Hotan
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
+#include "dsp/LBADR64_File.h"
+
+#include "Error.h"
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <time.h>
+
+#include <iostream>
+
+dsp::LBADR64_File::LBADR64_File (const char* filename) 
+  : File ("LBADR64")
+{
+}
+
+dsp::LBADR64_File::~LBADR64_File ()
+{
+
+}
+
+bool dsp::LBADR64_File::is_valid (const char* filename, int) const
+{
+  int fd = ::open(filename, O_RDONLY);
+  
+  if(fd == -1)
+    throw Error (FailedSys, "dsp::LBADR64_File::open",
+		 "failed fopen(%s)", filename);
+ 
+  FILE* fptr = fdopen(fd, "r");
+
+  char line1[80];
+  char line2[80];
+  char line3[80];
+  char line4[80];
+  char line5[80];
+  char line6[80];
+  char line7[80];
+  char line8[80];
+  char line9[80];
+  char line10[80];
+  char line11[80]; 
+  char line12[80];
+ 
+  fgets(line1, 80, fptr);
+  fgets(line2, 80, fptr);
+  fgets(line3, 80, fptr);
+  fgets(line4, 80, fptr);
+  fgets(line5, 80, fptr);
+  fgets(line6, 80, fptr);
+  fgets(line7, 80, fptr);
+  fgets(line8, 80, fptr);
+  fgets(line9, 80, fptr);
+  fgets(line10, 80, fptr);
+  fgets(line11, 80, fptr);
+  fgets(line12, 80, fptr); 
+
+  fclose(fptr);
+ 
+  // Test for basic header format and 64 MHz recording mode
+  //
+  if(line1[13] == ':') {     // Current version, 4096-byte ASCII header
+    float bw = 0.0;
+    sscanf(line11, "BANDWIDTH %f\n", &bw);
+    if (bw == 64.0) {  
+      return true;
+    }
+    else
+    return false;
+  }
+  else
+    return false;
+  
+}
+
+void dsp::LBADR64_File::open_file (const char* filename)
+{
+  
+  fd = ::open(filename, O_RDONLY);
+  
+  if(fd == -1)
+    throw Error (FailedSys, "dsp::LBADR64_File::open",
+		 "failed fopen(%s)", filename);
+
+  header_bytes = 4096;
+  
+  read(fd, header, header_bytes);
+  
+  struct tm date;
+  
+  char tmp[5];
+  tmp[0] = header[5];
+  tmp[1] = header[6];
+  tmp[2] = header[7];
+  tmp[3] = header[8];
+  tmp[4] = '\0';
+  date.tm_year = atoi(tmp) - 1900;
+
+  tmp[0] = header[9];
+  tmp[1] = header[10];
+  tmp[2] = '\0';
+  tmp[3] = '\0';
+  date.tm_mon  = atoi(tmp) - 1;
+
+  tmp[0] = header[11];
+  tmp[1] = header[12];
+  date.tm_mday = atoi(tmp);
+
+  tmp[0] = header[9];
+  tmp[1] = header[10];
+  tmp[0] = header[14];
+  tmp[1] = header[15];  
+  date.tm_hour = atoi(tmp);
+
+  tmp[0] = header[16];
+  tmp[1] = header[17];
+  date.tm_min  = atoi(tmp);
+
+  tmp[0] = header[18];
+  tmp[1] = header[19];  
+  date.tm_sec  = atoi(tmp) ;
+
+  utc_t utc;
+  
+  tm2utc(&utc, date);
+
+  info.set_start_time(utc);
+
+  info.set_nbit(2);
+  info.set_npol(2);
+  info.set_nchan(1);
+  
+  info.set_state(Signal::Nyquist);
+  info.set_machine("LBADR64");
+
+  // In 64 MHz bandwidth mode, the polarisations are packed in
+  // alternate bytes, with 4 consecutive samples per byte
+
+  info.set_rate(128000000);
+  info.set_bandwidth(64.0);
+
+  // ////////////////////////////////////////////////////////////////
+  // Change this as required. The defaults probably won't be correct!
+  // ////////////////////////////////////////////////////////////////
+
+  info.set_centre_frequency(1420.0);
+
+  info.set_telescope_code('4');   // 4 = Hobart, 7 = Parkes, 6 = Tid
+
+  info.set_identifier("v" + info.get_default_id());
+
+  struct stat file_info;
+  
+  stat (filename, &file_info);
+  
+  // To begin, file_info.st_size contains number of bytes in file. 
+  // Subtract header_bytes, multiply by 8 to get the number of data bits.
+  // Divide by the number of bits per sample to get the total number of
+  // samples, then divide by the number of channels used to get the total
+  // number of unique time samples.
+
+  info.set_ndat( (int64((file_info.st_size - header_bytes)) * 8) / 
+		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
+
+  // Set the minimum time unit to be the number of samples per byte
+  // (because we work in numbers of whole bytes)
+
+  resolution = 4;
+}
+
+//! Pads gaps in data
+int64 dsp::LBADR64_File::pad_bytes(unsigned char* buffer, int64 bytes){
+  if( get_info()->get_nbit() != 2 )
+    throw Error(InvalidState,"dsp::LBADR64_File::pad_bytes()",
+		"Can only pad if nbit=2.  nbit=%d",get_info()->get_nbit());
+
+  register const unsigned char val = 255;
+  for( int64 i=0; i<bytes; ++i)
+    buffer[i] = val;
+  
+  return bytes;
+}
