@@ -35,15 +35,31 @@ bool dsp::SMROFile::is_valid (const char* filename, int) const
     throw Error (FailedSys, "dsp::SMROFile::open",
 		 "failed fopen(%s)", filename);
   
-  char hdr[21];
-  read(fd, hdr, 20);
-  
-  // VERY HASTY TEST
-  if(hdr[13] == ':') {     // Current version, 4096-byte ASCII header
+  FILE* fptr = fdopen(fd, "r");
+
+  char line1[80];
+  char line11[80];
+
+  fgets(line1, 80, fptr);
+  for (unsigned i = 0; i < 10; i++) {
+    fgets(line11, 80, fptr);
+  } 
+
+  fclose(fptr);
+ 
+  // Two options, considering archived data
+  //
+  if(line1[8] == ':') {     // Legacy version, prior to LBA header upgrade
     return true;
   }
-  else if(hdr[8] == ':') { // Legacy version, prior to LBA header upgrade
-    return true;
+  else if(line1[13] == ':') { // Current version, 4096-byte ASCII header
+    float bw = 0.0;
+    sscanf(line11, "BANDWIDTH %f\n", &bw);
+    if (bw == 16.0) {
+      return true;
+    }
+    else
+      return false;
   }
   else
     return false;
