@@ -34,7 +34,7 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::BCPMUnpacker> registry_bcpm;
 
 #if DSP_cpsr
 #include "dsp/CPSRTwoBitCorrection.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection>  cpsr;
+static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection> cpsr;
 #endif
 
 #if DSP_cpsr2
@@ -51,7 +51,12 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::FadcTwoBitCorrection> fadc2;
 
 #if DSP_lbadr
 #include "dsp/SMROTwoBitCorrection.h"
-static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection>  lbadr;
+static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection> lbadr;
+#endif
+
+#if DSP_lbadr64
+#include "dsp/LBADR64_TwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::LBADR64_TwoBitCorrection> lbadr64;
 #endif
 
 #if DSP_mark4

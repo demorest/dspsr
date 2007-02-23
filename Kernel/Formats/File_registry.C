@@ -58,6 +58,11 @@ static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
 static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
 #endif
 
+#if DSP_lbadr64
+#include "dsp/LBADR64_File.h"
+static Registry::List<dsp::File>::Enter<dsp::LBADR64_File> register_lbadr64;
+#endif
+
 #if DSP_mark4
 #include "dsp/Mark4File.h"
 static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
