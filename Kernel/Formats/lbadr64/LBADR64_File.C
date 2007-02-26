@@ -35,46 +35,31 @@ bool dsp::LBADR64_File::is_valid (const char* filename, int) const
     throw Error (FailedSys, "dsp::LBADR64_File::open",
 		 "failed fopen(%s)", filename);
  
-  FILE* fptr = fdopen(fd, "r");
-
-  char line1[80];
-  char line2[80];
-  char line3[80];
-  char line4[80];
-  char line5[80];
-  char line6[80];
-  char line7[80];
-  char line8[80];
-  char line9[80];
-  char line10[80];
-  char line11[80]; 
-  char line12[80];
+  char hdr[4096];
+  read(fd, hdr, 4096);
  
-  fgets(line1, 80, fptr);
-  fgets(line2, 80, fptr);
-  fgets(line3, 80, fptr);
-  fgets(line4, 80, fptr);
-  fgets(line5, 80, fptr);
-  fgets(line6, 80, fptr);
-  fgets(line7, 80, fptr);
-  fgets(line8, 80, fptr);
-  fgets(line9, 80, fptr);
-  fgets(line10, 80, fptr);
-  fgets(line11, 80, fptr);
-  fgets(line12, 80, fptr); 
+  ::close(fd);
 
-  fclose(fptr);
- 
   // Test for basic header format and 64 MHz recording mode
   //
-  if(line1[13] == ':') {     // Current version, 4096-byte ASCII header
+  if(hdr[13] == ':') {     // Current version, 4096-byte ASCII header
+    std::cerr << "lba64: Recognised 4096-byte LBADR header" << std::endl;
     float bw = 0.0;
-    sscanf(line11, "BANDWIDTH %f\n", &bw);
-    if (bw == 64.0) {  
+    std::string strhdr = hdr;
+    int pos1 = strhdr.find("BANDWIDTH");
+    if (pos1 == std::string::npos) {
+      std::cerr << "lba64: Bandwidth keyword missing from header" << std::endl;
+      return false;
+    }
+    sscanf(hdr+pos1, "BANDWIDTH %f", &bw);
+    if (bw == 64.0) {
+      std::cerr << "lba64: Recorded bandwidth = 64 MHz" << std::endl;
       return true;
     }
-    else
-    return false;
+    else {
+      std::cerr << "lba64: Recorded bandwidth unsupported" << std::endl;
+      return false;
+    }
   }
   else
     return false;
