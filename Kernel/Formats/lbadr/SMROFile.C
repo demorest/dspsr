@@ -16,6 +16,9 @@
 #include <fcntl.h>
 #include <time.h>
 
+#include <string>
+#include <iostream>
+
 dsp::SMROFile::SMROFile (const char* filename) 
   : File ("SMRO")
 {
@@ -34,36 +37,39 @@ bool dsp::SMROFile::is_valid (const char* filename, int) const
   if(fd == -1)
     throw Error (FailedSys, "dsp::SMROFile::open",
 		 "failed fopen(%s)", filename);
-  
-  FILE* fptr = fdopen(fd, "r");
-
-  char line1[80];
-  char line11[80];
-
-  fgets(line1, 80, fptr);
-  for (unsigned i = 0; i < 10; i++) {
-    fgets(line11, 80, fptr);
-  } 
-
-  fclose(fptr);
  
+  char hdr[4096];
+  read(fd, hdr, 4096);
+
+  ::close(fd);
+
   // Two options, considering archived data
   //
-  if(line1[8] == ':') {     // Legacy version, prior to LBA header upgrade
+  if(hdr[8] == ':') {       // Legacy version, prior to LBA header upgrade
     return true;
+    std::cerr << "lbadr: Recognised legacy LBADR file format, bandwidth 16 MHz" << std::endl;
   }
-  else if(line1[13] == ':') { // Current version, 4096-byte ASCII header
+  else if(hdr[13] == ':') { // Current version, 4096-byte ASCII header
+    std::cerr << "lbadr: Recognised 4096-byte LBADR header" << std::endl;
     float bw = 0.0;
-    sscanf(line11, "BANDWIDTH %f\n", &bw);
+    std::string strhdr = hdr;
+    int pos1 = strhdr.find("BANDWIDTH");
+    if (pos1 == std::string::npos) {
+      std::cerr << "lbadr: Bandwidth keyword missing from header" << std::endl;
+      return false;
+    }
+    sscanf(hdr+pos1, "BANDWIDTH %f", &bw);
     if (bw == 16.0) {
+      std::cerr << "lbadr: Recorded bandwidth = 16 MHz" << std::endl;
       return true;
     }
-    else
+    else {
+      std::cerr << "lbadr: Recorded bandwidth unsupported" << std::endl;
       return false;
+    }
   }
   else
     return false;
-  
 }
 
 void dsp::SMROFile::open_file (const char* filename)
