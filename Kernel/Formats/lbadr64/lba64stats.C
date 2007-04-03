@@ -12,17 +12,27 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <cpgplot.h>
+#include "dsp/IOManager.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/BitSeries.h"
+#include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitStatsPlotter.h"
-#include "dsp/LBADR64_TwoBitCorrection.h"
-#include "dsp/LBADR64_File.h"
+#include "Error.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <iostream>
 
 #define BLK_SIZE 65536     // Size of blocks to read in from file
 
 int main(int argc, char** argv)
 {
+
+  dsp::Observation::verbose = true;
+
+  try {
+
   if(argc!=2)
     {
       perror("Invalid arguements : lbadr64tats <file.lba>\n");
@@ -45,25 +55,24 @@ int main(int argc, char** argv)
   if(file_stats.st_size<(BLK_SIZE*max))
     max=file_stats.st_size/BLK_SIZE;
 
-  // Data loader
-  dsp::LBADR64_File* loader = new dsp::LBADR64_File;
-  loader->open( filename );
-  loader->set_output( new dsp::BitSeries );
-  loader->set_block_size( BLK_SIZE );
+  dsp::TimeSeries* dspts = new dsp::TimeSeries();
+  dsp::IOManager* manager = new dsp::IOManager;
 
-  // Convert to a dsp::TimeSeries
-  dsp::LBADR64_TwoBitCorrection* unpacker = new dsp::LBADR64_TwoBitCorrection;
-  unpacker->set_input( loader->get_output() );
-  unpacker->set_output( new dsp::TimeSeries );
+  manager->set_output (dspts);
+
+  manager->open(filename);
+
+  manager->get_input()->set_block_size ( BLK_SIZE );
+
+  dsp::TwoBitCorrection* unpacker;
+  unpacker = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
 
   // Go to work
   int count;
-  for(count=0;count<max;count++)  // Load and unpack (BLK_SIZE*max) bytes
-    {
-      loader->operate();
-      unpacker->operate();
+  for(count = 0; count < max; count++)  // Load and unpack (BLK_SIZE*max) bytes
+    { 
+      manager->operate();
     }
-  loader->close();
 
   // Plot Histogram
   cpgopen("?");
@@ -75,5 +84,11 @@ int main(int argc, char** argv)
   cpgclos();
 
   // Free memory
-  delete loader,unpacker;
+  delete unpacker;
+
+  }
+  catch (Error& error)  {
+    std::cerr << error << std::endl;
+  }
+
 }
