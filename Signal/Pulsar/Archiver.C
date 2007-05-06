@@ -293,7 +293,7 @@ try {
   // dsp::PhaseSeries has either (both eph and polyco) or (none)
   // set_model must be called after the Integration::MJD has been set
   if( phase->get_folding_polyco() )
-    archive-> set_model ( *(phase->get_folding_polyco()) );
+    archive-> set_model ( phase->get_folding_polyco() );
   if( phase->get_pulsar_ephemeris() )
     archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()), false );
 

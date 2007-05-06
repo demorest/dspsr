@@ -248,7 +248,9 @@ const polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
 
     if( mpoly && mpoly->matches(time,pulsar) )
       return polycos[ipoly];
-    else if( polycos[ipoly]->i_nearest(time,pulsar) >= 0 ){
+
+    else if( polycos[ipoly]->i_nearest(time) >= 0 &&
+	     polycos[ipoly]->get_psrname() == pulsar ){
       if (verbose)
 	cerr << "dsp::Fold::choose_polyco PSR " << pulsar 
 	     << " found in polyco entry" << endl;
