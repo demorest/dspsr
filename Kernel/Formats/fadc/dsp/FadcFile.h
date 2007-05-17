@@ -50,8 +50,8 @@ namespace dsp {
 		static std::string get_header (const char* filename);
 		
 		// also switches sign of the imaginary values
-		void dsp::FadcFile::writeByte(FILE* outfile, two_bit_out two);
-		void dsp::FadcFile::writeByte(FILE* outfile, four_bit_out four);
+		void writeByte(FILE* outfile, two_bit_out two);
+		void writeByte(FILE* outfile, four_bit_out four);
 
 		int createDataFile(char* expFileName, long firstFile, long lastFile, long* offset_tsmps_file0, long* offset_tsmps, int nbit, int nPol, int nChan, int nADCperCard, long buffers_per_file, long bytes_per_buffer, int expect_magic_code);
 		// offest_tsmps refers to the number of time samples from the beginning of the file (0 and firstFile) where the
