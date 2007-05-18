@@ -1166,14 +1166,18 @@ int main (int argc, char** argv) try {
 
     double dm = 0.0;
 
-    const psrephem* eph = fold[0]->get_pulsar_ephemeris();
-    if (eph)
-      dm = eph -> get_dm();
+    if (fold[0]->has_pulsar_ephemeris()) {
+      const psrephem* eph = fold[0]->get_pulsar_ephemeris();
+      if (eph)
+	dm = eph -> get_dm();
+    }
 
     if (dm_set) {
-      cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
-	   << dispersion_measure << endl;
+      if (dm != 0)
+	cerr << "dspsr: over-riding DM=" << dm << " with DM=" 
+	     << dispersion_measure << endl;
       dm = dispersion_measure;
+      manager->get_info()->set_dispersion_measure (dm);
     }
 
     if (kernel)
