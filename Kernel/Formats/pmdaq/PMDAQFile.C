@@ -132,11 +132,16 @@ void dsp::PMDAQFile::work_out_ndat(const char* filename){
 	    filename,info.get_ndat(),data_bytes,fsize,chunk_size,nblocks);
 }
 
-// If user has requested channels that lie in the second observing band on disk, modify the bandwidth and centre frequency of output
-void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
-  fprintf(stderr,"In dsp::PMDAQFile::modify_info() with %d and %d cf=%f bw=%d\n",
-	  data->has_two_filters(), using_second_band,
-	  info.get_centre_frequency(), info.get_bandwidth());
+/*
+  If user has requested channels that lie in the second observing band
+  on disk, modify the bandwidth and centre frequency of output */
+
+void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data)
+{
+  if( verbose )
+    fprintf(stderr,"In dsp::PMDAQFile::modify_info() with %d and %d cf=%f bw=%d\n",
+	    data->has_two_filters(), using_second_band,
+	    info.get_centre_frequency(), info.get_bandwidth());
 
   if( !data->has_two_filters() )
     return;
@@ -153,8 +158,9 @@ void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data){
   info.set_centre_frequency( data->get_second_centre_frequency() );
   info.set_bandwidth( data->get_second_bandwidth() );
 
-  fprintf(stderr,"In dsp::PMDAQFile::modify_info() have set chan_begin to %d chan_end to %d cf=%f bw=%f\n",
-	  chan_begin, chan_end, info.get_centre_frequency(), info.get_bandwidth());
+  if( verbose )
+    fprintf(stderr,"In dsp::PMDAQFile::modify_info() have set chan_begin to %d chan_end to %d cf=%f bw=%f\n",
+	    chan_begin, chan_end, info.get_centre_frequency(), info.get_bandwidth());
 }
 
 void dsp::PMDAQFile::open_file (const char* filename)
