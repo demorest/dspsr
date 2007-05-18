@@ -297,7 +297,7 @@ unsigned dsp::Fold::maximum_nbin = 8192;
 
 /*! The minimum width of each pulse phase bin is specified in units of
   the time resolution of the input TimeSeries. */
-double dsp::Fold::minimum_bin_width = 1.5;
+double dsp::Fold::minimum_bin_width = 1.2;
 
 /*! If true, the number of bins chosen by Fold::choose_nbin will be a
   power of two.  If false, there is no constraint on the value returned. */
@@ -324,18 +324,35 @@ unsigned dsp::Fold::choose_nbin ()
 
   double sampling_period = 1.0 / input->get_rate();
 
+  if (verbose)
+    cerr << "dsp::Fold::choose_nbin sampling_period=" 
+	 << sampling_period << endl;
+
   if (sampling_period < 0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
 		 "input has a negative sampling rate");
 
   double binwidth = minimum_bin_width * sampling_period;
 
+  if (verbose)
+    cerr << "dsp::Fold::choose_nbin minimum_bin_width=" 
+	 << minimum_bin_width << " bins or " << binwidth << " seconds"
+	 << endl;
+
   unsigned sensible_nbin = unsigned (the_folding_period / binwidth);
+
+  if (verbose)
+    cerr << "dsp::Fold::choose_nbin sensible nbin=" 
+	 << sensible_nbin << endl;
 
   if (power_of_two) {
     double log2bin = log(the_folding_period/binwidth) / log(2.0);
     // make sensible_nbin the largest power of two less than the maximum  
     sensible_nbin = (unsigned) pow (2.0, floor(log2bin));
+
+    if (verbose)
+      cerr << "dsp::Fold::choose_nbin largest power of 2 < nbin=" 
+	   << sensible_nbin << endl;
   }
 
   if (sensible_nbin == 0) {
@@ -573,7 +590,7 @@ void dsp::Fold::transformation ()
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
   else
-    output->set_pulsar_ephemeris( pulsar_ephemeris.ptr(), folding_polyco.ptr() );
+    output->set_pulsar_ephemeris( pulsar_ephemeris, folding_polyco );
 
   output->set_reference_phase( reference_phase );
 
