@@ -13,7 +13,7 @@ config := $(srcdir)/config/Makefile.local
 #
 # Convert automake variables into Standard Makefile Scheme variables
 #
-$(config): $(srcdir)/Makefile.am
+$(config): $(srcdir)/Makefile.am ./Makefile
 	@echo "prefix := $(prefix)" > $@
 	@echo "host := $(host)" >> $@
 	@echo "CC := $(CC)" >> $@
