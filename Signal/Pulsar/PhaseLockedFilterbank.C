@@ -42,7 +42,8 @@ void dsp::PhaseLockedFilterbank::prepare ()
     throw Error (InvalidState, "dsp::PhaseLockedFilterbank::prepare",
 		 "invalid dimensions.  nchan=%d nbin=%d", nchan, nbin);
 
-  double period = divider.get_polyco()->period(input->get_start_time());
+  MJD epoch = input->get_start_time();
+  double period = 1.0/divider.get_predictor()->frequency(epoch);
 
   double samples_per_bin = period * input->get_rate() / nbin;
 

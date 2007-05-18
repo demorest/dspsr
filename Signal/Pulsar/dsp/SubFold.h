@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.9 $
-   $Date: 2006/10/15 21:48:08 $
+   $Revision: 1.10 $
+   $Date: 2007/05/18 05:04:41 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -24,7 +24,7 @@ namespace dsp {
 
   //! Fold data into sub-integrations
   /*! The SubFold class is useful for producing multiple sub-integrations
-    from a single observation.  Given a polyco and the number of pulses
+    from a single observation.  Given a Predictor and the number of pulses
     to integrate, this class can be used to produce single pulse profiles.
 
     If no PhaseSeriesUnloader is set (see SubFold::set_unloader),

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.19 $
-   $Date: 2006/10/15 21:48:07 $
+   $Revision: 1.20 $
+   $Date: 2007/05/18 05:04:41 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -16,8 +16,10 @@
 
 #include "dsp/TimeSeries.h"
 
+namespace Pulsar {
+  class Predictor;
+}
 class psrephem;
-class polyco;
 
 namespace dsp {
   
@@ -51,16 +53,19 @@ namespace dsp {
     double get_reference_phase () const { return reference_phase; }
 
     //! Set the period at which to fold data (in seconds)
-    //! The polyco and ephemeris are set to null values upon setting of the folding period
+    /*! The Pulsar::Predictor and ephemeris are set to null values upon
+      setting the folding period */
     void set_folding_period (double _folding_period);
     //! Get the period at which to fold data (in seconds)
     double get_folding_period () const;
-
+    
     //! Get the phase polynomial(s) with which to fold data
-    const polyco* get_folding_polyco () const;
+    const Pulsar::Predictor* get_folding_predictor () const;
 
-    //! Set the pulsar ephemeris used to fold with.  User must also supply the polyco that was generated from the ephemeris and used for folding
-    void set_pulsar_ephemeris(const psrephem* _pulsar_ephemeris, const polyco* _folding_polyco);
+    //! Set the pulsar ephemeris used to fold.
+    /*! User must also supply the Pulsar::Predictor that was generated from
+      the ephemeris and used for folding */
+    void set_pulsar_ephemeris (const psrephem*, const Pulsar::Predictor*);
     
     //! Returns the pulsar ephemeris stored
     const psrephem* get_pulsar_ephemeris() const;
@@ -119,9 +124,9 @@ namespace dsp {
     double folding_period;
 
     //! Phase polynomial(s) with which PSR is folded
-    Reference::To<const polyco> folding_polyco;
+    Reference::To<const Pulsar::Predictor> folding_predictor;
 
-    //! The ephemeris (if any) that was used to generate the polyco
+    //! The ephemeris (if any) that was used to generate the Pulsar::Predictor
     Reference::To<const psrephem> pulsar_ephemeris;
 
     //! Reference phase (phase of bin zero)

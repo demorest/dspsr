@@ -110,7 +110,7 @@ void dsp::Fold::prepare (const Observation* observation)
 	cerr << "dsp::Fold::prepare using folding_period="
 	     << folding_period << endl;
     pulsar_ephemeris = 0;
-    folding_polyco = 0;
+    folding_predictor = 0;
     built = true;
     return;
   }
@@ -124,13 +124,13 @@ void dsp::Fold::prepare (const Observation* observation)
     cerr << "dsp::Fold::prepare source=" << jbpulsar << endl;
 
 
-  folding_polyco = choose_polyco (observation->get_start_time(), jbpulsar);
+  folding_predictor = choose_predictor (observation->get_start_time(), jbpulsar);
 
   pulsar_ephemeris = choose_ephemeris (jbpulsar);
 
-  if (pulsar_ephemeris && folding_polyco) {
+  if (pulsar_ephemeris && folding_predictor) {
     if (verbose)
-      cerr << "dsp::Fold::prepare using given ephemeris and polyco" << endl;
+      cerr << "dsp::Fold::prepare using given ephemeris and Pulsar::Predictor" << endl;
     built = true;
     return;
   }
@@ -181,27 +181,27 @@ void dsp::Fold::prepare (const Observation* observation)
 #endif
 
   if (verbose)
-    cerr << "dsp::Fold::prepare creating polyco" << endl;
+    cerr << "dsp::Fold::prepare creating Pulsar::Predictor" << endl;
 
   if (dispersion_measure > 0.0)
     const_cast<psrephem*>(pulsar_ephemeris.get())->set_dm(dispersion_measure);
 
-  folding_polyco = get_folding_polyco (pulsar_ephemeris, observation);
+  folding_predictor = get_folding_predictor (pulsar_ephemeris, observation);
 
 #if 0
   doppler = 1.0 + psr_poly->doppler_shift(raw.start_time);
   
   if (verbose)
-    cerr << "dsp::Fold::prepare Doppler shift from polyco:" << doppler << endl;
+    cerr << "dsp::Fold::prepare Doppler shift from Pulsar::Predictor:" << doppler << endl;
 
 #endif
 
   built = true;
 } 
 
-Reference::To<polyco>
-dsp::Fold::get_folding_polyco(const psrephem* pephem,
-			      const Observation* observation)
+Pulsar::Predictor*
+dsp::Fold::get_folding_predictor (const psrephem* pephem,
+				  const Observation* observation)
 {
   Reference::To<MatchingPolyco> mpoly = new MatchingPolyco;
   
@@ -211,9 +211,7 @@ dsp::Fold::get_folding_polyco(const psrephem* pephem,
   if( mephem )
     mpoly->set_matching_sources( mephem->get_matching_sources() );
   
-  polycos.push_back( mpoly.get() );
-  
-  Reference::To<polyco> the_folding_polyco = mpoly.get();
+  predictors.push_back( mpoly.get() );
   
   MJD time = observation->get_start_time();
 
@@ -226,35 +224,35 @@ dsp::Fold::get_folding_polyco(const psrephem* pephem,
   // predict.set_frequency ( observation->get_centre_frequency() ); ???
   predict.set_parameters ( *pephem );
 
-  *the_folding_polyco = predict.get_polyco (time, time);
+  mpoly->polyco::operator=( predict.get_polyco (time, time) );
 
-  return the_folding_polyco;
+  return mpoly.release();
 }
 
-const polyco* dsp::Fold::choose_polyco (const MJD& time, const string& pulsar)
+const Pulsar::Predictor*
+dsp::Fold::choose_predictor (const MJD& time, const string& pulsar)
 {
-  if (verbose) cerr << "dsp::Fold::choose_polyco checking "
-		    << polycos.size()
-		    << " specified polycos" << endl;
+  if (verbose) cerr << "dsp::Fold::choose_predictor checking "
+		    << predictors.size()
+		    << " specified predictors" << endl;
 
-  for (unsigned ipoly=0; ipoly<polycos.size(); ipoly++){
+  for (unsigned ipoly=0; ipoly<predictors.size(); ipoly++){
+
     if( verbose )
-      cerr << "dsp::Fold::choose_polyco checking polyco " << ipoly 
-	   << " of source '" << polycos[ipoly]->get_psrname() << "'"
-	   << " pulsar='" << pulsar << "'" << endl;
+      cerr << "dsp::Fold::choose_predictor checking Pulsar::Predictor "
+	   << ipoly << " pulsar='" << pulsar << "'" << endl;
 
     const MatchingPolyco* mpoly;
-    mpoly = dynamic_cast<const MatchingPolyco*>(polycos[ipoly].ptr());
+    mpoly = dynamic_cast<const MatchingPolyco*>(predictors[ipoly].ptr());
 
     if( mpoly && mpoly->matches(time,pulsar) )
-      return polycos[ipoly];
+      return predictors[ipoly];
 
-    else if( polycos[ipoly]->i_nearest(time) >= 0 &&
-	     polycos[ipoly]->get_psrname() == pulsar ){
-      if (verbose)
-	cerr << "dsp::Fold::choose_polyco PSR " << pulsar 
-	     << " found in polyco entry" << endl;
-      return polycos[ipoly];
+    else try {
+      predictors[ipoly]->phase(time);
+      return predictors[ipoly];
+    }
+    catch (...) {
     }
 
   }
@@ -319,7 +317,7 @@ unsigned dsp::Fold::choose_nbin ()
 
   if (the_folding_period <= 0.0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
-		 "no folding period or polyco set. eph=%p",
+		 "no folding period or Pulsar::Predictor set. eph=%p",
 		 pulsar_ephemeris.ptr());
 
   double sampling_period = 1.0 / input->get_rate();
@@ -407,7 +405,7 @@ void dsp::Fold::set_folding_period (double _folding_period)
 {
   folding_period_source = string();
   folding_period = _folding_period;
-  folding_polyco = 0;
+  folding_predictor = 0;
   built = true;
 }
 
@@ -434,37 +432,37 @@ std::string dsp::Fold::get_source_name () const
   return "";
 }
 
-//! Set the period at which to fold data, but only do it for this source (in seconds)
-void dsp::Fold::set_folding_period (double folding_period, string _folding_period_source){
+void dsp::Fold::set_folding_period (double folding_period, string source)
+{
   set_folding_period( folding_period );
-  folding_period_source = _folding_period_source;
+  folding_period_source = source;
 }
 
 //! Get the average folding period
 double dsp::Fold::get_folding_period () const
 {
-  if (folding_polyco)
-    return folding_polyco->get_refperiod();
+  if (folding_predictor)
+    return 1.0/folding_predictor->frequency(input->get_start_time());
   else
     return folding_period;
 }
 
 //! Set the phase polynomial(s) with which to fold data
-void dsp::Fold::set_folding_polyco (const polyco* _folding_polyco)
+void dsp::Fold::set_folding_predictor (const Pulsar::Predictor* _folding_predictor)
 {
-  folding_polyco = _folding_polyco;
+  folding_predictor = _folding_predictor;
   folding_period = 0.0;
   built = true;
 }
 
-const polyco* dsp::Fold::get_folding_polyco () const
+const Pulsar::Predictor* dsp::Fold::get_folding_predictor () const
 {
-  return folding_polyco;
+  return folding_predictor;
 }
 
-bool dsp::Fold::has_folding_polyco () const
+bool dsp::Fold::has_folding_predictor () const
 {
-  return folding_polyco;
+  return folding_predictor;
 }
 
 void dsp::Fold::set_ncoef (unsigned _ncoef)
@@ -513,10 +511,10 @@ void dsp::Fold::set_input (const TimeSeries* _input)
 }
 
 //! Add a phase model with which to choose to fold the data
-void dsp::Fold::add_folding_polyco (const polyco* folding_polyco)
+void dsp::Fold::add_folding_predictor (const Pulsar::Predictor* folding_predictor)
 {
-  if( folding_polyco )
-    polycos.push_back( folding_polyco );
+  if( folding_predictor )
+    predictors.push_back( folding_predictor );
 }
 
 //! Add an ephemeris with which to choose to create the phase model
@@ -538,9 +536,9 @@ void dsp::Fold::transformation ()
   if (!built)
     prepare ();
 
-  if (folding_period <= 0 && !folding_polyco)
+  if (folding_period <= 0 && !folding_predictor)
     throw Error (InvalidState, "dsp::Fold::transformation",
-		 "no folding period or polyco set");
+		 "no folding period or Pulsar::Predictor set");
 
   if (folding_nbin == 0)
     choose_nbin ();
@@ -590,7 +588,7 @@ void dsp::Fold::transformation ()
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
   else
-    output->set_pulsar_ephemeris( pulsar_ephemeris, folding_polyco );
+    output->set_pulsar_ephemeris( pulsar_ephemeris, folding_predictor );
 
   output->set_reference_phase( reference_phase );
 
@@ -621,7 +619,7 @@ void dsp::Fold::transformation ()
 
 /*!  This method creates a folding plan and then folds nblock arrays.
 
-   \pre the folding_nbin and folding_period or folding_polyco attributes must
+   \pre the folding_nbin and folding_period or folding_predictor attributes must
    have been set prior to calling this method.
 
    \param integration_length returns the time integrated 
@@ -650,7 +648,7 @@ void dsp::Fold::fold (uint64 nweights,
     folding_nbin = requested_nbin;
   }
 
-  if (!folding_polyco && !folding_period)
+  if (!folding_predictor && !folding_period)
     throw Error (InvalidState, "dsp::Fold::fold",
 		 "no polynomial and no period specified");
 
@@ -787,7 +785,7 @@ double dsp::Fold::get_phi (const MJD& start_time)
     return fmod (start_time.in_seconds(), folding_period) / folding_period 
       - reference_phase;
 
-  return folding_polyco->phase(start_time).fracturns()  - reference_phase;
+  return folding_predictor->phase(start_time).fracturns()  - reference_phase;
 }
 
 double dsp::Fold::get_pfold (const MJD& start_time)
@@ -797,7 +795,7 @@ double dsp::Fold::get_pfold (const MJD& start_time)
 	folding_period_source == get_input()->get_source() ))
     return folding_period;
   
-  return folding_polyco->period(start_time);
+  return 1.0/folding_predictor->frequency(start_time);
 }
 
 /*! sets idat_start to zero and ndat_fold to input->get_ndat() */
@@ -850,7 +848,7 @@ void dsp::Fold::fold (double& integration_length, float* phase,
     folding_nbin = requested_nbin;
   }
   
-  if (!folding_polyco && !folding_period)
+  if (!folding_predictor && !folding_period)
     throw Error (InvalidState, "dsp::Fold::fold",
 		 "no polynomial and no period specified");
   
@@ -897,11 +895,11 @@ void dsp::Fold::fold (double& integration_length, float* phase,
   else
     {
       // find the period and phase at the mid time of the first sample
-      pfold = folding_polyco->period(start_time);
-      phi   = folding_polyco->phase(start_time).fracturns();
+      pfold = 1.0/folding_predictor->frequency(start_time);
+      phi   = folding_predictor->phase(start_time).fracturns();
 
       if (verbose)
-	cerr << "dsp::Fold::fold polyco.period=" << pfold << endl;
+	cerr << "dsp::Fold::fold Pulsar::Predictor.period=" << pfold << endl;
     }
 
   // adjust to reference phase

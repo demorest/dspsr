@@ -29,6 +29,7 @@
 
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
+#include "polyco.h"
 
 #if ACTIVATE_MPI
 #include "dsp/MPIRoot.h"
@@ -220,11 +221,11 @@ int main (int argc, char** argv) try {
   // the pulse phase of profile bin zero
   double reference_phase = 0.0;
 
-  // the ephemerides from which to choose when creating a folding polyco
+  // the ephemerides from which to choose when creating a folding Pulsar::Predictor
   vector< psrephem* > ephemerides;
 
-  // the polynomials from which to choose a folding polyco
-  vector< polyco* > polycos;
+  // the polynomials from which to choose a folding Pulsar::Predictor
+  vector< Pulsar::Predictor* > predictors;
 
   int fres = 0;
 
@@ -546,8 +547,8 @@ int main (int argc, char** argv) try {
       break;
 
     case 'P':
-      cerr << "dspsr: Loading polyco from " << optarg << endl;
-      polycos.push_back ( new polyco (optarg) );
+      cerr << "dspsr: Loading Pulsar::Predictor from " << optarg << endl;
+      predictors.push_back ( new polyco (optarg) );
       break;
 
     case 'p':
@@ -997,8 +998,8 @@ int main (int argc, char** argv) try {
     for (unsigned ieph=0; ieph < ephemerides.size(); ieph++)
       fold[ifold]->add_pulsar_ephemeris ( ephemerides[ieph] );
 
-    for (unsigned ipoly=0; ipoly < polycos.size(); ipoly++)
-      fold[ifold]->add_folding_polyco ( polycos[ipoly] );
+    for (unsigned ipoly=0; ipoly < predictors.size(); ipoly++)
+      fold[ifold]->add_folding_predictor ( predictors[ipoly] );
     
     if (!detected && (npol != 3))
       fold[ifold]->set_input (convolve);
@@ -1162,7 +1163,7 @@ int main (int argc, char** argv) try {
     }
 
     if (phased_filterbank)
-      phased_filterbank->divider.set_polyco( fold[0]->get_folding_polyco() );
+      phased_filterbank->divider.set_predictor( fold[0]->get_folding_predictor() );
 
     double dm = 0.0;
 

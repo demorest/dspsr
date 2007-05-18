@@ -60,7 +60,7 @@ void dsp::TimeDivide::set_turns (double turns)
   division_seconds = 0;
 }
 
-void dsp::TimeDivide::set_polyco (const polyco* _poly)
+void dsp::TimeDivide::set_predictor (const Pulsar::Predictor* _poly)
 {
   if (poly && poly == _poly)
     return;
@@ -400,11 +400,11 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   if (!poly)
     throw Error (InvalidState, "dsp::TimeDivide::set_boundaries",
 		 "division length specified in turns "
-		 "but no folding polyco");
+		 "but no folding Pulsar::Predictor");
 
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::set_boundaries using polynomial:\n"
-      "  avg. period=" << poly->period(divide_start) << endl;
+      "  avg. period=" << 1.0/poly->frequency(divide_start) << endl;
 
   Phase input_phase = poly->phase (divide_start);
 

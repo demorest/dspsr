@@ -7,14 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.5 $
-   $Date: 2006/10/15 21:48:08 $
+   $Revision: 1.6 $
+   $Date: 2007/05/18 05:04:41 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
 #define __baseband_dsp_TimeDivide_h
 
-#include "polyco.h"
+#include "Predictor.h"
 #include "Reference.h"
 
 namespace dsp {
@@ -54,11 +54,11 @@ namespace dsp {
     //! Get the number of turns in each division
     double get_turns () const { return division_turns; }
 
-    //! Set the polyco used to determine pulse phase
-    void set_polyco (const polyco*);
+    //! Set the Pulsar::Predictor used to determine pulse phase
+    void set_predictor (const Pulsar::Predictor*);
 
-    //! Get the polyco used to determine pulse phase
-    const polyco* get_polyco () const { return poly; }
+    //! Get the Pulsar::Predictor used to determine pulse phase
+    const Pulsar::Predictor* get_predictor () const { return poly; }
 
     //! Set the reference phase (phase of bin zero)
     void set_reference_phase (double phase);
@@ -115,8 +115,8 @@ namespace dsp {
     //! Number of turns in each division
     double division_turns;
 
-    //! The polyco used to determine pulse phase
-    Reference::To<const polyco> poly;
+    //! The Pulsar::Predictor used to determine pulse phase
+    Reference::To<const Pulsar::Predictor> poly;
 
     //! The reference phase
     double reference_phase;

@@ -23,7 +23,7 @@
 
 #include "Pulsar/FITSHdrExtension.h"
 
-#include "polyco.h"
+#include "Predictor.h"
 #include "psrephem.h"
 #include "Error.h"
 
@@ -203,7 +203,7 @@ try {
 
     MJD initial = phase->get_start_time();
 
-    Phase inphs = phase->get_folding_polyco()->phase(initial);
+    Phase inphs = phase->get_folding_predictor()->phase(initial);
 
     double dtime = inphs.fracturns() * phase->get_folding_period();
     initial -= dtime;
@@ -290,10 +290,10 @@ try {
   for (unsigned iext=0; iext < extensions.size(); iext++)
     archive -> add_extension ( extensions[iext] );
 
-  // dsp::PhaseSeries has either (both eph and polyco) or (none)
+  // dsp::PhaseSeries has either (both eph and Pulsar::Predictor) or (none)
   // set_model must be called after the Integration::MJD has been set
-  if( phase->get_folding_polyco() )
-    archive-> set_model ( phase->get_folding_polyco() );
+  if( phase->get_folding_predictor() )
+    archive-> set_model ( phase->get_folding_predictor() );
   if( phase->get_pulsar_ephemeris() )
     archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()), false );
 

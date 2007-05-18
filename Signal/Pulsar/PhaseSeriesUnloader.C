@@ -7,7 +7,7 @@
 #include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/PhaseSeries.h"
 
-#include "polyco.h"
+#include "Predictor.h"
 #include "dirutil.h"
 #include "strutil.h"
 
@@ -81,7 +81,7 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
 
   // small files need a more unique filename
 
-  const polyco* poly = data->get_folding_polyco();
+  const Pulsar::Predictor* poly = data->get_folding_predictor();
   if (poly) {
 
     // add pulse number to the output archive

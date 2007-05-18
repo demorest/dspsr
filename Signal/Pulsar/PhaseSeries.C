@@ -8,7 +8,7 @@
 #include "dsp/PhaseSeries.h"
 
 #include "psrephem.h"
-#include "polyco.h"
+#include "Predictor.h"
 
 using namespace std;
 
@@ -37,31 +37,31 @@ void dsp::PhaseSeries::resize (int64 nbin)
 void dsp::PhaseSeries::set_folding_period (double _folding_period)
 {
   folding_period = _folding_period;
-  folding_polyco = 0;
+  folding_predictor = 0;
   pulsar_ephemeris = 0;
 }
 
 //! Get the average folding period
 double dsp::PhaseSeries::get_folding_period () const
 {
-  if (folding_polyco)
-    return folding_polyco->period( get_mid_time() );
+  if (folding_predictor)
+    return 1.0 / folding_predictor->frequency( get_mid_time() );
   else
     return folding_period;
 }
 
-//! Set the pulsar ephemeris used to fold with.  User must also supply the polyco that was generated from the ephemeris and used for folding
-void dsp::PhaseSeries::set_pulsar_ephemeris(const psrephem* _pulsar_ephemeris, const polyco* _folding_polyco)
+//! Set the pulsar ephemeris used to fold with.  User must also supply the Pulsar::Predictor that was generated from the ephemeris and used for folding
+void dsp::PhaseSeries::set_pulsar_ephemeris(const psrephem* _pulsar_ephemeris, const Pulsar::Predictor* _folding_predictor)
 {
   pulsar_ephemeris = _pulsar_ephemeris;
-  folding_polyco = _folding_polyco;
+  folding_predictor = _folding_predictor;
   folding_period = 0.0;
 }
 
 //! Inquire the phase polynomial(s) with which to fold data
-const polyco* dsp::PhaseSeries::get_folding_polyco () const
+const Pulsar::Predictor* dsp::PhaseSeries::get_folding_predictor () const
 {
-  return folding_polyco.ptr();
+  return folding_predictor.ptr();
 }
 
 //! Inquire the ephemeris used to fold the data
@@ -75,10 +75,10 @@ MJD dsp::PhaseSeries::get_mid_time () const
 {
   MJD midtime = 0.5 * (start_time + end_time);
 
-  if (folding_polyco) {
+  if (folding_predictor) {
     // truncate midtime to the nearest pulse phase = reference_phase
-    Phase phase = folding_polyco->phase(midtime).Floor() + reference_phase;
-    midtime = folding_polyco->iphase(phase);
+    Phase phase = folding_predictor->phase(midtime).Floor() + reference_phase;
+    midtime = folding_predictor->iphase(phase);
   }
 
   if (folding_period) {
@@ -186,7 +186,7 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   integration_length = prof.integration_length;
   end_time           = prof.end_time;
   folding_period     = prof.folding_period;
-  folding_polyco     = prof.folding_polyco;
+  folding_predictor     = prof.folding_predictor;
   pulsar_ephemeris   = prof.pulsar_ephemeris;
   hits               = prof.hits;
 

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.46 $
-   $Date: 2006/11/19 15:39:25 $
+   $Revision: 1.47 $
+   $Date: 2007/05/18 05:04:41 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -18,7 +18,9 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 
-class polyco;
+namespace Pulsar {
+  class Predictor;
+}
 class psrephem;
 class rawprofile;
 
@@ -79,22 +81,24 @@ namespace dsp {
     //! Get the name of the source
     std::string get_source_name () const;
 
-    //! Set the period at which to fold data for all sources (in seconds- negative for don't use)
+    //! Set the period at which to fold data for all sources 
+    /*! \param folding_period in seconds, negative to disable */
     void set_folding_period (double folding_period);
-    //! Set the period at which to fold data, but only do it for this source (in seconds)
-    void set_folding_period (double folding_period, std::string _folding_period_source);
 
-    //! Get the period at which data is being folded at (in seconds)
+    //! Set the period at which to fold data for the specified source
+    void set_folding_period (double folding_period, std::string source);
+
+    //! Get the period at which data is being folded (in seconds)
     double get_folding_period () const;
 
     //! Returns true if data will be folded at a constant period
     bool has_folding_period() const { return (folding_period>0); }
 
     //! Get the phase model which is currently being used to fold data
-    const polyco* get_folding_polyco () const;
+    const Pulsar::Predictor* get_folding_predictor () const;
 
-    //! Returns true if data will be folded using polyco
-    bool has_folding_polyco () const;
+    //! Returns true if data will be folded using Pulsar::Predictor
+    bool has_folding_predictor () const;
 
     //! Get the ephemeris used to create the phase model
     //   const psrephem* get_pulsar_ephemeris () const;
@@ -135,7 +139,7 @@ namespace dsp {
     void set_input (const TimeSeries* input);
 
     //! Add a phase model with which to choose to fold the data
-    void add_folding_polyco (const polyco* folding_polyco);
+    void add_folding_predictor (const Pulsar::Predictor* folding_predictor);
 
     //! Add an ephemeris with which to choose to create the phase model
     void add_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
@@ -143,8 +147,8 @@ namespace dsp {
     //! Choose an appropriate ephemeris from those added
     const psrephem* choose_ephemeris (const std::string& pulsar);
 
-    //! Choose an appropriate polyco from those added
-    const polyco* choose_polyco (const MJD& time, const std::string& pulsar);
+    //! Choose an appropriate Pulsar::Predictor from those added
+    const Pulsar::Predictor* choose_predictor (const MJD& time, const std::string& pulsar);
 
     //! Choose an appropriate number of pulse phase bins
     unsigned choose_nbin ();
@@ -218,7 +222,7 @@ namespace dsp {
     //! The name of the source (overrides input source name)
     std::string source_name;
 
-    //! Flag that the polyco is built for the given ephemeris and input
+    //! Flag that the Pulsar::Predictor is built for the given ephemeris and input
     bool built;
 
 #if 0
@@ -231,7 +235,7 @@ namespace dsp {
 #endif
 
     //! Polycos from which to choose
-    std::vector< Reference::To<const polyco> > polycos;
+    std::vector< Reference::To<const Pulsar::Predictor> > predictors;
 
     //! Ephemerides from which to choose
     std::vector< Reference::To<const psrephem> > ephemerides;
@@ -249,16 +253,16 @@ namespace dsp {
     void initialise();
 
     //! Set the phase model with which to fold data
-    void set_folding_polyco (const polyco* folding_polyco);
+    void set_folding_predictor (const Pulsar::Predictor* folding_predictor);
 
   private:
 
-    // Generates folding_polyco from the given ephemeris
-    Reference::To<polyco> get_folding_polyco(const psrephem* pephemeris,
-					     const Observation* observation);
+    // Generates folding_predictor from the given ephemeris
+    Pulsar::Predictor* get_folding_predictor (const psrephem* pephemeris,
+					      const Observation* observation);
 
     //! Phase model with which to fold data (PSR)
-    Reference::To<const polyco> folding_polyco;
+    Reference::To<const Pulsar::Predictor> folding_predictor;
 
     //! Ephemeris with which to create the phase model
     Reference::To<const psrephem> pulsar_ephemeris;
