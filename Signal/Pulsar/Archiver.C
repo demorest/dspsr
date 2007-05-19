@@ -11,7 +11,7 @@
 #include "dsp/Operation.h"
 #include "dsp/TwoBitCorrection.h"
 
-#include "Pulsar/Archive.h"
+#include "Pulsar/Interpreter.h"
 #include "Pulsar/Integration.h"
 #include "Pulsar/Profile.h"
 
@@ -108,6 +108,26 @@ void dsp::Archiver::unload ()
   }
 
   if (!single_archive) {
+
+    if (script.length()) try {
+
+      if (verbose)
+	cerr << "dsp::Archive::unload post-processing with " << script << endl;
+
+      if (!interpreter)
+	interpreter = new Pulsar::Interpreter;
+
+      interpreter->set( archive );
+      interpreter->script( script );
+
+    }
+    catch (Error& error) {
+      cerr << "dsp::Archive::unload post-processing "
+	   << archive->get_filename() << " failed:\n"
+	   << error.get_message() << endl;
+      return;
+    }
+
     cerr << "dsp::Archiver::unload archive '"
 	 << archive->get_filename() << "'" << endl;
     

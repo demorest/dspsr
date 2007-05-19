@@ -66,16 +66,13 @@
 using namespace std;
 
 static char* args =
-"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJk:Kl:L:m:M:n:N:O:op:P:RsS:t:T:U:vVWx:X:z";
+"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:m:M:n:N:O:op:P:RsS:t:T:U:vVWx:X:z";
 
 void usage ()
 {
   cout << "dspsr - digital signal processing of pulsar signals\n"
     "Usage: dspsr [options] file1 [file2 ...] \n"
     "File handling options:\n"
-    " -a archive     set the output archive class name\n"
-    " -e ext         set the output archive filename extension\n"
-    " -O filename    set the output archive filename (including extension)\n"
     " -M metafile    load filenames from metafile\n"
     " -S seek        start processing at t=seek seconds\n"
     " -T total       process only t=total seconds\n"
@@ -107,7 +104,6 @@ void usage ()
     " -I             over-ride with IncoherentFilterbank class [false]\n"
 #endif
     " -o             set psrfft up to generate optimized transforms [false]\n" 
-    " -J             Disable dedispersion [dedispersion enabled]\n"
     "\n"
     "Dedispersion/Convolution options:\n"
     " -D dm          over-ride dispersion measure\n"
@@ -129,6 +125,11 @@ void usage ()
     " -P psr.poly    add the folding polynomial, psr.poly, for use \n"
     " -X name        add another pulsar to be folded \n"
     "\n"
+    "Output Archive options:\n"
+    " -a archive     set the output archive class name\n"
+    " -e ext         set the output archive filename extension\n"
+    " -O filename    set the output archive filename (including extension)\n"
+    " -J jobs.psh    run the psrsh script on the output before unloading\n"
     "Single Pulse options:\n"
     " -A             produce a single archive with multiple Integrations \n"
     " -j             join files into contiguous observation \n"
@@ -249,6 +250,9 @@ int main (int argc, char** argv) try {
 
   // filename of the output archives
   string archive_filename;
+
+  // filename of the script used to post-process data
+  char* script = 0;
 
   // form single pulse archives
   bool single_pulse = false;
@@ -480,7 +484,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'J':
-      disable_dedispersion = true;
+      script = optarg;
       break;
 
     case 'k':
@@ -809,7 +813,7 @@ int main (int argc, char** argv) try {
 
 #endif
 
-  if( !disable_dedispersion && (nchan == 1 || !simultaneous) ){
+  if( !(dm_set && dispersion_measure == 0) && (nchan == 1 || !simultaneous) ){
     
     if (verbose)
       cerr << "Creating Convolution instance" << endl;
@@ -933,8 +937,12 @@ int main (int argc, char** argv) try {
   dsp::Archiver* archiver = new dsp::Archiver;
 
   cerr << "dspsr: Archive class name = " << archive_class << endl;
-
   archiver->set_archive_class (archive_class.c_str());
+
+  if (script) {
+    cerr << "dspsr: using psrsh script '" << script << "'" << endl;
+    archiver->set_script (script);
+  }
 
   if (!archive_extension.empty())
     archiver->set_extension (archive_extension);

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.16 $
-   $Date: 2006/10/15 21:48:07 $
+   $Revision: 1.17 $
+   $Date: 2007/05/19 21:52:50 $
    $Author: straten $ */
 
 
@@ -19,6 +19,7 @@
 #include "Pulsar/Archive.h"
 
 namespace Pulsar {
+  class Interpreter;
   class Integration;
   class Profile;
 
@@ -58,7 +59,10 @@ namespace dsp {
 
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const std::string& archive_class_name);
-    
+
+    //! Set the post-processing script filename
+    void set_script (const std::string& filename) { script = filename; }
+
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
 
@@ -74,19 +78,17 @@ namespace dsp {
     //! Add the PhaseSeries data to the Pulsar::Archive instance
     void add (Pulsar::Archive* archive, const PhaseSeries* phase);
 
-    //! Quick hack until a dsp::Observation can store _properly_ the ChannelSum history
-    //! In particular it will need to store whether the 'channel_align' flag was enabled
-    //! and therefore whether the archive was dedispersed
-    void set_archive_dedispersed(bool _archive_dedispersed){ archive_dedispersed = _archive_dedispersed; }
+    void set_archive_dedispersed (bool _archive_dedispersed)
+    { archive_dedispersed = _archive_dedispersed; }
     
-    //! Retrieves this hack attribute that indicates whether the archive is dedispersed already
-    bool get_archive_dedispersed(){ return archive_dedispersed; }
+    bool get_archive_dedispersed() const
+    { return archive_dedispersed; }
  
-    //! If true, a dspReduction extension is added to the archive with this string
+    //! A dspReduction extension is added to the archive with this string
     void set_archive_software(std::string _archive_software)
     { archive_software = _archive_software; }
 
-    //! If true, a dspReduction extension is added to the archive with this string
+    //! A dspReduction extension is added to the archive with this string
     std::string get_archive_software()
     { return archive_software; }
 
@@ -97,6 +99,12 @@ namespace dsp {
 
     //! The Pulsar::Archive instance to which data will be added
     Reference::To<Pulsar::Archive> single_archive;
+
+    //! Filename of the script used to process Archive data before unloading
+    std::string script;
+
+    //! The script interpreter used to process Archive data before unloading
+    Reference::To<Pulsar::Interpreter> interpreter;
 
     //! Response from which Passband Extension will be constructed
     Reference::To<const Response> passband;
