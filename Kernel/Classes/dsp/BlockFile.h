@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.5 $
-   $Date: 2006/07/09 13:27:09 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2007/05/19 21:52:06 $
+   $Author: straten $ */
 
 
 #ifndef __dsp_BlockFile_h
@@ -36,7 +36,7 @@ namespace dsp {
 
   protected:
 
-    //! Number of bytes in each block
+    //! Total number of bytes in each block (header + data + tailer)
     uint64 block_bytes;
 
     //! Number of bytes in header of each block
