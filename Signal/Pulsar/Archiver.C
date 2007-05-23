@@ -23,7 +23,7 @@
 
 #include "Pulsar/FITSHdrExtension.h"
 
-#include "Predictor.h"
+#include "Pulsar/Predictor.h"
 #include "psrephem.h"
 #include "Error.h"
 
@@ -315,7 +315,7 @@ try {
   if( phase->get_folding_predictor() )
     archive-> set_model ( phase->get_folding_predictor() );
   if( phase->get_pulsar_ephemeris() )
-    archive-> set_ephemeris( *(phase->get_pulsar_ephemeris()), false );
+    archive-> set_ephemeris( phase->get_pulsar_ephemeris(), false );
 
   archive-> set_filename (get_filename (phase));
 

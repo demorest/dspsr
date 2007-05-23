@@ -18,6 +18,7 @@
 
 #include "Pulsar/BasebandArchive.h"
 
+#include "psrephem.h"
 #include "strutil.h"
 #include "dirutil.h"
 #include "Error.h"
@@ -252,7 +253,12 @@ int main (int argc, char** argv)
         else if( folders[i]->get_pulsar_ephemeris() ){
           if (verbose)
             fprintf(stderr,"No dm was specified on command line\n");
-          archives[i]->set_dispersion_measure(folders[i]->get_pulsar_ephemeris()->get_dm());
+
+	  const psrephem* eph = dynamic_cast<const psrephem*>
+	    (folders[i]->get_pulsar_ephemeris());
+
+	  if (eph)
+	    archives[i]->set_dispersion_measure(eph->get_dm());
         }
         else{
           if (verbose)
