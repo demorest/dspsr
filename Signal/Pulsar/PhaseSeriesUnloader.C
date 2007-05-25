@@ -7,7 +7,7 @@
 #include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/PhaseSeries.h"
 
-#include "Predictor.h"
+#include "Pulsar/Predictor.h"
 #include "dirutil.h"
 #include "strutil.h"
 

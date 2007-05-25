@@ -7,8 +7,8 @@
 
 #include "dsp/PhaseSeries.h"
 
+#include "Pulsar/Predictor.h"
 #include "psrephem.h"
-#include "Predictor.h"
 
 using namespace std;
 
