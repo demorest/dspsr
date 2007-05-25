@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.32 $
-   $Date: 2006/10/15 03:50:14 $
+   $Revision: 1.33 $
+   $Date: 2007/05/25 21:38:10 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -26,6 +26,7 @@
 
 namespace dsp {
   
+  class Scratch;
   class TimeKeeper;
 
   //! Defines the interface by which operations are performed on data
@@ -97,6 +98,9 @@ namespace dsp {
 
   protected:
 
+    //! Shared scratch space, if needed
+    Reference::To<Scratch> scratch;
+
     //! Return false if the operation doesn't have enough data to proceed
     virtual bool can_operate();
 
@@ -111,17 +115,6 @@ namespace dsp {
 
     //! Number of time sample weights encountered that are flagged invalid
     uint64 discarded_weights;
-
-    //! Return pointer to memory resource shared by operations
-    static float* float_workingspace (size_t nfloats)
-    { return (float*) workingspace (nfloats * sizeof(float)); }
-    
-    //! Return pointer to memory resource shared by operations
-    static double* double_workingspace (size_t ndoubles)
-    { return (double*) workingspace (ndoubles * sizeof(double)); }
-    
-    //! Return pointer to memory resource shared by operations
-    static void* workingspace (size_t nbytes);
 
     //! Returns the index in the 'timers' array of a particular timer
     int timers_index (const std::string& op_name);

@@ -5,16 +5,9 @@
  *
  ***************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
 #include "dsp/Operation.h"
 #include "dsp/TimeKeeper.h"
+#include "dsp/Scratch.h"
 
 using namespace std;
 
@@ -63,7 +56,9 @@ dsp::Operation::Operation (const char* _name)
   discarded_weights = 0;
 
   optime.operation = "operate";
-  
+
+  scratch = &Scratch::default_scratch;
+
   if( timekeeper )
     timekeeper->add_operation(this);
 }
@@ -126,36 +121,6 @@ uint64 dsp::Operation::get_discarded_weights () const
 void dsp::Operation::reset_discarded_weights ()
 {
   discarded_weights = 0;
-}
-
-//! Return pointer to a memory resource shared by operations
-void* dsp::Operation::workingspace (size_t nbytes)
-{
-  static char* working_space = NULL;
-  static size_t working_size = 0;
-
-  if (!nbytes) {
-    if (working_space) free(working_space); working_space = 0;
-    working_size = 0;
-  }
-
-  if (working_size < nbytes) {
-    if (working_space) free(working_space); working_space = 0;
-
-#ifdef HAVE_MALLOC_H
-    working_space = (char*)memalign(16, nbytes);
-#else
-    working_space = (char*)valloc(nbytes);
-#endif
-
-    if (!working_space)
-      throw Error (BadAllocation, "Operation::workingspace",
-	"error allocating %d bytes",nbytes);
-
-    working_size = nbytes;
-  }
-
-  return working_space;
 }
 
 dsp::Time dsp::Operation::get_operation_time(){

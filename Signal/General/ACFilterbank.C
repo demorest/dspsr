@@ -6,6 +6,7 @@
  ***************************************************************************/
 #include "dsp/ACFilterbank.h"
 #include "dsp/WeightedTimeSeries.h"
+#include "dsp/Scratch.h"
 
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
@@ -155,7 +156,7 @@ cerr << "dsp::ACFilterbank PSD nchan=1 ndim=" << 2*nchan << endl;
     scratch_needed += nfloat_fft;
 
   // divide up the scratch space
-  float* spectrum1 = float_workingspace (scratch_needed);
+  float* spectrum1 = scratch->space<float> (scratch_needed);
   float* spectrum2 = spectrum1 + nfloat_fft + 4;
   float* windowed_time_domain = spectrum2 + nfloat_fft + 4;
 

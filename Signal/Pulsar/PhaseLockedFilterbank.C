@@ -6,6 +6,7 @@
  ***************************************************************************/
 #include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/InputBuffering.h"
+#include "dsp/Scratch.h"
 
 #include "FTransform.h"
 
@@ -129,7 +130,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     divider.set_start_time (input->get_start_time());
 
   // set up the scratch space
-  float* complex_spectrum = float_workingspace (nchan * 2);
+  float* complex_spectrum = scratch->space<float> (nchan * 2);
 
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 

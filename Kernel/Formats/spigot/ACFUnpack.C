@@ -40,7 +40,7 @@ void dsp::ACFUnpack::unpack ()
 
   const uint16* input16 = reinterpret_cast<const uint16*>(input->get_rawptr());
 
-  float* input_fft = float_workingspace (nchan * 4 + 2);
+  float* input_fft = scratch->space<float> (nchan * 4 + 2);
   float* output_fft = input_fft + nchan * 2;
 
   unsigned ichan;

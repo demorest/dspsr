@@ -10,6 +10,7 @@
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
 #include "dsp/InputBuffering.h"
+#include "dsp/Scratch.h"
 
 #include "FTransform.h"
 
@@ -292,7 +293,7 @@ void dsp::Filterbank::transformation ()
 
   // divide up the scratch space
   float* c_spectrum[2];
-  c_spectrum[0] = float_workingspace (scratch_needed);
+  c_spectrum[0] = scratch->space<float> (scratch_needed);
   c_spectrum[1] = c_spectrum[0];
   if (matrix_convolution)
     c_spectrum[1] += bigfftsize;

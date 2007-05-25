@@ -12,6 +12,7 @@
 #include "dsp/InputBuffering.h"
 #include "dsp/DedispersionHistory.h"
 #include "dsp/Dedispersion.h"
+#include "dsp/Scratch.h"
 
 #include "FTransform.h"
 
@@ -195,7 +196,7 @@ void dsp::Convolution::transformation ()
   }
 
   float* spectrum[2];
-  spectrum[0] = float_workingspace (pts_reqd);
+  spectrum[0] = scratch->space<float> (pts_reqd);
   spectrum[1] = spectrum[0];
   if (matrix_convolution)
     spectrum[1] += n_fft * 2;

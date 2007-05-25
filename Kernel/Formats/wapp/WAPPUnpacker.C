@@ -6,6 +6,7 @@
  ***************************************************************************/
 #include "WAPPUnpacker.h"
 #include "WAPPFile.h"
+#include "dsp/Scratch.h"
 
 #include "machine_endian.h"
 #include "FTransform.h"
@@ -93,7 +94,7 @@ void dsp::WAPPUnpacker::unpack ()
   float smin = 0.0, smax = 3.0;
 
   /* now define a number of working arrays to store lags and spectra */
-  float* acf = float_workingspace (5*nchan);
+  float* acf = scratch->space<float> (5*nchan);
   float* psd = acf + 2*nchan;
   float* window = psd + 2*nchan;
 

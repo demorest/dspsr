@@ -6,6 +6,8 @@
  ***************************************************************************/
 #include "dsp/Bandpass.h"
 #include "dsp/Apodization.h"
+#include "dsp/Scratch.h"
+
 #include "FTransform.h"
 
 using namespace std;
@@ -81,7 +83,7 @@ void dsp::Bandpass::transformation ()
     cerr << "dsp::Bandpass::transformation npart=" << npart << endl;
 
   float* spectrum[2];
-  spectrum[0] = float_workingspace (pts_reqd);
+  spectrum[0] = scratch->space<float> (pts_reqd);
   spectrum[1] = spectrum[0];
   if (full_poln)
     spectrum[1] += resolution * 2;

@@ -6,6 +6,7 @@
  ***************************************************************************/
 #include "dsp/AutoCorrelation.h"
 #include "dsp/WeightedTimeSeries.h"
+#include "dsp/Scratch.h"
 
 using namespace std;
 
@@ -86,7 +87,7 @@ void dsp::AutoCorrelation::transformation ()
   float total;
   float product;
 
-  float* copy = float_workingspace (nlag);
+  float* copy = scratch->space<float> (nlag);
   const unsigned nbytes = nlag * sizeof(float);
 
   for (unsigned ichan=0; ichan < nchan; ichan++)

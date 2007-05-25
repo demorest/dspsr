@@ -7,6 +7,7 @@
 #include "dsp/Detection.h"
 #include "dsp/SLDetect.h"
 #include "dsp/Observation.h"
+#include "dsp/Scratch.h"
 
 #include "Error.h"
 #include "cross_detect.h"
@@ -236,7 +237,7 @@ void dsp::Detection::polarimetry ()
     if (ndim == 4)
       required_space = input_ndim * ndat;
     
-    copyp = float_workingspace (unsigned(required_space));
+    copyp = scratch->space<float> (unsigned(required_space));
 
     copy_bytes = input_ndim * ndat * sizeof(float);
 
