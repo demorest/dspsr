@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.47 $
-   $Date: 2007/05/18 05:04:41 $
+   $Revision: 1.48 $
+   $Date: 2007/05/25 21:38:03 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -53,7 +53,7 @@ namespace dsp {
     Fold (bool _dont_set_limits = false);
     
     //! Destructor
-    virtual ~Fold ();
+    ~Fold ();
 
     //! Prepare to fold the input TimeSeries
     void prepare ();
@@ -117,24 +117,6 @@ namespace dsp {
     //! Get the reference phase (phase of bin zero)
     double get_reference_phase () const { return reference_phase; }
 
-#if 0
-
-    Wvs FIX LATER ?
-    //! Give the output PhaseSeries the filename its Archive should be written to
-    void set_archive_filename(string _archive_filename){ archive_filename = _archive_filename; }
-
-    //! Inquire the filename the Archive will be written to, if any specified
-    string get_archive_filename(){ return archive_filename; }
-
-    //! Give the output PhaseSeries the filename extension its Archive will be given
-    void set_archive_filename_extension(string _archive_filename_extension)
-    { archive_filename_extension = _archive_filename_extension; }
-
-    //! Inquire the filename extension the Archive will be given, if any specified
-    string get_archive_filename_extension(){ return archive_filename_extension; }    
-
-#endif
-
     //! Overload Transformation::set_input to set weighted_input
     void set_input (const TimeSeries* input);
 
@@ -148,19 +130,11 @@ namespace dsp {
     const psrephem* choose_ephemeris (const std::string& pulsar);
 
     //! Choose an appropriate Pulsar::Predictor from those added
-    const Pulsar::Predictor* choose_predictor (const MJD& time, const std::string& pulsar);
+    const Pulsar::Predictor* choose_predictor (const MJD& time,
+					       const std::string& pulsar);
 
     //! Choose an appropriate number of pulse phase bins
     unsigned choose_nbin ();
-
-    //! Fold nblock blocks of data
-    //! This is kept in for use in baseband/timeseries/rawprofile.C
-    //! new_fold() is now called which doesn't assume chanpols are contiguous and uses get_datptr()
-    void fold (double& integration_length, float* phase, unsigned* hits,
-	       const Observation* info,unsigned nblock,
-	       const float* time, uint64 ndat, unsigned ndim,
-	       const unsigned* weights=0, unsigned ndatperweight=0,
-	       uint64 idat_start=0, uint64 ndat_fold=0);
 
     void set_dispersion_measure(float _dispersion_measure)
     { dispersion_measure = _dispersion_measure; }
