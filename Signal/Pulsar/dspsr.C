@@ -30,6 +30,7 @@
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
 #include "polyco.h"
+#include "psrephem.h"
 
 #if ACTIVATE_MPI
 #include "dsp/MPIRoot.h"
