@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.33 $
-   $Date: 2007/05/25 21:38:10 $
+   $Revision: 1.34 $
+   $Date: 2007/05/27 13:59:10 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -99,7 +99,7 @@ namespace dsp {
   protected:
 
     //! Shared scratch space, if needed
-    Reference::To<Scratch> scratch;
+    Scratch* scratch;
 
     //! Return false if the operation doesn't have enough data to proceed
     virtual bool can_operate();
