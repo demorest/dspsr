@@ -310,10 +310,16 @@ try {
   for (unsigned iext=0; iext < extensions.size(); iext++)
     archive -> add_extension ( extensions[iext] );
 
-  // dsp::PhaseSeries has either (both eph and Pulsar::Predictor) or (none)
   // set_model must be called after the Integration::MJD has been set
-  if( phase->get_folding_predictor() )
+  if( phase->get_folding_predictor() )  {
+    if (verbose)
+      cerr << "dsp::Archiver::set has predictor" << endl;
     archive-> set_model ( phase->get_folding_predictor() );
+  }
+  else if (verbose)
+    cerr << "dsp::Archiver::set PhaseSeries has no predictor" << endl;
+
+
   if( phase->get_pulsar_ephemeris() )
     archive-> set_ephemeris( phase->get_pulsar_ephemeris(), false );
 
