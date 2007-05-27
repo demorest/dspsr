@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.20 $
-   $Date: 2007/05/18 05:04:41 $
+   $Revision: 1.21 $
+   $Date: 2007/05/27 22:00:10 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -58,14 +58,15 @@ namespace dsp {
     void set_folding_period (double _folding_period);
     //! Get the period at which to fold data (in seconds)
     double get_folding_period () const;
-    
-    //! Get the phase polynomial(s) with which to fold data
+
+    //! Set the phase predictor with which the data were folded 
+    void set_folding_predictor (const Pulsar::Predictor*);
+
+    //! Get the phase predictor with which the data were folded
     const Pulsar::Predictor* get_folding_predictor () const;
 
     //! Set the pulsar ephemeris used to fold.
-    /*! User must also supply the Pulsar::Predictor that was generated from
-      the ephemeris and used for folding */
-    void set_pulsar_ephemeris (const psrephem*, const Pulsar::Predictor*);
+    void set_pulsar_ephemeris (const psrephem*);
     
     //! Returns the pulsar ephemeris stored
     const psrephem* get_pulsar_ephemeris() const;

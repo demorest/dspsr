@@ -50,11 +50,16 @@ double dsp::PhaseSeries::get_folding_period () const
     return folding_period;
 }
 
-//! Set the pulsar ephemeris used to fold with.  User must also supply the Pulsar::Predictor that was generated from the ephemeris and used for folding
-void dsp::PhaseSeries::set_pulsar_ephemeris(const psrephem* _pulsar_ephemeris, const Pulsar::Predictor* _folding_predictor)
+void dsp::PhaseSeries::set_pulsar_ephemeris (const psrephem* ephemeris)
 {
-  pulsar_ephemeris = _pulsar_ephemeris;
-  folding_predictor = _folding_predictor;
+  pulsar_ephemeris = ephemeris;
+}
+
+void dsp::PhaseSeries::set_folding_predictor (const Pulsar::Predictor* p)
+{
+  if (verbose)
+    cerr << "dsp::PhaseSeries::set_folding_predictor " << p << endl;
+  folding_predictor = p;
   folding_period = 0.0;
 }
 
