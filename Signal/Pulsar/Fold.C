@@ -132,9 +132,9 @@ void dsp::Fold::prepare (const Observation* observation)
 
   pulsar_ephemeris = choose_ephemeris (jbpulsar);
 
-  if (pulsar_ephemeris && folding_predictor) {
+  if (folding_predictor) {
     if (verbose)
-      cerr << "dsp::Fold::prepare using given ephemeris and Pulsar::Predictor" << endl;
+      cerr << "dsp::Fold::prepare using given predictor" << endl;
     built = true;
     return;
   }
@@ -185,7 +185,7 @@ void dsp::Fold::prepare (const Observation* observation)
 #endif
 
   if (verbose)
-    cerr << "dsp::Fold::prepare creating Pulsar::Predictor" << endl;
+    cerr << "dsp::Fold::prepare creating predictor" << endl;
 
   if (dispersion_measure > 0.0)
     const_cast<psrephem*>(pulsar_ephemeris.get())->set_dm(dispersion_measure);
@@ -591,8 +591,12 @@ void dsp::Fold::transformation ()
   
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
-  else
-    output->set_pulsar_ephemeris( pulsar_ephemeris, folding_predictor );
+  else {
+    if (pulsar_ephemeris)
+      output->set_pulsar_ephemeris( pulsar_ephemeris );
+    if (folding_predictor)
+      output->set_folding_predictor( folding_predictor );
+  }
 
   output->set_reference_phase( reference_phase );
 
@@ -602,10 +606,6 @@ void dsp::Fold::transformation ()
 
   if( dispersion_measure > 0.0 )
     get_output()->set_dispersion_measure( dispersion_measure );
-
-  // Set things out of the pulsar ephemeris
-  if( pulsar_ephemeris )
-    get_output()->set_dispersion_measure( pulsar_ephemeris->get_dm() );
 
 #if 0
   WvS FIX LATER ?
