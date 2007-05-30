@@ -59,6 +59,13 @@ void dsp::Archiver::set_archive (Pulsar::Archive* archive)
   single_archive = archive;
 }
 
+//! Get the Pulsar::Archive instance to which all data were added
+Pulsar::Archive* dsp::Archiver::get_archive ()
+{
+  return single_archive;
+}
+
+
 //! Add a Pulsar::Archive::Extension to those added to the output archive
 void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
 {
