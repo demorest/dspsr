@@ -30,11 +30,17 @@ void dsp::IOManager::set_output (BitSeries* raw)
 
   output = raw;
 
-  if (input)
+  if (input) {
+    if (verbose)
+      cerr << "dsp::IOManager::set_output calling Input::set_output" << endl;
     input -> set_output (raw);
-  
-  if (unpacker)
+  }
+
+  if (unpacker) {
+    if (verbose)
+      cerr << "dsp::IOManager::set_output call Unpacker::set_input" << endl;
     unpacker -> set_input (raw);
+  }
 }
 
 void dsp::IOManager::set_output (TimeSeries* _data)
@@ -44,8 +50,11 @@ void dsp::IOManager::set_output (TimeSeries* _data)
 
   data = _data;
 
-  if (unpacker)
+  if (unpacker) {
+    if (verbose)
+      cerr << "dsp::IOManager::set_output call Unpacker::set_output" << endl;
     unpacker -> set_output (_data);
+  }
 }
 
 //! Set the Input operator (should not normally need to be used)
@@ -61,7 +70,8 @@ void dsp::IOManager::set_input (Input* _input)
 
   name = "IOManager:" + input->get_name();
 
-  set_unpacker ( Unpacker::create( input->get_info() ) );
+  if (!unpacker || !unpacker->matches (input->get_info()))
+    set_unpacker ( Unpacker::create( input->get_info() ) );
 }
 
 const dsp::Observation* dsp::IOManager::get_info () const
@@ -158,7 +168,7 @@ void dsp::IOManager::operation ()
   if (!input)
     throw Error (InvalidState, "dsp::IOManager::load", "no input");
 
-  input->operate ();
+  input->load (output);
 
   if (!data)
     return;
