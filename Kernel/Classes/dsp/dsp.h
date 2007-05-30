@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/dsp.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2007/05/30 07:35:41 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_h
 #define __baseband_dsp_h
@@ -78,6 +78,9 @@ namespace dsp {
 
   //! The baseband/dsp version number
   extern const float version;
+
+  //! Set the verbosity level of various base classes
+  void set_verbosity (unsigned level);
 
 }
 
