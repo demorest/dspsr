@@ -22,6 +22,10 @@
 #include "dirutil.h"
 
 #include <iostream>
+
+#include <stdlib.h>
+#include <errno.h>
+
 using namespace std;
 
 static char* args =
@@ -78,7 +82,7 @@ void usage ()
     " -c period      fold with constant period\n"
     " -p phase       reference phase of pulse profile bin zero \n"
     " -E psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
-    " -P psr.poly    add the folding polynomial, psr.poly, for use \n"
+    " -P psr.poly    add the phase predictor, psr.poly, for use \n"
     " -X name        add another pulsar to be folded \n"
     "\n"
     "Output Archive options:\n"
@@ -108,12 +112,12 @@ static bool verbose = false;
 void prepare (dsp::LoadToFold* engine, dsp::Input* input);
 
 // number of time samples loaded from file at a time
-uint64_t block_size = 0;
+uint64 block_size = 0;
 
 const unsigned MB = 1024 * 1024;
 
 // maximum number of bytes to load into RAM (default 256 MB)
-uint64_t maximum_RAM = 256 * MB;
+uint64 maximum_RAM = 256 * MB;
 
 // number of seconds to seek into data
 double seek_seconds = 0.0;
@@ -166,6 +170,8 @@ int main (int argc, char** argv) try {
     if (optarg)
       stropt = optarg;
 
+    errno = 0;
+
     switch (c) {
 
       // two-bit correction parameters
@@ -207,23 +213,23 @@ int main (int argc, char** argv) try {
       break;
 
     case 'B':
-      bandwidth = atof (optarg);
+      bandwidth = strtod (optarg, 0);
       break;
 
     case 'b':
-      config->nbin = atoi (optarg);
+      config->nbin = strtol (optarg, 0, 10);
       break;
 
     case 'C':
-      offset_clock = atof (optarg);
+      offset_clock = strtod (optarg, 0);
       break;
 
     case 'c':
-      config->folding_period = atof (optarg);
+      config->folding_period = strtod (optarg, 0);
       break;
 
     case 'D':
-      dispersion_measure = atof(optarg);
+      dispersion_measure = strtod (optarg, 0);
       if (dispersion_measure == 0.0) {
 	cerr << "dspsr: Disabling dedispersion" << endl;
 	config->coherent_dedispersion = false;
@@ -231,7 +237,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'd':
-      config->npol = atoi (optarg);
+      config->npol = strtol (optarg, 0, 10);
       break;
 
     case 'E':
@@ -271,7 +277,7 @@ int main (int argc, char** argv) try {
     }
     
     case 'f':
-      centre_frequency = atof (optarg);
+      centre_frequency = strtod (optarg, 0);
       break;
 
     case 'G': {
@@ -335,7 +341,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'n':
-      config->ndim = atoi (optarg);
+      config->ndim = strtol (optarg, 0, 10);
       break;
 
     case 'N':
@@ -392,11 +398,11 @@ int main (int argc, char** argv) try {
       break;
 
     case 't':
-      block_size = atoi (optarg);
+      block_size = strtol (optarg, 0, 10);
       break;
 
     case 'U':
-      maximum_RAM = atoi (optarg) * 1024 * 1024;
+      maximum_RAM = uint64( strtod (optarg, 0) * double(MB) );
       break;
 
     case 'V':
@@ -417,7 +423,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'x': 
-      config->nfft = atoi (optarg);
+      config->nfft = strtol (optarg, 0, 10);
       break;
 
     case 'X':
@@ -438,7 +444,7 @@ int main (int argc, char** argv) try {
 	for (unsigned ilib=0; ilib < nlib; ilib++)
 	  cerr << " " << FTransform::get_library_name (ilib);
 	
-	cerr << "dspsr: default FFT library " 
+	cerr << "\ndspsr: default FFT library " 
 	     << FTransform::get_library() << endl;
       }
       else {
@@ -446,11 +452,22 @@ int main (int argc, char** argv) try {
 	cerr << "dspsr: FFT library set to " << lib << endl;
       }
 
-      break;
+      return 0;
     }
 
     default:
       cerr << "invalid param '" << c << "'" << endl;
+      return -1;
+
+    }
+
+    if (errno != 0) {
+      cerr << "error parsing -" << c;
+      if (optarg)
+	cerr << " " << optarg;
+      cerr << endl;
+      perror ("");
+      return -1;
     }
 
   }
@@ -575,7 +592,7 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   
   engine->prepare ();
   
-  uint64_t this_block_size = block_size;
+  uint64 this_block_size = block_size;
   
   if (!this_block_size) {
     
@@ -599,7 +616,7 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
     
     double nbyte_dat = nbyte * ndim * npol * nchan;
     
-    this_block_size = (uint64_t(maximum_RAM / nbyte_dat) / res) * res;
+    this_block_size = (uint64(maximum_RAM / nbyte_dat) / res) * res;
     
     cerr << "dspsr: block size=" << this_block_size << " samples" << endl;
     
