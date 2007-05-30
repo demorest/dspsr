@@ -136,7 +136,7 @@ const dsp::TwoBitTable* dsp::TwoBitCorrection::get_table () const
 void dsp::TwoBitCorrection::set_output (TimeSeries* _output)
 {
   if (verbose)
-    cerr << "dsp::TwoBitCorrection::set_output (TimeSeries*)" << endl;
+    cerr << "dsp::TwoBitCorrection::set_output (" << _output << ")" << endl;
 
   Unpacker::set_output (_output);
   weighted_output = dynamic_cast<WeightedTimeSeries*> (_output);
