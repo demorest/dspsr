@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/05/30 07:35:11 $
+   $Revision: 1.2 $
+   $Date: 2007/05/30 09:32:55 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -88,10 +88,10 @@ namespace dsp {
     std::vector< std::string > additional_pulsars;
 
     // the parameters of multiple pulsars to be folded
-    std::vector< Pulsar::Parameters* > ephemerides;
+    std::vector< Reference::To<Pulsar::Parameters> > ephemerides;
 
     // the predictors of multiple pulsars to be folded
-    std::vector< Pulsar::Predictor* > predictors;
+    std::vector< Reference::To<Pulsar::Predictor> > predictors;
 
     // name of the output archive class
     std::string archive_class;
