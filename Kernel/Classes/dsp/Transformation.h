@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.41 $
-   $Date: 2006/11/19 15:39:20 $
+   $Revision: 1.42 $
+   $Date: 2007/05/30 07:35:28 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -165,6 +165,10 @@ namespace dsp {
     //! to add a dspExtension history object to the output
     virtual void add_history();
 
+    //! String preceding output in verbose mode
+    std::string name (const std::string& function) 
+    { return "dsp::Tranformation["+Operation::get_name()+"]::" + function; }
+
   protected:
 
     //! The buffering policy in place (if any)
@@ -239,8 +243,8 @@ dsp::Transformation<In,Out>::Transformation (const char* _name,
 					     bool _time_conserved)
   : Operation (_name)
 {
-  if( Operation::verbose )
-    fprintf(stderr,"In Transformation constructor for '%s'\n",_name);
+  if (Operation::verbose)
+    std::cerr << name("ctor") << std::endl;
 
   type = _type;
   reset_min_samps();
@@ -263,66 +267,102 @@ bool dsp::Transformation<In,Out>::can_operate()
     return true;
 
   if (Operation::verbose)
-    std::cerr << "dsp::Transformation<In,Out> (" << Operation::get_name() << ")"
-      " has input of " << this->get_input()->get_ndat() << " samples."
-      "  Minimum is " << minimum_samps_can_process << std::endl;
+    std::cerr << name("can_operate") <<
+      " input ndat=" << this->get_input()->get_ndat() <<
+      " min=" << minimum_samps_can_process << std::endl;
 
   return false;
 }
 
 //! Makes sure input & output are okay before calling transformation()
 template <class In, class Out>
-void dsp::Transformation<In, Out>::vchecks(){
-  // If inplace is true, then the input and output should be of the same type....
-  if( type==inplace && !this->input.ptr() && this->output.ptr() )
-    this->input = (In*)this->output.get();
-  if( type==inplace && !this->output.ptr() && this->input.ptr() )
-    this->output = (Out*)this->input.get();
+void dsp::Transformation<In, Out>::vchecks()
+{
+  if (type == inplace) {
+    if (Operation::verbose)
+      std::cerr << name("vchecks") << " inplace checks" << std::endl;
+    // when inplace, In == Out
+    if( !this->input && this->output )
+      this->input = (In*) this->output.get();
+    if( !this->output && this->input )
+      this->output = (Out*) this->input.get();
+  }
+
+  if (Operation::verbose)
+    std::cerr << name("vchecks") << " input checks" << std::endl;
   
   if (!this->input)
-    throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::vchecks()",
-		 "no input");
+    throw Error (InvalidState, name("vchecks"), "no input");
 
   if (this->input->get_ndat() < 1)
-    throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::vchecks()",
+    throw Error (InvalidState, name("vchecks"),
 		 "empty input- input=%p input->ndat="UI64,
 		 this->input.get(),this->input->get_ndat());
 
   std::string reason;
   if (this->check_state && !this->input->state_is_valid (reason))
-    throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::vchecks()",
+    throw Error (InvalidState, name("vchecks"),
 		 "invalid input state: " + reason);
 
-  if ( type!=inplace && !this->output)
-    throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::vchecks()",
-		 "no output");
+  if (Operation::verbose)
+    std::cerr << name("vchecks") << " output check" << std::endl;
+  
+  if (type!=inplace && !this->output)
+    throw Error (InvalidState, name("vchecks"), "no output");
+
+  if (Operation::verbose)
+    std::cerr << name("vchecks") << " done" << std::endl;
+
 }
 
 //! Define the Operation pure virtual method
 template <class In, class Out>
 void dsp::Transformation<In, Out>::operation ()
-{
+try {
+
+  if (Operation::verbose)
+    std::cerr << name("operation") << " call vchecks" << std::endl;
+
   vchecks();
 
-  pre_transformation.send(this);
+  pre_transformation.send (this);
 
-  if (buffering_policy)
+  if (buffering_policy) {
+    if (Operation::verbose)
+      std::cerr << name("operation") <<
+	"\n  calling " + buffering_policy->get_name() + "::pre_transformation"
+		<< std::endl;
     buffering_policy -> pre_transformation ();
+  }
+
+  if (Operation::verbose)
+    std::cerr << name("operation") << " transformation" << std::endl;
 
   transformation ();
 
-  if (buffering_policy)
+  if (buffering_policy) {
+    if (Operation::verbose)
+      std::cerr << name("operation") << " post_transformation" << std::endl;
     buffering_policy -> post_transformation ();
+  }
+
+  if (Operation::verbose)
+    std::cerr << name("operation") << " check output" << std::endl;
 
   std::string reason;
-  if (this->check_state && type!=inplace && !this->output->state_is_valid (reason))
-    throw Error (InvalidState, "dsp::Transformation["+this->get_name()+"]::operate",
+  if (this->check_state && type!=inplace 
+      && !this->output->state_is_valid (reason))
+    throw Error (InvalidState, name("operation"),
 		 "invalid output state: " + reason);
 
   add_history();  
 
   post_transformation.send(this);
 }
+ catch (Error& error) {
+   throw error += name("operation");
+ }
+
 
 template <class In, class Out>
 void dsp::Transformation<In, Out>::set_input (const In* _input)
@@ -366,19 +406,10 @@ void dsp::Transformation<In, Out>::set_output (Out* _output)
 
 
 template <class In, class Out>
-dsp::Transformation<In,Out>::~Transformation(){
-  if( Operation::verbose ){
-    fprintf(stderr,"Transformation (%s) destructor entered input=%p output=%p\n",
-	    Operation::get_name().c_str(),this->input.ptr(),this->output.ptr());
-#if THIS_GETS_FIXED
-    if( this->input.ptr() )
-      fprintf(stderr,"Transformation (%s) destructor input has %d refs\n",
-	      Operation::get_name().c_str(), this->input->get_reference_count());
-    if( this->output.ptr() )
-      fprintf(stderr,"Transformation (%s) destructor output has %d refs\n",
-	      Operation::get_name().c_str(), this->output->get_reference_count());
-#endif
-  }
+dsp::Transformation<In,Out>::~Transformation()
+{
+  if (Operation::verbose)
+    std::cerr << name("dtor") << std::endl;
 }
 
 //! to add a dspExtension history object to the output
