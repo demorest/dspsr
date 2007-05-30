@@ -13,7 +13,7 @@
 using namespace std;
 
 dsp::SetBufferingPolicy::Policy dsp::SetBufferingPolicy::policy =
-  dsp::SetBufferingPolicy::Output;
+  dsp::SetBufferingPolicy::None;
 
 void dsp::SetBufferingPolicy::set (TransformationBase* base)
 {
