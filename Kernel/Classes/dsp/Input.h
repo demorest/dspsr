@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.33 $
-   $Date: 2006/10/15 04:43:53 $
+   $Revision: 1.34 $
+   $Date: 2007/05/30 07:35:20 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -19,6 +19,8 @@
 
 #include "dsp/Operation.h"
 #include "dsp/Observation.h"
+
+class ThreadContext;
 
 namespace dsp {
 
@@ -49,7 +51,8 @@ namespace dsp {
     virtual bool eod() = 0;
     
     //! Load BitSeries data
-    virtual void load (BitSeries* data);
+    /*! Only this load method is guaranteed to be thread safe */
+    void load (BitSeries* data);
 
     //! Set the BitSeries to which data will be loaded
     virtual void set_output (BitSeries* data);
@@ -189,6 +192,8 @@ namespace dsp {
     //! Ensures that load size is properly set
     void set_load_size ();
 
+    //! Thread coordination used in Input::load method
+    ThreadContext* context;
   };
 
 }

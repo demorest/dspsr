@@ -8,9 +8,7 @@
 #include "dsp/Input.h"
 #include "dsp/BitSeries.h"
 
-#include "MJD.h"
-#include "environ.h"
-
+#include "ThreadContext.h"
 #include "Error.h"
 
 using namespace std;
@@ -24,6 +22,8 @@ dsp::Input::Input (const char* name) : Operation (name)
   resolution_offset = 0;
 
   last_load_ndat = 0;
+
+  context = 0;
 }
 
 dsp::Input::~Input (){ }
@@ -164,13 +164,22 @@ void dsp::Input::copy (const Input* input)
   resolution = input->resolution;
 }
 
-/*! Set the Observation attributes of data and load the next block of data
+/*! 
+  Sets the Observation attributes of data and load the next block of data.
+  Because set_output and operate must be called separately, this is the
+  only thread-safe interface to the Input class.
  */
-void dsp::Input::load (BitSeries* data)
-{
+void dsp::Input::load (BitSeries* data) try {
+
+  ThreadContext::Lock lock (context);
+
   set_output( data );
-  operate();
-}
+  operate ();
+
+ }
+ catch (Error& error) {
+   throw error += "dsp::Input::load (BitSeries*)";
+ }
 
 /*! 
   This method ensures that the load_sample attribute accomodates any extra 
