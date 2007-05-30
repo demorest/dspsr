@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2007 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/05/29 12:05:06 $
+   $Revision: 1.2 $
+   $Date: 2007/05/30 07:35:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold_h
@@ -25,11 +25,11 @@ namespace dsp {
 
   public:
 
-    //! Constructor
-    LoadToFold ();
-    
-    //! Destructor
-    ~LoadToFold ();
+    //! Configuration parameters
+    class Config;
+
+    //! Set the configuration to be used in prepare and run
+    virtual void set_configuration (Config*) = 0;
 
     //! Set the Input from which data will be read
     virtual void set_input (Input*) = 0;
@@ -39,7 +39,9 @@ namespace dsp {
 
     //! Run through the data
     virtual void run () = 0;
-
+    
+    //! Finish everything
+    virtual void finish () = 0;
 
   };
 }
