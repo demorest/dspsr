@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.17 $
-   $Date: 2007/05/19 21:52:50 $
+   $Revision: 1.18 $
+   $Date: 2007/05/30 07:35:46 $
    $Author: straten $ */
 
 
@@ -65,6 +65,9 @@ namespace dsp {
 
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
+
+    //! Get the Pulsar::Archive instance to which all data were added
+    Pulsar::Archive* get_archive ();
 
     //! Add a Pulsar::Archive::Extension to those added to the output archive
     void add_extension (Pulsar::Archive::Extension* extension);
