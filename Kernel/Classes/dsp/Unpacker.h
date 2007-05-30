@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.16 $
-   $Date: 2006/11/19 15:39:25 $
+   $Revision: 1.17 $
+   $Date: 2007/05/30 07:35:37 $
    $Author: straten $ */
 
 
@@ -54,6 +54,11 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);
 
+    //! Return true if the derived class can convert the Observation
+    /*! Derived classes must define the conditions under which they can
+      be used to parse the given data. */
+    virtual bool matches (const Observation* observation) = 0;
+
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
 
@@ -66,11 +71,6 @@ namespace dsp {
     /*! This method must unpack the data from the BitSeries Input into
       the TimeSeries output. */
     virtual void unpack () = 0;
-
-    //! Return true if the derived class can convert the Observation
-    /*! Derived classes must define the conditions under which they can
-      be used to parse the given data. */
-    virtual bool matches (const Observation* observation) = 0;
 
     //! Specialize the Unpacker for the Observation
     virtual void match (const Observation* observation);
