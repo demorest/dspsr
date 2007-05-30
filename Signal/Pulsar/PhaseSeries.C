@@ -8,7 +8,7 @@
 #include "dsp/PhaseSeries.h"
 
 #include "Pulsar/Predictor.h"
-#include "psrephem.h"
+#include "Pulsar/Parameters.h"
 
 using namespace std;
 
@@ -50,7 +50,7 @@ double dsp::PhaseSeries::get_folding_period () const
     return folding_period;
 }
 
-void dsp::PhaseSeries::set_pulsar_ephemeris (const psrephem* ephemeris)
+void dsp::PhaseSeries::set_pulsar_ephemeris (const Pulsar::Parameters* ephemeris)
 {
   pulsar_ephemeris = ephemeris;
 }
@@ -70,7 +70,7 @@ const Pulsar::Predictor* dsp::PhaseSeries::get_folding_predictor () const
 }
 
 //! Inquire the ephemeris used to fold the data
-const psrephem* dsp::PhaseSeries::get_pulsar_ephemeris () const
+const Pulsar::Parameters* dsp::PhaseSeries::get_pulsar_ephemeris () const
 {
   return pulsar_ephemeris.ptr();
 }

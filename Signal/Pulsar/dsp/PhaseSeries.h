@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.21 $
-   $Date: 2007/05/27 22:00:10 $
+   $Revision: 1.22 $
+   $Date: 2007/05/30 07:36:04 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -18,8 +18,8 @@
 
 namespace Pulsar {
   class Predictor;
+  class Parameters;
 }
-class psrephem;
 
 namespace dsp {
   
@@ -66,10 +66,10 @@ namespace dsp {
     const Pulsar::Predictor* get_folding_predictor () const;
 
     //! Set the pulsar ephemeris used to fold.
-    void set_pulsar_ephemeris (const psrephem*);
+    void set_pulsar_ephemeris (const Pulsar::Parameters*);
     
     //! Returns the pulsar ephemeris stored
-    const psrephem* get_pulsar_ephemeris() const;
+    const Pulsar::Parameters* get_pulsar_ephemeris() const;
 
     //! Get the number of seconds integrated
     double get_integration_length () const { return integration_length; }
@@ -128,7 +128,7 @@ namespace dsp {
     Reference::To<const Pulsar::Predictor> folding_predictor;
 
     //! The ephemeris (if any) that was used to generate the Pulsar::Predictor
-    Reference::To<const psrephem> pulsar_ephemeris;
+    Reference::To<const Pulsar::Parameters> pulsar_ephemeris;
 
     //! Reference phase (phase of bin zero)
     double reference_phase;
