@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2007 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/05/29 12:05:06 $
+   $Revision: 1.2 $
+   $Date: 2007/05/30 07:35:59 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -29,6 +29,7 @@ namespace dsp {
   class Response;
   class RFIFilter;
   class Dedispersion;
+  class ResponseProduct;
 
   class Operation;
   class Convolution;
@@ -53,6 +54,9 @@ namespace dsp {
     //! Destructor
     ~LoadToFold1 ();
 
+    //! Set the configuration to be used in prepare and run
+    void set_configuration (Config*);
+
     //! Set the Input from which data will be read
     void set_input (Input*);
 
@@ -62,9 +66,18 @@ namespace dsp {
     //! Run through the data
     void run ();
 
+    //! Finish everything
+    void finish ();
+
+    //! report percentage finished
+    bool report;
+
   protected:
 
     friend class LoadToFoldN;
+
+    //! Derived classes may want to do their own final preparations
+    virtual void prepare_final ();
 
     //! Manages loading and unpacking
     Reference::To<IOManager> manager;
@@ -81,44 +94,10 @@ namespace dsp {
     //! The RFI filter
     Reference::To<RFIFilter> rfi_filter;
 
-    // use weighted time series
-    bool weighted_time_series;
-    // perform coherent dedispersion
-    bool coherent_dedispersion;
-    // perform coherent dedispersion while forming the filterbank
-    bool simultaneous_filterbank;
-
-    unsigned nfft;
-    unsigned fres;
-
-    // phase-locked filterbank phase bins
-    unsigned plfb_nbin;
-    // phase-locked filterbank channels
-    unsigned plfb_nchan;
-
-    unsigned npol;
-    unsigned nbin;
-    unsigned nchan;
-    unsigned ndim;
-
-    bool single_pulse;
-    bool single_archive;
-    double integration_length;
-
-    // List of additional pulsar names to be folded
-    std::vector<std::string> additional_pulsars;
-    double reference_phase;
-    double folding_period;
-
-    std::vector< Pulsar::Parameters* > ephemerides;
-
-    // the polynomials from which to choose a folding Pulsar::Predictor
-    std::vector< Pulsar::Predictor* > predictors;
-
-    std::string archive_class;
-    std::string script;
-
   private:
+
+    //! Configuration parameters
+    Reference::To<Config> config;
 
     //! The TimeSeries into which the Input is unpacked
     Reference::To<TimeSeries> unpacked;
@@ -131,6 +110,9 @@ namespace dsp {
 
     //! Performs coherent dedispersion
     Reference::To<Convolution> convolution;
+
+    //! The product of the RFIFilter and Dedispersion kernel
+    Reference::To<ResponseProduct> response_product;
 
     //! Removes inter-channel dispersion delays
     Reference::To<SampleDelay> sample_delay;
