@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.48 $
-   $Date: 2007/05/25 21:38:03 $
+   $Revision: 1.49 $
+   $Date: 2007/05/30 07:35:50 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -20,9 +20,8 @@
 
 namespace Pulsar {
   class Predictor;
+  class Parameters;
 }
-class psrephem;
-class rawprofile;
 
 namespace dsp {
 
@@ -50,7 +49,7 @@ namespace dsp {
     static bool power_of_two;
 
     //! Constructor
-    Fold (bool _dont_set_limits = false);
+    Fold ();
     
     //! Destructor
     ~Fold ();
@@ -104,13 +103,16 @@ namespace dsp {
     //   const psrephem* get_pulsar_ephemeris () const;
 
     //! Get the ephemeris used to create the phase model
-    const psrephem* get_pulsar_ephemeris () const;
+    const Pulsar::Parameters* get_pulsar_ephemeris () const;
+
+    //! Set the phase model with which to fold data
+    void set_folding_predictor (const Pulsar::Predictor*);
 
     //! use to see whether pulsar eph is stored
     bool has_pulsar_ephemeris() const { return pulsar_ephemeris.ptr(); }
 
     //! Set the ephemeris with which to create a new phase model
-    void set_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
+    void set_pulsar_ephemeris (const Pulsar::Parameters*);
 
     //! Set the reference phase (phase of bin zero)
     void set_reference_phase (double phase);
@@ -120,26 +122,8 @@ namespace dsp {
     //! Overload Transformation::set_input to set weighted_input
     void set_input (const TimeSeries* input);
 
-    //! Add a phase model with which to choose to fold the data
-    void add_folding_predictor (const Pulsar::Predictor* folding_predictor);
-
-    //! Add an ephemeris with which to choose to create the phase model
-    void add_pulsar_ephemeris (const psrephem* pulsar_ephemeris);
-
-    //! Choose an appropriate ephemeris from those added
-    const psrephem* choose_ephemeris (const std::string& pulsar);
-
-    //! Choose an appropriate Pulsar::Predictor from those added
-    const Pulsar::Predictor* choose_predictor (const MJD& time,
-					       const std::string& pulsar);
-
     //! Choose an appropriate number of pulse phase bins
     unsigned choose_nbin ();
-
-    void set_dispersion_measure(float _dispersion_measure)
-    { dispersion_measure = _dispersion_measure; }
-    float get_dispersion_measure() const
-    { return dispersion_measure; }
 
   protected:
 
@@ -196,23 +180,8 @@ namespace dsp {
     //! The name of the source (overrides input source name)
     std::string source_name;
 
-    //! Flag that the Pulsar::Predictor is built for the given ephemeris and input
+    //! Flag that the predictor is built for the given ephemeris and input
     bool built;
-
-#if 0
-    WvS FIX LATER ?
-    //! Used to specify the final output Archive filename
-    string archive_filename;
-
-    //! Used to specify the final output Archive filename extension
-    string archive_filename_extension;
-#endif
-
-    //! Polycos from which to choose
-    std::vector< Reference::To<const Pulsar::Predictor> > predictors;
-
-    //! Ephemerides from which to choose
-    std::vector< Reference::To<const psrephem> > ephemerides;
 
     //! INTERNAL: the time sample at which to start folding
     uint64 idat_start;
@@ -226,31 +195,23 @@ namespace dsp {
     // dsp::Fold
     void initialise();
 
-    //! Set the phase model with which to fold data
-    void set_folding_predictor (const Pulsar::Predictor* folding_predictor);
-
   private:
 
     // Generates folding_predictor from the given ephemeris
-    Pulsar::Predictor* get_folding_predictor (const psrephem* pephemeris,
-					      const Observation* observation);
+    Pulsar::Predictor* get_folding_predictor (const Pulsar::Parameters*,
+					      const Observation*);
 
     //! Phase model with which to fold data (PSR)
     Reference::To<const Pulsar::Predictor> folding_predictor;
 
     //! Ephemeris with which to create the phase model
-    Reference::To<const psrephem> pulsar_ephemeris;
+    Reference::To<const Pulsar::Parameters> pulsar_ephemeris;
 
     //! The folding period last used in the fold method
     double pfold;
 
-    //! If true, set_limits() returns straight away
-    bool dont_set_limits;
-
-    //! Dispersion measure to install in output/ephemeris
-    double dispersion_measure;
-
   };
+
 }
 
 #endif // !defined(__Fold_h)
