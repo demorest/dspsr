@@ -22,6 +22,17 @@ void dsp::InputBuffering::set_target (HasInput<TimeSeries>* _target)
   target = _target;
 }
 
+//! Set the minimum number of samples that can be processed
+void dsp::InputBuffering::set_minimum_samples (uint64 samples)
+{
+  minimum_samples = samples;
+
+  if (requested_reserve < minimum_samples) {
+    target->get_input()->change_reserve (minimum_samples-requested_reserve);
+    requested_reserve = minimum_samples;
+  }
+}
+
 /*! Copy remaining data from the target Transformation's input to buffer */
 void dsp::InputBuffering::set_next_start (uint64 next)
 {
@@ -30,8 +41,10 @@ void dsp::InputBuffering::set_next_start (uint64 next)
 
   next_start_sample = next;
 
+  // the number of samples in the target
   uint64 ndat = target->get_input()->get_ndat();
 
+  // the number of samples to be buffered
   uint64 buffer_ndat = ndat - next_start_sample;
 
   if (next_start_sample > ndat)
@@ -48,12 +61,7 @@ void dsp::InputBuffering::set_next_start (uint64 next)
   }
 
   if (minimum_samples < buffer_ndat)
-    minimum_samples = buffer_ndat;
-
-  if (requested_reserve < minimum_samples) {
-    target->get_input()->change_reserve (minimum_samples-requested_reserve);
-    requested_reserve = minimum_samples;
-  }
+    set_minimum_samples (buffer_ndat);
 
   if (!buffer)
     buffer = target->get_input()->null_clone();

@@ -36,7 +36,7 @@ namespace dsp {
     void set_next_start (uint64 next_start_sample);
     
     //! Set the minimum number of samples that can be processed
-    void set_minimum_samples (uint64 samples) { minimum_samples = samples; }
+    void set_minimum_samples (uint64 samples);
 
   protected:
     
