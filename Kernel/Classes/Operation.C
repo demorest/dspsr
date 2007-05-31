@@ -53,6 +53,7 @@ dsp::Operation::Operation (const Operation& op)
 {
   scratch = op.scratch;
   name = op.name;
+  prepared = false;
 }
 
 //! All sub-classes must specify name and capacity for inplace operation
@@ -76,6 +77,7 @@ dsp::Operation::Operation (const char* _name)
   if( timekeeper )
     timekeeper->add_operation(this);
 
+  prepared = false;
   // set_ostream (std::cerr);
 }
 
@@ -87,6 +89,11 @@ dsp::Operation::~Operation ()
 
 bool dsp::Operation::can_operate(){
   return true;
+}
+
+void dsp::Operation::prepare ()
+{
+  prepared = true;
 }
 
 bool dsp::Operation::operate ()

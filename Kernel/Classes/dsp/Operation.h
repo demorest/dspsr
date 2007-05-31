@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.35 $
-   $Date: 2007/05/31 06:00:15 $
+   $Revision: 1.36 $
+   $Date: 2007/05/31 11:00:22 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -74,6 +74,10 @@ namespace dsp {
     //! Call this method to operate on data
     //! Returns false on failure
     virtual bool operate ();
+
+    //! Prepare for data operations
+    /*! This method enables optimizations by some derived classes */
+    virtual void prepare ();
 
     //! Return the unique name of this operation
     std::string get_name() { return name; }
@@ -141,6 +145,9 @@ namespace dsp {
 
     //! Unique instantiation id
     int id;
+
+    //! Set true when preparation optimizations are completed
+    bool prepared;
 
     //! Stream to which verbose messages are sent
     std::ostream cerr;
