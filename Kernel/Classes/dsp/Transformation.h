@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.42 $
-   $Date: 2007/05/30 07:35:28 $
+   $Revision: 1.43 $
+   $Date: 2007/05/31 06:00:15 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -244,7 +244,7 @@ dsp::Transformation<In,Out>::Transformation (const char* _name,
   : Operation (_name)
 {
   if (Operation::verbose)
-    std::cerr << name("ctor") << std::endl;
+    cerr << name("ctor") << std::endl;
 
   type = _type;
   reset_min_samps();
@@ -267,7 +267,7 @@ bool dsp::Transformation<In,Out>::can_operate()
     return true;
 
   if (Operation::verbose)
-    std::cerr << name("can_operate") <<
+    cerr << name("can_operate") <<
       " input ndat=" << this->get_input()->get_ndat() <<
       " min=" << minimum_samps_can_process << std::endl;
 
@@ -280,7 +280,7 @@ void dsp::Transformation<In, Out>::vchecks()
 {
   if (type == inplace) {
     if (Operation::verbose)
-      std::cerr << name("vchecks") << " inplace checks" << std::endl;
+      cerr << name("vchecks") << " inplace checks" << std::endl;
     // when inplace, In == Out
     if( !this->input && this->output )
       this->input = (In*) this->output.get();
@@ -289,7 +289,7 @@ void dsp::Transformation<In, Out>::vchecks()
   }
 
   if (Operation::verbose)
-    std::cerr << name("vchecks") << " input checks" << std::endl;
+    cerr << name("vchecks") << " input checks" << std::endl;
   
   if (!this->input)
     throw Error (InvalidState, name("vchecks"), "no input");
@@ -305,13 +305,13 @@ void dsp::Transformation<In, Out>::vchecks()
 		 "invalid input state: " + reason);
 
   if (Operation::verbose)
-    std::cerr << name("vchecks") << " output check" << std::endl;
+    cerr << name("vchecks") << " output check" << std::endl;
   
   if (type!=inplace && !this->output)
     throw Error (InvalidState, name("vchecks"), "no output");
 
   if (Operation::verbose)
-    std::cerr << name("vchecks") << " done" << std::endl;
+    cerr << name("vchecks") << " done" << std::endl;
 
 }
 
@@ -321,7 +321,7 @@ void dsp::Transformation<In, Out>::operation ()
 try {
 
   if (Operation::verbose)
-    std::cerr << name("operation") << " call vchecks" << std::endl;
+    cerr << name("operation") << " call vchecks" << std::endl;
 
   vchecks();
 
@@ -329,25 +329,25 @@ try {
 
   if (buffering_policy) {
     if (Operation::verbose)
-      std::cerr << name("operation") <<
+      cerr << name("operation") <<
 	"\n  calling " + buffering_policy->get_name() + "::pre_transformation"
 		<< std::endl;
     buffering_policy -> pre_transformation ();
   }
 
   if (Operation::verbose)
-    std::cerr << name("operation") << " transformation" << std::endl;
+    cerr << name("operation") << " transformation" << std::endl;
 
   transformation ();
 
   if (buffering_policy) {
     if (Operation::verbose)
-      std::cerr << name("operation") << " post_transformation" << std::endl;
+      cerr << name("operation") << " post_transformation" << std::endl;
     buffering_policy -> post_transformation ();
   }
 
   if (Operation::verbose)
-    std::cerr << name("operation") << " check output" << std::endl;
+    cerr << name("operation") << " check output" << std::endl;
 
   std::string reason;
   if (this->check_state && type!=inplace 
@@ -368,7 +368,7 @@ template <class In, class Out>
 void dsp::Transformation<In, Out>::set_input (const In* _input)
 {
   if (Operation::verbose)
-    std::cerr << "dsp::Transformation["+this->get_name()+"]::set_input ("<<_input<<")"<<std::endl;
+    cerr << "dsp::Transformation["+this->get_name()+"]::set_input ("<<_input<<")"<<std::endl;
 
   this->input = _input;
 
@@ -385,7 +385,7 @@ template <class In, class Out>
 void dsp::Transformation<In, Out>::set_output (Out* _output)
 {
   if (Operation::verbose)
-    std::cerr << "dsp::Transformation["+this->get_name()+"]::set_output ("<<_output<<")"<<std::endl;
+    cerr << "dsp::Transformation["+this->get_name()+"]::set_output ("<<_output<<")"<<std::endl;
 
   if (type == inplace && this->input 
       && (const void*)this->input != (const void*)_output )
@@ -409,7 +409,7 @@ template <class In, class Out>
 dsp::Transformation<In,Out>::~Transformation()
 {
   if (Operation::verbose)
-    std::cerr << name("dtor") << std::endl;
+    cerr << name("dtor") << std::endl;
 }
 
 //! to add a dspExtension history object to the output

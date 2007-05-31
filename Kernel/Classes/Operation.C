@@ -42,8 +42,22 @@ void dsp::Operation::set_timekeeper(TimeKeeper* _timekeeper)
 void dsp::Operation::unset_timekeeper()
 { timekeeper = 0; }
 
+//! Set verbosity ostream
+void dsp::Operation::set_ostream (std::ostream& os)
+{
+  this->cerr.rdbuf( os.rdbuf() );
+}
+
+dsp::Operation::Operation (const Operation& op)
+  : cerr (op.cerr.rdbuf())
+{
+  scratch = op.scratch;
+  name = op.name;
+}
+
 //! All sub-classes must specify name and capacity for inplace operation
 dsp::Operation::Operation (const char* _name)
+  : cerr (std::cerr.rdbuf())
 {
   if (_name)
     name = _name;
@@ -61,6 +75,8 @@ dsp::Operation::Operation (const char* _name)
 
   if( timekeeper )
     timekeeper->add_operation(this);
+
+  // set_ostream (std::cerr);
 }
 
 dsp::Operation::~Operation ()
@@ -147,4 +163,9 @@ int dsp::Operation::timers_index(const string& op_name){
 	      op_name.c_str(), timers.size());
 
   return -1;
+}
+
+void dsp::Operation::set_scratch (Scratch* s)
+{
+  scratch = s;
 }
