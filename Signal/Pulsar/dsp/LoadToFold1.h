@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/05/31 05:59:36 $
+   $Revision: 1.4 $
+   $Date: 2007/05/31 07:57:22 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -71,7 +71,7 @@ namespace dsp {
     void finish ();
 
     //! report percentage finished
-    bool report;
+    unsigned report;
 
     //! The verbose output stream shared by all operations
     std::ostream cerr;
