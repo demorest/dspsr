@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.2 $
-   $Date: 2007/05/30 07:35:59 $
+   $Revision: 1.3 $
+   $Date: 2007/05/31 05:59:36 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -25,6 +25,7 @@ namespace dsp {
 
   class IOManager;
   class TimeSeries;
+  class Scratch;
 
   class Response;
   class RFIFilter;
@@ -72,6 +73,12 @@ namespace dsp {
     //! report percentage finished
     bool report;
 
+    //! The verbose output stream shared by all operations
+    std::ostream cerr;
+
+    //! Take and manage a new ostream instance
+    void take_ostream (std::ostream* newlog);
+
   protected:
 
     friend class LoadToFoldN;
@@ -93,6 +100,9 @@ namespace dsp {
 
     //! The RFI filter
     Reference::To<RFIFilter> rfi_filter;
+
+    //! Pointer to the ostream
+    std::ostream* log;
 
   private:
 
@@ -133,6 +143,9 @@ namespace dsp {
 
     //! Prepared to fold the given TimeSeries
     void prepare_fold (TimeSeries*);
+
+    //! The scratch space shared by all operations
+    Reference::To<Scratch> scratch;
 
   };
 
