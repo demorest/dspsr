@@ -70,6 +70,7 @@ void usage ()
     " -D dm          over-ride dispersion measure\n"
     " -x nfft        over-ride optimal transform length\n"
     " -R             apply RFI filter in frequency domain\n"
+    " -Z lib         choose the FFT library ('-Z help' for availability)\n"
     "\n"
     "Detection options:\n"
     " -d npol        1=PP+QQ, 2=PP,QQ, 3 = (PP+QQ)^2 4=PP,QQ,PQ,QP\n"
@@ -437,13 +438,15 @@ int main (int argc, char** argv) try {
 	
 	cerr << "\ndspsr: default FFT library " 
 	     << FTransform::get_library() << endl;
+
+	return 0;
       }
       else {
 	FTransform::set_library (lib);
 	cerr << "dspsr: FFT library set to " << lib << endl;
       }
 
-      return 0;
+      break;
     }
 
     default:
