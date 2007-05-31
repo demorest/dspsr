@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.10 $
-   $Date: 2007/05/18 05:04:41 $
+   $Revision: 1.11 $
+   $Date: 2007/05/31 05:59:48 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -44,6 +44,9 @@ namespace dsp {
     //! Destructor
     ~SubFold ();
     
+    //! Create a clonse
+    Fold* clone () const;
+
     /** @name PhaseSeries events
      *  The attached callback methods should be of the form:
      *

@@ -21,6 +21,11 @@ dsp::SubFold::~SubFold ()
 {
 }
 
+dsp::Fold* dsp::SubFold::clone () const
+{
+  return new SubFold(*this);
+}
+
 //! Set the file unloader
 void dsp::SubFold::set_unloader (dsp::PhaseSeriesUnloader* _unloader)
 {
