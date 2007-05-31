@@ -9,24 +9,18 @@
 #include "dsp/LoadToFoldConfig.h"
 
 #include "dsp/IOManager.h"
-#include "dsp/MultiFile.h"
+#include "dsp/Scratch.h"
 #include "dsp/SetBufferingPolicy.h"
 
-#include "dsp/Unpacker.h"
-#include "dsp/BitSeries.h"
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/WeightedTimeSeries.h"
 
 #include "dsp/ResponseProduct.h"
-#include "dsp/Dedispersion.h"
+#include "dsp/DedispersionSampleDelay.h"
 #include "dsp/RFIFilter.h"
 
-#include "dsp/AutoCorrelation.h"
 #include "dsp/Filterbank.h"
-#include "dsp/ACFilterbank.h"
-
 #include "dsp/SampleDelay.h"
-
 #include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/Detection.h"
 
@@ -43,13 +37,27 @@
 using namespace std;
 
 dsp::LoadToFold1::LoadToFold1 ()
+  : cerr( std::cerr.rdbuf() )
 {
-  manager = new dsp::IOManager;
+  manager = new IOManager;
+  scratch = new Scratch;
   report = true;
+  log = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
 {
+}
+
+void dsp::LoadToFold1::take_ostream (std::ostream* newlog)
+{
+  if (newlog)
+    this->cerr.rdbuf( newlog->rdbuf() );
+
+  if (log)
+    delete log;
+
+  log = newlog;
 }
 
 //! Run through the data
@@ -488,6 +496,19 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 //! Run through the data
 void dsp::LoadToFold1::run ()
 {
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFold1::run this=" << this 
+	 << " nops=" << operations.size() << endl;
+
+  // ensure that all operations are using the local log an scratch space
+  for (unsigned iop=0; iop < operations.size(); iop++) {
+    if (log) {
+      cerr << "dsp::LoadToFold1::run " << operations[iop]->get_name() << endl;
+      operations[iop] -> set_ostream (*log);
+    }
+    operations[iop] -> set_scratch (scratch);
+  }
+
   Input* input = manager->get_input();
 
   uint64_t block_size = input->get_block_size();
@@ -534,7 +555,10 @@ void dsp::LoadToFold1::run ()
     }
     
   }
-  
+
+  if (log)
+    *log << "dsp::LoadToFold1::run end of data" << endl;
+
   if (Operation::verbose)
     cerr << "end of data" << endl;
   
