@@ -90,15 +90,26 @@ void dsp::LoadToFoldN::prepare ()
   if (threads[0]->kernel && !threads[0]->kernel->context)
     threads[0]->kernel->context = new ThreadContext;
 
+  threads[0]->report = threads.size();
+
   for (unsigned i=1; i<threads.size(); i++) {
 
     //
     // clone the Fold/SubFold operations (share Pulsar::Predictor)
     //
+    // This code satisfies two preconditions:
+    // 1) the folding operation may be either a Fold or SubFold class
+    // 2) the folding operations should share predictors but not outputs
+    //
+
     unsigned nfold = threads[0]->fold.size();
     threads[i]->fold.resize( nfold );
-    for (unsigned ifold = 0; ifold < nfold; ifold ++)
+    for (unsigned ifold = 0; ifold < nfold; ifold ++)  {
+      // the clone automatically copies the pointers to predictors ...
       threads[i]->fold[ifold] = threads[0]->fold[ifold]->clone();
+      // ... and the outputs.  New ones will be created in prepare()
+      threads[i]->fold[ifold]->set_output( 0 );
+    }
 
     //
     // share the dedispersion kernel
@@ -108,7 +119,7 @@ void dsp::LoadToFoldN::prepare ()
     //
     // only the first thread prints updates
     //
-    threads[i]->report = false;
+    threads[i]->report = 0;
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFoldN::prepare preparing thread " << i << endl;
@@ -119,7 +130,7 @@ void dsp::LoadToFoldN::prepare ()
 
 }
 
-static void* thread_wrapper (void* context)
+void* dsp::LoadToFoldN::thread (void* context)
 {
   dsp::LoadToFold1* fold = reinterpret_cast<dsp::LoadToFold1*>( context );
 
@@ -163,7 +174,7 @@ void dsp::LoadToFoldN::run ()
 
     }
 
-    errno = pthread_create (&ids[i], 0, thread_wrapper, ptr);
+    errno = pthread_create (&ids[i], 0, thread, ptr);
 
     if (errno != 0)
       throw Error (FailedSys, "psr::LoadToFoldN::run", "pthread_create");
