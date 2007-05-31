@@ -136,9 +136,6 @@ char* mjd_string = 0;
 // set the telescope code
 char telescope_code = 0;
 
-// dispersion measure
-double dispersion_measure = 0.0;
-
 // bandwidth
 double bandwidth = 0.0;
 // centre_frequency
@@ -234,11 +231,13 @@ int main (int argc, char** argv) try {
       break;
 
     case 'D':
-      dispersion_measure = strtod (optarg, 0);
-      if (dispersion_measure == 0.0) {
+      config->dispersion_measure = strtod (optarg, 0);
+      if (config->dispersion_measure == 0.0) {
 	cerr << "dspsr: Disabling dedispersion" << endl;
 	config->coherent_dedispersion = false;
       }
+      else
+        cerr << "dspsr: Setting DM=" << config->dispersion_measure << endl;
       break;
 
     case 'd':
