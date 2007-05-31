@@ -53,8 +53,8 @@ void dsp::File::init()
 dsp::File* dsp::File::create (const char* filename, int _bs_index)
 { 
   if (verbose)
-    cerr << "dsp::File::create filename='" << filename 
-	 << "' bs_index=" << _bs_index << endl;
+    std::cerr << "dsp::File::create filename='" << filename 
+	      << "' bs_index=" << _bs_index << std::endl;
 
   // check if file can be opened for reading
   FILE* fptr = fopen (filename, "r");
@@ -64,8 +64,8 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 
   try {
 
-    if (verbose) cerr << "dsp::File::create with " << registry.size() 
-		      << " registered sub-classes" << endl;
+    if (verbose) std::cerr << "dsp::File::create with " << registry.size() 
+			   << " registered sub-classes" << std::endl;
 
     for (unsigned ichild=0; ichild < registry.size(); ichild++) {
       if (verbose)

@@ -54,7 +54,7 @@ bool dsp::WAPPFile::is_valid (const char* filename, int) const
   catch(Error& error)
   {
     if (verbose)
-      cerr << "dsp::WAPPFile::is_valid " << error.get_message() << endl;
+      std::cerr << "dsp::WAPPFile::is_valid " << error.get_message() << endl;
     ::close(fd);
     return false;
   }  

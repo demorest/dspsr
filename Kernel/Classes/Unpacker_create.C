@@ -13,8 +13,8 @@ dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
 {
   try {
 
-    if (verbose) cerr << "dsp::Unpacker::create with " << registry.size()
-                      << " registered sub-classes" << endl;
+    if (verbose) std::cerr << "dsp::Unpacker::create with " << registry.size()
+			   << " registered sub-classes" << std::endl;
 
     for (unsigned ichild=0; ichild < registry.size(); ichild++){
       if( verbose )
@@ -26,7 +26,8 @@ dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
         child-> match( observation );
 
         if (verbose)
-          cerr << "dsp::Unpacker::create return new sub-class" << endl;
+	  std::cerr << "dsp::Unpacker::create return new sub-class" 
+		    << std::endl;
         return child;
 
       }
