@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.49 $
-   $Date: 2007/05/30 07:35:50 $
+   $Revision: 1.50 $
+   $Date: 2007/05/31 05:59:31 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -53,6 +53,9 @@ namespace dsp {
     
     //! Destructor
     ~Fold ();
+
+    //! Create a clonse
+    Fold* clone () const;
 
     //! Prepare to fold the input TimeSeries
     void prepare ();
@@ -154,10 +157,6 @@ namespace dsp {
 
     //! Period at which to fold data
     double folding_period;
-
-    //! The source name for which to fold at folding_period.
-    /*! If this is not set, then all sources are folded at folding_period */
-    std::string folding_period_source;
 
     //! Set when Tranformation::input is a Weighted TimeSeries
     Reference::To<const WeightedTimeSeries> weighted_input;
