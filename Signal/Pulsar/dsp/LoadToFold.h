@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Attic/LoadToFold.h,v $
-   $Revision: 1.2 $
-   $Date: 2007/05/30 07:35:54 $
+   $Revision: 1.3 $
+   $Date: 2007/05/31 11:00:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold_h
@@ -42,6 +42,9 @@ namespace dsp {
     
     //! Finish everything
     virtual void finish () = 0;
+
+    //! Get the minimum number of samples required to process
+    virtual uint64 get_minimum_samples () const = 0;
 
   };
 }
