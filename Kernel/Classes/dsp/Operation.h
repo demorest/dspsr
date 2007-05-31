@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.34 $
-   $Date: 2007/05/27 13:59:10 $
+   $Revision: 1.35 $
+   $Date: 2007/05/31 06:00:15 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace dsp {
   
@@ -64,6 +65,9 @@ namespace dsp {
     //! All sub-classes must specify a unique name
     Operation (const char* name);
 
+    //! Copy constructor
+    Operation (const Operation&);
+
     //! Virtual destructor
     virtual ~Operation ();
 
@@ -95,6 +99,12 @@ namespace dsp {
 
     //! Pointer to the timekeeper
     static TimeKeeper* timekeeper;
+
+    //! Set the scratch space
+    virtual void set_scratch (Scratch*);
+
+    //! Set verbosity ostream
+    virtual void set_ostream (std::ostream& os);
 
   protected:
 
@@ -131,6 +141,10 @@ namespace dsp {
 
     //! Unique instantiation id
     int id;
+
+    //! Stream to which verbose messages are sent
+    std::ostream cerr;
+
   };
   
 }
