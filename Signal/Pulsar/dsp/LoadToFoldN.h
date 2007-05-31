@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.2 $
-   $Date: 2007/05/31 05:59:40 $
+   $Revision: 1.3 $
+   $Date: 2007/05/31 07:57:31 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -70,6 +70,8 @@ namespace dsp {
 
     //! The thread ids
     std::vector<pthread_t> ids;
+
+    static void* thread (void*);
 
   };
 
