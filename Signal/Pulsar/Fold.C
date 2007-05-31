@@ -65,6 +65,11 @@ dsp::Fold::~Fold ()
 {
 }
 
+dsp::Fold* dsp::Fold::clone () const
+{
+  return new Fold(*this);
+}
+
 //! Prepare for folding the input TimeSeries
 void dsp::Fold::prepare ()
 {
@@ -281,7 +286,6 @@ void dsp::Fold::set_reference_phase (double phase)
 //! Set the period at which to fold data (in seconds)
 void dsp::Fold::set_folding_period (double _folding_period)
 {
-  folding_period_source = string();
   folding_period = _folding_period;
   folding_predictor = 0;
   built = true;
@@ -308,12 +312,6 @@ std::string dsp::Fold::get_source_name () const
     return pulsar_ephemeris->get_name();
 
   return "";
-}
-
-void dsp::Fold::set_folding_period (double folding_period, string source)
-{
-  set_folding_period( folding_period );
-  folding_period_source = source;
 }
 
 //! Get the average folding period
@@ -632,9 +630,7 @@ void dsp::Fold::fold (uint64 nweights,
 
 double dsp::Fold::get_phi (const MJD& start_time)
 {
-  if ( folding_period > 0.0 &&
-       ( folding_period_source==get_input()->get_source()
-	 || folding_period_source==string() ))
+  if ( folding_period > 0.0 )
     return fmod (start_time.in_seconds(), folding_period) / folding_period 
       - reference_phase;
 
@@ -643,9 +639,7 @@ double dsp::Fold::get_phi (const MJD& start_time)
 
 double dsp::Fold::get_pfold (const MJD& start_time)
 {
-  if (folding_period > 0.0 && 
-      ( folding_period_source.empty() ||
-	folding_period_source == get_input()->get_source() ))
+  if ( folding_period > 0.0 )
     return folding_period;
   
   return 1.0/folding_predictor->frequency(start_time);
