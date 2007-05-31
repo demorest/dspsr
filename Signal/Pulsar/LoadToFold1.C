@@ -31,6 +31,7 @@
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
+#include "Pulsar/SimplePredictor.h"
 
 #include "Error.h"
 
@@ -41,7 +42,7 @@ dsp::LoadToFold1::LoadToFold1 ()
 {
   manager = new IOManager;
   scratch = new Scratch;
-  report = true;
+  report = 1;
   log = 0;
 }
 
@@ -294,11 +295,17 @@ void dsp::LoadToFold1::prepare_final ()
 
   double dm = 0.0;
 
-  if (config->dispersion_measure)
+  if (config->dispersion_measure) {
     dm = config->dispersion_measure;
+    if (Operation::verbose)
+      cerr << "LoadToFold1::prepare_final user DM=" << dm << endl;
+  }
 
-  else if (parameters)
+  else if (parameters) {
     dm = parameters->get_dispersion_measure ();
+    if (Operation::verbose)
+      cerr << "LoadToFold1::prepare_final eph DM=" << dm << endl;
+  }
 
   if (config->coherent_dedispersion) {
 
@@ -479,9 +486,29 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (ifold < config->ephemerides.size())
       fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
 
-    if (ifold < config->predictors.size())
+    if (ifold < config->predictors.size()) {
+
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
-    
+
+      Pulsar::SimplePredictor* simple_predictor
+	= dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
+
+      if (simple_predictor) {
+
+	manager->get_info()->set_source
+	  ( simple_predictor->get_name() );
+
+	manager->get_info()->set_coordinates
+	  ( simple_predictor->get_coordinates() );
+
+	if (kernel) 
+	  kernel->set_dispersion_measure
+	    ( simple_predictor->get_dispersion_measure() );
+
+      }
+
+    }    
+
     fold[ifold]->set_input (to_fold);
 
     fold[ifold]->prepare ( manager->get_info() );
@@ -537,15 +564,17 @@ void dsp::LoadToFold1::run ()
       
     }
     catch (Error& error) {
-      cerr << error << endl;
-      throw error += "dsp::LoadToFold1::run";
+      // if we've already made it through a couple of blocks, assume EOD
+      if (block == 0)
+        throw error += "dsp::LoadToFold1::run";
     }
     
     block++;
     
     if (report) {
-      
-      int percent = int (100.0*float(block)/float(nblocks_tot));
+
+      // report is set to the number of active threads
+      int percent = int (100.0*report*float(block)/float(nblocks_tot));
       
       if (percent > last_percent) {
 	cerr << "Finished " << percent << "%\r";
