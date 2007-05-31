@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.19 $
-   $Date: 2006/07/09 13:27:12 $
-   $Author: wvanstra $ */
+   $Revision: 1.20 $
+   $Date: 2007/05/31 11:04:25 $
+   $Author: straten $ */
 
 #ifndef __Convolution_h
 #define __Convolution_h
@@ -61,6 +61,15 @@ namespace dsp {
 
     //! Destructor
     virtual ~Convolution ();
+
+    //! Set internal attributes
+    void prepare () { }
+
+    //! Get the minimum number of samples required for operation
+    uint64 get_minimum_samples () const { return 0; }
+
+    //! Get the minimum number of samples lost
+    uint64 get_minimum_samples_lost () const { return 0; }
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
