@@ -4,7 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "dsp/Dedispersion.h"
+#include "dsp/DedispersionSampleDelay.h"
 #include "dsp/Observation.h"
 
 using namespace std;

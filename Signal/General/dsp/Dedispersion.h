@@ -7,15 +7,17 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.24 $
-   $Date: 2006/07/09 13:27:12 $
-   $Author: wvanstra $ */
+   $Revision: 1.25 $
+   $Date: 2007/05/31 05:59:22 $
+   $Author: straten $ */
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
 
 #include "dsp/Response.h"
 #include "dsp/SampleDelayFunction.h"
+
+class ThreadContext;
 
 namespace dsp {
   
@@ -128,40 +130,10 @@ namespace dsp {
     //! Build the dedispersion frequency response kernel
     virtual void build ();
 
-    class SampleDelay : public SampleDelayFunction {
+    class SampleDelay;
 
-    public:
-
-      //! Default constructor
-      SampleDelay ();
-
-      //! Set up the dispersion delays
-      bool match (const Observation* obs);
-
-      //! Return the dispersion delay for the given frequency channel
-      int64 get_delay (unsigned ichan, unsigned ipol);
-
-      //! Add to the history of operations performed on the observation
-      void mark (Observation* observation);
-
-    protected:
-
-      //! Centre frequency of the band-limited signal in MHz
-      double centre_frequency;
-
-      //! Bandwidth of signal in MHz
-      double bandwidth;
-
-      //! Dispersion measure (in \f${\rm pc cm}^{-3}\f$)
-      double dispersion_measure;
-
-      //! The sampling rate (in Hz)
-      double sampling_rate;
-
-      //! The dispersive delays
-      std::vector<int64> delays;
-
-    };
+    //!
+    ThreadContext* context;
 
   protected:
 
