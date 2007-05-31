@@ -125,16 +125,16 @@ static void* thread_wrapper (void* context)
 
   try {
 
-    fold->cerr << "THREAD STARTED" << endl;
+    if (fold->log) *(fold->log) << "THREAD STARTED" << endl;
   
     fold->run();
 
-    fold->cerr << "THREAD ENDED" << endl;
+    if (fold->log) *(fold->log) << "THREAD ENDED" << endl;
 
   }
   catch (Error& error) {
 
-    fold->cerr << "THREAD ERROR: " << error << endl;
+    if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
 
     pthread_exit (0);
 
