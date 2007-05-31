@@ -585,8 +585,19 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
     info->set_start_time( mjd );
   }
   
+  if (seek_seconds)
+    input->seek_seconds (seek_seconds);
+    
+  if (total_seconds)
+    input->set_total_seconds (seek_seconds + total_seconds);
+  
   engine->prepare ();
   
+  if (maximum_RAM == 0) {
+    input->set_block_size( engine->get_minimum_samples() );
+    return;
+  }
+
   uint64 this_block_size = block_size;
   
   if (!this_block_size) {
@@ -596,7 +607,7 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
       consider the RAM required for out of place operations, FFT
       plans, etc.
     */
-    
+
     unsigned nbit  = info->get_nbit();
     unsigned ndim  = info->get_ndim();
     unsigned npol  = info->get_npol();
@@ -624,12 +635,6 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
 
   }
 
-  if (seek_seconds)
-    input->seek_seconds (seek_seconds);
-    
-  if (total_seconds)
-    input->set_total_seconds (seek_seconds + total_seconds);
-  
   input->set_block_size ( this_block_size );
     
 }
