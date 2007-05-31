@@ -9,8 +9,9 @@
 #include "dsp/File.h"
 #include "dsp/MultiFile.h"
 
-#include "dsp/LoadToFold1.h"
 #include "dsp/LoadToFoldConfig.h"
+#include "dsp/LoadToFold1.h"
+#include "dsp/LoadToFoldN.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
@@ -149,6 +150,9 @@ string baseband_options;
 
 // The LoadToFold configuration parameters
 Reference::To<dsp::LoadToFold::Config> config;
+
+// Number of threads used to process the data
+unsigned nthread = 1;
 
 int main (int argc, char** argv) try {
 
@@ -362,12 +366,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'p':
-      scanned = sscanf (optarg, "%lf", &config->reference_phase);
-      if (scanned != 1) {
-        cerr << "dspsr: Error parsing " << optarg << " as reference phase"
-	     << endl;
-	return -1;
-      }
+      config->reference_phase = strtod (optarg, 0);
       cerr << "dspsr: reference phase of pulse profile bin zero = "
            << config->reference_phase << endl;
       break;
@@ -378,11 +377,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'S':
-      scanned = sscanf (optarg, "%lf", &seek_seconds);
-      if (scanned != 1) {
-        cerr << "dspsr: Error parsing " << optarg << " as seek time" << endl;
-	return -1;
-      }
+      seek_seconds = strtod (optarg, 0);
       break;
 
     case 's':
@@ -390,15 +385,11 @@ int main (int argc, char** argv) try {
       break;
 
     case 'T':
-      scanned = sscanf (optarg, "%lf", &total_seconds);
-      if (scanned != 1) {
-        cerr << "dspsr: Error parsing " << optarg << " as total time" << endl;
-	return -1;
-      }
+      total_seconds = strtod (optarg, 0);
       break;
 
     case 't':
-      block_size = strtol (optarg, 0, 10);
+      nthread = strtol (optarg, 0, 10);
       break;
 
     case 'U':
@@ -492,8 +483,10 @@ int main (int argc, char** argv) try {
 
   Reference::To<dsp::LoadToFold> engine;
 
-  // single-threaded case; will add LoadToFoldN later
-  engine = new dsp::LoadToFold1;
+  if (nthread > 1)
+    engine = new dsp::LoadToFoldN (nthread);
+  else
+    engine = new dsp::LoadToFold1;
 
   // configure the processing engine
   engine->set_configuration( config );

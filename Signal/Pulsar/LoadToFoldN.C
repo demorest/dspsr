@@ -10,19 +10,36 @@
 
 #include "dsp/Input.h"
 #include "dsp/Scratch.h"
+#include "dsp/Dedispersion.h"
+#include "dsp/Fold.h"
 
+#include "FTransform.h"
 #include "ThreadContext.h"
 
+#include <fstream>
+using namespace std;
+
+#include <errno.h>
+
 //! Constructor
-dsp::LoadToFoldN::LoadToFoldN ()
+dsp::LoadToFoldN::LoadToFoldN (unsigned nthread)
 {
-  context = 0;
+  input_context = new ThreadContext;
+
+  if (nthread)
+    set_nthread (nthread);
+
+  if (!FTransform::context)
+    FTransform::context = new ThreadContext;
+
+  if (Operation::verbose)
+    cerr << "FTransform::context set to " << FTransform::context << endl;
 }
     
 //! Destructor
 dsp::LoadToFoldN::~LoadToFoldN ()
 {
-  delete context;
+  delete input_context;
 }
 
 //! Set the number of thread to be used
@@ -56,10 +73,7 @@ void dsp::LoadToFoldN::set_input (Input* _input)
   if (!input)
     return;
 
-  if (!context)
-    context = new ThreadContext;
-
-  input->set_context( context );
+  input->set_context( input_context );
 
   for (unsigned i=0; i<threads.size(); i++)
     threads[i]->set_input( input );
@@ -73,34 +87,120 @@ void dsp::LoadToFoldN::prepare ()
 
   threads[0]->prepare ();
 
+  if (threads[0]->kernel && !threads[0]->kernel->context)
+    threads[0]->kernel->context = new ThreadContext;
+
   for (unsigned i=1; i<threads.size(); i++) {
 
-  // loop and copy XXX
+    //
+    // clone the Fold/SubFold operations (share Pulsar::Predictor)
+    //
+    unsigned nfold = threads[0]->fold.size();
+    threads[i]->fold.resize( nfold );
+    for (unsigned ifold = 0; ifold < nfold; ifold ++)
+      threads[i]->fold[ifold] = threads[0]->fold[ifold]->clone();
+
+    //
+    // share the dedispersion kernel
+    //
+    threads[i]->kernel = threads[0]->kernel;
+
+    //
+    // only the first thread prints updates
+    //
+    threads[i]->report = false;
+
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFoldN::prepare preparing thread " << i << endl;
+
+    threads[i]->prepare ();
 
   }
-
 
 }
 
 static void* thread_wrapper (void* context)
 {
-  reinterpret_cast<dsp::LoadToFold1*>( context )->run();
+  dsp::LoadToFold1* fold = reinterpret_cast<dsp::LoadToFold1*>( context );
+
+  try {
+
+    fold->cerr << "THREAD STARTED" << endl;
+  
+    fold->run();
+
+    fold->cerr << "THREAD ENDED" << endl;
+
+  }
+  catch (Error& error) {
+
+    fold->cerr << "THREAD ERROR: " << error << endl;
+
+    pthread_exit (0);
+
+  }
+
+  pthread_exit (context);
 }
 
 //! Run through the data
 void dsp::LoadToFoldN::run ()
 {
+  ids.resize( threads.size() );
+
+  for (unsigned i=0; i<threads.size(); i++) {
+
+    LoadToFold1* ptr = threads[i].ptr();
+
+    if (Operation::verbose) {
+
+      string logname = "dspsr.log." + tostring (i);
+
+      cerr << "dsp::LoadToFoldN::run spawning thread " << i 
+	   << " ptr=" << ptr << " log=" << logname << endl;
+
+      ptr->take_ostream( new std::ofstream (logname.c_str()) );
+
+    }
+
+    errno = pthread_create (&ids[i], 0, thread_wrapper, ptr);
+
+    if (errno != 0)
+      throw Error (FailedSys, "psr::LoadToFoldN::run", "pthread_create");
+
+  }
+
+  if (Operation::verbose)
+    cerr << "psr::LoadToFoldN::run all threads spawned" << endl;
 
 }
 
 //! Finish everything
 void dsp::LoadToFoldN::finish ()
 {
-  // wait until threads are finished
-  // add folded profiles together
+  unsigned errors = 0;
+
+  for (unsigned i=0; i<threads.size(); i++) {
+
+    if (Operation::verbose)
+      cerr << "psr::LoadToFoldN::finish joining thread " << i << endl;
+
+    void* result = 0;
+    pthread_join (ids[i], &result);
+
+    if (result != threads[i].ptr())
+      errors ++;
+
+  }
+
+  if (errors)
+    throw Error (InvalidState, "dsp::LoadToFoldN::finish",
+		 "%d threads aborted with an error", errors);
+
+  // add folded profiles together XXX
 }
 
-//! The creator of new LoadToFold1 threads
+//! The creator of new LoadToFold1 threadss
 dsp::LoadToFold1* dsp::LoadToFoldN::new_thread ()
 {
   return new LoadToFold1;
