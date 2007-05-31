@@ -128,7 +128,7 @@ void dsp::Fold::prepare (const Observation* observation)
   if (!pulsar_ephemeris) {
     if (verbose)
       cerr << "dsp::Fold::prepare generating ephemeris" << endl;
-    pulsar_ephemeris = new psrephem (pulsar.c_str());
+    pulsar_ephemeris = new psrephem (pulsar.c_str(), 0);
   }
 
   if (verbose)
