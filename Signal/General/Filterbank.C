@@ -16,7 +16,7 @@
 
 using namespace std;
 
-//#define _DEBUG
+// #define _DEBUG 1
 
 dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 {
@@ -144,8 +144,9 @@ void dsp::Filterbank::transformation ()
     matrix_convolution = (response->get_ndim() == 8);
 
     if (verbose)
-      fprintf (stderr, "dsp::Filterbank::transformation with %s convolution\n",
-	       (matrix_convolution)?"matrix":"complex");
+      cerr << "dsp::Filterbank::transformation with " 
+	   << ((matrix_convolution)?"matrix":"complex") << " convolution"
+	   << endl;
 
     if( matrix_convolution && input->get_nchan() > 1 )
       throw Error(InvalidState,"dsp::Filterbank::transformation",
@@ -272,9 +273,9 @@ void dsp::Filterbank::transformation ()
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
 
-  if( verbose )
-    fprintf(stderr,"dsp::Filterbank::transformation() have changed start time by %d samps\n",
-	    nfilt_pos);
+  if (verbose)
+    cerr << "dsp::Filterbank::transformation start time += "
+	 << nfilt_pos << " samps" << endl;
 
   // enable the Response to record its effect on the output Timeseries
   if (response)
