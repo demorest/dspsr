@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.17 $
-   $Date: 2007/05/30 07:35:37 $
+   $Revision: 1.18 $
+   $Date: 2007/05/31 11:00:11 $
    $Author: straten $ */
 
 
@@ -58,6 +58,9 @@ namespace dsp {
     /*! Derived classes must define the conditions under which they can
       be used to parse the given data. */
     virtual bool matches (const Observation* observation) = 0;
+
+    //! Copy the input attributes to the output
+    void prepare ();
 
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;

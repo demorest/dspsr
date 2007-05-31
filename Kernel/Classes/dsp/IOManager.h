@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.20 $
-   $Date: 2007/05/31 05:59:05 $
+   $Revision: 1.21 $
+   $Date: 2007/05/31 11:00:11 $
    $Author: straten $ */
 
 
@@ -39,6 +39,9 @@ namespace dsp {
     //! Destructor
     virtual ~IOManager ();
     
+    //! Prepare the input and unpacker
+    void prepare ();
+
     //! Prepare the appropriate Input and Unpacker
     virtual void open (const std::string& id);
 

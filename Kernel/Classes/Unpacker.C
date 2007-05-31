@@ -10,6 +10,15 @@
 
 using namespace std;
 
+void dsp::Unpacker::prepare ()
+{
+  if (verbose)
+    cerr << "dsp::Unpacker::prepare" << endl;
+
+  // set the Observation information
+  output->Observation::operator=(*input);
+}
+
 //! Initialize and resize the output before calling unpack
 void dsp::Unpacker::transformation ()
 {

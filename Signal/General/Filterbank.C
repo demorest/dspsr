@@ -28,12 +28,18 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
     set_buffering_policy (new InputBuffering (this));
 }
 
-void dsp::Filterbank::transformation ()
+void dsp::Filterbank::prepare ()
 {
-  if (verbose)
-    cerr << "dsp::Filterbank::transformation input ndat=" << input->get_ndat()
-	 << " nchan=" << input->get_nchan() << endl;
+  make_preparations ();
+  prepared = true;
+}
 
+/*
+  These are preparations that could be performed once at the start of
+  the data processing
+*/
+void dsp::Filterbank::make_preparations ()
+{
   if (nchan <= input->get_nchan() )
     throw Error (InvalidState, "dsp::Filterbank::transformation",
 		 "output nchan=%d <= input nchan=%d",
@@ -45,13 +51,13 @@ void dsp::Filterbank::transformation ()
 		 nchan, input->get_nchan());
 
   //! Number of channels outputted per input channel
-  unsigned nchan_subband = nchan / input->get_nchan();
+  nchan_subband = nchan / input->get_nchan();
 
   //! Complex samples dropped from beginning of cyclical convolution result
-  unsigned nfilt_pos = 0;
+  nfilt_pos = 0;
 
   //! Complex samples dropped from end of cyclical convolution result
-  unsigned nfilt_neg = 0;
+  nfilt_neg = 0;
 
   if (response) {
 
@@ -87,33 +93,60 @@ void dsp::Filterbank::transformation ()
   // number of complex values in the result of the first fft
   unsigned n_fft = nchan_subband * freq_res;
 
+  scalefac = 1.0;
+
+  if (verbose) {
+
+    string norm = "unknown";
+    if (FTransform::get_norm() == FTransform::unnormalized)
+      norm = "unnormalized";
+    else if (FTransform::get_norm() == FTransform::normalized)
+      norm = "normalized";
+	
+    cerr << "dsp::Filterbank::transformation\n"
+      "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
+      "  fft::normalization=" << norm << endl;
+
+  }
+
+  if (FTransform::get_norm() == FTransform::unnormalized)
+    scalefac = double(n_fft) * double(freq_res);
+
+  else if (FTransform::get_norm() == FTransform::normalized)
+    scalefac = double(n_fft) / double(freq_res);
+
   // number of complex samples invalid in result of small ffts
-  unsigned n_filt = nfilt_pos + nfilt_neg;
+  nfilt_tot = nfilt_pos + nfilt_neg;
+
+  // number of time samples by which big ffts overlap
+  nsamp_overlap = 0;
 
   // number of time samples in first fft
-  unsigned nsamp_fft = 0;
-  // number of time samples by which big ffts overlap
-  unsigned nsamp_overlap = 0;
+  nsamp_fft = 0;
 
   if (input->get_state() == Signal::Nyquist) {
     nsamp_fft = 2 * n_fft;
-    nsamp_overlap = 2 * n_filt * nchan_subband;
+    nsamp_overlap = 2 * nfilt_tot * nchan_subband;
   }
 
   else if (input->get_state() == Signal::Analytic) {
     nsamp_fft = n_fft;
-    nsamp_overlap = n_filt * nchan_subband;
+    nsamp_overlap = nfilt_tot * nchan_subband;
   }
 
   else
     throw Error (InvalidState, "dsp::Filterbank::transformation",
 		 "invalid input data state = " + input->get_state_as_string());
 
+  // number of timesamples between start of each big fft
+  nsamp_step = nsamp_fft - nsamp_overlap;
+
   // if given, test the validity of the window function
   if (apodization) {
+
     if( input->get_nchan() > 1 )
       throw Error(InvalidState,"dsp::Filterbank::transformation",
-		  "I don't use apodization windows so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
+		  "not implemented for nchan=%d > 1",
 		  input->get_nchan());
 
     if (apodization->get_ndat() != nsamp_fft)
@@ -132,11 +165,8 @@ void dsp::Filterbank::transformation ()
 		   "Signal::Nyquist signal. Complex apodization function.");
   }
 
-  // number of timesamples between start of each big fft
-  unsigned nsamp_step = nsamp_fft - nsamp_overlap;
-
   // matrix convolution
-  bool matrix_convolution = false;
+  matrix_convolution = false;
 
   if (response) {
 
@@ -177,37 +207,24 @@ void dsp::Filterbank::transformation ()
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
   // this may be in addition to any overlap necessary due to convolution.
   // nsamp_step is analogous to ngood in Convolution::transformation
-  const unsigned nsamp_tres = nchan_subband / time_res;
+  nsamp_tres = nchan_subband / time_res;
   if (nsamp_tres < 1)
     throw Error (InvalidState, "dsp::Filterbank::transformation",
-		 "time resolution:%d > no.channels per input channel:%d\n", time_res, nchan_subband);
+		 "time resolution:%d > no.channels per input channel:%d\n",
+		 time_res, nchan_subband);
 
-  const uint64 ndat = input->get_ndat();
-
-  // number of big FFTs (not including, but still considering, extra FFTs
-  // required to achieve desired time resolution) that can fit into data
-  uint64 npart = (ndat-(nchan_subband-nsamp_tres)-nsamp_overlap)/nsamp_step;
-  // points kept from each small fft
-  unsigned nkeep = freq_res - n_filt;
-
-  if (npart == 0)
-    throw Error (InvalidState, "dsp::Filterbank::transformation",
-		 "input.ndat="I64" < nfft=%d",
-		 input->get_ndat(), nsamp_fft);
-
-
-  if (has_buffering_policy()) {
+  if (has_buffering_policy())
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
-    get_buffering_policy()->set_next_start (nsamp_step * npart);
-  }
 
-  // prepare the output TimeSeries
-  {
-    output->copy_configuration ( get_input() );
-    output->set_nchan( nchan );
-    output->set_ndim( 2 );
-    output->set_state( Signal::Analytic);
-  }
+  prepare_output();
+}
+
+void dsp::Filterbank::prepare_output ()
+{
+  output->copy_configuration ( get_input() );
+  output->set_nchan( nchan );
+  output->set_ndim( 2 );
+  output->set_state( Signal::Analytic);
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
@@ -215,34 +232,6 @@ void dsp::Filterbank::transformation ()
     weighted_output->convolve_weights (nsamp_fft, nsamp_step);
     weighted_output->scrunch_weights (nsamp_fft / (freq_res * time_res));
   }
-
-  // output data will be complex
-  output->set_state (Signal::Analytic);
-
-  // resize to new number of valid time samples
-  output->resize (npart * nkeep * time_res);
-
-  double scalefac = 1.0;
-
-  if (verbose) {
-
-    string norm = "unknown";
-    if (FTransform::get_norm() == FTransform::unnormalized)
-      norm = "unnormalized";
-    else if (FTransform::get_norm() == FTransform::normalized)
-      norm = "normalized";
-	
-    cerr << "dsp::Filterbank::transformation\n"
-      "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
-      "  fft::normalization=" << norm << endl;
-
-  }
-
-  if (FTransform::get_norm() == FTransform::unnormalized)
-    scalefac = double(n_fft) * double(freq_res);
-
-  else if (FTransform::get_norm() == FTransform::normalized)
-    scalefac = double(n_fft) / double(freq_res);
 
   output->rescale (scalefac);
   
@@ -280,6 +269,38 @@ void dsp::Filterbank::transformation ()
   // enable the Response to record its effect on the output Timeseries
   if (response)
     response->mark (output);
+}
+
+void dsp::Filterbank::transformation ()
+{
+  if (verbose)
+    cerr << "dsp::Filterbank::transformation input ndat=" << input->get_ndat()
+	 << " nchan=" << input->get_nchan() << endl;
+
+  if (!prepared)
+    prepare ();
+  else
+    make_preparations ();
+  
+  const uint64 ndat = input->get_ndat();
+
+  // number of big FFTs (not including, but still considering, extra FFTs
+  // required to achieve desired time resolution) that can fit into data
+  uint64 npart = (ndat-(nchan_subband-nsamp_tres)-nsamp_overlap)/nsamp_step;
+  // points kept from each small fft
+  unsigned nkeep = freq_res - nfilt_tot;
+
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
+
+  // prepare the output TimeSeries
+  prepare_output ();
+
+  // resize to new number of valid time samples
+  output->resize (npart * nkeep * time_res);
+
+  if (npart == 0)
+    return;
 
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;
