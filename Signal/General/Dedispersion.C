@@ -7,6 +7,8 @@
 
 #include "dsp/Dedispersion.h"
 #include "dsp/Observation.h"
+
+#include "ThreadContext.h"
 #include "Error.h"
 #include <complex>
 
@@ -37,6 +39,7 @@ dsp::Dedispersion::Dedispersion ()
   frequency_resolution_set = false;
 
   built = false;
+  context = 0;
 }
 
 //! Set the dimensions of the data and update the built attribute
@@ -198,12 +201,24 @@ void dsp::Dedispersion::prepare ()
  */
 void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 {
+  if (verbose)
+    cerr << "dsp::Dedispersion::match before lock" << endl;
+
+  ThreadContext::Lock lock (context);
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::match after lock" << endl;
+
   prepare (input, channels);
 
   if (!built)
     build ();
 
   Response::match (input, channels);
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::match exit" << endl;
+
 }
 
 void dsp::Dedispersion::mark (Observation* output)
