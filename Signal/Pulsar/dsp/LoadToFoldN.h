@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/05/30 10:48:29 $
+   $Revision: 1.2 $
+   $Date: 2007/05/31 05:59:40 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -26,7 +26,7 @@ namespace dsp {
   public:
 
     //! Constructor
-    LoadToFoldN ();
+    LoadToFoldN (unsigned nthread = 0);
     
     //! Destructor
     ~LoadToFoldN ();
@@ -60,13 +60,16 @@ namespace dsp {
     Reference::To<Input> input;
 
     //! Thread lock for Input::load
-    ThreadContext* context;
+    ThreadContext* input_context;
 
     //! The creator of new LoadToFold1 threads
     virtual LoadToFold1* new_thread ();
 
     //! The LoadToFold1 threads
     std::vector< Reference::To<LoadToFold1> > threads;
+
+    //! The thread ids
+    std::vector<pthread_t> ids;
 
   };
 
