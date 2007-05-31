@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.6 $
-   $Date: 2006/07/09 13:27:12 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2007/05/31 11:00:11 $
+   $Author: straten $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
@@ -28,6 +28,15 @@ namespace dsp {
 
     //! Null constructor
     Filterbank ();
+
+    //! Prepare all relevant attributes
+    void prepare ();
+
+    //! Get the minimum number of samples required for operation
+    uint64 get_minimum_samples () { return nsamp_fft; }
+
+    //! Get the minimum number of samples lost
+    uint64 get_minimum_samples_lost () { return nsamp_overlap; }
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
@@ -66,6 +75,25 @@ namespace dsp {
 
     //! Frequency resolution factor
     unsigned freq_res;
+
+  private:
+
+    void make_preparations ();
+    void prepare_output ();
+
+    unsigned nchan_subband;
+    unsigned nfilt_tot;
+    unsigned nfilt_pos;
+    unsigned nfilt_neg;
+
+    unsigned nsamp_overlap;
+    unsigned nsamp_fft;
+    unsigned nsamp_step;
+    unsigned nsamp_tres;
+
+    double scalefac;
+
+    bool matrix_convolution;
 
   };
   

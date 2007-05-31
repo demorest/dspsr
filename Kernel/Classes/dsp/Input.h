@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.35 $
-   $Date: 2007/05/31 05:59:05 $
+   $Revision: 1.36 $
+   $Date: 2007/05/31 11:00:11 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -46,6 +46,9 @@ namespace dsp {
     
     //! Copies the behaviour and information attributes (not data)
     virtual void copy (const Input* input);
+
+    //! Prepare the output with the attributes of the data source
+    void prepare ();
 
     //! End of data
     virtual bool eod() = 0;

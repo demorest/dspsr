@@ -89,9 +89,6 @@ void dsp::IOManager::set_input (Input* _input)
   if (!input)
     return;
 
-  if (output)
-    input->set_output (output);
-
   name = "IOManager:" + input->get_name();
 
   if (!unpacker || !unpacker->matches (input->get_info()))
@@ -183,22 +180,31 @@ void dsp::IOManager::load (TimeSeries* _data)
   operation ();
 }
 
+void dsp::IOManager::prepare ()
+{
+  if (verbose)
+    cerr << "dsp::IOManager::prepare" << endl;
+
+  if (!output)
+    set_output (new BitSeries);
+
+  input->set_output( output );
+
+  input->prepare();
+  unpacker->prepare();
+
+  prepared = true;
+}
 
 void dsp::IOManager::operation ()
 {
   if (!output)
     set_output (new BitSeries);
 
-  if (!input)
-    throw Error (InvalidState, "dsp::IOManager::load", "no input");
-
   input->load (output);
 
   if (!data)
     return;
-
-  if (!unpacker)
-    throw Error (InvalidState, "dsp::IOManager::load", "no unpacker");
 
   unpacker->operate ();
 }

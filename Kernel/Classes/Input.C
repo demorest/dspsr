@@ -33,6 +33,15 @@ void dsp::Input::set_context (ThreadContext* c)
   context = c;
 }
 
+void dsp::Input::prepare ()
+{
+  if (verbose)
+    cerr << "dsp::Input::prepare" << endl;
+
+  // set the Observation information
+  get_output()->Observation::operator=(info);
+}
+
 //! Load data into the BitSeries specified by set_output
 void dsp::Input::operation ()
 {
@@ -71,9 +80,10 @@ void dsp::Input::operation ()
          << get_output()->get_ndat () << endl;
 
   load_data (get_output());
-  if( verbose )
-    fprintf(stderr,"dsp::Input::operation() out of load_data() with load_sample="UI64" name='%s'\n",
-	    get_load_sample(), get_name().c_str());
+
+  if (verbose)
+    cerr << "dsp::Input::operation load_data done"
+      " load_sample=" << get_load_sample() << " name='" + get_name() + "'\n";
 
   // mark the input_sample and input attributes of the BitSeries
   get_output()->input_sample = load_sample;
@@ -86,32 +96,20 @@ void dsp::Input::operation ()
 
   uint64 available = get_output()->get_ndat() - resolution_offset;
 
-  if( verbose )
-    fprintf(stderr,"dsp::Input::operation() get_output()->input_sample="UI64" input=%p request_offset="UI64" request_ndat="UI64" to_seek="UI64" available="UI64"\n",
-	    uint64(get_output()->input_sample), get_output()->input,
-	    uint64(get_output()->request_offset),
-	    uint64(get_output()->request_ndat), uint64(to_seek), uint64(available));
-
   if (available < block_size) {
+
     // should be the end of data
 
     get_output()->request_ndat = available;
     to_seek = available;
 
     if (!eod())
-      cerr << "dsp::Input::operation available=" << available << " < block_size="
-	   << block_size << " but eod not set" << endl;
+      cerr << "dsp::Input::operation available=" << available 
+	   << " < block_size=" << block_size << " but eod not set" << endl;
+
   }
 
   last_load_ndat = get_output()->get_ndat();
-  if( verbose )
-    fprintf(stderr,"dsp::Input::operation() Have set last_load_ndat to "UI64"\n",last_load_ndat);
-
-  if( verbose ){
-    uint64 next_sample = load_sample + resolution_offset;
-    fprintf(stderr,"Got next_sample = "UI64" and ndat="UI64"\n",
-	    next_sample,get_info()->get_ndat());
-  }
 
   if (verbose)
     cerr << "dsp::Input::operation calling seek(" << to_seek << ")" << endl;
@@ -124,7 +122,8 @@ void dsp::Input::operation ()
     output->set_source( real_source );
 
   if (verbose)
-    cerr << "dsp::Input::operation exit with load_sample="<< load_sample <<endl;
+    cerr << "dsp::Input::operation exit with load_sample="
+	 << load_sample <<endl;
 }
 
 //! Set the BitSeries to which data will be loaded
@@ -204,16 +203,8 @@ void dsp::Input::load (BitSeries* data) try {
 */
 void dsp::Input::seek (int64 offset, int whence)
 {
-  if (verbose)
-    fprintf(stderr,"dsp::Input::seek [EXTERNAL] offset="I64" name=%s\n",offset,get_name().c_str());
-
   // the next sample required by the user
   uint64 next_sample = load_sample + resolution_offset;
-
-  if( verbose )
-    fprintf(stderr,"dsp::Input::seek("I64",%s) got next_sample="UI64"\n",
-	    offset, whence==SEEK_SET?"SEEK_SET":( whence==SEEK_CUR?"SEEK_CUR":"SEEK_END" ),
-	    next_sample);
 
   switch (whence) {
 
