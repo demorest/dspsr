@@ -138,10 +138,6 @@ void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
     cerr << "dsp::Dedispersion::prepare input.nchan=" << input->get_nchan()
 	 << " channels=" << channels << endl;
   
-  if ( input->get_dispersion_measure() != 0.0 )
-    throw Error (InvalidState, "dsp::Dedispersion::prepare",
-		 "unsure how to dedisperse stuff that's already dedispersed");
-
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
   set_dc_centred ( input->get_dc_centred() );
