@@ -31,7 +31,7 @@
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
-#include "Pulsar/SimplePredictor.h"
+// #include "Pulsar/SimplePredictor.h"
 
 #include "Error.h"
 
@@ -44,6 +44,7 @@ dsp::LoadToFold1::LoadToFold1 ()
   scratch = new Scratch;
   report = 1;
   log = 0;
+  minimum_samples = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -110,6 +111,7 @@ void dsp::LoadToFold1::prepare ()
 
   if (manager->get_info()->get_detected()) {
     prepare_fold (unpacked);
+    prepare_final ();
     return;
   }
 
@@ -338,8 +340,31 @@ void dsp::LoadToFold1::prepare_final ()
   if ( tbc && config->tbc_cutoff )
     tbc -> set_cutoff_sigma ( config->tbc_cutoff );
 
+  for (unsigned iop=0; iop < operations.size(); iop++) {
+
+    Operation* op = operations[iop];
+    op->prepare ();
+
+  }
+
+  // for now ...
+
+  minimum_samples = 0;
+
+  if (filterbank)
+    minimum_samples = filterbank->get_minimum_samples ();
+
+  if (convolution)
+    minimum_samples = convolution->get_minimum_samples ();
+
+  // assume that SampleDelay can handle any required buffering
+
 }
 
+uint64 dsp::LoadToFold1::get_minimum_samples () const
+{
+  return minimum_samples;
+}
 
 void setup_output (const dsp::Fold* from, dsp::Fold* to)
 {
@@ -490,6 +515,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
 
+#if 0
       Pulsar::SimplePredictor* simple_predictor
 	= dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
 
@@ -506,6 +532,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 	    ( simple_predictor->get_dispersion_measure() );
 
       }
+#endif
 
     }    
 

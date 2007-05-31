@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/05/31 07:57:31 $
+   $Revision: 1.4 $
+   $Date: 2007/05/31 11:00:31 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -48,6 +48,9 @@ namespace dsp {
 
     //! Finish everything
     void finish ();
+
+    //! Get the minimum number of samples required to process
+    uint64 get_minimum_samples () const;
 
   protected:
 

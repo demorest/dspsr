@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.4 $
-   $Date: 2007/05/31 07:57:22 $
+   $Revision: 1.5 $
+   $Date: 2007/05/31 11:00:31 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -69,6 +69,9 @@ namespace dsp {
 
     //! Finish everything
     void finish ();
+
+    //! Get the minimum number of samples required to process
+    uint64 get_minimum_samples () const;
 
     //! report percentage finished
     unsigned report;
@@ -146,6 +149,9 @@ namespace dsp {
 
     //! The scratch space shared by all operations
     Reference::To<Scratch> scratch;
+
+    //! The minimum number of samples required to process
+    uint64 minimum_samples;
 
   };
 

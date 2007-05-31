@@ -130,6 +130,13 @@ void dsp::LoadToFoldN::prepare ()
 
 }
 
+uint64 dsp::LoadToFoldN::get_minimum_samples () const
+{
+  if (threads.size() == 0)
+    return 0;
+  return threads[0]->get_minimum_samples();
+}
+
 void* dsp::LoadToFoldN::thread (void* context)
 {
   dsp::LoadToFold1* fold = reinterpret_cast<dsp::LoadToFold1*>( context );
