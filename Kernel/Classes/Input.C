@@ -28,6 +28,11 @@ dsp::Input::Input (const char* name) : Operation (name)
 
 dsp::Input::~Input (){ }
 
+void dsp::Input::set_context (ThreadContext* c)
+{
+  context = c;
+}
+
 //! Load data into the BitSeries specified by set_output
 void dsp::Input::operation ()
 {
@@ -171,10 +176,17 @@ void dsp::Input::copy (const Input* input)
  */
 void dsp::Input::load (BitSeries* data) try {
 
+  if (verbose)
+    cerr << "dsp::Input::load before lock" << endl;
   ThreadContext::Lock lock (context);
+  if (verbose)
+    cerr << "dsp::Input::load after lock" << endl;
 
   set_output( data );
   operate ();
+
+  if (verbose)
+    cerr << "dsp::Input::load exit" << endl;
 
  }
  catch (Error& error) {

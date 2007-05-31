@@ -23,18 +23,42 @@ dsp::IOManager::~IOManager()
 {
 }
 
+//! Set the scratch space
+void dsp::IOManager::set_scratch (Scratch* s)
+{
+  if (verbose)
+    cerr << "dsp::IOManager::set_scratch" << endl;
+
+  Operation::set_scratch( s );
+
+  if (input && !input->context)
+    input->set_scratch( s );
+
+  if (unpacker)
+    unpacker->set_scratch( s );
+}
+
+//! Set verbosity ostream
+void dsp::IOManager::set_ostream (std::ostream& os)
+{
+  Operation::set_ostream( os );
+
+  if (verbose)
+    cerr << "dsp::IOManager::set_ostream" << endl;
+
+  if (input && !input->context)
+    input->set_ostream( os );
+
+  if (unpacker)
+    unpacker->set_ostream( os );
+}
+
 void dsp::IOManager::set_output (BitSeries* raw)
 {
   if (verbose)
     cerr << "dsp::IOManager::set_output (BitSeries*) " << raw << endl;
 
   output = raw;
-
-  if (input) {
-    if (verbose)
-      cerr << "dsp::IOManager::set_output calling Input::set_output" << endl;
-    input -> set_output (raw);
-  }
 
   if (unpacker) {
     if (verbose)

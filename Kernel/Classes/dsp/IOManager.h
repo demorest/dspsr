@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.19 $
-   $Date: 2006/10/15 04:43:53 $
+   $Revision: 1.20 $
+   $Date: 2007/05/31 05:59:05 $
    $Author: straten $ */
 
 
@@ -70,6 +70,11 @@ namespace dsp {
     //! Load and convert the next block of data
     virtual void load (TimeSeries* data);
 
+    //! Set the scratch space
+    virtual void set_scratch (Scratch*);
+
+    //! Set verbosity ostream
+    virtual void set_ostream (std::ostream& os);
 
   protected:
 

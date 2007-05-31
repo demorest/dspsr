@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.34 $
-   $Date: 2007/05/30 07:35:20 $
+   $Revision: 1.35 $
+   $Date: 2007/05/31 05:59:05 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -122,6 +122,8 @@ namespace dsp {
     //! Inquire what source name will be changed to after each call to operate ["" meaning no change]
     //! get_info()->get_source() will return the sourcename if this is ""
     std::string get_real_source(){ return real_source; }
+
+    void set_context (ThreadContext* context);
 
   protected:
 
