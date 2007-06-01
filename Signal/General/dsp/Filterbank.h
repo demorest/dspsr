@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.7 $
-   $Date: 2007/05/31 11:00:11 $
+   $Revision: 1.8 $
+   $Date: 2007/06/01 02:37:27 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
 
 #include "dsp/Convolution.h"
+#include "FTransformAgent.h"
 
 namespace dsp {
   
@@ -94,6 +95,9 @@ namespace dsp {
     double scalefac;
 
     bool matrix_convolution;
+
+    FTransform::Plan* forward;
+    FTransform::Plan* backward;
 
   };
   
