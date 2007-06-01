@@ -593,11 +593,6 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   
   engine->prepare ();
   
-  if (maximum_RAM == 0) {
-    input->set_block_size( engine->get_minimum_samples() );
-    return;
-  }
-
   uint64 this_block_size = block_size;
   
   if (!this_block_size) {
@@ -621,7 +616,20 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
     double nbyte = double(nbit)/8 + copies * sizeof(float);
     
     double nbyte_dat = nbyte * ndim * npol * nchan;
-    
+
+    if (maximum_RAM == 0) {
+  
+      uint64 min = engine->get_minimum_samples();
+      double inMB = double(min) * nbyte_dat / double(MB);
+      cerr << "dspsr: using minimum blocksize = " << min << " samples" << endl
+           << "       (equivalent to -U " << inMB << ")" << endl;
+  
+      input->set_block_size( min );
+  
+      return;
+    }
+
+
     this_block_size = (uint64(maximum_RAM / nbyte_dat) / res) * res;
     
     cerr << "dspsr: block size=" << this_block_size << " samples" << endl;
