@@ -13,7 +13,7 @@
 #include "dsp/Dedispersion.h"
 #include "dsp/Fold.h"
 
-#include "FTransform.h"
+#include "FTransformAgent.h"
 #include "ThreadContext.h"
 
 #include <fstream>
@@ -29,11 +29,8 @@ dsp::LoadToFoldN::LoadToFoldN (unsigned nthread)
   if (nthread)
     set_nthread (nthread);
 
-  if (!FTransform::context)
-    FTransform::context = new ThreadContext;
-
-  if (Operation::verbose)
-    cerr << "FTransform::context set to " << FTransform::context << endl;
+  if (!FTransform::Agent::context)
+    FTransform::Agent::context = new ThreadContext;
 }
     
 //! Destructor
