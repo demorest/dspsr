@@ -217,6 +217,16 @@ void dsp::Filterbank::make_preparations ()
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
 
   prepare_output();
+
+  using namespace FTransform;
+
+  if (input->get_state() == Signal::Nyquist)
+    forward = Agent::current->get_plan (nsamp_fft, FTransform::frc);
+  else
+    forward = Agent::current->get_plan (nsamp_fft, FTransform::fcc);
+
+  backward = Agent::current->get_plan (freq_res, FTransform::bcc);
+
 }
 
 void dsp::Filterbank::prepare_output ()
@@ -384,17 +394,17 @@ void dsp::Filterbank::transformation ()
 	    }
 
 #ifdef _DEBUG
-cerr << "f[r|c]c1d (" << nsamp_fft << "," << (void*)c_spectrum[ipol] 
-     << "," << (void*)time_dom_ptr << ")" << endl;
+	    cerr << "f[r|c]c1d (" << nsamp_fft << "," << (void*)c_spectrum[ipol] 
+		 << "," << (void*)time_dom_ptr << ")" << endl;
 #endif
 
 	    if (input->get_state() == Signal::Nyquist)
-	      FTransform::frc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
+	      forward->frc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
 	    else
-	      FTransform::fcc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
+	      forward->fcc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
 
 #ifdef _DEBUG
-cerr << "f[r|c]c1d done" << endl;
+	    cerr << "f[r|c]c1d done" << endl;
 #endif
 
 	}
@@ -458,11 +468,12 @@ cerr << "back into time series" << endl;
 	    for (ichan=0; ichan < nchan_subband; ichan++) {
 
 #ifdef _DEBUG
-cerr << "bcc1d (" << freq_res << "," << (void*)c_time 
-     << "," << (void*)freq_dom_ptr << ")" << endl;
+	      cerr << "bcc1d (" << freq_res << "," << (void*)c_time 
+		   << "," << (void*)freq_dom_ptr << ")" << endl;
 #endif
 
-	      FTransform::bcc1d (freq_res, c_time, freq_dom_ptr);
+	      backward->bcc1d (freq_res, c_time, freq_dom_ptr);
+
 
 #ifdef _DEBUG
 cerr << "bcc1d done" << endl;
