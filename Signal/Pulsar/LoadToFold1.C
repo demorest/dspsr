@@ -594,6 +594,8 @@ void dsp::LoadToFold1::run ()
       // if we've already made it through a couple of blocks, assume EOD
       if (block == 0)
         throw error += "dsp::LoadToFold1::run";
+      else if (Operation::verbose)
+	cerr << "ignoring error " << error << endl;
     }
     
     block++;
