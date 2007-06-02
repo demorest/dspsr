@@ -51,7 +51,7 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
   if (weighted_copy == this)
     return;
 
-  if (verbose) cerr << "dsp::WeightedTimeSeries::copy_configuration"
+  if (verbose) cerr << "dsp::WeightedTimeSeries::copy_weights"
 		 " resize weights (ndat=" << get_ndat() << ")" << endl;
 
   set_npol_weight  ( weighted_copy->get_npol_weight() );
@@ -435,6 +435,9 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 	 << " nkeep=" << nkeep << "\n  ndat_per_weight=" << ndat_per_weight
 	 << " nweights=" << nweights_tot << " bad=" << nzero << endl;
   }
+
+  if (ndat_per_weight == 0)
+    return;
 
   double weights_per_dat = 1.0 / ndat_per_weight;
 
