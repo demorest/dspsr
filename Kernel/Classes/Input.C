@@ -40,6 +40,7 @@ void dsp::Input::prepare ()
 
   // set the Observation information
   get_output()->Observation::operator=(info);
+  get_output()->set_ndat(0);
 }
 
 //! Load data into the BitSeries specified by set_output
