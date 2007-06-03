@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.43 $
-   $Date: 2007/05/31 06:00:15 $
+   $Revision: 1.44 $
+   $Date: 2007/06/03 00:56:34 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -293,11 +293,6 @@ void dsp::Transformation<In, Out>::vchecks()
   
   if (!this->input)
     throw Error (InvalidState, name("vchecks"), "no input");
-
-  if (this->input->get_ndat() < 1)
-    throw Error (InvalidState, name("vchecks"),
-		 "empty input- input=%p input->ndat="UI64,
-		 this->input.get(),this->input->get_ndat());
 
   std::string reason;
   if (this->check_state && !this->input->state_is_valid (reason))
