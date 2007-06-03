@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.39 $
-   $Date: 2007/06/03 00:56:23 $
+   $Revision: 1.40 $
+   $Date: 2007/06/03 01:22:36 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -26,6 +26,9 @@ namespace dsp {
   class TimeSeries : public DataSeries {
 
   public:
+
+    //! Automatically delete arrays on resize(0)
+    static bool auto_delete;
 
     //! Null constructor
     TimeSeries ();

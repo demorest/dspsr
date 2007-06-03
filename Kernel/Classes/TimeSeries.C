@@ -18,6 +18,8 @@
 
 using namespace std;
 
+bool dsp::TimeSeries::auto_delete = true;
+
 bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
 {
   if( c1.ts != c2.ts )
@@ -152,10 +154,12 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     if (reserve_nfloat % get_ndim())
       fake_ndat ++;
 
-    DataSeries::resize(nsamples+fake_ndat);
+    if (nsamples || auto_delete)
+      DataSeries::resize(nsamples+fake_ndat);
 
     // offset the data pointer and reset the number of samples
     data = (float*)buffer + reserve_nfloat;
+
     set_ndat( nsamples );
 
     return;
