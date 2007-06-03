@@ -96,6 +96,7 @@ void dsp::LoadToFold1::prepare ()
   SetBufferingPolicy::policy = SetBufferingPolicy::Input;
   Operation::preserve_data = true;
   Operation::record_time = true;
+  TimeSeries::auto_delete = false;
 
   operations.resize (0);
 
@@ -591,11 +592,7 @@ void dsp::LoadToFold1::run ()
       
     }
     catch (Error& error) {
-      // if we've already made it through a couple of blocks, assume EOD
-      if (block == 0)
-        throw error += "dsp::LoadToFold1::run";
-      else if (Operation::verbose)
-	cerr << "ignoring error " << error << endl;
+      throw error += "dsp::LoadToFold1::run";
     }
     
     block++;
