@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.18 $
-   $Date: 2007/05/31 11:00:11 $
+   $Revision: 1.19 $
+   $Date: 2007/06/03 00:56:47 $
    $Author: straten $ */
 
 
@@ -74,6 +74,9 @@ namespace dsp {
     /*! This method must unpack the data from the BitSeries Input into
       the TimeSeries output. */
     virtual void unpack () = 0;
+
+    //! Derived classes may redefine this
+    virtual void resize_output ();
 
     //! Specialize the Unpacker for the Observation
     virtual void match (const Observation* observation);
