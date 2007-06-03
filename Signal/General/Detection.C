@@ -20,7 +20,7 @@ using namespace std;
 
 //! Constructor
 dsp::Detection::Detection () 
-  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace,true)
+  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace, true)
 {
   state = Signal::Intensity;
   ndim = 1;
@@ -53,20 +53,14 @@ void dsp::Detection::set_output_state (Signal::State _state)
 }
 
 //! Detect the input data
-void dsp::Detection::transformation ()
-{
+void dsp::Detection::transformation () try {
+
   static MJD st = get_input()->get_start_time();
 
-  if( verbose )
-    fprintf(stderr,"In dsp::Detection::transformation() with input ndat="UI64" (st=%f)\n",
-	    get_input()->get_ndat(),
-	    (get_input()->get_start_time()-st).in_seconds());
-
   if (verbose)
-    cerr << "dsp::Detection::transformation output state="
-	 << Signal::state_string(state) << " and input state=" 
-	 << Signal::state_string(get_input()->get_state())
-	 << " and input ndat=" << get_input()->get_ndat() << endl;
+    cerr << "dsp::Detection::transformation input ndat=" << input->get_ndat()
+	 << " state=" << Signal::state_string(get_input()->get_state())
+	 << " output state=" << Signal::state_string(state) << endl;
 
   checks();
 
@@ -74,13 +68,15 @@ void dsp::Detection::transformation ()
 
   if( state==input->get_state() ) {
     if( !inplace ) {
-      if (verbose) cerr << "dsp::Detection::transformation inplace and no state change" << endl;
+      if (verbose)
+	cerr << "dsp::Detection::transformation inplace and no state change" 
+	     << endl;
     }
     else {
-      if (verbose) cerr << "dsp::Detection::transformation no state change- just copying input" << endl;
+      if (verbose) 
+	cerr << "dsp::Detection::transformation just copying input" << endl;
       output->operator=( *input );
     }
-
     return;
   }
 
@@ -110,11 +106,12 @@ void dsp::Detection::transformation ()
 		 + State2string(get_input()->get_state()) + " to "
 		 + State2string(state));
 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::Detection::transformation() with output ndat="UI64" (st=%f)\n",
-	    get_output()->get_ndat(),
-	    (get_output()->get_start_time()-st).in_seconds());
+  if (verbose)
+    cerr << "dsp::Detection::transformation exit" << endl;
 }
+ catch (Error& error) {
+   throw error += "dsp::Detection::transformation";
+ }
 
 void dsp::Detection::resize_output ()
 {
@@ -146,10 +143,16 @@ void dsp::Detection::resize_output ()
   if (!inplace) {
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
-    get_output()->resize( get_input()->get_ndat() );
+
+    // note that TimeSeries::resize( 0 ) deletes arrays
+    if (input->get_ndat())
+      get_output()->resize( get_input()->get_ndat() );
+    else
+      get_output()->set_ndat( 0 );
   }
   else
     get_output()->reshape ( output_npol, output_ndim );
+
 
 }
 
@@ -195,8 +198,8 @@ dsp::Detection::onepol_detect()
 
 }
   
-void dsp::Detection::polarimetry ()
-{
+void dsp::Detection::polarimetry () try {
+
   if (verbose)
     cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
 
@@ -294,9 +297,12 @@ void dsp::Detection::polarimetry ()
   if ( get_input() == get_output() )
     resize_output ();
 
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::Detection::polarimetry()\n");
+  if (verbose)
+    cerr << "dsp::Detection::polarimetry exit" << endl;
 }
+ catch (Error& error) {
+   throw error += "dsp::Detection::polarimetry";
+ }
 
 void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace, 
 					  float* r[4])
@@ -341,7 +347,7 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
 
 void dsp::Detection::checks(){
   if( get_input()->get_detected() && state != Signal::Intensity )
-    throw Error(InvalidState,"dsp::Detection::checks()",
+    throw Error(InvalidState, "dsp::Detection::checks",
 		"Sorry, but this class currently can only redetect data to Stokes I (You had input='%s' and output='%s')",
 		State2string(get_input()->get_state()).c_str(),
 		State2string(state).c_str());
@@ -350,13 +356,13 @@ void dsp::Detection::checks(){
   if (state == Signal::Stokes || state == Signal::Coherence) {
 
     if (get_input()->get_npol() != 2)
-      throw Error (InvalidState, "dsp::Detection::transformation",
+      throw Error (InvalidState, "dsp::Detection::checks",
 		   "invalid npol=%d for %s formation",
 		   input->get_npol(), Signal::state_string(state));
     
     if (get_input()->get_state() != Signal::Analytic && 
 	get_input()->get_state() != Signal::Nyquist)
-      throw Error (InvalidState, "dsp::Detection::transformation",
+      throw Error (InvalidState, "dsp::Detection::checks",
 		   "invalid state=%s for %s formation",
 		   get_input()->get_state_as_string().c_str(),
 		   Signal::state_string(state));
@@ -366,7 +372,7 @@ void dsp::Detection::checks(){
     // ndim = 1,2,4
     
     if (!(ndim==1 || ndim==2 || ndim==4))
-      throw Error (InvalidState, "dsp::Detection::transformation",
+      throw Error (InvalidState, "dsp::Detection::checks",
 		   "invalid ndim=%d for %s formation",
 		   ndim, Signal::state_string(state));
   }    

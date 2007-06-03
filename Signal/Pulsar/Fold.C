@@ -391,6 +391,9 @@ void dsp::Fold::transformation ()
   if (verbose)
     cerr << "dsp::Fold::transformation" << endl;
 
+  if (input->get_ndat() == 0)
+    return;
+
   if (!input->get_detected ())
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input is not detected");
@@ -547,7 +550,15 @@ void dsp::Fold::fold (uint64 nweights,
 	   << " weight_idat=" << weight_idat << " iweight=" << iweight 
 	   << " nweights=" << nweights << endl;
 
-    assert (iweight < nweights);
+    if (iweight >= nweights) {
+      Error error (InvalidState, "dsp::Fold::fold");
+      error << "iweight=" << iweight << " >= nweight=" << nweights << "\n\t"
+	    << "idat_start=" << idat_start 
+	    << " weight_idat=" << weight_idat 
+	    << " ndatperweight=" << ndatperweight;
+      throw error;
+    }
+
     if (weights[iweight] == 0)  {
       discarded_weights ++;
       bad_weights ++;
