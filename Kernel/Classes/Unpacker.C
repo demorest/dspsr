@@ -19,6 +19,15 @@ void dsp::Unpacker::prepare ()
   output->Observation::operator=(*input);
 }
 
+void dsp::Unpacker::resize_output ()
+{
+  // resize the output
+  if (input->get_ndat())
+    output->resize (input->get_ndat());
+  else
+    output->set_ndat (0);
+}
+
 //! Initialize and resize the output before calling unpack
 void dsp::Unpacker::transformation ()
 {
@@ -28,16 +37,19 @@ void dsp::Unpacker::transformation ()
   // set the Observation information
   output->Observation::operator=(*input);
 
-  // resize the output 
-  output->resize (input->get_ndat());
+  resize_output ();
 
   // unpack the data
   unpack ();
 
   if (verbose)
-    cerr << "dsp::Unpacker::transformation"
-      " seek=" << input->get_request_offset() <<
-      " ndat=" << input->get_request_ndat() << endl;;
+    cerr << "dsp::Unpacker::tranformation TimeSeries book-keeping\n"
+      "  input_sample=" << input->input_sample <<
+      "  seek=" << input->get_request_offset() <<
+      "  ndat=" << input->get_request_ndat() << endl;;
+
+  // Set the input_sample attribute
+  output->input_sample = input->input_sample;
 
   // The following lines deal with time sample resolution of the data source
   output->seek (input->get_request_offset());
