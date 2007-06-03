@@ -143,12 +143,7 @@ void dsp::Detection::resize_output ()
   if (!inplace) {
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
-
-    // note that TimeSeries::resize( 0 ) deletes arrays
-    if (input->get_ndat())
-      get_output()->resize( get_input()->get_ndat() );
-    else
-      get_output()->set_ndat( 0 );
+    get_output()->resize( get_input()->get_ndat() );
   }
   else
     get_output()->reshape ( output_npol, output_ndim );
