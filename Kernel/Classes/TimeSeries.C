@@ -65,6 +65,7 @@ void dsp::TimeSeries::init ()
 
   reserve_ndat = 0;
   reserve_nfloat = 0;
+  input_sample = -1;
 
   set_preserve_seeked_data( false );
 }
@@ -305,6 +306,10 @@ void dsp::TimeSeries::seek (int64 offset)
   assert (data >= fbuffer);
 
   set_ndat( get_ndat() - offset );
+
+  input_sample += offset;
+  assert (input_sample > 0);
+
   change_start_time (offset);
 
 }
@@ -358,12 +363,18 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   return mean/double(get_ndat());
 }
 
-void dsp::TimeSeries::copy_configuration (const Observation* copy){
+void dsp::TimeSeries::copy_configuration (const Observation* copy)
+{
   if( copy==this )
     return;
 
   if (!get_preserve_seeked_data() || get_samps_offset() == 0) {
+
     Observation::operator=( *copy );
+    if (verbose)
+      cerr << "dsp::TimeSeries::copy_configuration ndat=" << get_ndat()
+	   << endl;
+
     return;
   }
 
@@ -467,6 +478,12 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat)
   if (!pre_ndat)
     pre_ndat = pre->get_ndat();
 
+  if (pre->input_sample + pre_ndat != input_sample)
+    throw Error (InvalidState, "dsp::TimeSeries::prepend",
+		 "data to be prepended end sample="I64"; "
+		 "not contiguous with start sample="I64,
+		 pre->input_sample + pre_ndat, input_sample);
+
   if (verbose)
     cerr << "dsp::TimeSeries::prepend " << pre_ndat << " samples" << endl;
 
@@ -504,6 +521,8 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
       memcpy (to, from, size_t(byte_count));
     }
   }
+
+  input_sample = copy->input_sample + idat_start;
 }
 
 /*! 

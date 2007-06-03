@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.38 $
-   $Date: 2006/11/19 15:39:02 $
+   $Revision: 1.39 $
+   $Date: 2007/06/03 00:56:23 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -100,6 +100,9 @@ namespace dsp {
     //! Copy data from given TimeSeries in front of the current position
     void prepend (const dsp::TimeSeries*, uint64 pre_ndat = 0);
 
+    //! Return the sample offset from the start of the data source
+    int64 get_input_sample () const { return input_sample; }
+
     //! Set all values to zero
     virtual void zero ();
 
@@ -155,12 +158,11 @@ namespace dsp {
     uint64 get_reserve () const { return reserve_ndat; }
 
     friend class InputBuffering;
+    friend class Unpacker;
 
   private:
 
-    //! Variable used by Transformation::operation() to ensure that saved data
-    //! stays saved and is not wiped over.
-    //! Variable is reset to false after call to transformation()
+    /*! Used by OutputBuffering to ensure that data is saved during resize */
     bool preserve_seeked_data;
 
     //! Reserve space for this many timesamples preceding the base address
@@ -168,6 +170,10 @@ namespace dsp {
 
     //! Number of floats reserved
     uint64 reserve_nfloat;
+
+    //! Sample offset from start of source
+    /*! Set by Unpacker class and used by multithreaded InputBuffering */
+    int64 input_sample;
 
     //! Called by constructor to initialise variables
     void init ();
