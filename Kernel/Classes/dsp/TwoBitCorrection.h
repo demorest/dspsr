@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.31 $
-   $Date: 2006/10/15 21:48:06 $
+   $Revision: 1.32 $
+   $Date: 2007/06/03 00:56:41 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -121,7 +121,7 @@ namespace dsp {
   protected:
 
     //! Perform the bit conversion transformation on the input TimeSeries
-    virtual void transformation ();
+    virtual void resize_output ();
 
     //! Build the two-bit correction look-up table and allocate histograms
     virtual void build ();

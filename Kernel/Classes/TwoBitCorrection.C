@@ -143,58 +143,23 @@ void dsp::TwoBitCorrection::set_output (TimeSeries* _output)
 }
 
 //! Initialize and resize the output before calling unpack
-void dsp::TwoBitCorrection::transformation ()
+void dsp::TwoBitCorrection::resize_output ()
 {
-  if (verbose)
-    cerr << "dsp::TwoBitCorrection::transformation" << endl;;
-
-  if (input->get_nbit() != 2)
-    throw Error (InvalidParam, "dsp::TwoBitCorrection::transformation",
-		 "input not 2-bit digitized");
-
-  // build the two-bit lookup table
-  if (!built){
-    if (verbose)
-      cerr << "dsp::TwoBitCorrection::transformation calling build" << endl;
-    build ();
-  }
-
-  // set the Observation information
-  output->Observation::operator=(*input);
-
   if (weighted_output) {
     weighted_output -> set_ndat_per_weight (get_nsample());
     weighted_output -> set_nchan_weight (1);
     weighted_output -> set_npol_weight (input->get_npol());
   }
 
-  // resize the output 
-  output->resize (input->get_ndat());
+  uint64 ndat = input->get_ndat();
+
+  if (ndat < get_nsample())
+    output->set_ndat (0);
+  else
+    output->resize (ndat);
 
   if (weighted_output)
     weighted_output -> neutral_weights ();
-
-  if (verbose)
-    cerr << "dsp::TwoBitCorrection::transformation calling unpack" << endl;
-
-  // unpack the data
-  unpack ();
-
-  if (weighted_output) {
-
-    weighted_output -> mask_weights ();
-    uint64 nbad = weighted_output -> get_nzero ();
-    discarded_weights += nbad;
-
-    if (nbad && verbose)
-      cerr << "dsp::TwoBitCorrection::transformation " << nbad 
-           << "/" << weighted_output -> get_nweights()
-           << " total bad weights" << endl;
-
-  }
-
-  if (verbose)
-    cerr << "dsp::TwoBitCorrection::transformation exit" << endl;
 }
 
 
@@ -424,11 +389,24 @@ float dsp::TwoBitCorrection::get_fraction_low () const
 
 void dsp::TwoBitCorrection::unpack ()
 {
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::unpack" << endl;;
+
   if (input->get_nbit() != 2)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
-		 "input not 2-bit sampled");
+		 "input not 2-bit digitized");
 
   uint64 ndat = input->get_ndat();
+
+  if (ndat < get_nsample())
+    return;
+
+  // build the two-bit lookup table
+  if (!built){
+    if (verbose)
+      cerr << "dsp::TwoBitCorrection::unpack calling build" << endl;
+    build ();
+  }
 
   unsigned samples_per_byte = TwoBitTable::vals_per_byte / get_ndig_per_byte();
 
@@ -440,10 +418,6 @@ void dsp::TwoBitCorrection::unpack ()
       input->get_state() != Signal::Analytic)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
 		 "input is detected");
-
-  if (ndat < get_nsample())
-    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
-		 "input ndat="UI64" < nsample=%d", ndat, get_nsample());
 
   const unsigned char* rawptr = input->get_rawptr();
 
@@ -483,8 +457,19 @@ void dsp::TwoBitCorrection::unpack ()
       
   }  // for each polarization
 
-  output->seek (input->get_request_offset());
-  output->set_ndat (input->get_request_ndat());
+
+  if (weighted_output) {
+
+    weighted_output -> mask_weights ();
+    uint64 nbad = weighted_output -> get_nzero ();
+    discarded_weights += nbad;
+
+    if (nbad && verbose)
+      cerr << "dsp::TwoBitCorrection::unpack " << nbad 
+           << "/" << weighted_output -> get_nweights()
+           << " total bad weights" << endl;
+
+  }
 
 }
 
