@@ -22,10 +22,7 @@ void dsp::Unpacker::prepare ()
 void dsp::Unpacker::resize_output ()
 {
   // resize the output
-  if (input->get_ndat())
-    output->resize (input->get_ndat());
-  else
-    output->set_ndat (0);
+  output->resize (input->get_ndat());
 }
 
 //! Initialize and resize the output before calling unpack

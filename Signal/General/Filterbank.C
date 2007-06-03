@@ -307,13 +307,10 @@ void dsp::Filterbank::transformation ()
   prepare_output ();
 
   // resize to new number of valid time samples
-  if (!npart) {
-    // note that TimeSeries::resize(0) will destroy its memory
-    output->set_ndat (0);
+  output->resize (npart * nkeep * time_res);
+
+  if (!npart)
     return;
-  }
-  else
-    output->resize (npart * nkeep * time_res);
 
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;

@@ -153,10 +153,7 @@ void dsp::TwoBitCorrection::resize_output ()
 
   uint64 ndat = input->get_ndat();
 
-  if (ndat < get_nsample())
-    output->set_ndat (0);
-  else
-    output->resize (ndat);
+  output->resize (ndat);
 
   if (weighted_output)
     weighted_output -> neutral_weights ();
