@@ -10,7 +10,6 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Scratch.h"
-#include "dsp/SetBufferingPolicy.h"
 
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/WeightedTimeSeries.h"
@@ -38,13 +37,14 @@
 using namespace std;
 
 dsp::LoadToFold1::LoadToFold1 ()
-  : cerr( std::cerr.rdbuf() )
+  : cerr( std::cerr.rdbuf() ), error (InvalidState, "")
 {
   manager = new IOManager;
   scratch = new Scratch;
   report = 1;
   log = 0;
   minimum_samples = 0;
+  status = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -81,19 +81,19 @@ dsp::TimeSeries* dsp::LoadToFold1::new_time_series ()
   if (config->weighted_time_series) {
     if (Operation::verbose)
       cerr << "Creating WeightedTimeSeries instance" << endl;
-    return new dsp::WeightedTimeSeries;
+    return new WeightedTimeSeries;
   }
   else {
     if (Operation::verbose)
       cerr << "Creating TimeSeries instance" << endl;
-    return new dsp::TimeSeries;
+    return  new TimeSeries;
   }
 }
 
 
 void dsp::LoadToFold1::prepare ()
 {
-  SetBufferingPolicy::policy = SetBufferingPolicy::Input;
+  // SetBufferingPolicy::policy = SetBufferingPolicy::Input;
   Operation::preserve_data = true;
   Operation::record_time = true;
   TimeSeries::auto_delete = false;
