@@ -306,7 +306,7 @@ void dsp::LoadToFoldN::finish ()
 	else if (!configuration->single_pulse)
 	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
 	    *( threads[first]->fold[ifold]->get_output() ) +=
-	      *( threads[first]->fold[ifold]->get_output() );
+	      *( threads[i]->fold[ifold]->get_output() );
 
 	finished ++;
 
