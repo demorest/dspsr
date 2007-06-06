@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.4 $
-   $Date: 2007/05/31 11:00:31 $
+   $Revision: 1.5 $
+   $Date: 2007/06/06 01:02:42 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -64,6 +64,9 @@ namespace dsp {
 
     //! Thread lock for Input::load
     ThreadContext* input_context;
+
+    //! Condition for thread completion
+    ThreadContext* completion;
 
     //! The creator of new LoadToFold1 threads
     virtual LoadToFold1* new_thread ();
