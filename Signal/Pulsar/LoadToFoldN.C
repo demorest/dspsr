@@ -9,6 +9,8 @@
 #include "dsp/LoadToFoldConfig.h"
 
 #include "dsp/Input.h"
+#include "dsp/InputBufferingShare.h"
+
 #include "dsp/Scratch.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/Fold.h"
@@ -17,14 +19,15 @@
 #include "ThreadContext.h"
 
 #include <fstream>
-using namespace std;
-
 #include <errno.h>
+
+using namespace std;
 
 //! Constructor
 dsp::LoadToFoldN::LoadToFoldN (unsigned nthread)
 {
   input_context = new ThreadContext;
+  completion = new ThreadContext;
 
   if (nthread)
     set_nthread (nthread);
@@ -89,6 +92,31 @@ void dsp::LoadToFoldN::prepare ()
 
   threads[0]->report = threads.size();
 
+  //
+  // install InputBuffering::Share policy
+  //
+  typedef Transformation<TimeSeries,TimeSeries> Xform;
+
+  for (unsigned iop=0; iop < threads[0]->operations.size(); iop++) {
+
+    Xform* xform = dynamic_kast<Xform>( threads[0]->operations[iop] );
+
+    if (!xform)
+      continue;
+
+    if (!xform->has_buffering_policy())
+      continue;
+
+    InputBuffering* ibuf;
+    ibuf = dynamic_cast<InputBuffering*>( xform->get_buffering_policy() );
+
+    if (!ibuf)
+      continue;
+
+    xform->set_buffering_policy( new InputBuffering::Share (ibuf, xform) );
+
+  }
+
   for (unsigned i=1; i<threads.size(); i++) {
 
     //
@@ -123,6 +151,44 @@ void dsp::LoadToFoldN::prepare ()
 
     threads[i]->prepare ();
 
+    //
+    // share buffering policies
+    //
+    typedef Transformation<TimeSeries,TimeSeries> Xform;
+
+    for (unsigned iop=0; iop < threads[i]->operations.size(); iop++) {
+
+      Xform* trans0 = dynamic_kast<Xform>( threads[0]->operations[iop] );
+
+      if (!trans0)
+	continue;
+
+      if (!trans0->has_buffering_policy())
+	continue;
+
+      InputBuffering::Share* ibuf0;
+      ibuf0 = dynamic_cast<InputBuffering::Share*>
+	( trans0->get_buffering_policy() );
+
+      if (!ibuf0)
+	continue;
+
+      Xform* trans = dynamic_kast<Xform>( threads[i]->operations[iop] );
+
+      if (!trans)
+	throw Error (InvalidState, "dsp::LoadToFoldN::prepare",
+		     "mismatched operation type");
+
+      if (!trans->has_buffering_policy())
+	throw Error (InvalidState, "dsp::LoadToFoldN::prepare",
+		     "mismatched buffering policy");
+
+      // cerr << "Sharing buffering policy of " << trans->get_name() << endl;
+
+      trans->set_buffering_policy( ibuf0->clone(trans) );
+
+    }
+
   }
 
 }
@@ -144,6 +210,8 @@ void* dsp::LoadToFoldN::thread (void* context)
   
     fold->run();
 
+    fold->status = 2;
+
     if (fold->log) *(fold->log) << "THREAD ENDED" << endl;
 
   }
@@ -151,11 +219,19 @@ void* dsp::LoadToFoldN::thread (void* context)
 
     if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
 
-    pthread_exit (0);
+    fold->status = -1;
+    fold->error = error;
 
   }
 
-  pthread_exit (context);
+  //
+  // the lock must go out of scope before the signal will be delivered
+  {
+    ThreadContext::Lock lock (fold->completion);
+    fold->completion->signal();
+  }
+
+  pthread_exit (0);
 }
 
 //! Run through the data
@@ -165,20 +241,23 @@ void dsp::LoadToFoldN::run ()
 
   for (unsigned i=0; i<threads.size(); i++) {
 
-    LoadToFold1* ptr = threads[i].ptr();
+    LoadToFold1* fold = threads[i];
 
     if (Operation::verbose) {
 
       string logname = "dspsr.log." + tostring (i);
 
       cerr << "dsp::LoadToFoldN::run spawning thread " << i 
-	   << " ptr=" << ptr << " log=" << logname << endl;
+	   << " ptr=" << fold << " log=" << logname << endl;
 
-      ptr->take_ostream( new std::ofstream (logname.c_str()) );
+      fold->take_ostream( new std::ofstream (logname.c_str()) );
 
     }
 
-    errno = pthread_create (&ids[i], 0, thread, ptr);
+    fold->status = 1;
+    fold->completion = completion;
+
+    errno = pthread_create (&ids[i], 0, thread, fold);
 
     if (errno != 0)
       throw Error (FailedSys, "psr::LoadToFoldN::run", "pthread_create");
@@ -193,24 +272,68 @@ void dsp::LoadToFoldN::run ()
 //! Finish everything
 void dsp::LoadToFoldN::finish ()
 {
+  Error error (InvalidState, "");
+
   unsigned errors = 0;
+  unsigned finished = 0;
 
-  for (unsigned i=0; i<threads.size(); i++) {
+  unsigned first = 0;
 
-    if (Operation::verbose)
-      cerr << "psr::LoadToFoldN::finish joining thread " << i << endl;
+  ThreadContext::Lock lock (completion);
 
-    void* result = 0;
-    pthread_join (ids[i], &result);
+  while (finished < threads.size()) {
 
-    if (result != threads[i].ptr())
-      errors ++;
+    for (unsigned i=0; i<threads.size(); i++) {
+
+      if (threads[i]->status == 2 || threads[i]->status == -1) {
+
+	if (Operation::verbose)
+	  cerr << "psr::LoadToFoldN::finish joining thread " << i << endl;
+
+	void* result = 0;
+	pthread_join (ids[i], &result);
+
+	if (threads[i]->status < 0) {
+	  errors ++;
+	  error = threads[i]->error;
+	}
+
+	threads[i]->status = 0;
+
+	if (finished == 0)
+	  first = i;
+
+	else if (!configuration->single_pulse)
+	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
+	    *( threads[first]->fold[ifold]->get_output() ) +=
+	      *( threads[first]->fold[ifold]->get_output() );
+
+	finished ++;
+
+      }
+      else if (Operation::verbose) {
+
+	cerr << "dsp::LoadToFoldN::finish thread " << i;
+	if (threads[i]->status == 1)
+	  cerr << " pending" << endl;
+	else
+	  cerr << " processed" << endl;
+
+      }
+
+    }
+
+    if (finished < threads.size())
+      completion->wait();
 
   }
 
-  if (errors)
-    throw Error (InvalidState, "dsp::LoadToFoldN::finish",
-		 "%d threads aborted with an error", errors);
+  threads[first]->finish();
+
+  if (errors) {
+    error << errors << " threads aborted with an error";
+    throw error += "dsp::LoadToFoldN::finish";
+  }
 
   // add folded profiles together XXX
 }
