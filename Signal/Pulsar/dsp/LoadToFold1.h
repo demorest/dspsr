@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.5 $
-   $Date: 2007/05/31 11:00:31 $
+   $Revision: 1.6 $
+   $Date: 2007/06/06 03:18:13 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -20,6 +20,8 @@ namespace Pulsar {
   class Parameters;
   class Predictor;
 }
+
+class ThreadContext;
 
 namespace dsp {
 
@@ -106,6 +108,15 @@ namespace dsp {
 
     //! Pointer to the ostream
     std::ostream* log;
+
+    //! Status
+    int status;
+
+    //! Error status
+    Error error;
+
+    //! Completion notice
+    ThreadContext* completion;
 
   private:
 
