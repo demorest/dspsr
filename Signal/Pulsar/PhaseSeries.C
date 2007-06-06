@@ -116,14 +116,11 @@ void dsp::PhaseSeries::set_hits (unsigned value)
 bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
 				int64 istart, int64 fold_ndat)
 {
-  static MJD st = obs.get_start_time(); 
   MJD obsStart = obs.get_start_time() + double (istart) / obs.get_rate();
 
   if (verbose)
-    cerr << "PhaseSeries::mixable"
-         << "\n  mix->start=" << (obsStart-st).in_seconds()
-	 << "\n istart=" << istart
-	 << "\n this->start=" << (get_start_time()-st).in_seconds() << endl;
+    cerr << "PhaseSeries::mixable start mix=" << obsStart.printdays(8)
+	 << " cur=" << get_start_time().printdays(8) << endl;
 
   MJD obsEnd;
 
@@ -143,8 +140,8 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
       cerr << "PhaseSeries::mixable reset" << endl;
 
     Observation::operator = (obs);
-    if( verbose )
-      fprintf(stderr,"dsp::PhaseSeries::mixable() has acquired rate=%f\n",get_rate());
+    if (verbose)
+      cerr << "dsp::PhaseSeries::mixable rate=" << get_rate() << endl;
 
     end_time = obsEnd;
     start_time = obsStart;
@@ -169,8 +166,8 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
   start_time = std::min (start_time, obsStart);
 
   if (verbose)
-    cerr << "PhaseSeries::mixable combine start=" << start_time
-	 << " end=" << end_time << endl;
+    cerr << "PhaseSeries::mixable combine start=" << start_time.printdays(8)
+	 << " end=" << end_time.printdays(8) << endl;
 
   return true;
 }
@@ -209,6 +206,11 @@ dsp::PhaseSeries::operator += (const PhaseSeries& prof)
 
   for (unsigned ibin=0; ibin<hits.size(); ibin++)
     hits[ibin] += prof.hits[ibin];
+
+  if (verbose)
+    cerr << "dsp::PhaseSeries::operator+= length add=" 
+         << prof.integration_length 
+         << " cur=" << integration_length << endl;
 
   integration_length += prof.integration_length;
 
