@@ -7,18 +7,19 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.10 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2007/06/06 01:02:04 $
+   $Author: straten $ */
 
 #ifndef __Shape_h
 #define __Shape_h
 
+#include "ReferenceAble.h"
+#include <iostream>
+
 #ifdef ACTIVATE_MPI
 #include <mpi.h>
 #endif
-
-#include "ReferenceAble.h"
 
 namespace dsp {
 
@@ -90,6 +91,9 @@ namespace dsp {
       return buffer + offset * ipol + ndat*ndim * ichan;
     }
 
+    //! Set verbosity ostream
+    virtual void set_ostream (std::ostream& os) const;
+
   protected:
 
     //! Data points
@@ -119,6 +123,9 @@ namespace dsp {
     void init ();
     void size_dataspace ();
     void destroy ();
+
+    //! Stream to which verbose messages are sent
+    mutable std::ostream cerr;
 
 #if PGPLOT
     void plot (float centre, float width, const char* label, 

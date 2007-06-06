@@ -32,8 +32,15 @@ using namespace std;
 bool dsp::Observation::verbose = false;
 
 dsp::Observation::Observation ()
+  : cerr (std::cerr.rdbuf())
 {
   init ();
+}
+
+//! Set verbosity ostream
+void dsp::Observation::set_ostream (std::ostream& os) const
+{
+  this->cerr.rdbuf( os.rdbuf() );
 }
 
 void dsp::Observation::init ()
@@ -214,7 +221,7 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
   if (telescope != obs.telescope) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different telescope:"
-	   << telescope << " and " << obs.telescope << endl;
+	      << telescope << " and " << obs.telescope << endl;
     can_combine = false;
   }
 
@@ -513,6 +520,7 @@ string dsp::Observation::get_state_as_string () const
 }
 
 dsp::Observation::Observation (const Observation & in_obs)
+  : cerr (in_obs.cerr.rdbuf())
 {
   init ();
   dsp::Observation::operator=(in_obs);

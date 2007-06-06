@@ -351,6 +351,9 @@ namespace dsp {
     //! Returns the i'th dspExtension stored
     const dspExtension* get_extension(unsigned iext) const;
 
+    //! Set verbosity ostream
+    virtual void set_ostream (std::ostream& os) const;
+
   protected:
 
     //! Extra stuff
@@ -418,6 +421,9 @@ namespace dsp {
 
     //! The last format the data was stored as ("raw","CoherentFB","Digi" etc)
     std::string last_ondisk_format;
+
+    //! Stream to which verbose messages are sent
+    mutable std::ostream cerr;
 
   private:
     /////////////////////////////////////////////////////////////////////

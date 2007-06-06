@@ -30,7 +30,9 @@ void dsp::Shape::destroy ()
   init ();
 }
 
-dsp::Shape::Shape(void) {
+dsp::Shape::Shape ()
+  : cerr (std::cerr.rdbuf())
+{
   init ();
 }
 
@@ -40,6 +42,7 @@ dsp::Shape::~Shape(void) {
 
 //! Copy constructor
 dsp::Shape::Shape (const Shape& copy)
+  : cerr (copy.cerr.rdbuf())
 {
   init ();
   Shape::operator = (copy);
@@ -272,4 +275,10 @@ void dsp::Shape::zero ()
 {
   for (unsigned ifilt=0; ifilt<bufsize; ifilt++)
     buffer[ifilt] = 0;
+}
+
+//! Set verbosity ostream
+void dsp::Shape::set_ostream (std::ostream& os) const
+{
+  this->cerr.rdbuf( os.rdbuf() );
 }
