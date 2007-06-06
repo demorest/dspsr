@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.36 $
-   $Date: 2007/05/31 11:00:22 $
+   $Revision: 1.37 $
+   $Date: 2007/06/06 01:01:24 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -108,7 +108,7 @@ namespace dsp {
     virtual void set_scratch (Scratch*);
 
     //! Set verbosity ostream
-    virtual void set_ostream (std::ostream& os);
+    virtual void set_ostream (std::ostream& os) const;
 
   protected:
 
@@ -150,7 +150,7 @@ namespace dsp {
     bool prepared;
 
     //! Stream to which verbose messages are sent
-    std::ostream cerr;
+    mutable std::ostream cerr;
 
   };
   
