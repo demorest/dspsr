@@ -68,18 +68,23 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 			   << " registered sub-classes" << std::endl;
 
     for (unsigned ichild=0; ichild < registry.size(); ichild++) {
+
       if (verbose)
-	fprintf(stderr,"Testing child %d: '%s'\n",
-		ichild,registry[ichild]->get_name().c_str());
+	std::cerr << "dsp::File::create testing " 
+		  << registry[ichild]->get_name() << endl;;
 
       if ( registry[ichild]->is_valid (filename,_bs_index) ) {	
+
 	if (verbose)
-	  fprintf(stderr,"%s::is_valid() returned true\n",
-		  registry[ichild]->get_name().c_str());
+	  std::cerr << "dsp::File::create " << registry[ichild]->get_name()
+		    << "::is_valid() returned true" << endl;
+
 	File* child = registry.create (ichild);
 	child->open( filename,_bs_index );	
 	return child;	
+
       }
+
     }
     
   } catch (Error& error) {
@@ -96,13 +101,12 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
   throw Error (InvalidParam, "dsp::File::create", msg);
 }
 
-void dsp::File::open (const char* filename,int _bs_index)
+void dsp::File::open (const char* filename, int _bs_index)
 {
   bs_index = _bs_index;
 
   if (verbose)
-    fprintf(stderr,"\nIn dsp::File::open (char*) with filename='%s' and bs_index=%d\n",
-	    filename,bs_index);
+    cerr << "dsp::File::open filename='" << filename << "'" << endl;
 
   const PseudoFile* null_ptr = 0;
   open (filename, null_ptr );
@@ -111,8 +115,8 @@ void dsp::File::open (const char* filename,int _bs_index)
 void dsp::File::open (const PseudoFile& file)
 {
   if (verbose)
-    fprintf(stderr,"\nIn dsp::File::open (pseudofile) with filename='%s'\n",
-	    file.filename.c_str());
+    cerr << "dsp::File::open PseudoFile::filename='" 
+	 << file.filename << "'" << endl;
 
   open (0, &file);
 }
@@ -194,7 +198,7 @@ void dsp::File::set_total_samples ()
 int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 {
   if (verbose)
-    cerr << "dsp::File::load_bytes() nbytes=" << bytes << endl;
+    cerr << "dsp::File::load_bytes nbytes=" << bytes << endl;
 
   int64 old_pos = lseek(fd,0,SEEK_CUR);
 
@@ -207,8 +211,9 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
   uint64 end_pos = get_info()->get_nbytes() + uint64(header_bytes);
 
   if (verbose)
-    fprintf(stderr,"dsp::File::load_bytes() ::read() returned "I64" old_pos="I64" new_pos="I64" end_pos="UI64"\n",
-	    int64(bytes_read), old_pos, new_pos, end_pos);
+    cerr << "dsp::File::load_bytes bytes_read=" << bytes_read
+	 << " old_pos=" << old_pos << " new_pos=" << new_pos 
+	 << " end_pos=" << end_pos << endl;
 
   if( uint64(new_pos) >= end_pos ){
     bytes_read = ssize_t(end_pos - old_pos);
@@ -227,18 +232,13 @@ int64 dsp::File::seek_bytes (uint64 bytes)
   if (verbose)
     cerr << "dsp::File::seek_bytes nbytes=" << bytes << endl;
   
-  if (fd < 0) {
-    fprintf (stderr, "dsp::File::seek_bytes invalid fd\n");
-    return -1;
-  }
+  if (fd < 0)
+    throw Error (InvalidState, "dsp::File::seek_bytes", "invalid fd");
 
   bytes += header_bytes;
   int64 retval = lseek (fd, bytes, SEEK_SET);
-  if (retval < 0) {
-    perror ("dsp::File::seek_bytes lseek error");
-    fprintf(stderr,"Called lseek(%d,"UI64",SEEK_SET)\n",fd,bytes);
-    return -1;
-  }
+  if (retval < 0)
+    throw Error (FailedSys, "dsp::File::seek_bytes", "lseek error");
 
   if( uint64(retval) == get_info()->get_nbytes()+uint64(header_bytes) )
     end_of_data = true;
