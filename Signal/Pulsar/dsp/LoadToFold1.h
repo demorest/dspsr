@@ -7,14 +7,16 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.6 $
-   $Date: 2007/06/06 03:18:13 $
-   $Author: straten $ */
+   $Revision: 1.7 $
+   $Date: 2007/06/06 04:45:54 $
+   $Author: ahotan $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
 #define __baseband_dsp_LoadToFold1_h
 
 #include "dsp/LoadToFold.h"
+
+#include <assert.h>
 
 namespace Pulsar {
   class Parameters;
