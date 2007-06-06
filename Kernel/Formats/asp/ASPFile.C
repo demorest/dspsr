@@ -101,19 +101,19 @@ bool dsp::ASPFile::is_valid (const char* filename, int) const
 
   if (header.band_dir != 1 && header.band_dir != -1) {
     if (verbose)
-      std::cerr << "dsp::ASPFile invalid band_dir=" << header.band_dir << endl;
+      cerr << "dsp::ASPFile invalid band_dir=" << header.band_dir << endl;
     return false;
   }
 
   if (fabs(header.ch_bw) > 512.0) {
     if (verbose)
-      std::cerr << "dsp::ASPFile invalid ch_bw=" << header.ch_bw << endl;
+      cerr << "dsp::ASPFile invalid ch_bw=" << header.ch_bw << endl;
     return false;
   }
  
   if (fabs(header.rf) > 12e4) {
     if (verbose)
-      std::cerr << "dsp::ASPFile invalid rf=" << header.rf << endl;
+      cerr << "dsp::ASPFile invalid rf=" << header.rf << endl;
     return false;
   }
 
