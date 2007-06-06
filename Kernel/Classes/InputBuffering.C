@@ -39,10 +39,12 @@ void dsp::InputBuffering::set_next_start (uint64 next)
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::set_next_start " << next << endl;
 
+  const TimeSeries* input = target->get_input();
+
   next_start_sample = next;
 
   // the number of samples in the target
-  uint64 ndat = target->get_input()->get_ndat();
+  uint64 ndat = input->get_ndat();
 
   // the number of samples to be buffered
   uint64 buffer_ndat = ndat - next_start_sample;
@@ -64,13 +66,17 @@ void dsp::InputBuffering::set_next_start (uint64 next)
     set_minimum_samples (buffer_ndat);
 
   if (!buffer)
-    buffer = target->get_input()->null_clone();
+    buffer = input->null_clone();
 
-  buffer->set_nchan( target->get_input()->get_nchan() );
-  buffer->set_npol ( target->get_input()->get_npol() );
-  buffer->set_ndim ( target->get_input()->get_ndim() );
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::set_next_start copying from input sample "
+	 << input->get_input_sample() + next_start_sample << endl;
+
+  buffer->set_nchan( input->get_nchan() );
+  buffer->set_npol ( input->get_npol() );
+  buffer->set_ndim ( input->get_ndim() );
   buffer->resize( minimum_samples );
-  buffer->copy_data( target->get_input(), next_start_sample, buffer_ndat );
+  buffer->copy_data( input, next_start_sample, buffer_ndat );
   buffer->set_ndat( buffer_ndat );
 }
 
@@ -93,3 +99,10 @@ void dsp::InputBuffering::post_transformation ()
 }
 
 
+int64 dsp::InputBuffering::get_next_contiguous () const
+{
+  if (!buffer)
+    return -1;
+
+  return buffer->get_input_sample() + buffer->get_ndat();
+}
