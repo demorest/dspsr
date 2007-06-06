@@ -602,11 +602,12 @@ void dsp::Fold::fold (uint64 nweights,
 
   }
 
-  if (bad_weights && verbose)
-    cerr << "dsp::Fold::fold " << bad_weights
-         << "/" << iweight+1 << " total bad weights" << endl;
-
   double time_folded = double(ndat_folded) / get_input()->get_rate();
+
+  if (verbose)
+    cerr << "dsp::Fold::fold ndat_folded=" << ndat_folded 
+	 << " time=" << time_folded*1e3 << " ms"
+	 << " (bad=" << bad_weights << "/" << iweight+1 << ")" << endl;
 
   get_output()->integration_length += time_folded;
 
