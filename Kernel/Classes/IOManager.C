@@ -39,7 +39,7 @@ void dsp::IOManager::set_scratch (Scratch* s)
 }
 
 //! Set verbosity ostream
-void dsp::IOManager::set_ostream (std::ostream& os)
+void dsp::IOManager::set_ostream (std::ostream& os) const
 {
   Operation::set_ostream( os );
 
@@ -48,6 +48,9 @@ void dsp::IOManager::set_ostream (std::ostream& os)
 
   if (input && !input->context)
     input->set_ostream( os );
+
+  if (output)
+    output->set_ostream( os );
 
   if (unpacker)
     unpacker->set_ostream( os );
@@ -93,6 +96,7 @@ void dsp::IOManager::set_input (Input* _input)
 
   if (!unpacker || !unpacker->matches (input->get_info()))
     set_unpacker ( Unpacker::create( input->get_info() ) );
+
 }
 
 const dsp::Observation* dsp::IOManager::get_info () const
