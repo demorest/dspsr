@@ -43,7 +43,7 @@ void dsp::Operation::unset_timekeeper()
 { timekeeper = 0; }
 
 //! Set verbosity ostream
-void dsp::Operation::set_ostream (std::ostream& os)
+void dsp::Operation::set_ostream (std::ostream& os) const
 {
   this->cerr.rdbuf( os.rdbuf() );
 }
@@ -78,7 +78,6 @@ dsp::Operation::Operation (const char* _name)
     timekeeper->add_operation(this);
 
   prepared = false;
-  // set_ostream (std::cerr);
 }
 
 dsp::Operation::~Operation ()
