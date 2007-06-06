@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/05/31 11:00:26 $
+   $Revision: 1.4 $
+   $Date: 2007/06/06 01:02:28 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold_h
 #define __baseband_dsp_LoadToFold_h
 
 #include "Reference.h"
+#include "environ.h"
 
 namespace dsp {
 
