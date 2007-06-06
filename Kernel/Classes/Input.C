@@ -56,12 +56,12 @@ void dsp::Input::operation ()
 
   string reason;
   if (!info.state_is_valid (reason))
-    throw Error (InvalidState, "dsp::Input::operation()", "invalid state: "+reason);
+    throw Error (InvalidState, "dsp::Input::operation",
+		 "invalid state: " + reason);
 
   if (verbose)
     cerr << "dsp::Input::operation [EXTERNAL] block_size=" << block_size
-	 << " next_sample=" << load_sample+resolution_offset
-         << " (overlap=" << overlap << ")" << endl;
+	 << " next_sample=" << load_sample+resolution_offset << endl;
 
   // set the Observation information
   get_output()->Observation::operator=(info);
@@ -71,7 +71,7 @@ void dsp::Input::operation ()
   get_output()->change_start_time (load_sample);
 
   if (verbose)
-    cerr << "dsp::Input::operation [INTERNAL] block_size = " << get_block_size() << " load_size=" << load_size 
+    cerr << "dsp::Input::operation [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
   get_output()->resize (load_size);
