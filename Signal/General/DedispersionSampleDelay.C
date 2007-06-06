@@ -39,12 +39,12 @@ bool dsp::Dedispersion::SampleDelay::match (const Observation* obs)
   sampling_rate = obs->get_rate();
   delays.resize( obs->get_nchan() );
 
-  cerr << "dsp::Dedispersion::SampleDelay::match"
-       << "\n  centre frequency = " << centre_frequency
-       << "\n  bandwidth = " << bandwidth
-       << "\n  dispersion measure = " << dispersion_measure
-       << "\n  sampling rate = " << sampling_rate << endl;
-
+  std::cerr << "dsp::Dedispersion::SampleDelay::match"
+	    << "\n  centre frequency = " << centre_frequency
+	    << "\n  bandwidth = " << bandwidth
+	    << "\n  dispersion measure = " << dispersion_measure
+	    << "\n  sampling rate = " << sampling_rate << endl;
+  
   // when divided by MHz, yields a dimensionless value
   double dispersion = dispersion_measure / dm_dispersion;
 

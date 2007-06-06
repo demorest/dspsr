@@ -19,6 +19,8 @@
 #include <string>
 #include <iostream>
 
+using namespace std;
+
 dsp::SMROFile::SMROFile (const char* filename) 
   : File ("SMRO")
 {
@@ -47,24 +49,24 @@ bool dsp::SMROFile::is_valid (const char* filename, int) const
   //
   if(hdr[8] == ':') {       // Legacy version, prior to LBA header upgrade
     return true;
-    std::cerr << "lbadr: Recognised legacy LBADR file format, bandwidth 16 MHz" << std::endl;
+    cerr << "lbadr: Recognised legacy LBADR file format, bandwidth 16 MHz" << endl;
   }
   else if(hdr[13] == ':') { // Current version, 4096-byte ASCII header
-    std::cerr << "lbadr: Recognised 4096-byte LBADR header" << std::endl;
+    cerr << "lbadr: Recognised 4096-byte LBADR header" << endl;
     float bw = 0.0;
-    std::string strhdr = hdr;
+    string strhdr = hdr;
     int pos1 = strhdr.find("BANDWIDTH");
-    if (pos1 == std::string::npos) {
-      std::cerr << "lbadr: Bandwidth keyword missing from header" << std::endl;
+    if (pos1 == string::npos) {
+      cerr << "lbadr: Bandwidth keyword missing from header" << endl;
       return false;
     }
     sscanf(hdr+pos1, "BANDWIDTH %f", &bw);
     if (bw == 16.0) {
-      std::cerr << "lbadr: Recorded bandwidth = 16 MHz" << std::endl;
+      cerr << "lbadr: Recorded bandwidth = 16 MHz" << endl;
       return true;
     }
     else {
-      std::cerr << "lbadr: Recorded bandwidth unsupported" << std::endl;
+      cerr << "lbadr: Recorded bandwidth unsupported" << endl;
       return false;
     }
   }
