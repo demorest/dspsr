@@ -483,13 +483,11 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     throw Error (InvalidState, "dsp::TwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be == 1", ndig);
 
-  if (verbose){
-    cerr << "dsp::TwoBitCorrection::dig_unpack out=" << output_data << endl;
-    fprintf(stderr,"input_data=%p\n",input_data);
-    fprintf(stderr,"ndat="UI64"\n",ndat);
-    cerr <<   "\n   digitizer=" << digitizer << " weights=" << weights << endl;
-    cerr <<   " nweights=" << nweights << endl;
-  }
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::dig_unpack in=" << input_data
+	 << " out=" << output_data << " ndat=" << ndat << "\n\t"
+	 << " digitizer=" << digitizer << " weights=" << weights 
+	 << " nweights=" << nweights << endl;
 
   // 4 floating-point samples per byte
   const unsigned samples_per_byte = TwoBitTable::vals_per_byte;
