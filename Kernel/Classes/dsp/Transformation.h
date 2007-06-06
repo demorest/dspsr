@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.44 $
-   $Date: 2007/06/03 00:56:34 $
+   $Revision: 1.45 $
+   $Date: 2007/06/06 01:02:14 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -168,6 +168,16 @@ namespace dsp {
     //! String preceding output in verbose mode
     std::string name (const std::string& function) 
     { return "dsp::Tranformation["+Operation::get_name()+"]::" + function; }
+
+    //! Set verbosity ostream
+    void set_ostream (std::ostream& os) const
+    {
+      Operation::set_ostream (os);
+      if (this->input)
+	this->input->set_ostream(os);
+      if (this->output)
+	this->output->set_ostream(os);
+    }
 
   protected:
 
