@@ -180,7 +180,8 @@ void dsp::LoadToFold1::prepare ()
     
     if (config->simultaneous_filterbank) {
       filterbank->set_response (response);
-      filterbank->set_passband (passband);
+      if (!config->single_pulse)
+        filterbank->set_passband (passband);
     }
     
     operations.push_back (filterbank.get());
@@ -192,7 +193,8 @@ void dsp::LoadToFold1::prepare ()
       convolution = new Convolution;
     
     convolution->set_response (response);
-    convolution->set_passband (passband);
+    if (!config->single_pulse)
+      convolution->set_passband (passband);
     
     convolution->set_input  (convolved);  
     convolution->set_output (convolved);  // inplace
