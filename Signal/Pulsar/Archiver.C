@@ -258,14 +258,16 @@ try {
   archive-> set_ephemeris (const psrephem& ephemeris);
   */
 
-  archive-> set_telescope_code ( phase->get_telescope_code() );
+  char* cstr1 = new char[2];
+  sprintf(cstr1, "%c\n", phase->get_telescope_code());
+  archive->set_telescope_code ( cstr1 );
+  delete[] cstr1;
 
   archive-> set_type ( phase->get_type() );
   if (phase->get_state() == Signal::NthPower ||
       phase->get_state() == Signal::PP_State ||
       phase->get_state() == Signal::QQ_State ) {
-    fprintf(stderr, "Pulsar::Archiver:set State is %s - setting Archive state to Intensity\n",
-	    State2string(phase->get_state()).c_str());
+    fprintf(stderr, "Pulsar::Archiver:set State is %s - setting Archive state to Intensity\n", State2string(phase->get_state()).c_str());
     archive->set_state (Signal::Intensity);
   }
   else {
@@ -309,7 +311,11 @@ try {
     set (pband);
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
-  telescope->set_coordinates (phase -> get_telescope_code());
+
+  char* cstr2 = new char[2];
+  sprintf(cstr2, "%c\n", phase->get_telescope_code());
+  telescope->set_coordinates ( cstr2 );
+  delete[] cstr2;
 
   // default Receiver extension
   archive -> getadd<Pulsar::Receiver>();
