@@ -258,16 +258,12 @@ try {
   archive-> set_ephemeris (const psrephem& ephemeris);
   */
 
-  char* cstr1 = new char[2];
-  sprintf(cstr1, "%c\n", phase->get_telescope_code());
-  archive->set_telescope_code ( cstr1 );
-  delete[] cstr1;
+  archive-> set_telescope_code ( string(1, phase->get_telescope_code()) );
 
   archive-> set_type ( phase->get_type() );
   if (phase->get_state() == Signal::NthPower ||
       phase->get_state() == Signal::PP_State ||
       phase->get_state() == Signal::QQ_State ) {
-    fprintf(stderr, "Pulsar::Archiver:set State is %s - setting Archive state to Intensity\n", State2string(phase->get_state()).c_str());
     archive->set_state (Signal::Intensity);
   }
   else {
@@ -311,11 +307,7 @@ try {
     set (pband);
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
-
-  char* cstr2 = new char[2];
-  sprintf(cstr2, "%c\n", phase->get_telescope_code());
-  telescope->set_coordinates ( cstr2 );
-  delete[] cstr2;
+  telescope->set_coordinates ( string(1, phase -> get_telescope_code()) );
 
   // default Receiver extension
   archive -> getadd<Pulsar::Receiver>();
@@ -341,8 +333,6 @@ try {
   if (verbose) cerr << "dsp::Archiver set archive filename to '"
 		    << archive->get_filename() << "'" << endl;
 
-  //  fprintf(stderr,"At end of archset amps[0]=%f\n",
-  //  archive->get_Profile(0,0,0)->get_amps()[0]);
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Archive";
@@ -445,18 +435,6 @@ try {
 
   if (scale == 0 || !finite(scale))
     throw Error (InvalidParam, string(), "invalid scale=%lf", scale);
-
-  /*
-  static unsigned ientries = 0;
-  if( ichan==0 && ipol==0 ){
-    ientries++;
-    unsigned zero_count = 0;
-    for (unsigned ibin = 0; ibin<nbin; ibin++)
-      if( phase->get_hit(ibin) == 0 )
-	zero_count++;
-        fprintf(stderr,"set entry %d idim=%d ndim=%d zc=%d\n",ientries,idim, phase->get_ndim(),zero_count);
-  }
-  */
 
   for (unsigned ibin = 0; ibin<nbin; ibin++) {
     if (phase->get_hit(ibin) == 0) {
