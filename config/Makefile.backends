@@ -22,3 +22,12 @@ LBACKENDS += -L${DEVEL_INSTALL}/lib -lpuma -lputils
 
 endif
 
+##############################################################################
+#
+# DADA specific code
+#
+ifeq (dada,$(filter dada,$(BACKENDS)))
+
+LBACKENDS += -ldada
+
+endif
