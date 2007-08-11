@@ -7,6 +7,7 @@
 #include "dsp/WAPPFile.h"
 #include "Telescope.h"
 #include "Error.h"
+#include "tmutil.h"
 
 // from sigproc-2.4
 #include "key.h"
