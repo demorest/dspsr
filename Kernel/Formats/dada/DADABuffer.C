@@ -6,24 +6,18 @@
  ***************************************************************************/
 
 #include "dsp/DADABuffer.h"
+#include "dsp/ASCIIObservation.h"
 
 #include <iostream>
 using namespace std;
 
 //! Constructor
 dsp::DADABuffer::DADABuffer ()
-  : File ("DADABuffer"),
-    ipc(IPCIO_INIT)
-{
-}
-    
-//! Construct given a shared memory I/O struct
-dsp::DADABuffer::DADABuffer (const ipcio_t& _ipc)
   : File ("DADABuffer")
 {
-  ipc = _ipc;
+  hdu = 0;
 }
-
+    
 void dsp::DADABuffer::reset()
 {
   end_of_data = false;
@@ -32,15 +26,31 @@ void dsp::DADABuffer::reset()
   last_load_ndat = 0;
 }
 
-//! Returns true if filename appears to name a valid CPSR file
+//! Returns true if filename = DADA
 bool dsp::DADABuffer::is_valid (const char* filename, int) const
 {
-  return false;
+  return string(filename) == "DADA";
 }
 
 //! Open the file
 void dsp::DADABuffer::open_file (const char* filename)
 {
+  if (!hdu)
+    hdu = dada_hdu_create (NULL);
+
+  if (dada_hdu_connect (hdu) < 0)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "cannot connect to DADA ring buffers");
+
+  if (dada_hdu_lock_read (hdu) < 0)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "cannot lock DADA ring buffer read client status");
+
+  if (dada_hdu_open (hdu) < 0)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "cannot open DADA ring buffers");
+
+  info = ASCIIObservation (hdu->header);
 }
 
 //! Load bytes from shared memory
@@ -50,7 +60,7 @@ int64 dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64 bytes)
     cerr << "DADABuffer::load_bytes ipcio_read "
          << bytes << " bytes" << endl;
 
-  int64 bytes_read = ipcio_read (&ipc, (char*)buffer, bytes);
+  int64 bytes_read = ipcio_read (hdu->data_block, (char*)buffer, bytes);
   if (bytes_read < 0)
     cerr << "DADABuffer::load_bytes error ipcio_read" << endl;
 
@@ -67,7 +77,7 @@ int64 dsp::DADABuffer::seek_bytes (uint64 bytes)
     cerr << "DADABuffer::load_bytes ipcio_seek "
          << bytes << " bytes" << endl;
 
-  int64 absolute_bytes = ipcio_seek (&ipc, bytes, SEEK_SET);
+  int64 absolute_bytes = ipcio_seek (hdu->data_block, bytes, SEEK_SET);
   if (absolute_bytes < 0)
     cerr << "DADABuffer::seek_bytes error ipcio_seek" << endl;
 
@@ -80,22 +90,24 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
     cerr << "dsp::DADABuffer::seek " << offset 
 	 << " samples from " << whence << endl;
 
+  ipcbuf_t* buf = &(hdu->data_block->buf);
+
   if (whence == SEEK_END && offset == 0) {
 
     if (verbose)
       cerr << "dsp::DADABuffer::seek write_buf=" 
-	   << ipcbuf_get_write_count( &(ipc.buf) ) << endl;
+	   << ipcbuf_get_write_count( buf ) << endl;
 
-    ipc.buf.viewbuf ++;
+    buf->viewbuf ++;
 
-    if (ipcbuf_get_write_count( &(ipc.buf) ) > ipc.buf.viewbuf)
-      ipc.buf.viewbuf = ipcbuf_get_write_count( &(ipc.buf) ) + 1;
+    if (ipcbuf_get_write_count( buf ) > buf->viewbuf)
+      buf->viewbuf = ipcbuf_get_write_count( buf ) + 1;
 
-    ipc.bytes = 0;
-    ipc.curbuf = 0;
+    hdu->data_block->bytes = 0;
+    hdu->data_block->curbuf = 0;
 
     if (verbose)
-      cerr << "dsp::DADABuffer::seek viewbuf=" << ipc.buf.viewbuf << endl;
+      cerr << "dsp::DADABuffer::seek viewbuf=" << buf->viewbuf << endl;
 
   }
   else {
