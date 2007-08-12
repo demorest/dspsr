@@ -10,7 +10,7 @@
 #define __DADABuffer_h
 
 #include "dsp/File.h"
-#include "ipcio.h"
+#include "dada_hdu.h"
 
 namespace dsp {
 
@@ -24,9 +24,6 @@ namespace dsp {
     
     //! Constructor
     DADABuffer ();
-    
-    //! Construct given a shared memory I/O struct
-    DADABuffer (const ipcio_t& _ipc);
     
     //! Destructor
     virtual ~DADABuffer () { }
@@ -55,7 +52,7 @@ namespace dsp {
     virtual int64 seek_bytes (uint64 bytes);
    
     //! Shared memory interface
-    ipcio_t ipc;
+    dada_hdu_t* hdu;
         
   };
 
