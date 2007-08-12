@@ -179,28 +179,8 @@ dsp::PuMa2_Observation::PuMa2_Observation (const char* header)
   //
   dc_centred = true;
 
-  // //////////////////////////////////////////////////////////////////////
-  //
-  // PRIMARY
-  //
-  if (ascii_header_get (header, "PRIMARY", "%s", hdrstr) < 0)
-    throw Error (InvalidParam, "PuMa2_Observation", "failed read PRIMARY");
-
-  string primary = hdrstr;
-  string prefix = "u";
-
-  if (primary == "cpsr1")
-    prefix = "m";
-  if (primary == "cpsr2")
-    prefix = "n";
-
-  if (primary == "cgsr1")
-    prefix = "p";
-  if (primary == "cgsr2")
-    prefix = "q";
-
   // make an identifier name
-  set_identifier (prefix + get_default_id());
+  set_identifier (get_default_id());
   set_mode (stringprintf ("%d-bit mode", get_nbit()));
   set_machine ("PuMa2");
 
