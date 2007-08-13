@@ -40,6 +40,7 @@ void usage ()
     " -M metafile    load filenames from metafile\n"
     " -S seek        start processing at t=seek seconds\n"
     " -T total       process only t=total seconds\n"
+    " -t threads     process using n=threads processor threads\n"
     " -U Mbtyes      upper limit on RAM usage in MB\n"
     " -W             no WeightedTimeSeries\n"
     " -z             run in psrdisp backward-compatibility mode\n"
