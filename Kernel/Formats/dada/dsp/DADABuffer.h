@@ -50,6 +50,9 @@ namespace dsp {
     
     //! Set the offset in shared memory
     virtual int64 seek_bytes (uint64 bytes);
+
+    //! Over-ride File::set_total_samples
+    virtual void set_total_samples ();
    
     //! Shared memory interface
     dada_hdu_t* hdu;

@@ -50,7 +50,17 @@ void dsp::DADABuffer::open_file (const char* filename)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
 		 "cannot open DADA ring buffers");
 
+  if (verbose)
+    cerr << "dsp::DADABuffer::open_file HEADER: size=" 
+         << hdu->header_size << " content=\n" << hdu->header << endl;
+
   info = ASCIIObservation (hdu->header);
+
+  // cannot load less than a byte. set the time sample resolution accordingly
+  unsigned bits_per_byte = 8;
+  resolution = bits_per_byte / info.get_nbit();
+  if (resolution == 0)
+    resolution = 1;
 }
 
 //! Load bytes from shared memory
@@ -65,7 +75,7 @@ int64 dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64 bytes)
     cerr << "DADABuffer::load_bytes error ipcio_read" << endl;
 
   if (verbose)
-    cerr << "DADABuffer::load_bytes " << bytes << " bytes" << endl;
+    cerr << "DADABuffer::load_bytes read " << bytes_read << " bytes" << endl;
 
   return bytes_read;
 }
@@ -115,6 +125,9 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
   }
 }
 
+void dsp::DADABuffer::set_total_samples ()
+{
+}
 
 
 
