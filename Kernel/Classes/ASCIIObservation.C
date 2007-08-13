@@ -17,8 +17,6 @@ using namespace std;
 dsp::ASCIIObservation::ASCIIObservation (const char* header)
 {
   hdr_version = "HDR_VERSION";
-  obs_offset = "OBS_OFFSET";
-
   parse (header);
 }
 
@@ -32,8 +30,12 @@ void dsp::ASCIIObservation::parse (const char* header)
   // HDR_VERSION
   //
   float version;
-  if (ascii_header_get (header, hdr_version.c_str(), "%f", &version) < 0)
+  if (ascii_header_get (header, hdr_version.c_str(), "%f", &version) < 0) {
+    /*
     throw Error (InvalidState, "ASCIIObservation", "failed read "+hdr_version);
+    */
+    cerr << "ASCIIObservation: failed read " << hdr_version << endl;
+  }
 
   //
   // no idea about the size of the data
@@ -190,10 +192,9 @@ void dsp::ASCIIObservation::parse (const char* header)
   // OBS_OFFSET
   //
   offset_bytes = 0;
-  if (ascii_header_get (header, obs_offset.c_str(), UI64, &offset_bytes) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed read "+obs_offset);
-
-
+  if (ascii_header_get (header, "OBS_OFFSET", UI64, &offset_bytes) < 0 &&
+      ascii_header_get (header, "OFFSET", UI64, &offset_bytes) < 0)
+    throw Error (InvalidState, "ASCIIObservation", "failed read OBS_OFFSET");
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -217,8 +218,15 @@ void dsp::ASCIIObservation::parse (const char* header)
   //
   // INSTRUMENT
   //
-  if (ascii_header_get (header, "INSTRUMENT", "%s", buffer) == 0)
+  if (ascii_header_get (header, "INSTRUMENT", "%s", buffer) == 1)
     set_machine (buffer);
+  else 
+  if (ascii_header_get (header, "CPSR2_HEADER_VERSION", "%f", &version) == 1)
+    set_machine ("CPSR2");
+  else {
+    cerr << "ASCIIObservation: assuming instrument = PuMa2" << endl;
+    set_machine ("PuMa2");
+  }
 
   // make an identifier name
   set_identifier (get_default_id());
