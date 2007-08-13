@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/08/12 20:55:02 $
+   $Revision: 1.2 $
+   $Date: 2007/08/13 10:56:27 $
    $Author: straten $ */
 
 #ifndef __ASCIIObservation_h
@@ -39,7 +39,6 @@ namespace dsp {
   protected:
 
     std::string hdr_version;
-    std::string obs_offset;
 
   };
   
