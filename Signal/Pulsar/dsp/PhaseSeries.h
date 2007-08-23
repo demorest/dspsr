@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.22 $
-   $Date: 2007/05/30 07:36:04 $
+   $Revision: 1.23 $
+   $Date: 2007/08/23 20:19:56 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -73,6 +73,10 @@ namespace dsp {
 
     //! Get the number of seconds integrated
     double get_integration_length () const { return integration_length; }
+
+    //! Increment the integration length
+    void increment_integration_length (double seconds)
+    { integration_length += seconds; }
 
     //! Get the end time
     MJD get_end_time () const { return end_time; }
