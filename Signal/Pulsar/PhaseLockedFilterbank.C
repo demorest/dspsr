@@ -100,9 +100,17 @@ void dsp::PhaseLockedFilterbank::transformation ()
     get_output()->set_ndim (1);
     get_output()->set_state (Signal::Intensity);
 
+    if (FTransform::get_norm() == FTransform::nfft)
+      output->rescale (nchan);
+
+    output->set_rate (input->get_rate() / ndat_fft);
+
+    // complex to complex FFT produces a band swapped result
+    if (input->get_state() == Signal::Analytic)
+      output->set_swap (true);
+
     get_output()->resize (nchan * input_nchan);
     get_output()->zero ();
-
     get_output()->set_hits (1);
 
   }
@@ -114,7 +122,6 @@ void dsp::PhaseLockedFilterbank::transformation ()
     output->set_start_time (st_time);
   }
 
-
   if (FTransform::get_norm() == FTransform::unnormalized)
     output->rescale (nchan);
   
@@ -124,10 +131,15 @@ void dsp::PhaseLockedFilterbank::transformation ()
   if (input->get_state() == Signal::Analytic)
     output->set_swap (true);
 
+  bool first = false;
+
   // if unspecified, the first TimeSeries to be folded will define the
   // start time from which to begin cutting up the observation
-  if (divider.get_start_time() == MJD::zero)
+  if (divider.get_start_time() == MJD::zero)  {
+    cerr << "First call\n" << endl;
+    first = true;
     divider.set_start_time (input->get_start_time());
+  }
 
   // set up the scratch space
   float* complex_spectrum = scratch->space<float> (nchan * 2);
@@ -142,20 +154,36 @@ void dsp::PhaseLockedFilterbank::transformation ()
   // flag that the input TimeSeries contains data for another sub-integration
   bool more_data = true;
 
+  double time_per_fft = double(ndat_fft) / get_input()->get_rate();
+  double total_integrated = 0.0;
+
+  unsigned last_used = 0;
+
   while (more_data) {
 
     divider.set_bounds( get_input() );
 
     idat_start = divider.get_idat_start ();
 
-    if (idat_start + ndat_fft > input_ndat)
+    if (!first && idat_start != last_used)
+      throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation",
+                   "Sample dropped? last="UI64" start="UI64,
+                   last_used, idat_start);
+
+    first = false;
+    last_used = idat_start + divider.get_ndat ();
+
+    if (idat_start + ndat_fft > input_ndat)  {
+      divider.discard_bounds( get_input() );
       break;
+    }
 
     phase_bin = divider.get_phase_bin ();
 
     // cerr << "phase bin = " << phase_bin << endl;
     get_output()->get_hits()[phase_bin] ++;
-  
+    total_integrated += time_per_fft; 
+
     for (unsigned ichan=0; ichan < input_nchan; ichan++) {
 
       float* amps = output->get_datptr (phase_bin, 0) + ichan * nchan;
@@ -187,6 +215,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
   get_buffering_policy()->set_minimum_samples (ndat_fft);
   get_buffering_policy()->set_next_start (idat_start);
 
+  get_output()->increment_integration_length( total_integrated );
+
 }
 
 void dsp::PhaseLockedFilterbank::normalize_output ()
@@ -194,12 +224,23 @@ void dsp::PhaseLockedFilterbank::normalize_output ()
   unsigned output_nbin = get_output()->get_nbin();
   unsigned output_nchan = get_output()->get_nchan();
 
+  cerr << "dsp::PhaseLockedFilterbank::normalize_output nbin="
+       << output_nbin << " nchan=" << output_nchan << endl;
+
   unsigned* hits = get_output()->get_hits();
   
   for (unsigned ichan=0; ichan < output_nchan; ichan++) {
+
+    cerr << "hits[" << ichan << "]=" << hits[ichan] << endl;
+
     float* amps = output->get_datptr (ichan, 0);
-    for (unsigned ibin=0; ibin < output_nbin; ibin++)
+    for (unsigned ibin=0; ibin < output_nbin; ibin++)  {
       amps[ibin] /= hits[ichan];
+#if 0
+          cerr << "amps[" << ichan << "," << ibin << "]="
+               << amps[ibin] << endl;
+#endif
+    }
   }
 
   get_output()->set_hits(1);
