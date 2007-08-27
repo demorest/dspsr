@@ -30,9 +30,9 @@
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
-// #include "Pulsar/SimplePredictor.h"
 
 #include "Error.h"
+#include "pad.h"
 
 using namespace std;
 
@@ -557,7 +557,7 @@ void dsp::LoadToFold1::run ()
     cerr << "dsp::LoadToFold1::run this=" << this 
 	 << " nops=" << operations.size() << endl;
 
-  // ensure that all operations are using the local log an scratch space
+  // ensure that all operations are using the local log and scratch space
   for (unsigned iop=0; iop < operations.size(); iop++) {
     if (log) {
       cerr << "dsp::LoadToFold1::run " << operations[iop]->get_name() << endl;
@@ -613,20 +613,27 @@ void dsp::LoadToFold1::run ()
     
   }
 
-  if (log)
-    *log << "dsp::LoadToFold1::run end of data" << endl;
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFold1::run end of data" << endl;
+
+  unsigned cwidth = 20;
+
+  if (Operation::verbose || report) {
+
+    cerr << pad (cwidth, "Operation")
+	 << pad (cwidth, "Time Spent")
+	 << pad (cwidth, "Discarded") << endl;
+    
+    for (unsigned iop=0; iop < operations.size(); iop++)
+      cerr << pad (cwidth, operations[iop]->get_name())
+	   << pad (cwidth, tostring(operations[iop]->get_total_time()))
+	   << pad (cwidth, tostring(operations[iop]->get_discarded_weights()))
+	   << endl;
+    
+  }
 
   if (Operation::verbose)
-    cerr << "end of data" << endl;
-  
-  if (report) {
-    fprintf (stderr, "%15s %15s %15s\n", "Operation","Time Spent","Discarded");
-    for (unsigned iop=0; iop < operations.size(); iop++)
-      fprintf (stderr, "%15s %15.2g %15d\n",
-	       operations[iop]->get_name().c_str(),
-	       (float) operations[iop]->get_total_time(),
-	       (int) operations[iop]->get_discarded_weights()); 
-  }
+    cerr << "dsp::LoadToFold1::run exit" << endl;
 }
 
 //! Run through the data
