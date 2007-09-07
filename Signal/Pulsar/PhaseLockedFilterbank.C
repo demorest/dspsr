@@ -100,7 +100,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     get_output()->set_ndim (1);
     get_output()->set_state (Signal::Intensity);
 
-    if (FTransform::get_norm() == FTransform::nfft)
+    if (FTransform::get_norm() == FTransform::unnormalized)
       output->rescale (nchan);
 
     output->set_rate (input->get_rate() / ndat_fft);
