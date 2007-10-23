@@ -484,7 +484,7 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 		 "number of digitizers per byte = %d must be == 1", ndig);
 
   if (verbose)
-    cerr << "dsp::TwoBitCorrection::dig_unpack in=" << input_data
+    cerr << "dsp::TwoBitCorrection::dig_unpack in=" << (void*) input_data
 	 << " out=" << output_data << " ndat=" << ndat << "\n\t"
 	 << " digitizer=" << digitizer << " weights=" << weights 
 	 << " nweights=" << nweights << endl;
