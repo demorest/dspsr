@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.36 $
-   $Date: 2007/05/31 11:00:11 $
+   $Revision: 1.37 $
+   $Date: 2007/10/25 00:20:49 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -116,6 +116,9 @@ namespace dsp {
 
     //! Convenience method used to seek in units of seconds
     void seek_seconds (double seconds, int whence = 0);
+
+    //! Convenience method used to report the offset in seconds
+    double tell_seconds () const;
 
     //! Convenience method used to set the number of seconds
     void set_total_seconds (double seconds);
