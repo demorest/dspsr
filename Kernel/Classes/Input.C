@@ -293,6 +293,14 @@ void dsp::Input::seek_seconds (double seconds, int whence)
   seek( int64(seconds * info.get_rate()), whence );
 }
 
+double dsp::Input::tell_seconds () const
+{
+  if (info.get_rate() == 0)
+    throw Error (InvalidState, "dsp::Input::tell_seconds",
+		 "data rate unknown");
+
+  return load_sample / info.get_rate();
+}
 
 //! Convenience method used to set the number of seconds
 void dsp::Input::set_total_seconds (double seconds)
