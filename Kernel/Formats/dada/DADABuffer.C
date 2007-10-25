@@ -8,7 +8,7 @@
 #include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
 
-#include <iostream>
+#include <fstream>
 using namespace std;
 
 //! Constructor
@@ -29,14 +29,62 @@ void dsp::DADABuffer::reset()
 //! Returns true if filename = DADA
 bool dsp::DADABuffer::is_valid (const char* filename, int) const
 {
-  return string(filename) == "DADA";
+  ifstream input (filename);
+  if (!input)
+    return false;
+
+  std::string line;
+  std::getline (input, line);
+
+  if (line == "DADA INFO:")
+    return true;
+
+  return false;
 }
 
 //! Open the file
 void dsp::DADABuffer::open_file (const char* filename)
-{
+{ 
+  if (verbose)
+    cerr << "dsp::DADABuffer::open_file" << endl;
+
+  ifstream input (filename);
+  if (!input)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "cannot open INFO file: %s", filename);
+
+  std::string line;
+  std::getline (input, line);
+
+  if (line != "DADA INFO:")
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "invalid INFO file (no preamble): %s", filename);
+
+  input >> line;
+
+  if (line != "key")
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "invalid INFO file (no key): %s", filename);
+
+  input >> line;
+
+  key_t key = 0;
+  int scanned = 0;
+
+  if (line.length())
+    scanned = sscanf (line.c_str(), "%x", &key);
+
+  if (scanned != 1)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "invalid INFO file (no key scanned): %s", filename);
+
+  if (verbose)
+    cerr << "dsp::DADABuffer::open_file key=" << key << endl;
+
   if (!hdu)
     hdu = dada_hdu_create (NULL);
+
+  dada_hdu_set_key (hdu, key);
 
   if (dada_hdu_connect (hdu) < 0)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
@@ -61,6 +109,9 @@ void dsp::DADABuffer::open_file (const char* filename)
   resolution = bits_per_byte / info.get_nbit();
   if (resolution == 0)
     resolution = 1;
+
+  if (verbose)
+    cerr << "dsp::DADABuffer::open_file exit" << endl;
 }
 
 //! Load bytes from shared memory
