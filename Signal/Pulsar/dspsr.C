@@ -153,6 +153,7 @@ Reference::To<dsp::LoadToFold::Config> config;
 // Number of threads used to process the data
 unsigned nthread = 1;
 
+
 int main (int argc, char** argv) try {
 
   config = new dsp::LoadToFold::Config;
@@ -362,7 +363,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'P':
-      cerr << "dspsr: Loading Pulsar::Predictor from " << optarg << endl;
+      cerr << "dspsr: Loading phase model from " << optarg << endl;
       config->predictors.push_back ( factory<Pulsar::Predictor> (optarg) );
       break;
 
