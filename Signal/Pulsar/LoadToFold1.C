@@ -30,6 +30,7 @@
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
+#include "Pulsar/SimplePredictor.h"
 
 #include "Error.h"
 #include "pad.h"
@@ -354,11 +355,17 @@ void dsp::LoadToFold1::prepare_final ()
 
   minimum_samples = 0;
 
-  if (filterbank)
+  if (filterbank) {
+    // cerr << "ASK FILTERBANK" << endl;
     minimum_samples = filterbank->get_minimum_samples ();
+  }
 
-  if (convolution)
+  if (convolution) {
+    // cerr << "ASK CONVOLUTION" << endl;
     minimum_samples = convolution->get_minimum_samples ();
+  }
+
+  // cerr << "MINIMUM SAMPLES=" << minimum_samples << endl;
 
   // assume that SampleDelay can handle any required buffering
 
@@ -518,24 +525,20 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
 
-#if 0
-      Pulsar::SimplePredictor* simple_predictor
+      Pulsar::SimplePredictor* simple
 	= dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
 
-      if (simple_predictor) {
+      if (simple) {
 
 	manager->get_info()->set_source
-	  ( simple_predictor->get_name() );
+	  ( simple->get_name() );
 
 	manager->get_info()->set_coordinates
-	  ( simple_predictor->get_coordinates() );
+	  ( simple->get_coordinates() );
 
-	if (kernel) 
-	  kernel->set_dispersion_measure
-	    ( simple_predictor->get_dispersion_measure() );
+	config->dispersion_measure = simple->get_dispersion_measure();
 
       }
-#endif
 
     }    
 
@@ -574,7 +577,7 @@ void dsp::LoadToFold1::run ()
 
   unsigned block=0;
 
-  int last_percent = -1;
+  int64 last_decisecond = -1;
 
   bool still_going = true;
 
@@ -601,12 +604,21 @@ void dsp::LoadToFold1::run ()
     
     if (report) {
 
-      // report is set to the number of active threads
-      int percent = int (100.0*report*float(block)/float(nblocks_tot));
+      double seconds = input->tell_seconds();
+      int64 decisecond = seconds * 10;
       
-      if (percent > last_percent) {
-	cerr << "Finished " << percent << "%\r";
-	last_percent = percent;
+      if (decisecond > last_decisecond) {
+
+	last_decisecond = decisecond;
+	cerr << "Finished " << decisecond/10.0 << " s";
+
+	if (nblocks_tot)
+	  cerr << " (" 
+	       << int (100.0*report*float(block)/float(nblocks_tot))
+	       << "%)";
+
+	cerr << "   \r";
+
       }
       
     }
