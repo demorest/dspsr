@@ -69,6 +69,7 @@ void usage ()
     "\n"
     "Dedispersion/Convolution options:\n"
     " -D dm          over-ride dispersion measure\n"
+    " -K             remove inter-channel dispersion delays \n"
     " -x nfft        over-ride optimal transform length\n"
     " -R             apply RFI filter in frequency domain\n"
     " -Z lib         choose the FFT library ('-Z help' for availability)\n"
@@ -88,17 +89,17 @@ void usage ()
     " -P psr.poly    add the phase predictor, psr.poly, for use \n"
     " -X name        add another pulsar to be folded \n"
     "\n"
+    "Division options:\n"
+    " -A             produce a single archive with multiple Integrations \n"
+    " -j             join files into contiguous observation \n"
+    " -L seconds     form sub-integrations of the specified length \n"
+    " -s             generate single pulse Integrations \n"
+    "\n"
     "Output Archive options:\n"
     " -a archive     set the output archive class name\n"
     " -e ext         set the output archive filename extension\n"
     " -O filename    set the output archive filename (including extension)\n"
     " -J jobs.psh    run the psrsh script on the output before unloading\n"
-    "\n"
-    "Single Pulse options:\n"
-    " -A             produce a single archive with multiple Integrations \n"
-    " -j             join files into contiguous observation \n"
-    " -K             remove inter-channel dispersion delays \n"
-    " -s             generate single pulse Integrations \n"
        << endl;
 }
 
@@ -336,6 +337,10 @@ int main (int argc, char** argv) try {
 
     case 'K':
       config->interchan_dedispersion = true;
+      break;
+
+    case 'L':
+      config->integration_length = strtod (optarg, 0);
       break;
 
     case 'm':
