@@ -445,7 +445,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
   for (unsigned ifold=0; ifold < nfold; ifold++) {
 
-    if (ifold == 0 || config->single_pulse) {
+    if (ifold == 0 || config->single_pulse || config->integration_length) {
 
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare Archiver" << endl;
@@ -469,7 +469,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
     }
 
-    if (config->single_pulse) {
+    if (config->single_pulse || config->integration_length) {
 
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare SubFold" << endl;
@@ -486,7 +486,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       fold[ifold] = subfold;
 
       if (config->single_archive) {
-	cerr << "Creating single pulse single archive" << endl;
+	cerr << "Single archive with multiple sub-integrations" << endl;
 	Pulsar::Archive* arch;
 	arch = Pulsar::Archive::new_Archive (config->archive_class);
 	archiver[ifold]->set_archive (arch);
