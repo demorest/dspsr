@@ -7,14 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.6 $
-   $Date: 2006/07/09 13:27:07 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2007/11/13 14:15:24 $
+   $Author: straten $ */
 
 #ifndef __CPSR2_Observation_h
 #define __CPSR2_Observation_h
 
-#include "dsp/Observation.h"
+#include "dsp/ASCIIObservation.h"
 
 namespace dsp {
  
@@ -24,15 +24,12 @@ namespace dsp {
     The header block may come from a CPSR2 data file, or from the
     shared memory (data block) of the machines in the CPSR2
     cluster. */
-  class CPSR2_Observation : public Observation {
+  class CPSR2_Observation : public ASCIIObservation {
 
   public:
 
     //! Construct from a CPSR2 ASCII header block
     CPSR2_Observation (const char* header=0);
-
-    //! Number of bytes offset from the beginning of acquisition
-    uint64 offset_bytes;
 
     //! The digitizer thresholds for a SimpleFB file
     virtual void set_thresh();
