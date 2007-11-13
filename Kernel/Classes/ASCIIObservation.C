@@ -17,7 +17,9 @@ using namespace std;
 dsp::ASCIIObservation::ASCIIObservation (const char* header)
 {
   hdr_version = "HDR_VERSION";
-  parse (header);
+
+  if (header)
+    parse (header);
 }
 
 void dsp::ASCIIObservation::parse (const char* header)
@@ -30,12 +32,9 @@ void dsp::ASCIIObservation::parse (const char* header)
   // HDR_VERSION
   //
   float version;
-  if (ascii_header_get (header, hdr_version.c_str(), "%f", &version) < 0) {
-    /*
-    throw Error (InvalidState, "ASCIIObservation", "failed read "+hdr_version);
-    */
+  if (ascii_header_get (header, hdr_version.c_str(), "%f", &version) < 0)
     cerr << "ASCIIObservation: failed read " << hdr_version << endl;
-  }
+
 
   //
   // no idea about the size of the data
@@ -66,7 +65,7 @@ void dsp::ASCIIObservation::parse (const char* header)
   //
   // MODE
   //
-  ascii_header_get(header, "MODE", "%s", buffer);
+  ascii_header_get (header, "MODE", "%s", buffer);
     
   if (strncmp(buffer,"PSR",3) == 0) {
     cerr << "Source is Pulsar" << endl;
@@ -115,10 +114,15 @@ void dsp::ASCIIObservation::parse (const char* header)
 
   set_bandwidth (bw);
 
+  // //////////////////////////////////////////////////////////////////////
   //
-  // CPSR2 data is single-channel unless this is a detected CPSR2 FB see later
+  // NCHAN
   //
-  set_nchan(1);
+  int scan_nchan;
+  if (ascii_header_get (header, "NCHAN", "%d", &scan_nchan) < 0)
+    set_nchan (1);
+  else
+    set_nchan (scan_nchan);
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -147,6 +151,7 @@ void dsp::ASCIIObservation::parse (const char* header)
   int scan_ndim;
   if (ascii_header_get (header, "NDIM", "%d", &scan_ndim) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed read NDIM");
+
   set_ndim(scan_ndim);
 
   switch (scan_ndim) {
@@ -180,12 +185,23 @@ void dsp::ASCIIObservation::parse (const char* header)
 
   // //////////////////////////////////////////////////////////////////////
   //
-  // MJD_START
+  // UTC_START
   //
-  if (ascii_header_get (header, "MJD_START", "%s", buffer) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed read MJD_START");
+  if (ascii_header_get (header, "UTC_START", "%s", buffer) < 0)
+    throw Error (InvalidState, "ASCIIObservation", "failed read UTC_START");
 
-  MJD recording_start_time (buffer);
+  struct tm utc;
+  if (strptime (buffer, "%Y-%m-%d-%H:%M:%S", &utc) == NULL)
+    throw Error (InvalidState, "ASCIIObservation",
+		 "failed strptime (%s)", buffer);
+
+  MJD recording_start_time( timegm (&utc) );
+
+#ifdef _DEBUG
+  if (ascii_header_get (header, "MJD_START", "%s", buffer) >= 0)
+    cerr << "MJD_START=" << buffer
+	 << " MJD(UTC)=" << recording_start_time.printdays(13) << endl;
+#endif
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -200,13 +216,8 @@ void dsp::ASCIIObservation::parse (const char* header)
   //
   // CALCULATE the various offsets and sizes
   //
-  uint64 bitsperbyte = 8;
-  uint64 bitspersample = get_nbit()*get_npol();
-
-  uint64 offset_samples = offset_bytes * bitsperbyte / bitspersample;
   
-  double offset_seconds = double(offset_samples) * sampling_interval;
-
+  double offset_seconds = get_nsamples(offset_bytes) * sampling_interval;
   set_start_time (recording_start_time + offset_seconds);
 
   //
@@ -220,13 +231,6 @@ void dsp::ASCIIObservation::parse (const char* header)
   //
   if (ascii_header_get (header, "INSTRUMENT", "%s", buffer) == 1)
     set_machine (buffer);
-  else 
-  if (ascii_header_get (header, "CPSR2_HEADER_VERSION", "%f", &version) == 1)
-    set_machine ("CPSR2");
-  else {
-    cerr << "ASCIIObservation: assuming instrument = PuMa2" << endl;
-    set_machine ("PuMa2");
-  }
 
   // make an identifier name
   set_identifier (get_default_id());
