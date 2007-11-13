@@ -605,7 +605,7 @@ void dsp::LoadToFold1::run ()
     if (report) {
 
       double seconds = input->tell_seconds();
-      int64 decisecond = seconds * 10;
+      int64 decisecond = int64( seconds * 10 );
       
       if (decisecond > last_decisecond) {
 
