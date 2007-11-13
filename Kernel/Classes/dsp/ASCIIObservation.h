@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.2 $
-   $Date: 2007/08/13 10:56:27 $
+   $Revision: 1.3 $
+   $Date: 2007/11/13 14:15:18 $
    $Author: straten $ */
 
 #ifndef __ASCIIObservation_h
@@ -30,15 +30,18 @@ namespace dsp {
     //! Construct from an ASCII header block
     ASCIIObservation (const char* header=0);
 
-    //! Number of bytes offset from the beginning of acquisition
-    uint64 offset_bytes;
-
     //! Parse the ASCII header block
     void parse (const char* header);
+
+    //! Get the number of bytes offset from the beginning of acquisition
+    uint64 get_offset_bytes () const { return offset_bytes; }
 
   protected:
 
     std::string hdr_version;
+
+    //! Number of bytes offset from the beginning of acquisition
+    uint64 offset_bytes;
 
   };
   
