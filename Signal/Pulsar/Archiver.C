@@ -108,9 +108,13 @@ void dsp::Archiver::unload ()
     add (archive, profiles);
   }
   else {
-    // create a new archive
+
+    if (verbose)
+      cerr << "dsp::Archiver::unload new Pulsar::Archive" << endl;
     archive = Pulsar::Archive::new_Archive (archive_class_name);
-    // set the main data
+
+    if (verbose)
+      cerr << "dsp::Archiver::unload set Pulsar::Archive" << endl;
     set (archive, profiles);
   }
 
@@ -189,6 +193,7 @@ catch (Error& error) {
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 try {
+
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
@@ -277,12 +282,18 @@ try {
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
 
-  if( archive_dedispersed && phase->get_between_channel_dm () != 0) {
-      archive -> set_dedispersed( true );
-      archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
+  if (archive_dedispersed && phase->get_between_channel_dm () != 0) {
+    archive -> set_dedispersed( true );
+    if (verbose)
+      cerr << "dsp::Archiver::set between channel dm=" 
+           << phase->get_dispersion_measure() << endl;
+    archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
   }
   else {
     archive-> set_dedispersed( archive_dedispersed );
+    if (verbose)
+      cerr << "dsp::Archiver::set dm=" 
+           << phase->get_dispersion_measure() << endl;
     archive-> set_dispersion_measure ( phase->get_dispersion_measure() );
   }
 
@@ -293,18 +304,27 @@ try {
 
   // set any available extensions
   Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
-  if (dspR){
+  if (dspR) {
+    if (verbose)
+      cerr << "dsp::Archiver::set Pulsar::dspReduction extension" << endl;
     set (dspR);
     dspR->set_name( phase->get_machine() );
   }
 
   Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
-  if (tbc)
+  if (tbc)  {
+    if (verbose)
+      cerr << "dsp::Archiver::set Pulsar::TwoBitStats extension" << endl;
     set (tbc);
+  }
 
   Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
-  if (pband)
+  if (pband) {
+    if (verbose)
+      cerr << "dsp::Archiver::set Pulsar::Passband extension" << endl;
     set (pband);
+  }
+
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
   telescope->set_coordinates ( string(1, phase -> get_telescope_code()) );
@@ -319,7 +339,7 @@ try {
   if( phase->get_folding_predictor() )  {
     if (verbose)
       cerr << "dsp::Archiver::set has predictor" << endl;
-    archive-> set_model ( phase->get_folding_predictor() );
+    archive-> set_model ( phase->get_folding_predictor(), false );
   }
   else if (verbose)
     cerr << "dsp::Archiver::set PhaseSeries has no predictor" << endl;
@@ -375,6 +395,12 @@ try {
   integration-> set_duration ( phase->get_integration_length() );
 
   integration-> set_folding_period ( phase->get_folding_period () );
+
+  if (verbose)
+    cerr << "dsp::Archiver::set"
+         << " epoch=" << integration->get_epoch().printdays(13)
+         << " duration=" << integration->get_duration()
+         << " period=" << integration->get_folding_period() << endl;
 
   unsigned offchan = 0;
   if ( phase->get_swap() )
@@ -436,23 +462,26 @@ try {
   if (scale == 0 || !finite(scale))
     throw Error (InvalidParam, string(), "invalid scale=%lf", scale);
 
+  unsigned not_finite = 0;
+
   for (unsigned ibin = 0; ibin<nbin; ibin++) {
     if (phase->get_hit(ibin) == 0) {
       zeroes ++;
       *to = 0.0;
     }
-    else {
-      if (!finite(*from))
-	throw Error (InvalidParam, string(),
-		     "invalid data[ichan=%d][ipol=%d][idim=%d][ibin=%d]=%f",
-		     ichan, ipol, idim, ibin, *from);
-
+    else if (!finite(*from))
+      not_finite ++;
+    else
       *to = *from / (scale * double( phase->get_hit(ibin) ));
-    }
 
     to ++;
     from += ndim;
   }
+
+  if (not_finite)
+    throw Error (InvalidParam, string(),
+		 "%u/%u non-finite amplitudes in data[ichan=%d][ipol=%d][idim=%d]",
+		 not_finite, nbin, ichan, ipol, idim);
 
   if (zeroes && verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
