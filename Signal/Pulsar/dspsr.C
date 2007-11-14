@@ -447,6 +447,8 @@ int main (int argc, char** argv) try {
 
 	return 0;
       }
+      else if (lib == "simd")
+        FTransform::simd = true;
       else {
 	FTransform::set_library (lib);
 	cerr << "dspsr: FFT library set to " << lib << endl;
