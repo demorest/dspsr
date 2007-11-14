@@ -324,6 +324,9 @@ void dsp::LoadToFold1::prepare_final ()
 
   }
 
+  manager->get_info()->set_between_channel_dm( dm );
+  manager->get_info()->set_dispersion_measure( dm );
+
   /*
     In the case of unpacking two-bit data, set the corresponding
     parameters.  This is done in prepare_final because we really ought
