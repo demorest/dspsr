@@ -1,0 +1,6 @@
+#! /bin/csh -f
+
+echo "Running CVS udpate ..."
+
+cvs -z3 update -APd
+
