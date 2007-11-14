@@ -7,14 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma2/dsp/PuMa2_Observation.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2007/11/14 03:11:02 $
+   $Author: straten $ */
 
 #ifndef __PuMa2_Observation_h
 #define __PuMa2_Observation_h
 
-#include "dsp/Observation.h"
+#include "dsp/ASCIIObservation.h"
 
 namespace dsp {
  
@@ -24,15 +24,12 @@ namespace dsp {
     The header block may come from a PuMa2 data file, or from the
     shared memory (data block) of the machines in the PuMa2
     cluster. */
-  class PuMa2_Observation : public Observation {
+  class PuMa2_Observation : public ASCIIObservation {
 
   public:
 
     //! Construct from a PuMa2 ASCII header block
-    PuMa2_Observation (const char* header=0);
-
-    //! Number of bytes offset from the beginning of acquisition
-    uint64 offset_bytes;
+    PuMa2_Observation (const char* header);
 
   };
   
