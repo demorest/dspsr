@@ -136,10 +136,10 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 	 << " buffer=" << (void*)buffer << " ndat=" << get_ndat() << endl;
 
     if (data && buffer) {
-      cerr << "dsp::TimeSeries::resize(" << nsamples << ") offset="
-	     << int64((data-(float*)buffer)) << endl;
-      cerr << "get_samps_offset() = " 
-	   << get_samps_offset() << " floats get_preserve_seeked_data="
+      cerr << "dsp::TimeSeries::resize (" << nsamples << ") offset="
+	   << int64((data-(float*)buffer)) << endl
+           << "dsp::TimeSeries::resize get_samps_offset=" 
+	   << get_samps_offset() << " get_preserve_seeked_data="
 	   << get_preserve_seeked_data() << endl;
     }
   }  
@@ -155,7 +155,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
       fake_ndat ++;
 
     if (nsamples || auto_delete)
-      DataSeries::resize(nsamples+fake_ndat);
+      DataSeries::resize (nsamples+fake_ndat);
 
     // offset the data pointer and reset the number of samples
     data = (float*)buffer + reserve_nfloat;
