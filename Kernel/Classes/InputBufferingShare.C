@@ -60,13 +60,23 @@ try {
 /*! Copy remaining data from the target Transformation's input to buffer */
 void dsp::InputBuffering::Share::set_next_start (uint64 next)
 try {
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::Share::set_next_start lock context="
+         << context << endl;
   ThreadContext::Lock lock (context);
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::Share::set_next_start working" << endl;
 
   buffer->set_target (target);
   buffer->set_next_start (next);
 
-  if (context)
+  if (context) {
+    if (Operation::verbose)
+      cerr << "dsp::InputBuffering::Share::set_next_start broadcast" << endl;
     context->broadcast();
+  }
 }
  catch (Error& error) {
    throw error += "dsp::InputBuffering::Share::set_next_start";
@@ -75,6 +85,10 @@ try {
 /*! Prepend buffered data to target Transformation's input TimeSeries */
 void dsp::InputBuffering::Share::pre_transformation ()
 try {
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::Share::pre_transformation lock context="
+         << context << endl;
 
   ThreadContext::Lock lock (context);
 
@@ -94,8 +108,15 @@ try {
 
   }
 
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::Share::pre_transformation working" << endl;
+
   buffer->set_target (target);
   buffer->pre_transformation ();
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::Share::pre_transformation exiting" << endl;
+
 }
  catch (Error& error) {
    throw error += "dsp::InputBuffering::Share::pre_transformation";
