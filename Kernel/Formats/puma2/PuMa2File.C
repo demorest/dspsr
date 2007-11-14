@@ -77,10 +77,10 @@ void dsp::PuMa2File::open_file (const char* filename)
   cerr << "header size = " << hdr_size << " bytes" << endl;
   header_bytes = hdr_size;
 
-  if( want_to_check_bocf )
-    if (puma2_check_bocf (filename, data.offset_bytes, hdr_size) < 0)
-      throw Error (FailedCall, "dsp::PuMa2File::open_file",
-		   "check_bocf(%s) failed", filename);
+  if( want_to_check_bocf &&
+      puma2_check_bocf (filename, data.get_offset_bytes(), hdr_size) < 0 )
+    throw Error (FailedCall, "dsp::PuMa2File::open_file",
+		 "check_bocf(%s) failed", filename);
    
   // open the file
   fd = ::open (filename, O_RDONLY);
