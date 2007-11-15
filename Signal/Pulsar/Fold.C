@@ -8,9 +8,6 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
 
-#include "dsp/MatchingEphemeris.h"
-#include "dsp/MatchingPolyco.h"
-
 #include "Predict.h"
 #include "Error.h"
 
