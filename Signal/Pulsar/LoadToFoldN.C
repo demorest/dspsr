@@ -14,6 +14,8 @@
 #include "dsp/Scratch.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/Fold.h"
+#include "dsp/SubFold.h"
+#include "dsp/ThreadUnloader.h"
 
 #include "FTransformAgent.h"
 #include "ThreadContext.h"
@@ -40,6 +42,7 @@ dsp::LoadToFoldN::LoadToFoldN (unsigned nthread)
 dsp::LoadToFoldN::~LoadToFoldN ()
 {
   delete input_context;
+  delete completion;
 }
 
 //! Set the number of thread to be used
@@ -117,6 +120,9 @@ void dsp::LoadToFoldN::prepare ()
 
   }
 
+  if (configuration->single_pulse || configuration->integration_length)
+    prepare_subint_archival ();
+
   for (unsigned i=1; i<threads.size(); i++) {
 
     //
@@ -145,6 +151,10 @@ void dsp::LoadToFoldN::prepare ()
     // only the first thread prints updates
     //
     threads[i]->report = 0;
+
+    //
+    // only the first thread must manage archival
+    threads[i]->manage_archiver = false;
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFoldN::prepare preparing thread " << i << endl;
@@ -191,6 +201,39 @@ void dsp::LoadToFoldN::prepare ()
 
   }
 
+}
+
+void dsp::LoadToFoldN::prepare_subint_archival ()
+{
+  unsigned nfold = threads[0]->fold.size();
+
+  if( threads[0]->unloader.size() != nfold )
+    throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
+		 "unloader vector size=%u != fold vector size=%u",
+		 threads[0]->unloader.size(), nfold );
+
+  for (unsigned ifold = 0; ifold < nfold; ifold ++)
+  {
+    SubFold* subfold = dynamic_cast<SubFold*>( threads[0]->fold[ifold].get() );
+    if (!subfold)
+      throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
+		   "folder is not a SubFold" );
+
+    Reference::To<ThreadUnloader> archiver = new ThreadUnloader;
+    archiver->copy( subfold->get_divider() );
+    archiver->set_unloader( threads[0]->unloader[ifold] );
+    archiver->set_context( new ThreadContext );
+    threads[0]->unloader[ifold] = archiver;
+    subfold->set_unloader( archiver );
+
+  }
+
+  for (unsigned i=1; i<threads.size(); i++) 
+  {
+    threads[i]->unloader.resize( nfold );
+    for (unsigned ifold = 0; ifold < nfold; ifold ++)
+      threads[i]->unloader[ifold] = threads[0]->unloader[ifold];
+  }
 }
 
 uint64 dsp::LoadToFoldN::get_minimum_samples () const
@@ -281,6 +324,9 @@ void dsp::LoadToFoldN::finish ()
 
   ThreadContext::Lock lock (completion);
 
+  bool subints = configuration->single_pulse
+    || configuration->integration_length;
+
   while (finished < threads.size()) {
 
     for (unsigned i=0; i<threads.size(); i++) {
@@ -303,7 +349,7 @@ void dsp::LoadToFoldN::finish ()
 	if (finished == 0)
 	  first = i;
 
-	else if (!configuration->single_pulse)
+	else if (!subints)
 	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
 	    *( threads[first]->fold[ifold]->get_output() ) +=
 	      *( threads[i]->fold[ifold]->get_output() );
