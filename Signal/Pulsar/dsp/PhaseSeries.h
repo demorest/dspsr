@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.23 $
-   $Date: 2007/08/23 20:19:56 $
+   $Revision: 1.24 $
+   $Date: 2007/11/15 10:42:19 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -40,6 +40,9 @@ namespace dsp {
 
     //! Destructor
     ~PhaseSeries ();
+
+    //! Clone operator
+    PhaseSeries* clone() const;
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (int64 nsamples);
