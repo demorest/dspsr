@@ -106,7 +106,7 @@ void dsp::SubFold::transformation ()
 
       if (verbose)
 	cerr << "dsp::SubFold::transformation"
-	  " storing incomplete sub-integration" << endl;
+	  " sending incomplete sub-integration" << endl;
 	  
       partial.send (*output);
       output->zero();
@@ -134,12 +134,12 @@ void dsp::SubFold::transformation ()
       continue;
     }
 
-    if (unloader) {
+    if (unloader)
+    {
       if (verbose)
 	cerr << ":dsp::SubFold::transformation unload subint" << endl;
 
-      unloader->set_profiles(output);
-      unloader->unload();
+      unloader->unload(output);
     }
 
     output->zero();
