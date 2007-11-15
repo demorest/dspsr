@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.5 $
-   $Date: 2007/06/06 01:02:42 $
+   $Revision: 1.6 $
+   $Date: 2007/11/15 10:42:10 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -79,6 +79,7 @@ namespace dsp {
 
     static void* thread (void*);
 
+    void prepare_subint_archival ();
   };
 
 }
