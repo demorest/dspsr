@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.7 $
-   $Date: 2007/05/25 21:38:15 $
+   $Revision: 1.8 $
+   $Date: 2007/11/15 10:42:40 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -99,6 +99,12 @@ namespace dsp {
     //! Get the phase bin of the current division (turns < 1)
     unsigned get_phase_bin () const { return phase_bin; }
 
+    //! Get the current division
+    uint64 get_division () const { return division; }
+
+    //! Get the division associated with the specified epoch
+    uint64 get_division (const MJD& epoch);
+
     //@}
 
   protected:
@@ -135,6 +141,8 @@ namespace dsp {
     //! The end of the last Observation bound in this division
     MJD current_end;
 
+    //! The index of the current division
+    uint64 division;
 
     //! Flag set when the divided time range is within the current division
     bool is_valid;

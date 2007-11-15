@@ -48,7 +48,8 @@ void dsp::TimeDivide::set_seconds (double seconds)
     return;
 
   division_seconds = seconds;
-  division_turns = 0;
+  if (seconds)
+    division_turns = 0;
 }
 
 void dsp::TimeDivide::set_turns (double turns)
@@ -57,7 +58,8 @@ void dsp::TimeDivide::set_turns (double turns)
     return;
 
   division_turns = turns;
-  division_seconds = 0;
+  if (turns)
+    division_seconds = 0;
 }
 
 void dsp::TimeDivide::set_predictor (const Pulsar::Predictor* _poly)
@@ -383,7 +385,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     double seconds = (divide_start - start_time).in_seconds();
 
     // assumption: integer cast truncates
-    uint64 division = uint64 (seconds/division_seconds);
+    division = uint64 (seconds/division_seconds);
 
     lower = start_time + double(division) * division_seconds;
     upper = lower + division_seconds;
@@ -411,7 +413,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   double turns = (input_phase - start_phase).in_turns();
 
   // assumption: integer cast truncates
-  uint64 division = uint64 (turns/division_turns);
+  division = uint64 (turns/division_turns);
 
   input_phase = start_phase + division * division_turns;
   lower = poly->iphase (input_phase);
@@ -432,3 +434,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 
 }
 
+uint64 dsp::TimeDivide::get_division (const MJD& epoch)
+{
+  set_boundaries( epoch );
+  return division;
+}
