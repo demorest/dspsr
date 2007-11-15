@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.7 $
-   $Date: 2007/06/06 04:45:54 $
-   $Author: ahotan $ */
+   $Revision: 1.8 $
+   $Date: 2007/11/15 10:42:04 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
 #define __baseband_dsp_LoadToFold1_h
@@ -45,6 +45,7 @@ namespace dsp {
   class Detection;
   class Fold;
   class Archiver;
+  class PhaseSeriesUnloader;
 
   class LoadToFoldN;
 
@@ -102,8 +103,11 @@ namespace dsp {
     //! A folding algorithm for each pulsar to be folded
     std::vector< Reference::To<Fold> > fold;
     
-    //! An Archive writer for each pulsar to be folded
-    std::vector< Reference::To<Archiver> > archiver;
+    //! An unloader for each pulsar to be folded
+    std::vector< Reference::To<PhaseSeriesUnloader> > unloader;
+
+    //! Manage the archivers
+    bool manage_archiver;
 
     //! The RFI filter
     Reference::To<RFIFilter> rfi_filter;
@@ -159,6 +163,9 @@ namespace dsp {
 
     //! Prepared to fold the given TimeSeries
     void prepare_fold (TimeSeries*);
+
+    //! Prepare the given Archiver
+    void prepare_archiver (Archiver*);
 
     //! The scratch space shared by all operations
     Reference::To<Scratch> scratch;
