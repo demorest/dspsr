@@ -26,6 +26,12 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 {
 }
 
+void dsp::PhaseSeriesUnloader::unload (const PhaseSeries* profiles)
+{
+  set_profiles (profiles);
+  unload ();
+}
+
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
   string filename;
