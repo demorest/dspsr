@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.40 $
-   $Date: 2007/06/03 01:22:36 $
+   $Revision: 1.41 $
+   $Date: 2007/11/15 10:41:52 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -36,7 +36,7 @@ namespace dsp {
     //! Copy constructor
     TimeSeries(const TimeSeries& ts);
 
-    //! Cloner (calls new)
+    //! Clone operator
     virtual TimeSeries* clone() const;
 
     //! Returns a null-instantiation (calls new)
