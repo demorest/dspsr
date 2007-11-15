@@ -42,6 +42,7 @@ dsp::LoadToFold1::LoadToFold1 ()
 {
   manager = new IOManager;
   scratch = new Scratch;
+  manage_archiver = true;
   report = 1;
   log = 0;
   minimum_samples = 0;
@@ -437,42 +438,35 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 		 multifold_error, config->archive_filename.c_str());
 
   if (Operation::verbose)
-    cerr << "dsp::LoadToFold1::prepare_fold nfold=1" << endl;
+    cerr << "dsp::LoadToFold1::prepare_fold nfold=" << nfold << endl;
 
   fold.resize (nfold);
 
-  if (config->single_pulse)
-    archiver.resize (nfold);
-  else
-    archiver.resize (1);
+  bool subints = config->single_pulse || config->integration_length;
+
+  if (manage_archiver) {
+    if (subints)
+      unloader.resize (nfold);
+    else
+      unloader.resize (1);
+  }
 
   for (unsigned ifold=0; ifold < nfold; ifold++) {
 
-    if (ifold == 0 || config->single_pulse || config->integration_length) {
+    if (manage_archiver && ( ifold == 0 || subints ))
+    {
 
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare Archiver" << endl;
 
-      if (!archiver[ifold])
-	archiver[ifold] = new Archiver;
+      Archiver* archiver = new Archiver;
+      unloader[ifold] = archiver;
 
-      archiver[ifold]->set_archive_class (config->archive_class.c_str());
-      
-      if (!config->script.empty())
-	archiver[ifold]->set_script (config->script);
-      
-      if (config->additional_pulsars.size())
-	archiver[ifold]->set_source_filename (true);
-      
-      if (sample_delay)
-	archiver[ifold]->set_archive_dedispersed (true);
-      
-      if (!config->archive_filename.empty())
-	archiver[ifold]->set_filename (config->archive_filename);
+      prepare_archiver( archiver );
 
     }
 
-    if (config->single_pulse || config->integration_length) {
+    if (subints) {
 
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare SubFold" << endl;
@@ -484,16 +478,9 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       else
 	subfold -> set_subint_turns (1);
 
-      subfold -> set_unloader (archiver[ifold]);
+      subfold -> set_unloader (unloader[ifold]);
 
       fold[ifold] = subfold;
-
-      if (config->single_archive) {
-	cerr << "Single archive with multiple sub-integrations" << endl;
-	Pulsar::Archive* arch;
-	arch = Pulsar::Archive::new_Archive (config->archive_class);
-	archiver[ifold]->set_archive (arch);
-      }
 
     }
 
@@ -554,6 +541,32 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     operations.push_back( fold[ifold].get() );
   }
 
+}
+
+void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
+{
+  bool subints = config->single_pulse || config->integration_length;
+
+  archiver->set_archive_class (config->archive_class.c_str());
+      
+  if (!config->script.empty())
+    archiver->set_script (config->script);
+  
+  if (config->additional_pulsars.size())
+    archiver->set_source_filename (true);
+  
+  if (sample_delay)
+    archiver->set_archive_dedispersed (true);
+  
+  if (!config->archive_filename.empty())
+    archiver->set_filename (config->archive_filename);
+  
+  if (subints && config->single_archive) {
+    cerr << "Single archive with multiple sub-integrations" << endl;
+    Pulsar::Archive* arch;
+    arch = Pulsar::Archive::new_Archive (config->archive_class);
+    archiver->set_archive (arch);
+  }
 }
 
 //! Run through the data
@@ -659,25 +672,37 @@ void dsp::LoadToFold1::finish ()
     phased_filterbank -> normalize_output ();
   }
 
-  if (!config->single_pulse) {
+  bool subints = config->single_pulse || config->integration_length;
+
+  if (!subints) {
 
     for (unsigned i=0; i<fold.size(); i++) {
+
+      Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
+      if (!archiver)
+	throw Error (InvalidState, "dsp::LoadToFold1::finish",
+		     "unloader is not an archiver (single integration)");
 
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
 
-      archiver[0]->set_profiles (fold[i]->get_output());
-      archiver[0]->set_archive_software( "dspsr" );
-      archiver[0]->unload ();
+      archiver->set_profiles (fold[i]->get_output());
+      archiver->set_archive_software( "dspsr" );
+      archiver->unload ();
       
     }
 
   }
   else if (config->single_archive) {
 
-    for (unsigned i=0; i<archiver.size(); i++) {
+    for (unsigned i=0; i<unloader.size(); i++) {
 
-      Pulsar::Archive* archive = archiver[i]->get_archive ();
+      Archiver* archiver = dynamic_cast<Archiver*>( unloader[i].get() );
+      if (!archiver)
+	throw Error (InvalidState, "dsp::LoadToFold1::finish",
+		     "unloader is not an archiver (single archive)");
+
+      Pulsar::Archive* archive = archiver->get_archive ();
 
       cerr << "Unloading single archive with " << archive->get_nsubint ()
 	   << " integrations" << endl
