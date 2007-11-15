@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.11 $
-   $Date: 2007/05/31 05:59:48 $
+   $Revision: 1.12 $
+   $Date: 2007/11/15 10:42:34 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -96,6 +96,9 @@ namespace dsp {
 
     //@}
 
+    //! Access to the divider
+    const TimeDivide* get_divider () const { return &divider; }
+
   protected:
 
     //! Folds the TimeSeries data into one or more sub-integrations
@@ -103,9 +106,6 @@ namespace dsp {
 
     //! Set the idat_start and ndat_fold attributes
     virtual void set_limits (const Observation* input);
-
-    //! If no unloader is set, sub-integrations are stored here
-    std::vector< Reference::To<PhaseSeries> > subints;
 
     //! File unloading flag
     Reference::To<PhaseSeriesUnloader> unloader;
