@@ -50,6 +50,8 @@ bool dsp::WAPPFile::is_valid (const char* filename, int) const
     return false;
   try
   {
+    if (verbose)
+      cerr << "dsp::WAPPFile::is_valid try readheader" << endl;
     readheader(fd,&header);
   }
   catch(Error& error)
