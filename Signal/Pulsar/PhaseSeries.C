@@ -26,6 +26,11 @@ dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
 
 dsp::PhaseSeries::~PhaseSeries () { }
 
+dsp::PhaseSeries* dsp::PhaseSeries::clone() const
+{
+  return new PhaseSeries (*this);
+}
+
 //! Set the number of phase bins into which data will be PhaseSeriesed
 void dsp::PhaseSeries::resize (int64 nbin)
 {
