@@ -83,7 +83,7 @@ void dsp::InputBuffering::set_next_start (uint64 next)
 /*! Prepend buffered data to target Transformation's input TimeSeries */
 void dsp::InputBuffering::pre_transformation ()
 {
-  if (!requested_reserve || !buffer)
+  if (!requested_reserve || !buffer || !buffer->get_ndat())
     return;
 
   if (Operation::verbose)
