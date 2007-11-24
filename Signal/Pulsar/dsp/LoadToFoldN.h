@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.6 $
-   $Date: 2007/11/15 10:42:10 $
+   $Revision: 1.7 $
+   $Date: 2007/11/24 10:52:07 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -19,6 +19,8 @@
 class ThreadContext;
 
 namespace dsp {
+
+  class UnloaderShare;
 
   //! Multiple LoadToFold threads
   class LoadToFoldN : public LoadToFold {
@@ -61,6 +63,9 @@ namespace dsp {
     //! Input
     /*! call to set_input may precede set_nthread */
     Reference::To<Input> input;
+
+    //! PhaseSeriesUnloader sharing
+    std::vector< Reference::To<UnloaderShare> > unloaders;
 
     //! Thread lock for Input::load
     ThreadContext* input_context;
