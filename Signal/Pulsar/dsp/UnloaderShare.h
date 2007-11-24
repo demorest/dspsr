@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/11/24 10:52:02 $
+   $Revision: 1.2 $
+   $Date: 2007/11/24 21:12:45 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -132,6 +132,9 @@ namespace dsp {
 
     //! Default constructor
     Storage (unsigned contributors);
+
+    //! ~Destructor
+    ~Storage ();
 
     //! Set the storage area
     void set_profiles( PhaseSeries* );
