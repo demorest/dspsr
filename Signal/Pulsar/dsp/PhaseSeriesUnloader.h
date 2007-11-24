@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.12 $
-   $Date: 2007/11/15 10:42:24 $
+   $Revision: 1.13 $
+   $Date: 2007/11/24 10:52:02 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -35,14 +35,11 @@ namespace dsp {
     //! Destructor
     virtual ~PhaseSeriesUnloader ();
     
-    //! Set the PhaseSeries from which Profile data will be constructed
-    void set_profiles (const PhaseSeries*);
-
-    //! Defined by derived classes
-    virtual void unload () = 0;
-
     //! Unload the PhaseSeries data
-    virtual void unload (const PhaseSeries*);
+    virtual void unload (const PhaseSeries*) = 0;
+
+    //! Handle partially completed PhaseSeries data
+    virtual void partial (const PhaseSeries*);
 
     //! Creates a good filename for the PhaseSeries data archive
     virtual std::string get_filename (const PhaseSeries* data) const;
@@ -75,9 +72,6 @@ namespace dsp {
     std::string make_unique (const std::string& filename,
 			     const std::string& fname_extension,
 			     const PhaseSeries* data) const;
-
-    //! PhaseSeries from which Profile data will be constructed
-    Reference::To<const PhaseSeries> profiles;
 
     //! The filename pattern
     std::string filename_pattern;

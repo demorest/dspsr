@@ -108,7 +108,16 @@ void dsp::SubFold::transformation ()
 	cerr << "dsp::SubFold::transformation"
 	  " sending incomplete sub-integration" << endl;
 	  
-      partial.send (*output);
+      partial.send (output);
+
+      if (unloader)
+      {
+	if (verbose)
+	  cerr << ":dsp::SubFold::transformation partial subint" << endl;
+
+	unloader->partial (output);
+      }
+
       output->zero();
 
     }
@@ -125,7 +134,7 @@ void dsp::SubFold::transformation ()
     if (verbose)
       cerr << "dsp::SubFold::transformation sub-integration completed" << endl;
 
-    complete.send (*output);
+    complete.send (output);
 
     if (!keep(output)) {
       if (verbose)

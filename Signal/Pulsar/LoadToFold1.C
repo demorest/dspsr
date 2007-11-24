@@ -686,10 +686,9 @@ void dsp::LoadToFold1::finish ()
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
 
-      archiver->set_profiles (fold[i]->get_output());
       archiver->set_archive_software( "dspsr" );
-      archiver->unload ();
-      
+      archiver->unload( fold[i]->get_output() );
+
     }
 
   }

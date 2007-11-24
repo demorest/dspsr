@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.18 $
-   $Date: 2007/05/30 07:35:46 $
+   $Revision: 1.19 $
+   $Date: 2007/11/24 10:52:02 $
    $Author: straten $ */
 
 
@@ -73,7 +73,7 @@ namespace dsp {
     void add_extension (Pulsar::Archive::Extension* extension);
 
     //! Unloads all available data to a Pulsar::Archive instance
-    void unload ();
+    void unload (const PhaseSeries*);
 
     //! Set the Pulsar::Archive with the PhaseSeries data
     void set (Pulsar::Archive* archive, const PhaseSeries* phase);
@@ -96,6 +96,8 @@ namespace dsp {
     { return archive_software; }
 
   protected:
+
+    Reference::To<const PhaseSeries> profiles;
 
     //! Name of the Pulsar::Archive class used to create new instances
     std::string archive_class_name;

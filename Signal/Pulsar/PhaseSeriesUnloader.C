@@ -26,10 +26,11 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 {
 }
 
-void dsp::PhaseSeriesUnloader::unload (const PhaseSeries* profiles)
+void dsp::PhaseSeriesUnloader::partial (const PhaseSeries* profiles)
 {
-  set_profiles (profiles);
-  unload ();
+#ifdef _DEBUG
+  cerr << "dsp::PhaseSeriesUnloader::partial ignoring partial profile" << endl;
+#endif
 }
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
@@ -108,12 +109,6 @@ string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
       "'" << unique_filename << "' may not be unique." << endl;
   
   return path + unique_filename;
-}
-
-//! Set the PhaseSeries from which Profile data will be constructed
-void dsp::PhaseSeriesUnloader::set_profiles (const PhaseSeries* _profiles)
-{
-  profiles = _profiles;
 }
 
 /*! If this method is called, then set_extension is ignored.  The filename
