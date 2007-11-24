@@ -88,9 +88,6 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 {
   ThreadContext::Lock lock (context);
 
-  if (verbose)
-    cerr << "dsp::UnloaderShare::unload" << endl;
-
   if (divider.get_turns() == 0 && divider.get_seconds() == 0.0)
     throw Error (InvalidState, "dsp::UnloaderShare::tranformation",
 		 "sub-integration length not specified");
@@ -99,9 +96,11 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     throw Error (InvalidParam, "dsp::UnloaderShare::tranformation",
 		 "PhaseSeries data not provided");
 
-  unsigned division = divider.get_division( data->get_start_time() );
+  unsigned division = divider.get_division( data->get_mid_time() );
 
-  cerr << "contributor=" << contributor << " division=" << division << endl;
+  if (verbose)
+    cerr << "dsp::UnloaderShare::unload contributor=" << contributor 
+	 << " division=" << division << endl;
 
   unsigned istore = 0;
   for (istore=0; istore < storage.size(); istore++)
@@ -110,7 +109,8 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 
   if (istore == storage.size())
   {
-    cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
+    if (verbose)
+      cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
     Storage* temp = new Storage( contributors );
     temp->set_division( division );
     temp->set_profiles( data->clone() );
@@ -122,19 +122,30 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
   {
     if( storage[istore]->get_finished() )
     {
-      if (unloader) {
+      uint64 division = storage[istore]->get_division();
 
-	//if (verbose)
-	cerr << ":dsp::UnloaderShare::unload unload division="
-	     << storage[istore]->get_division() << endl;
+      if (unloader) try 
+      {
+	if (verbose)
+	  cerr << "dsp::UnloaderShare::unload unload division=" << division
+	       << endl;
     
 	unloader->unload( storage[istore]->get_profiles() );
       }
+      catch (Error& error)
+      {
+	cerr << "dsp::UnloaderShare::unload error unloading division "
+	     << division << error;
+      }
+
       storage.erase( storage.begin() + istore );
     }
     else
       istore ++;
   }  
+
+  if (verbose)
+    cerr << "dsp::UnloaderShare::unload exit" << endl;
 }
 
     //! Default constructor
@@ -168,6 +179,13 @@ dsp::UnloaderShare::Storage::Storage (unsigned contributors)
   : finished( contributors, false )
 {
 }
+
+dsp::UnloaderShare::Storage::~Storage ()
+{
+  if (verbose)
+    cerr << "dsp::UnloaderShare::Storage::~Storage" << endl;
+}
+
 
 //! Set the storage area
 void dsp::UnloaderShare::Storage::set_profiles( PhaseSeries* data )
@@ -205,16 +223,18 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
 
   if (_division == division)
   {
-    cerr << "dsp::UnloaderShare::Storage::integrate adding to division="
-	 << division << endl;
+    if (verbose)
+      cerr << "dsp::UnloaderShare::Storage::integrate adding to division="
+	   << division << endl;
     *profiles += *data;
     return true;
   }
 
   if (_division > division)
   {
-    cerr << "dsp::UnloaderShare::Storage::integrate contributor="
-	 << contributor << " past division=" << division << endl;
+    if (verbose)
+      cerr << "dsp::UnloaderShare::Storage::integrate contributor="
+	   << contributor << " past division=" << division << endl;
     finished[contributor] = true;
   }
 
