@@ -89,15 +89,17 @@ void dsp::Archiver::set_operations (const vector<Operation*>& ops)
     operations[iop] = ops[iop];
 }
 
-void dsp::Archiver::unload ()
+void dsp::Archiver::unload (const PhaseSeries* _profiles)
 {
   if (!single_archive && archive_class_name.size() == 0)
     throw Error (InvalidState, "dsp::Archiver::unload", 
 		 "neither Archive nor class name specified");
 
-  if (!profiles)
+  if (!_profiles)
     throw Error (InvalidState, "dsp::Archiver::unload",
 		 "Profile data not provided");
+
+  this->profiles = _profiles;
 
   Reference::To<Pulsar::Archive> archive;
 
