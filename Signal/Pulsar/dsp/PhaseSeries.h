@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.24 $
-   $Date: 2007/11/15 10:42:19 $
+   $Revision: 1.25 $
+   $Date: 2007/11/24 21:12:37 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -108,24 +108,6 @@ namespace dsp {
     //! Over-ride Observation::combinable_rate
     bool combinable_rate (double) const { return true; }
 
-#if 0
-    Wvs FIX LATER ?
-    //! Store what the output Archive's filename should be
-    void set_archive_filename(std::string _archive_filename)
-    { archive_filename = _archive_filename; }
-
-    //! Inquire what the output Archive's filename is going to be (if anything)
-    string get_archive_filename() const { return archive_filename; }
-
-    //! Store what the output Archive's filename extension should be
-    void set_archive_filename_extension(std::string _archive_filename_extension)
-    { archive_filename_extension = _archive_filename_extension; }
-
-    //! Inquire what the output Archive's filename extension is going to be (if anything)
-    string get_archive_filename_extension() const { return archive_filename_extension; }
-
-#endif
-
   protected:
 
     //! Period at which CAL data is folded
@@ -152,15 +134,6 @@ namespace dsp {
     //! Return true when Observation can be integrated (and prepare for it)
     bool mixable (const Observation& obs, unsigned nbin,
 		  int64 istart=0, int64 fold_ndat=0);
-
-#if 0
-    WvS FIX LATER ?
-    //! The Archive::unload_filename attribute
-    string archive_filename;
-
-    //! This filename extension will be added onto the Archive::unload_filename attribute
-    string archive_filename_extension;
-#endif
 
   };
 
