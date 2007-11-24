@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.19 $
-   $Date: 2007/11/24 10:52:02 $
+   $Revision: 1.20 $
+   $Date: 2007/11/24 21:12:25 $
    $Author: straten $ */
 
 
@@ -96,8 +96,9 @@ namespace dsp {
     { return archive_software; }
 
   protected:
-
-    Reference::To<const PhaseSeries> profiles;
+    
+    //! Used only internally
+    const PhaseSeries* profiles;
 
     //! Name of the Pulsar::Archive class used to create new instances
     std::string archive_class_name;

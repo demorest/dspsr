@@ -43,6 +43,7 @@ dsp::Archiver::Archiver ()
 {
   archive_software = "Software Unknown";
   archive_dedispersed = false;
+  profiles = 0;
 }
 
 dsp::Archiver::~Archiver ()
