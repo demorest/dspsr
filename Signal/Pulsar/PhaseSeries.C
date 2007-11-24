@@ -24,7 +24,11 @@ dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
   operator= (profile);
 }
 
-dsp::PhaseSeries::~PhaseSeries () { }
+dsp::PhaseSeries::~PhaseSeries ()
+{
+  if (verbose)
+    cerr << "dsp::PhaseSeries::~PhaseSeries" << endl;
+}
 
 dsp::PhaseSeries* dsp::PhaseSeries::clone() const
 {
@@ -203,7 +207,7 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   integration_length = prof.integration_length;
   end_time           = prof.end_time;
   folding_period     = prof.folding_period;
-  folding_predictor     = prof.folding_predictor;
+  folding_predictor  = prof.folding_predictor;
   pulsar_ephemeris   = prof.pulsar_ephemeris;
   hits               = prof.hits;
 
