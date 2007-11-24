@@ -15,7 +15,7 @@
 #include "dsp/Dedispersion.h"
 #include "dsp/Fold.h"
 #include "dsp/SubFold.h"
-#include "dsp/ThreadUnloader.h"
+#include "dsp/UnloaderShare.h"
 
 #include "FTransformAgent.h"
 #include "ThreadContext.h"
@@ -120,6 +120,7 @@ void dsp::LoadToFoldN::prepare ()
 
   }
 
+  cerr << "call prepare_subint_archival?" << endl;
   if (configuration->single_pulse || configuration->integration_length)
     prepare_subint_archival ();
 
@@ -207,10 +208,19 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 {
   unsigned nfold = threads[0]->fold.size();
 
+  cerr << "prepare_subint_archival nfold=" << nfold << endl;
+
   if( threads[0]->unloader.size() != nfold )
     throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
 		 "unloader vector size=%u != fold vector size=%u",
 		 threads[0]->unloader.size(), nfold );
+
+  unloaders.resize( nfold );
+
+  /*
+    Note that, at this point, only thread[0] has been prepared.
+    Therefore, only thread[0] will have an initialized fold array
+  */
 
   for (unsigned ifold = 0; ifold < nfold; ifold ++)
   {
@@ -219,20 +229,25 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
       throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
 		   "folder is not a SubFold" );
 
-    Reference::To<ThreadUnloader> archiver = new ThreadUnloader;
-    archiver->copy( subfold->get_divider() );
-    archiver->set_unloader( threads[0]->unloader[ifold] );
-    archiver->set_context( new ThreadContext );
-    threads[0]->unloader[ifold] = archiver;
-    subfold->set_unloader( archiver );
+    unloaders[ifold] = new UnloaderShare( threads.size() );
+    unloaders[ifold]->copy( subfold->get_divider() );
+    unloaders[ifold]->set_unloader( threads[0]->unloader[ifold] );
+    unloaders[ifold]->set_context( new ThreadContext );
+
+    threads[0]->unloader[ifold] = unloaders[ifold]->new_Submit (0);
+    subfold->set_unloader( threads[0]->unloader[ifold] );
 
   }
 
-  for (unsigned i=1; i<threads.size(); i++) 
+  for (unsigned i=0; i<threads.size(); i++) 
   {
     threads[i]->unloader.resize( nfold );
+
     for (unsigned ifold = 0; ifold < nfold; ifold ++)
-      threads[i]->unloader[ifold] = threads[0]->unloader[ifold];
+    {
+      cerr << "thread=" << i << " fold=" << ifold << endl;
+      threads[i]->unloader[ifold] = unloaders[ifold]->new_Submit (i);
+    }
   }
 }
 
