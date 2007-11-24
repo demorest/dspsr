@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.12 $
-   $Date: 2007/11/15 10:42:34 $
+   $Revision: 1.13 $
+   $Date: 2007/11/24 10:52:11 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -55,10 +55,10 @@ namespace dsp {
     //@{
 
     //! Attach methods to receive completed PhaseSeries instances
-    Callback<PhaseSeries> complete;
+    Callback<PhaseSeries*> complete;
 
     //! Attach methods to receive partially completed PhaseSeries instances
-    Callback<PhaseSeries> partial;
+    Callback<PhaseSeries*> partial;
 
     //@}
 
