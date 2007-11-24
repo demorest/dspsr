@@ -120,7 +120,6 @@ void dsp::LoadToFoldN::prepare ()
 
   }
 
-  cerr << "call prepare_subint_archival?" << endl;
   if (configuration->single_pulse || configuration->integration_length)
     prepare_subint_archival ();
 
@@ -208,7 +207,9 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 {
   unsigned nfold = threads[0]->fold.size();
 
-  cerr << "prepare_subint_archival nfold=" << nfold << endl;
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFoldN::prepare_subint_archival nfold=" << nfold
+	 << endl;
 
   if( threads[0]->unloader.size() != nfold )
     throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
@@ -244,10 +245,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     threads[i]->unloader.resize( nfold );
 
     for (unsigned ifold = 0; ifold < nfold; ifold ++)
-    {
-      cerr << "thread=" << i << " fold=" << ifold << endl;
       threads[i]->unloader[ifold] = unloaders[ifold]->new_Submit (i);
-    }
   }
 }
 
