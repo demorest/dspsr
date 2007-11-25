@@ -387,6 +387,13 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     // assumption: integer cast truncates
     division = uint64 (seconds/division_seconds);
 
+#ifdef _DEBUG
+    cerr << " divide_start=" << divide_start.printdays(13)
+	 << " start_time=" << start_time.printdays(13)
+	 << "\n seconds=" << seconds 
+	 << " division=" << division << endl;
+#endif
+
     lower = start_time + double(division) * division_seconds;
     upper = lower + division_seconds;
 
