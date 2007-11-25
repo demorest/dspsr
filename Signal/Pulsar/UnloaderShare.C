@@ -96,7 +96,8 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     throw Error (InvalidParam, "dsp::UnloaderShare::tranformation",
 		 "PhaseSeries data not provided");
 
-  unsigned division = divider.get_division( data->get_mid_time() );
+  MJD mid_time = 0.5 * ( data->get_start_time() + data->get_end_time() );
+  unsigned division = divider.get_division( mid_time );
 
   if (verbose)
     cerr << "dsp::UnloaderShare::unload contributor=" << contributor 
