@@ -266,7 +266,7 @@ try {
   archive-> set_ephemeris (const psrephem& ephemeris);
   */
 
-  archive-> set_telescope_code ( string(1, phase->get_telescope_code()) );
+  archive-> set_telescope ( string(1, phase->get_telescope_code()) );
 
   archive-> set_type ( phase->get_type() );
   if (phase->get_state() == Signal::NthPower ||
