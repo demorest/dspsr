@@ -6,7 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/S2File.h"
-#include "Telescope.h"
+#include "tempo++.h"
 #include "Error.h"
 
 // S2 header and unpacking routines
@@ -120,7 +120,7 @@ void dsp::S2File::open_file (const char* filename)
   if(extra_hdr.telid > ' ' )
     info.set_telescope_code ((char)extra_hdr.telid);
   else
-    info.set_telescope_code (Telescope::Parkes);
+    info.set_telescope_code (Tempo::Parkes);
     
   info.set_default_basis();
     

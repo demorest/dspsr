@@ -15,12 +15,12 @@
 #include <string>
 #include <vector>
 
-#include "Telescope.h"
 #include "Angle.h"
 #include "MJD.h"
 #include "Types.h"
 #include "dirutil.h"
 #include "Error.h"
+#include "tempo++.h"
 
 #include "environ.h"
 
@@ -460,7 +460,7 @@ void dsp::Observation::set_telescope_code (char _telescope)
 
 void dsp::Observation::set_default_basis ()
 {
-  if (telescope == Telescope::Parkes)  {
+  if (telescope == Tempo::Parkes)  {
     // Parkes has linear feeds for multibeam, H-OH, and 50cm
     basis = Signal::Linear;
     // above 2 GHz, can assume that the Galileo receiver is used
@@ -469,19 +469,19 @@ void dsp::Observation::set_default_basis ()
     // with the advent of the 1050 the above assumption is no longer valid
 
   }
-  else if (telescope == Telescope::ATCA)
+  else if (telescope == Tempo::Narrabri)
     basis = Signal::Circular;
-  else if (telescope == Telescope::Tidbinbilla)
+  else if (telescope == Tempo::Tidbinbilla)
     basis = Signal::Circular;
-  else if (telescope == Telescope::Arecibo)
+  else if (telescope == Tempo::Arecibo)
     basis = Signal::Circular;
-  else if (telescope == Telescope::Hobart)
+  else if (telescope == Tempo::Hobart)
     basis = Signal::Circular;
-  else if (telescope == Telescope::Greenbank) {
+  else if (telescope == Tempo::Greenbank) {
     fprintf(stderr,"WARNING Assuming GBT is Circular\n");
     basis = Signal::Circular;
   }
-  else if (telescope == Telescope::WSRT) {
+  else if (telescope == Tempo::Westerbork) {
     basis = Signal::Linear;
     if (centre_frequency > 2215 && centre_frequency < 2375)
       basis = Signal::Circular;

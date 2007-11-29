@@ -6,9 +6,9 @@
  ***************************************************************************/
 
 #include "dsp/ASCIIObservation.h"
-#include "Telescope.h"
 #include "strutil.h"
 #include "coord.h"
+#include "tempo++.h"
 
 #include "ascii_header.h"
 
@@ -49,7 +49,7 @@ void dsp::ASCIIObservation::parse (const char* header)
   if (ascii_header_get (header, "TELESCOPE", "%s", buffer) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed read TELESCOPE");
   
-  set_telescope_code( Telescope::code(buffer) );
+  set_telescope_code( Tempo::code(buffer) );
 
   // //////////////////////////////////////////////////////////////////////
   //
