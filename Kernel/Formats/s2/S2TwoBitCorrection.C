@@ -37,7 +37,7 @@ void dsp::S2TwoBitCorrection::match (char telescope)
 {
   switch ( telescope ) {
 
-  case Telescope::Parkes:
+  case Tempo::Parkes:
     if (verbose)
       cerr << "dsp::S2TwoBitCorrection::match Parkes (AT)" << endl;
     resynch_period = 10.0;
@@ -47,7 +47,7 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
     break;
     
-  case Telescope::ATCA:
+  case Tempo::Narrabri:
     if (verbose)
       cerr << "dsp::S2TwoBitCorrection::match ATCA (AT)" << endl;
     resynch_period = 10.0;
@@ -57,7 +57,7 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
     break;
     
-  case Telescope::Tidbinbilla:
+  case Tempo::Tidbinbilla:
 
     if (verbose)
       cerr << "dsp::S2TwoBitCorrection::match Tidbinbilla (AT)" << endl;
@@ -68,13 +68,13 @@ void dsp::S2TwoBitCorrection::match (char telescope)
     //    table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
     break;
 
-  case Telescope::Arecibo:
+  case Tempo::Arecibo:
     if (verbose)
       cerr << "dsp::S2TwoBitCorrection::match Arecibo (VLBA)" << endl;
     table = new S2TwoBitTable (TwoBitTable::OffsetBinary);
     break;
     
-  case Telescope::Hobart:
+  case Tempo::Hobart:
     if (verbose)
       cerr << "dsp::S2TwoBitCorrection::match Hobart (AT)" << endl;
     table = new S2TwoBitTable (TwoBitTable::SignMagnitude);
