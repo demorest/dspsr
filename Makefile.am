@@ -1,7 +1,7 @@
 
 ACLOCAL_AMFLAGS = -I config
 
-SUBDIRS	= util base backends dsp psr
+SUBDIRS	= util base backends dsp psr Management
 
 libs:
 	$(MAKE) RECURSIVE_TARGETS="all-recursive libs-recursive" libs-recursive
