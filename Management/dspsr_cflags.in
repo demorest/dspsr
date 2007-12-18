@@ -1,0 +1,6 @@
+#! /bin/sh
+
+# @configure_input@
+
+echo -IPREFIX/include
+
