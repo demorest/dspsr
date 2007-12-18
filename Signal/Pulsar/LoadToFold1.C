@@ -9,6 +9,7 @@
 #include "dsp/LoadToFoldConfig.h"
 
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/Scratch.h"
 
 #include "dsp/TwoBitCorrection.h"
