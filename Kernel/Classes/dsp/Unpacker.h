@@ -7,25 +7,17 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.19 $
-   $Date: 2007/06/03 00:56:47 $
+   $Revision: 1.20 $
+   $Date: 2007/12/18 11:57:11 $
    $Author: straten $ */
 
 
 #ifndef __Unpacker_h
 #define __Unpacker_h
 
-#include <typeinfo>
-
-namespace dsp {
-  class Unpacker;
-}
-
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
-#include "dsp/HoleyFile.h"
-#include "dsp/MultiFile.h"
 
 #include "Registry.h"
 
@@ -96,7 +88,7 @@ namespace dsp {
 	if( ptr )
 	  return ptr;
       }
-
+#if 0
       HoleyFile* hf = dynamic_cast<HoleyFile*>( iii );
 	
       if( hf ){
@@ -114,14 +106,11 @@ namespace dsp {
 	if( ptr )
 	  return ptr;
       }
+#endif
 
-      throw Error (InvalidState, "Unpacker::get_Input()",
-		   "Yo BitSeries::input is not of required type- it is of type '%s' this type='%s'.  Value='%p'.  Its name=%s. hf=%p mf=%p",
-		   typeid(iii).name(),
-		   typeid(T*).name(),iii,
-		   iii->get_name().c_str(),
-		   hf, mf);
-      return 0;
+      throw Error (InvalidState, "Unpacker::get_Input",
+		   "BitSeries::input is not of required type");
+
     }
 
 
