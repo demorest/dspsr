@@ -110,7 +110,9 @@ AC_CHECK_HEADERS([malloc.h])
 SWIN_FUNC_GETOPT_LONG
 
 AM_CONFIG_HEADER([config.h])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+		Management/Makefile
+		Management/dspsr_ldflags])
 
 AC_OUTPUT
 
