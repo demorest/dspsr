@@ -28,18 +28,15 @@ dsp::Fold::Fold () :
 
   reference_phase = -1.0; // Defaults to 0.0
 
-  ncoef = 0; // Defaults to 15
-  nspan = 0; // Defaults to 120
+  ncoef = 0; // Defaults to 15 during initialise
+  nspan = 0; // Defaults to 120 during initialise
 
   built = false;
 
   idat_start = ndat_fold = 0;
 }
 
-//! Makes sure parameters are initialised
-// This is called from prepare() rather than the constructor so that reducer
-// can set parameters (globally) if they have not been initialised locally for a given
-// dsp::Fold
+//! Set any unititialized parameters
 void dsp::Fold::initialise()
 {
   if( ncoef==0 )
@@ -74,6 +71,10 @@ void dsp::Fold::prepare ()
     throw Error (InvalidState, "dsp::Fold::prepare", "no input");
 
   prepare (input);
+}
+
+void dsp::Fold::finish ()
+{
 }
 
 //! Prepare for folding the given Observation

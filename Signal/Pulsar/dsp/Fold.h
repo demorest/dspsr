@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.50 $
-   $Date: 2007/05/31 05:59:31 $
+   $Revision: 1.51 $
+   $Date: 2007/12/19 14:00:17 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -62,6 +62,9 @@ namespace dsp {
 
     //! Prepare to fold the given Observation
     void prepare (const Observation* observation);
+
+    //! Perform any final operations
+    virtual void finish ();
 
     //! Set the number of phase bins into which data will be folded
     void set_nbin (unsigned _nbin) { requested_nbin = _nbin; }
