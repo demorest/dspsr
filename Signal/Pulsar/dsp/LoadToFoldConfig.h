@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.2 $
-   $Date: 2007/05/30 09:32:55 $
+   $Revision: 1.3 $
+   $Date: 2007/12/19 14:25:30 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -96,8 +96,11 @@ namespace dsp {
     // name of the output archive class
     std::string archive_class;
 
-    // name of the output archive filename
+    // name of the output archive file
     std::string archive_filename;
+
+    // extension appended to the output archive filename
+    std::string archive_extension;
 
     // name of post-processing psrsh script
     std::string script;

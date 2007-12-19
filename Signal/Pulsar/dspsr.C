@@ -252,6 +252,10 @@ int main (int argc, char** argv) try {
       config->ephemerides.push_back ( factory<Pulsar::Parameters> (optarg) );
       break;
 
+    case 'e':
+      config->archive_extension = optarg;
+      break;
+
     case 'F': {
 
       baseband_options += " -F" + stropt;

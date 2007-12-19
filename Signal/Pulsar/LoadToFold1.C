@@ -576,7 +576,10 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   
   if (!config->archive_filename.empty())
     archiver->set_filename (config->archive_filename);
-  
+
+  if (!config->archive_extension.empty())
+    archiver->set_extension (config->archive_extension);
+
   if (subints && config->single_archive) {
     cerr << "Single archive with multiple sub-integrations" << endl;
     Pulsar::Archive* arch;
