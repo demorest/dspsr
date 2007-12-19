@@ -49,12 +49,20 @@ bool dsp::PuMa2File::is_valid (const char* filename,int) const
   string header = get_header (filename);
 
   if (header.empty())
+  {
+    if (verbose)
+      cerr << "dsp::PuMa2File::is_valid empty header" << endl;
     return false;
+  }
 
   // verify that the buffer read contains a valid PuMa2 header
   float version;
   if (ascii_header_get (header.c_str(), "HDR_VERSION", "%f", &version) < 0)
+  {
+    if (verbose)
+      cerr << "dsp::PuMa2File::is_valid HDR_VERSION not defined" << endl;
     return false;
+  }
 
   return true;
 }

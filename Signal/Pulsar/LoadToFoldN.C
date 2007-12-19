@@ -120,7 +120,9 @@ void dsp::LoadToFoldN::prepare ()
 
   }
 
-  if (configuration->single_pulse || configuration->integration_length)
+  bool subints = configuration->single_pulse || configuration->integration_length;
+
+  if (subints)
     prepare_subint_archival ();
 
   for (unsigned i=1; i<threads.size(); i++) {
@@ -154,7 +156,8 @@ void dsp::LoadToFoldN::prepare ()
 
     //
     // only the first thread must manage archival
-    threads[i]->manage_archiver = false;
+    if (subints)
+      threads[i]->manage_archiver = false;
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFoldN::prepare preparing thread " << i << endl;
@@ -260,22 +263,24 @@ void* dsp::LoadToFoldN::thread (void* context)
 {
   dsp::LoadToFold1* fold = reinterpret_cast<dsp::LoadToFold1*>( context );
 
+  int status = 0;
+
   try {
 
     if (fold->log) *(fold->log) << "THREAD STARTED" << endl;
   
     fold->run();
 
-    fold->status = 2;
+    status = 2;
 
-    if (fold->log) *(fold->log) << "THREAD ENDED" << endl;
+    if (fold->log) *(fold->log) << "THREAD run ENDED" << endl;
 
   }
   catch (Error& error) {
 
     if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
 
-    fold->status = -1;
+    status = -1;
     fold->error = error;
 
   }
@@ -283,10 +288,14 @@ void* dsp::LoadToFoldN::thread (void* context)
   //
   // the lock must go out of scope before the signal will be delivered
   {
+    if (fold->log) *(fold->log) << "LOCK completion" << endl;
     ThreadContext::Lock lock (fold->completion);
+    fold->status = status;
+    if (fold->log) *(fold->log) << "SIGNAL completion" << endl;
     fold->completion->signal();
   }
 
+  if (fold->log) *(fold->log) << "THREAD EXIT" << endl;
   pthread_exit (0);
 }
 
@@ -352,6 +361,9 @@ void dsp::LoadToFoldN::finish ()
 	void* result = 0;
 	pthread_join (ids[i], &result);
 
+        if (Operation::verbose)
+          cerr << "psr::LoadToFoldN::finish thread " << i << " joined" << endl;
+
 	if (threads[i]->status < 0) {
 	  errors ++;
 	  error = threads[i]->error;
@@ -363,9 +375,14 @@ void dsp::LoadToFoldN::finish ()
 	  first = i;
 
 	else if (!subints)
+        {
+          if (Operation::verbose)
+            cerr << "psr::LoadToFoldN::finish combining" << endl;
+
 	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
 	    *( threads[first]->fold[ifold]->get_output() ) +=
 	      *( threads[i]->fold[ifold]->get_output() );
+        }
 
 	finished ++;
 
@@ -382,10 +399,22 @@ void dsp::LoadToFoldN::finish ()
 
     }
 
-    if (finished < threads.size())
+    if (finished < threads.size()) {
+
+      if (Operation::verbose)
+        cerr << "psr::LoadToFoldN::finish wait on condition" << endl;
+
       completion->wait();
 
+      if (Operation::verbose)
+        cerr << "psr::LoadToFoldN::finish condition wait returned" << endl;
+
+    }
+
   }
+
+  if (Operation::verbose)
+    cerr << "psr::LoadToFoldN::finish finishing via " << first << endl;
 
   threads[first]->finish();
 
