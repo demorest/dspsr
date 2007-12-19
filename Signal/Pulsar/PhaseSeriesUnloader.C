@@ -122,6 +122,12 @@ void dsp::PhaseSeriesUnloader::set_filename (const char* filename)
 //! Set the extension to be used by get_filename
 void dsp::PhaseSeriesUnloader::set_extension (const char* extension)
 {
+  if (!extension)
+    filename_extension.erase();
+
   filename_extension = extension;
+
+  if (extension[0] != '.')
+    filename_extension.insert (0, ".");
 }
 
