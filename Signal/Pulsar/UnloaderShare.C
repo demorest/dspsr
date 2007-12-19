@@ -105,7 +105,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 
   unsigned istore = 0;
   for (istore=0; istore < storage.size(); istore++)
-    if( storage[istore]->integrate( contributor, division, data ) )
+    if (storage[istore]->integrate( contributor, division, data ))
       break;
 
   if (istore == storage.size())
@@ -122,25 +122,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
   while( istore < storage.size() )
   {
     if( storage[istore]->get_finished() )
-    {
-      uint64 division = storage[istore]->get_division();
-
-      if (unloader) try 
-      {
-	if (verbose)
-	  cerr << "dsp::UnloaderShare::unload unload division=" << division
-	       << endl;
-    
-	unloader->unload( storage[istore]->get_profiles() );
-      }
-      catch (Error& error)
-      {
-	cerr << "dsp::UnloaderShare::unload error unloading division "
-	     << division << error;
-      }
-
-      storage.erase( storage.begin() + istore );
-    }
+      unload (istore);
     else
       istore ++;
   }  
@@ -149,7 +131,34 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
 }
 
-    //! Default constructor
+void dsp::UnloaderShare::finish ()
+{
+  while( storage.size() )
+    unload (0);
+}
+
+void dsp::UnloaderShare::unload (unsigned istore)
+{
+  uint64 division = storage[istore]->get_division();
+
+  if (unloader) try 
+  {
+    if (verbose)
+      cerr << "dsp::UnloaderShare::unload unload division=" << division
+	   << endl;
+    
+    unloader->unload( storage[istore]->get_profiles() );
+  }
+  catch (Error& error)
+    {
+      cerr << "dsp::UnloaderShare::unload error unloading division "
+	   << division << error;
+    }
+  
+  storage.erase( storage.begin() + istore );
+}
+
+//! Default constructor
 dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 {
   parent = _parent;

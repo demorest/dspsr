@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.13 $
-   $Date: 2007/11/24 10:52:11 $
+   $Revision: 1.14 $
+   $Date: 2007/12/19 14:00:17 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -46,6 +46,9 @@ namespace dsp {
     
     //! Create a clonse
     Fold* clone () const;
+
+    //! Emit any unfinished profiles
+    void finish ();
 
     /** @name PhaseSeries events
      *  The attached callback methods should be of the form:

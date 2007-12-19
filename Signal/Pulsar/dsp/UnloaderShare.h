@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.2 $
-   $Date: 2007/11/24 21:12:45 $
+   $Revision: 1.3 $
+   $Date: 2007/12/19 14:00:18 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -85,9 +85,15 @@ namespace dsp {
     //! Get the shared file unloader
     PhaseSeriesUnloader* get_unloader () const;
 
+    //! Unload all cached subintegrations
+    void finish ();
+
   protected:
 
     class Storage;
+
+    //! Unload the specified storage
+    void unload (unsigned istore);
 
     //! Temporary storage of incomplete sub-integrations
     std::vector< Reference::To<Storage> > storage;

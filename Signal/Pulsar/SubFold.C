@@ -104,21 +104,7 @@ void dsp::SubFold::transformation ()
 	 input comes from uncontiguous data, which can arise when
 	 processing in parallel. */
 
-      if (verbose)
-	cerr << "dsp::SubFold::transformation"
-	  " sending incomplete sub-integration" << endl;
-	  
-      partial.send (output);
-
-      if (unloader)
-      {
-	if (verbose)
-	  cerr << ":dsp::SubFold::transformation partial subint" << endl;
-
-	unloader->partial (output);
-      }
-
-      output->zero();
+      finish ();
 
     }
 
@@ -164,4 +150,20 @@ void dsp::SubFold::set_limits (const Observation* input)
   ndat_fold = divider.get_ndat ();
 }
 
+void dsp::SubFold::finish ()
+{
+  if (verbose)
+    cerr << "dsp::SubFold::finish incomplete sub-integration" << endl;
+	  
+  partial.send (output);
 
+  if (unloader)
+  {
+    if (verbose)
+      cerr << ":dsp::SubFold::transformation partial subint" << endl;
+    
+    unloader->partial (output);
+  }
+
+  output->zero();
+}

@@ -374,7 +374,15 @@ void dsp::LoadToFoldN::finish ()
 	if (finished == 0)
 	  first = i;
 
-	else if (!subints)
+	if (subints)
+        {
+          if (Operation::verbose)
+            cerr << "psr::LoadToFoldN::finish finishing" << endl;
+
+	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
+	    threads[i]->fold[ifold]->finish();
+        }
+	else
         {
           if (Operation::verbose)
             cerr << "psr::LoadToFoldN::finish combining" << endl;
@@ -412,6 +420,9 @@ void dsp::LoadToFoldN::finish ()
     }
 
   }
+
+  for (unsigned ifold = 0; ifold < unloaders.size(); ifold ++)
+    unloaders[ifold]->finish();
 
   if (Operation::verbose)
     cerr << "psr::LoadToFoldN::finish finishing via " << first << endl;
