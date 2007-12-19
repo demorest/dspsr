@@ -119,6 +119,12 @@ void dsp::LoadToFold1::prepare ()
     return;
   }
 
+  if (manager->get_info()->get_type() != Signal::Pulsar) {
+    // the kernel gets messed up by DM=0 sources, like PolnCal
+    cerr << "Disabling coherent dedispersion of non-pulsar signal" << endl;
+    config->coherent_dedispersion = false;
+  }
+
   // the data are not detected, so set up phase coherent reduction path
 
   if (config->coherent_dedispersion) {
@@ -190,8 +196,9 @@ void dsp::LoadToFold1::prepare ()
     operations.push_back (filterbank.get());
   }
 
-  if (config->nchan == 1 || !config->simultaneous_filterbank) {
-    
+  if (config->coherent_dedispersion &&
+      ( config->nchan == 1 || !config->simultaneous_filterbank ))
+  {
     if (!convolution)
       convolution = new Convolution;
     
@@ -252,23 +259,31 @@ void dsp::LoadToFold1::prepare ()
   
   if (!detect)
     detect = new Detection;
-  
-  if (config->npol == 4) {
-    
-    detect->set_output_state (Signal::Coherence);
-    detect->set_output_ndim (config->ndim);
-    
+
+  if (manager->get_info()->get_npol() == 1) 
+  {
+    cerr << "Only single polarization detection available" << endl;
+    detect->set_output_state( Signal::PP_State );
   }
-  else if (config->npol == 3)
-    detect->set_output_state (Signal::NthPower);
-  else if (config->npol == 2)
-    detect->set_output_state (Signal::PPQQ);
-  else if (config->npol == 1)
-    detect->set_output_state (Signal::Intensity);
   else
-    throw Error (InvalidState, "LoadToFold1::prepare",
-		 "invalid config->npol=%d", config->npol);
-  
+  {
+    if (config->npol == 4)
+    {
+      detect->set_output_state (Signal::Coherence);
+      detect->set_output_ndim (config->ndim);
+    }
+    else if (config->npol == 3)
+      detect->set_output_state (Signal::NthPower);
+    else if (config->npol == 2)
+      detect->set_output_state (Signal::PPQQ);
+    else if (config->npol == 1)
+      detect->set_output_state (Signal::Intensity);
+    else
+      throw Error( InvalidState, "LoadToFold1::prepare",
+		   "invalid npol config=%d input=%d",
+                   config->npol, manager->get_info()->get_npol() );
+  }
+
   operations.push_back (detect.get());
   
   if (config->npol == 3) {
@@ -677,6 +692,9 @@ void dsp::LoadToFold1::finish ()
 
   if (!subints) {
 
+    if (!unloader.size())
+      throw Error (InvalidState, "dsp::LoadToFold1::finish", "no unloader");
+
     for (unsigned i=0; i<fold.size(); i++) {
 
       Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
@@ -715,3 +733,4 @@ void dsp::LoadToFold1::finish ()
   }
 
 }
+
