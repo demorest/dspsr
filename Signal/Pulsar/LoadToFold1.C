@@ -632,6 +632,8 @@ void dsp::LoadToFold1::run ()
       
     }
     catch (Error& error) {
+      if (error.get_code() == EndOfFile)
+	break;
       throw error += "dsp::LoadToFold1::run";
     }
     
