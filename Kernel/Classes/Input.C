@@ -51,7 +51,7 @@ void dsp::Input::operation ()
                  "block_size="UI64" < overlap="UI64, block_size, overlap);
 
   if (eod())
-    throw Error (InvalidState, "dsp::Input::operation",
+    throw Error (EndOfFile, "dsp::Input::operation",
 		 "end of data for class '%s'",get_name().c_str());
 
   string reason;
