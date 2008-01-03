@@ -26,7 +26,7 @@ namespace dsp {
     DADABuffer ();
     
     //! Destructor
-    virtual ~DADABuffer () { }
+    ~DADABuffer ();
 
     //! Returns true if filename appears to name a valid CPSR file
     bool is_valid (const char* filename,int NOT_USED=-1) const;
@@ -42,8 +42,11 @@ namespace dsp {
  
   protected:
 
-    //! Open the file
+    //! Read the DADA key information from the specified filename
     virtual void open_file (const char* filename);
+
+    //! Close the DADA connection
+    void close ();
 
     //! Load bytes from shared memory
     virtual int64 load_bytes (unsigned char* buffer, uint64 bytes);

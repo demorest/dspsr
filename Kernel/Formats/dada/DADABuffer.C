@@ -17,7 +17,28 @@ dsp::DADABuffer::DADABuffer ()
 {
   hdu = 0;
 }
-    
+
+dsp::DADABuffer::~DADABuffer ()
+{
+  close ();
+}
+
+void dsp::DADABuffer::close ()
+{
+  if (!hdu)
+    return;
+
+  if (dada_hdu_unlock_read (hdu) < 0)
+    cerr << "dsp::DADABuffer::close error during dada_hdu_unlock_read" << endl;
+
+  if (dada_hdu_disconnect (hdu) < 0)
+    cerr << "dsp::DADABuffer::close error during dada_hdu_disconnect" << endl;
+
+  dada_hdu_destroy (hdu);
+
+  hdu = 0;
+}
+
 void dsp::DADABuffer::reset()
 {
   end_of_data = false;
