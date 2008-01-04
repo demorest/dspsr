@@ -103,7 +103,13 @@ void dsp::DADABuffer::open_file (const char* filename)
     cerr << "dsp::DADABuffer::open_file key=" << key << endl;
 
   if (!hdu)
-    hdu = dada_hdu_create (NULL);
+  {
+    /* DADA library logger */
+    multilog_t* log = multilog_open ("dspsr", 0);
+    multilog_add (log, stderr);
+
+    hdu = dada_hdu_create (log);
+  }
 
   dada_hdu_set_key (hdu, key);
 
