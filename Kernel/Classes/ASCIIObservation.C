@@ -33,8 +33,13 @@ void dsp::ASCIIObservation::parse (const char* header)
   //
   float version;
   if (ascii_header_get (header, hdr_version.c_str(), "%f", &version) < 0)
-    cerr << "ASCIIObservation: failed read " << hdr_version << endl;
-
+  {
+    /* Provide backward-compatibility with CPSR2 header */
+    if (ascii_header_get (header, "CPSR2_HEADER_VERSION", "%f", &version) < 0)
+      cerr << "ASCIIObservation: failed read " << hdr_version << endl;
+    else
+      set_machine ("CPSR2");
+  }
 
   //
   // no idea about the size of the data
@@ -67,20 +72,15 @@ void dsp::ASCIIObservation::parse (const char* header)
   //
   ascii_header_get (header, "MODE", "%s", buffer);
     
-  if (strncmp(buffer,"PSR",3) == 0) {
-    cerr << "Source is Pulsar" << endl;
+  if (strncmp(buffer,"PSR",3) == 0)
     set_type(Signal::Pulsar);
-  }
-  else if (strncmp(buffer,"CAL",3) == 0) {
-    cerr << "Source is CAL" << endl;
+  else if (strncmp(buffer,"CAL",3) == 0)
     set_type(Signal::PolnCal);
-  }
-  else if (strncmp(buffer,"LEV",3) == 0) {
-    cerr << "Source is LEVCAL" << endl;
+  else if (strncmp(buffer,"LEV",3) == 0)
     set_type(Signal::PolnCal);
-  }
   else {
-    cerr << "ASCIIObservation: unknown MODE, assuming Pulsar" << endl;
+    if (verbose)
+      cerr << "ASCIIObservation: unknown MODE, assuming Pulsar" << endl;
     set_type(Signal::Pulsar);
   }
 
