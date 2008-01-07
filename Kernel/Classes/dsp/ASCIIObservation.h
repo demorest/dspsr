@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/11/13 14:15:18 $
+   $Revision: 1.4 $
+   $Date: 2008/01/07 04:30:30 $
    $Author: straten $ */
 
 #ifndef __ASCIIObservation_h
@@ -30,8 +30,11 @@ namespace dsp {
     //! Construct from an ASCII header block
     ASCIIObservation (const char* header=0);
 
-    //! Parse the ASCII header block
-    void parse (const char* header);
+    //! Read the ASCII header block
+    void load (const char* header);
+
+    //! Write an ASCII header block
+    void unload (char* header);
 
     //! Get the number of bytes offset from the beginning of acquisition
     uint64 get_offset_bytes () const { return offset_bytes; }
