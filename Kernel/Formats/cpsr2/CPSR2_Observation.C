@@ -20,7 +20,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   if (!header)
     return;
 
-  parse (header);
+  load (header);
 
   if ( get_nchan() > 1 && get_npol() == 1) {
     set_state (Signal::Intensity);
