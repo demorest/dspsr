@@ -50,7 +50,9 @@ static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 
 #if DSP_dada
 #include "dsp/DADABuffer.h"
-static Registry::List<dsp::File>::Enter<dsp::DADABuffer> register_dada;
+static Registry::List<dsp::File>::Enter<dsp::DADABuffer> dada_buffer;
+#include "dsp/DADAFile.h"
+static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
 #endif
 
 #if DSP_fadc
