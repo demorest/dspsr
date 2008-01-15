@@ -312,10 +312,9 @@ void dsp::TimeSeries::seek (int64 offset)
   set_ndat( get_ndat() - offset );
 
   input_sample += offset;
-  assert (input_sample > 0);
+  assert (input_sample >= 0);
 
   change_start_time (offset);
-
 }
 
 //! Returns a uchar pointer to the first piece of data
