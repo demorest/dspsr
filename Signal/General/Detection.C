@@ -80,6 +80,9 @@ void dsp::Detection::transformation () try {
     return;
   }
 
+  if (input->get_ndat() == 0)
+    return;
+
   bool understood = true;
 
   if( !get_input()->get_detected() ) {
