@@ -237,8 +237,6 @@ void dsp::Input::seek (int64 offset, int whence)
     throw Error (InvalidParam, "dsp::Input::seek", "invalid whence");
   }
 
-  determine_eod(next_sample);
-
   // calculate the extra samples required owing to resolution
   resolution_offset = next_sample % resolution;
   load_sample = next_sample - resolution_offset;
@@ -362,16 +360,4 @@ void dsp::Input::set_load_size ()
   if (verbose)
     cerr << "dsp::Input::set_load_size load_size=" << load_size << endl;
 }
-
-//! Calls 'sed_eod()' within call to seek().  This is over-ridden by MiniFile
-void dsp::Input::determine_eod(uint64 next_sample){
-  if( next_sample < get_info()->get_ndat() )
-    set_eod( false );
-  else
-    set_eod( true );
-}
-
-
-
-
 
