@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.37 $
-   $Date: 2007/10/25 00:20:49 $
+   $Revision: 1.38 $
+   $Date: 2008/01/18 00:58:19 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -146,9 +146,6 @@ namespace dsp {
 
     //! Load data into the BitSeries specified with set_output
     virtual void operation ();
-
-    //! Calls 'sed_eod()' within call to seek().  This is over-ridden by MiniFile
-    virtual void determine_eod(uint64 next_sample);
 
     //! Information about the data source (passed on to BitSeries in load)
     Observation info;
