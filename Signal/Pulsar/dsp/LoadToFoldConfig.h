@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/12/19 14:25:30 $
+   $Revision: 1.4 $
+   $Date: 2008/01/19 20:59:37 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -55,6 +55,7 @@ namespace dsp {
 
     unsigned nfft;
     unsigned fres;
+    unsigned times_minimum_nfft;
 
     // phase-locked filterbank phase bins
     unsigned plfb_nbin;
