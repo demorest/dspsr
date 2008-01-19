@@ -103,8 +103,14 @@ void dsp::WeightedTimeSeries::set_nchan_weight (unsigned _nchan_weight)
 uint64 dsp::WeightedTimeSeries::get_nweights () const
 {
   uint64 nweights = get_nweights (get_ndat());
+
   if (weight_idat)
     nweights ++;
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::get_nweights weight_idat=" 
+	 << weight_idat << " nweights=" << nweights << endl;
+
   return nweights;
 }
 
@@ -160,11 +166,15 @@ void dsp::WeightedTimeSeries::resize (uint64 nsamples)
 void dsp::WeightedTimeSeries::resize_weights (uint64 nsamples)
 { 
   if (verbose)
-    cerr << "dsp::WeightedTimeSeries::resize_weights nsamples=" << nsamples
-	 << " weight_idat=" << weight_idat << " reserve=" << get_reserve()
-	 << endl;
+    cerr << "dsp::WeightedTimeSeries::resize_weights"
+      " nsamples=" << nsamples << endl;
 
   uint64 nweights = get_nweights(nsamples);
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::resize_weights"
+      " reserve=" << get_reserve() << endl;
+
   nweights += get_nweights(get_reserve());
 
   uint64 require = nweights * get_npol_weight() * get_nchan_weight();
