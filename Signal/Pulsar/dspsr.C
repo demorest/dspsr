@@ -424,9 +424,19 @@ int main (int argc, char** argv) try {
       config->weighted_time_series = false;
       break;
 
-    case 'x': 
-      config->nfft = strtol (optarg, 0, 10);
+    case 'x':
+    {
+      unsigned times = 0;
+
+      if (string(optarg) == "min")
+	config->times_minimum_nfft = 1;
+      else if ( sscanf(optarg, "minX%u", &times) == 1 )
+	config->times_minimum_nfft = times;
+      else
+	config->nfft = strtol (optarg, 0, 10);
+
       break;
+    }
 
     case 'X':
       config->additional_pulsars.push_back (optarg);

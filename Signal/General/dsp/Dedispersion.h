@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.25 $
-   $Date: 2007/05/31 05:59:22 $
+   $Revision: 1.26 $
+   $Date: 2008/01/19 20:59:37 $
    $Author: straten $ */
 
 #ifndef __Dedispersion_h
@@ -100,6 +100,9 @@ namespace dsp {
     //! Get the frequency resolution in each channel of the kernel
     unsigned get_frequency_resolution () const { return ndat; }
 
+    //! Set the frequency resolution this many times the minimum required
+    void set_times_minimum_nfft (unsigned times);
+
     //! Return the smearing across the entire band time in seconds
     double get_smearing_time () const {
       return smearing_time (centre_frequency, bandwidth);
@@ -154,6 +157,9 @@ namespace dsp {
 
     //! Flag set when set_frequency_resolution() method is called
     bool frequency_resolution_set;
+
+    //! Choose filter length this many times the minimum length
+    unsigned times_minimum_nfft;
 
     //! Flag that the response and bandpass attributes reflect the state
     bool built;

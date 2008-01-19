@@ -37,6 +37,7 @@ dsp::Dedispersion::Dedispersion ()
   fractional_delay = false;
 
   frequency_resolution_set = false;
+  times_minimum_nfft = 0;
 
   built = false;
   context = 0;
@@ -131,6 +132,14 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
   frequency_resolution_set = true;
 }
 
+void dsp::Dedispersion::set_times_minimum_nfft (unsigned times)
+{
+  if (verbose)
+    cerr << "dsp::Dedispersion::set_times_minimum_nfft ("<<times<<")"<<endl;
+
+  times_minimum_nfft = times;
+  frequency_resolution_set = true;
+}
 
 void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
 {
@@ -147,7 +156,8 @@ void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
 
   set_nchan (channels);
 
-  prepare ();
+  if (!built)
+    prepare ();
 }
 
 /*! The signal at sky frequencies lower than the centre frequency
@@ -232,8 +242,12 @@ void dsp::Dedispersion::build ()
   // prepare internal variables
   if (!frequency_resolution_set)
     set_optimal_ndat ();
-  else
+  else 
+  {
+    if (times_minimum_nfft)
+      set_frequency_resolution( times_minimum_nfft * get_minimum_ndat() );
     check_ndat ();
+  }
 
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
@@ -290,22 +304,14 @@ unsigned dsp::Dedispersion::get_effective_smearing_samples () const
   return smearing_samples (0);
 }
 
+/*!
+  Calculate the smearing time over the band (or the sub-band with
+  the lowest centre frequency) in seconds.  This will determine the
+  number of points "nsmear" that must be thrown away for each FFT.
+*/
 double dsp::Dedispersion::smearing_time (int half) const
-{
-  // Calculate the smearing time over the band (or the sub-band with
-  // the lowest centre frequency) in seconds.  This will determine the
-  // number of points "nsmear" that must be thrown away for each FFT.
-    
-  string band = "band";
-  if (nchan>1)
-    band = "worst channel";
-
-  string side;
-  if (half == 1)
-    side = "upper half of the ";
-  else if (half == -1)
-    side = "lower half of the ";
-  else if (half != 0)
+{  
+  if ( ! (half==0 || half==-1 || half == 1) )
     throw Error (InvalidParam, "dsp::Dedispersion::smearing_time",
 		 "invalid half=%d", half);
 
@@ -314,19 +320,32 @@ double dsp::Dedispersion::smearing_time (int half) const
   double lower_ch_cfreq = centre_frequency - (abs_bw - ch_abs_bw) / 2.0;
 
   // calculate the smearing (in the specified half of the band)
-  if (half) {
+  if (half)
+  {
     ch_abs_bw /= 2.0;
     lower_ch_cfreq += double(half) * ch_abs_bw;
   }
   double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
   
   if (verbose)
+  {
+    string band = "band";
+    if (nchan>1)
+      band = "worst channel";
+
+    string side;
+    if (half == 1)
+      side = "upper half of the ";
+    else if (half == -1)
+      side = "lower half of the ";
+
     cerr << "dsp::Dedispersion::smearing_time in the " << side << band << ": "
 	 << float(tsmear*1e3) << " ms" << endl;
+  }
 
   return tsmear;
 }
- 
+
 unsigned dsp::Dedispersion::smearing_samples (int half) const
 {
 
