@@ -382,7 +382,7 @@ void dsp::LoadToFoldN::finish ()
 	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
 	    threads[i]->fold[ifold]->finish();
         }
-	else
+	else if (finished)
         {
           if (Operation::verbose)
             cerr << "psr::LoadToFoldN::finish combining" << endl;
