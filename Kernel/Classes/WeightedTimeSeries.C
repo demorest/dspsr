@@ -102,20 +102,20 @@ void dsp::WeightedTimeSeries::set_nchan_weight (unsigned _nchan_weight)
 //! Get the number of weights
 uint64 dsp::WeightedTimeSeries::get_nweights () const
 {
-  uint64 nweights = get_nweights (get_ndat());
-
-  if (weight_idat)
-    nweights ++;
+  uint64 nweights = get_nweights (get_ndat() + weight_idat);
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::get_nweights weight_idat=" 
 	 << weight_idat << " nweights=" << nweights << endl;
 
   if ( (weights + nweights) > (base + weight_subsize) )
-    throw Error (InvalidState, "dsp::WeightedTimeSeries::get_nweights",
-		 "weights=%x + nweights=%u > base=%x + size=%u"
-		 " (weight_idat=%u)",
-		 weights, nweights, base, weight_subsize, weight_idat);
+  {
+    cerr << "dsp::WeightedTimeSeries::get_nweights FATAL ERROR:\n\t"
+            "weights=" << weights << " + nweights=" << nweights <<
+            " > base=" << base << " + size=" << weight_subsize <<
+            " (weight_idat=" << weight_idat << ")" << endl;
+    exit (-1);
+  }
 
   return nweights;
 }
