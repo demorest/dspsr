@@ -111,6 +111,12 @@ uint64 dsp::WeightedTimeSeries::get_nweights () const
     cerr << "dsp::WeightedTimeSeries::get_nweights weight_idat=" 
 	 << weight_idat << " nweights=" << nweights << endl;
 
+  if ( (weights + nweights) > (base + weight_subsize) )
+    throw Error (InvalidState, "dsp::WeightedTimeSeries::get_nweights",
+		 "weights=%x + nweights=%u > base=%x + size=%u"
+		 " (weight_idat=%u)",
+		 weights, nweights, base, weight_subsize, weight_idat);
+
   return nweights;
 }
 
