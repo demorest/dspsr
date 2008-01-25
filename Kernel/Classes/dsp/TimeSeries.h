@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.41 $
-   $Date: 2007/11/15 10:41:52 $
+   $Revision: 1.42 $
+   $Date: 2008/01/25 05:22:51 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -139,6 +139,8 @@ namespace dsp {
     void set_npol(unsigned _npol);
     //! Over-rides DataSeries::set_ndim()- this only allows a change if preserve_seeked_data is false
     void set_ndim(unsigned _ndim);
+
+    void finite_check () const;
 
   protected:
 

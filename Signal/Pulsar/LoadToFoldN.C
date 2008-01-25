@@ -11,7 +11,6 @@
 #include "dsp/Input.h"
 #include "dsp/InputBufferingShare.h"
 
-#include "dsp/Scratch.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/Fold.h"
 #include "dsp/SubFold.h"
@@ -296,6 +295,7 @@ void* dsp::LoadToFoldN::thread (void* context)
   }
 
   if (fold->log) *(fold->log) << "THREAD EXIT" << endl;
+
   pthread_exit (0);
 }
 
@@ -387,9 +387,16 @@ void dsp::LoadToFoldN::finish ()
           if (Operation::verbose)
             cerr << "psr::LoadToFoldN::finish combining" << endl;
 
-	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
-	    *( threads[first]->fold[ifold]->get_output() ) +=
-	      *( threads[i]->fold[ifold]->get_output() );
+	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++) try
+	  {
+	    PhaseSeries* result = threads[i]->fold[ifold]->get_output();
+	    *( threads[first]->fold[ifold]->get_output() ) += *( result );
+	  }
+	  catch (Error& error)
+	  {
+	    cerr << "psr::LoadToFoldN::finish results of thread[" << i << "]"
+	      " corrupted.  ifold=" << ifold << endl << error << endl;
+	  }
         }
 
 	finished ++;

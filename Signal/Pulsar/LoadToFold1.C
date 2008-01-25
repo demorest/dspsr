@@ -412,7 +412,7 @@ void setup_output (const dsp::Fold* from, dsp::Fold* to)
 template<class T>
 T* setup (dsp::Fold* ptr)
 {
-  // ensure that the current folder is a single pulse folder
+  // ensure that the current folder is of type T
   T* derived = dynamic_cast<T*> (ptr);
 
   if (!derived)
@@ -426,7 +426,7 @@ T* setup (dsp::Fold* ptr)
 template<class T>
 dsp::Fold* setup_not (dsp::Fold* ptr)
 {
-  // ensure that the current folder is a single pulse folder
+  // ensure that the current folder is not of type T
   T* derived = dynamic_cast<T*> (ptr);
 
   if (derived || !ptr)
@@ -598,6 +598,9 @@ void dsp::LoadToFold1::run ()
     cerr << "dsp::LoadToFold1::run this=" << this 
 	 << " nops=" << operations.size() << endl;
 
+  if (log)
+    scratch->set_ostream (*log);
+
   // ensure that all operations are using the local log and scratch space
   for (unsigned iop=0; iop < operations.size(); iop++) {
     if (log) {
@@ -636,7 +639,10 @@ void dsp::LoadToFold1::run ()
     }
     catch (Error& error) {
       if (error.get_code() == EndOfFile)
+      {
+        cerr << "end of file" << endl;
 	break;
+      }
       throw error += "dsp::LoadToFold1::run";
     }
     

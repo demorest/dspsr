@@ -41,12 +41,12 @@ void dsp::Filterbank::prepare ()
 void dsp::Filterbank::make_preparations ()
 {
   if (nchan <= input->get_nchan() )
-    throw Error (InvalidState, "dsp::Filterbank::transformation",
+    throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		 "output nchan=%d <= input nchan=%d",
 		 nchan, input->get_nchan());
 
   if (nchan % input->get_nchan() != 0)
-    throw Error (InvalidState, "dsp::Filterbank::transformation",
+    throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		 "output nchan=%d not a multiple of input nchan=%d",
 		 nchan, input->get_nchan());
 
@@ -69,7 +69,7 @@ void dsp::Filterbank::make_preparations ()
 
     response -> match (input, nchan);
     if (response->get_nchan() != nchan)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
+      throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		   "response nchan=%d != output nchan=%d",
 		   response->get_nchan(), nchan);
 
@@ -85,7 +85,7 @@ void dsp::Filterbank::make_preparations ()
 	   << " ndim=" << response->get_ndim() << endl;
 
     if (freq_res == 0)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
+      throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		   "Response.ndat = 0");
 
   }
@@ -103,7 +103,7 @@ void dsp::Filterbank::make_preparations ()
     else if (FTransform::get_norm() == FTransform::normalized)
       norm = "normalized";
 	
-    cerr << "dsp::Filterbank::transformation\n"
+    cerr << "dsp::Filterbank::make_preparations\n"
       "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
       "  fft::normalization=" << norm << endl;
 
@@ -135,7 +135,7 @@ void dsp::Filterbank::make_preparations ()
   }
 
   else
-    throw Error (InvalidState, "dsp::Filterbank::transformation",
+    throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		 "invalid input data state = " + input->get_state_as_string());
 
   // number of timesamples between start of each big fft
@@ -145,23 +145,23 @@ void dsp::Filterbank::make_preparations ()
   if (apodization) {
 
     if( input->get_nchan() > 1 )
-      throw Error(InvalidState,"dsp::Filterbank::transformation",
+      throw Error(InvalidState,"dsp::Filterbank::make_preparations",
 		  "not implemented for nchan=%d > 1",
 		  input->get_nchan());
 
     if (apodization->get_ndat() != nsamp_fft)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
+      throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		   "invalid apodization function ndat=%d"
 		   " (nfft=%d)", apodization->get_ndat(), nsamp_fft);
 
     if (input->get_state() == Signal::Analytic 
 	&& apodization->get_ndim() != 2)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
+      throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		   "Signal::Analytic signal. Real apodization function.");
 
     if (input->get_state() == Signal::Nyquist 
 	&& apodization->get_ndim() != 1)
-      throw Error (InvalidState, "dsp::Filterbank::transformation",
+      throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		   "Signal::Nyquist signal. Complex apodization function.");
   }
 
@@ -174,23 +174,23 @@ void dsp::Filterbank::make_preparations ()
     matrix_convolution = (response->get_ndim() == 8);
 
     if (verbose)
-      cerr << "dsp::Filterbank::transformation with " 
+      cerr << "dsp::Filterbank::make_preparations with " 
 	   << ((matrix_convolution)?"matrix":"complex") << " convolution"
 	   << endl;
 
     if( matrix_convolution && input->get_nchan() > 1 )
-      throw Error(InvalidState,"dsp::Filterbank::transformation",
+      throw Error(InvalidState,"dsp::Filterbank::make_preparations",
 		  "I don't use matrix convolution so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
 		  input->get_nchan());
 
     if (matrix_convolution && input->get_npol() != 2)
-	throw Error (InvalidState, "dsp::Filterbank::transformation",
+	throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		     "matrix convolution and input.npol != 2");
   }
 
   if (passband) {
     if( matrix_convolution && input->get_nchan() > 1 )
-      throw Error(InvalidState,"dsp::Filterbank::transformation",
+      throw Error(InvalidState,"dsp::Filterbank::make_preparations",
 		  "I don't use passbands in this class so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
 		  input->get_nchan());
 
@@ -209,12 +209,18 @@ void dsp::Filterbank::make_preparations ()
   // nsamp_step is analogous to ngood in Convolution::transformation
   nsamp_tres = nchan_subband / time_res;
   if (nsamp_tres < 1)
-    throw Error (InvalidState, "dsp::Filterbank::transformation",
+    throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		 "time resolution:%d > no.channels per input channel:%d\n",
 		 time_res, nchan_subband);
 
   if (has_buffering_policy())
+  {
+    if (verbose)
+      cerr << "dsp::Filterbank::make_preparations"
+	" reserve=" << nsamp_fft << endl;
+
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
+  }
 
   prepare_output();
 
@@ -245,7 +251,7 @@ void dsp::Filterbank::prepare_output ()
 
   output->rescale (scalefac);
   
-  if (verbose) cerr << "dsp::Filterbank::transformation scale="
+  if (verbose) cerr << "dsp::Filterbank::prepare_output scale="
                     << output->get_scale() <<endl;
 
   // output data will have new sampling rate
@@ -273,7 +279,7 @@ void dsp::Filterbank::prepare_output ()
   output->change_start_time (nfilt_pos);
 
   if (verbose)
-    cerr << "dsp::Filterbank::transformation start time += "
+    cerr << "dsp::Filterbank::prepare_output start time += "
 	 << nfilt_pos << " samps" << endl;
 
   // enable the Response to record its effect on the output Timeseries
@@ -289,9 +295,7 @@ void dsp::Filterbank::transformation ()
 
   if (!prepared)
     prepare ();
-  else
-    make_preparations ();
-  
+
   const uint64 ndat = input->get_ndat();
 
   // number of big FFTs (not including, but still considering, extra FFTs
@@ -306,6 +310,12 @@ void dsp::Filterbank::transformation ()
   // prepare the output TimeSeries
   prepare_output ();
 
+  uint64 output_ndat = npart * nkeep * time_res;
+
+  if (verbose)
+    cerr << "dsp::Filterbank::transformation npart=" << npart 
+	 << " nkeep=" << nkeep << " output_ndat=" << output_ndat << endl;
+
   // resize to new number of valid time samples
   output->resize (npart * nkeep * time_res);
 
@@ -314,6 +324,9 @@ void dsp::Filterbank::transformation ()
 
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;
+  if (input->get_state() == Signal::Nyquist)
+    bigfftsize += 8;
+
   // also need space to hold backward FFTs
   unsigned scratch_needed = bigfftsize + 2 * freq_res;
 
@@ -343,9 +356,7 @@ void dsp::Filterbank::transformation ()
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation enter main loop" <<
-      " npart:" << npart <<
-      " cpol:" << cross_pol <<
-      " npol:" << input->get_npol() << endl;
+      " cpol=" << cross_pol << " npol=" << input->get_npol() << endl;
 
   // number of floats to step between input to filterbank
   unsigned long in_step = nsamp_step * input->get_ndim();
@@ -405,6 +416,17 @@ void dsp::Filterbank::transformation ()
 
 #ifdef _DEBUG
 	    cerr << "f[r|c]c1d done" << endl;
+#endif
+
+#if CHECK_OUTPUT
+            for (unsigned isamp=0; isamp < nsamp_fft; isamp++)
+	    {
+	      float val = c_spectrum[ipol][isamp];
+              if (!isfinite(val * val)) {
+                 cerr << "F1: not finite ipol=" << ipol
+		      << " isamp=" << isamp << " val=" << val <<endl;
+              }
+	    }
 #endif
 
 	}
@@ -479,6 +501,18 @@ cerr << "back into time series" << endl;
 cerr << "bcc1d done" << endl;
 #endif
 
+#if CHECK_OUTPUT
+            for (unsigned isamp=0; isamp < freq_res*2; isamp++)
+	    {
+	      float val = c_time[isamp];
+              if (!isfinite(val * val)) {
+                 cerr << "F2: not finite ipol=" << ipol 
+		      << " isamp=" << isamp << " val=" << val << endl;
+              }
+	    }
+#endif
+
+
 	      freq_dom_ptr += freq_res*2;
 	      
 	      data_into = output->get_datptr (jchan+ichan, ipol) + t_off;
@@ -507,6 +541,7 @@ cerr << "bcc1d done" << endl;
   if (verbose)
     cerr << "dsp::Filterbank::transformation return with output ndat="
 	 << output->get_ndat() << endl;
+
 }
 
 #if 0

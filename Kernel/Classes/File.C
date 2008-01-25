@@ -230,7 +230,8 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 int64 dsp::File::seek_bytes (uint64 bytes)
 {
   if (verbose)
-    cerr << "dsp::File::seek_bytes nbytes=" << bytes << endl;
+    cerr << "dsp::File::seek_bytes nbytes=" << bytes 
+         << " header_bytes=" << header_bytes << endl;
   
   if (fd < 0)
     throw Error (InvalidState, "dsp::File::seek_bytes", "invalid fd");
