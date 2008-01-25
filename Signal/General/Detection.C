@@ -53,8 +53,8 @@ void dsp::Detection::set_output_state (Signal::State _state)
 }
 
 //! Detect the input data
-void dsp::Detection::transformation () try {
-
+void dsp::Detection::transformation () try
+{
   static MJD st = get_input()->get_start_time();
 
   if (verbose)
@@ -195,9 +195,9 @@ dsp::Detection::onepol_detect()
   }
 
 }
-  
-void dsp::Detection::polarimetry () try {
 
+void dsp::Detection::polarimetry () try
+{
   if (verbose)
     cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
 
@@ -237,7 +237,11 @@ void dsp::Detection::polarimetry () try {
     // need to copy only the first polarization
     if (ndim == 4)
       required_space = input_ndim * ndat;
-    
+
+    if (verbose)
+      cerr << "dsp::Detection::polarimetry require_floats="
+	   << required_space << endl;
+
     copyp = scratch->space<float> (unsigned(required_space));
 
     copy_bytes = input_ndim * ndat * sizeof(float);
@@ -253,11 +257,17 @@ void dsp::Detection::polarimetry () try {
     const float* p = input->get_datptr (ichan, 0);
     const float* q = input->get_datptr (ichan, 1);
 
-    if (inplace && ndim != 2) {
+    if (inplace && ndim != 2)
+    {
+      if (verbose && ichan == 0)
+	cerr << "dsp::Detection::polarimetry copy_bytes="
+	     << copy_bytes << endl;
+
       memcpy (copyp, p, size_t(copy_bytes));
       p = copyp;
 
-      if (ndim == 1) {
+      if (ndim == 1)
+      {
 	memcpy (copyq, q, size_t(copy_bytes));
 	q = copyq;
       }
@@ -269,9 +279,17 @@ void dsp::Detection::polarimetry () try {
 
       // ie Analytic
       if (state == Signal::Stokes)
+      {
 	stokes_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
+      }
       else
-	cross_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
+      {
+	if (verbose && ichan == 0)
+	  cerr << "dsp::Detection::polarimetry call wvs_cross_detect ndat="
+	       << ndat << endl;
+
+	cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+      }
 
     }
     else{ // ie Nyquist ndim==1
@@ -305,6 +323,9 @@ void dsp::Detection::polarimetry () try {
 void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace, 
 					  float* r[4])
 {
+  if (verbose && ichan == 0)
+    cerr << "dsp::Detection::get_result_pointers ndim=4" << endl;
+
   switch (ndim) {
 
     // Stokes I,Q,U,V in separate arrays
@@ -334,16 +355,24 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
 
     // Stokes I,Q,U,V in one array
   case 4:
+
     r[0] = get_output()->get_datptr (ichan,0);
     r[1] = r[0] + 1;
     r[2] = r[1] + 1;
     r[3] = r[2] + 1;
+
     break;
+
+  default:
+    throw Error (InvalidState, "dsp::Detection::get_result_pointers",
+		 "invalid ndim=%d", ndim);
+
   }
-  
+
 }
 
-void dsp::Detection::checks(){
+void dsp::Detection::checks()
+{
   if( get_input()->get_detected() && state != Signal::Intensity )
     throw Error(InvalidState, "dsp::Detection::checks",
 		"Sorry, but this class currently can only redetect data to Stokes I (You had input='%s' and output='%s')",

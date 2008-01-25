@@ -144,9 +144,8 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
   if (!require)
     return;
 
-  if (size == 0) {
-
-    // Add '8' (2 floats) on for FFTs that require 2 extra floats in the allocated memory
+  if (size == 0)
+  {
 
 #if INTERACTIVE_MEMORY
     cerr << "dsp::DataSeries::resize allocate " << require << " bytes" << endl;
@@ -155,17 +154,18 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 
 #ifdef HAVE_MALLOC_H
 
-#if INTERACTIVE_MEMORY
-    cerr << "dsp::DataSeries::resize memalign" << endl;
-#endif
-    buffer = (unsigned char*) memalign (16, size_t(require + 8));
+    if (verbose)
+      cerr << "dsp::DataSeries::resize memalign (16," << require << ")" 
+	   << endl;
+
+    buffer = (unsigned char*) memalign (16, require);
 
 #else
 
 #if INTERACTIVE_MEMORY
     cerr << "dsp::DataSeries::resize valloc" << endl;
 #endif
-    buffer = (unsigned char*) valloc (require + 8);
+    buffer = (unsigned char*) valloc (require);
 
 #endif
 
@@ -180,6 +180,9 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 
     size = require;
     memory_used += size;
+
+    if (verbose)
+      cerr << "dsp::DataSeries::resize memory_used=" << memory_used << endl;
   }
 
   reshape ();

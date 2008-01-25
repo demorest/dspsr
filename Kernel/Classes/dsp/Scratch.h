@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Scratch.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/05/25 21:37:54 $
+   $Revision: 1.2 $
+   $Date: 2008/01/25 05:22:51 $
    $Author: straten $ */
 
 #ifndef __dsp_Scratch_h
@@ -42,10 +42,16 @@ namespace dsp {
     //! Default scratch space
     static Scratch default_scratch;
 
+    //! Set verbosity ostream
+    virtual void set_ostream (std::ostream& os) const;
+
   protected:
 
     char* working_space;
     size_t working_size;
+
+    //! Stream to which verbose messages are sent
+    mutable std::ostream cerr;
 
   };
   

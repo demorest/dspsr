@@ -132,10 +132,11 @@ dsp::TimeSeries::use_data(float* _buffer, uint64 _ndat)
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
   if (verbose) {
-    cerr << "dsp::TimeSeries::resize(" << nsamples << ") data=" << data
+    cerr << "dsp::TimeSeries::resize (" << nsamples << ") data=" << data
 	 << " buffer=" << (void*)buffer << " ndat=" << get_ndat() << endl;
 
-    if (data && buffer) {
+    if (data && buffer) 
+    {
       cerr << "dsp::TimeSeries::resize (" << nsamples << ") offset="
 	   << int64((data-(float*)buffer)) << endl
            << "dsp::TimeSeries::resize get_samps_offset=" 
@@ -146,13 +147,13 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 
   if (!get_preserve_seeked_data()) {
 
-    if (verbose)
-      cerr << "dsp::TimeSeries::resize not preserving; reserving "
-	   << reserve_ndat << " samples" << endl;
-    
     uint64 fake_ndat = reserve_nfloat / get_ndim();
     if (reserve_nfloat % get_ndim())
       fake_ndat ++;
+
+    if (verbose)
+      cerr << "dsp::TimeSeries::resize not preserving; reserve_ndat="
+	   << reserve_ndat << " fake_ndat=" << fake_ndat << endl;
 
     if (nsamples || auto_delete)
       DataSeries::resize (nsamples+fake_ndat);
@@ -792,6 +793,48 @@ uint64 dsp::TimeSeries::get_seekage ()
   return uint64(data - fbuffer) / uint64(get_ndim());
 }
 
+
+
+void dsp::TimeSeries::finite_check () const
+{
+  unsigned nfloat = get_ndat() * get_ndim();
+  unsigned nchan = get_nchan();
+  unsigned npol = get_npol();
+  unsigned non_finite = 0;
+
+  if (verbose)
+    cerr << "dsp::TimeSeries::finite_check nchan=" << nchan << " npol=" << npol
+	 << " ndim=" << get_ndim() << " ndat=" << get_ndat() << endl;
+
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+    for (unsigned ipol=0; ipol < npol; ipol++)
+    {
+      const float* from = get_datptr (ichan, ipol);
+      for (unsigned ibin=0; ibin < nfloat; ibin++)
+	if (!finite(from[ibin]))
+	{
+#ifdef _DEBUG
+	  cerr << "not finite ichan=" << ichan << " ipol=" << ipol
+	       << " ptr=" << from << " ibin=" << ibin << endl;
+#endif
+	  non_finite ++;
+	}
+    }
+
+  if (non_finite)
+    throw Error (InvalidParam, "dsp::TimeSeries::finite_check",
+		 "%u/%u non-finite values",
+		 non_finite, nfloat * nchan * npol);
+}
+
+
+
+
+
+
+
+
+
 //-------------------------------------------------------------------
 
 dsp::TimeSeries& dsp::TimeSeriesPtr::operator * () const
@@ -904,3 +947,4 @@ const float* dsp::ChannelPtr::get_const_ptr() const{
 bool dsp::ChannelPtr::has_ptr() const{
   return ptr;
 }
+
