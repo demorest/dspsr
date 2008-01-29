@@ -401,6 +401,7 @@ int main (int argc, char** argv) try {
 
     case 't':
       nthread = strtol (optarg, 0, 10);
+      FTransform::nthread = nthread;
       break;
 
     case 'U':
@@ -640,8 +641,8 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
     
     double nbyte_dat = nbyte * ndim * npol * nchan;
 
-    if (maximum_RAM == 0) {
-  
+    if (maximum_RAM == 0) 
+    {
       uint64 min = engine->get_minimum_samples();
       double inMB = double(min) * nbyte_dat / double(MB);
       cerr << "dspsr: using minimum blocksize = " << min << " samples" << endl
@@ -651,7 +652,9 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   
       return;
     }
-
+    else
+      cerr << "dspsr: minimum blocksize = " << engine->get_minimum_samples()
+           << " samples" << endl;
 
     this_block_size = (uint64(maximum_RAM / nbyte_dat) / res) * res;
     
@@ -669,3 +672,4 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   input->set_block_size ( this_block_size );
     
 }
+
