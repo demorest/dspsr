@@ -119,19 +119,16 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 
   if (!require || require > size) {
     if (buffer){
-      if( old_buffer != (unsigned char*)(-1) ){
+      if( old_buffer != (unsigned char*)(-1) )
+      {
 	old_buffer = buffer;
       }
-      else{
-#if INTERACTIVE_MEMORY
-	cerr << "dsp::DataSeries::resize free " << size << " bytes at "
-	     << (void*)buffer << endl;
-	getchar();
-#endif
+      else
+      {
+	if (verbose)
+          cerr << "dsp::DataSeries::resize free size=" << size << " buffer="
+	       << (void*)buffer << endl;
 	free (buffer);
-#if INTERACTIVE_MEMORY
-	cerr << "dsp::DataSeries::resize freed" << endl;
-#endif
 	memory_used -= size;
       }
       buffer = 0;
@@ -147,31 +144,22 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
   if (size == 0)
   {
 
-#if INTERACTIVE_MEMORY
-    cerr << "dsp::DataSeries::resize allocate " << require << " bytes" << endl;
-    getchar();
-#endif
-
 #ifdef HAVE_MALLOC_H
 
     if (verbose)
-      cerr << "dsp::DataSeries::resize memalign (16," << require << ")" 
-	   << endl;
-
+      cerr << "dsp::DataSeries::resize memalign (16," << require << ")" << endl;
     buffer = (unsigned char*) memalign (16, require);
 
 #else
 
-#if INTERACTIVE_MEMORY
-    cerr << "dsp::DataSeries::resize valloc" << endl;
-#endif
+    if (verbose)
+      cerr << "dsp::DataSeries::resize valloc (" << require << ")" << endl;
     buffer = (unsigned char*) valloc (require);
 
 #endif
 
-#if INTERACTIVE_MEMORY
-    cerr << "dsp::DataSeries::resize allocated at " << (void*) buffer << endl;
-#endif
+    if (verbose)
+      cerr << "dsp::DataSeries::resize buffer=" << (void*) buffer << endl;
 
     if( !buffer )
       throw Error(InvalidState,"dsp::DataSeries::resize()",
