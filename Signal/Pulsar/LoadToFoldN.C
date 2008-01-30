@@ -92,7 +92,8 @@ void dsp::LoadToFoldN::prepare ()
   if (threads[0]->kernel && !threads[0]->kernel->context)
     threads[0]->kernel->context = new ThreadContext;
 
-  threads[0]->report = threads.size();
+  if (configuration->report)
+    configuration->report = threads.size();
 
   //
   // install InputBuffering::Share policy
@@ -151,7 +152,7 @@ void dsp::LoadToFoldN::prepare ()
     //
     // only the first thread prints updates
     //
-    threads[i]->report = 0;
+    threads[i]->id = i;
 
     //
     // only the first thread must manage archival
@@ -349,11 +350,26 @@ void dsp::LoadToFoldN::finish ()
   bool subints = configuration->single_pulse
     || configuration->integration_length;
 
-  while (finished < threads.size()) {
+  while (finished < threads.size())
+  {
+    for (unsigned i=0; i<threads.size(); i++)
+    {
+      int status = threads[i]->status;
 
-    for (unsigned i=0; i<threads.size(); i++) {
+      if (status == 1 || status == 0)
+      {
+        if (Operation::verbose)
+        {
+          cerr << "dsp::LoadToFoldN::finish thread " << i;
+          if (status == 1)
+            cerr << " pending" << endl;
+          else
+            cerr << " processed" << endl;
+        }
+        continue;
+      }
 
-      if (threads[i]->status == 2 || threads[i]->status == -1) {
+      try {
 
 	if (Operation::verbose)
 	  cerr << "psr::LoadToFoldN::finish joining thread " << i << endl;
@@ -364,12 +380,16 @@ void dsp::LoadToFoldN::finish ()
         if (Operation::verbose)
           cerr << "psr::LoadToFoldN::finish thread " << i << " joined" << endl;
 
-	if (threads[i]->status < 0) {
+        threads[i]->status = 0;
+
+	if (status < 0)
+        {
 	  errors ++;
 	  error = threads[i]->error;
+          cerr << "thread " << i << " aborted with error\n\t"
+               << error.get_message() << endl;
+          continue;
 	}
-
-	threads[i]->status = 0;
 
 	if (finished == 0)
 	  first = i;
@@ -387,35 +407,26 @@ void dsp::LoadToFoldN::finish ()
           if (Operation::verbose)
             cerr << "psr::LoadToFoldN::finish combining" << endl;
 
-	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++) try
+	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
 	  {
 	    PhaseSeries* result = threads[i]->fold[ifold]->get_output();
 	    *( threads[first]->fold[ifold]->get_output() ) += *( result );
-	  }
-	  catch (Error& error)
-	  {
-	    cerr << "psr::LoadToFoldN::finish results of thread[" << i << "]"
-	      " corrupted.  ifold=" << ifold << endl << error << endl;
 	  }
         }
 
 	finished ++;
 
       }
-      else if (Operation::verbose) {
-
-	cerr << "dsp::LoadToFoldN::finish thread " << i;
-	if (threads[i]->status == 1)
-	  cerr << " pending" << endl;
-	else
-	  cerr << " processed" << endl;
-
+      catch (Error& error)
+      {
+        cerr << "psr::LoadToFoldN::finish failure on thread " 
+             << i << error << endl;
       }
 
     }
 
-    if (finished < threads.size()) {
-
+    if (finished < threads.size())
+    {
       if (Operation::verbose)
         cerr << "psr::LoadToFoldN::finish wait on condition" << endl;
 
@@ -423,7 +434,6 @@ void dsp::LoadToFoldN::finish ()
 
       if (Operation::verbose)
         cerr << "psr::LoadToFoldN::finish condition wait returned" << endl;
-
     }
 
   }

@@ -30,7 +30,7 @@
 using namespace std;
 
 static char* args =
-"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:m:M:n:N:O:op:P:RsS:t:T:U:vVWx:X:zZ:";
+"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:m:M:n:N:O:op:P:qRsS:t:T:U:vVWx:X:zZ:";
 
 void usage ()
 {
@@ -419,6 +419,10 @@ int main (int argc, char** argv) try {
       Pulsar::Archive::set_verbosity (2);
       dsp::set_verbosity (2);
       verbose = true;
+      break;
+
+    case 'q':
+      config->report = 0;
       break;
 
     case 'W':

@@ -9,6 +9,9 @@
 
 dsp::LoadToFold::Config::Config ()
 {
+  // be a little bit verbose by default
+  report = 1;
+
   // number of time samples used to estimate undigitized power
   tbc_nsample = 0;
 

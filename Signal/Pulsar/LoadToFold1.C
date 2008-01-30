@@ -44,10 +44,10 @@ dsp::LoadToFold1::LoadToFold1 ()
   manager = new IOManager;
   scratch = new Scratch;
   manage_archiver = true;
-  report = 1;
   log = 0;
   minimum_samples = 0;
   status = 0;
+  id = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -648,8 +648,8 @@ void dsp::LoadToFold1::run ()
     
     block++;
     
-    if (report) {
-
+    if (id==0 && config->report) 
+    {
       double seconds = input->tell_seconds();
       int64 decisecond = int64( seconds * 10 );
       
@@ -660,7 +660,7 @@ void dsp::LoadToFold1::run ()
 
 	if (nblocks_tot)
 	  cerr << " (" 
-	       << int (100.0*report*float(block)/float(nblocks_tot))
+	       << int (100.0*config->report*float(block)/float(nblocks_tot))
 	       << "%)";
 
 	cerr << "   \r";
@@ -676,8 +676,8 @@ void dsp::LoadToFold1::run ()
 
   unsigned cwidth = 20;
 
-  if (Operation::verbose || report) {
-
+  if (Operation::verbose || (id==0 && config->report))
+  {
     cerr << pad (cwidth, "Operation")
 	 << pad (cwidth, "Time Spent")
 	 << pad (cwidth, "Discarded") << endl;

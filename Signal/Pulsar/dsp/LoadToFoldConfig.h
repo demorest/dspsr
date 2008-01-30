@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/01/19 20:59:37 $
+   $Revision: 1.5 $
+   $Date: 2008/01/30 05:17:59 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -30,6 +30,9 @@ namespace dsp {
 
     //! Default constructor
     Config ();
+
+    // report the percentage finished
+    unsigned report;
 
     // number of time samples used to estimate undigitized power
     unsigned tbc_nsample;
