@@ -157,10 +157,9 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
   Tempo::Predict predict;
   predict.set_nspan ( nspan );
   predict.set_ncoef ( ncoef );
-  predict.set_maxha ( 8 );
   predict.set_asite( observation->get_telescope_code() );
-  predict.set_frequency ( 1400.0 );
-  // predict.set_frequency ( observation->get_centre_frequency() ); ???
+  // predict.set_frequency ( 1400.0 );
+  predict.set_frequency ( observation->get_centre_frequency() );
   predict.set_parameters ( *pephem );
 
   return new polyco( predict.get_polyco (time, time) );
@@ -384,7 +383,7 @@ void dsp::Fold::set_input (const TimeSeries* _input)
     cerr << "dsp::Fold::set_input input is a WeightedTimeSeries" << endl;
 }
 
-void dsp::Fold::transformation ()
+void dsp::Fold::transformation () try
 {
   if (verbose)
     cerr << "dsp::Fold::transformation" << endl;
@@ -466,6 +465,10 @@ void dsp::Fold::transformation ()
   if( !source_name.empty() )
     get_output()->set_source (source_name);
 
+}
+catch (Error& error)
+{
+  throw error += "dsp::Fold::transformation";
 }
 
 /*!  This method creates a folding plan and then folds nblock arrays.
