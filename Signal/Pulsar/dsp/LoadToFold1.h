@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.8 $
-   $Date: 2007/11/15 10:42:04 $
+   $Revision: 1.9 $
+   $Date: 2008/01/30 05:17:59 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -78,14 +78,13 @@ namespace dsp {
     //! Get the minimum number of samples required to process
     uint64 get_minimum_samples () const;
 
-    //! report percentage finished
-    unsigned report;
-
     //! The verbose output stream shared by all operations
     std::ostream cerr;
 
     //! Take and manage a new ostream instance
     void take_ostream (std::ostream* newlog);
+
+    unsigned id;
 
   protected:
 
