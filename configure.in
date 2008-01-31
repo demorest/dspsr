@@ -43,9 +43,6 @@ AC_PROG_CC
 AC_PROG_CPP
 AM_PROG_CC_C_O
 AC_PROG_INSTALL
-AC_PROG_FC
-AC_F77_WRAPPERS
-#_STAR_RESTFP_FIX
 
 #
 # Disable the debugging information option, -g
@@ -87,6 +84,12 @@ Please see http://psrchive.sourceforge.net
 # Checks for optional libraries
 #
 SWIN_LIB_MPI
+SWIN_LIB_PSRDADA
+
+ACX_PTHREAD
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 
 #
 # Checks for graphics libraries
