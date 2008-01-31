@@ -28,6 +28,7 @@ endif
 #
 ifeq (dada,$(filter dada,$(BACKENDS)))
 
-LBACKENDS += -ldada
+LBACKENDS += $(LPSRDADA)
 
 endif
+
