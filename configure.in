@@ -86,11 +86,6 @@ Please see http://psrchive.sourceforge.net
 SWIN_LIB_MPI
 SWIN_LIB_PSRDADA
 
-ACX_PTHREAD
-LIBS="$PTHREAD_LIBS $LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
-
 #
 # Checks for graphics libraries
 #
