@@ -140,7 +140,10 @@ void dsp::LoadToFoldN::prepare ()
     for (unsigned ifold = 0; ifold < nfold; ifold ++)  {
       // the clone automatically copies the pointers to predictors ...
       threads[i]->fold[ifold] = threads[0]->fold[ifold]->clone();
-      // ... and the outputs.  New ones will be created in prepare()
+      // ... but each thread should have its own
+      threads[i]->fold[ifold]->set_folding_predictor
+         (threads[0]->fold[ifold]->get_folding_predictor()->clone());
+      // ... and its own output.  New ones will be created in prepare()
       threads[i]->fold[ifold]->set_output( 0 );
     }
 
@@ -279,6 +282,8 @@ void* dsp::LoadToFoldN::thread (void* context)
   catch (Error& error) {
 
     if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
+
+    cerr << "THREAD ERROR: " << error.get_message() << endl;
 
     status = -1;
     fold->error = error;
