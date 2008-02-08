@@ -399,14 +399,22 @@ uint64 dsp::LoadToFold1::get_minimum_samples () const
   return minimum_samples;
 }
 
-void setup_output (const dsp::Fold* from, dsp::Fold* to)
+void setup (const dsp::Fold* from, dsp::Fold* to)
 {
   // copy over the output if there is one
   if (from && from->has_output())
     to->set_output( from->get_output() );
 
+  if (from && from->has_folding_predictor())
+    to->set_folding_predictor( from->get_folding_predictor() );
+
+  if (from && from->has_pulsar_ephemeris())
+    to->set_pulsar_ephemeris( from->get_pulsar_ephemeris() );
+
   if (!to->has_output())
     to->set_output( new dsp::PhaseSeries );
+
+
 }
 
 template<class T>
@@ -418,7 +426,7 @@ T* setup (dsp::Fold* ptr)
   if (!derived)
     derived = new T;
 
-  setup_output (ptr, derived);
+  setup (ptr, derived);
 
   return derived;
 }
@@ -432,7 +440,7 @@ dsp::Fold* setup_not (dsp::Fold* ptr)
   if (derived || !ptr)
     ptr = new dsp::Fold;
 
-  setup_output (derived, ptr);
+  setup (derived, ptr);
 
   return ptr;
 }
@@ -530,15 +538,15 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (ifold < config->ephemerides.size())
       fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
 
-    if (ifold < config->predictors.size()) {
-
+    if (ifold < config->predictors.size())
+    {
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
 
       Pulsar::SimplePredictor* simple
 	= dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
 
-      if (simple) {
-
+      if (simple)
+      {
 	manager->get_info()->set_source
 	  ( simple->get_name() );
 
