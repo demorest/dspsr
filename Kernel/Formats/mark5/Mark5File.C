@@ -1,9 +1,12 @@
 /***************************************************************************
  *
- *   Copyright (C) 2005 by Haydon Knight
+ *   Copyright (C) 2005-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+using namespace std;
+
 #include "dsp/Mark5File.h"
 #include "dsp/Mark5TwoBitCorrection.h"
 #include "vlba_stream.h"
@@ -23,8 +26,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-
-using namespace std;
 
 dsp::Mark5File::Mark5File (const char* filename,const char* headername)
   : BlockFile ("Mark5")
@@ -103,10 +104,7 @@ void dsp::Mark5File::open_file (const char* filename)
     throw Error (InvalidParam, "Mark5File::open_file",
 		 "failed VLBA_stream_open");
 
-  fd = vlba_stream->infile;
-
-  // store the file pointer for use during reopen, if necessary
-  reopen_seek = lseek (fd, 0, SEEK_CUR);
+  fd = 0;
 
   // instruct the loader to only take gulps in 32/16 lots of nbits
   // necessary since Mk5 files are written in 64-/32-bit words
@@ -208,7 +206,7 @@ void dsp::Mark5File::open_file (const char* filename)
   // NDAT
   // Compute using BlockFile::fstat_file_ndat
   //
-  header_bytes = vlba_stream->startoffset;
+  header_bytes = 0;
   block_bytes = FRAMESIZE;
   block_header_bytes = FRAMESIZE - PAYLOADSIZE;
 
@@ -227,6 +225,8 @@ void dsp::Mark5File::open_file (const char* filename)
   info.set_mode(stringprintf ("%d-bit mode",info.get_nbit() ) );
   info.set_machine("Mark5");	
 }
+
+extern "C" int next_frame (struct VLBA_stream *vs);
 
 /*! Uses Walter's next_frame to take care of the modbits business, then
  copies the result from the VLBA_stream::frame buffer into the buffer
@@ -259,7 +259,12 @@ int64 dsp::Mark5File::load_bytes (unsigned char* buffer, uint64 bytes)
 
     if (offset_word >= PAYLOADSIZE) {
 
-      if (next_frame(vlba_stream) < 0) {
+      int retval = next_frame(vlba_stream);
+
+      // cerr << "retval=" << retval << endl;
+
+      if (retval < 0)
+      {
 	set_eod (true);
 	break;
       }
@@ -349,11 +354,5 @@ int64 dsp::Mark5File::seek_bytes (uint64 nbytes)
 
 void dsp::Mark5File::reopen ()
 {
-  File::reopen();
-
-  static_cast<struct VLBA_stream*>(stream)->infile = fd;
-
-  if (lseek (fd, reopen_seek, SEEK_SET) < 0)
-    throw Error (FailedSys, "dsp::Mark5File::reopen",
-		 "failed lseek(%u)", reopen_seek);
+  throw Error (InvalidState, "Mark5File::reopen", "unsupported");
 }
