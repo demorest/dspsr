@@ -253,19 +253,31 @@ void dsp::Input::seek (int64 offset, int whence)
 //! Seek to a sample close to the specified MJD
 void dsp::Input::seek(MJD mjd)
 {
-  if( mjd+1.0/info.get_rate() < info.get_start_time() )
-    throw Error(InvalidParam, "dsp::Input::seek",
-		"The given MJD (%s) is before the start time of the input data (%s)  (Difference is %s)",
-		mjd.printall(),info.get_start_time().printall(),
-		(info.get_start_time()-mjd).printall());
+  int misplacement = 0;
 
-  if( mjd-1.0/info.get_rate() > info.get_end_time() )
-    throw Error(InvalidParam,"dsp::Input::seek",
-		"The given MJD (%s) is after the end time of the input data (%s)  (Difference is %f seconds)",
-		mjd.printall(),info.get_start_time().printall(),
-		(mjd-info.get_start_time()).in_seconds());
-  
-  double seek_samples = (mjd-info.get_start_time()).in_seconds()*info.get_rate();
+  if (mjd+1.0/info.get_rate() < info.get_start_time())
+    misplacement = -1;
+
+  if (mjd-1.0/info.get_rate() > info.get_end_time())
+    misplacement = 1;
+
+  double seek_seconds = (mjd-info.get_start_time()).in_seconds();
+
+  if (misplacement)
+  {
+    string msg = "The given MJD (" + mjd.printall() + ") is ";
+    if (misplacement < 0)
+      msg += "before the start time";
+    else
+      msg += "after the end time";
+    msg += "of the input data "
+           "(" + info.get_start_time().printall() + "); "
+           "difference is %lf seconds";
+
+    throw Error (InvalidParam, "dsp::Input::seek", msg.c_str(), seek_seconds);
+  }
+ 
+  double seek_samples = seek_seconds*info.get_rate();
   uint64 actual_seek = 0;
 
   if( seek_samples<0.0 )
