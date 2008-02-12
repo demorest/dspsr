@@ -59,7 +59,7 @@ static int VLBA_stream_file_init(struct VLBA_stream *vs)
 	F->start = 0;
 	F->end = 0;
 	F->fetchsize = 0;
-	F->in = open64(F->files[0], O_RDONLY);
+	F->in = open(F->files[0], O_RDONLY);
 	if(!F->in)
 	{
 		fprintf(stderr, "VLBA_stream_file_init: "
@@ -112,6 +112,13 @@ static int VLBA_stream_file_next(struct VLBA_stream *vs)
 	if(vs->frame + vs->gulpsize/4 > F->end)
 	{
 		vs->frame = F->start;
+
+		/* WvS - dspsr somehow misses the end-of-file */
+		if (F->in == 0)
+		{
+		        return -1;
+		}
+
 		n = read(F->in, F->start, F->fetchsize);
 		
 		while(n < F->fetchsize)
@@ -123,7 +130,7 @@ static int VLBA_stream_file_next(struct VLBA_stream *vs)
 			{
 				break;
 			}
-			F->in = open64(F->files[F->curfile], O_RDONLY);
+			F->in = open(F->files[F->curfile], O_RDONLY);
 			if(!F->in)
 			{
 				break;
