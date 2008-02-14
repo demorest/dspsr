@@ -1,9 +1,11 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+using namespace std;
 
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
@@ -14,12 +16,7 @@
 
 #include <assert.h>
 
-using namespace std;
-
 // #define _DEBUG 1
-
-/*! From JA98, Table 1 */
-const double dsp::TwoBitCorrection::optimal_threshold = 0.9674;
 
 bool dsp::TwoBitCorrection::change_levels = true;
 
@@ -39,8 +36,6 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name)
   else
     cutoff_sigma = 10.0;
 
-  threshold = optimal_threshold;
-
   // Sub-classes must define this or set_table must be called
   table = NULL;
 
@@ -50,6 +45,10 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name)
 
   // This is set in build()
   built = false;
+  
+  lu_sum = 0;
+  lu_sumsq = 0;
+  lu_nlo = 0;
 }
 
 dsp::TwoBitCorrection::~TwoBitCorrection ()
@@ -90,15 +89,15 @@ void dsp::TwoBitCorrection::set_nsample (unsigned _nsample)
 }
 
 //! Set the cut off power for impulsive interference excision
-void dsp::TwoBitCorrection::set_threshold (float _threshold)
+void dsp::TwoBitCorrection::set_threshold (float threshold)
 {
-  if (threshold == _threshold)
+  if (threshold == ja98.get_threshold())
     return;
 
   if (verbose)
-    cerr << "dsp::TwoBitCorrection::set_threshold = "<<_threshold<<endl;
+    cerr << "dsp::TwoBitCorrection::set_threshold = " << threshold << endl;
 
-  threshold = _threshold;
+  ja98.set_threshold (threshold);
   built = false;
 }
 
@@ -166,15 +165,10 @@ void dsp::TwoBitCorrection::set_limits ()
   if (verbose)
     cerr << "dsp::TwoBitCorrection::set_limits" << endl;;
 
-  float fraction_ones = get_fraction_low();
+  float fsample = get_nsample();
 
-  // expectation value of the binomial distribution, JA98, Eqn. A6
-  // cf. http://mathworld.wolfram.com/BinomialDistribution.html, Eqn. 9
-  float nlo_mean = float(get_nsample()) * fraction_ones;
-
-  // variance of the binomial distribution, JA98, Eqn. A6
-  // cf. http://mathworld.wolfram.com/BinomialDistribution.html, Eqn. 14
-  float nlo_variance = nlo_mean * (1.0 - fraction_ones);
+  float nlo_mean = fsample * ja98.get_mean_Phi ();
+  float nlo_variance = fsample * ja98.get_var_Phi ();
 
   // the root mean square deviation
   float nlo_sigma = sqrt( nlo_variance );
@@ -301,7 +295,9 @@ void dsp::TwoBitCorrection::nlo_build ()
 }
 
 void dsp::TwoBitCorrection::generate (float* dls, float* spc, 
-				      unsigned n_min, unsigned n_max, unsigned n_tot,
+				      unsigned n_min,
+				      unsigned n_max,
+				      unsigned n_tot,
 				      TwoBitTable* table, bool huge)
 {
   for (unsigned nlo=n_min; nlo <= n_max; nlo++)  {
@@ -310,15 +306,16 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
        and p_in is the left-hand side of Eq.44 */
     float p_in = (float) nlo / (float) n_tot;
 
-    float lo, hi, A;
-    if (change_levels) {
-      output_levels (p_in, lo, hi, A);
-
-      table->set_lo_val (lo);
-      table->set_hi_val (hi);
+    if (change_levels)
+    {
+      ja98.set_Phi (p_in);
+      
+      table->set_lo_val ( ja98.get_lo() );
+      table->set_hi_val ( ja98.get_hi() );
     }
     
-    if (huge) {
+    if (huge)
+    {
       /* Generate the 256 sets of four output floating point values
 	 corresponding to each byte */
       table->generate (dls);
@@ -329,58 +326,14 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
       table->four_vals (dls);
       dls += TwoBitTable::vals_per_byte;
     }
-    if (change_levels) {
-      if (spc) {
-        *spc = A;
-        spc ++;
-      }
+
+    if (change_levels && spc)
+    {
+      *spc = ja98.get_A();
+      spc ++;
     }
+
   }
-}
-
-/*!  Given the fraction of digitized samples in the low voltage state,
-  this method returns the optimal values for low and high output
-  voltage states, as well as the fractional scattered power
-
-  \param p_in fraction of low voltage state samples
-  \retval lo the low voltage output state
-  \retval hi the hi voltage output state
-  \retval A the fractional scattered power
-*/
-void dsp::TwoBitCorrection::output_levels (float p_in, 
-					   float& lo, float& hi, float& A) 
-{
-  static float root_pi = sqrt(M_PI);
-  static float root2   = sqrt(2.0);
-
-  /* Refering to JA98, p_in is the left-hand side of Eq.44, the
-     fraction of samples between x2 and x4 */
-
-  /* The inverse error function of p_in gives alpha, equal to the 
-     "t/(root2 * sigma)" in brackets on the right-hand side of Eq.45 */
-  float alpha = ierf (p_in);
-  float expon = exp (-alpha*alpha);
-
-  // Equation 41 (-y2, y3)
-  lo = root2/alpha * sqrt(1.0 - (2.0*alpha/root_pi)*(expon/p_in));
-
-  // Equation 40 (-y1, y4)
-  hi = root2/alpha * sqrt(1.0 + (2.0*alpha/root_pi)*(expon/(1.0-p_in)));
-
-  // Equation 43
-  float halfrootnum = lo*(1-expon) + hi*expon;
-  float num = 2.0 * halfrootnum * halfrootnum;
-  A = num / ( M_PI * ((lo*lo-hi*hi)*p_in + hi*hi) );
-}
-
-/*! Return the average number of samples that lay within the
-    thresholds, x2 and x4, where -x2 = x4 are optimally set to
-    threshold=0.9674 of the noise power, as in Table 1 of JA98.
-    Apply t=threshold*sigma to Equation 45, 
-    (or -xl=xh=threshold to Equation A2) to get: */
-float dsp::TwoBitCorrection::get_fraction_low () const
-{
-  return erf (threshold / sqrt(2.0));
 }
 
 
@@ -588,10 +541,6 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   
 int64 dsp::TwoBitCorrection::stats(vector<double>& m, vector<double>& p)
 {
-  static float* lu_sum = 0;
-  static float* lu_sumsq = 0;
-  static unsigned char* lu_nlo = 0;
-
   if (!input)
     throw Error (InvalidState, "dsp::TwoBitCorrection::stats", "no input");
 

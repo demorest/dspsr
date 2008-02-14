@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.32 $
-   $Date: 2007/06/03 00:56:41 $
+   $Revision: 1.33 $
+   $Date: 2008/02/14 19:34:01 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
 #include "dsp/HistUnpacker.h"
+#include "JenetAnderson98.h"
 
 #include "environ.h"
 #include <vector>
@@ -35,9 +36,6 @@ namespace dsp {
   class TwoBitCorrection: public HistUnpacker {
 
   public:
-
-    //! Optimal fraction of total power for two-bit sampling threshold
-    static const double optimal_threshold;
 
     //! Perform the Jenet and Anderson correction
     static bool change_levels;
@@ -73,7 +71,7 @@ namespace dsp {
     void set_threshold (float threshold);
 
     //! Get the sampling threshold as a fraction of the noise power
-    float get_threshold () const { return threshold; }
+    float get_threshold () const { return ja98.get_threshold(); }
 
     //! Set the cut off power for impulsive interference excision
     void set_cutoff_sigma (float cutoff_sigma);
@@ -94,8 +92,7 @@ namespace dsp {
     //
     //
 
-    //! Get the fraction of low voltage levels
-    virtual float get_fraction_low () const;
+    float get_fraction_low () const { return ja98.get_mean_Phi(); }
 
     //! Calculate the sum and sum-squared from each digitizer
     virtual int64 stats (std::vector<double>& sum, std::vector<double>& sumsq);
@@ -110,15 +107,15 @@ namespace dsp {
     static TwoBitCorrection* create (const BitSeries& input,
 				     unsigned nsample=0, float cutoff_rms=3.0);
 
-    //! Return the high and low output voltage values
-    static void output_levels (float p_in, float& lo, float& hi, float& A);
-
     //! Generate dynamic level setting and scattered power correction lookup
-    static void generate (float* dls, float* spc,
-			  unsigned n_min, unsigned n_max, unsigned n_tot,
-			  TwoBitTable* table, bool huge);
+    void generate (float* dls, float* spc,
+		   unsigned n_min, unsigned n_max, unsigned n_tot,
+		   TwoBitTable* table, bool huge);
 
   protected:
+
+    //! The theory behind the implementation
+    JenetAnderson98 ja98;
 
     //! Perform the bit conversion transformation on the input TimeSeries
     virtual void resize_output ();
@@ -143,9 +140,6 @@ namespace dsp {
     //! Set when Transformation::output is a WeightedTimeSeries
     Reference::To<WeightedTimeSeries> weighted_output;
 
-    //! Sampling threshold as a fraction of the noise power
-    float threshold;
-
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
 
@@ -169,6 +163,11 @@ namespace dsp {
 
     //! Build the number of low-voltage states lookup table
     virtual void nlo_build ();
+
+  private:
+    float* lu_sum;
+    float* lu_sumsq;
+    unsigned char* lu_nlo;
 
   };
   
