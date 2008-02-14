@@ -18,7 +18,14 @@ using namespace std;
 #include "dsp/Scratch.h"
 
 // default scratch space used by Operations
-dsp::Scratch dsp::Scratch::default_scratch;
+static dsp::Scratch* the_default_scratch = 0;
+
+dsp::Scratch* dsp::Scratch::get_default_scratch()
+{
+  if (!the_default_scratch)
+    the_default_scratch = new Scratch;
+  return the_default_scratch;
+}
 
 dsp::Scratch::Scratch ()
   : cerr (std::cerr.rdbuf())
