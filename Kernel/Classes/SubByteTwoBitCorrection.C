@@ -19,6 +19,7 @@ dsp::SubByteTwoBitCorrection::SubByteTwoBitCorrection (const char* name)
   : TwoBitCorrection (name)
 {
   values = 0;
+  values_size = 0;
 }
 
 dsp::SubByteTwoBitCorrection::~SubByteTwoBitCorrection ()
@@ -82,7 +83,8 @@ void dsp::SubByteTwoBitCorrection::build ()
   TwoBitCorrection::build ();
 
   // create the new space
-  values = new unsigned char [get_nsample()];
+  values_size = get_nsample();
+  values = new unsigned char [values_size];
 }
 
 void dsp::SubByteTwoBitCorrection::nlo_build ()
@@ -106,6 +108,6 @@ void dsp::SubByteTwoBitCorrection::nlo_build ()
 
 void dsp::SubByteTwoBitCorrection::destroy ()
 {
-  if (values != NULL) delete [] values;  values = NULL;
+  if (values != NULL) delete [] values; values = NULL; values_size = 0;
 }
 

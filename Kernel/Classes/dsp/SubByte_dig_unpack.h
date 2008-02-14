@@ -79,6 +79,8 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
       input_data += input_incr;
     }
 
+    assert (pt <= values_size);
+
     // calculate the weight based on the last nsample pts
     unsigned n_in = 0;
     for (pt=0; pt<nsample; pt++)
