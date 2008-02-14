@@ -10,6 +10,8 @@ using namespace std;
 #include "dsp/SubByteTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 
+#include <assert.h>
+
 template<class Mask>
 void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 					       float* output_data,
@@ -63,16 +65,18 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 
   uint64 points = nsample;
 
-  for (unsigned wt=0; wt<nweights; wt++) {
-
+  for (unsigned wt=0; wt<nweights; wt++)
+  {
     if (points > points_left)
       points = points_left;
 
     uint64 pt = 0;
 
     // retrieve the next points values from the 2bit data
-    while (pt < points) {
-      for (unsigned isamp=0; isamp<samples_per_byte; isamp++) {
+    while (pt < points)
+    {
+      for (unsigned isamp=0; isamp<samples_per_byte; isamp++)
+      {
 	values[pt] = mask.twobit (*input_data, isamp);
 	pt++;
       }
@@ -103,7 +107,8 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 
       // reduce the risk of other functions accessing un-initialized 
       // segments of the array
-      for (pt=0; pt<points; pt++) {
+      for (pt=0; pt<points; pt++)
+      {
 	*output_data = 0.0;
 	output_data += output_incr;
       }
@@ -112,9 +117,11 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 
     }
 
-    else {
+    else
+    {
       float* corrected = &(dls_lookup[0]) + (n_in-n_min) * 4;
-      for (pt=0; pt<points; pt++) {
+      for (pt=0; pt<points; pt++)
+      {
 	*output_data = corrected [values[pt]];
 	output_data += output_incr;
       }
@@ -130,3 +137,4 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 	 << "/" << nweights << " bad weights" << endl;
 
 }
+
