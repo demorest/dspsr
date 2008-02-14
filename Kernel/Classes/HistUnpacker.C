@@ -17,6 +17,7 @@ bool dsp::HistUnpacker::keep_histogram = true;
 //! Null constructor
 dsp::HistUnpacker::HistUnpacker (const char* _name) : Unpacker (_name)
 {
+  nsample = 0;
   ndig = 2;
 }
 
@@ -72,10 +73,8 @@ void dsp::HistUnpacker::resize ()
 {
   histograms.resize (ndig);
   for (unsigned idig=0; idig<ndig; idig++)
-      histograms[idig].resize (nsample);
+    histograms[idig].resize (nsample);
 }
-
-
 
 void dsp::HistUnpacker::zero_histogram ()
 {
