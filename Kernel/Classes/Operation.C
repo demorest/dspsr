@@ -6,16 +6,9 @@
  ***************************************************************************/
 
 #include "dsp/Operation.h"
-#include "dsp/TimeKeeper.h"
 #include "dsp/Scratch.h"
 
 using namespace std;
-
-//! Global time keeper
-dsp::TimeKeeper* dsp::Operation::timekeeper = 0;
-
-//! If this is set to true then dsp::Transformation nukes prepends with test values
-bool dsp::Operation::debug = false;
 
 //! Global flag tells all Operations to record the time spent operating
 bool dsp::Operation::record_time = false;
@@ -34,13 +27,6 @@ bool dsp::Operation::check_state = true;
 bool dsp::Operation::preserve_data = false;
 
 int dsp::Operation::operation_status = 0;
-
-//! Only ever called by TimeKeeper class
-void dsp::Operation::set_timekeeper(TimeKeeper* _timekeeper)
-{ timekeeper = _timekeeper; }
-
-void dsp::Operation::unset_timekeeper()
-{ timekeeper = 0; }
 
 //! Set verbosity ostream
 void dsp::Operation::set_ostream (std::ostream& os) const
@@ -72,18 +58,13 @@ dsp::Operation::Operation (const char* _name)
 
   optime.operation = "operate";
 
-  scratch = &Scratch::default_scratch;
-
-  if( timekeeper )
-    timekeeper->add_operation(this);
+  scratch = Scratch::get_default_scratch();
 
   prepared = false;
 }
 
 dsp::Operation::~Operation ()
 {
-  if( timekeeper && record_time )
-    timekeeper->im_dying(this);
 }
 
 bool dsp::Operation::can_operate(){
@@ -99,9 +80,6 @@ bool dsp::Operation::operate ()
 {
   if (verbose)
     cerr << "dsp::Operation[" << name << "]::operate" << endl;
-
-  if( timekeeper )
-    timekeeper->setup_done();
 
   if (record_time)
     optime.start();
@@ -145,18 +123,7 @@ void dsp::Operation::reset_discarded_weights ()
   discarded_weights = 0;
 }
 
-dsp::Time dsp::Operation::get_operation_time(){
-  return Time(optime,name,id);
-}
 
-vector<dsp::Time> dsp::Operation::get_extra_times(){
-  vector<Time> extra_times(timers.size());
-
-  for(unsigned i=0; i<timers.size();i++)
-    extra_times[i] = Time(timers[i],name,id);
-
-  return extra_times;
-}
 
 //! Returns the index in the 'timers' array of a particular timer
 int dsp::Operation::timers_index(const string& op_name){

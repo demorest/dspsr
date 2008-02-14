@@ -55,8 +55,6 @@ void dsp::Detection::set_output_state (Signal::State _state)
 //! Detect the input data
 void dsp::Detection::transformation () try
 {
-  static MJD st = get_input()->get_start_time();
-
   if (verbose)
     cerr << "dsp::Detection::transformation input ndat=" << input->get_ndat()
 	 << " state=" << Signal::state_string(get_input()->get_state())
