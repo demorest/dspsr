@@ -38,6 +38,7 @@ dsp::LoadToFold::Config::Config ()
 
   zap_rfi = false;
 
+  times_minimum_fft = 0;
   nfft = 0;
   fres = 0;
 
