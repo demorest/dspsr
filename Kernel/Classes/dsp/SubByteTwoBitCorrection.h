@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2008/02/14 21:32:38 $
+   $Author: straten $ */
 
 #ifndef __SubByteTwoBitCorrection_h
 #define __SubByteTwoBitCorrection_h
@@ -66,6 +66,7 @@ namespace dsp {
 
     //! Temporary storage of bit-shifted values
     unsigned char* values;
+    unsigned values_size;
 
     //! Two bit numbers equal to low-voltage state
     unsigned lovoltage [4];
