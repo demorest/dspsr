@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Scratch.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/01/25 05:22:51 $
+   $Revision: 1.3 $
+   $Date: 2008/02/14 19:33:55 $
    $Author: straten $ */
 
 #ifndef __dsp_Scratch_h
@@ -40,7 +40,7 @@ namespace dsp {
     void* space (size_t nbytes);
 
     //! Default scratch space
-    static Scratch default_scratch;
+    static Scratch* get_default_scratch();
 
     //! Set verbosity ostream
     virtual void set_ostream (std::ostream& os) const;
