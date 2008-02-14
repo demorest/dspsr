@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.37 $
-   $Date: 2007/06/06 01:01:24 $
+   $Revision: 1.38 $
+   $Date: 2008/02/14 19:33:50 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -28,7 +28,6 @@
 namespace dsp {
   
   class Scratch;
-  class TimeKeeper;
 
   //! Defines the interface by which operations are performed on data
   /*! This pure virtual base class defines the manner in which various
@@ -36,12 +35,7 @@ namespace dsp {
 
   class Operation : public Reference::Able {
 
-    friend class TimeKeeper;
-
   public:
-
-    //! If this is set to true then dsp::Transformation nukes prepends with test values
-    static bool debug;
 
     //! Global flag enables stopwatch to record the time spent operating
     static bool record_time;
@@ -94,15 +88,8 @@ namespace dsp {
     //! Reset the count of invalid timesample weights encountered
     virtual void reset_discarded_weights ();
 
-    //! Only ever called by TimeKeeper class
-    static void set_timekeeper(TimeKeeper* _timekeeper);
-    static void unset_timekeeper();
-
     //! Inquire the unique instantiation id
     int get_id(){ return id; }
-
-    //! Pointer to the timekeeper
-    static TimeKeeper* timekeeper;
 
     //! Set the scratch space
     virtual void set_scratch (Scratch*);
@@ -132,10 +119,6 @@ namespace dsp {
 
     //! Returns the index in the 'timers' array of a particular timer
     int timers_index (const std::string& op_name);
-
-    //! Called by TimeKeeper to print out times etc.
-    Time get_operation_time();
-    std::vector<Time> get_extra_times();
 
     //! Stop watch records the amount of time spent performing this operation
     OperationTimer optime;
