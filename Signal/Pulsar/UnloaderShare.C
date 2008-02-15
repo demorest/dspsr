@@ -8,6 +8,7 @@
 #include "dsp/UnloaderShare.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/PhaseSeriesUnloader.h"
+#include "dsp/Operation.h"
 
 #include "ThreadContext.h"
 #include "Error.h"
@@ -82,10 +83,11 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
   divider.set_turns (subint_turns);
 }
 
-static bool verbose = false;
-
 void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::unload context=" << context << endl;
+
   ThreadContext::Lock lock (context);
 
   if (divider.get_turns() == 0 && divider.get_seconds() == 0.0)
@@ -99,7 +101,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
   MJD mid_time = 0.5 * ( data->get_start_time() + data->get_end_time() );
   unsigned division = divider.get_division( mid_time );
 
-  if (verbose)
+  if (Operation::verbose)
     cerr << "dsp::UnloaderShare::unload contributor=" << contributor 
 	 << " division=" << division << endl;
 
@@ -110,7 +112,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 
   if (istore == storage.size())
   {
-    if (verbose)
+    if (Operation::verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
     Storage* temp = new Storage( contributors );
     temp->set_division( division );
@@ -127,7 +129,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
       istore ++;
   }  
 
-  if (verbose)
+  if (Operation::verbose)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
 }
 
@@ -143,7 +145,7 @@ void dsp::UnloaderShare::unload (unsigned istore)
 
   if (unloader) try 
   {
-    if (verbose)
+    if (Operation::verbose)
       cerr << "dsp::UnloaderShare::unload unload division=" << division
 	   << endl;
     
@@ -168,12 +170,20 @@ dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 //! Unload the PhaseSeries data
 void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::Submit::unload"
+      " profiles=" << profiles << " contributor=" << contributor << endl;
+
   parent->unload( profiles, contributor );
 }
 
 //! Unload the PhaseSeries data
 void dsp::UnloaderShare::Submit::partial (const PhaseSeries* profiles)
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::Submit::partial"
+      " profiles=" << profiles << " contributor=" << contributor << endl;
+
   parent->unload( profiles, contributor );
 }
 
@@ -192,7 +202,7 @@ dsp::UnloaderShare::Storage::Storage (unsigned contributors)
 
 dsp::UnloaderShare::Storage::~Storage ()
 {
-  if (verbose)
+  if (Operation::verbose)
     cerr << "dsp::UnloaderShare::Storage::~Storage" << endl;
 }
 
@@ -233,7 +243,7 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
 
   if (_division == division)
   {
-    if (verbose)
+    if (Operation::verbose)
       cerr << "dsp::UnloaderShare::Storage::integrate adding to division="
 	   << division << endl;
     *profiles += *data;
@@ -242,7 +252,7 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
 
   if (_division > division)
   {
-    if (verbose)
+    if (Operation::verbose)
       cerr << "dsp::UnloaderShare::Storage::integrate contributor="
 	   << contributor << " past division=" << division << endl;
     finished[contributor] = true;
