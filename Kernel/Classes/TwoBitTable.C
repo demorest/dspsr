@@ -1,16 +1,20 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/TwoBitTable.h"
 
 //! Number of unique 8-bit combinations
-const unsigned dsp::TwoBitTable::unique_bytes = 1<<8; // (256)
+const unsigned dsp::TwoBitTable::unique_bytes = 256;
 
 //! Number of 2-bit values per byte
 const unsigned dsp::TwoBitTable::vals_per_byte = 4;
+
+//! Number of possible 2-bit values
+const unsigned dsp::TwoBitTable::unique_vals = 4;
 
 dsp::TwoBitTable::TwoBitTable (Type _type)
 {
@@ -90,13 +94,15 @@ const float* dsp::TwoBitTable::get_four_vals (unsigned byte)
 */
 void dsp::TwoBitTable::generate (float* table) const
 {
-  float voltages[vals_per_byte];
+  float voltages[unique_vals];
   four_vals (voltages);
 
   float* tabval = table;
 
-  for (unsigned byte=0; byte<unique_bytes; byte++) {
-    for (unsigned val=0; val<vals_per_byte; val++) {
+  for (unsigned byte=0; byte<unique_bytes; byte++)
+  {
+    for (unsigned val=0; val<vals_per_byte; val++)
+    {
       *tabval = voltages[twobit (byte, val)];
       tabval ++;
     }
@@ -148,11 +154,6 @@ void dsp::TwoBitTable::four_vals (float* vals) const
   }
   
   // Swap the order of the bits, e.g. SignMag becomes MagSign
-  if(flip){
-    float tmp;
-    tmp = vals[1];
-    vals[1] = vals[2];
-    vals[2] = tmp;
-  }
-    
+  if (flip)
+    std::swap (vals[1], vals[2]);
 }

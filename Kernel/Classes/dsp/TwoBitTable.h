@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.10 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2008/02/18 13:27:20 $
+   $Author: straten $ */
 
 
 #ifndef __TwoBitTable_h
@@ -39,6 +39,9 @@ namespace dsp {
 
     //! Number of 2-bit values per byte
     static const unsigned vals_per_byte;
+
+    //! Number of unique 2-bit values
+    static const unsigned unique_vals;
 
     //! Constructor
     TwoBitTable (Type type);
