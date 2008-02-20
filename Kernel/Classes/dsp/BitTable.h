@@ -32,7 +32,7 @@ namespace dsp {
     };
 
     //! Constructor
-    BitTable (unsigned nbit, Type type);
+    BitTable (unsigned nbit, Type type, bool build=true);
     
     //! Destructor
     virtual ~BitTable ();

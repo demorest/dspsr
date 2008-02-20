@@ -23,7 +23,7 @@ unsigned build_mask (unsigned nbit)
   return mask;
 }
 
-dsp::BitTable::BitTable (unsigned _nbit, Type _type)
+dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _build)
   :
   type( _type ),
   nbit( _nbit ),
@@ -35,7 +35,9 @@ dsp::BitTable::BitTable (unsigned _nbit, Type _type)
        << " values per byte=" << values_per_byte << endl;
 
   table = 0;
-  build ();
+
+  if (_build)
+    build ();
 }
 
 dsp::BitTable::~BitTable ()
@@ -57,7 +59,7 @@ void dsp::BitTable::build ()
 }
 
 /*!
-  \param table pointer to space for at least unique_bytes * values_per_bytes 
+  \param table pointer to space for at least unique_bytes * values_per_byte 
          floating point values
 */
 void dsp::BitTable::generate (float* table) const
