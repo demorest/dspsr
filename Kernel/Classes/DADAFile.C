@@ -78,23 +78,24 @@ void dsp::DADAFile::open_file (const char* filename)
   ASCIIObservation data (header.c_str());
   info = data;
 
-  unsigned hdr_size;
-  if (ascii_header_get (header.c_str(), "HDR_SIZE", "%u", &hdr_size) < 0)
+  if (ascii_header_get (header.c_str(), "HDR_SIZE", "%u", &header_bytes) < 0)
     throw Error (FailedCall, "dsp::DADAFile::open_file",
 		 "ascii_header_get(HDR_SIZE) failed");
-  header_bytes = hdr_size;
-  
+
+  if (ascii_header_get (header.c_str(), "RESOLUTION", "%u", &resolution) < 0)
+  {
+    // cannot load less than a byte. set the time sample resolution accordingly
+    unsigned bits_per_byte = 8;
+    resolution = bits_per_byte / info.get_nbit();
+    if (resolution == 0)
+      resolution = 1;
+  }
+
   // open the file
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
     throw Error (FailedSys, "dsp::DADAFile::open_file()", 
 		 "open(%s) failed", filename);
-  
-  // cannot load less than a byte. set the time sample resolution accordingly
-  unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
-  if (resolution == 0)
-    resolution = 1;
 
   if (verbose)
     cerr << "DADAFile::open exit" << endl;
