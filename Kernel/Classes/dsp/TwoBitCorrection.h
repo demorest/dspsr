@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.33 $
-   $Date: 2008/02/14 19:34:01 $
+   $Revision: 1.34 $
+   $Date: 2008/02/20 09:29:02 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -26,7 +26,7 @@ namespace dsp {
   class WeightedTimeSeries;
 
   //! Converts BitSeries data from two-bit digitized to floating-point values
-  /*! The conversion method, poln_unpack, implements the dynamic
+  /*! The conversion method, poln_unpack, implements the dynamic output
     level-setting technique described by Jenet & Anderson (1998, PASP,
     110, 1467; hereafter JA98).  It requires that each byte contains
     four samples from one digitized signal.  If the digitized bits
@@ -94,8 +94,10 @@ namespace dsp {
 
     float get_fraction_low () const { return ja98.get_mean_Phi(); }
 
+#if 0
     //! Calculate the sum and sum-squared from each digitizer
     virtual int64 stats (std::vector<double>& sum, std::vector<double>& sumsq);
+#endif
 
     //! Get the minumum number of ones in nsample points
     unsigned get_nmin() const { return n_min; }
@@ -163,11 +165,6 @@ namespace dsp {
 
     //! Build the number of low-voltage states lookup table
     virtual void nlo_build ();
-
-  private:
-    float* lu_sum;
-    float* lu_sumsq;
-    unsigned char* lu_nlo;
 
   };
   
