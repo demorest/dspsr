@@ -29,7 +29,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 		 "not built");
 
   const unsigned ndig = get_ndig_per_byte();
-  const unsigned samples_per_byte = TwoBitTable::vals_per_byte / ndig;
+  const unsigned samples_per_byte = table->get_values_per_byte() / ndig;
 
   if (ndig < 2)
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",

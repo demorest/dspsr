@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.34 $
-   $Date: 2008/02/20 09:29:02 $
+   $Revision: 1.35 $
+   $Date: 2008/02/20 21:44:22 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -110,7 +110,7 @@ namespace dsp {
 				     unsigned nsample=0, float cutoff_rms=3.0);
 
     //! Generate dynamic level setting and scattered power correction lookup
-    void generate (float* dls, float* spc,
+    void generate (std::vector<float>& dls, float* spc,
 		   unsigned n_min, unsigned n_max, unsigned n_tot,
 		   TwoBitTable* table, bool huge);
 
