@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -45,6 +45,9 @@ dsp::LevelMonitor::~LevelMonitor ()
 void dsp::LevelMonitor::set_history (LevelHistory* _history)
 {
   history = _history;
+
+  if (unpacker)
+    history->set_unpacker( unpacker );
 }
 
 //! Set the device to be used to plot/log the digitizer statistics
@@ -54,6 +57,9 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 
   if (input)
     unpacker = dynamic_cast<HistUnpacker*>(input->get_unpacker());
+
+  if (unpacker && history)
+    history->set_unpacker( unpacker );
 }
 
 //! Set the number of points included in each calculation of thresholds
@@ -132,7 +138,7 @@ void dsp::LevelMonitor::monitor ()
       if (verbose)
 	cerr << "LevelMonitor::monitor log statistics ..." << endl;
 
-      history -> log_stats (mean, variance, unpacker);
+      history -> log_stats (mean, variance);
     }
     
     if (!far_from_good)
@@ -248,7 +254,7 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 }
 
 int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
-					vector<double>& variance)
+				       vector<double>& variance)
 {
   unsigned ndig = mean.size();
   if (mean.size() != variance.size()) {
