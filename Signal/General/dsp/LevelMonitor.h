@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/02/20 06:31:44 $
+   $Revision: 1.2 $
+   $Date: 2008/02/20 09:29:09 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -21,13 +21,12 @@
 
 namespace dsp {
 
-  //! Base class for history of digitized data statistics
   class LevelHistory;
   class TimeSeries;
   class IOManager;
   class HistUnpacker;
 
-  //! Base class for monitoring a digitizer
+  //! Monitors digitizer levels and issues corrective commands
   class LevelMonitor : public Reference::Able
   {
     
