@@ -234,7 +234,8 @@ void dsp::TwoBitCorrection::build ()
     throw Error (InvalidParam, "dsp::TwoBitCorrection::build",
 		 "invalid number of digitizers=%d", get_ndig());
 
-  if (!get_ndig_per_byte() || TwoBitTable::vals_per_byte % get_ndig_per_byte())
+  if (!get_ndig_per_byte() ||
+      table->get_values_per_byte() % get_ndig_per_byte())
     throw Error (InvalidParam, "dsp::TwoBitCorrection::build",
 		 "invalid channels_per_byte=%d", get_ndig_per_byte());
  
@@ -248,14 +249,14 @@ void dsp::TwoBitCorrection::build ()
 
   bool huge = (get_ndig_per_byte() == 1);
 
-  unsigned size = TwoBitTable::vals_per_byte;
+  unsigned size = table->get_unique_values();
   if (huge)
-    size *= TwoBitTable::unique_bytes;
+    size = BitTable::unique_bytes * table->get_values_per_byte();
 
   if (verbose) cerr << "dsp::TwoBitCorrection::build allocate buffers\n";
   dls_lookup.resize (n_range * size);
 
-  generate (&(dls_lookup[0]), 0, n_min, n_max, get_nsample(), table, huge);
+  generate (dls_lookup, 0, n_min, n_max, get_nsample(), table, huge);
 
   zero_histogram ();
 
@@ -272,31 +273,36 @@ void dsp::TwoBitCorrection::nlo_build ()
   if (verbose)
     cerr << "dsp::TwoBitCorrection::nlo_build" << endl;
 
-  nlo_lookup.resize (TwoBitTable::unique_bytes);
+  nlo_lookup.resize (BitTable::unique_bytes);
 
   // flatten the table again (precision errors cause mismatch of lo_valsq)
   table->set_lo_val (1.0);
+  table->rebuild();
+
   float lo_valsq = 1.0;
 
-  for (unsigned byte = 0; byte < TwoBitTable::unique_bytes; byte++) {
+  for (unsigned byte = 0; byte < BitTable::unique_bytes; byte++) {
 
     nlo_lookup[byte] = 0;
-    const float* fourvals = table->get_four_vals (byte);
+    const float* fourvals = table->get_values (byte);
 
-    for (unsigned ifv=0; ifv<TwoBitTable::vals_per_byte; ifv++)
+    for (unsigned ifv=0; ifv<table->get_values_per_byte(); ifv++)
       if (fourvals[ifv]*fourvals[ifv] == lo_valsq)
 	nlo_lookup[byte] ++;
 
   }
 }
 
-void dsp::TwoBitCorrection::generate (float* dls, float* spc, 
+void dsp::TwoBitCorrection::generate (vector<float>& dls, float* spc, 
 				      unsigned n_min,
 				      unsigned n_max,
 				      unsigned n_tot,
 				      TwoBitTable* table, bool huge)
 {
-  for (unsigned nlo=n_min; nlo <= n_max; nlo++)  {
+  unsigned offset = 0;
+
+  for (unsigned nlo=n_min; nlo <= n_max; nlo++)
+  {
   
     /* Refering to JA98, nlo is the number of samples between x2 and x4, 
        and p_in is the left-hand side of Eq.44 */
@@ -308,19 +314,21 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
       
       table->set_lo_val ( ja98.get_lo() );
       table->set_hi_val ( ja98.get_hi() );
+      table->rebuild();
     }
     
     if (huge)
     {
       /* Generate the 256 sets of four output floating point values
 	 corresponding to each byte */
-      table->generate (dls);
-      dls += TwoBitTable::unique_bytes * TwoBitTable::vals_per_byte;
+      table->generate ( &(dls[offset]) );
+      offset += BitTable::unique_bytes * table->get_values_per_byte();
     }
-    else {
+    else
+    {
       // Generate the four output levels corresponding to each 2-bit number
-      table->four_vals (dls);
-      dls += TwoBitTable::vals_per_byte;
+      table->generate_unique_values ( &(dls[offset]) );
+      offset += table->get_unique_values();
     }
 
     if (change_levels && spc)
@@ -330,6 +338,8 @@ void dsp::TwoBitCorrection::generate (float* dls, float* spc,
     }
 
   }
+
+  assert (offset == dls.size());
 }
 
 
@@ -354,7 +364,7 @@ void dsp::TwoBitCorrection::unpack ()
     build ();
   }
 
-  unsigned samples_per_byte = TwoBitTable::vals_per_byte / get_ndig_per_byte();
+  unsigned samples_per_byte = table->get_values_per_byte() / get_ndig_per_byte();
 
   if (ndat % samples_per_byte)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
@@ -439,11 +449,11 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 	 << " nweights=" << nweights << endl;
 
   // 4 floating-point samples per byte
-  const unsigned samples_per_byte = TwoBitTable::vals_per_byte;
+  const unsigned samples_per_byte = table->get_values_per_byte();
 
   // 4*256 floating-point samples for all unique bytes
   const unsigned lookup_block_size =
-    samples_per_byte * TwoBitTable::unique_bytes;
+    samples_per_byte * BitTable::unique_bytes;
 
   unsigned long* hist = 0;
   if (keep_histogram)

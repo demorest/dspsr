@@ -92,14 +92,14 @@ void dsp::SubByteTwoBitCorrection::nlo_build ()
   if (verbose)
     cerr << "dsp::SubByteTwoBitCorrection::nlo_build" << endl;
 
-  float fourvals [TwoBitTable::vals_per_byte];
+  float fourvals [table->get_unique_values()];
   float lo_valsq = 1.0;
 
   // flatten the table again (precision errors cause mismatch of lo_valsq)
   table->set_lo_val (1.0);
-  table->four_vals (fourvals);
+  table->generate_unique_values (fourvals);
 
-  for (unsigned ifv=0; ifv<TwoBitTable::vals_per_byte; ifv++)
+  for (unsigned ifv=0; ifv<table->get_values_per_byte(); ifv++)
     if (fourvals[ifv]*fourvals[ifv] == lo_valsq)
       lovoltage[ifv] = 1;
     else
