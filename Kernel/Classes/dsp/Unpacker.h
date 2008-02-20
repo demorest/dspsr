@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.20 $
-   $Date: 2007/12/18 11:57:11 $
+   $Revision: 1.21 $
+   $Date: 2008/02/20 09:29:05 $
    $Author: straten $ */
 
 
@@ -56,6 +56,9 @@ namespace dsp {
 
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
+
+    //! Get the number of digitizers (histograms)
+    virtual unsigned get_ndig () const = 0;
 
    protected:
 
