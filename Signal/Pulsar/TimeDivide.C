@@ -93,25 +93,8 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   //
   MJD divide_start = input_start;
 
-  if (is_valid) {
-
-#ifdef _DEBUG
-    static MJD last_input_end;
-    if (last_input_end != input_end) {
-
-      if (last_input_end != MJD::zero) {
-	double seconds = (last_input_end - input_start).in_seconds();
-	double samps = seconds * sampling_rate;
-
-	if (fabs(samps) > 0.25)
-	  cerr << "discontiguous by " << samps << " samples = "
-	       << seconds*1e3 << " ms" << endl;
-      }
-
-      last_input_end = input_end;
-    }
-#endif
-
+  if (is_valid)
+  {
     divide_start = std::max (current_end, input_start);
 
     if (Operation::verbose)
@@ -120,7 +103,6 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 	   << "\n  current end = " << current_end
 	   << "\n  input start = " << input_start
 	   << endl;
-
   }
 
   new_division = false;
