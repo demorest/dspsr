@@ -40,6 +40,11 @@ void dsp::OneBitCorrection::generate_lookup(){
 
 dsp::OneBitCorrection::~OneBitCorrection (){ }
 
+unsigned dsp::OneBitCorrection::get_ndig () const
+{
+  return input->get_nchan();
+}
+
 //! Initialize and resize the output before calling unpack
 void dsp::OneBitCorrection::transformation ()
 {
