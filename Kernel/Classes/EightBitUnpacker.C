@@ -5,8 +5,8 @@
  *
  ***************************************************************************/
 
-#include "dsp/EightBitTable.h"
 #include "dsp/EightBitUnpacker.h"
+#include "dsp/BitTable.h"
 
 #include "Error.h"
 
@@ -23,7 +23,7 @@ dsp::EightBitUnpacker::~EightBitUnpacker ()
 {
 }
 
-void dsp::EightBitUnpacker::set_table (EightBitTable* _table)
+void dsp::EightBitUnpacker::set_table (BitTable* _table)
 {
   if (verbose)
     cerr << "dsp::EightBitUnpacker::set_table" << endl;
@@ -31,7 +31,7 @@ void dsp::EightBitUnpacker::set_table (EightBitTable* _table)
   table = _table;
 }
 
-const dsp::EightBitTable* dsp::EightBitUnpacker::get_table () const
+const dsp::BitTable* dsp::EightBitUnpacker::get_table () const
 { 
   return table;
 }
