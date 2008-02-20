@@ -7,59 +7,25 @@
 
 #include "dsp/TwoBitTable.h"
 
-//! Number of unique 8-bit combinations
-const unsigned dsp::TwoBitTable::unique_bytes = 256;
-
-//! Number of 2-bit values per byte
-const unsigned dsp::TwoBitTable::vals_per_byte = 4;
-
-//! Number of possible 2-bit values
-const unsigned dsp::TwoBitTable::unique_vals = 4;
-
-dsp::TwoBitTable::TwoBitTable (Type _type)
+dsp::TwoBitTable::TwoBitTable (Type _type) : BitTable (2, _type, false)
 {
-  table = 0;
-  built = false;
-
   lo_val = 0.25;
   hi_val = 0.75;
-
-  type = _type;
-
   flip = false;
-}
 
-
-dsp::TwoBitTable::~TwoBitTable ()
-{
-  if (table) delete [] table; table = 0;
+  build ();
 }
 
 //! Set the value of the low voltage state
 void dsp::TwoBitTable::set_lo_val (float _lo_val)
 {
-  if (lo_val != _lo_val)
-    built = false;
-
   lo_val = _lo_val;
 }
 
 //! Set the value of the high voltage state
 void dsp::TwoBitTable::set_hi_val (float _hi_val)
 {
-  if (hi_val != _hi_val)
-    built = false;
-
   hi_val = _hi_val;
-}
-
-//! Set the digitization convention
-void dsp::TwoBitTable::set_type (Type _type)
-{
-  if (type != _type)
-    built = false;
-
-  type = _type;
 }
 
 void dsp::TwoBitTable::set_flip (bool flipped)
@@ -67,64 +33,12 @@ void dsp::TwoBitTable::set_flip (bool flipped)
   flip = flipped;
 }
 
-
-void dsp::TwoBitTable::build ()
+void dsp::TwoBitTable::rebuild ()
 {
-  if (built)
-    return;
-
-  if (!table)
-    table = new float [ unique_bytes * vals_per_byte ];
-
-  generate (table);
+  build ();
 }
 
-const float* dsp::TwoBitTable::get_four_vals (unsigned byte)
-{
-  if (!built)
-    build ();
-
-  return table + vals_per_byte * byte; 
-}
-
-
-/*!
-  \param table pointer to space for at least 4*256=1024 floating point values,
-  representing the four outputs for each of 256 possible bytes.
-*/
-void dsp::TwoBitTable::generate (float* table) const
-{
-  float voltages[unique_vals];
-  four_vals (voltages);
-
-  float* tabval = table;
-
-  for (unsigned byte=0; byte<unique_bytes; byte++)
-  {
-    for (unsigned val=0; val<vals_per_byte; val++)
-    {
-      *tabval = voltages[twobit (byte, val)];
-      tabval ++;
-    }
-  }
-}
-
-/*! Each 8-bit byte is treated as four 2-bit numbers, ordered from 0 to 3.
-  By default, the first 2-bit number (val==0) is in the most significant
-  two bits and the last 2-bit number (val==3) is in the least significant
-  two bits.
-
-  \param byte the byte pattern containing four 2-bit numbers
-  \param val the value to extract from the byte */
-unsigned dsp::TwoBitTable::twobit (unsigned byte, unsigned val) const
-{
-  unsigned char mask  = 0x03;
-  unsigned char shift = 6 - val*2;
-
-  return (byte>>shift) & mask;
-}
-
-void dsp::TwoBitTable::four_vals (float* vals) const
+void dsp::TwoBitTable::generate_unique_values (float* vals) const
 {
   switch (type) {
 
@@ -150,7 +64,8 @@ void dsp::TwoBitTable::four_vals (float* vals) const
     break;
 
   default:
-    throw "TwoBitTable::four_vals unsupported type";
+    throw Error (InvalidState, "TwoBitTable::generate_unique_values",
+		 "unsupported type");
   }
   
   // Swap the order of the bits, e.g. SignMag becomes MagSign
