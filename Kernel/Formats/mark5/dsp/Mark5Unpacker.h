@@ -20,7 +20,10 @@ namespace dsp {
 	
     //! Constructor
     Mark5Unpacker (const char* name = "Mark5Unpacker");
-	
+
+    //! Get the number of independent digitizers
+    unsigned get_ndig () const;
+
   protected:
 	
     //! The unpacking routine

@@ -1,9 +1,10 @@
 /***************************************************************************
  *
- *   Copyright (C) 2005 by Haydon Knight
+ *   Copyright (C) 2005-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Mark5Unpacker.h"
 #include "dsp/Mark5File.h"
 #include "dsp/Mark5TwoBitCorrection.h"
@@ -22,6 +23,11 @@ bool dsp::Mark5Unpacker::matches (const Observation* observation)
 {
   return observation->get_machine() == "Mark5" &&
     ! dsp::Mark5TwoBitCorrection::can_do( observation );
+}
+
+unsigned dsp::Mark5Unpacker::get_ndig () const
+{
+  return input->get_nchan() * input->get_npol();
 }
 
 void dsp::Mark5Unpacker::unpack()
