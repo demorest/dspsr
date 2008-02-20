@@ -7,7 +7,7 @@
 
 #include "dsp/APSREightBit.h"
 #include "dsp/Observation.h"
-#include "dsp/EightBitTable.h"
+#include "dsp/BitTable.h"
 
 bool dsp::APSREightBit::matches (const Observation* observation)
 {
@@ -20,7 +20,7 @@ bool dsp::APSREightBit::matches (const Observation* observation)
 dsp::APSREightBit::APSREightBit ()
   : EightBitUnpacker ("APSREightBit")
 {
-  table = new EightBitTable (EightBitTable::TwosComplement);
+  table = new BitTable (8, BitTable::TwosComplement);
 }
 
 
