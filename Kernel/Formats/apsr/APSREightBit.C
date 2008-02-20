@@ -5,62 +5,31 @@
  *
  ***************************************************************************/
 
-#include "APSREightBit.h"
-#include "Error.h"
-
-//! Constructor
-dsp::APSREightBit::APSREightBit (const char* name) : HistUnpacker (name)
-{
-  set_nsample (256);
-  set_ndig (4);
-}
+#include "dsp/APSREightBit.h"
+#include "dsp/Observation.h"
+#include "dsp/EightBitTable.h"
 
 bool dsp::APSREightBit::matches (const Observation* observation)
 {
-  return observation->get_machine() == "APSR" 
+  return observation->get_machine() == "APSR"
     && observation->get_nbit() == 8
     && observation->get_state() == Signal::Analytic;
 }
 
-/*! The quadrature components must be offset by one */
-unsigned dsp::APSREightBit::get_output_offset (unsigned idig) const
+//! Null constructor
+dsp::APSREightBit::APSREightBit ()
+  : EightBitUnpacker ("APSREightBit")
 {
-  return idig % 2;
+  table = new EightBitTable (EightBitTable::TwosComplement);
 }
 
-/*! The first two digitizer channels are poln0, the last two are poln1 */
-unsigned dsp::APSREightBit::get_output_ipol (unsigned idig) const
-{
-  return idig / 2;
-}
 
-void dsp::APSREightBit::unpack ()
-{
-  const uint64 ndat = input->get_ndat();
-  const unsigned npol = input->get_npol();
-  const unsigned ndim = input->get_ndim();
-  const unsigned nskip = npol * ndim;
 
-  //cerr << "npol=" << npol << " ndim=" << ndim << endl;
 
-  for (unsigned ipol=0; ipol<npol; ipol++) {
-    for (unsigned idim=0; idim<ndim; idim++) {
 
-      unsigned off = ipol * ndim + idim;
 
-      //cerr << "ipol=" << ipol << " idim=" << idim << " off=" << off << endl;
 
-      const char* from = reinterpret_cast<const char*>(input->get_rawptr()+off);
-      float* into = output->get_datptr (0, ipol) + idim;
-      unsigned long* hist = get_histogram (off);
-  
-      for (unsigned bt = 0; bt < ndat; bt++) {
-        hist[ (unsigned char) *from ] ++;
-        *into = float(int( *from ));
-        from += nskip;
-        into += ndim;
-      }
-    }
-  }
-}
+
+
+
 
