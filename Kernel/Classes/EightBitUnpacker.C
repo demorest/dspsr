@@ -14,65 +14,25 @@ using namespace std;
 
 //! Null constructor
 dsp::EightBitUnpacker::EightBitUnpacker (const char* _name)
-  : HistUnpacker (_name)
-{
-  set_nsample (256);
-}
-
-dsp::EightBitUnpacker::~EightBitUnpacker ()
+  : BitUnpacker (_name)
 {
 }
 
-void dsp::EightBitUnpacker::set_table (BitTable* _table)
+void dsp::EightBitUnpacker::unpack (uint64 ndat, 
+				    const unsigned char* from,
+				    const unsigned nskip,
+				    float* into, 
+				    unsigned long* hist)
 {
-  if (verbose)
-    cerr << "dsp::EightBitUnpacker::set_table" << endl;
-
-  table = _table;
-}
-
-const dsp::BitTable* dsp::EightBitUnpacker::get_table () const
-{ 
-  return table;
-}
-
-void dsp::EightBitUnpacker::unpack ()
-{
-  const uint64   ndat  = input->get_ndat();
-
-  const unsigned nchan = input->get_nchan();
-  const unsigned npol  = input->get_npol();
-  const unsigned ndim  = input->get_ndim();
-
-  const unsigned nskip = npol * nchan * ndim;
-
-  unsigned offset = 0;
-
+  const unsigned ndim = input->get_ndim();
   const float* lookup = table->get_values ();
 
-  for (unsigned ichan=0; ichan<nchan; ichan++)
+  for (uint64 idat = 0; idat < ndat; idat++)
   {
-    for (unsigned ipol=0; ipol<npol; ipol++)
-    {
-      for (unsigned idim=0; idim<ndim; idim++)
-      {
-	const unsigned char* from = input->get_rawptr() + offset;
-	float* into = output->get_datptr (ichan, ipol) + idim;
-	unsigned long* hist = get_histogram (offset);
-  
-	offset ++;
+    hist[ *from ] ++;
+    *into = lookup[ *from ];
 
-	for (uint64 idat = 0; idat < ndat; idat++)
-	{
-	  into[0] = lookup[ *from ];
-	  hist[ *from ] ++;
-
-	  from += nskip;
-	  into += ndim;
-	}
-      }
-    }
+    from += nskip;
+    into += ndim;
   }
 }
-
-
