@@ -1,19 +1,41 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by pulsar Swinburne University
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#include "ascii_header.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 
-#include "ascii_header.h"
-
 #define STRLEN 128
 
 static char* whitespace = " \t\n";
+
+// search header for keyword and ensure that it is preceded by whitespace */
+char* ascii_header_find (const char* header, const char* keyword)
+{
+  char* key = strstr (header, keyword);
+
+  // keyword might be the very first word in header
+  while (key > header)
+  {
+    // fprintf (stderr, "found=%s", key);
+
+    // if preceded by whitespace, return the found key
+    if (strchr (whitespace, *(key-1)))
+      break;
+
+    // otherwise, search again, starting one byte later
+    key = strstr (key+1, keyword);
+  }
+
+  return key;
+}
 
 int ascii_header_set (char* header, const char* keyword,
 		      const char* format, ...)
@@ -26,7 +48,7 @@ int ascii_header_set (char* header, const char* keyword,
   int ret = 0;
 
   /* find the keyword (also the insertion point) */
-  char* key = strstr (header, keyword);  
+  char* key = ascii_header_find (header, keyword);  
 
   if (key) {
     /* if the keyword is present, find the first '#' or '\n' to follow it */
@@ -83,7 +105,7 @@ int ascii_header_get (const char* header, const char* keyword,
   int ret = 0;
 
   /* find the keyword */
-  char* key = strstr (header, keyword);
+  char* key = ascii_header_find (header, keyword);
   if (!key)
     return -1;
 
@@ -97,3 +119,4 @@ int ascii_header_get (const char* header, const char* keyword,
 
   return ret;
 }
+
