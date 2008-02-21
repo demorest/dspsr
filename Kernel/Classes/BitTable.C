@@ -11,13 +11,13 @@ using namespace std;
 
 const unsigned dsp::BitTable::bits_per_byte = 8;
 
-const unsigned dsp::BitTable::unique_bytes = 1 << (bits_per_byte-1);
+const unsigned dsp::BitTable::unique_bytes = 1 << bits_per_byte;
 
 unsigned build_mask (unsigned nbit)
 {
   unsigned mask = 0;
 
-  for (unsigned bit = 1; bit <= nbit; bit << 1)
+  for (unsigned bit = 1; bit <= nbit; bit <<= 1)
     mask |= bit;
 
   return mask;
@@ -28,7 +28,7 @@ dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _build)
   type( _type ),
   nbit( _nbit ),
   values_per_byte( bits_per_byte / nbit ),
-  unique_values( 1 << (nbit-1) ),
+  unique_values( 1 << nbit ),
   nbit_mask( build_mask(nbit) )
 {
   cerr << "unique bytes=" << unique_bytes << " values=" << unique_values
