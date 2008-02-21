@@ -48,7 +48,7 @@ void usage ()
     "Source options:\n"
     " -B bandwidth   set the bandwidth\n"
     " -f frequency   set the centre frequency\n"
-    " -k telid       set the tempo telescope code\n"
+    " -k telescope   set the telescope name\n"
     " -N name        set the source name\n"
     "\n"
     "Clock/Time options:\n"
@@ -136,7 +136,7 @@ double offset_clock = 0.0;
 char* mjd_string = 0;
 
 // set the telescope code
-char telescope_code = 0;
+char* telescope = 0;
 
 // bandwidth
 double bandwidth = 0.0;
@@ -336,7 +336,7 @@ int main (int argc, char** argv) try {
       break;
 
     case 'k':
-      telescope_code = optarg[0];
+      telescope = optarg;
       break;
 
     case 'K':
@@ -577,35 +577,40 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
 		 "\n\n" + baseband_options + "\n\n"
 		 " are specific to baseband (undetected) data.");
 
-  if (bandwidth != 0) {
+  if (bandwidth != 0)
+  {
     cerr << "dspsr: over-riding bandwidth"
       " old=" << info->get_bandwidth() <<
       " new=" << bandwidth << endl;
     info->set_bandwidth (bandwidth);
   }
   
-  if (centre_frequency != 0) {
+  if (centre_frequency != 0)
+  {
     cerr << "dspsr: over-riding centre_frequency"
       " old=" << info->get_centre_frequency() <<
       " new=" << centre_frequency << endl;
     info->set_centre_frequency (centre_frequency);
   }
   
-  if (telescope_code != 0) {
+  if (telescope)
+  {
     cerr << "dspsr: over-riding telescope code"
-      " old=" << info->get_telescope_code() <<
-      " new=" << telescope_code << endl;
-    info->set_telescope_code (telescope_code);
+      " old=" << info->get_telescope() <<
+      " new=" << telescope << endl;
+    info->set_telescope (telescope);
   }
   
-  if (!pulsar_name.empty()) {
+  if (!pulsar_name.empty())
+  {
     cerr << "dspsr: over-riding source name"
       " old=" << info->get_source() <<
       " new=" << pulsar_name << endl;
     info->set_source( pulsar_name );   
   }
   
-  if (mjd_string != 0) {
+  if (mjd_string != 0)
+  {
     MJD mjd (mjd_string);
     cerr << "dspsr: over-riding start time"
       " old=" << info->get_start_time() <<

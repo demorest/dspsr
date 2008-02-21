@@ -118,9 +118,9 @@ void dsp::S2File::open_file (const char* filename)
   
   info.set_machine ("S2");
   if(extra_hdr.telid > ' ' )
-    info.set_telescope_code ((char)extra_hdr.telid);
+    info.set_telescope ( Tempo::name(extra_hdr.telid) );
   else
-    info.set_telescope_code (Tempo::Parkes);
+    info.set_telescope ( "PKS" );
     
   info.set_default_basis();
     

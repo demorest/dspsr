@@ -30,7 +30,7 @@ dsp::S2TwoBitCorrection::S2TwoBitCorrection (char telescope)
 
 void dsp::S2TwoBitCorrection::match (const Observation* observation)
 {
-  match ( observation->get_telescope_code() );
+  match ( Tempo::code(observation->get_telescope()) );
 }
 
 void dsp::S2TwoBitCorrection::match (char telescope)

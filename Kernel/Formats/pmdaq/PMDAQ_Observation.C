@@ -41,11 +41,9 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   // TELESCOPE
   //
 
-  if (strncmp(&header[592+jump],"PARKES",6)==0)
-    set_telescope_code (7);
-  else
-    throw Error (InvalidState, "PMDAQ_Observation", "failed to recognise telescope %10.10s\n",
-	       &header[592+jump]);
+  char telescope_name[13];
+  sscanf(&header[592+jump],"%s",telescope_name);
+  set_telescope (telescope_name);
 
   // //////////////////////////////////////////////////////////////////////
   //
