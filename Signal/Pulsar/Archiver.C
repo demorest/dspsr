@@ -266,7 +266,7 @@ try {
   archive-> set_ephemeris (const psrephem& ephemeris);
   */
 
-  archive-> set_telescope ( string(1, phase->get_telescope_code()) );
+  archive-> set_telescope ( phase->get_telescope() );
 
   archive-> set_type ( phase->get_type() );
   if (phase->get_state() == Signal::NthPower ||
@@ -330,10 +330,11 @@ try {
 
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
-  telescope->set_coordinates ( string(1, phase -> get_telescope_code()) );
+  telescope->set_coordinates ( phase -> get_telescope() );
 
   // default Receiver extension
-  archive -> getadd<Pulsar::Receiver>();
+  Pulsar::Receiver* receiver = archive -> getadd<Pulsar::Receiver>();
+  receiver->set_name ( phase -> get_receiver() );
 
   for (unsigned iext=0; iext < extensions.size(); iext++)
     archive -> add_extension ( extensions[iext] );

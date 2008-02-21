@@ -52,13 +52,14 @@ void dsp::Observation::init ()
   Observation::set_nbit( 0 );
   Observation::set_calfreq(0.0);
 
-
   type = Signal::Pulsar;
   state = Signal::Intensity;
   basis = Signal::Linear;
 
-  telescope = 7;
+  telescope = "unknown";
+  receiver = "unknown";
   source = "unknown";
+
   centre_frequency = 0.0;
   bandwidth = 0.0;
 
@@ -222,6 +223,13 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different telescope:"
 	      << telescope << " and " << obs.telescope << endl;
+    can_combine = false;
+  }
+
+  if (receiver != obs.receiver) {
+    if (verbose || combinable_verbose)
+      cerr << "dsp::Observation::combinable different receiver:"
+	   << receiver << " and " << obs.receiver << endl;
     can_combine = false;
   }
 
@@ -450,17 +458,11 @@ bool dsp::Observation::contiguous (const Observation & obs,
   return contiguous && combinable;
 }
 
-void dsp::Observation::set_telescope_code (char _telescope)
-{
-  if (_telescope < 10) /* if the char is < 10 then it was probably an int */
-    _telescope += '0';
- 
-  telescope = _telescope;
-}
-
 void dsp::Observation::set_default_basis ()
 {
-  if (telescope == Tempo::Parkes)  {
+  int tempo_code = Tempo::code( get_telescope() );
+
+  if (tempo_code == Tempo::Parkes)  {
     // Parkes has linear feeds for multibeam, H-OH, and 50cm
     basis = Signal::Linear;
     // above 2 GHz, can assume that the Galileo receiver is used
@@ -469,24 +471,27 @@ void dsp::Observation::set_default_basis ()
     // with the advent of the 1050 the above assumption is no longer valid
 
   }
-  else if (telescope == Tempo::Narrabri)
+  else if (tempo_code == Tempo::Narrabri)
     basis = Signal::Circular;
-  else if (telescope == Tempo::Tidbinbilla)
+  else if (tempo_code == Tempo::Tidbinbilla)
     basis = Signal::Circular;
-  else if (telescope == Tempo::Arecibo)
+  else if (tempo_code == Tempo::Arecibo)
     basis = Signal::Circular;
-  else if (telescope == Tempo::Hobart)
+  else if (tempo_code == Tempo::Hobart)
     basis = Signal::Circular;
-  else if (telescope == Tempo::Greenbank) {
+  else if (tempo_code == Tempo::Greenbank)
+  {
     fprintf(stderr,"WARNING Assuming GBT is Circular\n");
     basis = Signal::Circular;
   }
-  else if (telescope == Tempo::Westerbork) {
+  else if (tempo_code == Tempo::Westerbork)
+  {
     basis = Signal::Linear;
     if (centre_frequency > 2215 && centre_frequency < 2375)
       basis = Signal::Circular;
   }
-  else {
+  else 
+  {
     cerr << "Observation::set_default_basis unrecognized telescope:"
          << telescope << "; assuming circular" << endl;
     basis = Signal::Circular;
@@ -545,7 +550,8 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_nbit        ( in_obs.get_nbit() );
   set_ndat        ( in_obs.get_ndat() );
 
-  set_telescope_code   ( in_obs.get_telescope_code() );
+  set_telescope   ( in_obs.get_telescope() );
+  set_receiver    ( in_obs.get_receiver() );
   set_source      ( in_obs.get_source() );
   set_coordinates ( in_obs.get_coordinates() );
 

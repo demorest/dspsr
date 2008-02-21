@@ -95,13 +95,18 @@ namespace dsp {
     //! Return the number of time samples in container
     uint64 get_ndat () const { return ndat; }
 
-    //! Set the tempo telescope code
-    void set_telescope_code (char telescope);
-    //! Return the tempo telescope code
-    char get_telescope_code () const { return telescope; }
+    //! Set the telescope name
+    void set_telescope (const std::string& name) { telescope = name; }
+    //! Return the telescope name
+    std::string get_telescope () const { return telescope; }
+
+    //! Set the receiver name
+    void set_receiver (const std::string& name) { receiver = name; }
+    //! Return the receiver name
+    std::string get_receiver () const { return receiver; }
 
     //! Set the source name
-    void set_source (const std::string& _source) { source = _source; }
+    void set_source (const std::string& name) { source = name; }
     //! Return the source name
     std::string get_source () const { return source; }
 
@@ -359,8 +364,11 @@ namespace dsp {
     //! Extra stuff
     std::vector<Reference::To<dspExtension> > extensions;
     
-    //! Tempo telescope code
-    char telescope;
+    //! Telescope name
+    std::string telescope;
+
+    //! Receiver name
+    std::string receiver;
 
     //! Source name.  If a pulsar, should be J2000
     std::string source;

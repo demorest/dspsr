@@ -46,15 +46,25 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   set_ndat( 0 );
 
+  char buffer[64];
+
   // //////////////////////////////////////////////////////////////////////
   //
   // TELESCOPE
   //
-  char buffer[64];
   if (ascii_header_get (header, "TELESCOPE", "%s", buffer) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed load TELESCOPE");
   
-  set_telescope_code( Tempo::code(buffer) );
+  set_telescope (buffer);
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // RECEIVER
+  //
+  if (ascii_header_get (header, "RECEIVER", "%s", buffer) < 0)
+    throw Error (InvalidState, "ASCIIObservation", "failed load RECEIVER");
+  
+  set_receiver (buffer);
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -285,8 +295,17 @@ void dsp::ASCIIObservation::unload (char* header)
   //
   // TELESCOPE
   //
-  if (ascii_header_set (header, "TELESCOPE", "%c", get_telescope_code() ) < 0)
+  if (ascii_header_set (header, "TELESCOPE", "%s", 
+			get_telescope().c_str() ) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed unload TELESCOPE");
+
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // RECEIVER
+  //
+  if (ascii_header_set (header, "RECEIVER", "%s", get_receiver().c_str()) < 0)
+    throw Error (InvalidState, "ASCIIObservation", "failed unload RECEIVER");
 
 
   // //////////////////////////////////////////////////////////////////////
