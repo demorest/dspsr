@@ -1,0 +1,23 @@
+#!/bin/csh -fe
+
+if ( "$1" == "-h" || "$1" == "--help" ) then
+  echo
+  echo "developer: updates CVS administration files with developer name"
+  echo
+  echo "usage:"
+  echo "  Management/developer USER"
+  echo
+  echo "where:"
+  echo "  USER is a sourceforge user name"
+  echo
+  exit
+endif
+
+set developer = :pserver:anonymous
+
+if ( "$1" != "" ) set developer = $1
+
+echo "Changing developer name to $developer"
+
+find . -name Root | awk -v name=$developer '{print "echo "name"@dspsr.cvs.sourceforge.net:/cvsroot/dspsr > "$1}' | csh -f
+
