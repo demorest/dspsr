@@ -62,9 +62,12 @@ void dsp::ASCIIObservation::load (const char* header)
   // RECEIVER
   //
   if (ascii_header_get (header, "RECEIVER", "%s", buffer) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load RECEIVER");
-  
-  set_receiver (buffer);
+  {
+    cerr << "ASCIIObservation failed to parse RECEIVER" << endl;
+    set_receiver ("unknown");
+  }
+  else
+    set_receiver (buffer);
 
   // //////////////////////////////////////////////////////////////////////
   //
