@@ -141,18 +141,8 @@ void dsp::Mark5File::open_file (const char* filename)
 
   /* user must specify a telescope whose name is recognised or the telescope
      code */
-	
-  string tel= hdrstr;
-  if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS") 
-    info.set_telescope_code (7);
-  else if ( !strcasecmp (hdrstr, "GBT") || tel == "GBT")
-    info.set_telescope_code (1);
-  else if ( !strcasecmp (hdrstr, "westerbork") || tel == "WSRT")
-    info.set_telescope_code ('i');
-  else {
-    cerr << "Mark5File:: Warning using telescope code " << hdrstr[0] << endl;
-    info.set_telescope_code (hdrstr[0]);
-  }
+
+  info.set_telescope (hdrstr);
 	
   // ///////////////////////////////////////////////////////////////	
   // SOURCE

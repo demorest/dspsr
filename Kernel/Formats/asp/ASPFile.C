@@ -150,7 +150,7 @@ void dsp::ASPFile::open_file (const char* filename)
   info.set_start_time( epoch );
   cerr << "MJD = " << info.get_start_time() << endl;
   cerr << "telescope = " << header.telescope << endl;
-  info.set_telescope_code (header.telescope[0]);
+  info.set_telescope (header.telescope);
 
   info.set_source (header.psr_name);
 

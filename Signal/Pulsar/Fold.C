@@ -157,7 +157,7 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
   Tempo::Predict predict;
   predict.set_nspan ( nspan );
   predict.set_ncoef ( ncoef );
-  predict.set_asite( observation->get_telescope_code() );
+  predict.set_site( observation->get_telescope() );
   // predict.set_frequency ( 1400.0 );
   predict.set_frequency ( observation->get_centre_frequency() );
   predict.set_parameters ( *pephem );

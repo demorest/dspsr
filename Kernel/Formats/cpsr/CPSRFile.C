@@ -8,6 +8,8 @@
 #include "dsp/CPSRFile.h"
 #include "pspmDbase.h"
 #include "pspm++.h"
+
+#include "tempo++.h"
 #include "dirutil.h"
 #include "Error.h"
 
@@ -210,7 +212,7 @@ void dsp::CPSRFile::open_file (const char* filename)
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
   // default_basis
-  info.set_telescope_code (hdr.ttelid);
+  info.set_telescope( Tempo::name(hdr.ttelid) );
   info.set_centre_frequency (hdr.frequency);
   info.set_default_basis();
     
