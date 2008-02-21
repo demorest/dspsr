@@ -7,7 +7,7 @@
 
 #include "dsp/APSRFourBit.h"
 #include "dsp/Observation.h"
-#include "dsp/FourBitTable.h"
+#include "dsp/BitTable.h"
 
 bool dsp::APSRFourBit::matches (const Observation* observation)
 {
@@ -20,16 +20,6 @@ bool dsp::APSRFourBit::matches (const Observation* observation)
 dsp::APSRFourBit::APSRFourBit ()
   : FourBitUnpacker ("APSRFourBit")
 {
-  table = new FourBitTable (FourBitTable::TwosComplement);
+  table = new BitTable (4, BitTable::TwosComplement);
 }
-
-
-
-
-
-
-
-
-
-
 
