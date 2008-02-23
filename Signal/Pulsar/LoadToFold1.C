@@ -651,12 +651,10 @@ void dsp::LoadToFold1::run ()
 	     << operations[iop]->get_name() << " done" << endl;
       
     }
-    catch (Error& error) {
+    catch (Error& error)
+    {
       if (error.get_code() == EndOfFile)
-      {
-        cerr << "end of file" << endl;
 	break;
-      }
       throw error += "dsp::LoadToFold1::run";
     }
     
