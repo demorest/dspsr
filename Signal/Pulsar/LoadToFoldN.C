@@ -137,12 +137,16 @@ void dsp::LoadToFoldN::prepare ()
 
     unsigned nfold = threads[0]->fold.size();
     threads[i]->fold.resize( nfold );
-    for (unsigned ifold = 0; ifold < nfold; ifold ++)  {
+    for (unsigned ifold = 0; ifold < nfold; ifold ++)
+    {
       // the clone automatically copies the pointers to predictors ...
       threads[i]->fold[ifold] = threads[0]->fold[ifold]->clone();
+
       // ... but each thread should have its own
-      threads[i]->fold[ifold]->set_folding_predictor
-         (threads[0]->fold[ifold]->get_folding_predictor()->clone());
+      if (threads[i]->fold[ifold]->has_folding_predictor())
+        threads[i]->fold[ifold]->set_folding_predictor
+           (threads[0]->fold[ifold]->get_folding_predictor()->clone());
+
       // ... and its own output.  New ones will be created in prepare()
       threads[i]->fold[ifold]->set_output( 0 );
     }
@@ -218,7 +222,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 	 << endl;
 
   if( threads[0]->unloader.size() != nfold )
-    throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
+    throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
 		 "unloader vector size=%u != fold vector size=%u",
 		 threads[0]->unloader.size(), nfold );
 
@@ -233,7 +237,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
   {
     SubFold* subfold = dynamic_cast<SubFold*>( threads[0]->fold[ifold].get() );
     if (!subfold)
-      throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archiver",
+      throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
 		   "folder is not a SubFold" );
 
     unloaders[ifold] = new UnloaderShare( threads.size() );
@@ -253,6 +257,9 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     for (unsigned ifold = 0; ifold < nfold; ifold ++)
       threads[i]->unloader[ifold] = unloaders[ifold]->new_Submit (i);
   }
+
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFoldN::prepare_subint_archival done" << endl;
 }
 
 uint64 dsp::LoadToFoldN::get_minimum_samples () const
@@ -464,3 +471,4 @@ dsp::LoadToFold1* dsp::LoadToFoldN::new_thread ()
 {
   return new LoadToFold1;
 }
+
