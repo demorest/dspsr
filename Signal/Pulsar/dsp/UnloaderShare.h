@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/12/19 14:00:18 $
+   $Revision: 1.4 $
+   $Date: 2008/02/23 09:32:41 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -110,6 +110,8 @@ namespace dsp {
     //! Thread coordination used in unload method
     ThreadContext* context;
 
+    bool wait_all;
+
   };
 
   class UnloaderShare::Submit : public PhaseSeriesUnloader
@@ -137,7 +139,7 @@ namespace dsp {
   public:
 
     //! Default constructor
-    Storage (unsigned contributors);
+    Storage (unsigned contributors, unsigned me);
 
     //! ~Destructor
     ~Storage ();
@@ -160,11 +162,20 @@ namespace dsp {
     //! Return true when all contributors are finished with this integration
     bool get_finished ();
 
+    //! Wait for all threads to complete
+    void wait_all (ThreadContext*);
+
+    //! Free any waiting thread, return true if one was waiting
+    bool free ();
+
   protected:
 
     Reference::To<PhaseSeries> profiles;
     std::vector<bool> finished;
     uint64 division;
+
+    //! Thread coordination used in integrate and wait_all
+    ThreadContext* context;
 
   };
 
