@@ -19,6 +19,7 @@ dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
 {
   context = 0;
   contributors = _contributors;
+  wait_all = true;
 }
 
 dsp::UnloaderShare::~UnloaderShare ()
@@ -103,7 +104,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::unload contributor=" << contributor 
-	 << " division=" << division << endl;
+	 << " division=" << division << " Nstorage=" << storage.size() << endl;
 
   unsigned istore = 0;
   for (istore=0; istore < storage.size(); istore++)
@@ -114,11 +115,26 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
   {
     if (Operation::verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
-    Storage* temp = new Storage( contributors );
+
+    Storage* temp = new Storage( contributors, contributor );
     temp->set_division( division );
-    temp->set_profiles( data->clone() );
+
+    if (wait_all)
+      temp->set_profiles( const_cast<PhaseSeries*>(data) );
+    else
+      temp->set_profiles( data->clone() );
+
     storage.push_back( temp );
+
+    if (wait_all)
+    {
+      temp->wait_all( context );
+      unload (istore);
+    }
   }
+
+  if (wait_all)
+    return;
 
   istore=0;
   while( istore < storage.size() )
@@ -135,12 +151,24 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
 
 void dsp::UnloaderShare::finish ()
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::finish" << endl;
+
   while( storage.size() )
     unload (0);
 }
 
 void dsp::UnloaderShare::unload (unsigned istore)
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::unload " << istore << endl;
+
+  if (storage[istore]->free())
+  {
+    cerr << "dsp::UnloaderShare::unload waiting thread freed" << endl;
+    return;
+  }
+
   uint64 division = storage[istore]->get_division();
 
   if (unloader) try 
@@ -195,9 +223,11 @@ dsp::UnloaderShare::new_Submit (unsigned contributor)
 }
 
 //! Default constructor
-dsp::UnloaderShare::Storage::Storage (unsigned contributors)
+dsp::UnloaderShare::Storage::Storage (unsigned contributors, unsigned me)
   : finished( contributors, false )
 {
+  finished[me] = true;
+  context = 0;
 }
 
 dsp::UnloaderShare::Storage::~Storage ()
@@ -246,27 +276,68 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
     if (Operation::verbose)
       cerr << "dsp::UnloaderShare::Storage::integrate adding to division="
 	   << division << endl;
+
     *profiles += *data;
+
+    finished[contributor] = true;
+    if (context)
+      context->signal();
+
     return true;
   }
 
   if (_division > division)
   {
-    if (Operation::verbose)
-      cerr << "dsp::UnloaderShare::Storage::integrate contributor="
-	   << contributor << " past division=" << division << endl;
     finished[contributor] = true;
+    if (context)
+      context->signal();
   }
 
   return false;
 }
 
+void dsp::UnloaderShare::Storage::wait_all (ThreadContext* ctxt)
+{
+  context = ctxt;
+  while (!get_finished())
+    context->wait();
+  context = 0;
+}
+
+bool dsp::UnloaderShare::Storage::free ()
+{
+  if (!context)
+    return false;
+
+  cerr << "dsp::UnloaderShare::Storage::free lock" << endl;
+
+  ThreadContext::Lock lock (context);
+
+  for (unsigned i=0; i < finished.size(); i++)
+    finished[i] = true;
+
+  cerr << "dsp::UnloaderShare::Storage::free signal" << endl;
+
+  context->signal();
+
+  return true;
+}
+
 //! Return true when all contributors are finished with this integration
 bool dsp::UnloaderShare::Storage::get_finished ()
 {
+  if (Operation::verbose)
+  {
+    cerr << "dsp::UnloaderShare::Storage::get_finished:";
+    for (unsigned i=0; i < finished.size(); i++)
+      cerr << " " << finished[i];
+    cerr << endl;
+  }
+
   for (unsigned i=0; i < finished.size(); i++)
     if (!finished[i])
       return false;
+
   return true;
 }
 
