@@ -31,8 +31,11 @@ dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _build)
   unique_values( 1 << nbit ),
   nbit_mask( build_mask(nbit) )
 {
+
+#ifdef _DEBUG
   cerr << "unique bytes=" << unique_bytes << " values=" << unique_values
        << " values per byte=" << values_per_byte << endl;
+#endif
 
   table = 0;
 
