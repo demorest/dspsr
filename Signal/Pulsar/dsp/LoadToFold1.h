@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.9 $
-   $Date: 2008/01/30 05:17:59 $
+   $Revision: 1.10 $
+   $Date: 2008/02/23 09:32:38 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -17,11 +17,6 @@
 #include "dsp/LoadToFold.h"
 
 #include <assert.h>
-
-namespace Pulsar {
-  class Parameters;
-  class Predictor;
-}
 
 class ThreadContext;
 
