@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.20 $
-   $Date: 2007/11/24 21:12:25 $
+   $Revision: 1.21 $
+   $Date: 2008/02/23 09:32:34 $
    $Author: straten $ */
 
 
@@ -105,6 +105,9 @@ namespace dsp {
 
     //! The Pulsar::Archive instance to which data will be added
     Reference::To<Pulsar::Archive> single_archive;
+
+    //! The Pulsar::Archive instance to which data will be unloaded
+    Reference::To<Pulsar::Archive> archive;
 
     //! Filename of the script used to process Archive data before unloading
     std::string script;

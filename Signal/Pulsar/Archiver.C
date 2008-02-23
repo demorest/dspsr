@@ -102,27 +102,29 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
   this->profiles = _profiles;
 
-  Reference::To<Pulsar::Archive> archive;
-
-  if (single_archive) {
+  if (single_archive)
+  {
     // refer to the single archive to which all sub-integration will be written
     archive = single_archive;
     // add the main data
     add (archive, profiles);
   }
-  else {
-
-    if (verbose)
-      cerr << "dsp::Archiver::unload new Pulsar::Archive" << endl;
-    archive = Pulsar::Archive::new_Archive (archive_class_name);
+  else
+  {
+    if (!archive)
+    {
+      if (verbose)
+        cerr << "dsp::Archiver::unload new Pulsar::Archive" << endl;
+      archive = Pulsar::Archive::new_Archive (archive_class_name);
+    }
 
     if (verbose)
       cerr << "dsp::Archiver::unload set Pulsar::Archive" << endl;
     set (archive, profiles);
   }
 
-  if (!single_archive) {
-
+  if (!single_archive)
+  {
     if (script.length()) try {
 
       if (verbose)
