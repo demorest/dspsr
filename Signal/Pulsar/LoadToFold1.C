@@ -94,7 +94,7 @@ dsp::TimeSeries* dsp::LoadToFold1::new_time_series ()
 }
 
 
-void dsp::LoadToFold1::prepare ()
+void dsp::LoadToFold1::prepare () try
 {
   // SetBufferingPolicy::policy = SetBufferingPolicy::Input;
   Operation::preserve_data = true;
@@ -113,13 +113,15 @@ void dsp::LoadToFold1::prepare ()
 
   operations.push_back (manager.get());
 
-  if (manager->get_info()->get_detected()) {
+  if (manager->get_info()->get_detected())
+  {
     prepare_fold (unpacked);
     prepare_final ();
     return;
   }
 
-  if (manager->get_info()->get_type() != Signal::Pulsar) {
+  if (manager->get_info()->get_type() != Signal::Pulsar)
+  {
     // the kernel gets messed up by DM=0 sources, like PolnCal
     cerr << "Disabling coherent dedispersion of non-pulsar signal" << endl;
     config->coherent_dedispersion = false;
@@ -127,8 +129,8 @@ void dsp::LoadToFold1::prepare ()
 
   // the data are not detected, so set up phase coherent reduction path
 
-  if (config->coherent_dedispersion) {
-
+  if (config->coherent_dedispersion)
+  {
     if (!kernel)
       kernel = new Dedispersion;
 
@@ -140,7 +142,6 @@ void dsp::LoadToFold1::prepare ()
 
     if (config->times_minimum_nfft)
       kernel->set_times_minimum_nfft (config->times_minimum_nfft);
-
   }
   else
     kernel = 0;
@@ -150,8 +151,8 @@ void dsp::LoadToFold1::prepare ()
 
   Response* response = kernel.ptr();
 
-  if (config->zap_rfi) {
-
+  if (config->zap_rfi)
+  {
     if (!rfi_filter)
       rfi_filter = new RFIFilter;
 
@@ -159,8 +160,8 @@ void dsp::LoadToFold1::prepare ()
 
     response = rfi_filter;
 
-    if (kernel) {
-
+    if (kernel)
+    {
       if (!response_product)
 	response_product = new ResponseProduct;
 
@@ -168,17 +169,15 @@ void dsp::LoadToFold1::prepare ()
       response_product->add_response (rfi_filter);
 
       response = response_product;
-
     }
-
 
   }
 
   // only the Filterbank must be out-of-place
   TimeSeries* convolved = unpacked;
 
-  if (config->nchan > 1) {
-
+  if (config->nchan > 1)
+  {
     // new storage for filterbank output (must be out-of-place)
     convolved = new_time_series ();
 
@@ -190,7 +189,8 @@ void dsp::LoadToFold1::prepare ()
     filterbank->set_output (convolved);
     filterbank->set_nchan (config->nchan);
     
-    if (config->simultaneous_filterbank) {
+    if (config->simultaneous_filterbank)
+    {
       filterbank->set_response (response);
       if (!config->single_pulse)
         filterbank->set_passband (passband);
@@ -216,8 +216,8 @@ void dsp::LoadToFold1::prepare ()
 
   }
 
-  if (config->interchan_dedispersion) {
-
+  if (config->interchan_dedispersion)
+  {
     if (!sample_delay)
       sample_delay = new SampleDelay;
 
@@ -228,11 +228,10 @@ void dsp::LoadToFold1::prepare ()
       kernel->set_fractional_delay (true);
 
     operations.push_back (sample_delay.get());
-
   }
 
-  if (config->plfb_nbin) {
-
+  if (config->plfb_nbin)
+  {
     if (!phased_filterbank)
       phased_filterbank = new PhaseLockedFilterbank;
 
@@ -289,19 +288,25 @@ void dsp::LoadToFold1::prepare ()
 
   operations.push_back (detect.get());
   
-  if (config->npol == 3) {
+  if (config->npol == 3)
+  {
     TimeSeries* detected = new_time_series ();
     detect->set_input (convolved);
     detect->set_output (detected);
     prepare_fold (detected);
   }
-  else {
+  else
+  {
     detect->set_input (convolved);
     detect->set_output (convolved);
     prepare_fold (convolved);
   }
   
   prepare_final ();
+}
+catch (Error& error)
+{
+  throw error += "dsp::LoadToFold1::prepare";
 }
 
 void dsp::LoadToFold1::prepare_final ()
@@ -540,6 +545,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
     if (ifold < config->predictors.size())
     {
+      cerr << "copy predictor " << ifold << endl;
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
 
       Pulsar::SimplePredictor* simple
@@ -682,6 +688,9 @@ void dsp::LoadToFold1::run ()
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::run end of data" << endl;
 
+  for (unsigned ifold=0; ifold < fold.size(); ifold++)
+    fold[ifold]->finish();
+
   unsigned cwidth = 20;
 
   if (Operation::verbose || (id==0 && config->report))
@@ -695,7 +704,6 @@ void dsp::LoadToFold1::run ()
 	   << pad (cwidth, tostring(operations[iop]->get_total_time()))
 	   << pad (cwidth, tostring(operations[iop]->get_discarded_weights()))
 	   << endl;
-    
   }
 
   if (Operation::verbose)
