@@ -406,15 +406,7 @@ void dsp::LoadToFoldN::finish ()
 	if (finished == 0)
 	  first = i;
 
-	if (subints)
-        {
-          if (Operation::verbose)
-            cerr << "psr::LoadToFoldN::finish finishing" << endl;
-
-	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
-	    threads[i]->fold[ifold]->finish();
-        }
-	else if (finished)
+	if (finished)
         {
           if (Operation::verbose)
             cerr << "psr::LoadToFoldN::finish combining" << endl;
