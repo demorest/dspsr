@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.14 $
-   $Date: 2007/12/19 14:00:17 $
+   $Revision: 1.15 $
+   $Date: 2008/02/24 03:39:20 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -103,6 +103,9 @@ namespace dsp {
     const TimeDivide* get_divider () const { return &divider; }
 
   protected:
+
+    //! Unload any partially completed integrations
+    virtual void unload_partial ();
 
     //! Folds the TimeSeries data into one or more sub-integrations
     virtual void transformation ();
