@@ -476,18 +476,18 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
   bool subints = config->single_pulse || config->integration_length;
 
-  if (manage_archiver) {
+  if (manage_archiver)
+  {
     if (subints)
       unloader.resize (nfold);
     else
       unloader.resize (1);
   }
 
-  for (unsigned ifold=0; ifold < nfold; ifold++) {
-
+  for (unsigned ifold=0; ifold < nfold; ifold++)
+  {
     if (manage_archiver && ( ifold == 0 || subints ))
     {
-
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare Archiver" << endl;
 
@@ -495,11 +495,10 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       unloader[ifold] = archiver;
 
       prepare_archiver( archiver );
-
     }
 
-    if (subints) {
-
+    if (subints)
+    {
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare SubFold" << endl;
 
@@ -515,14 +514,12 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       fold[ifold] = subfold;
 
     }
-
-    else {
-
+    else
+    {
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare Fold" << endl;
 
       fold[ifold] = setup_not<SubFold> (fold[ifold].ptr());
-
     }
 
     if (Operation::verbose)
@@ -560,9 +557,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 	  ( simple->get_coordinates() );
 
 	config->dispersion_measure = simple->get_dispersion_measure();
-
       }
-
     }    
 
     fold[ifold]->set_input (to_fold);
@@ -606,7 +601,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
 }
 
 //! Run through the data
-void dsp::LoadToFold1::run ()
+void dsp::LoadToFold1::run () try
 {
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::run this=" << this 
@@ -616,8 +611,10 @@ void dsp::LoadToFold1::run ()
     scratch->set_ostream (*log);
 
   // ensure that all operations are using the local log and scratch space
-  for (unsigned iop=0; iop < operations.size(); iop++) {
-    if (log) {
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
+    if (log)
+    {
       cerr << "dsp::LoadToFold1::run " << operations[iop]->get_name() << endl;
       operations[iop] -> set_ostream (*log);
     }
@@ -636,10 +633,10 @@ void dsp::LoadToFold1::run ()
 
   bool still_going = true;
 
-  while (!input->eod() && still_going) {
-
-    for (unsigned iop=0; iop < operations.size(); iop++) try {
-      
+  while (!input->eod() && still_going)
+  {
+    for (unsigned iop=0; iop < operations.size(); iop++) try
+    {
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::run calling " 
 	     << operations[iop]->get_name() << endl;
@@ -665,8 +662,8 @@ void dsp::LoadToFold1::run ()
       double seconds = input->tell_seconds();
       int64 decisecond = int64( seconds * 10 );
       
-      if (decisecond > last_decisecond) {
-
+      if (decisecond > last_decisecond)
+      {
 	last_decisecond = decisecond;
 	cerr << "Finished " << decisecond/10.0 << " s";
 
@@ -676,11 +673,8 @@ void dsp::LoadToFold1::run ()
 	       << "%)";
 
 	cerr << "   \r";
-
       }
-      
     }
-    
   }
 
   if (Operation::verbose)
@@ -707,24 +701,29 @@ void dsp::LoadToFold1::run ()
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::run exit" << endl;
 }
+catch (Error& error)
+{
+  throw error += "dsp::LoadToFold1::run";
+}
 
 //! Run through the data
-void dsp::LoadToFold1::finish ()
+void dsp::LoadToFold1::finish () try
 {
-  if (phased_filterbank)  {
+  if (phased_filterbank)
+  {
     cerr << "Calling PhaseLockedFilterbank::normalize_output" << endl;
     phased_filterbank -> normalize_output ();
   }
 
   bool subints = config->single_pulse || config->integration_length;
 
-  if (!subints) {
-
+  if (!subints)
+  {
     if (!unloader.size())
       throw Error (InvalidState, "dsp::LoadToFold1::finish", "no unloader");
 
-    for (unsigned i=0; i<fold.size(); i++) {
-
+    for (unsigned i=0; i<fold.size(); i++)
+    {
       Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
       if (!archiver)
 	throw Error (InvalidState, "dsp::LoadToFold1::finish",
@@ -735,14 +734,12 @@ void dsp::LoadToFold1::finish ()
 
       archiver->set_archive_software( "dspsr" );
       archiver->unload( fold[i]->get_output() );
-
     }
-
   }
-  else if (config->single_archive) {
-
-    for (unsigned i=0; i<unloader.size(); i++) {
-
+  else if (config->single_archive)
+  {
+    for (unsigned i=0; i<unloader.size(); i++)
+    {
       Archiver* archiver = dynamic_cast<Archiver*>( unloader[i].get() );
       if (!archiver)
 	throw Error (InvalidState, "dsp::LoadToFold1::finish",
@@ -755,10 +752,11 @@ void dsp::LoadToFold1::finish ()
 	 << "Filename = '" << archive->get_filename() << "'" << endl;
     
       archive->unload ();
-    
     }
-
   }
-
+}
+catch (Error& error)
+{
+  throw error += "dsp::LoadToFold1::finish";
 }
 
