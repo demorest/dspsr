@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.13 $
-   $Date: 2007/11/24 10:52:02 $
+   $Revision: 1.14 $
+   $Date: 2008/02/24 03:39:16 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -40,6 +40,9 @@ namespace dsp {
 
     //! Handle partially completed PhaseSeries data
     virtual void partial (const PhaseSeries*);
+
+    //! Perform any clean up tasks before completion
+    virtual void finish ();
 
     //! Creates a good filename for the PhaseSeries data archive
     virtual std::string get_filename (const PhaseSeries* data) const;
