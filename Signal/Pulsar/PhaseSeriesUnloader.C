@@ -33,6 +33,13 @@ void dsp::PhaseSeriesUnloader::partial (const PhaseSeries* profiles)
 #endif
 }
 
+void dsp::PhaseSeriesUnloader::finish ()
+{
+#ifdef _DEBUG
+  cerr << "dsp::PhaseSeriesUnloader::finish nothing to do" << endl;
+#endif
+}
+
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
   string filename;
