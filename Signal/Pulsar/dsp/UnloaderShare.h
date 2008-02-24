@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/02/23 09:32:41 $
+   $Revision: 1.5 $
+   $Date: 2008/02/24 03:39:25 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -53,6 +53,9 @@ namespace dsp {
     //! Unload the PhaseSeries data
     void unload (const PhaseSeries*, unsigned contributor);
 
+    //! Inform any waiting threads that contributor is finished
+    void finish_all (unsigned contributor);
+
     //! Copy the Divider configuration
     void copy (const TimeDivide*);
 
@@ -92,8 +95,8 @@ namespace dsp {
 
     class Storage;
 
-    //! Unload the specified storage
-    void unload (unsigned istore);
+    //! Unload the storage
+    void unload (Storage*);
 
     //! Temporary storage of incomplete sub-integrations
     std::vector< Reference::To<Storage> > storage;
@@ -110,7 +113,11 @@ namespace dsp {
     //! Thread coordination used in unload method
     ThreadContext* context;
 
+    //! First contributor to complete a division waits for all others
     bool wait_all;
+
+    //! Flags set when a contributor calls finish_all
+    std::vector<bool> finished_all;
 
   };
 
@@ -127,6 +134,9 @@ namespace dsp {
     //! Unload partial PhaseSeries data
     void partial (const PhaseSeries*);
 
+    //! Inform any waiting threads that the current thread is finished
+    void finish ();
+
   protected:
 
     Reference::To<UnloaderShare> parent;
@@ -139,7 +149,7 @@ namespace dsp {
   public:
 
     //! Default constructor
-    Storage (unsigned contributors, unsigned me);
+    Storage (unsigned contributors, const std::vector<bool>& finished);
 
     //! ~Destructor
     ~Storage ();
@@ -159,14 +169,14 @@ namespace dsp {
     //! Register the last division finished by the specified contributor
     bool integrate (unsigned contributor, uint64 division, const PhaseSeries*);
 
+    //! Inform any waiting threads that contributor is finished this division
+    void set_finished (unsigned contributor);
+
     //! Return true when all contributors are finished with this integration
     bool get_finished ();
 
     //! Wait for all threads to complete
     void wait_all (ThreadContext*);
-
-    //! Free any waiting thread, return true if one was waiting
-    bool free ();
 
   protected:
 
@@ -176,6 +186,7 @@ namespace dsp {
 
     //! Thread coordination used in integrate and wait_all
     ThreadContext* context;
+    void print_finished ();
 
   };
 

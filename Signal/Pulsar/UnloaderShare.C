@@ -16,6 +16,7 @@
 using namespace std;
 
 dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
+  : finished_all( _contributors, false )
 {
   context = 0;
   contributors = _contributors;
@@ -116,8 +117,9 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     if (Operation::verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
 
-    Storage* temp = new Storage( contributors, contributor );
+    Storage* temp = new Storage( contributors, finished_all );
     temp->set_division( division );
+    temp->set_finished( contributor );
 
     if (wait_all)
       temp->set_profiles( const_cast<PhaseSeries*>(data) );
@@ -129,7 +131,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     if (wait_all)
     {
       temp->wait_all( context );
-      unload (istore);
+      unload (temp);
     }
   }
 
@@ -140,7 +142,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
   while( istore < storage.size() )
   {
     if( storage[istore]->get_finished() )
-      unload (istore);
+      unload (storage[istore]);
     else
       istore ++;
   }  
@@ -149,27 +151,38 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
 }
 
+void dsp::UnloaderShare::finish_all (unsigned contributor)
+{
+  ThreadContext::Lock lock (context);
+
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::finish_all contributor=" << contributor << endl;
+
+  if (finished_all[contributor])
+    throw Error (InvalidParam, "dsp::UnloaderShare::finish_all",
+                 "contributor %d already finished", contributor);
+
+  finished_all[contributor] = true;
+
+  for (unsigned istore=0; istore < storage.size(); istore++)
+    storage[istore]->set_finished (contributor);
+}
+
 void dsp::UnloaderShare::finish ()
 {
   if (Operation::verbose)
-    cerr << "dsp::UnloaderShare::finish" << endl;
+    cerr << "dsp::UnloaderShare::finish size=" << storage.size() << endl;
 
   while( storage.size() )
-    unload (0);
+    unload( storage[0] );
 }
 
-void dsp::UnloaderShare::unload (unsigned istore)
+void dsp::UnloaderShare::unload (Storage* store)
 {
   if (Operation::verbose)
-    cerr << "dsp::UnloaderShare::unload " << istore << endl;
+    cerr << "dsp::UnloaderShare::unload store=" << store << endl;
 
-  if (storage[istore]->free())
-  {
-    cerr << "dsp::UnloaderShare::unload waiting thread freed" << endl;
-    return;
-  }
-
-  uint64 division = storage[istore]->get_division();
+  uint64 division = store->get_division();
 
   if (unloader) try 
   {
@@ -177,15 +190,20 @@ void dsp::UnloaderShare::unload (unsigned istore)
       cerr << "dsp::UnloaderShare::unload unload division=" << division
 	   << endl;
     
-    unloader->unload( storage[istore]->get_profiles() );
+    unloader->unload( store->get_profiles() );
   }
   catch (Error& error)
     {
       cerr << "dsp::UnloaderShare::unload error unloading division "
 	   << division << error;
     }
-  
-  storage.erase( storage.begin() + istore );
+
+  for (unsigned i=0; i<storage.size(); i++)
+    if (storage[i].get() == store)
+    {
+      storage.erase( storage.begin() + i );
+      break;
+    }
 }
 
 //! Default constructor
@@ -215,6 +233,15 @@ void dsp::UnloaderShare::Submit::partial (const PhaseSeries* profiles)
   parent->unload( profiles, contributor );
 }
 
+void dsp::UnloaderShare::Submit::finish () try
+{
+  parent->finish_all( contributor );
+}
+catch (Error& error)
+{
+  throw error += "dsp::UnloaderShare::Submit::finish";
+}
+
 //! Get submission interface for the specified contributor
 dsp::UnloaderShare::Submit* 
 dsp::UnloaderShare::new_Submit (unsigned contributor)
@@ -223,10 +250,10 @@ dsp::UnloaderShare::new_Submit (unsigned contributor)
 }
 
 //! Default constructor
-dsp::UnloaderShare::Storage::Storage (unsigned contributors, unsigned me)
-  : finished( contributors, false )
+dsp::UnloaderShare::Storage::Storage (unsigned contributors, 
+                                      const std::vector<bool>& all_finished)
+  : finished( all_finished )
 {
-  finished[me] = true;
   context = 0;
 }
 
@@ -253,6 +280,8 @@ dsp::PhaseSeries* dsp::UnloaderShare::Storage::get_profiles ()
 void dsp::UnloaderShare::Storage::set_division( uint64 d )
 {
   division = d;
+  if (Operation::verbose)
+    print_finished ();
 }
 
 //! Get the division
@@ -278,20 +307,13 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
 	   << division << endl;
 
     *profiles += *data;
-
-    finished[contributor] = true;
-    if (context)
-      context->signal();
+    set_finished( contributor );
 
     return true;
   }
 
   if (_division > division)
-  {
-    finished[contributor] = true;
-    if (context)
-      context->signal();
-  }
+    set_finished( contributor );
 
   return false;
 }
@@ -304,35 +326,18 @@ void dsp::UnloaderShare::Storage::wait_all (ThreadContext* ctxt)
   context = 0;
 }
 
-bool dsp::UnloaderShare::Storage::free ()
+void dsp::UnloaderShare::Storage::set_finished (unsigned contributor)
 {
-  if (!context)
-    return false;
-
-  cerr << "dsp::UnloaderShare::Storage::free lock" << endl;
-
-  ThreadContext::Lock lock (context);
-
-  for (unsigned i=0; i < finished.size(); i++)
-    finished[i] = true;
-
-  cerr << "dsp::UnloaderShare::Storage::free signal" << endl;
-
-  context->signal();
-
-  return true;
+  finished[contributor] = true;
+  if (context)
+    context->signal();
 }
 
 //! Return true when all contributors are finished with this integration
 bool dsp::UnloaderShare::Storage::get_finished ()
 {
   if (Operation::verbose)
-  {
-    cerr << "dsp::UnloaderShare::Storage::get_finished:";
-    for (unsigned i=0; i < finished.size(); i++)
-      cerr << " " << finished[i];
-    cerr << endl;
-  }
+    print_finished ();
 
   for (unsigned i=0; i < finished.size(); i++)
     if (!finished[i])
@@ -340,4 +345,13 @@ bool dsp::UnloaderShare::Storage::get_finished ()
 
   return true;
 }
+
+void dsp::UnloaderShare::Storage::print_finished ()
+{
+  cerr << "division=" << division << " finished:";
+  for (unsigned i=0; i < finished.size(); i++)
+    cerr << " " << finished[i];
+  cerr << endl;
+}
+
 
