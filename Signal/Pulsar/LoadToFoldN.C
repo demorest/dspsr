@@ -290,7 +290,7 @@ void* dsp::LoadToFoldN::thread (void* context)
 
     if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
 
-    cerr << "THREAD ERROR: " << error.get_message() << endl;
+    cerr << "THREAD ERROR: " << error << endl;
 
     status = -1;
     fold->error = error;
@@ -441,9 +441,6 @@ void dsp::LoadToFoldN::finish ()
     }
 
   }
-
-  for (unsigned ifold = 0; ifold < unloaders.size(); ifold ++)
-    unloaders[ifold]->finish();
 
   if (Operation::verbose)
     cerr << "psr::LoadToFoldN::finish finishing via " << first << endl;
