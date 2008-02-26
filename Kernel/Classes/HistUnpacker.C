@@ -18,11 +18,20 @@ bool dsp::HistUnpacker::keep_histogram = true;
 dsp::HistUnpacker::HistUnpacker (const char* _name) : Unpacker (_name)
 {
   nsample = 0;
-  ndig = 2;
+  ndig = 0;
 }
 
 dsp::HistUnpacker::~HistUnpacker ()
 {
+}
+
+unsigned dsp::HistUnpacker::get_ndig () const
+{
+  if (ndig)
+    return ndig;
+
+  HistUnpacker* thiz = const_cast<HistUnpacker*>(this);
+  thiz->set_ndig( input->get_nchan() * input->get_npol() * input->get_ndim() );
 }
 
 /*! By default, there are two digitizers, one for each polarization */
@@ -30,9 +39,6 @@ void dsp::HistUnpacker::set_ndig (unsigned _ndig)
 {
   if (ndig == _ndig)
     return;
-
-  if (verbose)
-    cerr << "dsp::HistUnpacker::set_ndig = " << _ndig << endl;
 
   ndig = _ndig;
   resize ();
@@ -54,12 +60,18 @@ void dsp::HistUnpacker::set_nsample (unsigned _nsample)
 /*! By default, there is no need to offset the output from each digitizer */
 unsigned dsp::HistUnpacker::get_output_offset (unsigned idig) const
 {
+  if (input->get_state() == Signal::Analytic)
+    return idig%2;
+
   return 0;
 }
 
 /*! By default, there is one digitizer for each polarization */
 unsigned dsp::HistUnpacker::get_output_ipol (unsigned idig) const
 {
+  if (input->get_state() == Signal::Analytic)
+    return idig/2;
+
   return idig;
 }
 

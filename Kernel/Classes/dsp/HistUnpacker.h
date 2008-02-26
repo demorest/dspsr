@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/10/15 21:48:05 $
+   $Revision: 1.5 $
+   $Date: 2008/02/26 06:45:54 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -36,7 +36,7 @@ namespace dsp {
     //! Set the number of digitizers (histograms)
     virtual void set_ndig (unsigned ndig);
     //! Get the number of digitizers (histograms)
-    unsigned get_ndig () const { return ndig; }
+    unsigned get_ndig () const;
 
     //! Set the number of samples in the histogram
     virtual void set_nsample (unsigned nsample);
