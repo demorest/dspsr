@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRTwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/02/18 10:49:55 $
+   $Revision: 1.2 $
+   $Date: 2008/02/26 06:45:48 $
    $Author: straten $ */
 
 #ifndef __APSRTwoBitCorrection_h
@@ -30,6 +30,8 @@ namespace dsp {
 
     //! Return true if APSRTwoBitCorrection can convert the Observation
     virtual bool matches (const Observation* observation);
+
+    unsigned get_input_incr () const;
 
   };
   
