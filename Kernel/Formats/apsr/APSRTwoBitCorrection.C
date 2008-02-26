@@ -22,13 +22,9 @@ dsp::APSRTwoBitCorrection::APSRTwoBitCorrection ()
   table = new TwoBitTable (TwoBitTable::TwosComplement);
 }
 
-
-
-
-
-
-
-
-
-
+/*! The data from each polarization are written in blocks */
+unsigned dsp::APSRTwoBitCorrection::get_input_incr () const
+{
+  return 1;
+}
 
