@@ -22,6 +22,15 @@
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 
+#if DSP_apsr
+#include "dsp/APSRTwoBitCorrection.h"
+#include "dsp/APSRFourBit.h"
+#include "dsp/APSREightBit.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::APSRTwoBitCorrection> apsr2;
+static Registry::List<dsp::Unpacker>::Enter<dsp::APSRFourBit> apsr4;
+static Registry::List<dsp::Unpacker>::Enter<dsp::APSREightBit> apsr8;
+#endif
+
 #if DSP_asp
 #include "dsp/ASPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::ASPUnpacker> asp;
