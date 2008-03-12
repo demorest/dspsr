@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/02/26 06:45:54 $
+   $Revision: 1.6 $
+   $Date: 2008/03/12 14:08:25 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -68,8 +68,7 @@ namespace dsp {
   protected:
 
     //! Get the pointer to the histogram array
-    unsigned long* get_histogram (unsigned idig)
-	{ return &histograms[idig][0]; }
+    unsigned long* get_histogram (unsigned idig);
 
   private:
 

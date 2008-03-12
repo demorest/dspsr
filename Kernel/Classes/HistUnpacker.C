@@ -83,6 +83,10 @@ unsigned dsp::HistUnpacker::get_output_ichan (unsigned idig) const
 
 void dsp::HistUnpacker::resize ()
 {
+  if (verbose)
+    cerr << "dsp::HistUnpacker::resize ndig=" << ndig
+         << " nsample=" << nsample << endl;
+
   histograms.resize (ndig);
   for (unsigned idig=0; idig<ndig; idig++)
     histograms[idig].resize (nsample);
@@ -100,14 +104,15 @@ void dsp::HistUnpacker::zero_histogram ()
 
 double dsp::HistUnpacker::get_histogram_mean (unsigned idig) const
 {
-  if ( idig >= get_ndig())
+  if (idig >= get_ndig())
     throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram_mean",
-		 "invalid channel=%d", idig);
+		 "invalid idig=%d >= ndig=%d", idig, get_ndig());
 
   double ones = 0.0;
   double pts  = 0.0;
 
-  for (unsigned ival=0; ival<nsample; ival++) {
+  for (unsigned ival=0; ival<nsample; ival++)
+  {
     double samples = double (histograms[idig][ival]);
     ones += samples * double (ival);
     pts  += samples * double (nsample);
@@ -117,6 +122,10 @@ double dsp::HistUnpacker::get_histogram_mean (unsigned idig) const
 
 unsigned long dsp::HistUnpacker::get_histogram_total (unsigned idig) const
 {
+  if (idig >= get_ndig())
+    throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram_total",
+                 "invalid idig=%d >= ndig=%d", idig, get_ndig());
+
   unsigned long nweights = 0;
 
   for (unsigned iwt=0; iwt<nsample; iwt++)
@@ -124,4 +133,14 @@ unsigned long dsp::HistUnpacker::get_histogram_total (unsigned idig) const
 
   return nweights;
 }
+
+unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig)
+{
+  if (idig >= get_ndig())
+    throw Error (InvalidRange, "dsp::HistUnpacker::get_histogram",
+                 "invalid idig=%d >= ndig=%d", idig, histograms.size());
+
+  return &histograms[idig][0];
+}
+
 
