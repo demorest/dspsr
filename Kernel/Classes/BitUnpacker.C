@@ -46,10 +46,6 @@ void dsp::BitUnpacker::unpack ()
 
   const unsigned nskip = npol * nchan * ndim;
 
-  if (ndat % 2)
-    throw Error (InvalidParam, "dsp::BitUnpacker::unpack",
-		 "invalid ndat="UI64, ndat);	 
-
   unsigned offset = 0;
 
   for (unsigned ichan=0; ichan<nchan; ichan++)
@@ -61,12 +57,13 @@ void dsp::BitUnpacker::unpack ()
 	const unsigned char* from = input->get_rawptr() + offset;
 	float* into = output->get_datptr (ichan, ipol) + idim;
 	unsigned long* hist = get_histogram (offset);
-  
+ 
+#ifdef _DEBUG
+        cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
+#endif
+ 
 	unpack (ndat, from, nskip, into, hist);
-
 	offset ++;
-
-
       }
     }
   }
