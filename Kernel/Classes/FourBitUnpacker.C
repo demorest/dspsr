@@ -28,6 +28,10 @@ void dsp::FourBitUnpacker::unpack (uint64 ndat,
   const unsigned ndim = input->get_ndim();
   const float* lookup = table->get_values ();
 
+  if (ndat % 2)
+    throw Error (InvalidParam, "dsp::FourBitUnpacker::unpack",
+                 "invalid ndat="UI64, ndat);
+
   for (uint64 idat = 0; idat < ndat2; idat++)
   {
     into[0]    = lookup[ *from * 2 ];
