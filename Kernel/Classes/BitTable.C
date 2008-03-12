@@ -16,9 +16,17 @@ const unsigned dsp::BitTable::unique_bytes = 1 << bits_per_byte;
 unsigned build_mask (unsigned nbit)
 {
   unsigned mask = 0;
+  unsigned add  = 1;
 
-  for (unsigned bit = 1; bit <= nbit; bit <<= 1)
-    mask |= bit;
+  for (unsigned bit = 0; bit < nbit; bit ++)
+  {
+    mask |= add;
+    add <<= 1;
+  }
+
+#ifdef _DEBUG
+  cerr << "build_mask: nbit=" << nbit << " mask=" << mask << endl;
+#endif
 
   return mask;
 }
@@ -76,7 +84,11 @@ void dsp::BitTable::generate (float* table) const
   {
     for (unsigned val=0; val<values_per_byte; val++)
     {
-      *tabval = values[extract (byte, val)];
+      unsigned sample = extract (byte, val);
+#ifdef _DEBUG
+      cerr << "byte=" << byte << " val=" << val << " sample=" << sample << endl;
+#endif
+      *tabval = values[sample];
       tabval ++;
     }
   }
@@ -120,3 +132,4 @@ void dsp::BitTable::generate_unique_values (float* values) const
   }
    
 }
+
