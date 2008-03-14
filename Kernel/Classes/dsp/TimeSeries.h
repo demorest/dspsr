@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.42 $
-   $Date: 2008/01/25 05:22:51 $
+   $Revision: 1.43 $
+   $Date: 2008/03/14 03:05:36 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -22,9 +22,10 @@
 #include "dsp/DataSeries.h"
 
 namespace dsp {
-  
-  class TimeSeries : public DataSeries {
 
+  //! Arrays of consecutive samples for each polarization and frequency channel
+  class TimeSeries : public DataSeries
+  {
   public:
 
     //! Automatically delete arrays on resize(0)
@@ -244,3 +245,4 @@ bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2);
 bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2);
 
 #endif
+
