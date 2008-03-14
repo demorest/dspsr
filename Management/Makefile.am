@@ -10,9 +10,9 @@ install-exec-hook: fix_prefix
 # scripts are up-to-date with respect to where the software was installed.
 #
 
-FIX_PREFIX := ${prefix}/bin/dspsr_ldflags ${prefix}/bin/dspsr_cflags
+FIX_PREFIX = ${prefix}/bin/dspsr_ldflags ${prefix}/bin/dspsr_cflags
 
-LOCAL_ROOT := ${top_srcdir}
+LOCAL_ROOT = ${top_srcdir}
 include ${top_srcdir}/config/Makefile.backends
 
 fix_prefix: install-binSCRIPTS

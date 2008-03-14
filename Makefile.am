@@ -8,7 +8,7 @@ libs:
 
 all: $(config)
 
-config := $(srcdir)/config/Makefile.local
+config = $(srcdir)/config/Makefile.local
 
 #
 # Convert automake variables into Standard Makefile Scheme variables
