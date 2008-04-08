@@ -511,11 +511,15 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     {
       n_lo += nlo_lookup [*input_data_ptr];
       input_data_ptr += input_incr;
+
+#ifdef APSR_DEV
       if (input_data_ptr == block_ptr)
       {
         input_data_ptr += resolution;
         block_ptr += 2 * resolution;
       }
+#endif
+
     }
 
     if (hist)
@@ -545,9 +549,12 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     else {
       
       input_data_ptr = input_data;
+
+#ifdef APSR_DEV
       block_ptr = 0;
       if (resolution > 1)
         block_ptr = input_data + resolution;
+#endif
 
       section = &(dls_lookup[0]) + (n_lo-n_min) * lookup_block_size;
       
@@ -564,11 +571,15 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 	}
 
 	input_data_ptr += input_incr;
+
+#ifdef APSR_DEV
         if (input_data_ptr == block_ptr)
         {
           input_data_ptr += resolution;
           block_ptr += 2 * resolution;
         }
+#endif
+
       }
 
       if (weights)
