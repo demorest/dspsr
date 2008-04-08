@@ -289,7 +289,7 @@ void dsp::ASCIIObservation::unload (char* header)
   //
   // HDR_VERSION
   //
-  float version;
+  float version = 0.0;
   if (ascii_header_set (header, hdr_version.c_str(), "%f", version) < 0)
     cerr << "ASCIIObservation: failed unload " << hdr_version << endl;
 
