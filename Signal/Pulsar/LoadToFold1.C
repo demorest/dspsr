@@ -261,8 +261,6 @@ void dsp::LoadToFold1::prepare () try
   
   }
  
-  TimeSeries* detected = NULL;
-  
   if (!detect)
     detect = new Detection;
 
@@ -352,7 +350,6 @@ void dsp::LoadToFold1::prepare_final ()
 
     if (kernel)
       kernel->set_dispersion_measure (dm);
-
   }
 
   manager->get_info()->set_between_channel_dm( dm );
