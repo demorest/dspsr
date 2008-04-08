@@ -152,10 +152,18 @@ void dsp::SubFold::set_limits (const Observation* input)
 
 void dsp::SubFold::finish () try
 {
+  if (verbose)
+    cerr << "dsp::SubFold::finish unload_partial" << endl;
+
   unload_partial ();
 
   if (unloader)
+  {
+    if (verbose)
+      cerr << "dsp::SubFold::finish call unloader finish" << endl;
+
     unloader->finish ();
+  }
 }
 catch (Error& error)
 {
