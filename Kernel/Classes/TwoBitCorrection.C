@@ -479,7 +479,10 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   unsigned input_incr = get_input_incr ();
   unsigned output_incr = get_output_incr ();
 
-  cerr << "output_incr=" << output_incr << " input_incr=" << input_incr << endl;
+#ifdef _DEBUG
+  cerr << "dsp::TwoBitCorrection::dig_unpack output_incr=" << output_incr 
+       << " input_incr=" << input_incr << endl;
+#endif
 
   float* section = 0;
   float* fourval = 0;
@@ -494,10 +497,9 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   const unsigned char* block_ptr = 0;
   if (resolution > 1)
     block_ptr = input_data + resolution;
-  
+
   for (unsigned long wt=0; wt<n_weights; wt++)
   {
-
     const unsigned char* input_data_ptr = input_data;
 
     if (bytes > bytes_left) {
