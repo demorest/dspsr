@@ -216,6 +216,19 @@ void dsp::TimeSeries::resize (uint64 nsamples)
 	      nsamples,int64((data-(float*)buffer)),get_samps_offset());
 }
 
+void dsp::TimeSeries::decrease_ndat (uint64 new_ndat)
+{
+  if (new_ndat > get_ndat())
+    throw Error (InvalidParam, "dsp::TimeSeries::decrease_ndat",
+                 "new ndat="UI64" > old ndat="UI64, new_ndat, get_ndat());
+
+  if (verbose)
+    cerr << "dsp::TimeSeries::decrease_ndat from " << get_ndat() 
+         << " to " << new_ndat << endl;
+
+  Observation::set_ndat( new_ndat );
+}
+
 dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 {
   //  fprintf(stderr,"Hi from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
@@ -287,6 +300,9 @@ void dsp::TimeSeries::zero_resize(unsigned char*& _buffer, uint64& nbytes){
 //! Offset the base pointer by offset time samples
 void dsp::TimeSeries::seek (int64 offset)
 {
+  if (verbose)
+    cerr << "dsp::TimeSeries::seek " << offset << endl;
+
   if (offset == 0)
     return;
 
@@ -306,7 +322,11 @@ void dsp::TimeSeries::seek (int64 offset)
 		 "offset="I64" > current_offset="I64";"
                  " attempt to seek before start of data", 
                  offset, current_offset/get_ndim());
-  
+
+  if (verbose)
+    cerr << "dsp::TimeSeries::seek current_offset=" << current_offset
+         << " float_offset=" << float_offset << endl;
+ 
   data += float_offset;
   assert (data >= fbuffer);
 
@@ -325,7 +345,12 @@ unsigned char* dsp::TimeSeries::get_data()
     throw Error (InvalidState,"dsp::TimeSeries::get_data",
 		"Data buffer not initialized.  ndat="UI64, get_ndat());
 
-  return ((unsigned char*)data);
+#ifdef _DEBUG
+    cerr << "dsp::TimeSeries::get_data data-buffer=" 
+         << int(data-(float*)buffer) << endl;
+#endif
+
+  return (unsigned char*) data;
 }
 
 //! Returns a uchar pointer to the first piece of data
@@ -498,9 +523,6 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat)
 void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy, 
 				 uint64 idat_start, uint64 copy_ndat)
 {
-  if (!copy_ndat || !copy)
-    return;
-
   if (verbose)
     cerr << "dsp::TimeSeries::copy_data to ndat=" << get_ndat()
 	 << " from ndat=" << copy->get_ndat() 
@@ -518,11 +540,16 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
   uint64 offset = idat_start * get_ndim();
   uint64 byte_count = copy_ndat * get_ndim() * sizeof(float);
 
-  for (unsigned ichan=0; ichan<get_nchan(); ichan++) {
-    for (unsigned ipol=0; ipol<get_npol(); ipol++) {
-      float* to = get_datptr (ichan, ipol);
-      const float* from = copy->get_datptr(ichan,ipol) + offset;
-      memcpy (to, from, size_t(byte_count));
+  if (copy_ndat)
+  {
+    for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+    {
+      for (unsigned ipol=0; ipol<get_npol(); ipol++)
+      {
+        float* to = get_datptr (ichan, ipol);
+        const float* from = copy->get_datptr(ichan,ipol) + offset;
+        memcpy (to, from, size_t(byte_count));
+      }
     }
   }
 
