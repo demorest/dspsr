@@ -230,8 +230,7 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 void dsp::Dedispersion::mark (Observation* output)
 {
   if (verbose)
-    cerr << "dsp::Dedispersion::mark dm="<< dispersion_measure << endl;
-  output->change_dispersion_measure (dispersion_measure);
+    cerr << "dsp::Dedispersion::mark no longer changing DM" << endl;
 }
 
 void dsp::Dedispersion::build ()
