@@ -23,7 +23,7 @@ bool dsp::TwoBitCorrection::change_levels = true;
 
 //! Null constructor
 dsp::TwoBitCorrection::TwoBitCorrection (const char* _name) 
-    : HistUnpacker (_name)
+  : HistUnpacker (_name)
 {
   // Sub-classes may re-define these
   set_nsample (512);
@@ -52,10 +52,31 @@ dsp::TwoBitCorrection::~TwoBitCorrection ()
 {
 }
 
-/*! By default, one polarization is output in one byte */
+/*! By default, one digitizer is output in one byte */
 unsigned dsp::TwoBitCorrection::get_ndig_per_byte () const
 { 
   return 1;
+}
+
+/*!
+  By default, each digitizer samples a real valued signal.
+
+  In the case of dual-sideband downconversion, the in-phase and
+  quadrature components are independently sampled, and ndim_per_digitizer=1.
+
+  In the case of decimating the output of a polyphase filterbank,
+  the real and imaginary components of the complex values may be 
+  scaled and resampled together, and ndim_per_digitizer=2
+*/
+unsigned dsp::TwoBitCorrection::get_ndim_per_digitizer () const
+{ 
+  return 1;
+}
+
+void dsp::TwoBitCorrection::set_default_ndig ()
+{
+  set_ndig( (input->get_nchan() * input->get_npol() * input->get_ndim())
+	    / get_ndim_per_digitizer() );
 }
 
 /*! By default, the data from each polarization is interleaved byte by byte */
@@ -67,14 +88,16 @@ unsigned dsp::TwoBitCorrection::get_input_offset (unsigned idig) const
 /*! By default, the data from each polarization is interleaved byte by byte */
 unsigned dsp::TwoBitCorrection::get_input_incr () const 
 {
-  // cerr << "dsp::TwoBitCorrection::get_input_incr" << endl;
-  return input->get_npol() * input->get_ndim();
+  return input->get_npol() * get_output_incr();
 }
 
 /*! By default, the output from each digitizer is contiguous */
 unsigned dsp::TwoBitCorrection::get_output_incr () const
 {
-  return input->get_ndim();
+  if (get_ndim_per_digitizer () == 2)
+    return 1;
+  else
+    return input->get_ndim();
 }
 
 //! Set the number of time samples used to estimate undigitized power
@@ -370,12 +393,12 @@ void dsp::TwoBitCorrection::unpack ()
   unsigned samples_per_byte = table->get_values_per_byte()/get_ndig_per_byte();
 
   if (ndat % samples_per_byte)
-    throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
 		 "input ndat="I64" != %dn", ndat, samples_per_byte);
   
   if (input->get_state() != Signal::Nyquist && 
       input->get_state() != Signal::Analytic)
-    throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
+    throw Error (InvalidParam, "dsp::TwoBitCorrection::unpack",
 		 "input is detected");
 
   const unsigned char* rawptr = input->get_rawptr();
@@ -385,6 +408,9 @@ void dsp::TwoBitCorrection::unpack ()
   // weights are used only if output is a WeightedTimeseries
   unsigned* weights = 0;
   uint64 nweights = 0;
+
+  // the number of floating point numbers to unpack from each digitizer
+  uint64 nfloat = ndat * get_ndim_per_digitizer();
 
   for (unsigned idig=0; idig<ndig; idig++)
   {
@@ -412,7 +438,7 @@ void dsp::TwoBitCorrection::unpack ()
       nweights = weighted_output -> get_nweights ();
     }
 
-    dig_unpack (into, from, ndat, idig, weights, unsigned(nweights));
+    dig_unpack (into, from, nfloat, idig, weights, unsigned(nweights));
       
   }  // for each polarization
 
@@ -487,16 +513,22 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   float* section = 0;
   float* fourval = 0;
 
+#ifdef APSR_DEV
+
+  unsigned sample_resolution = get_input()->get_loader()->get_resolution();
   // convert samples back to bytes
-  unsigned resolution = 0; //get_input()->get_loader()->get_resolution() / 4;
+  unsigned byte_resolution = get_input()->get_nbytes(sample_resolution);
 
 #ifdef _DEBUG
-  cerr << "dsp::TwoBitCorrection::unpack resolution=" << resolution << " incr=" << input_incr << endl;
+  cerr << "dsp::TwoBitCorrection::unpack resolution="
+       << byte_resolution << " incr=" << input_incr << endl;
 #endif
 
-  const unsigned char* block_ptr = 0;
-  if (resolution > 1)
-    block_ptr = input_data + resolution;
+  const unsigned char* packet_ptr = 0;
+  if (byte_resolution > 1)
+    packet_ptr = input_data + byte_resolution;
+
+#endif
 
   for (unsigned long wt=0; wt<n_weights; wt++)
   {
@@ -515,10 +547,10 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
       input_data_ptr += input_incr;
 
 #ifdef APSR_DEV
-      if (input_data_ptr == block_ptr)
+      if (input_data_ptr == packet_ptr)
       {
-        input_data_ptr += resolution;
-        block_ptr += 2 * resolution;
+        input_data_ptr += byte_resolution;
+        packet_ptr += 2 * byte_resolution;
       }
 #endif
 
@@ -553,9 +585,9 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
       input_data_ptr = input_data;
 
 #ifdef APSR_DEV
-      block_ptr = 0;
-      if (resolution > 1)
-        block_ptr = input_data + resolution;
+      packet_ptr = 0;
+      if (byte_resolution > 1)
+        packet_ptr = input_data + byte_resolution;
 #endif
 
       section = &(dls_lookup[0]) + (n_lo-n_min) * lookup_block_size;
@@ -575,10 +607,10 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 	input_data_ptr += input_incr;
 
 #ifdef APSR_DEV
-        if (input_data_ptr == block_ptr)
+        if (input_data_ptr == packet_ptr)
         {
-          input_data_ptr += resolution;
-          block_ptr += 2 * resolution;
+          input_data_ptr += byte_resolution;
+          packet_ptr += 2 * byte_resolution;
         }
 #endif
 
