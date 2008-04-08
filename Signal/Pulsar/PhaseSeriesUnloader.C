@@ -4,8 +4,10 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/PhaseSeries.h"
+#include "dsp/Operation.h"
 
 #include "Pulsar/Predictor.h"
 #include "dirutil.h"
@@ -28,16 +30,15 @@ dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 
 void dsp::PhaseSeriesUnloader::partial (const PhaseSeries* profiles)
 {
-#ifdef _DEBUG
-  cerr << "dsp::PhaseSeriesUnloader::partial ignoring partial profile" << endl;
-#endif
+  if (Operation::verbose)
+    cerr << "dsp::PhaseSeriesUnloader::partial unload partial" << endl;
+  unload (profiles);
 }
 
 void dsp::PhaseSeriesUnloader::finish ()
 {
-#ifdef _DEBUG
-  cerr << "dsp::PhaseSeriesUnloader::finish nothing to do" << endl;
-#endif
+  if (Operation::verbose)
+    cerr << "dsp::PhaseSeriesUnloader::finish nothing to do" << endl;
 }
 
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
