@@ -99,6 +99,7 @@ int main (int argc, char** argv) try
 
     case 'V':
       dsp::Operation::verbose = true;
+      dsp::Observation::verbose = true;
     case 'v':
       verbose = true;
       break;
@@ -209,73 +210,86 @@ int main (int argc, char** argv) try
     }
 
     // set the number of samples to load
-    double samples = manager->get_info()->get_rate() * time_per_plot + 0.5;
-    uint64 block_size = uint64(samples);
+    double samples = manager->get_info()->get_rate() * time_per_plot;
+    uint64 block_size = uint64(samples + 0.5);
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
 
-    cerr << block_size << " samples per " << time_per_plot << "s plot" << endl;
+    cerr << block_size << " samples per " 
+         << time_per_plot << "s plot" << endl;
 
     manager->get_input()->set_block_size( block_size );
 
     // set the number of samples to average
-    samples = manager->get_info()->get_rate() * time_per_point + 0.5;
-    uint64 point_size = uint64(samples);
+    samples = manager->get_info()->get_rate() * time_per_point;
+    uint64 point_size = uint64(samples + 0.5);
     time_per_point = double(point_size) / manager->get_info()->get_rate();
+
+    cerr << point_size << " samples per " 
+         << time_per_point*1e6 << "us point" << endl;
 
     uint64 npoints = block_size / point_size;
     if (block_size % point_size)
       npoints ++;
-    
+
+    cerr << npoints << " points per plot" << endl;
+
     vector<float> xaxis (npoints);
     vector<float> mean  (npoints);
     vector<float> rms   (npoints);
 
     double current_time = 0.0;
 
-    while (!manager->get_input()->eod()) {
-
+    while (!manager->get_input()->eod())
+    {
       if (unpack)
         unpack->zero_histogram ();
       
       manager->load (voltages);
 
-      for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan) {
+      if (verbose)
+        cerr << "input sample=" << voltages->get_input_sample() 
+             << " ndat=" << voltages->get_ndat() << endl;
 
+      for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan)
+      {
 	if (display && plotter)
 	  cpgpage();
 	
 	float bottom = 0.52;
 
-	for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol) {
-
-	  if (display && plotter) {
+	for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol)
+        {
+	  if (display && plotter)
+          {
 	    cpgsvp (0.7, 0.95, bottom, bottom+0.40);
 	    plotter->plot (ichan,ipol);
 	  }
 
 	  float* data = voltages->get_datptr (ichan, ipol);
-	  uint64 ndat = voltages->get_ndat();
+          uint64 nfloat = voltages->get_ndat() * voltages->get_ndim();
+          uint64 npoint = point_size * voltages->get_ndim();
 	  uint64 idat = 0;
 
-	  for (unsigned ipt=0; ipt<npoints; ipt++) {
-
+	  for (unsigned ipt=0; ipt<npoints; ipt++)
+          {
 	    xaxis[ipt] = current_time + double(ipt)*time_per_point;
 
 	    mean[ipt] = 0;
 	    rms [ipt] = 0;
 	    unsigned count = 0;
 	    
-	    for (uint64 jdat=0; jdat<point_size && idat<ndat; jdat++)  {
+	    for (uint64 jdat=0; jdat<npoint && idat<nfloat; jdat++)
+            {
 	      float sample = data[idat]; idat ++;
 	      mean[ipt] += sample;
 	      rms [ipt] += sample*sample;
-	    count ++;
+	      count ++;
 	    }
-	    
+	    // cerr << ipt << " " << count << endl;
+
 	    mean[ipt] /= count;
 	    rms[ipt]  /= count;
 	    rms[ipt]  = sqrt(rms[ipt] - mean[ipt]*mean[ipt]);
-	    
 	  }
 	  
 	  float min = 0.0;
@@ -291,7 +305,8 @@ int main (int argc, char** argv) try
 	  cpgsvp (0.1, 0.63, bottom, bottom+0.20);
 	  cpgsci(1);
 	  
-	  if (ipol==1) {
+	  if (ipol==1)
+          {
 	    cpglab("Seconds from start of file", "", "");
 	    cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
 	  }
@@ -317,24 +332,20 @@ int main (int argc, char** argv) try
 	  cpgpt(npoints, &(xaxis[0]), &(rms[0]), -1);
 	  
 	  bottom = 0.08;
-
 	}
 	
-	if (display && plotter) {
+	if (display && plotter) 
+        {
 	  cpgsvp (0.7, 0.95, bottom, 0.92);
 	  plotter->label ();
 	}
-
       }
 
-      
       current_time += time_per_plot;
-
     }
 
     if (verbose)
       cerr << "end of data file " << filenames[ifile] << endl;
-
   }
   catch (string& error) {
     cerr << error << endl;

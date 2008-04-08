@@ -10,6 +10,7 @@ using namespace std;
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
 #include "dsp/WeightedTimeSeries.h"
+#include "dsp/Input.h"
 
 #include "Error.h"
 #include "ierf.h"
@@ -26,9 +27,9 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name)
 {
   // Sub-classes may re-define these
   set_nsample (512);
-  set_ndig (2);
 
-  if (psrdisp_compatible) {
+  if (psrdisp_compatible)
+  {
     cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
       "   using cutoff sigma of 6.0 instead of 10.0" << endl;
     cutoff_sigma = 6.0;
@@ -66,13 +67,14 @@ unsigned dsp::TwoBitCorrection::get_input_offset (unsigned idig) const
 /*! By default, the data from each polarization is interleaved byte by byte */
 unsigned dsp::TwoBitCorrection::get_input_incr () const 
 {
-  return 2;
+  // cerr << "dsp::TwoBitCorrection::get_input_incr" << endl;
+  return input->get_npol() * input->get_ndim();
 }
 
 /*! By default, the output from each digitizer is contiguous */
 unsigned dsp::TwoBitCorrection::get_output_incr () const
 {
-  return 1;
+  return input->get_ndim();
 }
 
 //! Set the number of time samples used to estimate undigitized power
@@ -174,26 +176,27 @@ void dsp::TwoBitCorrection::set_limits ()
          << "  nlo_sigma=" << nlo_sigma << endl;
 
   // backward compatibility
-  if (psrdisp_compatible) {
-
+  if (psrdisp_compatible)
+  {
     // in psrdisp, sigma was incorrectly set as
     nlo_sigma = sqrt( float(get_nsample()) );
 
     cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
       "   setting nlo_sigma to " << nlo_sigma << endl;
-
   }
 
   n_max = unsigned (nlo_mean + (cutoff_sigma * nlo_sigma));
 
-  if (n_max >= get_nsample()) {
+  if (n_max >= get_nsample())
+  {
     if (verbose)
       cerr << "dsp::TwoBitCorrection::set_limits resetting nmax:"
 	   << n_max << " to nsample-2:" << get_nsample()-1 << endl;
     n_max = get_nsample()-1;
   }
 
-  if (cutoff_sigma * nlo_sigma >= nlo_mean+1.0) {
+  if (cutoff_sigma * nlo_sigma >= nlo_mean+1.0)
+  {
     if (verbose)
       cerr << "dsp::TwoBitCorrection::set_limits resetting nmin:"
 	   << n_min << " to one:1" << endl;
@@ -303,7 +306,6 @@ void dsp::TwoBitCorrection::generate (vector<float>& dls, float* spc,
 
   for (unsigned nlo=n_min; nlo <= n_max; nlo++)
   {
-  
     /* Refering to JA98, nlo is the number of samples between x2 and x4, 
        and p_in is the left-hand side of Eq.44 */
     float p_in = (float) nlo / (float) n_tot;
@@ -358,13 +360,14 @@ void dsp::TwoBitCorrection::unpack ()
     return;
 
   // build the two-bit lookup table
-  if (!built){
+  if (!built)
+  {
     if (verbose)
       cerr << "dsp::TwoBitCorrection::unpack calling build" << endl;
     build ();
   }
 
-  unsigned samples_per_byte = table->get_values_per_byte() / get_ndig_per_byte();
+  unsigned samples_per_byte = table->get_values_per_byte()/get_ndig_per_byte();
 
   if (ndat % samples_per_byte)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::check_input",
@@ -383,8 +386,8 @@ void dsp::TwoBitCorrection::unpack ()
   unsigned* weights = 0;
   uint64 nweights = 0;
 
-  for (unsigned idig=0; idig<ndig; idig++) {
-
+  for (unsigned idig=0; idig<ndig; idig++)
+  {
     unsigned ipol = get_output_ipol (idig);
     unsigned ichan = get_output_ichan (idig);
     unsigned input_offset = get_input_offset (idig);
@@ -414,8 +417,8 @@ void dsp::TwoBitCorrection::unpack ()
   }  // for each polarization
 
 
-  if (weighted_output) {
-
+  if (weighted_output)
+  {
     weighted_output -> mask_weights ();
     uint64 nbad = weighted_output -> get_nzero ();
     discarded_weights += nbad;
@@ -476,10 +479,24 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   unsigned input_incr = get_input_incr ();
   unsigned output_incr = get_output_incr ();
 
+  cerr << "output_incr=" << output_incr << " input_incr=" << input_incr << endl;
+
   float* section = 0;
   float* fourval = 0;
 
-  for (unsigned long wt=0; wt<n_weights; wt++) {
+  // convert samples back to bytes
+  unsigned resolution = 0; //get_input()->get_loader()->get_resolution() / 4;
+
+#ifdef _DEBUG
+  cerr << "dsp::TwoBitCorrection::unpack resolution=" << resolution << " incr=" << input_incr << endl;
+#endif
+
+  const unsigned char* block_ptr = 0;
+  if (resolution > 1)
+    block_ptr = input_data + resolution;
+  
+  for (unsigned long wt=0; wt<n_weights; wt++)
+  {
 
     const unsigned char* input_data_ptr = input_data;
 
@@ -490,9 +507,15 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
     // calculate the weight based on the last nsample pts
     unsigned n_lo = 0;
-    for (bt=0; bt<bytes_per_weight; bt++) {
+    for (bt=0; bt<bytes_per_weight; bt++)
+    {
       n_lo += nlo_lookup [*input_data_ptr];
       input_data_ptr += input_incr;
+      if (input_data_ptr == block_ptr)
+      {
+        input_data_ptr += resolution;
+        block_ptr += 2 * resolution;
+      }
     }
 
     if (hist)
@@ -522,15 +545,30 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
     else {
       
       input_data_ptr = input_data;
+      block_ptr = 0;
+      if (resolution > 1)
+        block_ptr = input_data + resolution;
+
       section = &(dls_lookup[0]) + (n_lo-n_min) * lookup_block_size;
       
-      for (bt=0; bt<bytes; bt++) {
+      for (bt=0; bt<bytes; bt++)
+      {
 	fourval = section + unsigned(*input_data_ptr) * samples_per_byte;
-	for (pt=0; pt<samples_per_byte; pt++) {
+	for (pt=0; pt<samples_per_byte; pt++)
+        {
 	  *output_data = fourval[pt];
+#ifdef _DEBUG2
+          cerr << "b: " << *output_data << endl;
+#endif
 	  output_data += output_incr;
 	}
+
 	input_data_ptr += input_incr;
+        if (input_data_ptr == block_ptr)
+        {
+          input_data_ptr += resolution;
+          block_ptr += 2 * resolution;
+        }
       }
 
       if (weights)
@@ -543,5 +581,4 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   }
   
 }
-  
 

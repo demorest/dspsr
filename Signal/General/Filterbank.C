@@ -59,8 +59,8 @@ void dsp::Filterbank::make_preparations ()
   //! Complex samples dropped from end of cyclical convolution result
   nfilt_neg = 0;
 
-  if (response) {
-
+  if (response)
+  {
     if (verbose)
       cerr << "dsp::Filterbank call Response::match" << endl;
 
@@ -87,7 +87,6 @@ void dsp::Filterbank::make_preparations ()
     if (freq_res == 0)
       throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		   "Response.ndat = 0");
-
   }
 
   // number of complex values in the result of the first fft
@@ -95,18 +94,16 @@ void dsp::Filterbank::make_preparations ()
 
   scalefac = 1.0;
 
-  if (verbose) {
-
+  if (verbose)
+  {
     string norm = "unknown";
     if (FTransform::get_norm() == FTransform::unnormalized)
       norm = "unnormalized";
     else if (FTransform::get_norm() == FTransform::normalized)
       norm = "normalized";
 	
-    cerr << "dsp::Filterbank::make_preparations\n"
-      "  n_fft="<< n_fft <<" and freq_res="<< freq_res << "\n"
-      "  fft::normalization=" << norm << endl;
-
+    cerr << "dsp::Filterbank::make_preparations n_fft=" << n_fft 
+         << " freq_res=" << freq_res << " fft::norm=" << norm << endl;
   }
 
   if (FTransform::get_norm() == FTransform::unnormalized)
@@ -124,12 +121,13 @@ void dsp::Filterbank::make_preparations ()
   // number of time samples in first fft
   nsamp_fft = 0;
 
-  if (input->get_state() == Signal::Nyquist) {
+  if (input->get_state() == Signal::Nyquist)
+  {
     nsamp_fft = 2 * n_fft;
     nsamp_overlap = 2 * nfilt_tot * nchan_subband;
   }
-
-  else if (input->get_state() == Signal::Analytic) {
+  else if (input->get_state() == Signal::Analytic)
+  {
     nsamp_fft = n_fft;
     nsamp_overlap = nfilt_tot * nchan_subband;
   }
@@ -141,9 +139,14 @@ void dsp::Filterbank::make_preparations ()
   // number of timesamples between start of each big fft
   nsamp_step = nsamp_fft - nsamp_overlap;
 
-  // if given, test the validity of the window function
-  if (apodization) {
+  if (verbose)
+    cerr << "dsp::Filterbank::make_preparations nfilt_tot=" << nfilt_tot
+         << " nsamp_fft=" << nsamp_fft << " nsamp_step=" << nsamp_step
+         << " nsamp_overlap=" << nsamp_overlap << endl;
 
+  // if given, test the validity of the window function
+  if (apodization)
+  {
     if( input->get_nchan() > 1 )
       throw Error(InvalidState,"dsp::Filterbank::make_preparations",
 		  "not implemented for nchan=%d > 1",
@@ -168,8 +171,8 @@ void dsp::Filterbank::make_preparations ()
   // matrix convolution
   matrix_convolution = false;
 
-  if (response) {
-
+  if (response)
+  {
     // if the response has 8 dimensions, then perform matrix convolution
     matrix_convolution = (response->get_ndim() == 8);
 
@@ -178,22 +181,17 @@ void dsp::Filterbank::make_preparations ()
 	   << ((matrix_convolution)?"matrix":"complex") << " convolution"
 	   << endl;
 
-    if( matrix_convolution && input->get_nchan() > 1 )
+    if (matrix_convolution && input->get_nchan() > 1)
       throw Error(InvalidState,"dsp::Filterbank::make_preparations",
-		  "I don't use matrix convolution so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
-		  input->get_nchan());
+		  "matrix convolution untested for > one input channel");
 
     if (matrix_convolution && input->get_npol() != 2)
 	throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		     "matrix convolution and input.npol != 2");
   }
 
-  if (passband) {
-    if( matrix_convolution && input->get_nchan() > 1 )
-      throw Error(InvalidState,"dsp::Filterbank::make_preparations",
-		  "I don't use passbands in this class so couldn't test this code for inputs with more than one channel (input->nchan=%d)",
-		  input->get_nchan());
-
+  if (passband)
+  {
     if (response)
       passband -> match (response);
 
@@ -201,7 +199,6 @@ void dsp::Filterbank::make_preparations ()
 
     if (!response)
       passband->match (input);
-
   }
 
   // if the time_res is greater than 1, the ffts must overlap by ntimesamp.
@@ -244,7 +241,8 @@ void dsp::Filterbank::prepare_output ()
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
-  if (weighted_output) {
+  if (weighted_output)
+  {
     weighted_output->convolve_weights (nsamp_fft, nsamp_step);
     weighted_output->scrunch_weights (nsamp_fft / (freq_res * time_res));
   }
@@ -254,14 +252,18 @@ void dsp::Filterbank::prepare_output ()
   if (verbose) cerr << "dsp::Filterbank::prepare_output scale="
                     << output->get_scale() <<endl;
 
-  // output data will have new sampling rate
-  // NOTE: that nsamp_fft already contains the extra factor of two required
-  // when the input TimeSeries is Signal::Nyquist (real) sampled
+  /*
+   * output data will have new sampling rate
+   * NOTE: that nsamp_fft already contains the extra factor of two required
+   * when the input TimeSeries is Signal::Nyquist (real) sampled
+   */
   double ratechange = double(freq_res * time_res) / double (nsamp_fft);
   output->set_rate (input->get_rate() * ratechange);
 
-  // if freq_res is even, then each sub-band will be centred on a frequency
-  // that lies on a spectral bin *edge* - not the centre of the spectral bin
+  /*
+   * if freq_res is even, then each sub-band will be centred on a frequency
+   * that lies on a spectral bin *edge* - not the centre of the spectral bin
+   */
   output->set_dc_centred (freq_res%2);
 
 #if 0
@@ -301,6 +303,7 @@ void dsp::Filterbank::transformation ()
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
   uint64 npart = (ndat-(nchan_subband-nsamp_tres)-nsamp_overlap)/nsamp_step;
+
   // points kept from each small fft
   unsigned nkeep = freq_res - nfilt_tot;
 
@@ -382,21 +385,35 @@ void dsp::Filterbank::transformation ()
   float* data_into = NULL;
   float* data_from = NULL;
 
-  for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++) {
+  for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
+  {
+    for (ipart=0; ipart<npart; ipart++)
+    {
+#ifdef _DEBUG
+      cerr << "ipart=" << ipart << endl;
+#endif
 
-    for (ipart=0; ipart<npart; ipart++) {
       in_offset = ipart * in_step;
       out_offset = ipart * out_step;
       
-      for (ipol=0; ipol < npol; ipol++) {
-	for (itres=0; itres < time_res; itres ++) {
+      for (ipol=0; ipol < npol; ipol++)
+      {
+	for (itres=0; itres < time_res; itres ++)
+        {
 	  tres_offset = itres * tres_step;
 	  
-	  for (jpol=0; jpol<cross_pol; jpol++) {
+	  for (jpol=0; jpol<cross_pol; jpol++)
+          {
 	    if (matrix_convolution)
 	      ipol = jpol;
 	    
 	    time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, ipol));
+
+#ifdef _DEBUG
+            cerr << "time_dom_ptr=" << (void*) time_dom_ptr << endl;
+            cerr << "in_offset=" << in_offset << " tres_offset=" << tres_offset << endl;
+#endif
+
 	    time_dom_ptr += in_offset + tres_offset;
 	    
 	    if (apodization) {
@@ -463,14 +480,20 @@ cerr << "apply response" << endl;
 cerr << "back into time series" << endl;
 #endif
 
-	  for (jpol=0; jpol<cross_pol; jpol++) {
+	  for (jpol=0; jpol<cross_pol; jpol++)
+          {
 	    if (matrix_convolution)
 	      ipol = jpol;
 	    
 	    freq_dom_ptr = c_spectrum[ipol];
 	    
-	    if (freq_res == 1) {
-	      for (ichan=0; ichan < nchan_subband; ichan++) {
+	    if (freq_res == 1)
+            {
+#ifdef _DEBUG
+cerr << "fres = 1 start" << endl;
+#endif
+	      for (ichan=0; ichan < nchan_subband; ichan++)
+              {
 		data_into = output->get_datptr (input_ichan*nchan_subband+ichan, ipol) + out_offset + itres*2;
 		
 		*data_into = *freq_dom_ptr;     // copy the Re[z]
@@ -478,6 +501,9 @@ cerr << "back into time series" << endl;
 		*data_into = *freq_dom_ptr;     // copy the Im[z]
 		freq_dom_ptr ++;
 	      }
+#ifdef _DEBUG
+cerr << "fres = 1 end" << endl;
+#endif
 	      continue;
 	    }
 	    
@@ -487,13 +513,12 @@ cerr << "back into time series" << endl;
             unsigned jchan = input_ichan * nchan_subband;
             unsigned t_off = unsigned(out_offset + itres*2);
 
-	    for (ichan=0; ichan < nchan_subband; ichan++) {
-
+	    for (ichan=0; ichan < nchan_subband; ichan++)
+            {
 #ifdef _DEBUG
 	      cerr << "bcc1d (" << freq_res << "," << (void*)c_time 
 		   << "," << (void*)freq_dom_ptr << ")" << endl;
 #endif
-
 	      backward->bcc1d (freq_res, c_time, freq_dom_ptr);
 
 

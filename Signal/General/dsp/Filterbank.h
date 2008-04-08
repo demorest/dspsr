@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.8 $
-   $Date: 2007/06/01 02:37:27 $
+   $Revision: 1.9 $
+   $Date: 2008/04/08 04:32:44 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -53,6 +53,7 @@ namespace dsp {
 
     //! Set the frequency resolution factor
     void set_freq_res (unsigned _freq_res) { freq_res = _freq_res; }
+    void set_frequency_resolution (unsigned fres) { freq_res = fres; }
 
     //! Get the frequency resolution factor
     unsigned get_freq_res () const { return freq_res; } 

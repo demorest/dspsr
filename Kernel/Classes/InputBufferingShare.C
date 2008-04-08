@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/InputBufferingShare.h"
 #include "ThreadContext.h"
 
@@ -46,24 +47,25 @@ dsp::InputBuffering::Share::~Share ()
 }
 
 //! Set the minimum number of samples that can be processed
-void dsp::InputBuffering::Share::set_minimum_samples (uint64 samples)
-try {
+void dsp::InputBuffering::Share::set_minimum_samples (uint64 samples) try
+{
   ThreadContext::Lock lock (context);
 
   buffer->set_target(target);
   buffer->set_minimum_samples (samples);
 }
- catch (Error& error) {
-   throw error += "dsp::InputBuffering::Share::set_minimum_samples";
- }
+catch (Error& error)
+{
+  throw error += "dsp::InputBuffering::Share::set_minimum_samples";
+}
 
 /*! Copy remaining data from the target Transformation's input to buffer */
-void dsp::InputBuffering::Share::set_next_start (uint64 next)
-try {
-
+void dsp::InputBuffering::Share::set_next_start (uint64 next) try
+{
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::Share::set_next_start lock context="
          << context << endl;
+
   ThreadContext::Lock lock (context);
 
   if (Operation::verbose)
@@ -72,20 +74,21 @@ try {
   buffer->set_target (target);
   buffer->set_next_start (next);
 
-  if (context) {
+  if (context)
+  {
     if (Operation::verbose)
       cerr << "dsp::InputBuffering::Share::set_next_start broadcast" << endl;
     context->broadcast();
   }
 }
- catch (Error& error) {
-   throw error += "dsp::InputBuffering::Share::set_next_start";
- }
+catch (Error& error)
+{
+  throw error += "dsp::InputBuffering::Share::set_next_start";
+}
 
 /*! Prepend buffered data to target Transformation's input TimeSeries */
-void dsp::InputBuffering::Share::pre_transformation ()
-try {
-
+void dsp::InputBuffering::Share::pre_transformation () try
+{
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::Share::pre_transformation lock context="
          << context << endl;
@@ -98,14 +101,13 @@ try {
   if (want == 0)
     return;
 
-  while ( buffer->get_next_contiguous() != want ) {
-
+  while ( buffer->get_next_contiguous() != want )
+  {
     if (Operation::verbose)
       cerr << "dsp::InputBuffering::Share::pre_transformation want=" << want 
 	   << "; have=" << buffer->get_next_contiguous() << endl;
 
     context->wait();
-
   }
 
   if (Operation::verbose)
@@ -116,11 +118,11 @@ try {
 
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::Share::pre_transformation exiting" << endl;
-
 }
- catch (Error& error) {
-   throw error += "dsp::InputBuffering::Share::pre_transformation";
- }
+catch (Error& error)
+{
+  throw error += "dsp::InputBuffering::Share::pre_transformation";
+}
 
 /*! No action required after transformation */
 void dsp::InputBuffering::Share::post_transformation ()
