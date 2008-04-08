@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/03/12 14:08:25 $
+   $Revision: 1.7 $
+   $Date: 2008/04/08 21:00:58 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -69,6 +69,9 @@ namespace dsp {
 
     //! Get the pointer to the histogram array
     unsigned long* get_histogram (unsigned idig);
+
+    //! Compute the default number of digitizers
+    virtual void set_default_ndig ();
 
   private:
 
