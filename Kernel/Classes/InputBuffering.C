@@ -56,12 +56,6 @@ void dsp::InputBuffering::set_next_start (uint64 next)
     cerr << "dsp::InputBuffering::set_next_start saving "
 	 << buffer_ndat << " samples" << endl;
 
-  if (!buffer_ndat) {
-    if (buffer)
-      buffer->set_ndat (0);
-    return;
-  }
-
   if (minimum_samples < buffer_ndat)
     set_minimum_samples (buffer_ndat);
 
