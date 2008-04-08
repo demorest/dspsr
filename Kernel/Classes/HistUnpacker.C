@@ -30,8 +30,14 @@ unsigned dsp::HistUnpacker::get_ndig () const
   if (ndig)
     return ndig;
 
-  HistUnpacker* thiz = const_cast<HistUnpacker*>(this);
-  thiz->set_ndig( input->get_nchan() * input->get_npol() * input->get_ndim() );
+  const_cast<HistUnpacker*>(this)->set_default_ndig();
+
+  return ndig;
+}
+
+void dsp::HistUnpacker::set_default_ndig ()
+{
+  set_ndig( input->get_nchan() * input->get_npol() * input->get_ndim() );
 }
 
 /*! By default, there are two digitizers, one for each polarization */
