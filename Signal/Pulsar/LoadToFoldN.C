@@ -128,11 +128,11 @@ void dsp::LoadToFoldN::prepare ()
   for (unsigned i=1; i<threads.size(); i++) {
 
     //
-    // clone the Fold/SubFold operations (share Pulsar::Predictor)
+    // clone the Fold/SubFold operations
     //
     // This code satisfies two preconditions:
     // 1) the folding operation may be either a Fold or SubFold class
-    // 2) the folding operations should share predictors but not outputs
+    // 2) the folding operations should not share outputs or predictors
     //
 
     unsigned nfold = threads[0]->fold.size();
