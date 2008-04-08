@@ -82,13 +82,11 @@ void dsp::DADAFile::open_file (const char* filename)
     throw Error (FailedCall, "dsp::DADAFile::open_file",
 		 "ascii_header_get(HDR_SIZE) failed");
 
-
   if (ascii_header_get (header.c_str(), "RESOLUTION", "%u", &resolution) < 0)
     resolution = 1;
 
   // the resolution is the _byte_ resolution; convert to _sample_ resolution
-  unsigned bits_per_byte = 8;
-  resolution = (resolution * bits_per_byte) / info.get_nbit();
+  resolution = info.get_nsamples (resolution);
   if (resolution == 0)
     resolution = 1;
 
