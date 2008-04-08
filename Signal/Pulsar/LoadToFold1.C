@@ -123,7 +123,8 @@ void dsp::LoadToFold1::prepare () try
   if (manager->get_info()->get_type() != Signal::Pulsar)
   {
     // the kernel gets messed up by DM=0 sources, like PolnCal
-    cerr << "Disabling coherent dedispersion of non-pulsar signal" << endl;
+    if (id==0 && config->report)
+      cerr << "Disabling coherent dedispersion of non-pulsar signal" << endl;
     config->coherent_dedispersion = false;
   }
 
@@ -195,7 +196,10 @@ void dsp::LoadToFold1::prepare () try
       if (!config->single_pulse)
         filterbank->set_passband (passband);
     }
-    
+
+    if (config->fres)
+      filterbank->set_frequency_resolution (config->fres);
+
     operations.push_back (filterbank.get());
   }
 
@@ -326,20 +330,22 @@ void dsp::LoadToFold1::prepare_final ()
 
   double dm = 0.0;
 
-  if (config->dispersion_measure) {
+  if (config->dispersion_measure)
+  {
     dm = config->dispersion_measure;
     if (Operation::verbose)
       cerr << "LoadToFold1::prepare_final user DM=" << dm << endl;
   }
 
-  else if (parameters) {
+  else if (parameters)
+  {
     dm = parameters->get_dispersion_measure ();
     if (Operation::verbose)
       cerr << "LoadToFold1::prepare_final eph DM=" << dm << endl;
   }
 
-  if (config->coherent_dedispersion) {
-
+  if (config->coherent_dedispersion)
+  {
     if (dm == 0.0)
       throw Error (InvalidState, "LoadToFold1::prepare_final",
 		   "coherent dedispersion enabled, but DM unknown");
@@ -542,7 +548,6 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
     if (ifold < config->predictors.size())
     {
-      cerr << "copy predictor " << ifold << endl;
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
 
       Pulsar::SimplePredictor* simple
@@ -592,7 +597,8 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   if (!config->archive_extension.empty())
     archiver->set_extension (config->archive_extension);
 
-  if (subints && config->single_archive) {
+  if (subints && config->single_archive)
+  {
     cerr << "Single archive with multiple sub-integrations" << endl;
     Pulsar::Archive* arch;
     arch = Pulsar::Archive::new_Archive (config->archive_class);

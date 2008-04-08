@@ -168,7 +168,8 @@ void dsp::Seekable::load_data (BitSeries* data)
   "recycled" is returned. */
 uint64 dsp::Seekable::recycle_data (BitSeries* data)
 {
-  if (data->get_input_sample(this) == -1)  {
+  if (data->get_input_sample(this) == -1)
+  {
     if (verbose)
       cerr << "dsp::Seekable::recycle_data no input_sample" << endl;
     return 0;
@@ -178,10 +179,9 @@ uint64 dsp::Seekable::recycle_data (BitSeries* data)
   uint64 last_sample = start_sample + last_load_ndat;
 
   if (verbose)
-    cerr << "dsp::Seekable::recycle_data"
-      "\n start_sample=" << start_sample <<
-      "\n last_sample=" << last_sample << 
-      "\n load_sample=" << get_load_sample() << endl;
+    cerr << "dsp::Seekable::recycle_data input data"
+      "\n   start_sample=" << start_sample <<
+      "\n   last_sample=" << last_sample << endl;
 
   if (get_load_sample() < start_sample || get_load_sample() >= last_sample)
     return 0;
@@ -210,8 +210,8 @@ uint64 dsp::Seekable::recycle_data (BitSeries* data)
   unsigned char *from = data->get_rawptr() + offset_bytes;
 
   // this loop is "overlap safe"
-  while (recycle_bytes) {
-
+  while (recycle_bytes)
+  {
     if (offset_bytes > recycle_bytes)
       offset_bytes = recycle_bytes;
 

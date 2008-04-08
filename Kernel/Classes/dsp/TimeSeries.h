@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.43 $
-   $Date: 2008/03/14 03:05:36 $
+   $Revision: 1.44 $
+   $Date: 2008/04/08 04:32:44 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -75,6 +75,9 @@ namespace dsp {
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (uint64 nsamples);
+
+    //! Decrease the array lengths without changing the base pointers
+    virtual void decrease_ndat (uint64 new_ndat);
 
     //! Use the supplied array to store nsamples time samples.
     //! Always deletes existing data
