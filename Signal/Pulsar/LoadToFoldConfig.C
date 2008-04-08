@@ -45,7 +45,7 @@ dsp::LoadToFold::Config::Config ()
   // phase-locked filterbank phase bins
   plfb_nbin = 0;
   // phase-locked filterbank channels
-  plfb_nchan;
+  plfb_nchan = 0;
 
   // full polarization by default
   npol = 4;
