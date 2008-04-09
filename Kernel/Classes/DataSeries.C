@@ -5,30 +5,22 @@
  *
  ***************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
-
-#include <assert.h>
-#include <stdio.h>
-
 #include "dsp/DataSeries.h"
 #include "Error.h"
+#include "malloc16.h"
 
 using namespace std;
 
 int dsp::DataSeries::instantiation_count = 0;
 int64 dsp::DataSeries::memory_used = 0;
 
-dsp::DataSeries::DataSeries() : Observation() {
+dsp::DataSeries::DataSeries() : Observation()
+{
   initi();
 }
 
-void dsp::DataSeries::initi(){
+void dsp::DataSeries::initi()
+{
   instantiation_count++;
   //  fprintf(stderr,"New dataseries: %p count=%d\n", this,
   //  instantiation_count);
@@ -41,34 +33,37 @@ void dsp::DataSeries::initi(){
   set_nbit( 8 * sizeof(float) );
 }
   
-dsp::DataSeries::DataSeries(const DataSeries& ms) {
+dsp::DataSeries::DataSeries (const DataSeries& ms)
+{
   initi();
   operator=(ms);
 }
 
-dsp::DataSeries::~DataSeries(){
-  //  fprintf(stderr,"In DataSeries destructor ndat="UI64" %p\n",get_ndat(), this);
+dsp::DataSeries::~DataSeries()
+{
   resize(0);
   instantiation_count--;
-  //  fprintf(stderr,"dsp::DataSeries::~DataSeries() count now %d\n",
-  //  instantiation_count);
 }
 
 //! Enforces that ndat*ndim must be an integer number of bytes
-void dsp::DataSeries::set_ndat(uint64 _ndat){
+void dsp::DataSeries::set_ndat (uint64 _ndat)
+{
   if( _ndat*get_ndim()*get_nbit() % 8 )
-    throw Error(InvalidParam,"dsp::DataSeries::set_ndat()",
-		"You've tried to set an ndat ("UI64") that gives a non-integer number of bytes per pol/chan grouping",
-		_ndat);
+    throw Error(InvalidParam,"dsp::DataSeries::set_ndat",
+		"ndat="UI64" * ndim=%d * nbit=%d yields non-integer bytes",
+                _ndat, get_ndim(), get_nbit());
+
   Observation::set_ndat( _ndat );
 }
 
 //! Enforces that ndat*ndim must be an integer number of bytes
-void dsp::DataSeries::set_ndim(uint64 _ndim){
+void dsp::DataSeries::set_ndim (uint64 _ndim)
+{
   if( _ndim*get_ndat()*get_nbit() % 8 )
-    throw Error(InvalidParam,"dsp::DataSeries::set_ndim()",
-		"You've tried to set an ndim ("UI64") that gives a non-integer number of bytes per pol/chan grouping",
-		_ndim);
+    throw Error(InvalidParam,"dsp::DataSeries::set_ndim",
+                "ndat="UI64" * ndim=%d * nbit=%d yields non-integer bytes",
+                get_ndat(), _ndim, get_nbit()); 
+
   Observation::set_ndim( unsigned(_ndim) );
 }
 
@@ -85,7 +80,8 @@ void dsp::DataSeries::set_ndim(uint64 _ndim){
   and the current data fill be lost.
   </UL>
 */
-void dsp::DataSeries::resize (uint64 nsamples){
+void dsp::DataSeries::resize (uint64 nsamples)
+{
   unsigned char* dummy = (unsigned char*)(-1);
   resize(nsamples,dummy);
 }
@@ -126,9 +122,9 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
       else
       {
 	if (verbose)
-          cerr << "dsp::DataSeries::resize free size=" << size << " buffer="
+          cerr << "dsp::DataSeries::resize free16 size=" << size << " buffer="
 	       << (void*)buffer << endl;
-	free (buffer);
+	free16 (buffer);
 	memory_used -= size;
       }
       buffer = 0;
@@ -143,20 +139,9 @@ void dsp::DataSeries::resize (uint64 nsamples, unsigned char*& old_buffer)
 
   if (size == 0)
   {
-
-#ifdef HAVE_MALLOC_H
-
     if (verbose)
-      cerr << "dsp::DataSeries::resize memalign (16," << require << ")" << endl;
-    buffer = (unsigned char*) memalign (16, require);
-
-#else
-
-    if (verbose)
-      cerr << "dsp::DataSeries::resize valloc (" << require << ")" << endl;
-    buffer = (unsigned char*) valloc (require);
-
-#endif
+      cerr << "dsp::DataSeries::resize malloc16 (" << require << ")" << endl;
+    buffer = (unsigned char*) malloc16 (require);
 
     if (verbose)
       cerr << "dsp::DataSeries::resize buffer=" << (void*) buffer << endl;
