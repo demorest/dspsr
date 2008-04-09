@@ -37,7 +37,8 @@ unsigned dsp::HistUnpacker::get_ndig () const
 
 void dsp::HistUnpacker::set_default_ndig ()
 {
-  set_ndig( input->get_nchan() * input->get_npol() * input->get_ndim() );
+  set_ndig( (input->get_nchan() * input->get_npol() * input->get_ndim())
+            / get_ndim_per_digitizer() );
 }
 
 /*! By default, there are two digitizers, one for each polarization */
@@ -48,6 +49,21 @@ void dsp::HistUnpacker::set_ndig (unsigned _ndig)
 
   ndig = _ndig;
   resize ();
+}
+
+/*!
+  By default, each digitizer samples a real-valued signal.
+
+  In the case of dual-sideband downconversion, the in-phase and
+  quadrature components are independently sampled, and ndim_per_digitizer=1.
+
+  In the case of decimated output from a polyphase filterbank,
+  the real and imaginary components of the complex values may be
+  scaled and resampled together, and ndim_per_digitizer=2
+*/
+unsigned dsp::HistUnpacker::get_ndim_per_digitizer () const
+{
+  return 1;
 }
 
 //! Set the number of time samples used to estimate undigitized power
@@ -66,7 +82,7 @@ void dsp::HistUnpacker::set_nsample (unsigned _nsample)
 /*! By default, there is no need to offset the output from each digitizer */
 unsigned dsp::HistUnpacker::get_output_offset (unsigned idig) const
 {
-  if (input->get_state() == Signal::Analytic)
+  if (input->get_state() == Signal::Analytic && get_ndim_per_digitizer() == 1)
     return idig%2;
 
   return 0;
@@ -75,7 +91,7 @@ unsigned dsp::HistUnpacker::get_output_offset (unsigned idig) const
 /*! By default, there is one digitizer for each polarization */
 unsigned dsp::HistUnpacker::get_output_ipol (unsigned idig) const
 {
-  if (input->get_state() == Signal::Analytic)
+  if (input->get_state() == Signal::Analytic && get_ndim_per_digitizer() == 1)
     return idig/2;
 
   return idig;

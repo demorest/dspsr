@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.36 $
-   $Date: 2008/04/08 20:59:56 $
+   $Revision: 1.37 $
+   $Date: 2008/04/09 05:23:18 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -45,9 +45,6 @@ namespace dsp {
 
     //! Virtual destructor
     virtual ~TwoBitCorrection ();
-
-    //! Get the dimension of the digitizer outputs (real or imaginary)
-    virtual unsigned get_ndim_per_digitizer () const;
 
     //! Get the number of digitizer outputs in one byte
     virtual unsigned get_ndig_per_byte () const;
@@ -130,9 +127,6 @@ namespace dsp {
 
     //! Unpacking algorithm may be re-defined by sub-classes
     virtual void unpack ();
-
-    //! Compute the default number of digitizers
-    virtual void set_default_ndig ();
 
     //! Unpack a single polarization from raw into data
     virtual void dig_unpack (float* output_data,
