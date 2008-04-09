@@ -98,8 +98,10 @@ void dsp::BitStatsPlotter::label()
 
   cpglab (xlabel.c_str(), ylabel.c_str(), " ");
 
-  if (data->has_input() && data->get_input()->get_state()==Signal::Analytic) {
-
+  if (data->has_input()
+      && data->get_input()->get_state()==Signal::Analytic
+      && data->get_ndim_per_digitizer() == 1)
+  {
     cpgsci (colours[0]);
     cpgmtxt("T", .5, 0.0, 0.0, "In-phase");
     cpgsci (colours[1]);
