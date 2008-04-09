@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/01/30 05:17:59 $
+   $Revision: 1.6 $
+   $Date: 2008/04/09 02:55:23 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -57,6 +57,7 @@ namespace dsp {
     bool zap_rfi;
 
     unsigned nfft;
+    unsigned nsmear;
     unsigned fres;
     unsigned times_minimum_nfft;
 

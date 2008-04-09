@@ -143,6 +143,12 @@ void dsp::LoadToFold1::prepare () try
 
     if (config->times_minimum_nfft)
       kernel->set_times_minimum_nfft (config->times_minimum_nfft);
+
+    if (config->nsmear)
+    {
+      cerr << "setting smearing samples to " << config->nsmear << endl;
+      kernel->set_smearing_samples (config->nsmear);
+    }
   }
   else
     kernel = 0;

@@ -39,6 +39,8 @@ dsp::Dedispersion::Dedispersion ()
   frequency_resolution_set = false;
   times_minimum_nfft = 0;
 
+  smearing_samples_set = false;
+
   built = false;
   context = 0;
 }
@@ -132,6 +134,22 @@ void dsp::Dedispersion::set_frequency_resolution (unsigned nfft)
   frequency_resolution_set = true;
 }
 
+void dsp::Dedispersion::set_smearing_samples (unsigned tot)
+{
+  unsigned pos = tot / 2;
+  unsigned neg = pos;
+  if (tot % 2)
+    neg ++;
+  set_smearing_samples (pos, neg);
+}
+
+void dsp::Dedispersion::set_smearing_samples (unsigned pos, unsigned neg)
+{
+  impulse_pos = pos;
+  impulse_neg = neg;
+  smearing_samples_set = true;
+}
+
 void dsp::Dedispersion::set_times_minimum_nfft (unsigned times)
 {
   if (verbose)
@@ -176,11 +194,14 @@ void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
 */
 void dsp::Dedispersion::prepare ()
 {
+  if (!smearing_samples_set)
+  {
+    impulse_pos = smearing_samples (1);
+    impulse_neg = smearing_samples (-1);
+  }
 
-  impulse_pos = smearing_samples (1);
-  impulse_neg = smearing_samples (-1);
-
-  if (psrdisp_compatible) {
+  if (psrdisp_compatible)
+  {
     cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
       "   using symmetric impulse response function" << endl;
     impulse_pos = impulse_neg;
@@ -239,14 +260,14 @@ void dsp::Dedispersion::build ()
     return;
 
   // prepare internal variables
-  if (!frequency_resolution_set)
-    set_optimal_ndat ();
-  else 
+  if (frequency_resolution_set)
   {
     if (times_minimum_nfft)
       set_frequency_resolution( times_minimum_nfft * get_minimum_ndat() );
     check_ndat ();
   }
+  else 
+    set_optimal_ndat ();
 
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
@@ -347,7 +368,6 @@ double dsp::Dedispersion::smearing_time (int half) const
 
 unsigned dsp::Dedispersion::smearing_samples (int half) const
 {
-
   double tsmear = smearing_time (half);
 
   // the sampling rate of the resulting complex time samples
@@ -360,7 +380,8 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 
   // add another ten percent, just to be sure that the pollution due
   // to the cyclical convolution effect is minimized
-  if (psrdisp_compatible) {
+  if (psrdisp_compatible)
+  {
      cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
        "   increasing smearing time by 5 instead of " 
           << smearing_buffer*100.0 << " percent" << endl;
@@ -372,13 +393,15 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
   // smear across one channel in number of time samples.
   unsigned nsmear = unsigned (ceil(tsmear * sampling_rate));
  
-  if (psrdisp_compatible) {
+  if (psrdisp_compatible)
+  {
     cerr << "dsp::Dedispersion::prepare psrdisp compatibility\n"
       "   rounding smear samples down instead of up" << endl;
      nsmear = unsigned (tsmear * sampling_rate);
   }
 
-  if (verbose) {
+  if (verbose)
+  {
     // recalculate the smearing time simply for display of new value
     tsmear = double (nsmear) / sampling_rate;
     cerr << "dsp::Dedispersion::smearing_samples effective smear time: "
@@ -425,13 +448,14 @@ void dsp::Dedispersion::build (vector<float>& phases,
 
   phases.resize (_ndat * _nchan);
 
-  for (unsigned ichan = 0; ichan < _nchan; ichan++) {
-
+  for (unsigned ichan = 0; ichan < _nchan; ichan++)
+  {
     double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
 
     // cerr << "chan_cfreq=" << chan_cfreq << endl;
 
-    if (fractional_delay) {
+    if (fractional_delay)
+    {
       // Compute the DM delay in microseconds; when multiplied by the
       // frequency in MHz, the powers of ten cancel each other
       delay = dispersion_per_MHz * ( 1.0/sqr(chan_cfreq) -
@@ -443,8 +467,8 @@ void dsp::Dedispersion::build (vector<float>& phases,
     double coeff = -sign * 2*M_PI * dispersion_per_MHz / sqr(chan_cfreq);
 
     unsigned spt = ichan * _ndat;
-    for (unsigned ipt = 0; ipt < _ndat; ipt++) {
-
+    for (unsigned ipt = 0; ipt < _ndat; ipt++)
+    {
       // frequency offset from centre frequency of channel
       double freq = double(ipt)*binwidth - 0.5*chanwidth;
 

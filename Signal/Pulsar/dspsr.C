@@ -431,6 +431,20 @@ int main (int argc, char** argv) try {
 
     case 'x':
     {
+      char* colon = strchr (optarg, ':');
+      if (colon)
+      {
+	*colon = '\0';
+	colon++;
+        if (sscanf (colon, "%d", &config->nsmear) < 1)
+        {
+	  fprintf (stderr,
+	           "Error parsing '%s' as filterbank frequency resolution\n",
+                   colon);
+	  return -1;
+	}
+      }
+
       unsigned times = 0;
 
       if (string(optarg) == "min")
