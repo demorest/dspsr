@@ -45,5 +45,5 @@ unsigned dsp::APSRTwoBitCorrection::get_input_incr () const
 unsigned dsp::APSRTwoBitCorrection::get_input_offset (unsigned idig) const
 {
   unsigned resolution = input->get_loader()->get_resolution();
-  return idig * input->get_nbytes(resolution);
+  return idig * input->get_nbytes(resolution) / 2;
 }
