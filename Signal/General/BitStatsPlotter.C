@@ -180,7 +180,9 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
   unsigned nplot = 1;
 
   // plot histograms for in-phase and quadrature components
-  if (data->has_input() && data->get_input()->get_state() == Signal::Analytic)
+  if (data->has_input() 
+      && data->get_input()->get_state() == Signal::Analytic
+      && data->get_ndim_per_digitizer() == 1)
     nplot = 2;
 
   int idig[2] = {-1, -1};
