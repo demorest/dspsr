@@ -7,6 +7,7 @@
 
 #include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
+#include "ascii_header.h"
 
 #include <fstream>
 using namespace std;
@@ -131,9 +132,11 @@ void dsp::DADABuffer::open_file (const char* filename)
 
   info = ASCIIObservation (hdu->header);
 
-  // cannot load less than a byte. set the time sample resolution accordingly
-  unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  if (ascii_header_get (hdu->header, "RESOLUTION", "%u", &resolution) < 0)
+    resolution = 1;
+
+  // the resolution is the _byte_ resolution; convert to _sample_ resolution
+  resolution = info.get_nsamples (resolution);
   if (resolution == 0)
     resolution = 1;
 
