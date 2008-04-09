@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.26 $
-   $Date: 2008/01/19 20:59:37 $
+   $Revision: 1.27 $
+   $Date: 2008/04/09 02:55:23 $
    $Author: straten $ */
 
 #ifndef __Dedispersion_h
@@ -100,6 +100,10 @@ namespace dsp {
     //! Get the frequency resolution in each channel of the kernel
     unsigned get_frequency_resolution () const { return ndat; }
 
+    //! Set the number of smearing samples in each channel of the kernel
+    void set_smearing_samples (unsigned pos, unsigned neg);
+    void set_smearing_samples (unsigned total);
+
     //! Set the frequency resolution this many times the minimum required
     void set_times_minimum_nfft (unsigned times);
 
@@ -157,6 +161,9 @@ namespace dsp {
 
     //! Flag set when set_frequency_resolution() method is called
     bool frequency_resolution_set;
+
+    //! Flag set when set_smearing_samples() method is called
+    bool smearing_samples_set;
 
     //! Choose filter length this many times the minimum length
     unsigned times_minimum_nfft;
