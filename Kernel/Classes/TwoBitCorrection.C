@@ -501,31 +501,32 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   float* section = 0;
   float* fourval = 0;
 
-// #define APSR_DEV 1
+#define APSR_DEV 1
 
 #ifdef APSR_DEV
 
   unsigned sample_resolution = get_input()->get_loader()->get_resolution();
 
-  // convert samples back to bytes
-  // ndim_per_digitizer==1 -> real and imaginary are separately digitized
+  unsigned byte_resolution = get_input()->get_nbytes(sample_resolution);
 
-  unsigned byte_resolution = sample_resolution / 4;
+  unsigned dig_bytes = byte_resolution / get_ndig();
 
-//#ifdef _DEBUG
-  cerr << "dsp::TwoBitCorrection::dig_unpack byte resolution="
+#ifdef _DEBUG
+  cerr << "dsp::TwoBitCorrection::dig_unpack dig resolution="
        << byte_resolution << endl;
-//#endif
+#endif
 
   const unsigned char* end_of_packet = 0;
-  if (byte_resolution > 1)
-    end_of_packet = input_data + byte_resolution;
+  if (dig_bytes > 1)
+    end_of_packet = input_data + dig_bytes;
 
   const unsigned char* packet_ptr = end_of_packet;
 
 #endif
 
   const unsigned char* input_data_ptr = input_data;
+
+  unsigned jump = 0;
 
   for (unsigned long wt=0; wt<n_weights; wt++)
   {
@@ -551,10 +552,11 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
       if (input_data_ptr == packet_ptr)
       {
 #ifdef _DEBUG
-        cerr << "packet jump 1" << endl;
+        jump++;
+        cerr << "packet jump " << jump << endl;
 #endif
-        input_data_ptr += byte_resolution;
-        packet_ptr += 2 * byte_resolution;
+        input_data_ptr += dig_bytes;
+        packet_ptr += byte_resolution;
       }
 #endif
 
@@ -596,8 +598,8 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 #ifdef _DEBUG
         cerr << "packet jump 2.bad" << endl;
 #endif
-          input_data_ptr += byte_resolution;
-          packet_ptr += 2 * byte_resolution;
+          input_data_ptr += dig_bytes;
+          packet_ptr += byte_resolution;
         }
 #endif
 
@@ -635,8 +637,8 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 #ifdef _DEBUG
         cerr << "packet jump 2" << endl;
 #endif
-          input_data_ptr += byte_resolution;
-          packet_ptr += 2 * byte_resolution;
+          input_data_ptr += dig_bytes;
+          packet_ptr += byte_resolution;
         }
 #endif
 
