@@ -359,9 +359,6 @@ void dsp::LoadToFoldN::finish ()
 
   ThreadContext::Lock lock (completion);
 
-  bool subints = configuration->single_pulse
-    || configuration->integration_length;
-
   while (finished < threads.size())
   {
     for (unsigned i=0; i<threads.size(); i++)
