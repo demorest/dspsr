@@ -501,7 +501,7 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   float* section = 0;
   float* fourval = 0;
 
-#define APSR_DEV 1
+// #define APSR_DEV 1
 
 #ifdef APSR_DEV
 
