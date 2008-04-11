@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.8 $
-   $Date: 2007/11/15 10:42:40 $
+   $Revision: 1.9 $
+   $Date: 2008/04/11 13:50:47 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -66,6 +66,9 @@ namespace dsp {
     //! Get the reference phase (phase of bin zero)
     double get_reference_phase () const { return reference_phase; }
 
+    //! Fold the fractional pulses at the start and end of data
+    void set_fractional_pulses (bool);
+
     //@}
 
     /** @name Operation Methods
@@ -120,6 +123,9 @@ namespace dsp {
 
     //! Number of turns in each division
     double division_turns;
+
+    //! Include the fractional pulses at the start and end of data
+    bool fractional_pulses;
 
     //! The Pulsar::Predictor used to determine pulse phase
     Reference::To<const Pulsar::Predictor> poly;

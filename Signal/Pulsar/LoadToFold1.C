@@ -516,7 +516,10 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       if (config->integration_length)
 	subfold -> set_subint_seconds (config->integration_length);
       else
+      {
 	subfold -> set_subint_turns (1);
+	subfold -> set_fractional_pulses (config->fractional_pulses);
+      }
 
       subfold -> set_unloader (unloader[ifold]);
 

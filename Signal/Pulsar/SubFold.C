@@ -57,6 +57,11 @@ void dsp::SubFold::set_subint_turns (unsigned subint_turns)
   divider.set_turns (subint_turns);
 }
 
+void dsp::SubFold::set_fractional_pulses (bool flag)
+{
+  divider.set_fractional_pulses (flag);
+}
+
 void dsp::SubFold::prepare ()
 {
   if (verbose)

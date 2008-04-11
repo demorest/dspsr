@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.15 $
-   $Date: 2008/02/24 03:39:20 $
+   $Revision: 1.16 $
+   $Date: 2008/04/11 13:50:47 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -82,6 +82,8 @@ namespace dsp {
 
     //! Get the number of turns to fold into each sub-integration
     unsigned get_subint_turns () const { return unsigned(divider.get_turns());}
+
+    void set_fractional_pulses (bool);
 
     /** @name deprecated methods 
      *  Use of these methods is deprecated in favour of attaching
