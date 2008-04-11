@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/04/09 02:55:23 $
+   $Revision: 1.7 $
+   $Date: 2008/04/11 13:50:47 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -77,6 +77,7 @@ namespace dsp {
 
     double reference_phase;
     double folding_period;
+    bool fractional_pulses;
 
     /* There are three ways to fold multiple pulsars:
 

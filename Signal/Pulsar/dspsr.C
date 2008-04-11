@@ -30,7 +30,7 @@
 using namespace std;
 
 static char* args =
-"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:m:M:n:N:O:op:P:qRsS:t:T:U:vVWx:X:zZ:";
+"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:m:M:n:N:O:op:P:qRsS:t:T:U:vVWx:X:yzZ:";
 
 void usage ()
 {
@@ -91,9 +91,10 @@ void usage ()
     "\n"
     "Division options:\n"
     " -A             produce a single archive with multiple Integrations \n"
-    " -j             join files into contiguous observation \n"
+    " -j             join input data files into contiguous observation \n"
     " -L seconds     form sub-integrations of the specified length \n"
-    " -s             generate single pulse Integrations \n"
+    " -s             generate single pulse integrations \n"
+    " -y             output partially completed single pulse integrations \n"
     "\n"
     "Output Archive options:\n"
     " -a archive     set the output archive class name\n"
@@ -459,6 +460,10 @@ int main (int argc, char** argv) try {
 
     case 'X':
       config->additional_pulsars.push_back (optarg);
+      break;
+
+    case 'y':
+      config->fractional_pulses = true;
       break;
 
     case 'z':
