@@ -250,6 +250,9 @@ int main (int argc, char** argv) try
         cerr << "input sample=" << voltages->get_input_sample() 
              << " ndat=" << voltages->get_ndat() << endl;
 
+      if (voltages->get_ndat() < point_size)
+        break;
+
       for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan)
       {
 	if (display && plotter)
@@ -274,24 +277,30 @@ int main (int argc, char** argv) try
           {
 	    xaxis[ipt] = current_time + double(ipt)*time_per_point;
 
-	    mean[ipt] = 0;
-	    rms [ipt] = 0;
+            double sum = 0, sumsq = 0;
 	    unsigned count = 0;
 	    
 	    for (uint64 jdat=0; jdat<npoint && idat<nfloat; jdat++)
             {
 	      float sample = data[idat]; idat ++;
-	      mean[ipt] += sample;
-	      rms [ipt] += sample*sample;
+
+	      sum += sample;
+	      sumsq += sample*sample;
 	      count ++;
 	    }
-	    // cerr << ipt << " " << count << endl;
 
-	    mean[ipt] /= count;
-	    rms[ipt]  /= count;
-	    rms[ipt]  = sqrt(rms[ipt] - mean[ipt]*mean[ipt]);
+            if (count == 0)
+              count = 1;
+               
+	    mean[ipt] = sum/count;
+	    double var  = (sumsq - sum*sum/count) / count;
+
+	    rms[ipt] = 0.0;
+            if (var > 0)
+              rms[ipt] = sqrt(var);
+          
 	  }
-	  
+
 	  float min = 0.0;
 	  float max = 0.0;
 	  float buf = 0.0;
@@ -300,7 +309,12 @@ int main (int argc, char** argv) try
 	  
 	  minmax (mean, min, max);
 	  buf = (max-min) * 0.05;
-	  
+
+          // cerr << "mean min=" << min << " max=" << max << endl;
+
+          if (min == max)
+            buf = 1.0;
+ 
 	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
 	  cpgsvp (0.1, 0.63, bottom, bottom+0.20);
 	  cpgsci(1);
@@ -321,7 +335,12 @@ int main (int argc, char** argv) try
 	  
 	  minmax (rms, min, max);
 	  buf = (max-min) * 0.05;
-	  
+
+          // cerr << "rms min=" << min << " max=" << max << endl;
+
+          if (min == max)
+            buf = 1.0;
+
 	  cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
 	  cpgsvp (0.1, 0.63, bottom+0.20, bottom+0.40);
 	  cpgsci(1);
