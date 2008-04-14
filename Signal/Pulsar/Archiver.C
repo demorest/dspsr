@@ -233,8 +233,8 @@ try {
   Pulsar::FITSHdrExtension* ext;
   ext = archive->get<Pulsar::FITSHdrExtension>();
   
-  if (ext) {
-
+  if (ext)
+  {
     // Make sure the start time is aligned with pulse phase zero
     // as this is what the PSRFITS format expects.
 
@@ -273,10 +273,12 @@ try {
   archive-> set_type ( phase->get_type() );
   if (phase->get_state() == Signal::NthPower ||
       phase->get_state() == Signal::PP_State ||
-      phase->get_state() == Signal::QQ_State ) {
+      phase->get_state() == Signal::QQ_State )
+  {
     archive->set_state (Signal::Intensity);
   }
-  else {
+  else
+  {
     archive-> set_state ( phase->get_state() );
   }
 
@@ -287,14 +289,16 @@ try {
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
 
-  if (archive_dedispersed && phase->get_between_channel_dm () != 0) {
+  if (archive_dedispersed && phase->get_between_channel_dm () != 0)
+  {
     archive -> set_dedispersed( true );
     if (verbose)
       cerr << "dsp::Archiver::set between channel dm=" 
            << phase->get_dispersion_measure() << endl;
     archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
   }
-  else {
+  else
+  {
     archive-> set_dedispersed( archive_dedispersed );
     if (verbose)
       cerr << "dsp::Archiver::set dm=" 
@@ -309,7 +313,8 @@ try {
 
   // set any available extensions
   Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
-  if (dspR) {
+  if (dspR)
+  {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::dspReduction extension" << endl;
     set (dspR);
@@ -317,14 +322,16 @@ try {
   }
 
   Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
-  if (tbc)  {
+  if (tbc)
+  {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::TwoBitStats extension" << endl;
     set (tbc);
   }
 
   Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
-  if (pband) {
+  if (pband)
+  {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::Passband extension" << endl;
     set (pband);
@@ -342,7 +349,8 @@ try {
     archive -> add_extension ( extensions[iext] );
 
   // set_model must be called after the Integration::MJD has been set
-  if( phase->get_folding_predictor() )  {
+  if( phase->get_folding_predictor() )
+  {
     if (verbose)
       cerr << "dsp::Archiver::set has predictor" << endl;
     archive-> set_model ( phase->get_folding_predictor(), false );
@@ -358,18 +366,18 @@ try {
 
   if (verbose) cerr << "dsp::Archiver set archive filename to '"
 		    << archive->get_filename() << "'" << endl;
-
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::set Pulsar::Archive";
 }
 
 
 void dsp::Archiver::set (Pulsar::Integration* integration,
 			 const PhaseSeries* phase,
-			 unsigned isub, unsigned nsub)
-try {
-
+			 unsigned isub, unsigned nsub) 
+try
+{
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Integration" << endl;
 
@@ -379,7 +387,8 @@ try {
 
   unsigned effective_npol = npol;
 
-  if (nsub > 1) {
+  if (nsub > 1)
+  {
     if (ndim != nsub)
       cerr << "YIKES!" << endl;
     ndim = 1;
@@ -414,8 +423,8 @@ try {
 
   for (unsigned ichan=0; ichan<nchan; ichan++)
     for (unsigned ipol=0; ipol<npol; ipol++)
-      for (unsigned idim=0; idim<ndim; idim++) {
-
+      for (unsigned idim=0; idim<ndim; idim++)
+      {
 	unsigned poln = ipol*ndim+idim;
 	unsigned chan = (ichan+offchan)%nchan;
 
@@ -429,10 +438,10 @@ try {
 	       << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
 	set (profile, phase, ichan, ipol, idim);
-
       }
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::set Pulsar::Integration";
 }
 
@@ -441,8 +450,8 @@ catch (Error& error) {
 void dsp::Archiver::set (Pulsar::Profile* profile,
 			 const PhaseSeries* phase,
 			 unsigned ichan, unsigned ipol, unsigned idim)
-try {
-
+try
+{
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Profile"
       " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << "\r";
@@ -459,7 +468,7 @@ try {
   profile-> set_weight (1.0);
 
   const float* from = phase->get_datptr (ichan, ipol) + idim;
-  float* to = profile->get_amps ();
+  float* into = profile->get_amps ();
 
   unsigned zeroes = 0;
 
@@ -470,28 +479,49 @@ try {
 
   unsigned not_finite = 0;
 
-  for (unsigned ibin = 0; ibin<nbin; ibin++) {
-    if (phase->get_hit(ibin) == 0) {
+  for (unsigned ibin = 0; ibin<nbin; ibin++)
+  {
+    if (phase->get_hit(ibin) == 0)
+    {
       zeroes ++;
-      *to = 0.0;
+      into[ibin] = 0.0;
     }
     else if (!finite(*from))
       not_finite ++;
     else
-      *to = *from / (scale * double( phase->get_hit(ibin) ));
+      into[ibin] = *from / (scale * double( phase->get_hit(ibin) ));
 
-    to ++;
     from += ndim;
   }
 
   if (not_finite)
     throw Error (InvalidParam, string(),
-		 "%u/%u non-finite amplitudes in data[ichan=%d][ipol=%d][idim=%d]",
+		 "%u/%u non-finite amplitudes in ichan=%d ipol=%d idim=%d",
 		 not_finite, nbin, ichan, ipol, idim);
 
-  if (zeroes && verbose)
-    cerr << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
-	 << " out of " << nbin << " bins with zero hits\r";
+  if (zeroes)
+  {
+    if (verbose)
+      warn << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
+	   << " out of " << nbin << " bins with zero hits" << endl;
+
+    // find the mean of the hit bins
+    double sum = 0.0;
+    unsigned count = 0;
+    for (unsigned ibin = 0; ibin<nbin; ibin++)
+      if (phase->get_hit(ibin) != 0)
+      {
+	sum += into[ibin];
+	count ++;
+      }
+
+    // set the unhit bins to the mean
+    double mean = sum / count;
+    for (unsigned ibin = 0; ibin<nbin; ibin++)
+      if (phase->get_hit(ibin) == 0)
+	into[ibin] = mean;
+  }
+
 }
 catch (Error& error) {
   throw error += "dsp::Archiver::set Pulsar::Profile";
