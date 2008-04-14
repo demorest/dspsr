@@ -7,12 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/dsp.h,v $
-   $Revision: 1.5 $
-   $Date: 2007/05/30 07:35:41 $
+   $Revision: 1.6 $
+   $Date: 2008/04/14 21:23:59 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_h
 #define __baseband_dsp_h
+
+#include "Warning.h"
 
 /*! \mainpage 
  
@@ -81,6 +83,9 @@ namespace dsp {
 
   //! Set the verbosity level of various base classes
   void set_verbosity (unsigned level);
+
+  //! Warning messages filter
+  extern Warning warn;
 
 }
 

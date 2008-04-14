@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp.h"
 
 bool dsp::psrdisp_compatible = false;
@@ -16,3 +17,5 @@ bool dsp::psrdisp_compatible = false;
 
 */
 const float dsp::version = 2.0;
+
+Warning dsp::warn;
