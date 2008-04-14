@@ -515,6 +515,10 @@ try
 	count ++;
       }
 
+    // avoid division by zero
+    if (count == 0)
+      count = 1;
+
     // set the unhit bins to the mean
     double mean = sum / count;
     for (unsigned ibin = 0; ibin<nbin; ibin++)
