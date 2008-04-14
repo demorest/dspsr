@@ -15,6 +15,7 @@ Callback<TransformationBase*> TransformationBase::initialization;
 static int setup_initialization ()
 {
   TransformationBase::initialization.connect (SetBufferingPolicy::set);
+  return 0;
 }
 
 static int setup = setup_initialization ();
