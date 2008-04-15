@@ -20,7 +20,8 @@ bool dsp::APSREightBit::matches (const Observation* observation)
 dsp::APSREightBit::APSREightBit ()
   : EightBitUnpacker ("APSREightBit")
 {
-  table = new BitTable (8, BitTable::TwosComplement);
+  bool reverse_bits = true;
+  table = new BitTable (8, BitTable::TwosComplement, reverse_bits);
 }
 
 
