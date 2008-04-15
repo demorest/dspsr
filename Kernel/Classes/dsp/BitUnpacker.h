@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BitUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/04/15 08:11:41 $
+   $Revision: 1.3 $
+   $Date: 2008/04/15 20:14:32 $
    $Author: straten $ */
 
 #ifndef __BitUnpacker_h
@@ -37,7 +37,13 @@ namespace dsp {
 
     //! Get the digitisation convention
     const BitTable* get_table () const;
-			     
+
+    //! Unpack a single digitizer output
+    virtual void unpack (uint64 ndat,
+                         const unsigned char* from, const unsigned nskip,
+                         float* into, const unsigned fskip,
+                         unsigned long* hist) = 0;
+
   protected:
 
     //! The four bit table generator  
@@ -46,12 +52,9 @@ namespace dsp {
     //! Unpack all channels, polarizations, real/imag, etc.
     virtual void unpack ();
 
-    //! Unpack a single digitizer output
-    virtual void unpack (uint64 ndat,
-                         const unsigned char* from, const unsigned nskip,
-			 float* into, const unsigned fskip,
-                         unsigned long* hist) = 0;
-
   };
+
 }
+
 #endif
+
