@@ -24,6 +24,9 @@ namespace dsp {
     //! Return true if APSREightBit can convert the Observation
     virtual bool matches (const Observation* observation);
 
+    void unpack ();
+    unsigned get_ndim_per_digitizer () const;
+
   };
   
 }
