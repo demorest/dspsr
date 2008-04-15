@@ -31,10 +31,11 @@ unsigned build_mask (unsigned nbit)
   return mask;
 }
 
-dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _build)
+dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _reverse)
   :
   type( _type ),
   nbit( _nbit ),
+  reverse_bits( _reverse ),
   values_per_byte( bits_per_byte / nbit ),
   unique_values( 1 << nbit ),
   nbit_mask( build_mask(nbit) )
@@ -46,9 +47,6 @@ dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _build)
 #endif
 
   table = 0;
-
-  if (_build)
-    build ();
 }
 
 dsp::BitTable::~BitTable ()
@@ -58,6 +56,9 @@ dsp::BitTable::~BitTable ()
 
 const float* dsp::BitTable::get_values (unsigned byte)
 {
+  if (!table)
+    build ();
+
   return table + values_per_byte * byte; 
 }
 
@@ -67,6 +68,18 @@ void dsp::BitTable::build ()
     table = new float [ unique_bytes * values_per_byte ];
 
   generate (table);
+}
+
+//! Reverses the order of bits
+template<typename T>
+T reverse (T value, unsigned N)
+{
+  T one = 1;
+  T result = 0;
+  for (unsigned bit=0; bit < N; bit++)
+    if ((value >> bit) & one)
+      result |= one << (N-bit-1);
+  return result;
 }
 
 /*!
@@ -82,6 +95,13 @@ void dsp::BitTable::generate (float* table) const
 
   for (unsigned byte=0; byte<unique_bytes; byte++)
   {
+    if (reverse_bits)
+    {
+      cerr << byte << " -> ";
+      byte = reverse (byte, 8);
+      cerr << byte << endl;
+    }
+
     for (unsigned val=0; val<values_per_byte; val++)
     {
       unsigned sample = extract (byte, val);
@@ -98,7 +118,8 @@ void dsp::BitTable::generate (float* table) const
   most significant bit to least significant bit
 
   \param byte the byte pattern containing unique_values values
-  \param i the index of the value to extract from the byte */
+  \param i the index of the value to extract from the byte
+*/
 unsigned dsp::BitTable::extract (unsigned byte, unsigned i) const
 {
   unsigned shift = bits_per_byte - nbit * (i+1);
