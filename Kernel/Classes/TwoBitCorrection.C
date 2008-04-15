@@ -531,8 +531,6 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   const unsigned char* input_data_ptr = input_data;
 
-  unsigned jump = 0;
-
   const unsigned n_lo_max = get_nsample() - 1;
 
   for (unsigned long wt=0; wt<n_weights; wt++)
@@ -558,10 +556,6 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 
       if (input_data_ptr == packet_ptr)
       {
-#ifdef _DEBUG
-        jump++;
-        cerr << "packet jump " << jump << endl;
-#endif
         input_data_ptr += dig_bytes;
         packet_ptr += byte_resolution;
       }
@@ -605,9 +599,6 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 #ifdef APSR_DEV
         if (input_data_ptr == packet_ptr)
         {
-#ifdef _DEBUG
-        cerr << "packet jump 2.bad" << endl;
-#endif
           input_data_ptr += dig_bytes;
           packet_ptr += byte_resolution;
         }
@@ -644,9 +635,6 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 #ifdef APSR_DEV
         if (input_data_ptr == packet_ptr)
         {
-#ifdef _DEBUG
-        cerr << "packet jump 2" << endl;
-#endif
           input_data_ptr += dig_bytes;
           packet_ptr += byte_resolution;
         }
