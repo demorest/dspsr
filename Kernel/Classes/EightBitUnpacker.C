@@ -10,6 +10,8 @@
 
 #include "Error.h"
 
+// #define _DEBUG 1
+
 using namespace std;
 
 //! Null constructor
@@ -24,9 +26,9 @@ void dsp::EightBitUnpacker::unpack (uint64 ndat,
 				    const unsigned char* from,
 				    const unsigned nskip,
 				    float* into, 
+                                    const unsigned fskip,
 				    unsigned long* hist)
 {
-  const unsigned ndim = input->get_ndim();
   const float* lookup = table->get_values ();
 
   if (verbose)
@@ -38,11 +40,11 @@ void dsp::EightBitUnpacker::unpack (uint64 ndat,
     *into = lookup[ *from ];
 
 #ifdef _DEBUG
-    cerr << int(*from) << "=" << *into << endl;
+    cerr << idat << " " << int(*from) << "=" << *into << endl;
 #endif
 
     from += nskip;
-    into += ndim;
+    into += fskip;
   }
 }
 

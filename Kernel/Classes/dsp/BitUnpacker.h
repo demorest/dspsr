@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BitUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/02/21 04:56:06 $
+   $Revision: 1.2 $
+   $Date: 2008/04/15 08:11:41 $
    $Author: straten $ */
 
 #ifndef __BitUnpacker_h
@@ -47,9 +47,10 @@ namespace dsp {
     virtual void unpack ();
 
     //! Unpack a single digitizer output
-    virtual void unpack (uint64 ndat, const unsigned char* from,
-			 const unsigned nskip,
-			 float* into, unsigned long* hist) = 0;
+    virtual void unpack (uint64 ndat,
+                         const unsigned char* from, const unsigned nskip,
+			 float* into, const unsigned fskip,
+                         unsigned long* hist) = 0;
 
   };
 }
