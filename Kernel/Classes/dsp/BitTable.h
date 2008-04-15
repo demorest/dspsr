@@ -32,7 +32,7 @@ namespace dsp {
     };
 
     //! Constructor
-    BitTable (unsigned nbit, Type type, bool build=true);
+    BitTable (unsigned nbit, Type type, bool reverse_bits = false);
     
     //! Destructor
     virtual ~BitTable ();
@@ -68,6 +68,9 @@ namespace dsp {
 
     //! Number of bits
     const unsigned nbit;
+
+    //! Reverse the order of the bits
+    const bool reverse_bits;
 
     //! Number of N-bit values per byte
     const unsigned values_per_byte;
