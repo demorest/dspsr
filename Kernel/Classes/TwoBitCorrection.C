@@ -171,6 +171,10 @@ void dsp::TwoBitCorrection::set_limits ()
   float nlo_mean = fsample * ja98.get_mean_Phi ();
   float nlo_variance = fsample * ja98.get_var_Phi ();
 
+  if (nlo_mean == fsample)
+    throw Error (InvalidState, "dsp::TwoBitCorrection::set_limits",
+                 "sampling threshold is too high");
+
   // the root mean square deviation
   float nlo_sigma = sqrt( nlo_variance );
 
@@ -208,8 +212,9 @@ void dsp::TwoBitCorrection::set_limits ()
   else 
     n_min = unsigned (nlo_mean - (cutoff_sigma * nlo_sigma));
   
-  if (verbose) cerr << "dsp::TwoBitCorrection::set_limits nmin:"
-		    << n_min << " and nmax:" << n_max << endl;
+  if (verbose)
+    cerr << "dsp::TwoBitCorrection::set_limits nmin:"
+         << n_min << " and nmax:" << n_max << endl;
 }
 
 
@@ -528,6 +533,8 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   unsigned jump = 0;
 
+  const unsigned n_lo_max = get_nsample() - 1;
+
   for (unsigned long wt=0; wt<n_weights; wt++)
   {
     if (bytes > bytes_left)
@@ -566,16 +573,19 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
     if (data_are_complex)
       n_lo >>= 1;
 
+    if (n_lo > n_lo_max)
+      n_lo = n_lo_max;
+
     if (hist)
       hist [n_lo] ++;
 
     // test if the number of low voltage states is outside the
     // acceptable limit or if this section of data has been previously
     // flagged bad (for example, due to bad data in the other polarization)
-    if ( n_lo<n_min || n_lo>n_max || (weights && weights[wt] == 0) ) {
-
+    if ( n_lo<n_min || n_lo>n_max || (weights && weights[wt] == 0) )
+    {
 #ifdef _DEBUG
-      cerr << "w[" << wt << "]=0 ";
+       cerr << "w[" << wt << "]=0 ";
 #endif
       
       if (weights)
