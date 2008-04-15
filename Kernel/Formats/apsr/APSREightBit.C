@@ -6,14 +6,10 @@
  ***************************************************************************/
 
 #include "dsp/APSREightBit.h"
+#include "apsr_unpack.h"
+
 #include "dsp/Observation.h"
-#include "dsp/Input.h"
-
 #include "dsp/BitTable.h"
-
-#include <assert.h>
-#include <iostream>
-using namespace std;
 
 bool dsp::APSREightBit::matches (const Observation* observation)
 {
@@ -41,50 +37,6 @@ unsigned dsp::APSREightBit::get_ndim_per_digitizer () const
 
 void dsp::APSREightBit::unpack ()
 {
-  const uint64   ndat  = input->get_ndat();
-
-  const unsigned nchan = input->get_nchan();
-  const unsigned npol  = input->get_npol();
-  const unsigned ndim  = input->get_ndim();
-
-  const unsigned nskip = 1;
-  const unsigned fskip = 1;
-
-  const unsigned sample_resolution = input->get_loader()->get_resolution();
-
-  // unpack real and imaginary components at the same time
-  const unsigned byte_resolution = sample_resolution * ndim;
-
-  const unsigned npack = ndat / sample_resolution;
-
-  unsigned offset = 0;
-
-  // cerr << "npack=" << npack << " res=" << sample_resolution << " nfloat=" << ndat*ndim << endl;
-
-  for (unsigned ichan=0; ichan<nchan; ichan++)
-  {
-    for (unsigned ipol=0; ipol<npol; ipol++)
-    {
-      float* into = output->get_datptr (ichan, ipol);
-      float* backup = into;
-
-      const unsigned char* from = input->get_rawptr() + ipol * byte_resolution;
-      const unsigned char* also = from;
-
-      for (unsigned ipack=0; ipack<npack; ipack++)
-      {
-
-        // cerr << "ipack=" << ipack << " offset=" << offset << " end=" << into+byte_resolution - backup << endl;
-
-        unsigned long* hist = get_histogram (offset);
-
-        EightBitUnpacker::unpack (byte_resolution, from, nskip, into, fskip, hist);
-        from += byte_resolution * 2;
-        into += byte_resolution;
-      }
-
-      offset ++;
-    }
-  }
+  apsr_unpack (input, output, this);
 }
 
