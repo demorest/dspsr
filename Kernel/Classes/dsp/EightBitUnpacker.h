@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/EightBitUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/02/21 04:55:58 $
+   $Revision: 1.4 $
+   $Date: 2008/04/15 08:11:41 $
    $Author: straten $ */
 
 #ifndef __EightBitUnpacker_h
@@ -30,7 +30,7 @@ namespace dsp {
   protected:
 
     void unpack (uint64 ndat, const unsigned char* from, const unsigned nskip,
-		 float* into, unsigned long* hist);
+		 float* into, const unsigned fskip, unsigned long* hist);
 
   };
 }

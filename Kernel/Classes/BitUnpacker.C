@@ -45,6 +45,7 @@ void dsp::BitUnpacker::unpack ()
   const unsigned ndim  = input->get_ndim();
 
   const unsigned nskip = npol * nchan * ndim;
+  const unsigned fskip = ndim;
 
   unsigned offset = 0;
 
@@ -62,7 +63,7 @@ void dsp::BitUnpacker::unpack ()
         cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
 #endif
  
-	unpack (ndat, from, nskip, into, hist);
+	unpack (ndat, from, nskip, into, fskip, hist);
 	offset ++;
       }
     }

@@ -19,13 +19,11 @@ dsp::FourBitUnpacker::FourBitUnpacker (const char* _name)
 }
 
 void dsp::FourBitUnpacker::unpack (uint64 ndat, 
-				   const unsigned char* from,
-				   const unsigned nskip,
-				   float* into, 
+				   const unsigned char* from, const unsigned nskip,
+				   float* into, const unsigned fskip,
 				   unsigned long* hist)
 {
   const uint64 ndat2  = ndat/2;
-  const unsigned ndim = input->get_ndim();
   const float* lookup = table->get_values ();
 
   if (ndat % 2)
@@ -35,11 +33,11 @@ void dsp::FourBitUnpacker::unpack (uint64 ndat,
   for (uint64 idat = 0; idat < ndat2; idat++)
   {
     into[0]    = lookup[ *from * 2 ];
-    into[ndim] = lookup[ *from * 2 + 1 ];
+    into[fskip] = lookup[ *from * 2 + 1 ];
     
     hist[ *from ] ++;
 
     from += nskip;
-    into += ndim * 2;
+    into += fskip * 2;
   }
 }
