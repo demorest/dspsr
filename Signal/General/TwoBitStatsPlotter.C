@@ -33,14 +33,14 @@ dsp::TwoBitStatsPlotter::~TwoBitStatsPlotter ()
 
 string dsp::TwoBitStatsPlotter::get_xlabel () const
 {
-    char label[64];
-    sprintf (label, "Low state count (in %d pts)", twobit->get_nsample());
-    return label;
+  char label[64];
+  snprintf (label, 64, "Low state count (in %d pts)", twobit->get_nsample());
+  return label;
 }
 
 string dsp::TwoBitStatsPlotter::get_ylabel () const
 {
-    return "Number of weights";
+  return "Number of weights";
 }
 
 
@@ -78,7 +78,8 @@ float gammln(float xx)
 }
 
 // returns ln(n!)
-float factln(int n) {
+float factln(int n)
+{
   return gammln (n+1.0);
 }
 
@@ -109,8 +110,8 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
   double fraction_of_samples = 0.0;
   double fraction_ones = twobit->get_fraction_low();
 
-  for (int wt=0; wt<L; wt++) {
-
+  for (int wt=0; wt<L; wt++)
+  {
     fraction_of_samples = double(wt) / double (L);
 
     value = exp(flnppwt - factln(wt) - factln(L-wt) +
@@ -121,7 +122,6 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
       theory_max = value;
 
     theory[wt] = value;
-
   }
 
   theory_calculated = true;
@@ -158,7 +158,8 @@ void dsp::TwoBitStatsPlotter::set_theory_colour ()
   theory_colour = 7; 
 
   for (int ic=0; ic<(int)colours.size(); ic++)
-    if (colours[ic] == theory_colour) {
+    if (colours[ic] == theory_colour)
+    {
       theory_colour --;
       ic = -1;
     }
@@ -167,8 +168,8 @@ void dsp::TwoBitStatsPlotter::set_theory_colour ()
 
 void dsp::TwoBitStatsPlotter::check_colours ()
 {
-    BitStatsPlotter::check_colours ();
-    set_theory_colour();
+  BitStatsPlotter::check_colours ();
+  set_theory_colour();
 }
 
 
@@ -193,11 +194,13 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   unsigned n_min = twobit->get_nmin ();
   unsigned n_max = twobit->get_nmax ();
 
-  if (plot_only_range)  {
+  if (plot_only_range)
+  {
     hp_min = n_min - 10;
     hp_max = n_max + 10;
   }
-  else  {
+  else
+  {
     // definitely keep the theory in sight
     hp_min=0; hp_max=nsample-1;
     for (; hp_min<nsample; hp_min++)
@@ -232,7 +235,8 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   cpgpt (plot_theory, -1);
 
   // draw the cut-off sigma lines
-  if (show_cutoff_sigma) {
+  if (show_cutoff_sigma)
+  {
     cpgmove (n_min, 0.0);
     cpgdraw (n_min, theory_max * nweights);
     cpgmove (n_max, 0.0);
