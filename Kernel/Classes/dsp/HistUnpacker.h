@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.8 $
-   $Date: 2008/04/09 05:23:18 $
+   $Revision: 1.9 $
+   $Date: 2008/04/15 20:14:36 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -59,6 +59,9 @@ namespace dsp {
     template <typename T>
     void get_histogram (std::vector<T>& data, unsigned idig) const;
 
+    //! Get the pointer to the histogram array
+    unsigned long* get_histogram (unsigned idig);
+
     //! Get the centroid of the histogram for the given digitizer
     double get_histogram_mean (unsigned idig) const;
 
@@ -69,9 +72,6 @@ namespace dsp {
     void zero_histogram ();
 
   protected:
-
-    //! Get the pointer to the histogram array
-    unsigned long* get_histogram (unsigned idig);
 
     //! Compute the default number of digitizers
     virtual void set_default_ndig ();
