@@ -93,13 +93,15 @@ void dsp::BitTable::generate (float* table) const
 
   float* tabval = table;
 
-  for (unsigned byte=0; byte<unique_bytes; byte++)
+  for (unsigned b=0; b<unique_bytes; b++)
   {
+    unsigned byte = b;
+
     if (reverse_bits)
     {
-      cerr << byte << " -> ";
+      // cerr << byte << " -> ";
       byte = reverse (byte, 8);
-      cerr << byte << endl;
+      // cerr << byte << endl;
     }
 
     for (unsigned val=0; val<values_per_byte; val++)
