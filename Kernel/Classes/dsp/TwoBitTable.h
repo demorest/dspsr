@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.12 $
-   $Date: 2008/02/20 21:44:11 $
+   $Revision: 1.13 $
+   $Date: 2008/04/15 01:07:24 $
    $Author: straten $ */
 
 
@@ -26,7 +26,7 @@ namespace dsp {
   public:
 
     //! Constructor
-    TwoBitTable (Type type);
+    TwoBitTable (Type type, bool reverse_bits = false);
     
     //! Set the value of the low voltage state
     void set_lo_val (float lo_val);
@@ -39,12 +39,6 @@ namespace dsp {
 
     //! Return the value of the high voltage state
     float get_hi_val () const { return hi_val; }
-
-    //! Set the flip value to be true or false
-    void set_flip (bool flipped);
-
-    //! Get the flip value
-    bool get_flip () const { return flip; }
 
     //! Build a two-bit table with the current attributes
     void rebuild ();
@@ -59,9 +53,6 @@ namespace dsp {
 
     //! Value of voltage in high state
     float hi_val;
-
-    //! Flip the two data bits - that is SignMag becomes MagSign
-    bool flip;
 
   };
 

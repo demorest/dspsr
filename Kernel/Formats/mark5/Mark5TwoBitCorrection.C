@@ -29,8 +29,8 @@ bool dsp::Mark5TwoBitCorrection::can_do (const Observation* observation)
 dsp::Mark5TwoBitCorrection::Mark5TwoBitCorrection ()
   : SubByteTwoBitCorrection ("Mark5TwoBitCorrection")
 {
-  table = new TwoBitTable (TwoBitTable::OffsetBinary);
-  table->set_flip(true);
+  bool reverse_bits = true;
+  table = new TwoBitTable (TwoBitTable::OffsetBinary, reverse_bits);
   set_ndig (8);
   file = 0;
 }
