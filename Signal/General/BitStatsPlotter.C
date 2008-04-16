@@ -47,10 +47,15 @@ void dsp::BitStatsPlotter::set_data (const HistUnpacker* stats)
 // helper function
 void dsp::BitStatsPlotter::cpgpt (std::vector<float>& vals, int type)
 {
-  for (unsigned i=0; i<vals.size(); i++) {
+  for (unsigned i=0; i<vals.size(); i++)
+  {
     float ind = i;
     float val = vals[i];
-    ::cpgpt (1, &ind, &val, type);
+    if (val)
+    {
+      ::cpgpt (1, &ind, &val, type);
+      // fprintf (stderr, "hist %d %x %f\n", i, i, val);
+    }
   }
 }
 
