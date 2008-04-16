@@ -33,7 +33,7 @@ QTMOC := moc
 ##########################################################################
 -include ${LOCAL_ROOT}/config/Makefile.local
 
-LDFLAGS += -L${LIBDIR}
+LDFLAGS := -L${LIBDIR} $(LDFLAGS)
 MAKEDEPEND := $(CCC) -MM >
 
 INSTALL_BINDIR := ${prefix}/bin
