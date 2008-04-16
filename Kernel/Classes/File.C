@@ -4,6 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/File.h"
 #include "dsp/PseudoFile.h"
 
@@ -20,6 +25,7 @@
 #include <errno.h>
 
 using namespace std;
+using std::cerr;
 
 //! Constructor
 dsp::File::File (const char* name) : Seekable (name)
@@ -54,21 +60,19 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 { 
   if (verbose)
     std::cerr << "dsp::File::create filename='" << filename 
-	      << "' bs_index=" << _bs_index << std::endl;
+	      << "' bs_index=" << _bs_index << endl;
 
   // check if file can be opened for reading
-  FILE* fptr = fopen (filename, "r");
-  if (!fptr) throw Error (FailedSys, "dsp::File::create",
+  int fd = ::open (filename, O_RDONLY);
+  if (fd < 0) throw Error (FailedSys, "dsp::File::create",
 			  "cannot open '%s'", filename);
-  fclose (fptr);
+  ::close (fd);
 
-  try {
+  if (verbose) std::cerr << "dsp::File::create with " << registry.size() 
+			 << " registered sub-classes" << std::endl;
 
-    if (verbose) std::cerr << "dsp::File::create with " << registry.size() 
-			   << " registered sub-classes" << std::endl;
-
-    for (unsigned ichild=0; ichild < registry.size(); ichild++) {
-
+  for (unsigned ichild=0; ichild < registry.size(); ichild++) try
+  {
       if (verbose)
 	std::cerr << "dsp::File::create testing " 
 		  << registry[ichild]->get_name() << endl;;
@@ -85,10 +89,12 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 
       }
 
-    }
-    
-  } catch (Error& error) {
-    throw error += "dsp::File::create";
+  }
+  catch (Error& error)
+  {
+    if (verbose)
+      std::cerr << "dsp::File::create failed while testing "
+                << registry[ichild]->get_name() << endl;
   }
   
   string msg = filename;
