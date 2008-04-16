@@ -14,8 +14,7 @@
 bool dsp::APSREightBit::matches (const Observation* observation)
 {
   return observation->get_machine() == "APSR"
-    && observation->get_nbit() == 8
-    && observation->get_state() == Signal::Analytic;
+    && observation->get_nbit() == 8;
 }
 
 //! Null constructor
@@ -32,11 +31,14 @@ dsp::APSREightBit::APSREightBit ()
 */
 unsigned dsp::APSREightBit::get_ndim_per_digitizer () const
 {
-  return 2;
+  return input->get_ndim();
 }
 
 void dsp::APSREightBit::unpack ()
 {
-  apsr_unpack (input, output, this);
+  if (input->get_npol() == 1)     // Jayanta's test data has one poln
+    BitUnpacker::unpack ();
+  else
+    apsr_unpack (input, output, this);
 }
 
