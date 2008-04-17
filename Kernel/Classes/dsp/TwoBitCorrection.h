@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.37 $
-   $Date: 2008/04/09 05:23:18 $
+   $Revision: 1.38 $
+   $Date: 2008/04/17 07:12:51 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -23,7 +23,6 @@
 namespace dsp {
 
   class TwoBitTable;
-  class WeightedTimeSeries;
 
   //! Converts BitSeries data from two-bit digitized to floating-point values
   /*! The conversion method, poln_unpack, implements the dynamic output
@@ -85,9 +84,6 @@ namespace dsp {
     //! Get the digitization convention
     const TwoBitTable* get_table () const;
 
-    //! Overload Transformation::set_output to set weighted_output
-    void set_output (TimeSeries* output);
-
     //
     //
     //
@@ -119,9 +115,6 @@ namespace dsp {
     //! The theory behind the implementation
     JenetAnderson98 ja98;
 
-    //! Perform the bit conversion transformation on the input TimeSeries
-    virtual void resize_output ();
-
     //! Build the two-bit correction look-up table and allocate histograms
     virtual void build ();
 
@@ -138,9 +131,6 @@ namespace dsp {
 
     //! Two-bit conversion table generator
     Reference::To<TwoBitTable> table;
-
-    //! Set when Transformation::output is a WeightedTimeSeries
-    Reference::To<WeightedTimeSeries> weighted_output;
 
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
