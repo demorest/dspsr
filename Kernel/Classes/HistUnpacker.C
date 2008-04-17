@@ -4,9 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-// #define _DEBUG 1
 
 #include "dsp/HistUnpacker.h"
+#include "dsp/WeightedTimeSeries.h"
 
 #include <iostream>
 
@@ -18,12 +18,40 @@ bool dsp::HistUnpacker::keep_histogram = true;
 dsp::HistUnpacker::HistUnpacker (const char* _name) : Unpacker (_name)
 {
   nsample = 0;
+  nstate = 0;
   ndig = 0;
 }
 
 dsp::HistUnpacker::~HistUnpacker ()
 {
+  // cerr << "dsp::HistUnpacker::~HistUnpacker" << endl;
 }
+
+void dsp::HistUnpacker::set_output (TimeSeries* _output)
+{
+  if (verbose)
+    cerr << "dsp::HistUnpacker::set_output (" << _output << ")" << endl;
+
+  Unpacker::set_output (_output);
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (_output);
+}
+
+//! Initialize and resize the output before calling unpack
+void dsp::HistUnpacker::resize_output ()
+{
+  if (weighted_output)
+  {
+    weighted_output -> set_ndat_per_weight (get_nsample());
+    weighted_output -> set_nchan_weight (1);
+    weighted_output -> set_npol_weight (input->get_npol());
+  }
+
+  output->resize ( input->get_ndat() );
+
+  if (weighted_output)
+    weighted_output -> neutral_weights ();
+}
+
 
 unsigned dsp::HistUnpacker::get_ndig () const
 {
@@ -39,6 +67,8 @@ void dsp::HistUnpacker::set_default_ndig ()
 {
   set_ndig( (input->get_nchan() * input->get_npol() * input->get_ndim())
             / get_ndim_per_digitizer() );
+  if (verbose)
+    cerr << "dsp::HistUnpacker::set_default_ndig ndig=" << ndig << endl;
 }
 
 /*! By default, there are two digitizers, one for each polarization */
