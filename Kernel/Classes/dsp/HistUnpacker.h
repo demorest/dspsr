@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.9 $
-   $Date: 2008/04/15 20:14:36 $
+   $Revision: 1.10 $
+   $Date: 2008/04/17 07:12:43 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -18,6 +18,8 @@
 #include <vector>
 
 namespace dsp {
+
+  class WeightedTimeSeries;
 
   //! Base class of all unpackers that keep a histogram
   class HistUnpacker: public Unpacker {
@@ -32,6 +34,9 @@ namespace dsp {
 
     //! Virtual destructor
     virtual ~HistUnpacker ();
+
+    //! Overload Transformation::set_output to set weighted_output
+    void set_output (TimeSeries* output);
 
     //! Set the number of digitizers (histograms)
     virtual void set_ndig (unsigned ndig);
@@ -76,10 +81,19 @@ namespace dsp {
     //! Compute the default number of digitizers
     virtual void set_default_ndig ();
 
+    //! Set when Transformation::output is a WeightedTimeSeries
+    Reference::To<WeightedTimeSeries> weighted_output;
+
+    //! Initialize the WeightedTimeSeries dimensions
+    void resize_output ();
+
   private:
 
-    //! Number of samples in the histogram
+    //! Number of samples per weight
     unsigned nsample;
+
+    //! Number of states in the histogram
+    unsigned nstate;
 
     //! Number of histograms
     unsigned ndig;
