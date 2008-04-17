@@ -11,6 +11,8 @@
 #include "dsp/Observation.h"
 #include "dsp/TwoBitTable.h"
 
+using namespace std;
+
 bool dsp::APSRTwoBitCorrection::matches (const Observation* observation)
 {
   return observation->get_machine() == "APSR"
@@ -45,5 +47,12 @@ unsigned dsp::APSRTwoBitCorrection::get_input_incr () const
 unsigned dsp::APSRTwoBitCorrection::get_input_offset (unsigned idig) const
 {
   unsigned resolution = input->get_loader()->get_resolution();
-  return idig * input->get_nbytes(resolution) / 2;
+  unsigned offset = idig * input->get_nbytes(resolution) / 2;
+
+  if (verbose)
+    cerr << "dsp::APSRTwoBitCorrection::get_input_offset resolution=" << resolution 
+         << " idig=" << idig << " offset=" << offset << endl;
+
+  return offset;
 }
+

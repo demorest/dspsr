@@ -80,9 +80,13 @@ void dsp::InputBuffering::pre_transformation ()
   if (!requested_reserve || !buffer || !buffer->get_ndat())
     return;
 
+  const TimeSeries* container = target->get_input();
+
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::pre_transformation prepend "
-	 << buffer->get_ndat() << " samples" << endl;
+	 << buffer->get_ndat() << " samples \n"
+         << "dsp::InputBuffering::pre_transformation target input sample="
+         << container->get_input_sample() << endl;
 
   const_cast<TimeSeries*>( target->get_input() )->prepend (buffer);
 }
