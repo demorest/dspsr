@@ -15,7 +15,7 @@ using namespace std;
 dsp::BitSeries::BitSeries ()
 {
   data = 0;
-  size = 0;
+  data_size = 0;
   input_sample = -1;
   input = 0;
 
@@ -27,7 +27,7 @@ dsp::BitSeries::BitSeries ()
 dsp::BitSeries::~BitSeries ()
 {
   if (data) delete [] data; data = 0;
-  size = 0;
+  data_size = 0;
 }
 
 //! Allocate the space required to store nsamples time samples.
@@ -45,14 +45,14 @@ void dsp::BitSeries::resize (int64 nsamples)
     throw Error (InvalidParam, "dsp::BitSeries::resize",
 		 "invalid size="I64, require);
 
-  if (!require || require > size) {
+  if (!require || require > data_size) {
 
     if (verbose)
-      cerr << "dsp::BitSeries::resize current size = " << size << " bytes"
+      cerr << "dsp::BitSeries::resize current size = " << data_size << " bytes"
           " -- required size = " << require << " bytes" << endl;
  
     if (data) delete [] data; data = 0;
-    size = 0;
+    data_size = 0;
     //! data has been deleted. input sample is no longer valid
     input_sample = -1;
     input = 0;
@@ -69,9 +69,9 @@ void dsp::BitSeries::resize (int64 nsamples)
   if (!require)
     return;
 
-  if (size == 0) {
+  if (data_size == 0) {
     data = new unsigned char [require];
-    size = require;
+    data_size = require;
   }
 
 }
@@ -117,9 +117,9 @@ int64 dsp::BitSeries::get_input_sample (Input* test_input) const
 void dsp::BitSeries::append (const dsp::BitSeries* little)
 {
   if( !get_ndat() ){
-    if( size < little->size )
+    if( data_size < little->data_size )
       throw Error(InvalidRange,"dsp::BitSeries::append()",
-		  "BitSeries does not have required capacity to be appended to (size=" + tostring(size) + ")");
+		  "BitSeries does not have required capacity to be appended to (size=" + tostring(data_size) + ")");
 
     Observation::operator=(*little);
     set_ndat(0);
@@ -130,7 +130,7 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
       throw Error(InvalidState,"dsp::BitSeries::append()",
 		  "BitSerieses not combinable");
     
-    if( get_nsamples(size) < get_ndat()+little->get_ndat() )
+    if( get_nsamples(data_size) < get_ndat()+little->get_ndat() )
       throw Error(InvalidRange,"dsp::BitSeries::append()",
 		  "BitSeries does not have required capacity to be appended to");
   }    
@@ -166,7 +166,7 @@ void dsp::BitSeries::attach(unsigned char* _data){
 }
 
 void dsp::BitSeries::share(unsigned char*& _buffer,uint64& _size) const {
-  _size = size;
+  _size = data_size;
   _buffer = data;
 }
 
@@ -176,10 +176,10 @@ unsigned char* dsp::BitSeries::release(uint64& _size){
     return 0;
 
   unsigned char* ret = data;
-  _size = size;
+  _size = data_size;
 
   data = 0;
-  size = 0;
+  data_size = 0;
   input_sample = -1;
   input = 0;
   set_ndat( 0 );
