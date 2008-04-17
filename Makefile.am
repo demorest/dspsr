@@ -8,6 +8,9 @@ libs:
 
 all: $(config)
 
+depend:
+	for dir in $(SUBDIRS); do cd $$dir; $(MAKE) depend; cd -; done
+
 config = $(srcdir)/config/Makefile.local
 
 #
