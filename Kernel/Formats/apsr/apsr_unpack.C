@@ -49,9 +49,22 @@ void apsr_unpack (const dsp::BitSeries* input, dsp::TimeSeries* output,
              << " end=" << into+nfloat - backup << endl;
         */
 
-        unsigned long* hist = unpacker->get_histogram (offset);
+        bool all_zero = true;
+        for (unsigned ibyte = 0; ibyte < nbyte; ibyte++)
+          if (from[ibyte] != 0)
+          {
+            all_zero = false;
+            break;
+          }
 
-        unpacker->unpack (nfloat, from, nskip, into, fskip, hist);
+        if (all_zero)
+          for (unsigned ifloat = 0; ifloat < nfloat; ifloat++)
+            into[ifloat] = 0.0;
+        else
+        {
+          unsigned long* hist = unpacker->get_histogram (offset);
+          unpacker->unpack (nfloat, from, nskip, into, fskip, hist);
+        }
 
         from += nbyte * npol;
         into += nfloat;
