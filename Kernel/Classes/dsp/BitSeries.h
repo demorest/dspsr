@@ -69,6 +69,8 @@ namespace dsp {
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
     virtual const unsigned char* get_datptr (uint64 sample) const;
 
+    uint64 get_size () const { return data_size; }
+
     //! Append little onto the end of this
     virtual void append (const BitSeries* little);
 
@@ -100,7 +102,7 @@ namespace dsp {
     //! The size (in bytes) of the allocated data buffer
     /*! Note that more space may have been allocated than indicated by
       the ndat attribute */
-    int64 size;
+    int64 data_size;
 
     //! Sample offset from start of source; attribute used by Input class
     int64 input_sample;
