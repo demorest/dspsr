@@ -9,8 +9,8 @@ using namespace std;
 
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
-#include "dsp/WeightedTimeSeries.h"
 #include "dsp/Input.h"
+#include "dsp/WeightedTimeSeries.h"
 
 #include "Error.h"
 #include "ierf.h"
@@ -131,35 +131,6 @@ const dsp::TwoBitTable* dsp::TwoBitCorrection::get_table () const
 { 
   return table;
 }
-
-void dsp::TwoBitCorrection::set_output (TimeSeries* _output)
-{
-  if (verbose)
-    cerr << "dsp::TwoBitCorrection::set_output (" << _output << ")" << endl;
-
-  Unpacker::set_output (_output);
-  weighted_output = dynamic_cast<WeightedTimeSeries*> (_output);
-}
-
-//! Initialize and resize the output before calling unpack
-void dsp::TwoBitCorrection::resize_output ()
-{
-  if (weighted_output)
-  {
-    weighted_output -> set_ndat_per_weight (get_nsample());
-    weighted_output -> set_nchan_weight (1);
-    weighted_output -> set_npol_weight (input->get_npol());
-  }
-
-  uint64 ndat = input->get_ndat();
-
-  output->resize (ndat);
-
-  if (weighted_output)
-    weighted_output -> neutral_weights ();
-}
-
-
 
 void dsp::TwoBitCorrection::set_limits ()
 {
@@ -292,15 +263,14 @@ void dsp::TwoBitCorrection::nlo_build ()
 
   float lo_valsq = 1.0;
 
-  for (unsigned byte = 0; byte < BitTable::unique_bytes; byte++) {
-
+  for (unsigned byte = 0; byte < BitTable::unique_bytes; byte++)
+  {
     nlo_lookup[byte] = 0;
     const float* fourvals = table->get_values (byte);
 
     for (unsigned ifv=0; ifv<table->get_values_per_byte(); ifv++)
       if (fourvals[ifv]*fourvals[ifv] == lo_valsq)
 	nlo_lookup[byte] ++;
-
   }
 }
 
@@ -351,7 +321,6 @@ void dsp::TwoBitCorrection::generate (vector<float>& dls, float* spc,
 
   assert (offset == dls.size());
 }
-
 
 void dsp::TwoBitCorrection::unpack ()
 {
@@ -449,20 +418,24 @@ void dsp::TwoBitCorrection::unpack ()
 
 void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 					const unsigned char* input_data, 
-					uint64 ndat,
+					uint64 nfloat,
 					unsigned digitizer,
 					unsigned* weights,
 					unsigned nweights)
 {
   unsigned ndig = get_ndig_per_byte();
 
+  const unsigned char* end_of_buffer = input->get_rawptr() + input->get_size();
+
   if (ndig != 1)
     throw Error (InvalidState, "dsp::TwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be == 1", ndig);
 
+#ifndef _DEBUG
   if (verbose)
+#endif
     cerr << "dsp::TwoBitCorrection::dig_unpack in=" << (void*) input_data
-	 << " out=" << output_data << " ndat=" << ndat << "\n\t"
+	 << " out=" << output_data << " nfloat=" << nfloat << "\n\t"
 	 << " digitizer=" << digitizer << " weights=" << weights 
 	 << " nweights=" << nweights << endl;
 
@@ -481,17 +454,17 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   unsigned complex_nsample = get_nsample() * get_ndim_per_digitizer();
 
-  unsigned long n_weights = (unsigned long) ceil (float(ndat)/complex_nsample);
+  unsigned long n_weights = (unsigned long) ceil (float(nfloat)/complex_nsample);
 
-  assert (n_weights*complex_nsample >= ndat);
+  assert (n_weights*complex_nsample >= nfloat);
 
   if (weights && n_weights > nweights)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::dig_unpack",
 		 "weights array size=%d < nweights=%d", nweights, n_weights);
 
-  uint64 bytes_left = ndat / samples_per_byte;
+  uint64 bytes_left = nfloat / samples_per_byte;
   uint64 bytes_per_weight = complex_nsample / samples_per_byte;
-  uint64 bytes = bytes_per_weight;
+  uint64 bytes_to_unpack = bytes_per_weight;
   unsigned bt;
   unsigned pt;
 
@@ -517,8 +490,8 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
   unsigned dig_bytes = byte_resolution / get_ndig();
 
 #ifdef _DEBUG
-  cerr << "dsp::TwoBitCorrection::dig_unpack dig resolution="
-       << byte_resolution << endl;
+  cerr << "dsp::TwoBitCorrection::dig_unpack nweight=" << n_weights
+       << " ndig=" << get_ndig() << " dig_bytes=" << dig_bytes << endl;
 #endif
 
   const unsigned char* end_of_packet = 0;
@@ -531,26 +504,40 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   const unsigned char* input_data_ptr = input_data;
 
-  const unsigned n_lo_max = get_nsample() - 1;
+  const unsigned n_lo_max = get_nsample();
 
   for (unsigned long wt=0; wt<n_weights; wt++)
   {
-    if (bytes > bytes_left)
+#ifdef _DEBUG
+    cerr << wt << " ";
+#endif
+
+    if (bytes_to_unpack > bytes_left)
     {
       input_data_ptr -= (bytes_per_weight - bytes_left) * input_incr;
-      bytes = bytes_left;
+      // cerr << "off " << (bytes_per_weight - bytes_left) * input_incr << endl;
+      bytes_to_unpack = bytes_left;
     }
 
     // calculate the weight based on the last nsample pts
     unsigned n_lo = 0;
     for (bt=0; bt<bytes_per_weight; bt++)
     {
+#if 0
+      if (input_data_ptr >= end_of_buffer)
+      {
+        cerr << "past end of buffer on wt=" << wt << " nwt=" << n_weights 
+             << " bt=" << bt << " bytes_left=" << bytes_left << " rem=" << bytes_left - bt << endl;
+        exit(-1);
+      }
+#endif
+
       n_lo += nlo_lookup [*input_data_ptr];
       input_data_ptr += input_incr;
 
 #ifdef APSR_DEV
 
-#ifdef _DEBUG
+#ifdef _DEBUG2
 cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_ptr << " incr=" << input_incr << endl;
 #endif
 
@@ -567,18 +554,21 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
     if (data_are_complex)
       n_lo >>= 1;
 
-    if (n_lo > n_lo_max)
-      n_lo = n_lo_max;
-
-    if (hist)
+    if (hist && n_lo < n_lo_max)
       hist [n_lo] ++;
+
+    input_data_ptr = input_data;
+
+#ifdef APSR_DEV
+    packet_ptr = end_of_packet;
+#endif
 
     // test if the number of low voltage states is outside the
     // acceptable limit or if this section of data has been previously
     // flagged bad (for example, due to bad data in the other polarization)
     if ( n_lo<n_min || n_lo>n_max || (weights && weights[wt] == 0) )
     {
-#ifdef _DEBUG
+#ifdef _DEBUG2
        cerr << "w[" << wt << "]=0 ";
 #endif
       
@@ -587,7 +577,7 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
       
       // reduce the risk of other functions accessing un-initialized 
       // segments of the array
-      for (bt=0; bt<bytes; bt++)
+      for (bt=0; bt<bytes_to_unpack; bt++)
       {
         for (pt=0; pt<samples_per_byte; pt++)
         {
@@ -603,22 +593,13 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
           packet_ptr += byte_resolution;
         }
 #endif
-
       }
-      
     }
-    
     else
     {
-      input_data_ptr = input_data;
-
-#ifdef APSR_DEV
-      packet_ptr = end_of_packet;
-#endif
-
       section = &(dls_lookup[0]) + (n_lo-n_min) * lookup_block_size;
       
-      for (bt=0; bt<bytes; bt++)
+      for (bt=0; bt<bytes_to_unpack; bt++)
       {
 	fourval = section + unsigned(*input_data_ptr) * samples_per_byte;
 	for (pt=0; pt<samples_per_byte; pt++)
@@ -646,8 +627,8 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 	weights[wt] = n_lo;
       
     }
-    
-    bytes_left -= bytes;
+
+    bytes_left -= bytes_to_unpack;
     input_data = input_data_ptr;
 
 #ifdef APSR_DEV
@@ -655,6 +636,10 @@ cerr << "data_ptr=" << (void*)input_data_ptr << " pack_ptr=" << (void*)packet_pt
 #endif
 
   }
+
+#ifdef _DEBUG
+  cerr << "DONE!" << endl;
+#endif
   
 }
 
