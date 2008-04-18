@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.21 $
-   $Date: 2008/02/20 09:29:05 $
+   $Revision: 1.22 $
+   $Date: 2008/04/18 04:57:06 $
    $Author: straten $ */
 
 
@@ -36,7 +36,8 @@ namespace dsp {
 
     then register the new class in Unpacker_registry.C.
   */
-  class Unpacker : public Transformation <BitSeries, TimeSeries> {
+  class Unpacker : public Transformation <BitSeries, TimeSeries>
+  {
 
   public:
     
@@ -56,9 +57,6 @@ namespace dsp {
 
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
-
-    //! Get the number of digitizers (histograms)
-    virtual unsigned get_ndig () const = 0;
 
    protected:
 
