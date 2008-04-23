@@ -21,14 +21,20 @@ dsp::TimeDivide::TimeDivide ()
 {
   division_seconds = 0;
   division_turns = 0;
-  phase_bin = 0;
+  reference_phase = 0;
 
+  fractional_pulses = false;
+
+  division = 0;
   is_valid = false;
   in_next = false;
+
   end_reached = false;
   new_division = false;
 
-  fractional_pulses = false;
+  idat_start = 0;
+  ndat = 0;
+  phase_bin = 0;
 }
 
 dsp::TimeDivide::~TimeDivide ()
