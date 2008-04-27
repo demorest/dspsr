@@ -487,7 +487,11 @@ try
       into[ibin] = 0.0;
     }
     else if (!finite(*from))
+    {
       not_finite ++;
+      if (verbose)
+        cerr << "non-finite: hit=" << phase->get_hit(ibin) << endl;
+    }
     else
       into[ibin] = *from / (scale * double( phase->get_hit(ibin) ));
 
