@@ -11,6 +11,8 @@
 #include "dsp/Observation.h"
 #include "dsp/BitTable.h"
 
+using namespace std;
+
 bool dsp::APSREightBit::matches (const Observation* observation)
 {
   return observation->get_machine() == "APSR"
@@ -21,7 +23,7 @@ bool dsp::APSREightBit::matches (const Observation* observation)
 dsp::APSREightBit::APSREightBit ()
   : EightBitUnpacker ("APSREightBit")
 {
-  bool reverse_bits = true;
+  bool reverse_bits = false;
   table = new BitTable (8, BitTable::TwosComplement, reverse_bits);
 }
 

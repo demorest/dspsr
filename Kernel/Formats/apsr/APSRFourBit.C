@@ -22,7 +22,7 @@ bool dsp::APSRFourBit::matches (const Observation* observation)
 dsp::APSRFourBit::APSRFourBit ()
   : FourBitUnpacker ("APSRFourBit")
 {
-  bool reverse_bits = true;
+  bool reverse_bits = false;
   table = new BitTable (4, BitTable::TwosComplement, reverse_bits);
 }
 
