@@ -16,10 +16,40 @@ using namespace std;
 dsp::FourBitUnpacker::FourBitUnpacker (const char* _name)
   : BitUnpacker (_name)
 {
+  // with 4 bits, there are 16 output states
+  set_nstate (16);
+
+  // internally, count the frequency of 8-bit bytes
+  set_nstate_internal (256);
 }
 
+void dsp::FourBitUnpacker::get_histogram (std::vector<unsigned long>& hist,
+					  unsigned idig) const
+{
+  assert( get_nstate() == 16 );
+  assert( get_nstate_internal() == 256 );
+  assert( idig < get_ndig() );
+
+  hist.resize( get_nstate() );
+
+  unsigned mask = 0x0f;
+
+  const unsigned long* hist_internal = HistUnpacker::get_histogram (idig);
+
+  for (unsigned i=0; i<get_nstate_internal(); i++)
+  {
+    unsigned s0 = i & mask;
+    unsigned s1 = (i >> 4) & mask;
+
+    hist[s0] += hist_internal[i];
+    hist[s1] += hist_internal[i];
+  }
+}
+
+
 void dsp::FourBitUnpacker::unpack (uint64 ndat, 
-				   const unsigned char* from, const unsigned nskip,
+				   const unsigned char* from,
+				   const unsigned nskip,
 				   float* into, const unsigned fskip,
 				   unsigned long* hist)
 {
