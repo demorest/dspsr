@@ -174,7 +174,7 @@ int main (int argc, char** argv) try
 	plotter->set_data( correct );
 
 	if ( tbc_nsample )
-	    correct -> set_nsample ( tbc_nsample );
+	    correct -> set_ndat_per_weight ( tbc_nsample );
 	
 	if ( tbc_threshold )
 	    correct -> set_threshold ( tbc_threshold );

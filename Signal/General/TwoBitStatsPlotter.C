@@ -34,7 +34,7 @@ dsp::TwoBitStatsPlotter::~TwoBitStatsPlotter ()
 string dsp::TwoBitStatsPlotter::get_xlabel () const
 {
   char label[64];
-  snprintf (label, 64, "Low state count (in %d pts)", twobit->get_nsample());
+  snprintf (label, 64, "Low state count (in %d pts)", twobit->get_ndat_per_weight());
   return label;
 }
 
@@ -90,7 +90,7 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
     return;
   }
 
-  if (twobit->get_nsample() < 1) {
+  if (twobit->get_ndat_per_weight() < 1) {
     cerr << "TwoBitStatsPlotter::calculate_theory invalid data";
     return;
   }
@@ -99,7 +99,7 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
     return;
 
   // the number of samples per statistical measure
-  int L = twobit->get_nsample();
+  int L = twobit->get_ndat_per_weight();
 
   theory.resize (L);
   theory_max = 0.0;
@@ -184,10 +184,10 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   // the theoretical binomial distribution must be scaled to the
   // number of weights tested
   double nweights = twobit->get_histogram_total (0);
-  unsigned nsample = twobit->get_nsample ();
+  unsigned ndat_per_weight = twobit->get_ndat_per_weight ();
 
-  vector<float> plot_theory (nsample);
-  for (unsigned iwt=0; iwt<nsample; iwt++)
+  vector<float> plot_theory (ndat_per_weight);
+  for (unsigned iwt=0; iwt<ndat_per_weight; iwt++)
     plot_theory[iwt] = theory[iwt] * nweights;
   
   float hp_min, hp_max;
@@ -202,8 +202,8 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   else
   {
     // definitely keep the theory in sight
-    hp_min=0; hp_max=nsample-1;
-    for (; hp_min<nsample; hp_min++)
+    hp_min=0; hp_max=ndat_per_weight-1;
+    for (; hp_min<ndat_per_weight; hp_min++)
       if (theory[unsigned(hp_min)] > theory_max*hist_min)
 	break;
     for (; hp_max>0; hp_max--)
