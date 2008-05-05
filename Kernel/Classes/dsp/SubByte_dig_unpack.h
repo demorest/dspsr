@@ -37,14 +37,14 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 
   const unsigned input_incr = get_input_incr ();
   const unsigned output_incr = get_output_incr ();
-  const unsigned nsample = get_nsample ();
+  const unsigned ndat_per_weight = get_ndat_per_weight ();
 
   // although I and Q are switched here, the histogram is queried as expected
   unsigned long*  hist = 0;
   if (keep_histogram)
     hist = get_histogram (digitizer);
 
-  unsigned required_nweights = (unsigned) ceil (float(ndat)/float(nsample));
+  unsigned required_nweights = (unsigned) ceil (float(ndat)/float(ndat_per_weight));
 
   if (weights)
   {
@@ -63,7 +63,7 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
   uint64 points_left = ndat;
   unsigned bad_weights = 0;
 
-  uint64 points = nsample;
+  uint64 points = ndat_per_weight;
 
   for (unsigned wt=0; wt<nweights; wt++)
   {
@@ -85,9 +85,9 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (Mask& mask,
 
     assert (pt <= values_size);
 
-    // calculate the weight based on the last nsample pts
+    // calculate the weight based on the last ndat_per_weight pts
     unsigned n_in = 0;
-    for (pt=0; pt<nsample; pt++)
+    for (pt=0; pt<ndat_per_weight; pt++)
       n_in += lovoltage [values[pt]];
 
     if (hist)

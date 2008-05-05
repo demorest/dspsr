@@ -83,7 +83,7 @@ void dsp::SubByteTwoBitCorrection::build ()
   TwoBitCorrection::build ();
 
   // create the new space
-  values_size = get_nsample();
+  values_size = get_ndat_per_weight();
   values = new unsigned char [values_size];
 }
 

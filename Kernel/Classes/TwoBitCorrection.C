@@ -26,7 +26,7 @@ dsp::TwoBitCorrection::TwoBitCorrection (const char* _name)
   : HistUnpacker (_name)
 {
   // Sub-classes may re-define these
-  set_nsample (512);
+  set_ndat_per_weight (512);
 
   if (psrdisp_compatible)
   {
@@ -80,12 +80,14 @@ unsigned dsp::TwoBitCorrection::get_output_incr () const
 }
 
 //! Set the number of time samples used to estimate undigitized power
-void dsp::TwoBitCorrection::set_nsample (unsigned _nsample)
+void dsp::TwoBitCorrection::set_ndat_per_weight (unsigned _ndat)
 {
-  if (get_nsample() != _nsample)
+  if (get_ndat_per_weight() != _ndat)
     built = false;
 
-  HistUnpacker::set_nsample (_nsample);
+  // in two-bit correction mode, ndat_per_weight must equal nstate
+  HistUnpacker::set_ndat_per_weight (_ndat);
+  HistUnpacker::set_nstate (_ndat);
 }
 
 //! Set the cut off power for impulsive interference excision
@@ -137,7 +139,7 @@ void dsp::TwoBitCorrection::set_limits ()
   if (verbose)
     cerr << "dsp::TwoBitCorrection::set_limits" << endl;;
 
-  float fsample = get_nsample();
+  float fsample = get_ndat_per_weight();
 
   float nlo_mean = fsample * ja98.get_mean_Phi ();
   float nlo_variance = fsample * ja98.get_var_Phi ();
@@ -157,7 +159,7 @@ void dsp::TwoBitCorrection::set_limits ()
   if (psrdisp_compatible)
   {
     // in psrdisp, sigma was incorrectly set as
-    nlo_sigma = sqrt( float(get_nsample()) );
+    nlo_sigma = sqrt( float(get_ndat_per_weight()) );
 
     cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
       "   setting nlo_sigma to " << nlo_sigma << endl;
@@ -165,12 +167,12 @@ void dsp::TwoBitCorrection::set_limits ()
 
   n_max = unsigned (nlo_mean + (cutoff_sigma * nlo_sigma));
 
-  if (n_max >= get_nsample())
+  if (n_max >= get_ndat_per_weight())
   {
     if (verbose)
       cerr << "dsp::TwoBitCorrection::set_limits resetting nmax:"
-	   << n_max << " to nsample-2:" << get_nsample()-1 << endl;
-    n_max = get_nsample()-1;
+	   << n_max << " to ndat_per_weight-2:" << get_ndat_per_weight()-1 << endl;
+    n_max = get_ndat_per_weight()-1;
   }
 
   if (cutoff_sigma * nlo_sigma >= nlo_mean+1.0)
@@ -209,7 +211,7 @@ void dsp::TwoBitCorrection::build ()
     return;
 
   if (verbose) cerr << "dsp::TwoBitCorrection::build"
-		    << " nsamp=" << get_nsample()
+		    << " ppweight=" << get_ndat_per_weight()
 		    << " cutoff=" << cutoff_sigma << "sigma\n";
 
   if (get_ndig()<1)
@@ -238,7 +240,7 @@ void dsp::TwoBitCorrection::build ()
   if (verbose) cerr << "dsp::TwoBitCorrection::build allocate buffers\n";
   dls_lookup.resize (n_range * size);
 
-  generate (dls_lookup, 0, n_min, n_max, get_nsample(), table, huge);
+  generate (dls_lookup, 0, n_min, n_max, get_ndat_per_weight(), table, huge);
 
   zero_histogram ();
 
@@ -333,7 +335,7 @@ void dsp::TwoBitCorrection::unpack ()
 
   uint64 ndat = input->get_ndat();
 
-  if (ndat < get_nsample())
+  if (ndat < get_ndat_per_weight())
     return;
 
   // build the two-bit lookup table
@@ -425,8 +427,6 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 {
   unsigned ndig = get_ndig_per_byte();
 
-  const unsigned char* end_of_buffer = input->get_rawptr() + input->get_size();
-
   if (ndig != 1)
     throw Error (InvalidState, "dsp::TwoBitCorrection::dig_unpack",
 		 "number of digitizers per byte = %d must be == 1", ndig);
@@ -452,18 +452,19 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   bool data_are_complex = get_ndim_per_digitizer() == 2;
 
-  unsigned complex_nsample = get_nsample() * get_ndim_per_digitizer();
+  unsigned nfloat_per_weight = get_ndat_per_weight()*get_ndim_per_digitizer();
 
-  unsigned long n_weights = (unsigned long) ceil (float(nfloat)/complex_nsample);
+  double f_weights = double(nfloat) / double(nfloat_per_weight);
+  unsigned long n_weights = (unsigned long) ceil (f_weights);
 
-  assert (n_weights*complex_nsample >= nfloat);
+  assert (n_weights*nfloat_per_weight >= nfloat);
 
   if (weights && n_weights > nweights)
     throw Error (InvalidParam, "dsp::TwoBitCorrection::dig_unpack",
 		 "weights array size=%d < nweights=%d", nweights, n_weights);
 
   uint64 bytes_left = nfloat / samples_per_byte;
-  uint64 bytes_per_weight = complex_nsample / samples_per_byte;
+  uint64 bytes_per_weight = nfloat_per_weight / samples_per_byte;
   uint64 bytes_to_unpack = bytes_per_weight;
   unsigned bt;
   unsigned pt;
@@ -504,7 +505,7 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
 
   const unsigned char* input_data_ptr = input_data;
 
-  const unsigned n_lo_max = get_nsample();
+  const unsigned n_lo_max = get_ndat_per_weight();
 
   for (unsigned long wt=0; wt<n_weights; wt++)
   {
@@ -519,7 +520,7 @@ void dsp::TwoBitCorrection::dig_unpack (float* output_data,
       bytes_to_unpack = bytes_left;
     }
 
-    // calculate the weight based on the last nsample pts
+    // calculate the weight based on the last ndat_per_weight pts
     unsigned n_lo = 0;
     for (bt=0; bt<bytes_per_weight; bt++)
     {

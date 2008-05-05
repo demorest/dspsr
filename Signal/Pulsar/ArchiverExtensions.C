@@ -179,9 +179,9 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try {
   }
 
   unsigned ndig = twobit->get_ndig ();
-  unsigned nsample = twobit->get_nsample ();
+  unsigned ndat_per_weight = twobit->get_ndat_per_weight ();
 
-  tbc->resize (nsample, ndig);
+  tbc->resize (ndat_per_weight, ndig);
 
   tbc->set_threshold ( twobit->get_threshold() );
   tbc->set_cutoff_sigma ( twobit->get_cutoff_sigma() );
@@ -189,11 +189,10 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try {
   // temporary space
   vector<float> histogram;
 
-  for (unsigned idig=0; idig<ndig; idig++) {
-
+  for (unsigned idig=0; idig<ndig; idig++)
+  {
     twobit->get_histogram (histogram, idig);
     tbc->set_histogram (histogram, idig);
-
   }
 
 }

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.38 $
-   $Date: 2008/04/17 07:12:51 $
+   $Revision: 1.39 $
+   $Date: 2008/05/05 19:58:19 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -64,7 +64,10 @@ namespace dsp {
     //virtual void initialize (const string& descriptor);
 
     //! Set the number of time samples used to estimate undigitized power
-    void set_nsample (unsigned nsample);
+    void set_ndat_per_weight (unsigned ndat_per_weight);
+
+    //! Set the number of states in the histogram
+    void set_nstate (unsigned nstate) { set_ndat_per_weight (nstate); }
 
     //! Set the sampling threshold as a fraction of the noise power
     void set_threshold (float threshold);
@@ -95,15 +98,16 @@ namespace dsp {
     virtual int64 stats (std::vector<double>& sum, std::vector<double>& sumsq);
 #endif
 
-    //! Get the minumum number of ones in nsample points
+    //! Get the minumum number of ones in ndat_per_weight points
     unsigned get_nmin() const { return n_min; }
 
-    //! Get the maxumum number of ones in nsample points
+    //! Get the maxumum number of ones in ndat_per_weight points
     unsigned get_nmax() const { return n_max; }
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static TwoBitCorrection* create (const BitSeries& input,
-				     unsigned nsample=0, float cutoff_rms=3.0);
+				     unsigned ndat_per_weight = 0,
+				     float cutoff_rms = 3.0);
 
     //! Generate dynamic level setting and scattered power correction lookup
     void generate (std::vector<float>& dls, float* spc,
@@ -135,10 +139,10 @@ namespace dsp {
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
 
-    //! Minumum number of ones in nsample points
+    //! Minumum number of ones in ndat_per_weight points
     unsigned n_min;
 
-    //! Maximum number of ones in nsample points
+    //! Maximum number of ones in ndat_per_weight points
     unsigned n_max;
 
     //! Lookup table and histogram dimensions reflect the attributes

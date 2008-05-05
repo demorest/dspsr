@@ -373,7 +373,7 @@ void dsp::LoadToFold1::prepare_final ()
   tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
     
   if ( tbc && config->tbc_nsample )
-    tbc -> set_nsample ( config->tbc_nsample );
+    tbc -> set_ndat_per_weight ( config->tbc_nsample );
   
   if ( tbc && config->tbc_threshold )
     tbc -> set_threshold ( config->tbc_threshold );
