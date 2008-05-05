@@ -17,9 +17,12 @@ bool dsp::HistUnpacker::keep_histogram = true;
 //! Null constructor
 dsp::HistUnpacker::HistUnpacker (const char* _name) : Unpacker (_name)
 {
-  nsample = 0;
+  ndat_per_weight = 0;
   nstate = 0;
+  nstate_internal = 0;
+
   ndig = 0;
+  resize_needed = true;
 }
 
 dsp::HistUnpacker::~HistUnpacker ()
@@ -41,7 +44,7 @@ void dsp::HistUnpacker::resize_output ()
 {
   if (weighted_output)
   {
-    weighted_output -> set_ndat_per_weight (get_nsample());
+    weighted_output -> set_ndat_per_weight (get_ndat_per_weight());
     weighted_output -> set_nchan_weight (1);
     weighted_output -> set_npol_weight (input->get_npol());
   }
@@ -78,7 +81,7 @@ void dsp::HistUnpacker::set_ndig (unsigned _ndig)
     return;
 
   ndig = _ndig;
-  resize ();
+  resize_needed = true;
 }
 
 /*!
@@ -96,17 +99,40 @@ unsigned dsp::HistUnpacker::get_ndim_per_digitizer () const
   return 1;
 }
 
-//! Set the number of time samples used to estimate undigitized power
-void dsp::HistUnpacker::set_nsample (unsigned _nsample)
+//! Set the number of time samples per weight
+void dsp::HistUnpacker::set_ndat_per_weight (unsigned _ndat_per_weight)
 {
-  if (nsample == _nsample)
+  if (verbose)
+    cerr << "dsp::HistUnpacker::set_ndat_per_weight="
+	 << _ndat_per_weight << endl;
+
+  ndat_per_weight = _ndat_per_weight;
+}
+
+//! Set the number of possible states
+void dsp::HistUnpacker::set_nstate (unsigned _nstate)
+{
+  if (nstate == _nstate)
     return;
 
   if (verbose)
-    cerr << "dsp::HistUnpacker::set_nsample = " << _nsample << endl;
+    cerr << "dsp::HistUnpacker::set_nstate = " << _nstate << endl;
 
-  nsample = _nsample;
-  resize ();
+  nstate = _nstate;
+  resize_needed = true;
+}
+
+//! Set the number of states in the internal representation of the histogram
+void dsp::HistUnpacker::set_nstate_internal (unsigned _nstate)
+{
+  if (nstate_internal == _nstate)
+    return;
+
+  if (verbose)
+    cerr << "dsp::HistUnpacker::set_nstate_internal = " << _nstate << endl;
+
+  nstate_internal = _nstate;
+  resize_needed = true;
 }
 
 /*! By default, there is no need to offset the output from each digitizer */
@@ -137,11 +163,21 @@ void dsp::HistUnpacker::resize ()
 {
   if (verbose)
     cerr << "dsp::HistUnpacker::resize ndig=" << ndig
-         << " nsample=" << nsample << endl;
+         << " nstate=" << nstate << endl;
 
-  histograms.resize (ndig);
+  histograms.resize( get_ndig() );
   for (unsigned idig=0; idig<ndig; idig++)
-    histograms[idig].resize (nsample);
+    histograms[idig].resize( get_nstate_internal() );
+
+  resize_needed = false;
+}
+
+unsigned dsp::HistUnpacker::get_nstate_internal () const
+{
+  if (nstate_internal)
+    return nstate_internal;
+  else
+    return nstate;
 }
 
 void dsp::HistUnpacker::zero_histogram ()
@@ -154,6 +190,16 @@ void dsp::HistUnpacker::zero_histogram ()
       histograms[ichan][ibin] = 0;
 }
 
+void dsp::HistUnpacker::get_histogram (std::vector<unsigned long>& hist,
+				       unsigned idig) const
+{
+  if (idig >= get_ndig())
+    throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram",
+		 "invalid idig=%d >= ndig=%d", idig, get_ndig());
+
+  hist = histograms[idig];
+}
+
 double dsp::HistUnpacker::get_histogram_mean (unsigned idig) const
 {
   if (idig >= get_ndig())
@@ -163,11 +209,11 @@ double dsp::HistUnpacker::get_histogram_mean (unsigned idig) const
   double ones = 0.0;
   double pts  = 0.0;
 
-  for (unsigned ival=0; ival<nsample; ival++)
+  for (unsigned ival=0; ival<nstate; ival++)
   {
     double samples = double (histograms[idig][ival]);
     ones += samples * double (ival);
-    pts  += samples * double (nsample);
+    pts  += samples * double (nstate);
   }
   return ones/pts;
 }
@@ -180,7 +226,7 @@ unsigned long dsp::HistUnpacker::get_histogram_total (unsigned idig) const
 
   unsigned long nweights = 0;
 
-  for (unsigned iwt=0; iwt<nsample; iwt++)
+  for (unsigned iwt=0; iwt<nstate; iwt++)
     nweights += histograms[idig][iwt];
 
   return nweights;
@@ -188,11 +234,19 @@ unsigned long dsp::HistUnpacker::get_histogram_total (unsigned idig) const
 
 unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig)
 {
+  if (resize_needed)
+    resize ();
+
   if (idig >= get_ndig())
     throw Error (InvalidRange, "dsp::HistUnpacker::get_histogram",
                  "invalid idig=%d >= ndig=%d", idig, histograms.size());
 
   return &histograms[idig][0];
+}
+
+const unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig) const
+{
+  return const_cast<HistUnpacker*>(this)->get_histogram(idig);
 }
 
 
