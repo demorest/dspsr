@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.11 $
-   $Date: 2008/04/18 04:57:20 $
+   $Revision: 1.12 $
+   $Date: 2008/05/05 19:58:39 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -46,10 +46,15 @@ namespace dsp {
     //! Get the dimension of the digitizer outputs (real or complex)
     virtual unsigned get_ndim_per_digitizer () const;
 
-    //! Set the number of samples in the histogram
-    virtual void set_nsample (unsigned nsample);
-    //! Get the number of samples in the histogram
-    unsigned get_nsample () const { return nsample; }
+    //! Set the number of samples per weight in WeightTimeSeries output
+    virtual void set_ndat_per_weight (unsigned ndat_per_weight);
+    //! Get the number of samples per weight in WeightTimeSeries output
+    unsigned get_ndat_per_weight () const { return ndat_per_weight; }
+
+    //! Set the number of states in the histogram
+    virtual void set_nstate (unsigned nstate);
+    //! Get the number of states in the histogram
+    unsigned get_nstate () const { return nstate; }
 
     //! Get the offset (number of floats) into output for the given digitizer
     virtual unsigned get_output_offset (unsigned idig) const;
@@ -60,12 +65,16 @@ namespace dsp {
     //! Get the output frequency channel for the given digitizer;
     virtual unsigned get_output_ichan (unsigned idig) const;
 
+    //! Get the histogram for the specified digitizer
+    virtual void get_histogram (std::vector<unsigned long>&, unsigned) const;
+
     //! Get the histogram for the given digitizer
     template <typename T>
     void get_histogram (std::vector<T>& data, unsigned idig) const;
 
     //! Get the pointer to the histogram array
     unsigned long* get_histogram (unsigned idig);
+    const unsigned long* get_histogram (unsigned idig) const;
 
     //! Get the centroid of the histogram for the given digitizer
     double get_histogram_mean (unsigned idig) const;
@@ -87,23 +96,30 @@ namespace dsp {
     //! Initialize the WeightedTimeSeries dimensions
     void resize_output ();
 
+    void set_nstate_internal (unsigned _nstate);
+    unsigned get_nstate_internal () const;
+
   private:
 
     //! Number of samples per weight
-    unsigned nsample;
+    unsigned ndat_per_weight;
 
     //! Number of states in the histogram
     unsigned nstate;
 
+    //! Number of states in the internal representation of the histogram
+    unsigned nstate_internal;
+
     //! Number of histograms
     unsigned ndig;
 
-    //! Histograms of number of ones in nsample points
+    //! Histograms of nstate (or nstate_internal, if set) states
     std::vector< std::vector< unsigned long > > histograms;
 
     //! Resize the histograms vector to reflect attributes
     void resize ();
 
+    bool resize_needed;
   };
   
 }
@@ -111,10 +127,13 @@ namespace dsp {
 template <typename T> void
 dsp::HistUnpacker::get_histogram (std::vector<T>& data, unsigned idig) const
 {
-  data.resize (nsample);
+  std::vector<unsigned long> hist;
+  get_histogram (hist, idig);
 
-  for (unsigned i=0; i<nsample; i++)
-    data[i] = T(histograms[idig][i]);
+  data.resize( hist.size() );
+
+  for (unsigned i=0; i<hist.size(); i++)
+    data[i] = T(hist[i]);
 }
 
 #endif
