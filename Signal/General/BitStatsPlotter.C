@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/BitStatsPlotter.h"
 #include "dsp/HistUnpacker.h"
 
@@ -181,7 +182,7 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
 
   check_colours ();
 
-  unsigned nsample = data->get_nsample();
+  unsigned nstate = data->get_nstate();
   unsigned ndig = data->get_ndig ();
   
   unsigned nplot = 1;
@@ -196,7 +197,7 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
 
   float ymax = 0.0;
 
-  int imin = nsample-1;
+  int imin = nstate-1;
   int imax = 0;
 
   unsigned iplot=0; 
@@ -245,7 +246,7 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
 	if (histogram[imin] > ymax * hist_min)
 	  break;
       int imax_orig = imax;
-      for (imax=nsample-1; imax>imax_orig; imax--)
+      for (imax=nstate-1; imax>imax_orig; imax--)
 	if (histogram[imax] > ymax * hist_min)
 	  break;
     }
@@ -270,8 +271,8 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
   // plot the actual distribution of number of ones
   float midheight = ymax/2.0;
 
-  for (iplot=0; iplot < nplot; iplot++) {
-
+  for (iplot=0; iplot < nplot; iplot++)
+  {
     data->get_histogram (histogram, idig[iplot]);
 
     cpgsci (colours[iplot]);
@@ -279,9 +280,8 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
     
     float fractone = data->get_histogram_mean (idig[iplot]);
     cpgsls (4);
-    cpgmove (fractone*float(nsample), 0.0);
-    cpgdraw (fractone*float(nsample), midheight);
-
+    cpgmove (fractone*float(nstate), 0.0);
+    cpgdraw (fractone*float(nstate), midheight);
   }
 
   cpgsls (1);

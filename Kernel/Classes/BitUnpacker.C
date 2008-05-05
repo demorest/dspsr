@@ -16,7 +16,7 @@ using namespace std;
 dsp::BitUnpacker::BitUnpacker (const char* _name)
   : HistUnpacker (_name)
 {
-  set_nsample (256);
+  set_nstate (256);
 }
 
 dsp::BitUnpacker::~BitUnpacker ()
