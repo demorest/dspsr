@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitUnpacker.h,v $
-   $Revision: 1.7 $
-   $Date: 2008/04/15 08:11:41 $
+   $Revision: 1.8 $
+   $Date: 2008/05/05 19:58:33 $
    $Author: straten $ */
 
 #ifndef __FourBitUnpacker_h
@@ -26,6 +26,9 @@ namespace dsp {
 
     //! Null constructor
     FourBitUnpacker (const char* name = "FourBitUnpacker");
+
+    //! Get the histogram for the specified digitizer
+    void get_histogram (std::vector<unsigned long>&, unsigned idig) const;
 
   protected:
 
