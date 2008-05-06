@@ -273,8 +273,8 @@ void dsp::Filterbank::prepare_output ()
   output->set_centre_frequency_offset ( 0.5*channel_bandwidth*shift );
 #endif
 
-  // complex to complex FFT produces a band swapped result
-  if (input->get_state() == Signal::Analytic)
+  // dual sideband data produces a band swapped result
+  if (input->get_dual_sideband())
     output->set_swap (true);
 
   // increment the start time by the number of samples dropped from the fft
