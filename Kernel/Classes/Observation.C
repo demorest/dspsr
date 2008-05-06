@@ -578,6 +578,8 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_source      ( in_obs.get_source() );
   set_coordinates ( in_obs.get_coordinates() );
 
+  dual_sideband = in_obs.dual_sideband;
+
   set_centre_frequency ( in_obs.get_centre_frequency() );
   set_bandwidth   ( in_obs.get_bandwidth() );
   set_dispersion_measure   ( in_obs.get_dispersion_measure() );
