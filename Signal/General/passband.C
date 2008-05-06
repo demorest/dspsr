@@ -84,7 +84,7 @@ int main (int argc, char** argv) try {
 
   int c;
 
-  static char* args = "B:c:dD:f:m:n:RS:T:t:hvV";
+  static char* args = "B:c:dD:f:lm:n:RS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -112,7 +112,11 @@ int main (int argc, char** argv) try {
     case 'g':
       ffts = atoi (optarg);
       break;
-      
+
+    case 'l':
+      plotter.logarithmic = true;
+      break;
+
     case 'R':
       filter = new dsp::RFIFilter;
       break;
