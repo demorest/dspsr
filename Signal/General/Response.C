@@ -123,7 +123,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
     // if the input Observation is single-channel, complex sampled
     // data, then the first forward FFT performed on this data will
     // result in a swapped spectrum
-    if ( input->get_state() == Signal::Analytic && !whole_swapped ) {
+    if ( input->get_dual_sideband() && !whole_swapped ) {
       if (verbose)
 	cerr << "dsp::Response::match swap whole" << endl;
       swap (false);
@@ -145,7 +145,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
 
     // if the input Observation is multi-channel, complex sampled data,
     // then each FFT performed will result in little swapped spectra
-    if ( input->get_state() == Signal::Analytic && !chan_swapped ) {
+    if ( input->get_dual_sideband() && !chan_swapped ) {
       if (verbose)
 	cerr << "dsp::Response::match swap channels (nchan=" << nchan << ")"
 	     << endl;
