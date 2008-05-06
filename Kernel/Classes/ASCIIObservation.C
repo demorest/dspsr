@@ -165,9 +165,10 @@ void dsp::ASCIIObservation::load (const char* header)
   if (ascii_header_get (header, "NDIM", "%d", &scan_ndim) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed load NDIM");
 
-  set_ndim(scan_ndim);
+  set_ndim (scan_ndim);
 
-  switch (scan_ndim) {
+  switch (scan_ndim)
+  {
   case 1:
     set_state (Signal::Nyquist); break;
   case 2:
@@ -176,7 +177,11 @@ void dsp::ASCIIObservation::load (const char* header)
     throw Error (InvalidState, "ASCIIObservation",
 		 "invalid NDIM=%d\n", scan_ndim);
   }
-  
+
+  int scan_dsb;
+  if (ascii_header_get (header, "DSB", "%d", &scan_dsb) >= 0)
+    set_dual_sideband (scan_dsb == 1);
+
   //
   // call this only after setting frequency and telescope
   //
@@ -232,11 +237,6 @@ void dsp::ASCIIObservation::load (const char* header)
   
   double offset_seconds = get_nsamples(offset_bytes) * sampling_interval;
   set_start_time (recording_start_time + offset_seconds);
-
-  //
-  // until otherwise, the band is centred on the centre frequency
-  //
-  dc_centred = true;
 
   // //////////////////////////////////////////////////////////////////////
   //
