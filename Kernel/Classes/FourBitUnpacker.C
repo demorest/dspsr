@@ -9,6 +9,7 @@
 #include "dsp/BitTable.h"
 
 #include "Error.h"
+#include <assert.h>
 
 using namespace std;
 
