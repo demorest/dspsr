@@ -74,10 +74,33 @@ void dsp::Observation::init ()
   dispersion_measure = 0.0;
   between_channel_dm = 0.0;
 
+  dual_sideband = -1;
+
   domain = "Time";  /* cf 'Fourier' */
   last_ondisk_format = "raw"; /* cf 'CoherentFB' or 'Digi' etc */
 }
 
+//! Set true if the data are dual sideband
+void dsp::Observation::set_dual_sideband (bool dual)
+{
+  // not sure how bool casts to char, so making it explicit
+  if (dual)
+    dual_sideband = 1;
+  else
+    dual_sideband = 0;
+}
+
+
+//! Return true if the data are dual_sideband
+bool dsp::Observation::get_dual_sideband () const
+{
+  if (dual_sideband != -1)
+    return (dual_sideband == 1);
+
+  // if the dual sideband flag is not set, return true if state == Analytic
+  return state == Signal::Analytic;
+}
+     
 double dsp::Observation::get_highest_frequency(double max_freq, unsigned chanstart,unsigned chanend){
   chanend = min(get_nchan(),chanend);
 

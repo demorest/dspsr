@@ -157,12 +157,13 @@ namespace dsp {
     //! Return true if frequency channels are out of order (band swappped)
     bool get_swap () const { return swap; }
 
+    //! Set true if the data are dual sideband
+    void set_dual_sideband (bool _dual);
+    //! Return true if the data are dual_sideband
+    bool get_dual_sideband () const;
+
     //! Set true if centre channel is centred on centre frequency
-    //! i.e. to get centre frequency of first channel:
-    //!double dsp::Observation::get_base_frequency (){
-    //!  if (dc_centred) return centre_frequency - 0.5*bandwidth;
-    //!  else return centre_frequency - 0.5*bandwidth + 0.5*bandwidth/double(nchan);
-    //!}
+    /*! This flag is currently experimental */
     void set_dc_centred (bool _dc_centred) { dc_centred = _dc_centred; }
     bool get_dc_centred () const { return dc_centred; }
 
@@ -434,17 +435,22 @@ namespace dsp {
     mutable std::ostream cerr;
 
   private:
+
     /////////////////////////////////////////////////////////////////////
-    // Private variables should only be accessed by set/get at all times!
+    //
+    // Private variables should be accessed only using set/get at all times!
+    //
 
     //! Number of time samples in container
-    //! This is private so that classes that inherit from Observation that have nbit%8 != 0
-    //! can enforce resizes/set_ndat's so that ndat*ndim is always an integer number of bytes
+    /*! This is private so that classes that inherit from Observation
+      and have nbit%8 != 0 can enforce resizes/set_ndat's so that
+      ndat*ndim is always an integer number of bytes */
     uint64 ndat;
 
     //! Dimension of each datum
-    //! This is private so that classes that inherit from Observation that have nbit%8 != 0
-    //! can enforce set_ndim's so that ndat*ndim is always an integer number of bytes
+    /*! This is private so that classes that inherit from Observation
+      that have nbit%8 != 0 can enforce set_ndim's so that ndat*ndim
+      is always an integer number of bytes */
     unsigned ndim;
 
     //! Number of frequency channels across bandwidth
@@ -458,6 +464,9 @@ namespace dsp {
 
     //! The calfrequency
     double calfreq;
+
+    //! Lower sideband
+    char dual_sideband;
 
   };
 
