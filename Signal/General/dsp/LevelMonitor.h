@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/02/20 09:29:09 $
+   $Revision: 1.3 $
+   $Date: 2008/05/08 20:59:05 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -38,9 +38,6 @@ namespace dsp {
     //! Actually connect
     static bool connect;
 
-    //! Number of iterations 0 for infinite
-    int iterations;
-    
     //! Constructor
     LevelMonitor ();
     
@@ -70,11 +67,8 @@ namespace dsp {
     virtual int set_thresholds (std::vector<double>& mean, 
                                 std::vector<double>& variance);
 
-    //! If you are really fast, you might need to sleep a while
-    virtual void rest_a_while () {}
-
     //! Set the number of iterations to perform
-    void set_iterations (unsigned);
+    void set_max_iterations (unsigned);
 
     //! Set the device to be used to plot/log the digitizer statistics
     void set_history (LevelHistory* history);
@@ -82,12 +76,24 @@ namespace dsp {
     //! Set the device to be used to plot/log the digitizer statistics
     void set_input (IOManager* input);
  
+    //! Swap the polarizations
+    void set_swap_polarizations (bool swap);
+
+    //! Read data consecutively (do not seek to end on each iteration)
+    void set_consecutive (bool swap);
+
   protected:
     
     void init();
     
     //! the number of points to integrate
-    unsigned long n_integrate;
+    uint64 n_integrate;
+    
+    //! the number of points to load in one iteration
+    uint64 block_size;
+
+    //! Number of iterations 0 for infinite
+    unsigned max_iterations;
     
     //! abort current integration
     bool abort;
@@ -105,6 +111,12 @@ namespace dsp {
 
     //! flag says we need to get on it
     bool far_from_good;
+
+    //! Swap polarizations
+    bool swap_polarizations;
+
+    //! Read data consecutively
+    bool consecutive;
 
   private:
 

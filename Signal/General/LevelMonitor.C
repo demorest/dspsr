@@ -19,18 +19,22 @@
 using namespace std;
 
 bool dsp::LevelMonitor::verbose = false;
-bool dsp::LevelMonitor::connect = true;
 
 //! Initialize null values
 dsp::LevelMonitor::LevelMonitor ()
 {
   abort = false;
-  connect = true;
   input = 0;
   history = 0;
 
-  n_integrate = (unsigned long) 64e6;
+  swap_polarizations = false;
+  consecutive = true;
+
+  n_integrate = 1 << 26;
+  block_size = 1 << 18;
+
   mean_tolerance = var_tolerance = 5e-4;
+  max_iterations = 0;
 
   far_from_good = false;
 
@@ -60,6 +64,9 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 
   if (unpacker && history)
     history->set_unpacker( unpacker );
+
+  if (data)
+    input->set_output (data);
 }
 
 //! Set the number of points included in each calculation of thresholds
@@ -96,6 +103,21 @@ int dsp::LevelMonitor::change_levels (int channel, double delta_Volt)
   return 0;
 }
 
+void dsp::LevelMonitor::set_max_iterations (unsigned iter)
+{
+  max_iterations = iter;
+}
+
+void dsp::LevelMonitor::set_swap_polarizations (bool swap)
+{
+  swap_polarizations = swap;
+}
+
+void dsp::LevelMonitor::set_consecutive (bool flag)
+{
+  consecutive = flag;
+}
+
 //! Convert power to dBm
 double variance2dBm (double variance)
 {
@@ -111,9 +133,9 @@ void dsp::LevelMonitor::monitor ()
   vector<double> mean;
   vector<double> variance;
 
-  int bad_level_count = 0;
+  unsigned iterations = 0;
 
-  while (!abort)
+  while (!max_iterations || iterations < max_iterations)
   {
     if (verbose)
       cerr << "LevelMonitor::monitor accumulate stats ..." << endl;
@@ -142,28 +164,15 @@ void dsp::LevelMonitor::monitor ()
     }
     
     if (!far_from_good)
-    {
-      bad_level_count = 0;
-      rest_a_while();
-    }
-    else
-    {
-      bad_level_count++;
+      return;
 
-      if (bad_level_count > iterations && iterations != 0 )
-      {
-         cerr << "****\nLevelMonitor::Cannot set levels: level count greater than " << iterations << "\n****" << endl; 
-         // monitor_abort();   
-         bad_level_count = 0;
-         cerr << "****\nLevelMonitor::Resetting iteration count and sleeping " << "\n****" << endl;
-         sleep(2); 
-      }
-    }    
+    iterations++;
+
   }
 }
 
 int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
-					 vector<double>& variance)
+					 vector<double>& variance) try
 {
   if (!input)
   {
@@ -174,8 +183,11 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
   if (verbose)
     cerr << "LevelMonitor::accumulate_stats integrate " << n_integrate << endl;
 
+  input->get_input()->set_block_size (block_size);
+
   // get only the latest information from the digitizer
-  input -> get_input() -> seek (0, SEEK_END);
+  if (!consecutive)
+    input -> get_input() -> seek (0, SEEK_END);
 
   if (verbose)
     cerr << "LevelMonitor::accumulate_stats finished seek" << endl;
@@ -208,10 +220,11 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
   {
     input -> load (data);
 
-    if (verbose)
-      cerr << "LevelMonitor::accumulate_stats data loaded" << endl;
-
     uint64 ndat = data->get_ndat();
+
+    if (verbose)
+      cerr << "LevelMonitor::accumulate_stats loaded ndat=" << ndat << endl;
+
     unsigned idig = 0;
 
     for (unsigned ichan=0; ichan < nchan; ichan++)
@@ -252,6 +265,10 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 
   return 0;
 }
+ catch (Error& error)
+   {
+     throw error += "dsp::LevelMonitor::accumulate_stats";
+   }
 
 int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 				       vector<double>& variance)
@@ -264,12 +281,19 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 
   far_from_good = false;
 
-  for (unsigned idig=0; idig < ndig; idig ++) {
-    
+  if (verbose)
+    cerr << "LevelMonitor::set_thresholds ndig=" << ndig << endl;
+
+  for (unsigned idig=0; idig < ndig; idig ++)
+  {   
     double delta_var = fabs(variance[idig] - optimal_variance);
 
-    if ((delta_var > var_tolerance) && (connect == true)) {
-      
+    if (verbose)
+      cerr << "LevelMonitor::set_thresholds idig=" << idig
+	   << " dvar=" << delta_var << " max=" << var_tolerance << endl;
+
+    if (delta_var > var_tolerance)
+    {   
       // don't bother adjusting the trim while the gain is improperly set
       if (delta_var > 5 * var_tolerance) {
 	if (verbose)
@@ -284,19 +308,20 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 	     << idig << ", " << delta_dBm << ")" << endl;
 
       if ( change_gain (idig, delta_dBm) < 0 ) {
-	fprintf (stderr, "LevelMonitor::set_thresholds fail change_gain\n");
+	cerr << "LevelMonitor::set_thresholds fail change_gain\n";
 	return -1;
       }
       if (verbose)
 	cerr << "LevelMonitor::set_thresholds change gain complete" << endl;
     }
     
-    if ((!far_from_good) && (fabs(mean[idig]) > mean_tolerance) && (connect == true)) {
+    if (!far_from_good && (fabs(mean[idig]) > mean_tolerance))
+    {
+      if (verbose) cerr << "LevelMonitor::set_thresholds adjust trim\n";
 
-      if (verbose) fprintf (stderr, "LevelMonitor::set_thresholds adjust trim\n");
-
-      if ( change_levels (idig, mean[idig]) < 0 ) {
-	fprintf (stderr, "LevelMonitor::set_thresholds fail change_level\n");
+      if ( change_levels (idig, mean[idig]) < 0 )
+      {
+	cerr << "LevelMonitor::set_thresholds fail change_level\n";
 	return -1;
       }
 
