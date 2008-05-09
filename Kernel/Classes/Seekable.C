@@ -76,7 +76,7 @@ void dsp::Seekable::load_data (BitSeries* data)
 	   << " read_sample=" << read_sample << endl;
 
     if( read_sample > info.get_ndat() )
-      throw Error(InvalidState,"dsp::Seekable::load_data ()",
+      throw Error (InvalidState, "dsp::Seekable::load_data",
 		  "'read_sample' > ndat.... BUG!");
 
     uint64 samples_left = info.get_ndat() - read_sample;
@@ -85,32 +85,32 @@ void dsp::Seekable::load_data (BitSeries* data)
       cerr << "dsp::Seekable::load_data " << samples_left 
 	   << " samples remaining" << endl;
 
-    if (samples_left <= read_size) {
-
+    if (samples_left <= read_size)
+    {
       if (verbose)
 	cerr << "dsp::Seekable::load_data end of data read_size="
 	     << samples_left << endl;
 
       read_size = samples_left;
       end_of_data = true;
-
     }
-
   }
 
   // exit if there is nothing left to read
-  if (!read_size){
+  if (!read_size)
+  {
     data->set_ndat (recycled);
     return;
   }
 
-  if (read_sample != current_sample) {
-
+  if (read_sample != current_sample)
+  {
     uint64 toseek_bytes = data->get_nbytes (read_sample);
 
     if (verbose)
-      cerr << "dsp::Seekable::load_data"
-	" call seek_bytes("<< toseek_bytes <<")"<<endl;
+      cerr << "dsp::Seekable::load_data read_sample=" << read_sample
+           << " != current_sample=" << current_sample 
+	   << " seek_bytes=" << toseek_bytes << endl;
 
     int64 seeked = seek_bytes (toseek_bytes);
     if (seeked < 0)

@@ -94,7 +94,8 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
   {
     if (verbose)
       std::cerr << "dsp::File::create failed while testing "
-                << registry[ichild]->get_name() << endl;
+                << registry[ichild]->get_name() << endl
+                << error.get_message() << endl;
   }
   
   string msg = filename;

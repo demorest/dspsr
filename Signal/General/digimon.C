@@ -93,6 +93,7 @@ int main (int argc, char** argv) try
 
     case 'V':
       dsp::Operation::verbose = true;
+      dsp::Observation::verbose = true;
     case 'v':
       dsp::LevelMonitor::verbose = true;
       verbose = true;

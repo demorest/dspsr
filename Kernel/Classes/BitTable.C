@@ -142,8 +142,10 @@ void dsp::BitTable::generate_unique_values (float* values) const
   unsigned input_middle = unique_values / 2;
   double input_spacing = JenetAnderson98::get_optimal_spacing (nbit);
 
+#if _DEBUG
   cerr << "optimal input spacing = " << input_spacing << endl;
   cerr << "last level = " << input_spacing * (unique_values/2-1) << endl;
+#endif
 
   unsigned input_offset = 0;
   if (type == TwosComplement)
