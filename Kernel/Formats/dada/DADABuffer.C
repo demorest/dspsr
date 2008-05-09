@@ -17,6 +17,7 @@ dsp::DADABuffer::DADABuffer ()
   : File ("DADABuffer")
 {
   hdu = 0;
+  passive = false;
 }
 
 dsp::DADABuffer::~DADABuffer ()
@@ -29,8 +30,11 @@ void dsp::DADABuffer::close ()
   if (!hdu)
     return;
 
-  if (dada_hdu_unlock_read (hdu) < 0)
+  if (!passive && dada_hdu_unlock_read (hdu) < 0)
     cerr << "dsp::DADABuffer::close error during dada_hdu_unlock_read" << endl;
+
+  if (passive && dada_hdu_close_view (hdu) < 0)
+    cerr << "dsp::DADABuffer::close error during dada_hdu_close_view" << endl;
 
   if (dada_hdu_disconnect (hdu) < 0)
     cerr << "dsp::DADABuffer::close error during dada_hdu_disconnect" << endl;
@@ -100,6 +104,10 @@ void dsp::DADABuffer::open_file (const char* filename)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
 		 "invalid INFO file (no key scanned): %s", filename);
 
+  input >> line;
+
+  passive = line == "viewer";
+
   if (verbose)
     cerr << "dsp::DADABuffer::open_file key=" << key << endl;
 
@@ -118,9 +126,13 @@ void dsp::DADABuffer::open_file (const char* filename)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
 		 "cannot connect to DADA ring buffers");
 
-  if (dada_hdu_lock_read (hdu) < 0)
+  if (!passive && dada_hdu_lock_read (hdu) < 0)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
 		 "cannot lock DADA ring buffer read client status");
+
+  if (passive && dada_hdu_open_view (hdu) < 0)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+		 "cannot open DADA ring buffer for viewing");
 
   if (dada_hdu_open (hdu) < 0)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
