@@ -52,6 +52,16 @@ dsp::TwoBitCorrection::~TwoBitCorrection ()
 {
 }
 
+//! Get the optimal value of the time series variance
+double dsp::TwoBitCorrection::get_optimal_variance ()
+{
+  if (change_levels)
+    return ja98.A4( ja98.get_mean_Phi() );
+  else
+    return table->get_optimal_variance();
+}
+
+
 /*! By default, one digitizer is output in one byte */
 unsigned dsp::TwoBitCorrection::get_ndig_per_byte () const
 { 
@@ -171,7 +181,8 @@ void dsp::TwoBitCorrection::set_limits ()
   {
     if (verbose)
       cerr << "dsp::TwoBitCorrection::set_limits resetting nmax:"
-	   << n_max << " to ndat_per_weight-2:" << get_ndat_per_weight()-1 << endl;
+	   << n_max << " to ndat_per_weight-2:" << get_ndat_per_weight()-1
+	   << endl;
     n_max = get_ndat_per_weight()-1;
   }
 

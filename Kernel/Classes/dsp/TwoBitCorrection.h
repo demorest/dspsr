@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.39 $
-   $Date: 2008/05/05 19:58:19 $
+   $Revision: 1.40 $
+   $Date: 2008/05/09 06:20:21 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -44,6 +44,9 @@ namespace dsp {
 
     //! Virtual destructor
     virtual ~TwoBitCorrection ();
+
+    //! Get the optimal value of the time series variance
+    virtual double get_optimal_variance ();
 
     //! Get the number of digitizer outputs in one byte
     virtual unsigned get_ndig_per_byte () const;
