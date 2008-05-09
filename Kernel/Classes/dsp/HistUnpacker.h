@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.12 $
-   $Date: 2008/05/05 19:58:39 $
+   $Revision: 1.13 $
+   $Date: 2008/05/09 03:47:32 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -21,8 +21,9 @@ namespace dsp {
 
   class WeightedTimeSeries;
 
-  //! Base class of all unpackers that keep a histogram
-  class HistUnpacker: public Unpacker {
+  //! Bit unpacker that keeps a histogram and optimal statistics
+  class HistUnpacker: public Unpacker
+  {
 
   public:
 
@@ -37,6 +38,9 @@ namespace dsp {
 
     //! Overload Transformation::set_output to set weighted_output
     void set_output (TimeSeries* output);
+
+    //! Get the optimal value of the time series variance
+    virtual double get_optimal_variance ();
 
     //! Set the number of digitizers (histograms)
     virtual void set_ndig (unsigned ndig);

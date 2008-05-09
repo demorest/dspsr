@@ -23,6 +23,15 @@ dsp::BitUnpacker::~BitUnpacker ()
 {
 }
 
+double dsp::BitUnpacker::get_optimal_variance ()
+{
+  if (!table)
+    throw Error (InvalidState, "dsp::BitUnpacker::get_optimal_variance",
+                 "BitTable not set");
+
+  return table->get_optimal_variance();
+}
+
 void dsp::BitUnpacker::set_table (BitTable* _table)
 {
   if (verbose)

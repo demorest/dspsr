@@ -58,6 +58,9 @@ namespace dsp {
     //! Extract the ith sample from byte
     virtual unsigned extract (unsigned byte, unsigned i) const;
 
+    //! Return the optimal variance of normally distributed samples
+    virtual double get_optimal_variance ();
+
   protected:
 
     //! For each unsigned char, values of the two output voltage states
