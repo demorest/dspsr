@@ -59,14 +59,13 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 {
   input = _input;
 
-  if (input)
-    unpacker = dynamic_cast<HistUnpacker*>(input->get_unpacker());
-
-  if (unpacker && history)
-    history->set_unpacker( unpacker );
+  if (!input)
+    return;
 
   if (data)
     input->set_output (data);
+
+  input->prepare();
 
   input->get_input()->set_block_size (block_size);
 
@@ -76,8 +75,19 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
   npol = info->get_npol();
   ndim = info->get_ndim();
 
-  if (unpacker && unpacker->get_ndim_per_digitizer() == 2)
+  unpacker = dynamic_cast<HistUnpacker*>(input->get_unpacker());
+
+  if (!unpacker)
+    throw Error (InvalidState, "dsp::LevelMonitor::set_input",
+                 "unpacker is not a HistUnpacker; optimal_variance unknown");
+
+  if (history)
+    history->set_unpacker( unpacker );
+
+  if (unpacker->get_ndim_per_digitizer() == 2)
     ndim = 1;
+
+  optimal_variance = unpacker->get_optimal_variance();
 
   ndig = nchan * npol * ndim;
 }
@@ -98,10 +108,9 @@ void dsp::LevelMonitor::monitor_abort ()
   This method should be redefined by sub-classes which implement actual
   control over a physical/virtual digitizer
 */
-int dsp::LevelMonitor::change_gain (int channel, double delta_gain)
+int dsp::LevelMonitor::change_gain (unsigned ichan, unsigned ipol, unsigned idim, double delta_gain)
 {
-  cerr << "LevelMonitor::change_gain "
-       << channel << " " << delta_gain << endl;
+  cout << "GAIN " << ichan << " " << ipol << " " << idim << " " << delta_gain << endl;
   return 0;
 }
 
@@ -109,10 +118,9 @@ int dsp::LevelMonitor::change_gain (int channel, double delta_gain)
   This method should be redefined by sub-classes which implement actual
   control over a physical/virtual digitizer
 */
-int dsp::LevelMonitor::change_levels (int channel, double delta_Volt)
+int dsp::LevelMonitor::change_levels (unsigned ichan, unsigned ipol, unsigned idim, double delta_mean)
 {
-  cerr << "LevelMonitor::change_levels "
-       << channel << " " << delta_Volt << endl;
+  cout << "LEVEL " << ichan << " " << ipol << " " << idim << " " << delta_mean << endl;
   return 0;
 }
 
@@ -142,7 +150,8 @@ void dsp::LevelMonitor::monitor ()
 
   unsigned iterations = 0;
 
-  while (!max_iterations || iterations < max_iterations)
+  while ( (!max_iterations || iterations < max_iterations) &&
+          !input->get_input()->eod() )
   {
     if (verbose)
       cerr << "LevelMonitor::monitor accumulate stats ..." << endl;
@@ -209,7 +218,7 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 
   uint64 total_pts = 0;
 
-  while (!abort && total_pts < n_integrate)
+  while (!abort && total_pts < n_integrate && !input->get_input()->eod())
   {
     input -> load (data);
 
@@ -270,8 +279,7 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 				       vector<double>& variance)
 {
-  unsigned ndig = mean.size();
-  if (mean.size() != variance.size())
+  if (mean.size() != ndig || variance.size() != ndig)
   {
     cerr << "LevelMonitor::set_thresholds size mismatch" << endl;
     return -1;
@@ -282,54 +290,65 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
   if (verbose)
     cerr << "LevelMonitor::set_thresholds ndig=" << ndig << endl;
 
-  for (unsigned idig=0; idig < ndig; idig ++)
-  {   
-    double delta_var = fabs(variance[idig] - optimal_variance);
+  unsigned idig = 0;
 
-    if (verbose)
-      cerr << "LevelMonitor::set_thresholds idig=" << idig
-	   << " dvar=" << delta_var << " max=" << var_tolerance << endl;
-
-    if (delta_var > var_tolerance)
-    {   
-      // don't bother adjusting the trim while the gain is improperly set
-      if (delta_var > 5 * var_tolerance)
-      {
-	if (verbose)
-	  cerr << "LevelMonitor::set_thresholds hold the trim" << endl;
-	far_from_good = true;
-      }
-      
-      // calculate the change in gain
-      double delta_gain = sqrt(optimal_variance / variance[idig]);
-
-      if (verbose)
-	cerr << "LevelMonitor::set_thresholds change_gain (" 
-	     << idig << ", " << delta_gain << ")" << endl;
-
-      if ( change_gain (idig, delta_gain) < 0 )
-      {
-	cerr << "LevelMonitor::set_thresholds fail change_gain\n";
-	return -1;
-      }
-      if (verbose)
-	cerr << "LevelMonitor::set_thresholds change gain complete" << endl;
-    }
-    
-    if (!far_from_good && (fabs(mean[idig]) > mean_tolerance))
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+  {
+    for (unsigned ipol=0; ipol < npol; ipol++)
     {
-      if (verbose) cerr << "LevelMonitor::set_thresholds adjust trim\n";
-
-      if ( change_levels (idig, mean[idig]) < 0 )
+      for (unsigned idim=0; idim < ndim; idim++)
       {
-	cerr << "LevelMonitor::set_thresholds fail change_level\n";
-	return -1;
-      }
+        double delta_var = fabs(variance[idig] - optimal_variance);
 
-      if (verbose)
-	cerr << "LevelMonitor::set_thresholds change level complete" << endl;
+        if (verbose)
+          cerr << "LevelMonitor::set_thresholds idig=" << idig
+	       << " dvar=" << delta_var << " max=" << var_tolerance << endl;
+
+        if (delta_var > var_tolerance)
+        {   
+          // don't bother adjusting the trim while the gain is improperly set
+          if (delta_var > 5 * var_tolerance)
+          {
+	    if (verbose)
+	      cerr << "LevelMonitor::set_thresholds hold the trim" << endl;
+	    far_from_good = true;
+          }
+      
+          // calculate the change in gain
+          double delta_gain = sqrt(optimal_variance / variance[idig]);
+    
+          if (verbose)
+	    cerr << "LevelMonitor::set_thresholds change_gain (" 
+	         << idig << ", " << delta_gain << ")" << endl;
+    
+          if ( change_gain (ichan, ipol, idim, delta_gain) < 0 )
+          {
+	    cerr << "LevelMonitor::set_thresholds fail change_gain\n";
+	    return -1;
+          }
+          if (verbose)
+	    cerr << "LevelMonitor::set_thresholds change gain complete" << endl;
+        }
+        
+        if (!far_from_good && (fabs(mean[idig]) > mean_tolerance))
+        {
+          if (verbose) cerr << "LevelMonitor::set_thresholds adjust trim\n";
+    
+          if ( change_levels (ichan, ipol, idim, mean[idig]) < 0 )
+          {
+	    cerr << "LevelMonitor::set_thresholds fail change_level\n";
+	    return -1;
+          }
+    
+          if (verbose)
+	    cerr << "LevelMonitor::set_thresholds change level complete" << endl;
+        }
+
+        idig ++;
+      }
     }
   }
+
   return 0;
 }
-
+            
