@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/05/09 00:16:05 $
+   $Revision: 1.5 $
+   $Date: 2008/05/09 03:47:39 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -54,10 +54,10 @@ namespace dsp {
     virtual void monitor_abort ();
     
     //! Change the gain in the given channel
-    virtual int change_gain (int channel, double delta_dBm);
+    virtual int change_gain (unsigned ichan, unsigned ipol, unsigned idim, double scale);
     
     //! Change the level in the given channel
-    virtual int change_levels (int channel, double delta_Volt);
+    virtual int change_levels (unsigned ichan, unsigned ipol, unsigned idim, double offset);
     
     //! Accumulate statistics about incoming data stream
     virtual int accumulate_stats (std::vector<double>& mean, 
