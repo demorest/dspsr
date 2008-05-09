@@ -12,6 +12,8 @@
 
 #include "dsp/LevelMonitor.h"
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
+
 #include "Error.h"
 
 #if HAVE_PGPLOT
@@ -59,9 +61,8 @@ int main (int argc, char** argv) try
 
   while ((arg = getopt(argc, argv, "chm:ps:i:vV")) != -1)
   {
-
-    switch (arg)  {
-
+    switch (arg)
+    {
     case 'i':
       iterations = atoi (optarg);
       break;
@@ -74,7 +75,8 @@ int main (int argc, char** argv) try
       swap_polarizations = true;
       break;
 
-    case 'm': {
+    case 'm':
+    {
       float mpts;
       sscanf (optarg, "%f", &mpts);
       npts = long(mpts * 1e6);
@@ -95,7 +97,6 @@ int main (int argc, char** argv) try
       dsp::LevelMonitor::verbose = true;
       verbose = true;
       break;
-    
     }
   }
 
