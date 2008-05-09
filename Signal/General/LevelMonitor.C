@@ -67,6 +67,19 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 
   if (data)
     input->set_output (data);
+
+  input->get_input()->set_block_size (block_size);
+
+  Observation* info = input->get_info();
+
+  nchan = info->get_nchan();
+  npol = info->get_npol();
+  ndim = info->get_ndim();
+
+  if (unpacker && unpacker->get_ndim_per_digitizer() == 2)
+    ndim = 1;
+
+  ndig = nchan * npol * ndim;
 }
 
 //! Set the number of points included in each calculation of thresholds
@@ -85,10 +98,10 @@ void dsp::LevelMonitor::monitor_abort ()
   This method should be redefined by sub-classes which implement actual
   control over a physical/virtual digitizer
 */
-int dsp::LevelMonitor::change_gain (int channel, double delta_dBm)
+int dsp::LevelMonitor::change_gain (int channel, double delta_gain)
 {
   cerr << "LevelMonitor::change_gain "
-       << channel << " " << delta_dBm << endl;
+       << channel << " " << delta_gain << endl;
   return 0;
 }
 
@@ -116,12 +129,6 @@ void dsp::LevelMonitor::set_swap_polarizations (bool swap)
 void dsp::LevelMonitor::set_consecutive (bool flag)
 {
   consecutive = flag;
-}
-
-//! Convert power to dBm
-double variance2dBm (double variance)
-{
-  return 10.0 * log (variance) / log(10.0);
 }
 
 /*! 
@@ -183,8 +190,6 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
   if (verbose)
     cerr << "LevelMonitor::accumulate_stats integrate " << n_integrate << endl;
 
-  input->get_input()->set_block_size (block_size);
-
   // get only the latest information from the digitizer
   if (!consecutive)
     input -> get_input() -> seek (0, SEEK_END);
@@ -192,19 +197,7 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
   if (verbose)
     cerr << "LevelMonitor::accumulate_stats finished seek" << endl;
 
-  Observation* info = input->get_info();
-
-  /*
-    This function computes the statistics for what are in principle
-    independent data streams.  The interpretation of these statistics
-    in terms of the actual number of indepdendent digitizer control
-    channels is done later
-  */
-
-  unsigned nchan = info->get_nchan();
-  unsigned npol = info->get_npol();
-  unsigned ndim = info->get_ndim();
-  unsigned ndig = nchan * npol * ndim;
+  unsigned input_ndim = input->get_info()->get_ndim();
 
   // start with an empty histogram ...
   if (unpacker)
@@ -221,6 +214,10 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
     input -> load (data);
 
     uint64 ndat = data->get_ndat();
+
+    // combine the statistics for real and imaginary components
+    if (input_ndim == 2 && ndim == 1)
+      ndat *= 2;
 
     if (verbose)
       cerr << "LevelMonitor::accumulate_stats loaded ndat=" << ndat << endl;
@@ -274,7 +271,8 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 				       vector<double>& variance)
 {
   unsigned ndig = mean.size();
-  if (mean.size() != variance.size()) {
+  if (mean.size() != variance.size())
+  {
     cerr << "LevelMonitor::set_thresholds size mismatch" << endl;
     return -1;
   }
@@ -295,19 +293,22 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
     if (delta_var > var_tolerance)
     {   
       // don't bother adjusting the trim while the gain is improperly set
-      if (delta_var > 5 * var_tolerance) {
+      if (delta_var > 5 * var_tolerance)
+      {
 	if (verbose)
 	  cerr << "LevelMonitor::set_thresholds hold the trim" << endl;
 	far_from_good = true;
       }
       
       // calculate the change in gain
-      double delta_dBm = optimal_dBm - variance2dBm (variance[idig]);
+      double delta_gain = sqrt(optimal_variance / variance[idig]);
+
       if (verbose)
 	cerr << "LevelMonitor::set_thresholds change_gain (" 
-	     << idig << ", " << delta_dBm << ")" << endl;
+	     << idig << ", " << delta_gain << ")" << endl;
 
-      if ( change_gain (idig, delta_dBm) < 0 ) {
+      if ( change_gain (idig, delta_gain) < 0 )
+      {
 	cerr << "LevelMonitor::set_thresholds fail change_gain\n";
 	return -1;
       }

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/05/08 20:59:05 $
+   $Revision: 1.4 $
+   $Date: 2008/05/09 00:16:05 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -133,6 +133,8 @@ namespace dsp {
     Reference::To<HistUnpacker> unpacker;
 
     void connect_bits ();
+
+    unsigned nchan, npol, ndim, ndig;
     
   };
 
