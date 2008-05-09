@@ -201,7 +201,11 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 
   // get only the latest information from the digitizer
   if (!consecutive)
+  {
+    if (verbose)
+      cerr << "LevelMonitor::accumulate_stats SEEK_END" << endl;
     input -> get_input() -> seek (0, SEEK_END);
+  }
 
   if (verbose)
     cerr << "LevelMonitor::accumulate_stats finished seek" << endl;
