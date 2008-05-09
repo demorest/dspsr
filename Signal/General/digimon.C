@@ -138,8 +138,8 @@ int main (int argc, char** argv) try
   while (!manager->get_input()->eod())
   {
     digitizer->monitor ();
-    
-    if (rest_seconds)
+
+    if (rest_seconds && !manager->get_input()->eod())
     {
       if (verbose)
 	cerr << "digimon: sleeping " << rest_seconds << " seconds" << endl;
