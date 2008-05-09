@@ -6,6 +6,11 @@
  ***************************************************************************/
 
 #include "dsp/BitTable.h"
+#include "JenetAnderson98.h"
+#include "NormalDistribution.h"
+
+#include <math.h>
+#include <assert.h>
 
 using namespace std;
 
@@ -131,28 +136,51 @@ unsigned dsp::BitTable::extract (unsigned byte, unsigned i) const
 
 void dsp::BitTable::generate_unique_values (float* values) const
 {
-  float spacing = 1.0 / float(unique_values);
-  float middle = float(unique_values - 1) / 2.0;
+  double output_spacing = 1.0 / double(unique_values);
+  double output_middle = double(unique_values - 1) / 2.0;
 
-  switch (type) {
+  unsigned input_middle = unique_values / 2;
+  double input_spacing = JenetAnderson98::get_optimal_spacing (nbit);
 
-  case OffsetBinary:
-    for (unsigned i=0; i<unique_values; i++)
-      values[i] = (float(i) - middle) * spacing;
-    break;
+  cerr << "optimal input spacing = " << input_spacing << endl;
+  cerr << "last level = " << input_spacing * (unique_values/2-1) << endl;
 
-  case TwosComplement:
+  unsigned input_offset = 0;
+  if (type == TwosComplement)
+    input_offset = unique_values / 2;
+
+  NormalDistribution normal;
+  double cumulative_probability = 0.0;
+  double variance = 0.0;
+
+  for (unsigned i=0; i<unique_values; i++)
   {
-    unsigned half = unique_values / 2;
-    for (unsigned i=0; i<unique_values; i++)
-      values[i] = (float((i+half)%unique_values) - middle) * spacing;
-    break;
+    double output = (double(i) - output_middle) * output_spacing;
+    values[(i+input_offset)%unique_values] = output;
+
+    if (i < input_middle)
+    {
+      double threshold = (i+1 - input_middle) * input_spacing;
+      double cumulative = normal.cumulative_distribution (threshold);
+      double interval = cumulative - cumulative_probability;
+      cumulative_probability = cumulative;
+
+      variance += output*output * interval;
+    }
   }
 
-  default:
-    throw Error (InvalidState, "BitTable::generate_unique_values",
-		 "unsupported type");
-  }
-   
+  assert (cumulative_probability == 0.5);
+  variance *= 2.0;
+
+  // scale such that the variance is unity
+  double scale = 1.0/sqrt(variance);
+  for (unsigned i=0; i<unique_values; i++)
+    values[i] *= scale;
 }
+
+double dsp::BitTable::get_optimal_variance ()
+{
+  return 1.0;
+}
+
 
