@@ -74,7 +74,11 @@ void dsp::Input::operation ()
     cerr << "dsp::Input::operation [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
-  get_output()->resize (load_size);
+  uint64 maximum_load_size = block_size;
+  if (resolution > 1)
+    maximum_load_size += 2 * resolution;
+
+  get_output()->resize (maximum_load_size);
 
   if (verbose)
     cerr << "dsp::Input::operation call load_data Bit_Stream::ndat=" 
@@ -358,16 +362,6 @@ void dsp::Input::set_load_size ()
 
   if (remainder)
     load_size += resolution - remainder;
-
-  /*   
-  if( get_info() && load_sample + block_size > get_info()->get_ndat() ){
-    //if( verbose )
-      fprintf(stderr,"dsp::Input::set_load_size() loading 'block_size' ("UI64") samples will run past end of data- changing load_size from "UI64" to "UI64"\n",
-	      block_size,load_size,get_info()->get_ndat() - load_sample);
-    load_size = get_info()->get_ndat() - load_sample;
-    //exit(-1);
-  }
-  */
 
   if (verbose)
     cerr << "dsp::Input::set_load_size load_size=" << load_size << endl;
