@@ -59,7 +59,10 @@ namespace dsp {
    
     //! Shared memory interface
     dada_hdu_t* hdu;
-        
+
+    //! Passive viewing mode
+    bool passive;
+
   };
 
 }
