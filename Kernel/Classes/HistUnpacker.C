@@ -55,6 +55,11 @@ void dsp::HistUnpacker::resize_output ()
     weighted_output -> neutral_weights ();
 }
 
+double dsp::HistUnpacker::get_optimal_variance ()
+{
+  throw Error (InvalidState, "dsp::HistUnpacker::get_optimal_variance",
+               "not implemented");
+}
 
 unsigned dsp::HistUnpacker::get_ndig () const
 {

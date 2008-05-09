@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BitUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/04/15 20:14:32 $
+   $Revision: 1.4 $
+   $Date: 2008/05/09 03:47:31 $
    $Author: straten $ */
 
 #ifndef __BitUnpacker_h
@@ -31,6 +31,9 @@ namespace dsp {
 
     //! Virtual destructor
     virtual ~BitUnpacker ();
+
+    //! Get the optimal value of the output time series variance
+    double get_optimal_variance ();
 
     //! Set the digitisation convention
     void set_table (BitTable* table);
