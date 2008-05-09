@@ -48,7 +48,7 @@ void dsp::DADABuffer::reset()
 {
   end_of_data = false;
   current_sample = 0;
-  seek (0,SEEK_END);
+  seek (0,SEEK_SET);
   last_load_ndat = 0;
 }
 
@@ -109,7 +109,7 @@ void dsp::DADABuffer::open_file (const char* filename)
   passive = line == "viewer";
 
   if (verbose)
-    cerr << "dsp::DADABuffer::open_file key=" << key << endl;
+    cerr << "dsp::DADABuffer::open_file key=" << key << " passive=" << passive << endl;
 
   if (!hdu)
   {
@@ -177,12 +177,15 @@ int64 dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64 bytes)
 int64 dsp::DADABuffer::seek_bytes (uint64 bytes)
 {
   if (verbose)
-    cerr << "DADABuffer::load_bytes ipcio_seek "
+    cerr << "DADABuffer::seek_bytes ipcio_seek "
          << bytes << " bytes" << endl;
 
   int64 absolute_bytes = ipcio_seek (hdu->data_block, bytes, SEEK_SET);
   if (absolute_bytes < 0)
     cerr << "DADABuffer::seek_bytes error ipcio_seek" << endl;
+
+  if (verbose)
+    cerr << "DADABuffer::seek_bytes absolute_bytes=" << absolute_bytes << endl;
 
   return absolute_bytes;
 }
@@ -191,14 +194,14 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
 {
   if (verbose)
     cerr << "dsp::DADABuffer::seek " << offset 
-	 << " samples from " << whence << endl;
+	 << " samples from whence=" << whence << endl;
 
   ipcbuf_t* buf = &(hdu->data_block->buf);
 
-  if (whence == SEEK_END && offset == 0) {
-
+  if (passive && whence == SEEK_END && offset == 0)
+  {
     if (verbose)
-      cerr << "dsp::DADABuffer::seek write_buf=" 
+      cerr << "dsp::DADABuffer::seek passive to end write_buf=" 
 	   << ipcbuf_get_write_count( buf ) << endl;
 
     buf->viewbuf ++;
@@ -213,15 +216,34 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
       cerr << "dsp::DADABuffer::seek viewbuf=" << buf->viewbuf << endl;
 
   }
-  else {
+  else
     Input::seek (offset, whence);
+}
+
+//! Ensure that block_size is an integer multiple of resolution
+void dsp::DADABuffer::set_block_size (uint64 _size)
+{
+  if (resolution > 1)
+  {
+    uint64 packets = _size / resolution;
+    if (_size % resolution)
+      packets ++;
+    _size = resolution * packets;
   }
+  File::set_block_size (_size);
+}
+
+//! End-of-data is defined by primary read client (passive viewer)
+bool dsp::DADABuffer::eod()
+{
+  if (passive)
+    return ipcbuf_eod ( &(hdu->data_block->buf) );
+  else
+    return File::eod();
 }
 
 void dsp::DADABuffer::set_total_samples ()
 {
 }
-
-
 
 
