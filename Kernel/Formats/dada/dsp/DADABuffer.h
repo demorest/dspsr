@@ -34,6 +34,12 @@ namespace dsp {
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);
 
+    //! Ensure that block_size is an integer multiple of resolution
+    virtual void set_block_size (uint64 _size);
+
+    //! End-of-data is defined by primary read client (passive viewer)
+    virtual bool eod();
+
     //! Get the information about the data source
     virtual void set_info (const Observation& obs) { info = obs; }
 
