@@ -587,21 +587,6 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   bool subints = config->single_pulse || config->integration_length;
 
   archiver->set_archive_class (config->archive_class.c_str());
-      
-  if (!config->script.empty())
-    archiver->set_script (config->script);
-  
-  if (config->additional_pulsars.size())
-    archiver->set_source_filename (true);
-  
-  if (sample_delay)
-    archiver->set_archive_dedispersed (true);
-  
-  if (!config->archive_filename.empty())
-    archiver->set_filename (config->archive_filename);
-
-  if (!config->archive_extension.empty())
-    archiver->set_extension (config->archive_extension);
 
   if (subints && config->single_archive)
   {
@@ -610,6 +595,42 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
     arch = Pulsar::Archive::new_Archive (config->archive_class);
     archiver->set_archive (arch);
   }
+
+  FilenameEpoch* epoch_convention = 0;
+
+  if (config->single_pulse)
+    archiver->set_convention( new FilenamePulse );
+  else
+    archiver->set_convention( epoch_convention = new FilenameEpoch );
+
+  if (config->integration_length &&
+      config->integration_length == unsigned(config->integration_length))
+  {
+    if (!epoch_convention)
+      throw Error (InvalidState, "dsp::LoadToFold1::prepare_archiver",
+		   "cannot set integration length in single pulse mode");
+    epoch_convention->set_integer_seconds (config->integration_length);
+  }
+
+  if (!config->archive_filename.empty())
+  {
+    if (!epoch_convention)
+      throw Error (InvalidState, "dsp::LoadToFold1::prepare_archiver",
+		   "cannot set archive filename in single pulse mode");
+    epoch_convention->set_datestr_pattern (config->archive_filename);
+  }
+
+  if (sample_delay)
+    archiver->set_archive_dedispersed (true);
+  
+  if (!config->script.empty())
+    archiver->set_script (config->script);
+  
+  if (config->additional_pulsars.size())
+    archiver->set_path_add_source (true);
+  
+  if (!config->archive_extension.empty())
+    archiver->set_extension (config->archive_extension);
 }
 
 //! Run through the data
