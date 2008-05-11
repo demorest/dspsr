@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.10 $
-   $Date: 2008/04/23 08:48:26 $
+   $Revision: 1.11 $
+   $Date: 2008/05/11 08:12:50 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -129,6 +129,9 @@ namespace dsp {
 
     //! Include the fractional pulses at the start and end of data
     bool fractional_pulses;
+
+    //! Round division boundaries to integer numbers of division_seconds
+    bool integer_division_seconds_boundaries;
 
     //! The Pulsar::Predictor used to determine pulse phase
     Reference::To<const Pulsar::Predictor> poly;

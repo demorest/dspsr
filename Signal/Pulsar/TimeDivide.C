@@ -23,6 +23,7 @@ dsp::TimeDivide::TimeDivide ()
   division_turns = 0;
   reference_phase = 0;
 
+  integer_division_seconds_boundaries = true;
   fractional_pulses = false;
 
   division = 0;
@@ -46,9 +47,18 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
   if (start_time == _start_time)
     return;
 
-  start_time  = _start_time;
+  start_time = _start_time;
   start_phase = Phase::zero;
   is_valid = false;
+
+  if( division_seconds && division_seconds == unsigned(division_seconds) &&
+      integer_division_seconds_boundaries)
+  {
+    unsigned integer_seconds = unsigned(division_seconds);
+    unsigned seconds = start_time.get_secs();
+    unsigned divisions = seconds / integer_seconds;
+    start_time = MJD (start_time.intday(), divisions * integer_seconds, 0.0);
+  }
 }
 
 void dsp::TimeDivide::set_seconds (double seconds)
