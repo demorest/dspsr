@@ -18,9 +18,8 @@ using namespace std;
 //! Constructor
 dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
 {
-  filename_extension = ".ar";
-  force_filename = false;
-  source_filename = false;
+  extension = ".ar";
+  path_add_source = false;
 }
     
 //! Destructor
@@ -41,101 +40,135 @@ void dsp::PhaseSeriesUnloader::finish ()
     cerr << "dsp::PhaseSeriesUnloader::finish nothing to do" << endl;
 }
 
+//! Set the filename convention
+void dsp::PhaseSeriesUnloader::set_convention (FilenameConvention* conv)
+{
+  convention = conv;
+}
+
+dsp::FilenameConvention* dsp::PhaseSeriesUnloader::get_convention ()
+{
+  return convention;
+}
+
+//! Set the path to which output data will be written
+void dsp::PhaseSeriesUnloader::set_path (const std::string& p)
+{
+  path = p;
+}
+
+std::string dsp::PhaseSeriesUnloader::get_path () const
+{
+  return path;
+}
+    
+//! place output files in a sub-directory named by source
+void dsp::PhaseSeriesUnloader::set_path_add_source (bool flag)
+{
+  path_add_source = flag;
+}
+
+bool dsp::PhaseSeriesUnloader::get_path_add_source () const
+{
+  return path_add_source;
+}
+
+//! Set the extension to be added to the end of filenames
+void dsp::PhaseSeriesUnloader::set_extension (const std::string& ext)
+{
+  extension = ext;
+
+  if (ext.empty())
+    return;
+
+  // ensure that the first character is a .
+  if (extension[0] != '.')
+    extension.insert (0, ".");
+}
+
+
+std::string dsp::PhaseSeriesUnloader::get_extension () const
+{
+  return extension;
+}
+
 string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
-  string filename;
-  string fname_extension = filename_extension;
+  string the_path;
 
-  if ( filename_pattern.empty() )
-    filename = data->get_default_id() + fname_extension;
+  if (!path.empty())
+    the_path = path + "/";
 
-  else {
-    char* fname = new char[FILENAME_MAX];
-    char* retval = data->get_start_time().datestr ( fname, FILENAME_MAX,
-						    filename_pattern.c_str() );
+  if (path_add_source)
+    the_path += data->get_source() + "/";
 
-    if (retval)
-      filename = retval;
+  if (!file_is_directory(the_path.c_str()))
+    makedir (the_path.c_str());
 
-    delete[] fname;
-
-    cerr << "filename = " << filename << endl;
-
-    if (!retval)
-      throw Error (FailedSys, "dsp::PhaseSeriesUnloader::get_filename",
-		   "error MJD::datestr(" + filename_pattern + ")");
-  }
-
-  return make_unique(filename,fname_extension,data);
+  return the_path + convention->get_filename(data) + extension;
 }
 
-string dsp::PhaseSeriesUnloader::make_unique (const string& filename,
-					      const string& fname_extension,
-					      const PhaseSeries* data) const
+
+dsp::FilenameEpoch::FilenameEpoch ()
 {
-  string path;
+  datestr_pattern = "%Y-%m-%d-%H:%M:%S";
+  integer_seconds = 0;
+}
 
-  if (!filename_path.empty())
-    path = filename_path + "/";
+void dsp::FilenameEpoch::set_datestr_pattern (const std::string& pattern)
+{
+  datestr_pattern = pattern;
+}
 
-  if (source_filename)
-    path += data->get_source() + "/";
+void dsp::FilenameEpoch::set_integer_seconds (unsigned seconds)
+{
+  integer_seconds = seconds;
+}
 
-  if (!file_is_directory(path.c_str()))
-    makedir (path.c_str());
+std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
+{
+  MJD epoch = data->get_start_time();
 
-  string unique_filename = filename;
+  if (integer_seconds)
+  {
+    unsigned seconds = epoch.get_secs();
+    unsigned divisions = seconds / integer_seconds;
+    epoch = MJD (epoch.intday(), divisions * integer_seconds, 0.0);
+  }
+
+  char* fname = new char[FILENAME_MAX];
+
+  char* retval = data->get_start_time().datestr ( fname, FILENAME_MAX,
+						  datestr_pattern.c_str() );
+  string filename;
+
+  if (retval)
+    filename = retval;
+
+  delete[] fname;
+
+  if (!retval)
+    throw Error (FailedSys, "dsp::PhaseSeriesUnloader::get_filename",
+		   "error MJD::datestr(" + datestr_pattern + ")");
+
+  return filename;
+}
+
+std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data) const
+{
+  const Pulsar::Predictor* poly = data->get_folding_predictor();
+  if (!poly)
+    throw Error (InvalidState, "dsp::FilenamePulse::get_filename",
+		 "PhaseSeries does not contain a polyco");
+
+  // add pulse number to the output archive
+  Phase phase = poly->phase ( data->get_start_time() );
 
   if (Observation::verbose)
-    cerr << "dsp::PhaseSeriesUnloader::make_unique filename=" << filename
-	 << " ext=" << fname_extension << " force=" << force_filename 
-	 << " length=" << data->get_integration_length() << endl;
+    cerr << "dsp::FilenamePulse::get_filename phase=" << phase 
+	 << " ref=" << data->get_reference_phase() << endl;
 
-  if (force_filename || data->get_integration_length() > 1.0)
-    return path + unique_filename;
-
-  // small files need a more unique filename
-
-  const Pulsar::Predictor* poly = data->get_folding_predictor();
-  if (poly) {
-
-    // add pulse number to the output archive
-    Phase phase = poly->phase ( data->get_start_time() );
-
-    if (Observation::verbose)
-      cerr << "dsp::PhaseSeriesUnloader::make_unique phase=" << phase 
-	   << " ref=" << data->get_reference_phase() << endl;
-
-    phase = (phase + 0.5-data->get_reference_phase()).Floor();
+  phase = (phase + 0.5 - data->get_reference_phase()).Floor();
     
-    unique_filename = stringprintf ("pulse_"I64, phase.intturns());
-    unique_filename += fname_extension;
-
-  }
-  else
-    cerr << "WARNING: integration length < 1 sec.\n"
-      "'" << unique_filename << "' may not be unique." << endl;
-  
-  return path + unique_filename;
+  return stringprintf ("pulse_"I64, phase.intturns());
 }
-
-/*! If this method is called, then set_extension is ignored.  The filename
-  may contain date and time format conversion specifiers as described by
-  the strftime man page */
-void dsp::PhaseSeriesUnloader::set_filename (const char* filename)
-{
-  filename_pattern = filename;
-}
-
-//! Set the extension to be used by get_filename
-void dsp::PhaseSeriesUnloader::set_extension (const char* extension)
-{
-  if (!extension)
-    filename_extension.erase();
-
-  filename_extension = extension;
-
-  if (extension[0] != '.')
-    filename_extension.insert (0, ".");
-}
-

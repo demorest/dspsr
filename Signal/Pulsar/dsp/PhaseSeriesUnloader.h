@@ -1,15 +1,15 @@
 
 /***************************************************************************
  *
- *   Copyright (C) 2003 by Willem van Straten
+ *   Copyright (C) 2003-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.14 $
-   $Date: 2008/02/24 03:39:16 $
+   $Revision: 1.15 $
+   $Date: 2008/05/11 08:12:44 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -22,10 +22,11 @@
 namespace dsp {
 
   class PhaseSeries;
+  class FilenameConvention;
 
   //! Base class for things that can unload PhaseSeries data somewhere
-
-  class PhaseSeriesUnloader : public Reference::Able {
+  class PhaseSeriesUnloader : public Reference::Able
+  {
 
   public:
     
@@ -44,55 +45,68 @@ namespace dsp {
     //! Perform any clean up tasks before completion
     virtual void finish ();
 
-    //! Creates a good filename for the PhaseSeries data archive
+    //! Generate a filename using the current convention
     virtual std::string get_filename (const PhaseSeries* data) const;
 
-    //! Set the filename (pattern) to be used by get_filename
-    virtual void set_filename (const char* filename);
-    void set_filename (const std::string& filename)
-    { set_filename (filename.c_str()); }
+    //! Set the filename convention
+    virtual void set_convention (FilenameConvention*);
+    virtual FilenameConvention* get_convention ();
 
-    //! Set the extension to be used by get_filename
-    virtual void set_extension (const char* extension);
-    void set_extension (const std::string& extension)
-    { set_extension (extension.c_str()); }
-
-    //! allow the archive filename to be over-ridden by a pulse number
-    void set_force_filename (bool _force_filename)
-    { force_filename = _force_filename; }
-
-    bool get_force_filename () const { return force_filename; }
-
+    //! Set the path to which output data will be written
+    virtual void set_path (const std::string&);
+    virtual std::string get_path () const;
+    
     //! place output files in a sub-directory named by source
-    void set_source_filename (bool _source_filename)
-    { source_filename = _source_filename; }
+    virtual void set_path_add_source (bool);
+    virtual bool get_path_add_source () const;
 
-    bool get_source_filename(){ return source_filename; }
+    //! Set the extension to be added to the end of filenames
+    virtual void set_extension (const std::string&);
+    virtual std::string get_extension () const;
+
 
   protected:
 
-    //! Helper function that makes sure a given filename is unique
-    std::string make_unique (const std::string& filename,
-			     const std::string& fname_extension,
-			     const PhaseSeries* data) const;
-
-    //! The filename pattern
-    std::string filename_pattern;
-
+    //! The filename convention
+    Reference::To<FilenameConvention> convention;
     //! The filename extension
-    std::string filename_extension;
+    std::string extension;
 
     //! The filename path
-    std::string filename_path;
+    std::string path;
 
     //! Put each output file in a sub-directory named by source
-    bool source_filename;
-
-    //! Force make_unique() to return 'filename' [false]
-    bool force_filename;
+    bool path_add_source;
 
   };
 
+  //! Defines the output filename convention
+  class FilenameConvention : public Reference::Able
+  {
+  public:
+    virtual std::string get_filename (const PhaseSeries* data) const = 0;
+  };
+
+  //! Defines the output filename convention
+  class FilenameEpoch : public FilenameConvention
+  {
+  public:
+    FilenameEpoch ();
+    void set_datestr_pattern (const std::string&);
+    void set_integer_seconds (unsigned);
+    std::string get_filename (const PhaseSeries* data) const;
+
+  protected:
+    std::string datestr_pattern;
+    unsigned integer_seconds;
+  };
+
+  //! Defines the output filename convention
+  class FilenamePulse : public FilenameConvention
+  {
+  public:
+    std::string get_filename (const PhaseSeries* data) const;
+  };
 }
 
 #endif // !defined(__PhaseSeriesUnloader_h)
