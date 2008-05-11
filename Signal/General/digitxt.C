@@ -36,7 +36,6 @@ int main (int argc, char** argv) try
   bool argand = false;
 
   int c;
-  int scanned;
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
 
