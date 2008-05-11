@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -69,9 +69,9 @@ double dsp::PhaseSeries::get_folding_period () const
     return folding_period;
 }
 
-void dsp::PhaseSeries::set_pulsar_ephemeris (const Pulsar::Parameters* ephemeris)
+void dsp::PhaseSeries::set_pulsar_ephemeris (const Pulsar::Parameters* eph)
 {
-  pulsar_ephemeris = ephemeris;
+  pulsar_ephemeris = eph;
 }
 
 void dsp::PhaseSeries::set_folding_predictor (const Pulsar::Predictor* p)
@@ -99,13 +99,15 @@ MJD dsp::PhaseSeries::get_mid_time () const
 {
   MJD midtime = 0.5 * (start_time + end_time);
 
-  if (folding_predictor) {
+  if (folding_predictor)
+  {
     // truncate midtime to the nearest pulse phase = reference_phase
     Phase phase = folding_predictor->phase(midtime).Floor() + reference_phase;
     midtime = folding_predictor->iphase (phase, &midtime);
   }
 
-  if (folding_period) {
+  if (folding_period)
+  {
     double phase = reference_phase + 
       fmod (midtime.in_seconds(), folding_period)/folding_period;
     midtime -= phase * folding_period;
@@ -204,11 +206,12 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   if (verbose)
     cerr << "dsp::PhaseSeries::operator = copy attributes" << endl;
 
+  reference_phase    = prof.reference_phase;
   integration_length = prof.integration_length;
   end_time           = prof.end_time;
   folding_period     = prof.folding_period;
-  folding_predictor  = prof.folding_predictor;
-  pulsar_ephemeris   = prof.pulsar_ephemeris;
+  folding_predictor  = prof.folding_predictor->clone();
+  pulsar_ephemeris   = prof.pulsar_ephemeris->clone();
   hits               = prof.hits;
 
   return *this;
