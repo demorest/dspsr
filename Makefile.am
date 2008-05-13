@@ -1,5 +1,5 @@
 
-ACLOCAL_AMFLAGS = -I config
+ACLOCAL_AMFLAGS = -I `psrchive_aclocal` -I config
 
 SUBDIRS	= util base backends dsp psr Management
 
