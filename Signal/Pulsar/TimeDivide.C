@@ -47,6 +47,10 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
   if (start_time == _start_time)
     return;
 
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_start_time start_time=" 
+         << _start_time.printall() << endl;
+
   start_time = _start_time;
   start_phase = Phase::zero;
   is_valid = false;
@@ -58,6 +62,10 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
     unsigned seconds = start_time.get_secs();
     unsigned divisions = seconds / integer_seconds;
     start_time = MJD (start_time.intday(), divisions * integer_seconds, 0.0);
+
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::set_start_time rounded start_time=" 
+           << _start_time.printall() << endl;
   }
 }
 
