@@ -129,17 +129,27 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
 {
   MJD epoch = data->get_start_time();
 
+  if (Observation::verbose)
+    cerr << "dsp::FilenameEpoch::get_filename epoch=" 
+         << epoch.printall() << endl;
+
   if (integer_seconds)
   {
+    // round the epoch up into the current division
+    epoch += 0.5 * double(integer_seconds);
+
     unsigned seconds = epoch.get_secs();
     unsigned divisions = seconds / integer_seconds;
     epoch = MJD (epoch.intday(), divisions * integer_seconds, 0.0);
+
+    if (Observation::verbose)
+      cerr << "dsp::FilenameEpoch::get_filename rounded epoch=" 
+           << epoch.printall() << endl;
   }
 
   char* fname = new char[FILENAME_MAX];
 
-  char* retval = data->get_start_time().datestr ( fname, FILENAME_MAX,
-						  datestr_pattern.c_str() );
+  char* retval = epoch.datestr( fname, FILENAME_MAX, datestr_pattern.c_str() );
   string filename;
 
   if (retval)
