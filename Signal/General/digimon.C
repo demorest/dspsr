@@ -34,7 +34,8 @@ void usage ()
     " -c          read data consecutively (useful for debugging)\n"
     " -p          swap polarizations (useful for debugging)\n"
     " -m MBsamp   number of mega-bytes to sample\n"
-    " -s sleep    number of seconds to sleep between samples blocks\n"
+    " -b fsleep   number of seconds to sleep between iterations \n"
+    " -s sleep    number of seconds to sleep after levels are properly set\n"
     " -i iter     number of iterations - defaults to convergence\n"
        << endl;
 }
@@ -50,6 +51,9 @@ int main (int argc, char** argv) try
   // number of seconds to rest before making another estimate
   int rest_seconds = 30;
 
+  // number of seconds to rest between iterations
+  double between_iterations = 0.5;
+
   // plot device
   string device = "?";
 
@@ -59,7 +63,7 @@ int main (int argc, char** argv) try
 
   int arg = 0;
 
-  while ((arg = getopt(argc, argv, "chm:ps:i:vV")) != -1)
+  while ((arg = getopt(argc, argv, "cb:hm:ps:i:vV")) != -1)
   {
     switch (arg)
     {
@@ -69,6 +73,10 @@ int main (int argc, char** argv) try
 
     case 'c':
       consecutive = true;
+      break;
+
+    case 'b':
+      between_iterations = atof (optarg);
       break;
 
     case 'p':
@@ -121,7 +129,7 @@ int main (int argc, char** argv) try
   
   digitizer->set_input (manager);
 
-  //digitizer->set_integration (npts);
+  digitizer->set_between_iterations (between_iterations);
   digitizer->set_max_iterations (iterations);
   digitizer->set_swap_polarizations (swap_polarizations);
   digitizer->set_consecutive (consecutive);
