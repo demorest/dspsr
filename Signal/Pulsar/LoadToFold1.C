@@ -603,13 +603,20 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   else
     archiver->set_convention( epoch_convention = new FilenameEpoch );
 
+  unsigned integer_seconds = unsigned(config->integration_length);
+
   if (config->integration_length &&
-      config->integration_length == unsigned(config->integration_length))
+      config->integration_length == integer_seconds)
   {
     if (!epoch_convention)
       throw Error (InvalidState, "dsp::LoadToFold1::prepare_archiver",
 		   "cannot set integration length in single pulse mode");
-    epoch_convention->set_integer_seconds (config->integration_length);
+
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold1::prepare_archiver integer_seconds="
+           << integer_seconds << " in output filenames" << endl;
+
+    epoch_convention->set_integer_seconds (integer_seconds);
   }
 
   if (!config->archive_filename.empty())
