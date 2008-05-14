@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/05/09 03:47:39 $
+   $Revision: 1.6 $
+   $Date: 2008/05/14 00:58:39 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -67,8 +67,11 @@ namespace dsp {
     virtual int set_thresholds (std::vector<double>& mean, 
                                 std::vector<double>& variance);
 
-    //! Set the number of iterations to perform
+    //! Set the maximum number of iterations before giving up
     void set_max_iterations (unsigned);
+
+    //! Set the number of seconds to sleep between iterations
+    void set_between_iterations (double seconds);
 
     //! Set the device to be used to plot/log the digitizer statistics
     void set_history (LevelHistory* history);
@@ -92,9 +95,12 @@ namespace dsp {
     //! the number of points to load in one iteration
     uint64 block_size;
 
-    //! Number of iterations 0 for infinite
+    //! Number of iterations, 0 for infinite
     unsigned max_iterations;
-    
+
+    //! the amount of time to sleep between iterations
+    double between_iterations;
+ 
     //! abort current integration
     bool abort;
     
@@ -102,10 +108,10 @@ namespace dsp {
     double optimal_variance;
     //! the optimal dBm
     double optimal_dBm;
-    
+
     //! the amount by which the mean may be off zero
     double mean_tolerance;
-    
+
     //! the amount by which the variance may be off optimal
     double var_tolerance;
 

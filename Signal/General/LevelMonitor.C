@@ -13,6 +13,7 @@
 #include "dsp/Input.h"
 
 #include "dsp/TimeSeries.h"
+#include "fsleep.h"
 
 #include <assert.h>
 
@@ -35,6 +36,7 @@ dsp::LevelMonitor::LevelMonitor ()
 
   mean_tolerance = var_tolerance = 5e-4;
   max_iterations = 0;
+  between_iterations = 0.0;
 
   far_from_good = false;
 
@@ -96,6 +98,11 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 void dsp::LevelMonitor::set_integration (uint64 npts)
 {
   n_integrate = npts;
+}
+
+void dsp::LevelMonitor::set_between_iterations (double seconds)
+{
+  between_iterations = seconds;
 }
 
 //! Abort monitoring
@@ -182,6 +189,13 @@ void dsp::LevelMonitor::monitor ()
     if (!far_from_good)
       return;
 
+    if (between_iterations)
+    {
+      if (verbose)
+        cerr << "LevelMonitor::monitor sleeping " << between_iterations << " seconds" << endl;
+      fsleep (between_iterations);
+    }
+
     iterations++;
 
   }
@@ -266,6 +280,12 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 
   for (unsigned idig=0; idig < ndig; idig++) 
   {
+    if (total_pts == 0)
+    {
+       mean[idig] = variance[idig] = 0.0;
+       continue;
+    }
+
     double x = tot_sum[idig] / total_pts;
     double xsq = tot_sumsq[idig] / total_pts;
 
@@ -302,6 +322,12 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
     {
       for (unsigned idim=0; idim < ndim; idim++)
       {
+        if (variance[idig] == 0.0)
+        {
+          idig ++;
+          continue;
+        }
+
         double delta_var = fabs(variance[idig] - optimal_variance);
 
         if (verbose)
@@ -355,4 +381,4 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 
   return 0;
 }
-            
+
