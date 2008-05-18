@@ -25,7 +25,7 @@ SWIN_OPTIONS_SET
 # Enable convenience compiler selection
 SWIN_COMPILER
 
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 # Create static libraries by default
 AC_DISABLE_SHARED
