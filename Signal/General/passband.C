@@ -32,7 +32,7 @@ void usage ()
     "Options:\n"
     " -c cmap    set the colour map (0 to 7) \n"
     " -d         produce dynamic spectrum (greyscale) \n"
-    " -m maxval  set the maximum value in the greyscale (saturate birdies) \n"
+    " -r min,max set the min,max value in the plot (e.g. saturate birdies) \n"
     " -n nchan   number of frequency channels in each spectrum \n"
     " -t seconds integration interval for each spectrum \n"
     " -R         test RFIFilter class \n"
@@ -74,6 +74,7 @@ int main (int argc, char** argv) try {
 
   // the plotter
   fft::BandpassPlotter<dsp::Response, dsp::TimeSeries> plotter;
+  plotter.title = "Bandpass";
 
   // the colour map
   pgplot::ColourMap::Name colour_map = pgplot::ColourMap::Heat;
@@ -84,10 +85,14 @@ int main (int argc, char** argv) try {
 
   int c;
 
-  static char* args = "B:c:dD:f:lm:n:RS:T:t:hvV";
+  static char* args = "iB:c:dD:f:lr:n:RS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
+
+    case 'i':
+      plotter.xlabel_ichan = true;
+      break;
 
     case 'B':
       bandwidth = atof (optarg);
@@ -141,9 +146,13 @@ int main (int argc, char** argv) try {
       metafile = optarg;
       break;
       
-    case 'm':
-      plotter.user_max = atoi (optarg);
+    case 'r':
+    {
+      float min, max;
+      sscanf (optarg, "%f,%f", &min, &max);
+      plotter.set_minmax (min, max);
       break;
+    }
 
     case 'n':
       nchan = atoi (optarg);
