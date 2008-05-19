@@ -162,12 +162,18 @@ void dsp::BitTable::generate_unique_values (float* values) const
 
     if (i < input_middle)
     {
-      double threshold = (i+1 - input_middle) * input_spacing;
+      double threshold = double(int(i+1) - int(input_middle)) * input_spacing;
       double cumulative = normal.cumulative_distribution (threshold);
       double interval = cumulative - cumulative_probability;
       cumulative_probability = cumulative;
 
       variance += output*output * interval;
+
+#ifdef _DEBUG
+      cerr << i << " t=" << threshold << " c=" << interval 
+           << " v=" << variance << endl;
+#endif
+
     }
   }
 
@@ -177,7 +183,11 @@ void dsp::BitTable::generate_unique_values (float* values) const
   // scale such that the variance is unity
   double scale = 1.0/sqrt(variance);
   for (unsigned i=0; i<unique_values; i++)
+  {
+    // cerr << i << " " << values[i];
     values[i] *= scale;
+    // cerr << " " << values[i] << endl;
+  }
 }
 
 double dsp::BitTable::get_optimal_variance ()
