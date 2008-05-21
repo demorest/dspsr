@@ -15,7 +15,7 @@ dsp/Buffer.h                    dsp/IncoherentFilterbank.h      dsp/TScrunch.h \
 dsp/LevelHistory.h              dsp/TimeOrder.h \
 dsp/Chomper.h                   dsp/LevelMonitor.h              dsp/TwoBitHistoryPlotter.h \
 dsp/TwoBitStatsPlotter.h \
-dsp/Convolution.h               dsp/Plotter.h                   \
+dsp/Convolution.h               \
 dsp/Dedispersion.h              \
 dsp/DedispersionHistory.h       dsp/RFIFilter.h \
 dsp/DedispersionSampleDelay.h   dsp/Response.h
@@ -49,12 +49,12 @@ test_Dedispersion_SOURCES = test_Dedispersion.C
 
 if HAVE_PGPLOT
 
-##############################################################################
-#
-# PGPLOT-specific code
-#
+  ###########################################################################
+  #
+  # PGPLOT-specific code
+  #
 
-  libdspdsp_la_SOURCES += TwoBitStatsPlotter.C TwoBitHistoryPlotter.C BitStatsPlotter.C
+  libdspdsp_la_SOURCES += TwoBitStatsPlotter.C BitStatsPlotter.C
   bin_PROGRAMS += digistat passband
 
   digistat_SOURCES = digistat.C
@@ -68,4 +68,6 @@ endif
 include $(top_srcdir)/config/Makefile.include
 
 LDADD = libdspdsp.la $(top_builddir)/Base/libdspbase.la $(top_builddir)/Util/libdsputil.la
+
+AM_CPPFLAGS += @PGPLOT_CFLAGS@
 
