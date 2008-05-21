@@ -138,7 +138,7 @@ void dsp::LBADR64_File::open_file (const char* filename)
 
   info.set_centre_frequency(1420.0);
 
-  info.set_telescope_code('4');   // 4 = Hobart, 7 = Parkes, 6 = Tid
+  info.set_telescope( "Hobart" );   // 4 = Hobart, 7 = Parkes, 6 = Tid
 
   info.set_identifier("v" + info.get_default_id());
 

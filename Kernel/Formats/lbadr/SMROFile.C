@@ -233,7 +233,7 @@ void dsp::SMROFile::open_file (const char* filename)
   // Change this as required. The default probably won't be correct!
   // ///////////////////////////////////////////////////////////////
 
-  info.set_telescope_code('4');   // 4 = Hobart, 7 = Parkes, 6 = Tid
+  info.set_telescope( "Hobart" );   // 4 = Hobart, 7 = Parkes, 6 = Tid
 
   info.set_identifier("v" + info.get_default_id());
 
