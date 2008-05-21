@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 /*! \file File_registry.C
   \brief Register dsp::File-derived classes for use in this file
     
@@ -19,108 +20,108 @@
   added does perform a proper is_valid() test.
 */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "dsp/File.h"
-
-//! Based on backends.list, backends.h #defines the DSP_Backend macros
-#include "backends.h"
 
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::File> dsp::File::registry;
 
-#if DSP_asp
+#if HAVE_asp
 #include "dsp/ASPFile.h"
 static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
 #endif
 
-#if DSP_bcpm
+#if HAVE_bcpm
 #include "dsp/BCPMFile.h"
 static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
 #endif
 
-#if DSP_cpsr
+#if HAVE_cpsr
 #include "dsp/CPSRFile.h"
 static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
-#if DSP_cpsr2
+#if HAVE_cpsr2
 #include "dsp/CPSR2File.h"
 static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 #endif
 
-#if DSP_dada
+#if HAVE_dada
 #include "dsp/DADABuffer.h"
 static Registry::List<dsp::File>::Enter<dsp::DADABuffer> dada_buffer;
 #include "dsp/DADAFile.h"
 static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
 #endif
 
-#if DSP_fadc
+#if HAVE_fadc
 #include "dsp/FadcFile.h"
 static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
 #endif
 
-#if DSP_lbadr
+#if HAVE_lbadr
 #include "dsp/SMROFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
 #endif
 
-#if DSP_lbadr64
+#if HAVE_lbadr64
 #include "dsp/LBADR64_File.h"
 static Registry::List<dsp::File>::Enter<dsp::LBADR64_File> register_lbadr64;
 #endif
 
-#if DSP_mark4
+#if HAVE_mark4
 #include "dsp/Mark4File.h"
 static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
 #endif
 
-#if DSP_mark5
+#if HAVE_mark5
 #include "dsp/Mark5File.h"
 static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
 #endif
 
-#if DSP_maxim
+#if HAVE_maxim
 #include "dsp/MaximFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
 #endif
 
-#if DSP_mini
+#if HAVE_mini
 #include "dsp/MiniFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 #endif
 
-#if DSP_mwa
+#if HAVE_mwa
 #include "dsp/MWAFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MWAFile> file_register_mwa;
 #endif
 
-#if DSP_pmdaq
+#if HAVE_pmdaq
 #include "dsp/PMDAQFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
 #endif
 
-#if DSP_puma
+#if HAVE_puma
 #include "dsp/PuMaFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
 #endif
 
-#if DSP_puma2
+#if HAVE_puma2
 #include "dsp/PuMa2File.h"
 static Registry::List<dsp::File>::Enter<dsp::PuMa2File> register_puma2;
 #endif
 
-#if DSP_s2
+#if HAVE_s2
 #include "dsp/S2File.h"
 static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
 #endif
 
-#if DSP_spigot
+#if HAVE_spigot
 #include "dsp/SpigotFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
 #endif
 
-#if DSP_wapp
+#if HAVE_wapp
 #include "dsp/WAPPFile.h"
 static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
 #endif
@@ -132,39 +133,24 @@ static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
 // ///////////////////////////////////////////////////////////////////////////
 
 //Tej's new CPSR2 8 bit File Format:
-#if DSP_CPSR2_8bit
+#if HAVE_CPSR2_8bit
 #include "dsp/EightBitFile.h"
 static Registry::List<dsp::File>::Enter<dsp::EightBitFile> register_eightbitcpsr2;
 #endif
 
-#if 0
-
-/* Wvs FIX LATER */
-// This is defined in libdsp.a
-// It comes before CPSRFile as PSPMverify seems to think MultiBitSeriesFiles are CPSR files
-#include "dsp/MultiBitSeriesFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MultiBitSeriesFile> register_multibitseriesfile;
-
-#endif
-
-#if DSP_vsib
+#if HAVE_vsib
 #include "dsp/VSIBFile.h"
 static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;
 #endif
 
-#if DSP_DUMBLBA
+#if HAVE_DUMBLBA
 #include "dsp/DumbLBAFile.h"
 static Registry::List<dsp::File>::Enter<dsp::Dumb_LBAFile> file_register_dumblba;
 #endif
 
-#if DSP_k5
+#if HAVE_k5
 #include "dsp/K5File.h"
 static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
 #endif
 
-#if 0
-/* Wvs FIX LATER */
-#include "dsp/BitSeriesFile.h"
-static Registry::List<dsp::File>::Enter<dsp::BitSeriesFile> register_bitseriesfile;
-#endif
 

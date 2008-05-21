@@ -5,7 +5,7 @@
  *
  ***************************************************************************/
 
-#include "dsp.h"
+#include "dsp/dsp.h"
 
 bool dsp::psrdisp_compatible = false;
 
