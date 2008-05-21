@@ -10,5 +10,7 @@ DIST_SUBDIRS =  apsr asp bcpm cpsr cpsr2 dada fadc gmrt \
 #############################################################################
 #
 
+include $(top_srcdir)/config/Makefile.bootstrap
+
 include $(top_srcdir)/config/Makefile.include
 
