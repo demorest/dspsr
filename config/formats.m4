@@ -21,6 +21,8 @@ AC_DEFUN([DSPSR_SELECTED_FORMATS],
   # formats.list will always be in the current working directory when configure is run
   selected_formats=`cat formats.list 2> /dev/null`
 
+  formats_list=
+
   if test x"$selected_formats" = x; then
     AC_MSG_WARN([
 
@@ -29,10 +31,9 @@ AC_DEFUN([DSPSR_SELECTED_FORMATS],
     ])
   else
     AC_MSG_NOTICE([Selected formats: $selected_formats])
-    AC_SUBST([CONFIG_STATUS_DEPENDENCIES],['$(top_builddir)/formats.list'])
   fi
 
-  AC_SUBST([CONFIG_STATUS_DEPENDENCIES],['$(top_srcdir)/config/formats.sh'])
+  AC_SUBST([CONFIG_STATUS_DEPENDENCIES],['$(top_srcdir)/config/formats.sh $(top_builddir)/formats.list'])
 
 ])
 
