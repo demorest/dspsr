@@ -40,12 +40,9 @@ Detection.C
 
 bin_PROGRAMS = dmsmear digitxt digimon
 
-check_PROGRAMS = test_Dedispersion
-
 dmsmear_SOURCES = dmsmear.C 
 digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
-test_Dedispersion_SOURCES = test_Dedispersion.C
 
 if HAVE_PGPLOT
 
