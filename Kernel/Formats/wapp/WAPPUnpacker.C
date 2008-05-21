@@ -29,7 +29,7 @@ extern "C" {
 //! Constructor
 dsp::WAPPUnpacker::WAPPUnpacker (const char* name) : HistUnpacker (name)
 {
-  set_nsample (256);
+  set_ndat_per_weight (256);
   set_ndig (4);
 }
 
@@ -90,8 +90,6 @@ void dsp::WAPPUnpacker::unpack ()
 
   /* needed for truncation modes */
   scale *= pow(2.0,(double)head->lagtrunc);
-
-  float smin = 0.0, smax = 3.0;
 
   /* now define a number of working arrays to store lags and spectra */
   float* acf = scratch->space<float> (5*nchan);
