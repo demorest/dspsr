@@ -174,7 +174,7 @@ void dsp::SpigotFile::parse (void* header)
          << endl;
 
   // Always Greenbank for now
-  info.set_telescope_code ('1');
+  info.set_telescope ( "Greenbank" );
 
   //
   // source

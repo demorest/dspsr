@@ -109,7 +109,7 @@ void dsp::BCPMFile::open_file (const char* filename){
     throw Error(InvalidParam,"dsp::BCPMFile::open_file()",
 		"bpp_search.cb_sum_polarizations is false");
 
-  get_info()->set_telescope_code( char(6) );
+  get_info()->set_telescope( "Tidbinbilla" );
   get_info()->set_machine( "BCPM" );
   get_info()->set_nchan( unsigned(bpp_search.num_chans) );
   get_info()->set_bandwidth( get_info()->get_nchan() * 0.000001*bpp_search.bandwidth );
