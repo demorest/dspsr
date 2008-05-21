@@ -4,12 +4,12 @@ noinst_LTLIBRARIES = libClasses.la
 nobase_include_HEADERS = \
 dsp/ASCIIObservation.h          dsp/InputBuffering.h            dsp/Seekable.h \
 dsp/BitSeries.h                 dsp/InputBufferingShare.h       dsp/SetBufferingPolicy.h \
-dsp/JA98Unpacker.h              dsp/Sink.h \
+dsp/DADAFile.h                  dsp/JA98Unpacker.h              \
 dsp/BitTable.h                  dsp/MPIRoot.h                   dsp/SubByteTwoBitCorrection.h \
 dsp/BitUnpacker.h               dsp/MPIServer.h                 dsp/SubByte_dig_unpack.h \
 dsp/BlockFile.h                 dsp/MPITrans.h                  dsp/TestInput.h \
 dsp/BufferingPolicy.h           dsp/MiniExtension.h             \
-dsp/ChannelOrder.h              dsp/MiniPlan.h                  dsp/Time.h \
+dsp/ChannelOrder.h              dsp/MiniPlan.h                  \
 dsp/DataSeries.h                dsp/TimeSeries.h \
 dsp/DataSource.h                dsp/MultiFile.h                 dsp/Transformation.h \
 dsp/Digitizer.h                 dsp/TwoBitCorrection.h \
@@ -22,10 +22,10 @@ dsp/IOManager.h                 \
 dsp/Input.h                     dsp/Scratch.h
 
 libClasses_la_SOURCES = \
-ASCIIObservation.C              InputBufferingShare.C           Sink.C \
+ASCIIObservation.C              InputBufferingShare.C           \
 BitSeries.C                     JA98Unpacker.C                  SubByteTwoBitCorrection.C \
-TestInput.C \
-BitTable.C                      Time.C \
+DADAFile.C                      TestInput.C \
+BitTable.C                      \
 BitUnpacker.C                   \
 BlockFile.C                     TimeSeries.C \
 ChannelOrder.C                  Transformation.C \
