@@ -18,14 +18,14 @@ bool dsp::SMROTwoBitCorrection::matches (const Observation* observation)
 dsp::SMROTwoBitCorrection::SMROTwoBitCorrection ()
   : SubByteTwoBitCorrection ("SMROTwoBitCorrection")
 {
-  //threshold = 1.5;
+  bool reverse_bits = true;
+
 #ifdef SIGN_MAG
-  table = new TwoBitTable (TwoBitTable::SignMagnitude);
+  table = new TwoBitTable (TwoBitTable::SignMagnitude, reverse_bits);
 #endif
 #ifdef OFFSET_BIN
-  table = new TwoBitTable (TwoBitTable::OffsetBinary);
+  table = new TwoBitTable (TwoBitTable::OffsetBinary, reverse_bits);
 #endif
-  table->set_flip(true);
 }
 
 /*! SMRO has four digitizers: Potentially 4 channels */
