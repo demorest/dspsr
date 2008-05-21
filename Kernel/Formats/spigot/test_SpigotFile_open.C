@@ -4,12 +4,16 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/SpigotFile.h"
 #include "dirutil.h"
+#include "strutil.h"
 
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
+
+using namespace std;
 
 void usage ()
 {

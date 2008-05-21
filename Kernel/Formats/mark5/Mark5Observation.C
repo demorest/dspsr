@@ -5,17 +5,15 @@
  *
  ***************************************************************************/
 #include "dsp/Mark5Observation.h"
-#include "string_utils.h"
 #include "coord.h"
 #include "ascii_header.h"
 #include <unistd.h>
 #include "fcntl.h"
 #include <sys/types.h>
 
+using namespace std;
+
 //modelled on CPSR2_8bitObservation.C
-
-
-
 
 dsp::Mark5_Observation::Mark5_Observation(const char* header)
 {
@@ -28,7 +26,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	printf("header = %s\n",header);
 	// NB: where do we open the header file or specify its name?
 	if (header == NULL)
-		throw_str ("Mark5_Observation - no header string");
+		throw Error (InvalidState,"Mark5_Observation", "no header string");
 	
 	//
 	// no idea about the size of the data
@@ -50,26 +48,17 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	
 	
 	if (ascii_header_get (header,"TELESCOPE","%s",hdrstr) <0)
-		throw_str ("Mark5_Observation - failed read TELESCOPE");
+		throw Error (InvalidState,"Mark5_Observation", "failed read TELESCOPE");
 	/* user must specify a telescope whose name is recognised or the telescope
 	code */
 	
-	string tel= hdrstr;
-	if ( !strcasecmp (hdrstr, "parkes") || tel == "PKS") 
-    	set_telescope_code (7);
-  	else if ( !strcasecmp (hdrstr, "GBT") || tel == "GBT")
-    	set_telescope_code (1);
-  	else if ( !strcasecmp (hdrstr, "westerbork") || tel == "WSRT")
-    	set_telescope_code ('i');
-  	else {
-    	   cerr << "Mark5_Observation:: Warning using code" << hdrstr[0] << endl;
-    	set_telescope_code (hdrstr[0]);
-  	}
+    	set_telescope (hdrstr);
+
 	// ///////////////////////////////////////////////////////////////	
 	// SOURCE
 	//
 	  if (ascii_header_get (header, "SOURCE", "%s", hdrstr) < 0)
-	    throw_str ("Mark5_Observation - failed read SOURCE");
+	    throw Error (InvalidState,"Mark5_Observation", "failed read SOURCE");
 
   	set_source (hdrstr);
 	// ///////////////////////////////////////////////////////////////
@@ -79,7 +68,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	//  fix this is up in later version
 	double freq;
   	if (ascii_header_get (header, "FREQ", "%lf", &freq) < 0)
-    	throw_str ("Mark5_Observation - failed read FREQ");
+    	throw Error (InvalidState,"Mark5_Observation", "failed read FREQ");
 
   	set_centre_frequency (freq);
 
@@ -91,7 +80,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	//
 	double bw;
 	if (ascii_header_get (header, "BW", "%lf", &bw) < 0)
-    		throw_str ("Mark5_Observation - failed read BW");
+    		throw Error (InvalidState,"Mark5_Observation", "failed read BW");
 
 	set_bandwidth (bw);
 	
@@ -117,7 +106,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	
 	int scan_nbit;
 	if (ascii_header_get (header, "NBIT", "%d", &scan_nbit) < 0)
-	   throw_str ("Mark5_Observation - failed read NBIT");
+	   throw Error (InvalidState,"Mark5_Observation", "failed read NBIT");
 
 	set_nbit (scan_nbit);
 
@@ -137,7 +126,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	//  FANOUT
 	//
 	if (ascii_header_get (header,"FANOUT","%d",&fanout) < 0)
-		throw_str ("Mark5_Observation - failed read FANOUT");
+		throw Error (InvalidState,"Mark5_Observation", "failed read FANOUT");
 
 
 
@@ -147,7 +136,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	// Note TSAMP is the sampling period in microseconds
 	double sampling_interval;
   	if (ascii_header_get (header, "TSAMP", "%lf", &sampling_interval)<0)
-    		throw_str ("Mark5_Observation - failed read TSAMP");
+    		throw Error (InvalidState,"Mark5_Observation", "failed read TSAMP");
 
   	/* IMPORTANT: TSAMP is the sampling period in microseconds */
   	sampling_interval *= 1e-6;
@@ -159,7 +148,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	string datafilename;   
 	
 	 if (ascii_header_get (header,"DATAFILE","%s",hdrstr) < 0 )
-	 	throw_str ("Mark5_Observation - failed read Mark5 data filename");
+	 	throw Error (InvalidState,"Mark5_Observation", "failed read Mark5 data filename");
 	
 	// ///////////////////////////////////////////////////////////////	  
 	// MJD_START
@@ -178,7 +167,7 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	string prefix="?";    // what prefix should we assign??
 	  
 	set_identifier(prefix+get_default_id() );
-	set_mode(stringprintf ("%d-bit mode",get_nbit() ) );
+	set_mode( tostring(get_nbit()) + "-bit mode" );
 	set_machine("Mark5");
 	
 	// ///////////////////////////////////////////////////////////////
