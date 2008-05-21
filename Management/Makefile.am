@@ -12,10 +12,6 @@ install-exec-hook: fix_prefix
 
 FIX_PREFIX = ${prefix}/bin/dspsr_ldflags ${prefix}/bin/dspsr_cflags
 
-LOCAL_ROOT = ${top_srcdir}
-include ${top_srcdir}/config/Makefile.backends
-
 fix_prefix: install-binSCRIPTS
 	perl -p -i -e "s|PREFIX|${prefix}|" ${FIX_PREFIX}
-	perl -p -i -e "s|BACKENDS|${LBACKENDS}|" ${FIX_PREFIX}
 
