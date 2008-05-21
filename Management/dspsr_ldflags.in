@@ -2,9 +2,5 @@
 
 # @configure_input@
 
-echo -n " -LPREFIX/lib -ldspsr -ldspdsp -ldspbase "
-
-echo -n " BACKENDS "
-
-echo -n " -ldsputil @PSRCHIVE_LIBS@"
+echo -n " -LPREFIX/lib -ldspsr -ldspdsp -ldspbase -ldsputil @PSRCHIVE_LIBS@"
 
