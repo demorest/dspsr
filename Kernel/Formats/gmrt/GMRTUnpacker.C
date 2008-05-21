@@ -1,10 +1,11 @@
 /***************************************************************************
  *
- *   Copyright (C) 2006 by Willem van Straten
+ *   Copyright (C) 2008 by Jayanta Roy
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "GMRTUnpacker.h"
+
+#include "dsp/GMRTUnpacker.h"
 #include "Error.h"
 
 using namespace std;
@@ -12,7 +13,6 @@ using namespace std;
 //! Constructor
 dsp::GMRTUnpacker::GMRTUnpacker (const char* name) : HistUnpacker (name)
 {
-  set_nsample (256);
   set_ndig (4);
 }
 

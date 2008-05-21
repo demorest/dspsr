@@ -4,8 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "WAPPUnpacker.h"
-#include "WAPPFile.h"
+
+#include "dsp/WAPPUnpacker.h"
+#include "dsp/WAPPFile.h"
 #include "dsp/Scratch.h"
 
 #include "machine_endian.h"

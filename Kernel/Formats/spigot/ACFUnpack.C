@@ -8,6 +8,7 @@
 #include "dsp/ACFUnpack.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
+#include "dsp/Scratch.h"
 
 #include "FTransform.h"
 #include "Error.h"

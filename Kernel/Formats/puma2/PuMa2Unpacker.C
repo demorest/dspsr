@@ -5,7 +5,7 @@
  *
  ***************************************************************************/
 
-#include "PuMa2Unpacker.h"
+#include "dsp/PuMa2Unpacker.h"
 #include "dsp/BitTable.h"
 
 //! Constructor

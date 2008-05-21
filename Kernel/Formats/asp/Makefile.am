@@ -1,9 +1,9 @@
 
 noinst_LTLIBRARIES = libasp.la
 
-nobase_include_HEADERS =  dsp/ASPFile.h dsp/ASPUnpacker.h dsp/asp_params.h dsp/data2rcv.h
+nobase_include_HEADERS =  dsp/ASPFile.h dsp/ASPUnpacker.h 
 
-libasp_la_SOURCES =  ASPFile.C ASPUnpacker.C
+libasp_la_SOURCES = ASPFile.C ASPUnpacker.C asp_params.h data2rcv.h
 
 #############################################################################
 #
