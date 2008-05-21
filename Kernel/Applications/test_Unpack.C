@@ -12,9 +12,11 @@
 #include "dsp/Unpacker.h"
 #include "dsp/WeightedTimeSeries.h"
 
-#include "string_utils.h"
+#include "strutil.h"
 #include "dirutil.h"
 #include "Error.h"
+
+using namespace std;
 
 static char* args = "B:t:vV";
 
