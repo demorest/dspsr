@@ -1,5 +1,5 @@
 
-lib_LTLIBRARIES = libdsppsr.la
+lib_LTLIBRARIES = libdspsr.la
 
 nobase_include_HEADERS = \
 dsp/Archiver.h                  dsp/SubFold.h \
@@ -9,7 +9,7 @@ dsp/LoadToFold1.h               dsp/PhaseLockedFilterbank.h \
 dsp/LoadToFoldConfig.h          dsp/PhaseSeries.h \
 dsp/LoadToFoldN.h               dsp/PhaseSeriesUnloader.h
 
-libdsppsr_la_SOURCES = \
+libdspsr_la_SOURCES = \
 Archiver.C              SubFold.C               \
 ArchiverExtensions.C    TimeDivide.C            \
 Fold.C                  UnloaderShare.C \
@@ -26,7 +26,7 @@ dspsr_SOURCES = dspsr.C
 
 include $(top_srcdir)/config/Makefile.include
 
-LDADD = libdsppsr.la \
+LDADD = libdspsr.la \
 	$(top_builddir)/More/General/libdspdsp.la \
 	$(top_builddir)/Base/libdspbase.la \
 	$(top_builddir)/Util/libdsputil.la
