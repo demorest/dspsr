@@ -1,9 +1,9 @@
 
 noinst_LTLIBRARIES = libgmrt.la
 
-nobase_include_HEADERS =  dsp/GMRTFile.h dsp/GMRTUnpacker.h dsp/data2rcv.h dsp/gmrt_params.h
+nobase_include_HEADERS = dsp/GMRTFile.h dsp/GMRTUnpacker.h
 
-libgmrt_la_SOURCES =  GMRTFile.C GMRTUnpacker.C
+libgmrt_la_SOURCES = GMRTFile.C GMRTUnpacker.C data2rcv.h gmrt_params.h
 
 #############################################################################
 #
