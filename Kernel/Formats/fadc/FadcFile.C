@@ -226,12 +226,12 @@ cerr<<"fileSize going to return "<<sz<<"\n";
 // returns the whole header file
 string dsp::FadcFile::get_header (const char* filename)
 {
-cerr<<"FadcFile getheader\n";
+::cerr<<"FadcFile getheader\n";
   string str="";
   char ch;
   std::ifstream input (filename);
   
-cerr<<"Tried to open "<<filename<<" (did not check for success yet)\n";
+::cerr<<"Tried to open "<<filename<<" (did not check for success yet)\n";
   if (!input)
     return str;
 
