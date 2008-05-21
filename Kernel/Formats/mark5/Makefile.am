@@ -1,0 +1,12 @@
+
+noinst_LTLIBRARIES = libmark5.la
+
+nobase_include_HEADERS =  dsp/Mark5File.h dsp/Mark5Observation.h dsp/Mark5TwoBitCorrection.h dsp/Mark5Unpacker.h dsp/vlba_stream.h
+
+libmark5_la_SOURCES =  Mark5File.C Mark5Observation.C Mark5TwoBitCorrection.C Mark5Unpacker.C
+
+#############################################################################
+#
+
+include $(top_srcdir)/config/Makefile.include
+
