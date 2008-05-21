@@ -18,10 +18,14 @@ AC_DEFUN([DSPSR_SELECTED_FORMATS],
 [
   AC_PROVIDE([DSPSR_SELECTED_FORMATS])
 
-  # formats.list will always be in the current working directory when configure is run
-  selected_formats=`cat formats.list 2> /dev/null`
+  # formats.list will always be in the current working directory
+  # when configure is run
 
-  formats_list=
+  if test ! -f formats.list; then
+    echo > formats.list
+  fi
+
+  selected_formats=`cat formats.list 2> /dev/null`
 
   if test x"$selected_formats" = x; then
     AC_MSG_WARN([
