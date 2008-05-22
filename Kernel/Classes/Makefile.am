@@ -4,7 +4,7 @@ noinst_LTLIBRARIES = libClasses.la
 nobase_include_HEADERS = \
 dsp/ASCIIObservation.h          dsp/InputBuffering.h            dsp/Seekable.h \
 dsp/BitSeries.h                 dsp/InputBufferingShare.h       dsp/SetBufferingPolicy.h \
-dsp/DADAFile.h                  dsp/JA98Unpacker.h              \
+dsp/DADAFile.h                  \
 dsp/BitTable.h                  dsp/MPIRoot.h                   dsp/SubByteTwoBitCorrection.h \
 dsp/BitUnpacker.h               dsp/MPIServer.h                 dsp/SubByte_dig_unpack.h \
 dsp/BlockFile.h                 dsp/MPITrans.h                  dsp/TestInput.h \
@@ -23,7 +23,7 @@ dsp/Input.h                     dsp/Scratch.h
 
 libClasses_la_SOURCES = \
 ASCIIObservation.C              InputBufferingShare.C           \
-BitSeries.C                     JA98Unpacker.C                  SubByteTwoBitCorrection.C \
+BitSeries.C                     SubByteTwoBitCorrection.C \
 DADAFile.C                      TestInput.C \
 BitTable.C                      \
 BitUnpacker.C                   \
