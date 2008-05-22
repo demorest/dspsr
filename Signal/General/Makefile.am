@@ -64,7 +64,7 @@ endif
 
 include $(top_srcdir)/config/Makefile.include
 
-LDADD = libdspdsp.la $(top_builddir)/Base/libdspbase.la $(top_builddir)/Util/libdsputil.la
+LDADD = libdspdsp.la $(top_builddir)/Base/libdspbase.la 
 
 AM_CPPFLAGS += @PGPLOT_CFLAGS@
 

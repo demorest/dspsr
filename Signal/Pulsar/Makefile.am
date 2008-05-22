@@ -28,6 +28,5 @@ include $(top_srcdir)/config/Makefile.include
 
 LDADD = libdspsr.la \
 	$(top_builddir)/More/General/libdspdsp.la \
-	$(top_builddir)/Base/libdspbase.la \
-	$(top_builddir)/Util/libdsputil.la
+	$(top_builddir)/Base/libdspbase.la
 
