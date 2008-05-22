@@ -6,7 +6,6 @@
  ***************************************************************************/
 #include "dsp/MWAFile.h"
 #include "dirutil.h"
-#include "h_string.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -38,8 +37,7 @@ dsp::MWAFile::is_valid (const char* filename,int) const
     return false;
   }
 
-  string info_file = filename;
-  if( h_backchomp(info_file,".mwa") )
+  if (strstr (filename, ".mwa"))
     return true;
 
   return false;
