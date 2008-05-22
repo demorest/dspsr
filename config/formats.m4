@@ -18,14 +18,14 @@ AC_DEFUN([DSPSR_SELECTED_FORMATS],
 [
   AC_PROVIDE([DSPSR_SELECTED_FORMATS])
 
-  # formats.list will always be in the current working directory
+  # backends.list will always be in the current working directory
   # when configure is run
 
-  if test ! -f formats.list; then
-    echo > formats.list
+  if test ! -f backends.list; then
+    echo > backends.list
   fi
 
-  selected_formats=`cat formats.list 2> /dev/null`
+  selected_formats=`cat backends.list 2> /dev/null`
 
   if test x"$selected_formats" = x; then
     AC_MSG_WARN([
@@ -37,7 +37,7 @@ AC_DEFUN([DSPSR_SELECTED_FORMATS],
     AC_MSG_NOTICE([Selected formats: $selected_formats])
   fi
 
-  AC_SUBST([CONFIG_STATUS_DEPENDENCIES],['$(top_srcdir)/config/formats.sh $(top_builddir)/formats.list'])
+  AC_SUBST([CONFIG_STATUS_DEPENDENCIES],['$(top_srcdir)/config/formats.sh $(top_builddir)/backends.list'])
 
 ])
 
