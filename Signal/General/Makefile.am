@@ -9,7 +9,7 @@ dsp/AutoCorrelation.h           dsp/SampleDelayFunction.h \
 dsp/Example.h                   dsp/Shape.h \
 dsp/Bandpass.h                  dsp/Simultaneous.h \
 dsp/Stats.h \
-dsp/Filterbank.h                dsp/StatsPlotter.h \
+dsp/Filterbank.h                \
 dsp/BitStatsPlotter.h           dsp/Switcher.h \
 dsp/Buffer.h                    dsp/IncoherentFilterbank.h      dsp/TScrunch.h \
 dsp/LevelHistory.h              dsp/TimeOrder.h \
