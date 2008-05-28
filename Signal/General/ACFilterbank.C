@@ -64,7 +64,7 @@ void dsp::ACFilterbank::transformation ()
 
   else
     throw Error (InvalidState, "dsp::ACFilterbank::transformation",
-		 "invalid input data state = " + input->get_state_as_string());
+		 "invalid input data state = " + tostring(input->get_state()));
 
   // if given, test the validity of the window function
   if (apodization) {

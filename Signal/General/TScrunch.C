@@ -72,8 +72,7 @@ void dsp::TScrunch::transformation ()
 
   if( !input->get_detected() )
     throw Error(InvalidState,"dsp::TScrunch::transformation()",
-		"invalid input state: '%s'",
-		input->get_state_as_string().c_str());
+		"invalid input state: " + tostring(input->get_state()));
 
   const unsigned nscrunchings = input->get_ndat()/sfactor;
 

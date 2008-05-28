@@ -163,7 +163,7 @@ void dsp::Convolution::transformation ()
   else
     throw Error (InvalidState, "dsp::Convolution::transformation",
 		 "Cannot transform Signal::State="
-		 + input->get_state_as_string());
+		 + tostring(input->get_state()));
 
 #ifdef DEBUG
   fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 

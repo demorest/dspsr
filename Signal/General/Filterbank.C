@@ -134,7 +134,7 @@ void dsp::Filterbank::make_preparations ()
 
   else
     throw Error (InvalidState, "dsp::Filterbank::make_preparations",
-		 "invalid input data state = " + input->get_state_as_string());
+		 "invalid input data state = " + tostring(input->get_state()));
 
   // number of timesamples between start of each big fft
   nsamp_step = nsamp_fft - nsamp_overlap;

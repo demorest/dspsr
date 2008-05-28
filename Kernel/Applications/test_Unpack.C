@@ -105,7 +105,7 @@ int main (int argc, char** argv)
 
       manager.load (&voltages);
       
-      cerr << "check voltages " << voltages.get_state_as_string() 
+      cerr << "check voltages " << voltages.get_state() 
            << " block " << block << endl;
       voltages.check();
 

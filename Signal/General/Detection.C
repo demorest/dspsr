@@ -389,8 +389,8 @@ void dsp::Detection::checks()
 	get_input()->get_state() != Signal::Nyquist)
       throw Error (InvalidState, "dsp::Detection::checks",
 		   "invalid state=%s for %s formation",
-		   get_input()->get_state_as_string().c_str(),
-		   Signal::state_string(state));
+		   tostring(get_input()->get_state()).c_str(),
+		   tostring(state).c_str());
     
     // Signal::Coherence product and Signal::Stokes parameter
     // formation can be performed in three ways, corresponding to
