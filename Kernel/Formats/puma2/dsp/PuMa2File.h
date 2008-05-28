@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma2/dsp/PuMa2File.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/10/15 23:26:48 $
+   $Revision: 1.4 $
+   $Date: 2008/05/28 21:12:43 $
    $Author: straten $ */
 
 
@@ -29,7 +29,7 @@ namespace dsp {
     PuMa2File (const char* filename=0);
 
     //! Returns true if filename appears to name a valid PuMa2 file
-    bool is_valid (const char* filename, int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
     //! Set this to 'false' if you don't need to check bocf
     static bool want_to_check_bocf;

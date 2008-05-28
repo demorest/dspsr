@@ -32,7 +32,7 @@ dsp::SMROFile::~SMROFile ()
 
 }
 
-bool dsp::SMROFile::is_valid (const char* filename, int) const
+bool dsp::SMROFile::is_valid (const char* filename) const
 {
   int fd = ::open(filename, O_RDONLY);
   

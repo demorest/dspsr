@@ -53,7 +53,7 @@ void dsp::DADABuffer::reset()
 }
 
 //! Returns true if filename = DADA
-bool dsp::DADABuffer::is_valid (const char* filename, int) const
+bool dsp::DADABuffer::is_valid (const char* filename) const
 {
   ifstream input (filename);
   if (!input)

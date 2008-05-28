@@ -30,7 +30,7 @@ dsp::SpigotFile::~SpigotFile ()
 
 }
 
-bool dsp::SpigotFile::is_valid (const char* filename,int) const
+bool dsp::SpigotFile::is_valid (const char* filename) const
 {
  if (verbose)
     cerr << "dsp::SpigotFile::is_valid " << filename << endl;

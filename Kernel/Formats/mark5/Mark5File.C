@@ -38,7 +38,7 @@ dsp::Mark5File::~Mark5File ( )
 
 }
 
-bool dsp::Mark5File::is_valid (const char* filename, int) const
+bool dsp::Mark5File::is_valid (const char* filename) const
 {
   string headername = filename;
   headername += ".hdr";

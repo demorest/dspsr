@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr64/dsp/LBADR64_File.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/02/23 04:29:36 $
-   $Author: ahotan $ */
+   $Revision: 1.2 $
+   $Date: 2008/05/28 21:12:42 $
+   $Author: straten $ */
 
 #ifndef __LBADR64_File_h
 #define __LBADR64_File_h
@@ -32,7 +32,7 @@ namespace dsp {
     ~LBADR64_File ();
 
     //! Return true if filename contains data in the recognized format.
-    bool is_valid (const char *filename,int NOT_USED=-1) const;
+    bool is_valid (const char *filename) const;
     
     
   protected:

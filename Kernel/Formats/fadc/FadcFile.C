@@ -239,7 +239,7 @@ string dsp::FadcFile::get_header (const char* filename)
   return str;
 } 
 
-bool dsp::FadcFile::is_valid (const char* filename,int) const
+bool dsp::FadcFile::is_valid (const char* filename) const
 {
   string header = get_header (filename);
 

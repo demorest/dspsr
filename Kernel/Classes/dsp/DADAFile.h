@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/DADAFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/01/14 05:50:48 $
+   $Revision: 1.2 $
+   $Date: 2008/05/28 21:12:42 $
    $Author: straten $ */
 
 #ifndef __DADAFile_h
@@ -28,7 +28,7 @@ namespace dsp {
     DADAFile (const char* filename=0);
 
     //! Returns true if filename appears to name a valid DADA file
-    bool is_valid (const char* filename, int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
   protected:
 

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.17 $
-   $Date: 2006/08/04 00:08:08 $
+   $Revision: 1.18 $
+   $Date: 2008/05/28 21:12:42 $
    $Author: straten $ */
 
 #ifndef __CPSR2File_h
@@ -29,7 +29,7 @@ namespace dsp {
     virtual ~CPSR2File();
 
     //! Returns true if filename appears to name a valid CPSR2 file
-    bool is_valid (const char* filename,int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
     //! Set this to 'false' if you don't need to yamasaki verify
     static bool want_to_yamasaki_verify;

@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROFile.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2008/05/28 21:12:42 $
+   $Author: straten $ */
 
 #ifndef __SMROFile_h
 #define __SMROFile_h
@@ -32,7 +32,7 @@ namespace dsp {
     ~SMROFile ();
 
     //! Return true if filename contains data in the recognized format.
-    bool is_valid (const char *filename,int NOT_USED=-1) const;
+    bool is_valid (const char *filename) const;
     
     
   protected:

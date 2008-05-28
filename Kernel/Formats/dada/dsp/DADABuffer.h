@@ -29,7 +29,7 @@ namespace dsp {
     ~DADABuffer ();
 
     //! Returns true if filename appears to name a valid CPSR file
-    bool is_valid (const char* filename,int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
     //! Seek to the specified time sample
     virtual void seek (int64 offset, int whence = 0);

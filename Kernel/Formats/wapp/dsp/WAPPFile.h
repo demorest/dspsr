@@ -28,7 +28,7 @@ namespace dsp {
     ~WAPPFile ();
 	  
     //! Returns true if filename is a valid WAPP file
-    bool is_valid (const char* filename, int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
   protected:
 

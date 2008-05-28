@@ -25,7 +25,7 @@ dsp::MWAFile::~MWAFile()
 
 //! Returns true if filename appears to name a valid LBA file
 bool
-dsp::MWAFile::is_valid (const char* filename,int) const
+dsp::MWAFile::is_valid (const char* filename) const
 {
   if( verbose )
     fprintf(stderr,"Entered dsp::MWAFile::is_valid(%s)\n",filename);
@@ -49,8 +49,6 @@ dsp::MWAFile::open_file (const char* filename)
 {
   if( verbose )
     fprintf(stderr,"Entered dsp::MWAFile::open_file (%s)\n",filename);
-
-  bs_index = 0;
 
   if( !is_valid(filename) )
     throw Error(InvalidState,"dsp::MWAFile::open_file()",

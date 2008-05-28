@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaFile.h,v $
-   $Revision: 1.6 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2008/05/28 21:12:43 $
+   $Author: straten $ */
 
 
 #ifndef __dsp_PuMaFile_h
@@ -32,7 +32,7 @@ namespace dsp {
     ~PuMaFile ();
 
     //! Returns true if filename appears to name a valid PuMa file
-    bool is_valid (const char* filename,int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
   protected:
 

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.24 $
-   $Date: 2006/10/15 04:43:53 $
+   $Revision: 1.25 $
+   $Date: 2008/05/28 21:12:42 $
    $Author: straten $ */
 
 
@@ -33,10 +33,10 @@ namespace dsp {
     virtual ~MultiFile ();
     
     //! Open a number of files and treat them as one logical observation.
-    virtual void open (const std::vector<std::string>& new_filenames, int bs_index = 0);
+    virtual void open (const std::vector<std::string>& new_filenames);
 
     //! Makes sure only these filenames are open
-    virtual void have_open (const std::vector<std::string>& filenames, int bs_index = 0);
+    virtual void have_open (const std::vector<std::string>& filenames);
 
     //! Retrieve a pointer to the loader File instance
     File* get_loader ();

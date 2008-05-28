@@ -28,9 +28,10 @@ extern "C" {
 }
 
 //! Construct and open file
-dsp::BCPMFile::BCPMFile (const char* filename) : File ("BCPM"){
+dsp::BCPMFile::BCPMFile (const char* filename) : File ("BCPM")
+{
   if (filename)
-    open (filename,0);
+    open (filename);
 }
 
 //! Destructor
@@ -49,7 +50,7 @@ string read_line (const char* filename)
 }
 
 //! Returns true if filename appears to name a valid BCPM file
-bool dsp::BCPMFile::is_valid (const char* filename,int) const{
+bool dsp::BCPMFile::is_valid (const char* filename) const{
   string ss = read_line(filename);
 
   if( ss == "NBPPSEARCH" )
