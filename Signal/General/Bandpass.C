@@ -69,7 +69,7 @@ void dsp::Bandpass::transformation ()
   else
     throw Error (InvalidState, "dsp::Bandpass::transformation",
 		 "Cannot transform Signal::State="
-		 + input->get_state_as_string());
+		 + tostring(input->get_state()));
 
   // there must be at least enough data for one FFT
   if (input->get_ndat() < nsamp_fft)

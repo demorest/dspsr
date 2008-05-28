@@ -307,7 +307,7 @@ int main (int argc, char** argv)
 	combined_voltages->set_source( pulsar_name );
       
       if (debug) {
-	cerr << "check " << combined_voltages->get_state_as_string() 
+	cerr << "check " << combined_voltages->get_state()
 	     << " voltages block " << block << endl;
 	combined_voltages->check();
       }
@@ -322,7 +322,7 @@ int main (int argc, char** argv)
       if (debug) {
 	float range = block*block_size / nbin;
 	
-	cerr << "check " << profiles.get_state_as_string()
+	cerr << "check " << profiles.get_state()
 	     << " profiles block " << block << " +/-" << range << endl;
 	profiles.check (-range, range);
       }

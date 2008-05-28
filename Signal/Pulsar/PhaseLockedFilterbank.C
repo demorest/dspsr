@@ -88,7 +88,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
   else
     throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation",
-		 "invalid input data state = " + input->get_state_as_string());
+		 "invalid input data state = " + tostring(input->get_state()));
 
   if (get_output()->get_integration_length() == 0.0) {
 
