@@ -97,14 +97,12 @@ void dsp::ASCIIObservation::load (const char* header)
     set_type(Signal::Pulsar);
   }
 
-  if (get_type() == Signal::PolnCal) {
-
+  if (get_type() == Signal::PolnCal)
+  {
     double calfreq;
     if (ascii_header_get (header, "CALFREQ", "%lf", &calfreq) < 0)
       throw Error (InvalidState, "ASCIIObservation", "failed load FREQ");
     set_calfreq(calfreq);
-    cerr << "Set CALFREQ to " << get_calfreq() << endl;
-
   }
 
   // //////////////////////////////////////////////////////////////////////
@@ -178,15 +176,16 @@ void dsp::ASCIIObservation::load (const char* header)
 		 "invalid NDIM=%d\n", scan_ndim);
   }
 
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // STATE
+  //
+  if (ascii_header_get (header, "STATE", "%s", buffer) >= 0)
+    set_state( fromstring<Signal::State> (buffer) );
+
   int scan_dsb;
   if (ascii_header_get (header, "DSB", "%d", &scan_dsb) >= 0)
     set_dual_sideband (scan_dsb == 1);
-
-  //
-  // call this only after setting frequency and telescope
-  //
-  set_default_basis ();
-
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -244,9 +243,6 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   if (ascii_header_get (header, "INSTRUMENT", "%s", buffer) == 1)
     set_machine (buffer);
-
-  // make an identifier name
-  set_identifier (get_default_id());
 
   // //////////////////////////////////////////////////////////////////////
   //
