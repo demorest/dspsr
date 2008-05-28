@@ -9,35 +9,36 @@
 using namespace std;
 
 //! Return a pointer to a new instance of the appropriate sub-class
-dsp::Unpacker* dsp::Unpacker::create (const Observation* observation)
+dsp::Unpacker* dsp::Unpacker::create (const Observation* observation) try
 {
-  try {
+  if (verbose) std::cerr << "dsp::Unpacker::create with " << registry.size()
+		         << " registered sub-classes" << std::endl;
 
-    if (verbose) std::cerr << "dsp::Unpacker::create with " << registry.size()
-			   << " registered sub-classes" << std::endl;
+  for (unsigned ichild=0; ichild < registry.size(); ichild++)
+  {
+    if (verbose)
+      std::cerr << "dsp::Unpacker::create testing "
+                << registry[ichild]->get_name() << std::endl;
 
-    for (unsigned ichild=0; ichild < registry.size(); ichild++){
-      if( verbose )
-	fprintf(stderr,"Testing child %d: %s\n",ichild,
-		registry[ichild]->get_name().c_str());
-      if ( registry[ichild]->matches (observation) ) {
+    if ( registry[ichild]->matches (observation) )
+    {
+      Unpacker* child = registry.create (ichild);
+      child-> match( observation );
 
-        Unpacker* child = registry.create (ichild);
-        child-> match( observation );
+      if (verbose)
+        std::cerr << "dsp::Unpacker::create return new sub-class" 
+		  << std::endl;
 
-        if (verbose)
-	  std::cerr << "dsp::Unpacker::create return new sub-class" 
-		    << std::endl;
-        return child;
+      return child;
 
-      }
     }
-
-  } catch (Error& error) {
-    throw error += "dsp::Unpacker::create";
   }
 
-  throw Error (InvalidState, "dsp::Unpacker::create",
+  throw Error (InvalidState, string(),
                "no unpacker for machine=" + observation->get_machine());
+}
+catch (Error& error)
+{
+  throw error += "dsp::Unpacker::create";
 }
 
