@@ -12,5 +12,5 @@ test_Unpack_SOURCES = test_Unpack.C
 
 INCLUDES = -I$(top_builddir)/local_include
 
-LDADD = $(top_builddir)/Base/libdspbase.la
+LDADD = $(top_builddir)/Kernel/libdspbase.la
 
