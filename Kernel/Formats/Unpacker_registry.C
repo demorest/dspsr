@@ -25,12 +25,16 @@
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
 
 #if HAVE_apsr
+
 #include "dsp/APSRTwoBitCorrection.h"
-#include "dsp/APSRFourBit.h"
-#include "dsp/APSREightBit.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::APSRTwoBitCorrection> apsr2;
+
+#include "dsp/APSRFourBit.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::APSRFourBit> apsr4;
+
+#include "dsp/APSREightBit.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::APSREightBit> apsr8;
+
 #endif
 
 #if HAVE_asp
@@ -41,6 +45,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::ASPUnpacker> asp;
 #if HAVE_bcpm
 #include "dsp/BCPMUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::BCPMUnpacker> registry_bcpm;
+#endif
+
+#if HAVE_bpsr
+#include "dsp/BPSRUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::BPSRUnpacker> bpsr;
 #endif
 
 #if HAVE_cpsr
