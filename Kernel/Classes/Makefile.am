@@ -35,7 +35,7 @@ EightBitUnpacker.C              Unpacker.C \
 File.C                          Observation.C                   Unpacker_create.C \
 Operation.C                     WeightedTimeSeries.C \
 FourBitUnpacker.C               OutputBuffering.C               dsp.C \
-HistUnpacker.C                  PseudoFile.C                    dspExtension.C \
+HistUnpacker.C                  dspExtension.C \
 IOManager.C                     Scratch.C                       \
 Input.C                         Seekable.C                      \
 InputBuffering.C                SetBufferingPolicy.C
