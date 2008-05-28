@@ -29,6 +29,12 @@
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::File> dsp::File::registry;
 
+/*! DADAFile is built in */
+#include "dsp/DADAFile.h"
+static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
+
+
+
 #if HAVE_asp
 #include "dsp/ASPFile.h"
 static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
@@ -52,8 +58,6 @@ static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 #if HAVE_dada
 #include "dsp/DADABuffer.h"
 static Registry::List<dsp::File>::Enter<dsp::DADABuffer> dada_buffer;
-#include "dsp/DADAFile.h"
-static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
 #endif
 
 #if HAVE_fadc
