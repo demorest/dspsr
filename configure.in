@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([DSPSR],[1.0],[straten@sourceforge.net])
+AC_INIT([dspsr],[2.0],[dspsr-developers@lists.sourceforge.net])
 
 AC_CONFIG_AUX_DIR([config])
-AC_CONFIG_SRCDIR([base/TimeSeries.h])
+AC_CONFIG_SRCDIR([Kernel/Makefile.am])
 
 AC_ARG_VAR([PSRHOME],[Standard pulsar home directory])
 AC_ARG_VAR([LOGIN_ARCH],[Architecture-dependent sub-directory of PSRHOME])
@@ -19,6 +19,10 @@ else
   fi
 fi
 
+#
+#
+#
+
 # Check if the user has set compiler options
 SWIN_OPTIONS_SET
 
@@ -26,6 +30,12 @@ SWIN_OPTIONS_SET
 SWIN_COMPILER
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
+
+#
+#
+#
+
+DSPSR_FORMATS
 
 # Create static libraries by default
 AC_DISABLE_SHARED
@@ -42,7 +52,9 @@ AC_PROG_CXXCPP
 AC_PROG_CC
 AC_PROG_CPP
 AM_PROG_CC_C_O
+
 AC_PROG_INSTALL
+AC_PROG_LIBTOOL
 
 #
 # Disable the debugging information option, -g
@@ -80,11 +92,14 @@ Please see http://psrchive.sourceforge.net
 
 ]))
 
+CPPFLAGS="$PSRCHIVE_CFLAGS $CPPFLAGS"
+LDFLAGS="$PSRCHIVE_LIBS $LDFLAGS"
+
 #
 # Checks for optional libraries
 #
-SWIN_LIB_MPI
 SWIN_LIB_PSRDADA
+SWIN_LIB_MPI
 
 #
 # Checks for graphics libraries
@@ -109,11 +124,50 @@ SWIN_FUNC_GETOPT_LONG
 
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
+		Kernel/Makefile
+		Kernel/Classes/Makefile
+		Kernel/Applications/Makefile
+		Kernel/Formats/Makefile
+		Kernel/Formats/apsr/Makefile
+		Kernel/Formats/asp/Makefile
+		Kernel/Formats/bcpm/Makefile
+		Kernel/Formats/bpsr/Makefile
+		Kernel/Formats/cpsr/Makefile
+		Kernel/Formats/cpsr2/Makefile
+		Kernel/Formats/dada/Makefile
+		Kernel/Formats/fadc/Makefile
+		Kernel/Formats/gmrt/Makefile
+		Kernel/Formats/lbadr/Makefile
+		Kernel/Formats/lbadr64/Makefile
+		Kernel/Formats/mark4/Makefile
+		Kernel/Formats/mark5/Makefile
+		Kernel/Formats/maxim/Makefile
+		Kernel/Formats/mwa/Makefile
+		Kernel/Formats/pmdaq/Makefile
+		Kernel/Formats/puma/Makefile
+		Kernel/Formats/puma2/Makefile
+		Kernel/Formats/s2/Makefile
+		Kernel/Formats/spigot/Makefile
+		Kernel/Formats/wapp/Makefile
+		Signal/Makefile
+		Signal/General/Makefile
+		Signal/Pulsar/Makefile
 		Management/Makefile
 		Management/dspsr_ldflags
 		Management/dspsr_cflags])
 
 AC_OUTPUT
 
-rm -f config/Makefile.local
+echo
+
+if test x"$selected_formats" = x; then
+  echo "WARNING: no file formats have been selected"
+  echo "Please see http://dspsr.sourceforge.net/formats for details"
+else
+  echo "DSPSR will support these formats: $selected_formats" 
+fi
+
+echo
+echo "DSPSR is now ready to be compiled.  Please run 'make'"
+echo
 
