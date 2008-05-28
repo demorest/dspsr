@@ -52,6 +52,9 @@ int main (int argc, char** argv) try
   float time_per_plot = 1.0;
   float time_per_point = 1e-3;
 
+  double seek_seconds = 0;
+  double total_seconds = 0;
+
   int c;
   int scanned;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -95,6 +98,14 @@ int main (int argc, char** argv) try
           " sampling threshold" << endl;
         return -1;
       }
+      break;
+
+    case 'S':
+      seek_seconds = strtod (optarg, 0);
+      break;
+
+    case 'T':
+      total_seconds = strtod (optarg, 0);
       break;
 
     case 'V':
@@ -200,6 +211,12 @@ int main (int argc, char** argv) try
         }
 
     }
+
+    if (seek_seconds)
+      input->seek_seconds (seek_seconds);
+    
+    if (total_seconds)
+      input->set_total_seconds (seek_seconds + total_seconds);
 
     cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
     cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
