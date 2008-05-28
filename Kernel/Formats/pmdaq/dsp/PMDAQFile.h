@@ -29,7 +29,7 @@ namespace dsp {
     virtual ~PMDAQFile();
 
     //! Returns true if filename appears to name a valid PMDAQ file
-    bool is_valid (const char* filename,int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
     //! Which band the bandwidth/centre frequency will be extracted from
     static bool using_second_band;

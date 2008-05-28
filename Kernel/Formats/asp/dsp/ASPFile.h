@@ -25,7 +25,7 @@ namespace dsp {
     ~ASPFile ();
 	  
     //! Returns true if filename is a valid Mk5 file
-    bool is_valid (const char* filename, int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
   protected:
 

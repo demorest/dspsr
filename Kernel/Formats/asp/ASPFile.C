@@ -91,7 +91,7 @@ int open_read_header (const char* filename,
 }
 
 
-bool dsp::ASPFile::is_valid (const char* filename, int) const
+bool dsp::ASPFile::is_valid (const char* filename) const
 {
   struct asp_params header;
   struct data2rcv block;

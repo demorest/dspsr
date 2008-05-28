@@ -44,7 +44,7 @@ string dsp::PuMa2File::get_header (const char* filename)
   return line;
 }
 
-bool dsp::PuMa2File::is_valid (const char* filename,int) const
+bool dsp::PuMa2File::is_valid (const char* filename) const
 {
   string header = get_header (filename);
 

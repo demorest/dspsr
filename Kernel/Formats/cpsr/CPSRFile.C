@@ -37,7 +37,7 @@ dsp::CPSRFile::CPSRFile (const char* filename)
 //! Virtual destructor
 dsp::CPSRFile::~CPSRFile(){ }
 
-bool dsp::CPSRFile::is_valid (const char* filename,int) const
+bool dsp::CPSRFile::is_valid (const char* filename) const
 {
   int fd = ::open (filename, O_RDONLY);
   if (fd < 0)
@@ -78,12 +78,12 @@ void dsp::CPSRFile::open_file (const char* filename)
   if (verbose)
     cerr << "dsp::CPSRFile::open " << filename << endl;
 
-  if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE ) {
-    fprintf (stderr, "dsp::CPSRFile:: PSPM header size is invalid.\n");
-    fprintf (stderr, "dsp::CPSRFile:: PSPM header size %d.\n",
-	     PSPM_HEADER_SIZE);
-    fprintf (stderr, "dsp::CPSRFile:: for this architecture: %d.\n",
-	     sizeof(PSPM_SEARCH_HEADER));
+  if ( sizeof(PSPM_SEARCH_HEADER) != PSPM_HEADER_SIZE )
+   {
+    cerr << "dsp::CPSRFile:: PSPM header size is invalid.\n"
+            "dsp::CPSRFile:: PSPM header size " << PSPM_HEADER_SIZE << ".\n"
+            "dsp::CPSRFile:: for this architecture: " 
+         << sizeof(PSPM_SEARCH_HEADER) << endl;
     
     throw Error (InvalidState, "dsp::CPSRFile::open", 
 		 "Architecture Error: Invalid PSPM header size");

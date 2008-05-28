@@ -28,7 +28,7 @@ dsp::MultiFile::~MultiFile ()
   
   \post Resets the file pointers 
 */
-void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
+void dsp::MultiFile::open (const vector<string>& new_filenames)
 {
   if (new_filenames.empty())
     throw Error (InvalidParam, "dsp::Multifile::open",
@@ -44,7 +44,7 @@ void dsp::MultiFile::open (const vector<string>& new_filenames, int bs_index)
     if( !found(new_filenames[i],old_filenames) ){
 
       // If there is no loader, create one from the first file
-      loader = File::create( new_filenames[i], bs_index );
+      loader = File::create( new_filenames[i] );
 
       files.push_back( loader );
 
@@ -83,17 +83,19 @@ void dsp::MultiFile::setup ()
 }
 
 //! Makes sure only these filenames are open
-void dsp::MultiFile::have_open (const vector<string>& filenames,int bs_index)
+void dsp::MultiFile::have_open (const vector<string>& filenames)
 {
   // Erase any files we already have open that we don't want open
-  for( unsigned ifile=0; ifile<files.size(); ifile++){
-    if( !found(files[ifile]->get_filename(),filenames) ){
+  for (unsigned ifile=0; ifile<files.size(); ifile++)
+  {
+    if ( !found(files[ifile]->get_filename(),filenames) )
+    {
       files.erase(files.begin()+ifile);
       ifile--;
     }
   }
 
-  open (filenames,bs_index);
+  open (filenames);
 }
 
 //! Erase the entire list of loadable files
@@ -176,8 +178,8 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
   uint64 bytes_loaded = 0;
   unsigned index = current_index;
 
-  while (bytes_loaded < bytes) {
-
+  while (bytes_loaded < bytes)
+  {
     int64 to_load = bytes - bytes_loaded;
 
     if (index >= files.size()) {
@@ -220,8 +222,8 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
   uint64 total_bytes = 0;
 
   unsigned index;
-  for (index = 0; index < files.size(); index++) {
-
+  for (index = 0; index < files.size(); index++)
+  {
     // Number of bytes stored in this file
     uint64 file_bytes = files[index]->get_info()->get_nbytes();
 
@@ -231,7 +233,8 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
     total_bytes += file_bytes;
   }
 
-  if (index == files.size()) {
+  if (index == files.size())
+  {
     cerr << "dsp::MultiFile::seek_bytes (" << bytes << ")"
       " past end of data" << endl;
     return -1;
@@ -253,8 +256,6 @@ void dsp::MultiFile::set_loader (unsigned index)
 
   loader = files[index];
 
-  // MiniFile requires loader to know what output->get_rawptr() is
-  // (ASSUMPTION: output is what is getting loaded into rather than some other BitSeries via load())
   loader->set_output( get_output() );
   loader->reopen();
 

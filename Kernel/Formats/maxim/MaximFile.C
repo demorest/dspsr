@@ -26,7 +26,7 @@ dsp::MaximFile::~MaximFile ()
 {
 }
 
-bool dsp::MaximFile::is_valid (const char* filename, int) const
+bool dsp::MaximFile::is_valid (const char* filename) const
 {
   int fd = ::open(filename, O_RDONLY);
   

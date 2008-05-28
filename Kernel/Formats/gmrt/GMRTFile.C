@@ -91,7 +91,7 @@ int open_read_header (const char* filename,
 }
 
 
-bool dsp::GMRTFile::is_valid (const char* filename, int) const
+bool dsp::GMRTFile::is_valid (const char* filename) const
 {
   struct gmrt_params header;
   struct data2rcv block;

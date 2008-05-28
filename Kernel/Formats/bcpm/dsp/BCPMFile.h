@@ -27,7 +27,7 @@ namespace dsp {
     ~BCPMFile ();
 
     //! Returns true if filename appears to name a valid BCPM file
-    bool is_valid (const char* filename,int NOT_USED=-1) const;
+    bool is_valid (const char* filename) const;
 
   protected:
 

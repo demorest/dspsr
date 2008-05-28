@@ -39,7 +39,7 @@ dsp::WAPPFile::~WAPPFile ( )
 }
 
 
-bool dsp::WAPPFile::is_valid (const char* filename, int) const
+bool dsp::WAPPFile::is_valid (const char* filename) const
 {
 #ifdef KEVINS_CODE
   struct WAPP_HEADER header;

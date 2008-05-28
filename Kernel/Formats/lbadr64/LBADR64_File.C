@@ -27,7 +27,7 @@ dsp::LBADR64_File::~LBADR64_File ()
 
 }
 
-bool dsp::LBADR64_File::is_valid (const char* filename, int) const
+bool dsp::LBADR64_File::is_valid (const char* filename) const
 {
   int fd = ::open(filename, O_RDONLY);
   

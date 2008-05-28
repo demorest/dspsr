@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/maxim/dsp/MaximFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2008/05/28 21:12:43 $
+   $Author: straten $ */
 
 #ifndef __MaximFile_h
 #define __MaximFile_h
@@ -30,7 +30,7 @@ namespace dsp {
     ~MaximFile ();
 
     //! Return true if filename contains data in the recognized format.
-    bool is_valid (const char *filename,int NOT_USED=-1) const;
+    bool is_valid (const char *filename) const;
     
     
   protected:

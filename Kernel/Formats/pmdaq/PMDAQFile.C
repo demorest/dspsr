@@ -97,7 +97,7 @@ int dsp::PMDAQFile::get_header (char* pmdaq_header, const char* filename)
 
 static char pmdaq_header [PMDAQ_HEADER_SIZE];
 
-bool dsp::PMDAQFile::is_valid (const char* filename,int) const
+bool dsp::PMDAQFile::is_valid (const char* filename) const
 {
   Reference::To<PMDAQFile> dummy = new PMDAQFile;
 

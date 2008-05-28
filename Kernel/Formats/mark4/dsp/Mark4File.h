@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark4/dsp/Mark4File.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2008/05/28 21:12:43 $
+   $Author: straten $ */
 
 #ifndef __Mark4File_h
 #define __Mark4File_h
@@ -36,7 +36,7 @@ namespace dsp {
     ~Mark4File ();
 
     //! Return true if filename contains data in the recognized format.
-    bool is_valid (const char *filename,int NOT_USED=-1) const;
+    bool is_valid (const char *filename) const;
     
     
   protected:

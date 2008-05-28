@@ -35,7 +35,7 @@ string dsp::DADAFile::get_header (const char* filename)
   return line;
 }
 
-bool dsp::DADAFile::is_valid (const char* filename,int) const
+bool dsp::DADAFile::is_valid (const char* filename) const
 {
   string header = get_header (filename);
 

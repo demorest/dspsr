@@ -31,7 +31,7 @@ dsp::Mark4File::~Mark4File ()
 
 }
 
-bool dsp::Mark4File::is_valid (const char* filename, int) const
+bool dsp::Mark4File::is_valid (const char* filename) const
 {
   int filed = ::open(filename, O_RDONLY);
   

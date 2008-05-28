@@ -47,7 +47,7 @@ dsp::PuMaFile::~PuMaFile ()
   free (header);
 }
 
-bool dsp::PuMaFile::is_valid (const char* filename,int) const
+bool dsp::PuMaFile::is_valid (const char* filename) const
 { 
   if (verbose)
     cerr << "dsp::PuMaFile::is_valid (" << filename << ")" << endl;
