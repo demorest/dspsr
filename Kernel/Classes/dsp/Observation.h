@@ -230,16 +230,6 @@ namespace dsp {
     //! Returns true if state is Detected, Coherence, or Stokes
     bool get_detected () const;
 
-    //! Returns a convenient id string for a given MJD
-    //! The supplied dsp::Observation is for pinching the 'm'/'n' part of the 'identifier' attribute
-    static std::string get_default_id (const MJD& mjd, const Observation* obs=0);
-
-    //! Returns default_id (start_time);
-    std::string get_default_id () const;
-
-    //! Returns a string describing the state of the data
-    std::string get_state_as_string () const;
-
     //! Returns the centre frequency of the first channel in MHz
     double get_base_frequency () const;
 
