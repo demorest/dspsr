@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.29 $
-   $Date: 2006/10/15 04:43:53 $
+   $Revision: 1.30 $
+   $Date: 2008/05/28 21:12:29 $
    $Author: straten $ */
 
 
@@ -19,8 +19,6 @@
 #include "Registry.h"
 
 namespace dsp {
-
-  class PseudoFile;
 
   //! Loads BitSeries data from file
   /*! This class is used in conjunction with the Unpacker class in
@@ -46,11 +44,11 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     /*! This is the entry point for creating new instances of File objects
       from input data files of an arbitrary format. */
-    static File* create (const char* filename,int _bs_index=0);
+    static File* create (const char* filename);
 
     //! Convenience interface to File::create (const char*)
-    static File* create (const std::string& filename,int _bs_index=0)
-    { return create (filename.c_str(),_bs_index); }
+    static File* create (const std::string& filename)
+    { return create (filename.c_str()); }
 
     //! Constructor
     File (const char* name);
@@ -61,18 +59,14 @@ namespace dsp {
     //! Return true if filename contains data in the recognized format
     /*! Derived classes must define the conditions under which they can
       be used to parse the given data file */
-    virtual bool is_valid (const char* filename, int _bs_index=0) const = 0;
+    virtual bool is_valid (const char* filename) const = 0;
 
     //! Open the file
-    virtual void open (const char* filename,int _bs_index=0);
+    virtual void open (const char* filename);
 
     //! Convenience interface to File::open (const char*)
-    void open (const std::string& filename,int _bs_index=0) 
-    { open (filename.c_str(),_bs_index); }
-
-    //! Open from a PseudoFile
-    /*! Resets attributes without calling open_file */
-    virtual void open (const PseudoFile& file);
+    void open (const std::string& filename) 
+    { open (filename.c_str()); }
 
     //! Close the file
     virtual void close ();
@@ -86,13 +80,6 @@ namespace dsp {
 
     //! Inquire how many bytes are in the header
     int get_header_bytes() const{ return header_bytes; }
-
-    //! Inquire the index of the BitSeries to be loaded
-    //! This variable is generally set through a call to open(), is_valid() or create()
-    int get_bs_index() const { return bs_index; }
-    
-    //! Return a PseudoFile constructed from this File
-    PseudoFile get_pseudofile();
 
   protected:
     
@@ -126,9 +113,6 @@ namespace dsp {
     //! The name of the currently opened file, set by open()
     std::string current_filename;
 
-    //! Stores the index of the BitSeries to be loaded.  A file loader that whose files can store more than one BitSeries stream should have this number >=0
-    int bs_index;
-
     //! Load nbyte bytes of sampled data from the device into buffer
     /*! If the data stored on the device contains information other
       than the sampled data, this method should be overloaded and the
@@ -153,9 +137,6 @@ namespace dsp {
     friend class Registry::Entry<File>;
 
   private:
-
-    //! Worker function for both forms of open
-    void open (const char* filename, const PseudoFile* file);
 
     //! Initialize variables to sensible null values
     void init();
