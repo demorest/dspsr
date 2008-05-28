@@ -189,6 +189,9 @@ bool dsp::Fold::power_of_two = true;
   folding may be set through the Fold::maximum_nbin attribute. */
 unsigned dsp::Fold::choose_nbin ()
 {
+  if (verbose)
+    cerr << "dsp::Fold::choose_nbin" << endl;
+
   double the_folding_period = get_folding_period ();
 
   if (verbose)
@@ -396,14 +399,22 @@ void dsp::Fold::transformation () try
 		 "input is not detected");
 
   if (!built)
+  {
+    if (verbose)
+      cerr << "dsp::Fold::transformation prepare" << endl;
     prepare ();
+  }
 
   if (folding_period <= 0 && !folding_predictor)
     throw Error (InvalidState, "dsp::Fold::transformation",
 		 "no folding period or Pulsar::Predictor set");
 
   if (folding_nbin == 0)
+  {
+    if (verbose)
+      cerr << "dsp::Fold::transformation choose_nbin" << endl;
     choose_nbin ();
+  }
 
   if ( output->integration_length &&
        output->get_reference_phase() != get_reference_phase() )
@@ -432,8 +443,8 @@ void dsp::Fold::transformation () try
   unsigned ndatperweight = 0;
   unsigned weight_idat = 0;
 
-  if (weighted_input) {
-
+  if (weighted_input)
+  {
     nweights = weighted_input->get_nweights();
     weights = weighted_input->get_weights();
     ndatperweight = weighted_input->get_ndat_per_weight();
@@ -442,14 +453,14 @@ void dsp::Fold::transformation () try
     if (verbose)
       cerr << "dsp::Fold::transformation WeightedTimeSeries weights="
 	   << weights << " ndatperweight=" << ndatperweight << endl;
-
   }
 
   fold (nweights, weights, ndatperweight, weight_idat);
   
   if (folding_period > 0.0)
     output->set_folding_period( folding_period );
-  else {
+  else
+  {
     if (pulsar_ephemeris)
       output->set_pulsar_ephemeris( pulsar_ephemeris );
     if (folding_predictor)
