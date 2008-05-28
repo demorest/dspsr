@@ -1,5 +1,22 @@
 #! /bin/csh -f
 
+set psrchive=`sh -c 'which psrchive_aclocal 2> /dev/null'`
+
+if ( "$psrchive" == "" ) then
+
+  echo
+  echo "PSRCHIVE installation not found."
+  echo "If installed, please ensure that PSRCHIVE executables are in PATH"
+  echo
+
+endif
+
+echo "Copying autoconf and automake tools from PSRCHIVE ..."
+
+cp `$psrchive`/* config/
+
+sh config/formats.sh
+
 echo "Running the GNU autotools.  Please be patient ..."
 
 autoreconf --install --force
