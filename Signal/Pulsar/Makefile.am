@@ -27,6 +27,6 @@ dspsr_SOURCES = dspsr.C
 include $(top_srcdir)/config/Makefile.include
 
 LDADD = libdspsr.la \
-	$(top_builddir)/More/General/libdspdsp.la \
-	$(top_builddir)/Base/libdspbase.la
+	$(top_builddir)/Signal/General/libdspdsp.la \
+	$(top_builddir)/Kernel/libdspbase.la
 
