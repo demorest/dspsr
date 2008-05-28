@@ -10,7 +10,6 @@
 #endif
 
 #include "dsp/File.h"
-#include "dsp/PseudoFile.h"
 
 #include "Reference.h"
 #include "Error.h"
@@ -56,11 +55,10 @@ void dsp::File::init()
 }
 
 //! Return a pointer to a new instance of the appropriate sub-class
-dsp::File* dsp::File::create (const char* filename, int _bs_index)
+dsp::File* dsp::File::create (const char* filename)
 { 
   if (verbose)
-    std::cerr << "dsp::File::create filename='" << filename 
-	      << "' bs_index=" << _bs_index << endl;
+    std::cerr << "dsp::File::create filename='" << filename << endl;
 
   // check if file can be opened for reading
   int fd = ::open (filename, O_RDONLY);
@@ -73,22 +71,20 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
 
   for (unsigned ichild=0; ichild < registry.size(); ichild++) try
   {
+    if (verbose)
+      std::cerr << "dsp::File::create testing " 
+                << registry[ichild]->get_name() << endl;;
+
+    if ( registry[ichild]->is_valid (filename) )
+    {
       if (verbose)
-	std::cerr << "dsp::File::create testing " 
-		  << registry[ichild]->get_name() << endl;;
+        std::cerr << "dsp::File::create " << registry[ichild]->get_name()
+                  << "::is_valid() returned true" << endl;
 
-      if ( registry[ichild]->is_valid (filename,_bs_index) ) {	
-
-	if (verbose)
-	  std::cerr << "dsp::File::create " << registry[ichild]->get_name()
-		    << "::is_valid() returned true" << endl;
-
-	File* child = registry.create (ichild);
-	child->open( filename,_bs_index );	
-	return child;	
-
-      }
-
+      File* child = registry.create (ichild);
+      child->open( filename );	
+      return child;	
+    }
   }
   catch (Error& error)
   {
@@ -100,7 +96,8 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
   
   string msg = filename;
 
-  msg += " not a recognized file format\n\t" + tostring(registry.size()) + " registered Formats: ";
+  msg += " not a recognized file format\n\t"
+      + tostring(registry.size()) + " registered Formats: ";
 
   for (unsigned ichild=0; ichild < registry.size(); ichild++)
     msg += registry[ichild]->get_name() + " ";
@@ -108,56 +105,20 @@ dsp::File* dsp::File::create (const char* filename, int _bs_index)
   throw Error (InvalidParam, "dsp::File::create", msg);
 }
 
-void dsp::File::open (const char* filename, int _bs_index)
+void dsp::File::open (const char* filename)
 {
-  bs_index = _bs_index;
+  if (!filename)
+    throw Error (InvalidParam, "dsp::File::open", "filename not specified");
 
   if (verbose)
-    cerr << "dsp::File::open filename='" << filename << "'" << endl;
-
-  const PseudoFile* null_ptr = 0;
-  open (filename, null_ptr );
-}
-
-void dsp::File::open (const PseudoFile& file)
-{
-  if (verbose)
-    cerr << "dsp::File::open PseudoFile::filename='" 
-	 << file.filename << "'" << endl;
-
-  open (0, &file);
-}
-
-void dsp::File::open (const char* filename, const PseudoFile* file)
-{
-  if (verbose)
-    cerr << "dsp::File::open bs_index=" << bs_index << endl;
+    cerr << "dsp::File::open filename=" << filename << endl;
 
   close();
 
-  if (filename) {
-
-    open_file (filename);
+  open_file (filename);
       
-    if (info.get_ndat() == 0)
-      set_total_samples ();
-
-  }
-  else if (file) {
-
-    close ();
-
-    filename = file->filename.c_str();
-    bs_index = file->bs_index;
-
-    fd = ::open (filename, O_RDONLY);
-    if (fd < 0)
-      throw Error (FailedSys, "dsp::File::open PseudoFile", 
-		   "failed open(%s)", filename);
-  
-    header_bytes = file->header_bytes;
-    info = *file;
-  }
+  if (info.get_ndat() == 0)
+    set_total_samples ();
 
   current_filename = filename;
 
@@ -192,9 +153,6 @@ void dsp::File::reopen ()
   seek_bytes (0);
 }
 
-dsp::PseudoFile dsp::File::get_pseudofile(){
-  return PseudoFile(this);
-}
 
 void dsp::File::set_total_samples ()
 {
