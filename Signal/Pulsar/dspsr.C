@@ -124,6 +124,9 @@ const unsigned MB = 1024 * 1024;
 // maximum number of bytes to load into RAM (default 256 MB)
 uint64 maximum_RAM = 256 * MB;
 
+// if nonzero, choose maximum RAM = minimum RAM times this number
+unsigned times_minimum_RAM = 0;
+
 // number of seconds to seek into data
 double seek_seconds = 0.0;
 
@@ -406,8 +409,20 @@ int main (int argc, char** argv) try {
       break;
 
     case 'U':
-      maximum_RAM = uint64( strtod (optarg, 0) * double(MB) );
+    {
+      if (string(optarg) == "min")
+	times_minimum_RAM = 1;
+      else if ( sscanf(optarg, "minX%u", &times_minimum_RAM) == 1 )
+	break;
+      else
+      {	
+	times_minimum_RAM = 0;
+        maximum_RAM = uint64( strtod (optarg, 0) * double(MB) );
+	if (maximum_RAM == 0)
+	  times_minimum_RAM = 1;
+      }
       break;
+    }
 
     case 'V':
       cerr << "dspsr: Entering very verbose mode" << endl;
@@ -669,11 +684,13 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
     
     double nbyte_dat = nbyte * ndim * npol * nchan;
 
-    if (maximum_RAM == 0) 
+    if (times_minimum_RAM)
     {
-      uint64 min = engine->get_minimum_samples();
+      uint64 min = times_minimum_RAM * engine->get_minimum_samples();
       double inMB = double(min) * nbyte_dat / double(MB);
-      cerr << "dspsr: using minimum blocksize = " << min << " samples" << endl
+
+      cerr << "dspsr: using " << times_minimum_RAM 
+	   << " times minimum blocksize, or " << min << " samples" << endl
            << "       (equivalent to -U " << inMB << ")" << endl;
   
       input->set_block_size( min );
