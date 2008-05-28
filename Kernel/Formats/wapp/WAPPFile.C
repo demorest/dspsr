@@ -299,7 +299,6 @@ void dsp::WAPPFile::open_file (const char* filename)
   info.set_default_basis ();
 
   string prefix="wapp";
-  info.set_identifier(prefix+info.get_default_id() );
   info.set_machine("WAPP");	
 
   header_bytes = lseek(fd,0,SEEK_CUR);

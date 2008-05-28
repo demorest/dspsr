@@ -166,7 +166,6 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	
 	string prefix="?";    // what prefix should we assign??
 	  
-	set_identifier(prefix+get_default_id() );
 	set_mode( tostring(get_nbit()) + "-bit mode" );
 	set_machine("Mark5");
 	

@@ -169,9 +169,6 @@ void dsp::GMRTFile::open_file (const char* filename)
 
   info.set_default_basis ();
 	
-  string prefix="GMRT";
-
-  info.set_identifier(prefix+info.get_default_id() );
   info.set_mode(header.pol_mode);
   info.set_machine("GMRT");	
 }
