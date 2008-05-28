@@ -57,7 +57,6 @@ dsp::MWAFile::open_file (const char* filename)
 
   info.set_start_time( MJD(52644.0) );
   string prefix = "mwa";
-  info.set_identifier (prefix + info.get_default_id());
 
   info.set_telescope( "Greenbank" );
   info.set_source("J0534+2200");

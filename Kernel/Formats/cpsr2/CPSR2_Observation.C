@@ -69,7 +69,6 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     prefix = "q";
 
   // make an identifier name
-  set_identifier (prefix + get_default_id());
   set_mode (stringprintf ("%d-bit mode", get_nbit()));
   set_machine ("CPSR2");
 

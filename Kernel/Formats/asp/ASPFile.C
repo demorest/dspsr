@@ -171,7 +171,6 @@ void dsp::ASPFile::open_file (const char* filename)
 	
   string prefix="asp";
 
-  info.set_identifier(prefix+info.get_default_id() );
   info.set_mode(header.pol_mode);
   info.set_machine("ASP");	
 }

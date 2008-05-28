@@ -109,7 +109,6 @@ void dsp::MaximFile::open_file (const char* filename)
   info.set_centre_frequency(635.0);
 
   info.set_telescope("Hobart"); // Check this... Make sure it IS the 14m
-  info.set_identifier("v" + info.get_default_id());
 
   struct stat file_info;
   

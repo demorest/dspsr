@@ -212,7 +212,7 @@ void dsp::CPSRFile::open_file (const char* filename)
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
   // default_basis
-  info.set_telescope( Tempo::name(hdr.ttelid) );
+  info.set_telescope( string(1, hdr.ttelid) );
   info.set_centre_frequency (hdr.frequency);
   info.set_default_basis();
     
@@ -246,9 +246,6 @@ void dsp::CPSRFile::open_file (const char* filename)
   }
 
   info.set_machine ("CPSR");
-
-  // make an identifier name
-  info.set_identifier ("o" + info.get_default_id());  // o for orion
 
   if (verbose)
     cerr << "dsp::CPSRFile::open exit" << endl;

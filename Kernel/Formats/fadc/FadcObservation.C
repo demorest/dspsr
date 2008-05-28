@@ -299,10 +299,8 @@ cerr<<"FadcObservation: total_samples = "<<total_samples<<'\n';
   string prefix = "F";
 
   // make an identifier name
-  set_identifier (prefix + get_default_id());
   set_mode (tostring(get_nbit()) + "-bit mode");
   set_machine ("Fadc");
-cerr<<"FadcObservation: machine set\n";  
   
   // //////////////////////////////////////////////////////////////////////
   //

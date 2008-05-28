@@ -217,7 +217,6 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   dc_centred = false;
 
   // make an identifier name
-  set_identifier ("f" + get_default_id());
   set_mode (stringprintf ("%d-bit mode", get_nbit()));
   set_machine ("PMDAQ");
 

@@ -211,7 +211,6 @@ void dsp::Mark5File::open_file (const char* filename)
 	
   string prefix="tmp";    // what prefix should we assign??
 	  
-  info.set_identifier(prefix+info.get_default_id() );
   info.set_mode(stringprintf ("%d-bit mode",info.get_nbit() ) );
   info.set_machine("Mark5");	
 }
