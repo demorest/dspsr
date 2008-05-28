@@ -1,7 +1,7 @@
 
 noinst_LTLIBRARIES = libClasses.la
 
-nobase_include_HEADERS = \
+nobase_include_HEADERS = ascii_header.h \
 dsp/ASCIIObservation.h          dsp/InputBuffering.h            dsp/Seekable.h \
 dsp/BitSeries.h                 dsp/InputBufferingShare.h       dsp/SetBufferingPolicy.h \
 dsp/DADAFile.h                  \
@@ -21,7 +21,7 @@ dsp/HistUnpacker.h              dsp/dsp.h                       dsp/dspExtension
 dsp/IOManager.h                 \
 dsp/Input.h                     dsp/Scratch.h
 
-libClasses_la_SOURCES = \
+libClasses_la_SOURCES = ascii_header.c \
 ASCIIObservation.C              InputBufferingShare.C           \
 BitSeries.C                     SubByteTwoBitCorrection.C \
 DADAFile.C                      TestInput.C \
