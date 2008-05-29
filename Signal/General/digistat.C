@@ -213,10 +213,10 @@ int main (int argc, char** argv) try
     }
 
     if (seek_seconds)
-      input->seek_seconds (seek_seconds);
+      manager->get_input()->seek_seconds (seek_seconds);
     
     if (total_seconds)
-      input->set_total_seconds (seek_seconds + total_seconds);
+      manager->get_input()->set_total_seconds (seek_seconds + total_seconds);
 
     cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
     cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
