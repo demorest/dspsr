@@ -1,18 +1,14 @@
 #! /bin/csh
 
 set SFUSER = `awk -F@ '{print $1}' CVS/Root`
-set SFPATH = /home/groups/d/ds/dspsr/htdocs/classes
+set SFPATH = shell.sourceforge.net:/home/groups/d/ds/dspsr/htdocs/classes
 
-echo "Installing html/* as $SFUSER"
+set SFHTML = dspsr
 
-echo "Creating gzipped tarball ..."
+echo "Installing $SFHTML as $SFUSER"
+
 cd html
-chmod -R g+w dspsr
-tar cf doc.tar dspsr
-gzip -f doc.tar
+chmod -R g+w $SFHTML
 
-echo "Secure copying to shell.sourceforge.net ..."
-
-scp doc.tar.gz $SFUSER@shell.sourceforge.net:
-ssh $SFUSER@shell.sourceforge.net "cd $SFPATH && rm -rf * && tar zxvf ~/doc.tar.gz"
+rsync -Crvz --rsh="ssh -l $SFUSER" $SFHTML $SFPATH/
 
