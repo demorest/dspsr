@@ -22,7 +22,7 @@ dsp::SpigotFile::SpigotFile (const char* filename)
   : File ("Spigot")
 {
   if (filename)
-    open (filename,0);
+    open (filename);
 }
 
 dsp::SpigotFile::~SpigotFile ()
