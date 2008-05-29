@@ -6,7 +6,20 @@
  ***************************************************************************/
 
 #include "dsp/OutputBuffering.h"
-#include "find_nint.h"
+
+// Function for returning the nearest integer
+template<class T>
+T find_nint(double d){
+  T ret = T(d);
+  if( d > 0 && d-double(ret) > 0.5 )
+    ret++;
+  if( d < 0 && d-double(ret) < -0.5 )
+    ret--;
+  return ret;
+}
+
+inline int64 nint64 (double d) { return find_nint<int64>(d); }
+inline uint64 nuint64 (double d) { return find_nint<uint64>(d); }
 
 using namespace std;
 
