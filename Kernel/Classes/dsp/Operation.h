@@ -7,15 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.38 $
-   $Date: 2008/02/14 19:33:50 $
+   $Revision: 1.39 $
+   $Date: 2008/05/29 08:04:31 $
    $Author: straten $ */
 
 #ifndef __Operation_h
 #define __Operation_h
 
 #include "dsp/dsp.h"
-#include "dsp/Time.h"
 
 #include "RealTimer.h"
 #include "Reference.h"
@@ -121,10 +120,7 @@ namespace dsp {
     int timers_index (const std::string& op_name);
 
     //! Stop watch records the amount of time spent performing this operation
-    OperationTimer optime;
-
-    //! More stop watches for recording miscellaneous timings
-    std::vector<OperationTimer> timers;
+    RealTimer optime;
 
     //! Unique instantiation id
     int id;
