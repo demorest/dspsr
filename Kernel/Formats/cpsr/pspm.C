@@ -10,7 +10,6 @@
 #include "pspm_search_header.h"
 #include "machine_endian.h"
 #include "pspm++.h"
-#include "tapepos.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -308,31 +307,3 @@ PSPM_SEARCH_HEADER* pspm_read (const char* filename)
   return ret;
 }
 
-PSPM_SEARCH_HEADER* pspm_read (const char* tapedev, int filenum) 
-{
-  int tfd = open (tapedev, O_RDONLY);
-  if (tfd < 0) {
-    fprintf (stderr, "pspm_read:: Could not open '%s'", tapedev);
-    perror (":");
-    return NULL;
-  }
-
-  if (tapepos (tfd, filenum-1) < 0) {
-    fprintf (stderr, "pspm_read:: error positioning tape:'%s' to file:%d\n",
-	     tapedev, filenum);
-    close (tfd);
-    return NULL;
-  }
-
-  PSPM_SEARCH_HEADER* ret = pspm_read (tfd);
-
-  // re-position the tape and get it ready for dd
-  if (tapepos (tfd, filenum-1) < 0) {
-    fprintf (stderr, "pspm_read:: error positioning tape:'%s' to file:%d\n",
-	     tapedev, filenum);
-    close (tfd);
-    return NULL;
-  }
-  close (tfd);
-  return ret;
-}
