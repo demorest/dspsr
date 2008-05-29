@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/S2File.h"
-#include "tempo++.h"
 #include "Error.h"
 
 // S2 header and unpacking routines
@@ -118,7 +117,7 @@ void dsp::S2File::open_file (const char* filename)
   
   info.set_machine ("S2");
   if(extra_hdr.telid > ' ' )
-    info.set_telescope ( Tempo::name(extra_hdr.telid) );
+    info.set_telescope ( string (1, extra_hdr.telid) );
   else
     info.set_telescope ( "PKS" );
     
