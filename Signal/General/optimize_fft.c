@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 1998 by wvanstra Willem van Straten
+ *   Copyright (C) 1998 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
