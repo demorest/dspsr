@@ -1,6 +1,4 @@
 
-PACKAGE = DSPSR
-
 SUBDIRS	= Kernel Signal Management
 
 include $(top_srcdir)/config/Makefile.root
