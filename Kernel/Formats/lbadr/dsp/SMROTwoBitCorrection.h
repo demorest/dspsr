@@ -7,14 +7,13 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROTwoBitCorrection.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2008/05/29 08:26:06 $
+   $Author: straten $ */
 
 #ifndef __SMROTwoBitCorrection_h
 #define __SMROTwoBitCorrection_h
 
-#include "SMRO.h"
 #include "dsp/SubByteTwoBitCorrection.h"
 
 namespace dsp {
