@@ -56,8 +56,6 @@ dsp::Operation::Operation (const char* _name)
 
   discarded_weights = 0;
 
-  optime.operation = "operate";
-
   scratch = Scratch::get_default_scratch();
 
   prepared = false;
@@ -123,22 +121,8 @@ void dsp::Operation::reset_discarded_weights ()
   discarded_weights = 0;
 }
 
-
-
-//! Returns the index in the 'timers' array of a particular timer
-int dsp::Operation::timers_index(const string& op_name){
-  for( unsigned i=0; i<timers.size(); i++)
-    if( timers[i].operation == op_name )
-      return i;
-
-  throw Error(InvalidParam,"dsp::Operation::timers_index()",
-	      "Your input string '%s' didn't match that of any of the %d timers",
-	      op_name.c_str(), timers.size());
-
-  return -1;
-}
-
 void dsp::Operation::set_scratch (Scratch* s)
 {
   scratch = s;
 }
+
