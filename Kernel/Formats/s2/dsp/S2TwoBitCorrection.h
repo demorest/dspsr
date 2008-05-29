@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitCorrection.h,v $
-   $Revision: 1.10 $
-   $Date: 2007/11/29 12:02:36 $
+   $Revision: 1.11 $
+   $Date: 2008/05/29 07:34:58 $
    $Author: straten $ */
 
 #ifndef __S2TwoBitCorrection_h
@@ -27,7 +27,7 @@ namespace dsp {
   public:
 
     //! Construct based on the telescope at which the data was recorded
-    S2TwoBitCorrection (char telescope = Tempo::Parkes);
+    S2TwoBitCorrection (char telescope = '7');
 
     //! Return true if S2TwoBitCorrection can convert the Observation
     virtual bool matches (const Observation* observation);
