@@ -1,19 +1,21 @@
 #! /bin/csh -f
 
-set psrchive=`sh -c 'which psrchive_aclocal 2> /dev/null'`
+set psrchive=`sh -c 'which psrchive 2> /dev/null'`
 
 if ( "$psrchive" == "" ) then
 
   echo
   echo "PSRCHIVE installation not found."
-  echo "If installed, please ensure that PSRCHIVE executables are in PATH"
+  echo "If installed, please ensure that psrchive executable is in PATH"
+  echo "If not installed, please see http://psrchive.sourceforge.net"
   echo
+  exit -1
 
 endif
 
 echo "Copying autoconf and automake tools from PSRCHIVE ..."
 
-cp `$psrchive`/* config/
+cp `$psrchive --aclocal`/* config/
 
 sh config/formats.sh
 
@@ -37,3 +39,4 @@ else
   exit -1
 
 endif
+
