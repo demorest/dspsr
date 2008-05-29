@@ -296,7 +296,6 @@ void dsp::WAPPFile::open_file (const char* filename)
   // telscope code
   //
   info.set_telescope ("Arecibo");  // assume Arecibo
-  info.set_default_basis ();
 
   string prefix="wapp";
   info.set_machine("WAPP");	

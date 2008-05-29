@@ -207,8 +207,7 @@ void dsp::Mark5File::open_file (const char* filename)
   //
   // call this only after setting frequency and telescope
   //
-  info.set_default_basis ();
-	
+
   string prefix="tmp";    // what prefix should we assign??
 	  
   info.set_mode(stringprintf ("%d-bit mode",info.get_nbit() ) );

@@ -207,9 +207,6 @@ cerr<<"FadcObservation: Sample Res. Bits = "<<scan_nbit<<"\n";
   //
   // call this only after setting frequency and telescope
   //
-  set_default_basis ();
-cerr<<"FadcObservation: Default basis set\n";
-
 
   // //////////////////////////////////////////////////////////////////////
   //

@@ -167,8 +167,6 @@ void dsp::GMRTFile::open_file (const char* filename)
 
   set_total_samples();
 
-  info.set_default_basis ();
-	
   info.set_mode(header.pol_mode);
   info.set_machine("GMRT");	
 }

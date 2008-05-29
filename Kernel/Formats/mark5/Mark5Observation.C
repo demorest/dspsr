@@ -120,7 +120,6 @@ dsp::Mark5_Observation::Mark5_Observation(const char* header)
 	 //
 	 // call this only after setting frequency and telescope
   	 //
-  	 set_default_basis ();
 
 	// ///////////////////////////////////////////////////////////////
 	//  FANOUT
