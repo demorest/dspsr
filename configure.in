@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([dspsr],[2.0],[dspsr-developers@lists.sourceforge.net])
+AC_INIT([DSPSR],[2.0],[dspsr-developers@lists.sourceforge.net])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([Kernel/Makefile.am])
@@ -32,7 +32,7 @@ SWIN_COMPILER
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 #
-#
+# Check for selected formats in backends.list
 #
 
 DSPSR_FORMATS
