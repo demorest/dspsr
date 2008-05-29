@@ -1,0 +1,44 @@
+#! /bin/csh
+
+if ( "$1" == "" ) then
+
+cat <<EOF
+
+  Please specify the relative path to the old file to be merged; e.g.
+
+  Management/merge backend/cpsr2/CPSR2File.C
+
+EOF
+
+exit -1
+endif
+
+
+if ( ! -d Signal/Pulsar ) then
+  echo "Signal/Pulsar directory does not exist; running ./update"
+  ./update
+endif
+
+set find_paths = "Kernel Signal"
+
+set file = $1
+set base = `basename $file`
+
+set matches = `find $find_paths -name $base -print | wc -l`
+
+if ( $matches == 0 ) then
+  echo "WARNING: No match found for $file"
+else if ( $matches > 1 ) then
+  echo "WARNING: More than one match for $file"
+  find $find_paths -name $base -print
+else
+
+  set match = `find $find_paths -name $base -print`
+  mv $file $file.merge.backup
+  echo "Merging $file into $match"
+  cvs update -r dspsr-1-0 $file >& /dev/null
+  merge $match $file $file.merge.backup
+  echo "Done!"
+
+endif
+
