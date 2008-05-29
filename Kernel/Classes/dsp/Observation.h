@@ -303,9 +303,6 @@ namespace dsp {
     bool contiguous (const Observation& next, bool verbose_on_failure=true,
 		     int ichan=-1,int ipol=-1) const;
 
-    //! Sets the feed type based on the telescope and centre frequency
-    void set_default_basis ();
-
     //! Set all attributes to null default
     void init ();
 

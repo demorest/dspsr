@@ -64,7 +64,6 @@ dsp::MWAFile::open_file (const char* filename)
   info.set_ndim(1);
   info.set_nbit(32);
   info.set_type( Signal::Pulsar );
-  info.set_default_basis ();
   info.set_mode("32-bit");
   info.set_state( Signal::Nyquist );
   info.set_machine( "MWA" );

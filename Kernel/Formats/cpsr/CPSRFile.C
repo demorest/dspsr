@@ -214,7 +214,6 @@ void dsp::CPSRFile::open_file (const char* filename)
   // default_basis
   info.set_telescope( string(1, hdr.ttelid) );
   info.set_centre_frequency (hdr.frequency);
-  info.set_default_basis();
     
   // CPSR samples the analytic representation of the voltages
   info.set_state (Signal::Analytic);

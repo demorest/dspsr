@@ -167,8 +167,6 @@ void dsp::ASPFile::open_file (const char* filename)
 
   set_total_samples();
 
-  info.set_default_basis ();
-	
   string prefix="asp";
 
   info.set_mode(header.pol_mode);
