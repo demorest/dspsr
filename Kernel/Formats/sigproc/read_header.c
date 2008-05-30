@@ -1,8 +1,11 @@
 /* read_header.c - general handling routines for SIGPROC headers */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "header.h"
+#include "sigproc.h"
+
 int nbins;
 double period;
 /* read a string from the input which looks like nchars-char[1-nchars] */
@@ -24,7 +27,7 @@ int read_header(FILE *inputfile) /* includefile */
 {
   char string[80], message[80];
   int itmp,nbytes,totalbytes,expecting_rawdatafile=0,expecting_source_name=0; 
-  int expecting_frequency_table=0,channel_index;
+  int expecting_frequency_table=0,channel_index=0;
 
 
   /* try to read in the first line of the header */
