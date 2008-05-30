@@ -1,4 +1,5 @@
 /* sigproc.h: Automatically generated include file for sigproc-3.7 */
+#include <stdio.h>
 #include "polyco.h"
 #include "epn.h"
 #include "version.h"
