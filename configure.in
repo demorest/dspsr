@@ -147,6 +147,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/puma/Makefile
 		Kernel/Formats/puma2/Makefile
 		Kernel/Formats/s2/Makefile
+		Kernel/Formats/sigproc/Makefile
 		Kernel/Formats/spigot/Makefile
 		Kernel/Formats/wapp/Makefile
 		Signal/Makefile
