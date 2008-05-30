@@ -28,11 +28,8 @@ void dsp::SigProcObservation::load (FILE* header)
 
 void dsp::SigProcObservation::load_global ()
 {
-  // no idea about the size of the data
-  //
-  set_ndat( 0 );
-
-  set_telescope( string(1, char(telescope_id)) );
+  set_telescope( string(1, '0' + telescope_id) );
+  set_machine( string(1, '0' + machine_id) );
 
   // set_receiver (buffer);
 
@@ -50,12 +47,18 @@ void dsp::SigProcObservation::load_global ()
   set_nbit (nbits);
   set_ndim (1);
 
+  // set_ndat (nsamples);
+
   set_state( Signal::Intensity );
 
   set_rate( 1.0/tsamp );
-  set_start_time( mjdobs + tstart );
-  set_machine( string(1, char(machine_id)) );
-  coordinates.setRadians (src_raj, src_dej);
+  set_start_time( tstart );
+
+  sky_coord coord;
+  coord.ra().setHourMS (src_raj);
+  coord.dec().setDegMS (src_dej);
+
+  set_coordinates (coord);
 }
 
 void dsp::SigProcObservation::unload (FILE* header)
@@ -66,8 +69,8 @@ void dsp::SigProcObservation::unload (FILE* header)
 
 void dsp::SigProcObservation::unload_global ()
 {
-  telescope_id = get_telescope()[0];
-  machine_id = get_machine()[0];
+  telescope_id = get_telescope()[0] - '0';
+  machine_id = get_machine()[0] - '0';
 
   // set_receiver (buffer);
 
@@ -82,7 +85,8 @@ void dsp::SigProcObservation::unload_global ()
   
   tsamp = 1.0 / get_rate ();
 
-  // get_start_time( mjdobs + tstart );
+  tstart = get_start_time().in_days();
 
-  // coordinates.setRadians (src_raj, src_dej);
+  src_raj = coordinates.ra().getHourMS ();
+  src_dej = coordinates.dec().getDegMS ();
 }
