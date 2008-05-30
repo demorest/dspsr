@@ -8,6 +8,11 @@ test_SetBufferingPolicy_SOURCES = test_SetBufferingPolicy.C
 test_Input_SOURCES = test_Input.C
 test_Unpack_SOURCES = test_Unpack.C
 
+if HAVE_sigproc
+  check_PROGRAMS += sigproc_header
+  sigproc_header_SOURCES = sigproc_header.C
+endif
+
 #############################################################################
 
 INCLUDES = -I$(top_builddir)/local_include
