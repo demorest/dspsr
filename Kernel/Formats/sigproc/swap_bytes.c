@@ -1,3 +1,6 @@
+#include "sigproc.h"
+#include <stdlib.h>
+
 /* 
 	some useful routines written by Jeff Hagen for swapping
 	bytes of data between Big Endian and  Little Endian formats:

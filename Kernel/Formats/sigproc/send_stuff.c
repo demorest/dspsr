@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "sigproc.h"
 FILE *input, *output;
 int swapout;
