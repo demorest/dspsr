@@ -8,8 +8,7 @@
 #include "dsp/SigProcObservation.h"
 
 extern "C" {
-#include "sigproc.h"
-#include "header.h"
+#include "filterbank.h"
 }
 
 using namespace std;
@@ -28,9 +27,6 @@ void dsp::SigProcObservation::load (FILE* header)
 
 void dsp::SigProcObservation::load_global ()
 {
-  set_telescope( string(1, '0' + telescope_id) );
-  set_machine( string(1, '0' + machine_id) );
-
   // set_receiver (buffer);
 
   set_source( source_name );
@@ -69,15 +65,14 @@ void dsp::SigProcObservation::unload (FILE* header)
 
 void dsp::SigProcObservation::unload_global ()
 {
-  telescope_id = get_telescope()[0] - '0';
-  machine_id = get_machine()[0] - '0';
-
   // set_receiver (buffer);
+  machine_id = 1;
+  telescope_id = 1;
 
   strcpy( source_name, get_source().c_str() );
 
-  // set_centre_frequency (freq);
-  // set_bandwidth (bw);
+  fch1 = get_centre_frequency (0);
+  foff = get_bandwidth() / get_nchan();
 
   nchans = get_nchan ();
   nifs = get_npol ();
@@ -89,4 +84,11 @@ void dsp::SigProcObservation::unload_global ()
 
   src_raj = coordinates.ra().getHourMS ();
   src_dej = coordinates.dec().getDegMS ();
+
+  // cerr << "raj=" << src_raj << " dej=" << src_dej << endl;
+
+  az_start = za_start = 0.0;
+
+  for (unsigned ipol=0; ipol < get_npol(); ipol++)
+    ::ifstream[ipol] = 'Y';
 }
