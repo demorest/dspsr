@@ -1,0 +1,1 @@
+#define SIGPROC_VERSION 3.7
