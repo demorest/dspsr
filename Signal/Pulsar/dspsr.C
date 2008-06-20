@@ -83,7 +83,7 @@ void usage ()
     "\n"
     "Folding options:\n"
     " -b nbin        fold pulse profile into nbin phase bins \n"
-    " -c period      fold with constant period\n"
+    " -c period      fold with constant period (in seconds)\n"
     " -p phase       reference phase of pulse profile bin zero \n"
     " -E psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
     " -P psr.poly    add the phase predictor, psr.poly, for use \n"
