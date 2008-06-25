@@ -480,8 +480,13 @@ void dsp::Dedispersion::build (vector<float>& phases,
 
       phases[spt+ipt] = coeff*sqr(freq)/(chan_cfreq+freq) + delay_phase;
 
-      if (build_delays)
+      if (build_delays && freq != 0.0)
 	phases[spt+ipt] /= (2.0*M_PI * freq);
+
+#ifdef _DEBUG
+      cerr << ichan*_ndat + ipt << " " << chan_cfreq+freq << " " 
+	   << phases[spt+ipt] << endl;
+#endif
     }
   }
 }
