@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.27 $
-   $Date: 2008/04/09 02:55:23 $
+   $Revision: 1.28 $
+   $Date: 2008/06/25 05:20:59 $
    $Author: straten $ */
 
 #ifndef __Dedispersion_h
@@ -137,6 +137,9 @@ namespace dsp {
     //! Build the dedispersion frequency response kernel
     virtual void build ();
 
+    //! Build delays in microseconds instead of phases
+    void set_build_delays (bool delay = true);
+
     class SampleDelay;
 
     //!
@@ -167,6 +170,9 @@ namespace dsp {
 
     //! Choose filter length this many times the minimum length
     unsigned times_minimum_nfft;
+
+    //! Build method returns delay in microseconds instead of phase
+    bool build_delays;
 
     //! Flag that the response and bandpass attributes reflect the state
     bool built;
