@@ -1,9 +1,10 @@
 /***************************************************************************
  *
- *   Copyright (C) 2003 by Willem van Straten
+ *   Copyright (C) 2003-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include <iostream>
 #include <unistd.h>
 
@@ -25,6 +26,7 @@ void usage()
     "   -w smear   over-ride extra fractional smearing buffer size\n"
     "\n"
     "   -q         quiet mode; print only the dispersion smearing\n"
+    "   -D         report on impact of dc_centred bug \n"
     "   -v         enable verbosity flags in Dedispersion class\n"
     "\n"
     "  Program returns smear in microseconds as well as the minimum\n"
@@ -32,11 +34,13 @@ void usage()
        << endl;
 }
 
-int main(int argc, char ** argv)
-{ try {
+void report_dc_centred_impact (dsp::Dedispersion&);
 
+int main(int argc, char ** argv) try
+{
   bool verbose = false;
   bool quiet = false;
+  bool dc_centred_report = false;
 
   float  dm = 1.0;
   double centrefreq = 1420.4;
@@ -47,11 +51,15 @@ int main(int argc, char ** argv)
   bool   triple = false;
 
   int c;
-  while ((c = getopt(argc, argv, "hd:b:f:n:qvw:x:")) != -1)
+  while ((c = getopt(argc, argv, "hDd:b:f:n:qvw:x:")) != -1)
     switch (c) {
 
     case 'b':
       bw = atof (optarg);
+      break;
+
+    case 'D':
+      dc_centred_report = true;
       break;
 
     case 'd':
@@ -102,15 +110,21 @@ int main(int argc, char ** argv)
   kernel.set_dispersion_measure (dm);
 
   kernel.set_nchan (nchan);
-  kernel.set_dc_centred (triple);
 
   if (set_nfft)
     kernel.set_frequency_resolution (set_nfft);
 
+  if (dc_centred_report)
+  {
+    report_dc_centred_impact (kernel);
+    return 0;
+  }
+
   /* micro seconds */
   float smear_us = kernel.get_smearing_time () * 1e6;
 
-  if (quiet) {
+  if (quiet)
+  {
     cerr << " " << smear_us * 1e-6 << endl;
     return 0;
   }
@@ -128,7 +142,8 @@ int main(int argc, char ** argv)
     "Dispersion delay:   " << kernel.delay_time() << " s\n"
     "Smearing time:      " << smear_us << " us\n";
 
-  if (nchan > 1)  {
+  if (nchan > 1)
+  {
     smear_us = kernel.get_effective_smearing_time () * 1e6;
     cerr << "Effective Smearing: " << smear_us << " us\n";
   }
@@ -154,11 +169,71 @@ int main(int argc, char ** argv)
   return 0;
 
 }
-catch (...) {
-  cerr << "exception thrown: " << endl;
+catch (Error& error)
+{
+  cerr << error << endl;
   return -1;
 }
+
+/*
+ * WvS - 25 June 2008
+ * 
+ * It was discovered that CPSR2 and PuMa2 file readers were setting the
+ * dc_centred attribute to true by default.  This experimental parameter
+ * probably should never have been introduced.  It shifts the frequencies
+ * by half a channel width when creating a filterbank dispersion kernel.
+ * In most cases, this is not right.
+ *
+ */
+
+void report_dc_centred_impact (dsp::Dedispersion& kernel)
+{
+  kernel.prepare ();
+  kernel.build ();
+  kernel.set_build_delays ();
+
+  unsigned ndat = kernel.get_ndat();
+  unsigned nchan = kernel.get_nchan();
+
+  kernel.set_dc_centred (false);
+  vector<float> delays0 (ndat * nchan);
+  kernel.build (delays0, ndat, nchan);
+
+  kernel.set_dc_centred (true);
+  vector<float> delays1 (ndat * nchan);
+  kernel.build (delays1, ndat, nchan);
+
+  float max_diff = 0.0;
+  float min_diff = 0.0;
+
+  unsigned count = 0;
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+  {
+    float max = 0;
+    float min = 0;
+
+    for (unsigned idat=0; idat < ndat; idat++)
+    {
+      float diff = delays1[count] - delays0[count];
+      count ++;
+
+      if (diff < min)
+	min = diff;
+      if (diff > max)
+	max = diff;
+    }
+
+    // cerr << "chan=" << ichan << " diff=" << max-min << " us" << endl;
+
+    if (max-min > max_diff)
+      max_diff = max-min;
+
+    if (min_diff == 0.0 || max-min < min_diff)
+      min_diff = max-min;
+  }
+
+  cout << "Residual smearing per channel due to dc_centred bug: \n"
+    "maximum = " << max_diff << " microseconds\n"
+    "minimum = " << min_diff << " microseconds" << endl;
 }
-
-
 
