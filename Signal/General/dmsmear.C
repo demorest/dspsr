@@ -188,6 +188,13 @@ catch (Error& error)
 
 void report_dc_centred_impact (dsp::Dedispersion& kernel)
 {
+  if (kernel.get_nchan () < 2)
+  {
+    cerr << "dc_centred bug impacts only filterbank mode (use -n <nchan>)"
+	 << endl;
+    return;
+  }
+
   kernel.prepare ();
   kernel.build ();
   kernel.set_build_delays ();
@@ -196,44 +203,47 @@ void report_dc_centred_impact (dsp::Dedispersion& kernel)
   unsigned nchan = kernel.get_nchan();
 
   kernel.set_dc_centred (false);
-  vector<float> delays0 (ndat * nchan);
+  vector<float> delays0;
   kernel.build (delays0, ndat, nchan);
 
   kernel.set_dc_centred (true);
-  vector<float> delays1 (ndat * nchan);
+  vector<float> delays1;
   kernel.build (delays1, ndat, nchan);
 
-  float max_diff = 0.0;
-  float min_diff = 0.0;
+  float max_smearing = 0.0;
+  float min_smearing = 0.0;
 
-  unsigned count = 0;
+  assert (delays0.size() == delays1.size());
+  assert (delays0.size() == ndat * nchan);
+
   for (unsigned ichan=0; ichan < nchan; ichan++)
   {
-    float max = 0;
-    float min = 0;
+    unsigned offset = ichan * ndat;
+    float delay_min = delays1[offset] - delays0[offset];
 
-    for (unsigned idat=0; idat < ndat; idat++)
-    {
-      float diff = delays1[count] - delays0[count];
-      count ++;
+    offset += ndat/2;
+    assert (offset < ndat*nchan);
+    float delay_0   = delays1[offset] - delays0[offset];
 
-      if (diff < min)
-	min = diff;
-      if (diff > max)
-	max = diff;
-    }
+    offset += ndat/2-1;
+    assert (offset < ndat*nchan);
+    float delay_max = delays1[offset] - delays0[offset];
 
-    // cerr << "chan=" << ichan << " diff=" << max-min << " us" << endl;
+    // the centre of each band is unaffected
+    assert (delay_0 == 0);
 
-    if (max-min > max_diff)
-      max_diff = max-min;
+    // the delay is most at the extreme edges of the band
+    float smearing = std::max(fabs(delay_min), fabs(delay_max));
 
-    if (min_diff == 0.0 || max-min < min_diff)
-      min_diff = max-min;
+    if (smearing > max_smearing)
+      max_smearing = smearing;
+
+    if (min_smearing == 0.0 || smearing < min_smearing)
+      min_smearing = smearing;
   }
 
   cout << "Residual smearing per channel due to dc_centred bug: \n"
-    "maximum = " << max_diff << " microseconds\n"
-    "minimum = " << min_diff << " microseconds" << endl;
+    "maximum = " << max_smearing << " microseconds\n"
+    "minimum = " << min_smearing << " microseconds" << endl;
 }
 
