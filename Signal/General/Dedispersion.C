@@ -35,11 +35,14 @@ dsp::Dedispersion::Dedispersion ()
 
   Doppler_shift = 1.0;
   fractional_delay = false;
+  dc_centred = false;
 
   frequency_resolution_set = false;
   times_minimum_nfft = 0;
 
   smearing_samples_set = false;
+
+  build_delays = false;
 
   built = false;
   context = 0;
@@ -476,7 +479,16 @@ void dsp::Dedispersion::build (vector<float>& phases,
       double delay_phase = -2.0*M_PI * freq * delay;
 
       phases[spt+ipt] = coeff*sqr(freq)/(chan_cfreq+freq) + delay_phase;
+
+      if (build_delays)
+	phases[spt+ipt] /= (2.0*M_PI * freq);
     }
   }
+}
+
+//! Build delays in microseconds instead of phases
+void dsp::Dedispersion::set_build_delays (bool delays)
+{
+  build_delays = delays;
 }
 
