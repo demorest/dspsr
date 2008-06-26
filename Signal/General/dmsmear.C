@@ -210,40 +210,34 @@ void report_dc_centred_impact (dsp::Dedispersion& kernel)
   vector<float> delays1;
   kernel.build (delays1, ndat, nchan);
 
-  float max_smearing = 0.0;
-  float min_smearing = 0.0;
-
   assert (delays0.size() == delays1.size());
   assert (delays0.size() == ndat * nchan);
 
-  for (unsigned ichan=0; ichan < nchan; ichan++)
-  {
-    unsigned offset = ichan * ndat;
-    float delay_min = delays1[offset] - delays0[offset];
+  unsigned lowest_cfreq_chan = 0;
+  if (kernel.get_bandwidth() < 0.0)
+    lowest_cfreq_chan = nchan - 1;
 
-    offset += ndat/2;
-    assert (offset < ndat*nchan);
-    float delay_0   = delays1[offset] - delays0[offset];
+  unsigned offset = lowest_cfreq_chan * ndat;
+  float delay_lo = delays1[offset] - delays0[offset];
 
-    offset += ndat/2-1;
-    assert (offset < ndat*nchan);
-    float delay_max = delays1[offset] - delays0[offset];
+  offset += ndat/2;
+  assert (offset < ndat*nchan);
+  float delay_0  = delays1[offset] - delays0[offset];
 
-    // the centre of each band is unaffected
-    assert (delay_0 == 0);
+  offset += ndat/2-1;
+  assert (offset < ndat*nchan);
+  float delay_hi = delays1[offset] - delays0[offset];
 
-    // the delay is most at the extreme edges of the band
-    float smearing = std::max(fabs(delay_min), fabs(delay_max));
+  // the centre of each band is unaffected
+  assert (delay_0 == 0);
 
-    if (smearing > max_smearing)
-      max_smearing = smearing;
+  // cerr << ichan << " " << delay_lo << " " << delay_hi << endl;
 
-    if (min_smearing == 0.0 || smearing < min_smearing)
-      min_smearing = smearing;
-  }
+  float smearing = fabs(delay_lo) + fabs(delay_hi);
+  float assymetry = fabs(delay_lo) - fabs(delay_hi);
 
-  cout << "Residual smearing per channel due to dc_centred bug: \n"
-    "maximum = " << max_smearing << " microseconds\n"
-    "minimum = " << min_smearing << " microseconds" << endl;
+  cout << "Owing to dc_centred bug: \n"
+    "total smearing = " << smearing << " microseconds\n"
+    "assymetry = " << assymetry << " microseconds" << endl;
 }
 
