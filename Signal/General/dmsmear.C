@@ -234,10 +234,10 @@ void report_dc_centred_impact (dsp::Dedispersion& kernel)
   // cerr << ichan << " " << delay_lo << " " << delay_hi << endl;
 
   float smearing = fabs(delay_lo) + fabs(delay_hi);
-  float assymetry = fabs(delay_lo) - fabs(delay_hi);
+  float asymmetry = fabs(delay_lo) - fabs(delay_hi);
 
   cout << "Owing to dc_centred bug: \n"
     "total smearing = " << smearing << " microseconds\n"
-    "assymetry = " << assymetry << " microseconds" << endl;
+    "asymmetry = " << asymmetry << " microseconds" << endl;
 }
 
