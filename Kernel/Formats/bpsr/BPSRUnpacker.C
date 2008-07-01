@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2006 by Willem van Straten
+ *   Copyright (C) 2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -19,9 +19,11 @@ dsp::BPSRUnpacker::BPSRUnpacker (const char* name) : HistUnpacker (name)
 
 bool dsp::BPSRUnpacker::matches (const Observation* observation)
 {
+#ifdef _DEBUG
   cerr << "dsp::BPSRUnpacker::matches machine=" << observation->get_machine()
        << " nbit=" << observation->get_nbit()
        << " ndim=" << observation->get_ndim() << endl;
+#endif
 
   return observation->get_machine() == "BPSR" 
     && observation->get_nbit() == 8
