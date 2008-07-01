@@ -32,7 +32,7 @@ void dsp::Unpacker::transformation ()
     cerr << "dsp::Unpacker::transformation" << endl;;
 
   // set the Observation information
-  output->Observation::operator=(*input);
+  prepare ();
 
   resize_output ();
 
