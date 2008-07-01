@@ -73,28 +73,33 @@ int main (int argc, char** argv) try
     to communicate the data between operations.
   */
 
-  // input timeseries container
+  if (verbose)
+    cerr << "sigproc_filterbank: creating input timeseries container" << endl;
   Reference::To<dsp::TimeSeries> timeseries = new dsp::TimeSeries;
 
-  // interface manages the data loading and unpacking
+  if (verbose)
+    cerr << "sigproc_filterbank: creating input/unpacker manager" << endl;
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
   manager->set_output (timeseries);
-  manager->get_input()->set_block_size( block_size );
 
-  // rescales the input timeseries inplace
+  if (verbose)
+    cerr << "sigproc_filterbank: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
 
-  // add the input timeseries polarizations together inplace
+  if (verbose)
+    cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
   pscrunch->set_input (timeseries);
   pscrunch->set_output (timeseries);
 
-  // output bitseries container
+  if (verbose)
+    cerr << "sigproc_filterbank: creating output bitseries container" << endl;
   Reference::To<dsp::BitSeries> bitseries = new dsp::BitSeries;
 
-  // interface manages the creation of data loading and unpacking classes
+  if (verbose)
+    cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
@@ -105,6 +110,10 @@ int main (int argc, char** argv) try
       cerr << "sigproc_filterbank: opening file " << filenames[ifile] << endl;
 
     manager->open (filenames[ifile]);
+
+    unsigned nchan = manager->get_info()->get_nchan();
+
+    manager->get_input()->set_block_size( block_size/nchan );
 
     if (verbose)
     {
@@ -128,11 +137,12 @@ int main (int argc, char** argv) try
     while (!manager->get_input()->eod())
     {
       manager->operate ();
-      digitizer->operate ();
       rescale->operate ();
 
       if (do_pscrunch)
 	pscrunch->operate ();
+
+      digitizer->operate ();
 
       // output the result to stdout
       const uint64 nbyte = bitseries->get_nbytes();
