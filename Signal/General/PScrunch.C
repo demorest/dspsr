@@ -39,10 +39,12 @@ void dsp::PScrunch::transformation ()
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
-  output->set_npol (1);
 
   if (output != input)
+  {
+    output->set_npol (1);
     output->resize (output_ndat);
+  }
   else
     output->set_ndat (output_ndat);
 
@@ -59,4 +61,10 @@ void dsp::PScrunch::transformation ()
     for (uint64 idat=0; idat < output_ndat; idat++)
       out_data[idat] = (in_p0[idat] + in_p1[idat]) * 0.5;
   }
+
+  if (output == input)
+    output->set_npol (1);
+
+  output->set_state (Signal::Intensity);
 }
+
