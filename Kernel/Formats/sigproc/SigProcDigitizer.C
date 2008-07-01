@@ -48,7 +48,7 @@ void dsp::SigProcDigitizer::pack ()
 
   unsigned char* outptr = output->get_rawptr();
 
-  const float bit8_mean = 128.0;
+  const float bit8_mean = 127.5;
   const float cutoff_sigma = 6.0;
   const float bit8_scale = bit8_mean / cutoff_sigma;
 
