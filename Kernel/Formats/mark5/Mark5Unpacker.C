@@ -41,7 +41,7 @@ void dsp::Mark5Unpacker::unpack()
     cerr << "Mark5Unpacker::unpack ndat=" << ndat << " npol=" << npol
 	 << " nchan=" << nchan << endl;
 	
-  Mark5File* file = get_Input<Mark5File>();
+  const Mark5File* file = get_Input<Mark5File>();
   if (!file)
     throw Error (InvalidState, "dsp::Mark5Unpacker::unpack",
 		 "Input is not a Mark5File");

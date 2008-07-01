@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark5/dsp/Mark5TwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2008/07/01 12:30:17 $
+   $Author: straten $ */
 
 #ifndef __Mark5TwoBitCorrection_h
 #define __Mark5TwoBitCorrection_h
@@ -54,7 +54,7 @@ namespace dsp {
 		     unsigned* weights = 0,
 		     unsigned nweights = 0);
 
-    Mark5File* file;
+    const Mark5File* file;
 
   };
   
