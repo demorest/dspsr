@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.22 $
-   $Date: 2008/04/18 04:57:06 $
+   $Revision: 1.23 $
+   $Date: 2008/07/01 12:30:09 $
    $Author: straten $ */
 
 
@@ -53,7 +53,7 @@ namespace dsp {
     virtual bool matches (const Observation* observation) = 0;
 
     //! Copy the input attributes to the output
-    void prepare ();
+    virtual void prepare ();
 
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
@@ -79,42 +79,17 @@ namespace dsp {
 
     //! Provide BitSeries::input attribute access to derived classes
     template<class T>
-    T* get_Input () {
+    const T* get_Input ()
+    {
+      const Input* input = get_input()->get_loader();
 
-      const Input* ii = get_input()->get_loader();
-      Input* iii = (Input*)(ii);
-      
-      {
-	T* ptr = dynamic_cast<T*>( iii );
-	if( ptr )
-	  return ptr;
-      }
-#if 0
-      HoleyFile* hf = dynamic_cast<HoleyFile*>( iii );
-	
-      if( hf ){
-	T* ptr = dynamic_cast<T*>( hf->get_loader() );
-	
-	if( ptr )
-	  return ptr;
-      }
-
-      MultiFile* mf = dynamic_cast<MultiFile*>( iii );
-	
-      if( mf ){
-	T* ptr = dynamic_cast<T*>( mf->get_loader() );
-	
-	if( ptr )
-	  return ptr;
-      }
-#endif
+      const T* ptr = dynamic_cast<const T*>( input );
+      if( ptr )
+	return ptr;
 
       throw Error (InvalidState, "Unpacker::get_Input",
 		   "BitSeries::input is not of required type");
-
     }
-
-
   };
 
 }
