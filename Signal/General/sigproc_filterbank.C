@@ -33,6 +33,7 @@ void usage ()
 int main (int argc, char** argv) try 
 {
   bool verbose = false;
+  int nbits = 8;
 
   // a mega-sample at a time
   uint64 block_size = 1024 * 1024;
@@ -101,6 +102,7 @@ int main (int argc, char** argv) try
   if (verbose)
     cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
+  digitizer->set_nbit(nbits);
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
 
@@ -129,27 +131,38 @@ int main (int argc, char** argv) try
 
     dsp::SigProcObservation sigproc;
 
-    sigproc.copy( manager->get_info() );
-    sigproc.unload( stdout );
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
+    bool written_header = false;
 
     while (!manager->get_input()->eod())
     {
-      manager->operate ();
-      rescale->operate ();
+	    manager->operate ();
 
-      if (do_pscrunch)
+
+	    rescale->operate ();
+
+
+	    if (do_pscrunch)
 	pscrunch->operate ();
 
       digitizer->operate ();
+
+
+
+      if(!written_header){
+	      sigproc.copy(bitseries);
+	      sigproc.unload( stdout );
+		written_header = true;
+      }
 
       // output the result to stdout
       const uint64 nbyte = bitseries->get_nbytes();
       unsigned char* data = bitseries->get_rawptr();
 
-      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
-	cout << data[ibyte];
+//      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
+//	cout << data[ibyte];
+	fwrite(data,nbyte,1,stdout);
     }
 
     if (verbose)
