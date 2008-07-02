@@ -76,7 +76,7 @@ void dsp::SigProcObservation::unload_global ()
 
   nchans = get_nchan ();
   nifs = get_npol ();
-  nbits = get_nbit ();
+  obits = get_nbit ();
   
   tsamp = 1.0 / get_rate ();
 
@@ -92,3 +92,4 @@ void dsp::SigProcObservation::unload_global ()
   for (unsigned ipol=0; ipol < get_npol(); ipol++)
     ::ifstream[ipol] = 'Y';
 }
+
