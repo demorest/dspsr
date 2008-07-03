@@ -45,8 +45,6 @@ void dsp::PScrunch::transformation ()
     output->set_npol (1);
     output->resize (output_ndat);
   }
-  else
-    output->set_ndat (output_ndat);
 
   if (!output_ndat)
     return;
@@ -63,7 +61,7 @@ void dsp::PScrunch::transformation ()
   }
 
   if (output == input)
-    output->set_npol (1);
+    output->reshape (1,1);
 
   output->set_state (Signal::Intensity);
 }
