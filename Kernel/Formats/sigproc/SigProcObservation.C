@@ -66,8 +66,16 @@ void dsp::SigProcObservation::unload (FILE* header)
 void dsp::SigProcObservation::unload_global ()
 {
   // set_receiver (buffer);
-  machine_id = 1;
-  telescope_id = 1;
+  machine_id = 0;
+  telescope_id = 0;
+
+  
+  if(get_telescope().compare("PKS")==0)telescope_id=4;
+  if(get_machine().compare("BPSR")==0)machine_id=9;
+  if(get_machine().compare("SCAMP")==0)machine_id=6;
+
+
+
 
   strcpy( source_name, get_source().c_str() );
 

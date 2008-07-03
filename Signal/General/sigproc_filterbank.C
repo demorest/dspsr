@@ -22,7 +22,7 @@
 
 using namespace std;
 
-static char* args = "hvV";
+static char* args = "b:hvV";
 
 void usage ()
 {
@@ -52,6 +52,10 @@ int main (int argc, char** argv) try
     case 'v':
       verbose = true;
       break;
+    case 'b':
+      nbits = atoi (optarg);
+      break;
+
 
     default:
       cerr << "invalid param '" << c << "'" << endl;
@@ -76,24 +80,27 @@ int main (int argc, char** argv) try
 
   if (verbose)
     cerr << "sigproc_filterbank: creating input timeseries container" << endl;
-  Reference::To<dsp::TimeSeries> timeseries = new dsp::TimeSeries;
+  Reference::To<dsp::TimeSeries> timeseries1 = new dsp::TimeSeries;
+    Reference::To<dsp::TimeSeries> timeseries2 = new dsp::TimeSeries;
+        Reference::To<dsp::TimeSeries> timeseries3 = new dsp::TimeSeries;
+
 
   if (verbose)
     cerr << "sigproc_filterbank: creating input/unpacker manager" << endl;
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
-  manager->set_output (timeseries);
+  manager->set_output (timeseries1);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
-  rescale->set_input (timeseries);
-  rescale->set_output (timeseries);
+  rescale->set_input (timeseries1);
+  rescale->set_output (timeseries2);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
-  pscrunch->set_input (timeseries);
-  pscrunch->set_output (timeseries);
+  pscrunch->set_input (timeseries2);
+  pscrunch->set_output (timeseries3);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating output bitseries container" << endl;
@@ -103,8 +110,10 @@ int main (int argc, char** argv) try
     cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
   digitizer->set_nbit(nbits);
-  digitizer->set_input (timeseries);
+  digitizer->set_input (timeseries3);
   digitizer->set_output (bitseries);
+      bool written_header = false;
+
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
@@ -115,7 +124,7 @@ int main (int argc, char** argv) try
 
     unsigned nchan = manager->get_info()->get_nchan();
 
-    manager->get_input()->set_block_size( block_size/nchan );
+    manager->get_input()->set_block_size( (int)(block_size/nchan) );
 
     if (verbose)
     {
@@ -133,7 +142,6 @@ int main (int argc, char** argv) try
 
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
-    bool written_header = false;
 
     while (!manager->get_input()->eod())
     {
