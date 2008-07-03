@@ -51,24 +51,20 @@ void dsp::SigProcDigitizer::pack ()
   const float bit8_mean = 127.5;
   const float cutoff_sigma = 6.0;
   const float bit8_scale = bit8_mean / cutoff_sigma;
-	bool flip_band;
 
-	flip_band = input->get_bandwidth() > 0;
-	if(flip_band){
-		output->set_bandwidth(-input->get_bandwidth());
-	}
+  bool flip_band = input->get_bandwidth() > 0;
+  if (flip_band)
+    output->set_bandwidth(-input->get_bandwidth());
   
-	output->set_nbit(nbit);
+  output->set_nbit(nbit);
 
-	for (unsigned ichan=0; ichan < nchan; ichan++)
-	{
-		const float* inptr;
-		if(flip_band){
-			// we need to reverse the channel order too.
-			inptr = input->get_datptr (nchan-ichan-1);
-		} else {
-			inptr = input->get_datptr (nchan);
-		}
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+  {
+    const float* inptr;
+    if (flip_band)
+      inptr = input->get_datptr (nchan-ichan-1);
+    else
+      inptr = input->get_datptr (ichan);
 
     for (uint64 idat=0; idat < ndat; idat++)
     {
