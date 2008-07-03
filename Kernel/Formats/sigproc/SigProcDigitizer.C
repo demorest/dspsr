@@ -93,25 +93,21 @@ void dsp::SigProcDigitizer::pack ()
 			break;
 	}
 
-  // the number of time samples
-  const uint64 ndat = input->get_ndat();
-
-  unsigned char* outptr = output->get_rawptr();
 
 
-  bool flip_band = input->get_bandwidth() > 0;
-  if (flip_band)
-    output->set_bandwidth(-input->get_bandwidth());
-  
-  output->set_nbit(nbit);
+	bool flip_band = input->get_bandwidth() > 0;
+	if (flip_band)
+		output->set_bandwidth(-input->get_bandwidth());
 
-  for (unsigned ichan=0; ichan < nchan; ichan++)
-  {
-    const float* inptr;
-    if (flip_band)
-      inptr = input->get_datptr (nchan-ichan-1);
-    else
-      inptr = input->get_datptr (ichan);
+	output->set_nbit(nbit);
+
+	for (unsigned ichan=0; ichan < nchan; ichan++)
+	{
+		const float* inptr;
+		if (flip_band)
+			inptr = input->get_datptr (nchan-ichan-1);
+		else
+			inptr = input->get_datptr (ichan);
 
 		for (uint64 idat=0; idat < ndat; idat++)
 		{
