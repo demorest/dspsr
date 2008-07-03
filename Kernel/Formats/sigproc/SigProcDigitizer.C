@@ -7,23 +7,33 @@
 
 #include "dsp/SigProcDigitizer.h"
 
-    //! Default constructor
+//! Default constructor
 dsp::SigProcDigitizer::SigProcDigitizer ()
 {
-  nbit = 8;
+	nbit = 8;
 }
 
 //! Set the number of bits per sample
 void dsp::SigProcDigitizer::set_nbit (unsigned _nbit)
 {
-  if (_nbit != 8)
-    throw Error (InvalidState, "dsp::SigProcDigitizer::set_nbit",
-		 "only 8 bit sampling implemented");
+	switch(_nbit){
+
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+			nbit=_nbit;
+			break;
+		default:
+			throw Error (InvalidState, "dsp::SigProcDigitizer::set_nbit",
+					"only 8 bit sampling implemented");
+			break;
+	}
 }
 
 unsigned dsp::SigProcDigitizer::get_nbit () const
 {
-  return nbit;
+	return nbit;
 }
 
 /*! 
@@ -33,24 +43,61 @@ unsigned dsp::SigProcDigitizer::get_nbit () const
 
   If this condition isn't true, then the nesting of the loops should
   be inverted.
-*/
+  */
 void dsp::SigProcDigitizer::pack ()
 {
-  if (input->get_npol() != 1)
-    throw Error (InvalidState, "dsp::SigProcDigitizer::pack",
-		 "cannot handle npol=%d", input->get_npol());
+	if (input->get_npol() != 1)
+		throw Error (InvalidState, "dsp::SigProcDigitizer::pack",
+				"cannot handle npol=%d", input->get_npol());
 
-  // the number of frequency channels
-  const unsigned nchan = input->get_nchan();
+	// the number of frequency channels
+	const unsigned nchan = input->get_nchan();
+
+	// the number of time samples
+	const uint64 ndat = input->get_ndat();
+
+	unsigned char* outptr = output->get_rawptr();
+
+	float digi_mean=0;
+	float digi_sigma=6;
+	float digi_scale=0;
+	int digi_max=0;
+	int digi_min=0;
+	int bit_counter=0;
+	int samp_per_byte = 8/nbit;
+
+	switch (nbit){
+		case 1:
+			digi_mean=0.5;
+			digi_scale= digi_mean / digi_sigma;
+			digi_min = 0;
+			digi_max = 1;
+			break;
+		case 2:
+			digi_mean=1.5;
+			digi_scale= digi_mean / digi_sigma;
+			digi_min = 0;
+			digi_max = 3;
+			break;
+		case 4:
+			digi_mean=7.5;
+			digi_scale= digi_mean / digi_sigma;
+			digi_min = 0;
+			digi_max = 15;
+			break;
+		case 8:
+			digi_mean=127.5;
+			digi_scale= digi_mean / digi_sigma;
+			digi_min = 0;
+			digi_max = 255;
+			break;
+	}
 
   // the number of time samples
   const uint64 ndat = input->get_ndat();
 
   unsigned char* outptr = output->get_rawptr();
 
-  const float bit8_mean = 127.5;
-  const float cutoff_sigma = 6.0;
-  const float bit8_scale = bit8_mean / cutoff_sigma;
 
   bool flip_band = input->get_bandwidth() > 0;
   if (flip_band)
@@ -66,19 +113,35 @@ void dsp::SigProcDigitizer::pack ()
     else
       inptr = input->get_datptr (ichan);
 
-    for (uint64 idat=0; idat < ndat; idat++)
-    {
-      int result = int( (inptr[idat] * bit8_scale) + bit8_mean );
+		for (uint64 idat=0; idat < ndat; idat++)
+		{
+			int result = int( (inptr[idat] * digi_scale) + digi_mean );
 
-      // clip the result at the limits
-      if (result < 0)
-	result = 0;
+			// clip the result at the limits
+			if (result < digi_min)
+				result = digi_min;
 
-      if (result > 255)
-	result = 255;
+			if (result > digi_max)
+				result = digi_max;
 
-      outptr[idat*nchan + ichan] = (unsigned char) result;
-    }
-  }
+
+
+			switch (nbit){
+				case 1:
+				case 2:
+				case 4:
+					bit_counter = ichan % (samp_per_byte);
+					if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte) 
+						+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
+					outptr[idat*(int)(nchan/samp_per_byte) 
+						+ (int)(ichan/samp_per_byte)] = ((unsigned char) result) << (bit_counter*nbit);
+					break;
+				case 8:
+					outptr[idat*nchan + ichan] = (unsigned char) result;
+					break;
+			}
+		}
+	}
 }
+
 
