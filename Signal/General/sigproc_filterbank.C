@@ -80,27 +80,24 @@ int main (int argc, char** argv) try
 
   if (verbose)
     cerr << "sigproc_filterbank: creating input timeseries container" << endl;
-  Reference::To<dsp::TimeSeries> timeseries1 = new dsp::TimeSeries;
-    Reference::To<dsp::TimeSeries> timeseries2 = new dsp::TimeSeries;
-        Reference::To<dsp::TimeSeries> timeseries3 = new dsp::TimeSeries;
-
+  Reference::To<dsp::TimeSeries> timeseries = new dsp::TimeSeries;
 
   if (verbose)
     cerr << "sigproc_filterbank: creating input/unpacker manager" << endl;
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
-  manager->set_output (timeseries1);
+  manager->set_output (timeseries);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
-  rescale->set_input (timeseries1);
-  rescale->set_output (timeseries2);
+  rescale->set_input (timeseries);
+  rescale->set_output (timeseries);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
-  pscrunch->set_input (timeseries2);
-  pscrunch->set_output (timeseries3);
+  pscrunch->set_input (timeseries);
+  pscrunch->set_output (timeseries);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating output bitseries container" << endl;
@@ -110,7 +107,7 @@ int main (int argc, char** argv) try
     cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
   digitizer->set_nbit(nbits);
-  digitizer->set_input (timeseries3);
+  digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
       bool written_header = false;
 
