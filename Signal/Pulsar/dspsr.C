@@ -260,21 +260,25 @@ int main (int argc, char** argv) try {
       config->archive_extension = optarg;
       break;
 
-    case 'F': {
-
+    case 'F':
+    {
       baseband_options += " -F" + stropt;
 
       char* pfr = strchr (optarg, ':');
-      if (pfr) {
+      if (pfr)
+      {
 	*pfr = '\0';
 	pfr++;
-	if (*pfr == 'D' || *pfr == 'd') {
+	if (*pfr == 'D' || *pfr == 'd')
+	{
 	  // FLAG that says "set the spectral resolution of the filterbank
 	  // to match that required by coherent dedispersion
 	  config->simultaneous_filterbank = true;
 	}
-	else {
-	  if (sscanf (pfr, "%d", &config->fres) < 1) {
+	else
+	{
+	  if (sscanf (pfr, "%u", &config->nfft) < 1)
+	  {
 	    fprintf (stderr,
 		     "Error parsing %s as filterbank frequency resolution\n",
 		     optarg);
@@ -282,7 +286,8 @@ int main (int argc, char** argv) try {
 	  }
 	}
       }
-      if (sscanf (optarg, "%d", &config->nchan) < 1) {
+      if (sscanf (optarg, "%u", &config->nchan) < 1)
+      {
 	fprintf(stderr,
 		"Cannot parse '%s' as number of filterbank channels\n",
 		optarg);
