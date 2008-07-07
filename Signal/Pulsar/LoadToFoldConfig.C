@@ -41,7 +41,6 @@ dsp::LoadToFold::Config::Config ()
   times_minimum_nfft = 0;
   nfft = 0;
   nsmear = 0;
-  fres = 0;
 
   // phase-locked filterbank phase bins
   plfb_nbin = 0;

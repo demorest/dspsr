@@ -138,9 +138,6 @@ void dsp::LoadToFold1::prepare () try
     if (config->nfft)
       kernel->set_frequency_resolution (config->nfft);
 
-    if (config->fres)
-      kernel->set_frequency_resolution (config->fres);
-
     if (config->times_minimum_nfft)
       kernel->set_times_minimum_nfft (config->times_minimum_nfft);
 
@@ -203,8 +200,8 @@ void dsp::LoadToFold1::prepare () try
         filterbank->set_passband (passband);
     }
 
-    if (config->fres)
-      filterbank->set_frequency_resolution (config->fres);
+    if (config->nfft)
+      filterbank->set_frequency_resolution (config->nfft);
 
     operations.push_back (filterbank.get());
   }
