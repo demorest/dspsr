@@ -7,15 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.40 $
-   $Date: 2008/05/09 06:20:21 $
+   $Revision: 1.41 $
+   $Date: 2008/07/09 04:26:17 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
 #define __TwoBitCorrection_h
 
-#include "dsp/HistUnpacker.h"
-#include "JenetAnderson98.h"
+#include "dsp/ExcisionUnpacker.h"
 
 #include "environ.h"
 #include <vector>
@@ -32,7 +31,8 @@ namespace dsp {
     from different convertors (ie. different polarizations and/or
     in-phase and quadrature components) are mixed within each byte, it
     is recommended to inherit the SubByteTwoBitCorrection class. */
-  class TwoBitCorrection: public HistUnpacker {
+  class TwoBitCorrection: public ExcisionUnpacker
+  {
 
   public:
 
@@ -48,64 +48,17 @@ namespace dsp {
     //! Get the optimal value of the time series variance
     virtual double get_optimal_variance ();
 
-    //! Get the number of digitizer outputs in one byte
-    virtual unsigned get_ndig_per_byte () const;
-
-    //! Get the offset (number of bytes) into input for the given digitizer
-    virtual unsigned get_input_offset (unsigned idig) const;
-
-    //! Get the offset to the next byte containing the current digitizer data
-    virtual unsigned get_input_incr () const;
-
-    //! Get the offset (number of floats) between consecutive digitizer samples
-    virtual unsigned get_output_incr () const;
-
-    //! Return a descriptive string
-    //virtual const string descriptor () const;
-
-    //! Initialize from a descriptor string as output by above
-    //virtual void initialize (const string& descriptor);
-
-    //! Set the number of time samples used to estimate undigitized power
-    void set_ndat_per_weight (unsigned ndat_per_weight);
-
-    //! Set the number of states in the histogram
-    void set_nstate (unsigned nstate) { set_ndat_per_weight (nstate); }
-
     //! Set the sampling threshold as a fraction of the noise power
     void set_threshold (float threshold);
 
     //! Get the sampling threshold as a fraction of the noise power
     float get_threshold () const { return ja98.get_threshold(); }
 
-    //! Set the cut off power for impulsive interference excision
-    void set_cutoff_sigma (float cutoff_sigma);
-    
-    //! Get the cut off power for impulsive interference excision
-    float get_cutoff_sigma() const { return cutoff_sigma; }
-
     //! Set the digitization convention
     void set_table (TwoBitTable* table);
 
     //! Get the digitization convention
     const TwoBitTable* get_table () const;
-
-    //
-    //
-    //
-
-    float get_fraction_low () const { return ja98.get_mean_Phi(); }
-
-#if 0
-    //! Calculate the sum and sum-squared from each digitizer
-    virtual int64 stats (std::vector<double>& sum, std::vector<double>& sumsq);
-#endif
-
-    //! Get the minumum number of ones in ndat_per_weight points
-    unsigned get_nmin() const { return n_min; }
-
-    //! Get the maxumum number of ones in ndat_per_weight points
-    unsigned get_nmax() const { return n_max; }
 
     //! Return a pointer to a new instance of the appropriate sub-class
     static TwoBitCorrection* create (const BitSeries& input,
@@ -119,14 +72,11 @@ namespace dsp {
 
   protected:
 
-    //! The theory behind the implementation
-    JenetAnderson98 ja98;
-
     //! Build the two-bit correction look-up table and allocate histograms
     virtual void build ();
 
-    //! Unpacking algorithm may be re-defined by sub-classes
-    virtual void unpack ();
+    //! Get the number of digitizer outputs in one byte
+    virtual unsigned get_ndig_per_byte () const;
 
     //! Unpack a single polarization from raw into data
     virtual void dig_unpack (float* output_data,
@@ -139,26 +89,11 @@ namespace dsp {
     //! Two-bit conversion table generator
     Reference::To<TwoBitTable> table;
 
-    //! Cut off power for impulsive interference excision
-    float cutoff_sigma;
-
-    //! Minumum number of ones in ndat_per_weight points
-    unsigned n_min;
-
-    //! Maximum number of ones in ndat_per_weight points
-    unsigned n_max;
-
-    //! Lookup table and histogram dimensions reflect the attributes
-    bool built;
-
     //! Values used in Dynamic Level Setting
     std::vector< float > dls_lookup;
 
     //! Number of low-voltage states in a given byte
     std::vector< unsigned char > nlo_lookup;
-
-    //! Set limits using current attributes
-    void set_limits ();
 
     //! Build the number of low-voltage states lookup table
     virtual void nlo_build ();
