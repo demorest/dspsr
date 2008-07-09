@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Attic/ExcisionBitUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/09 04:28:18 $
+   $Revision: 1.2 $
+   $Date: 2008/07/09 05:51:16 $
    $Author: straten $ */
 
 #ifndef __ExcisionBitUnpacker_h
@@ -31,15 +31,6 @@ namespace dsp {
     //! Set the BitUnpacker to be used to unpack data
     void set_unpacker (BitUnpacker*);
 
-    //! Get the offset (number of bytes) into input for the given digitizer
-    virtual unsigned get_input_offset (unsigned idig) const;
-
-    //! Get the offset to the next byte containing the current digitizer data
-    virtual unsigned get_input_incr () const;
-
-    //! Get the offset (number of floats) between consecutive digitizer samples
-    virtual unsigned get_output_incr () const;
-
   protected:
 
     //! Unpack a single digitized stream from raw into data
@@ -53,6 +44,11 @@ namespace dsp {
     //! Unpacker implements unpack routine
     Reference::To<BitUnpacker> unpacker;
 
+    virtual unsigned get_input_stride (unsigned nfloat_out) const;
+
+    std::vector<char> number_of_low_states;
+
+    unsigned minimum_ndat_per_weight;
   };
 
 }
