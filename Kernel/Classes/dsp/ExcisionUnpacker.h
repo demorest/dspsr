@@ -1,20 +1,21 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2004 by Willem van Straten
+ *   Copyright (C) 2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/09 02:59:11 $
+   $Revision: 1.2 $
+   $Date: 2008/07/09 04:26:10 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_h
 #define __ExcisionUnpacker_h
 
-#include "dsp/BitUnpacker.h"
+#include "dsp/HistUnpacker.h"
+#include "JenetAnderson98.h"
 
 namespace dsp {
 
@@ -48,18 +49,37 @@ namespace dsp {
     //! Get the cut off power for impulsive interference excision
     float get_cutoff_sigma() const { return cutoff_sigma; }
 
+    //
+    //
+    //
+
+    //! Get the fraction of samples in the low state
+    float get_fraction_low () const { return ja98.get_mean_Phi(); }
+
+    //! Get the minumum number of ones in ndat_per_weight points
+    unsigned get_nlow_min() const { return nlow_min; }
+
+    //! Get the maxumum number of ones in ndat_per_weight points
+    unsigned get_nlow_max() const { return nlow_max; }
+
   protected:
 
-    //! Unpack using dig_unpack then perform excision
+    //! Set nlow_min and nlow_max using current attributes
+    void set_limits ();
+
+    //! Build the look-up tables and allocate histograms
+    virtual void build ();
+
+    //! Unpack using dig_unpack
     void unpack ();
 
-    //! Unpack a single polarization from raw into data
+    //! Unpack a single digitized stream from raw into data
     virtual void dig_unpack (float* output_data,
 			     const unsigned char* input_data, 
 			     uint64 ndat,
 			     unsigned digitizer,
 			     unsigned* weights = 0,
-			     unsigned nweights = 0);
+			     unsigned nweights = 0) = 0;
 
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
@@ -73,6 +93,9 @@ namespace dsp {
     //! Lookup table and histogram dimensions reflect the attributes
     bool built;
 
+    //! The theory behind the implementation
+    JenetAnderson98 ja98;
   };
 }
+
 #endif

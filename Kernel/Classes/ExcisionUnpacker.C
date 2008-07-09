@@ -18,6 +18,83 @@ using namespace std;
 dsp::ExcisionUnpacker::ExcisionUnpacker (const char* _name)
   : HistUnpacker (_name)
 {
+  if (psrdisp_compatible)
+  {
+    cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
+      "   using cutoff sigma of 6.0 instead of 10.0" << endl;
+    cutoff_sigma = 6.0;
+  }
+  else
+    cutoff_sigma = 10.0;
+
+  // These are set in set_limits()
+  nlow_min = 0;
+  nlow_max = 0;
+
+  built = false;  
+}
+
+void dsp::ExcisionUnpacker::set_limits ()
+{
+  if (verbose)
+    cerr << "dsp::ExcisionUnpacker::set_limits" << endl;;
+
+  float fsample = get_ndat_per_weight();
+
+  float nlo_mean = fsample * ja98.get_mean_Phi ();
+  float nlo_variance = fsample * ja98.get_var_Phi ();
+
+  if (nlo_mean == fsample)
+    throw Error (InvalidState, "dsp::ExcisionUnpacker::set_limits",
+                 "sampling threshold is too high");
+
+  // the root mean square deviation
+  float nlo_sigma = sqrt( nlo_variance );
+
+  if (verbose)
+    cerr << "  nlo_mean=" << nlo_mean << endl
+         << "  nlo_sigma=" << nlo_sigma << endl;
+
+  // backward compatibility
+  if (psrdisp_compatible)
+  {
+    // in psrdisp, sigma was incorrectly set as
+    nlo_sigma = sqrt( float(get_ndat_per_weight()) );
+
+    cerr << "dsp::ExcisionUnpacker psrdisp compatibility\n"
+      "   setting nlo_sigma to " << nlo_sigma << endl;
+  }
+
+  nlow_max = unsigned (nlo_mean + (cutoff_sigma * nlo_sigma));
+
+  if (nlow_max >= get_ndat_per_weight())
+  {
+    if (verbose)
+      cerr << "dsp::ExcisionUnpacker::set_limits resetting nmax:"
+	   << nlow_max << " to ndat_per_weight-2:" << get_ndat_per_weight()-1
+	   << endl;
+    nlow_max = get_ndat_per_weight()-1;
+  }
+
+  if (cutoff_sigma * nlo_sigma >= nlo_mean+1.0)
+  {
+    if (verbose)
+      cerr << "dsp::ExcisionUnpacker::set_limits resetting nmin:"
+	   << nlow_min << " to one:1" << endl;
+    nlow_min = 1;
+  }
+  else 
+    nlow_min = unsigned (nlo_mean - (cutoff_sigma * nlo_sigma));
+  
+  if (verbose)
+    cerr << "dsp::ExcisionUnpacker::set_limits nmin:"
+         << nlow_min << " and nmax:" << nlow_max << endl;
+}
+
+void dsp::ExcisionUnpacker::build ()
+{
+  set_limits ();
+  built = true;
 }
 
 void dsp::ExcisionUnpacker::unpack ()
@@ -29,6 +106,14 @@ void dsp::ExcisionUnpacker::unpack ()
 
   if (ndat < get_ndat_per_weight())
     return;
+
+  // build the two-bit lookup table
+  if (!built)
+  {
+    if (verbose)
+      cerr << "dsp::Excision::unpack calling build" << endl;
+    build ();
+  }
 
   const unsigned char* rawptr = input->get_rawptr();
 
