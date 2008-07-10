@@ -23,7 +23,7 @@
 
 using namespace std;
 
-static char* args = "c:hn:s:t:vVw:";
+static char* args = "c:hn:s:t:vVw:D:";
 
 void usage ()
 {
@@ -34,6 +34,7 @@ void usage ()
     " -c <cutoff>    cutoff threshold for impulsive interference excision\n"
     " -t <threshold> sampling threshold at record time\n"
     "Display paramters:\n"
+    " -D <device>    set the pgplot device to use\n"
     " -s <seconds>   total amount of data in each plot\n"
     " -w <seconds>   amount of data averaged into each point in plot\n"
        << endl;
@@ -54,6 +55,8 @@ int main (int argc, char** argv) try
 
   double seek_seconds = 0;
   double total_seconds = 0;
+
+  string pgdev = "?";
 
   int c;
   int scanned;
@@ -124,6 +127,12 @@ int main (int argc, char** argv) try
       cerr << "digistat: time per point=" << time_per_point << " s" << endl;
       break;
 
+    case 'D':
+      pgdev = optarg;
+      if (pgdev.empty()) {
+        pgdev = "?";
+      }
+      break;
 
     default:
       cerr << "invalid param '" << c << "'" << endl;
@@ -149,7 +158,7 @@ int main (int argc, char** argv) try
   }
 
   if (display) {
-    cpgbeg (0, "?", 0, 0);
+    cpgbeg (0, pgdev.c_str(), 0, 0);
     cpgask(1);
     cpgsvp (0.05, 0.95, 0.0, 0.95);
     cpgsch (2.0);
