@@ -10,6 +10,7 @@
 // #include <config.h>
 // #endif
 
+#include "dsp/ExcisionUnpacker.h"
 #include "dsp/LevelMonitor.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
@@ -122,6 +123,10 @@ int main (int argc, char** argv) try
   if (verbose)
     cerr << "digistat: opening file " << argv[optind] << endl;
   manager->open (argv[optind]);
+
+  dsp::ExcisionUnpacker* excision = dynamic_cast<dsp::ExcisionUnpacker*>( manager->get_unpacker() );
+  if (excision)
+    excision->set_cutoff_sigma ( 100.0 );
 
   if (verbose)
     cerr << "digimon: creating LevelMonitor" << endl;
