@@ -69,7 +69,7 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 
   input->prepare();
 
-  input->get_input()->set_block_size (block_size);
+  input->set_block_size (block_size);
 
   Observation* info = input->get_info();
 
