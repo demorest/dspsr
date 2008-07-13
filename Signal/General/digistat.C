@@ -23,7 +23,7 @@
 
 using namespace std;
 
-static char* args = "c:hn:S:s:T:t:vVw:";
+static char* args = "c:D:hn:S:s:T:t:vVw:";
 
 void usage ()
 {
