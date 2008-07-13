@@ -30,7 +30,8 @@
 using namespace std;
 
 static char* args =
-"2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:m:M:n:N:O:op:P:qRsS:t:T:U:vVWx:X:yzZ:";
+  "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
+  "L:m:M:n:N:O:op:P:qRsS:t:T:U:vVWx:X:yzZ:";
 
 void usage ()
 {
@@ -118,14 +119,6 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input);
 
 // number of time samples loaded from file at a time
 uint64 block_size = 0;
-
-const unsigned MB = 1024 * 1024;
-
-// maximum number of bytes to load into RAM (default 256 MB)
-uint64 maximum_RAM = 256 * MB;
-
-// if nonzero, choose maximum RAM = minimum RAM times this number
-unsigned times_minimum_RAM = 0;
 
 // number of seconds to seek into data
 double seek_seconds = 0.0;
@@ -416,16 +409,21 @@ int main (int argc, char** argv) try {
     case 'U':
     {
       if (string(optarg) == "min")
-	times_minimum_RAM = 1;
-      else if ( sscanf(optarg, "minX%u", &times_minimum_RAM) == 1 )
+      {
+	config->set_times_minimum_ndat( 1 );
 	break;
-      else
-      {	
-	times_minimum_RAM = 0;
-        maximum_RAM = uint64( strtod (optarg, 0) * double(MB) );
-	if (maximum_RAM == 0)
-	  times_minimum_RAM = 1;
       }
+
+      {
+	unsigned times = 0;
+	if ( sscanf(optarg, "minX%u", &times) == 1 )
+	{
+	  config->set_times_minimum_ndat( times );
+	  break;
+	}
+      }
+
+      config->set_maximum_RAM (uint64( strtod (optarg, 0) * 1024 * 1024 ));
       break;
     }
 
@@ -663,63 +661,6 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   if (total_seconds)
     input->set_total_seconds (seek_seconds + total_seconds);
   
-  engine->prepare ();
-  
-  uint64 this_block_size = block_size;
-  
-  if (!this_block_size) {
-    
-    /*
-      This simple calculation of the maximum block size does not
-      consider the RAM required for out of place operations, FFT
-      plans, etc.
-    */
-
-    unsigned nbit  = info->get_nbit();
-    unsigned ndim  = info->get_ndim();
-    unsigned npol  = info->get_npol();
-    unsigned nchan = info->get_nchan();
-    unsigned res   = input->get_resolution();
-    
-    // Any outofplace operation will double the size requirements
-    double copies = config->get_nbuffers();
-
-    // each nbit number will be unpacked into a float
-    double nbyte = double(nbit)/8 + copies * sizeof(float);
-    
-    double nbyte_dat = nbyte * ndim * npol * nchan;
-
-    if (times_minimum_RAM)
-    {
-      uint64 min = times_minimum_RAM * engine->get_minimum_samples();
-      double inMB = double(min) * nbyte_dat / double(MB);
-
-      cerr << "dspsr: using " << times_minimum_RAM 
-	   << " times minimum blocksize, or " << min << " samples" << endl
-           << "       (equivalent to -U " << inMB << ")" << endl;
-  
-      input->set_block_size( min );
-  
-      return;
-    }
-    else
-      cerr << "dspsr: minimum blocksize = " << engine->get_minimum_samples()
-           << " samples" << endl;
-
-    this_block_size = (uint64(maximum_RAM / nbyte_dat) / res) * res;
-    
-    cerr << "dspsr: block size=" << this_block_size << " samples" << endl;
-    
-    if (this_block_size == 0)
-      throw Error (InvalidState, "dspsr:prepare",
-		   "insufficient RAM: limit=%f MB  require=%f MB\n"
-		   "(use -U to increase RAM limit)",
-		   double(maximum_RAM)/double(MB),
-		   double(nbyte_dat)/double(MB));
-
-  }
-
-  input->set_block_size ( this_block_size );
-    
+  engine->prepare ();    
 }
 

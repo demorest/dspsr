@@ -401,8 +401,18 @@ void dsp::LoadToFold1::prepare_final ()
 
   // cerr << "MINIMUM SAMPLES=" << minimum_samples << endl;
 
-  // assume that SampleDelay can handle any required buffering
+  // set the block size to at least minimum_samples
+  uint64 ram = manager->set_block_size
+    ( minimum_samples * config->get_times_minimum_ndat(),
+      config->get_maximum_RAM(),
+      config->get_nbuffers() );
 
+  if (id==0 && config->report)
+  {
+    double megabyte = 1024*1024;
+    cerr << "dspsr: blocksize=" << manager->get_input()->get_block_size()
+	 << " samples or " << double(ram)/megabyte << " MB" << endl;
+  }
 }
 
 uint64 dsp::LoadToFold1::get_minimum_samples () const

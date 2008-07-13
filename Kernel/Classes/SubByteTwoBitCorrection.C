@@ -4,11 +4,10 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/SubByteTwoBitCorrection.h"
-#include "dsp/SubByte_dig_unpack.h"
-
-#include "dsp/TwoBitMask.h"
-
+#include "dsp/excision_unpack.h"
+#include "dsp/StepIterator.h"
 #include <iostream>
 
 using namespace std;
@@ -18,13 +17,10 @@ using namespace std;
 dsp::SubByteTwoBitCorrection::SubByteTwoBitCorrection (const char* name)
   : TwoBitCorrection (name)
 {
-  values = 0;
-  values_size = 0;
 }
 
 dsp::SubByteTwoBitCorrection::~SubByteTwoBitCorrection ()
 {
-  destroy ();
 }
 
 /*! By default, both polarizations are output in one byte */
@@ -56,58 +52,38 @@ dsp::SubByteTwoBitCorrection::get_shift (unsigned idig, unsigned samp) const
    digitizer outputs in each byte.  For an example of code with two
    samples from each of two digitizers, with bits ordered in a
    different way, please see mark5/Mark5TwoBitCorrection.C. */
-void dsp::SubByteTwoBitCorrection::dig_unpack (float* outptr,
-					       const unsigned char* inptr,
-					       uint64 ndat,
-					       unsigned digitizer,
+void dsp::SubByteTwoBitCorrection::dig_unpack (const unsigned char* input_data,
+					       float* output_data,
+					       uint64 nfloat,
+					       unsigned long* hist,
 					       unsigned* weights,
 					       unsigned nweights)
 {
-  ShiftMask<2> mask;
-  mask.shift[0] = get_shift(digitizer,0);
-  if (get_ndig_per_byte() == 2)
-    mask.shift[1] = get_shift(digitizer,1);
+  StepIterator<const unsigned char> iterator (input_data);
+  iterator.set_increment ( get_input_incr() );
 
-  dig_unpack (mask, outptr, inptr, ndat, digitizer, weights, nweights);
+  unpacker.mask.shift[0] = get_shift (current_digitizer, 0);
+
+  ExcisionUnpacker::excision_unpack (unpacker, iterator,
+				     output_data, nfloat,
+                                     hist, weights, nweights);
 }
 
 void dsp::SubByteTwoBitCorrection::build ()
 {
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::SubByteTwoBitCorrection::build" << endl;
 
-  // delete the old space
-  SubByteTwoBitCorrection::destroy();
+  ExcisionUnpacker::build ();
 
-  // setup the lookup table
-  TwoBitCorrection::build ();
+  unpacker.set_nlow_min (nlow_min);
+  unpacker.set_nlow_max (nlow_max);
 
-  // create the new space
-  values_size = get_ndat_per_weight();
-  values = new unsigned char [values_size];
-}
+  cerr << "dsp::SubByteTwoBitCorrection::build ndat=" << get_ndat_per_weight() << " ndim=" << get_ndim_per_digitizer() << endl;
+  unpacker.lookup_build (get_ndat_per_weight(), 
+                         get_ndim_per_digitizer(),
+                         table, &ja98);
 
-void dsp::SubByteTwoBitCorrection::nlo_build ()
-{
-  if (verbose)
-    cerr << "dsp::SubByteTwoBitCorrection::nlo_build" << endl;
-
-  float fourvals [table->get_unique_values()];
-  float lo_valsq = 1.0;
-
-  // flatten the table again (precision errors cause mismatch of lo_valsq)
-  table->set_lo_val (1.0);
-  table->generate_unique_values (fourvals);
-
-  for (unsigned ifv=0; ifv<table->get_values_per_byte(); ifv++)
-    if (fourvals[ifv]*fourvals[ifv] == lo_valsq)
-      lovoltage[ifv] = 1;
-    else
-      lovoltage[ifv] = 0;
-}
-
-void dsp::SubByteTwoBitCorrection::destroy ()
-{
-  if (values != NULL) delete [] values; values = NULL; values_size = 0;
+  unpacker.nlow_build (table);
 }
 

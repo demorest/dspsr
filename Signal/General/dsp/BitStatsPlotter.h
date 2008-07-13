@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BitStatsPlotter.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.5 $
+   $Date: 2008/07/13 00:38:54 $
+   $Author: straten $ */
 
 #ifndef __BitStatsPlotter_h
 #define __BitStatsPlotter_h
@@ -92,6 +92,9 @@ namespace dsp {
 
     //! Plot a vector of points with index on x-axis
     void cpgpt (std::vector<float>& vals, int type);
+
+    //! Scale factor multplied by each index on x axis
+    float xscale;
 
   private:
 

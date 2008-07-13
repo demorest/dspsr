@@ -9,26 +9,20 @@
 #ifndef __APSRFourBit_h
 #define __APSRFourBit_h
 
-#include "dsp/FourBitUnpacker.h"
+#include "dsp/APSRUnpacker.h"
+#include "dsp/FourBitTwo.h"
 
-namespace dsp {
+namespace dsp
+{
+  typedef APSRUnpacker< APSRExcision<FourBitTwo>, 4 > APSRFourBitBase;
 
-  //! Converts APSR data from 4-bit digitized to floating point values
-  class APSRFourBit: public FourBitUnpacker {
-
+  //! Converts APSR data from 8-bit digitized to floating point values
+  class APSRFourBit: public APSRFourBitBase
+  {
   public:
-
-    //! Constructor initializes base class attributes
+    //! Constructor initializes bit table
     APSRFourBit ();
-
-    //! Return true if APSRFourBit can convert the Observation
-    virtual bool matches (const Observation* observation);
-
-    void unpack ();
-    unsigned get_ndim_per_digitizer () const;
-
   };
-  
 }
 
 #endif

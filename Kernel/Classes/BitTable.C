@@ -59,10 +59,10 @@ dsp::BitTable::~BitTable ()
   if (table) delete [] table; table = 0;
 }
 
-const float* dsp::BitTable::get_values (unsigned byte)
+const float* dsp::BitTable::get_values (unsigned byte) const
 {
   if (!table)
-    build ();
+    const_cast<BitTable*>(this)->build ();
 
   return table + values_per_byte * byte; 
 }
@@ -190,9 +190,36 @@ void dsp::BitTable::generate_unique_values (float* values) const
   }
 }
 
-double dsp::BitTable::get_optimal_variance ()
+double dsp::BitTable::get_optimal_variance () const
 {
   return 1.0;
 }
 
+/*
+  return the sampling threshold nearest to and less than unity
+*/
+double dsp::BitTable::get_nlow_threshold () const
+{
+  double input_spacing = JenetAnderson98::get_optimal_spacing (nbit);
+  unsigned steps = unsigned (1.0 / input_spacing);
+  return steps * input_spacing;
+}
 
+void dsp::BitTable::get_nlow_lookup (char* nlow_lookup) const
+{
+  double nlow_threshold = get_nlow_threshold ();
+
+  const float* lookup = get_values ();
+
+  for (unsigned ichar=0; ichar < unique_bytes; ichar++)
+  {
+    nlow_lookup[ichar] = 0;
+
+    for (unsigned val=0; val<values_per_byte; val++)
+    {
+      if (fabs(*lookup) < nlow_threshold)
+	nlow_lookup[ichar] ++;
+      lookup ++;
+    }
+  }
+}

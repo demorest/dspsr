@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.13 $
-   $Date: 2008/05/09 03:47:32 $
+   $Revision: 1.14 $
+   $Date: 2008/07/13 00:38:53 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -18,8 +18,6 @@
 #include <vector>
 
 namespace dsp {
-
-  class WeightedTimeSeries;
 
   //! Bit unpacker that keeps a histogram and optimal statistics
   class HistUnpacker: public Unpacker
@@ -36,9 +34,6 @@ namespace dsp {
     //! Virtual destructor
     virtual ~HistUnpacker ();
 
-    //! Overload Transformation::set_output to set weighted_output
-    void set_output (TimeSeries* output);
-
     //! Get the optimal value of the time series variance
     virtual double get_optimal_variance ();
 
@@ -49,11 +44,6 @@ namespace dsp {
 
     //! Get the dimension of the digitizer outputs (real or complex)
     virtual unsigned get_ndim_per_digitizer () const;
-
-    //! Set the number of samples per weight in WeightTimeSeries output
-    virtual void set_ndat_per_weight (unsigned ndat_per_weight);
-    //! Get the number of samples per weight in WeightTimeSeries output
-    unsigned get_ndat_per_weight () const { return ndat_per_weight; }
 
     //! Set the number of states in the histogram
     virtual void set_nstate (unsigned nstate);
@@ -94,19 +84,10 @@ namespace dsp {
     //! Compute the default number of digitizers
     virtual void set_default_ndig ();
 
-    //! Set when Transformation::output is a WeightedTimeSeries
-    Reference::To<WeightedTimeSeries> weighted_output;
-
-    //! Initialize the WeightedTimeSeries dimensions
-    void resize_output ();
-
     void set_nstate_internal (unsigned _nstate);
     unsigned get_nstate_internal () const;
 
   private:
-
-    //! Number of samples per weight
-    unsigned ndat_per_weight;
 
     //! Number of states in the histogram
     unsigned nstate;

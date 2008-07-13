@@ -43,6 +43,14 @@ void dsp::Input::prepare ()
   get_output()->set_ndat(0);
 }
 
+//! Return the number nearest to and larger than big and divisible by small
+template<typename Big, typename Small>
+inline Big multiple_smaller (Big big, Small small)
+{
+  Big divides = big / small;
+  return divides * small;
+}
+
 //! Load data into the BitSeries specified by set_output
 void dsp::Input::operation ()
 {
@@ -101,17 +109,23 @@ void dsp::Input::operation ()
 
   uint64 available = get_output()->get_ndat() - resolution_offset;
 
-  if (available < block_size) {
-
+  if (available < block_size)
+  {
     // should be the end of data
+    if (!eod())
+    {
+      Error error (InvalidState, "dsp::Input::operation");
+      error << "available=" << available << " < "
+               "block_size=" << block_size << " but eod not set";
+      throw error;
+    }
 
-    get_output()->request_ndat = available;
     to_seek = available;
 
-    if (!eod())
-      cerr << "dsp::Input::operation available=" << available 
-	   << " < block_size=" << block_size << " but eod not set" << endl;
-
+    // ensure that ndat is a multiple of resolution
+    get_output()->resize ( multiple_smaller (output->get_ndat(), resolution) );
+    get_output()->request_offset = resolution_offset;
+    get_output()->request_ndat = get_output()->get_ndat() - resolution_offset;
   }
 
   last_load_ndat = get_output()->get_ndat();

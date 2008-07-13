@@ -29,7 +29,8 @@ dsp::Detection::Detection ()
 //! Set the state of output data
 void dsp::Detection::set_output_state (Signal::State _state)
 {
-  switch (_state)  {
+  switch (_state)
+  {
   case Signal::Intensity:  // Square-law detected total power (1 pol)
   case Signal::PPQQ:       // Square-law detected, two polarizations
   case Signal::NthPower:   // Square-law total power to the nth power
@@ -64,13 +65,16 @@ void dsp::Detection::transformation () try
 
   bool inplace = (input.get() == output.get());
 
-  if( state==input->get_state() ) {
-    if( !inplace ) {
+  if (state==input->get_state())
+  {
+    if (!inplace)
+    {
       if (verbose)
 	cerr << "dsp::Detection::transformation inplace and no state change" 
 	     << endl;
     }
-    else {
+    else
+    {
       if (verbose) 
 	cerr << "dsp::Detection::transformation just copying input" << endl;
       output->operator=( *input );
@@ -83,8 +87,8 @@ void dsp::Detection::transformation () try
 
   bool understood = true;
 
-  if( !get_input()->get_detected() ) {
-
+  if( !get_input()->get_detected() )
+  {
     if (state==Signal::Coherence || state==Signal::Stokes)
       polarimetry();
 
@@ -96,7 +100,6 @@ void dsp::Detection::transformation () try
 
     else
       understood = false;
-
   }
   else
     understood = false;
@@ -124,7 +127,8 @@ void dsp::Detection::resize_output ()
   unsigned output_ndim = 1;
   unsigned output_npol = input->get_npol();
 
-  if (state == Signal::Stokes || state == Signal::Coherence) {
+  if (state == Signal::Stokes || state == Signal::Coherence)
+  {
     output_ndim = ndim;
     output_npol = 4/ndim;
     if (verbose)
@@ -224,7 +228,8 @@ void dsp::Detection::polarimetry () try
   float* copyp  = NULL;
   float* copyq = NULL;
 
-  if (inplace && ndim != 2) {
+  if (inplace && ndim != 2)
+  {
     // only when ndim==2 is this transformation really inplace.
     // so when ndim==1or4, a copy of the data must be made
     
@@ -250,8 +255,8 @@ void dsp::Detection::polarimetry () try
 
   float* r[4];
 
-  for (unsigned ichan=0; ichan<nchan; ichan++) {
-
+  for (unsigned ichan=0; ichan<nchan; ichan++)
+  {
     const float* p = input->get_datptr (ichan, 0);
     const float* q = input->get_datptr (ichan, 1);
 
@@ -308,7 +313,7 @@ void dsp::Detection::polarimetry () try
     }
   }
 
-  if ( get_input() == get_output() )
+  if ( inplace )
     resize_output ();
 
   if (verbose)

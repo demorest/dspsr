@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/StepIterator.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/10 11:11:04 $
+   $Revision: 1.2 $
+   $Date: 2008/07/13 00:38:53 $
    $Author: straten $ */
 
 #ifndef __dsp_StepIterator_h
@@ -21,22 +21,23 @@ class StepIterator
  public:
 
   //! Construct from base pointer
-  StepIterator (T* start)
+  inline StepIterator (T* start)
     {
       current = start;
       increment = 1;
     }
   
-  StepIterator (const StepIterator& copy)
+  inline StepIterator (const StepIterator& copy)
     {
       operator = (copy);
       increment = copy.increment;
     }
 
-  const StepIterator& operator = (const StepIterator& copy)
+  inline const StepIterator& operator = (const StepIterator& copy)
   {
     // increment is set only by copy constructor
     current = copy.current;
+    return *this;
   }
 
   void set_increment (unsigned step)
@@ -44,17 +45,17 @@ class StepIterator
     increment = step;
   }
 
-  void* ptr ()
+  const void* ptr ()
   {
     return current;
   }
 
-  void operator ++ ()
+  inline void operator ++ ()
   {
     current += increment;
   }
 
-  T operator * ()
+  inline T operator * ()
   {
     return *current;
   }

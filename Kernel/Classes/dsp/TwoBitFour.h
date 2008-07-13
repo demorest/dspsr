@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/10 11:08:40 $
+   $Revision: 1.2 $
+   $Date: 2008/07/13 00:38:54 $
    $Author: straten $ */
 
 #ifndef __TwoBitFour_h
@@ -44,27 +44,31 @@ namespace dsp
     void nlow_build (TwoBitTable* table);
 
     //! Build the output value lookup table
-    void lookup_build (unsigned nsamp, TwoBitTable*, JenetAnderson98* = 0);
+    void lookup_build (unsigned nsamp, unsigned ndim,
+                       TwoBitTable*, JenetAnderson98* = 0);
 
     template<class Iterator>
-    void prepare (Iterator input, unsigned ndat)
+    inline void prepare (Iterator input, unsigned ndat)
     {
       const unsigned nbyte = ndat / samples_per_byte;
       nlow = 0;
       for (unsigned bt=0; bt < nbyte; bt++)
       {
-	nlow += nlow_lookup[ *input ];
+        nlow += nlow_lookup[ *input ];
 	++ input;
       }
     }
     
     template<class Iterator>
-    void unpack (Iterator& input, unsigned ndat, 
-		 float* output, unsigned output_incr, unsigned& _nlow)
+    inline void unpack (Iterator& input, unsigned ndat, 
+			float* output, unsigned output_incr, unsigned& _nlow)
     {
       const unsigned nbyte = ndat / samples_per_byte;
       _nlow = nlow;
-      
+
+      // if data are complex, divide n_low by two
+      nlow /= ndim_per_digitizer;
+
       if (nlow < nlow_min || nlow > nlow_max)
 	return;
       
@@ -90,6 +94,8 @@ namespace dsp
     unsigned nlow;
     unsigned nlow_min;
     unsigned nlow_max;
+
+    unsigned ndim_per_digitizer;
 
     float* lookup_base;
  

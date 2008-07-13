@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.8 $
-   $Date: 2008/07/07 20:53:17 $
+   $Revision: 1.9 $
+   $Date: 2008/07/13 00:38:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -26,6 +26,12 @@ namespace dsp {
   //! Load, unpack, process and fold data into phase-averaged profile(s)
   class LoadToFold::Config : public Reference::Able {
 
+    // set block size to this factor times the minimum possible
+    unsigned times_minimum_ndat;
+
+    // set block size to result in approximately this much RAM usage
+    uint64 maximum_RAM;
+
   public:
 
     //! Default constructor
@@ -33,6 +39,14 @@ namespace dsp {
 
     // report the percentage finished
     unsigned report;
+
+    // set block size to this factor times the minimum possible
+    void set_times_minimum_ndat (unsigned);
+    unsigned get_times_minimum_ndat () const { return times_minimum_ndat; }
+
+    // set block_size to result in approximately this much RAM usage
+    void set_maximum_RAM (uint64);
+    uint64 get_maximum_RAM () const { return maximum_RAM; }
 
     // number of time samples used to estimate undigitized power
     unsigned tbc_nsample;
@@ -50,12 +64,13 @@ namespace dsp {
     // remove inter-channel dispersion delays
     bool interchan_dedispersion;
 
-    // set the dispersion measure used in coherent dedispersion
+    // dispersion measure used in coherent dedispersion
     double dispersion_measure;
 
     // zap RFI during convolution
     bool zap_rfi;
 
+    // set fft lengths and convolution edge effect lengths
     unsigned nfft;
     unsigned nsmear;
     unsigned times_minimum_nfft;

@@ -8,6 +8,8 @@
 #include "dsp/TwoBitFour.h"
 #include "JenetAnderson98.h"
 
+#include <assert.h>
+
 // 4 floating-point samples per byte
 const unsigned dsp::TwoBitFour::samples_per_byte = 4;
 
@@ -18,6 +20,7 @@ dsp::TwoBitFour::TwoBitFour ()
 {
   nlow = nlow_min = nlow_max = 0;
   lookup_base = 0;
+  ndim_per_digitizer = 1;
 }
 
 dsp::TwoBitFour::~TwoBitFour ()
@@ -63,7 +66,7 @@ void dsp::TwoBitFour::nlow_build (TwoBitTable* table)
   }
 }
 
-void dsp::TwoBitFour::lookup_build (unsigned nsamp,
+void dsp::TwoBitFour::lookup_build (unsigned nsamp, unsigned ndim,
 				    TwoBitTable* table,
 				    JenetAnderson98* ja98)
 {
@@ -72,6 +75,7 @@ void dsp::TwoBitFour::lookup_build (unsigned nsamp,
   assert (nlow_max > nlow_min);
   assert (nsamp > nlow_max);
 
+  ndim_per_digitizer = ndim;
   lookup_base = new float [(nlow_max - nlow_min + 1) * lookup_block_size];
 
   float* lookup = lookup_base;

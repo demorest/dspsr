@@ -7,38 +7,26 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRTwoBitCorrection.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/04/08 20:59:48 $
+   $Revision: 1.4 $
+   $Date: 2008/07/13 00:38:54 $
    $Author: straten $ */
 
 #ifndef __APSRTwoBitCorrection_h
 #define __APSRTwoBitCorrection_h
 
-class APSRTwoBitCorrection;
-
+#include "dsp/APSRUnpacker.h"
 #include "dsp/TwoBitCorrection.h"
 
-namespace dsp {
-
+namespace dsp
+{
   //! Converts APSR data from 2-bit digitized to floating point values
-  class APSRTwoBitCorrection: public TwoBitCorrection {
-
+  class APSRTwoBitCorrection: public APSRUnpacker<TwoBitCorrection,2>
+  {
   public:
-
-    //! Constructor initializes base class attributes
+    //! Constructor initializes two bit table
     APSRTwoBitCorrection ();
-
-    //! Return true if APSRTwoBitCorrection can convert the Observation
-    virtual bool matches (const Observation* observation);
-
-    unsigned get_ndim_per_digitizer () const;
-
-    unsigned get_input_offset (unsigned idig) const;
-
-    unsigned get_input_incr () const;
-
   };
-  
 }
 
 #endif
+
