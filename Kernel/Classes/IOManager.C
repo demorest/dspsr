@@ -241,8 +241,6 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
       resolution *= 4;
   }
 
-  cerr << "resolution=" << resolution << endl;
-
   Observation* info = get_info();
 
   unsigned nbit  = info->get_nbit();
