@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.3 $
+   $Date: 2008/07/13 05:25:36 $
    $Author: straten $ */
 
 #ifndef __APSRUnpacker_h
@@ -91,6 +91,12 @@ namespace dsp
       : ExcisionUnpacker (name), unpacker (table)
     {
       this->ja98.set_threshold( table->get_nlow_threshold() );
+    }
+
+    //! Get the optimal value of the time series variance
+    double get_optimal_variance ()
+    {
+      return unpacker.get_table()->get_optimal_variance();
     }
 
   protected:
