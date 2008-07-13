@@ -23,7 +23,7 @@
 
 using namespace std;
 
-static char* args = "c:hn:s:t:vVw:D:";
+static char* args = "c:hn:S:s:T:t:vVw:";
 
 void usage ()
 {
@@ -243,7 +243,10 @@ int main (int argc, char** argv) try
     cerr << block_size << " samples per " 
          << time_per_plot << "s plot" << endl;
 
-    manager->get_input()->set_block_size( block_size );
+    uint64 ram = manager->set_block_size( block_size );
+    double megabyte = 1024*1024;
+    cerr << "digistat: blocksize=" << manager->get_input()->get_block_size()
+         << " samples or " << double(ram)/megabyte << " MB" << endl;
 
     // set the number of samples to average
     samples = manager->get_info()->get_rate() * time_per_point;

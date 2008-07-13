@@ -17,6 +17,7 @@ dsp::BitStatsPlotter::BitStatsPlotter ()
   horizontal = true;
   full_xscale = false;
   hist_min = 0.00;
+  xscale = 1.0;
 
   vpxmin = 0.1;
   vpxmax = 0.9;
@@ -50,13 +51,10 @@ void dsp::BitStatsPlotter::cpgpt (std::vector<float>& vals, int type)
 {
   for (unsigned i=0; i<vals.size(); i++)
   {
-    float ind = i;
+    float ind = i * xscale;
     float val = vals[i];
     if (val)
-    {
       ::cpgpt (1, &ind, &val, type);
-      // fprintf (stderr, "hist %d %x %f\n", i, i, val);
-    }
   }
 }
 
@@ -177,14 +175,21 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
   if (!data)
     return;
 
+#ifdef _DEBUG
   cerr << "dsp::BitStatsPlotter::plot"
     " ichan=" << ichan << " ipol=" << ipol << endl;
+#endif
 
   check_colours ();
 
   unsigned nstate = data->get_nstate();
   unsigned ndig = data->get_ndig ();
-  
+
+#ifdef _DEBUG
+  cerr << "dsp::BitStatsPlotter::plot"
+    " nstate=" << nstate << " ndig=" << ndig << endl;
+#endif
+ 
   unsigned nplot = 1;
 
   // plot histograms for in-phase and quadrature components
@@ -229,7 +234,10 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
     // find the range of the data to be plotted
     vector<float>::iterator maxel;
 
+#ifdef _DEBUG
     cerr << "dsp::BitStatsPlotter::plot idig=" << idig[iplot] << endl;
+#endif
+
     data->get_histogram (histogram, idig[iplot]);
 
     maxel = max_element(histogram.begin(), histogram.end());
@@ -240,7 +248,8 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
     
     ymax = max (ymax, *maxel);
     
-    if (!full_xscale) {
+    if (!full_xscale)
+    {
       int imin_orig = imin;
       for (imin=0; imin<imin_orig; imin++)
 	if (histogram[imin] > ymax * hist_min)
@@ -253,7 +262,8 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
   }
 
   // set the world coordinates for the histograms and draw a box
-  if (!special (imin, imax, ymax)) {
+  if (!special (imin, imax, ymax))
+  {
     ymax *= 1.05;
     cpgswin (imin, imax, ymax*hist_min, ymax);
   }
@@ -286,3 +296,4 @@ void dsp::BitStatsPlotter::plot (unsigned ichan, unsigned ipol)
 
   cpgsls (1);
 }
+

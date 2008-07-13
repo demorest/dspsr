@@ -4,11 +4,12 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Mark5TwoBitCorrection.h"
 #include "dsp/Mark5File.h"
 
-#include "dsp/SubByte_dig_unpack.h"
-#include "dsp/TwoBitMask.h"
+#include "dsp/StepIterator.h"
+#include "dsp/excision_unpack.h"
 
 #include "vlba_stream.h"
 
@@ -117,40 +118,42 @@ unsigned dsp::Mark5TwoBitCorrection::get_input_incr () const
   f=1 c=7 s=27 m=31
 
  */
-void dsp::Mark5TwoBitCorrection::dig_unpack (float* outptr,
-					     const unsigned char* inptr,
-					     uint64 ndat,
-					     unsigned digitizer,
-					     unsigned* weights,
-					     unsigned nweights)
+
+void dsp::Mark5TwoBitCorrection::dig_unpack (const unsigned char* input_data,
+					       float* output_data,
+					       uint64 nfloat,
+					       unsigned long* hist,
+					       unsigned* weights,
+					       unsigned nweights)
 {
-  if (!file) {
+  if (!file)
+  {
     file = get_Input<Mark5File>();
     if (!file)
       throw Error (InvalidState, "dsp::Mark5Unpacker::unpack",
 		   "Input is not a Mark5File");
   }
 
+  StepIterator<const unsigned char> iterator (input_data);
+  iterator.set_increment ( get_input_incr() );
+
   struct VLBA_stream* vlba_stream = (struct VLBA_stream*) file->stream;
 
-  GatherMask<2> mask;
-
   // the byte pattern repeats every two digitizers
-  unsigned channel = digitizer % 2;
+  unsigned channel = current_digitizer % 2;
 
   // CHAN b in Walter's code == channel 4
-  mask.shift0[0] = vlba_stream->basebits[channel * 4];
+  gather.mask.shift0[0] = vlba_stream->basebits[channel * 4];
 
   // m in Walter's code
   // NOTE: -1 so that GatherMask::bitshift does not have to << before |
-  mask.shift1[0] = mask.shift0[0] + 2*vlba_stream->fanout -1;
+  gather.mask.shift1[0] = gather.mask.shift0[0] + 2*vlba_stream->fanout -1;
 
   // +2*f in Walter's code
-  mask.shift0[1] = mask.shift0[0] + 2;  // s
-  mask.shift1[1] = mask.shift1[0] + 2;  // m
+  gather.mask.shift0[1] = gather.mask.shift0[0] + 2;  // s
+  gather.mask.shift1[1] = gather.mask.shift1[0] + 2;  // m
 
-  // cerr << mask << endl;
-
-  SubByteTwoBitCorrection::dig_unpack (mask, outptr, inptr, ndat, 
-				       digitizer, weights, nweights);
+  ExcisionUnpacker::excision_unpack (gather, iterator,
+				     output_data, nfloat,
+                                     hist, weights, nweights);
 }

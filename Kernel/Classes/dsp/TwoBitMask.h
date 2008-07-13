@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitMask.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2008/07/13 00:38:54 $
+   $Author: straten $ */
 
 #ifndef __TwoBitMask_h
 #define __TwoBitMask_h
@@ -18,7 +18,7 @@
 
 namespace dsp {
 
-  //! Shifts two bits and masks
+  //! Shift and mask two contiguous bits
   template<unsigned N>
   class ShiftMask {
 
@@ -27,8 +27,12 @@ namespace dsp {
     unsigned shift[N];
 
     //! Return the shifted 2-bit number
-    inline unsigned char twobit (unsigned char data, unsigned isamp)
+    inline unsigned char operator() (unsigned char data, unsigned isamp)
     { return (data >> shift[isamp]) & 0x03; }
+
+    //! Return the shifted 2-bit number
+    inline unsigned char operator() (unsigned char data)
+    { return (data >> shift[0]) & 0x03; }
 
   };
 
@@ -42,7 +46,7 @@ namespace dsp {
     unsigned shift1[N];
 
     //! Return the shifted 2-bit number
-    inline unsigned char twobit (unsigned char data, unsigned isamp)
+    inline unsigned char operator() (unsigned char data, unsigned isamp)
     { return ((data>>shift0[isamp]) & 0x01)|((data>>shift1[isamp]) & 0x02); }
 
   };
@@ -58,3 +62,4 @@ namespace dsp {
 }
 
 #endif // !defined(__TwoBitMask_h)
+

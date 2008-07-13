@@ -7,14 +7,16 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/02/14 21:32:38 $
+   $Revision: 1.6 $
+   $Date: 2008/07/13 00:38:53 $
    $Author: straten $ */
 
 #ifndef __SubByteTwoBitCorrection_h
 #define __SubByteTwoBitCorrection_h
 
 #include "dsp/TwoBitCorrection.h"
+#include "dsp/TwoBitMask.h"
+#include "dsp/TwoBit1or2.h"
 
 namespace dsp {
   
@@ -46,39 +48,18 @@ namespace dsp {
 
   protected:
 
-    //! Template unpacking algorithm
-    template<class Rule>
-    void dig_unpack (Rule& rule,
-		     float* output_data,
-		     const unsigned char* input_data, 
-		     uint64 ndat,
-		     unsigned digitizer,
-		     unsigned* weights = 0,
-		     unsigned nweights = 0);
-
     //! Default unpacking algorithm
-    void dig_unpack (float* output_data,
-		     const unsigned char* input_data, 
+    void dig_unpack (const unsigned char* input_data, 
+		     float* output_data,
 		     uint64 ndat,
-		     unsigned digitizer,
+		     unsigned long* hist,
 		     unsigned* weights = 0,
 		     unsigned nweights = 0);
 
-    //! Temporary storage of bit-shifted values
-    unsigned char* values;
-    unsigned values_size;
-
-    //! Two bit numbers equal to low-voltage state
-    unsigned lovoltage [4];
+    TwoBit< 1, ShiftMask<1> > unpacker;
 
     //! Build the dynamic level setting lookup table and temporary space
     void build ();
-
-    //! Build the number of low-voltage states lookup table
-    void nlo_build ();
-
-    //! Delete allocated resources
-    void destroy ();
 
   };
   

@@ -34,7 +34,8 @@ dsp::TwoBitStatsPlotter::~TwoBitStatsPlotter ()
 string dsp::TwoBitStatsPlotter::get_xlabel () const
 {
   char label[64];
-  snprintf (label, 64, "Low state count (in %d pts)", twobit->get_ndat_per_weight());
+  snprintf (label, 64, "Low state count (in %d pts)",
+            twobit->get_ndat_per_weight() * twobit->get_ndim_per_digitizer());
   return label;
 }
 
@@ -85,12 +86,14 @@ float factln(int n)
 
 void dsp::TwoBitStatsPlotter::calculate_theory ()
 {
-  if (!twobit) {
+  if (!twobit)
+  {
     cerr << "TwoBitStatsPlotter::calculate_theory no data" << endl;
     return;
   }
 
-  if (twobit->get_ndat_per_weight() < 1) {
+  if (twobit->get_ndat_per_weight() < 1)
+  {
     cerr << "TwoBitStatsPlotter::calculate_theory invalid data";
     return;
   }
@@ -99,7 +102,7 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
     return;
 
   // the number of samples per statistical measure
-  int L = twobit->get_ndat_per_weight();
+  int L = twobit->get_ndat_per_weight() * twobit->get_ndim_per_digitizer();
 
   theory.resize (L);
   theory_max = 0.0;
@@ -141,10 +144,13 @@ double dsp::TwoBitStatsPlotter::get_chi_squared (int idig)
   // number of weights tested
   double nweights = twobit->get_histogram_total (idig);
 
+  unsigned ndim = twobit->get_ndim_per_digitizer ();
+
   double chisq = 0;
-  for (unsigned iwt=0; iwt<histogram.size(); iwt++) {
+  for (unsigned iwt=0; iwt<histogram.size(); iwt++)
+  {
     double normval = histogram[iwt] / nweights;
-    double offmodel = normval - theory[iwt];
+    double offmodel = normval - theory[iwt*ndim];
     chisq += offmodel * offmodel;
   }
 
@@ -186,13 +192,16 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   double nweights = twobit->get_histogram_total (0);
   unsigned ndat_per_weight = twobit->get_ndat_per_weight ();
 
+  unsigned ndim = twobit->get_ndim_per_digitizer ();
+  xscale = ndim;
+
   vector<float> plot_theory (ndat_per_weight);
   for (unsigned iwt=0; iwt<ndat_per_weight; iwt++)
-    plot_theory[iwt] = theory[iwt] * nweights;
+    plot_theory[iwt] = theory[iwt*ndim] * nweights * ndim;
   
   float hp_min, hp_max;
-  unsigned n_min = twobit->get_nmin ();
-  unsigned n_max = twobit->get_nmax ();
+  unsigned n_min = twobit->get_nlow_min ();
+  unsigned n_max = twobit->get_nlow_max ();
 
   if (plot_only_range)
   {
@@ -204,10 +213,10 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
     // definitely keep the theory in sight
     hp_min=0; hp_max=ndat_per_weight-1;
     for (; hp_min<ndat_per_weight; hp_min++)
-      if (theory[unsigned(hp_min)] > theory_max*hist_min)
+      if (theory[unsigned(hp_min*ndim)] > theory_max*hist_min)
 	break;
     for (; hp_max>0; hp_max--)
-      if (theory[unsigned(hp_max)] > theory_max*hist_min)
+      if (theory[unsigned(hp_max*ndim)] > theory_max*hist_min)
 	break;
   }
 
@@ -218,8 +227,8 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
     imax = (unsigned) hp_max;
 
   // want to keep the entire theoretical curve in the box
-  if (ymax < theory_max * nweights)
-    ymax = theory_max * nweights;
+  if (ymax < theory_max * nweights * ndim)
+    ymax = theory_max * nweights * ndim;
 
   ymax *= 1.05;
 
@@ -228,7 +237,7 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   fprintf (stderr, "histogram (%d->%d) ymax: %f\n", imin, imax, ymax);
 #endif
 
-  cpgswin (imin, imax, ymax*hist_min, ymax);
+  cpgswin (imin*xscale, imax*xscale, ymax*hist_min, ymax);
 
   // plot the theoretical distribution of number of ones
   cpgsci(theory_colour);
@@ -238,10 +247,11 @@ bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
   if (show_cutoff_sigma)
   {
     cpgmove (n_min, 0.0);
-    cpgdraw (n_min, theory_max * nweights);
+    cpgdraw (n_min, theory_max * nweights * ndim);
     cpgmove (n_max, 0.0);
-    cpgdraw (n_max, theory_max * nweights);
+    cpgdraw (n_max, theory_max * nweights * ndim);
   }
 
   return true;
 }
+

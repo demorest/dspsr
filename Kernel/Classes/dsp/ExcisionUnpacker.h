@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/09 04:26:10 $
+   $Revision: 1.3 $
+   $Date: 2008/07/13 00:38:53 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_h
@@ -17,7 +17,10 @@
 #include "dsp/HistUnpacker.h"
 #include "JenetAnderson98.h"
 
-namespace dsp {
+namespace dsp
+{
+  class WeightedTimeSeries;
+  class Input;
 
   //! Excises digitized data with statistics outside of acceptable limits
   class ExcisionUnpacker: public HistUnpacker
@@ -28,6 +31,15 @@ namespace dsp {
     //! Null constructor
     ExcisionUnpacker (const char* name = "ExcisionUnpacker");
 
+    //! Overload Transformation::set_output to also set weighted_output
+    void set_output (TimeSeries*);
+
+    //! Match the ndat_per_weight to the resolution of the Input
+    void match_resolution (const Input*);
+
+    //! Return ndat_per_weight
+    unsigned get_resolution () const;
+
     //! Get the offset (number of bytes) into input for the given digitizer
     virtual unsigned get_input_offset (unsigned idig) const;
 
@@ -37,8 +49,11 @@ namespace dsp {
     //! Get the offset (number of floats) between consecutive digitizer samples
     virtual unsigned get_output_incr () const;
 
-    //! Set the number of time samples used to estimate undigitized power
-    void set_ndat_per_weight (unsigned ndat_per_weight);
+    //! Set the number of samples per weight in WeightTimeSeries output
+    virtual void set_ndat_per_weight (unsigned ndat_per_weight);
+
+    //! Get the number of samples per weight in WeightTimeSeries output
+    unsigned get_ndat_per_weight () const { return ndat_per_weight; }
 
     //! Set the number of states in the histogram
     void set_nstate (unsigned nstate) { set_ndat_per_weight (nstate); }
@@ -64,6 +79,12 @@ namespace dsp {
 
   protected:
 
+    //! Set when Transformation::output is a WeightedTimeSeries
+    Reference::To<WeightedTimeSeries> weighted_output;
+
+    //! Initialize the WeightedTimeSeries dimensions
+    void resize_output ();
+
     //! Set nlow_min and nlow_max using current attributes
     void set_limits ();
 
@@ -74,12 +95,19 @@ namespace dsp {
     void unpack ();
 
     //! Unpack a single digitized stream from raw into data
-    virtual void dig_unpack (float* output_data,
-			     const unsigned char* input_data, 
+    virtual void dig_unpack (const unsigned char* input_data, 
+			     float* output_data,
 			     uint64 ndat,
-			     unsigned digitizer,
+			     unsigned long* hist,
 			     unsigned* weights = 0,
 			     unsigned nweights = 0) = 0;
+
+    //! Template method can be used to implement pure virtual dig_unpack
+    template<class U, class Iterator>
+    void excision_unpack (U& unpack, Iterator& input,
+		          float* output_data, uint64 ndat,
+		          unsigned long* hist,
+		          unsigned* weights, unsigned nweights);
 
     //! Cut off power for impulsive interference excision
     float cutoff_sigma;
@@ -90,11 +118,23 @@ namespace dsp {
     //! Maximum number of low states in ndat_per_weight points
     unsigned nlow_max;
 
+    //! The theory behind the implementation
+    JenetAnderson98 ja98;
+
+    //! The current digitized stream
+    unsigned current_digitizer;
+
+    //! Derived types may not set built flag to true, but can set it to false
+    void not_built ();
+
+  private:
+
     //! Lookup table and histogram dimensions reflect the attributes
     bool built;
 
-    //! The theory behind the implementation
-    JenetAnderson98 ja98;
+    //! Number of samples per weight
+    unsigned ndat_per_weight;
+
   };
 }
 

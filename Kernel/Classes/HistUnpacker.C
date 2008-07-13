@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/HistUnpacker.h"
-#include "dsp/WeightedTimeSeries.h"
 
 #include <iostream>
 
@@ -17,7 +16,6 @@ bool dsp::HistUnpacker::keep_histogram = true;
 //! Null constructor
 dsp::HistUnpacker::HistUnpacker (const char* _name) : Unpacker (_name)
 {
-  ndat_per_weight = 0;
   nstate = 0;
   nstate_internal = 0;
 
@@ -28,31 +26,6 @@ dsp::HistUnpacker::HistUnpacker (const char* _name) : Unpacker (_name)
 dsp::HistUnpacker::~HistUnpacker ()
 {
   // cerr << "dsp::HistUnpacker::~HistUnpacker" << endl;
-}
-
-void dsp::HistUnpacker::set_output (TimeSeries* _output)
-{
-  if (verbose)
-    cerr << "dsp::HistUnpacker::set_output (" << _output << ")" << endl;
-
-  Unpacker::set_output (_output);
-  weighted_output = dynamic_cast<WeightedTimeSeries*> (_output);
-}
-
-//! Initialize and resize the output before calling unpack
-void dsp::HistUnpacker::resize_output ()
-{
-  if (weighted_output)
-  {
-    weighted_output -> set_ndat_per_weight (get_ndat_per_weight());
-    weighted_output -> set_nchan_weight (1);
-    weighted_output -> set_npol_weight (input->get_npol());
-  }
-
-  output->resize ( input->get_ndat() );
-
-  if (weighted_output)
-    weighted_output -> neutral_weights ();
 }
 
 double dsp::HistUnpacker::get_optimal_variance ()
@@ -90,28 +63,17 @@ void dsp::HistUnpacker::set_ndig (unsigned _ndig)
 }
 
 /*!
-  By default, each digitizer samples a real-valued signal.
+  ndim per digitizer is 1 for both real data and complex data that have
+  been created by quadrature down conversion, where real and imaginary
+  components are independently sampled.
 
-  In the case of dual-sideband downconversion, the in-phase and
-  quadrature components are independently sampled, and ndim_per_digitizer=1.
-
-  In the case of decimated output from a polyphase filterbank,
-  the real and imaginary components of the complex values may be
-  scaled and resampled together, and ndim_per_digitizer=2
+  ndim per digitizer is 2 for complex data that have been created by
+  digitial electronics, such as a polyphase filterbank, especially
+  if the real and imaginary components are scaled and resampled together.
 */
 unsigned dsp::HistUnpacker::get_ndim_per_digitizer () const
 {
   return 1;
-}
-
-//! Set the number of time samples per weight
-void dsp::HistUnpacker::set_ndat_per_weight (unsigned _ndat_per_weight)
-{
-  if (verbose)
-    cerr << "dsp::HistUnpacker::set_ndat_per_weight="
-	 << _ndat_per_weight << endl;
-
-  ndat_per_weight = _ndat_per_weight;
 }
 
 //! Set the number of possible states
@@ -198,18 +160,18 @@ void dsp::HistUnpacker::zero_histogram ()
 void dsp::HistUnpacker::get_histogram (std::vector<unsigned long>& hist,
 				       unsigned idig) const
 {
-  if (idig >= get_ndig())
+  if (idig >= histograms.size())
     throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram",
-		 "invalid idig=%d >= ndig=%d", idig, get_ndig());
+		 "invalid idig=%d >= ndig=%d", idig, histograms.size());
 
   hist = histograms[idig];
 }
 
 double dsp::HistUnpacker::get_histogram_mean (unsigned idig) const
 {
-  if (idig >= get_ndig())
+  if (idig >= histograms.size())
     throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram_mean",
-		 "invalid idig=%d >= ndig=%d", idig, get_ndig());
+		 "invalid idig=%d >= ndig=%d", idig, histograms.size());
 
   double ones = 0.0;
   double pts  = 0.0;
@@ -242,7 +204,7 @@ unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig)
   if (resize_needed)
     resize ();
 
-  if (idig >= get_ndig())
+  if (idig >= histograms.size())
     throw Error (InvalidRange, "dsp::HistUnpacker::get_histogram",
                  "invalid idig=%d >= ndig=%d", idig, histograms.size());
 

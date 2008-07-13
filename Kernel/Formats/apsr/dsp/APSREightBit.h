@@ -9,26 +9,20 @@
 #ifndef __APSREightBit_h
 #define __APSREightBit_h
 
-#include "dsp/EightBitUnpacker.h"
+#include "dsp/APSRUnpacker.h"
+#include "dsp/EightBitOne.h"
 
-namespace dsp {
+namespace dsp
+{
+  typedef APSRUnpacker< APSRExcision<EightBitOne>, 8 > APSREightBitBase;
 
-  //! Converts APSR data from 4-bit digitized to floating point values
-  class APSREightBit: public EightBitUnpacker {
-
+  //! Converts APSR data from 8-bit digitized to floating point values
+  class APSREightBit: public APSREightBitBase
+  {
   public:
-
-    //! Constructor initializes base class attributes
+    //! Constructor initializes bit table
     APSREightBit ();
-
-    //! Return true if APSREightBit can convert the Observation
-    virtual bool matches (const Observation* observation);
-
-    void unpack ();
-    unsigned get_ndim_per_digitizer () const;
-
   };
-  
 }
 
 #endif

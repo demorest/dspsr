@@ -1,15 +1,17 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Aidan Hotan
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/IOManager.h"
 #include "dsp/File.h"
 #include "dsp/BitSeries.h"
 #include "dsp/Unpacker.h"
 #include "dsp/TimeSeries.h"
 
+#include "templates.h"
 #include "Error.h"
 
 using namespace std;
@@ -63,7 +65,8 @@ void dsp::IOManager::set_output (BitSeries* raw)
 
   output = raw;
 
-  if (unpacker) {
+  if (unpacker)
+  {
     if (verbose)
       cerr << "dsp::IOManager::set_output call Unpacker::set_input" << endl;
     unpacker -> set_input (raw);
@@ -77,7 +80,8 @@ void dsp::IOManager::set_output (TimeSeries* _data)
 
   data = _data;
 
-  if (unpacker) {
+  if (unpacker)
+  {
     if (verbose)
       cerr << "dsp::IOManager::set_output call Unpacker::set_output" << endl;
     unpacker -> set_output (_data);
@@ -211,5 +215,61 @@ void dsp::IOManager::operation ()
     return;
 
   unpacker->operate ();
+}
+
+uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
+				       uint64 maximum_RAM,
+				       unsigned copies)
+{
+  /*
+    This simple calculation of the maximum block size does not
+    consider the RAM required FFT plans, etc.
+  */
+
+  unsigned resolution = input->get_resolution();
+
+  unpacker->match_resolution (input);
+  if (unpacker->get_resolution())
+    resolution = unpacker->get_resolution();
+
+  // ensure that the block size is a multiple of four
+  if (resolution % 4)
+  {
+    if (resolution % 2 == 0)
+      resolution *= 2;
+    else
+      resolution *= 4;
+  }
+
+  cerr << "resolution=" << resolution << endl;
+
+  Observation* info = get_info();
+
+  unsigned nbit  = info->get_nbit();
+  unsigned ndim  = info->get_ndim();
+  unsigned npol  = info->get_npol();
+  unsigned nchan = info->get_nchan();
+
+  // each nbit number will be unpacked into a float
+  double nbyte = double(nbit)/8 + copies * sizeof(float);
+    
+  double nbyte_dat = nbyte * ndim * npol * nchan;
+
+  uint64 block_size = multiple_greater (minimum_samples, resolution);
+
+  if (maximum_RAM)
+    block_size = (uint64(maximum_RAM / nbyte_dat) / resolution) * resolution;
+  
+  double megabyte = 1024 * 1024;
+  if (block_size < minimum_samples)
+    throw Error (InvalidState, "dsp::IOManager::set_block_size",
+		 "insufficient RAM: limit=%f MB  require=%f MB\n"
+		 "(use -U to increase RAM limit)",
+		 double(maximum_RAM)/megabyte,
+		 double(minimum_samples)/megabyte);
+
+  input->set_block_size ( block_size );
+
+  return uint64( block_size * nbyte_dat );
 }
 

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.23 $
-   $Date: 2008/07/01 12:30:09 $
+   $Revision: 1.24 $
+   $Date: 2008/07/13 00:38:54 $
    $Author: straten $ */
 
 
@@ -22,6 +22,8 @@
 #include "Registry.h"
 
 namespace dsp {
+
+  class Input;
 
   //! Abstract base class of Transformations that convert n-bit to float
   /*! This class is used in conjunction with the File class in
@@ -51,6 +53,12 @@ namespace dsp {
     /*! Derived classes must define the conditions under which they can
       be used to parse the given data. */
     virtual bool matches (const Observation* observation) = 0;
+
+    //! Match the unpacker to the resolution
+    virtual void match_resolution (const Input*) {}
+
+    //! Return ndat_per_weight
+    virtual unsigned get_resolution () const { return 0; }
 
     //! Copy the input attributes to the output
     virtual void prepare ();

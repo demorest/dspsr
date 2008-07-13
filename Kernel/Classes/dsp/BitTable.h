@@ -47,7 +47,7 @@ namespace dsp {
     Type get_type () const { return type; }
 
     //! Returns pointer to values_per_byte floats represented by byte
-    const float* get_values (unsigned byte = 0);
+    const float* get_values (unsigned byte = 0) const;
 
     //! Generate a look-up table for conversion to floating point
     void generate (float* table) const;
@@ -59,7 +59,13 @@ namespace dsp {
     virtual unsigned extract (unsigned byte, unsigned i) const;
 
     //! Return the optimal variance of normally distributed samples
-    virtual double get_optimal_variance ();
+    virtual double get_optimal_variance () const;
+
+    //! Return the optimal threshold closest to and less than unity
+    virtual double get_nlow_threshold () const;
+
+    //! Return the number of low voltage states in each of 256 bytes
+    virtual void get_nlow_lookup (char* nlow_lookup) const;
 
   protected:
 

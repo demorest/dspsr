@@ -7,8 +7,10 @@
 
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
+#include "dsp/Input.h"
 #include "dsp/BitTable.h"
 
+#include "templates.h"
 #include "Error.h"
 #include <assert.h>
 
@@ -18,6 +20,8 @@ using namespace std;
 dsp::ExcisionUnpacker::ExcisionUnpacker (const char* _name)
   : HistUnpacker (_name)
 {
+  ndat_per_weight = 0;
+
   if (psrdisp_compatible)
   {
     cerr << "dsp::TwoBitCorrection psrdisp compatibility\n"
@@ -34,26 +38,81 @@ dsp::ExcisionUnpacker::ExcisionUnpacker (const char* _name)
   built = false;  
 }
 
-void dsp::ExcisionUnpacker::set_limits ()
+void dsp::ExcisionUnpacker::set_output (TimeSeries* _output)
 {
   if (verbose)
-    cerr << "dsp::ExcisionUnpacker::set_limits" << endl;;
+    cerr << "dsp::ExcisionUnpacker::set_output (" << _output << ")" << endl;
 
+  Unpacker::set_output (_output);
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (_output);
+}
+
+//! Initialize and resize the output before calling unpack
+void dsp::ExcisionUnpacker::resize_output ()
+{
+  if (weighted_output)
+  {
+    weighted_output -> set_ndat_per_weight (get_ndat_per_weight());
+    weighted_output -> set_nchan_weight (1);
+    weighted_output -> set_npol_weight (input->get_npol());
+  }
+
+  output->resize ( input->get_ndat() );
+
+  if (weighted_output)
+    weighted_output -> neutral_weights ();
+}
+
+//! Match the unpacker to the resolution
+void dsp::ExcisionUnpacker::match_resolution (const Input* input)
+{
+  unsigned resolution = input->get_resolution();
+  if (resolution > ndat_per_weight)
+    set_ndat_per_weight (resolution);
+  else
+    set_ndat_per_weight (multiple_greater (ndat_per_weight, resolution));
+}
+
+//! Return ndat_per_weight
+unsigned dsp::ExcisionUnpacker::get_resolution () const
+{
+  return ndat_per_weight;
+}
+
+
+//! Set the number of time samples used to estimate digitized power
+void dsp::ExcisionUnpacker::set_ndat_per_weight (unsigned _ndat)
+{
+  if (verbose)
+    cerr << "dsp::ExcisionUnpacker::set_ndat_per_weight=" << _ndat << endl;
+
+  // ndat_per_weight must equal nstate
+  HistUnpacker::set_nstate (_ndat);
+  ndat_per_weight = _ndat;
+  built = false;
+}
+
+void dsp::ExcisionUnpacker::set_limits ()
+{
   float fsample = get_ndat_per_weight();
+
+  if (verbose)
+    cerr << "dsp::ExcisionUnpacker::set_limits nsample=" << fsample << endl;
 
   float nlo_mean = fsample * ja98.get_mean_Phi ();
   float nlo_variance = fsample * ja98.get_var_Phi ();
 
   if (nlo_mean == fsample)
     throw Error (InvalidState, "dsp::ExcisionUnpacker::set_limits",
-                 "sampling threshold is too high");
+                 "sampling threshold error: mean nlow=%f == sample size=%f",
+                 nlo_mean, fsample);
 
   // the root mean square deviation
   float nlo_sigma = sqrt( nlo_variance );
 
   if (verbose)
-    cerr << "  nlo_mean=" << nlo_mean << endl
-         << "  nlo_sigma=" << nlo_sigma << endl;
+    cerr << "dsp::ExcisionUnpacker::set_limits nlo_mean=" << nlo_mean 
+         << " nlo_sigma=" << nlo_sigma << endl;
 
   // backward compatibility
   if (psrdisp_compatible)
@@ -93,8 +152,16 @@ void dsp::ExcisionUnpacker::set_limits ()
 
 void dsp::ExcisionUnpacker::build ()
 {
+  if (verbose)
+    cerr << "dsp::ExcisionUnpacker::build" << endl;
   set_limits ();
+  zero_histogram ();
   built = true;
+}
+
+void dsp::ExcisionUnpacker::not_built ()
+{
+  built = false;
 }
 
 void dsp::ExcisionUnpacker::unpack ()
@@ -155,7 +222,13 @@ void dsp::ExcisionUnpacker::unpack ()
       nweights = weighted_output -> get_nweights ();
     }
 
-    dig_unpack (into, from, nfloat, idig, weights, unsigned(nweights));
+    unsigned long* hist = 0;
+    if (keep_histogram)
+      hist = get_histogram (idig);
+
+    current_digitizer = idig;
+
+    dig_unpack (from, into, nfloat, hist, weights, nweights);
       
   }  // for each stream of digitized data
 
@@ -193,17 +266,6 @@ unsigned dsp::ExcisionUnpacker::get_output_incr () const
     return 1;
   else
     return input->get_ndim();
-}
-
-//! Set the number of time samples used to estimate undigitized power
-void dsp::ExcisionUnpacker::set_ndat_per_weight (unsigned _ndat)
-{
-  if (get_ndat_per_weight() != _ndat)
-    built = false;
-
-  // in two-bit correction mode, ndat_per_weight must equal nstate
-  HistUnpacker::set_ndat_per_weight (_ndat);
-  HistUnpacker::set_nstate (_ndat);
 }
 
 //! Set the cut off power for impulsive interference excision

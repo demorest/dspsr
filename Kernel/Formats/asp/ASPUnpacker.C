@@ -11,7 +11,6 @@
 //! Constructor
 dsp::ASPUnpacker::ASPUnpacker (const char* name) : HistUnpacker (name)
 {
-  set_ndat_per_weight (256);
   set_ndig (4);
 }
 

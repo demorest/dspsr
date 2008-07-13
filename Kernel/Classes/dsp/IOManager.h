@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.22 $
-   $Date: 2007/06/06 01:01:24 $
+   $Revision: 1.23 $
+   $Date: 2008/07/13 00:38:53 $
    $Author: straten $ */
 
 
@@ -69,6 +69,11 @@ namespace dsp {
     //! Set the BitSeries into which data will be loaded
     // (should not normally need to be used)
     virtual void set_output (BitSeries* output);
+
+    //! Set the block size according to constraints
+    virtual uint64 set_block_size (uint64 minimum_samples,
+				   uint64 maximum_RAM = 0,
+				   unsigned copies = 1);
 
     //! Load and convert the next block of data
     virtual void load (TimeSeries* data);

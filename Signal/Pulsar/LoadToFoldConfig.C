@@ -12,6 +12,9 @@ dsp::LoadToFold::Config::Config ()
   // be a little bit verbose by default
   report = 1;
 
+  maximum_RAM = 256 * 1024 * 1024;
+  times_minimum_ndat = 1;
+
   // number of time samples used to estimate undigitized power
   tbc_nsample = 0;
 
@@ -81,3 +84,18 @@ dsp::LoadToFold::Config::Config ()
   archive_class = "Baseband";
 
 }
+
+// set block size to this factor times the minimum possible
+void dsp::LoadToFold::Config::set_times_minimum_ndat (unsigned ndat)
+{
+  times_minimum_ndat = ndat;
+  maximum_RAM = 0.0;
+}
+
+// set block_size to result in approximately this much RAM usage
+void dsp::LoadToFold::Config::set_maximum_RAM (uint64 ram)
+{
+  maximum_RAM = ram;
+  times_minimum_ndat = 1;
+}
+
