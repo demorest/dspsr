@@ -732,7 +732,7 @@ void dsp::LoadToFold1::run () try
 
   unsigned cwidth = 20;
 
-  if (Operation::verbose || (id==0 && config->report))
+  if (Operation::verbose || id==0)
   {
     cerr << pad (cwidth, "Operation")
 	 << pad (cwidth, "Time Spent")
