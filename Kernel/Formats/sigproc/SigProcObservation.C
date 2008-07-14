@@ -69,9 +69,14 @@ void dsp::SigProcObservation::unload_global ()
   machine_id = 0;
   telescope_id = 0;
 
-  
+ /*
+  * We need to get all the codes in here, but I am not sure
+  * what the DSPSR 'names' for all the hardware is.
+  *
+  * M.Keith 2008-07-14
+  */
   if(get_telescope().compare("PKS")==0)telescope_id=4;
-  if(get_machine().compare("BPSR")==0)machine_id=9;
+  if(get_machine().compare("BPSR")==0)machine_id=10;
   if(get_machine().compare("SCAMP")==0)machine_id=6;
 
 
