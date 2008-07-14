@@ -94,6 +94,12 @@ void dsp::ExcisionUnpacker::set_ndat_per_weight (unsigned _ndat)
 
 void dsp::ExcisionUnpacker::set_limits ()
 {
+  if (cutoff_sigma == 0.0)
+  {
+    nlow_min = 1;
+    nlow_max = get_ndat_per_weight() - 1;
+  }
+
   float fsample = get_ndat_per_weight();
 
   if (verbose)
