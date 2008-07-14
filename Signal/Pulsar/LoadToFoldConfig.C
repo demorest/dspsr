@@ -19,10 +19,10 @@ dsp::LoadToFold::Config::Config ()
   excision_nsample = 0;
 
   // cutoff power used for impulsive interference rejection
-  excision_cutoff = 0.0;
+  excision_cutoff = -1.0;
 
   // sampling threshold
-  excision_threshold = 0.0;
+  excision_threshold = -1.0;
 
   // use weighted time series
   weighted_time_series = true;

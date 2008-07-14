@@ -368,15 +368,18 @@ void dsp::LoadToFold1::prepare_final ()
 
   dsp::ExcisionUnpacker* excision;
   excision = dynamic_cast<dsp::ExcisionUnpacker*> ( manager->get_unpacker() );
+
+  if (excision)
+  {
+    if ( config->excision_nsample )
+      excision -> set_ndat_per_weight ( config->excision_nsample );
+  
+    if ( config->excision_threshold > 0 )
+      excision -> set_threshold ( config->excision_threshold );
     
-  if ( excision && config->excision_nsample )
-    excision -> set_ndat_per_weight ( config->excision_nsample );
-  
-  if ( excision && config->excision_threshold )
-    excision -> set_threshold ( config->excision_threshold );
-  
-  if ( excision && config->excision_cutoff )
-    excision -> set_cutoff_sigma ( config->excision_cutoff );
+    if ( config->excision_cutoff >= 0 )
+      excision -> set_cutoff_sigma ( config->excision_cutoff );
+  }
 
   for (unsigned iop=0; iop < operations.size(); iop++)
   {
