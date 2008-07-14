@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/07/13 00:38:53 $
+   $Revision: 1.4 $
+   $Date: 2008/07/14 01:24:52 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_h
@@ -56,13 +56,19 @@ namespace dsp
     unsigned get_ndat_per_weight () const { return ndat_per_weight; }
 
     //! Set the number of states in the histogram
-    void set_nstate (unsigned nstate) { set_ndat_per_weight (nstate); }
+    virtual void set_nstate (unsigned nstate) { set_ndat_per_weight (nstate); }
 
     //! Set the cut off power for impulsive interference excision
-    void set_cutoff_sigma (float cutoff_sigma);
+    virtual void set_cutoff_sigma (float cutoff_sigma);
     
     //! Get the cut off power for impulsive interference excision
-    float get_cutoff_sigma() const { return cutoff_sigma; }
+    virtual float get_cutoff_sigma() const { return cutoff_sigma; }
+
+    //! Set the sampling threshold as a fraction of the noise power
+    virtual void set_threshold (float threshold) { }
+
+    //! Get the sampling threshold as a fraction of the noise power
+    virtual float get_threshold () const { return 0.0; }
 
     //
     //
