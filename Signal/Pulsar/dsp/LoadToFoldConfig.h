@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.9 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.10 $
+   $Date: 2008/07/14 01:25:17 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -49,11 +49,11 @@ namespace dsp {
     uint64 get_maximum_RAM () const { return maximum_RAM; }
 
     // number of time samples used to estimate undigitized power
-    unsigned tbc_nsample;
+    unsigned excision_nsample;
     // cutoff power used for impulsive interference rejection
-    float tbc_cutoff;
+    float excision_cutoff;
     // sampling threshold
-    float tbc_threshold;
+    float excision_threshold;
 
     // use weighted time series
     bool weighted_time_series;

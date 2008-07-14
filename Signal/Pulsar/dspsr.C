@@ -181,24 +181,24 @@ int main (int argc, char** argv) try {
 
       baseband_options += " -2" + stropt;
 
-      scanned = sscanf (optarg, "n%u", &config->tbc_nsample);
+      scanned = sscanf (optarg, "n%u", &config->excision_nsample);
       if (scanned == 1)  {
-        cerr << "dspsr: Using " << config->tbc_nsample 
+        cerr << "dspsr: Using " << config->excision_nsample 
              << " samples to estimate undigitized power" << endl;
         break;
       }
 
-      scanned = sscanf (optarg, "c%f", &config->tbc_cutoff);
+      scanned = sscanf (optarg, "c%f", &config->excision_cutoff);
       if (scanned == 1)  {
         cerr << "dspsr: Setting impulsive interference excision threshold "
-	  "to " << config->tbc_cutoff << endl;
+	  "to " << config->excision_cutoff << endl;
         break;
       }
 
-      scanned = sscanf (optarg, "t%f", &config->tbc_threshold);
+      scanned = sscanf (optarg, "t%f", &config->excision_threshold);
       if (scanned == 1) {
         cerr << "dspsr: Setting two-bit sampling threshold to "
-             << config->tbc_threshold << endl;
+             << config->excision_threshold << endl;
         break;
       }
       

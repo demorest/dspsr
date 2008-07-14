@@ -16,13 +16,13 @@ dsp::LoadToFold::Config::Config ()
   times_minimum_ndat = 1;
 
   // number of time samples used to estimate undigitized power
-  tbc_nsample = 0;
+  excision_nsample = 0;
 
   // cutoff power used for impulsive interference rejection
-  tbc_cutoff = 0.0;
+  excision_cutoff = 0.0;
 
   // sampling threshold
-  tbc_threshold = 0.0;
+  excision_threshold = 0.0;
 
   // use weighted time series
   weighted_time_series = true;

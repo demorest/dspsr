@@ -12,7 +12,7 @@
 #include "dsp/Input.h"
 #include "dsp/Scratch.h"
 
-#include "dsp/TwoBitCorrection.h"
+#include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
 
 #include "dsp/ResponseProduct.h"
@@ -366,23 +366,22 @@ void dsp::LoadToFold1::prepare_final ()
     ephemeris is prepared by Fold.
   */
 
-  dsp::TwoBitCorrection* tbc;
-  tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+  dsp::ExcisionUnpacker* excision;
+  excision = dynamic_cast<dsp::ExcisionUnpacker*> ( manager->get_unpacker() );
     
-  if ( tbc && config->tbc_nsample )
-    tbc -> set_ndat_per_weight ( config->tbc_nsample );
+  if ( excision && config->excision_nsample )
+    excision -> set_ndat_per_weight ( config->excision_nsample );
   
-  if ( tbc && config->tbc_threshold )
-    tbc -> set_threshold ( config->tbc_threshold );
+  if ( excision && config->excision_threshold )
+    excision -> set_threshold ( config->excision_threshold );
   
-  if ( tbc && config->tbc_cutoff )
-    tbc -> set_cutoff_sigma ( config->tbc_cutoff );
+  if ( excision && config->excision_cutoff )
+    excision -> set_cutoff_sigma ( config->excision_cutoff );
 
-  for (unsigned iop=0; iop < operations.size(); iop++) {
-
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
     Operation* op = operations[iop];
     op->prepare ();
-
   }
 
   // for now ...
