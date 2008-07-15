@@ -20,6 +20,13 @@
 #include <iostream>
 #include <unistd.h>
 
+#define SIGPROC_FILTERBANK_RINGBUFFER
+#ifdef SIGPROC_FILTERBANK_RINGBUFFER
+#include <dada_hdu.h>
+#include <ipcio.h>
+#include "dsp/ASCIIObservation.h"
+#endif
+
 using namespace std;
 
 static char* args = "b:hvV";
@@ -34,6 +41,10 @@ int main (int argc, char** argv) try
 {
   bool verbose = false;
   int nbits = 8;
+#ifdef SIGPROC_FILTERBANK_RINGBUFFER
+  dada_hdu_t* hdu;
+#endif
+
 
   // a mega-sample at a time
   uint64 block_size = 1024 * 1024;
@@ -109,6 +120,18 @@ int main (int argc, char** argv) try
   digitizer->set_nbit(nbits);
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
+
+#ifdef  SIGPROC_FILTERBANK_RINGBUFFER
+  if (verbose)
+	  cerr << "sigproc_filterbank: creating 2nd sigproc digitizer, for ringbuffer" << endl;
+    Reference::To<dsp::BitSeries> bitseries_rb = new dsp::BitSeries;    
+  Reference::To<dsp::SigProcDigitizer> digitizer_rb = new dsp::SigProcDigitizer;
+  digitizer_rb->set_nbit(8);
+  digitizer_rb->set_input (timeseries);
+  digitizer_rb->set_output (bitseries_rb);
+#endif
+
+
       bool written_header = false;
 
 
@@ -136,10 +159,27 @@ int main (int argc, char** argv) try
     }
 
     dsp::SigProcObservation sigproc;
+#ifdef SIGPROC_FILTERBANK_RINGBUFFER
+    dsp::ASCIIObservation ascii_hdr;
+    bool written_rb_header = false;
 
+    multilog_t* mlog = multilog_open ("sigproc_filterbank",0);
+    multilog_add (mlog, stderr);
+
+    hdu = dada_hdu_create(mlog);
+    hdu->header = (char*) malloc(4096);
+    dada_hdu_set_key(hdu,0xb2);
+    if(dada_hdu_connect(hdu) < 0)
+	    return -1;
+    if(dada_hdu_lock_write(hdu) < 0)
+	    return -1;
+
+    
+
+#endif
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
-
+    uint64 lost_samps = 0;
     while (!manager->get_input()->eod())
     {
 	    manager->operate ();
@@ -149,35 +189,59 @@ int main (int argc, char** argv) try
 
 
 	    if (do_pscrunch)
-	pscrunch->operate ();
+		    pscrunch->operate ();
 
-      digitizer->operate ();
+#ifdef SIGPROC_FILTERBANK_RINGBUFFER
+	
+	    if(ipcio_space_left(hdu->data_block)){
+		    digitizer_rb->operate();
+		    if(!written_rb_header){
+			    ascii_hdr.copy(bitseries_rb);
+			    char* buf = ipcbuf_get_next_write(hdu->header_block);
+			    ascii_hdr.unload(buf);
+			    ipcbuf_mark_filled(hdu->header_block,4096);
+			    ipcbuf_unlock_write(hdu->header_block);
+			    written_rb_header = true;
+		    }
+		    ipcio_write(hdu->data_block,(char*)bitseries_rb->get_rawptr(),bitseries_rb->get_nbytes());
+	    } else {
+		    lost_samps += timeseries->get_ndat();
+	    }
+#endif
+
+	    digitizer->operate ();
 
 
 
-      if(!written_header){
-	      sigproc.copy(bitseries);
-	      sigproc.unload( stdout );
-		written_header = true;
-      }
+	    if(!written_header){
+		    sigproc.copy(bitseries);
+		    sigproc.unload( stdout );
+		    written_header = true;
+	    }
 
-      // output the result to stdout
-      const uint64 nbyte = bitseries->get_nbytes();
-      unsigned char* data = bitseries->get_rawptr();
+	    // output the result to stdout
+	    const uint64 nbyte = bitseries->get_nbytes();
+	    unsigned char* data = bitseries->get_rawptr();
 
-//      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
-//	cout << data[ibyte];
-	fwrite(data,nbyte,1,stdout);
+	    //      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
+	    //	cout << data[ibyte];
+	    fwrite(data,nbyte,1,stdout);
     }
 
+#ifdef SIGPROC_FILTERBANK_RINGBUFFER
+    	ipcio_close(hdu->data_block);
+	fprintf(stderr,"Downwind processes lost %lld samps due to buffer overrun\n",lost_samps);
+#endif
+
+
     if (verbose)
-      cerr << "end of data file " << filenames[ifile] << endl;
+	    cerr << "end of data file " << filenames[ifile] << endl;
   }
   catch (Error& error)
   {
-    cerr << error << endl;
+	  cerr << error << endl;
   }
-  
+
   return 0;
 }
 
@@ -186,3 +250,7 @@ catch (Error& error)
   cerr << error << endl;
   return -1;
 }
+
+
+
+
