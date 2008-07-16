@@ -175,21 +175,21 @@ void dsp::DataSeries::reshape ()
       " (subsize=" << subsize << " bytes)" << endl;
 }
 
-void dsp::DataSeries::reshape (unsigned _npol, unsigned _ndim)
+void dsp::DataSeries::reshape (unsigned new_npol, unsigned new_ndim)
 {
-  unsigned _total = _npol * _ndim;
+  unsigned new_total = new_npol * new_ndim;
   unsigned total = get_npol() * get_ndim();
 
-  if (total != _total)
+  if (total < new_total)
     throw Error (InvalidParam, "dsp::DataSeries::reshape",
 		 "current npol=%d*ndim=%d = %d != new npol=%d*ndim=%d = %d",
-		 get_npol(), get_ndim(), total, _npol, _ndim, _total);
+		 get_npol(), get_ndim(), total, new_npol, new_ndim, new_total);
 
   subsize *= get_npol();
-  subsize /= _npol;
+  subsize /= new_npol;
 
-  set_npol (_npol);
-  set_ndim (_ndim);
+  set_npol (new_npol);
+  set_ndim (new_ndim);
 }
 
 //! Returns a uchar pointer to the first piece of data
@@ -216,7 +216,7 @@ unsigned char* dsp::DataSeries::get_udatptr (unsigned ichan, unsigned ipol)
 		"Your ipol (%d) was >= npol (%d)",
 		ipol,get_npol()); 
 
-  return get_data() + (ichan*get_npol()+ipol)*subsize;
+  return get_data() + (ichan*get_npol() + ipol) * subsize;
 }
 
 //! Return pointer to the specified data block
