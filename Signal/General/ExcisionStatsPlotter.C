@@ -4,8 +4,8 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "dsp/TwoBitStatsPlotter.h"
-#include "dsp/TwoBitCorrection.h"
+#include "dsp/ExcisionStatsPlotter.h"
+#include "dsp/ExcisionUnpacker.h"
 
 #include <iostream>
 #include <algorithm>
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-dsp::TwoBitStatsPlotter::TwoBitStatsPlotter ()
+dsp::ExcisionStatsPlotter::ExcisionStatsPlotter ()
 {
   theory_calculated = false;
   theory_max = 0.0;
@@ -27,11 +27,11 @@ dsp::TwoBitStatsPlotter::TwoBitStatsPlotter ()
   hist_min = 0.01;
 }
 
-dsp::TwoBitStatsPlotter::~TwoBitStatsPlotter ()
+dsp::ExcisionStatsPlotter::~ExcisionStatsPlotter ()
 {
 }
 
-string dsp::TwoBitStatsPlotter::get_xlabel () const
+string dsp::ExcisionStatsPlotter::get_xlabel () const
 {
   char label[64];
   snprintf (label, 64, "Low state count (in %d pts)",
@@ -39,18 +39,18 @@ string dsp::TwoBitStatsPlotter::get_xlabel () const
   return label;
 }
 
-string dsp::TwoBitStatsPlotter::get_ylabel () const
+string dsp::ExcisionStatsPlotter::get_ylabel () const
 {
   return "Number of weights";
 }
 
 
-void dsp::TwoBitStatsPlotter::set_data (const HistUnpacker* hist)
+void dsp::ExcisionStatsPlotter::set_data (const HistUnpacker* hist)
 {
-  const TwoBitCorrection* stats = dynamic_cast<const TwoBitCorrection*>(hist);
+  const ExcisionUnpacker* stats = dynamic_cast<const ExcisionUnpacker*>(hist);
   if (!stats)
-    throw Error (InvalidParam, "dsp::TwoBitStatsPlotter::set_data",
-                 "HistUnpacker is not a TwoBitCorrection");
+    throw Error (InvalidParam, "dsp::ExcisionStatsPlotter::set_data",
+                 "HistUnpacker is not a ExcisionUnpacker");
 
   twobit = stats;
   theory_calculated = false;
@@ -84,17 +84,17 @@ float factln(int n)
   return gammln (n+1.0);
 }
 
-void dsp::TwoBitStatsPlotter::calculate_theory ()
+void dsp::ExcisionStatsPlotter::calculate_theory ()
 {
   if (!twobit)
   {
-    cerr << "TwoBitStatsPlotter::calculate_theory no data" << endl;
+    cerr << "ExcisionStatsPlotter::calculate_theory no data" << endl;
     return;
   }
 
   if (twobit->get_ndat_per_weight() < 1)
   {
-    cerr << "TwoBitStatsPlotter::calculate_theory invalid data";
+    cerr << "ExcisionStatsPlotter::calculate_theory invalid data";
     return;
   }
 
@@ -130,7 +130,7 @@ void dsp::TwoBitStatsPlotter::calculate_theory ()
   theory_calculated = true;
 }
 
-double dsp::TwoBitStatsPlotter::get_chi_squared (int idig)
+double dsp::ExcisionStatsPlotter::get_chi_squared (int idig)
 {
   if (!twobit)
     return 0;
@@ -159,7 +159,7 @@ double dsp::TwoBitStatsPlotter::get_chi_squared (int idig)
 
 
 
-void dsp::TwoBitStatsPlotter::set_theory_colour ()
+void dsp::ExcisionStatsPlotter::set_theory_colour ()
 {
   theory_colour = 7; 
 
@@ -172,7 +172,7 @@ void dsp::TwoBitStatsPlotter::set_theory_colour ()
 }
 
 
-void dsp::TwoBitStatsPlotter::check_colours ()
+void dsp::ExcisionStatsPlotter::check_colours ()
 {
   BitStatsPlotter::check_colours ();
   set_theory_colour();
@@ -181,7 +181,7 @@ void dsp::TwoBitStatsPlotter::check_colours ()
 
 
 
-bool dsp::TwoBitStatsPlotter::special (unsigned imin, unsigned imax,
+bool dsp::ExcisionStatsPlotter::special (unsigned imin, unsigned imax,
 				       float& ymax)
 {  
   // calculate the theortical distribution of 1-count histogram
