@@ -6,30 +6,30 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Attic/TwoBitStatsPlotter.h,v $
-   $Revision: 1.9 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ExcisionStatsPlotter.h,v $
+   $Revision: 1.1 $
+   $Date: 2008/07/16 07:00:16 $
+   $Author: straten $ */
 
-#ifndef __TwoBitStatsPlotter_h
-#define __TwoBitStatsPlotter_h
+#ifndef __ExcisionStatsPlotter_h
+#define __ExcisionStatsPlotter_h
 
 #include "dsp/BitStatsPlotter.h"
 
 namespace dsp {
   
-  class TwoBitCorrection;
+  class ExcisionUnpacker;
 
-  //! Plots the histograms maintained by TwoBitCorrection
-  class TwoBitStatsPlotter : public BitStatsPlotter {
+  //! Plots the histograms maintained by ExcisionUnpacker
+  class ExcisionStatsPlotter : public BitStatsPlotter {
 
   public:
 
     //! Null constructor
-    TwoBitStatsPlotter ();
+    ExcisionStatsPlotter ();
 
     //! Virtual destructor
-    virtual ~TwoBitStatsPlotter ();
+    virtual ~ExcisionStatsPlotter ();
 
     //! Set the data to be plotted
     void set_data (const HistUnpacker* stats);
@@ -67,7 +67,7 @@ namespace dsp {
     int theory_colour;
 
     //! Data to be plotted
-    Reference::To<const TwoBitCorrection> twobit;
+    Reference::To<const ExcisionUnpacker> twobit;
 
     void calculate_theory ();
     void set_theory_colour ();

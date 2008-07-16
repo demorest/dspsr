@@ -4,27 +4,27 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#ifndef __TwoBitHistoryPlotter_h
-#define __TwoBitHistoryPlotter_h
+#ifndef __ExcisionHistoryPlotter_h
+#define __ExcisionHistoryPlotter_h
 
 #include <sys/time.h>
 #include <vector>
 
-#include "dsp/TwoBitHistory.h"
-#include "dsp/TwoBitStatsPlotter.h"
+#include "dsp/ExcisionHistory.h"
+#include "dsp/ExcisionStatsPlotter.h"
 
 namespace dsp {
 
   /*!
     Uses PGPLOT to plot the history of the digitizer statistics
   */
-  class TwoBitHistoryPlotter : public TwoBitHistory {
+  class ExcisionHistoryPlotter : public ExcisionHistory {
     
   public:
     
-    TwoBitHistoryPlotter () { ndig = 0; keep_minutes = 150; }
+    ExcisionHistoryPlotter () { ndig = 0; keep_minutes = 150; }
     
-    virtual ~TwoBitHistoryPlotter() {}
+    virtual ~ExcisionHistoryPlotter() {}
 
     //! Reset the history
     void reset () { ndig = 0; }
@@ -32,7 +32,7 @@ namespace dsp {
     //! Log the statistics of the digitized data in some form
     virtual void log_stats (std::vector<double>& mean,
                             std::vector<double>& variance,
-			    TwoBitCorrection* stats);
+			    ExcisionUnpacker* stats);
     
     // the number of minutes to keep in history
     float  keep_minutes;
@@ -40,7 +40,7 @@ namespace dsp {
   protected:
     
     //! Two-bit digitization histogram plotter
-    TwoBitStatsPlotter stat;
+    ExcisionStatsPlotter stat;
     
     //! Time of the first call to log_stats
     timeval start;
@@ -61,7 +61,7 @@ namespace dsp {
     unsigned ndig;
 
     //! this gets called on the first call
-    void init_stats_log (TwoBitCorrection* converter);
+    void init_stats_log (ExcisionUnpacker* converter);
     
   };
 

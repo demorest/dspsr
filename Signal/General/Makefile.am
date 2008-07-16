@@ -9,7 +9,7 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/BitStatsPlotter.h dsp/Switcher.h dsp/Buffer.h	       \
 	dsp/IncoherentFilterbank.h dsp/TScrunch.h dsp/LevelHistory.h   \
 	dsp/TimeOrder.h dsp/Chomper.h dsp/LevelMonitor.h	       \
-	dsp/TwoBitHistoryPlotter.h dsp/TwoBitStatsPlotter.h	       \
+	dsp/ExcisionHistoryPlotter.h dsp/ExcisionStatsPlotter.h	       \
 	dsp/Convolution.h dsp/Dedispersion.h dsp/DedispersionHistory.h \
 	dsp/RFIFilter.h dsp/DedispersionSampleDelay.h dsp/Response.h   \
 	dsp/Rescale.h dsp/PScrunch.h
@@ -37,7 +37,7 @@ if HAVE_PGPLOT
   # PGPLOT-specific code
   #
 
-  libdspdsp_la_SOURCES += TwoBitStatsPlotter.C BitStatsPlotter.C
+  libdspdsp_la_SOURCES += ExcisionStatsPlotter.C BitStatsPlotter.C
   bin_PROGRAMS += digistat passband
 
   digistat_SOURCES = digistat.C
