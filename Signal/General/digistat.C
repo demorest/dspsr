@@ -4,8 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "dsp/TwoBitStatsPlotter.h"
-#include "dsp/TwoBitCorrection.h"
+
+#include "dsp/ExcisionStatsPlotter.h"
+#include "dsp/ExcisionUnpacker.h"
 #include "dsp/BitSeries.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/IOManager.h"
@@ -46,9 +47,14 @@ int main (int argc, char** argv) try
   bool display = true;
   bool verbose = false;
 
-  unsigned tbc_nsample = 0;
-  float tbc_cutoff = 0.0;
-  float tbc_threshold = 0.0;
+  // unknown until data are loaded
+  unsigned excision_nsample = 0;
+
+  // disable excision by default
+  float excision_cutoff = 0.0;
+
+  // unknown until data are loaded
+  float excision_threshold = 0.0;
 
   float time_per_plot = 1.0;
   float time_per_point = 1e-3;
@@ -64,7 +70,7 @@ int main (int argc, char** argv) try
     switch (c) {
 
     case 'c':
-      scanned = sscanf (optarg, "%f", &tbc_cutoff);
+      scanned = sscanf (optarg, "%f", &excision_cutoff);
       if (scanned != 1) {
         cerr << "digistat: error parsing " << optarg << " as"
           " dynamic output level assignment cutoff" << endl;
@@ -77,7 +83,7 @@ int main (int argc, char** argv) try
       return 0;
 
     case 'n':
-      scanned = sscanf (optarg, "%u", &tbc_nsample);
+      scanned = sscanf (optarg, "%u", &excision_nsample);
       if (scanned != 1) {
 	cerr << "digistat: error parsing " << optarg << " as"
 	  " number of samples used to estimate undigitized power" << endl;
@@ -95,7 +101,7 @@ int main (int argc, char** argv) try
       break;
 
     case 't':
-      scanned = sscanf (optarg, "%f", &tbc_threshold);
+      scanned = sscanf (optarg, "%f", &excision_threshold);
       if (scanned != 1) {
         cerr << "digistat: error parsing " << optarg << " as"
           " sampling threshold" << endl;
@@ -174,7 +180,7 @@ int main (int argc, char** argv) try
 
   // plots digitization statistics
   Reference::To<dsp::BitStatsPlotter> plotter;
-  Reference::To<dsp::TwoBitCorrection> correct;
+  Reference::To<dsp::ExcisionUnpacker> excision;
   Reference::To<dsp::HistUnpacker> unpack;
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
@@ -185,24 +191,24 @@ int main (int argc, char** argv) try
     if (verbose)
       cerr << "digistat: file " << filenames[ifile] << " opened" << endl;
 
-    correct = dynamic_cast<dsp::TwoBitCorrection*>(manager->get_unpacker());
+    excision = dynamic_cast<dsp::ExcisionUnpacker*>(manager->get_unpacker());
 
-    if (correct) {
+    if (excision) {
 
 	// plots two-bit digitization statistics
-	plotter = new dsp::TwoBitStatsPlotter;
-	plotter->set_data( correct );
+	plotter = new dsp::ExcisionStatsPlotter;
+	plotter->set_data( excision );
 
-	if ( tbc_nsample )
-	    correct -> set_ndat_per_weight ( tbc_nsample );
+	if ( excision_nsample )
+	    excision -> set_ndat_per_weight ( excision_nsample );
 	
-	if ( tbc_threshold )
-	    correct -> set_threshold ( tbc_threshold );
+	if ( excision_threshold )
+	    excision -> set_threshold ( excision_threshold );
 	
-	if ( tbc_cutoff )
-	    correct -> set_cutoff_sigma ( tbc_cutoff );
+	if ( excision_cutoff >= 0 )
+	    excision -> set_cutoff_sigma ( excision_cutoff );
 
-        unpack = correct;
+        unpack = excision;
 
     }
 

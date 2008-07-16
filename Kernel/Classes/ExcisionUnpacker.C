@@ -96,8 +96,9 @@ void dsp::ExcisionUnpacker::set_limits ()
 {
   if (cutoff_sigma == 0.0)
   {
-    nlow_min = 1;
-    nlow_max = get_ndat_per_weight() - 1;
+    nlow_min = 0;
+    nlow_max = get_ndat_per_weight();
+    return;
   }
 
   float fsample = get_ndat_per_weight();
