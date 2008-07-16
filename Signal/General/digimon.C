@@ -6,20 +6,12 @@
  *
  ***************************************************************************/
 
-// #if HAVE_CONFIG_H
-// #include <config.h>
-// #endif
-
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/LevelMonitor.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
 
 #include "Error.h"
-
-#if HAVE_PGPLOT
-#include <cpgplot.h>
-#endif
 
 #include <iostream>
 #include <stdlib.h>
@@ -124,9 +116,13 @@ int main (int argc, char** argv) try
     cerr << "digistat: opening file " << argv[optind] << endl;
   manager->open (argv[optind]);
 
-  dsp::ExcisionUnpacker* excision = dynamic_cast<dsp::ExcisionUnpacker*>( manager->get_unpacker() );
+  //
+  // disable excision
+  //
+  dsp::ExcisionUnpacker* excision = 0;
+  excision = dynamic_cast<dsp::ExcisionUnpacker*>( manager->get_unpacker() );
   if (excision)
-    excision->set_cutoff_sigma ( 100.0 );
+    excision->set_cutoff_sigma ( 0.0 );
 
   if (verbose)
     cerr << "digimon: creating LevelMonitor" << endl;
@@ -138,16 +134,6 @@ int main (int argc, char** argv) try
   digitizer->set_max_iterations (iterations);
   digitizer->set_swap_polarizations (swap_polarizations);
   digitizer->set_consecutive (consecutive);
-  
-#if HAVE_PGPLOT
-  if (cpgbeg (0, device.c_str(), 1, 1) != 1)
-    {
-      cerr << "digimon: error opening plot device" << endl;
-      return -1;
-    };
-  
-  cpgpap(3.0, 0.8);
-#endif
   
   while (!manager->get_input()->eod())
   {
@@ -161,10 +147,6 @@ int main (int argc, char** argv) try
     }
   }
   
-#if HAVE_PGPLOT
-  cpgend ();
-#endif
- 
   return 0;
 }
 catch (Error& error) 
@@ -172,3 +154,4 @@ catch (Error& error)
   cerr << "digimon: " << error << endl;
   return -1;
 }
+
