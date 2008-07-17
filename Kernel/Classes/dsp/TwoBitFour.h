@@ -7,23 +7,19 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.3 $
+   $Date: 2008/07/17 01:17:29 $
    $Author: straten $ */
 
 #ifndef __TwoBitFour_h
 #define __TwoBitFour_h
 
-#include "dsp/TwoBitTable.h"
-
-class JenetAnderson98;
+#include "dsp/TwoBitLookup.h"
 
 namespace dsp
 {
-  class TwoBitTable;
-
   //! Unpack four 2-bit samples per byte from an array of bytes
-  class TwoBitFour
+  class TwoBitFour : public TwoBitLookup
   {
 
   public:
@@ -31,21 +27,14 @@ namespace dsp
     static const unsigned samples_per_byte;
     static const unsigned lookup_block_size;
 
-    TwoBitFour ();
-    ~TwoBitFour ();
-
-    //! Set the minimum acceptable value of nlow
-    void set_nlow_min (unsigned min);
-
-    //! Set the maximum acceptable value of nlow
-    void set_nlow_max (unsigned max);
-
-    //! Build the nlow per byte lookup table
+    //! Build counts of low voltage 2-bit states in each byte
     void nlow_build (TwoBitTable* table);
 
-    //! Build the output value lookup table
-    void lookup_build (unsigned nsamp, unsigned ndim,
-                       TwoBitTable*, JenetAnderson98* = 0);
+    //! Implement TwoBitLookup::get_lookup_block
+    void get_lookup_block (float* lookup, TwoBitTable* table);
+
+    //! Implement TwoBitLookup::get_lookup_block_size
+    unsigned get_lookup_block_size ();
 
     template<class Iterator>
     inline void prepare (Iterator input, unsigned ndat)
@@ -67,7 +56,7 @@ namespace dsp
       _nlow = nlow;
 
       // if data are complex, divide n_low by two
-      nlow /= ndim_per_digitizer;
+      nlow /= ndim;
 
       if (nlow < nlow_min || nlow > nlow_max)
 	return;
@@ -90,18 +79,6 @@ namespace dsp
   protected:
     
     char nlow_lookup [256];
-
-    unsigned nlow;
-    unsigned nlow_min;
-    unsigned nlow_max;
-
-    unsigned ndim_per_digitizer;
-
-    float* lookup_base;
- 
-    // delete lookup_base
-    void destroy ();
-   
   };
 
 }

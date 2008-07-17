@@ -6,47 +6,12 @@
  ***************************************************************************/
 
 #include "dsp/TwoBitFour.h"
-#include "JenetAnderson98.h"
-
-#include <assert.h>
 
 // 4 floating-point samples per byte
 const unsigned dsp::TwoBitFour::samples_per_byte = 4;
 
 // 4 floating-point samples per byte times 256 unique bytes
 const unsigned dsp::TwoBitFour::lookup_block_size = 4 * 256;
-
-dsp::TwoBitFour::TwoBitFour ()
-{
-  nlow = nlow_min = nlow_max = 0;
-  lookup_base = 0;
-  ndim_per_digitizer = 1;
-}
-
-dsp::TwoBitFour::~TwoBitFour ()
-{
-  destroy ();
-}
-
-void dsp::TwoBitFour::destroy ()
-{
-  if (lookup_base)
-    delete [] lookup_base;
-
-  lookup_base = 0;
-}
-
-void dsp::TwoBitFour::set_nlow_min (unsigned min)
-{
-  nlow_min = min;
-  destroy ();
-}
-
-void dsp::TwoBitFour::set_nlow_max (unsigned max)
-{
-  nlow_max = max;
-  destroy ();
-}
 
 void dsp::TwoBitFour::nlow_build (TwoBitTable* table)
 {
@@ -66,39 +31,16 @@ void dsp::TwoBitFour::nlow_build (TwoBitTable* table)
   }
 }
 
-void dsp::TwoBitFour::lookup_build (unsigned nsamp, unsigned ndim,
-				    TwoBitTable* table,
-				    JenetAnderson98* ja98)
+void dsp::TwoBitFour::get_lookup_block (float* lookup, TwoBitTable* table)
 {
-  destroy ();
+  table->rebuild();
 
-  assert (nlow_max > nlow_min);
-  assert (nsamp > nlow_max);
+  /* Generate the 256 sets of four output floating point values
+     corresponding to each byte */
+  table->generate ( lookup );
+}
 
-  ndim_per_digitizer = ndim;
-  lookup_base = new float [(nlow_max - nlow_min + 1) * lookup_block_size];
-
-  float* lookup = lookup_base;
-
-  for (unsigned nlo = nlow_min; nlo <= nlow_max; nlo++)
-  {
-    /* Refering to JA98, nlo is the number of samples between x2 and x4, 
-       and p_in is the left-hand side of Eq.44 */
-
-    float p_in = (float) nlo / (float) nsamp;
-
-    if (ja98)
-    {
-      ja98->set_Phi (p_in);
-      
-      table->set_lo_val ( ja98->get_lo() );
-      table->set_hi_val ( ja98->get_hi() );
-      table->rebuild();
-    }
-    
-    /* Generate the 256 sets of four output floating point values
-       corresponding to each byte */
-    table->generate ( lookup );
-    lookup += lookup_block_size;
-  }
+unsigned dsp::TwoBitFour::get_lookup_block_size ()
+{
+  return lookup_block_size;
 }

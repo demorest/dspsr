@@ -7,57 +7,40 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBit1or2.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.3 $
+   $Date: 2008/07/17 01:17:29 $
    $Author: straten $ */
 
 #ifndef __TwoBit1or2_h
 #define __TwoBit1or2_h
 
-#include "dsp/TwoBitTable.h"
-
-class JenetAnderson98;
+#include "dsp/TwoBitLookup.h"
 
 namespace dsp
 {
-  class TwoBitTable;
-
-  class TwoBit1or2
+  class TwoBit1or2 : public TwoBitLookup
   {
   public:
 
     TwoBit1or2 ();
     ~TwoBit1or2 ();
 
-    //! Set the minimum acceptable value of nlow
-    void set_nlow_min (unsigned min);
-
-    //! Set the maximum acceptable value of nlow
-    void set_nlow_max (unsigned max);
-
     //! Build the nlow per byte lookup table
     void nlow_build (TwoBitTable* table);
 
-    //! Build the output value lookup table
-    void lookup_build (unsigned ndat, unsigned ndim,
-                       TwoBitTable*, JenetAnderson98* = 0);
+    //! Unpack a block of unique samples, given the current table
+    void get_lookup_block (float* lookup, TwoBitTable* table);
+
+    //! Return the number of unique samples per block
+    unsigned get_lookup_block_size ();
 
   protected:
     
     char nlow_lookup [4];
 
-    unsigned nlow;
-    unsigned nlow_min;
-    unsigned nlow_max;
-
-    unsigned ndim_per_digitizer;
-
-    float* lookup_base;
-     unsigned char* temp_values;
-
-    // delete temp_values and lookup_base
+    unsigned char* temp_values;
+    void create ();
     void destroy ();
-
   };
 
 
@@ -142,7 +125,7 @@ namespace dsp
     {
       _nlow = nlow;
 
-      nlow /= ndim_per_digitizer;
+      nlow /= ndim;
       
       if (nlow < nlow_min || nlow > nlow_max)
 	return;
