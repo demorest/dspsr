@@ -124,12 +124,11 @@ void dsp::TwoBitCorrection::build ()
 
   unpacker.set_nlow_min (nlow_min);
   unpacker.set_nlow_max (nlow_max);
+  unpacker.set_ndat (get_ndat_per_weight());
+  unpacker.set_ndim (get_ndim_per_digitizer());
 
   unpacker.nlow_build (table);
-
-  unpacker.lookup_build (get_ndat_per_weight(),
-                         get_ndim_per_digitizer(),
-                         table, &ja98);
+  unpacker.lookup_build (table, &ja98);
 
   if (verbose) cerr << "dsp::TwoBitCorrection::build exits\n";
 }
