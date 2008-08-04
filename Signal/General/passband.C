@@ -10,7 +10,7 @@
 #include "dsp/IOManager.h"
 #include "dsp/MultiFile.h"
 
-#include "dsp/TwoBitCorrection.h"
+#include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
 
 #include "BandpassPlotter.h"
@@ -253,29 +253,13 @@ int main (int argc, char** argv) try {
 
     cerr << "Blocksz=" << block_size << endl;
 
-    manager->get_input()->set_block_size ( block_size );
-    manager->get_input()->set_overlap ( 0 );
+    manager->set_block_size ( block_size );
 
-    dsp::TwoBitCorrection* tbc;
-    tbc = dynamic_cast<dsp::TwoBitCorrection*> ( manager->get_unpacker() );
+    dsp::ExcisionUnpacker* excision;
+    excision = dynamic_cast<dsp::ExcisionUnpacker*> ( manager->get_unpacker() );
 
-    float tbc_cutoff = 100.0;
-
-    if ( tbc && tbc_cutoff )
-      tbc -> set_cutoff_sigma ( tbc_cutoff );
-
-#if 0
-
-    if ( tbc && tbc_threshold )
-      tbc -> set_threshold ( tbc_threshold );
-
-    if ( tbc && tbc_nsample )
-      tbc -> set_nsample ( tbc_nsample );
-
-    if ( tbc && tbc_cutoff )
-      tbc -> set_cutoff_sigma ( tbc_cutoff );
-
-#endif
+    if ( excision )
+      excision -> set_cutoff_sigma ( 0.0 );
 
     vector< vector<float> > dynamic_spectrum [2];
 
@@ -302,8 +286,6 @@ int main (int argc, char** argv) try {
 	break;
 	
       }
-
-      cerr << ".";
 
       if (passband->get_integration_length() > integrate) {
 
