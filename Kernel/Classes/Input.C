@@ -120,12 +120,24 @@ void dsp::Input::operation ()
       throw error;
     }
 
+    if (verbose)
+      cerr << "dsp::Input::operation available=" << available 
+           << " < block_size=" << block_size << endl;
+
     to_seek = available;
 
+    uint64 useful_ndat = multiple_smaller (output->get_ndat(), resolution);
+
+    if (verbose)
+      cerr << "dsp::Input::operation useful ndat=" << useful_ndat << endl;
+
     // ensure that ndat is a multiple of resolution
-    get_output()->resize ( multiple_smaller (output->get_ndat(), resolution) );
+    get_output()->resize ( useful_ndat );
     get_output()->request_offset = resolution_offset;
     get_output()->request_ndat = get_output()->get_ndat() - resolution_offset;
+
+    if (verbose)
+      cerr << "dsp::Input::operation eod request_ndat=" << output->request_ndat << endl;
   }
 
   last_load_ndat = get_output()->get_ndat();

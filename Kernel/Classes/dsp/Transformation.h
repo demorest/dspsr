@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.45 $
-   $Date: 2007/06/06 01:02:14 $
+   $Revision: 1.46 $
+   $Date: 2008/08/04 12:28:27 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -332,11 +332,13 @@ try {
 
   pre_transformation.send (this);
 
-  if (buffering_policy) {
+  if (buffering_policy)
+  {
     if (Operation::verbose)
       cerr << name("operation") <<
 	"\n  calling " + buffering_policy->get_name() + "::pre_transformation"
-		<< std::endl;
+        " input sample=" << this->get_input()->get_input_sample() << std::endl;
+
     buffering_policy -> pre_transformation ();
   }
 
