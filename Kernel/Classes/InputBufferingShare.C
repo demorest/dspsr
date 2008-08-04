@@ -98,7 +98,7 @@ void dsp::InputBuffering::Share::pre_transformation () try
   int64 want = target->get_input()->get_input_sample();
 
   // don't wait for data preceding the first loaded block
-  if (want == 0)
+  if (want <= 0)
     return;
 
   while ( buffer->get_next_contiguous() != want )
