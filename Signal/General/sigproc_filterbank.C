@@ -55,7 +55,7 @@ int main (int argc, char** argv) try
 #endif
 
   // a mega-sample at a time
-  uint64 block_size = 1024 * 1024;
+  uint64 block_size = 10* 15625 * 1024;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -108,6 +108,14 @@ int main (int argc, char** argv) try
   if (verbose)
     cerr << "sigproc_filterbank: creating input timeseries container" << endl;
   Reference::To<dsp::TimeSeries> timeseries = new dsp::TimeSeries;
+//  Reference::To<dsp::TimeSeries> timeseries2 = new dsp::TimeSeries;
+//  Reference::To<dsp::TimeSeries> timeseries3 = new dsp::TimeSeries;
+  Reference::To<dsp::TimeSeries> timeseries2;
+  Reference::To<dsp::TimeSeries> timeseries3;
+	timeseries2=timeseries3=timeseries;
+
+
+
 
   if (verbose)
     cerr << "sigproc_filterbank: creating input/unpacker manager" << endl;
@@ -118,13 +126,13 @@ int main (int argc, char** argv) try
     cerr << "sigproc_filterbank: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
-  rescale->set_output (timeseries);
+  rescale->set_output (timeseries2);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
-  pscrunch->set_input (timeseries);
-  pscrunch->set_output (timeseries);
+  pscrunch->set_input (timeseries2);
+  pscrunch->set_output (timeseries3);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating output bitseries container" << endl;
@@ -134,7 +142,7 @@ int main (int argc, char** argv) try
     cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
   digitizer->set_nbit(nbits);
-  digitizer->set_input (timeseries);
+  digitizer->set_input (timeseries3);
   digitizer->set_output (bitseries);
 
 #ifdef  SIGPROC_FILTERBANK_RINGBUFFER
@@ -144,7 +152,7 @@ int main (int argc, char** argv) try
   Reference::To<dsp::BitSeries> bitseries_rb = new dsp::BitSeries;    
   Reference::To<dsp::SigProcDigitizer> digitizer_rb = new dsp::SigProcDigitizer;
   digitizer_rb->set_nbit(8);
-  digitizer_rb->set_input (timeseries);
+  digitizer_rb->set_input (timeseries3);
   digitizer_rb->set_output (bitseries_rb);
 #endif
 
@@ -201,10 +209,20 @@ int main (int argc, char** argv) try
     while (!manager->get_input()->eod())
     {
       manager->operate ();
+
+//   DUMPY TEST CODE MJK 2008
+//   float* raw = timeseries->get_datptr(512,1);
+//	for(int i = 0; i < timeseries->get_ndat(); i++){
+//		fprintf(stdout,"%f\n",raw[i]);
+//	}
+//
+//	return 1;
+
       rescale->operate ();
 
       if (do_pscrunch)
 	pscrunch->operate ();
+
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
 	
@@ -248,6 +266,7 @@ int main (int argc, char** argv) try
     //      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
     //	cout << data[ibyte];
     fwrite(data,nbyte,1,stdout);
+
     }
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
@@ -264,8 +283,10 @@ int main (int argc, char** argv) try
   }
   catch (Error& error)
   {
-    cerr << error << endl;
+	  cerr << error << endl;
   }
+
+
 
   return 0;
 }
