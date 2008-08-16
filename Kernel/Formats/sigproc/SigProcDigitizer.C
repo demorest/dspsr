@@ -69,13 +69,13 @@ void dsp::SigProcDigitizer::pack ()
 	switch (nbit){
 		case 1:
 			digi_mean=0.5;
-			digi_scale= digi_mean / digi_sigma;
+			digi_scale=1;
 			digi_min = 0;
 			digi_max = 1;
 			break;
 		case 2:
 			digi_mean=1.5;
-			digi_scale= digi_mean / digi_sigma;
+			digi_scale=1;
 			digi_min = 0;
 			digi_max = 3;
 			break;
@@ -111,7 +111,7 @@ void dsp::SigProcDigitizer::pack ()
 
 		for (uint64 idat=0; idat < ndat; idat++)
 		{
-			int result = int( (inptr[idat] * digi_scale) + digi_mean );
+			int result = int( (inptr[idat] * digi_scale) + digi_mean +0.5 );
 
 			// clip the result at the limits
 			if (result < digi_min)
@@ -127,10 +127,11 @@ void dsp::SigProcDigitizer::pack ()
 				case 2:
 				case 4:
 					bit_counter = ichan % (samp_per_byte);
+
 					if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte) 
 						+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
 					outptr[idat*(int)(nchan/samp_per_byte) 
-						+ (int)(ichan/samp_per_byte)] = ((unsigned char) result) << (bit_counter*nbit);
+						+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
 					break;
 				case 8:
 					outptr[idat*nchan + ichan] = (unsigned char) result;
