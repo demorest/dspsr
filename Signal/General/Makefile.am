@@ -24,11 +24,12 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C \
 	PScrunch.C BandpassMonitor.C
 
-bin_PROGRAMS = dmsmear digitxt digimon
+bin_PROGRAMS = dmsmear digitxt digimon digihist
 
 dmsmear_SOURCES = dmsmear.C 
 digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
+digihist_SOURCES = digihist.C
 
 if HAVE_PGPLOT
 
