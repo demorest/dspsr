@@ -18,7 +18,7 @@
 
 using namespace std;
 
-static char* args = "hvV";
+static char* args = "hvVP:";
 
 void usage ()
 {
@@ -28,6 +28,13 @@ void usage ()
 
 void summarize (const vector<uint64>& histogram,
 		unsigned nbit, double start, double end);
+
+template<typename T>
+void zero (vector<T>& data)
+{
+  for (unsigned i=0; i<data.size(); i++)
+    data[i] = 0.0;
+}
 
 int main (int argc, char** argv) try 
 {
@@ -46,6 +53,10 @@ int main (int argc, char** argv) try
     case 'h':
       usage ();
       return 0;
+
+    case 'P':
+      update_period = atof (optarg);
+      break;
 
     case 'V':
       dsp::Operation::verbose = true;
@@ -96,28 +107,34 @@ int main (int argc, char** argv) try
     MJD start = input->get_info()->get_start_time();
     double next_update = update_period;
 
+    vector<uint64> histogram (256, 0);
+    unsigned nbit = input->get_info()->get_nbit();
+
     while (!input->eod())
     {
       input->load (bits);
 
-      unsigned nbit = bits->get_nbit();
       const unsigned nbyte = bits->get_nbytes();
       unsigned char* data = bits->get_datptr (0);
-
-      vector<uint64> histogram (256, 0);
 
       for (unsigned ibyte=0; ibyte < nbyte; ibyte++)
 	histogram[ data[ibyte] ] ++;
 
-      if ((bits->get_start_time() - start).in_seconds() >= next_update)
+      if (next_update &&
+	  (bits->get_start_time() - start).in_seconds() >= next_update)
       {
 	summarize (histogram, nbit, next_update-update_period, next_update);
 	next_update += update_period;
+	zero (histogram);
       }
     }
 
     if (verbose)
       cerr << "end of data file " << filenames[ifile] << endl;
+
+    if (next_update == 0.0)
+      summarize (histogram, nbit,
+		 0, (bits->get_end_time() - start).in_seconds());
   }
   catch (Error& error)
   {
@@ -133,13 +150,6 @@ catch (Error& error)
   return -1;
 }
 
-
-template<typename T>
-void zero (vector<T>& data)
-{
-  for (unsigned i=0; i<data.size(); i++)
-    data[i] = 0.0;
-}
 
 void rebin (vector<uint64>& output, 
 	    const vector<uint64>& input, unsigned nbit)
