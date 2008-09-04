@@ -26,7 +26,8 @@ void usage ()
     "Usage: digihist file1 [file2 ...] \n" << endl;
 }
 
-void summarize (vector<unsigned long>& histogram, unsigned nbit);
+void summarize (const vector<uint64>& histogram,
+		unsigned nbit, double start, double end);
 
 int main (int argc, char** argv) try 
 {
@@ -34,6 +35,9 @@ int main (int argc, char** argv) try
 
   // number of time samples loaded at once
   uint64 block_size = 1024;
+
+  // period (in seconds) of elapsed recording time between updates
+  double update_period = 1.0;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -89,6 +93,9 @@ int main (int argc, char** argv) try
 
     input->set_block_size( block_size );
 
+    MJD start = input->get_info()->get_start_time();
+    double next_update = update_period;
+
     while (!input->eod())
     {
       input->load (bits);
@@ -97,12 +104,16 @@ int main (int argc, char** argv) try
       const unsigned nbyte = bits->get_nbytes();
       unsigned char* data = bits->get_datptr (0);
 
-      vector<unsigned long> histogram (256, 0);
+      vector<uint64> histogram (256, 0);
 
       for (unsigned ibyte=0; ibyte < nbyte; ibyte++)
 	histogram[ data[ibyte] ] ++;
 
-      summarize (histogram, nbit);
+      if ((bits->get_start_time() - start).in_seconds() >= next_update)
+      {
+	summarize (histogram, nbit, next_update-update_period, next_update);
+	next_update += update_period;
+      }
     }
 
     if (verbose)
@@ -130,8 +141,8 @@ void zero (vector<T>& data)
     data[i] = 0.0;
 }
 
-void rebin (vector<unsigned long>& output, 
-	    const vector<unsigned long>& input, unsigned nbit)
+void rebin (vector<uint64>& output, 
+	    const vector<uint64>& input, unsigned nbit)
 {
   unsigned nsamp = 8 / nbit;
 
@@ -157,9 +168,10 @@ void rebin (vector<unsigned long>& output,
   }
 }
 
-void summarize (vector<unsigned long>& histogram, unsigned nbit)
+void summarize (const vector<uint64>& histogram,
+		unsigned nbit, double start, double end)
 {
-  vector<unsigned long> result;
+  vector<uint64> result;
 
   switch (nbit)
     {
@@ -183,10 +195,11 @@ void summarize (vector<unsigned long>& histogram, unsigned nbit)
       throw Error (InvalidState, "summarize", "nbit=%d not implemented", nbit);
     }
 
-  unsigned long total = 0;
+  uint64 total = 0;
   for (unsigned i=0; i<result.size(); i++)
     total += result[i];
 
   for (unsigned i=0; i<result.size(); i++)
-    cout << i << " " << double(result[i])/double(total) << endl;
+    cout << start << "->" << end
+	 << " " << i << " " << double(result[i])/double(total) << endl;
 }
