@@ -64,10 +64,10 @@ namespace dsp {
     uint64 get_request_ndat () const { return request_ndat; }
 
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
-    virtual unsigned char* get_datptr (uint64 sample);
+    virtual unsigned char* get_datptr (uint64 sample = 0);
 
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
-    virtual const unsigned char* get_datptr (uint64 sample) const;
+    virtual const unsigned char* get_datptr (uint64 sample = 0) const;
 
     uint64 get_size () const { return data_size; }
 
