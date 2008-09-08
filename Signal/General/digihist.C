@@ -7,6 +7,8 @@
 
 #include "dsp/BitSeries.h"
 #include "dsp/File.h"
+#include "dsp/ExcisionUnpacker.h"
+
 #include "Error.h"
 
 #include "strutil.h"
@@ -83,6 +85,9 @@ int main (int argc, char** argv) try
   // generalized interface to input data
   Reference::To<dsp::Input> input;
 
+  // generalized interface to unpacker
+  Reference::To<dsp::Unpacker> unpacker;
+
   // container into which bits are loaded
   Reference::To<dsp::BitSeries> bits;
 
@@ -100,33 +105,63 @@ int main (int argc, char** argv) try
       cerr << "Sampling rate = " << input->get_info()->get_rate() << endl;
     }
 
-    bits = new dsp::BitSeries;
+    const dsp::Observation* info = input->get_info();
 
-    input->set_block_size( block_size );
+    unpacker = dsp::Unpacker::create( input->get_info() );
 
-    MJD start = input->get_info()->get_start_time();
+    dsp::ExcisionUnpacker* excision = 0;
+    unsigned ndig = 1;
+
+    if (unpacker)
+    {
+      excision = dynamic_cast<dsp::ExcisionUnpacker*>( unpacker.ptr() );
+      ndig = excision->get_ndig ();
+    }
+
+    MJD start = info->get_start_time();
     double next_update = update_period;
 
     vector<uint64> histogram (256, 0);
-    unsigned nbit = input->get_info()->get_nbit();
+    unsigned nbit = info->get_nbit();
+
+    bits = new dsp::BitSeries;
+    input->set_block_size( block_size );
 
     while (!input->eod())
     {
       input->load (bits);
 
-      const unsigned nbyte = bits->get_nbytes();
-      unsigned char* data = bits->get_datptr (0);
+      const unsigned nbyte = bits->get_nbytes ();
+      unsigned char* data = bits->get_datptr ();
 
-      for (unsigned ibyte=0; ibyte < nbyte; ibyte++)
-	histogram[ data[ibyte] ] ++;
+      for (unsigned idig=0; idig<ndig; idig++)
+      {
+	unsigned ipol = 0;
+	unsigned ichan = 0;
+
+	unsigned input_offset = 0;
+	unsigned input_incr = 1;
+
+	if (excision)
+	{
+	  ipol = excision->get_output_ipol (idig);
+	  ichan = excision->get_output_ichan (idig);
+
+	  input_offset = excision->get_input_offset (idig);
+	  input_incr = excision->get_input_intr ();
+	}
+
+	for (unsigned ibyte=input_offset; ibyte < nbyte; ibyte+=input_incr)
+	  histogram[ data[ibyte] ] ++;
+      }
 
       if (next_update &&
 	  (bits->get_start_time() - start).in_seconds() >= next_update)
-      {
-	summarize (histogram, nbit, next_update-update_period, next_update);
-	next_update += update_period;
-	zero (histogram);
-      }
+	{
+	  summarize (histogram, nbit, next_update-update_period, next_update);
+	  next_update += update_period;
+	  zero (histogram);
+	}
     }
 
     if (verbose)
