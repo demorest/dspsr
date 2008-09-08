@@ -28,15 +28,9 @@ void usage ()
     "Usage: digihist file1 [file2 ...] \n" << endl;
 }
 
-void summarize (const vector<uint64>& histogram,
+void summarize (vector< vector<uint64> >& histogram,
+		const dsp::ExcisionUnpacker*,
 		unsigned nbit, double start, double end);
-
-template<typename T>
-void zero (vector<T>& data)
-{
-  for (unsigned i=0; i<data.size(); i++)
-    data[i] = 0.0;
-}
 
 int main (int argc, char** argv) try 
 {
@@ -121,7 +115,9 @@ int main (int argc, char** argv) try
     MJD start = info->get_start_time();
     double next_update = update_period;
 
-    vector<uint64> histogram (256, 0);
+    vector<uint64> hist_init (256, 0);
+    vector< vector<uint64> > histograms ( ndig, hist_init );
+
     unsigned nbit = info->get_nbit();
 
     bits = new dsp::BitSeries;
@@ -148,27 +144,28 @@ int main (int argc, char** argv) try
 	  ichan = excision->get_output_ichan (idig);
 
 	  input_offset = excision->get_input_offset (idig);
-	  input_incr = excision->get_input_intr ();
+	  input_incr = excision->get_input_incr ();
 	}
 
 	for (unsigned ibyte=input_offset; ibyte < nbyte; ibyte+=input_incr)
-	  histogram[ data[ibyte] ] ++;
+	  histograms[idig][ data[ibyte] ] ++;
       }
 
       if (next_update &&
 	  (bits->get_start_time() - start).in_seconds() >= next_update)
-	{
-	  summarize (histogram, nbit, next_update-update_period, next_update);
-	  next_update += update_period;
-	  zero (histogram);
-	}
+      {
+	summarize (histograms, excision, nbit, 
+		   next_update-update_period, next_update);
+
+	next_update += update_period;
+      }
     }
 
     if (verbose)
       cerr << "end of data file " << filenames[ifile] << endl;
 
     if (next_update == 0.0)
-      summarize (histogram, nbit,
+      summarize (histograms, excision, nbit,
 		 0, (bits->get_end_time() - start).in_seconds());
   }
   catch (Error& error)
@@ -213,8 +210,17 @@ void rebin (vector<uint64>& output,
   }
 }
 
+template<typename T>
+void zero (vector<T>& data)
+{
+  for (unsigned i=0; i<data.size(); i++)
+    data[i] = 0;
+}
+
 void summarize (const vector<uint64>& histogram,
-		unsigned nbit, double start, double end)
+		unsigned nbit, 
+		double start, double end,
+		unsigned ichan, unsigned ipol)
 {
   vector<uint64> result;
 
@@ -245,6 +251,33 @@ void summarize (const vector<uint64>& histogram,
     total += result[i];
 
   for (unsigned i=0; i<result.size(); i++)
-    cout << start << "->" << end
+    cout << start << "->" << end << " " << ichan << " " << ipol
 	 << " " << i << " " << double(result[i])/double(total) << endl;
+}
+
+void summarize (vector< vector<uint64> >& histograms,
+		const dsp::ExcisionUnpacker* excision,
+		unsigned nbit, double start, double end)
+{
+  unsigned ndig = 1;
+  
+  if (excision)
+    ndig = excision->get_ndig ();
+
+  for (unsigned idig=0; idig<ndig; idig++)
+  {
+    unsigned ipol = 0;
+    unsigned ichan = 0;
+
+    if (excision)
+    {
+      ipol = excision->get_output_ipol (idig);
+      ichan = excision->get_output_ichan (idig);
+    }
+
+    summarize (histograms[idig], nbit,
+	       start, end, ichan, ipol);
+
+    zero (histograms[idig]);
+  }
 }
