@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BitUnpacker.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/05/09 03:47:31 $
+   $Revision: 1.5 $
+   $Date: 2008/09/08 06:33:39 $
    $Author: straten $ */
 
 #ifndef __BitUnpacker_h
@@ -49,7 +49,7 @@ namespace dsp {
 
   protected:
 
-    //! The four bit table generator  
+    //! The bit table generator  
     Reference::To<BitTable> table;
     
     //! Unpack all channels, polarizations, real/imag, etc.
