@@ -183,8 +183,8 @@ int main (int argc, char** argv) try
   Reference::To<dsp::ExcisionUnpacker> excision;
   Reference::To<dsp::HistUnpacker> unpack;
 
-  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
-
+  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
+  {
     cerr << "digistat: opening file " << filenames[ifile] << endl;
     manager->open (filenames[ifile]);
 
@@ -193,38 +193,37 @@ int main (int argc, char** argv) try
 
     excision = dynamic_cast<dsp::ExcisionUnpacker*>(manager->get_unpacker());
 
-    if (excision) {
+    if (excision)
+    {
+      // plots two-bit digitization statistics
+      plotter = new dsp::ExcisionStatsPlotter;
+      plotter->set_data( excision );
 
-	// plots two-bit digitization statistics
-	plotter = new dsp::ExcisionStatsPlotter;
-	plotter->set_data( excision );
-
-	if ( excision_nsample )
-	    excision -> set_ndat_per_weight ( excision_nsample );
+      if ( excision_nsample )
+	excision -> set_ndat_per_weight ( excision_nsample );
 	
-	if ( excision_threshold )
-	    excision -> set_threshold ( excision_threshold );
-	
-	if ( excision_cutoff >= 0 )
-	    excision -> set_cutoff_sigma ( excision_cutoff );
+      if ( excision_threshold )
+	excision -> set_threshold ( excision_threshold );
+      
+      if ( excision_cutoff >= 0 )
+	excision -> set_cutoff_sigma ( excision_cutoff );
 
-        unpack = excision;
-
+      unpack = excision;
     }
-
-    else {
-
-	unpack = dynamic_cast<dsp::HistUnpacker*>(manager->get_unpacker());
-	
-	if (unpack) {
-	    plotter = new dsp::BitStatsPlotter;
-	    plotter->set_data( unpack );
-	}
-	else {
-	    cerr << "digistat: Unpacker does not maintain a histogram" << endl;
-	    plotter = 0;
-        }
-
+    else
+    {
+      unpack = dynamic_cast<dsp::HistUnpacker*>(manager->get_unpacker());
+      
+      if (unpack)
+      {
+	plotter = new dsp::BitStatsPlotter;
+	plotter->set_data( unpack );
+      }
+      else
+      {
+	cerr << "digistat: Unpacker does not maintain a histogram" << endl;
+	plotter = 0;
+      }
     }
 
     if (seek_seconds)
@@ -236,7 +235,8 @@ int main (int argc, char** argv) try
     cerr << "Bandwidth = " << manager->get_info()->get_bandwidth() << endl;
     cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
 
-    if (manager->get_info()->get_rate() <= 0.0)  {
+    if (manager->get_info()->get_rate() <= 0.0)
+    {
       cerr << "digistat: invalid sampling rate" << endl;
       return -1;
     }
@@ -333,7 +333,6 @@ int main (int argc, char** argv) try
 	    rms[ipt] = 0.0;
             if (var > 0)
               rms[ipt] = sqrt(var);
-          
 	  }
 
 	  float min = 0.0;
@@ -411,17 +410,20 @@ int main (int argc, char** argv) try
   return 0;
 }
 
-catch (Error& error) {
+catch (Error& error)
+{
   cerr << error << endl;
   return -1;
 }
 
-catch (string& error) {
+catch (string& error)
+{
   cerr << "exception thrown: " << error << endl;
   return -1;
 }
 
-catch (...) {
+catch (...)
+{
   cerr << "exception thrown: " << endl;
   return -1;
 }
