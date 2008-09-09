@@ -83,7 +83,7 @@ int main (int argc, char** argv) try
   Reference::To<dsp::Unpacker> unpacker;
 
   // container into which bits are loaded
-  Reference::To<dsp::BitSeries> bits;
+  Reference::To<dsp::BitSeries> bits = new dsp::BitSeries;
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
@@ -102,25 +102,18 @@ int main (int argc, char** argv) try
     const dsp::Observation* info = input->get_info();
 
     unpacker = dsp::Unpacker::create( input->get_info() );
+    unpacker->set_input (bits);
 
     dsp::ExcisionUnpacker* excision = 0;
-    unsigned ndig = 1;
-
-    if (unpacker)
-    {
-      excision = dynamic_cast<dsp::ExcisionUnpacker*>( unpacker.ptr() );
-      ndig = excision->get_ndig ();
-    }
+    excision = dynamic_cast<dsp::ExcisionUnpacker*>( unpacker.ptr() );
 
     MJD start = info->get_start_time();
     double next_update = update_period;
 
-    vector<uint64> hist_init (256, 0);
-    vector< vector<uint64> > histograms ( ndig, hist_init );
+    vector< vector<uint64> > histograms;
 
     unsigned nbit = info->get_nbit();
 
-    bits = new dsp::BitSeries;
     input->set_block_size( block_size );
 
     while (!input->eod())
@@ -129,6 +122,18 @@ int main (int argc, char** argv) try
 
       const unsigned nbyte = bits->get_nbytes ();
       unsigned char* data = bits->get_datptr ();
+
+      unsigned ndig = 1;
+      if (excision)
+        ndig = excision->get_ndig ();
+
+      if (histograms.size() < ndig)
+      {
+        vector<uint64> hist_init (256, 0);
+        histograms.resize( ndig );
+        for (unsigned i=0; i<ndig; i++)
+          histograms[i] = hist_init;
+      }
 
       for (unsigned idig=0; idig<ndig; idig++)
       {
@@ -146,6 +151,8 @@ int main (int argc, char** argv) try
 	  input_offset = excision->get_input_offset (idig);
 	  input_incr = excision->get_input_incr ();
 	}
+
+        cerr << "idig=" << idig << " input_offset=" << input_offset << endl;
 
 	for (unsigned ibyte=input_offset; ibyte < nbyte; ibyte+=input_incr)
 	  histograms[idig][ data[ibyte] ] ++;
@@ -274,6 +281,8 @@ void summarize (vector< vector<uint64> >& histograms,
       ipol = excision->get_output_ipol (idig);
       ichan = excision->get_output_ichan (idig);
     }
+
+    cerr << "idig=" << idig << " ichan=" << ichan << " ipol=" << ipol << endl;
 
     summarize (histograms[idig], nbit,
 	       start, end, ichan, ipol);
