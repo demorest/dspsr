@@ -5,9 +5,12 @@
  *
  ***************************************************************************/
 
-#include "dsp/BitSeries.h"
-#include "dsp/File.h"
+#include "dsp/UnpackerIterator.h"
 #include "dsp/ExcisionUnpacker.h"
+#include "dsp/IOManager.h"
+
+#include "dsp/BitSeries.h"
+#include "dsp/Input.h"
 
 #include "Error.h"
 
@@ -76,36 +79,34 @@ int main (int argc, char** argv) try
     return 0;
   }
 
-  // generalized interface to input data
-  Reference::To<dsp::Input> input;
-
-  // generalized interface to unpacker
-  Reference::To<dsp::Unpacker> unpacker;
+  // interface manages the creation of data loading and converting classes
+  Reference::To<dsp::IOManager> manager = new dsp::IOManager;
 
   // container into which bits are loaded
   Reference::To<dsp::BitSeries> bits = new dsp::BitSeries;
+
+  manager->set_output (bits);
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
     if (verbose)
       cerr << "digihist: opening file " << filenames[ifile] << endl;
 
-    input = dsp::File::create( filenames[ifile] );
+    manager->open( filenames[ifile] );
+    manager->set_block_size( block_size );
+
+    const dsp::Observation* info = manager->get_info();
 
     if (verbose)
     {
       cerr << "digihist: file " << filenames[ifile] << " opened" << endl;
-      cerr << "Bandwidth = " << input->get_info()->get_bandwidth() << endl;
-      cerr << "Sampling rate = " << input->get_info()->get_rate() << endl;
+      cerr << "Bandwidth = " << info->get_bandwidth() << endl;
+      cerr << "Sampling rate = " << info->get_rate() << endl;
     }
 
-    const dsp::Observation* info = input->get_info();
-
-    unpacker = dsp::Unpacker::create( input->get_info() );
-    unpacker->set_input (bits);
-
+    dsp::Unpacker* unpacker = manager->get_unpacker();
     dsp::ExcisionUnpacker* excision = 0;
-    excision = dynamic_cast<dsp::ExcisionUnpacker*>( unpacker.ptr() );
+    excision = dynamic_cast<dsp::ExcisionUnpacker*>( unpacker );
 
     MJD start = info->get_start_time();
     double next_update = update_period;
@@ -114,14 +115,13 @@ int main (int argc, char** argv) try
 
     unsigned nbit = info->get_nbit();
 
-    input->set_block_size( block_size );
 
-    while (!input->eod())
+    while (!manager->get_input()->eod())
     {
-      input->load (bits);
+      manager->operate ();
 
-      const unsigned nbyte = bits->get_nbytes ();
       unsigned char* data = bits->get_datptr ();
+      unsigned char* end_of_data = data + bits->get_nbytes ();
 
       unsigned ndig = 1;
       if (excision)
@@ -137,25 +137,13 @@ int main (int argc, char** argv) try
 
       for (unsigned idig=0; idig<ndig; idig++)
       {
-	unsigned ipol = 0;
-	unsigned ichan = 0;
+	dsp::Unpacker::Iterator iterator = unpacker->get_iterator (idig);
 
-	unsigned input_offset = 0;
-	unsigned input_incr = 1;
-
-	if (excision)
+	while (iterator < end_of_data)
 	{
-	  ipol = excision->get_output_ipol (idig);
-	  ichan = excision->get_output_ichan (idig);
-
-	  input_offset = excision->get_input_offset (idig);
-	  input_incr = excision->get_input_incr ();
+	  histograms[idig][ *iterator ] ++;
+	  ++ iterator;
 	}
-
-        cerr << "idig=" << idig << " input_offset=" << input_offset << endl;
-
-	for (unsigned ibyte=input_offset; ibyte < nbyte; ibyte+=input_incr)
-	  histograms[idig][ data[ibyte] ] ++;
       }
 
       if (next_update &&
