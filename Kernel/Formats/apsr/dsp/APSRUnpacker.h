@@ -7,13 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/07/13 05:25:36 $
+   $Revision: 1.4 $
+   $Date: 2008/09/09 06:34:22 $
    $Author: straten $ */
 
 #ifndef __APSRUnpacker_h
 #define __APSRUnpacker_h
 
+#include "dsp/UnpackerIterator.h"
 #include "dsp/APSRIterator.h"
 #include "dsp/excision_unpack.h"
 
@@ -60,6 +61,35 @@ namespace dsp
 
     //! When we try > 1 band, return input->get_nchan()
     unsigned get_input_incr () const { return 1; }
+
+    class Implementation : public Unpacker::Iterator::Implementation
+    {
+    public:
+      Implementation (const APSRIterator& copy,
+		const unsigned char* base,
+		unsigned idig)
+	: iterator (copy)
+      { iterator.set_base (base + idig * iterator.get_data_size()); }
+
+      unsigned char get_value () const
+      { return *iterator; }
+
+      void increment ()
+      { ++ iterator; }
+
+      bool less_than (const unsigned char* ptr)
+      { return iterator.ptr() < ptr; }
+
+    protected:
+      APSRIterator iterator;
+    };
+
+    //! Return the iterator for the specified frequency and polarization
+    Unpacker::Iterator get_iterator (unsigned idig)
+    {
+      return Unpacker::Iterator
+	( new Implementation (iterator, this->input->get_rawptr(), idig) );
+    }
 
   protected:
 
