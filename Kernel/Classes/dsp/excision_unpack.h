@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/excision_unpack.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.3 $
+   $Date: 2008/09/09 06:34:18 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_excision_unpack_h
@@ -21,14 +21,14 @@
 
 using namespace std;
 
-template<class U, class Iterator>
+template<class U, class Iter>
   void dsp::ExcisionUnpacker::excision_unpack (U& unpack,
-					  Iterator& input_data,
-					  float* output_data,
-					  uint64 nfloat,
-					  unsigned long* hist,
-					  unsigned* weights,
-					  unsigned nweights)
+					       Iter& input_data,
+					       float* output_data,
+					       uint64 nfloat,
+					       unsigned long* hist,
+					       unsigned* weights,
+					       unsigned nweights)
 {
 #ifndef _DEBUG
   if (verbose)
