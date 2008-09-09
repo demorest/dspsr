@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockIterator.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:53 $
+   $Revision: 1.3 $
+   $Date: 2008/09/09 06:34:14 $
    $Author: straten $ */
 
 #ifndef __BlockIterator_h
@@ -87,7 +87,7 @@ class BlockIterator
     }
   }
 
-  inline T operator * ()
+  inline T operator * () const
   {
     return *current;
   }
