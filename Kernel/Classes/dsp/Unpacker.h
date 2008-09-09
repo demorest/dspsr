@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.24 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.25 $
+   $Date: 2008/09/09 06:34:10 $
    $Author: straten $ */
 
 
@@ -65,6 +65,12 @@ namespace dsp {
 
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
+
+    //! Iterator through the input BitSeries
+    class Iterator;
+
+    //! Return the iterator for the specified digitizer
+    Iterator get_iterator (unsigned idig);
 
    protected:
 

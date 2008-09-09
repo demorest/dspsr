@@ -5,7 +5,7 @@
  *
  ***************************************************************************/
 
-#include "dsp/Unpacker.h"
+#include "dsp/UnpackerIterator.h"
 #include "Error.h"
 
 using namespace std;
@@ -68,4 +68,11 @@ void dsp::Unpacker::match (const Observation* observation)
 dsp::Unpacker::Unpacker (const char* name)
   : Transformation <BitSeries, TimeSeries> (name, outofplace, true) 
 {
+}
+
+//! Return the iterator for the specified digitizer
+dsp::Unpacker::Iterator dsp::Unpacker::get_iterator (unsigned idig)
+{
+  throw Error (InvalidState, "dsp::Unpacker::get_iterator",
+	       "Iterator not implemented");
 }
