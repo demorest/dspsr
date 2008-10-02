@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BandpassMonitor.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/10/02 02:10:24 $
+   $Revision: 1.3 $
+   $Date: 2008/10/02 09:42:23 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_BandpassMonitor_h
@@ -35,6 +35,12 @@ namespace dsp
 	  float *mean_sum[4];
 	  float *var_sum[4];
 	  int count[4];
+	 
+          char timestamp[100];
+          char bp0filetmp[100],bp1filetmp[100];
+          char bp0file[100],bp1file[100];
+          char time0file[100],time1file[100];
+ 
   };
 }
 
