@@ -58,6 +58,18 @@ dsp::TimeSeries::~TimeSeries()
 {
 }
 
+    //! Get the order
+dsp::TimeSeries::Order dsp::TimeSeries::get_order () const
+{
+  return order;
+}
+
+//! Set the order
+void dsp::TimeSeries::set_order (Order o)
+{
+  order = o;
+}
+
 void dsp::TimeSeries::set_nbit (unsigned _nbit)
 {
   if (verbose)
