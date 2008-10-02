@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/TimeSeries.h"
 
 #include "environ.h"
@@ -20,35 +21,6 @@ using namespace std;
 
 bool dsp::TimeSeries::auto_delete = true;
 
-bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
-{
-  if( c1.ts != c2.ts )
-    return false;
-  if( c1.ichan != c2.ichan )
-    return false;
-  if( c1.ipol != c2.ipol )
-    return false;
-
-  if( !c1.has_ptr() && !c2.has_ptr() )
-    return true;
-
-  return c1.get_const_ptr() == c2.get_const_ptr();
-} 
-
-bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2)
-{ return !(c1==c2); }
-
-bool dsp::TimeSeriesPtr::operator < (const TimeSeriesPtr& tsp) const{
-  if( !ptr || !tsp.ptr )
-    throw Error(InvalidParam,"dsp::TimeSeriesPtr::operator<(TimeSeriesPtr&))"
-		"Null pointer passed in");
-  return ptr->get_centre_frequency() < tsp.ptr->get_centre_frequency();
-}
-
-bool dsp::ChannelPtr::operator < (const ChannelPtr& c) const{
-  return centre_frequency < c.centre_frequency;
-}
-
 dsp::TimeSeries::TimeSeries () : DataSeries()
 {
   init ();
@@ -62,14 +34,14 @@ dsp::TimeSeries::TimeSeries (const TimeSeries& ts) : DataSeries()
 
 void dsp::TimeSeries::init ()
 {
+  order = OrderPFT;
+
   DataSeries::set_nbit( 8 * sizeof(float) );
   data = 0;
 
   reserve_ndat = 0;
   reserve_nfloat = 0;
   input_sample = -1;
-
-  set_preserve_seeked_data( false );
 }
 
 dsp::TimeSeries* dsp::TimeSeries::clone () const
@@ -131,7 +103,8 @@ dsp::TimeSeries::use_data(float* _buffer, uint64 _ndat)
 */
 void dsp::TimeSeries::resize (uint64 nsamples)
 {
-  if (verbose) {
+  if (verbose)
+  {
     cerr << "dsp::TimeSeries::resize (" << nsamples << ") data=" << data
 	 << " buffer=" << (void*)buffer << " ndat=" << get_ndat() << endl;
 
@@ -140,80 +113,27 @@ void dsp::TimeSeries::resize (uint64 nsamples)
       cerr << "dsp::TimeSeries::resize (" << nsamples << ") offset="
 	   << int64((data-(float*)buffer)) << endl
            << "dsp::TimeSeries::resize get_samps_offset=" 
-	   << get_samps_offset() << " get_preserve_seeked_data="
-	   << get_preserve_seeked_data() << endl;
+	   << get_samps_offset()  << endl;
     }
   }  
 
-  if (!get_preserve_seeked_data()) {
+  uint64 fake_ndat = reserve_nfloat / get_ndim();
+  if (reserve_nfloat % get_ndim())
+    fake_ndat ++;
 
-    uint64 fake_ndat = reserve_nfloat / get_ndim();
-    if (reserve_nfloat % get_ndim())
-      fake_ndat ++;
+  if (verbose)
+    cerr << "dsp::TimeSeries::resize reserve_ndat="
+	 << reserve_ndat << " fake_ndat=" << fake_ndat << endl;
 
-    if (verbose)
-      cerr << "dsp::TimeSeries::resize not preserving; reserve_ndat="
-	   << reserve_ndat << " fake_ndat=" << fake_ndat << endl;
+  if (nsamples || auto_delete)
+    DataSeries::resize (nsamples+fake_ndat);
 
-    if (nsamples || auto_delete)
-      DataSeries::resize (nsamples+fake_ndat);
+  // offset the data pointer and reset the number of samples
+  data = (float*)buffer + reserve_nfloat;
 
-    // offset the data pointer and reset the number of samples
-    data = (float*)buffer + reserve_nfloat;
+  set_ndat( nsamples );
 
-    set_ndat( nsamples );
-
-    return;
-  }
-
-  uint64 samps_offset = get_samps_offset();
-  unsigned char* old_buffer = 0;
-  uint64 old_size = size;
-  MJD true_start_time = get_start_time();
-  
-  if( subsize*get_npol()*get_nchan() > size )
-    throw Error(InvalidState,"dsp::TimeSeries::resize()",
-		"BUG! Cannot calculate startings properly as subsize*get_npol()*get_nchan() > size ("UI64" * %d * %d > "UI64")\n",
-		subsize,get_npol(),get_nchan(),size);
-
-  vector<vector<float*> > startings(get_nchan(),vector<float*>(get_npol()));
-
-  for( unsigned ichan=0; ichan<get_nchan(); ichan++){
-    for( unsigned ipol=0; ipol<get_npol(); ipol++){
-      startings[ichan][ipol] = get_datptr(ichan,ipol) - get_samps_offset()*get_ndim();
-      //      fprintf(stderr,"startings(%d,%d) is "I64" samps past buffer size="UI64" subsize="UI64" ndat="UI64" npol=%d ndim=%d nchan=%d\n",
-      //      ichan,ipol,int64(startings[ichan][ipol]-(float*)buffer),size,subsize,get_ndat(),
-      //      get_npol(),get_ndim(),get_nchan());
-    }
-  }
-
-  DataSeries::resize(0,old_buffer);
-  DataSeries::resize(nsamples+samps_offset);
-
-  data = (float*)buffer;
-
-  for( unsigned ichan=0; ichan<get_nchan(); ichan++){
-    for( unsigned ipol=0; ipol<get_npol(); ipol++){
-      float* dat = get_datptr(ichan,ipol);
-      float* src = startings[ichan][ipol];
-      memcpy( dat, src, size_t(samps_offset*get_ndim()*sizeof(float)));
-    }
-  }
-
-  free( old_buffer );
-  memory_used -= old_size;
-
-  seek( samps_offset );
-  set_start_time( true_start_time );
-
-  //  fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64" floats and first val=%f\n",
-  //  nsamples,int64((data-(float*)buffer)),
-  //  get_datptr(0,0)[0]);
-
-  if( data && buffer )
-    if( verbose )
-      fprintf(stderr,"Bye from dsp::TimeSeries::resize("UI64") with offset="I64" or "I64" floats\n",
-	      nsamples,int64((data-(float*)buffer)),get_samps_offset());
+  return;
 }
 
 void dsp::TimeSeries::decrease_ndat (uint64 new_ndat)
@@ -231,70 +151,10 @@ void dsp::TimeSeries::decrease_ndat (uint64 new_ndat)
 
 dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 {
-  //  fprintf(stderr,"Hi from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
-  //  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
-
-  if( !get_preserve_seeked_data() ){
-    //    fprintf(stderr,"dsp::TimeSeries::operator=() won't preserve data\n");
-    DataSeries::operator=(copy);
-    //    fprintf(stderr,"dsp::TimeSeries::operator=() done DataSeries::operator=(copy)\n");
-    data = (float*)buffer;
-    //    fprintf(stderr,"dsp::TimeSeries::operator=() returning\n");
-    return *this;
-  }
-
-  //    fprintf(stderr,"dsp::TimeSeries::operator=() will preserve data... calling resize()\n");
-  resize( copy.get_ndat() );
-  set_ndat( 0 );
-  //fprintf(stderr,"dsp::TimeSeries::operator=()... calling append()\n");
-  append( &copy );
-
-  //    fprintf(stderr,"Bye from dsp::TimeSeries::operator=("UI64") with offset="I64"\n",
-  //  copy.get_ndat(),int64((data-(float*)buffer)*get_ndim()));
-
+  DataSeries::operator=(copy);
+  order = copy.order;
+  data = (float*)buffer;
   return *this;
-}
-
-//! Use the supplied array to store nsamples time samples.
-//! Always deletes any existing data
-void dsp::TimeSeries::resize( uint64 nsamples, uint64 bytes_supplied, unsigned char* buffer_supplied){
-  uint64 require = uint64(get_ndim()) * nsamples * uint64(get_npol()) * uint64(get_nchan());
-
-  if( require > bytes_supplied )
-    throw Error(InvalidState,"dsp::TimeSeries::resize()",
-		"Not enough bytes supplied ("UI64") to fit in "UI64" samples -> "UI64" bytes",
-		bytes_supplied, nsamples, require );
-
-  if( get_preserve_seeked_data() )
-    throw Error(InvalidState,"dsp::TimeSeries::resize(uint64,uint64,uchar*)",
-		"You have preserved_seeked_data set to true, but this method is not programmed to do any preserving of seeked data");
-
-  DataSeries::resize(0);
-
-  buffer = buffer_supplied;
-  data = (float*)buffer_supplied;
-  size = bytes_supplied;
-  set_ndat( nsamples );
-  subsize = (get_ndim() * nsamples * get_nbit())/8;
-
-  if( subsize*get_npol()*get_nchan() > size )
-    throw Error(InvalidState,"dsp::TimeSeries::resize(uint64,uint64,uchar*)",
-		"BUG! subsize*get_npol()*get_nchan() > size ("UI64" * %d * %d > "UI64")\n",
-		subsize,get_npol(),get_nchan(),size);
-}
-
-//! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
-void dsp::TimeSeries::zero_resize(unsigned char*& _buffer, uint64& nbytes){
-  if( get_preserve_seeked_data() )
-    throw Error(InvalidState,"dsp::TimeSeries::zero_resize()",
-		"You have preserved_seeked_data set to true, but this method is not programmed to do any preserving of seeked data");
-
-  _buffer = (unsigned char*)buffer;
-  nbytes = size;
-
-  buffer = 0;
-  data = 0;
-  DataSeries::resize(0);
 }
 
 //! Offset the base pointer by offset time samples
@@ -366,14 +226,42 @@ const unsigned char* dsp::TimeSeries::get_data() const
 //! Return pointer to the specified data block
 float* dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol)
 {
-  return (float*)get_udatptr(ichan,ipol);
+  if (order != OrderPFT)
+    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
+		 "Not in Polarization, Frequency, Time Order");
+
+  return reinterpret_cast<float*>( get_udatptr(ichan,ipol) );
 }
 
 //! Return pointer to the specified data block
 const float*
 dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
 {
-  return (const float*)get_udatptr(ichan,ipol);
+  if (order != OrderPFT)
+    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
+		 "Not in Polarization, Frequency, Time Order");
+
+  return reinterpret_cast<const float*>( get_udatptr(ichan,ipol) );
+}
+
+//! Return pointer to the specified data block
+float* dsp::TimeSeries::get_dattfp ()
+{
+  if (order != OrderTFP)
+    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
+		 "Not in Time, Frequency, Polarization Order");
+
+  return reinterpret_cast<float*>( get_udatptr(0,0) );
+}
+
+//! Return pointer to the specified data block
+const float* dsp::TimeSeries::get_dattfp () const
+{
+  if (order != OrderTFP)
+    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
+		 "Not in Time, Frequency, Polarization Order");
+
+  return reinterpret_cast<const float*>( get_udatptr(0,0) );
 }
 
 double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
@@ -397,38 +285,11 @@ void dsp::TimeSeries::copy_configuration (const Observation* copy)
   if( copy==this )
     return;
 
-  if (!get_preserve_seeked_data() || get_samps_offset() == 0) {
-
-    Observation::operator=( *copy );
-    if (verbose)
-      cerr << "dsp::TimeSeries::copy_configuration ndat=" << get_ndat()
-	   << endl;
-
-    return;
-  }
-
-  Observation* input = (Observation*)copy;
-  
-  unsigned input_nchan = input->get_nchan();
-  unsigned input_npol = input->get_npol();
-  unsigned input_ndim = input->get_ndim();
-  Signal::State input_state = input->get_state();
-
-  input->set_npol( get_npol() );
-  input->set_ndim( get_ndim() );
-  input->set_state( get_state() );
-  input->set_nchan( get_nchan() );
-
-  Observation::operator=( *input );
-
-  input->set_nchan( input_nchan );
-  input->set_npol( input_npol );
-  input->set_ndim( input_ndim );
-  input->set_state( input_state );
+  Observation::operator=( *copy );
 
   if (verbose)
-    cerr << "dsp::TimeSeries::copy_configuration"
-      " not copying nchan, npol, ndim, state" << endl;
+    cerr << "dsp::TimeSeries::copy_configuration ndat=" << get_ndat()
+	 << endl;
 }
 
 dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
@@ -574,24 +435,19 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
   if( ncontain==maximum_ndat() )
     return 0;
 
-  if ( get_ndat() == 0 ) {
-    int64 samps_offset = get_samps_offset();
-
-    if( get_preserve_seeked_data() && samps_offset > 0 ){
-      seek( -samps_offset );
-      uint64 ret = append( little );
-      seek( samps_offset );
-      return ret;
-    }
+  if ( get_ndat() == 0 )
+  {
     Observation::operator=( *little );
     set_ndat (0);
-  }    
+  }
   else if( !contiguous(*little,true) )
     throw Error (InvalidState, "dsp::TimeSeries::append()",
 		 "next TimeSeries is not contiguous");
   
-  for( unsigned ichan=0; ichan<get_nchan(); ichan++) {
-    for( unsigned ipol=0; ipol<get_npol(); ipol++) {
+  for( unsigned ichan=0; ichan<get_nchan(); ichan++)
+  {
+    for( unsigned ipol=0; ipol<get_npol(); ipol++)
+    {
       const float* from = little->get_datptr (ichan,ipol);
       float* to = get_datptr(ichan,ipol) + ncontain*get_ndim();
       
@@ -619,16 +475,8 @@ uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsi
   if( ncontain==maximum_ndat() )
     return 0;
 
-  if ( get_ndat() == 0 ) {
-    int64 samps_offset = get_samps_offset();
-
-    if( get_preserve_seeked_data() && samps_offset > 0 ){
-      seek( -samps_offset );
-      uint64 ret = append( little );
-      seek( samps_offset );
-      return ret;
-    }
-
+  if ( get_ndat() == 0 )
+  {
     Observation::operator=( *little );
     set_nchan(1);
     set_npol(1);
@@ -674,10 +522,6 @@ void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
 
 dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts)
 {
-  if( get_preserve_seeked_data() )
-    throw Error(InvalidState,"dsp::TimeSeries::swap_data()",
-		"This method is not programmed to handle cases when preserve_seeked_data is set to true");
-
   DataSeries::swap_data( ts );
   float* tmp = data; data = ts.data; ts.data = tmp;
 
@@ -724,9 +568,6 @@ void dsp::TimeSeries::attach (auto_ptr<float> _data)
   if( !_data.get() )
     throw Error(InvalidState,"dsp::TimeSeries::attach()",
 		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
-  if( get_preserve_seeked_data() )
-    throw Error(InvalidState,"dsp::TimeSeries::attach(float*)",
-		"attach() isn't programmed to handle situations when preserve_seeked_data is set to true");
 
   resize(0);
   data = _data.release();
@@ -734,20 +575,19 @@ void dsp::TimeSeries::attach (auto_ptr<float> _data)
 }
 
 //! Call this when you do not want to transfer ownership of the array
-void dsp::TimeSeries::attach(float* _data){
+void dsp::TimeSeries::attach (float* _data)
+{
   if( !_data )
     throw Error(InvalidState,"dsp::TimeSeries::attach()",
 		"NULL ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
-  if( get_preserve_seeked_data() )
-    throw Error(InvalidState,"dsp::TimeSeries::attach(float*)",
-		"attach() isn't programmed to handle situations when preserve_seeked_data is set to true");
 
   resize(0);
   data = _data;
   buffer = (unsigned char*)data;
 }
 
-bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){
+bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries)
+{
   unsigned char* fr_min = (unsigned char*)tseries->get_datptr(0,0);
   unsigned char* fr_max = (unsigned char*)(tseries->get_datptr(tseries->get_nchan()-1,tseries->get_npol()-1)+tseries->get_ndat());
   if( fr>=fr_min && fr<fr_max)
@@ -757,35 +597,6 @@ bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries){
   return false;
 }
 
-//! Over-rides DataSeries::set_nchan()- this only allows a change if preserve_seeked_data is false
-void dsp::TimeSeries::set_nchan(unsigned _nchan){
-  if( get_preserve_seeked_data() && get_samps_offset() != 0 && _nchan != get_nchan() )
-    throw Error(InvalidParam,"dsp::TimeSeries::set_nchan()",
-		"You have preserve_seeked_data set to true with "UI64" samples being preserved but you want to change nchan from %d to %d.  This is currently not programmed for",
-		get_samps_offset(),get_nchan(),_nchan);
-
-  DataSeries::set_nchan(_nchan);
-}
-
-//! Over-rides DataSeries::set_npol()- this only allows a change if preserve_seeked_data is false
-void dsp::TimeSeries::set_npol(unsigned _npol){
-  if( get_preserve_seeked_data() && get_samps_offset() != 0 && _npol != get_npol() )
-    throw Error(InvalidParam,"dsp::TimeSeries::set_npol()",
-		"You have preserve_seeked_data set to true with "UI64" samples being preserved but you want to change npol from %d to %d.  This is currently not programmed for",
-		get_samps_offset(),get_npol(),_npol);
-
-  DataSeries::set_npol(_npol);
-}
-
-//! Over-rides DataSeries::set_npol()- this only allows a change if preserve_seeked_data is false
-void dsp::TimeSeries::set_ndim(unsigned _ndim){
-  if( get_preserve_seeked_data() && get_samps_offset() != 0 && _ndim != get_ndim() )
-    throw Error(InvalidParam,"dsp::TimeSeries::set_ndim()",
-		"You have preserve_seeked_data set to true with "UI64" samples being preserved but you want to change ndim from %d to %d.  This is currently not programmed for",
-		get_samps_offset(),get_ndim(),_ndim);
-
-  DataSeries::set_ndim(_ndim);
-}
 
 /*! This method is used by the InputBuffering policy */
 void dsp::TimeSeries::change_reserve (int64 change) const
@@ -811,16 +622,6 @@ void dsp::TimeSeries::change_reserve (int64 change) const
   }
 
 }
-
-//! Returns how many samples have been seeked over
-uint64 dsp::TimeSeries::get_seekage ()
-{     
-  float* fbuffer = (float*)buffer;
-  
-  return uint64(data - fbuffer) / uint64(get_ndim());
-}
-
-
 
 void dsp::TimeSeries::finite_check () const
 {
@@ -852,126 +653,5 @@ void dsp::TimeSeries::finite_check () const
     throw Error (InvalidParam, "dsp::TimeSeries::finite_check",
 		 "%u/%u non-finite values",
 		 non_finite, nfloat * nchan * npol);
-}
-
-
-
-
-
-
-
-
-
-//-------------------------------------------------------------------
-
-dsp::TimeSeries& dsp::TimeSeriesPtr::operator * () const
-{
-  if(!ptr)
-    throw Error(InvalidState,"dsp::TimeSeriesPtr::operator*()",
-		"You have called operator*() when ptr is NULL");
-
-  return *ptr;
-}
-
-dsp::TimeSeries* dsp::TimeSeriesPtr::operator -> () const 
-{ 
-  if(!ptr) 
-    throw Error(InvalidState,"dsp::TimeSeriesPtr::operator*()",
-		"You have called operator*() when ptr is NULL");
-
-  return ptr;
-}
-        
-dsp::TimeSeriesPtr& dsp::TimeSeriesPtr::operator=(const TimeSeriesPtr& tsp){
-  ptr = tsp.ptr; 
-  return *this; 
-}
-
-dsp::TimeSeriesPtr::TimeSeriesPtr(const TimeSeriesPtr& tsp){ 
-  operator=(tsp);
-}
-
-dsp::TimeSeriesPtr::TimeSeriesPtr(TimeSeries* _ptr){ 
-  ptr = _ptr;
-}
-
-dsp::TimeSeriesPtr::TimeSeriesPtr(){ 
-  ptr = 0;
-}
-
-dsp::TimeSeriesPtr::~TimeSeriesPtr(){ }
-
-void dsp::ChannelPtr::init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
-{
-  ts=_ts;
-  ichan=_ichan;
-  ipol = _ipol;
-  if( ts ){
-    ptr=ts->get_datptr(ichan,ipol);
-    centre_frequency = _ts->get_centre_frequency(_ichan);
-  }
-  else{
-    ptr = 0;
-    centre_frequency = 0.0;
-  }
-}
-
-dsp::ChannelPtr& dsp::ChannelPtr::operator=(const ChannelPtr& c){
-  ts=c.ts;
-  ptr=c.ptr;
-  ichan=c.ichan;
-  ipol=c.ipol;
-  centre_frequency = c.centre_frequency;
-  return *this;
-}
-
-dsp::ChannelPtr::ChannelPtr()
-{
-  ts = 0;
-  ptr = 0;
-  ichan=ipol=0;
-  centre_frequency = 0.0;
-}
-
-dsp::ChannelPtr::ChannelPtr(TimeSeries* _ts,unsigned _ichan, unsigned _ipol)
-{
-  init(_ts,_ichan,_ipol);
-}
-
-dsp::ChannelPtr::ChannelPtr(TimeSeriesPtr _ts,unsigned _ichan, unsigned _ipol)
-{
-  init(_ts.ptr,_ichan,_ipol);
-}
-
-dsp::ChannelPtr::ChannelPtr(const ChannelPtr& c){ 
-  operator=(c);
-}
-
-dsp::ChannelPtr::~ChannelPtr(){ }
-    
-float& dsp::ChannelPtr::operator[](unsigned index){
-  return ptr[index];
-}
-
-float dsp::ChannelPtr::get_centre_frequency(){
-  return centre_frequency;
-}
-
-float*& dsp::ChannelPtr::get_ptr(){
-  if( !ptr )
-    throw Error(InvalidState,"dsp::ChannelPtr::get_ptr()",
-		"ptr not set!");
-  return ptr;
-}
-
-const float* dsp::ChannelPtr::get_const_ptr() const{
-  if( !ptr )
-    throw Error(InvalidState,"dsp::ChannelPtr::get_ptr()",
-		"ptr not set!");
-  return ptr;
-}
-
-bool dsp::ChannelPtr::has_ptr() const{
-  return ptr;
 }
 
