@@ -175,7 +175,7 @@ int main (int argc, char** argv) try
     {
       manager->operate ();
 
-//      rescale->operate ();
+      rescale->operate ();
 
       if (do_pscrunch)
 	pscrunch->operate ();
