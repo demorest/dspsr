@@ -33,7 +33,7 @@ void usage ()
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
-    "  -B secs   block length in seconds \n"
+    "  -B samps  number of samples per block \n"
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename  \n" 
        << endl;
@@ -43,11 +43,10 @@ int main (int argc, char** argv) try
 {
   bool verbose = false;
 
-  int nbits = 8;
-  int nsecs = 10;
+  int nbits = 2;
 
-  // a mega-sample at a time
-  uint64 block_size = 1024 * 1024;
+  // a kilo-sample at a time
+  uint64 block_size = 1024;
 
   char* output_filename = 0;
 
@@ -60,7 +59,7 @@ int main (int argc, char** argv) try
       break;
 
     case 'B':
-      nsecs = atoi (optarg);
+      block_size = atoi (optarg);
       break;
 
     case 'o':
@@ -80,8 +79,6 @@ int main (int argc, char** argv) try
     default:
       cerr << "invalid param '" << c << "'" << endl;
     }
-
-  block_size = nsecs * block_size;
 
   vector <string> filenames;
   
@@ -156,7 +153,7 @@ int main (int argc, char** argv) try
 
     unsigned nchan = manager->get_info()->get_nchan();
 
-    manager->get_input()->set_block_size( (int)(block_size/nchan) );
+    manager->get_input()->set_block_size( block_size );
 
     if (verbose)
     {
