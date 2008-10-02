@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/08/16 00:29:51 $
-   $Author: sixbynine $ */
+   $Revision: 1.3 $
+   $Date: 2008/10/02 06:40:10 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
 #define __baseband_dsp_Rescale_h
@@ -34,14 +34,31 @@ namespace dsp
     //! Rescale to zero mean and unit variance
     void transformation ();
 
+    //! Set the rescaling interval in seconds
+    void set_interval_seconds (double seconds);
 
+    //! Set the rescaling interval in samples
+    void set_interval_samples (uint64 samples);
 
   private:
-    int iblock;
-    uint64 sample;
-    dsp::BandpassMonitor *bandpass_monitor;
-    float** prev_mean;
-    float** prev_var;
+
+    Callback<Rescale*> update;
+
+    std::vector< std::vector<double> > freq_total;
+    std::vector< std::vector<double> > freq_totalsq;
+
+    std::vector< std::vector<float> > time_total;
+
+    std::vector< std::vector<float> > scale;
+    std::vector< std::vector<float> > offset;
+
+    double interval_seconds;
+    uint64 interval_samples;
+
+    uint64 nsample;
+    uint64 isample;
+
+    void init ();
 
   };
 }

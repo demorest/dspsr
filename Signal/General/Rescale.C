@@ -10,134 +10,205 @@
 using namespace std;
 
 dsp::Rescale::Rescale ()
-	: Transformation<TimeSeries,TimeSeries> ("Rescale", anyplace)
+  : Transformation<TimeSeries,TimeSeries> ("Rescale", anyplace)
 {
-	iblock = 0;
-	sample = 0;
-	bandpass_monitor = new dsp::BandpassMonitor(); 
-	prev_mean = NULL;
-	prev_var = NULL;
+  nsample = isample = 0;
+  interval_seconds = 0.0;
+  interval_samples = 0;
 }
 
+//! Set the rescaling interval in seconds
+void dsp::Rescale::set_interval_seconds (double seconds)
+{
+  interval_seconds = seconds;
+}
+
+//! Set the rescaling interval in samples
+void dsp::Rescale::set_interval_samples (uint64 samples)
+{
+  interval_samples = samples;
+}
+
+template<typename T>
+void zero (vector<T>& data)
+{
+  const unsigned n = data.size();
+  for (unsigned i=0; i<n; i++)
+    data[i]=0;
+}
+
+void dsp::Rescale::init ()
+{
+  const unsigned input_npol  = input->get_npol();
+  const unsigned input_nchan = input->get_nchan();
+
+  scale.resize (input_npol);
+  for (unsigned ipol=0; ipol < input_npol; ipol++)
+    scale[ipol].resize (input_nchan);
+
+  if ( ! (interval_seconds || interval_samples) )
+  {
+    nsample = isample = 0;
+    return;
+  }
+
+  if (interval_samples)
+    nsample = interval_samples;
+  else
+    nsample = interval_seconds / input->get_rate();
+
+  cerr << "dsp::Rescale::init interval samples = " << nsample << endl;
+
+  isample = 0;
+
+  time_total.resize (input_npol);
+  freq_total.resize (input_npol);
+  freq_totalsq.resize (input_npol);
+
+  for (unsigned ipol=0; ipol < input_npol; ipol++)
+  {
+    time_total[ipol].resize (nsample);
+    zero (time_total[ipol]);
+
+    freq_total[ipol].resize (input_nchan);
+    zero (freq_total[ipol]);
+
+    freq_totalsq[ipol].resize (input_nchan);
+    zero (freq_total[ipol]);
+  }
+}
 
 /*!
   \pre input TimeSeries must contain detected data
-  */
+*/
 void dsp::Rescale::transformation ()
 {
-	if (verbose)
-		cerr << "dsp::Rescale::transformation" << endl;
+  if (verbose)
+    cerr << "dsp::Rescale::transformation" << endl;
 
-	const uint64   input_ndat  = input->get_ndat();
-	const unsigned input_ndim  = input->get_ndim();
-	const unsigned input_npol  = input->get_npol();
-	const unsigned input_nchan = input->get_nchan();
-	
-	//fprintf(stderr,"input_ndat %d \n",input_ndat);
-	//fprintf(stderr,"input_nchan %d \n",input_nchan);
+  bool first_call = scale.size () == 0;
 
-	if (input_ndim != 1)
-		throw Error (InvalidState, "dsp::Rescale::transformation",
-				"invalid ndim=%d", input_ndim);
+  if (first_call)
+    init ();
 
-	uint64 output_ndat = input_ndat;
+  const uint64   input_ndat  = input->get_ndat();
+  const unsigned input_ndim  = input->get_ndim();
+  const unsigned input_npol  = input->get_npol();
+  const unsigned input_nchan = input->get_nchan();
+  
+  if (input_ndim != 1)
+    throw Error (InvalidState, "dsp::Rescale::transformation",
+		 "invalid ndim=%d", input_ndim);
 
-	// prepare the output TimeSeries
-	output->copy_configuration (input);
+  uint64 output_ndat = input_ndat;
 
-	if (output != input)
-		output->resize (output_ndat);
-	else
-		output->set_ndat (output_ndat);
+  // prepare the output TimeSeries
+  output->copy_configuration (input);
 
-	if (!output_ndat)
-		return;
+  if (output != input)
+    output->resize (output_ndat);
+  else
+    output->set_ndat (output_ndat);
 
-	float* freqs = new float[input_nchan];
-	for (unsigned ichan=0; ichan < input_nchan; ichan++)
-		freqs[ichan] = input->get_centre_frequency(ichan);
+  if (!output_ndat)
+    return;
 
-	for (unsigned ipol=0; ipol < input_npol; ipol++) 
+  uint64 start_dat = 0;
+  uint64 end_dat = input_ndat;
+
+  do
+  {
+    end_dat = input_ndat;
+
+    if (nsample)
+    {
+      uint64 interval_end_dat = nsample - isample;
+      if (interval_end_dat < end_dat)
+	end_dat = interval_end_dat;
+    }
+
+    uint64 samp_dat = isample;
+
+    for (unsigned ipol=0; ipol < input_npol; ipol++) 
+    {
+      for (unsigned ichan=0; ichan < input_nchan; ichan++)
+      {
+	const float* in_data = input->get_datptr (ichan, ipol);
+
+	samp_dat = isample;
+
+	double sum = 0.0;
+	double sumsq = 0.0;
+
+	for (unsigned idat=start_dat; idat < end_dat; idat++)
 	{
-		float* mean_bandpass= new float[input_nchan];
-		float* variance_bandpass = new float[input_nchan];
-		float* rms_bandpass = new float[input_nchan];
-		if(prev_mean == NULL){
-			prev_mean = new float*[input_npol];
-			prev_var = new float*[input_npol];
-			for(unsigned p = 0; p < input_npol; p++){
-				prev_mean[p] = new float[input_nchan];
-				prev_var[p] = new float[input_nchan];
-				for (unsigned ichan=0; ichan < input_nchan; ichan++){
-					 prev_mean[p][ichan] = -1;
-				}
-			}
-		}
-	
-		// array to store zero DM time series
-		float* zerotime = new float[input_ndat];
+	  sum += in_data[idat];
+	  sumsq += in_data[idat] * in_data[idat];
 
-		for (unsigned ichan=0; ichan < input_nchan; ichan++)
-		{
-			const float* in_data = input->get_datptr (ichan, ipol);
+	  if (nsample)
+	    time_total[ipol][samp_dat] += in_data[idat];
 
-			double sum = 0.0;
-			double sumsq = 0.0;
-
-			for (uint64 idat=0; idat < input_ndat; idat++)
-			{
-				sum += in_data[idat];
-				sumsq += in_data[idat] * in_data[idat];
-				zerotime[idat] += in_data[idat];
-			}
-
-			double mean = sum / input_ndat;
-			double variance = sumsq/input_ndat - mean*mean;
-			double rms = sqrt(variance);
-			
-			
-                        mean_bandpass[ichan] = (float)mean;
-                        variance_bandpass[ichan] = (float)variance;
-                        rms_bandpass[ichan] = (float)rms;
-
-//			if( prev_mean[ipol][ichan] > 0){
-//				if(mean > prev_mean[ipol][ichan]*1.005)mean = prev_mean[ipol][ichan]*1.005;
-//				if(mean < prev_mean[ipol][ichan]*0.995)mean = prev_mean[ipol][ichan]*0.995;
-//				if(variance > prev_var[ipol][ichan]*1.005)variance = prev_var[ipol][ichan]*1.005;
-//				if(variance < prev_var[ipol][ichan]*0.995)variance = prev_var[ipol][ichan]*0.995;
-//				
-//				mean = (mean + prev_mean[ipol][ichan])/2.0;
-//				variance = (variance + prev_var[ipol][ichan])/2.0;
-//			}
-//
-//			prev_mean[ipol][ichan] = mean;
-//			prev_var[ipol][ichan] = variance;
-
-
-
-//			if( prev_mean[ipol][ichan] < 0){
-//				 prev_mean[ipol][ichan] = mean;
-//				 prev_var[ipol][ichan] = variance;
-//			} else {
-//				mean = prev_mean[ipol][ichan];
-//				variance =  prev_var[ipol][ichan];
-//			}
-
-
-			float scale = 1.0/sqrt(variance);
-
-
-			float* out_data = output->get_datptr (ichan, ipol);
-
-			for (uint64 idat=0; idat < output_ndat; idat++)
-				out_data[idat] = (in_data[idat] - mean) * scale;
-		}
-		//bandpass_monitor->append(sample,sample+input_ndat,ipol,input_nchan,mean_bandpass,variance_bandpass, freqs);
-		//also include zero dm time series
-		bandpass_monitor->append(sample,sample+input_ndat,ipol,input_nchan,mean_bandpass,variance_bandpass,rms_bandpass,freqs,zerotime);
-
+	  samp_dat++;
 	}
-	sample += input_ndat;
-	iblock++;
+
+	freq_total[ipol][ichan] += sum;
+	freq_totalsq[ipol][ichan] += sumsq;
+      }
+    }
+
+    isample = samp_dat;
+
+    if (!nsample || samp_dat == nsample || first_call)
+    {
+      uint64 count = nsample;
+
+      if (!nsample || first_call)
+	count = input_ndat;
+      
+      first_call = false;
+
+      for (unsigned ipol=0; ipol < input_npol; ipol++) 
+      {
+	for (unsigned ichan=0; ichan < input_nchan; ichan++)
+	{
+	  double mean = freq_total[ipol][ichan] / count;
+	  double meansq = freq_totalsq[ipol][ichan] / count;
+	  double variance = meansq - mean*mean;
+
+	  freq_total[ipol][ichan] = mean;
+	  freq_totalsq[ipol][ichan] = variance;
+
+	  offset[ipol][ichan] = -mean;
+	  scale[ipol][ichan] = 1.0 / sqrt(variance);
+	}
+      }
+
+      update (this);
+
+      for (unsigned ipol=0; ipol < input_npol; ipol++)
+      {
+	zero (freq_total[ipol]);
+	zero (freq_totalsq[ipol]);
+	zero (time_total[ipol]);
+      }
+    }
+
+    for (unsigned ipol=0; ipol < input_npol; ipol++) 
+    {
+      for (unsigned ichan=0; ichan < input_nchan; ichan++)
+      {
+	const float* in_data = input->get_datptr (ichan, ipol);
+	float* out_data = output->get_datptr (ichan, ipol);
+
+	float the_offset = offset[ipol][ichan];
+	float the_scale = scale[ipol][ichan];
+	for (uint64 idat=start_dat; idat < end_dat; idat++)
+	  out_data[idat] = (in_data[idat] + the_offset) * the_scale;
+      }
+    }
+
+    start_dat = end_dat;
+  }
+  while (end_dat < input_ndat);
 }
 
