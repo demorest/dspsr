@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.44 $
-   $Date: 2008/04/08 04:32:44 $
+   $Revision: 1.45 $
+   $Date: 2008/10/02 23:33:37 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -27,6 +27,17 @@ namespace dsp {
   class TimeSeries : public DataSeries
   {
   public:
+
+    //! Order of the dimensions
+    enum Order {
+
+      //! Polarization, Frequency, Time (default before 3 October 2008)
+      OrderPFT,
+
+      //! Time, Frequency, Polarization (better for many things)
+      OrderTFP
+
+    };
 
     //! Automatically delete arrays on resize(0)
     static bool auto_delete;
@@ -62,6 +73,12 @@ namespace dsp {
     //! Multiple each value by this scalar
     virtual TimeSeries& operator *= (float mult);
 
+    //! Get the order
+    Order get_order () const;
+
+    //! Set the order
+    void set_order (Order order);
+
     //! Copy the configuration of another TimeSeries instance (not the data)
     //! This doesn't copy nchan, npol or ndim if data is being preserved
     virtual void copy_configuration (const Observation* copy);
@@ -79,13 +96,6 @@ namespace dsp {
     //! Decrease the array lengths without changing the base pointers
     virtual void decrease_ndat (uint64 new_ndat);
 
-    //! Use the supplied array to store nsamples time samples.
-    //! Always deletes existing data
-    virtual void resize( uint64 nsamples, uint64 bytes_supplied, unsigned char* buffer);
-
-    //! Equivalent to resize(0) but instead of deleting data, returns the pointer for reuse elsewhere
-    virtual void zero_resize(unsigned char*& _buffer, uint64& nbytes);
-
     //! For nchan=1, npol=1 data this uses the data in 'buffer'
     TimeSeries& use_data(float* _buffer, uint64 _ndat);
     
@@ -94,6 +104,12 @@ namespace dsp {
 
     //! Return pointer to the specified data block
     const float* get_datptr (unsigned ichan=0, unsigned ipol=0) const;
+
+    //! Return pointer to the specified data block
+    float* get_dattfp ();
+
+    //! Return pointer to the specified data block
+    const float* get_dattfp () const;
 
     //! Offset the base pointer by offset time samples
     virtual void seek (int64 offset);
@@ -125,25 +141,6 @@ namespace dsp {
     //! Call this when you do not want to transfer ownership of the array
     virtual void attach (float* _data);
 
-    //! Called by Transformation::operation() to ensure that saved data
-    //! stays saved and is not wiped over.
-    //! Variable is reset to false after call to transformation()
-    void set_preserve_seeked_data(bool _psd){ preserve_seeked_data = _psd; }
-   
-    //! Inquire whether the data that has been seeked over top of
-    //! will be saved on a resize.
-    bool get_preserve_seeked_data(){ return preserve_seeked_data; }
-
-    //! Returns how many samples have been seeked over
-    uint64 get_seekage();
-
-    //! Over-rides DataSeries::set_nchan()- this only allows a change if preserve_seeked_data is false
-    void set_nchan(unsigned _nchan);
-    //! Over-rides DataSeries::set_npol()- this only allows a change if preserve_seeked_data is false
-    void set_npol(unsigned _npol);
-    //! Over-rides DataSeries::set_ndim()- this only allows a change if preserve_seeked_data is false
-    void set_ndim(unsigned _ndim);
-
     void finite_check () const;
 
   protected:
@@ -171,8 +168,8 @@ namespace dsp {
 
   private:
 
-    /*! Used by OutputBuffering to ensure that data is saved during resize */
-    bool preserve_seeked_data;
+    //! Order of the dimensions
+    Order order;
 
     //! Reserve space for this many timesamples preceding the base address
     uint64 reserve_ndat;
@@ -189,63 +186,8 @@ namespace dsp {
 
 
   };
-
-  class TimeSeriesPtr{
-    public:
-    
-    TimeSeries* ptr;
-   
-    TimeSeries& operator * () const;
-    TimeSeries* operator -> () const; 
-        
-    TimeSeriesPtr& operator=(const TimeSeriesPtr& tsp);
-
-    TimeSeriesPtr(const TimeSeriesPtr& tsp);
-    TimeSeriesPtr(TimeSeries* _ptr);
-    TimeSeriesPtr();
-
-    bool operator < (const TimeSeriesPtr& tsp) const;
-
-    ~TimeSeriesPtr();
-  };
-
-  // This class just stores a pointer into a particular channel/polarisation pair's data
-  class ChannelPtr{
-  public :
-    TimeSeries* ts;
-    unsigned ichan;
-    unsigned ipol;
-    double centre_frequency;
-    
-    void init(TimeSeries* _ts,unsigned _ichan, unsigned _ipol);
-
-    ChannelPtr& operator=(const ChannelPtr& c);
-
-    ChannelPtr();
-    ChannelPtr(TimeSeries* _ts,unsigned _ichan, unsigned _ipol);
-    ChannelPtr(TimeSeriesPtr _ts,unsigned _ichan, unsigned _ipol);
-    ChannelPtr(const ChannelPtr& c);
-    ~ChannelPtr();
-    
-    float*& get_ptr();
-    const float* get_const_ptr() const;
-    bool has_ptr() const;
-    void set_ptr(float* _ptr){ ptr = _ptr; }
-
-    bool operator < (const ChannelPtr& c) const;
-
-    float& operator[](unsigned index);
-
-    float get_centre_frequency();
-
-  private:
-    float* ptr;
-  };
   
 }
-    
-bool operator==(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2);
-bool operator!=(const dsp::ChannelPtr& c1, const dsp::ChannelPtr& c2);
 
 #endif
 
