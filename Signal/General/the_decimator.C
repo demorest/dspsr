@@ -169,7 +169,7 @@ int main (int argc, char** argv) try
   Reference::To<dsp::BitSeries> bitseries_rb = new dsp::BitSeries;    
   Reference::To<dsp::SigProcDigitizer> digitizer_rb = new dsp::SigProcDigitizer;
   digitizer_rb->set_nbit(8);
-  digitizer_rb->set_input (timeseries3);
+  digitizer_rb->set_input (timeseries);
   digitizer_rb->set_output (bitseries_rb);
 #endif
 
