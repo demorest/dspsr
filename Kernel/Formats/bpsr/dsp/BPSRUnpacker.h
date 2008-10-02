@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2006 by Willem van Straten
+ *   Copyright (C) 2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/bpsr/dsp/BPSRUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/05/28 21:44:32 $
+   $Revision: 1.2 $
+   $Date: 2008/10/02 23:56:57 $
    $Author: straten $ */
 
 #ifndef __BPSRUnpacker_h
@@ -16,10 +16,12 @@
 
 #include "dsp/HistUnpacker.h"
 
-namespace dsp {
+namespace dsp
+{
 
   //! Simple 8-bit to float unpacker for the BPSR files
-  class BPSRUnpacker : public HistUnpacker {
+  class BPSRUnpacker : public HistUnpacker 
+  {
 
   public:
     
