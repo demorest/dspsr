@@ -14,7 +14,7 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/TwoBitCorrection.h dsp/EightBitUnpacker.h		     \
 	dsp/Observation.h dsp/TwoBitMask.h dsp/File.h		     \
 	dsp/TwoBitTable.h dsp/Operation.h dsp/Unpacker.h	     \
-	dsp/FourBitUnpacker.h dsp/OutputBuffering.h		     \
+	dsp/FourBitUnpacker.h					     \
 	dsp/WeightedTimeSeries.h dsp/HistUnpacker.h dsp/dsp.h	     \
 	dsp/dspExtension.h dsp/IOManager.h dsp/Input.h dsp/Scratch.h \
 	dsp/ExcisionUnpacker.h dsp/UnpackerIterator.h		     \
@@ -22,17 +22,17 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/TwoBitFour.h dsp/TwoBit1or2.h dsp/FourBitTwo.h	     \
 	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h
 
-libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	     \
-	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C  \
-	DADAFile.C TestInput.C BitTable.C BitUnpacker.C BlockFile.C  \
-	TimeSeries.C ChannelOrder.C Transformation.C DataSeries.C    \
-	TwoBitCorrection.C Digitizer.C MultiFile.C TwoBitTable.C     \
-	EightBitUnpacker.C Unpacker.C File.C Observation.C	     \
-	Unpacker_create.C Operation.C WeightedTimeSeries.C	     \
-	FourBitUnpacker.C OutputBuffering.C dsp.C HistUnpacker.C     \
-	dspExtension.C IOManager.C Scratch.C Input.C Seekable.C	     \
-	InputBuffering.C SetBufferingPolicy.C ExcisionUnpacker.C     \
-	TwoBitLookup.C TwoBitFour.C TwoBit1or2.C NLowLookup.C \
+libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
+	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
+	DADAFile.C TestInput.C BitTable.C BitUnpacker.C BlockFile.C \
+	TimeSeries.C ChannelOrder.C Transformation.C DataSeries.C   \
+	TwoBitCorrection.C Digitizer.C MultiFile.C TwoBitTable.C    \
+	EightBitUnpacker.C Unpacker.C File.C Observation.C	    \
+	Unpacker_create.C Operation.C WeightedTimeSeries.C	    \
+	FourBitUnpacker.C dsp.C HistUnpacker.C			    \
+	dspExtension.C IOManager.C Scratch.C Input.C Seekable.C	    \
+	InputBuffering.C SetBufferingPolicy.C ExcisionUnpacker.C    \
+	TwoBitLookup.C TwoBitFour.C TwoBit1or2.C NLowLookup.C	    \
 	UnpackerIterator.C
 
 if HAVE_MPI
