@@ -7,6 +7,7 @@
 
 #include "dsp/Operation.h"
 #include "dsp/Scratch.h"
+#include "strutil.h"
 
 using namespace std;
 
@@ -61,8 +62,29 @@ dsp::Operation::Operation (const char* _name)
   prepared = false;
 }
 
+static bool first_destructor = true;
+
 dsp::Operation::~Operation ()
 {
+#if 1
+  return;
+#endif
+
+  unsigned cwidth = 25;
+
+  if (first_destructor)
+  {
+    cerr << pad (cwidth, "Operation")
+	 << pad (cwidth, "Time Spent")
+	 << pad (cwidth, "Discarded") << endl;
+
+    first_destructor = false;
+  }
+
+  cerr << pad (cwidth, get_name())
+       << pad (cwidth, tostring(get_total_time()))
+       << pad (cwidth, tostring(get_discarded_weights()))
+       << endl;
 }
 
 bool dsp::Operation::can_operate(){
