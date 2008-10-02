@@ -39,7 +39,7 @@ void usage ()
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
-    "  -B secs   block length in units of seconds \n" 
+    "  -B samps  number of samples per block \n"
     "  -o file   file stamp for filterbank file  \n" 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
@@ -51,29 +51,17 @@ int main (int argc, char** argv) try
 {
   bool verbose = false;
   int nbits = 8;
-  int nsecs = 10;
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
   dada_hdu_t* hdu = 0;
   key_t hdu_key = 0;
 #endif
 
-  // a mega-sample at a time
-  // uint64 block_size = 10* 15625 * 1024;
-  // one tenth of a mega-sample at a time	
-  uint64 block_size = 15625 * 1024;
+  // a kilo-sample at a time
+  uint64 block_size = 1024;
 
-  // files to store raw stats
-  FILE *statfile[2];
-  statfile[0] = fopen("rawstat0.dat","wb"); 
-  statfile[1] = fopen("rawstat1.dat","wb"); 
-
-  char filestamp[100];
-  char statfile0[100], statfile1[100];
-  char bpfile0[100],bpfile1[100];
-  FILE *outfile;
-  FILE *headerinfo;
-  headerinfo = fopen("header.info","wb"); 
+  FILE* outfile = stdout;
+  char* outfile_basename = 0;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -84,20 +72,20 @@ int main (int argc, char** argv) try
       break;
 
     case 'B':
-      nsecs = atoi (optarg);
+      block_size = atoi (optarg);
       break;
 
     case 'o':
-      sscanf (optarg, "%s", &filestamp);
+      outfile_basename = optarg;
       break;
 
     case 'k':
       if (sscanf (optarg, "%x", &hdu_key) != 1)
-	{
-	  cerr << "sigproc_filterbank: could not scan key from "
-	    "'" << hdu_key << "'" << endl;
-	  return -1;
-	}
+      {
+	cerr << "sigproc_filterbank: could not scan key from "
+	  "'" << hdu_key << "'" << endl;
+	return -1;
+      }
       break;
 
     case 'h':
@@ -114,25 +102,16 @@ int main (int argc, char** argv) try
       cerr << "invalid param '" << c << "'" << endl;
     }
 
-  strcpy(statfile0,filestamp);
-  strcpy(statfile1,filestamp);
-  strcat(statfile0,".stat0");
-  strcat(statfile1,".stat1");
+  if (outfile_basename)
+  {
+    string filename = outfile_basename;
+    filename += ".fil";
 
-  sscanf (filestamp, "%s", &bpfile0);
-  sscanf (filestamp, "%s", &bpfile1);
-  strcat(bpfile0,".bp0");
-  strcat(bpfile1,".bp1");
-
-  //outfile = fopen("2bit.fil","wb"); 
-  strcat(filestamp,".fil");
-  outfile = fopen(filestamp,"wb"); 
-
-  fprintf(stderr," file stamp: %s\n",filestamp);
-  fprintf(stderr," file stamp: %s\n",filestamp);
-  fprintf(stderr," stat file names : %s %s\n",statfile0,statfile1);
-
-  block_size = nsecs * block_size;
+    outfile = fopen (filename.c_str(),"wb"); 
+    if (!outfile)
+      throw Error (FailedSys, "",
+		   "Could not open " + filename + " for output");
+  }
 
   vector <string> filenames;
   
@@ -154,14 +133,6 @@ int main (int argc, char** argv) try
   if (verbose)
     cerr << "sigproc_filterbank: creating input timeseries container" << endl;
   Reference::To<dsp::TimeSeries> timeseries = new dsp::TimeSeries;
-//  Reference::To<dsp::TimeSeries> timeseries2 = new dsp::TimeSeries;
-//  Reference::To<dsp::TimeSeries> timeseries3 = new dsp::TimeSeries;
-  Reference::To<dsp::TimeSeries> timeseries2;
-  Reference::To<dsp::TimeSeries> timeseries3;
-	timeseries2=timeseries3=timeseries;
-
-
-
 
   if (verbose)
     cerr << "sigproc_filterbank: creating input/unpacker manager" << endl;
@@ -172,13 +143,13 @@ int main (int argc, char** argv) try
     cerr << "sigproc_filterbank: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
-  rescale->set_output (timeseries2);
+  rescale->set_output (timeseries);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
-  pscrunch->set_input (timeseries2);
-  pscrunch->set_output (timeseries3);
+  pscrunch->set_input (timeseries);
+  pscrunch->set_output (timeseries);
 
   if (verbose)
     cerr << "sigproc_filterbank: creating output bitseries container" << endl;
@@ -187,8 +158,8 @@ int main (int argc, char** argv) try
   if (verbose)
     cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
-  digitizer->set_nbit(nbits);
-  digitizer->set_input (timeseries3);
+  digitizer->set_nbit (nbits);
+  digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
 
 #ifdef  SIGPROC_FILTERBANK_RINGBUFFER
@@ -213,7 +184,7 @@ int main (int argc, char** argv) try
 
     unsigned nchan = manager->get_info()->get_nchan();
 
-    manager->get_input()->set_block_size( (int)(block_size/nchan) );
+    manager->get_input()->set_block_size( block_size );
 
     if (verbose)
     {
@@ -256,23 +227,10 @@ int main (int argc, char** argv) try
     {
       manager->operate ();
 
-//      DUMPY TEST CODE MJK 2008
-	int nsamp = timeseries->get_ndat();
-        float* raw0 = timeseries->get_datptr(512,0);
-        float* raw1 = timeseries->get_datptr(512,1);
-	//for(int i = 0; i < timeseries->get_ndat(); i++){
-		//fprintf(stdout,"%d %f %f\n",i,raw0[i],raw1[i]);
-	//}
-	fwrite(raw0, 1, nsamp*sizeof(float), statfile[0]); 
-	fwrite(raw1, 1, nsamp*sizeof(float), statfile[1]); 
-//
-//	return 1;
-
       rescale->operate ();
 
       if (do_pscrunch)
 	pscrunch->operate ();
-
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
 	
@@ -304,10 +262,8 @@ int main (int argc, char** argv) try
 
     if (!written_header)
     {
-      sigproc.copy(bitseries);
-      //sigproc.unload( stdout );
+      sigproc.copy( bitseries );
       sigproc.unload( outfile );
-      sigproc.unload( headerinfo );
       written_header = true;
     }
 
@@ -315,10 +271,7 @@ int main (int argc, char** argv) try
     const uint64 nbyte = bitseries->get_nbytes();
     unsigned char* data = bitseries->get_rawptr();
 
-    //      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
-    //	cout << data[ibyte];
-    //fwrite(data,nbyte,1,stdout);
-    fwrite(data,nbyte,1,outfile);
+    fwrite (data,nbyte,1,outfile);
 
     }
 
@@ -331,24 +284,16 @@ int main (int argc, char** argv) try
 
 #endif
 
-    // Rename raw stat files 
-    rename("rawstat0.dat",statfile0);
-    rename("rawstat1.dat",statfile1);
+    fclose(outfile);
 
-    // Rename band pass files
-    rename("bp0.dat",bpfile0);
-    rename("bp1.dat",bpfile1);
-
-    fclose(outfile); 
     if (verbose)
-	    cerr << "end of data file " << filenames[ifile] << endl;
+      cerr << "end of data file " << filenames[ifile] << endl;
+
   }
   catch (Error& error)
   {
-	  cerr << error << endl;
+    cerr << error << endl;
   }
-
-
 
   return 0;
 }
