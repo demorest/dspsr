@@ -42,28 +42,29 @@ void dsp::Rescale::init ()
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
 
-  scale.resize (input_npol);
-  for (unsigned ipol=0; ipol < input_npol; ipol++)
-    scale[ipol].resize (input_nchan);
-
-  if ( ! (interval_seconds || interval_samples) )
-  {
-    nsample = isample = 0;
-    return;
-  }
+  if (verbose)
+    cerr << "dsp::Rescale::init npol=" << input_npol 
+         << " nchan=" << input_nchan 
+         << " ndat=" << input->get_ndat() << endl;
 
   if (interval_samples)
     nsample = interval_samples;
+  else if (interval_seconds)
+    nsample = uint64( interval_seconds / input->get_rate() );
   else
-    nsample = interval_seconds / input->get_rate();
+    nsample = input->get_ndat ();
 
-  cerr << "dsp::Rescale::init interval samples = " << nsample << endl;
+  if (verbose)
+    cerr << "dsp::Rescale::init interval samples = " << nsample << endl;
 
   isample = 0;
 
   time_total.resize (input_npol);
   freq_total.resize (input_npol);
   freq_totalsq.resize (input_npol);
+
+  scale.resize (input_npol);
+  offset.resize (input_npol);
 
   for (unsigned ipol=0; ipol < input_npol; ipol++)
   {
@@ -75,6 +76,9 @@ void dsp::Rescale::init ()
 
     freq_totalsq[ipol].resize (input_nchan);
     zero (freq_total[ipol]);
+
+    scale[ipol].resize (input_nchan);
+    offset[ipol].resize (input_nchan);
   }
 }
 
@@ -86,7 +90,7 @@ void dsp::Rescale::transformation ()
   if (verbose)
     cerr << "dsp::Rescale::transformation" << endl;
 
-  bool first_call = scale.size () == 0;
+  bool first_call = nsample == 0;
 
   if (first_call)
     init ();
@@ -120,12 +124,9 @@ void dsp::Rescale::transformation ()
   {
     end_dat = input_ndat;
 
-    if (nsample)
-    {
-      uint64 interval_end_dat = nsample - isample;
-      if (interval_end_dat < end_dat)
-	end_dat = interval_end_dat;
-    }
+    uint64 interval_end_dat = nsample - isample;
+    if (interval_end_dat < end_dat)
+      end_dat = interval_end_dat;
 
     uint64 samp_dat = isample;
 
@@ -145,8 +146,7 @@ void dsp::Rescale::transformation ()
 	  sum += in_data[idat];
 	  sumsq += in_data[idat] * in_data[idat];
 
-	  if (nsample)
-	    time_total[ipol][samp_dat] += in_data[idat];
+	  time_total[ipol][samp_dat] += in_data[idat];
 
 	  samp_dat++;
 	}
@@ -160,6 +160,7 @@ void dsp::Rescale::transformation ()
 
     if (!nsample || samp_dat == nsample || first_call)
     {
+      isample = 0;
       uint64 count = nsample;
 
       if (!nsample || first_call)
@@ -208,7 +209,15 @@ void dsp::Rescale::transformation ()
     }
 
     start_dat = end_dat;
+
+    if (verbose)
+      cerr << "end_dat=" << end_dat << " input_ndat=" << input_ndat << endl;
+
   }
   while (end_dat < input_ndat);
+
+  if (verbose)
+    cerr << "dsp::Rescale::transformation exit" << endl;
+
 }
 
