@@ -33,6 +33,8 @@ void dsp::Rescale::transformation ()
 	const unsigned input_npol  = input->get_npol();
 	const unsigned input_nchan = input->get_nchan();
 	
+	//fprintf(stderr,"input_ndat %d \n",input_ndat);
+	//fprintf(stderr,"input_nchan %d \n",input_nchan);
 
 	if (input_ndim != 1)
 		throw Error (InvalidState, "dsp::Rescale::transformation",
@@ -59,6 +61,7 @@ void dsp::Rescale::transformation ()
 	{
 		float* mean_bandpass= new float[input_nchan];
 		float* variance_bandpass = new float[input_nchan];
+		float* rms_bandpass = new float[input_nchan];
 		if(prev_mean == NULL){
 			prev_mean = new float*[input_npol];
 			prev_var = new float*[input_npol];
@@ -70,6 +73,10 @@ void dsp::Rescale::transformation ()
 				}
 			}
 		}
+	
+		// array to store zero DM time series
+		float* zerotime = new float[input_ndat];
+
 		for (unsigned ichan=0; ichan < input_nchan; ichan++)
 		{
 			const float* in_data = input->get_datptr (ichan, ipol);
@@ -81,14 +88,17 @@ void dsp::Rescale::transformation ()
 			{
 				sum += in_data[idat];
 				sumsq += in_data[idat] * in_data[idat];
+				zerotime[idat] += in_data[idat];
 			}
 
 			double mean = sum / input_ndat;
 			double variance = sumsq/input_ndat - mean*mean;
+			double rms = sqrt(variance);
 			
 			
-			                        mean_bandpass[ichan] = (float)mean;
-						                        variance_bandpass[ichan] = (float)variance;
+                        mean_bandpass[ichan] = (float)mean;
+                        variance_bandpass[ichan] = (float)variance;
+                        rms_bandpass[ichan] = (float)rms;
 
 //			if( prev_mean[ipol][ichan] > 0){
 //				if(mean > prev_mean[ipol][ichan]*1.005)mean = prev_mean[ipol][ichan]*1.005;
@@ -122,7 +132,9 @@ void dsp::Rescale::transformation ()
 			for (uint64 idat=0; idat < output_ndat; idat++)
 				out_data[idat] = (in_data[idat] - mean) * scale;
 		}
-		bandpass_monitor->append(sample,sample+input_ndat,ipol,input_nchan,mean_bandpass,variance_bandpass, freqs);
+		//bandpass_monitor->append(sample,sample+input_ndat,ipol,input_nchan,mean_bandpass,variance_bandpass, freqs);
+		//also include zero dm time series
+		bandpass_monitor->append(sample,sample+input_ndat,ipol,input_nchan,mean_bandpass,variance_bandpass,rms_bandpass,freqs,zerotime);
 
 	}
 	sample += input_ndat;

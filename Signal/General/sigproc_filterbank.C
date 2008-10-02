@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <string.h>
 
 #define SIGPROC_FILTERBANK_RINGBUFFER
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
@@ -29,7 +30,7 @@
 
 using namespace std;
 
-static char* args = "b:hk:vV";
+static char* args = "b:B:o:hk:vV";
 
 void usage ()
 {
@@ -38,6 +39,8 @@ void usage ()
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
+    "  -B secs   block length in units of seconds \n" 
+    "  -o file   file stamp for filterbank file  \n" 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
 #endif
@@ -48,6 +51,7 @@ int main (int argc, char** argv) try
 {
   bool verbose = false;
   int nbits = 8;
+  int nsecs = 10;
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
   dada_hdu_t* hdu = 0;
@@ -55,7 +59,21 @@ int main (int argc, char** argv) try
 #endif
 
   // a mega-sample at a time
-  uint64 block_size = 10* 15625 * 1024;
+  // uint64 block_size = 10* 15625 * 1024;
+  // one tenth of a mega-sample at a time	
+  uint64 block_size = 15625 * 1024;
+
+  // files to store raw stats
+  FILE *statfile[2];
+  statfile[0] = fopen("rawstat0.dat","wb"); 
+  statfile[1] = fopen("rawstat1.dat","wb"); 
+
+  char filestamp[100];
+  char statfile0[100], statfile1[100];
+  char bpfile0[100],bpfile1[100];
+  FILE *outfile;
+  FILE *headerinfo;
+  headerinfo = fopen("header.info","wb"); 
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -63,6 +81,14 @@ int main (int argc, char** argv) try
 
     case 'b':
       nbits = atoi (optarg);
+      break;
+
+    case 'B':
+      nsecs = atoi (optarg);
+      break;
+
+    case 'o':
+      sscanf (optarg, "%s", &filestamp);
       break;
 
     case 'k':
@@ -87,6 +113,26 @@ int main (int argc, char** argv) try
     default:
       cerr << "invalid param '" << c << "'" << endl;
     }
+
+  strcpy(statfile0,filestamp);
+  strcpy(statfile1,filestamp);
+  strcat(statfile0,".stat0");
+  strcat(statfile1,".stat1");
+
+  sscanf (filestamp, "%s", &bpfile0);
+  sscanf (filestamp, "%s", &bpfile1);
+  strcat(bpfile0,".bp0");
+  strcat(bpfile1,".bp1");
+
+  //outfile = fopen("2bit.fil","wb"); 
+  strcat(filestamp,".fil");
+  outfile = fopen(filestamp,"wb"); 
+
+  fprintf(stderr," file stamp: %s\n",filestamp);
+  fprintf(stderr," file stamp: %s\n",filestamp);
+  fprintf(stderr," stat file names : %s %s\n",statfile0,statfile1);
+
+  block_size = nsecs * block_size;
 
   vector <string> filenames;
   
@@ -210,11 +256,15 @@ int main (int argc, char** argv) try
     {
       manager->operate ();
 
-//   DUMPY TEST CODE MJK 2008
-//   float* raw = timeseries->get_datptr(512,1);
-//	for(int i = 0; i < timeseries->get_ndat(); i++){
-//		fprintf(stdout,"%f\n",raw[i]);
-//	}
+//      DUMPY TEST CODE MJK 2008
+	int nsamp = timeseries->get_ndat();
+        float* raw0 = timeseries->get_datptr(512,0);
+        float* raw1 = timeseries->get_datptr(512,1);
+	//for(int i = 0; i < timeseries->get_ndat(); i++){
+		//fprintf(stdout,"%d %f %f\n",i,raw0[i],raw1[i]);
+	//}
+	fwrite(raw0, 1, nsamp*sizeof(float), statfile[0]); 
+	fwrite(raw1, 1, nsamp*sizeof(float), statfile[1]); 
 //
 //	return 1;
 
@@ -255,7 +305,9 @@ int main (int argc, char** argv) try
     if (!written_header)
     {
       sigproc.copy(bitseries);
-      sigproc.unload( stdout );
+      //sigproc.unload( stdout );
+      sigproc.unload( outfile );
+      sigproc.unload( headerinfo );
       written_header = true;
     }
 
@@ -265,7 +317,8 @@ int main (int argc, char** argv) try
 
     //      for (uint64 ibyte=0; ibyte<nbyte; ibyte++)
     //	cout << data[ibyte];
-    fwrite(data,nbyte,1,stdout);
+    //fwrite(data,nbyte,1,stdout);
+    fwrite(data,nbyte,1,outfile);
 
     }
 
@@ -278,6 +331,15 @@ int main (int argc, char** argv) try
 
 #endif
 
+    // Rename raw stat files 
+    rename("rawstat0.dat",statfile0);
+    rename("rawstat1.dat",statfile1);
+
+    // Rename band pass files
+    rename("bp0.dat",bpfile0);
+    rename("bp1.dat",bpfile1);
+
+    fclose(outfile); 
     if (verbose)
 	    cerr << "end of data file " << filenames[ifile] << endl;
   }
