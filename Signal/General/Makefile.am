@@ -47,8 +47,12 @@ if HAVE_PGPLOT
 endif
 
 if HAVE_sigproc
-  bin_PROGRAMS += sigproc_filterbank
-  sigproc_filterbank_SOURCES = sigproc_filterbank.C
+  bin_PROGRAMS += digifil
+  digifil_SOURCES = digifil.C
+if HAVE_dada
+  bin_PROGRAMS += the_decimator
+  the_decimator_SOURCES = the_decimator.C
+endif
 endif
 
 #############################################################################
