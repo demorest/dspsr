@@ -8,9 +8,9 @@
 #include "dsp/SigProcDigitizer.h"
 
 //! Default constructor
-dsp::SigProcDigitizer::SigProcDigitizer ()
+dsp::SigProcDigitizer::SigProcDigitizer () : Digitizer ("SigProcDigitizer")
 {
-	nbit = 8;
+  nbit = 8;
 }
 
 //! Set the number of bits per sample
