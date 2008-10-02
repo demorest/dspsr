@@ -80,7 +80,7 @@ void dsp::BPSRUnpacker::unpack ()
 	}
       }
     }
-
+break;
   case TimeSeries::OrderTFP:
     {
       const unsigned char* from = input->get_rawptr();
@@ -98,10 +98,11 @@ void dsp::BPSRUnpacker::unpack ()
 	from += 4;
       }
     }
-
+break;
   default:
     throw Error (InvalidState, "dsp::BPSRUnpacker::unpack",
 		 "unrecognized order");
+break;
   }
 }
 
