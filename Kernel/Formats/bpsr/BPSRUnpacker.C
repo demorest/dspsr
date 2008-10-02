@@ -47,30 +47,61 @@ void dsp::BPSRUnpacker::unpack ()
   const uint64 ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
-  const unsigned step = npol * nchan;
 
-  // data are organized: p0c0 p0c1 p1c0 p1c1, p0c2 p0c3 p1c2 p1c3, ...
+  output->set_order (TimeSeries::OrderTFP);
 
-  for (unsigned ichan=0; ichan<nchan; ichan++) 
+  switch ( output->get_order() )
   {
-    unsigned chan_off = (ichan/2) * 4 + ichan%2;
-
-    for (unsigned ipol=0; ipol<npol; ipol++)
+  case TimeSeries::OrderPFT:
     {
-      unsigned pol_off = ipol * 2;
+      const unsigned step = npol * nchan;
 
-      const unsigned char* from = input->get_rawptr() + chan_off + pol_off;
-      float* into = output->get_datptr (ichan, ipol);
+      // input data are organized: p0c0 p0c1 p1c0 p1c1 p0c2 p0c3 p1c2 p1c3 ...
 
-      // unsigned long* hist = get_histogram (off);
-
-      for (unsigned bt = 0; bt < ndat; bt++)
+      for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
-        // hist[ *from ] ++;
-        into[bt] = float( *from );
-        from += step;
+	unsigned chan_off = (ichan/2) * 4 + ichan%2;
+
+	for (unsigned ipol=0; ipol<npol; ipol++)
+	{
+	  unsigned pol_off = ipol * 2;
+
+	  const unsigned char* from = input->get_rawptr() + chan_off + pol_off;
+	  float* into = output->get_datptr (ichan, ipol);
+
+	  // unsigned long* hist = get_histogram (off);
+
+	  for (unsigned bt = 0; bt < ndat; bt++)
+	  {
+	    // hist[ *from ] ++;
+	    into[bt] = float( *from );
+	    from += step;
+	  }
+	}
       }
     }
+
+  case TimeSeries::OrderTFP:
+    {
+      const unsigned char* from = input->get_rawptr();
+      float* into = output->get_dattfp();
+
+      const uint64 nfloat = npol * nchan * ndat;
+      for (uint64 ifloat=0; ifloat < nfloat; ifloat += 4)
+      {
+	into[0] = float( from[0] );
+	into[1] = float( from[2] );
+	into[2] = float( from[1] );
+	into[3] = float( from[3] );
+	
+	into += 4;
+	from += 4;
+      }
+    }
+
+  default:
+    throw Error (InvalidState, "dsp::BPSRUnpacker::unpack",
+		 "unrecognized order");
   }
 }
 
