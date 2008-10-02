@@ -49,6 +49,8 @@ void dsp::PScrunch::transformation ()
   if (!output_ndat)
     return;
 
+  float scale = 1.0 / sqrt(2.0);
+
   for (unsigned ichan=0; ichan < input_nchan; ichan++)
   {
     const float* in_p0 = input->get_datptr (ichan, 0);
@@ -56,7 +58,6 @@ void dsp::PScrunch::transformation ()
 
     float* out_data = output->get_datptr (ichan, 0);
 
-    float scale = 1.0 / sqrt(2.0);
     for (uint64 idat=0; idat < output_ndat; idat++)
       out_data[idat] = (in_p0[idat] + in_p1[idat]) * scale;
   }
