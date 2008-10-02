@@ -51,19 +51,42 @@ void dsp::PScrunch::transformation ()
 
   float scale = 1.0 / sqrt(2.0);
 
-  for (unsigned ichan=0; ichan < input_nchan; ichan++)
-  {
-    const float* in_p0 = input->get_datptr (ichan, 0);
-    const float* in_p1 = input->get_datptr (ichan, 1);
+  switch(input->get_order()){
+	  case TimeSeries::OrderPFT:
+		  {
+			  for (unsigned ichan=0; ichan < input_nchan; ichan++)
+			  {
+				  const float* in_p0 = input->get_datptr (ichan, 0);
+				  const float* in_p1 = input->get_datptr (ichan, 1);
 
-    float* out_data = output->get_datptr (ichan, 0);
+				  float* out_data = output->get_datptr (ichan, 0);
 
-    for (uint64 idat=0; idat < output_ndat; idat++)
-      out_data[idat] = (in_p0[idat] + in_p1[idat]) * scale;
+				  for (uint64 idat=0; idat < output_ndat; idat++)
+					  out_data[idat] = (in_p0[idat] + in_p1[idat]) * scale;
+			  }
+			  break;
+		  }
+	  case TimeSeries::OrderTFP:
+		  {
+			  int in,out;
+			  in=out=0;
+			  float* out_data = output->get_dattfp();
+			  const float* in_data = input->get_dattfp();
+			  for (uint64 idat=0; idat < output_ndat; idat++){
+				  for (unsigned ichan=0; ichan < input_nchan; ichan++){
+					  out_data[out] = in_data[in] + in_data[in+1];
+					  in+=2;
+					  out++;
+				  }
+			  }
+			  break;
+		  }
+	  default:
+		  throw Error (InvalidState, "dsp::PScrunch::operate",
+				  "Can only handle data ordered TFP or PFT");
   }
-
   if (output == input)
-    output->reshape (1,1);
+	  output->reshape (1,1);
 
   output->set_state (Signal::Intensity);
 }

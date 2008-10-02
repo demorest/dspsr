@@ -10,7 +10,7 @@
 //! Default constructor
 dsp::SigProcDigitizer::SigProcDigitizer () : Digitizer ("SigProcDigitizer")
 {
-  nbit = 8;
+	nbit = 8;
 }
 
 //! Set the number of bits per sample
@@ -43,7 +43,7 @@ unsigned dsp::SigProcDigitizer::get_nbit () const
 
   If this condition isn't true, then the nesting of the loops should
   be inverted.
-  */
+ */
 void dsp::SigProcDigitizer::pack ()
 {
 	if (input->get_npol() != 1)
@@ -101,43 +101,101 @@ void dsp::SigProcDigitizer::pack ()
 
 	output->set_nbit(nbit);
 
-	for (unsigned ichan=0; ichan < nchan; ichan++)
-	{
-		const float* inptr;
-		if (flip_band)
-			inptr = input->get_datptr (nchan-ichan-1);
-		else
-			inptr = input->get_datptr (ichan);
 
-		for (uint64 idat=0; idat < ndat; idat++)
-		{
-			int result = int( (inptr[idat] * digi_scale) + digi_mean +0.5 );
+	/*
+	   TFP mode
+	 */
 
-			// clip the result at the limits
-			if (result < digi_min)
-				result = digi_min;
+	switch (input->get_order()){
 
-			if (result > digi_max)
-				result = digi_max;
+		case TimeSeries::OrderTFP:
+			{
+				const float* inptr = input->get_dattfp();
+
+				for(uint64 idat=0; idat < ndat; idat++){
+
+					for(unsigned ichan=0; ichan < nchan; ichan++){
+						unsigned inChan = ichan;
+						if (flip_band)
+							inChan = (nchan-ichan-1);
+
+						int result = int( (inptr[idat*nchan + inChan] * digi_scale) + digi_mean +0.5 );
+
+						// clip the result at the limits
+						if (result < digi_min)
+							result = digi_min;
+
+						if (result > digi_max)
+							result = digi_max;
+
+						switch (nbit){
+							case 1:
+							case 2:
+							case 4:
+								bit_counter = ichan % (samp_per_byte);
+
+								if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte)
+									+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
+								outptr[idat*(int)(nchan/samp_per_byte)
+									+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
+								break;
+							case 8:
+								outptr[idat*nchan + ichan] = (unsigned char) result;
+								break;
+						}
 
 
+					}
+				}
 
-			switch (nbit){
-				case 1:
-				case 2:
-				case 4:
-					bit_counter = ichan % (samp_per_byte);
-
-					if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte) 
-						+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
-					outptr[idat*(int)(nchan/samp_per_byte) 
-						+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
-					break;
-				case 8:
-					outptr[idat*nchan + ichan] = (unsigned char) result;
-					break;
+				return;
 			}
-		}
+		case TimeSeries::OrderPFT:
+			{
+				for (unsigned ichan=0; ichan < nchan; ichan++)
+				{
+					const float* inptr;
+					if (flip_band)
+						inptr = input->get_datptr (nchan-ichan-1);
+					else
+						inptr = input->get_datptr (ichan);
+
+					for (uint64 idat=0; idat < ndat; idat++)
+					{
+						int result = int( (inptr[idat] * digi_scale) + digi_mean +0.5 );
+
+						// clip the result at the limits
+						if (result < digi_min)
+							result = digi_min;
+
+						if (result > digi_max)
+							result = digi_max;
+
+
+
+						switch (nbit){
+							case 1:
+							case 2:
+							case 4:
+								bit_counter = ichan % (samp_per_byte);
+
+								if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte) 
+									+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
+								outptr[idat*(int)(nchan/samp_per_byte) 
+									+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
+								break;
+							case 8:
+								outptr[idat*nchan + ichan] = (unsigned char) result;
+								break;
+						}
+					}
+				}
+				return;
+			}
+		default:
+			throw Error (InvalidState, "dsp::SigProcDigitizer::operate",
+					"Can only operate on data ordered FTP or PFT.");
+
 	}
 }
 
