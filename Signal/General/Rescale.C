@@ -193,8 +193,12 @@ void dsp::Rescale::transformation ()
 			isample = 0;
 			uint64 count = nsample;
 
+                        update_epoch = input->get_start_time();
+
 			if (!nsample || first_call)
 				count = input_ndat;
+			else
+                        	update_epoch += end_dat / input->get_rate();
 
 			first_call = false;
 			for (unsigned ipol=0; ipol < input_npol; ipol++) 
