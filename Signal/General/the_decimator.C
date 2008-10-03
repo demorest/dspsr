@@ -31,7 +31,7 @@
 
 using namespace std;
 
-static char* args = "b:B:o:prhk:vV";
+static char* args = "b:B:I:o:prhk:vV";
 
 void usage ()
 {
@@ -41,6 +41,7 @@ void usage ()
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
     "  -B secs   number of seconds per block \n"
+    "  -I secs   number of seconds between level updates \n"
     "  -o file   file stamp for filterbank file  \n" 
     "  -r        report total Operation times \n"
     "  -p        revert to PFT order \n"
@@ -63,6 +64,9 @@ int main (int argc, char** argv) try
   // block size in seconds
   double block_size = 10;
 
+  // update interval in seconds;
+  double update_interval = 0.0;
+
   FILE* outfile = stdout;
   char* outfile_basename = 0;
 
@@ -78,6 +82,10 @@ int main (int argc, char** argv) try
 
     case 'B':
       block_size = atof (optarg);
+      break;
+
+    case 'I':
+      update_interval = atof (optarg);
       break;
 
     case 'o':
@@ -157,7 +165,7 @@ int main (int argc, char** argv) try
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
-
+  rescale->set_interval_seconds (update_interval);
   if (verbose)
     cerr << "sigproc_filterbank: attaching BandpassMonitor" << endl;
   Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
