@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.26 $
-   $Date: 2008/10/03 00:48:10 $
+   $Revision: 1.27 $
+   $Date: 2008/10/03 01:16:06 $
    $Author: straten $ */
 
 
@@ -50,7 +50,7 @@ namespace dsp {
     static Unpacker* create (const Observation* observation);
 
     //! Return true if the unpacker support the specified output order
-    virtual bool get_order_supported (TimeSeries::Order);
+    virtual bool get_order_supported (TimeSeries::Order) const;
 
     //! Set the order of the dimensions in the output TimeSeries
     virtual void set_output_order (TimeSeries::Order);
