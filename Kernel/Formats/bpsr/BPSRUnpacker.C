@@ -17,6 +17,18 @@ dsp::BPSRUnpacker::BPSRUnpacker (const char* name) : HistUnpacker (name)
 {
 }
 
+//! Return true if the unpacker support the specified output order
+bool dsp::BPSRUnpacker::get_order_supported (TimeSeries::Order order) const
+{
+  return true;
+}
+
+//! Set the order of the dimensions in the output TimeSeries
+void dsp::BPSRUnpacker::set_output_order (TimeSeries::Order order)
+{
+  output_order = order;
+}
+
 bool dsp::BPSRUnpacker::matches (const Observation* observation)
 {
 #ifdef _DEBUG
@@ -47,8 +59,6 @@ void dsp::BPSRUnpacker::unpack ()
   const uint64 ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
-
-  output->set_order (TimeSeries::OrderTFP);
 
   switch ( output->get_order() )
   {
