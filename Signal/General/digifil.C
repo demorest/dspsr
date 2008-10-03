@@ -24,7 +24,7 @@
 
 using namespace std;
 
-static char* args = "b:B:o:hvV";
+static char* args = "b:B:o:rhvV";
 
 void usage ()
 {
@@ -36,6 +36,7 @@ void usage ()
     "  -B samps  number of samples per block \n"
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename  \n" 
+    "  -r        report total Operation times \n"
        << endl;
 }
 
@@ -64,6 +65,10 @@ int main (int argc, char** argv) try
 
     case 'o':
       output_filename = optarg;
+      break;
+
+    case 'r':
+      dsp::Operation::record_time = true;
       break;
 
     case 'h':
