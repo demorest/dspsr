@@ -14,7 +14,7 @@ void dsp::BandpassMonitor::output_state (Rescale* rescale)
   MJD epoch = rescale->get_update_epoch();
 
   char datestr [64];
-  std::string stamp = epoch.datestr (datestr, 64, "%Y-%m-%d %H:%M:%S");
+  std::string stamp = epoch.datestr (datestr, 64, "%Y-%m-%d-%H:%M:%S");
 
   unsigned npol  = rescale->get_input()->get_npol();
   unsigned nchan = rescale->get_input()->get_nchan();
