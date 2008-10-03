@@ -35,8 +35,8 @@ static char* args = "b:B:I:o:prhk:vV";
 
 void usage ()
 {
-  cout << "sigproc_filterbank - convert dspsr input to sigproc filterbank \n"
-    "Usage: sigproc_filterbank file1 [file2 ...] \n"
+  cout << "the_decimator - convert dspsr input to sigproc filterbank \n"
+    "Usage: the_decimator file1 [file2 ...] \n"
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
@@ -103,7 +103,7 @@ int main (int argc, char** argv) try
     case 'k':
       if (sscanf (optarg, "%x", &hdu_key) != 1)
       {
-	cerr << "sigproc_filterbank: could not scan key from "
+	cerr << "the_decimator: could not scan key from "
 	  "'" << hdu_key << "'" << endl;
 	return -1;
       }
@@ -141,7 +141,7 @@ int main (int argc, char** argv) try
 
   if (filenames.size() == 0)
   {
-    cerr << "sigproc_filterbank: please specify a filename (-h for help)" 
+    cerr << "the_decimator: please specify a filename (-h for help)" 
 	 << endl;
     return 0;
   }
@@ -152,38 +152,38 @@ int main (int argc, char** argv) try
   */
 
   if (verbose)
-    cerr << "sigproc_filterbank: creating input timeseries container" << endl;
+    cerr << "the_decimator: creating input timeseries container" << endl;
   Reference::To<dsp::TimeSeries> timeseries = new dsp::TimeSeries;
 
   if (verbose)
-    cerr << "sigproc_filterbank: creating input/unpacker manager" << endl;
+    cerr << "the_decimator: creating input/unpacker manager" << endl;
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
   manager->set_output (timeseries);
 
   if (verbose)
-    cerr << "sigproc_filterbank: creating rescale transformation" << endl;
+    cerr << "the_decimator: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
   rescale->set_interval_seconds (update_interval);
   if (verbose)
-    cerr << "sigproc_filterbank: attaching BandpassMonitor" << endl;
+    cerr << "the_decimator: attaching BandpassMonitor" << endl;
   Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
 
   rescale->update.connect( monitor, &dsp::BandpassMonitor::output_state);
 
   if (verbose)
-    cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
+    cerr << "the_decimator: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
   pscrunch->set_input (timeseries);
   pscrunch->set_output (timeseries);
 
   if (verbose)
-    cerr << "sigproc_filterbank: creating output bitseries container" << endl;
+    cerr << "the_decimator: creating output bitseries container" << endl;
   Reference::To<dsp::BitSeries> bitseries = new dsp::BitSeries;
 
   if (verbose)
-    cerr << "sigproc_filterbank: creating sigproc digitizer" << endl;
+    cerr << "the_decimator: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
   digitizer->set_nbit (nbits);
   digitizer->set_input (timeseries);
@@ -191,7 +191,7 @@ int main (int argc, char** argv) try
 
 #ifdef  SIGPROC_FILTERBANK_RINGBUFFER
   if (verbose)
-    cerr << "sigproc_filterbank: creating 2nd sigproc digitizer for ringbuffer"
+    cerr << "the_decimator: creating 2nd sigproc digitizer for ringbuffer"
 	 << endl;
   Reference::To<dsp::BitSeries> bitseries_rb = new dsp::BitSeries;    
   Reference::To<dsp::SigProcDigitizer> digitizer_rb = new dsp::SigProcDigitizer;
@@ -205,14 +205,14 @@ int main (int argc, char** argv) try
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
     if (verbose)
-      cerr << "sigproc_filterbank: opening file " << filenames[ifile] << endl;
+      cerr << "the_decimator: opening file " << filenames[ifile] << endl;
 
     manager->open (filenames[ifile]);
 
     dsp::Observation* obs = manager->get_info();
 
     unsigned nchan = obs->get_nchan();
-    uint64 nsample = block_size / obs->get_rate();
+    uint64 nsample = uint64( block_size * obs->get_rate() );
 
     if (verbose)
       cerr << "the_decimator: block_size=" << block_size << " sec "
@@ -227,7 +227,7 @@ int main (int argc, char** argv) try
 
     if (verbose)
     {
-      cerr << "sigproc_filterbank: file " 
+      cerr << "the_decimator: file " 
 	   << filenames[ifile] << " opened" << endl;
       cerr << "Source = " << obs->get_source() << endl;
       cerr << "Frequency = " << obs->get_centre_frequency() << endl;
@@ -244,7 +244,7 @@ int main (int argc, char** argv) try
 
     if (hdu_key)
     {
-      multilog_t* mlog = multilog_open ("sigproc_filterbank",0);
+      multilog_t* mlog = multilog_open ("the_decimator",0);
       multilog_add (mlog, stderr);
       
       hdu = dada_hdu_create(mlog);
