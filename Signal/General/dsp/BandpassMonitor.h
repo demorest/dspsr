@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BandpassMonitor.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/10/03 04:42:30 $
+   $Revision: 1.5 $
+   $Date: 2008/10/03 05:04:58 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_BandpassMonitor_h
@@ -23,7 +23,7 @@ namespace dsp
   class Rescale;
 
   //! Rescale all channels and polarizations
-  class BandpassMonitor
+  class BandpassMonitor : public Reference::Able
   {
   public:
 
