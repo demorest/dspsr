@@ -273,3 +273,36 @@ void dsp::Rescale::transformation ()
 
 }
 
+//! Get the epoch of the last scale/offset update
+MJD dsp::Rescale::get_update_epoch () const
+{
+  return update_epoch;
+}
+
+//! Get the mean bandpass for the given polarization
+const float* dsp::Rescale::get_offset (unsigned ipol) const
+{
+  assert (ipol < offset.size());
+  return &(offset[ipol][0]);
+}
+
+//! Get the rms bandpass for the given polarization
+const float* dsp::Rescale::get_scale (unsigned ipol) const
+{
+  assert (ipol < scale.size());
+  return &(scale[ipol][0]);
+}
+
+//! Get the number of samples between updates
+uint64 dsp::Rescale::get_nsample () const
+{
+  return nsample;
+}
+
+//! Get the total power time series for the given polarization
+const float* dsp::Rescale::get_time (unsigned ipol) const
+{
+  assert (ipol < time_total.size());
+  return &(time_total[ipol][0]);
+}
+
