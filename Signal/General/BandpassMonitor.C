@@ -33,7 +33,7 @@ void dsp::BandpassMonitor::output_state (Rescale* rescale)
     dump (stamp, ipol, nchan, data, ".bps");
 
     // the mean is -offset
-    const float* offset = rescale->get_scale(ipol);
+    const float* offset = rescale->get_offset(ipol);
     for (unsigned ichan=0; ichan < nchan; ichan++)
       temp[ichan] = -offset[ichan];
     dump (stamp, ipol, nchan, data, ".bp");
