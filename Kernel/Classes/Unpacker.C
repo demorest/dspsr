@@ -29,11 +29,12 @@ void dsp::Unpacker::prepare ()
 void dsp::Unpacker::resize_output ()
 {
   // resize the output
+  output->set_order (output_order);
   output->resize (input->get_ndat());
 }
 
 //! Return true if the unpacker support the specified output order
-bool dsp::Unpacker::get_order_supported (TimeSeries::Order order)
+bool dsp::Unpacker::get_order_supported (TimeSeries::Order order) const
 {
   // by default, only the current order is supported
   return order == output_order;
