@@ -134,15 +134,15 @@ void dsp::Rescale::transformation ()
 			case TimeSeries::OrderTFP:
 				{
 					const float* in_data = input->get_dattfp();
+					in_data += start_dat * input_nchan*input_npol;
 					for (unsigned idat=start_dat; idat < end_dat; idat++){
 						for (unsigned ichan=0; ichan < input_nchan; ichan++){
-							int arr_offset = idat*input_nchan*input_npol + ichan*input_npol;
 							for (unsigned ipol=0; ipol < input_npol; ipol++){
-								freq_total[ipol][ichan]  += in_data[idat];
-								freq_totalsq[ipol][ichan]  += in_data[idat] * in_data[arr_offset + ipol];
+								freq_total[ipol][ichan]  += (*in_data);
+								freq_totalsq[ipol][ichan]  += (*in_data)*(*in_data);
 
-								time_total[ipol][samp_dat] += in_data[arr_offset+ipol];
-
+								time_total[ipol][samp_dat] += (*in_data);
+								in_data++;
 
 							}
 						}
@@ -225,11 +225,14 @@ void dsp::Rescale::transformation ()
 				{
 					const float* in_data = input->get_dattfp();
 					float* out_data = output->get_dattfp();
+					in_data += start_dat * input_nchan*input_npol;
+					out_data += start_dat * input_nchan*input_npol;
 					for (unsigned idat=start_dat; idat < end_dat; idat++){
 						for (unsigned ichan=0; ichan < input_nchan; ichan++){
-							int arr_offset = idat*input_nchan*input_npol + ichan*input_npol;
 							for (unsigned ipol=0; ipol < input_npol; ipol++){
-								out_data[arr_offset+ipol] = (in_data[arr_offset+ipol] + offset[ipol][ichan]) * scale[ipol][ichan];
+								(*out_data) = ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
+								in_data++;
+								out_data++;
 							}
 						}
 					}
