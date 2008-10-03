@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/bpsr/dsp/BPSRUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/10/02 23:56:57 $
+   $Revision: 1.3 $
+   $Date: 2008/10/03 01:16:11 $
    $Author: straten $ */
 
 #ifndef __BPSRUnpacker_h
@@ -32,6 +32,12 @@ namespace dsp
     
     //! The unpacking routine
     virtual void unpack ();
+
+    //! Return true; support any output order
+    virtual bool get_order_supported (TimeSeries::Order) const;
+
+    //! Set the order of the dimensions in the output TimeSeries
+    virtual void set_output_order (TimeSeries::Order);
 
     //! Return true if we can convert the Observation
     virtual bool matches (const Observation* observation);
