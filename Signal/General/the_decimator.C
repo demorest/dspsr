@@ -40,7 +40,7 @@ void usage ()
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
-    "  -B samps  number of samples per block \n"
+    "  -B secs   number of seconds per block \n"
     "  -o file   file stamp for filterbank file  \n" 
     "  -r        report total Operation times \n"
     "  -p        revert to PFT order \n"
@@ -60,8 +60,8 @@ int main (int argc, char** argv) try
   key_t hdu_key = 0;
 #endif
 
-  // a kilo-sample at a time
-  uint64 block_size = 1024;
+  // block size in seconds
+  double block_size = 10;
 
   FILE* outfile = stdout;
   char* outfile_basename = 0;
@@ -77,7 +77,7 @@ int main (int argc, char** argv) try
       break;
 
     case 'B':
-      block_size = atoi (optarg);
+      block_size = atof (optarg);
       break;
 
     case 'o':
@@ -201,9 +201,16 @@ int main (int argc, char** argv) try
 
     manager->open (filenames[ifile]);
 
-    unsigned nchan = manager->get_info()->get_nchan();
+    dsp::Observation* obs = manager->get_info();
 
-    manager->get_input()->set_block_size( block_size );
+    unsigned nchan = obs->get_nchan();
+    uint64 nsample = block_size / obs->get_rate();
+
+    if (verbose)
+      cerr << "the_decimator: block_size=" << block_size << " sec "
+	"(" << nsample << " samp)" << endl;
+
+    manager->set_block_size( nsample );
 
     dsp::Unpacker* unpacker = manager->get_unpacker();
 
@@ -212,8 +219,6 @@ int main (int argc, char** argv) try
 
     if (verbose)
     {
-      dsp::Observation* obs = manager->get_info();
-
       cerr << "sigproc_filterbank: file " 
 	   << filenames[ifile] << " opened" << endl;
       cerr << "Source = " << obs->get_source() << endl;
