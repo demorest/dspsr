@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.25 $
-   $Date: 2008/09/09 06:34:10 $
+   $Revision: 1.26 $
+   $Date: 2008/10/03 00:48:10 $
    $Author: straten $ */
 
 
@@ -49,6 +49,12 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);
 
+    //! Return true if the unpacker support the specified output order
+    virtual bool get_order_supported (TimeSeries::Order);
+
+    //! Set the order of the dimensions in the output TimeSeries
+    virtual void set_output_order (TimeSeries::Order);
+
     //! Return true if the derived class can convert the Observation
     /*! Derived classes must define the conditions under which they can
       be used to parse the given data. */
@@ -73,6 +79,9 @@ namespace dsp {
     Iterator get_iterator (unsigned idig);
 
    protected:
+
+    //! The order of the dimensions in the output TimeSeries
+    TimeSeries::Order output_order;
 
     //! The operation unpacks n-bit into floating point TimeSeries
     virtual void transformation ();
