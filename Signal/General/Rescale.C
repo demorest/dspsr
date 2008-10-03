@@ -213,7 +213,10 @@ void dsp::Rescale::transformation ()
 					freq_totalsq[ipol][ichan] = variance;
 
 					offset[ipol][ichan] = -mean;
-					scale[ipol][ichan] = 1.0 / sqrt(variance);
+					if (variance == 0.0)
+						scale[ipol][ichan] = 1.0;
+					else
+						scale[ipol][ichan] = 1.0 / sqrt(variance);
 				}
 			}
 
