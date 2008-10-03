@@ -143,10 +143,10 @@ void dsp::Rescale::transformation ()
 
 								time_total[ipol][samp_dat] += in_data[arr_offset+ipol];
 
-								samp_dat++;
 
 							}
 						}
+						samp_dat++;
 					}
 					break;
 				}
