@@ -7,6 +7,8 @@
 
 #include "dsp/Rescale.h"
 
+#include <assert.h>
+
 using namespace std;
 
 dsp::Rescale::Rescale ()
