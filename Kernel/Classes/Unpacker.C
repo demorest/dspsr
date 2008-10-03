@@ -10,6 +10,13 @@
 
 using namespace std;
 
+//! Constructor
+dsp::Unpacker::Unpacker (const char* name)
+  : Transformation <BitSeries, TimeSeries> (name, outofplace, true) 
+{
+  output_order = TimeSeries::OrderPFT;
+}
+
 void dsp::Unpacker::prepare ()
 {
   if (verbose)
@@ -23,6 +30,21 @@ void dsp::Unpacker::resize_output ()
 {
   // resize the output
   output->resize (input->get_ndat());
+}
+
+//! Return true if the unpacker support the specified output order
+bool dsp::Unpacker::get_order_supported (TimeSeries::Order order)
+{
+  // by default, only the current order is supported
+  return order == output_order;
+}
+
+//! Set the order of the dimensions in the output TimeSeries
+void dsp::Unpacker::set_output_order (TimeSeries::Order order)
+{
+  if (order != output_order)
+    throw Error (InvalidState, "dsp::Unpacker::set_output_order",
+		 "unsupported output order");
 }
 
 //! Initialize and resize the output before calling unpack
@@ -62,12 +84,6 @@ void dsp::Unpacker::match (const Observation* observation)
 {
   if (verbose)
     cerr << "dsp::Unpacker::match" << endl;
-}
-
-//! Constructor
-dsp::Unpacker::Unpacker (const char* name)
-  : Transformation <BitSeries, TimeSeries> (name, outofplace, true) 
-{
 }
 
 //! Return the iterator for the specified digitizer
