@@ -10,6 +10,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
+#include "dsp/Unpacker.h"
 
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
