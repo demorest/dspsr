@@ -30,7 +30,7 @@
 
 using namespace std;
 
-static char* args = "b:B:o:hk:vV";
+static char* args = "b:B:o:prhk:vV";
 
 void usage ()
 {
@@ -41,6 +41,8 @@ void usage ()
     "  -b bits   number of bits per sample output to file \n" 
     "  -B samps  number of samples per block \n"
     "  -o file   file stamp for filterbank file  \n" 
+    "  -r        report total Operation times \n"
+    "  -p        revert to PFT order \n"
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
 #endif
@@ -63,6 +65,8 @@ int main (int argc, char** argv) try
   FILE* outfile = stdout;
   char* outfile_basename = 0;
 
+  dsp::TimeSeries::Order order = dsp::TimeSeries::OrderTFP;
+
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -77,6 +81,14 @@ int main (int argc, char** argv) try
 
     case 'o':
       outfile_basename = optarg;
+      break;
+
+    case 'p':
+      order = dsp::TimeSeries::OrderPFT;
+      break;
+
+    case 'r':
+      dsp::Operation::record_time = true;
       break;
 
     case 'k':
@@ -146,6 +158,12 @@ int main (int argc, char** argv) try
   rescale->set_output (timeseries);
 
   if (verbose)
+    cerr << "sigproc_filterbank: attaching BandpassMonitor" << endl;
+  Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
+
+  rescale->update.connect( monitor, &dsp::BandpassMonitor::output_state);
+
+  if (verbose)
     cerr << "sigproc_filterbank: creating pscrunch transformation" << endl;
   Reference::To<dsp::PScrunch> pscrunch = new dsp::PScrunch;
   pscrunch->set_input (timeseries);
@@ -185,6 +203,11 @@ int main (int argc, char** argv) try
     unsigned nchan = manager->get_info()->get_nchan();
 
     manager->get_input()->set_block_size( block_size );
+
+    dsp::Unpacker* unpacker = manager->get_unpacker();
+
+    if (unpacker->get_order_supported (order))
+      unpacker->set_output_order (order);
 
     if (verbose)
     {
