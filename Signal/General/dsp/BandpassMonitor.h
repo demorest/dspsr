@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BandpassMonitor.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/10/03 05:04:58 $
+   $Revision: 1.6 $
+   $Date: 2008/10/03 05:42:40 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_BandpassMonitor_h
@@ -37,7 +37,7 @@ namespace dsp
 
   protected:
 
-    std::vector<float> rms;
+    std::vector<float> temp;
 
   };
 }

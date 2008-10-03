@@ -20,21 +20,22 @@ void dsp::BandpassMonitor::output_state (Rescale* rescale)
   unsigned nchan = rescale->get_input()->get_nchan();
   unsigned ndat  = rescale->get_nsample();
 
-  rms.resize (nchan);
+  temp.resize (nchan);
 
   for (unsigned ipol=0; ipol < npol; ipol++)
   {
-    const float* data = 0;
+    const float* data = &(temp[0]);
 
     // the r.m.s. is one over the scale
     const float* scale = rescale->get_scale(ipol);
     for (unsigned ichan=0; ichan < nchan; ichan++)
-      rms[ichan] = 1.0/scale[ichan];
-
-    data = &(rms[0]);
+      temp[ichan] = 1.0/scale[ichan];
     dump (stamp, ipol, nchan, data, ".bps");
 
-    data = rescale->get_offset(ipol);
+    // the mean is -offset
+    const float* offset = rescale->get_scale(ipol);
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+      temp[ichan] = -offset[ichan];
     dump (stamp, ipol, nchan, data, ".bp");
     
     data = rescale->get_time(ipol);
