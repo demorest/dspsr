@@ -10,6 +10,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
+#include "dsp/Unpacker.h"
 
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
@@ -24,7 +25,7 @@
 
 using namespace std;
 
-static char* args = "b:B:o:rhvV";
+static char* args = "b:B:o:prhvV";
 
 void usage ()
 {
@@ -35,8 +36,9 @@ void usage ()
     "  -b bits   number of bits per sample output to file \n" 
     "  -B samps  number of samples per block \n"
     "  -I secs   rescale interval in seconds \n"
-    "  -o file   output filename  \n" 
+    "  -o file   output filename \n" 
     "  -r        report total Operation times \n"
+    "  -p        revert to PFT order \n"
        << endl;
 }
 
@@ -50,6 +52,8 @@ int main (int argc, char** argv) try
   uint64 block_size = 1024;
 
   char* output_filename = 0;
+
+  dsp::TimeSeries::Order order = dsp::TimeSeries::OrderTFP;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)
@@ -65,6 +69,10 @@ int main (int argc, char** argv) try
 
     case 'o':
       output_filename = optarg;
+      break;
+
+    case 'p':
+      order = dsp::TimeSeries::OrderPFT;
       break;
 
     case 'r':
@@ -156,9 +164,12 @@ int main (int argc, char** argv) try
 
     manager->open (filenames[ifile]);
 
-    unsigned nchan = manager->get_info()->get_nchan();
-
     manager->get_input()->set_block_size( block_size );
+
+    dsp::Unpacker* unpacker = manager->get_unpacker();
+
+    if (unpacker->get_order_supported (order))
+      unpacker->set_output_order (order);
 
     if (verbose)
     {
@@ -175,7 +186,7 @@ int main (int argc, char** argv) try
     dsp::SigProcObservation sigproc;
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
-    uint64 lost_samps = 0;
+
     while (!manager->get_input()->eod())
     {
       manager->operate ();
