@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/10/02 06:40:10 $
+   $Revision: 1.4 $
+   $Date: 2008/10/03 04:45:27 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
@@ -40,9 +40,24 @@ namespace dsp
     //! Set the rescaling interval in samples
     void set_interval_samples (uint64 samples);
 
-  private:
+    //! Get the epoch of the last scale/offset update
+    MJD get_update_epoch () const;
+
+    //! Get the offset bandpass for the given polarization
+    const float* get_offset (unsigned ipol) const;
+
+    //! Get the scale bandpass for the given polarization
+    const float* get_scale (unsigned ipol) const;
+
+    //! Get the number of samples between updates
+    uint64 get_nsample () const;
+
+    //! Get the total power time series for the given polarization
+    const float* get_time (unsigned ipol) const;
 
     Callback<Rescale*> update;
+
+  private:
 
     std::vector< std::vector<double> > freq_total;
     std::vector< std::vector<double> > freq_totalsq;
@@ -57,6 +72,8 @@ namespace dsp
 
     uint64 nsample;
     uint64 isample;
+
+    MJD update_epoch;
 
     void init ();
 
