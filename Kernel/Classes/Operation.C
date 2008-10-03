@@ -66,9 +66,8 @@ static bool first_destructor = true;
 
 dsp::Operation::~Operation ()
 {
-#if 1
-  return;
-#endif
+  if (!record_time || !get_total_time())
+    return;
 
   unsigned cwidth = 25;
 
@@ -87,7 +86,8 @@ dsp::Operation::~Operation ()
        << endl;
 }
 
-bool dsp::Operation::can_operate(){
+bool dsp::Operation::can_operate()
+{
   return true;
 }
 
