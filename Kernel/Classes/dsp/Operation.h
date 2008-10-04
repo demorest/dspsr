@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.39 $
-   $Date: 2008/05/29 08:04:31 $
+   $Revision: 1.40 $
+   $Date: 2008/10/04 07:02:52 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -38,6 +38,9 @@ namespace dsp {
 
     //! Global flag enables stopwatch to record the time spent operating
     static bool record_time;
+
+    //! Global flag enables report of time spent in operation on descruction
+    static bool report_time;
 
     //! Global verbosity flag
     static bool verbose;
