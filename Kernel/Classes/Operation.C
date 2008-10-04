@@ -11,8 +11,12 @@
 
 using namespace std;
 
-//! Global flag tells all Operations to record the time spent operating
+/*! By default, operations do not time themselves */
 bool dsp::Operation::record_time = false;
+
+/*! By default, if record_time is enabled, operations will report total
+  time spent when their destructor is called */
+bool dsp::Operation::report_time = true;
 
 //! Global verbosity flag
 bool dsp::Operation::verbose = false;
@@ -66,7 +70,7 @@ static bool first_destructor = true;
 
 dsp::Operation::~Operation ()
 {
-  if (!record_time || !get_total_time())
+  if (!record_time || !report_time || !get_total_time())
     return;
 
   unsigned cwidth = 25;
