@@ -74,7 +74,7 @@ void dsp::PScrunch::transformation ()
 			  const float* in_data = input->get_dattfp();
 			  for (uint64 idat=0; idat < output_ndat; idat++){
 				  for (unsigned ichan=0; ichan < input_nchan; ichan++){
-					  out_data[out] = in_data[in] + in_data[in+1];
+					  out_data[out] = (in_data[in] + in_data[in+1])*scale;
 					  in+=2;
 					  out++;
 				  }
