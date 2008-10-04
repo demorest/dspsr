@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.15 $
-   $Date: 2008/05/11 08:12:44 $
+   $Revision: 1.16 $
+   $Date: 2008/10/04 11:50:37 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -60,6 +60,10 @@ namespace dsp {
     virtual void set_path_add_source (bool);
     virtual bool get_path_add_source () const;
 
+    //! Set the prefix to be added to the front of filenames
+    virtual void set_prefix (const std::string&);
+    virtual std::string get_prefix () const;
+
     //! Set the extension to be added to the end of filenames
     virtual void set_extension (const std::string&);
     virtual std::string get_extension () const;
@@ -69,11 +73,15 @@ namespace dsp {
 
     //! The filename convention
     Reference::To<FilenameConvention> convention;
-    //! The filename extension
-    std::string extension;
 
     //! The filename path
     std::string path;
+
+    //! The filename prefix
+    std::string prefix;
+
+    //! The filename extension
+    std::string extension;
 
     //! Put each output file in a sub-directory named by source
     bool path_add_source;
