@@ -120,26 +120,36 @@ void dsp::SigProcDigitizer::pack ()
 						if (flip_band)
 							inChan = (nchan-ichan-1);
 
-						int result = (int)(((*inptr) * digi_scale) + digi_mean +0.5 );
-						inptr++;
+						//printf("%f\t",(*inptr));
+						int result = (int)(((*(inptr+inChan)) * digi_scale) + digi_mean +0.5 );
+						//printf("%d\n",result);
 
 						// clip the result at the limits
-						if (result < digi_min)
-							result = digi_min;
+						//if (result < digi_min)
+						//	result = digi_min;
+						result = std::max(result,digi_min);
 
-						if (result > digi_max)
-							result = digi_max;
+						//if (result > digi_max)
+						//	result = digi_max;
+						result = std::min(result,digi_max);
 
 						switch (nbit){
 							case 1:
 							case 2:
 							case 4:
 								bit_counter = ichan % (samp_per_byte);
+
+							//	if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte)
+							//		+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
+							//	outptr[idat*(int)(nchan/samp_per_byte)
+							//		+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
+
 								if(bit_counter==0){
 									outptr++;
 									(*outptr) = (unsigned char)0;
 								}
-                                                                (*outptr) = ((unsigned char) (result)) << (bit_counter*nbit);
+								//fprintf(stderr,"%d %d\n",outptr - output->get_rawptr(), idat*(int)(nchan/samp_per_byte) + (int)(ichan/samp_per_byte));
+                                                                (*outptr) |= ((unsigned char) (result)) << (bit_counter*nbit);
 
 								break;
 							case 8:
@@ -150,6 +160,7 @@ void dsp::SigProcDigitizer::pack ()
 
 
 					}
+					inptr+=nchan;
 				}
 
 				return;
@@ -183,10 +194,12 @@ void dsp::SigProcDigitizer::pack ()
 							case 4:
 								bit_counter = ichan % (samp_per_byte);
 
-								if(bit_counter==0)outptr[idat*divider
-									+ divider]=(unsigned char)0;
-								outptr[idat*divider 
-									+ divider] += ((unsigned char) (result)) << (bit_counter*nbit);
+
+								if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte)
+									+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
+								outptr[idat*(int)(nchan/samp_per_byte)
+									+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
+
 								break;
 							case 8:
 								outptr[idat*nchan + ichan] = (unsigned char) result;
