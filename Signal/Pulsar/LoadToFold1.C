@@ -381,21 +381,20 @@ void dsp::LoadToFold1::prepare_final ()
   }
 
   for (unsigned iop=0; iop < operations.size(); iop++)
-  {
-    Operation* op = operations[iop];
-    op->prepare ();
-  }
+    operations[iop]->prepare ();
 
   // for now ...
 
   minimum_samples = 0;
 
-  if (filterbank) {
+  if (filterbank)
+  {
     // cerr << "ASK FILTERBANK" << endl;
     minimum_samples = filterbank->get_minimum_samples ();
   }
 
-  if (convolution) {
+  if (convolution)
+  {
     // cerr << "ASK CONVOLUTION" << endl;
     minimum_samples = convolution->get_minimum_samples ();
   }
@@ -646,6 +645,8 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   
   if (!config->archive_extension.empty())
     archiver->set_extension (config->archive_extension);
+
+  archiver->set_prefix( manager->get_input()->get_prefix() );
 }
 
 //! Run through the data
