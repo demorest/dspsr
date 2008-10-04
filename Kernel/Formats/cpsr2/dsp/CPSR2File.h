@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.18 $
-   $Date: 2008/05/28 21:12:42 $
+   $Revision: 1.19 $
+   $Date: 2008/10/04 11:45:55 $
    $Author: straten $ */
 
 #ifndef __CPSR2File_h
@@ -34,6 +34,9 @@ namespace dsp {
     //! Set this to 'false' if you don't need to yamasaki verify
     static bool want_to_yamasaki_verify;
 
+    //! return 'm' for cpsr1 and 'n' for cpsr2
+    std::string get_prefix () const;
+
   protected:
 
     //! Pads gaps in data
@@ -44,6 +47,8 @@ namespace dsp {
 
     //! Read the CPSR2 ascii header from filename
     static int get_header (char* cpsr2_header, const char* filename);
+
+    std::string prefix;
   };
 
 }

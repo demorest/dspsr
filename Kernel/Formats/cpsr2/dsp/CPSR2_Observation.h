@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.7 $
-   $Date: 2007/11/13 14:15:24 $
+   $Revision: 1.8 $
+   $Date: 2008/10/04 11:45:55 $
    $Author: straten $ */
 
 #ifndef __CPSR2_Observation_h
@@ -33,6 +33,8 @@ namespace dsp {
 
     //! The digitizer thresholds for a SimpleFB file
     virtual void set_thresh();
+
+    std::string prefix;
   };
   
 }

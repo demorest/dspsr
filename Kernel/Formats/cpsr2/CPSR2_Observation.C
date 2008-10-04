@@ -56,7 +56,7 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     throw Error (InvalidState, "CPSR2_Observation", "failed read PRIMARY");
 
   string primary = hdrstr;
-  string prefix = "u";
+  prefix = "u";
 
   if (primary == "cpsr1")
     prefix = "m";
