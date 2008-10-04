@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.40 $
-   $Date: 2008/10/04 07:02:52 $
+   $Revision: 1.41 $
+   $Date: 2008/10/04 09:56:19 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -75,8 +75,15 @@ namespace dsp {
     /*! This method enables optimizations by some derived classes */
     virtual void prepare ();
 
+    //! Combine results with another operation
+    /*! This method enables results from multiple threads to be combined */
+    virtual void combine (const Operation*);
+
+    //! Report operation statistics
+    virtual void report () const;
+
     //! Return the unique name of this operation
-    std::string get_name() { return name; }
+    std::string get_name() const { return name; }
 
     //! Return the total time spent on this Operation in seconds
     double get_total_time () const;
@@ -84,11 +91,14 @@ namespace dsp {
     //! Get the time spent in the last invocation of operate()
     double get_elapsed_time() const;
 
+    //! Return the total number of timesample weights encountered
+    virtual uint64 get_total_weights () const;
+
     //! Return the number of invalid timesample weights encountered
     virtual uint64 get_discarded_weights () const;
 
     //! Reset the count of invalid timesample weights encountered
-    virtual void reset_discarded_weights ();
+    virtual void reset_weights_counters ();
 
     //! Inquire the unique instantiation id
     int get_id(){ return id; }
@@ -118,6 +128,9 @@ namespace dsp {
 
     //! Number of time sample weights encountered that are flagged invalid
     uint64 discarded_weights;
+
+    //! Total number of time sample weights encountered
+    uint64 total_weights;
 
     //! Returns the index in the 'timers' array of a particular timer
     int timers_index (const std::string& op_name);

@@ -60,34 +60,18 @@ dsp::Operation::Operation (const char* _name)
   instantiation_count++;
 
   discarded_weights = 0;
+  total_weights = 0;
 
   scratch = Scratch::get_default_scratch();
 
   prepared = false;
 }
 
-static bool first_destructor = true;
 
 dsp::Operation::~Operation ()
 {
-  if (!record_time || !report_time || !get_total_time())
-    return;
-
-  unsigned cwidth = 25;
-
-  if (first_destructor)
-  {
-    cerr << pad (cwidth, "Operation")
-	 << pad (cwidth, "Time Spent")
-	 << pad (cwidth, "Discarded") << endl;
-
-    first_destructor = false;
-  }
-
-  cerr << pad (cwidth, get_name())
-       << pad (cwidth, tostring(get_total_time()))
-       << pad (cwidth, tostring(get_discarded_weights()))
-       << endl;
+  if (report_time)
+    Operation::report ();
 }
 
 bool dsp::Operation::can_operate()
@@ -140,11 +124,18 @@ uint64 dsp::Operation::get_discarded_weights () const
 {
   return discarded_weights;
 }
- 
+
+//! Return the number of invalid timesample weights encountered
+uint64 dsp::Operation::get_total_weights () const
+{
+  return total_weights;
+}
+
 //! Reset the count of invalid timesample weights encountered
-void dsp::Operation::reset_discarded_weights ()
+void dsp::Operation::reset_weights_counters ()
 {
   discarded_weights = 0;
+  total_weights = 0;
 }
 
 void dsp::Operation::set_scratch (Scratch* s)
@@ -152,3 +143,35 @@ void dsp::Operation::set_scratch (Scratch* s)
   scratch = s;
 }
 
+//! Combine results with another operation
+void dsp::Operation::combine (const Operation* other)
+{
+  total_weights += other->total_weights;
+  discarded_weights += other->discarded_weights;
+  optime += other->optime;
+}
+
+//! Report operation statistics
+void dsp::Operation::report () const
+{
+  if (!record_time || !get_total_time())
+    return;
+
+  unsigned cwidth = 25;
+
+  static bool first_report = true;
+
+  if (first_report)
+  {
+    cerr << pad (cwidth, "Operation")
+	 << pad (cwidth, "Time Spent")
+	 << pad (cwidth, "Discarded") << endl;
+
+    first_report = false;
+  }
+
+  cerr << pad (cwidth, get_name())
+       << pad (cwidth, tostring(get_total_time()))
+       << pad (cwidth, tostring(get_discarded_weights()))
+       << endl;
+}
