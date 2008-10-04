@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.38 $
-   $Date: 2008/01/18 00:58:19 $
+   $Revision: 1.39 $
+   $Date: 2008/10/04 11:33:21 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -130,6 +130,9 @@ namespace dsp {
     std::string get_real_source(){ return real_source; }
 
     void set_context (ThreadContext* context);
+
+    //! Input derived types may specify a prefix to be added to output files
+    virtual std::string get_prefix () const;
 
   protected:
 
