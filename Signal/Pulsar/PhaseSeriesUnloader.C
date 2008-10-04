@@ -51,6 +51,17 @@ dsp::FilenameConvention* dsp::PhaseSeriesUnloader::get_convention ()
   return convention;
 }
 
+//! Set the prefix to which output data will be written
+void dsp::PhaseSeriesUnloader::set_prefix (const std::string& p)
+{
+  prefix = p;
+}
+
+std::string dsp::PhaseSeriesUnloader::get_prefix () const
+{
+  return prefix;
+}
+
 //! Set the path to which output data will be written
 void dsp::PhaseSeriesUnloader::set_path (const std::string& p)
 {
@@ -105,7 +116,7 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
   if (!file_is_directory(the_path.c_str()))
     makedir (the_path.c_str());
 
-  return the_path + convention->get_filename(data) + extension;
+  return the_path + prefix + convention->get_filename(data) + extension;
 }
 
 
