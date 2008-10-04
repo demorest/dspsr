@@ -384,6 +384,11 @@ int main (int argc, char** argv) try {
            << config->reference_phase << endl;
       break;
 
+    case 'r':
+      dsp::Operation::record_time = true;
+      dsp::Operation::report_time = false;
+      break;
+
     case 'R':
       baseband_options += " -R";
       config->zap_rfi = true;
