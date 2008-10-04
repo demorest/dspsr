@@ -33,6 +33,11 @@ void dsp::Input::set_context (ThreadContext* c)
   context = c;
 }
 
+std::string dsp::Input::get_prefix () const
+{
+  return "";
+}
+
 void dsp::Input::prepare ()
 {
   if (verbose)
