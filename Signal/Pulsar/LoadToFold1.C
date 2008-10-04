@@ -731,22 +731,6 @@ void dsp::LoadToFold1::run () try
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
     fold[ifold]->finish();
 
-
-  if (Operation::record_time && (Operation::verbose || id==0))
-  {
-    unsigned cwidth = 25;
-
-    cerr << pad (cwidth, "Operation")
-	 << pad (cwidth, "Time Spent")
-	 << pad (cwidth, "Discarded") << endl;
-    
-    for (unsigned iop=0; iop < operations.size(); iop++)
-      cerr << pad (cwidth, operations[iop]->get_name())
-	   << pad (cwidth, tostring(operations[iop]->get_total_time()))
-	   << pad (cwidth, tostring(operations[iop]->get_discarded_weights()))
-	   << endl;
-  }
-
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::run exit" << endl;
 }
@@ -803,6 +787,10 @@ void dsp::LoadToFold1::finish () try
       archive->unload ();
     }
   }
+
+  if (Operation::record_time)
+    for (unsigned iop=0; iop < operations.size(); iop++)
+      operations[iop]->report();
 }
 catch (Error& error)
 {
