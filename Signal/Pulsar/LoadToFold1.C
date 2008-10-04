@@ -98,7 +98,6 @@ void dsp::LoadToFold1::prepare () try
 {
   // SetBufferingPolicy::policy = SetBufferingPolicy::Input;
   Operation::preserve_data = true;
-  Operation::record_time = true;
   TimeSeries::auto_delete = false;
 
   operations.resize (0);
@@ -732,10 +731,11 @@ void dsp::LoadToFold1::run () try
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
     fold[ifold]->finish();
 
-  unsigned cwidth = 20;
 
-  if (Operation::verbose || id==0)
+  if (Operation::record_time && (Operation::verbose || id==0))
   {
+    unsigned cwidth = 25;
+
     cerr << pad (cwidth, "Operation")
 	 << pad (cwidth, "Time Spent")
 	 << pad (cwidth, "Discarded") << endl;
