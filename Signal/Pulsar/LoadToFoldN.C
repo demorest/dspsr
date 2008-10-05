@@ -408,11 +408,7 @@ void dsp::LoadToFoldN::finish ()
           if (Operation::verbose)
             cerr << "psr::LoadToFoldN::finish combining" << endl;
 
-	  for (unsigned ifold=0; ifold<threads[i]->fold.size(); ifold++)
-	  {
-	    PhaseSeries* result = threads[i]->fold[ifold]->get_output();
-	    *( threads[first]->fold[ifold]->get_output() ) += *( result );
-	  }
+	  threads[first]->combine( threads[i] );
         }
 
 	finished ++;
@@ -444,7 +440,8 @@ void dsp::LoadToFoldN::finish ()
 
   threads[first]->finish();
 
-  if (errors) {
+  if (errors)
+  {
     error << errors << " threads aborted with an error";
     throw error += "dsp::LoadToFoldN::finish";
   }
