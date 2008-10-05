@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.10 $
-   $Date: 2008/02/23 09:32:38 $
+   $Revision: 1.11 $
+   $Date: 2008/10/05 11:56:42 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -66,6 +66,9 @@ namespace dsp {
 
     //! Run through the data
     void run ();
+
+    //! Combine the results from another processing thread
+    void combine (const LoadToFold1*);
 
     //! Finish everything
     void finish ();
