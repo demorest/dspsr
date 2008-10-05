@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.25 $
-   $Date: 2007/11/24 21:12:37 $
+   $Revision: 1.26 $
+   $Date: 2008/10/05 11:56:51 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -47,8 +47,8 @@ namespace dsp {
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (int64 nsamples);
 
-    //! Add prof to this
-    PhaseSeries& operator += (const PhaseSeries& prof);
+    //! Add the given PhaseSeries to this
+    void combine (const PhaseSeries*);
 
     //! Set the reference phase (phase of bin zero)
     void set_reference_phase (double phase) { reference_phase = phase; }
