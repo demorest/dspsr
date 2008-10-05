@@ -740,6 +740,22 @@ catch (Error& error)
   throw error += "dsp::LoadToFold1::run";
 }
 
+void dsp::LoadToFold1::combine (const LoadToFold1* other)
+{
+  if (operations.size() != other->operations.size())
+    throw Error (InvalidState, "dsp::LoadToFold1::combine",
+		 "processes have different numbers of operations");
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
+    if (operations[iop]->get_name() != other->operations[iop]->get_name())
+      throw Error (InvalidState, "dsp::LoadToFold1::combine",
+		   "operation names do not match");
+
+    operations[iop]->combine( other->operations[iop] );
+  }
+}
+
 //! Run through the data
 void dsp::LoadToFold1::finish () try
 {
