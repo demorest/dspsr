@@ -45,6 +45,12 @@ dsp::Operation::Operation (const Operation& op)
   scratch = op.scratch;
   name = op.name;
   prepared = false;
+
+  id = instantiation_count;
+  instantiation_count++;
+
+  discarded_weights = op.discarded_weights;
+  total_weights = op.total_weights;
 }
 
 //! All sub-classes must specify name and capacity for inplace operation
