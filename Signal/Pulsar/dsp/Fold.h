@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.51 $
-   $Date: 2007/12/19 14:00:17 $
+   $Revision: 1.52 $
+   $Date: 2008/10/05 11:56:37 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -62,6 +62,9 @@ namespace dsp {
 
     //! Prepare to fold the given Observation
     void prepare (const Observation* observation);
+
+    //! If Operation is a Fold, integrate its PhaseSeries
+    void combine (const Operation*);
 
     //! Perform any final operations
     virtual void finish ();
