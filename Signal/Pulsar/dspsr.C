@@ -31,7 +31,7 @@ using namespace std;
 
 static char* args =
   "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
-  "L:m:M:n:N:O:op:P:qRsS:t:T:U:vVWx:X:yzZ:";
+  "L:m:M:n:N:O:op:P:qrRsS:t:T:U:vVWx:X:yzZ:";
 
 void usage ()
 {
