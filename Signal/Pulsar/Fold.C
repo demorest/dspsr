@@ -73,6 +73,16 @@ void dsp::Fold::prepare ()
   prepare (input);
 }
 
+//! Combine results with another operation
+void dsp::Fold::combine (const Operation* other)
+{
+  Operation::combine (other);
+
+  const Fold* fold = dynamic_cast<const Fold*>( other );
+  if (fold)
+    get_output()->combine( fold->get_output() );
+}
+
 void dsp::Fold::finish ()
 {
 }
