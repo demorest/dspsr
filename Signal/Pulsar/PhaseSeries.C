@@ -217,26 +217,23 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   return *this;
 }
 
-dsp::PhaseSeries&
-dsp::PhaseSeries::operator += (const PhaseSeries& prof)
+void dsp::PhaseSeries::combine (const PhaseSeries* prof)
 {
-  if (!mixable (prof, prof.get_nbin()))
-    throw Error (InvalidParam, "PhaseSeries::operator+=",
+  if (!mixable (*prof, prof->get_nbin()))
+    throw Error (InvalidParam, "PhaseSeries::combine",
 		 "PhaseSeries !mixable");
 
-  TimeSeries::operator += (prof);
+  TimeSeries::operator += (*prof);
 
   for (unsigned ibin=0; ibin<hits.size(); ibin++)
-    hits[ibin] += prof.hits[ibin];
+    hits[ibin] += prof->hits[ibin];
 
   if (verbose)
-    cerr << "dsp::PhaseSeries::operator+= length add=" 
-         << prof.integration_length 
+    cerr << "dsp::PhaseSeries::combine length add=" 
+         << prof->integration_length 
          << " cur=" << integration_length << endl;
 
-  integration_length += prof.integration_length;
-
-  return *this;
+  integration_length += prof->integration_length;
 }
 
 
