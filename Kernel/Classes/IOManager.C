@@ -258,13 +258,17 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
   if (maximum_RAM)
     block_size = (uint64(maximum_RAM / nbyte_dat) / resolution) * resolution;
   
-  double megabyte = 1024 * 1024;
+  float megabyte = 1024 * 1024;
   if (block_size < minimum_samples)
+  {
+    float min_ram = (minimum_samples/resolution) * resolution * nbyte_dat;
+
     throw Error (InvalidState, "dsp::IOManager::set_block_size",
-		 "insufficient RAM: limit=%f MB  require=%f MB\n"
-		 "(use -U to increase RAM limit)",
-		 double(maximum_RAM)/megabyte,
-		 double(minimum_samples)/megabyte);
+		 "insufficient RAM: limit=%g MB -> block="UI64" samples\n\t"
+		 "require="UI64" samples -> \"-U %g\" on command line",
+		 float(maximum_RAM)/megabyte, block_size,
+		 minimum_samples, min_ram/megabyte);
+  }
 
   input->set_block_size ( block_size );
 
