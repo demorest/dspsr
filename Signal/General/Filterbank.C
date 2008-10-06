@@ -219,7 +219,7 @@ void dsp::Filterbank::make_preparations ()
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
   }
 
-  prepare_output();
+  prepare_output ();
 
   using namespace FTransform;
 
@@ -232,9 +232,18 @@ void dsp::Filterbank::make_preparations ()
 
 }
 
-void dsp::Filterbank::prepare_output ()
+void dsp::Filterbank::prepare_output (uint64 ndat)
 {
+  if (ndat)
+  {
+    output->set_nchan( nchan );
+    output->set_ndim( 2 );
+    output->set_state( Signal::Analytic);
+    output->resize( ndat );
+  }
+
   output->copy_configuration ( get_input() );
+
   output->set_nchan( nchan );
   output->set_ndim( 2 );
   output->set_state( Signal::Analytic);
@@ -316,20 +325,21 @@ void dsp::Filterbank::transformation ()
   if (has_buffering_policy())
     get_buffering_policy()->set_next_start (nsamp_step * npart);
 
-  // prepare the output TimeSeries
-  prepare_output ();
-
   uint64 output_ndat = npart * nkeep * time_res;
+
+  // prepare the output TimeSeries
+  prepare_output (output_ndat);
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation npart=" << npart 
 	 << " nkeep=" << nkeep << " output_ndat=" << output_ndat << endl;
 
   // resize to new number of valid time samples
-  output->resize (npart * nkeep * time_res);
+  output->resize (output_ndat);
 
   if (verbose)
-    cerr << "dsp::Filterbank::transformation after prepare output ndat=" << output->get_ndat() << endl;
+    cerr << "dsp::Filterbank::transformation after prepare output ndat=" 
+	 << output->get_ndat() << endl;
 
   if (!npart)
     return;
