@@ -765,6 +765,10 @@ void dsp::LoadToFold1::finish () try
     phased_filterbank -> normalize_output ();
   }
 
+  if (Operation::record_time)
+    for (unsigned iop=0; iop < operations.size(); iop++)
+      operations[iop]->report();
+
   bool subints = config->single_pulse || config->integration_length;
 
   if (!subints)
@@ -804,10 +808,6 @@ void dsp::LoadToFold1::finish () try
       archive->unload ();
     }
   }
-
-  if (Operation::record_time)
-    for (unsigned iop=0; iop < operations.size(); iop++)
-      operations[iop]->report();
 }
 catch (Error& error)
 {
