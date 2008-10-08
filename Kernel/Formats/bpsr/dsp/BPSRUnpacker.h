@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/bpsr/dsp/BPSRUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/10/03 01:16:11 $
-   $Author: straten $ */
+   $Revision: 1.4 $
+   $Date: 2008/10/08 23:19:06 $
+   $Author: sixbynine $ */
 
 #ifndef __BPSRUnpacker_h
 #define __BPSRUnpacker_h
@@ -44,6 +44,7 @@ namespace dsp
 
     unsigned get_output_ichan (unsigned idig) const;
     unsigned get_output_ipol (unsigned idig) const;
+
 
   };
 

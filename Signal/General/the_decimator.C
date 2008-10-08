@@ -29,6 +29,10 @@
 #include "dsp/ASCIIObservation.h"
 #endif
 
+#ifdef USE_OPENSSL
+#include <openssl/sha.h>
+#endif
+
 using namespace std;
 
 static char* args = "b:B:I:o:prhk:vV";
@@ -310,6 +314,12 @@ int main (int argc, char** argv) try
 
     fwrite (data,nbyte,1,outfile);
 
+#ifdef USE_OPENSSL
+    char* sha_str = sha[2*SHA_DIGEST_LENGTH+1];
+    get_SHA_hash(data,nbyte,sha_str);    
+// ADD the hash to the block header, and write out block header.
+#endif
+
     }
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
@@ -343,4 +353,21 @@ catch (Error& error)
 
 
 
+
+#ifdef USE_OPENSSL
+char get_SHA_hash(unsigned char* buffer,int size, char* hashStr) {
+        unsigned char hash[SHA_DIGEST_LENGTH];
+        char *ptr;
+        int i;
+
+        SHA1(buffer, size, hash);
+        ptr = hashStr;
+        for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
+                sprintf(ptr, "%02x", hash[i]);
+                ptr+=2;
+
+        }
+        return 1;
+}
+#endif
 
