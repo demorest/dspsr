@@ -46,6 +46,7 @@ if HAVE_PGPLOT
 
 endif
 
+
 if HAVE_sigproc
   bin_PROGRAMS += digifil
   digifil_SOURCES = digifil.C
@@ -63,4 +64,8 @@ include $(top_srcdir)/config/Makefile.include
 LDADD = libdspdsp.la $(top_builddir)/Kernel/libdspbase.la @PGPLOT_LIBS@
 
 AM_CPPFLAGS += @PGPLOT_CFLAGS@
+
+if HAVE_OPENSSL
+  AM_CPPFLAGS += "-DUSE_OPENSSL"
+endif
 

@@ -114,6 +114,14 @@ install_sh="CPPROG='cp -p' ${install_sh}"
 #
 AC_CHECK_HEADERS([malloc.h])
 
+AC_CHECK_HEADERS([openssl/sha.h])
+#AC_TRY_LINK([#include <stdlib.h>\n #include <openssl/sha.h>],[unsigned char* ptr; int i; SHA1(ptr,i,ptr);],
+#              have_openssl=yes, have_openssl=no)
+#AM_CONDITIONAL(HAVE_OPENSSL, [test x"$have_openssl" = xyes])
+AC_CHECK_LIB([crypto],[SHA1],have_openssl=yes, have_openssl=no)
+AM_CONDITIONAL(HAVE_OPENSSL, [test x"$have_openssl" = xyes])
+
+
 #
 # Checks for library functions.
 #
