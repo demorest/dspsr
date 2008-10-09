@@ -53,7 +53,14 @@ if HAVE_sigproc
 if HAVE_dada
   bin_PROGRAMS += the_decimator
   the_decimator_SOURCES = the_decimator.C
-  the_decimator_LDADD = $(LDADD) @OPENSSL_LIBS@
+  the_decimator_LDADD = $(LDADD) @OPENSSL_LIBS@ @PSRXML_LIBS@
+  the_decimator_CPPFLAGS = $(CPPFLAGS) @PSRXML_CFLAGS@
+if HAVE_OPENSSL
+  the_decimator_CPPFLAGS += -DUSE_OPENSSL
+endif
+if HAVE_PSRXML
+  the_decimator_CPPFLAGS += -DUSE_PSRXML
+endif
 endif
 endif
 
@@ -65,8 +72,4 @@ include $(top_srcdir)/config/Makefile.include
 LDADD = libdspdsp.la $(top_builddir)/Kernel/libdspbase.la @PGPLOT_LIBS@
 
 AM_CPPFLAGS += @PGPLOT_CFLAGS@
-
-if HAVE_OPENSSL
-  AM_CPPFLAGS += "-DUSE_OPENSSL"
-endif
 
