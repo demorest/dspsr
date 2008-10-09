@@ -53,6 +53,7 @@ if HAVE_sigproc
 if HAVE_dada
   bin_PROGRAMS += the_decimator
   the_decimator_SOURCES = the_decimator.C
+  the_decimator_LDADD = $(LDADD) @OPENSSL_LIBS@
 endif
 endif
 
