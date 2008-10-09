@@ -114,12 +114,18 @@ install_sh="CPPROG='cp -p' ${install_sh}"
 #
 AC_CHECK_HEADERS([malloc.h])
 
+# Check for openssl
+# perhaps this should be an external .m4? MJK
 AC_CHECK_HEADERS([openssl/sha.h])
-#AC_TRY_LINK([#include <stdlib.h>\n #include <openssl/sha.h>],[unsigned char* ptr; int i; SHA1(ptr,i,ptr);],
-#              have_openssl=yes, have_openssl=no)
-#AM_CONDITIONAL(HAVE_OPENSSL, [test x"$have_openssl" = xyes])
 AC_CHECK_LIB([crypto],[SHA1],have_openssl=yes, have_openssl=no)
 AM_CONDITIONAL(HAVE_OPENSSL, [test x"$have_openssl" = xyes])
+if test x"$have_openssl" = xyes; then
+	OPENSSL_LIBS="-lcrypto"	
+	AC_SUBST(OPENSSL_LIBS)
+	echo "Using openssl for SHA checksums."
+fi
+
+
 
 
 #

@@ -31,6 +31,7 @@
 
 #ifdef USE_OPENSSL
 #include <openssl/sha.h>
+char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 #endif
 
 using namespace std;
@@ -315,9 +316,12 @@ int main (int argc, char** argv) try
     fwrite (data,nbyte,1,outfile);
 
 #ifdef USE_OPENSSL
-    char* sha_str = sha[2*SHA_DIGEST_LENGTH+1];
+    char* sha_str = (char*)malloc(sizeof(char)*(2*SHA_DIGEST_LENGTH+1));
     get_SHA_hash(data,nbyte,sha_str);    
 // ADD the hash to the block header, and write out block header.
+
+
+    free(sha_str);
 #endif
 
     }
