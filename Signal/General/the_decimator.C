@@ -33,10 +33,13 @@
 #include <openssl/sha.h>
 char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 #endif
+#ifdef USE_PSRXML
+#include <psrxml.h>
+#endif
 
 using namespace std;
 
-static char* args = "b:B:I:o:prhk:vV";
+static char* args = "b:B:I:o:prhxk:vV";
 
 void usage ()
 {
@@ -53,12 +56,36 @@ void usage ()
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
 #endif
+#ifdef USE_PSRXML
+    "  -x        write PsrXML header file\n"
+#endif
+    "\n"
+    "Optional Components:\n"
+    "Write to DADA ring buffer "
+#ifdef SIGPROC_FILTERBANK_RINGBUFFER
+    "ENABLED\n"
+#else
+    "DISABLED (compile time switch)\n"
+#endif
+    "PsrXML header writing "
+#ifdef USE_PSRXML
+    "ENABLED\n"
+#else
+    "DISABLED (compile time switch)\n"
+#endif
+    "SHA block checksums "
+#ifdef USE_OPENSSL
+    "ENABLED\n"
+#else
+    "DISABLED (compile time switch)\n"
+#endif
        << endl;
 }
 
 int main (int argc, char** argv) try 
 {
   bool verbose = false;
+  bool write_psrxml = false;
   int nbits = 8;
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
@@ -113,7 +140,14 @@ int main (int argc, char** argv) try
 	return -1;
       }
       break;
-
+    case 'x':
+#ifdef USE_PSRXML
+      write_psrxml = true;
+#else
+      fprintf(stderr,"PsrXML library was not enabled at compile time\n");
+      exit(1);
+#endif
+      break;
     case 'h':
       usage ();
       return 0;
@@ -203,6 +237,28 @@ int main (int argc, char** argv) try
   digitizer_rb->set_nbit(8);
   digitizer_rb->set_input (timeseries);
   digitizer_rb->set_output (bitseries_rb);
+#endif
+
+#ifdef USE_PSRXML
+  psrxml* psrxml_header =0;
+  dataFile* rawDataFile = 0;
+  dataBlockHeader* blockHeaders =0;
+  int numberOfBlocksRecorded = 0;
+  unsigned long long totalSamplesRecorded = 0;
+  int blockHeaders_length = 2;
+
+  if(write_psrxml){
+	  // prepare the psrxml header 
+	  psrxml_header = (psrxml*) malloc(sizeof(psrxml));
+	  // blank the xml header
+	  clearPsrXmlDoc(psrxml_header);
+
+	  // create a dataFile to store the info for the raw data file.
+	  rawDataFile = (dataFile*) malloc(sizeof(dataFile));
+	  blockHeaders = (dataBlockHeader*)malloc(sizeof(dataBlockHeader)*blockHeaders_length);
+
+  }
+
 #endif
 
   bool written_header = false;
@@ -304,9 +360,111 @@ int main (int argc, char** argv) try
 
     if (!written_header)
     {
-      sigproc.copy( bitseries );
-      sigproc.unload( outfile );
-      written_header = true;
+	    sigproc.copy( bitseries );
+	    sigproc.unload( outfile );
+	    written_header = true;
+#ifdef USE_PSRXML
+	    if(write_psrxml){
+		    // set the basic parameters, undefined things will be set as we go along or at the end.
+		    strcpy(psrxml_header->sourceName,timeseries->get_source().c_str());
+		    strcpy(psrxml_header->sourceNameCentreBeam,""); // @todo
+		    // cat reference is not yet defined
+		    psrxml_header->mjdObs = timeseries->get_start_time().intday();
+		    psrxml_header->timeToFirstSample = (unsigned long long)(timeseries->get_start_time().get_secs())*(unsigned long long)1000000000 + (unsigned long long)(timeseries->get_start_time().get_fracsec()*1e9);
+		    strcpy(psrxml_header->utc,""); //@todo
+		    strcpy(psrxml_header->lst,""); //@todo
+		    strcpy(psrxml_header->localTime,""); //@todo
+		    psrxml_header->nativeSampleRate = 1.0/(timeseries->get_rate());
+		    psrxml_header->currentSampleInterval = psrxml_header->nativeSampleRate; // we don't do any resampling
+		    // number of samples is not yet defined... 
+		    psrxml_header->requestedObsTime = 0; //@todo
+		    //actualObsTime is not yet defined.
+		    psrxml_header->centreFreqCh1 = timeseries->get_centre_frequency(0);
+		    psrxml_header->freqOffset =  timeseries->get_bandwidth() / timeseries->get_nchan();
+		    if(timeseries->get_bandwidth() > 0){
+			    // the band will be flipped by the sigproc digitizer, so update the header
+			    psrxml_header->freqOffset = -psrxml_header->freqOffset;
+			    psrxml_header->centreFreqCh1 = timeseries->get_centre_frequency(timeseries->get_nchan()-1);
+		    }
+		    psrxml_header->numberOfChannels =  timeseries->get_nchan();
+		    psrxml_header->startCoordinate.ra = timeseries->get_coordinates().ra().getDegrees();
+		    psrxml_header->startCoordinate.dec = timeseries->get_coordinates().dec().getDegrees();
+		    strcpy(psrxml_header->startCoordinate.posn_epoch,"J2000");
+		    // end coordinate not known...
+		    psrxml_header->requestedCoordinate.ra=0; //@todo
+		    psrxml_header->requestedCoordinate.dec=0; //@todo
+		    strcpy(psrxml_header->requestedCoordinate.posn_epoch,"J2000");
+		    psrxml_header->startParalacticAngle = 0; //@todo
+		    // end paralactic angle not known
+		    psrxml_header->isParalacticAngleTracking = 1; //@todo
+		    psrxml_header->startAzEl.az=0; //@todo
+		    psrxml_header->startAzEl.el=0; //@todo
+		    strcpy(psrxml_header->observingProgramme,timeseries->get_identifier().c_str());
+		    strcpy(psrxml_header->observerName,""); //@todo
+		    strcpy(psrxml_header->observationType,Source2string(timeseries->get_type()).c_str());
+		    strcpy(psrxml_header->observationConfiguration,"");//@todo
+		    strcpy(psrxml_header->telescopeIdentifyingString,timeseries->get_telescope().c_str());
+		    strcpy(psrxml_header->receiverIdentifyingString,timeseries->get_receiver().c_str());
+		    strcpy(psrxml_header->backendIdentifyingString,timeseries->get_machine().c_str());
+
+		    strcpy(psrxml_header->telescopeConfigString,"");//@todo
+		    strcpy(psrxml_header->receiverIdentifyingString,"");//@todo
+		    strcpy(psrxml_header->backendIdentifyingString,"");//@todo
+
+
+		    strcpy(psrxml_header->receiver.name,timeseries->get_receiver().c_str());
+		    psrxml_header->receiver.hasCircularFeeds = timeseries->get_basis() == Signal::Circular;
+		    psrxml_header->receiver.feedRightHanded = 0; // @todo
+		    psrxml_header->receiver.numberOfPolarisations = 2;
+		    psrxml_header->receiver.feedSymetry = 0; // @todo
+		    psrxml_header->receiver.calXYPhase = 0; //@todo
+
+		    psrxml_header->receiverBeamNumber = 0;//@todo
+		    psrxml_header->totalBeamsRecorded = 0;//@todo
+		    // sky beam number not known
+
+		    strcpy(psrxml_header->backend.name,timeseries->get_machine().c_str());
+		    psrxml_header->backend.sigprocCode = 0; //@todo
+		    psrxml_header->backend.upperSideband = timeseries->get_bandwidth() > 0; // assume that input data are 'raw'
+		    psrxml_header->backend.reverseCrossPhase = 0; //@todo
+
+		    strcpy(psrxml_header->recordedPol,"II");
+		    strcpy(psrxml_header->observedPol,""); //@todo
+		    psrxml_header->nRecordedPol = 1;
+
+		    strcpy(psrxml_header->telescope.name,timeseries->get_telescope().c_str());
+		    psrxml_header->telescope.longitude = 0;//@todo
+		    psrxml_header->telescope.lattitude=0;//@todo
+		    psrxml_header->telescope.zenithLimit=0;//@todo
+		    psrxml_header->telescope.x=0;//@todo
+		    psrxml_header->telescope.y=0;//@todo
+		    psrxml_header->telescope.z=0;//@todo
+		    psrxml_header->telescope.sigprocCode=0;//@todo
+		    strcpy(psrxml_header->telescope.tempoCode,"");//@todo
+		    strcpy(psrxml_header->telescope.pulsarhunterCode,"");//@todo
+
+		    psrxml_header->comment = (char*)malloc(sizeof(char)*1024);
+		    strcpy(psrxml_header->comment,"PsrXML written by The DECIMATOR");
+
+		    rawDataFile->source = psrxml_header;
+		    string filename = outfile_basename;
+		    filename += ".fil";
+		    strcpy(rawDataFile->filename,filename.c_str());
+		    strcpy(rawDataFile->dataType,"TIMESERIES");
+		    // uid etc not avaliable yet.
+		    // checksum not avaliable yet.
+		    rawDataFile->endian = INDEPENDANT;
+		    rawDataFile->headerLength = ftell(outfile);
+		    rawDataFile->blockLength = timeseries->get_ndat()*psrxml_header->numberOfChannels*nbits/8;
+		    rawDataFile->blockHeaderLength=0;
+		    rawDataFile->bitsPerSample = nbits;
+		    rawDataFile->isChannelInterleaved = 1;
+		    rawDataFile->firstSampleIsMostSignificantBit = 0;
+		    rawDataFile->isSigned =0;
+	    }
+#endif
+
+
     }
 
     // output the result to stdout
@@ -315,13 +473,22 @@ int main (int argc, char** argv) try
 
     fwrite (data,nbyte,1,outfile);
 
+#ifdef USE_PSRXML
+
+    totalSamplesRecorded += timeseries->get_ndat();
+    if(write_psrxml){
+	    if(numberOfBlocksRecorded >= blockHeaders_length){
+		    blockHeaders_length*=2;
+		    blockHeaders = (dataBlockHeader*) realloc(blockHeaders,sizeof(dataBlockHeader)*blockHeaders_length);
+	    }
 #ifdef USE_OPENSSL
-    char* sha_str = (char*)malloc(sizeof(char)*(2*SHA_DIGEST_LENGTH+1));
-    get_SHA_hash(data,nbyte,sha_str);    
-// ADD the hash to the block header, and write out block header.
 
+	    get_SHA_hash(data,nbyte,blockHeaders[numberOfBlocksRecorded].sha1_hash);    
+	    blockHeaders[numberOfBlocksRecorded].has_sha1_hash=1;
+    }
+#endif
+    numberOfBlocksRecorded++;
 
-    free(sha_str);
 #endif
 
     }
@@ -336,6 +503,26 @@ int main (int argc, char** argv) try
 #endif
 
     fclose(outfile);
+
+#ifdef USE_PSRXML
+    if(write_psrxml){
+	    rawDataFile->blockHeaders_length = numberOfBlocksRecorded;
+	    rawDataFile->blockHeaders = blockHeaders;
+
+	    psrxml_header->numberOfSamples = totalSamplesRecorded;
+	    psrxml_header->actualObsTime = totalSamplesRecorded*psrxml_header->currentSampleInterval;
+
+	    psrxml_header->files_length = 1;
+
+	    psrxml_header->files = (dataFile**) malloc(sizeof(dataFile*)*psrxml_header->files_length); 
+	    psrxml_header->files[0] = rawDataFile;
+
+	    char header_filename[80];
+	    sprintf(header_filename,"%s.psrxml",outfile_basename);
+	    writePsrXml(psrxml_header,header_filename);
+	    freePsrXml(psrxml_header);
+    }
+#endif
 
     if (verbose)
       cerr << "end of data file " << filenames[ifile] << endl;
