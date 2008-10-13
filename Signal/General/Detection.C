@@ -16,6 +16,8 @@
 
 #include <memory>
 
+#include <string.h>
+
 using namespace std;
 
 //! Constructor

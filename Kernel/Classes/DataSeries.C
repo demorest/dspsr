@@ -9,6 +9,8 @@
 #include "Error.h"
 #include "malloc16.h"
 
+#include <string.h>
+
 using namespace std;
 
 int dsp::DataSeries::instantiation_count = 0;

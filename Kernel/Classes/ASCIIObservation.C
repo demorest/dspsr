@@ -12,6 +12,8 @@
 
 #include "ascii_header.h"
 
+#include <string.h>
+
 using namespace std;
 
 dsp::ASCIIObservation::ASCIIObservation (const char* header)

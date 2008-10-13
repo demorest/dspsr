@@ -9,6 +9,8 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "Error.h"
 
+#include <stdlib.h>
+
 using namespace std;
 
 dsp::WeightedTimeSeries::WeightedTimeSeries()

@@ -10,6 +10,8 @@
 
 #include <cpgplot.h>
 
+#include <algorithm>
+
 using namespace std;
 
 dsp::BitStatsPlotter::BitStatsPlotter ()

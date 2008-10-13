@@ -8,6 +8,8 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
 
+#include <string.h>
+
 using namespace std;
 
 dsp::AutoCorrelation::AutoCorrelation () 

@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <memory>
+
 using namespace std;
 
 

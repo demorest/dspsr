@@ -13,6 +13,8 @@
 #include "FTransform.h"
 #include "templates.h"
 
+#include <string.h>
+
 using namespace std;
 
 dsp::IncoherentFilterbank::IncoherentFilterbank ()

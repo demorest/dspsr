@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <iostream>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "dsp/Dedispersion.h"
 
