@@ -124,6 +124,9 @@ void dsp::ASPFile::open_file (const char* filename)
 {
   struct asp_params header;
   struct data2rcv block;
+
+  cerr << "sizeof(struct asp_params) = " << sizeof(struct asp_params) << endl;
+  cerr << "sizeof(struct data2rcv) = " << sizeof(struct data2rcv) << endl;
   
   fd = open_read_header (filename, &header, &block);
  

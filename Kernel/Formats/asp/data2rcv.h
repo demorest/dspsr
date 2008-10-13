@@ -9,12 +9,12 @@
 #define _DATA2RCV_H
 
 struct data2rcv {
- int totalsize;
- int NPtsSend;
+ int32_t totalsize;
+ int32_t NPtsSend;
  double iMJD;
  double fMJD;
- long long ipts1,ipts2; /* Actual position of the start and end in the data time serie */
- int  FreqChanNo;
-};
+ int64_t ipts1,ipts2; /* Actual position of the start and end in the data time serie */
+ int32_t  FreqChanNo;
+} __attribute__ ((aligned (4), packed)); // Align as in 32-bit
 
 #endif

@@ -12,6 +12,7 @@
 dsp::ASPUnpacker::ASPUnpacker (const char* name) : HistUnpacker (name)
 {
   set_ndig (4);
+  set_nstate (256);
 }
 
 bool dsp::ASPUnpacker::matches (const Observation* observation)
@@ -54,7 +55,7 @@ void dsp::ASPUnpacker::unpack ()
   
       for (unsigned bt = 0; bt < ndat; bt++) {
         hist[ (unsigned char) *from ] ++;
-        *into = float(int( *from ));
+        *into = float(int( (signed char) *from ));
         from += nskip;
         into += ndim;
       }
