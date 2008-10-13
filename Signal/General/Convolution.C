@@ -16,6 +16,8 @@
 
 #include "FTransform.h"
 
+#include <string.h>
+
 using namespace std;
 
 //#define DEBUG

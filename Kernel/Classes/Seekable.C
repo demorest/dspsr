@@ -11,6 +11,8 @@
 #include "environ.h"
 #include "Error.h"
 
+#include <string.h>
+
 using namespace std;
 
 //! Constructor

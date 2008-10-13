@@ -9,6 +9,8 @@
 #include "Error.h"
 #include "tostring.h"
 
+#include <string.h>
+
 using namespace std;
 
 //! Null constructor
