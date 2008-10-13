@@ -44,8 +44,10 @@ bool dsp::Mark5File::is_valid (const char* filename) const
   headername += ".hdr";
 
   FILE* fptr = fopen (headername.c_str(), "r");
-  if( !fptr )
+  if( !fptr ) {
+      if (verbose) cerr << "Mark5File: no hdr file (" << headername << ")" << endl;
     return false;
+  }
 
   auto_ptr<char> header( new char[1024]);
   fread (header.get(), sizeof(char),1024, fptr);
