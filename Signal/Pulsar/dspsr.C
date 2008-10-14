@@ -32,7 +32,7 @@ using namespace std;
 
 static char* args =
   "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
-  "L:m:M:n:N:O:op:P:qrRsS:t:T:U:vVWx:X:yzZ:";
+  "L:m:M:n:N:O:op:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
 
 void usage ()
 {
@@ -446,8 +446,10 @@ int main (int argc, char** argv) try {
       verbose = true;
       break;
 
+    case 'Q':
+      config->report_vitals = 0;
     case 'q':
-      config->report = 0;
+      config->report_done = 0;
       break;
 
     case 'W':
