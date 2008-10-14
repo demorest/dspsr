@@ -102,6 +102,13 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
   this->profiles = _profiles;
 
+  uint64 ndat_folded = profiles->get_ndat_folded();
+  uint64 ndat_total = profiles->get_ndat_total();
+  double percent = double(ndat_folded)/double(ndat_total) * 100.0;
+
+  cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
+       << ndat_total << " total samples: " << percent << "%" << endl;
+
   if (single_archive)
   {
     // refer to the single archive to which all sub-integration will be written
