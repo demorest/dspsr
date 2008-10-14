@@ -44,10 +44,16 @@ dsp::Archiver::Archiver ()
   archive_software = "Software Unknown";
   archive_dedispersed = false;
   profiles = 0;
+  minimum_integration_length = 0;
 }
 
 dsp::Archiver::~Archiver ()
 {
+}
+
+void dsp::Archiver::set_minimum_integration_length (double seconds)
+{
+  minimum_integration_length = seconds;
 }
 
 void dsp::Archiver::set_archive_class (const string& class_name)
@@ -108,6 +114,15 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
   cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
        << ndat_total << " total samples: " << percent << "%" << endl;
+
+
+  if (profiles->get_integration_length() < minimum_integration_length)
+  {
+    cerr << "dsp::Archiver::unload ignoring " 
+	 << profiles->get_integration_length() << " seconds of data" << endl;
+
+    return;
+  }
 
   if (single_archive)
   {

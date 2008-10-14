@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.21 $
-   $Date: 2008/02/23 09:32:34 $
+   $Revision: 1.22 $
+   $Date: 2008/10/14 21:00:13 $
    $Author: straten $ */
 
 
@@ -66,6 +66,9 @@ namespace dsp {
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
 
+    //! Set the minimum integration length required to unload data
+    void set_minimum_integration_length (double seconds);
+
     //! Get the Pulsar::Archive instance to which all data were added
     Pulsar::Archive* get_archive ();
 
@@ -99,6 +102,9 @@ namespace dsp {
     
     //! Used only internally
     const PhaseSeries* profiles;
+
+    //! Minimum integration length required to unload data
+    double minimum_integration_length;
 
     //! Name of the Pulsar::Archive class used to create new instances
     std::string archive_class_name;

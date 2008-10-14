@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.16 $
-   $Date: 2008/10/04 11:50:37 $
+   $Revision: 1.17 $
+   $Date: 2008/10/14 21:00:13 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -68,6 +68,8 @@ namespace dsp {
     virtual void set_extension (const std::string&);
     virtual std::string get_extension () const;
 
+    //! Set the minimum integration length required to unload data
+    virtual void set_minimum_integration_length (double seconds) = 0;
 
   protected:
 
