@@ -52,7 +52,7 @@ void dsp::PScrunch::transformation ()
   float scale = 1.0 / sqrt(2.0);
 
   switch(input->get_order()){
-	  case TimeSeries::OrderPFT:
+	  case TimeSeries::OrderFPT:
 		  {
 			  for (unsigned ichan=0; ichan < input_nchan; ichan++)
 			  {
@@ -83,7 +83,7 @@ void dsp::PScrunch::transformation ()
 		  }
 	  default:
 		  throw Error (InvalidState, "dsp::PScrunch::operate",
-				  "Can only handle data ordered TFP or PFT");
+				  "Can only handle data ordered TFP or FPT");
   }
   if (output == input)
 	  output->reshape (1,1);

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.45 $
-   $Date: 2008/10/02 23:33:37 $
+   $Revision: 1.46 $
+   $Date: 2008/10/14 18:53:28 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -31,8 +31,8 @@ namespace dsp {
     //! Order of the dimensions
     enum Order {
 
-      //! Polarization, Frequency, Time (default before 3 October 2008)
-      OrderPFT,
+      //! Frequency, Polarization, Time (default before 3 October 2008)
+      OrderFPT,
 
       //! Time, Frequency, Polarization (better for many things)
       OrderTFP
