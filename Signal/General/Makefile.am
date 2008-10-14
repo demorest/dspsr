@@ -21,7 +21,7 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	IncoherentFilterbank.C Bandpass.C LevelMonitor.C RFIFilter.C  \
 	Chomper.C Response.C ResponseProduct.C Convolution.C	      \
 	SLDetect.C Dedispersion.C SampleDelay.C DedispersionHistory.C \
-	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C \
+	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	      \
 	PScrunch.C BandpassMonitor.C
 
 bin_PROGRAMS = dmsmear digitxt digimon digihist
@@ -35,7 +35,7 @@ if HAVE_PGPLOT
 
   ###########################################################################
   #
-  # PGPLOT-specific code
+  # start PGPLOT-specific code
   #
 
   libdspdsp_la_SOURCES += ExcisionStatsPlotter.C BitStatsPlotter.C
@@ -44,24 +44,36 @@ if HAVE_PGPLOT
   digistat_SOURCES = digistat.C
   passband_SOURCES = passband.C
 
+  #
+  # end PGPLOT-specific code
+  #
+  ###########################################################################
+
 endif
 
 
 if HAVE_sigproc
+
+  ###########################################################################
+  #
+  # start sigproc-specific code
+  #
+
   bin_PROGRAMS += digifil
   digifil_SOURCES = digifil.C
+
 if HAVE_dada
   bin_PROGRAMS += the_decimator
   the_decimator_SOURCES = the_decimator.C
   the_decimator_LDADD = $(LDADD) @OPENSSL_LIBS@ @PSRXML_LIBS@
   the_decimator_CPPFLAGS = $(CPPFLAGS) @PSRXML_CFLAGS@
-if HAVE_OPENSSL
-  the_decimator_CPPFLAGS += -DUSE_OPENSSL
 endif
-if HAVE_PSRXML
-  the_decimator_CPPFLAGS += -DUSE_PSRXML
-endif
-endif
+
+  #
+  # end sigproc-specific code
+  #
+  ###########################################################################
+
 endif
 
 #############################################################################
