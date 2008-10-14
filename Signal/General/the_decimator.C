@@ -56,7 +56,7 @@ void usage ()
     "  -I secs   number of seconds between level updates \n"
     "  -o file   file stamp for filterbank file  \n" 
     "  -r        report total Operation times \n"
-    "  -p        revert to PFT order \n"
+    "  -p        revert to FPT order \n"
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
 #endif
@@ -129,7 +129,7 @@ int main (int argc, char** argv) try
       break;
 
     case 'p':
-      order = dsp::TimeSeries::OrderPFT;
+      order = dsp::TimeSeries::OrderFPT;
       break;
 
     case 'r':
