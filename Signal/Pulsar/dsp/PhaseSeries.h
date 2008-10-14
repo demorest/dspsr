@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.26 $
-   $Date: 2008/10/05 11:56:51 $
+   $Revision: 1.27 $
+   $Date: 2008/10/14 18:53:33 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -124,6 +124,9 @@ namespace dsp {
 
     //! Number of time samples integrated into each phase bin
     std::vector<unsigned> hits;
+
+    //! Total number of time samples passed to folding routine
+    uint64 ndat_total;
 
     //! The number of seconds integrated into the profile(s)
     double integration_length;

@@ -551,10 +551,11 @@ void dsp::Fold::fold (uint64 nweights,
   uint64 iweight = 0;
   // idat of last point in current weight
   uint64 idat_nextweight = 0;
-  // number of time samples actually folded
-  uint64 ndat_folded = 0;
   // number of bad weights encountered this run
   unsigned bad_weights = 0;
+
+  // number of time samples folded
+  uint64 ndat_folded = 0;
 
   if (verbose)
     cerr << "dsp::Fold::fold idat_start=" << idat_start 
@@ -562,7 +563,8 @@ void dsp::Fold::fold (uint64 nweights,
 
   bool bad_data = false;
 
-  if (ndatperweight) {
+  if (ndatperweight)
+  {
     iweight = (idat_start + weight_idat) / ndatperweight;
 
     idat_nextweight = (iweight + 1) * ndatperweight - weight_idat;
@@ -572,7 +574,8 @@ void dsp::Fold::fold (uint64 nweights,
 	   << " weight_idat=" << weight_idat << " iweight=" << iweight 
 	   << " nweights=" << nweights << endl;
 
-    if (iweight >= nweights) {
+    if (iweight >= nweights)
+    {
       Error error (InvalidState, "dsp::Fold::fold");
       error << "iweight=" << iweight << " >= nweight=" << nweights << "\n\t"
 	    << "idat_start=" << idat_start 
@@ -581,7 +584,10 @@ void dsp::Fold::fold (uint64 nweights,
       throw error;
     }
 
-    if (weights[iweight] == 0)  {
+    total_weights ++;
+
+    if (weights[iweight] == 0)
+    {
       discarded_weights ++;
       bad_weights ++;
       bad_data = true;
@@ -593,18 +599,24 @@ void dsp::Fold::fold (uint64 nweights,
   double phase_per_sample = sampling_interval / pfold;
   unsigned* hits = &(get_output()->hits[0]);
    
-  for (uint64 idat=idat_start; idat < idat_end; idat++) {
-
-    if (ndatperweight && idat >= idat_nextweight) {
+  for (uint64 idat=idat_start; idat < idat_end; idat++)
+  {
+    if (ndatperweight && idat >= idat_nextweight)
+    {
       iweight ++;
+      total_weights ++;
+
       assert (iweight < nweights);
-      if (weights[iweight] == 0) {
+
+      if (weights[iweight] == 0)
+      {
 	bad_data = true;
 	discarded_weights ++;
 	bad_weights ++;
       }
       else
 	bad_data = false;
+
       idat_nextweight += ndatperweight;
     }
 
@@ -617,11 +629,11 @@ void dsp::Fold::fold (uint64 nweights,
 
     if (bad_data)
       binplan[idat-idat_start] = folding_nbin;
-    else {
+    else
+    {
       hits[ibin]++;
       ndat_folded ++;
     }
-
   }
 
   double time_folded = double(ndat_folded) / get_input()->get_rate();
@@ -631,35 +643,43 @@ void dsp::Fold::fold (uint64 nweights,
 	 << " time=" << time_folded*1e3 << " ms"
 	 << " (bad=" << bad_weights << "/" << iweight+1 << ")" << endl;
 
-  get_output()->integration_length += time_folded;
+  PhaseSeries* result = get_output();
+ 
+  result->integration_length += time_folded;
+  result->ndat_total += ndat_fold;
 
-  if ( get_output()->get_nbin() != folding_nbin )
+  if ( result->get_nbin() != folding_nbin )
     throw Error (InvalidParam,"dsp::Fold::fold",
 		 "folding_nbin != output->nbin (%d != %d)",
-		 folding_nbin, get_output()->get_nbin());
+		 folding_nbin, result->get_nbin());
 
-  unsigned ndim = get_input()->get_ndim();
+  const TimeSeries* in = get_input();
 
-  for (unsigned ichan=0; ichan<get_input()->get_nchan(); ichan++) {
-    for (unsigned ipol=0; ipol<get_input()->get_npol(); ipol++) {
+  const unsigned ndim = in->get_ndim();
+  const unsigned npol = in->get_npol();
+  const unsigned nchan = in->get_nchan();
 
-      const float* timep = get_input()->get_datptr(ichan,ipol)
+  for (unsigned ichan=0; ichan<nchan; ichan++)
+  {
+    for (unsigned ipol=0; ipol<npol; ipol++)
+    {
+      const float* timep = in->get_datptr(ichan,ipol)
 	+ idat_start*ndim;
 
-      float* phasep = get_output()->get_datptr(ichan,ipol);
+      float* phasep = result->get_datptr(ichan,ipol);
 
-      for (uint64 idat=0; idat < ndat_fold; idat++) {
-	if (binplan[idat] != folding_nbin) {
+      for (uint64 idat=0; idat < ndat_fold; idat++)
+      {
+	if (binplan[idat] != folding_nbin)
+        {
 	  float* phdimp = phasep + binplan[idat] * ndim;
 	  for (unsigned idim=0; idim<ndim; idim++)
 	    phdimp[idim] += timep[idim];
 	}
 	timep += ndim;
       } // for each idat
-
     } // for each chan
   } // for each pol
-
 }
 
 double dsp::Fold::get_phi (const MJD& start_time)
