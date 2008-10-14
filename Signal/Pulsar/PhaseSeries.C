@@ -15,6 +15,7 @@ using namespace std;
 dsp::PhaseSeries::PhaseSeries () : TimeSeries()
 {
   integration_length = 0;
+  ndat_total = 0;
   folding_period = 0;
   reference_phase = 0;
 }
@@ -123,6 +124,8 @@ void dsp::PhaseSeries::zero ()
     cerr << "PhaseSeries::zero" << endl;
 
   integration_length = 0.0;
+  ndat_total = 0;
+
   set_hits (0);
   TimeSeries::zero ();
 }
@@ -153,8 +156,8 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
   else
     obsEnd = obsStart + double (fold_ndat) / obs.get_rate();
 
-  if (integration_length == 0.0) {
-
+  if (integration_length == 0.0)
+  {
     // the integration is currently empty; prepare for integration
 
     if (verbose)
@@ -167,8 +170,16 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
     end_time = obsEnd;
     start_time = obsStart;
 
+    /*
+      the integration length may be zero only because all of the samples
+      have been dropped - maintain the record of dropped samples
+    */
+    uint64 backup_ndat_total = ndat_total;
+
     resize (nbin);
     zero ();
+
+    ndat_total = backup_ndat_total;
 
     return true;
   }
@@ -208,6 +219,7 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
 
   reference_phase    = prof.reference_phase;
   integration_length = prof.integration_length;
+  ndat_total         = prof.ndat_total;
   end_time           = prof.end_time;
   folding_period     = prof.folding_period;
   folding_predictor  = prof.folding_predictor->clone();
@@ -234,6 +246,23 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof)
          << " cur=" << integration_length << endl;
 
   integration_length += prof->integration_length;
+  ndat_total += prof->ndat_total;
 }
 
+//! Return the total number of time samples
+uint64 dsp::PhaseSeries::get_ndat_total () const
+{
+  return ndat_total;
+}
 
+//! Return the number of time samples folded into the profiles
+uint64 dsp::PhaseSeries::get_ndat_folded () const
+{
+  uint64 folded = 0;
+
+  const unsigned nbin = get_nbin();
+  for (unsigned i=0; i<nbin; i++)
+    folded += hits[i];
+
+  return folded;
+}
