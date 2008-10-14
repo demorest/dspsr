@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.28 $
-   $Date: 2008/10/14 19:11:33 $
-   $Author: straten $ */
+   $Revision: 1.29 $
+   $Date: 2008/10/14 19:12:12 $
+   $Author: demorest $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
@@ -23,6 +23,7 @@ namespace Pulsar {
 
 namespace dsp {
   
+  //! Data as a function of pulse phase
   class PhaseSeries : public TimeSeries {
 
     friend class Fold;

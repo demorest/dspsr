@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.26 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.27 $
+   $Date: 2008/10/14 19:12:12 $
+   $Author: demorest $ */
 
 #ifndef __Response_h
 #define __Response_h
@@ -26,6 +26,7 @@ namespace dsp {
 
   class Observation;
 
+  //! Describes a frequency (or impulse) response
   class Response : public Shape {
 
   public:
