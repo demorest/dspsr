@@ -242,6 +242,17 @@ catch (Error& error)
   throw error += "dsp::UnloaderShare::Submit::finish";
 }
 
+//! Set the minimum integration length required to unload data
+void dsp::UnloaderShare::Submit::set_minimum_integration_length (double secs)
+{
+  if (!parent->get_unloader())
+    throw Error (InvalidState,
+		 "dsp::UnloaderShare::Submit::set_minimum_integration_length",
+		 "parent unloader not set");
+
+  parent->get_unloader()->set_minimum_integration_length (secs);
+}
+
 //! Get submission interface for the specified contributor
 dsp::UnloaderShare::Submit* 
 dsp::UnloaderShare::new_Submit (unsigned contributor)

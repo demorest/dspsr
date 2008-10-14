@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/02/24 03:39:25 $
+   $Revision: 1.6 $
+   $Date: 2008/10/14 21:00:13 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -136,6 +136,9 @@ namespace dsp {
 
     //! Inform any waiting threads that the current thread is finished
     void finish ();
+
+    //! Set the minimum integration length required to unload data
+    void set_minimum_integration_length (double seconds);
 
   protected:
 
