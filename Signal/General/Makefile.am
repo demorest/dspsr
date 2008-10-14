@@ -66,7 +66,7 @@ if HAVE_dada
   bin_PROGRAMS += the_decimator
   the_decimator_SOURCES = the_decimator.C
   the_decimator_LDADD = $(LDADD) @OPENSSL_LIBS@ @PSRXML_LIBS@
-  the_decimator_CPPFLAGS = $(CPPFLAGS) @PSRXML_CFLAGS@
+  the_decimator_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) @PSRXML_CFLAGS@
 endif
 
   #
