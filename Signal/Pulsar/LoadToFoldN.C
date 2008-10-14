@@ -92,16 +92,16 @@ void dsp::LoadToFoldN::prepare ()
   if (threads[0]->kernel && !threads[0]->kernel->context)
     threads[0]->kernel->context = new ThreadContext;
 
-  if (configuration->report)
-    configuration->report = threads.size();
+  if (configuration->report_done)
+    configuration->report_done = threads.size();
 
   //
   // install InputBuffering::Share policy
   //
   typedef Transformation<TimeSeries,TimeSeries> Xform;
 
-  for (unsigned iop=0; iop < threads[0]->operations.size(); iop++) {
-
+  for (unsigned iop=0; iop < threads[0]->operations.size(); iop++)
+  {
     Xform* xform = dynamic_kast<Xform>( threads[0]->operations[iop] );
 
     if (!xform)
@@ -117,15 +117,16 @@ void dsp::LoadToFoldN::prepare ()
       continue;
 
     xform->set_buffering_policy( new InputBuffering::Share (ibuf, xform) );
-
   }
 
-  bool subints = configuration->single_pulse || configuration->integration_length;
+  bool subints = configuration->single_pulse 
+    || configuration->integration_length;
 
   if (subints)
     prepare_subint_archival ();
 
-  for (unsigned i=1; i<threads.size(); i++) {
+  for (unsigned i=1; i<threads.size(); i++)
+  {
 
     //
     // clone the Fold/SubFold operations
@@ -176,8 +177,8 @@ void dsp::LoadToFoldN::prepare ()
     //
     typedef Transformation<TimeSeries,TimeSeries> Xform;
 
-    for (unsigned iop=0; iop < threads[i]->operations.size(); iop++) {
-
+    for (unsigned iop=0; iop < threads[i]->operations.size(); iop++)
+    {
       Xform* trans0 = dynamic_kast<Xform>( threads[0]->operations[iop] );
 
       if (!trans0)
@@ -206,11 +207,8 @@ void dsp::LoadToFoldN::prepare ()
       // cerr << "Sharing buffering policy of " << trans->get_name() << endl;
 
       trans->set_buffering_policy( ibuf0->clone(trans) );
-
     }
-
   }
-
 }
 
 void dsp::LoadToFoldN::prepare_subint_archival ()

@@ -122,7 +122,7 @@ void dsp::LoadToFold1::prepare () try
   if (manager->get_info()->get_type() != Signal::Pulsar)
   {
     // the kernel gets messed up by DM=0 sources, like PolnCal
-    if (id==0 && config->report)
+    if (id==0 && config->report_vitals)
       cerr << "Disabling coherent dedispersion of non-pulsar signal" << endl;
     config->coherent_dedispersion = false;
   }
@@ -135,14 +135,24 @@ void dsp::LoadToFold1::prepare () try
       kernel = new Dedispersion;
 
     if (config->nfft)
+    {
+      if (id==0 && config->report_vitals)
+	cerr << "dspsr: setting filter length to " << config->nfft << endl;
       kernel->set_frequency_resolution (config->nfft);
+    }
 
     if (config->times_minimum_nfft)
+    {
+      if (id==0 && config->report_vitals)
+	cerr << "dspsr: setting filter length to minimum times " 
+	     << config->times_minimum_nfft << endl;
       kernel->set_times_minimum_nfft (config->times_minimum_nfft);
+    }
 
     if (config->nsmear)
     {
-      cerr << "setting smearing samples to " << config->nsmear << endl;
+      if (id==0 && config->report_vitals)
+	cerr << "dspsr: setting smearing to " << config->nsmear << endl;
       kernel->set_smearing_samples (config->nsmear);
     }
   }
@@ -219,7 +229,6 @@ void dsp::LoadToFold1::prepare () try
     convolution->set_output (convolved);  // inplace
     
     operations.push_back (convolution.get());
-
   }
 
   if (config->interchan_dedispersion)
@@ -387,16 +396,29 @@ void dsp::LoadToFold1::prepare_final ()
 
   minimum_samples = 0;
 
+  if (kernel && id==0 && config->report_vitals)
+    cerr << "dspsr: dedispersion filter length=" << kernel->get_ndat ()
+	 << " (minimum=" << kernel->get_minimum_ndat () << ")" 
+	 << " complex samples" << endl;
+
   if (filterbank)
   {
-    // cerr << "ASK FILTERBANK" << endl;
     minimum_samples = filterbank->get_minimum_samples ();
+    if (id==0 && config->report_vitals)
+    {
+      cerr << "dspsr: " << config->nchan << " channel ";
+      if (config->simultaneous_filterbank)
+	cerr << "dedispersing ";
+      cerr << "filterbank requires " << minimum_samples << " samples" << endl;
+    }
   }
 
   if (convolution)
   {
-    // cerr << "ASK CONVOLUTION" << endl;
     minimum_samples = convolution->get_minimum_samples ();
+    if (id==0 && config->report_vitals)
+      cerr << "dspsr: convolution requires at least " 
+	   << minimum_samples << " samples" << endl;
   }
 
   // cerr << "MINIMUM SAMPLES=" << minimum_samples << endl;
@@ -407,7 +429,7 @@ void dsp::LoadToFold1::prepare_final ()
       config->get_maximum_RAM(),
       config->get_nbuffers() );
 
-  if (id==0 && config->report)
+  if (id==0 && config->report_vitals)
   {
     double megabyte = 1024*1024;
     cerr << "dspsr: blocksize=" << manager->get_input()->get_block_size()
@@ -706,7 +728,7 @@ void dsp::LoadToFold1::run () try
     
     block++;
     
-    if (id==0 && config->report) 
+    if (id==0 && config->report_done) 
     {
       double seconds = input->tell_seconds();
       int64 decisecond = int64( seconds * 10 );
@@ -718,7 +740,7 @@ void dsp::LoadToFold1::run () try
 
 	if (nblocks_tot)
 	  cerr << " (" 
-	       << int (100.0*config->report*float(block)/float(nblocks_tot))
+	       << int (100.0*config->report_done*float(block)/float(nblocks_tot))
 	       << "%)";
 
 	cerr << "   \r";
