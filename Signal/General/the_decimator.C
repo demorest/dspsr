@@ -5,6 +5,10 @@
  *
  ***************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/SigProcObservation.h"
 #include "dsp/SigProcDigitizer.h"
 
@@ -29,11 +33,11 @@
 #include "dsp/ASCIIObservation.h"
 #endif
 
-#ifdef USE_OPENSSL
+#ifdef HAVE_OPENSSL_SHA_H
 #include <openssl/sha.h>
 char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 #endif
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
 #include <psrxml.h>
 #endif
 
@@ -56,7 +60,7 @@ void usage ()
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
 #endif
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
     "  -x        write PsrXML header file\n"
 #endif
     "\n"
@@ -68,13 +72,13 @@ void usage ()
     "DISABLED (compile time switch)\n"
 #endif
     "PsrXML header writing "
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
     "ENABLED\n"
 #else
     "DISABLED (compile time switch)\n"
 #endif
     "SHA block checksums "
-#ifdef USE_OPENSSL
+#ifdef HAVE_OPENSSL_SHA_H
     "ENABLED\n"
 #else
     "DISABLED (compile time switch)\n"
@@ -141,7 +145,7 @@ int main (int argc, char** argv) try
       }
       break;
     case 'x':
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
       write_psrxml = true;
 #else
       fprintf(stderr,"PsrXML library was not enabled at compile time\n");
@@ -239,7 +243,7 @@ int main (int argc, char** argv) try
   digitizer_rb->set_output (bitseries_rb);
 #endif
 
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
   psrxml* psrxml_header =0;
   dataFile* rawDataFile = 0;
   dataBlockHeader* blockHeaders =0;
@@ -363,7 +367,7 @@ int main (int argc, char** argv) try
 	    sigproc.copy( bitseries );
 	    sigproc.unload( outfile );
 	    written_header = true;
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
 	    if(write_psrxml){
 		    // set the basic parameters, undefined things will be set as we go along or at the end.
 		    strcpy(psrxml_header->sourceName,timeseries->get_source().c_str());
@@ -473,7 +477,7 @@ int main (int argc, char** argv) try
 
     fwrite (data,nbyte,1,outfile);
 
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
 
     totalSamplesRecorded += timeseries->get_ndat();
     if(write_psrxml){
@@ -481,7 +485,7 @@ int main (int argc, char** argv) try
 		    blockHeaders_length*=2;
 		    blockHeaders = (dataBlockHeader*) realloc(blockHeaders,sizeof(dataBlockHeader)*blockHeaders_length);
 	    }
-#ifdef USE_OPENSSL
+#ifdef HAVE_OPENSSL_SHA_H
 
 	    get_SHA_hash(data,nbyte,blockHeaders[numberOfBlocksRecorded].sha1_hash);    
 	    blockHeaders[numberOfBlocksRecorded].has_sha1_hash=1;
@@ -504,7 +508,7 @@ int main (int argc, char** argv) try
 
     fclose(outfile);
 
-#ifdef USE_PSRXML
+#ifdef HAVE_PSRXML
     if(write_psrxml){
 	    rawDataFile->blockHeaders_length = numberOfBlocksRecorded;
 	    rawDataFile->blockHeaders = blockHeaders;
@@ -545,7 +549,7 @@ catch (Error& error)
 
 
 
-#ifdef USE_OPENSSL
+#ifdef HAVE_OPENSSL_SHA_H
 char get_SHA_hash(unsigned char* buffer,int size, char* hashStr) {
         unsigned char hash[SHA_DIGEST_LENGTH];
         char *ptr;
