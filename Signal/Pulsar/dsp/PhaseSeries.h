@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.27 $
-   $Date: 2008/10/14 18:53:33 $
+   $Revision: 1.28 $
+   $Date: 2008/10/14 19:11:33 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -107,6 +107,12 @@ namespace dsp {
 
     //! Over-ride Observation::combinable_rate
     bool combinable_rate (double) const { return true; }
+
+    //! Return the total number of time samples
+    uint64 get_ndat_total () const;
+
+    //! Return the number of time samples folded into the profiles
+    uint64 get_ndat_folded () const;
 
   protected:
 
