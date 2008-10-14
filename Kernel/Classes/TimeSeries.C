@@ -35,7 +35,7 @@ dsp::TimeSeries::TimeSeries (const TimeSeries& ts) : DataSeries()
 
 void dsp::TimeSeries::init ()
 {
-  order = OrderPFT;
+  order = OrderFPT;
 
   DataSeries::set_nbit( 8 * sizeof(float) );
   data = 0;
@@ -239,9 +239,9 @@ const unsigned char* dsp::TimeSeries::get_data() const
 //! Return pointer to the specified data block
 float* dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol)
 {
-  if (order != OrderPFT)
+  if (order != OrderFPT)
     throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
-		 "Not in Polarization, Frequency, Time Order");
+		 "Not in Frequency, Polarization, Time Order");
 
   return reinterpret_cast<float*>( get_udatptr(ichan,ipol) );
 }
@@ -250,9 +250,9 @@ float* dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol)
 const float*
 dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
 {
-  if (order != OrderPFT)
+  if (order != OrderFPT)
     throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
-		 "Not in Polarization, Frequency, Time Order");
+		 "Not in Frequency, Polarization, Time Order");
 
   return reinterpret_cast<const float*>( get_udatptr(ichan,ipol) );
 }

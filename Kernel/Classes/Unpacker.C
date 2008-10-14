@@ -14,7 +14,7 @@ using namespace std;
 dsp::Unpacker::Unpacker (const char* name)
   : Transformation <BitSeries, TimeSeries> (name, outofplace, true) 
 {
-  output_order = TimeSeries::OrderPFT;
+  output_order = TimeSeries::OrderFPT;
 }
 
 void dsp::Unpacker::prepare ()

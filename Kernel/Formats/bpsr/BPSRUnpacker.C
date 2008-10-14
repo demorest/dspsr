@@ -62,7 +62,7 @@ void dsp::BPSRUnpacker::unpack ()
 
   switch ( output->get_order() )
   {
-  case TimeSeries::OrderPFT:
+  case TimeSeries::OrderFPT:
     {
       const unsigned step = npol * nchan;
 

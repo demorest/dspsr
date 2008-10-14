@@ -38,7 +38,7 @@ void usage ()
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename \n" 
     "  -r        report total Operation times \n"
-    "  -p        revert to PFT order \n"
+    "  -p        revert to FPT order \n"
        << endl;
 }
 
@@ -72,7 +72,7 @@ int main (int argc, char** argv) try
       break;
 
     case 'p':
-      order = dsp::TimeSeries::OrderPFT;
+      order = dsp::TimeSeries::OrderFPT;
       break;
 
     case 'r':

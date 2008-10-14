@@ -65,7 +65,7 @@ void dsp::SigProcDigitizer::pack ()
 	int digi_min=0;
 	int bit_counter=0;
 	int samp_per_byte = 8/nbit;
-	int divider = (nbit*nchan)/8;
+
 	switch (nbit){
 		case 1:
 			digi_mean=0.5;
@@ -165,7 +165,7 @@ void dsp::SigProcDigitizer::pack ()
 
 				return;
 			}
-		case TimeSeries::OrderPFT:
+		case TimeSeries::OrderFPT:
 			{
 				for (unsigned ichan=0; ichan < nchan; ichan++)
 				{

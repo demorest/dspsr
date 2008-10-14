@@ -152,7 +152,7 @@ void dsp::Rescale::transformation ()
 					}
 					break;
 				}
-			case TimeSeries::OrderPFT:
+			case TimeSeries::OrderFPT:
 				{
 					for (unsigned ipol=0; ipol < input_npol; ipol++) 
 					{
@@ -183,7 +183,7 @@ void dsp::Rescale::transformation ()
 				}
 			default:
 				throw Error (InvalidState, "dsp::Rescale::operate",
-						"Requires data in TFP or PFT order");
+						"Requires data in TFP or FPT order");
 
 		}
 		isample = samp_dat;
@@ -248,7 +248,7 @@ void dsp::Rescale::transformation ()
 					break;
 				}
 
-			case TimeSeries::OrderPFT:
+			case TimeSeries::OrderFPT:
 				{
 					for (unsigned ipol=0; ipol < input_npol; ipol++) 
 					{
@@ -267,7 +267,7 @@ void dsp::Rescale::transformation ()
 				}
 			default:
 				throw Error (InvalidState, "dsp::Rescale::operate",
-						"Requires data in TFP or PFT order");
+						"Requires data in TFP or FPT order");
 		}
 		start_dat = end_dat;
 
