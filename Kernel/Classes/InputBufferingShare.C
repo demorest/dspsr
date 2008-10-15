@@ -62,6 +62,10 @@ catch (Error& error)
 /*! Copy remaining data from the target Transformation's input to buffer */
 void dsp::InputBuffering::Share::set_next_start (uint64 next) try
 {
+  // do nothing if the thread has no data
+  if (target->get_input()->get_ndat() == 0)
+    return;
+
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::Share::set_next_start lock context="
          << context << endl;
