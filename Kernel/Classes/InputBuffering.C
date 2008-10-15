@@ -82,13 +82,19 @@ void dsp::InputBuffering::pre_transformation ()
 
   const TimeSeries* container = target->get_input();
 
+  int64 want = container->get_input_sample();
+
+  // don't wait for data preceding the first loaded block or last empty block
+  if (want <= 0)
+    return;
+
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::pre_transformation prepend "
 	 << buffer->get_ndat() << " samples \n"
          << "dsp::InputBuffering::pre_transformation target input sample="
-         << container->get_input_sample() << endl;
+         << want << endl;
 
-  const_cast<TimeSeries*>( target->get_input() )->prepend (buffer);
+  const_cast<TimeSeries*>( container )->prepend (buffer);
 }
 
 /*! No action required after transformation */
