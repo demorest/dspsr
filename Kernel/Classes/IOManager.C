@@ -261,7 +261,8 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
   float megabyte = 1024 * 1024;
   if (block_size < minimum_samples)
   {
-    float min_ram = (minimum_samples/resolution) * resolution * nbyte_dat;
+    float blocks = float(minimum_samples)/float(resolution);
+    float min_ram = ceil (blocks) * resolution * nbyte_dat;
 
     throw Error (InvalidState, "dsp::IOManager::set_block_size",
 		 "insufficient RAM: limit=%g MB -> block="UI64" samples\n\t"
