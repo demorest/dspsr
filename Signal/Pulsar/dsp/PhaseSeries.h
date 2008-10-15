@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.29 $
-   $Date: 2008/10/14 19:12:12 $
-   $Author: demorest $ */
+   $Revision: 1.30 $
+   $Date: 2008/10/15 04:00:16 $
+   $Author: straten $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
@@ -144,6 +144,11 @@ namespace dsp {
     //! Return true when Observation can be integrated (and prepare for it)
     bool mixable (const Observation& obs, unsigned nbin,
 		  int64 istart=0, int64 fold_ndat=0);
+
+  private:
+
+    //! Ensure that the old operator += interface is not used
+    void operator += (const PhaseSeries&);
 
   };
 
