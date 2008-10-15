@@ -317,7 +317,7 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
       cerr << "dsp::UnloaderShare::Storage::integrate adding to division="
 	   << division << endl;
 
-    *profiles += *data;
+    profiles->combine( data );
     set_finished( contributor );
 
     return true;
