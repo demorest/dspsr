@@ -11,7 +11,10 @@
 
 #include "dsp/Observation.h"
 
-//! Container of dimension/time-major order floating point data.
+
+namespace dsp {
+  
+  //! Container of dimension/time-major order floating point data.
   /* The DataSeries class contains n-bit data arranged as a
      function of frequency, polarization, time, and dimension, ie.
 
@@ -23,9 +26,6 @@
      ...
      fFpPt0d0...fFpPt0dD,fFpPt1d0...fFpPt1dD...fFpPtTd0...fFpPtTdD
   */
-
-namespace dsp {
-  
   class DataSeries : public Observation {
     
   public:
