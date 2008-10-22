@@ -48,7 +48,10 @@ void dsp::DADABuffer::reset()
 {
   end_of_data = false;
   current_sample = 0;
-  seek (0,SEEK_SET);
+
+  if (!passive)
+    seek (0,SEEK_SET);
+
   last_load_ndat = 0;
 }
 
@@ -67,6 +70,38 @@ bool dsp::DADABuffer::is_valid (const char* filename) const
 
   return false;
 }
+
+int ipcio_view_eod (ipcio_t* ipcio, unsigned byte_resolution)
+{
+  ipcbuf_t* buf = &(ipcio->buf);
+
+#ifdef _DEBUG
+  fprintf (stderr, "ipcio_view_eod: write_buf=%"PRIu64"\n", 
+	   ipcbuf_get_write_count( buf ) );
+#endif
+
+  buf->viewbuf ++;
+
+  if (ipcbuf_get_write_count( buf ) > buf->viewbuf)
+    buf->viewbuf = ipcbuf_get_write_count( buf ) + 1;
+
+  ipcio->bytes = 0;
+  ipcio->curbuf = 0;
+
+  uint64_t current = ipcio_tell (ipcio);
+  uint64_t too_far = current % byte_resolution;
+  if (too_far)
+  {
+    int64_t absolute_bytes = ipcio_seek (ipcio,
+					 current + byte_resolution - too_far,
+					 SEEK_SET);
+    if (absolute_bytes < 0)
+      return -1;
+  }
+
+  return 0;
+}
+
 
 //! Open the file
 void dsp::DADABuffer::open_file (const char* filename)
@@ -153,6 +188,10 @@ void dsp::DADABuffer::open_file (const char* filename)
   if (resolution == 0)
     resolution = 1;
 
+  if (passive && ipcio_view_eod (hdu->data_block, byte_resolution) < 0)
+    throw Error (FailedCall, "dsp::DADABuffer::open_file",
+		 "cannot ipcio_view_eod");
+
   if (verbose)
     cerr << "dsp::DADABuffer::open_file exit" << endl;
 }
@@ -197,37 +236,11 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
     cerr << "dsp::DADABuffer::seek " << offset 
 	 << " samples from whence=" << whence << endl;
 
-  ipcbuf_t* buf = &(hdu->data_block->buf);
-
   if (passive && whence == SEEK_END && offset == 0)
   {
-    if (verbose)
-      cerr << "dsp::DADABuffer::seek passive to end write_buf=" 
-	   << ipcbuf_get_write_count( buf ) << endl;
-
-    buf->viewbuf ++;
-
-    if (ipcbuf_get_write_count( buf ) > buf->viewbuf)
-      buf->viewbuf = ipcbuf_get_write_count( buf ) + 1;
-
-    hdu->data_block->bytes = 0;
-    hdu->data_block->curbuf = 0;
-
-    uint64 current = ipcio_tell (hdu->data_block);
-
-    uint64 too_far = current % byte_resolution;
-    if (too_far)
-    {
-      int64 absolute_bytes = ipcio_seek (hdu->data_block,
-					 current + byte_resolution - too_far,
-					 SEEK_SET);
-      if (absolute_bytes < 0)
-	cerr << "DADABuffer::seek passed SEEK_END error ipcio_seek" << endl;
-    }
-
-    if (verbose)
-      cerr << "dsp::DADABuffer::seek viewbuf=" << buf->viewbuf << endl;
-
+    if (ipcio_view_eod (hdu->data_block, byte_resolution) < 0)
+      throw Error (FailedCall, "dsp::DADABuffer::seek",
+		   "cannot ipcio_view_eod");
   }
   else
     Input::seek (offset, whence);
