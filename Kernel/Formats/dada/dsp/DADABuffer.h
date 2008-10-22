@@ -69,6 +69,9 @@ namespace dsp {
     //! Passive viewing mode
     bool passive;
 
+    //! The byte resolution
+    unsigned byte_resolution;
+
   };
 
 }

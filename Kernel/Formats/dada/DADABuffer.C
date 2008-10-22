@@ -109,7 +109,8 @@ void dsp::DADABuffer::open_file (const char* filename)
   passive = line == "viewer";
 
   if (verbose)
-    cerr << "dsp::DADABuffer::open_file key=" << key << " passive=" << passive << endl;
+    cerr << "dsp::DADABuffer::open_file key=" << key 
+	 << " passive=" << passive << endl;
 
   if (!hdu)
   {
@@ -144,11 +145,11 @@ void dsp::DADABuffer::open_file (const char* filename)
 
   info = ASCIIObservation (hdu->header);
 
-  if (ascii_header_get (hdu->header, "RESOLUTION", "%u", &resolution) < 0)
-    resolution = 1;
+  if (ascii_header_get (hdu->header, "RESOLUTION", "%u", &byte_resolution) < 0)
+    byte_resolution = 1;
 
   // the resolution is the _byte_ resolution; convert to _sample_ resolution
-  resolution = info.get_nsamples (resolution);
+  resolution = info.get_nsamples (byte_resolution);
   if (resolution == 0)
     resolution = 1;
 
@@ -211,6 +212,18 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
 
     hdu->data_block->bytes = 0;
     hdu->data_block->curbuf = 0;
+
+    uint64 current = ipcio_tell (hdu->data_block);
+
+    uint64 too_far = current % byte_resolution;
+    if (too_far)
+    {
+      int64 absolute_bytes = ipcio_seek (hdu->data_block,
+					 current + byte_resolution - too_far,
+					 SEEK_SET);
+      if (absolute_bytes < 0)
+	cerr << "DADABuffer::seek passed SEEK_END error ipcio_seek" << endl;
+    }
 
     if (verbose)
       cerr << "dsp::DADABuffer::seek viewbuf=" << buf->viewbuf << endl;
