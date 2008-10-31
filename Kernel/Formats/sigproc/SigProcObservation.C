@@ -26,7 +26,7 @@ public:
   FilePtr (FILE* f) { fptr = f; }
   ~FilePtr () { if (fptr) fclose (fptr); }
   operator FILE* () { return fptr; }
-  bool operator ! () { return fptr != 0; }
+  bool operator ! () { return fptr == 0; }
 protected:
   FILE* fptr;
 };
@@ -86,8 +86,10 @@ void dsp::SigProcObservation::load_global ()
   sky_coord coord;
   coord.ra().setHourMS (src_raj);
   coord.dec().setDegMS (src_dej);
-
   set_coordinates (coord);
+
+  set_machine ("SigProc");
+  set_telescope ("parkes");
 }
 
 void dsp::SigProcObservation::unload (FILE* header)
