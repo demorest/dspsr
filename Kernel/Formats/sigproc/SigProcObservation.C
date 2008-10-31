@@ -6,12 +6,40 @@
  ***************************************************************************/
 
 #include "dsp/SigProcObservation.h"
+#include <iostream.h>
 
 extern "C" {
 #include "filterbank.h"
 }
 
 using namespace std;
+
+dsp::SigProcObservation::SigProcObservation (const char* filename)
+{
+  if (filename)
+    load (filename);
+}
+
+class FilePtr
+{
+public:
+  FilePtr (FILE* f) { fptr = f; }
+  ~FilePtr () { if (fptr) fclose (fptr); }
+  operator FILE* () { return fptr; }
+  bool operator ! () { return fptr != 0; }
+protected:
+  FILE* fptr;
+};
+
+void dsp::SigProcObservation::load (const char* filename)
+{
+  FilePtr fptr = fopen (filename, "r");
+  if (!fptr)
+    throw Error (FailedSys, "dsp::SigProcObservation::load",
+                 "fopen (%s)", filename);
+
+  load (fptr);
+}
 
 dsp::SigProcObservation::SigProcObservation (FILE* header)
 {
@@ -21,7 +49,12 @@ dsp::SigProcObservation::SigProcObservation (FILE* header)
 
 void dsp::SigProcObservation::load (FILE* header)
 {
-  read_header (header);
+  header_bytes = read_header (header);
+
+  if (header_bytes < 1)
+    throw Error (FailedCall, "dsp::SigProcObservation::load",
+                 "read_header failed");
+
   load_global ();
 }
 

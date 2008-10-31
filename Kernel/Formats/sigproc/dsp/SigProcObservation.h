@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcObservation.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/05/30 10:33:32 $
+   $Revision: 1.2 $
+   $Date: 2008/10/31 06:00:50 $
    $Author: straten $ */
 
 #ifndef __SigProcObservation_h
@@ -22,6 +22,12 @@ namespace dsp {
   class SigProcObservation : public Observation {
 
   public:
+
+    //! Construct from a sigproc file
+    SigProcObservation (const char* filename);
+
+    //! Read the sigproce header from file
+    void load (const char* filename);
 
     //! Construct from an SigProc header block
     SigProcObservation (FILE* header=0);
@@ -38,6 +44,7 @@ namespace dsp {
     //! Copy parameters to the sigproc global variables
     void unload_global ();
 
+    int header_bytes;
   };
   
 }
