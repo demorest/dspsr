@@ -120,6 +120,11 @@ static Registry::List<dsp::File>::Enter<dsp::PuMa2File> register_puma2;
 static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
 #endif
 
+#if HAVE_sigproc
+#include "dsp/SigProcFile.h"
+static Registry::List<dsp::File>::Enter<dsp::SigProcFile> register_sigproc;
+#endif
+
 #if HAVE_spigot
 #include "dsp/SpigotFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
