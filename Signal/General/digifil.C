@@ -5,6 +5,11 @@
  *
  ***************************************************************************/
 
+/*
+  digifil converts any file format recognized by dspsr into sigproc
+  filterbank (.fil) format.
+ */
+
 #include "dsp/SigProcObservation.h"
 #include "dsp/SigProcDigitizer.h"
 
@@ -25,7 +30,7 @@
 
 using namespace std;
 
-static char* args = "b:B:o:prhvV";
+static char* args = "b:B:co:prhvV";
 
 void usage ()
 {
@@ -34,7 +39,8 @@ void usage ()
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
-    "  -B samps  number of samples per block \n"
+    "  -B secs   block size in seconds \n"
+    "  -c        keep offset and scale constant \n"
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename \n" 
     "  -r        report total Operation times \n"
@@ -45,11 +51,12 @@ void usage ()
 int main (int argc, char** argv) try 
 {
   bool verbose = false;
+  bool constant_offset_scale = false;
 
   int nbits = 2;
 
-  // a kilo-sample at a time
-  uint64 block_size = 1024;
+  // block size in seconds
+  double block_size = 10;
 
   char* output_filename = 0;
 
@@ -64,7 +71,11 @@ int main (int argc, char** argv) try
       break;
 
     case 'B':
-      block_size = atoi (optarg);
+      block_size = atof (optarg);
+      break;
+
+    case 'c':
+      constant_offset_scale = true;
       break;
 
     case 'o':
@@ -137,6 +148,7 @@ int main (int argc, char** argv) try
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
+  rescale->set_constant (constant_offset_scale);
 
   if (verbose)
     cerr << "digifil: creating pscrunch transformation" << endl;
@@ -164,7 +176,15 @@ int main (int argc, char** argv) try
 
     manager->open (filenames[ifile]);
 
-    manager->get_input()->set_block_size( block_size );
+    dsp::Observation* obs = manager->get_info();
+
+    uint64 nsample = uint64( block_size * obs->get_rate() );
+
+    if (verbose)
+      cerr << "digifil: block_size=" << block_size << " sec "
+        "(" << nsample << " samp)" << endl;
+
+    manager->set_block_size( nsample );
 
     dsp::Unpacker* unpacker = manager->get_unpacker();
 

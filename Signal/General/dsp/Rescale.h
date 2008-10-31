@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/10/03 04:45:27 $
+   $Revision: 1.5 $
+   $Date: 2008/10/31 21:54:21 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
@@ -39,6 +39,9 @@ namespace dsp
 
     //! Set the rescaling interval in samples
     void set_interval_samples (uint64 samples);
+
+    //! After setting offset and scale, keep them constant
+    void set_constant (bool);
 
     //! Get the epoch of the last scale/offset update
     MJD get_update_epoch () const;
@@ -74,6 +77,8 @@ namespace dsp
     uint64 isample;
 
     MJD update_epoch;
+
+    bool constant_offset_scale;
 
     void init ();
 
