@@ -125,6 +125,13 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::PuMa2Unpacker> puma2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>  s2;
 #endif
 
+#if HAVE_sigproc
+#include "dsp/SigProcEight.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::SigProcEight> sigproc8;
+#include "dsp/SigProcTwo.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::SigProcTwo> sigproc2;
+#endif
+
 #if HAVE_spigot
 #include "dsp/ACFUnpack.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
