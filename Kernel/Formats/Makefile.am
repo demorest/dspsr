@@ -10,3 +10,5 @@ include $(top_srcdir)/config/Makefile.bootstrap
 
 include $(top_srcdir)/config/Makefile.include
 
+AM_CPPFLAGS += @PSRDADA_CFLAGS@
+
