@@ -219,7 +219,6 @@ void dsp::Rescale::transformation ()
 
                   if (!constant_offset_scale || first_call)
                   {
-cerr << "Setting offset and scale ipol=" << ipol << " ichan=" << ichan << endl;
 		  offset[ipol][ichan] = -mean;
 		  if (variance == 0.0)
 		    scale[ipol][ichan] = 1.0;
