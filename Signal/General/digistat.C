@@ -204,9 +204,11 @@ int main (int argc, char** argv) try
 	
       if ( excision_threshold )
 	excision -> set_threshold ( excision_threshold );
-      
-      if ( excision_cutoff >= 0 )
-	excision -> set_cutoff_sigma ( excision_cutoff );
+
+      cerr << "digistat: setting excision unpacker cutoff to "
+           << excision_cutoff << endl;
+ 
+      excision -> set_cutoff_sigma ( excision_cutoff );
 
       unpack = excision;
     }
