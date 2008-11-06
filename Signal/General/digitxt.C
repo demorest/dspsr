@@ -97,7 +97,7 @@ int main (int argc, char** argv) try
     correct = dynamic_cast<dsp::TwoBitCorrection*>(manager->get_unpacker());
 
     if (correct)
-      correct -> set_cutoff_sigma (100.0);
+      correct -> set_cutoff_sigma (0.0);
 
     if (verbose)
     {
