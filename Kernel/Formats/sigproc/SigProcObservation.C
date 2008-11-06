@@ -68,7 +68,7 @@ void dsp::SigProcObservation::load_global ()
 
   // set_calfreq(calfreq);
 
-  set_centre_frequency (fch1);
+  set_centre_frequency (fch1 + 0.5 * (foff * (nchans-1)));
   set_bandwidth (foff * nchans);
 
   set_nchan (nchans);
