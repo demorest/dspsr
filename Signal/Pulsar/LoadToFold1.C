@@ -617,6 +617,8 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       if (simple)
       {
+  	fold[ifold]->set_source_name ( simple->get_name() );
+
 	manager->get_info()->set_source
 	  ( simple->get_name() );
 
@@ -689,7 +691,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   if (!config->script.empty())
     archiver->set_script (config->script);
   
-  if (config->additional_pulsars.size())
+  if (fold.size() > 1)
     archiver->set_path_add_source (true);
   
   if (!config->archive_extension.empty())
