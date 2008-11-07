@@ -43,7 +43,7 @@ char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 
 using namespace std;
 
-static char* args = "b:B:I:o:prhxk:vV";
+static char* args = "b:B:cI:o:prhxk:vV";
 
 void usage ()
 {
@@ -53,6 +53,7 @@ void usage ()
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
     "  -B secs   number of seconds per block \n"
+    "  -c        keep offset and scale constant \n"
     "  -I secs   number of seconds between level updates \n"
     "  -o file   file stamp for filterbank file  \n" 
     "  -r        report total Operation times \n"
@@ -89,6 +90,7 @@ void usage ()
 int main (int argc, char** argv) try 
 {
   bool verbose = false;
+  bool constant_offset_scale = false;
   bool write_psrxml = false;
   int nbits = 8;
 
@@ -118,6 +120,10 @@ int main (int argc, char** argv) try
 
     case 'B':
       block_size = atof (optarg);
+      break;
+
+    case 'c':
+      constant_offset_scale = true;
       break;
 
     case 'I':
@@ -209,6 +215,8 @@ int main (int argc, char** argv) try
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
   rescale->set_interval_seconds (update_interval);
+  rescale->set_constant (constant_offset_scale);
+
   if (verbose)
     cerr << "the_decimator: attaching BandpassMonitor" << endl;
   Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
