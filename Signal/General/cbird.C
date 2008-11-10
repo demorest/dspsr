@@ -173,6 +173,20 @@ int main(int argc, char ** argv) try
   cout << "Channel masks are written into: " << filename << endl;
   cerr << "\n";
 
+// write out input band and filtered band in ascii
+  string plotfile = filename + ".band";
+
+  outfile = fopen(plotfile.c_str(), "w");
+  if (!outfile)
+      	throw Error (FailedSys, "",
+                   "Could not open " + filename + " for output");
+
+  for (i=0; i < nchan; i++)
+        fprintf(outfile, "%d %f %f\n", i+1, bpdata[i], data[i]);
+
+  fclose (outfile);
+
+
 // free memory
   free (bpdata);
   return 0;
