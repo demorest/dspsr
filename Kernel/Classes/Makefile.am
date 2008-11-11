@@ -20,7 +20,8 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/ExcisionUnpacker.h dsp/UnpackerIterator.h		     \
 	dsp/BlockIterator.h dsp/StepIterator.h dsp/TwoBitLookup.h    \
 	dsp/TwoBitFour.h dsp/TwoBit1or2.h dsp/FourBitTwo.h	     \
-	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h
+	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h \
+	dsp/ObservationChange.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
@@ -33,7 +34,7 @@ libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	dspExtension.C IOManager.C Scratch.C Input.C Seekable.C	    \
 	InputBuffering.C SetBufferingPolicy.C ExcisionUnpacker.C    \
 	TwoBitLookup.C TwoBitFour.C TwoBit1or2.C NLowLookup.C	    \
-	UnpackerIterator.C
+	UnpackerIterator.C ObservationChange.C
 
 if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
