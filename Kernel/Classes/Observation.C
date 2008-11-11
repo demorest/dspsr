@@ -4,16 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <stdio.h>
-#include <math.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
 
-#include <string>
-#include <vector>
+#include "dsp/Observation.h"
+#include "dsp/dspExtension.h"
 
 #include "Angle.h"
 #include "MJD.h"
@@ -24,8 +17,16 @@
 
 #include "environ.h"
 
-#include "dsp/dspExtension.h"
-#include "dsp/Observation.h"
+#include <stdio.h>
+#include <math.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#include <string>
+#include <vector>
 
 using namespace std;
 
@@ -72,12 +73,10 @@ void dsp::Observation::init ()
   identifier = mode = machine = "";
   coordinates = sky_coord();
   dispersion_measure = 0.0;
-  between_channel_dm = 0.0;
+  rotation_measure = 0.0;
 
   dual_sideband = -1;
-
-  domain = "Time";  /* cf 'Fourier' */
-  last_ondisk_format = "raw"; /* cf 'CoherentFB' or 'Digi' etc */
+  require_equal_sources = true;
 }
 
 //! Set true if the data are dual sideband
@@ -100,76 +99,7 @@ bool dsp::Observation::get_dual_sideband () const
   // if the dual sideband flag is not set, return true if state == Analytic
   return state == Signal::Analytic;
 }
-     
-double dsp::Observation::get_highest_frequency(double max_freq, unsigned chanstart,unsigned chanend){
-  chanend = min(get_nchan(),chanend);
 
-  double sign_change = 1;
-
-  if( get_centre_frequency()<0.0 )
-    sign_change = -1;
-
-  unsigned j=chanstart;
-  while( j<chanend && sign_change*get_centre_frequency(j)>max_freq ){
-    //fprintf(stderr,"dsp::Observation::get_highest_frequency() Chan %d at %f is higher than %f\n",
-    //    j,sign_change*get_centre_frequency(j),max_freq);
-    j++;
-  }
-
-  if( j==chanend )
-    throw Error(InvalidParam,"dsp::Observation::get_highest_frequency()",
-		"Your max_freq of %f is higher than all the centre frequencies available",
-		max_freq);
-
-  double highest_frequency = sign_change*get_centre_frequency(j);
-
-  for( unsigned i=j; i<chanend; i++){
-    if( sign_change*get_centre_frequency(i)>max_freq ){
-      //      fprintf(stderr,"dsp::Observation::get_highest_frequency() Chan %d at %f is higher than %f\n",
-      //    i,sign_change*get_centre_frequency(i),max_freq);
-    }
-    else{
-      highest_frequency = max(highest_frequency,sign_change*get_centre_frequency(i));
-    }
-  }
-
-  return highest_frequency;
-}
-
-double dsp::Observation::get_lowest_frequency(double min_freq, unsigned chanstart,unsigned chanend){
-  chanend = min(get_nchan(),chanend);
-
-  double sign_change = 1;
-
-  if( get_centre_frequency()<0.0 )
-    sign_change = -1;
-
-  unsigned j=chanstart;
-  while( j<chanend && sign_change*get_centre_frequency(j)<min_freq ){
-    //    fprintf(stderr,"dsp::Observation::get_lowest_frequency() Chan %d at %f is lower than %f\n",
-    //    j,sign_change*get_centre_frequency(j),min_freq);
-    j++;
-  }
-
-  if( j==chanend )
-    throw Error(InvalidParam,"dsp::Observation::get_lowest_frequency()",
-		"Your min_freq of %f is lower than all the centre frequencies available",
-		min_freq);
-
-  double lowest_frequency = sign_change*get_centre_frequency(0);
-
-  for( unsigned i=j; i<chanend; i++){
-    if( sign_change*get_centre_frequency(i)<min_freq ){
-      //fprintf(stderr,"dsp::Observation::get_lowest_frequency() Chan %d at %f is lower than %f\n",
-      //    i,sign_change*get_centre_frequency(i),min_freq);
-    }
-    else{
-      lowest_frequency = min(lowest_frequency,sign_change*get_centre_frequency(i));
-    }
-  }
-
-  return lowest_frequency;
-}
 
 void dsp::Observation::set_state (Signal::State _state)
 {
@@ -256,7 +186,8 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
 
-  if (source != obs.source) {
+  if (require_equal_sources && source != obs.source)
+  {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different source:"
 	   << source << " and " << obs.source << endl;
@@ -394,13 +325,6 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
   
-  if( domain != obs.domain ) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different domains:"
-	   << domain << " and " << obs.domain << endl;
-    can_combine = false;
-  }
-  
   if( fabs(dispersion_measure - obs.dispersion_measure) > eps) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different dispersion measure:"
@@ -408,10 +332,10 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
   
-  if( fabs(between_channel_dm - obs.between_channel_dm) > eps) {
+  if( fabs(rotation_measure - obs.rotation_measure) > eps) {
     if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different dispersion measure:"
-	   << between_channel_dm << " and " << obs.between_channel_dm << endl;
+      cerr << "dsp::Observation::combinable different rotation measure:"
+	   << rotation_measure << " and " << obs.rotation_measure << endl;
     can_combine = false;
   }
 
@@ -514,10 +438,10 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 
   dual_sideband = in_obs.dual_sideband;
 
-  set_centre_frequency ( in_obs.get_centre_frequency() );
-  set_bandwidth   ( in_obs.get_bandwidth() );
-  set_dispersion_measure   ( in_obs.get_dispersion_measure() );
-  set_between_channel_dm( in_obs.get_between_channel_dm() );
+  set_centre_frequency   ( in_obs.get_centre_frequency() );
+  set_bandwidth          ( in_obs.get_bandwidth() );
+  set_dispersion_measure ( in_obs.get_dispersion_measure() );
+  set_rotation_measure   ( in_obs.get_rotation_measure() );
 
   set_start_time  ( in_obs.get_start_time() );
 
@@ -530,9 +454,6 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_machine     ( in_obs.get_machine() );
   set_mode        ( in_obs.get_mode() );
   set_calfreq     ( in_obs.get_calfreq());
-
-  set_domain( in_obs.get_domain() );
-  set_last_ondisk_format( in_obs.get_last_ondisk_format() );
 
   extensions.resize( 0 );
 
@@ -560,11 +481,6 @@ double dsp::Observation::get_centre_frequency (unsigned ichan) const
   double channel = double ( (ichan+swap_chan) % get_nchan() );
 
   return get_base_frequency() + channel * bandwidth / double(get_nchan());
-}
-
-//! Returns the centre frequency of the ichan'th frequency ordered channel in MHz.
-double dsp::Observation::get_ordered_cfreq(unsigned ichan){
-  return get_centre_frequency(ichan);
 }
 
 // returns the centre_frequency of the first channel
