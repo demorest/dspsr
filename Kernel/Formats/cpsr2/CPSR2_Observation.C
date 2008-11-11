@@ -22,10 +22,8 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
 
   load (header);
 
-  if ( get_nchan() > 1 && get_npol() == 1) {
+  if ( get_nchan() > 1 && get_npol() == 1)
     set_state (Signal::Intensity);
-    set_thresh();
-  }
   
 #if 0
 
@@ -73,7 +71,3 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
   set_machine ("CPSR2");
 
 }
-
-void dsp::CPSR2_Observation::set_thresh() {
-  thresh = new float [2*get_nchan()];
-}    

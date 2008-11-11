@@ -90,22 +90,10 @@ void dsp::CPSR2File::open_file (const char* filename)
 
   info = data;
   if (info.get_state() == Signal::Intensity)
-  {
-    if (verbose)
-      cerr <<
-	"CPSR2File::open State is Intensity so dealing with SimpleFB file \n"
-	"Getting thresholds from file and filling observation \n"
-	   << endl;
+    throw Error (InvalidState, "dsp::CPSR2File::open_file",
+                 "SimpleFB no longer supported");
 
-    size_t blksize =  info.get_nchan()*2*sizeof(float);
-    fd = ::open(filename,O_RDONLY);
-    lseek(fd,CPSR2_HEADER_SIZE,SEEK_SET);
-    read(fd,(void *) info.get_thresh(),blksize);
-    header_bytes = CPSR2_HEADER_SIZE + blksize;
-    want_to_yamasaki_verify = false;
-  }
-  else
-    header_bytes = CPSR2_HEADER_SIZE;
+  header_bytes = CPSR2_HEADER_SIZE;
 
   if( want_to_yamasaki_verify && filesize(filename) > 50 * 1024 * 1024 )
     if (yamasaki_verify (filename, data.get_offset_bytes(),
