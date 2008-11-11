@@ -18,6 +18,7 @@ dsp::PhaseSeries::PhaseSeries () : TimeSeries()
   ndat_total = 0;
   folding_period = 0;
   reference_phase = 0;
+  require_equal_sources = false;
 }
 
 dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
