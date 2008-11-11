@@ -77,9 +77,6 @@ dsp::MWAFile::open_file (const char* filename)
   info.set_dc_centred( false );
   info.set_calfreq( 0.0 );
   info.set_dispersion_measure( 0.0 );
-  info.set_between_channel_dm( 0.0 );
-  info.set_domain( "Time" );
-  info.set_last_ondisk_format( "MWA" );
 
   {
     // COORDINATES are stored as RAJ and DECJ

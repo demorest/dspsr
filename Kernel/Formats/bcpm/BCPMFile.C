@@ -119,9 +119,6 @@ void dsp::BCPMFile::open_file (const char* filename){
   get_info()->set_swap( false );
   get_info()->set_mode("SEARCH");
   get_info()->set_dispersion_measure( 0.0 );
-  get_info()->set_between_channel_dm( 0.0 );
-  get_info()->set_domain("Time");
-  get_info()->set_last_ondisk_format( "raw" );
   get_info()->set_dc_centred( false );
   get_info()->set_type( Signal::Pulsar );
   get_info()->set_state( Signal::Intensity );
