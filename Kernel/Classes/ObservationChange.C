@@ -36,6 +36,88 @@ dsp::ObservationChange::ObservationChange ()
   dual_sideband_changed = false;
 }
 
+//! Set the attributes that have been changed
+void dsp::ObservationChange::change (Observation* target)
+{
+  if (telescope_changed)
+    target->set_telescope( get_telescope() );
+
+  if (receiver_changed)
+    target->set_receiver( get_receiver() );
+
+  if (source_changed)
+    target->set_source( get_source() );
+
+  if (centre_frequency_changed)
+    target->set_centre_frequency( get_centre_frequency() );
+
+  if (bandwidth_changed)
+    target->set_bandwidth( get_bandwidth() );
+
+  if (type_changed)
+    target->set_type( get_type() );
+
+  if (state_changed)
+    target->set_state( get_state() );
+
+  if (basis_changed)
+    target->set_basis( get_basis() );
+
+  if (rate_changed)
+    target->set_rate( get_rate() );
+
+  if (start_time_changed)
+    target->set_start_time( get_start_time() );
+
+  if (scale_changed)
+    target->set_scale( get_scale() );
+
+  if (swap_changed)
+    target->set_swap( get_swap() );
+
+  if (dc_centred_changed)
+    target->set_dc_centred( get_dc_centred() );
+
+  if (identifier_changed)
+    target->set_identifier( get_identifier() );
+
+  if (mode_changed)
+    target->set_mode( get_mode() );
+
+  if (machine_changed)
+    target->set_machine( get_machine() );
+
+  if (coordinates_changed)
+    target->set_coordinates( get_coordinates() );
+
+  if (dispersion_measure_changed)
+    target->set_dispersion_measure( get_dispersion_measure() );
+
+  if (rotation_measure_changed)
+    target->set_rotation_measure( get_rotation_measure() );
+
+  if (ndat_changed)
+    target->set_ndat( get_ndat() );
+
+  if (ndim_changed)
+    target->set_ndim( get_ndim() );
+
+  if (nchan_changed)
+    target->set_nchan( get_nchan() );
+
+  if (npol_changed)
+    target->set_npol( get_npol() );
+
+  if (nbit_changed)
+    target->set_nbit( get_nbit() );
+
+  if (calfreq_changed)
+    target->set_calfreq( get_calfreq() );
+
+  if (dual_sideband_changed)
+    target->set_dual_sideband( get_dual_sideband() );
+}
+
 //! Set the telescope name
 void dsp::ObservationChange::set_telescope (const std::string& arg)
 {
