@@ -177,7 +177,6 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
   predict.set_nspan ( nspan );
   predict.set_ncoef ( ncoef );
   predict.set_site( observation->get_telescope() );
-  // predict.set_frequency ( 1400.0 );
   predict.set_frequency ( observation->get_centre_frequency() );
   predict.set_parameters ( *pephem );
 
@@ -487,9 +486,18 @@ void dsp::Fold::transformation () try
   else
   {
     if (pulsar_ephemeris)
+    {
+      if (verbose)
+        cerr << "dsp::Fold::transformation set output ephemeris" << endl;
       output->set_pulsar_ephemeris( pulsar_ephemeris );
+    }
+
     if (folding_predictor)
+    {
+      if (verbose)
+        cerr << "dsp::Fold::transformation set output predictor" << endl;
       output->set_folding_predictor( folding_predictor );
+    }
   }
 
   output->set_reference_phase( reference_phase );
@@ -497,6 +505,9 @@ void dsp::Fold::transformation () try
   // set the sampling rate of the output PhaseSeries
   double sampling_interval = pfold / double(folding_nbin);
   output->set_rate (1.0/sampling_interval);
+
+  if (change)
+    change->change( output );
 }
 catch (Error& error)
 {
