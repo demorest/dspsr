@@ -37,7 +37,7 @@ dsp::ObservationChange::ObservationChange ()
 }
 
 //! Set the attributes that have been changed
-void dsp::ObservationChange::change (Observation* target)
+void dsp::ObservationChange::change (Observation* target) const
 {
   if (telescope_changed)
     target->set_telescope( get_telescope() );

@@ -22,7 +22,7 @@ namespace dsp {
     ObservationChange (); 
 
     //! Set the attributes that have been changed
-    virtual void change (Observation* obs);
+    virtual void change (Observation* obs) const;
 
     //! Set the type of receiver feeds
     virtual void set_basis (Signal::Basis _basis);
