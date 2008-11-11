@@ -238,12 +238,7 @@ try {
   unsigned ndim = phase->get_ndim();
   unsigned nsub = 1;
 
-  unsigned effective_npol = npol;
-
-  if ( phase->get_domain() == "Lag" )
-    nsub = ndim;
-  else
-    effective_npol *= ndim;
+  unsigned effective_npol = npol * ndim;
 
   if( verbose )
     cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
@@ -310,24 +305,9 @@ try {
   archive-> set_coordinates ( phase->get_coordinates() );
   archive-> set_bandwidth ( phase->get_bandwidth() );
   archive-> set_centre_frequency ( phase->get_centre_frequency() );
+  archive-> set_dispersion_measure ( phase->get_dispersion_measure() );
 
-  if (archive_dedispersed && phase->get_between_channel_dm () != 0)
-  {
-    archive -> set_dedispersed( true );
-    if (verbose)
-      cerr << "dsp::Archiver::set between channel dm=" 
-           << phase->get_dispersion_measure() << endl;
-    archive -> set_dispersion_measure ( phase->get_between_channel_dm() );
-  }
-  else
-  {
-    archive-> set_dedispersed( archive_dedispersed );
-    if (verbose)
-      cerr << "dsp::Archiver::set dm=" 
-           << phase->get_dispersion_measure() << endl;
-    archive-> set_dispersion_measure ( phase->get_dispersion_measure() );
-  }
-
+  archive-> set_dedispersed( archive_dedispersed );
   archive-> set_faraday_corrected (false);
 
   for (unsigned isub=0; isub < nsub; isub++)
