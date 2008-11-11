@@ -631,6 +631,8 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       if (simple)
       {
+        config->dispersion_measure = simple->get_dispersion_measure();
+
         if (!change)
           change = new ObservationChange;
 
