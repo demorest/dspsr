@@ -1,10 +1,12 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Fold.h"
+#include "dsp/ObservationChange.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
 
@@ -102,21 +104,28 @@ void dsp::Fold::prepare (const Observation* observation)
 
   folding_nbin = 0;
 
-  string pulsar = observation->get_source();
+  Reference::To<Observation> copy;
+  if (change)
+  {
+    copy = new Observation (*observation);
+    change->change(copy);
+    observation = copy;
+  }
 
-  if (!source_name.empty())
-    pulsar = source_name;
+  string pulsar = observation->get_source();
 
   if (pulsar.length() == 0)
     throw Error (InvalidParam, "dsp::Fold::prepare", "empty source name");
 
   // Is this a CAL?
-  if (observation->get_type() == Signal::PolnCal) {
+  if (observation->get_type() == Signal::PolnCal)
+  {
     double calperiod = 1.0/observation->get_calfreq();
     set_folding_period (calperiod);
   }
 
-  if (folding_period > 0) {
+  if (folding_period > 0)
+  {
     if (verbose)
       cerr << "dsp::Fold::prepare using folding_period="
 	   << folding_period << endl;
@@ -302,27 +311,37 @@ void dsp::Fold::set_folding_period (double _folding_period)
 }
 
 //! Set the name of the source
-void dsp::Fold::set_source_name (const std::string& source)
+void dsp::Fold::set_change (const ObservationChange* c)
 {
-  source_name = source;
-  if (!source.empty())
-    built = false;
+  change = c;
+  built = false;
 }
 
+#if 0
 //! Get the name of the source
 std::string dsp::Fold::get_source_name () const
 {
-  if (!source_name.empty())
-    return source_name;
-
   if (input)
-    return input->get_source();
+  {
+    const Observation* observation = input;
+
+    Reference::To<Observation> copy;
+    if (change)
+    {
+      copy = new Observation (&observation);
+      change->change(copy);
+      observation = copy;
+    }
+
+    return observation->get_source();
+  }
 
   if (pulsar_ephemeris)
     return pulsar_ephemeris->get_name();
 
   return "";
 }
+#endif
 
 //! Get the average folding period
 double dsp::Fold::get_folding_period () const
@@ -440,10 +459,6 @@ void dsp::Fold::transformation () try
 
   set_limits (input);
 
-  // temporarily set the output source name equal to the input source name
-  if( !source_name.empty() )
-    get_output()->set_source (input->get_source());
-
   if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold))
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input and output are not PhaseSeries::mixable");
@@ -482,10 +497,6 @@ void dsp::Fold::transformation () try
   // set the sampling rate of the output PhaseSeries
   double sampling_interval = pfold / double(folding_nbin);
   output->set_rate (1.0/sampling_interval);
-
-  if( !source_name.empty() )
-    get_output()->set_source (source_name);
-
 }
 catch (Error& error)
 {

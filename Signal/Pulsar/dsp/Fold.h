@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.52 $
-   $Date: 2008/10/05 11:56:37 $
+   $Revision: 1.53 $
+   $Date: 2008/11/11 06:14:29 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -26,6 +26,7 @@ namespace Pulsar {
 namespace dsp {
 
   class WeightedTimeSeries;
+  class ObservationChange;
 
   //! Fold TimeSeries data into phase-averaged profile(s)
   /*! 
@@ -84,10 +85,8 @@ namespace dsp {
     //! Get the number of minutes over which polynomial coefficients are valid
     unsigned get_nspan () const { return nspan; }
 
-    //! Set the name of the source
-    void set_source_name (const std::string& name);
-    //! Get the name of the source
-    std::string get_source_name () const;
+    //! Set the attributes to be changed in the output PhaseSeries
+    void set_change (const ObservationChange*);
 
     //! Set the period at which to fold data for all sources 
     /*! \param folding_period in seconds, negative to disable */
@@ -182,8 +181,8 @@ namespace dsp {
     //! Number of minutes over which polynomial coefficients are valid
     unsigned nspan;
 
-    //! The name of the source (overrides input source name)
-    std::string source_name;
+    //! The attributes to be changed in the output PhaseSeries
+    Reference::To<const ObservationChange> change;
 
     //! Flag that the predictor is built for the given ephemeris and input
     bool built;
