@@ -28,6 +28,7 @@
 #include "dsp/PhaseSeries.h"
 
 #include "dsp/Archiver.h"
+#include "dsp/ObservationChange.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
@@ -365,7 +366,6 @@ void dsp::LoadToFold1::prepare_final ()
       kernel->set_dispersion_measure (dm);
   }
 
-  manager->get_info()->set_between_channel_dm( dm );
   manager->get_info()->set_dispersion_measure( dm );
 
   /*
@@ -602,11 +602,25 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (config->folding_period)
       fold[ifold]->set_folding_period (config->folding_period);
 
+    Reference::To<ObservationChange> change;
+
     if (ifold && ifold <= config->additional_pulsars.size())
-      fold[ifold]->set_source_name ( config->additional_pulsars[ifold-1] );
+    {
+      change = new ObservationChange;
+      change->set_source( config->additional_pulsars[ifold-1] );
+    }
 
     if (ifold < config->ephemerides.size())
+    {
+      if (!change)
+        change = new ObservationChange;
+
+      Pulsar::Parameters* ephem = config->ephemerides[ifold];
+      change->set_source( ephem->get_name() );
+      change->set_dispersion_measure( ephem->get_dispersion_measure() );
+
       fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
+    }
 
     if (ifold < config->predictors.size())
     {
@@ -617,19 +631,18 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       if (simple)
       {
-  	fold[ifold]->set_source_name ( simple->get_name() );
+        if (!change)
+          change = new ObservationChange;
 
-	manager->get_info()->set_source
-	  ( simple->get_name() );
-
-	manager->get_info()->set_coordinates
-	  ( simple->get_coordinates() );
-
-	config->dispersion_measure = simple->get_dispersion_measure();
+        change->set_source( simple->get_name() );
+        change->set_dispersion_measure( simple->get_dispersion_measure() );
       }
     }    
 
     fold[ifold]->set_input (to_fold);
+
+    if (change)
+      fold[ifold]->set_change (change);
 
     fold[ifold]->prepare ( manager->get_info() );
 

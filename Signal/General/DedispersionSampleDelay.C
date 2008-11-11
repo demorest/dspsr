@@ -73,6 +73,6 @@ int64 dsp::Dedispersion::SampleDelay::get_delay (unsigned ichan, unsigned ipol)
 
 void dsp::Dedispersion::SampleDelay::mark (Observation* observation)
 {
-  observation->set_between_channel_dm (dispersion_measure);
+  observation->set_dispersion_measure (dispersion_measure);
 }
 
