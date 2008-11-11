@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.8 $
-   $Date: 2008/10/04 11:45:55 $
+   $Revision: 1.9 $
+   $Date: 2008/11/11 06:14:09 $
    $Author: straten $ */
 
 #ifndef __CPSR2_Observation_h
@@ -30,9 +30,6 @@ namespace dsp {
 
     //! Construct from a CPSR2 ASCII header block
     CPSR2_Observation (const char* header=0);
-
-    //! The digitizer thresholds for a SimpleFB file
-    virtual void set_thresh();
 
     std::string prefix;
   };
