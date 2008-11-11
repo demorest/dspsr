@@ -47,7 +47,7 @@ namespace dsp {
     Observation& swap_data(Observation& obs);
 
     //! Set the type of receiver feeds
-    void set_basis (Signal::Basis _basis) { basis = _basis; }
+    virtual void set_basis (Signal::Basis _basis) { basis = _basis; }
     //! Return the type of receiver feeds
     Signal::Basis get_basis () const { return basis; }
 
@@ -57,7 +57,7 @@ namespace dsp {
     Signal::State get_state () const { return state; }
 
     //! Set the source type
-    void set_type (Signal::Source _type) { type = _type; }
+    virtual void set_type (Signal::Source _type) { type = _type; }
     //! Return the source type
     Signal::Source get_type () const { return type; }
 
@@ -70,11 +70,6 @@ namespace dsp {
     virtual void set_nchan (unsigned _nchan) { nchan = _nchan; }
     //! Return the number of channels into which the band is divided
     unsigned get_nchan () const { return nchan; }
-
-    //! digitizer thresholds 
-    virtual void set_thresh () { thresh = new float [1] ; thresh[0] = 0.0;}
-    //! get a pointer to the thresholds: mean and sigma for each channel
-    float * get_thresh () {return thresh;}
     
     //! Set the number of polarizations
     virtual void set_npol (unsigned _npol) { npol = _npol; }
@@ -96,130 +91,118 @@ namespace dsp {
     uint64 get_ndat () const { return ndat; }
 
     //! Set the telescope name
-    void set_telescope (const std::string& name) { telescope = name; }
+    virtual void set_telescope (const std::string& name) { telescope = name; }
     //! Return the telescope name
     std::string get_telescope () const { return telescope; }
 
     //! Set the receiver name
-    void set_receiver (const std::string& name) { receiver = name; }
+    virtual void set_receiver (const std::string& name) { receiver = name; }
     //! Return the receiver name
     std::string get_receiver () const { return receiver; }
 
     //! Set the source name
-    void set_source (const std::string& name) { source = name; }
+    virtual void set_source (const std::string& name) { source = name; }
     //! Return the source name
     std::string get_source () const { return source; }
 
     //! Set the coordinates of the source
-    void set_coordinates (sky_coord _coordinates) { coordinates=_coordinates; }
+    virtual void set_coordinates (sky_coord _coordinates)
+    { coordinates=_coordinates; }
+
     //! Return the coordinates of the source
-    sky_coord get_coordinates () const { return coordinates; }
+    sky_coord get_coordinates () const
+    { return coordinates; }
 
     //! Set the centre frequency of the band-limited signal in MHz
-    void set_centre_frequency (double cf) { centre_frequency = cf; }
+    virtual void set_centre_frequency (double cf) { centre_frequency = cf; }
     //! Return the centre frequency of the band-limited signal in MHz
     double get_centre_frequency () const{ return centre_frequency; }
 
     //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (unsigned ichan) const;
 
-    //! Returns the centre frequency of the ichan'th frequency ordered channel in MHz.
-    double get_ordered_cfreq(unsigned ichan);
+    //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
+    virtual void set_bandwidth (double _bandwidth)
+    { bandwidth = _bandwidth; }
 
-    //! Return the centre frequency of the highest frequency channel below the maximum stated in MHz
-    double get_highest_frequency(double max_freq=1.0e9, unsigned chanstart=0,unsigned chanend=99999);
-
-    //! Return the centre frequency of the lowest frequency channel in MHz
-    double get_lowest_frequency(double min_freq=0.0, unsigned chanstart=0,unsigned chanend=99999);
-
-    //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)  lsb means that the highest RF frequency is in channel 0
-    void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
-    //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)  lsb means that the highest RF frequency is in channel 0
+    //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double get_bandwidth () const { return bandwidth; }
 
     //! Set the start time of the leading edge of the first time sample
-    void set_start_time (MJD _start_time) { start_time = _start_time; }
+    virtual void set_start_time (MJD _start_time) { start_time = _start_time; }
     //! Return the start time of the leading edge of the first time sample
     MJD get_start_time () const { return start_time; }
     
     //! Set the sampling rate (time samples per second in Hz)
-    void set_rate (double _rate) { rate = _rate; }
+    virtual void set_rate (double _rate) { rate = _rate; }
     //! Return the sampling rate (time samples per second in Hz)
     double get_rate () const { return rate; }
 
     //! Set the amount by which data has been scaled
-    void set_scale (double _scale) { scale = _scale; }
+    virtual void set_scale (double _scale) { scale = _scale; }
     //! Return the amount by which data has been scaled
     double get_scale () const { return scale; }
 
     //! Set true if frequency channels are out of order (band swappped)
-    void set_swap (bool _swap) { swap = _swap; }
+    virtual void set_swap (bool _swap) { swap = _swap; }
     //! Return true if frequency channels are out of order (band swappped)
     bool get_swap () const { return swap; }
 
     //! Set true if the data are dual sideband
-    void set_dual_sideband (bool _dual);
+    virtual void set_dual_sideband (bool _dual);
     //! Return true if the data are dual_sideband
     bool get_dual_sideband () const;
 
     //! Set true if centre channel is centred on centre frequency
     /*! This flag is currently experimental */
-    void set_dc_centred (bool _dc_centred) { dc_centred = _dc_centred; }
-    bool get_dc_centred () const { return dc_centred; }
+    virtual void set_dc_centred (bool _dc_centred)
+    { dc_centred = _dc_centred; }
+
+    bool get_dc_centred () const
+    { return dc_centred; }
 
     //! Set the observation identifier
-    void set_identifier (const std::string& _identifier)
+    virtual void set_identifier (const std::string& _identifier)
     { identifier = _identifier; }
 
     //! Return the observation identifier
-    std::string get_identifier () const { return identifier; }
+    std::string get_identifier () const
+    { return identifier; }
 
     //! Set the instrument used to record signal
-    void set_machine (const std::string& _machine) { machine = _machine; }
+    virtual void set_machine (const std::string& _machine)
+    { machine = _machine; }
+
     //! Return the instrument used to record signal
-    std::string get_machine () const { return machine; }
+    std::string get_machine () const
+    { return machine; }
 
-    //! Returns the DM to which the data has been dedispersed (in-channel dispersion)
-    double get_dispersion_measure () const { return dispersion_measure; }
+    //! Returns the pulsar dispersion measure
+    double get_dispersion_measure () const
+    { return dispersion_measure; }
 
-    //! Set the record of what DM the data is dedispersed (in-channel dispersion)
-    void set_dispersion_measure (double dm) { dispersion_measure = dm; }
+    //! Set the pulsar dispersion mesure
+    virtual void set_dispersion_measure (double dm)
+    { dispersion_measure = dm; }
 
-    //! Add on extra DM units to the dispersion measure (in-channel smearing)
-    void change_dispersion_measure(double dm) { dispersion_measure += dm; }
+    //! Returns the pulsar rotation measure
+    double get_rotation_measure () const
+    { return rotation_measure; }
 
-    //! Returns the DM to which the data has been dedispersed (between-channel dispersion)
-    double get_between_channel_dm () const { return between_channel_dm; }
-
-    //! Set the record of what DM the data is dedispersed (between-channel dispersion)
-    void set_between_channel_dm (double dm) { between_channel_dm = dm; }
-
-    //! Add on extra DM units to the dispersion measure (between-channel smearing)
-    void change_between_channel_dm(double dm) { between_channel_dm += dm; }
+    //! Set the pulsar rotation mesure
+    virtual void set_rotation_measure (double rm)
+    { rotation_measure = rm; }
 
     //! Set the observation mode
-    void set_mode (const std::string& _mode) { mode = _mode; }
+    virtual void set_mode (const std::string& _mode) { mode = _mode; }
     //! Return the observation mode
     std::string get_mode () const { return mode; }
 
     //! Set the cal frequency
-    void set_calfreq (double _calfreq) {calfreq = _calfreq;}
+    virtual void set_calfreq (double _calfreq) {calfreq = _calfreq;}
 
     //! get the calfreq
     double get_calfreq() const {return calfreq;} 
-
-    //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
-    //! Also, H_BandPass sets this as bandpass
-    std::string get_domain() const { return domain; }
-
-    //! Whether data is in 'Time' or 'Fourier' domain 
-    void set_domain(const std::string& _domain){ domain = _domain; }
-
-    //! Inquire the last format on disk the dat was stored on
-    std::string get_last_ondisk_format() const { return last_ondisk_format; }
-
-    //! Set the last format on disk the dat was stored on
-    void set_last_ondisk_format(const std::string& _last_ondisk_format){ last_ondisk_format = _last_ondisk_format; }
 
     //! Change the state and correct other attributes accordingly
     virtual void change_state (Signal::State new_state);
@@ -367,9 +350,6 @@ namespace dsp {
     //! Bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double bandwidth;
 
-    //! Pointer to the digitizer thresholds
-    float * thresh;
-
     //! Type of signal source (Linear or Circular)
     Signal::Source type;
 
@@ -406,20 +386,17 @@ namespace dsp {
     //! Coordinates of the source
     sky_coord coordinates;
 
-    //! The DM TimeSeries has been dedispersed to (in-channel smearing) (latest ChannelSum only)
+    //! The dispersion measure to be archived
     double dispersion_measure;
 
-    //! The DM the channels have been shifted by
-    double between_channel_dm;
-
-    //! Whether data is in 'Time' or 'Fourier' or some variant that starts with 'Fourier'.  Classes that change this are PowerSpectrumMKL, PowerSpectrumFFTW, PowerTwoFFTW, PowerTwoMKL.  BasicPlotter and/or Plotter uses it too I think.  HSK 21/11/02
-    std::string domain;
-
-    //! The last format the data was stored as ("raw","CoherentFB","Digi" etc)
-    std::string last_ondisk_format;
+    //! The rotation measure to be archive
+    double rotation_measure;
 
     //! Stream to which verbose messages are sent
     mutable std::ostream cerr;
+
+    //! Require equal sources in combinable
+    bool require_equal_sources;
 
   private:
 
