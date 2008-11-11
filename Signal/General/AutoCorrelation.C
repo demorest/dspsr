@@ -56,7 +56,6 @@ void dsp::AutoCorrelation::transformation ()
   get_output()->set_nchan( nchan );
   get_output()->set_npol( npol );
   get_output()->set_ndim( nlag );
-  get_output()->set_domain( "Lag" );
 
   get_output()->set_rate (get_input()->get_rate()/nlag);
 
