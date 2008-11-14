@@ -157,6 +157,7 @@ int main (int argc, char** argv) try
 {
   config = new dsp::LoadToFold::Config;
 
+  parse_options (argc, argv);
 
   vector<string> filenames;
 
