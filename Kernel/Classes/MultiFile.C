@@ -1,20 +1,23 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/MultiFile.h"
-#include "dsp/File.h"
+
 #include "Error.h"
 #include "templates.h"
+#include "dirutil.h"
+#include "strutil.h"
 
 #include <algorithm>
 #include <math.h>
 
 using namespace std;
 
-dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
+dsp::MultiFile::MultiFile () : File ("MultiFile")
 {
   current_index = 0;
 }
@@ -22,6 +25,47 @@ dsp::MultiFile::MultiFile () : Seekable ("MultiFile")
 dsp::MultiFile::~MultiFile ()
 {
 }
+
+//! Returns true if filename is an ASCII file listing valid filenames
+bool dsp::MultiFile::is_valid (const char* metafile) const
+{
+  if (verbose)
+    cerr << "dsp::MultiFile::is_valid meta filename=" << metafile << endl;
+
+  vector<string> filenames;
+  stringfload (&filenames, metafile);
+
+  if (verbose)
+    cerr << "dsp::MultiFile::is_valid " << filenames.size()
+	 << " filenames read" << endl;
+
+  if (filenames.size() == 0)
+    return false;
+
+  for (unsigned i=0; i < filenames.size(); i++)
+    if (!file_exists( filenames[i].c_str() ))
+    {
+      if (verbose)
+	cerr << "dsp::MultiFile::is_valid '" << filenames[i] << "' not found" 
+	     << endl;
+      return false;
+    }      
+
+  return true;
+}
+
+//! Open the ASCII file of filenames
+void dsp::MultiFile::open_file (const char* metafile)
+{
+  if (verbose)
+    cerr << "dsp::MultiFile::open_file meta filename=" << metafile << endl;
+
+  vector<string> filenames;
+  stringfload (&filenames, metafile);
+
+  open (filenames);
+}
+
 
 /*! This method adds to the current set of input files and re-sorts
   them all files by start time.
@@ -40,9 +84,10 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
     old_filenames[i] = files[i]->get_filename();
 
   // open up each of the new files and add it to our list of files
-  for( unsigned i=0; i<new_filenames.size(); i++){
-    if( !found(new_filenames[i],old_filenames) ){
-
+  for( unsigned i=0; i<new_filenames.size(); i++)
+  {
+    if( !found(new_filenames[i],old_filenames) )
+    {
       // If there is no loader, create one from the first file
       loader = File::create( new_filenames[i] );
 
@@ -110,14 +155,17 @@ void dsp::MultiFile::erase_files()
 //! Erase just some of the list of loadable files
 void dsp::MultiFile::erase_files(const vector<string>& erase_filenames)
 {
-  for( unsigned ifile=0; ifile<files.size(); ifile++){
-    if( found(files[ifile]->get_filename(),erase_filenames) ){
+  for( unsigned ifile=0; ifile<files.size(); ifile++)
+  {
+    if( found(files[ifile]->get_filename(),erase_filenames) )
+    {
       files.erase( files.begin()+ifile );
       ifile--;
     }
   }
   
-  if( files.empty() ){
+  if( files.empty() )
+  {
     erase_files ();
     return;
   }
@@ -138,7 +186,8 @@ void dsp::MultiFile::ensure_contiguity()
 
   sort( files.begin(), files.end(), time_order );
 
-  for (unsigned ifile=1; ifile<files.size(); ifile++) {
+  for (unsigned ifile=1; ifile<files.size(); ifile++)
+  {
     if (verbose)
       cerr << "dsp::MultiFile::ensure_contiguity files " << ifile-1 
 	   << " and " << ifile << endl;
@@ -158,7 +207,6 @@ void dsp::MultiFile::ensure_contiguity()
                    "file %d (%s)\n\tis not contiguous with\n\tfile %d (%s)",
                    ifile-1, files[ifile-1]->get_filename().c_str(),
                    ifile, files[ifile]->get_filename().c_str()); 
-
   }
 
   if (verbose)
@@ -182,7 +230,8 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
   {
     int64 to_load = bytes - bytes_loaded;
 
-    if (index >= files.size()) {
+    if (index >= files.size())
+    {
       if (verbose)
 	cerr << "dsp::MultiFile::load_bytes end of data" << endl;
       end_of_data = true;
