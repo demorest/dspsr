@@ -42,14 +42,19 @@ bool dsp::MultiFile::is_valid (const char* metafile) const
   if (filenames.size() == 0)
     return false;
 
+  string path = pathname (metafile);
+
   for (unsigned i=0; i < filenames.size(); i++)
-    if (!file_exists( filenames[i].c_str() ))
+  {
+    string file = filenames[i];
+    string relative = path + "/" + file;
+    if (!file_exists( file.c_str() ) && !file_exists( relative.c_str() ) )
     {
       if (verbose)
-	cerr << "dsp::MultiFile::is_valid '" << filenames[i] << "' not found" 
-	     << endl;
+	cerr << "dsp::MultiFile::is_valid '" << file << "' not found" << endl;
       return false;
     }      
+  }
 
   return true;
 }
@@ -62,6 +67,28 @@ void dsp::MultiFile::open_file (const char* metafile)
 
   vector<string> filenames;
   stringfload (&filenames, metafile);
+
+  string path = pathname (metafile);
+
+  for (unsigned i=0; i < filenames.size(); i++)
+  {
+    string file = filenames[i];
+    string relative = path + file;
+    if (!file_exists( file.c_str() ) && file_exists( relative.c_str() ) )
+      filenames[i] = relative;
+
+    if (verbose)
+      cerr << "dsp::MultiFile::open_file" << i << " " << filenames[i] << endl;
+  }
+
+  for (unsigned i=0; i < filenames.size();)
+    if (filenames[i] == metafile)
+    {
+      cerr << "dsp::MultiFile refusing to recursively open meta file" << endl;
+      filenames.erase( filenames.begin() + i );
+    }
+    else
+      i++;
 
   open (filenames);
 }
@@ -96,7 +123,7 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
       loader->close();
 
       if (verbose)
-	cerr << "dsp::MultiFile::open new PseudoFile = " 
+	cerr << "dsp::MultiFile::open new File = " 
 	     << files.back()->get_filename() << endl;
     }
   }
