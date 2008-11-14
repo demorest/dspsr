@@ -30,9 +30,7 @@
 
 using namespace std;
 
-static char* args =
-  "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
-  "L:m:M:n:N:O:op:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
+void parse_options (int argc, char** argv);
 
 void usage ()
 {
@@ -93,7 +91,6 @@ void usage ()
     "\n"
     "Division options:\n"
     " -A             produce a single archive with multiple Integrations \n"
-    " -j             join input data files into contiguous observation \n"
     " -L seconds     form sub-integrations of the specified length \n"
     " -s             generate single pulse integrations \n"
     " -y             output partially completed single pulse integrations \n"
@@ -102,6 +99,7 @@ void usage ()
     " -a archive     set the output archive class name\n"
     " -e ext         set the output archive filename extension\n"
     " -O filename    set the output archive filename (including extension)\n"
+    " -j job[,job2]  run the psrsh commands on the output before unloading \n"
     " -J jobs.psh    run the psrsh script on the output before unloading\n"
        << endl;
 }
@@ -152,24 +150,141 @@ Reference::To<dsp::LoadToFold::Config> config;
 // Number of threads used to process the data
 unsigned nthread = 1;
 
+// load filenames from the ascii file named metafile
+char* metafile = 0;
 
-int main (int argc, char** argv) try {
-
+int main (int argc, char** argv) try
+{
   config = new dsp::LoadToFold::Config;
 
-  // treat all files as though they were one contiguous observation
-  bool join_files = false;
 
-  // load filenames from the ascii file named metafile
-  char* metafile = 0;
+  vector<string> filenames;
+
+  if (metafile)
+    stringfload (&filenames, metafile);
+  else 
+    for (int ai=optind; ai<argc; ai++)
+      dirglob (&filenames, argv[ai]);
+
+  if (filenames.size() == 0) {
+    usage ();
+    return 0;
+  }
+
+  Reference::To<dsp::LoadToFold> engine;
+
+  if (nthread > 1)
+    engine = new dsp::LoadToFoldN (nthread);
+  else
+    engine = new dsp::LoadToFold1;
+
+  // configure the processing engine
+  engine->set_configuration( config );
+
+  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
+  {
+    if (verbose)
+      cerr << "opening data file " << filenames[ifile] << endl;
+    
+    prepare (engine, dsp::File::create( filenames[ifile] ));
+        
+    if (verbose)
+      cerr << "data file " << filenames[ifile] << " opened" << endl;
+
+    engine->run();
+    engine->finish();
+  }
+  catch (Error& error)
+  {
+    cerr << error << endl;
+  }
+
+  return 0;
+}
+
+catch (Error& error)
+{
+  cerr << "Error thrown: " << error << endl;
+  return -1;
+}
+
+
+void prepare (dsp::LoadToFold* engine, dsp::Input* input)
+{
+  engine->set_input( input );
+
+  dsp::Observation* info = input->get_info();
+
+  if (info->get_detected() && !baseband_options.empty())
+    throw Error (InvalidState, "prepare",
+		 "input type " + input->get_name() +
+		 " yields detected data and the command line option(s):"
+		 "\n\n" + baseband_options + "\n\n"
+		 " are specific to baseband (undetected) data.");
+
+  if (bandwidth != 0)
+  {
+    cerr << "dspsr: over-riding bandwidth"
+      " old=" << info->get_bandwidth() <<
+      " new=" << bandwidth << endl;
+    info->set_bandwidth (bandwidth);
+  }
+  
+  if (centre_frequency != 0)
+  {
+    cerr << "dspsr: over-riding centre_frequency"
+      " old=" << info->get_centre_frequency() <<
+      " new=" << centre_frequency << endl;
+    info->set_centre_frequency (centre_frequency);
+  }
+  
+  if (telescope)
+  {
+    cerr << "dspsr: over-riding telescope code"
+      " old=" << info->get_telescope() <<
+      " new=" << telescope << endl;
+    info->set_telescope (telescope);
+  }
+  
+  if (!pulsar_name.empty())
+  {
+    cerr << "dspsr: over-riding source name"
+      " old=" << info->get_source() <<
+      " new=" << pulsar_name << endl;
+    info->set_source( pulsar_name );   
+  }
+  
+  if (mjd_string != 0)
+  {
+    MJD mjd (mjd_string);
+    cerr << "dspsr: over-riding start time"
+      " old=" << info->get_start_time() <<
+      " new=" << mjd << endl;
+    info->set_start_time( mjd );
+  }
+  
+  if (seek_seconds)
+    input->seek_seconds (seek_seconds);
+    
+  if (total_seconds)
+    input->set_total_seconds (seek_seconds + total_seconds);
+  
+  engine->prepare ();    
+}
+
+void parse_options (int argc, char** argv)
+{
+  static char* args =
+    "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
+    "L:m:M:n:N:O:op:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
 
   string stropt;
 
   int c;
   int scanned;
 
-  while ((c = getopt(argc, argv, args)) != -1) {
-
+  while ((c = getopt(argc, argv, args)) != -1)
+  {
     if (optarg)
       stropt = optarg;
 
@@ -205,7 +320,7 @@ int main (int argc, char** argv) try {
       
       cerr << "dspsr: error parsing " << optarg << " as"
 	" two-bit correction nsample, threshold, or cutoff" << endl;
-      return -1;
+      exit (-1);
 
     case 'A':
       config->single_archive = true;
@@ -276,7 +391,7 @@ int main (int argc, char** argv) try {
 	    fprintf (stderr,
 		     "Error parsing %s as filterbank frequency resolution\n",
 		     optarg);
-	    return -1;
+	    exit (-1);
 	  }
 	}
       }
@@ -285,7 +400,7 @@ int main (int argc, char** argv) try {
 	fprintf(stderr,
 		"Cannot parse '%s' as number of filterbank channels\n",
 		optarg);
-	return -1;
+	exit (-1);
       }
       break;
     }
@@ -305,24 +420,24 @@ int main (int argc, char** argv) try {
         if (sscanf (pfr, "%u", &config->plfb_nchan) < 1) {
           fprintf (stderr, "Cannot parse '%s' as "
                    "phase-locked filterbank config->nchan\n", pfr);
-        return -1;
+        exit (-1);
         }
       }
       if (sscanf (optarg, "%u", &config->plfb_nbin) < 1) {
         fprintf (stderr, "Cannot parse '%s' as "
                  "phase-locked filterbank config->nbin\n", optarg);
-        return -1;
+        exit (-1);
       }
       break;
     }
 
     case 'h':
       usage ();
-      return 0;
+      exit (0);
 
     case 'i':
       info ();
-      return 0;
+      exit (0);
 
 #if ACTIVATE_MKL      
     case 'I':
@@ -331,11 +446,11 @@ int main (int argc, char** argv) try {
 #endif      
 
     case 'j':
-      join_files = true;
+      separate (optarg, config->jobs, ",");
       break;
-
+      
     case 'J':
-      config->script = optarg;
+      loadlines (optarg, config->jobs);
       break;
 
     case 'k':
@@ -468,7 +583,7 @@ int main (int argc, char** argv) try {
 	  fprintf (stderr,
 	           "Error parsing '%s' as filterbank frequency resolution\n",
                    colon);
-	  return -1;
+	  exit (-1);
 	}
       }
 
@@ -509,7 +624,7 @@ int main (int argc, char** argv) try {
 	cerr << "\ndspsr: default FFT library " 
 	     << FTransform::get_library() << endl;
 
-	return 0;
+	exit (0);
       }
       else if (lib == "simd")
         FTransform::simd = true;
@@ -523,152 +638,18 @@ int main (int argc, char** argv) try {
 
     default:
       cerr << "invalid param '" << c << "'" << endl;
-      return -1;
+      exit (-1);
 
     }
 
-    if (errno != 0) {
+    if (errno != 0)
+    {
       cerr << "error parsing -" << c;
       if (optarg)
 	cerr << " " << optarg;
       cerr << endl;
       perror ("");
-      return -1;
+      exit (-1);
     }
-
   }
-
-  vector<string> filenames;
-
-  if (metafile)
-    stringfload (&filenames, metafile);
-  else 
-    for (int ai=optind; ai<argc; ai++)
-      dirglob (&filenames, argv[ai]);
-
-  if (filenames.size() == 0) {
-    usage ();
-    return 0;
-  }
-
-  if (join_files && filenames.size() == 1) {
-    cerr << "Only one file specified.  Ignoring -j (join files)" << endl;
-    join_files = false;
-  }
-
-  Reference::To<dsp::LoadToFold> engine;
-
-  if (nthread > 1)
-    engine = new dsp::LoadToFoldN (nthread);
-  else
-    engine = new dsp::LoadToFold1;
-
-  // configure the processing engine
-  engine->set_configuration( config );
-
-  if (join_files) {
-
-    if (verbose)
-      cerr << "Opening Multfile" << endl;
-    
-    dsp::MultiFile* multifile = new dsp::MultiFile;
-    multifile->open (filenames);
-
-    prepare (engine, multifile);
-    engine->run ();
-    engine->finish ();
-
-    return 0;
-
-  }
-
-  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
-
-    if (verbose)
-      cerr << "opening data file " << filenames[ifile] << endl;
-    
-    prepare (engine, dsp::File::create( filenames[ifile] ));
-        
-    if (verbose)
-      cerr << "data file " << filenames[ifile] << " opened" << endl;
-
-    engine->run();
-    engine->finish();
-
-  }
-  catch (Error& error) {
-    cerr << error << endl;
-  }
-
-  return 0;
 }
-
-catch (Error& error) {
-  cerr << "Error thrown: " << error << endl;
-  return -1;
-}
-
-
-void prepare (dsp::LoadToFold* engine, dsp::Input* input)
-{
-  engine->set_input( input );
-
-  dsp::Observation* info = input->get_info();
-
-  if (info->get_detected() && !baseband_options.empty())
-    throw Error (InvalidState, "prepare",
-		 "input type " + input->get_name() +
-		 " yields detected data and the command line option(s):"
-		 "\n\n" + baseband_options + "\n\n"
-		 " are specific to baseband (undetected) data.");
-
-  if (bandwidth != 0)
-  {
-    cerr << "dspsr: over-riding bandwidth"
-      " old=" << info->get_bandwidth() <<
-      " new=" << bandwidth << endl;
-    info->set_bandwidth (bandwidth);
-  }
-  
-  if (centre_frequency != 0)
-  {
-    cerr << "dspsr: over-riding centre_frequency"
-      " old=" << info->get_centre_frequency() <<
-      " new=" << centre_frequency << endl;
-    info->set_centre_frequency (centre_frequency);
-  }
-  
-  if (telescope)
-  {
-    cerr << "dspsr: over-riding telescope code"
-      " old=" << info->get_telescope() <<
-      " new=" << telescope << endl;
-    info->set_telescope (telescope);
-  }
-  
-  if (!pulsar_name.empty())
-  {
-    cerr << "dspsr: over-riding source name"
-      " old=" << info->get_source() <<
-      " new=" << pulsar_name << endl;
-    info->set_source( pulsar_name );   
-  }
-  
-  if (mjd_string != 0)
-  {
-    MJD mjd (mjd_string);
-    cerr << "dspsr: over-riding start time"
-      " old=" << info->get_start_time() <<
-      " new=" << mjd << endl;
-    info->set_start_time( mjd );
-  }
-  
-  if (seek_seconds)
-    input->seek_seconds (seek_seconds);
-    
-  if (total_seconds)
-    input->set_total_seconds (seek_seconds + total_seconds);
-  
-  engine->prepare ();    
-}
-
