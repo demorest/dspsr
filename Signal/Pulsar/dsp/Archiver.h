@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.22 $
-   $Date: 2008/10/14 21:00:13 $
+   $Revision: 1.23 $
+   $Date: 2008/11/14 17:29:04 $
    $Author: straten $ */
 
 
@@ -60,8 +60,8 @@ namespace dsp {
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const std::string& archive_class_name);
 
-    //! Set the post-processing script filename
-    void set_script (const std::string& filename) { script = filename; }
+    //! Set the post-processing script
+    void set_script (const std::vector<std::string>& jobs) { script = jobs; }
 
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
@@ -115,8 +115,8 @@ namespace dsp {
     //! The Pulsar::Archive instance to which data will be unloaded
     Reference::To<Pulsar::Archive> archive;
 
-    //! Filename of the script used to process Archive data before unloading
-    std::string script;
+    //! Commands used to process Archive data before unloading
+    std::vector<std::string> script;
 
     //! The script interpreter used to process Archive data before unloading
     Reference::To<Pulsar::Interpreter> interpreter;
