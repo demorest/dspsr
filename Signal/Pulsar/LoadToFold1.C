@@ -703,8 +703,8 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   if (sample_delay)
     archiver->set_archive_dedispersed (true);
   
-  if (!config->script.empty())
-    archiver->set_script (config->script);
+  if (config->jobs.size())
+    archiver->set_script (config->jobs);
   
   if (fold.size() > 1)
     archiver->set_path_add_source (true);

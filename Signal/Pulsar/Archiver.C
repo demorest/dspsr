@@ -124,6 +124,9 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     return;
   }
 
+  cerr << "dsp::Archiver::unload " << profiles->get_integration_length() 
+       << " seconds of data" << endl;
+
   if (single_archive)
   {
     // refer to the single archive to which all sub-integration will be written
@@ -147,10 +150,11 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
   if (!single_archive)
   {
-    if (script.length()) try {
+    if (script.size()) try
+    {
 
       if (verbose)
-	cerr << "dsp::Archive::unload post-processing with " << script << endl;
+	cerr << "dsp::Archive::unload post-processing" << endl;
 
       if (!interpreter)
 	interpreter = new Pulsar::Interpreter;

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.11 $
-   $Date: 2008/10/14 10:07:13 $
+   $Revision: 1.12 $
+   $Date: 2008/11/14 17:29:04 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -125,8 +125,8 @@ namespace dsp {
     // extension appended to the output archive filename
     std::string archive_extension;
 
-    // name of post-processing psrsh script
-    std::string script;
+    // output archive post-processing jobs
+    std::vector<std::string> jobs;
 
     // get the number of buffers required to process the data
     unsigned get_nbuffers () const { return buffers; }
