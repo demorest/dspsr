@@ -283,6 +283,5 @@ void dsp::SpigotFile::parse (void* header)
   info.set_machine ("Spigot");
   
   info.set_dispersion_measure (0);
-  info.set_between_channel_dm (0);
-
 }
+
