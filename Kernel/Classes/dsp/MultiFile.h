@@ -7,22 +7,20 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.25 $
-   $Date: 2008/05/28 21:12:42 $
+   $Revision: 1.26 $
+   $Date: 2008/11/14 17:28:54 $
    $Author: straten $ */
 
 
 #ifndef __MultiFile_h
 #define __MultiFile_h
 
-#include "dsp/Seekable.h"
+#include "dsp/File.h"
 
 namespace dsp {
 
-  class File;
-
   //! Loads BitSeries data from multiple files
-  class MultiFile : public Seekable {
+  class MultiFile : public File {
 
   public:
   
@@ -31,6 +29,9 @@ namespace dsp {
     
     //! Destructor
     virtual ~MultiFile ();
+
+    //! Returns true if filename is an ASCII file listing valid filenames
+    bool is_valid (const char* filename) const;
     
     //! Open a number of files and treat them as one logical observation.
     virtual void open (const std::vector<std::string>& new_filenames);
@@ -66,6 +67,9 @@ namespace dsp {
 
   protected:
     
+    //! Open the ASCII file of filenames
+    virtual void open_file (const char* filename);
+
     //! Load bytes from file
     virtual int64 load_bytes (unsigned char* buffer, uint64 bytes);
     
