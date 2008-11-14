@@ -24,7 +24,7 @@
 #include <config.h>
 #endif
 
-#include "dsp/File.h"
+#include "dsp/MultiFile.h"
 
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::File> dsp::File::registry;
@@ -33,6 +33,9 @@ Registry::List<dsp::File> dsp::File::registry;
 #include "dsp/DADAFile.h"
 static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
 
+/*! MultFile is built in */
+#include "dsp/MultiFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MultiFile> multifile;
 
 
 #if HAVE_asp
