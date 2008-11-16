@@ -353,7 +353,7 @@ void dsp::LoadToFoldN::finish ()
   unsigned errors = 0;
   unsigned finished = 0;
 
-  unsigned first = 0;
+  LoadToFold1* first = 0;
 
   ThreadContext::Lock lock (completion);
 
@@ -387,11 +387,11 @@ void dsp::LoadToFoldN::finish ()
         if (Operation::verbose)
           cerr << "psr::LoadToFoldN::finish thread " << i << " joined" << endl;
 
+	finished ++;
         threads[i]->status = 0;
 
 	if (status < 0)
         {
-	  finished ++;
 	  errors ++;
 	  error = threads[i]->error;
           cerr << "thread " << i << " aborted with error\n\t"
@@ -399,18 +399,20 @@ void dsp::LoadToFoldN::finish ()
           continue;
 	}
 
-	if (finished == 0)
-	  first = i;
+	if (!first)
+	{
+          if (Operation::verbose)
+            cerr << "psr::LoadToFoldN::finish initializing first" << endl;
 
-	if (finished)
+	  first = threads[i];
+	}
+	else
         {
           if (Operation::verbose)
-            cerr << "psr::LoadToFoldN::finish combining" << endl;
+            cerr << "psr::LoadToFoldN::finish combining with first" << endl;
 
-	  threads[first]->combine( threads[i] );
+	  first->combine( threads[i] );
         }
-
-	finished ++;
 
       }
       catch (Error& error)
@@ -434,10 +436,13 @@ void dsp::LoadToFoldN::finish ()
 
   }
 
-  if (Operation::verbose)
-    cerr << "psr::LoadToFoldN::finish finishing via " << first << endl;
+  if (first)
+  {
+    if (Operation::verbose)
+      cerr << "psr::LoadToFoldN::finish finishing via first" << endl;
 
-  threads[first]->finish();
+    first->finish();
+  }
 
   if (errors)
   {
