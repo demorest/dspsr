@@ -391,6 +391,7 @@ void dsp::LoadToFoldN::finish ()
 
 	if (status < 0)
         {
+	  finished ++;
 	  errors ++;
 	  error = threads[i]->error;
           cerr << "thread " << i << " aborted with error\n\t"
