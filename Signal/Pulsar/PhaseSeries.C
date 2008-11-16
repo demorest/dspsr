@@ -232,6 +232,9 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
 
 void dsp::PhaseSeries::combine (const PhaseSeries* prof)
 {
+  if (!prof || prof->get_nbin() == 0)
+    return;
+
   if (!mixable (*prof, prof->get_nbin()))
     throw Error (InvalidParam, "PhaseSeries::combine",
 		 "PhaseSeries !mixable");
