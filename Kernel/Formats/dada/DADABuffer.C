@@ -30,6 +30,23 @@ void dsp::DADABuffer::close ()
   if (!hdu)
     return;
 
+  if (!eod())
+  {
+    /*
+       If the stream has not reached end of data, then do not mark the
+       header as cleared.  The next few lines work with the implementation
+       of dada_hdu_unlock_read and should probably be given a less
+       obscure interface.  By not clearing the header, the script that
+       runs dspsr can use dbnull to clear the ring buffer of the data
+       that caused dspsr to quit before end-of-data.
+    */
+    if (hdu->header)
+    {
+      free (hdu->header);
+      hdu->header = 0;
+    }
+  }
+
   if (!passive && dada_hdu_unlock_read (hdu) < 0)
     cerr << "dsp::DADABuffer::close error during dada_hdu_unlock_read" << endl;
 
