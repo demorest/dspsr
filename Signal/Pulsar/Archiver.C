@@ -112,9 +112,9 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
   uint64 ndat_total = profiles->get_ndat_total();
   double percent = double(ndat_folded)/double(ndat_total) * 100.0;
 
-  cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
-       << ndat_total << " total samples: " << percent << "%" << endl;
-
+  if (verbose)
+    cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
+	 << ndat_total << " total samples: " << percent << "%" << endl;
 
   if (profiles->get_integration_length() < minimum_integration_length)
   {
@@ -176,6 +176,22 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     archive -> unload();
   }
 
+}
+
+void dsp::Archiver::finish () try
+{
+  if (!single_archive)
+    return;
+
+  cerr << "dsp::Archiver::finish archive '"
+       << single_archive->get_filename() << "' with "
+       << single_archive->get_nsubint () << " integrations" << endl;
+    
+  archive->unload ();
+}
+catch (Error& error)
+{
+  throw error += "dsp::Archiver::finish";
 }
 
 void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
