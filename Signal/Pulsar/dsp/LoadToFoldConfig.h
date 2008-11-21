@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.12 $
-   $Date: 2008/11/14 17:29:04 $
+   $Revision: 1.13 $
+   $Date: 2008/11/21 00:56:47 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -83,6 +83,9 @@ namespace dsp {
     // phase-locked filterbank channels
     unsigned plfb_nchan;
 
+    // compute and fold the fourth moments of the electric field
+    bool fourth_moment;
+
     unsigned npol;
     unsigned nbin;
     unsigned nchan;
@@ -94,7 +97,7 @@ namespace dsp {
 
     double reference_phase;
     double folding_period;
-    bool fractional_pulses;
+    bool   fractional_pulses;
 
     /* There are three ways to fold multiple pulsars:
 

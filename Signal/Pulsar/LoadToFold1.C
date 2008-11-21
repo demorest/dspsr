@@ -23,6 +23,7 @@
 #include "dsp/SampleDelay.h"
 #include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/Detection.h"
+#include "dsp/FourthMoment.h"
 
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
@@ -285,7 +286,12 @@ void dsp::LoadToFold1::prepare () try
   }
   else
   {
-    if (config->npol == 4)
+    if (config->fourth_moment)
+    {
+      detect->set_output_state (Signal::Stokes);
+      detect->set_output_ndim (4);
+    }
+    else if (config->npol == 4)
     {
       detect->set_output_state (Signal::Coherence);
       detect->set_output_ndim (config->ndim);
@@ -315,7 +321,19 @@ void dsp::LoadToFold1::prepare () try
   {
     detect->set_input (convolved);
     detect->set_output (convolved);
-    prepare_fold (convolved);
+
+    if (config->fourth_moment)
+    {
+      FourthMoment* fourth = new FourthMoment;
+      operations.push_back (fourth);
+
+      TimeSeries* moment = new_time_series ();
+      fourth->set_input (convolved);
+      fourth->set_output (moment);
+      prepare_fold (moment);
+    }
+    else
+      prepare_fold (convolved);
   }
   
   prepare_final ();
@@ -671,7 +689,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
 
   FilenameEpoch* epoch_convention = 0;
 
-  if (config->single_pulse)
+  if (config->single_pulse && !config->single_archive)
     archiver->set_convention( new FilenamePulse );
   else
     archiver->set_convention( epoch_convention = new FilenameEpoch );
@@ -699,6 +717,8 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
 		   "cannot set archive filename in single pulse mode");
     epoch_convention->set_datestr_pattern (config->archive_filename);
   }
+
+  archiver->set_archive_software( "dspsr" );
 
   if (sample_delay)
     archiver->set_archive_dedispersed (true);
@@ -852,26 +872,7 @@ void dsp::LoadToFold1::finish () try
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
 
-      archiver->set_archive_software( "dspsr" );
       archiver->unload( fold[i]->get_output() );
-    }
-  }
-  else if (config->single_archive)
-  {
-    for (unsigned i=0; i<unloader.size(); i++)
-    {
-      Archiver* archiver = dynamic_cast<Archiver*>( unloader[i].get() );
-      if (!archiver)
-	throw Error (InvalidState, "dsp::LoadToFold1::finish",
-		     "unloader is not an archiver (single archive)");
-
-      Pulsar::Archive* archive = archiver->get_archive ();
-
-      cerr << "Unloading single archive with " << archive->get_nsubint ()
-	   << " integrations" << endl
-	 << "Filename = '" << archive->get_filename() << "'" << endl;
-    
-      archive->unload ();
     }
   }
 }
