@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.11 $
-   $Date: 2008/05/11 08:12:50 $
+   $Revision: 1.12 $
+   $Date: 2008/11/21 11:08:02 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -139,7 +139,12 @@ namespace dsp {
     //! Calculates the boundaries of the sub-integration containing time
     void set_boundaries (const MJD& time);
 
+    //! If observation is set, round boundaries to integer samples
+    void set_boundaries (const MJD& mjd1, const MJD& mjd2);
+
   private:
+
+    mutable const Observation* observation;
 
     //! The start of the current division
     MJD lower;
@@ -164,7 +169,6 @@ namespace dsp {
 
     //! Flag set when the current observation appears contiguous
     bool new_division;
-
 
     //! The first time sample in the current division
     uint64 idat_start;

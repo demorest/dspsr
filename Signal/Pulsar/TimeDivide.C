@@ -113,6 +113,8 @@ void dsp::TimeDivide::set_fractional_pulses (bool flag)
 
 void dsp::TimeDivide::set_bounds (const Observation* input)
 {
+  observation = input;
+
   double sampling_rate = input->get_rate();
   uint64 input_ndat = input->get_ndat();
 
@@ -141,7 +143,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   end_reached = false;
   in_next = false;
 
-  if (input_end < lower || divide_start+0.6/sampling_rate > upper)
+  if (input_end < lower || divide_start + 0.5/sampling_rate > upper)
   {
     /*
       This state occurs when either:
@@ -407,8 +409,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 	 << " division=" << division << endl;
 #endif
 
-    lower = start_time + double(division) * division_seconds;
-    upper = lower + division_seconds;
+    set_boundaries( start_time + double(division) * division_seconds,
+		    start_time + double(division+1) * division_seconds );
 
     return;
   }
@@ -436,7 +438,6 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   division = uint64 (turns/division_turns);
 
   input_phase = start_phase + division * division_turns;
-  lower = poly->iphase (input_phase);
   
   if (division_turns < 1.0)
   {
@@ -449,8 +450,52 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 #endif
   }
 
-  input_phase += division_turns;
-  upper = poly->iphase (input_phase);
+  set_boundaries( poly->iphase (input_phase),
+		  poly->iphase (input_phase + division_turns) );
+}
+
+void dsp::TimeDivide::set_boundaries (const MJD& mjd1, const MJD& mjd2) try
+{
+  if (!observation)
+  {
+    lower = mjd1;
+    upper = mjd2;
+    return;
+  }
+
+  double sampling_rate = observation->get_rate();
+  MJD input_start = observation->get_start_time ();
+
+  double seconds = (mjd1-input_start).in_seconds();
+  int64 samples = lrint( seconds * sampling_rate );
+
+  lower = input_start + samples / sampling_rate;
+
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_boundaries \n\t"
+      "input start=" << input_start << "\n\t"
+      "request start=" << mjd1 << "\n\t"
+      "seconds diff=" << seconds << "\n\t"
+      "samples diff=" << samples << "\n\t"
+      "division start=" << lower << endl;
+
+  seconds = (mjd2-lower).in_seconds ();
+  assert (seconds > 0);
+  samples = lrint( seconds * sampling_rate );
+
+  upper = lower + samples / sampling_rate;
+
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_boundaries \n\t"
+      "input start=" << input_start << "\n\t"
+      "request end=" << mjd2 << "\n\t"
+      "seconds diff=" << seconds << "\n\t"
+      "samples diff=" << samples << "\n\t"
+      "division end=" << upper << endl;
+}
+catch (Error& error)
+{
+  throw error += "dsp::TimeDivide::set_boundaries";
 }
 
 uint64 dsp::TimeDivide::get_division (const MJD& epoch)
