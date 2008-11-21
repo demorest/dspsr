@@ -276,7 +276,7 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
 void parse_options (int argc, char** argv)
 {
   static char* args =
-    "2:a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
+    "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
     "L:m:M:n:N:O:op:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
 
   string stropt;
@@ -299,21 +299,24 @@ void parse_options (int argc, char** argv)
       baseband_options += " -2" + stropt;
 
       scanned = sscanf (optarg, "n%u", &config->excision_nsample);
-      if (scanned == 1)  {
+      if (scanned == 1)
+      {
         cerr << "dspsr: Using " << config->excision_nsample 
              << " samples to estimate undigitized power" << endl;
         break;
       }
 
       scanned = sscanf (optarg, "c%f", &config->excision_cutoff);
-      if (scanned == 1)  {
-        cerr << "dspsr: Setting impulsive interference excision threshold "
-	  "to " << config->excision_cutoff << endl;
+      if (scanned == 1)
+      {
+        cerr << "dspsr: Setting impulsive interference excision threshold to "
+	     << config->excision_cutoff << endl;
         break;
       }
 
       scanned = sscanf (optarg, "t%f", &config->excision_threshold);
-      if (scanned == 1) {
+      if (scanned == 1)
+      {
         cerr << "dspsr: Setting two-bit sampling threshold to "
              << config->excision_threshold << endl;
         break;
@@ -322,6 +325,10 @@ void parse_options (int argc, char** argv)
       cerr << "dspsr: error parsing " << optarg << " as"
 	" two-bit correction nsample, threshold, or cutoff" << endl;
       exit (-1);
+
+    case '4':
+      config->fourth_moment = true;
+      break;
 
     case 'A':
       config->single_archive = true;
