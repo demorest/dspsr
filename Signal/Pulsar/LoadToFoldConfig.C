@@ -51,8 +51,8 @@ dsp::LoadToFold::Config::Config ()
   // phase-locked filterbank channels
   plfb_nchan = 0;
 
-  // do no compute the fourth order moments by default
-  fourth_moment = true;
+  // do not compute the fourth order moments by default
+  fourth_moment = false;
 
   // full polarization by default
   npol = 4;
