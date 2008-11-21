@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.23 $
-   $Date: 2008/11/14 17:29:04 $
+   $Revision: 1.24 $
+   $Date: 2008/11/21 00:56:37 $
    $Author: straten $ */
 
 
@@ -77,6 +77,9 @@ namespace dsp {
 
     //! Unloads all available data to a Pulsar::Archive instance
     void unload (const PhaseSeries*);
+
+    //! Perform any clean up tasks before completion
+    void finish ();
 
     //! Set the Pulsar::Archive with the PhaseSeries data
     void set (Pulsar::Archive* archive, const PhaseSeries* phase);
