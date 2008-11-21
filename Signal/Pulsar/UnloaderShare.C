@@ -175,6 +175,9 @@ void dsp::UnloaderShare::finish ()
 
   while( storage.size() )
     unload( storage[0] );
+
+  if (unloader)
+    unloader->finish ();
 }
 
 void dsp::UnloaderShare::unload (Storage* store)
