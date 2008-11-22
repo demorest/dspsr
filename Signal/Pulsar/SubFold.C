@@ -42,6 +42,7 @@ dsp::PhaseSeriesUnloader* dsp::SubFold::get_unloader () const
 //! Set the start time from which to begin counting sub-integrations
 void dsp::SubFold::set_start_time (const MJD& start_time)
 {
+  cerr << "dsp::SubFold::set_start_time" << endl;
   divider.set_start_time (start_time);
 }
 
@@ -72,7 +73,13 @@ void dsp::SubFold::prepare ()
   // if unspecified, the first TimeSeries to be folded will define the
   // start time from which to begin cutting up the observation
   if (divider.get_start_time() == MJD::zero)
+  {
+    if (verbose)
+      cerr << "dsp::SubFold::prepare set divider start time=" 
+	   << input->get_start_time() << endl;
+
     divider.set_start_time (input->get_start_time());
+  }
 
   if (has_folding_predictor() && divider.get_turns())
     divider.set_predictor (get_folding_predictor());
@@ -81,7 +88,7 @@ void dsp::SubFold::prepare ()
 }
 
 
-void dsp::SubFold::transformation ()
+void dsp::SubFold::transformation () try
 {
   if (verbose)
     cerr << "dsp::SubFold::transformation" << endl;
@@ -96,21 +103,23 @@ void dsp::SubFold::transformation ()
   // flag that the input TimeSeries contains data for another sub-integration
   bool more_data = true;
 
-  while (more_data) {
-
+  while (more_data)
+  {
     divider.set_bounds( get_input() );
+
+    if (!divider.get_fractional_pulses())
+      output->set_ndat_expected( divider.get_division_ndat() );
 
     more_data = divider.get_in_next ();
 
-    if (divider.get_new_division() && output->get_integration_length()) {
-
+    if (divider.get_new_division() && output->get_integration_length())
+    {
       /* A new division has been started and there is still data in
 	 the current integration.  This is a sign that the current
 	 input comes from uncontiguous data, which can arise when
 	 processing in parallel. */
 
       unload_partial ();
-
     }
 
     if (!divider.get_is_valid())
@@ -127,7 +136,8 @@ void dsp::SubFold::transformation ()
 
     complete.send (output);
 
-    if (!keep(output)) {
+    if (!keep(output))
+    {
       if (verbose)
 	cerr << "dsp::SubFold::transformation discard sub-integration" << endl;
       output->zero();
@@ -137,16 +147,19 @@ void dsp::SubFold::transformation ()
     if (unloader)
     {
       if (verbose)
-	cerr << ":dsp::SubFold::transformation unload subint" << endl;
+	cerr << "dsp::SubFold::transformation unload subint" << endl;
 
       unloader->unload(output);
     }
 
     output->zero();
-
-
   }
 }
+catch (Error& error)
+{
+  throw error += "dsp::SubFold::transformation";
+}
+
 
 /*! sets the Fold::idat_start and Fold::ndat_fold attributes */
 void dsp::SubFold::set_limits (const Observation* input)
