@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.12 $
-   $Date: 2008/11/21 11:08:02 $
+   $Revision: 1.13 $
+   $Date: 2008/11/22 17:20:44 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -68,6 +68,7 @@ namespace dsp {
 
     //! Fold the fractional pulses at the start and end of data
     void set_fractional_pulses (bool);
+    bool get_fractional_pulses () const;
 
     //@}
 
@@ -93,11 +94,14 @@ namespace dsp {
     //! Return true if the end of the current division has been reached
     bool get_end_reached () const { return end_reached; }
 
-    //! Get the first time sample in the current division
+    //! Get the first time sample from observation in the current division
     uint64 get_idat_start () const { return idat_start; }
 
-    //! Get the number of time samples in the current division
+    //! Get the number of time samples from observation in the current division
     uint64 get_ndat () const { return ndat; }
+
+    //! Get the total number of time samples in the current division
+    uint64 get_division_ndat () const { return division_ndat; }
 
     //! Get the phase bin of the current division (turns < 1)
     unsigned get_phase_bin () const { return phase_bin; }
@@ -144,8 +148,6 @@ namespace dsp {
 
   private:
 
-    mutable const Observation* observation;
-
     //! The start of the current division
     MJD lower;
 
@@ -170,11 +172,17 @@ namespace dsp {
     //! Flag set when the current observation appears contiguous
     bool new_division;
 
-    //! The first time sample in the current division
+    //! The observation from which to compute time samples
+    mutable const Observation* observation;
+
+    //! The first time sample from observation in the current division
     uint64 idat_start;
 
-    //! The number of time samples in the current division
+    //! The number of time samples from observation in the current division
     uint64 ndat;
+
+    //! The total number of time samples in the current division
+    uint64 division_ndat;
 
     //! The phase bin of the current division (division_turns < 1)
     unsigned phase_bin;
