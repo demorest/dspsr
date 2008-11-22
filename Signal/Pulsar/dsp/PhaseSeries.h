@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.30 $
-   $Date: 2008/10/15 04:00:16 $
+   $Revision: 1.31 $
+   $Date: 2008/11/22 17:20:33 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -109,6 +109,12 @@ namespace dsp {
     //! Over-ride Observation::combinable_rate
     bool combinable_rate (double) const { return true; }
 
+    //! Set the expected number of time samples
+    void set_ndat_expected (uint64);
+
+    //! Return the expected number of time samples
+    uint64 get_ndat_expected () const;
+
     //! Return the total number of time samples
     uint64 get_ndat_total () const;
 
@@ -134,6 +140,9 @@ namespace dsp {
 
     //! Total number of time samples passed to folding routine
     uint64 ndat_total;
+
+    //! Total number of time samples expected to be passed to folding routine
+    uint64 ndat_expected;
 
     //! The number of seconds integrated into the profile(s)
     double integration_length;
