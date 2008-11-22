@@ -116,6 +116,22 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
 	 << ndat_total << " total samples: " << percent << "%" << endl;
 
+  uint64 ndat_expected = profiles->get_ndat_expected();
+  if (ndat_expected && (abs(int64(ndat_expected) - int64(ndat_total)) > 1))
+  {
+    /*
+      ndat_expected is the number of samples expected to be totalled in
+      the sub-integration.  This number can possibly differ from ndat_total
+      due to different rounding in different thread (an untested assertion).
+    */
+
+    if (verbose)
+      cerr << "dsp::Archiver::unload ignoring incomplete sub-integration \n\t"
+	"expected=" << ndat_expected << " total=" << ndat_total << endl;
+
+    return;
+  }
+
   if (profiles->get_integration_length() < minimum_integration_length)
   {
     cerr << "dsp::Archiver::unload ignoring " 
@@ -186,8 +202,9 @@ void dsp::Archiver::finish () try
   cerr << "dsp::Archiver::finish archive '"
        << single_archive->get_filename() << "' with "
        << single_archive->get_nsubint () << " integrations" << endl;
-    
-  archive->unload ();
+
+  if (single_archive->get_nsubint ())
+    single_archive->unload ();
 }
 catch (Error& error)
 {
@@ -195,8 +212,8 @@ catch (Error& error)
 }
 
 void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
-try {
-
+try 
+{
   if (verbose)
     cerr << "dsp::Archiver::add Pulsar::Archive" << endl;
 
