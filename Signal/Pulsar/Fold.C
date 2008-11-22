@@ -685,8 +685,7 @@ void dsp::Fold::fold (uint64 nweights,
   {
     for (unsigned ipol=0; ipol<npol; ipol++)
     {
-      const float* timep = in->get_datptr(ichan,ipol)
-	+ idat_start*ndim;
+      const float* timep = in->get_datptr(ichan,ipol) + idat_start * ndim;
 
       float* phasep = result->get_datptr(ichan,ipol);
 
