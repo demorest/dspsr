@@ -16,6 +16,8 @@ dsp::PhaseSeries::PhaseSeries () : TimeSeries()
 {
   integration_length = 0;
   ndat_total = 0;
+  ndat_expected = 0;
+
   folding_period = 0;
   reference_phase = 0;
   require_equal_sources = false;
@@ -221,6 +223,8 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   reference_phase    = prof.reference_phase;
   integration_length = prof.integration_length;
   ndat_total         = prof.ndat_total;
+  ndat_expected      = prof.ndat_expected;
+
   end_time           = prof.end_time;
   folding_period     = prof.folding_period;
   folding_predictor  = prof.folding_predictor->clone();
@@ -251,6 +255,9 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof)
 
   integration_length += prof->integration_length;
   ndat_total += prof->ndat_total;
+
+  if (!ndat_expected)
+    ndat_expected = prof->ndat_expected;
 }
 
 //! Return the total number of time samples
@@ -269,4 +276,16 @@ uint64 dsp::PhaseSeries::get_ndat_folded () const
     folded += hits[i];
 
   return folded;
+}
+
+//! Set the expected number of time samples
+void dsp::PhaseSeries::set_ndat_expected (uint64 n)
+{
+  ndat_expected = n;
+}
+
+//! Return the expected number of time samples
+uint64 dsp::PhaseSeries::get_ndat_expected () const
+{
+  return ndat_expected;
 }
