@@ -36,6 +36,8 @@ dsp::TimeDivide::TimeDivide ()
   idat_start = 0;
   ndat = 0;
   phase_bin = 0;
+
+  observation = 0;
 }
 
 dsp::TimeDivide::~TimeDivide ()
