@@ -224,7 +224,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 		 "unloader vector size=%u != fold vector size=%u",
 		 threads[0]->unloader.size(), nfold );
 
-  unloaders.resize( nfold );
+  unloader.resize( nfold );
 
   /*
     Note that, at this point, only thread[0] has been prepared.
@@ -238,12 +238,12 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
       throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
 		   "folder is not a SubFold" );
 
-    unloaders[ifold] = new UnloaderShare( threads.size() );
-    unloaders[ifold]->copy( subfold->get_divider() );
-    unloaders[ifold]->set_unloader( threads[0]->unloader[ifold] );
-    unloaders[ifold]->set_context( new ThreadContext );
+    unloader[ifold] = new UnloaderShare( threads.size() );
+    unloader[ifold]->copy( subfold->get_divider() );
+    unloader[ifold]->set_unloader( threads[0]->unloader[ifold] );
+    unloader[ifold]->set_context( new ThreadContext );
 
-    threads[0]->unloader[ifold] = unloaders[ifold]->new_Submit (0);
+    threads[0]->unloader[ifold] = unloader[ifold]->new_Submit (0);
     subfold->set_unloader( threads[0]->unloader[ifold] );
 
   }
@@ -253,7 +253,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     threads[i]->unloader.resize( nfold );
 
     for (unsigned ifold = 0; ifold < nfold; ifold ++)
-      threads[i]->unloader[ifold] = unloaders[ifold]->new_Submit (i);
+      threads[i]->unloader[ifold] = unloader[ifold]->new_Submit (i);
   }
 
   if (Operation::verbose)
@@ -439,9 +439,17 @@ void dsp::LoadToFoldN::finish ()
   if (first)
   {
     if (Operation::verbose)
-      cerr << "psr::LoadToFoldN::finish finishing via first" << endl;
+      cerr << "psr::LoadToFoldN::finish via first" << endl;
 
     first->finish();
+  }
+
+  for (unsigned i=0; i<unloader.size(); i++)
+  {
+    if (Operation::verbose)
+      cerr << "psr::LoadToFoldN::finish unloader[" << i << "]" << endl;
+
+    unloader[i]->finish();
   }
 
   if (errors)
