@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.7 $
-   $Date: 2007/11/24 10:52:07 $
+   $Revision: 1.8 $
+   $Date: 2008/11/22 17:20:49 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -65,7 +65,7 @@ namespace dsp {
     Reference::To<Input> input;
 
     //! PhaseSeriesUnloader sharing
-    std::vector< Reference::To<UnloaderShare> > unloaders;
+    std::vector< Reference::To<UnloaderShare> > unloader;
 
     //! Thread lock for Input::load
     ThreadContext* input_context;
