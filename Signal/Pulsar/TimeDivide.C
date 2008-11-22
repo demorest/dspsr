@@ -38,6 +38,7 @@ dsp::TimeDivide::TimeDivide ()
   phase_bin = 0;
 
   observation = 0;
+  division_ndat = 0;
 }
 
 dsp::TimeDivide::~TimeDivide ()
@@ -111,6 +112,11 @@ void dsp::TimeDivide::set_reference_phase (double phase)
 void dsp::TimeDivide::set_fractional_pulses (bool flag)
 {
   fractional_pulses = flag;
+}
+
+bool dsp::TimeDivide::get_fractional_pulses () const
+{
+  return fractional_pulses;
 }
 
 void dsp::TimeDivide::set_bounds (const Observation* input)
@@ -483,16 +489,16 @@ void dsp::TimeDivide::set_boundaries (const MJD& mjd1, const MJD& mjd2) try
 
   seconds = (mjd2-lower).in_seconds ();
   assert (seconds > 0);
-  samples = lrint( seconds * sampling_rate );
+  division_ndat = lrint( seconds * sampling_rate );
 
-  upper = lower + samples / sampling_rate;
+  upper = lower + division_ndat / sampling_rate;
 
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::set_boundaries \n\t"
       "input start=" << input_start << "\n\t"
       "request end=" << mjd2 << "\n\t"
       "seconds diff=" << seconds << "\n\t"
-      "samples diff=" << samples << "\n\t"
+      "samples diff=" << division_ndat << "\n\t"
       "division end=" << upper << endl;
 }
 catch (Error& error)
