@@ -6,7 +6,8 @@
  ***************************************************************************/
 
 #include "dsp/SigProcObservation.h"
-#include <iostream.h>
+#include <iostream>
+#include <string.h>
 
 extern "C" {
 #include "filterbank.h"
