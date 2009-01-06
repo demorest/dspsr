@@ -276,8 +276,8 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
 void parse_options (int argc, char** argv)
 {
   static char* args =
-    "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:"
-    "L:m:M:n:N:O:op:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
+    "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:"
+    "m:M:n:N:oO:p:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
 
   string stropt;
 
@@ -486,7 +486,19 @@ void parse_options (int argc, char** argv)
       break;
 
     case 'N':
-      pulsar_name = optarg;
+      if (!file_exists(optarg))
+	pulsar_name = optarg;
+      else
+      {
+	cerr << "dspsr: Loading source names from " << optarg << endl;
+	vector <string> names;
+	stringfload (&names, optarg);
+
+	if (names.size())
+	  pulsar_name = names[0];
+	for (unsigned i=1; i < names.size(); i++)
+	  config->additional_pulsars.push_back ( names[i] );
+      }
       break;
 
     case 'O':
@@ -619,11 +631,12 @@ void parse_options (int argc, char** argv)
       dsp::psrdisp_compatible = true;
       break;
 
-    case 'Z': {
-
+    case 'Z':
+    {
       string lib = optarg;
 
-      if (lib == "help") {
+      if (lib == "help")
+      {
 	unsigned nlib = FTransform::get_num_libraries ();
 	cerr << "dspsr: " << nlib << " available FFT libraries:";
 	for (unsigned ilib=0; ilib < nlib; ilib++)
