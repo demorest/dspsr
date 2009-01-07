@@ -787,6 +787,11 @@ void dsp::LoadToFold1::run () try
     {
       if (error.get_code() == EndOfFile)
 	break;
+
+      // ensure that remaining threads are not left waiting
+      for (unsigned ifold=0; ifold < fold.size(); ifold++)
+	fold[ifold]->finish();
+
       throw error += "dsp::LoadToFold1::run";
     }
     
