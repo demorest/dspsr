@@ -33,11 +33,6 @@ Registry::List<dsp::File> dsp::File::registry;
 #include "dsp/DADAFile.h"
 static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
 
-/*! MultFile is built in */
-#include "dsp/MultiFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MultiFile> multifile;
-
-
 #if HAVE_asp
 #include "dsp/ASPFile.h"
 static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
@@ -165,4 +160,7 @@ static Registry::List<dsp::File>::Enter<dsp::Dumb_LBAFile> file_register_dumblba
 static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
 #endif
 
+/*! MultFile is built in and slow - it tries to parse entire binary files */
+#include "dsp/MultiFile.h"
+static Registry::List<dsp::File>::Enter<dsp::MultiFile> multifile;
 
