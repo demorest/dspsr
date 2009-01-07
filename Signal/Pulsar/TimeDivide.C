@@ -172,7 +172,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
     new_division = true;
 
-    set_boundaries (divide_start + 0.5/sampling_rate);
+    set_boundaries (divide_start + 0.55/sampling_rate);
   }
 
   divide_start = std::max (lower, divide_start);
@@ -245,8 +245,34 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 	 << " ms (" << idat_end << "pts)" << endl;
  
   if (idat_end <= idat_start)
+  {
+#ifdef _DEBUG
+    cerr << "dsp::TimeDivide::bound start division at"
+         << "\n          start = " << divide_start
+         << "\n division start = " << lower
+         << "\n    input start = " << input_start
+         << endl;
+
+    offset = divide_start - input_start;
+
+    cerr << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
+         << " ms (" << idat_start << "pts)" << endl;
+
+    cerr << "dsp::TimeDivide::bound end division at "
+         << "\n           end = " << divide_end
+         << "\n  division end = " << upper
+         << "\n     input end = " << input_end
+         << endl;
+
+    offset = divide_end - input_start;
+
+    cerr << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
+         << " ms (" << idat_end << "pts)" << endl; 
+#endif
+
     throw Error (InvalidState, "dsp::TimeDivide::bound",
 		 "idat_end="UI64" <= idat_start="UI64, idat_end, idat_start);
+  }
 
   if (idat_end > input_ndat)
   {
