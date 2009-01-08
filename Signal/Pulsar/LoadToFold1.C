@@ -666,6 +666,20 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
     fold[ifold]->prepare ( manager->get_info() );
 
+    if (ifold && ifold <= config->additional_pulsars.size())
+    {
+      if (!change)
+        change = new ObservationChange;
+
+      /*
+        If additional pulsar names have been specified, then Fold::prepare
+        will have retrieved an ephemeris, and the DM from this ephemeris 
+        should make its way into the folded profile.
+      */
+      const Pulsar::Parameters* ephem = fold[ifold]->get_pulsar_ephemeris ();
+      change->set_dispersion_measure( ephem->get_dispersion_measure() );
+    }
+
     fold[ifold]->get_output()->zero();
 
     operations.push_back( fold[ifold].get() );
