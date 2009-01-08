@@ -436,7 +436,8 @@ void dsp::WeightedTimeSeries::mask_weights ()
 
 void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 {
-  if (ndat_per_weight >= nfft) {
+  if (ndat_per_weight >= nfft)
+  {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::convolve_weights ndat_per_weight="
 	   << ndat_per_weight << " >= nfft=" << nfft << endl;
@@ -445,9 +446,19 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
     return;
   }
 
+  if (get_ndat() + nkeep < nfft)
+  {
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::convolve_weights ndat=" << get_ndat()
+           << " + nkeep=" << nkeep << " is less than nfft=" << nfft << endl;
+
+    return;
+  }
+
   uint64 nweights_tot = get_nweights();
 
-  if (verbose) {
+  if (verbose)
+  {
     uint64 nzero = get_nzero ();
     cerr << "dsp::WeightedTimeSeries::convolve_weights nfft=" << nfft
 	 << " nkeep=" << nkeep << "\n  ndat_per_weight=" << ndat_per_weight
@@ -466,15 +477,16 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
   uint64 zero_start = 0;
   uint64 zero_end = 0;
 
-
-  for (uint64 start_idat=0; start_idat < end_idat; start_idat += nkeep) {
-
+  for (uint64 start_idat=0; start_idat < end_idat; start_idat += nkeep)
+  {
     uint64 start_weight = uint64(start_idat * weights_per_dat);
     uint64 end_weight = uint64(ceil ((start_idat+nfft) * weights_per_dat));
 
     if (end_weight > nweights_tot)
       throw Error (InvalidState, "dsp::WeightedTimeSeries::convolve_weights",
-		   "end_weight=%d > nweights=%d", end_weight, nweights_tot);
+		   "end_weight=%d > nweights=%d \n\t"
+                   "blocks="UI64" end_idat="UI64,
+                   end_weight, nweights_tot, blocks, end_idat);
 
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::convolve_weights start_weight="
@@ -493,7 +505,8 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
        Therefore, flag only the previous data set and set the flag for
        the next loop. */
 
-    for (iweight=zero_start; iweight < zero_end; iweight++) {
+    for (iweight=zero_start; iweight < zero_end; iweight++)
+    {
       weights[iweight] = 0;
       total_bad ++;
     }
@@ -501,8 +514,8 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
     if (zero_weights == 0)
       zero_start = zero_end = 0;
 
-    else {
-
+    else
+    {
       if (verbose)
         cerr << "dsp::WeightedTimeSeries::convolve_weights bad weights="
 	     << zero_weights << endl;
@@ -513,22 +526,21 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
       if (verbose)
 	cerr << "dsp::WeightedTimeSeries::convolve_weights"
 	  " flagging " << zero_end-zero_start << " bad weights" << endl;
-
     }
-
   } 
 
-  for (uint64 iweight=zero_start; iweight < zero_end; iweight++) {
+  for (uint64 iweight=zero_start; iweight < zero_end; iweight++)
+  {
     weights[iweight] = 0;
     total_bad ++;
   }
 
-  if (verbose) {
+  if (verbose)
+  {
     uint64 nzero = get_nzero ();
     cerr << "dsp::WeightedTimeSeries::convolve_weights bad=" << nzero <<
       "/" << nweights_tot << endl;
   }
-
 }
 
 void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
