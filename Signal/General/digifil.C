@@ -19,6 +19,8 @@
 
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
+#include "dsp/Filterbank.h"
+#include "dsp/Detection.h"
 
 #include "dirutil.h"
 #include "Error.h"
@@ -32,7 +34,7 @@
 
 using namespace std;
 
-static char* args = "b:B:co:prhvV";
+static char* args = "b:B:F:co:prhvV";
 
 void usage ()
 {
@@ -55,7 +57,8 @@ int main (int argc, char** argv) try
   bool verbose = false;
   bool constant_offset_scale = false;
 
-  int nbits = 2;
+  unsigned nbits = 2;
+  unsigned filterbank_nchan = 0;
 
   // block size in seconds
   double block_size = 10;
@@ -78,6 +81,10 @@ int main (int argc, char** argv) try
 
     case 'c':
       constant_offset_scale = true;
+      break;
+
+    case 'F':
+      filterbank_nchan = atoi (optarg);
       break;
 
     case 'o':
@@ -173,6 +180,10 @@ int main (int argc, char** argv) try
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
+    Reference::To<dsp::Filterbank> filterbank;
+    Reference::To<dsp::TimeSeries> filterbank_input;
+    Reference::To<dsp::Detection> detection;
+
     if (verbose)
       cerr << "digifil: opening file " << filenames[ifile] << endl;
 
@@ -185,6 +196,25 @@ int main (int argc, char** argv) try
     if (verbose)
       cerr << "digifil: block_size=" << block_size << " sec "
         "(" << nsample << " samp)" << endl;
+
+    if (!obs->get_detected())
+    {
+      detection = new dsp::Detection;
+      detection->set_input( timeseries );
+      detection->set_output( timeseries );
+      
+      if (filterbank_nchan)
+      {
+	filterbank = new dsp::Filterbank;
+	filterbank_input = new dsp::TimeSeries;
+
+	manager->set_output (filterbank_input);
+
+	filterbank->set_nchan( filterbank_nchan );
+	filterbank->set_input( filterbank_input );
+	filterbank->set_output( timeseries );
+      }
+    }
 
     manager->set_block_size( nsample );
 
@@ -212,6 +242,12 @@ int main (int argc, char** argv) try
     while (!manager->get_input()->eod())
     {
       manager->operate ();
+
+      if (filterbank)
+	filterbank->operate();
+
+      if (detection)
+	detection->operate();
 
       rescale->operate ();
 
