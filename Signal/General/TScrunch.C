@@ -65,8 +65,15 @@ double dsp::TScrunch::get_time_resolution() const
 
 void dsp::TScrunch::prepare ()
 {
-  if (has_buffering_policy())
-    get_buffering_policy()->set_minimum_samples ( get_factor() );
+  if (!has_buffering_policy())
+    return;
+
+  unsigned sfactor = get_factor();
+
+  if (verbose)
+    cerr << "dsp::TScrunch::prepare factor=" << sfactor << endl;
+
+  get_buffering_policy()->set_minimum_samples ( sfactor );
 }
 
 void dsp::TScrunch::transformation ()
