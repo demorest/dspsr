@@ -26,10 +26,10 @@ int dsp::Operation::instantiation_count = 0;
 
 bool dsp::Operation::check_state = true;
 
-/*! No buffering policy is enabled by default.  If input buffering is
-  desired, this flag must be raised before any Operation-derived
+/*! Input buffering is enabled by default.  If input buffering is not
+  desired, this flag must be lowered before any Operation-derived
   classes are instantiated */
-bool dsp::Operation::preserve_data = false;
+bool dsp::Operation::preserve_data = true;
 
 int dsp::Operation::operation_status = 0;
 
