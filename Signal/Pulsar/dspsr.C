@@ -487,7 +487,11 @@ void parse_options (int argc, char** argv)
 
     case 'N':
       if (!file_exists(optarg))
+      {
+        cerr << "dspsr: Setting source name to " << optarg << endl;
 	pulsar_name = optarg;
+  errno = 0;
+      }
       else
       {
 	cerr << "dspsr: Loading source names from " << optarg << endl;
