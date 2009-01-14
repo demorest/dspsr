@@ -251,7 +251,7 @@ int main (int argc, char** argv) try
     {
       tscrunch = new dsp::TScrunch;
 
-      tscrunch->set_ScrunchFactor (tscrunch_factor);
+      tscrunch->set_factor (tscrunch_factor);
       tscrunch->set_input( timeseries );
       tscrunch->set_output( timeseries );
     }
