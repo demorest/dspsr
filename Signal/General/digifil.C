@@ -192,6 +192,7 @@ int main (int argc, char** argv) try
     dsp::Observation* obs = manager->get_info();
 
     uint64 nsample = uint64( block_size * obs->get_rate() );
+    bool do_pscrunch = obs->get_npol() > 1;
 
     if (verbose)
       cerr << "digifil: block_size=" << block_size << " sec "
@@ -202,6 +203,8 @@ int main (int argc, char** argv) try
       detection = new dsp::Detection;
       detection->set_input( timeseries );
       detection->set_output( timeseries );
+
+      do_pscrunch = false;  // Detection will pscrunch
       
       if (filterbank_nchan)
       {
@@ -236,8 +239,6 @@ int main (int argc, char** argv) try
     }
 
     dsp::SigProcObservation sigproc;
-
-    bool do_pscrunch = manager->get_info()->get_npol() > 1;
 
     while (!manager->get_input()->eod())
     {
