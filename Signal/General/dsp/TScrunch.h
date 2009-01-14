@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Haydon Knight
+ *   Copyright (C) 2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -14,45 +14,41 @@
 
 namespace dsp {
 
-  //! Time-scrunches a TimeSeries by ScrunchFactor OR to a required time resolution- which ever is specified as the last setting before transformation() is called.
+  //! Decimates a TimeSeries in the time domain
 
-  class TScrunch : public Transformation <TimeSeries, TimeSeries> {
+  /*! Input data are buffered to handle block sizes that are not integer
+      multiples of the decimation factor (number of samples)
+  */
+
+  class TScrunch : public Transformation <TimeSeries, TimeSeries>
+  {
 
   public:
 
     TScrunch (Behaviour place=anyplace);
     
-    void set_ScrunchFactor( int64 _ScrunchFactor){ ScrunchFactor = _ScrunchFactor; use_tres = false; }
-    int64 get_ScrunchFactor(){ return ScrunchFactor; }
+    void set_factor ( unsigned samples );
+    int64 get_factor ();
 
-    void set_NewTimeRes( double microseconds );
-    /* Returns number of microseconds between time samples for output */
-    double get_TimeRes(){ return TimeRes; }
+    void set_time_resolution ( double microseconds );
+    double get_time_resolution ();
     
-    /* If you're not sure which method is being used, call one of these two */
-    bool UsingScrunchFactor(){ return !use_tres; }
-    bool UsingTimeRes(){ return use_tres; }
-
-    /* deprected */
-    bool get_do_only_full_scrunches(){ return true; }
-    /* deprecated */
-    void set_do_only_full_scrunches(bool){ }
-
   protected:
-    virtual void transformation ();
 
-    // Returns the unsigned version of the ScrunchFactor
-    unsigned get_sfactor();
+    //! Prepare input buffer
+    void prepare ();
 
-    int64 ScrunchFactor;
-    double TimeRes;  // In microseconds
+    //! Perform decimation
+    void transformation ();
 
-    // If true, use the tres parameter, if false use the ScrunchFactor parameter
+    // Returns the unsigned version of the factor
+    unsigned get_scrunch_factor();
+
+    int64 factor;
+    double time_resolution;
+
+    // If true, use the tres parameter, if false use the factor parameter
     bool use_tres; 
-    
-    /* deprecated */
-    bool do_only_full_scrunches;
-
   };
 
 }

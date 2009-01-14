@@ -1,117 +1,127 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Haydon Knight
+ *   Copyright (C) 2008 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/TScrunch.h"
+#include "dsp/InputBuffering.h"
+
 #include "Error.h"
 
 using namespace std;
 
-dsp::TScrunch::TScrunch(Behaviour place) 
+dsp::TScrunch::TScrunch (Behaviour place) 
   : Transformation <TimeSeries, TimeSeries> ("TScrunch", place, true)
 {
-  ScrunchFactor = -1;
-  TimeRes = -1.0;
+  factor = -1;
+  time_resolution = -1.0;
+  use_tres = false;
+
+  if (preserve_data)
+    set_buffering_policy (new InputBuffering (this));
+}
+
+void dsp::TScrunch::set_factor( unsigned samples )
+{
+  factor = samples;
   use_tres = false;
 }
 
-/* returns the ScrunchFactor determined by this tres */
-void dsp::TScrunch::set_NewTimeRes( double microseconds ){
-  TimeRes = microseconds;
+void dsp::TScrunch::set_time_resolution( double microseconds )
+{
+  time_resolution = microseconds;
   use_tres = true;
 }
 
-unsigned dsp::TScrunch::get_sfactor(){
-  if( UsingScrunchFactor() ){
-    if( ScrunchFactor < 1 )
-      throw Error (InvalidState, "dsp::TScrunch",
-		   "invalid scrunch factor:%d", ScrunchFactor);
-    TimeRes = 1.0e6/(input->get_rate()*double(ScrunchFactor));
+unsigned dsp::TScrunch::get_scrunch_factor()
+{
+  if (!use_tres)
+  {
+    if( factor < 1 )
+      throw Error (InvalidState, "dsp::TScrunch::get_scrunch_factor",
+		   "invalid scrunch factor:%d", factor);
+    time_resolution = 1.0e6/(input->get_rate()*double(factor));
   }
-  else{
-    if( TimeRes < 0.0 )
-      throw Error(InvalidState,"dsp::Tscrunch::get_sfactor()",
-		  "invalid time resolution: '%f'",
-		  TimeRes);
+  else
+  {
+    if( time_resolution < 0.0 )
+      throw Error(InvalidState,"dsp::Tscrunch::get_scrunch_factor",
+		  "invalid time resolution:%lf", time_resolution);
     double in_tsamp = 1.0e6/input->get_rate();  // in microseconds
-    ScrunchFactor = int64(TimeRes/in_tsamp + 0.00001);
+    factor = unsigned(time_resolution/in_tsamp + 0.00001);
     
-    if( verbose )
-      fprintf(stderr,"Setting Scrunchfactor to int64(%f/%f+0.00001) = "I64"\n",
-	      TimeRes,in_tsamp,ScrunchFactor);
-    
-    if( ScrunchFactor<1 )
-      ScrunchFactor = 1;
+    if ( factor<1 )
+      factor = 1;
+
+    use_tres = false;
   }
   
-  return unsigned(ScrunchFactor);
+  return factor;
+}
+
+void dsp::TScrunch::prepare ()
+{
+  if (has_buffering_policy())
+    get_buffering_policy()->set_minimum_samples ( get_scrunch_factor() );
 }
 
 void dsp::TScrunch::transformation ()
 {
-  if( verbose )
-    fprintf(stderr,"\nIn %s::transformation() with sf=%d\n",get_name().c_str(),int(ScrunchFactor));
+  unsigned sfactor = get_scrunch_factor();
 
-  if( UsingScrunchFactor() && ScrunchFactor==1 ){
-    if( verbose )
-      fprintf(stderr,"ScrunchFactor=1 so no need to scrunch!\n");
+  if( sfactor==1 )
+  {
     if( input.get() != output.get() )
       output->operator=( *input );
     return;
   }
 
-  unsigned sfactor = get_sfactor();
-
-  if( input->get_ndat() < uint64(sfactor) )
-    throw Error(InvalidState,"dsp::TScrunch::transformation()",
-		"Your ndat ("UI64") is less than the scrunch factor (%d) so you won't get any samples out!",
-		input->get_ndat(),sfactor);
-
   if( !input->get_detected() )
     throw Error(InvalidState,"dsp::TScrunch::transformation()",
 		"invalid input state: " + tostring(input->get_state()));
 
-  const unsigned nscrunchings = input->get_ndat()/sfactor;
+  const unsigned output_ndat = input->get_ndat()/sfactor;
 
-  if( input.get() != output.get() ){
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (output_ndat * sfactor);
+
+  if (input.get() != output.get())
+  {
     get_output()->copy_configuration( get_input() );
-    get_output()->set_ndim( get_input()->get_ndim() );
-    get_output()->set_nchan( get_input()->get_nchan() );
-    get_output()->set_npol( get_input()->get_npol() );
-    get_output()->set_state( get_input()->get_state() );
-
-    get_output()->resize( get_input()->get_ndat()/sfactor );
+    get_output()->resize( output_ndat );
   }
 
   output->rescale( sfactor );
   output->set_rate( input->get_rate()/sfactor );
 
-  for (unsigned ichan=0; ichan<input->get_nchan(); ichan++) {
-    for (unsigned ipol=0; ipol<input->get_npol(); ipol++) {
-      const float* in  = input->get_datptr(ichan, ipol);
+  const unsigned input_nchan = input->get_nchan();
+  const unsigned input_npol = input->get_npol();
+
+  for (unsigned ichan=0; ichan<input_nchan; ichan++)
+  {
+    for (unsigned ipol=0; ipol<input_npol; ipol++)
+    {
+      const float* in = input->get_datptr(ichan, ipol);
       float* out = output->get_datptr(ichan, ipol);
       
-      unsigned j=0;
+      unsigned input_idat=0;
 
-      for( unsigned iscrunching=0; iscrunching<nscrunchings; ++iscrunching){
-	unsigned stop = j + sfactor;
+      for( unsigned output_idat=0; output_idat<output_ndat; ++output_idat)
+      {
+	unsigned stop = input_idat + sfactor;
 	
-	out[iscrunching] = in[j]; 	++j;
+	out[output_idat] = in[input_idat]; 	++input_idat;
 	
-	for( ; j<stop; ++j)
-	  out[iscrunching] += in[j];
+	for( ; input_idat<stop; ++input_idat)
+	  out[output_idat] += in[input_idat];
       }
     } // for each ipol
   } // for each ichan
 
   if( input.get() == output.get() )
     output->set_ndat( input->get_ndat()/sfactor );
-
-  if( verbose )
-    fprintf(stderr,"Exiting from %s::transformation()\n\n",get_name().c_str()); 
 }
 
 
