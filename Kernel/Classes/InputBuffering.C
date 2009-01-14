@@ -13,6 +13,7 @@ dsp::InputBuffering::InputBuffering (HasInput<TimeSeries>* _target)
   target = _target;
   next_start_sample = 0;
   requested_reserve = 0;
+  minimum_samples = 0;
   name = "InputBuffering";
 }
 
@@ -36,15 +37,20 @@ void dsp::InputBuffering::set_minimum_samples (uint64 samples)
 /*! Copy remaining data from the target Transformation's input to buffer */
 void dsp::InputBuffering::set_next_start (uint64 next)
 {
-  if (Operation::verbose)
-    cerr << "dsp::InputBuffering::set_next_start " << next << endl;
-
   const TimeSeries* input = target->get_input();
 
   next_start_sample = next;
 
   // the number of samples in the target
-  uint64 ndat = input->get_ndat();
+  const uint64 ndat = input->get_ndat();
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::set_next_start next=" << next 
+         << " ndat=" << ndat << endl;
+
+  if (ndat && input->get_input_sample() < 0)
+    throw Error (InvalidState, "dsp::InputBuffering::set_next_start",
+                 "input_sample of target input TimeSeries is not set");
 
   // the number of samples to be buffered
   uint64 buffer_ndat = ndat - next_start_sample;
@@ -54,7 +60,7 @@ void dsp::InputBuffering::set_next_start (uint64 next)
 
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::set_next_start saving "
-	 << buffer_ndat << " samples" << endl;
+         << buffer_ndat << " samples" << endl;
 
   if (minimum_samples < buffer_ndat)
     set_minimum_samples (buffer_ndat);
@@ -69,6 +75,11 @@ void dsp::InputBuffering::set_next_start (uint64 next)
   buffer->set_nchan( input->get_nchan() );
   buffer->set_npol ( input->get_npol() );
   buffer->set_ndim ( input->get_ndim() );
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::set_next_start resize buffer"
+            " minimum_samples=" << minimum_samples << endl;
+
   buffer->resize( minimum_samples );
   buffer->copy_data( input, next_start_sample, buffer_ndat );
   buffer->set_ndat( buffer_ndat );
