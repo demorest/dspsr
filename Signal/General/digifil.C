@@ -19,6 +19,7 @@
 
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
+#include "dsp/TScrunch.h"
 #include "dsp/Filterbank.h"
 #include "dsp/Detection.h"
 
@@ -34,7 +35,7 @@
 
 using namespace std;
 
-static char* args = "b:B:F:co:prhvV";
+static char* args = "b:B:F:co:prT:hvV";
 
 void usage ()
 {
@@ -45,6 +46,8 @@ void usage ()
     "  -b bits   number of bits per sample output to file \n" 
     "  -B secs   block size in seconds \n"
     "  -c        keep offset and scale constant \n"
+    "  -F nchan  create a filterbank (voltages only) \n"
+    "  -T nsamp  decimate in time \n"
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename \n" 
     "  -r        report total Operation times \n"
@@ -59,6 +62,7 @@ int main (int argc, char** argv) try
 
   unsigned nbits = 2;
   unsigned filterbank_nchan = 0;
+  unsigned tscrunch_factor = 0;
 
   // block size in seconds
   double block_size = 10;
@@ -97,6 +101,10 @@ int main (int argc, char** argv) try
 
     case 'r':
       dsp::Operation::record_time = true;
+      break;
+
+    case 'T':
+      tscrunch_factor = atoi (optarg);
       break;
 
     case 'h':
@@ -183,6 +191,7 @@ int main (int argc, char** argv) try
     Reference::To<dsp::Filterbank> filterbank;
     Reference::To<dsp::TimeSeries> filterbank_input;
     Reference::To<dsp::Detection> detection;
+    Reference::To<dsp::TScrunch> tscrunch;
 
     if (verbose)
       cerr << "digifil: opening file " << filenames[ifile] << endl;
@@ -238,6 +247,15 @@ int main (int argc, char** argv) try
       cerr << "Sampling rate = " << obs->get_rate() << endl;
     }
 
+    if (tscrunch_factor)
+    {
+      tscrunch = new dsp::TScrunch;
+
+      tscrunch->set_ScrunchFactor (tscrunch_factor);
+      tscrunch->set_input( timeseries );
+      tscrunch->set_output( timeseries );
+    }
+
     dsp::SigProcObservation sigproc;
 
     while (!manager->get_input()->eod())
@@ -249,6 +267,9 @@ int main (int argc, char** argv) try
 
       if (detection)
 	detection->operate();
+
+      if (tscrunch)
+        tscrunch->operate();
 
       rescale->operate ();
 
