@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.46 $
-   $Date: 2008/10/14 18:53:28 $
+   $Revision: 1.47 $
+   $Date: 2009/01/14 20:19:42 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -125,6 +125,8 @@ namespace dsp {
 
     //! Return the sample offset from the start of the data source
     int64 get_input_sample () const { return input_sample; }
+    //! Used to arrange pieces in order during input buffering
+    void set_input_sample (uint64 sample) { input_sample = sample; }
 
     //! Set all values to zero
     virtual void zero ();
