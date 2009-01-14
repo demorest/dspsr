@@ -28,10 +28,10 @@ namespace dsp {
     TScrunch (Behaviour place=anyplace);
     
     void set_factor ( unsigned samples );
-    int64 get_factor ();
+    unsigned get_factor () const;
 
     void set_time_resolution ( double microseconds );
-    double get_time_resolution ();
+    double get_time_resolution () const;
     
   protected:
 
@@ -41,14 +41,11 @@ namespace dsp {
     //! Perform decimation
     void transformation ();
 
-    // Returns the unsigned version of the factor
-    unsigned get_scrunch_factor();
-
-    int64 factor;
-    double time_resolution;
+    mutable unsigned factor;
+    mutable double time_resolution;
 
     // If true, use the tres parameter, if false use the factor parameter
-    bool use_tres; 
+    mutable bool use_tres; 
   };
 
 }

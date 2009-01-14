@@ -15,8 +15,8 @@ using namespace std;
 dsp::TScrunch::TScrunch (Behaviour place) 
   : Transformation <TimeSeries, TimeSeries> ("TScrunch", place, true)
 {
-  factor = -1;
-  time_resolution = -1.0;
+  factor = 0;
+  time_resolution = 0;
   use_tres = false;
 
   if (preserve_data)
@@ -35,19 +35,12 @@ void dsp::TScrunch::set_time_resolution( double microseconds )
   use_tres = true;
 }
 
-unsigned dsp::TScrunch::get_scrunch_factor()
+unsigned dsp::TScrunch::get_factor() const
 {
-  if (!use_tres)
+  if (use_tres)
   {
-    if( factor < 1 )
-      throw Error (InvalidState, "dsp::TScrunch::get_scrunch_factor",
-		   "invalid scrunch factor:%d", factor);
-    time_resolution = 1.0e6/(input->get_rate()*double(factor));
-  }
-  else
-  {
-    if( time_resolution < 0.0 )
-      throw Error(InvalidState,"dsp::Tscrunch::get_scrunch_factor",
+    if( time_resolution <= 0.0 )
+      throw Error(InvalidState,"dsp::Tscrunch::get_factor",
 		  "invalid time resolution:%lf", time_resolution);
     double in_tsamp = 1.0e6/input->get_rate();  // in microseconds
     factor = unsigned(time_resolution/in_tsamp + 0.00001);
@@ -56,22 +49,35 @@ unsigned dsp::TScrunch::get_scrunch_factor()
       factor = 1;
 
     use_tres = false;
+    time_resolution = 0.0;
   }
   
   return factor;
 }
 
+double dsp::TScrunch::get_time_resolution() const
+{
+  if (!time_resolution)
+    time_resolution = 1.0e6/(input->get_rate()*double(factor));
+
+  return time_resolution;
+}
+
 void dsp::TScrunch::prepare ()
 {
   if (has_buffering_policy())
-    get_buffering_policy()->set_minimum_samples ( get_scrunch_factor() );
+    get_buffering_policy()->set_minimum_samples ( get_factor() );
 }
 
 void dsp::TScrunch::transformation ()
 {
-  unsigned sfactor = get_scrunch_factor();
+  unsigned sfactor = get_factor();
 
-  if( sfactor==1 )
+  if (!sfactor)
+    throw Error (InvalidState, "dsp::TScrunch::get_factor",
+		   "scrunch factor not set");
+
+  if (sfactor==1)
   {
     if( input.get() != output.get() )
       output->operator=( *input );
