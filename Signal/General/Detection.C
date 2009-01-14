@@ -1,11 +1,11 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Detection.h"
-#include "dsp/SLDetect.h"
 #include "dsp/Observation.h"
 #include "dsp/Scratch.h"
 
@@ -97,9 +97,6 @@ void dsp::Detection::transformation () try
     else if (state==Signal::PPQQ)
       square_law();
 
-    else if( state==Signal::PP_State || state==Signal::QQ_State )
-      onepol_detect();
-
     else
       understood = false;
   }
@@ -147,15 +144,14 @@ void dsp::Detection::resize_output ()
 
   get_output()->set_state( state );
 
-  if (!inplace) {
+  if (!inplace)
+  {
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
   }
   else
     get_output()->reshape ( output_npol, output_ndim );
-
-
 }
 
 void dsp::Detection::square_law ()
@@ -163,42 +159,42 @@ void dsp::Detection::square_law ()
   if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
  
-  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
-  sld->set_input( input );
-  sld->set_output( output ); 
-  sld->operate();  
-}
-
-//! Quick and dirty method for detecting to PP or QQ
-void
-dsp::Detection::onepol_detect()
-{
-  Reference::To<dsp::SLDetect> sld(new dsp::SLDetect);
-  sld->set_input( input );
-  sld->set_output( new dsp::TimeSeries ); 
-  sld->operate();  
-
+  const unsigned nchan = input->get_nchan();
+  const unsigned npol = input->get_npol();
+  const unsigned nfloat = input->get_ndim() * input->get_ndat();
+  for (unsigned ichan=0; ichan<nchan; ichan++)
   {
-    Reference::To<Observation> onepol = new Observation( *sld->get_output() );
-    onepol->set_npol( 1 );
-    onepol->set_state( state );
-    output->Observation::operator=( *onepol );
-  }    
+    for (unsigned ipol=0; ipol<npol; ipol++)
+    {
+      register const float* in_ptr = input->get_datptr (ichan,ipol);
+      register const float* dend = in_ptr + nfloat;
 
-  output->resize( output->get_ndat() );
+      register float* out_ptr = output->get_datptr (ichan,ipol);
 
-  unsigned goodpol = 0;
-  if( state==Signal::QQ_State )
-    goodpol = 1;
+      if (input->get_state()==Signal::Nyquist)
+	while( in_ptr != dend)
+        {
+	  *out_ptr = *in_ptr * *in_ptr;
+	  out_ptr++;
+	  in_ptr++;
+	} 
+      
+      else if (input->get_state()==Signal::Analytic)
+	while( in_ptr!=dend)
+        {
+	  *out_ptr = *in_ptr * *in_ptr;  // Re*Re
+	  in_ptr++;
+	  
+	  *out_ptr += *in_ptr * *in_ptr; // Add in Im*Im
+	  in_ptr++;
+	  out_ptr++;
+	} 
 
-  for( unsigned ichan=0; ichan<output->get_nchan(); ichan++){
-    float* in = sld->get_output()->get_datptr(ichan,goodpol);
-    float* out= get_output()->get_datptr(ichan,0);
-
-    memcpy(out,in,size_t(output->get_ndat()*sizeof(float)));
-  }
-
+    }  // for each ipol
+  }  // for each ichan
 }
+
+
 
 void dsp::Detection::polarimetry () try
 {
