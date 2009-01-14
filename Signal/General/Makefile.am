@@ -2,7 +2,7 @@
 lib_LTLIBRARIES = libdspdsp.la
 
 nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
-	dsp/ResponseProduct.h dsp/Accumulator.h dsp/SLDetect.h	       \
+	dsp/ResponseProduct.h dsp/Accumulator.h	       \
 	dsp/Apodization.h dsp/SampleDelay.h dsp/AutoCorrelation.h      \
 	dsp/SampleDelayFunction.h dsp/Example.h dsp/Shape.h	       \
 	dsp/Bandpass.h dsp/Simultaneous.h dsp/Stats.h dsp/Filterbank.h \
@@ -21,7 +21,7 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	TimeOrder.C Apodization.C AutoCorrelation.C Filterbank.C      \
 	IncoherentFilterbank.C Bandpass.C LevelMonitor.C RFIFilter.C  \
 	Chomper.C Response.C ResponseProduct.C Convolution.C	      \
-	SLDetect.C Dedispersion.C SampleDelay.C DedispersionHistory.C \
+	Dedispersion.C SampleDelay.C DedispersionHistory.C \
 	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	      \
 	PScrunch.C BandpassMonitor.C FourthMoment.C
 
