@@ -337,9 +337,15 @@ void dsp::Filterbank::transformation ()
   // resize to new number of valid time samples
   output->resize (output_ndat);
 
+  // set the input sample
+  int64 input_sample = input->get_input_sample();
+  if (input_sample >= 0)
+    output->set_input_sample ((input_sample / nsamp_step) * nkeep * time_res);
+
   if (verbose)
-    cerr << "dsp::Filterbank::transformation after prepare output ndat=" 
-	 << output->get_ndat() << endl;
+    cerr << "dsp::Filterbank::transformation after prepare output"
+            " ndat=" << output->get_ndat() << 
+            " input_sample=" << output->get_input_sample() << endl;
 
   if (!npart)
     return;
