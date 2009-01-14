@@ -199,6 +199,24 @@ void dsp::Detection::square_law ()
 
     }  // for each ipol
   }  // for each ichan
+
+  if (state == Signal::Intensity && npol == 2)
+  {
+    // pscrunching
+    for (unsigned ichan=0; ichan<nchan; ichan++)
+    {
+      register float* p0 = output->get_datptr (ichan, 0);
+      register float* p1 = output->get_datptr (ichan, 1);
+      const register float* pend = p0 + output->get_ndat();
+
+      while( p0!=pend)
+      {
+	*p0 += *p1;
+        p0 ++;
+        p1 ++;
+      }
+    }
+  } 
 }
 
 
