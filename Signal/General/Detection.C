@@ -118,9 +118,10 @@ void dsp::Detection::transformation () try
   if (verbose)
     cerr << "dsp::Detection::transformation exit" << endl;
 }
- catch (Error& error) {
-   throw error += "dsp::Detection::transformation";
- }
+catch (Error& error)
+{
+  throw error += "dsp::Detection::transformation";
+}
 
 void dsp::Detection::resize_output ()
 {
@@ -226,12 +227,12 @@ void dsp::Detection::polarimetry () try
   if (verbose)
     cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
 
-  unsigned input_npol = get_input()->get_npol();
-  unsigned input_ndim = get_input()->get_ndim();
+  const unsigned input_npol = get_input()->get_npol();
+  const unsigned input_ndim = get_input()->get_ndim();
 
-  if (ndim != 1 && get_input()->get_state()==Signal::Nyquist)
+  if (input_ndim != 2 || get_input()->get_state()==Signal::Analytic)
     throw Error (InvalidState, "dsp::Detection::polarimetry",
-		 "Cannot detect Nyquist input when ndim == 1");
+          "Cannot detect polarization when ndim != 2 or state != Analytic");
 
   bool inplace = input.get() == output.get();
 
@@ -298,47 +299,19 @@ void dsp::Detection::polarimetry () try
 
     get_result_pointers (ichan, inplace, r);
 
-    if (input_ndim == 2) {
-
-      // ie Analytic
-      if (state == Signal::Stokes)
-      {
-	stokes_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
-      }
-      else
-      {
-	if (verbose && ichan == 0)
-	  cerr << "dsp::Detection::polarimetry call wvs_cross_detect ndat="
-	       << ndat << endl;
-
-	cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
-      }
-
-    }
-    else{ // ie Nyquist ndim==1
-      float*& pp = r[0];
-      float*& qq = r[1];
-      float*& Rpq= r[2];
-      float*& Ipq= r[3];
-
-      for (unsigned j=0; j<ndat; j++)  {
-	float p_r = *p; p++;
-	float q_r = *q; q++;
-	
-	*pp  = sqr(p_r);  pp ++;    /*  p* p      */
-	*qq  = sqr(q_r);  qq ++;    /*  q* q      */
-	*Rpq = p_r * q_r; Rpq ++;   /*  Re[p* q]  */
-	*Ipq = 0.0;       Ipq ++;   /*  Im[p* q]  */
-      }
-    }
+    if (state == Signal::Stokes)
+      stokes_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
+    else
+      cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
   }
 
   if (verbose)
     cerr << "dsp::Detection::polarimetry exit" << endl;
 }
- catch (Error& error) {
-   throw error += "dsp::Detection::polarimetry";
- }
+catch (Error& error)
+{
+  throw error += "dsp::Detection::polarimetry";
+}
 
 void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace, 
 					  float* r[4])
@@ -346,18 +319,21 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
   if (verbose && ichan == 0)
     cerr << "dsp::Detection::get_result_pointers ndim=4" << endl;
 
-  switch (ndim) {
+  switch (ndim)
+  {
 
     // Stokes I,Q,U,V in separate arrays
   case 1:
-    if( inplace ){
+    if( inplace )
+    {
       r[0] = get_output()->get_datptr (ichan,0);
       r[2] = get_output()->get_datptr (ichan,0);
       uint64 diff = uint64(r[2] - r[0])/2;
       r[1] = r[0] + diff;
       r[3] = r[2] + diff;
     }
-    else{
+    else
+    {
       r[0] = get_output()->get_datptr (ichan,0);
       r[1] = get_output()->get_datptr (ichan,1);
       r[2] = get_output()->get_datptr (ichan,2);
@@ -386,22 +362,13 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
   default:
     throw Error (InvalidState, "dsp::Detection::get_result_pointers",
 		 "invalid ndim=%d", ndim);
-
   }
-
 }
 
 void dsp::Detection::checks()
 {
-  if( get_input()->get_detected() && state != Signal::Intensity )
-    throw Error(InvalidState, "dsp::Detection::checks",
-		"Sorry, but this class currently can only redetect data to Stokes I (You had input='%s' and output='%s')",
-		State2string(get_input()->get_state()).c_str(),
-		State2string(state).c_str());
-
-
-  if (state == Signal::Stokes || state == Signal::Coherence) {
-
+  if (state == Signal::Stokes || state == Signal::Coherence)
+  {
     if (get_input()->get_npol() != 2)
       throw Error (InvalidState, "dsp::Detection::checks",
 		   "invalid npol=%d for %s formation",
@@ -422,6 +389,5 @@ void dsp::Detection::checks()
       throw Error (InvalidState, "dsp::Detection::checks",
 		   "invalid ndim=%d for %s formation",
 		   ndim, Signal::state_string(state));
-  }    
-
+  }
 }
