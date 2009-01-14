@@ -87,6 +87,9 @@ void dsp::Detection::transformation () try
   if (input->get_ndat() == 0)
     return;
 
+  if (!inplace)
+    resize_output ();    
+
   bool understood = true;
 
   if( !get_input()->get_detected() )
@@ -108,6 +111,9 @@ void dsp::Detection::transformation () try
 		 "dsp::Detection cannot convert from " 
 		 + State2string(get_input()->get_state()) + " to "
 		 + State2string(state));
+
+  if ( inplace )
+    resize_output ();
 
   if (verbose)
     cerr << "dsp::Detection::transformation exit" << endl;
@@ -162,6 +168,7 @@ void dsp::Detection::square_law ()
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
   const unsigned nfloat = input->get_ndim() * input->get_ndat();
+
   for (unsigned ichan=0; ichan<nchan; ichan++)
   {
     for (unsigned ipol=0; ipol<npol; ipol++)
@@ -214,9 +221,6 @@ void dsp::Detection::polarimetry () try
     cerr << "dsp::Detection::polarimetry "
 	 << ((inplace) ? "in" : "outof") << "place" << endl;
 
-  if (!inplace)
-    resize_output ();    
-
   uint64 ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
@@ -229,7 +233,7 @@ void dsp::Detection::polarimetry () try
   if (inplace && ndim != 2)
   {
     // only when ndim==2 is this transformation really inplace.
-    // so when ndim==1or4, a copy of the data must be made
+    // so when ndim==1 or 4, a copy of the data must be made
     
     // need to copy both polarizations
     if (ndim == 1)
@@ -310,9 +314,6 @@ void dsp::Detection::polarimetry () try
       }
     }
   }
-
-  if ( inplace )
-    resize_output ();
 
   if (verbose)
     cerr << "dsp::Detection::polarimetry exit" << endl;
