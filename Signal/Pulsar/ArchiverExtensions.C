@@ -136,19 +136,14 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
 
     }
 
-
-
     // ////////////////////////////////////////////////////////////////////
     //
     // Tscrunch class parameters
     //
     TScrunch* tscrunch = dynamic_cast<TScrunch*>( operations[i].get() );
 
-    if (tscrunch) {
-
-      dspR->set_ScrunchFactor ( tscrunch->get_ScrunchFactor() );
-
-    }
+    if (tscrunch)
+      dspR->set_ScrunchFactor ( tscrunch->get_factor() );
 
 
     // ////////////////////////////////////////////////////////////////////
