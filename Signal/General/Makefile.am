@@ -85,4 +85,6 @@ include $(top_srcdir)/config/Makefile.include
 LDADD = libdspdsp.la $(top_builddir)/Kernel/libdspbase.la @PGPLOT_LIBS@
 
 AM_CPPFLAGS += @PGPLOT_CFLAGS@
+AM_CXXFLAGS = @OPENMP_CFLAGS@
+
 
