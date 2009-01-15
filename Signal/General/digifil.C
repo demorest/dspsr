@@ -35,7 +35,7 @@
 
 using namespace std;
 
-static char* args = "b:B:F:co:prT:hvV";
+static char* args = "b:B:F:co:prt:hvVZ:";
 
 void usage ()
 {
@@ -47,7 +47,7 @@ void usage ()
     "  -B secs   block size in seconds \n"
     "  -c        keep offset and scale constant \n"
     "  -F nchan  create a filterbank (voltages only) \n"
-    "  -T nsamp  decimate in time \n"
+    "  -t nsamp  decimate in time \n"
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename \n" 
     "  -r        report total Operation times \n"
@@ -101,9 +101,10 @@ int main (int argc, char** argv) try
 
     case 'r':
       dsp::Operation::record_time = true;
+      dsp::Operation::report_time = true;
       break;
 
-    case 'T':
+    case 't':
       tscrunch_factor = atoi (optarg);
       break;
 
@@ -117,6 +118,31 @@ int main (int argc, char** argv) try
       verbose = true;
       break;
 
+    case 'Z':
+    {
+      string lib = optarg;
+
+      if (lib == "help")
+      {
+        unsigned nlib = FTransform::get_num_libraries ();
+        cerr << "dspsr: " << nlib << " available FFT libraries:";
+        for (unsigned ilib=0; ilib < nlib; ilib++)
+          cerr << " " << FTransform::get_library_name (ilib);
+  
+        cerr << "\ndspsr: default FFT library " 
+             << FTransform::get_library() << endl;
+
+        exit (0);
+      }
+      else if (lib == "simd")
+        FTransform::simd = true;
+      else {
+        FTransform::set_library (lib);
+        cerr << "dspsr: FFT library set to " << lib << endl;
+      }
+
+      break;
+    }
     default:
       cerr << "invalid param '" << c << "'" << endl;
     }
