@@ -30,3 +30,5 @@ LDADD = libdspsr.la \
 	$(top_builddir)/Signal/General/libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la
 
+AM_CXXFLAGS = @OPENMP_CFLAGS@
+
