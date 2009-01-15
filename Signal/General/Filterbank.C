@@ -625,7 +625,7 @@ void dsp::Filterbank::tfp_filterbank ()
     cerr << "dsp::Filterbank::tfp_filterbank input ndat=" << ndat << endl;
 
   // number of FFTs
-  const uint64 npart = ndat / nsamp_step;
+  const uint64 npart = ndat / nsamp_fft;
   const unsigned long nfloat = nsamp_fft * input->get_ndim();
 
   float* outdat = output->get_dattfp ();
@@ -634,11 +634,12 @@ void dsp::Filterbank::tfp_filterbank ()
   {
     const float* indat = input->get_datptr (input_ichan, ipol);
 
+    uint64 ipart=0;
 #pragma omp parallel for private(ipart)
-    for (uint64 ipart=0; ipart < npart; ipart++)
+    for (ipart=0; ipart < npart; ipart++)
     {
       if (input->get_state() == Signal::Nyquist)
-	forward->frc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
+	      forward->frc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
       else
         forward->fcc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
     }
@@ -649,7 +650,7 @@ void dsp::Filterbank::tfp_filterbank ()
     /* the data are now in TPF order, whereas TFP is desired.
        so square law detect, then pack p1 into the p0 holes */
 
-    uint64 nfloat = ndat * npol * nchan;
+    uint64 nfloat = npart * npol * nchan;
     outdat = output->get_dattfp ();
 
     if (verbose)
@@ -666,13 +667,16 @@ void dsp::Filterbank::tfp_filterbank ()
     if (verbose)
       cerr << "dsp::Filterbank::tfp_filterbank interleaving" << endl;
 
-    nfloat = ndat * nchan;
+    nfloat = npart * nchan;
 
     for (uint64 ifloat=0; ifloat < nfloat; ifloat++)
     {
       // set Im[p0] = Re[p1]
       outdat[ifloat*2+1] = outdat[ifloat*2+nfloat];
     }
+
+    output->set_state (Signal::PPQQ);
+    output->set_ndim (1);
   }
 }
 
