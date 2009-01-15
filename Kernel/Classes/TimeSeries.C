@@ -52,7 +52,9 @@ dsp::TimeSeries* dsp::TimeSeries::clone () const
 
 dsp::TimeSeries* dsp::TimeSeries::null_clone () const
 {
-  return new TimeSeries;
+  TimeSeries* result = new TimeSeries;
+  result->order = order;
+  return result;
 }
 
 dsp::TimeSeries::~TimeSeries()
@@ -373,7 +375,7 @@ void dsp::TimeSeries::zero ()
 }
 
 
-void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat)
+void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat) try
 {
   if (!pre)
     return;
@@ -393,9 +395,13 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat)
   seek (-int64(pre_ndat));
   copy_data (pre, 0, pre_ndat);
 }
+catch (Error& error)
+{
+  throw error += "dsp::TimeSeries::prepend";
+}
 
 void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy, 
-				 uint64 idat_start, uint64 copy_ndat)
+                                 uint64 idat_start, uint64 copy_ndat) try
 {
   if (verbose)
     cerr << "dsp::TimeSeries::copy_data to ndat=" << get_ndat()
@@ -416,18 +422,39 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
 
   if (copy_ndat)
   {
-    for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+    switch (order)
     {
-      for (unsigned ipol=0; ipol<get_npol(); ipol++)
+    case OrderFPT:
+      for (unsigned ichan=0; ichan<get_nchan(); ichan++)
       {
-        float* to = get_datptr (ichan, ipol);
-        const float* from = copy->get_datptr(ichan,ipol) + offset;
-        memcpy (to, from, size_t(byte_count));
+        for (unsigned ipol=0; ipol<get_npol(); ipol++)
+        {
+          float* to = get_datptr (ichan, ipol);
+          const float* from = copy->get_datptr(ichan,ipol) + offset;
+          memcpy (to, from, size_t(byte_count));
+        }
       }
+      break;
+
+    case OrderTFP:
+      {
+      uint64 times = get_nchan() * get_npol();
+      offset *= times;
+      byte_count *= times;
+
+      float* to = get_dattfp ();
+      const float* from = copy->get_dattfp() + offset;
+      memcpy (to, from, size_t(byte_count));
+      }
+      break;
     }
   }
 
   input_sample = copy->input_sample + idat_start;
+}
+catch (Error& error)
+{
+  throw error += "dsp::TimeSeries::copy_data";
 }
 
 /*! 
