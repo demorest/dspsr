@@ -132,11 +132,16 @@ void dsp::Rescale::transformation ()
     {
       end_dat = input_ndat;
 
-      uint64 interval_end_dat = nsample - isample;
+      uint64 interval_end_dat = start_dat + nsample - isample;
       if (interval_end_dat < end_dat)
-	end_dat = interval_end_dat;
+        end_dat = interval_end_dat;
 
       uint64 samp_dat = isample;
+
+      if (verbose)
+        cerr << "dsp::Rescale::transformation end_dat=" << end_dat
+             << " interval_end_dat=" << interval_end_dat
+             << " isample=" << isample << endl;
 
       switch(input->get_order()){
       case TimeSeries::OrderTFP:
@@ -196,6 +201,10 @@ void dsp::Rescale::transformation ()
 
       if (!nsample || samp_dat == nsample || first_call)
 	{
+    if (verbose)
+      cerr << "dsp::Rescale::transformation rescale nsample=" << nsample
+           << " isample=" << isample << " first_call=" << first_call << endl;
+
 	  isample = 0;
 	  uint64 count = nsample;
 
