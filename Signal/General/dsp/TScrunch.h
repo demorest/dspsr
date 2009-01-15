@@ -40,12 +40,17 @@ namespace dsp {
 
     //! Perform decimation
     void transformation ();
+    void tfp_tscrunch ();
+    void fpt_tscrunch ();
 
     mutable unsigned factor;
     mutable double time_resolution;
 
     // If true, use the tres parameter, if false use the factor parameter
     mutable bool use_tres; 
+
+    unsigned sfactor;
+    uint64 output_ndat;
   };
 
 }

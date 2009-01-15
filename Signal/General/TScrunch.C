@@ -78,7 +78,7 @@ void dsp::TScrunch::prepare ()
 
 void dsp::TScrunch::transformation ()
 {
-  unsigned sfactor = get_factor();
+  sfactor = get_factor();
 
   if (!sfactor)
     throw Error (InvalidState, "dsp::TScrunch::get_factor",
@@ -95,7 +95,7 @@ void dsp::TScrunch::transformation ()
     throw Error(InvalidState,"dsp::TScrunch::transformation()",
 		"invalid input state: " + tostring(input->get_state()));
 
-  const unsigned output_ndat = input->get_ndat()/sfactor;
+  output_ndat = input->get_ndat()/sfactor;
 
   if (has_buffering_policy())
     get_buffering_policy()->set_next_start (output_ndat * sfactor);
@@ -109,6 +109,23 @@ void dsp::TScrunch::transformation ()
   output->rescale( sfactor );
   output->set_rate( input->get_rate()/sfactor );
 
+  switch (input->get_order())
+  {
+    case TimeSeries::OrderFPT:
+      fpt_tscrunch ();
+      break;
+
+    case TimeSeries::OrderTFP:
+      tfp_tscrunch ();
+      break;
+  }
+
+  if( input.get() == output.get() )
+    output->set_ndat( input->get_ndat()/sfactor );
+}
+
+void dsp::TScrunch::fpt_tscrunch ()
+{
   const unsigned input_nchan = input->get_nchan();
   const unsigned input_npol = input->get_npol();
 
@@ -132,11 +149,31 @@ void dsp::TScrunch::transformation ()
       }
     } // for each ipol
   } // for each ichan
-
-  if( input.get() == output.get() )
-    output->set_ndat( input->get_ndat()/sfactor );
 }
 
+void dsp::TScrunch::tfp_tscrunch ()
+{
+  const unsigned input_nchan = input->get_nchan();
+  const unsigned input_npol = input->get_npol();
 
+  const unsigned nfloat = input_nchan * input_npol;
 
+  const float* indat = input->get_dattfp ();
+  float* outdat = output->get_dattfp ();
+  
+  for( unsigned output_idat=0; output_idat<output_ndat; ++output_idat)
+  {
+    for (unsigned ifloat=0; ifloat < nfloat; ifloat++)
+      outdat[ifloat] = indat[ifloat];
 
+    for (unsigned ifactor=1; ifactor < sfactor; ifactor++)
+    {
+      indat += nfloat;
+      for (unsigned ifloat=0; ifloat < nfloat; ifloat++)
+        outdat[ifloat] += indat[ifloat];
+    }
+
+    indat += nfloat;
+    outdat += nfloat;
+  }
+}
