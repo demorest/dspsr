@@ -24,6 +24,8 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
   time_res = 1;
   freq_res = 1;
 
+  output_order = TimeSeries::OrderFPT;
+
   if (preserve_data)
     set_buffering_policy (new InputBuffering (this));
 }
@@ -219,6 +221,10 @@ void dsp::Filterbank::make_preparations ()
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
   }
 
+  // can support TFP only if freq_res == 1
+  if (freq_res > 1)
+    output_order = TimeSeries::OrderFPT;
+
   prepare_output ();
 
   using namespace FTransform;
@@ -228,8 +234,8 @@ void dsp::Filterbank::make_preparations ()
   else
     forward = Agent::current->get_plan (nsamp_fft, FTransform::fcc);
 
-  backward = Agent::current->get_plan (freq_res, FTransform::bcc);
-
+  if (freq_res > 1)
+    backward = Agent::current->get_plan (freq_res, FTransform::bcc);
 }
 
 void dsp::Filterbank::prepare_output (uint64 ndat)
@@ -246,7 +252,8 @@ void dsp::Filterbank::prepare_output (uint64 ndat)
 
   output->set_nchan( nchan );
   output->set_ndim( 2 );
-  output->set_state( Signal::Analytic);
+  output->set_state( Signal::Analytic );
+  output->set_order( output_order );
 
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
@@ -310,7 +317,8 @@ void dsp::Filterbank::transformation ()
   const uint64 ndat = input->get_ndat();
 
   if (verbose)
-    cerr << "dsp::Filterbank::transformation after prepare input ndat=" << input->get_ndat() << endl;
+    cerr << "dsp::Filterbank::transformation after prepare input ndat="
+         << ndat << endl;
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
@@ -350,6 +358,14 @@ void dsp::Filterbank::transformation ()
   if (!npart)
     return;
 
+  if (freq_res == 1 && output_order == TimeSeries::OrderTFP)
+  {
+    if (verbose)
+      cerr << "dsp::Filterbank::transformation TFP filterbank" << endl;
+    tfp_filterbank ();
+    return;
+  }
+
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;
   if (input->get_state() == Signal::Nyquist)
@@ -387,19 +403,19 @@ void dsp::Filterbank::transformation ()
       " cpol=" << cross_pol << " npol=" << input->get_npol() << endl;
 
   // number of floats to step between input to filterbank
-  unsigned long in_step = nsamp_step * input->get_ndim();
+  const unsigned long in_step = nsamp_step * input->get_ndim();
 
   // number of floats to step between output from filterbank
-  unsigned long out_step = nkeep * time_res * 2;
+  const unsigned long out_step = nkeep * time_res * 2;
 
   // number of floats to step between additional time resolution
-  unsigned long tres_step = nsamp_tres * input->get_ndim();
+  const unsigned long tres_step = nsamp_tres * input->get_ndim();
 
   // counters
   unsigned ipt, itres, ipol, jpol, ichan;
   uint64 ipart;
 
-  unsigned npol = input->get_npol();
+  const unsigned npol = input->get_npol();
 
   // offsets into input and output
   uint64 in_offset, tres_offset, out_offset;
@@ -592,6 +608,72 @@ cerr << "bcc1d done" << endl;
     cerr << "dsp::Filterbank::transformation return with output ndat="
 	 << output->get_ndat() << endl;
 
+}
+
+void dsp::Filterbank::set_output_order (TimeSeries::Order order)
+{
+  output_order = order;
+}
+
+void dsp::Filterbank::tfp_filterbank ()
+{
+  const uint64 ndat = input->get_ndat();
+  const unsigned npol = input->get_npol();
+  const unsigned input_ichan = 0;
+
+  if (verbose)
+    cerr << "dsp::Filterbank::tfp_filterbank input ndat=" << ndat << endl;
+
+  // number of FFTs
+  const uint64 npart = ndat / nsamp_step;
+  const unsigned long nfloat = nsamp_fft * input->get_ndim();
+
+  float* outdat = output->get_dattfp ();
+
+  for (unsigned ipol=0; ipol < npol; ipol++)
+  {
+    const float* indat = input->get_datptr (input_ichan, ipol);
+
+#pragma omp parallel for private(ipart)
+    for (uint64 ipart=0; ipart < npart; ipart++)
+    {
+      if (input->get_state() == Signal::Nyquist)
+	forward->frc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
+      else
+        forward->fcc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
+    }
+  }
+
+  if (npol == 2)
+  {
+    /* the data are now in TPF order, whereas TFP is desired.
+       so square law detect, then pack p1 into the p0 holes */
+
+    uint64 nfloat = ndat * npol * nchan;
+    outdat = output->get_dattfp ();
+
+    if (verbose)
+      cerr << "dsp::Filterbank::tfp_filterbank detecting" << endl;
+
+    for (uint64 ifloat=0; ifloat < nfloat; ifloat++)
+    {
+      // Re squared
+      outdat[ifloat*2] *= outdat[ifloat*2];
+      // plus Im squared
+      outdat[ifloat*2] += outdat[ifloat*2+1] + outdat[ifloat*2+1];
+    }
+
+    if (verbose)
+      cerr << "dsp::Filterbank::tfp_filterbank interleaving" << endl;
+
+    nfloat = ndat * nchan;
+
+    for (uint64 ifloat=0; ifloat < nfloat; ifloat++)
+    {
+      // set Im[p0] = Re[p1]
+      outdat[ifloat*2+1] = outdat[ifloat*2+nfloat];
+    }
+  }
 }
 
 #if 0

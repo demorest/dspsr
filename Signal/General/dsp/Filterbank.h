@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.10 $
-   $Date: 2008/10/06 11:29:19 $
+   $Revision: 1.11 $
+   $Date: 2009/01/15 05:05:25 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -64,10 +64,16 @@ namespace dsp {
     //! Get the time resolution factor
     unsigned get_time_res () const { return time_res; } 
 
+    //! Set the order of the dimensions in the output TimeSeries
+    void set_output_order (TimeSeries::Order);
+
   protected:
 
     //! Perform the convolution transformation on the input TimeSeries
     virtual void transformation ();
+
+    //! Implements a time-major-order filterbank
+    void tfp_filterbank ();
 
     //! Number of channels into which the input will be divided
     unsigned nchan;
@@ -77,6 +83,9 @@ namespace dsp {
 
     //! Frequency resolution factor
     unsigned freq_res;
+
+    //! The order of the dimensions in the output TimeSeries
+    TimeSeries::Order output_order;
 
   private:
 
