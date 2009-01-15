@@ -209,12 +209,7 @@ int main (int argc, char** argv) try
 
     if (!obs->get_detected())
     {
-      detection = new dsp::Detection;
-      detection->set_input( timeseries );
-      detection->set_output( timeseries );
 
-      do_pscrunch = false;  // Detection will pscrunch
-      
       if (filterbank_nchan)
       {
 	filterbank = new dsp::Filterbank;
@@ -225,6 +220,18 @@ int main (int argc, char** argv) try
 	filterbank->set_nchan( filterbank_nchan );
 	filterbank->set_input( filterbank_input );
 	filterbank->set_output( timeseries );
+
+        // filterbank will do detection
+        filterbank->set_output_order( dsp::TimeSeries::OrderTFP );
+      }
+      else
+      {
+        detection = new dsp::Detection;
+        detection->set_input( timeseries );
+        detection->set_output( timeseries );
+
+        // detection will do pscrunch
+        do_pscrunch = false;
       }
     }
 
