@@ -198,6 +198,7 @@ int main (int argc, char** argv) try
   catch (Error& error)
   {
     cerr << error << endl;
+    return -1;
   }
 
   return 0;
@@ -618,8 +619,15 @@ void parse_options (int argc, char** argv)
       else if ( sscanf(optarg, "minX%u", &times) == 1 )
 	config->times_minimum_nfft = times;
       else
+      {
 	config->nfft = strtol (optarg, 0, 10);
-
+        if (colon && config->nsmear >= config->nfft)
+	{
+          cerr << "dspsr -x: nfft=" << config->nfft
+               << " must be greater than nsmear=" << config->nsmear << endl;
+          exit (-1);
+        }
+      }
       break;
     }
 
