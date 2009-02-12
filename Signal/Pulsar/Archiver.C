@@ -15,6 +15,8 @@
 #include "Pulsar/Integration.h"
 #include "Pulsar/Profile.h"
 
+#include "Pulsar/Check.h"
+
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
 #include "Pulsar/Passband.h"
@@ -41,6 +43,10 @@ bool dsp::Archiver::verbose = false;
 
 dsp::Archiver::Archiver ()
 {
+  // disable the psrchive check for internal consistency of 
+  // dedispersion related book-keeping attributes
+  Pulsar::Archive::Check::disable ("Dedispersed");
+
   archive_software = "Software Unknown";
   archive_dedispersed = false;
   profiles = 0;
@@ -337,6 +343,12 @@ try {
   }
 
   archive-> set_scale ( Signal::FluxDensity );
+
+  if (verbose)
+    cerr << "dsp::Archiver::set Archive source=" << phase->get_source()
+	 << "\n  coord=" << phase->get_coordinates()
+	 << "\n  bw=" << phase->get_bandwidth()
+	 << "\n  freq=" << phase->get_centre_frequency () << endl;
 
   archive-> set_source ( phase->get_source() );
   archive-> set_coordinates ( phase->get_coordinates() );
