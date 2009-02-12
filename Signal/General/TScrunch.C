@@ -97,6 +97,12 @@ void dsp::TScrunch::transformation ()
 
   output_ndat = input->get_ndat()/sfactor;
 
+  if (verbose)
+    cerr << "dsp::TScrunch::transformation input ndat=" << input->get_ndat()
+         << " output ndat=" << output_ndat << " sfactor=" << sfactor << endl;
+
+  prepare ();
+
   if (has_buffering_policy())
     get_buffering_policy()->set_next_start (output_ndat * sfactor);
 
