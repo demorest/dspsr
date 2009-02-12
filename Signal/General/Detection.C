@@ -230,7 +230,7 @@ void dsp::Detection::polarimetry () try
   const unsigned input_npol = get_input()->get_npol();
   const unsigned input_ndim = get_input()->get_ndim();
 
-  if (input_ndim != 2 || get_input()->get_state()==Signal::Analytic)
+  if (input_ndim != 2 || get_input()->get_state() != Signal::Analytic)
     throw Error (InvalidState, "dsp::Detection::polarimetry",
           "Cannot detect polarization when ndim != 2 or state != Analytic");
 
