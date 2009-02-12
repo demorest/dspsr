@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/10/14 21:00:13 $
+   $Revision: 1.7 $
+   $Date: 2009/02/12 08:59:18 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -109,6 +109,9 @@ namespace dsp {
 
     //! The number of contributors
     unsigned contributors;
+
+    //! The last division completed by a contributor
+    std::vector<uint64> last_division;
 
     //! Thread coordination used in unload method
     ThreadContext* context;
