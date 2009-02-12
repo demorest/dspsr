@@ -83,6 +83,19 @@ void dsp::SampleDelay::build ()
   built = true;
 }
 
+void dsp::SampleDelay::prepare ()
+{
+  if (function->match(input) || !built)
+    build ();
+
+  if (!has_buffering_policy())
+    return;
+
+  if (verbose)
+    cerr << "dsp::SampleDelay::prepare reserve=" << total_delay << endl;
+
+  get_buffering_policy()->set_minimum_samples (total_delay);
+}
 
 /*!
   \pre input TimeSeries must contain complex (Analytic) data
@@ -97,16 +110,14 @@ void dsp::SampleDelay::transformation ()
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
 
-  if (function->match(input) || !built)
-    build ();
-
-  get_buffering_policy()->set_minimum_samples (total_delay);
-
   uint64 output_ndat = 0;
 
   if (input_ndat < total_delay)
-    cerr << "dsp::SampleDelay::transformation insufficient data\n"
-      "  input ndat=" << input_ndat << " total delay=" << total_delay  << endl;
+  {
+    if (verbose)
+      cerr << "dsp::SampleDelay::transformation insufficient data\n"
+        "  input ndat=" << input_ndat << " total delay=" << total_delay  << endl;
+  }
   else
     output_ndat = input_ndat - total_delay;
 
