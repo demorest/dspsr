@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelay.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2009/02/12 08:59:03 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_SampleDelay_h
 #define __baseband_dsp_SampleDelay_h
@@ -32,6 +32,9 @@ namespace dsp {
 
     //! Set the delay function
     void set_function (SampleDelayFunction*);
+
+    //! Computes the total delay and prepares the input buffer
+    void prepare ();
 
     //! Applies the delays to the input
     void transformation ();
