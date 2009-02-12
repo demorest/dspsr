@@ -36,7 +36,7 @@ dsp::LevelMonitor::LevelMonitor ()
 
   mean_tolerance = var_tolerance = 5e-4;
   max_iterations = 0;
-  between_iterations = 0.0;
+  between_iterations = 1.0;
 
   far_from_good = false;
 
