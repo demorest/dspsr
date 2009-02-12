@@ -299,12 +299,12 @@ try {
     double dtime = inphs.fracturns() * phase->get_folding_period();
     initial -= dtime;
 
-    ext->start_time = initial;
+    ext->set_start_time(initial);
 
     // In keeping with tradition, I'll set this to a value that should
     // work in most places for the next 50 years or so ;)
 
-    ext->set_coord_mode("J2000");
+    ext->set_coordmode("J2000");
 
     // Set the ASCII date stamp from the system clock (in UTC)
 
