@@ -16,7 +16,8 @@
 using namespace std;
 
 dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
-  : finished_all( _contributors, false )
+  : finished_all( _contributors, false ),
+    last_division( _contributors, 0 )
 {
   context = 0;
   contributors = _contributors;
@@ -107,6 +108,8 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     cerr << "dsp::UnloaderShare::unload contributor=" << contributor 
 	 << " division=" << division << " Nstorage=" << storage.size() << endl;
 
+  last_division[contributor] = division;
+
   unsigned istore = 0;
   for (istore=0; istore < storage.size(); istore++)
     if (storage[istore]->integrate( contributor, division, data ))
@@ -120,6 +123,11 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
     Storage* temp = new Storage( contributors, finished_all );
     temp->set_division( division );
     temp->set_finished( contributor );
+
+    // other contributors may be well ahead of this one
+    for (unsigned ic=0; ic < contributors; ic++)
+      if ( last_division[ic] > division )
+        temp->set_finished( ic );
 
     if (wait_all)
       temp->set_profiles( const_cast<PhaseSeries*>(data) );
