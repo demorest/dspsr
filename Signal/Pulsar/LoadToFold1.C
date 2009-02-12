@@ -116,6 +116,7 @@ void dsp::LoadToFold1::prepare () try
 
   if (manager->get_info()->get_detected())
   {
+    prepare_interchan (unpacked);
     prepare_fold (unpacked);
     prepare_final ();
     return;
@@ -235,19 +236,7 @@ void dsp::LoadToFold1::prepare () try
     operations.push_back (convolution.get());
   }
 
-  if (config->interchan_dedispersion)
-  {
-    if (!sample_delay)
-      sample_delay = new SampleDelay;
-
-    sample_delay->set_input (convolved);
-    sample_delay->set_output (convolved);
-    sample_delay->set_function (new Dedispersion::SampleDelay);
-    if (kernel)
-      kernel->set_fractional_delay (true);
-
-    operations.push_back (sample_delay.get());
-  }
+  prepare_interchan (convolved);
 
   if (config->plfb_nbin)
   {
@@ -343,6 +332,26 @@ catch (Error& error)
   throw error += "dsp::LoadToFold1::prepare";
 }
 
+void dsp::LoadToFold1::prepare_interchan (TimeSeries* data)
+{
+  if (! config->interchan_dedispersion)
+    return;
+
+  if (Operation::verbose)
+    cerr << "LoadToFold1::prepare correct inter-channel dispersion delay" << endl;
+
+  if (!sample_delay)
+    sample_delay = new SampleDelay;
+
+  sample_delay->set_input (data);
+  sample_delay->set_output (data);
+  sample_delay->set_function (new Dedispersion::SampleDelay);
+  if (kernel)
+    kernel->set_fractional_delay (true);
+
+  operations.push_back (sample_delay.get());
+}
+
 void dsp::LoadToFold1::prepare_final ()
 {
   assert (fold.size() > 0);
@@ -366,7 +375,6 @@ void dsp::LoadToFold1::prepare_final ()
     if (Operation::verbose)
       cerr << "LoadToFold1::prepare_final user DM=" << dm << endl;
   }
-
   else if (parameters)
   {
     dm = parameters->get_dispersion_measure ();
