@@ -26,7 +26,7 @@ dsp::GMRTFile::~GMRTFile ( )
 {
 }
 
-void correct_endian (struct gmrt_params* header)
+static void correct_endian (struct gmrt_params* header)
 {
   FromLittleEndian (header->n_ds);
   FromLittleEndian (header->n_chan);
@@ -49,7 +49,7 @@ void correct_endian (struct gmrt_params* header)
   FromLittleEndian (header->epoch);
 }
 
-void correct_endian (struct data2rcv* block)
+static void correct_endian (struct data2rcv* block)
 {
   FromLittleEndian (block->totalsize);
   FromLittleEndian (block->NPtsSend);
