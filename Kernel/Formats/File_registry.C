@@ -63,6 +63,11 @@ static Registry::List<dsp::File>::Enter<dsp::DADABuffer> dada_buffer;
 static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
 #endif
 
+#if HAVE_gmrt
+#include "dsp/GMRTFile.h"
+static Registry::List<dsp::File>::Enter<dsp::GMRTFile> register_gmrt;
+#endif
+
 #if HAVE_lbadr
 #include "dsp/SMROFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
