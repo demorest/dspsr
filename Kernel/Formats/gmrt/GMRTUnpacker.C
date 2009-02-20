@@ -18,7 +18,9 @@ dsp::GMRTUnpacker::GMRTUnpacker (const char* name) : HistUnpacker (name)
 
 bool dsp::GMRTUnpacker::matches (const Observation* observation)
 {
-  cerr << "dsp::GMRTUnpacker::matches machine=" << observation->get_machine() << " nbit=" << observation->get_nbit() << endl;
+  if (verbose)
+    cerr << "dsp::GMRTUnpacker::matches machine=" << observation->get_machine() 
+         << " nbit=" << observation->get_nbit() << endl;
 
   return observation->get_machine() == "GMRT" 
     && observation->get_nbit() == 8;
