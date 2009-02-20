@@ -97,7 +97,8 @@ void dsp::Detection::transformation () try
     if (state==Signal::Coherence || state==Signal::Stokes)
       polarimetry();
 
-    else if (state==Signal::PPQQ || state==Signal::Intensity)
+    else if (state==Signal::PPQQ || state==Signal::Intensity
+             || state==Signal::PP_State || state==Signal::QQ_State)
       square_law();
 
     else
