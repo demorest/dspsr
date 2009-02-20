@@ -69,6 +69,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::FadcUnpacker> fadc;
 static Registry::List<dsp::Unpacker>::Enter<dsp::FadcTwoBitCorrection> fadc2;
 #endif
 
+#if HAVE_gmrt
+#include "dsp/GMRTUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::GMRTUnpacker> gmrt;
+#endif
+
 #if HAVE_lbadr
 #include "dsp/SMROTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection> lbadr;
