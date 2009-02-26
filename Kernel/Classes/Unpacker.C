@@ -24,6 +24,10 @@ void dsp::Unpacker::prepare ()
 
   // set the Observation information
   output->Observation::operator=(*input);
+
+  if (verbose)
+    cerr << "dsp::Unpacker::prepare output start_time="
+	 << output->get_start_time() << endl;
 }
 
 void dsp::Unpacker::resize_output ()
