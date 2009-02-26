@@ -19,7 +19,7 @@
 
 #include "FTransform.h"
 
-#include "factory.h"
+#include "load_factory.h"
 #include "dirutil.h"
 
 #include <iostream>
@@ -115,9 +115,6 @@ static bool verbose = false;
 // sets up the LoadToFold engine using the following attributes
 
 void prepare (dsp::LoadToFold* engine, dsp::Input* input);
-
-// number of time samples loaded from file at a time
-uint64 block_size = 0;
 
 // number of seconds to seek into data
 double seek_seconds = 0.0;
