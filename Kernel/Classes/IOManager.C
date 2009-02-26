@@ -223,14 +223,23 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
 {
   /*
     This simple calculation of the maximum block size does not
-    consider the RAM required FFT plans, etc.
+    consider the RAM required for FFT plans, etc.
   */
 
   unsigned resolution = input->get_resolution();
 
+  if (verbose)
+    cerr << "dsp::IOManager::set_block_size input resolution="
+         << resolution << endl;
+
   unpacker->match_resolution (input);
   if (unpacker->get_resolution())
+  {
     resolution = unpacker->get_resolution();
+    if (verbose)
+      cerr << "dsp::IOManager::set_block_size unpacker resolution="
+           << resolution << endl;
+  }
 
   // ensure that the block size is a multiple of four
   if (resolution % 4)
@@ -255,14 +264,27 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
 
   uint64 block_size = multiple_greater (minimum_samples, resolution);
 
+  if (verbose)
+    cerr << "dsp::IOManager::set_block_size required block_size="
+         << block_size << endl;
+
   if (maximum_RAM)
+  {
     block_size = (uint64(maximum_RAM / nbyte_dat) / resolution) * resolution;
-  
+    if (verbose)
+      cerr << "dsp::IOManager::set_block_size possible block_size="
+           << block_size << endl;
+  }
+ 
   float megabyte = 1024 * 1024;
+
   if (block_size < minimum_samples)
   {
     float blocks = float(minimum_samples)/float(resolution);
     float min_ram = ceil (blocks) * resolution * nbyte_dat;
+
+    if (verbose)
+      cerr << "dsp::IOManager::set_block_size insufficient RAM" << endl;
 
     throw Error (InvalidState, "dsp::IOManager::set_block_size",
 		 "insufficient RAM: limit=%g MB -> block="UI64" samples\n\t"

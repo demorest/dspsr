@@ -46,6 +46,10 @@ void dsp::Input::prepare ()
   // set the Observation information
   get_output()->Observation::operator=(info);
   get_output()->set_ndat(0);
+
+  if (verbose)
+    cerr << "dsp::Input::prepare output start_time="
+	 << output->get_start_time() << endl;
 }
 
 //! Return the number nearest to and larger than big and divisible by small
