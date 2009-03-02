@@ -1,0 +1,147 @@
+
+#include "makeinf.h"
+#include "gmrt.h"
+
+#include <stdio.h>
+
+int gmrt_nbit = 0;
+
+static int need_byteswap_st = 0;
+static int bytesperpt_st = 0;
+static int sb_flag;
+static int bitshift = 2;
+static char badch[100];
+
+void GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
+/* Convert GMRT header into an infodata structure */
+{
+   FILE *hdrfile;
+   double ss;
+   char line[200], ctmp[100], project[20], date[20];
+   char *hdrfilenm;
+   int numantennas, hh, mm, cliplen;
+
+   hdrfilenm = calloc(strlen(datfilenm) + 1, 1);
+   cliplen = strlen(datfilenm) - 3;
+   strncpy(hdrfilenm, datfilenm, cliplen);
+   strcpy(hdrfilenm + cliplen, "hdr");
+   hdrfile = chkfopen(hdrfilenm, "r");
+   while (fgets(line, 200, hdrfile)) {
+      if (line[0] == '#') {
+         continue;
+      } else if (strncmp(line, "Site            ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", idata->telescope);
+      } else if (strncmp(line, "Observer        ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", idata->observer);
+      } else if (strncmp(line, "Proposal        ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", project);
+      } else if (strncmp(line, "Array Mode      ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", idata->instrument);
+      } else if (strncmp(line, "Observing Mode  ", 16) == 0) {
+         continue;
+      } else if (strncmp(line, "Date            ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", date);
+      } else if (strncmp(line, "Num Antennas    ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d\n", &numantennas);
+      } else if (strncmp(line, "Antenna List    ", 16) == 0) {
+         continue;
+      } else if (strncmp(line, "Num Channels    ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d\n", &idata->num_chan);
+      } else if (strncmp(line, "Channel width   ", 16) == 0) {
+         sscanf(line, "%*[^:]: %lf\n", &idata->chan_wid);
+         /* Flag is made to handle LSB and USB data.... S.Sarala, 25 Apr 2005 */
+         if (idata->chan_wid < 0.0)
+            sb_flag = -1;
+         else
+            sb_flag = 1;
+         if (idata->chan_wid < 0.0)
+            idata->chan_wid = -(idata->chan_wid);
+      } else if (strncmp(line, "Frequency Ch.1  ", 16) == 0) {
+         sscanf(line, "%*[^:]: %lf\n", &idata->freq);
+      } else if (strncmp(line, "Sampling Time   ", 16) == 0) {
+         sscanf(line, "%*[^:]: %lf\n", &idata->dt);
+         idata->dt /= 1000000.0;        /* Convert from us to s */
+      } else if (strncmp(line, "Num bits/sample ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d\n", &gmrt_nbit);
+         /* to handle 16 and 8 bit data.... S.Sarala, 28 May 2005 */
+         if (gmrt_nbit == 16)
+            bytesperpt_st = 2;
+         else
+            bytesperpt_st = 1;
+      } else if (strncmp(line, "Data Format     ", 16) == 0) {
+         {
+            /* The following is from question 20.9 of the comp.lang.c FAQ */
+            int x = 1, machine_is_little_endian = 0;
+            if(*(char *)&x == 1) {
+               machine_is_little_endian = 1;
+            }
+
+            if (strstr(line, "little")) {
+               if (machine_is_little_endian)
+                  need_byteswap_st = 0;
+               else
+                  need_byteswap_st = 1;
+            } else {
+               if (machine_is_little_endian)
+                  need_byteswap_st = 1;
+               else
+                  need_byteswap_st = 0;
+            }
+         }
+      } else if (strncmp(line, "Polarizations   ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", ctmp);
+         if (strcmp(ctmp, "Total I")) {
+            printf("\nWarning:  Cannot handle data with other than "
+                   "'Total I' polarization.\n   Data is '%s'\n", ctmp);
+         }
+      } else if (strncmp(line, "MJD             ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d\n", &idata->mjd_i);
+      } else if (strncmp(line, "UTC             ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d:%d:%lf\n", &hh, &mm, &ss);
+         idata->mjd_f = (hh + (mm + ss / 60.0) / 60.0) / 24.0;
+      } else if (strncmp(line, "Source          ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", idata->object);
+      } else if (strncmp(line, "Coordinates     ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d:%d:%lf, %d:%d:%lf\n",
+                &idata->ra_h, &idata->ra_m, &idata->ra_s,
+                &idata->dec_d, &idata->dec_m, &idata->dec_s);
+      } else if (strncmp(line, "Coordinate Sys  ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", ctmp);
+         if (strcmp(ctmp, "J2000")) {
+            printf("\nWarning:  Cannot non-J2000 coordinates!\n"
+                   "   Data is '%s'\n", ctmp);
+         }
+      } else if (strncmp(line, "Drift Rate      ", 16) == 0) {
+         continue;
+      } else if (strncmp(line, "Obs. Length     ", 16) == 0) {
+         continue;
+      } else if (strncmp(line, "Bad Channels    ", 16) == 0) {
+         sscanf(line, "%*[^:]: %[^\n]\n", ctmp);
+      } else if (strncmp(line, "Bit shift value ", 16) == 0) {
+         sscanf(line, "%*[^:]: %d\n", &bitshift);
+      } else {
+         continue;
+      }
+   }
+   idata->freqband = idata->chan_wid * idata->num_chan;
+   idata->dm = 0.0;
+   idata->N = 0.0;
+   idata->numonoff = 0;
+   idata->bary = 0;
+   idata->fov = 0.0;
+
+   strcpy(idata->band, "Radio");
+   strcpy(idata->analyzer, "dspsr");
+   strcpy(badch, ctmp);
+   printf("bad channels are %s\n", badch);
+   printf("bit shift value set to %d\n", bitshift);
+   printf("No of bits/sample is %d\n", gmrt_nbit);
+
+   sprintf(idata->notes, "%d antenna observation for Project %s\n"
+           "    UT Date at file start = %s\n"
+           "    Bad channels: %s\n", numantennas, project, date, ctmp);
+   fclose(hdrfile);
+   free(hdrfilenm);
+}
+
+
