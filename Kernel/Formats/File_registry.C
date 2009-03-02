@@ -66,6 +66,10 @@ static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
 #if HAVE_gmrt
 #include "dsp/GMRTFile.h"
 static Registry::List<dsp::File>::Enter<dsp::GMRTFile> register_gmrt;
+#if HAVE_PRESTO
+#include "dsp/GMRTFilterbankFile.h"
+static Registry::List<dsp::File>::Enter<dsp::GMRTFilterbankFile> gmrt_fb;
+#endif
 #endif
 
 #if HAVE_lbadr
