@@ -210,18 +210,17 @@ int main (int argc, char** argv) try
   manager->set_output (timeseries);
 
   if (verbose)
+    cerr << "the_decimator: creating BandpassMonitor" << endl;
+  Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
+
+  if (verbose)
     cerr << "the_decimator: creating rescale transformation" << endl;
   Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
   rescale->set_interval_seconds (update_interval);
   rescale->set_constant (constant_offset_scale);
-
-  if (verbose)
-    cerr << "the_decimator: attaching BandpassMonitor" << endl;
-  Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
-
-  rescale->update.connect( monitor, &dsp::BandpassMonitor::output_state);
+  rescale->update.connect (monitor, &dsp::BandpassMonitor::output_state);
 
   if (verbose)
     cerr << "the_decimator: creating pscrunch transformation" << endl;
