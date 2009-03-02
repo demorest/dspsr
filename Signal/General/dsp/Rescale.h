@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.6 $
-   $Date: 2009/03/02 07:15:05 $
+   $Revision: 1.7 $
+   $Date: 2009/03/02 12:04:06 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
@@ -30,6 +30,9 @@ namespace dsp
 
     //! Default constructor
     Rescale ();
+
+    //! Desctructor
+    ~Rescale ();
 
     //! Rescale to zero mean and unit variance
     void transformation ();
@@ -87,7 +90,7 @@ namespace dsp
     bool constant_offset_scale;
 
     void init ();
-
+    void compute_various (bool first_call = false);
   };
 }
 
