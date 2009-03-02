@@ -72,6 +72,10 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::FadcTwoBitCorrection> fadc2;
 #if HAVE_gmrt
 #include "dsp/GMRTUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::GMRTUnpacker> gmrt;
+#if HAVE_PRESTO
+#include "dsp/GMRTFilterbank16.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::GMRTFilterbank16> gmrt16;
+#endif
 #endif
 
 #if HAVE_lbadr
