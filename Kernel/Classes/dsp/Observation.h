@@ -350,13 +350,13 @@ namespace dsp {
     //! Bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double bandwidth;
 
-    //! Type of signal source (Linear or Circular)
+    //! Type of signal source (Pulsar, CAL, etc.)
     Signal::Source type;
 
-    //! State of the signal
+    //! State of the signal (Full Stokes, Total Intensity, etc.)
     Signal::State state;
 
-    //! Type of receiver feeds
+    //! Type of receiver feeds (Linear or Circular)
     Signal::Basis basis;
 
     //! Time samples per second in Hz
@@ -365,15 +365,6 @@ namespace dsp {
     //! Start time of the leading edge of the first time sample
     MJD start_time;
     
-    //! Amount by which data has been scaled
-    double scale;
-
-    //! Flag set when frequency channels are out of order (band swappped)
-    bool swap;
-
-    //! Flag set when centre channel is centred on centre frequency
-    bool dc_centred;
-
     //! Observation identifier
     std::string identifier;
 
@@ -389,7 +380,7 @@ namespace dsp {
     //! The dispersion measure to be archived
     double dispersion_measure;
 
-    //! The rotation measure to be archive
+    //! The rotation measure to be archived
     double rotation_measure;
 
     //! Stream to which verbose messages are sent
@@ -397,6 +388,15 @@ namespace dsp {
 
     //! Require equal sources in combinable
     bool require_equal_sources;
+
+    //! Amount by which data has been scaled
+    double scale;
+
+    //! Flag set when frequency channels are out of order (band swappped)
+    bool swap;
+
+    //! Flag set when centre channel is centred on centre frequency
+    bool dc_centred;
 
   private:
 
