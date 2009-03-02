@@ -145,14 +145,18 @@ void dsp::File::reopen ()
   if (fd >= 0)
     throw Error (InvalidState, "dsp::File::reopen", "already open");
 
-  fd = ::open (current_filename.c_str(), O_RDONLY);
-  if (fd < 0)
-    throw Error (FailedSys, "dsp::File::reopen",
-		 "failed open(%s)", current_filename.c_str());
+  open_fd (current_filename);
 
   seek_bytes (0);
 }
 
+void dsp::File::open_fd (const std::string& filename)
+{
+  fd = ::open (filename.c_str(), O_RDONLY);
+  if (fd < 0)
+    throw Error (FailedSys, "dsp::File::open_fd",
+		 "failed open(" + filename + ")");
+}
 
 void dsp::File::set_total_samples ()
 {

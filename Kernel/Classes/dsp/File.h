@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.30 $
-   $Date: 2008/05/28 21:12:29 $
+   $Revision: 1.31 $
+   $Date: 2009/03/02 17:33:49 $
    $Author: straten $ */
 
 
@@ -129,6 +129,9 @@ namespace dsp {
     
     //! Calculates the total number of samples in the file, based on its size
     virtual void set_total_samples ();
+
+    //! Utility opens the file descriptor
+    virtual void open_fd (const std::string& filename);
 
     //! List of registered sub-classes
     static Registry::List<File> registry;
