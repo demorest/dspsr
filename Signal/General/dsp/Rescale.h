@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/10/31 21:54:21 $
+   $Revision: 1.6 $
+   $Date: 2009/03/02 07:15:05 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
@@ -51,6 +51,12 @@ namespace dsp
 
     //! Get the scale bandpass for the given polarization
     const float* get_scale (unsigned ipol) const;
+
+    //! Get the mean bandpass for the given polarization
+    const double* get_mean (unsigned ipol) const;
+
+    //! Get the scale bandpass for the given polarization
+    const double* get_variance (unsigned ipol) const;
 
     //! Get the number of samples between updates
     uint64 get_nsample () const;

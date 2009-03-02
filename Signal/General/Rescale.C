@@ -322,6 +322,20 @@ const float* dsp::Rescale::get_scale (unsigned ipol) const
   return &(scale[ipol][0]);
 }
 
+//! Get the mean bandpass for the given polarization
+const double* dsp::Rescale::get_mean (unsigned ipol) const
+{
+  assert (ipol < freq_total.size());
+  return &(freq_total[ipol][0]);
+}
+
+//! Get the scale bandpass for the given polarization
+const double* dsp::Rescale::get_variance (unsigned ipol) const
+{
+  assert (ipol < freq_totalsq.size());
+  return &(freq_totalsq[ipol][0]);
+}
+
 //! Get the number of samples between updates
 uint64 dsp::Rescale::get_nsample () const
 {
