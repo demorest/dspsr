@@ -20,8 +20,8 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/ExcisionUnpacker.h dsp/UnpackerIterator.h		     \
 	dsp/BlockIterator.h dsp/StepIterator.h dsp/TwoBitLookup.h    \
 	dsp/TwoBitFour.h dsp/TwoBit1or2.h dsp/FourBitTwo.h	     \
-	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h \
-	dsp/ObservationChange.h
+	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h     \
+	dsp/ObservationChange.h dsp/PrestoObservation.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
@@ -40,6 +40,10 @@ if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
+if HAVE_PRESTO
+libClasses_la_SOURCES += PrestoObservation.C
+endif
+
 check_PROGRAMS = test_BlockIterator
 
 test_BlockIterator_SOURCES = test_BlockIterator.C
@@ -49,4 +53,6 @@ test_BlockIterator_SOURCES = test_BlockIterator.C
 
 include $(top_srcdir)/config/Makefile.include
 
-LDADD = libClasses.la
+AM_CPPFLAGS += @PRESTO_CFLAGS@
+
+LDADD = libClasses.la @PRESTO_LIBS@
