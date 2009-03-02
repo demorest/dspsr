@@ -20,6 +20,17 @@ dsp::Rescale::Rescale ()
   constant_offset_scale = false;
 }
 
+dsp::Rescale::~Rescale ()
+{
+  // cerr << "dsp::Rescale::~Rescale isample=" << isample << endl;
+
+  if (isample)
+  {
+    compute_various ();
+    update (this);
+  }
+}
+
 void dsp::Rescale::set_constant (bool value)
 {
   constant_offset_scale = value;
@@ -199,47 +210,21 @@ void dsp::Rescale::transformation ()
       }
       isample = samp_dat;
 
-      if (!nsample || samp_dat == nsample || first_call)
+      if (samp_dat == nsample || first_call)
 	{
     if (verbose)
       cerr << "dsp::Rescale::transformation rescale nsample=" << nsample
            << " isample=" << isample << " first_call=" << first_call << endl;
 
-	  isample = 0;
-	  uint64 count = nsample;
+	  if (first_call)
+      update_epoch = input->get_start_time();
 
-	  update_epoch = input->get_start_time();
-
-	  if (!nsample || first_call)
-	    count = input_ndat;
-	  else
-	    update_epoch += end_dat / input->get_rate();
-
-	  for (unsigned ipol=0; ipol < input_npol; ipol++) 
-	    {
-	      for (unsigned ichan=0; ichan < input_nchan; ichan++)
-		{
-		  double mean = freq_total[ipol][ichan] / count;
-		  double meansq = freq_totalsq[ipol][ichan] / count;
-		  double variance = meansq - mean*mean;
-
-		  freq_total[ipol][ichan] = mean;
-		  freq_totalsq[ipol][ichan] = variance;
-
-                  if (!constant_offset_scale || first_call)
-                  {
-		  offset[ipol][ichan] = -mean;
-		  if (variance == 0.0)
-		    scale[ipol][ichan] = 1.0;
-		  else
-		    scale[ipol][ichan] = 1.0 / sqrt(variance);
-                  }
-		}
-	    }
-
-          first_call = false;
-
+    compute_various (first_call);
 	  update (this);
+
+    update_epoch += isample / input->get_rate();
+    isample = 0;
+    first_call = false;
 
 	  for (unsigned ipol=0; ipol < input_npol; ipol++)
 	    {
@@ -299,7 +284,36 @@ void dsp::Rescale::transformation ()
 
   if (verbose)
     cerr << "dsp::Rescale::transformation exit" << endl;
+}
 
+void dsp::Rescale::compute_various (bool first_call)
+{
+  // cerr << "dsp::Rescale::compute_various isample=" << isample << endl;
+
+  const unsigned input_npol  = input->get_npol();
+  const unsigned input_nchan = input->get_nchan();
+
+  for (unsigned ipol=0; ipol < input_npol; ipol++)
+  {
+    for (unsigned ichan=0; ichan < input_nchan; ichan++)
+    {
+      double mean = freq_total[ipol][ichan] / isample;
+      double meansq = freq_totalsq[ipol][ichan] / isample;
+      double variance = meansq - mean*mean;
+
+      freq_total[ipol][ichan] = mean;
+      freq_totalsq[ipol][ichan] = variance;
+
+      if (!constant_offset_scale || first_call)
+      {
+        offset[ipol][ichan] = -mean;
+        if (variance == 0.0)
+          scale[ipol][ichan] = 1.0;
+        else
+          scale[ipol][ichan] = 1.0 / sqrt(variance);
+      }
+    }
+  }
 }
 
 //! Get the epoch of the last scale/offset update
