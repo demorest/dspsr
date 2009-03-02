@@ -12,10 +12,6 @@
 
 #include <fstream>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 using namespace std;
 
 //#include "f772c.h"
@@ -182,8 +178,8 @@ void dsp::BCPMFile::open_file (const char* filename){
   // Note that BPP_HEADER_SIZE is 8 bytes bigger than sizeof(BPP_SEARCH_HEADER) so I'm not sure if this is right
   header_bytes = BPP_HEADER_SIZE;
 
-  fd = ::open(filename, O_RDONLY);
-  
+  open_fd (filename);
+
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
   resolution = bits_per_byte / get_info()->get_nbit();
