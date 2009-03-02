@@ -6,6 +6,8 @@
  ***************************************************************************/
 
 #include "dsp/SigProcObservation.h"
+#include "FilePtr.h"
+
 #include <iostream>
 #include <string.h>
 
@@ -20,17 +22,6 @@ dsp::SigProcObservation::SigProcObservation (const char* filename)
   if (filename)
     load (filename);
 }
-
-class FilePtr
-{
-public:
-  FilePtr (FILE* f) { fptr = f; }
-  ~FilePtr () { if (fptr) fclose (fptr); }
-  operator FILE* () { return fptr; }
-  bool operator ! () { return fptr == 0; }
-protected:
-  FILE* fptr;
-};
 
 void dsp::SigProcObservation::load (const char* filename)
 {
