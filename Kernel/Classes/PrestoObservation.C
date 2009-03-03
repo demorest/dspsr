@@ -22,12 +22,8 @@ dsp::PrestoObservation::PrestoObservation (const infodata* data)
   // remove spaces from source name
   source = remove_all (data->object, ' ');
 
-  /*
-    For an even number of channels, the centre frequency sits on the edge
-    between the two central channels.  For an odd number of channels, the
-    centre frequency is in the middle of the central channel.
-  */
-  centre_frequency = data->freq + double(data->num_chan - 1)*data->freqband/2;
+  // GMRT convention: data->freq is always the low frequency edge of band
+  centre_frequency = data->freq + fabs(data->freqband)/2;
   bandwidth = data->freqband;
 
   set_nchan (data->num_chan);
