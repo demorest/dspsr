@@ -10,13 +10,6 @@
 
 #include "FilePtr.h"
 
-// from PRESTO
-
-extern "C" {
-#include <mask.h>
-#include <gmrt.h>
-}
-
 using namespace std;
 
 // #define _DEBUG
@@ -79,6 +72,9 @@ catch (Error& error)
   return false;
 }
 
+// defined in gmrt.c
+extern "C" { int GMRT_hdr_to_inf(char *datfilenm, infodata *idata); }
+
 /*! 
   Loads the Observation information from an GMRTFilterbank-TCI style file.
 */
@@ -99,7 +95,7 @@ void dsp::GMRTFilterbankFile::open_file (const char* filename)
   if (verbose)
     cerr << "dsp::GMRTFilterbankFile::open PRESTO finished" << endl;
 
-  info = PrestoObservation (&data, gmrt_nbit);
+  info = PrestoObservation (&data);
 
   cerr << "machine=" << info.get_machine() << endl;
 
