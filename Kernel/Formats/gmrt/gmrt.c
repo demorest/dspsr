@@ -1,18 +1,20 @@
 
-#include "makeinf.h"
-#include "gmrt.h"
+/*
+  modified version of GMRT_hdr_to_inf from PRESTO by Scott Ransom.
+*/
+
+#include "dsp/infodata.h"
 
 #include <stdio.h>
-
-int gmrt_nbit = 0;
+#include <string.h>
+#include <stdlib.h>
 
 static int need_byteswap_st = 0;
-static int bytesperpt_st = 0;
 static int sb_flag;
 static int bitshift = 2;
 static char badch[100];
 
-void GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
+int GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
 /* Convert GMRT header into an infodata structure */
 {
    FILE *hdrfile;
@@ -25,7 +27,10 @@ void GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
    cliplen = strlen(datfilenm) - 3;
    strncpy(hdrfilenm, datfilenm, cliplen);
    strcpy(hdrfilenm + cliplen, "hdr");
-   hdrfile = chkfopen(hdrfilenm, "r");
+   hdrfile = fopen(hdrfilenm, "r");
+   if (!hdrfile)
+     return -1;
+
    while (fgets(line, 200, hdrfile)) {
       if (line[0] == '#') {
          continue;
@@ -62,12 +67,7 @@ void GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
          sscanf(line, "%*[^:]: %lf\n", &idata->dt);
          idata->dt /= 1000000.0;        /* Convert from us to s */
       } else if (strncmp(line, "Num bits/sample ", 16) == 0) {
-         sscanf(line, "%*[^:]: %d\n", &gmrt_nbit);
-         /* to handle 16 and 8 bit data.... S.Sarala, 28 May 2005 */
-         if (gmrt_nbit == 16)
-            bytesperpt_st = 2;
-         else
-            bytesperpt_st = 1;
+         sscanf(line, "%*[^:]: %d\n", &idata->num_bit);
       } else if (strncmp(line, "Data Format     ", 16) == 0) {
          {
             /* The following is from question 20.9 of the comp.lang.c FAQ */
@@ -135,13 +135,15 @@ void GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
    strcpy(badch, ctmp);
    printf("bad channels are %s\n", badch);
    printf("bit shift value set to %d\n", bitshift);
-   printf("No of bits/sample is %d\n", gmrt_nbit);
+   printf("No of bits/sample is %d\n", idata->num_bit);
 
    sprintf(idata->notes, "%d antenna observation for Project %s\n"
            "    UT Date at file start = %s\n"
            "    Bad channels: %s\n", numantennas, project, date, ctmp);
    fclose(hdrfile);
    free(hdrfilenm);
+
+   return 0;
 }
 
 
