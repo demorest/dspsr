@@ -21,7 +21,8 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/BlockIterator.h dsp/StepIterator.h dsp/TwoBitLookup.h    \
 	dsp/TwoBitFour.h dsp/TwoBit1or2.h dsp/FourBitTwo.h	     \
 	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h     \
-	dsp/ObservationChange.h dsp/PrestoObservation.h
+	dsp/ObservationChange.h \
+	dsp/infodata.h dsp/PrestoObservation.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
