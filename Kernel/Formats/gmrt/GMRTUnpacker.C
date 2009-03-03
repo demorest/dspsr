@@ -14,6 +14,7 @@ using namespace std;
 dsp::GMRTUnpacker::GMRTUnpacker (const char* name) : HistUnpacker (name)
 {
   set_ndig (4);
+  set_nstate (256);
 }
 
 bool dsp::GMRTUnpacker::matches (const Observation* observation)
