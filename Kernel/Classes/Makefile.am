@@ -35,14 +35,10 @@ libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	dspExtension.C IOManager.C Scratch.C Input.C Seekable.C	    \
 	InputBuffering.C SetBufferingPolicy.C ExcisionUnpacker.C    \
 	TwoBitLookup.C TwoBitFour.C TwoBit1or2.C NLowLookup.C	    \
-	UnpackerIterator.C ObservationChange.C
+	UnpackerIterator.C ObservationChange.C PrestoObservation.C
 
 if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
-endif
-
-if HAVE_PRESTO
-libClasses_la_SOURCES += PrestoObservation.C
 endif
 
 check_PROGRAMS = test_BlockIterator
