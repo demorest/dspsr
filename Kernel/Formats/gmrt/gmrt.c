@@ -54,13 +54,6 @@ int GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
          sscanf(line, "%*[^:]: %d\n", &idata->num_chan);
       } else if (strncmp(line, "Channel width   ", 16) == 0) {
          sscanf(line, "%*[^:]: %lf\n", &idata->chan_wid);
-         /* Flag is made to handle LSB and USB data.... S.Sarala, 25 Apr 2005 */
-         if (idata->chan_wid < 0.0)
-            sb_flag = -1;
-         else
-            sb_flag = 1;
-         if (idata->chan_wid < 0.0)
-            idata->chan_wid = -(idata->chan_wid);
       } else if (strncmp(line, "Frequency Ch.1  ", 16) == 0) {
          sscanf(line, "%*[^:]: %lf\n", &idata->freq);
       } else if (strncmp(line, "Sampling Time   ", 16) == 0) {
