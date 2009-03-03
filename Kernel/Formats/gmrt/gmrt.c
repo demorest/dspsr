@@ -90,10 +90,10 @@ int GMRT_hdr_to_inf(char *datfilenm, infodata * idata)
          }
       } else if (strncmp(line, "Polarizations   ", 16) == 0) {
          sscanf(line, "%*[^:]: %[^\n]\n", ctmp);
-         if (strcmp(ctmp, "Total I")) {
-            printf("\nWarning:  Cannot handle data with other than "
-                   "'Total I' polarization.\n   Data is '%s'\n", ctmp);
-         }
+         if (strcmp(ctmp, "Total I") == 0)
+           idata->num_poln=1;
+         else
+          idata->num_poln=4;
       } else if (strncmp(line, "MJD             ", 16) == 0) {
          sscanf(line, "%*[^:]: %d\n", &idata->mjd_i);
       } else if (strncmp(line, "UTC             ", 16) == 0) {
