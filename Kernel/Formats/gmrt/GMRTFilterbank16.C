@@ -59,7 +59,7 @@ void dsp::GMRTFilterbank16::unpack ()
   const uint64 ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
 
-  const uint16* base = reinterpret_cast<const uint16*>(input->get_rawptr());
+  const int16* base = reinterpret_cast<const int16*>(input->get_rawptr());
 
   switch ( output->get_order() )
   {
@@ -67,7 +67,7 @@ void dsp::GMRTFilterbank16::unpack ()
     {
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
-        const uint16* from = base + ichan;
+        const int16* from = base + ichan;
 	float* into = output->get_datptr (ichan, 0);
 
 	for (unsigned bt = 0; bt < ndat; bt++)
@@ -81,7 +81,7 @@ void dsp::GMRTFilterbank16::unpack ()
 
   case TimeSeries::OrderTFP:
     {
-      const uint16* from = base;
+      const int16* from = base;
       float* into = output->get_dattfp();
 
       const uint64 nfloat = nchan * ndat;
