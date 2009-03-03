@@ -7,30 +7,27 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/PrestoObservation.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/03/02 17:39:51 $
+   $Revision: 1.2 $
+   $Date: 2009/03/03 05:29:30 $
    $Author: straten $ */
 
 #ifndef __PrestoObservation_h
 #define __PrestoObservation_h
 
 #include "dsp/Observation.h"
-#include "makeinf.h"
+#include "dsp/infodata.h"
 
 namespace dsp
 { 
-  //! General means of constructing Observation attributes from CPSR2 data
-  /*! This class parses the ASCII header block used for CPSR2 data and
-    initializes all of the attributes of the Observation base class.
-    The header block may come from a CPSR2 data file, or from the
-    shared memory (data block) of the machines in the CPSR2
-    cluster. */
+  //! Copy Observation attributes from a PRESTO infodata structure
+  /*! The infodata structure has been slightly modified to include
+    the number of bits per sample and the number of polarizations. */
   class PrestoObservation : public Observation
   {
   public:
 
     //! Construct from a PRESTO infodata struct
-    PrestoObservation (const infodata*, unsigned extern_nbit);
+    PrestoObservation (const infodata*);
 
   };  
 }
