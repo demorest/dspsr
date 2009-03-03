@@ -10,8 +10,7 @@
 
 using namespace std;
 
-dsp::PrestoObservation::PrestoObservation (const infodata* data, 
-					   unsigned extern_nbit)
+dsp::PrestoObservation::PrestoObservation (const infodata* data)
 {
   if (!data)
     throw Error (InvalidState, "dsp::PrestoObservation ctor",
@@ -32,10 +31,15 @@ dsp::PrestoObservation::PrestoObservation (const infodata* data,
   bandwidth = data->freqband;
 
   set_nchan (data->num_chan);
-  set_nbit (extern_nbit);
+  set_nbit (data->num_bit);
+  set_npol (data->num_poln);
+
+  if (get_npol() == 1)
+    state = Signal::Intensity;
+  else
+    state = Signal::Coherence;
 
   type = Signal::Pulsar;     // best estimate
-  state = Signal::Intensity; // only supported option
   basis = Signal::Linear;    // doesn't matter
 
   rate = 1/data->dt;
