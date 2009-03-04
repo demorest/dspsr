@@ -135,6 +135,11 @@ static Registry::List<dsp::File>::Enter<dsp::SigProcFile> register_sigproc;
 static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
 #endif
 
+#if HAVE_fits
+#include "dsp/FITSFile.h"
+static Registry::List<dsp::File>::Enter<dsp::FITSFile> register_fits;
+#endif
+
 #if HAVE_wapp
 #include "dsp/WAPPFile.h"
 static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
