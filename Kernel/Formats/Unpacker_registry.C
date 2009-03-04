@@ -144,6 +144,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::SigProcTwo> sigproc2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
 #endif
 
+#if HAVE_fits
+#include "dsp/FITSUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::FITSUnpacker> fits;
+#endif
+
 #if HAVE_wapp
 #include "dsp/WAPPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::WAPPUnpacker> wapp;
