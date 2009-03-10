@@ -7,20 +7,20 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/gmrt/dsp/GMRTFilterbank16.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/03/02 17:34:28 $
+   $Revision: 1.2 $
+   $Date: 2009/03/10 06:26:05 $
    $Author: straten $ */
 
 #ifndef __GMRTFilterbank16_h
 #define __GMRTFilterbank16_h
 
-#include "dsp/HistUnpacker.h"
+#include "dsp/Unpacker.h"
 
 namespace dsp
 {
 
   //! Simple 8-bit to float unpacker for the BPSR files
-  class GMRTFilterbank16 : public HistUnpacker 
+  class GMRTFilterbank16 : public Unpacker 
   {
 
   public:
