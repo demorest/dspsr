@@ -22,7 +22,14 @@ AC_DEFUN([DSPSR_SELECTED_FORMATS],
   # when configure is run
 
   if test ! -f backends.list; then
-    echo > backends.list
+    AC_MSG_WARN([
+
+    Using default list of backend file formats.
+
+    Please see http://dspsr.sourceforge.net/formats
+
+    ])
+    cp $srcdir/config/backends.default backends.list
   fi
 
   selected_formats=`cat backends.list 2> /dev/null`
