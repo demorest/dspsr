@@ -10,6 +10,8 @@
 
 #include "FilePtr.h"
 
+#include <string.h>
+
 using namespace std;
 
 // #define _DEBUG

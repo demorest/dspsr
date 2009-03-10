@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/PMDAQFile.h"
 #include "dsp/PMDAQ_Observation.h"
 #include "dsp/PMDAQ_Extension.h"
@@ -16,6 +17,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <string.h>
 
 using namespace std;
 

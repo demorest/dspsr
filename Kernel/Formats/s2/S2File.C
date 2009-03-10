@@ -11,6 +11,9 @@
 // S2 header and unpacking routines
 #include "tci_file.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 using namespace std;
 
 // #define _DEBUG

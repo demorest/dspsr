@@ -4,12 +4,15 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "SMRO.h"
 #include "dsp/SMROFile.h"
 
 #include "Error.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
