@@ -14,7 +14,7 @@ using namespace std;
 
 //! Constructor
 dsp::GMRTFilterbank16::GMRTFilterbank16 (const char* name)
-  : HistUnpacker (name)
+  : Unpacker (name)
 {
 }
 
@@ -41,54 +41,58 @@ bool dsp::GMRTFilterbank16::matches (const Observation* observation)
   return observation->get_machine() == "PA" 
     && observation->get_nbit() == 16
     && observation->get_ndim() == 1
-    && observation->get_npol() == 1;
-}
-
-unsigned dsp::GMRTFilterbank16::get_output_ipol (unsigned idig) const
-{
-  return 0;
-}
-
-unsigned dsp::GMRTFilterbank16::get_output_ichan (unsigned idig) const
-{
-  return idig;
+    && (observation->get_npol() == 1 || observation->get_npol() == 4);
 }
 
 void dsp::GMRTFilterbank16::unpack ()
 {
   const uint64 ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
+  const unsigned npol  = input->get_npol();
 
   const int16* base = reinterpret_cast<const int16*>(input->get_rawptr());
+
+  /*
+    GMRT filterbank stores: RR, RL, LL, LR
+    TimeSeries stores:      LL, RR, RL, LR
+  */
+  const unsigned ipol_map [4] = { 1, 2, 0, 3};
 
   switch ( output->get_order() )
   {
   case TimeSeries::OrderFPT:
+  {
+    for (unsigned ipol=0; ipol<npol; ipol++) 
     {
+      unsigned timeseries_ipol = 0;
+      if (npol > 1)
+	timeseries_ipol = ipol_map[ipol];
+
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
-        const int16* from = base + ichan;
-	float* into = output->get_datptr (ichan, 0);
-
+        const int16* from = base + ichan*npol + ipol;
+	float* into = output->get_datptr (ichan, timeseries_ipol);
+	
 	for (unsigned bt = 0; bt < ndat; bt++)
-        {
+	{
           into[bt] = float( *from );
-	  from += nchan;
+	  from += nchan * npol;
 	}
       }
     }
-    break;
+  }
+  break;
 
   case TimeSeries::OrderTFP:
-    {
-      const int16* from = base;
-      float* into = output->get_dattfp();
+  {
+    const int16* from = base;
+    float* into = output->get_dattfp();
 
-      const uint64 nfloat = nchan * ndat;
-      for (uint64 ifloat=0; ifloat < nfloat; ifloat ++)
-	into[ifloat] = float( from[ifloat] );
-    }
-    break;
+    const uint64 nfloat = nchan * ndat;
+    for (uint64 ifloat=0; ifloat < nfloat; ifloat ++)
+      into[ifloat] = float( from[ifloat] );
+  }
+  break;
 
   default:
     throw Error (InvalidState, "dsp::GMRTFilterbank16::unpack",
