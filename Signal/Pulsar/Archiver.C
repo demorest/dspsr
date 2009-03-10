@@ -395,6 +395,7 @@ try {
   // default Receiver extension
   Pulsar::Receiver* receiver = archive -> getadd<Pulsar::Receiver>();
   receiver->set_name ( phase -> get_receiver() );
+  receiver->set_basis ( phase -> get_basis() );
 
   for (unsigned iext=0; iext < extensions.size(); iext++)
     archive -> add_extension ( extensions[iext] );
