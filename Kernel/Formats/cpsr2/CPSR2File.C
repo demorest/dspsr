@@ -4,11 +4,6 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
 
 #include "dsp/CPSR2File.h"
 #include "dsp/CPSR2_Observation.h"
@@ -18,6 +13,13 @@
 #include "cpsr2_header.h"
 #include "yamasaki_verify.h"
 #include "dirutil.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 using namespace std;
 

@@ -14,6 +14,8 @@
 #include "machine_endian.h"
 #include "Error.h"
 
+#include <string.h>
+
 using namespace std;
 
 //! Null constructor

@@ -123,7 +123,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 	 << ndat_total << " total samples: " << percent << "%" << endl;
 
   uint64 ndat_expected = profiles->get_ndat_expected();
-  if (ndat_expected && (abs(int64(ndat_expected) - int64(ndat_total)) > 1))
+  if (ndat_expected && (imaxabs(int64(ndat_expected) - int64(ndat_total)) > 1))
   {
     /*
       ndat_expected is the number of samples expected to be totalled in
