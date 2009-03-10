@@ -60,27 +60,7 @@ AC_PROG_LIBTOOL
 # Disable the debugging information option, -g
 #
 SWIN_DEBUG
-
-#
-# Set up to use the fink package installation directory
-#
-if test -d /sw; then
-  CPPFLAGS="-I/sw/include $CPPFLAGS"
-  LDFLAGS="-L/sw/lib $LDFLAGS"
-else
-  #
-  # Set up to use the standard package installation directory
-  #
-  if test -d /usr/local; then
-    CPPFLAGS="-I/usr/local/include $CPPFLAGS"
-    LDFLAGS="-L/usr/local/lib $LDFLAGS"
-  fi
-fi
-
-if test "$PSRHOME"; then
- CPPFLAGS="-I$PSRHOME/packages/$LOGIN_ARCH/include $CPPFLAGS"
- LDFLAGS="-L$PSRHOME/packages/$LOGIN_ARCH/lib $LDFLAGS"
-fi
+SWIN_LOCAL
 
 #
 # Checks for essential libraries
