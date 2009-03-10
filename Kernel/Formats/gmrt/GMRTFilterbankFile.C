@@ -96,8 +96,7 @@ void dsp::GMRTFilterbankFile::open_file (const char* filename)
     cerr << "dsp::GMRTFilterbankFile::open PRESTO finished" << endl;
 
   info = PrestoObservation (&data);
-
-  cerr << "machine=" << info.get_machine() << endl;
+  info.set_basis (Signal::Circular);
 
   header_bytes = 0;
   
