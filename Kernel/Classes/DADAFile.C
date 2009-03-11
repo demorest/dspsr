@@ -90,11 +90,7 @@ void dsp::DADAFile::open_file (const char* filename)
   if (resolution == 0)
     resolution = 1;
 
-  // open the file
-  fd = ::open (filename, O_RDONLY);
-  if (fd < 0)
-    throw Error (FailedSys, "dsp::DADAFile::open_file()", 
-		 "open(%s) failed", filename);
+  open_fd (filename);
 
   if (verbose)
     cerr << "DADAFile::open exit" << endl;
