@@ -1,9 +1,14 @@
 /***************************************************************************
  *
- *   Copyright (C) 2006 by Willem van Straten
+ *   Copyright (C) 2008 by Jayanta Roy
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/GMRTFile.h"
 #include "gmrt_params.h"
 #include "data2rcv.h"
