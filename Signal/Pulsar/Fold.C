@@ -10,6 +10,7 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
 
+#include "psrephem.h"
 #include "Predict.h"
 #include "Error.h"
 
@@ -135,23 +136,20 @@ void dsp::Fold::prepare (const Observation* observation)
     return;
   }
 
-  if (folding_predictor) {
+  if (folding_predictor)
+  {
     if (verbose)
       cerr << "dsp::Fold::prepare using given predictor" << endl;
     built = true;
     return;
   }
 
-  if (!pulsar_ephemeris) {
+  if (!pulsar_ephemeris)
+  {
     if (verbose)
       cerr << "dsp::Fold::prepare generating ephemeris" << endl;
-    pulsar_ephemeris = new psrephem (pulsar.c_str(), 0);
+    pulsar_ephemeris = new Legacy::psrephem (pulsar.c_str(), 0);
   }
-
-  if (verbose)
-    cerr << "dsp::Fold::prepare pulsar_ephemeris name='" 
-	 << pulsar_ephemeris->get_name() << "' dm=" 
-	 << pulsar_ephemeris->get_dispersion_measure() << endl;
 
   if (verbose)
     cerr << "dsp::Fold::prepare creating predictor" << endl;
@@ -165,12 +163,6 @@ Pulsar::Predictor*
 dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
 				  const Observation* observation)
 {
-  const psrephem* pephem = dynamic_cast<const psrephem*>( params );
-
-  if (!pephem)
-    throw Error (InvalidState, "dsp::Fold::get_folding_predictor",
-		 "can prepare only psrephem for now");
-
   MJD time = observation->get_start_time();
 
   Tempo::Predict predict;
@@ -178,7 +170,7 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
   predict.set_ncoef ( ncoef );
   predict.set_site( observation->get_telescope() );
   predict.set_frequency ( observation->get_centre_frequency() );
-  predict.set_parameters ( *pephem );
+  predict.set_parameters ( params );
 
   return new polyco( predict.get_polyco (time, time) );
 }

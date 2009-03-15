@@ -32,9 +32,10 @@
 #include "dsp/ObservationChange.h"
 
 #include "Pulsar/Archive.h"
-#include "Pulsar/Parameters.h"
+#include "Pulsar/TextParameters.h"
 #include "Pulsar/SimplePredictor.h"
 
+#include "psrephem.h"
 #include "Error.h"
 #include "pad.h"
 
@@ -313,6 +314,9 @@ void dsp::LoadToFold1::prepare () try
 
     if (config->fourth_moment)
     {
+      if (Operation::verbose)
+	cerr << "LoadToFold1::prepare fourth order moments" << endl;
+   
       FourthMoment* fourth = new FourthMoment;
       operations.push_back (fourth);
 
@@ -352,6 +356,26 @@ void dsp::LoadToFold1::prepare_interchan (TimeSeries* data)
   operations.push_back (sample_delay.get());
 }
 
+double get_dispersion_measure (const Pulsar::Parameters* parameters)
+{
+  const Legacy::psrephem* peph = 0;
+  peph = dynamic_cast<const Legacy::psrephem*>(parameters);
+  if (peph)
+    return peph->get_dispersion_measure ();
+
+  const Pulsar::TextParameters* teph = 0;
+  teph = dynamic_cast<const Pulsar::TextParameters*>(parameters);
+  if (teph)
+  {
+    double dm = 0.0;
+    teph->get_value (dm, "DM");
+    return dm;
+  }
+
+  throw Error (InvalidState, "get_dispersion_measure (Pulsar::Parameters*)",
+	       "unknown Parameters class");
+}
+
 void dsp::LoadToFold1::prepare_final ()
 {
   assert (fold.size() > 0);
@@ -377,9 +401,9 @@ void dsp::LoadToFold1::prepare_final ()
   }
   else if (parameters)
   {
-    dm = parameters->get_dispersion_measure ();
+    dm = get_dispersion_measure (parameters);
     if (Operation::verbose)
-      cerr << "LoadToFold1::prepare_final eph DM=" << dm << endl;
+      cerr << "LoadToFold1::prepare_final ephem DM=" << dm << endl;
   }
 
   if (config->coherent_dedispersion)
@@ -643,7 +667,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       Pulsar::Parameters* ephem = config->ephemerides[ifold];
       change->set_source( ephem->get_name() );
-      change->set_dispersion_measure( ephem->get_dispersion_measure() );
+      change->set_dispersion_measure( get_dispersion_measure(ephem) );
 
       fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
     }
@@ -685,7 +709,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
         should make its way into the folded profile.
       */
       const Pulsar::Parameters* ephem = fold[ifold]->get_pulsar_ephemeris ();
-      change->set_dispersion_measure( ephem->get_dispersion_measure() );
+      change->set_dispersion_measure( get_dispersion_measure(ephem) );
     }
 
     fold[ifold]->get_output()->zero();
