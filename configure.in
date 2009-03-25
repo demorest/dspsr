@@ -79,7 +79,7 @@ SWIN_LIB_PSRDADA
 SWIN_LIB_PRESTO
 SWIN_LIB_MPI
 AX_OPENMP
-
+AC_SUBST(OPENMP_CFLAGS)
 #
 # Checks for graphics libraries
 #
