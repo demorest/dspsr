@@ -137,6 +137,8 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::S2TwoBitCorrection>  s2;
 static Registry::List<dsp::Unpacker>::Enter<dsp::SigProcEight> sigproc8;
 #include "dsp/SigProcTwo.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::SigProcTwo> sigproc2;
+#include "dsp/SigProcOne.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::SigProcOne> sigproc1;
 #endif
 
 #if HAVE_spigot
