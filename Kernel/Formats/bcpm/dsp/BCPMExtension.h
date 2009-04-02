@@ -29,15 +29,9 @@ namespace dsp{
     //! Return a new copy-constructed instance identical to this instance
     BCPMExtension* clone() const { return new BCPMExtension(*this); }
 
-    //! Return a new null-constructed instance
-    BCPMExtension* new_extension() const { return new BCPMExtension; }
-
     //! Copy stuff
     virtual void copy(const BCPMExtension& b);
 
-    //! Dump out to a string
-    virtual std::string dump_string() const;
-    
     //! This stores the ordering of the channels in a BCPM data file
     std::vector<int> chtab;
 

@@ -11,11 +11,13 @@
 #include "Angle.h"
 #include "MJD.h"
 #include "Types.h"
-#include "dirutil.h"
-#include "Error.h"
-#include "tempo++.h"
 
-#include "environ.h"
+#include "Error.h"
+// #include "tempo++.h"
+
+//#include "environ.h"
+#include "dirutil.h"
+#include "typeutil.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -455,10 +457,10 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_mode        ( in_obs.get_mode() );
   set_calfreq     ( in_obs.get_calfreq());
 
-  extensions.resize( 0 );
+  extension.resize( 0 );
 
-  for( unsigned iext=0; iext<in_obs.get_nextensions(); iext++)
-    add( in_obs.get_extension(iext)->clone() );
+  for( unsigned iext=0; iext<in_obs.get_nextension(); iext++)
+    add_extension( in_obs.get_extension(iext)->clone() );
 
   return *this;
 }
@@ -523,7 +525,8 @@ void dsp::Observation::change_start_time (int64 samples)
 }
 
 //! Constructs the CPSR2-header parameter, OFFSET
-uint64 dsp::Observation::get_offset(){
+uint64 dsp::Observation::get_offset()
+{
   MJD obs_start(identifier);
   double time_offset = (get_start_time()-obs_start).in_seconds();
 
@@ -531,58 +534,45 @@ uint64 dsp::Observation::get_offset(){
 }
 
 //! Adds a dspExtension
-void dsp::Observation::add(dspExtension* extension){
-  if( extension->must_only_have_one() )
-    for( unsigned i=0; i<extensions.size(); i++)
-      if( extensions[i]->get_name()==extension->get_name() )
-	throw Error(InvalidState,"dsp::Observation::add()",
-		    "You can only have one '%s' dspExtension, but you are trying to add your second!",
-		    extension->get_name().c_str());
+void dsp::Observation::add_extension (dspExtension* ext)
+{
+  unsigned index = find (extension, ext);
 
-  extensions.push_back( extension );
-}
-
-//! Removes a dspExtension
-Reference::To<dsp::dspExtension> 
-dsp::Observation::remove_extension(const string& ext_name){
-  for( unsigned i=0; i<extensions.size(); i++){
-    if( extensions[i]->get_name() == ext_name ){
-      Reference::To<dspExtension> removed = extensions[i];
-      extensions.erase( extensions.begin()+i );
-      return removed;
-    }
+  if (index < extension.size())
+  {
+    if (verbose == 3)
+      cerr << "dsp::Observation::add_extension replacing" << endl;
+    extension[index] = ext;
   }
-  return 0;
-}
-
-//! Returns true if one of the stored dspExtensions has this name
-bool dsp::Observation::has(const string& extension_name){
-  for( unsigned i=0; i<extensions.size(); i++)
-    if( extensions[i]->get_name()==extension_name )
-      return true;
-
-  return false;
+  else
+  {
+    if (verbose == 3)
+      cerr << "dsp::Observation::add_extension appending "
+	   << ext->get_name() << endl;
+    extension.push_back(ext);
+  }
 }
 
 //! Returns the number of dspExtensions currently stored
-unsigned dsp::Observation::get_nextensions() const {
-  return extensions.size();
+unsigned dsp::Observation::get_nextension() const
+{
+  return extension.size();
 }
 
 //! Returns the i'th dspExtension stored
 dsp::dspExtension* dsp::Observation::get_extension(unsigned iext){
-  if( iext >= extensions.size() )
+  if( iext >= extension.size() )
     throw Error(InvalidParam,"dsp::Observation::get_extension()",
-		"You requested extension '%d' but there are only %d extensions stored",iext,extensions.size());
-  return extensions[iext].get();
+		"You requested extension '%d' but there are only %d extensions stored",iext,extension.size());
+  return extension[iext].get();
 }
 
 //! Returns the i'th dspExtension stored
 const dsp::dspExtension* dsp::Observation::get_extension(unsigned iext) const{
-  if( iext >= extensions.size() )
+  if( iext >= extension.size() )
     throw Error(InvalidParam,"dsp::Observation::get_extension()",
-		"You requested extension '%d' but there are only %d extensions stored",iext,extensions.size());
-  return extensions[iext].get();
+		"You requested extension '%d' but there are only %d extensions stored",iext,extension.size());
+  return extension[iext].get();
 }
 
 //! Return the end time of the trailing edge of the last time sample

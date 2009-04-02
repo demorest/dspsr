@@ -12,7 +12,7 @@ using namespace std;
 
 //! Null constructor
 dsp::DedispersionHistory::DedispersionHistory()
-    : dspExtension("DedispersionHistory",true)
+    : dspExtension("DedispersionHistory")
 {
 }
 
@@ -32,38 +32,11 @@ dsp::DedispersionHistory::clone() const
     return dh;
 }
 
-//! Return a new null-constructed instance
-dsp::dspExtension*
-dsp::DedispersionHistory::new_extension() const
-{
-    return new DedispersionHistory;
-}
-
 //! Add in a dedispersion operation
 void
 dsp::DedispersionHistory::add(string classname, float dm)
 {
     classes.push_back( classname );
     dms.push_back( dm );
-}
-
-#include "format_it.h"
-#include "tostring.h"
-
-//! Dump out to a string
-string dsp::DedispersionHistory::dump_string() const
-{
-  vector<string> lines;
-
-  for( unsigned i=0; i<classes.size(); i++)
-    lines.push_back(classes[i] + " " + tostring(dms[i]) + "\n");
-
-  format_it(lines,3);
-
-  string s;
-  for( unsigned i=0; i<classes.size(); i++)
-    s += lines[i];
-
-  return s;
 }
 

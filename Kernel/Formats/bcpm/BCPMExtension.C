@@ -25,16 +25,3 @@ void dsp::BCPMExtension::copy(const dsp::BCPMExtension& b){
   chtab = b.chtab;
 }
 
-//! Dump out to a string
-string dsp::BCPMExtension::dump_string() const {
-  string ss = "BCPMExtension MiniExtension.C $Revision: 1.5 $ $Date: 2006/11/11 21:47:33 $:\n";
-
-  char dummy[4096];
-
-  for( unsigned i=0; i<chtab.size(); i++){
-    sprintf(dummy,"%d %d\n",i,chtab[i]);
-    ss += dummy;
-  }
-
-  return ss;
-}
