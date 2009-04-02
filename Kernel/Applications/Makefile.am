@@ -15,7 +15,9 @@ endif
 
 #############################################################################
 
-INCLUDES = -I$(top_builddir)/local_include
+INCLUDES = -I$(top_builddir)/local_include 
+
+AM_CPPFLAGS = @PSRCHIVE_CFLAGS@
 
 LDADD = $(top_builddir)/Kernel/libdspbase.la
 
