@@ -15,10 +15,10 @@ $(MAKEFILE_ACLOCAL): $(PSRCHIVE_ACLOCAL)/Makefile.aclocal
 	cp $(PSRCHIVE_ACLOCAL)/Makefile.aclocal $(MAKEFILE_ACLOCAL)
 
 $(PSRCHIVE_ACLOCAL)/Makefile.aclocal:
-	@echo; \
+	@echo; echo; echo; \
 	echo A required configuration file is missing; \
 	echo Please update your PSRCHIVE installation; \
-	echo; \
+	echo; echo; echo; \
 	exit -1
 
 
