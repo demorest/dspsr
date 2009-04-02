@@ -72,6 +72,9 @@ Please see http://psrchive.sourceforge.net
 
 ]))
 
+PSRCHIVE_ACLOCAL=`$psrchive_config --aclocal`
+AC_SUBST(PSRCHIVE_ACLOCAL)
+
 #
 # Checks for optional libraries
 #
@@ -112,6 +115,7 @@ AC_SUBST(INCLUDE_CPPFLAGS)
 
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
+		config/Makefile
 		Kernel/Makefile
 		Kernel/Classes/Makefile
 		Kernel/Applications/Makefile
