@@ -15,3 +15,6 @@ FIX_PREFIX = ${prefix}/bin/dspsr_ldflags ${prefix}/bin/dspsr_cflags
 fix_prefix: install-binSCRIPTS
 	perl -p -i -e "s|PREFIX|${prefix}|" ${FIX_PREFIX}
 
+LDFLAGS += $(PSRCHIVE_LIBS)
+CPPFLAGS += $(PSRCHIVE_CPPFLAGS)
+

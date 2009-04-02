@@ -5,7 +5,7 @@ include $(top_srcdir)/config/Makefile.root
 
 ACLOCAL_AMFLAGS = -I config
 
-EXTRA_DIST += config/backends.default
+EXTRA_DIST += config/backends.default config/formats.sh
 
 DISTCLEANFILES = backends.list
 
