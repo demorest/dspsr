@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -10,6 +10,7 @@
 #include "dsp/Response.h"
 #include "dsp/Operation.h"
 #include "dsp/TwoBitCorrection.h"
+#include "dsp/OutputArchive.h"
 
 #include "Pulsar/Interpreter.h"
 #include "Pulsar/Integration.h"
@@ -153,52 +154,60 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
   {
     // refer to the single archive to which all sub-integration will be written
     archive = single_archive;
-    // add the main data
+
+    // add the profile data
     add (archive, profiles);
+
+    return;
   }
-  else
+
+  if (!archive)
   {
-    if (!archive)
+    if (profiles->has<OutputArchive>())
     {
       if (verbose)
-        cerr << "dsp::Archiver::unload new Pulsar::Archive" << endl;
+	cerr << "dsp::Archiver::unload using OutputArchive policy" << endl;
+      archive = profiles->get<OutputArchive>()->new_Archive();
+    }
+    else
+    {
+      if (verbose)
+	cerr << "dsp::Archiver::unload new " << archive_class_name << endl;
       archive = Pulsar::Archive::new_Archive (archive_class_name);
     }
-
-    if (verbose)
-      cerr << "dsp::Archiver::unload set Pulsar::Archive" << endl;
-    set (archive, profiles);
   }
 
-  if (!single_archive)
+  if (verbose)
+    cerr << "dsp::Archiver::unload set Pulsar::Archive" << endl;
+
+  set (archive, profiles);
+
+  if (script.size()) try
   {
-    if (script.size()) try
-    {
+    if (verbose)
+      cerr << "dsp::Archive::unload post-processing" << endl;
 
-      if (verbose)
-	cerr << "dsp::Archive::unload post-processing" << endl;
+    if (!interpreter)
+      interpreter = new Pulsar::Interpreter;
 
-      if (!interpreter)
-	interpreter = new Pulsar::Interpreter;
+    interpreter->set( archive );
+    interpreter->script( script );
 
-      interpreter->set( archive );
-      interpreter->script( script );
-
-    }
-    catch (Error& error) {
-      cerr << "dsp::Archive::unload post-processing "
-	   << archive->get_filename() << " failed:\n"
-	   << error.get_message() << endl;
-      return;
-    }
-
-    cerr << "dsp::Archiver::unload archive '"
-	 << archive->get_filename() << "'" << endl;
-    
-    archive -> unload();
+  }
+  catch (Error& error)
+  {
+    cerr << "dsp::Archive::unload post-processing "
+	 << archive->get_filename() << " failed:\n"
+	 << error.get_message() << endl;
+    return;
   }
 
+  cerr << "dsp::Archiver::unload archive '"
+       << archive->get_filename() << "'" << endl;
+    
+  archive -> unload();
 }
+
 
 void dsp::Archiver::finish () try
 {
