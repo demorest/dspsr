@@ -1,5 +1,5 @@
 
-SUBDIRS	= Kernel Signal Management
+SUBDIRS	= config . Kernel Signal Management
 
 include $(top_srcdir)/config/Makefile.root
 
