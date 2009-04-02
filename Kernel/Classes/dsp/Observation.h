@@ -309,17 +309,11 @@ namespace dsp {
     template<class ExtensionType>
     bool has() const;
 
-    //! Returns true if one of the stored dspExtensions has this name
-    bool has(const std::string& extension_name);
-
     //! Adds a dspExtension
-    void add(dspExtension* extension);
-
-    //! Removes a dspExtension
-    Reference::To<dspExtension> remove_extension(const std::string& ext_name);
+    void add_extension (dspExtension*);
 
     //! Returns the number of dspExtensions currently stored
-    unsigned get_nextensions() const;
+    unsigned get_nextension () const;
 
     //! Returns the i'th dspExtension stored
     dspExtension* get_extension(unsigned iext);
@@ -333,7 +327,7 @@ namespace dsp {
   protected:
 
     //! Extra stuff
-    std::vector<Reference::To<dspExtension> > extensions;
+    std::vector<Reference::To<dspExtension> > extension;
     
     //! Telescope name
     std::string telescope;
@@ -442,15 +436,15 @@ template<class ExtensionType>
 ExtensionType* dsp::Observation::get(){
   ExtensionType* ret = 0;
 
-  for( unsigned i=0; i<extensions.size(); i++){
-    ret = dynamic_cast<ExtensionType*>(extensions[i].get());
+  for( unsigned i=0; i<extension.size(); i++){
+    ret = dynamic_cast<ExtensionType*>(extension[i].get());
     if( ret )
       return ret;
   }
 
   throw Error(InvalidState,"dsp::Observation::get()",
 	      "Could not find a matching extension of the %d stored for '%s'",
-	      extensions.size(), typeid(ret).name());
+	      extension.size(), typeid(ret).name());
   
   return 0;
 }
@@ -461,15 +455,15 @@ template<class ExtensionType>
 const ExtensionType* dsp::Observation::get() const{
   ExtensionType* ret = 0;
 
-  for( unsigned i=0; i<extensions.size(); i++){
-    ret = dynamic_cast<ExtensionType*>(extensions[i].get());
+  for( unsigned i=0; i<extension.size(); i++){
+    ret = dynamic_cast<ExtensionType*>(extension[i].get());
     if( ret )
       return ret;
   }
 
   throw Error(InvalidState,"dsp::Observation::get()",
 	      "Could not find a matching extension of the %d stored for '%s'",
-	      extensions.size(), typeid(ret).name());
+	      extension.size(), typeid(ret).name());
   
   return 0;
 }
@@ -484,13 +478,13 @@ dsp::Observation::getadd()
   //  if( has<ExtensionType>() )
   //return get<ExtensionType>();
 
-  for( unsigned i=0; i<extensions.size(); i++)
-    if( dynamic_cast<ExtensionType*>(extensions[i].get()) )
-      return dynamic_cast<ExtensionType*>(extensions[i].get());
+  for( unsigned i=0; i<extension.size(); i++)
+    if( dynamic_cast<ExtensionType*>(extension[i].get()) )
+      return dynamic_cast<ExtensionType*>(extension[i].get());
 
   Reference::To<ExtensionType> ext = new ExtensionType;
 
-  add( ext );
+  add_extension (ext);
   
   return ext;
 }
@@ -499,8 +493,8 @@ dsp::Observation::getadd()
 //! Call like: if( obs->has<MiniExtension>() )...
 template<class ExtensionType>
 bool dsp::Observation::has() const{
-  for( unsigned i=0; i<extensions.size(); i++)
-    if( dynamic_cast<ExtensionType*>(extensions[i].get()) )
+  for( unsigned i=0; i<extension.size(); i++)
+    if( dynamic_cast<ExtensionType*>(extension[i].get()) )
       return true;
 
   return false;

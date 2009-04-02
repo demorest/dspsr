@@ -25,18 +25,6 @@ dsp::dspExtension* dsp::PMDAQ_Extension::clone() const{
   return new PMDAQ_Extension(*this);
 }
 
-//! Return a new null-constructed instance
-dsp::dspExtension* dsp::PMDAQ_Extension::new_extension() const {
-  return new PMDAQ_Extension;
-}
-
-//! Dump out to a string
-string dsp::PMDAQ_Extension::dump_string() const{
-  string s = "pmdaq_begin_chan\t" + tostring(chan_begin) + "\n";
-  s += "pmdaq_end_chan\t" + tostring(chan_end) + "\n";
-  return s;
-}
-
 //! Copy constructor
 dsp::PMDAQ_Extension::PMDAQ_Extension(const PMDAQ_Extension& p) : dspExtension("PMDAQ_Extension"){
   operator=(p);

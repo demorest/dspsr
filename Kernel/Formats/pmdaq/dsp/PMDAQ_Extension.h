@@ -33,12 +33,6 @@ namespace dsp {
     //! Return a new copy-constructed instance identical to this instance
     virtual dspExtension* clone() const;
 
-    //! Return a new null-constructed instance
-    virtual dspExtension* new_extension() const;
-
-    //! Dump out to a string
-    virtual std::string dump_string() const;
-
     void set_chan_begin(unsigned _chan_begin){ chan_begin = _chan_begin; }
     unsigned get_chan_begin() const { return chan_begin; }
     void set_chan_end(unsigned _chan_end){ chan_end = _chan_end; }

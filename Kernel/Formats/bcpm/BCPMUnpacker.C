@@ -40,7 +40,6 @@ void dsp::BCPMUnpacker::unpack (){
 		get_input()->get_nbit());
 
   get_output()->Observation::operator=( *get_input() );
-  get_output()->remove_extension("BCPMExtension");
   get_output()->set_nbit( 32 );
   get_output()->resize( get_input()->get_ndat() );
 
