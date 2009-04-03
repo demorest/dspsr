@@ -5,6 +5,8 @@
 # that break the other GNU autotools-generated Makefiles
 #
 
+EXTRA_DIST = backends.default formats.sh Makefile.aclocal
+
 all: aclocal_update
 
 MAKEFILE_ACLOCAL = $(top_srcdir)/config/Makefile.aclocal
