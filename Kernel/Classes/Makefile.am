@@ -54,7 +54,7 @@ include $(top_srcdir)/config/Makefile.include
 
 AM_CPPFLAGS += @PRESTO_CFLAGS@
 
-libClasses_la_LDFLAGS = @PSRCHIVE_LIBS@ @PRESTO_LIBS@
+libClasses_la_LDFLAGS = @PRESTO_LIBS@
 
 LDADD = libClasses.la
 
