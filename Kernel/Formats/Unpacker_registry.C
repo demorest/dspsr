@@ -52,6 +52,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::BCPMUnpacker> registry_bcpm;
 static Registry::List<dsp::Unpacker>::Enter<dsp::BPSRUnpacker> bpsr;
 #endif
 
+#if HAVE_caspsr
+#include "dsp/CASPSRUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::CASPSRUnpacker> caspsr;
+#endif
+
 #if HAVE_cpsr
 #include "dsp/CPSRTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection> cpsr;
