@@ -130,6 +130,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/asp/Makefile
 		Kernel/Formats/bcpm/Makefile
 		Kernel/Formats/bpsr/Makefile
+		Kernel/Formats/caspsr/Makefile
 		Kernel/Formats/cpsr/Makefile
 		Kernel/Formats/cpsr2/Makefile
 		Kernel/Formats/dada/Makefile
