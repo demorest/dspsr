@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2005 by Willem van Straten
+ *   Copyright (C) 2005-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -8,6 +8,7 @@
 #include "dsp/HistUnpacker.h"
 
 #include <iostream>
+#include <assert.h>
 
 using namespace std;
 
@@ -217,3 +218,25 @@ const unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig) const
 }
 
 
+//! Combine results with another operation
+void dsp::HistUnpacker::combine (const Operation* other)
+{
+  Operation::combine (other);
+
+  const HistUnpacker* like = dynamic_cast<const HistUnpacker*>( other );
+  if (!like)
+    return;
+
+  if (verbose)
+    cerr << "dsp::HistUnpacker::combine this=" << this
+	 << " like=" << like << endl;
+
+  assert (histograms.size() == like->histograms.size());
+
+  for (unsigned ichan=0; ichan < histograms.size(); ichan++)
+  {
+    assert (histograms[ichan].size() == like->histograms[ichan].size());
+    for (unsigned ibin=0; ibin<histograms[ichan].size(); ibin++)
+      histograms[ichan][ibin] += like->histograms[ichan][ibin];
+  }
+}
