@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2007 by Willem van Straten
+ *   Copyright (C) 2007-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -245,7 +245,6 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 
     threads[0]->unloader[ifold] = unloader[ifold]->new_Submit (0);
     subfold->set_unloader( threads[0]->unloader[ifold] );
-
   }
 
   for (unsigned i=0; i<threads.size(); i++) 
@@ -253,7 +252,11 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     threads[i]->unloader.resize( nfold );
 
     for (unsigned ifold = 0; ifold < nfold; ifold ++)
-      threads[i]->unloader[ifold] = unloader[ifold]->new_Submit (i);
+    {
+      UnloaderShare::Submit* submit = unloader[ifold]->new_Submit (i);
+      threads[i]->unloader[ifold] = submit;
+      submit->set_list( &(threads[i]->operations) );
+    }
   }
 
   if (Operation::verbose)

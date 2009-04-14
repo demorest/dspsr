@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2007 by Willem van Straten
+ *   Copyright (C) 2007-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -8,6 +8,7 @@
 #include "dsp/LoadToFold1.h"
 #include "dsp/LoadToFoldConfig.h"
 
+#include "dsp/SignalPath.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
 #include "dsp/Scratch.h"
@@ -84,12 +85,14 @@ dsp::TimeSeries* dsp::LoadToFold1::new_time_series ()
 {
   config->buffers ++;
 
-  if (config->weighted_time_series) {
+  if (config->weighted_time_series)
+  {
     if (Operation::verbose)
       cerr << "Creating WeightedTimeSeries instance" << endl;
     return new WeightedTimeSeries;
   }
-  else {
+  else
+  {
     if (Operation::verbose)
       cerr << "Creating TimeSeries instance" << endl;
     return  new TimeSeries;
@@ -112,6 +115,8 @@ void dsp::LoadToFold1::prepare () try
     unpacked = new_time_series();
 
   manager->set_output (unpacked);
+
+  manager->get_info()->add_extension( new SignalPath (&operations) );
 
   operations.push_back (manager.get());
 
@@ -514,8 +519,6 @@ void setup (const dsp::Fold* from, dsp::Fold* to)
 
   if (!to->has_output())
     to->set_output( new dsp::PhaseSeries );
-
-
 }
 
 template<class T>
@@ -877,19 +880,28 @@ catch (Error& error)
   throw error += "dsp::LoadToFold1::run";
 }
 
-void dsp::LoadToFold1::combine (const LoadToFold1* other)
+void dsp::LoadToFold1::combine (const LoadToFold1* that)
 {
-  if (operations.size() != other->operations.size())
+  if (operations.size() != that->operations.size())
     throw Error (InvalidState, "dsp::LoadToFold1::combine",
 		 "processes have different numbers of operations");
 
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFold1::combine"
+	 << " this.ops=" << &(this->operations)
+	 << " that.ops=" << &(that->operations) << endl;
+
   for (unsigned iop=0; iop < operations.size(); iop++)
   {
-    if (operations[iop]->get_name() != other->operations[iop]->get_name())
+    if (operations[iop]->get_name() != that->operations[iop]->get_name())
       throw Error (InvalidState, "dsp::LoadToFold1::combine",
 		   "operation names do not match");
 
-    operations[iop]->combine( other->operations[iop] );
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold1::combine "
+	   << operations[iop]->get_name() << endl;
+
+    operations[iop]->combine( that->operations[iop] );
   }
 }
 
@@ -919,6 +931,14 @@ void dsp::LoadToFold1::finish () try
       if (!archiver)
 	throw Error (InvalidState, "dsp::LoadToFold1::finish",
 		     "unloader is not an archiver (single integration)");
+
+      /*
+	In multi-threaded applications, the thread that calls the
+	finish method may not be the thread that called the prepare
+	method.
+      */
+
+      fold[i]->get_output()->getadd<SignalPath>()->set_list (&operations);
 
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
