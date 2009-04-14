@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2007 by Willem van Straten
+ *   Copyright (C) 2007-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -16,8 +16,8 @@
 using namespace std;
 
 dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
-  : finished_all( _contributors, false ),
-    last_division( _contributors, 0 )
+  : last_division( _contributors, 0 ),
+    finished_all( _contributors, false )
 {
   context = 0;
   contributors = _contributors;
@@ -86,7 +86,8 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
   divider.set_turns (subint_turns);
 }
 
-void dsp::UnloaderShare::unload (const PhaseSeries* data, unsigned contributor)
+void dsp::UnloaderShare::unload (const PhaseSeries* data,
+				 unsigned contributor)
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::unload context=" << context << endl;
@@ -222,6 +223,13 @@ dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 {
   parent = _parent;
   contributor = id;
+  list = 0;
+}
+
+//! Set the signal path that yielded the folded PhaseSeries data
+void dsp::UnloaderShare::Submit::set_list (SignalPath::List* _list)
+{
+  list = _list;
 }
 
 //! Unload the PhaseSeries data
@@ -231,21 +239,20 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
     cerr << "dsp::UnloaderShare::Submit::unload"
       " profiles=" << profiles << " contributor=" << contributor << endl;
 
-  parent->unload( profiles, contributor );
-}
-
-//! Unload the PhaseSeries data
-void dsp::UnloaderShare::Submit::partial (const PhaseSeries* profiles)
-{
-  if (Operation::verbose)
-    cerr << "dsp::UnloaderShare::Submit::partial"
-      " profiles=" << profiles << " contributor=" << contributor << endl;
+  if (list)
+  {
+    SignalPath* p = const_cast<PhaseSeries*>(profiles)->getadd<SignalPath>();
+    p->set_list (list);
+  }
 
   parent->unload( profiles, contributor );
 }
 
 void dsp::UnloaderShare::Submit::finish () try
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::Submit::finish" << endl;
+
   parent->finish_all( contributor );
 }
 catch (Error& error)
@@ -315,7 +322,7 @@ uint64 dsp::UnloaderShare::Storage::get_division ()
 //! Add to the contributors that are finished with this integration
 bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
 					     uint64 _division,
-					     const PhaseSeries* data )
+					     const PhaseSeries* data)
 {
   if (contributor >= finished.size())
     throw Error( InvalidParam, "dsp::UnloaderShare::Storage::integrate",
@@ -328,7 +335,18 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
       cerr << "dsp::UnloaderShare::Storage::integrate adding to division="
 	   << division << endl;
 
-    profiles->combine( data );
+    /*
+      If there is a SignalPath (and assuming that the Fold operation
+      is part of the signal path) then the profile data will be
+      combined when Fold::combine is called.  Otherwise, the
+      PhaseSeries::combine method must be called directly
+    */
+      
+    if (profiles->has<SignalPath>() && data->has<SignalPath>())
+      profiles->get<SignalPath>()->combine( data->get<SignalPath>() );
+    else
+      profiles->combine( data );
+
     set_finished( contributor );
 
     return true;

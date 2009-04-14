@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/02/12 08:59:18 $
+   $Revision: 1.8 $
+   $Date: 2009/04/14 10:38:01 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
 #define __UnloaderShare_h
 
 #include "dsp/PhaseSeriesUnloader.h"
+#include "dsp/SignalPath.h"
 #include "dsp/TimeDivide.h"
 
 class ThreadContext;
@@ -131,11 +132,11 @@ namespace dsp {
     //! Default constructor
     Submit (UnloaderShare* parent, unsigned contributor);
 
+    //! Set the signal path that yielded the folded PhaseSeries data
+    void set_list (SignalPath::List*);
+
     //! Unload the PhaseSeries data
     void unload (const PhaseSeries*);
-
-    //! Unload partial PhaseSeries data
-    void partial (const PhaseSeries*);
 
     //! Inform any waiting threads that the current thread is finished
     void finish ();
@@ -146,6 +147,10 @@ namespace dsp {
   protected:
 
     Reference::To<UnloaderShare> parent;
+
+    //! The signal path that yielded the folded PhaseSeries data
+    SignalPath::List* list;
+
     unsigned contributor;
 
   };
@@ -187,6 +192,7 @@ namespace dsp {
   protected:
 
     Reference::To<PhaseSeries> profiles;
+
     std::vector<bool> finished;
     uint64 division;
 
