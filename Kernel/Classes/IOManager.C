@@ -100,7 +100,6 @@ void dsp::IOManager::set_input (Input* _input)
 
   if (!unpacker || !unpacker->matches (input->get_info()))
     set_unpacker ( Unpacker::create( input->get_info() ) );
-
 }
 
 const dsp::Observation* dsp::IOManager::get_info () const
@@ -164,18 +163,14 @@ dsp::Unpacker* dsp::IOManager::get_unpacker ()
 
   \pre This function is not fully implemented.
 */
-void dsp::IOManager::open (const string& id)
+void dsp::IOManager::open (const string& id) try
 {
-  try {
-
-    set_input ( File::create(id) );
-
-  } catch (Error& error) {
-    throw error += "dsp::IOManager::open";
-  }
-
+  set_input ( File::create(id) );
 }
-
+catch (Error& error)
+{
+  throw error += "dsp::IOManager::open";
+}
 
 //! The operation loads the next block of data and converts it to float_Stream
 void dsp::IOManager::load (TimeSeries* _data)
@@ -202,6 +197,18 @@ void dsp::IOManager::prepare ()
   unpacker->prepare();
 
   prepared = true;
+}
+
+void dsp::IOManager::combine (const Operation* other)
+{
+  Operation::combine (other);
+
+  const IOManager* like = dynamic_cast<const IOManager*>( other );
+  if (!like)
+    return;
+
+  input->combine (like->input);
+  unpacker->combine (like->unpacker);
 }
 
 void dsp::IOManager::operation ()
