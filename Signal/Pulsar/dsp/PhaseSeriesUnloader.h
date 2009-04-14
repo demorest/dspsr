@@ -1,15 +1,15 @@
 
 /***************************************************************************
  *
- *   Copyright (C) 2003-2008 by Willem van Straten
+ *   Copyright (C) 2003-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.17 $
-   $Date: 2008/10/14 21:00:13 $
+   $Revision: 1.18 $
+   $Date: 2009/04/14 10:38:16 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -22,6 +22,7 @@
 namespace dsp {
 
   class PhaseSeries;
+  class Operation;
   class FilenameConvention;
 
   //! Base class for things that can unload PhaseSeries data somewhere
@@ -52,9 +53,9 @@ namespace dsp {
     virtual void set_convention (FilenameConvention*);
     virtual FilenameConvention* get_convention ();
 
-    //! Set the path to which output data will be written
-    virtual void set_path (const std::string&);
-    virtual std::string get_path () const;
+    //! Set the directory to which output data will be written
+    virtual void set_directory (const std::string&);
+    virtual std::string get_directory () const;
     
     //! place output files in a sub-directory named by source
     virtual void set_path_add_source (bool);
@@ -76,8 +77,8 @@ namespace dsp {
     //! The filename convention
     Reference::To<FilenameConvention> convention;
 
-    //! The filename path
-    std::string path;
+    //! The filename directory
+    std::string directory;
 
     //! The filename prefix
     std::string prefix;

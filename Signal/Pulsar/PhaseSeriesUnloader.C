@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2003 by Willem van Straten
+ *   Copyright (C) 2003-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -63,14 +63,14 @@ std::string dsp::PhaseSeriesUnloader::get_prefix () const
 }
 
 //! Set the path to which output data will be written
-void dsp::PhaseSeriesUnloader::set_path (const std::string& p)
+void dsp::PhaseSeriesUnloader::set_directory (const std::string& p)
 {
-  path = p;
+  directory = p;
 }
 
-std::string dsp::PhaseSeriesUnloader::get_path () const
+std::string dsp::PhaseSeriesUnloader::get_directory () const
 {
-  return path;
+  return directory;
 }
     
 //! place output files in a sub-directory named by source
@@ -107,8 +107,8 @@ string dsp::PhaseSeriesUnloader::get_filename (const PhaseSeries* data) const
 {
   string the_path;
 
-  if (!path.empty())
-    the_path = path + "/";
+  if (!directory.empty())
+    the_path = directory + "/";
 
   if (path_add_source)
     the_path += data->get_source() + "/";
@@ -190,6 +190,6 @@ std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data) const
 	 << " ref=" << data->get_reference_phase() << endl;
 
   phase = (phase + 0.5 - data->get_reference_phase()).Floor();
-    
+
   return stringprintf ("pulse_"I64, phase.intturns());
 }
