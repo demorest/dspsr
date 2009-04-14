@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.15 $
-   $Date: 2006/10/15 21:48:06 $
+   $Revision: 1.16 $
+   $Date: 2009/04/14 10:38:05 $
    $Author: straten $ */
 
 
@@ -23,17 +23,21 @@ class Detection;
 namespace dsp {
 
   //! Detects phase-coherent TimeSeries data
-  /*!  The Detection class may be used to perform simple square law
+  /*!  
+
+  The Detection class may be used to perform simple square law
   detection or calculation of the Stokes parameters or the coherency
   matrix.  In the case of Stokes/Coherency formation, the components
   may be stored in polarization-major order or time-major order, or a
   mixture of the two by calling set_output_ndim() with an argument of
   4, 1, or 2, respectively.  The three methods require different
   amounts of RAM and therefore result in performance benefits that are
-  largely cache-dependent. */
+  largely cache-dependent.
 
-  //! It is recommended that user calls both set_output_ndim() and set_output_state() 
+  It is recommended that both set_output_ndim and set_output_state 
+  are called.
 
+  */
   class Detection : public Transformation <TimeSeries, TimeSeries> {
 
   public:
