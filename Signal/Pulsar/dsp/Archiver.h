@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.24 $
-   $Date: 2008/11/21 00:56:37 $
+   $Revision: 1.25 $
+   $Date: 2009/04/14 10:38:11 $
    $Author: straten $ */
 
 
@@ -50,12 +50,6 @@ namespace dsp {
     
     //! Destructor
     virtual ~Archiver ();
-
-    //! Set the Response from which Passband Extension will be constructed
-    void set_passband (const Response* passband);
-
-    //! Set the Operation instances for the dspReduction Extension
-    void set_operations (const std::vector<Operation*>& operations);
 
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const std::string& archive_class_name);
@@ -129,9 +123,6 @@ namespace dsp {
 
     //! TwoBitCorrection from which TwoBitStats Extension will be constructed
     Reference::To<const TwoBitCorrection> twobit;
-
-    //! The Operation instances for the dspReduction Extension
-    std::vector< Reference::To<Operation> > operations;
 
     //! The Pulsar::Archive::Extension classes to be added to the output
     std::vector< Reference::To<Pulsar::Archive::Extension> > extensions;

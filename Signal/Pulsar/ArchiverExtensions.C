@@ -1,13 +1,15 @@
 /***************************************************************************
  *
- *   Copyright (C) 2003 by Willem van Straten
+ *   Copyright (C) 2003-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Archiver.h"
 #include "dsp/Response.h"
 #include "dsp/PhaseSeries.h"
 
+#include "dsp/SignalPath.h"
 #include "dsp/Input.h"
 #include "dsp/IOManager.h"
 #include "dsp/TwoBitCorrection.h"
@@ -23,39 +25,52 @@
 
 using namespace std;
 
-void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
+void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
+{
+  const char* method = "dsp::Archiver::set Pulsar::dspReduction";
+
+  if (!profiles)
+    throw Error (InvalidState, method, "Profile data not provided");
 
   if (verbose)
-    cerr << "dsp::Archiver::set Pulsar::dspReduction Extension" << endl;
+    cerr << method << " start" << endl;
 
   dspR->set_software( archive_software );
+  dspR->set_name( profiles->get_machine() );
+  dspR->set_scale( profiles->get_scale() );
 
-  if (!operations.size()) {
+  if (!profiles->has<SignalPath>())
+  {
     if (verbose)
-      cerr << "dsp::Archiver::set Pulsar::dspReduction no operations" << endl;
+      cerr << method << " no SignalPath" << endl;
     return;
   }
 
-  if (!profiles)
-    throw Error (InvalidState, "dsp::Archiver::set dspReduction Extension",
-		 "Profile data not provided");
+  SignalPath::List* list = profiles->get<SignalPath>()->get_list();
 
-  for (unsigned i = 0; i < operations.size(); i++) {
+  if (!list || !list->size())
+  {
+    if (verbose)
+      cerr << method << " empty SignalPath" << endl;
+    return;
+  }
+
+  for (unsigned i = 0; i < list->size(); i++)
+  {
+    Operation* operation = (*list)[i];
 
     // ////////////////////////////////////////////////////////////////////
     //
     // Input class parameters
     //
-    Input* input = dynamic_cast<Input*>( operations[i].get() );
+    Input* input = dynamic_cast<Input*>( operation );
 
-    if (input) {
-
+    if (input)
+    {
       dspR->set_total_samples ( input->get_total_samples() );
       dspR->set_block_size ( input->get_block_size() );
       dspR->set_overlap ( input->get_overlap() );
-
     }
-
 
     // ////////////////////////////////////////////////////////////////////
     //
@@ -67,29 +82,27 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
     //
     // IOManager class may contain a TwoBitCorrection Unpacker
     //
-    IOManager* manager = dynamic_cast<IOManager*>( operations[i].get() );
+    IOManager* manager = dynamic_cast<IOManager*>( operation );
     if (manager)
       tbc = dynamic_cast<const TwoBitCorrection*> ( manager->get_unpacker() );
     else
-      tbc = dynamic_cast<const TwoBitCorrection*>( operations[i].get() );
+      tbc = dynamic_cast<const TwoBitCorrection*>( operation );
 
     // save it for the TwoBitStats Extension
     if (tbc)
       twobit = tbc;
 
-
     // ////////////////////////////////////////////////////////////////////
     //
     // Filterbank class parameters
     //
-    Filterbank* filterbank = dynamic_cast<Filterbank*>( operations[i].get() );
+    Filterbank* filterbank = dynamic_cast<Filterbank*>( operation );
 
-    if (filterbank) {
-
+    if (filterbank)
+    {
       dspR->set_nchan ( filterbank->get_nchan() );
       dspR->set_freq_res ( filterbank->get_freq_res() );
       dspR->set_time_res ( filterbank->get_time_res() );
-
     }
 
     // ////////////////////////////////////////////////////////////////////
@@ -97,17 +110,17 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
     // Convolution class parameters
     //
 
-    Convolution* convolution = dynamic_cast<Convolution*>(operations[i].get());
+    Convolution* convolution = dynamic_cast<Convolution*>(operation);
 
-    if (convolution) {
-
+    if (convolution)
+    {
       if ( !convolution->has_response() )
-        cerr << "dsp::Archiver::set Pulsar::dspReduction Convolution\n   "
-             << convolution->get_name() << " instance with no Response" << endl;
+        cerr << method << " Convolution\n   "
+             << convolution->get_name() << " with no Response" << endl;
 
-      else {
-
-        if (verbose) cerr << "dsp::Archiver::set Pulsar::dspReduction "
+      else
+      {
+        if (verbose) cerr << method << " "
                              "Convolution with Response" << endl;
 
         const Response* response = convolution->get_response ();
@@ -118,7 +131,8 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
 
         const TimeSeries* input = convolution->get_input ();
 
-        if (input->get_state() == Signal::Nyquist) {
+        if (input->get_state() == Signal::Nyquist)
+	{
 	  nsamp_fft *= 2;
 	  nsamp_overlap_pos *= 2;
 	  nsamp_overlap_neg *= 2;
@@ -127,46 +141,36 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try {
         dspR->set_nsamp_fft ( nsamp_fft );
         dspR->set_nsamp_overlap_pos ( nsamp_overlap_pos );
         dspR->set_nsamp_overlap_neg ( nsamp_overlap_neg );
-
       }
 
       // save it for the Passband Extension
       if ( convolution->has_passband() )
 	passband = convolution->get_passband();
-
     }
 
     // ////////////////////////////////////////////////////////////////////
     //
     // Tscrunch class parameters
     //
-    TScrunch* tscrunch = dynamic_cast<TScrunch*>( operations[i].get() );
+    TScrunch* tscrunch = dynamic_cast<TScrunch*>( operation );
 
     if (tscrunch)
       dspR->set_ScrunchFactor ( tscrunch->get_factor() );
-
-
-    // ////////////////////////////////////////////////////////////////////
-    //
-    // PhaseSeries class parameters
-    //
-
-    if (profiles)
-      dspR->set_scale ( profiles->get_scale() );
   }
-
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::set Pulsar::dspReduction";
 }
 
 
-void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try {
-
+void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try
+{
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::TwoBitStats Extension" << endl;
 
-  if (!twobit) {
+  if (!twobit)
+  {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::TwoBitStats no TwoBitCorrection"
 	   << endl;
@@ -189,19 +193,20 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try {
     twobit->get_histogram (histogram, idig);
     tbc->set_histogram (histogram, idig);
   }
-
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::set Pulsar::TwoBitStats";
 }
 
 
-void dsp::Archiver::set (Pulsar::Passband* pband) try {
-
+void dsp::Archiver::set (Pulsar::Passband* pband) try
+{
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Passband Extension" << endl;
 
-  if (!passband) {
+  if (!passband)
+  {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::Passband no passband" << endl;
     return;
@@ -212,7 +217,8 @@ void dsp::Archiver::set (Pulsar::Passband* pband) try {
   unsigned nband = passband->get_nchan ();
   unsigned nchan = passband->get_ndat ();
 
-  if (npol==0 || nband==0 || nchan==0) {
+  if (npol==0 || nband==0 || nchan==0)
+  {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::Passband empty passband" << endl;
     return;
@@ -234,9 +240,9 @@ void dsp::Archiver::set (Pulsar::Passband* pband) try {
   for (unsigned ipol=0; ipol<npol; ipol++)
     for (unsigned iband=0; iband<nband; iband++)
       pband->set_passband (copy.get_datptr (iband, ipol), ipol, iband);
-  
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::set Pulsar::Passband";
 }
 

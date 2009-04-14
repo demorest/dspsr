@@ -86,23 +86,6 @@ void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
   extensions.push_back (extension);
 }
 
-//! Set the Response from which Passband Extension will be constructed
-void dsp::Archiver::set_passband (const Response* _passband)
-{
-  passband = _passband;
-}
-
-//! Set the Operation instances for the dspReduction Extension
-void dsp::Archiver::set_operations (const vector<Operation*>& ops)
-{
-  if (verbose) cerr << "dsp::Archiver::set_operations " << ops.size() 
-                    << " operations" << endl;
- 
-  operations.resize ( ops.size() );
-  for (unsigned iop=0; iop < ops.size(); iop++)
-    operations[iop] = ops[iop];
-}
-
 void dsp::Archiver::unload (const PhaseSeries* _profiles)
 {
   if (!single_archive && archive_class_name.size() == 0)
@@ -242,7 +225,8 @@ try
 
   unsigned nsub = archive->get_nsubint();
 
-  if (!nsub) {
+  if (!nsub)
+  {
     set (archive, phase);
     return;
   }
@@ -266,13 +250,14 @@ try
   archive-> resize (nsub + 1);
   set (archive-> get_Integration(nsub), phase);
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::add Pulsar::Archive";
 }
 
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
-try {
-
+try
+{
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
@@ -292,7 +277,7 @@ try {
 
   unsigned effective_npol = npol * ndim;
 
-  if( verbose )
+  if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
 	 << " npol=" << effective_npol << " nchan=" << nchan 
 	 << " nbin=" << nbin << endl;
@@ -378,7 +363,6 @@ try {
     if (verbose)
       cerr << "dsp::Archiver::set Pulsar::dspReduction extension" << endl;
     set (dspR);
-    dspR->set_name( phase->get_machine() );
   }
 
   Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
@@ -419,8 +403,7 @@ try {
   else if (verbose)
     cerr << "dsp::Archiver::set PhaseSeries has no predictor" << endl;
 
-
-  if( phase->get_pulsar_ephemeris() )
+  if (phase->get_pulsar_ephemeris())
     archive-> set_ephemeris( phase->get_pulsar_ephemeris(), false );
 
   archive-> set_filename (get_filename (phase));
@@ -494,7 +477,7 @@ try
 
 	Pulsar::Profile* profile = integration->get_Profile(poln, chan);
 
-	if( verbose )
+	if (verbose)
 	  cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
 	       << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
@@ -592,7 +575,8 @@ try
   }
 
 }
-catch (Error& error) {
+catch (Error& error)
+{
   throw error += "dsp::Archiver::set Pulsar::Profile";
 }
 
