@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.23 $
-   $Date: 2008/07/13 00:38:53 $
+   $Revision: 1.24 $
+   $Date: 2009/04/14 10:37:49 $
    $Author: straten $ */
 
 
@@ -41,6 +41,9 @@ namespace dsp {
     
     //! Prepare the input and unpacker
     void prepare ();
+
+    //! If Operation is an IOManager, combine the input and unpacker
+    void combine (const Operation*);
 
     //! Prepare the appropriate Input and Unpacker
     virtual void open (const std::string& id);
