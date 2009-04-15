@@ -22,8 +22,12 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-dsp::FITSFile::FITSFile(const char* filename) : File("FITSFile"), row(1),
-    byte_offset(0) {}
+dsp::FITSFile::FITSFile(const char* filename)
+  : File("FITSFile"), 
+    current_row(1),
+    byte_offset(0)
+{
+}
 
 bool dsp::FITSFile::is_valid(const char* filename) const
 {
@@ -154,7 +158,7 @@ void dsp::FITSFile::open_file(const char* filename)
     set_data_colnum(colnum);
 }
 
-int64 dsp::FITSFile::load_bytes(unsigned char* buffer, uint64 bytes)
+int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
 {
     cerr << "dsp::FITSFile::load_bytes bytes: " << bytes << endl;
 
@@ -164,64 +168,42 @@ int64 dsp::FITSFile::load_bytes(unsigned char* buffer, uint64 bytes)
     const uint nsamp = get_nsamples();
     const uint nsub = info.get_ndat() / nsamp;
 
-    unsigned char nval = '0';
-    int initflag = 0;
 
     // bytes to read each subint
     const uint bytes_per_subint = get_bytes_per_row();
     cerr << "bytes_per_subint: " << bytes_per_subint << endl;
 
     uint bytes_to_read = bytes;
-    uint i = 0;
 
-    if (byte_offset) {
-        // 1. read the remainder of the row
-        const uint remainder = bytes_per_subint - byte_offset;
+    while (bytes_to_read)
+    {
+      if (current_row > nsub)
+	throw Error (InvalidState, "dsp::FITSFile::load_bytes",
+		     "current row=%u > nrow=%u", current_row, nsub);
 
-        fits_read_col_byt(fp, colnum, row, byte_offset, remainder, nval,
-                &buffer[i], &initflag, &status);
+      // read up to the end of the current row or the number of bytes to read
+      uint this_read = bytes_per_subint - byte_offset;
+      if (this_read > bytes_to_read)
+	this_read = bytes_to_read;
 
-        i += remainder;
-        ++row;
-        bytes_to_read -= remainder;
+      // read this_read bytes from the current row offset by byte_offset
+      unsigned char nval = '0';
+      int initflag = 0;
+      fits_read_col_byt (fp, colnum, current_row, byte_offset, this_read, nval,
+			 buffer, &initflag, &status);
+
+      // offset the base pointer and byte_offset in the current row
+      buffer += this_read;
+      byte_offset += this_read;
+
+      if (byte_offset == bytes_per_subint)
+      {
+        ++current_row;
+	byte_offset = 0;
+      }
+
+      bytes_to_read -= this_read;
     }
 
-    // 2. read rows while it's possible to read complete rows
-    while (bytes_to_read > bytes_per_subint) {
-        fits_read_col_byt(fp, colnum, row, 1, bytes_per_subint, nval,
-                &buffer[i], &initflag, &status);
-
-        i += bytes_per_subint;
-        ++row;
-        bytes_to_read -= bytes_per_subint;
-    }
-
-    byte_offset = bytes_to_read;
-
-    // ensure we don't read past the end of data table
-    const uint total_bytes = nsub * bytes_per_subint;
-    uint read_final_bytes;
-    if (row * bytes_per_subint + byte_offset > total_bytes)
-        read_final_bytes = total_bytes - row * bytes_per_subint;
-    else
-        read_final_bytes = byte_offset;
-
-    // 3.
-    fits_read_col_byt(fp, colnum, row, 1, read_final_bytes, nval,
-            &buffer[i], &initflag, &status);
-
-    printf("buffer[0]: %d\n", buffer[0]);
-    printf("buffer[1]: %d\n", buffer[1]);
-    printf("buffer[bytes]: %d\n", buffer[bytes]);
-    printf("buffer[bytes - 1]: %d\n\n", buffer[bytes - 1]);
-
-    // old code
-    /*for (uint isub = 1; isub <= nsub; ++isub) {
-        fits_read_col_byt(fp, colnum, isub, 1, bytes_per_subint, nval,
-                &buffer[i], &initflag, &status);
-
-        i += bytes_per_subint;
-    }*/
-
-    return i + read_final_bytes;
+    return bytes;
 }
