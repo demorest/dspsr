@@ -160,10 +160,7 @@ void dsp::FITSFile::open_file(const char* filename)
 
 int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
 {
-    cerr << "dsp::FITSFile::load_bytes bytes: " << bytes << endl;
-
     const int colnum = get_data_colnum();
-    int status = 0;
 
     const uint nsamp = get_nsamples();
     const uint nsub = info.get_ndat() / nsamp;
@@ -171,7 +168,6 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
 
     // bytes to read each subint
     const uint bytes_per_subint = get_bytes_per_row();
-    cerr << "bytes_per_subint: " << bytes_per_subint << endl;
 
     uint bytes_to_read = bytes;
 
@@ -186,11 +182,20 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
       if (this_read > bytes_to_read)
 	this_read = bytes_to_read;
 
-      // read this_read bytes from the current row offset by byte_offset
+      // read from the current row offset by byte_offset
       unsigned char nval = '0';
       int initflag = 0;
+      int status = 0;
+
+      cerr << "dsp::FITSFile::load_bytes row=" << current_row 
+	   << " offset=" << byte_offset << " read=" << this_read << endl;
+
       fits_read_col_byt (fp, colnum, current_row, byte_offset, this_read, nval,
 			 buffer, &initflag, &status);
+
+      if (status)
+	throw FITSError (status, "dsp::FITSFile::load_bytes",
+			 "fits_read_col_byt");
 
       // offset the base pointer and byte_offset in the current row
       buffer += this_read;
@@ -200,6 +205,7 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
       {
         ++current_row;
 	byte_offset = 0;
+	cerr << "dsp::FITSFile::load_bytes next row=" << current_row << endl;
       }
 
       bytes_to_read -= this_read;
