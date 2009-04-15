@@ -31,6 +31,10 @@ dsp::Fold* dsp::SubFold::clone () const
 //! Set the file unloader
 void dsp::SubFold::set_unloader (dsp::PhaseSeriesUnloader* _unloader)
 {
+  if (verbose)
+    cerr << "dsp::SubFold::set_unloader this=" << this 
+         << " unloader=" << _unloader << endl;
+
   unloader = _unloader;
 }
 
@@ -141,16 +145,13 @@ void dsp::SubFold::transformation () try
     if (unloader && keep(output))
     {
       if (verbose)
-	cerr << "dsp::SubFold::transformation unload subint" << endl;
+	cerr << "dsp::SubFold::transformation this=" << this
+             << " unloader=" << unloader.get() << endl;
 
       unloader->unload(output);
     }
 
-    if (output->has<SignalPath>())
-      output->get<SignalPath>()->reset();
-    else
-      output->zero();
-
+    zero_output ();
   }
 }
 catch (Error& error)
@@ -190,7 +191,7 @@ void dsp::SubFold::unload_partial () try
 {
   if (!output->get_integration_length())
   {
-    output->zero();
+    zero_output();
     return;
   }
 
@@ -202,15 +203,24 @@ void dsp::SubFold::unload_partial () try
   if (unloader)
   {
     if (verbose)
-      cerr << "dsp::SubFold::unload_partial to unloader" << endl;
+      cerr << "dsp::SubFold::unload_partial this=" << this
+           << " unloader=" << unloader.get() << endl;
 
     unloader->partial (output);
   }
 
-  output->zero();
+  zero_output ();
 }
 catch (Error& error)
 {
   throw error += "dsp::SubFold::finish";
+}
+
+void dsp::SubFold::zero_output ()
+{
+  if (output->has<SignalPath>())
+    output->get<SignalPath>()->reset();
+  else
+    output->zero();
 }
 
