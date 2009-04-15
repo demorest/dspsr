@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.16 $
-   $Date: 2008/04/11 13:50:47 $
+   $Revision: 1.17 $
+   $Date: 2009/04/15 21:41:16 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -123,6 +123,9 @@ namespace dsp {
 
     //! Initialize the time divider
     void prepare ();
+
+    //! Reset all outputs to null values
+    void zero_output ();
 
     //! Flag set when time divider is initialized
     bool built;
