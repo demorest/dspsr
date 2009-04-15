@@ -21,3 +21,5 @@ AM_CPPFLAGS = @PSRCHIVE_CFLAGS@
 
 LDADD = $(top_builddir)/Kernel/libdspbase.la
 
+include $(top_srcdir)/config/Makefile.include
+
