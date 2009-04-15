@@ -146,11 +146,9 @@ void dsp::SubFold::transformation () try
       unloader->unload(output);
     }
 
-#if 0
     if (output->has<SignalPath>())
       output->get<SignalPath>()->reset();
     else
-#endif
       output->zero();
 
   }
