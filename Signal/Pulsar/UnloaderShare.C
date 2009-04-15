@@ -243,6 +243,10 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
   {
     SignalPath* p = const_cast<PhaseSeries*>(profiles)->getadd<SignalPath>();
     p->set_list (list);
+
+    if (Operation::verbose)
+      cerr << "dsp::UnloaderShare::Submit::unload"
+              " this=" << this << " list=" << list << endl;
   }
 
   parent->unload( profiles, contributor );
@@ -341,9 +345,20 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
       combined when Fold::combine is called.  Otherwise, the
       PhaseSeries::combine method must be called directly
     */
-      
+
     if (profiles->has<SignalPath>() && data->has<SignalPath>())
-      profiles->get<SignalPath>()->combine( data->get<SignalPath>() );
+    {
+      SignalPath* into = profiles->get<SignalPath>();
+      const SignalPath* from = data->get<SignalPath>();
+
+      if (Operation::verbose)
+        cerr << "dsp::UnloaderShare::Storage::integrate into "
+          "profile=" << profiles.get() << " list=" << into->get_list() << endl
+             << "dsp::UnloaderShare::Storage::integrate from "
+          "profile=" << data << " list=" << from->get_list() << endl;
+
+      into->combine(from);
+    }
     else
       profiles->combine( data );
 
