@@ -276,8 +276,8 @@ void* dsp::LoadToFoldN::thread (void* context)
 
   int status = 0;
 
-  try {
-
+  try
+  {
     if (fold->log) *(fold->log) << "THREAD STARTED" << endl;
   
     fold->run();
@@ -285,10 +285,9 @@ void* dsp::LoadToFoldN::thread (void* context)
     status = 2;
 
     if (fold->log) *(fold->log) << "THREAD run ENDED" << endl;
-
   }
-  catch (Error& error) {
-
+  catch (Error& error)
+  {
     if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
 
     cerr << "THREAD ERROR: " << error << endl;
@@ -296,6 +295,7 @@ void* dsp::LoadToFoldN::thread (void* context)
     status = -1;
     fold->error = error;
 
+    exit (-1);
   }
 
   //
@@ -303,6 +303,7 @@ void* dsp::LoadToFoldN::thread (void* context)
   {
     if (fold->log) *(fold->log) << "LOCK completion" << endl;
     ThreadContext::Lock lock (fold->completion);
+    if (fold->log) *(fold->log) << "SET status = " << status << endl;
     fold->status = status;
     if (fold->log) *(fold->log) << "SIGNAL completion" << endl;
     fold->completion->signal();
