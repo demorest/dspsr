@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.41 $
-   $Date: 2008/10/04 09:56:19 $
+   $Revision: 1.42 $
+   $Date: 2009/04/15 00:14:13 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -75,12 +75,15 @@ namespace dsp {
     /*! This method enables optimizations by some derived classes */
     virtual void prepare ();
 
-    //! Combine results with another operation
+    //! Combine accumulated results with another operation
     /*! This method enables results from multiple threads to be combined */
     virtual void combine (const Operation*);
 
     //! Report operation statistics
     virtual void report () const;
+
+    //! Reset accumulated results to intial values
+    virtual void reset ();
 
     //! Return the unique name of this operation
     std::string get_name() const { return name; }
@@ -96,9 +99,6 @@ namespace dsp {
 
     //! Return the number of invalid timesample weights encountered
     virtual uint64 get_discarded_weights () const;
-
-    //! Reset the count of invalid timesample weights encountered
-    virtual void reset_weights_counters ();
 
     //! Inquire the unique instantiation id
     int get_id(){ return id; }

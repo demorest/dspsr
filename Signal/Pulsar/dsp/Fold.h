@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.53 $
-   $Date: 2008/11/11 06:14:29 $
+   $Revision: 1.54 $
+   $Date: 2009/04/15 00:14:13 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -66,6 +66,9 @@ namespace dsp {
 
     //! If Operation is a Fold, integrate its PhaseSeries
     void combine (const Operation*);
+
+    //! Reset the PhaseSeries
+    void reset ();
 
     //! Perform any final operations
     virtual void finish ();

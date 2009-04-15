@@ -137,24 +137,24 @@ uint64 dsp::Operation::get_total_weights () const
   return total_weights;
 }
 
-//! Reset the count of invalid timesample weights encountered
-void dsp::Operation::reset_weights_counters ()
-{
-  discarded_weights = 0;
-  total_weights = 0;
-}
-
 void dsp::Operation::set_scratch (Scratch* s)
 {
   scratch = s;
 }
 
-//! Combine results with another operation
+//! Combine accumulated results with another operation
 void dsp::Operation::combine (const Operation* other)
 {
   total_weights += other->total_weights;
   discarded_weights += other->discarded_weights;
   optime += other->optime;
+}
+
+//! Reset accumulated results to zero
+void dsp::Operation::reset ()
+{
+  discarded_weights = 0;
+  total_weights = 0;
 }
 
 //! Report operation statistics

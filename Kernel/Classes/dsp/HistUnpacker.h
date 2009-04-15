@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.15 $
-   $Date: 2009/04/14 10:37:45 $
+   $Revision: 1.16 $
+   $Date: 2009/04/15 00:14:13 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -36,6 +36,9 @@ namespace dsp {
 
     //! If Operation is a HistUnpacker, integrate its histograms
     void combine (const Operation*);
+
+    //! Reset the histograms
+    void reset ();
 
     //! Get the optimal value of the time series variance
     virtual double get_optimal_variance ();

@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/PhaseSeries.h"
+#include "dsp/SignalPath.h"
 
 #include "Pulsar/Predictor.h"
 #include "Pulsar/Parameters.h"
@@ -131,6 +132,9 @@ void dsp::PhaseSeries::zero ()
 
   set_hits (0);
   TimeSeries::zero ();
+
+  if (has<SignalPath>())
+    get<SignalPath>()->reset ();
 }
 
 //! Set the hits in all bins
