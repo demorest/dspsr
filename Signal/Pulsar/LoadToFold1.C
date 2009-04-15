@@ -792,7 +792,12 @@ void dsp::LoadToFold1::run () try
 	 << " nops=" << operations.size() << endl;
 
   if (log)
+  {
     scratch->set_ostream (*log);
+
+    for (unsigned iul=0; iul < unloader.size(); iul++)
+      unloader[iul]->set_ostream (*log);
+  }
 
   // ensure that all operations are using the local log and scratch space
   for (unsigned iop=0; iop < operations.size(); iop++)
