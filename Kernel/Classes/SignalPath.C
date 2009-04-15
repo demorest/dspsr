@@ -49,7 +49,8 @@ void dsp::SignalPath::combine (const SignalPath* that)
     Operation* this_op = (*this->operations)[iop];
     Operation* that_op = (*that->operations)[iop];
 
-    cerr << "dsp::SignalPath::combine " << this_op->get_name() << endl;
+    if (Operation::verbose)
+      cerr << "dsp::SignalPath::combine " << this_op->get_name() << endl;
 
     if (this_op->get_name() != that_op->get_name())
       throw Error (InvalidState, "dsp::LoadToFold1::combine",
