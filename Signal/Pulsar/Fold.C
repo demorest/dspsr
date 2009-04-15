@@ -86,6 +86,14 @@ void dsp::Fold::combine (const Operation* other)
     get_output()->combine( fold->get_output() );
 }
 
+void dsp::Fold::reset ()
+{
+  Operation::reset ();
+
+  if (output)
+    output->zero();
+}
+
 void dsp::Fold::finish ()
 {
 }

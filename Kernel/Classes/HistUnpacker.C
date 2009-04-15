@@ -240,3 +240,10 @@ void dsp::HistUnpacker::combine (const Operation* other)
       histograms[ichan][ibin] += like->histograms[ichan][ibin];
   }
 }
+
+//! Combine results with another operation
+void dsp::HistUnpacker::reset ()
+{
+  Operation::reset ();
+  zero_histogram ();
+}

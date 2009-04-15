@@ -31,6 +31,9 @@ namespace dsp {
     //! Combine information from another signal path
     void combine (const SignalPath*);
 
+    //! Reset all of the components in the signal path
+    void reset ();
+
     //! Set the list of operations
     void set_list (List*);
 

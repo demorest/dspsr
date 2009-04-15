@@ -211,6 +211,14 @@ void dsp::IOManager::combine (const Operation* other)
   unpacker->combine (like->unpacker);
 }
 
+void dsp::IOManager::reset ()
+{
+  Operation::reset ();
+
+  input->reset ();
+  unpacker->reset ();
+}
+
 void dsp::IOManager::operation ()
 {
   if (!output)

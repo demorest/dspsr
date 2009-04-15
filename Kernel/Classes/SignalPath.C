@@ -33,11 +33,16 @@ dsp::dspExtension* dsp::SignalPath::clone() const
 
 void dsp::SignalPath::combine (const SignalPath* that)
 {
+  if (!operations)
+    return;
+
   if (operations->size() != that->operations->size())
     throw Error (InvalidState, "dsp::UnloaderShare::Storage::combine",
 		 "processes have different numbers of operations");
 
-  cerr << "dsp::SignalPath::combine this=" << this << " that=" << that << endl;
+  if (Operation::verbose)
+    cerr << "dsp::SignalPath::combine"
+      " this=" << this << " that=" << that << endl;
 
   for (unsigned iop=0; iop < operations->size(); iop++)
   {
@@ -52,4 +57,13 @@ void dsp::SignalPath::combine (const SignalPath* that)
 
     this_op->combine( that_op );
   }
+}
+
+void dsp::SignalPath::reset ()
+{
+  if (!operations)
+    return;
+
+  for (unsigned iop=0; iop < operations->size(); iop++)
+    (*operations)[iop]->reset ();
 }
