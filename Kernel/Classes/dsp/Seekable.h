@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.12 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.13 $
+   $Date: 2009/04/15 09:57:18 $
+   $Author: straten $ */
 
 
 #ifndef __Seekable_h
@@ -38,11 +38,11 @@ namespace dsp {
     //! End of data
     virtual bool eod();
     
-    //! Reset the file pointers
-    virtual void reset ();
+    //! Rewind to the start of the data
+    virtual void rewind ();
 
     //! Inquire current time sample
-    virtual uint64 get_current_sample(){ return current_sample; }
+    virtual uint64 get_current_sample() { return current_sample; }
 
   protected:
     

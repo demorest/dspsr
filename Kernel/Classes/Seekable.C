@@ -37,7 +37,7 @@ void dsp::Seekable::init()
   current_sample = 0;
 }
 
-void dsp::Seekable::reset ()
+void dsp::Seekable::rewind ()
 {
   end_of_data = false;
   current_sample = 0;
