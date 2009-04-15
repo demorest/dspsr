@@ -88,6 +88,9 @@ void dsp::Fold::combine (const Operation* other)
 
 void dsp::Fold::reset ()
 {
+  if (verbose)
+    cerr << "dsp::Fold::reset" << endl;
+
   Operation::reset ();
 
   if (output)
@@ -179,6 +182,10 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
   predict.set_site( observation->get_telescope() );
   predict.set_frequency ( observation->get_centre_frequency() );
   predict.set_parameters ( params );
+
+  if (verbose)
+    cerr << "dsp::Fold::get_folding_predictor"
+            " calling Tempo::Predict::get_polyco" << endl;
 
   return new polyco( predict.get_polyco (time, time) );
 }
