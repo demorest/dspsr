@@ -226,6 +226,9 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 
   unloader.resize( nfold );
 
+  for (unsigned i=1; i<threads.size(); i++)
+    threads[i]->unloader.resize( nfold );
+
   /*
     Note that, at this point, only thread[0] has been prepared.
     Therefore, only thread[0] will have an initialized fold array
@@ -243,20 +246,19 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     unloader[ifold]->set_unloader( threads[0]->unloader[ifold] );
     unloader[ifold]->set_context( new ThreadContext );
 
-    threads[0]->unloader[ifold] = unloader[ifold]->new_Submit (0);
-    subfold->set_unloader( threads[0]->unloader[ifold] );
-  }
-
-  for (unsigned i=0; i<threads.size(); i++) 
-  {
-    threads[i]->unloader.resize( nfold );
-
-    for (unsigned ifold = 0; ifold < nfold; ifold ++)
+    for (unsigned i=0; i<threads.size(); i++) 
     {
       UnloaderShare::Submit* submit = unloader[ifold]->new_Submit (i);
       threads[i]->unloader[ifold] = submit;
+
+      if (Operation::verbose)
+        cerr << "dsp::LoadToFoldN thread[" << i << "] submit=" << submit 
+             << " list=" << &(threads[i]->operations) << endl;
+
       submit->set_list( &(threads[i]->operations) );
     }
+
+    subfold->set_unloader( threads[0]->unloader[ifold] );
   }
 
   if (Operation::verbose)
