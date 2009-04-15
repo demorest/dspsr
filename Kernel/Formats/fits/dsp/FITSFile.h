@@ -41,7 +41,7 @@ namespace dsp
             std::string filename;
             uint nsamples;
 
-            uint row;
+            uint current_row;
 
             uint byte_offset;
 
