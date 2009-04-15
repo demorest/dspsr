@@ -1,11 +1,13 @@
 /***************************************************************************
  *
- *   Copyright (C) 2003 by Willem van Straten
+ *   Copyright (C) 2003-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/SubFold.h"
+#include "dsp/SignalPath.h"
+
 #include "dsp/PhaseSeriesUnloader.h"
 
 #include "Error.h"
@@ -136,15 +138,7 @@ void dsp::SubFold::transformation () try
 
     complete.send (output);
 
-    if (!keep(output))
-    {
-      if (verbose)
-	cerr << "dsp::SubFold::transformation discard sub-integration" << endl;
-      output->zero();
-      continue;
-    }
-
-    if (unloader)
+    if (unloader && keep(output))
     {
       if (verbose)
 	cerr << "dsp::SubFold::transformation unload subint" << endl;
@@ -152,7 +146,13 @@ void dsp::SubFold::transformation () try
       unloader->unload(output);
     }
 
-    output->zero();
+#if 0
+    if (output->has<SignalPath>())
+      output->get<SignalPath>()->reset();
+    else
+#endif
+      output->zero();
+
   }
 }
 catch (Error& error)
