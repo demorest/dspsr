@@ -187,10 +187,11 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
       int initflag = 0;
       int status = 0;
 
-      cerr << "dsp::FITSFile::load_bytes row=" << current_row 
-	   << " offset=" << byte_offset << " read=" << this_read << endl;
+      if (verbose)
+        cerr << "dsp::FITSFile::load_bytes row=" << current_row 
+	     << " offset=" << byte_offset << " read=" << this_read << endl;
 
-      fits_read_col_byt (fp, colnum, current_row, byte_offset, this_read, nval,
+      fits_read_col_byt (fp, colnum, current_row, byte_offset+1, this_read, nval,
 			 buffer, &initflag, &status);
 
       if (status)
@@ -205,7 +206,6 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
       {
         ++current_row;
 	byte_offset = 0;
-	cerr << "dsp::FITSFile::load_bytes next row=" << current_row << endl;
       }
 
       bytes_to_read -= this_read;
