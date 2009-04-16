@@ -116,7 +116,7 @@ void dsp::LoadToFold1::prepare () try
 
   manager->set_output (unpacked);
 
-  manager->get_info()->add_extension( new SignalPath (&operations) );
+  // manager->get_info()->add_extension( new SignalPath (&operations) );
 
   operations.push_back (manager.get());
 
@@ -943,7 +943,7 @@ void dsp::LoadToFold1::finish () try
 	method.
       */
 
-      fold[i]->get_output()->getadd<SignalPath>()->set_list (&operations);
+      // fold[i]->get_output()->getadd<SignalPath>()->set_list (&operations);
 
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
