@@ -218,9 +218,11 @@ catch (Error& error)
 
 void dsp::SubFold::zero_output ()
 {
+#ifdef SIGNAL_PATH
   if (output->has<SignalPath>())
     output->get<SignalPath>()->reset();
   else
+#endif
     output->zero();
 }
 
