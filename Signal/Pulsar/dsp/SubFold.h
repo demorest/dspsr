@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/04/15 21:41:16 $
+   $Revision: 1.18 $
+   $Date: 2009/04/16 05:41:29 $
    $Author: straten $ */
 
 #ifndef __SubFold_h
@@ -103,6 +103,9 @@ namespace dsp {
 
     //! Access to the divider
     const TimeDivide* get_divider () const { return &divider; }
+
+    //! Set verbosity ostream
+    void set_ostream (std::ostream& os) const;
 
   protected:
 

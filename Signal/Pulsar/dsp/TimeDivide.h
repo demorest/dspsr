@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.13 $
-   $Date: 2008/11/22 17:20:44 $
+   $Revision: 1.14 $
+   $Date: 2009/04/16 05:41:29 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -28,7 +28,7 @@ namespace dsp {
     
     //! Constructor
     TimeDivide ();
-    
+
     //! Destructor
     ~TimeDivide ();
 
@@ -114,6 +114,9 @@ namespace dsp {
 
     //@}
 
+    //! Set verbosity ostream
+    void set_ostream (std::ostream&) const;
+
   protected:
 
     //! The start time from which to begin dividing time
@@ -145,6 +148,9 @@ namespace dsp {
 
     //! If observation is set, round boundaries to integer samples
     void set_boundaries (const MJD& mjd1, const MJD& mjd2);
+
+    //! Stream to which verbose messages are sent
+    mutable std::ostream* log;
 
   private:
 

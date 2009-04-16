@@ -28,6 +28,13 @@ dsp::Fold* dsp::SubFold::clone () const
   return new SubFold(*this);
 }
 
+//! Set verbosity ostream
+void dsp::SubFold::set_ostream (std::ostream& os) const
+{
+  Operation::set_ostream (os);
+  divider.set_ostream (os);
+}
+
 //! Set the file unloader
 void dsp::SubFold::set_unloader (dsp::PhaseSeriesUnloader* _unloader)
 {
