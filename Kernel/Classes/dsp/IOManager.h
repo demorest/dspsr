@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.25 $
-   $Date: 2009/04/15 00:14:13 $
+   $Revision: 1.26 $
+   $Date: 2009/04/20 06:16:32 $
    $Author: straten $ */
 
 
@@ -47,6 +47,9 @@ namespace dsp {
 
     //! Reset the input and unpacker
     void reset ();
+
+    //! Report operation statistics
+    void report () const;
 
     //! Prepare the appropriate Input and Unpacker
     virtual void open (const std::string& id);

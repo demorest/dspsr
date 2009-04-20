@@ -219,6 +219,14 @@ void dsp::IOManager::reset ()
   unpacker->reset ();
 }
 
+void dsp::IOManager::report () const
+{
+  if (input)
+    input->report ();
+  if (unpacker)
+    unpacker->report ();
+}
+
 void dsp::IOManager::operation ()
 {
   if (!output)
