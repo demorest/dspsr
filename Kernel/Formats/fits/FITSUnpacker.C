@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2008 by Jonathan Khoo
+ *   Copyright (C) 2008 by Jonathan Khoo & Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -38,41 +38,44 @@ void dsp::FITSUnpacker::unpack()
     const uint npol = input->get_npol();
     const uint nchan = input->get_nchan();
     const uint nbit = input->get_nbit();
-    const uint sampsPerByte = 8 / nbit;
+    const uint samps_per_byte = 8 / nbit;
 
-    for (uint idat = 0; idat < input->get_ndat(); ++idat) {
+    float (*bitNumber)(int) = NULL;
+    bitNumber = &oneBitNumber;
+
+    switch (nbit) {
+        case 1:
+            bitNumber = &oneBitNumber;
+            break;
+        case 2:
+            bitNumber = &twoBitNumber;
+            break;
+        case 4:
+            bitNumber = &fourBitNumber;
+            break;
+        case 8:
+            bitNumber = &eightBitNumber;
+            break;
+        default:
+            throw Error(InvalidState, "FITSUnpacker::unpack",
+                    "invalid nbit=%d", nbit);
+    }
+
+    const uint ndat = input->get_ndat();
+
+    for (uint idat = 0; idat < ndat; ++idat) {
         for (uint ipol = 0; ipol < npol; ++ipol) {
             const unsigned char* from = input->get_rawptr() +
-                (idat * nchan * npol / sampsPerByte) +
-                (ipol * nchan / sampsPerByte);
-            for (uint ichan = 0; ichan < nchan; ++ichan) {
-                float* into = output->get_datptr(ichan, ipol);
-
-                // shift the number right (towards LSB) so a mask can 
-                // be applied later
-                const int mod = (sampsPerByte - 1) - (ichan % sampsPerByte);
+                (idat * nchan * npol / samps_per_byte) +
+                (ipol * nchan / samps_per_byte);
+            for (uint ichan = 0; ichan < nchan;) {
+                const int mod = (samps_per_byte - 1) - (ichan % samps_per_byte);
                 const int shiftedNumber = *from >> (mod * nbit);
 
-                // calculate value depending on nbit
-                switch (nbit) {
-                    case 1:
-                        into[idat] = oneBitNumber(shiftedNumber);
-                        break;
-                    case 2:
-                        into[idat] = twoBitNumber(shiftedNumber);
-                        break;
-                    case 4:
-                        into[idat] = fourBitNumber(shiftedNumber);
-                        break;
-                    case 8:
-                        into[idat] = eightBitNumber(shiftedNumber);
-                        break;
-                    default:
-                        throw Error(InvalidState, "FITSUnpacker::unpack",
-                                "invalid nbit=%d", nbit);
-                }
+                float* into = output->get_datptr(ichan, ipol) + idat;
+                *into = bitNumber(shiftedNumber);
 
-                if (ichan % sampsPerByte == 0)
+                if ((++ichan) % samps_per_byte == 0)
                     ++from;
             }
         }
