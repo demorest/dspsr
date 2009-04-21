@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2008 by Jonathan Khoo
+ *   Copyright (C) 2008 by Jonathan Khoo & Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -8,14 +8,13 @@
 #include "dsp/FITSFile.h"
 #include "dsp/psrfitsio.h"
 #include "fits_params.h"
-
-#include <fcntl.h>
+#include "dsp/CloneArchive.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Receiver.h"
 #include "Pulsar/FITSSUBHdrExtension.h"
 
-#include "dsp/CloneArchive.h"
+#include <fcntl.h>
 
 using std::cout;
 using std::cerr;
@@ -23,7 +22,7 @@ using std::endl;
 using std::string;
 
 dsp::FITSFile::FITSFile(const char* filename)
-  : File("FITSFile"), 
+  : File("FITSFile"),
     current_row(1),
     byte_offset(0)
 {
@@ -33,11 +32,11 @@ bool dsp::FITSFile::is_valid(const char* filename) const
 {
     fitsfile* test_fptr = 0;
     int status = 0;
-    char error[FLEN_ERRMSG];
 
     fits_open_file(&test_fptr, filename, READONLY, &status);
     if (status) {
         if (verbose) {
+            char error[FLEN_ERRMSG];
             fits_get_errstatus(status, error);
             cerr << "FITSFile::is_valid fits_open_file: " << error << endl;
         }
@@ -75,15 +74,28 @@ bool dsp::FITSFile::is_valid(const char* filename) const
 
 void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
 {
-    psrfits_read_key(fp, "STT_IMJD", &(header->day));
-    psrfits_read_key(fp, "STT_SMJD", &(header->sec));
-    psrfits_read_key(fp, "STT_OFFS", &(header->frac));
+    long day;
+    long sec;
+    double frac;
+
+    psrfits_read_key(fp, "STT_IMJD", &day);
+    psrfits_read_key(fp, "STT_SMJD", &sec);
+    psrfits_read_key(fp, "STT_OFFS", &frac);
+    header->start_time = MJD((int)day, (int)sec, frac);
 
     int status = 0;
-    fits_movnam_hdu(fp, BINARY_TBL, "SUBINT", 0, &status); 
-
+    fits_movnam_hdu(fp, BINARY_TBL, "SUBINT", 0, &status);
     psrfits_read_key(fp, "TBIN", &(header->tsamp));
+
+    if (status)
+        throw FITSError(status, "FITSFile - read_header",
+                "fits_read_key (TBIN)");
+
     psrfits_read_key(fp, "NAXIS2", &(header->nsubint));
+
+    if (status)
+        throw FITSError(status, "FITSFile - read_header",
+                "fits_read_key (NAXIS2)");
 }
 
 void dsp::FITSFile::open_file(const char* filename)
@@ -99,8 +111,6 @@ void dsp::FITSFile::open_file(const char* filename)
     const uint npol = archive->get_npol();
     const uint nchan = archive->get_nchan();
 
-    set_filename(filename);
-
     int status = 0;
     fits_open_file(&fp, filename, READONLY, &status);
     fits_params header;
@@ -108,7 +118,6 @@ void dsp::FITSFile::open_file(const char* filename)
 
     info.set_source(archive->get_source());
     info.set_type(Signal::Pulsar);
-
     info.set_centre_frequency(archive->get_centre_frequency());
     info.set_bandwidth(archive->get_bandwidth());
     info.set_nchan(nchan);
@@ -135,39 +144,37 @@ void dsp::FITSFile::open_file(const char* filename)
     info.set_coordinates( archive->get_coordinates() );
     info.set_receiver( archive->get<Pulsar::Receiver>()->get_name() );
     info.set_basis( archive->get_basis() );
-
-    MJD startTime = MJD((int)header.day, (int)header.sec, header.frac);
-    info.set_start_time(startTime);
-
+    info.set_start_time(header.start_time);
     info.set_machine("FITS");
     info.set_telescope(archive->get_telescope());
-
     info.set_ndat(header.nsubint * nsamp);
-    set_nsamples(nsamp);
 
-    set_bytes_per_row((nsamp * npol *
-                nchan) / (8 / nbits));
+    set_nsamples(nsamp);
+    set_bytes_per_row((nsamp * npol * nchan) / (8 / nbits));
+
+    int colnum;
+    fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
+
+    if (status)
+        throw FITSError(status, "FITSFile::open_file",
+                "fits_get_colnum (DATA)");
+
+    set_data_colnum(colnum);
 
     fd = ::open(filename, O_RDONLY);
     if (fd < 0)
         throw Error(FailedSys, "dsp::FITSFile::open",
                 "failed open(%s)", filename);
-
-    int colnum;
-    fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
-    set_data_colnum(colnum);
 }
 
 int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
 {
     const int colnum = get_data_colnum();
-
     const uint nsamp = get_nsamples();
     const uint nsub = info.get_ndat() / nsamp;
 
-
-    // bytes to read each subint
-    const uint bytes_per_subint = get_bytes_per_row();
+    // bytes to read each row 
+    const uint bytes_per_row = get_bytes_per_row();
 
     uint bytes_to_read = bytes;
 
@@ -178,7 +185,7 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
 		     "current row=%u > nrow=%u", current_row, nsub);
 
       // read up to the end of the current row or the number of bytes to read
-      uint this_read = bytes_per_subint - byte_offset;
+      uint this_read = bytes_per_row - byte_offset;
       if (this_read > bytes_to_read)
 	this_read = bytes_to_read;
 
@@ -202,7 +209,7 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
       buffer += this_read;
       byte_offset += this_read;
 
-      if (byte_offset == bytes_per_subint)
+      if (byte_offset == bytes_per_row)
       {
         ++current_row;
 	byte_offset = 0;
