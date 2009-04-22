@@ -1,8 +1,8 @@
 noinst_LTLIBRARIES = libfits.la
 
-nobase_include_HEADERS = dsp/FITSUnpacker.h dsp/FITSFile.h dsp/psrfitsio.h
+nobase_include_HEADERS = dsp/FITSUnpacker.h dsp/FITSFile.h
 
-libfits_la_SOURCES = FITSUnpacker.C FITSFile.C psrfitsio.C fits_params.h
+libfits_la_SOURCES = FITSUnpacker.C FITSFile.C fits_params.h
 
 #############################################################################
 #
