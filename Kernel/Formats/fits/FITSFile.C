@@ -6,7 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/FITSFile.h"
-#include "dsp/psrfitsio.h"
+#include "psrfitsio.h"
 #include "fits_params.h"
 #include "dsp/CloneArchive.h"
 
@@ -21,14 +21,14 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-dsp::FITSFile::FITSFile(const char* filename)
-  : File("FITSFile"),
+dsp::FITSFile::FITSFile (const char* filename)
+  : File("FITSFile"), 
     current_row(1),
     byte_offset(0)
 {
 }
 
-bool dsp::FITSFile::is_valid(const char* filename) const
+bool dsp::FITSFile::is_valid (const char* filename) const
 {
     fitsfile* test_fptr = 0;
     int status = 0;
@@ -150,7 +150,7 @@ void dsp::FITSFile::open_file(const char* filename)
     info.set_ndat(header.nsubint * nsamp);
 
     set_nsamples(nsamp);
-    set_bytes_per_row((nsamp * npol * nchan) / (8 / nbits));
+    set_bytes_per_row( (nsamp * npol * nchan * nbits) / 8 );
 
     int colnum;
     fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
