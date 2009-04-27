@@ -271,10 +271,12 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   engine->prepare ();    
 }
 
+void parse_error (char c, const char* arg);
+
 void parse_options (int argc, char** argv)
 {
   static char* args =
-    "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIjJ:k:Kl:L:"
+    "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIj:J:k:Kl:L:"
     "m:M:n:N:oO:p:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
 
   string stropt;
@@ -282,7 +284,7 @@ void parse_options (int argc, char** argv)
   int c;
   int scanned;
 
-  while ((c = getopt(argc, argv, args)) != -1)
+  while ((c = getopt(argc, argv, args)) != -1) try
   {
     if (optarg)
       stropt = optarg;
@@ -488,7 +490,7 @@ void parse_options (int argc, char** argv)
       {
         cerr << "dspsr: Setting source name to " << optarg << endl;
 	pulsar_name = optarg;
-  errno = 0;
+	errno = 0;
       }
       else
       {
@@ -674,12 +676,29 @@ void parse_options (int argc, char** argv)
 
     if (errno != 0)
     {
-      cerr << "error parsing -" << c;
-      if (optarg)
-	cerr << " " << optarg;
-      cerr << endl;
+      parse_error (c, optarg);
       perror ("");
       exit (-1);
     }
   }
+  catch (Error& error)
+  {
+    parse_error (c, optarg);
+    cerr << error << endl;
+    exit (-1);
+  }
+  catch (std::exception& error)
+  {
+    parse_error (c, optarg);
+    cerr << error.what() << endl;
+    exit (-1);
+  }
+}
+
+void parse_error (char c, const char* arg)
+{
+  cerr << "error parsing -" << c;
+  if (arg)
+    cerr << " " << arg;
+  cerr << endl;
 }
