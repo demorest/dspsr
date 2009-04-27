@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.25 $
-   $Date: 2009/04/14 10:38:11 $
+   $Revision: 1.26 $
+   $Date: 2009/04/27 06:31:53 $
    $Author: straten $ */
 
 
@@ -55,7 +55,7 @@ namespace dsp {
     void set_archive_class (const std::string& archive_class_name);
 
     //! Set the post-processing script
-    void set_script (const std::vector<std::string>& jobs) { script = jobs; }
+    void set_script (const std::vector<std::string>& jobs);
 
     //! Set the Pulsar::Archive instance to which data will be added
     void set_archive (Pulsar::Archive* archive);
