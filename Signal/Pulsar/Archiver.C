@@ -79,6 +79,11 @@ Pulsar::Archive* dsp::Archiver::get_archive ()
   return single_archive;
 }
 
+//! Set the post-processing script
+void dsp::Archiver::set_script (const std::vector<std::string>& jobs)
+{ 
+  script = jobs;
+}
 
 //! Add a Pulsar::Archive::Extension to those added to the output archive
 void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
@@ -171,7 +176,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
       cerr << "dsp::Archive::unload post-processing" << endl;
 
     if (!interpreter)
-      interpreter = new Pulsar::Interpreter;
+      interpreter = standard_shell();
 
     interpreter->set( archive );
     interpreter->script( script );
