@@ -90,6 +90,10 @@ void dsp::Operation::prepare ()
   prepared = true;
 }
 
+void dsp::Operation::add_extensions (Extensions*)
+{
+}
+
 bool dsp::Operation::operate ()
 {
   if (verbose)

@@ -265,7 +265,7 @@ dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
 
 dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
 {
-  Observation::swap_data( ts );
+  // Observation::swap_data( ts );
   unsigned char* tmp = buffer; buffer = ts.buffer; ts.buffer = tmp;
   uint64 tmp2 = size; size = ts.size; ts.size = tmp2;
   uint64 tmp3 = subsize; subsize = ts.subsize; ts.subsize = tmp3;

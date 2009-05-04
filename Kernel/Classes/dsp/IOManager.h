@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.26 $
-   $Date: 2009/04/20 06:16:32 $
+   $Revision: 1.27 $
+   $Date: 2009/05/04 02:14:30 $
    $Author: straten $ */
 
 
@@ -41,6 +41,9 @@ namespace dsp {
     
     //! Prepare the input and unpacker
     void prepare ();
+
+    //! Add any input and unpacker extensions
+    void add_extensions (Extensions*);
 
     //! Combine the input and unpacker
     void combine (const Operation*);

@@ -116,8 +116,6 @@ void dsp::LoadToFold1::prepare () try
 
   manager->set_output (unpacked);
 
-  // manager->get_info()->add_extension( new SignalPath (&operations) );
-
   operations.push_back (manager.get());
 
   if (manager->get_info()->get_detected())
@@ -446,8 +444,18 @@ void dsp::LoadToFold1::prepare_final ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
+  Reference::To<Extensions> extensions = new Extensions;
+
+  extensions->add_extension( new SignalPath (&operations) );
+
   for (unsigned iop=0; iop < operations.size(); iop++)
+  {
     operations[iop]->prepare ();
+    operations[iop]->add_extensions (extensions);
+  }
+
+  for (unsigned ifold=0; ifold < fold.size(); ifold++)
+    fold[ifold]->get_output()->set_extensions (extensions);
 
   // for now ...
 
@@ -942,8 +950,6 @@ void dsp::LoadToFold1::finish () try
 	finish method may not be the thread that called the prepare
 	method.
       */
-
-      // fold[i]->get_output()->getadd<SignalPath>()->set_list (&operations);
 
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;

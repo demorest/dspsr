@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.26 $
-   $Date: 2009/04/27 06:31:53 $
+   $Revision: 1.27 $
+   $Date: 2009/05/04 02:14:30 $
    $Author: straten $ */
 
 
@@ -32,7 +32,7 @@ namespace dsp {
 
   class Response;
   class Operation;
-  class TwoBitCorrection;
+  class ExcisionUnpacker;
 
   //! Class to unload PhaseSeries data in a Pulsar::Archive
   /*! 
@@ -121,8 +121,8 @@ namespace dsp {
     //! Response from which Passband Extension will be constructed
     Reference::To<const Response> passband;
 
-    //! TwoBitCorrection from which TwoBitStats Extension will be constructed
-    Reference::To<const TwoBitCorrection> twobit;
+    //! ExcisionUnpacker from which TwoBitStats Extension will be constructed
+    Reference::To<const ExcisionUnpacker> excision_unpacker;
 
     //! The Pulsar::Archive::Extension classes to be added to the output
     std::vector< Reference::To<Pulsar::Archive::Extension> > extensions;
