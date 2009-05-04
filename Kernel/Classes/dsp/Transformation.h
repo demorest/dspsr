@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.46 $
-   $Date: 2008/08/04 12:28:27 $
+   $Revision: 1.47 $
+   $Date: 2009/05/04 02:14:14 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Transformation_h
@@ -162,9 +162,6 @@ namespace dsp {
     //! Inquire whether the class conserves time
     bool get_time_conserved() const { return time_conserved; }
 
-    //! to add a dspExtension history object to the output
-    virtual void add_history();
-
     //! String preceding output in verbose mode
     std::string name (const std::string& function) 
     { return "dsp::Tranformation["+Operation::get_name()+"]::" + function; }
@@ -303,21 +300,12 @@ void dsp::Transformation<In, Out>::vchecks()
   
   if (!this->input)
     throw Error (InvalidState, name("vchecks"), "no input");
-
-  std::string reason;
-  if (this->check_state && !this->input->state_is_valid (reason))
-    throw Error (InvalidState, name("vchecks"),
-		 "invalid input state: " + reason);
-
-  if (Operation::verbose)
-    cerr << name("vchecks") << " output check" << std::endl;
   
   if (type!=inplace && !this->output)
     throw Error (InvalidState, name("vchecks"), "no output");
 
   if (Operation::verbose)
     cerr << name("vchecks") << " done" << std::endl;
-
 }
 
 //! Define the Operation pure virtual method
@@ -355,14 +343,6 @@ try {
 
   if (Operation::verbose)
     cerr << name("operation") << " check output" << std::endl;
-
-  std::string reason;
-  if (this->check_state && type!=inplace 
-      && !this->output->state_is_valid (reason))
-    throw Error (InvalidState, name("operation"),
-		 "invalid output state: " + reason);
-
-  add_history();  
 
   post_transformation.send(this);
 }
@@ -418,13 +398,5 @@ dsp::Transformation<In,Out>::~Transformation()
   if (Operation::verbose)
     cerr << name("dtor") << std::endl;
 }
-
-//! to add a dspExtension history object to the output
-template <class In, class Out>
-void dsp::Transformation<In,Out>::add_history()
-{
-  /* do nothing by default */
-}
-
 
 #endif
