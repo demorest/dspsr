@@ -6,8 +6,11 @@
  ***************************************************************************/
 
 /*
-$Id: tci_file.h,v 1.2 2006/07/09 13:27:09 wvanstra Exp $
+$Id: tci_file.h,v 1.3 2009/05/04 23:17:13 straten Exp $
 $Log: tci_file.h,v $
+Revision 1.3  2009/05/04 23:17:13  straten
+verbosity mods
+
 Revision 1.2  2006/07/09 13:27:09  wvanstra
 copyright notice added: Academic Free License
 
@@ -131,6 +134,8 @@ int tci_file_header_display (tci_hdr header, char* format);
 int tci_file_header_flush (tci_hdr *header);
 
 void endian_convert(void *, int);
+
+extern int tci_file_verbose;
 
 #ifdef __cplusplus
 	   }

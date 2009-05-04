@@ -31,6 +31,9 @@ bool dsp::S2File::is_valid (const char* filename) const
   tci_fd   s2file;
   tci_hdr  header;
 
+  if (verbose)
+    tci_file_verbose = 1;
+
   if (tci_file_open (filename, &s2file, &header, 'r') != 0)
     return false;
 
