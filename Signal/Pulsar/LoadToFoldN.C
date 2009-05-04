@@ -250,12 +250,6 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     {
       UnloaderShare::Submit* submit = unloader[ifold]->new_Submit (i);
       threads[i]->unloader[ifold] = submit;
-
-      if (Operation::verbose)
-        cerr << "dsp::LoadToFoldN thread[" << i << "] submit=" << submit 
-             << " list=" << &(threads[i]->operations) << endl;
-
-      submit->set_list( &(threads[i]->operations) );
     }
 
     subfold->set_unloader( threads[0]->unloader[ifold] );

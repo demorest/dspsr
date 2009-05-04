@@ -223,13 +223,6 @@ dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 {
   parent = _parent;
   contributor = id;
-  list = 0;
-}
-
-//! Set the signal path that yielded the folded PhaseSeries data
-void dsp::UnloaderShare::Submit::set_list (SignalPath::List* _list)
-{
-  list = _list;
 }
 
 //! Unload the PhaseSeries data
@@ -238,18 +231,6 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::Submit::unload"
       " profiles=" << profiles << " contributor=" << contributor << endl;
-
-#ifdef SIGNAL_PATH
-  if (list)
-  {
-    SignalPath* p = const_cast<PhaseSeries*>(profiles)->getadd<SignalPath>();
-    p->set_list (list);
-
-    if (Operation::verbose)
-      cerr << "dsp::UnloaderShare::Submit::unload"
-              " this=" << this << " list=" << list << endl;
-  }
-#endif
 
   parent->unload( profiles, contributor );
 }
@@ -348,19 +329,24 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
       PhaseSeries::combine method must be called directly
     */
 
+#define SIGNAL_PATH
+
 #ifdef SIGNAL_PATH
-    if (profiles->has<SignalPath>() && data->has<SignalPath>())
+    if (profiles->has_extensions())
     {
-      SignalPath* into = profiles->get<SignalPath>();
-      const SignalPath* from = data->get<SignalPath>();
+      SignalPath* into = profiles->get_extensions()->get<SignalPath>();
+      const SignalPath* from = data->get_extensions()->get<SignalPath>();
 
-      if (Operation::verbose)
-        cerr << "dsp::UnloaderShare::Storage::integrate into "
-          "profile=" << profiles.get() << " list=" << into->get_list() << endl
-             << "dsp::UnloaderShare::Storage::integrate from "
-          "profile=" << data << " list=" << from->get_list() << endl;
+      if (into && from)
+      {
+	if (Operation::verbose)
+	  cerr << "dsp::UnloaderShare::Storage::integrate into "
+	    "profile=" << profiles.get() << " list=" << into->get_list()
+	       << "\ndsp::UnloaderShare::Storage::integrate from "
+	    "profile=" << data << " list=" << from->get_list() << endl;
 
-      into->combine(from);
+	into->combine(from);
+      }
     }
     else
 #endif
