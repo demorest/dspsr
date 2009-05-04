@@ -223,11 +223,18 @@ catch (Error& error)
   throw error += "dsp::SubFold::finish";
 }
 
+#define SIGNAL_PATH
+
 void dsp::SubFold::zero_output ()
 {
 #ifdef SIGNAL_PATH
-  if (output->has<SignalPath>())
-    output->get<SignalPath>()->reset();
+  SignalPath* path = 0;
+
+  if (output->has_extensions())
+    path = output->get_extensions()->get<SignalPath>();
+
+  if (path)
+    path->reset();
   else
 #endif
     output->zero();
