@@ -4,7 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include "dsp/SigProcFile.h"
 #include "dsp/SigProcObservation.h"
 #include <fcntl.h>
