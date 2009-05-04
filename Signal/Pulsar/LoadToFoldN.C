@@ -20,6 +20,7 @@
 #include "ThreadContext.h"
 
 #include <fstream>
+#include <stdlib.h>
 #include <errno.h>
 
 using namespace std;
