@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/PhaseSeries.h"
+#include "dsp/dspExtension.h"
 
 #include "Pulsar/Predictor.h"
 #include "Pulsar/Parameters.h"
@@ -21,6 +22,7 @@ dsp::PhaseSeries::PhaseSeries () : TimeSeries()
   folding_period = 0;
   reference_phase = 0;
   require_equal_sources = false;
+  require_equal_rates = false;
 }
 
 dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
@@ -293,3 +295,24 @@ uint64 dsp::PhaseSeries::get_ndat_expected () const
 {
   return ndat_expected;
 }
+
+void dsp::PhaseSeries::set_extensions (Extensions* ext)
+{
+  extensions = ext;
+}
+
+const dsp::Extensions* dsp::PhaseSeries::get_extensions () const
+{
+  return extensions;
+}
+
+dsp::Extensions* dsp::PhaseSeries::get_extensions ()
+{
+  return extensions;
+}
+
+bool dsp::PhaseSeries::has_extensions () const
+{
+  return extensions;
+}
+

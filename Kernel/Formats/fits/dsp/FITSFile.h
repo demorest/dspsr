@@ -9,6 +9,7 @@
 #ifndef __FITSFile_h
 #define __FITSFile_h
 
+#include "Pulsar/Archive.h"
 #include "fitsio.h"
 #include "dsp/File.h"
 
@@ -23,6 +24,8 @@ namespace dsp
 
             //! Returns true if filename appears to name a valid FITS file
             bool is_valid(const char* filename) const;
+
+            void add_extensions (Extensions*);
 
         protected:
             //! Open the file
@@ -65,6 +68,7 @@ namespace dsp
 
             int data_colnum;
 
+            Reference::To<Pulsar::Archive> archive;
     };
 }
 

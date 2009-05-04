@@ -173,7 +173,10 @@ void dsp::BCPMFile::open_file (const char* filename){
     bpp_search.rf_lo,
     centre_frequency);  
 
+#if FIX_THIS
   get_info()->add_extension( b );
+#endif
+
   get_info()->set_centre_frequency( centre_frequency );
 
   // Note that BPP_HEADER_SIZE is 8 bytes bigger than sizeof(BPP_SEARCH_HEADER) so I'm not sure if this is right

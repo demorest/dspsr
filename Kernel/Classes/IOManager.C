@@ -199,6 +199,14 @@ void dsp::IOManager::prepare ()
   prepared = true;
 }
 
+void dsp::IOManager::add_extensions (Extensions* ext)
+{
+  if (input)
+    input->add_extensions (ext);
+  if (unpacker)
+    unpacker->add_extensions (ext);
+}
+
 void dsp::IOManager::combine (const Operation* other)
 {
   Operation::combine (other);

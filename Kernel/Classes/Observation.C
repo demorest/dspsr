@@ -1,23 +1,14 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/Observation.h"
-#include "dsp/dspExtension.h"
-
-#include "Angle.h"
-#include "MJD.h"
-#include "Types.h"
 
 #include "Error.h"
-// #include "tempo++.h"
-
-//#include "environ.h"
 #include "dirutil.h"
-#include "typeutil.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -26,9 +17,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-
-#include <string>
-#include <vector>
 
 using namespace std;
 
@@ -48,12 +36,11 @@ void dsp::Observation::set_ostream (std::ostream& os) const
 
 void dsp::Observation::init ()
 {
-  Observation::set_ndat( 0 );
-  Observation::set_nchan( 1 );
-  Observation::set_npol( 1 );
-  Observation::set_ndim( 1 );
-  Observation::set_nbit( 0 );
-  Observation::set_calfreq(0.0);
+  ndat = 0;
+  nchan = 1;
+  npol = 1;
+  ndim = 1;
+  nbit = 0;
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -65,6 +52,7 @@ void dsp::Observation::init ()
 
   centre_frequency = 0.0;
   bandwidth = 0.0;
+  calfreq = 0.0;
 
   rate = 0.0;
   start_time = 0.0;
@@ -79,6 +67,7 @@ void dsp::Observation::init ()
 
   dual_sideband = -1;
   require_equal_sources = true;
+  require_equal_rates = true;
 }
 
 //! Set true if the data are dual sideband
@@ -157,20 +146,6 @@ bool dsp::Observation::combinable (const Observation & obs,
 				   bool combinable_verbose, 
 				   int ichan, int ipol) const
 {
-  bool can_combine = ordinary_checks( obs, different_bands, combinable_verbose, ichan, ipol );
-
-  if( different_bands && !bands_adjoining(obs) ){
-    if( verbose || combinable_verbose )
-	fprintf(stderr,"dsp::Observation::combinable bands don't meet- this is centred at %f with bandwidth %f.  obs is centred at %f with bandwidth %f\n",
-		get_centre_frequency(), fabs(get_bandwidth()),
-		obs.get_centre_frequency(), fabs(obs.get_bandwidth()));
-      can_combine = false;
-  }
-
-  return can_combine;
-}
-
-bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_bands, bool combinable_verbose, int ichan, int ipol) const {
   bool can_combine = true;
   double eps = 0.000001;
 
@@ -280,7 +255,7 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
     can_combine = false;
   }
   
-  if (!combinable_rate (obs.rate)) {
+  if (require_equal_rates && rate != obs.rate) {
     if (verbose || combinable_verbose)
       cerr << "dsp::Observation::combinable different rate:"
 	   << rate << " and " << obs.rate << endl;
@@ -342,33 +317,6 @@ bool dsp::Observation::ordinary_checks(const Observation & obs, bool different_b
   }
 
   return can_combine;
-}
-
-bool dsp::Observation::bands_adjoining(const Observation& obs) const {
-  float this_lo = get_centre_frequency() - fabs(get_bandwidth())/2.0;
-  float this_hi = get_centre_frequency() + fabs(get_bandwidth())/2.0;
-  float obs_lo = obs.get_centre_frequency() - fabs(obs.get_bandwidth())/2.0;
-  float obs_hi = obs.get_centre_frequency() + fabs(obs.get_bandwidth())/2.0;
-  
-  float eps = 0.000001;
-  
-  if( fabs(this_hi-obs_lo)<eps || fabs(this_lo-obs_hi)<eps )
-    return true;
-  
-  if( verbose )
-    fprintf(stderr,"dsp::Observation::bands_adjoining) returning false\n");
-
-  return false;
-}
-
-bool dsp::Observation::bands_combinable(const Observation& obs,bool combinable_verbose) const{
-  return ordinary_checks(obs,true,combinable_verbose);
-}
-
-/* return true if the test_rate is within 1% of the rate attribute */
-bool dsp::Observation::combinable_rate (double test_rate) const
-{
-  return fabs(rate-test_rate)/rate < 0.01;
 }
 
 bool dsp::Observation::contiguous (const Observation & obs, 
@@ -457,19 +405,6 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_mode        ( in_obs.get_mode() );
   set_calfreq     ( in_obs.get_calfreq());
 
-  extension.resize( 0 );
-
-  for( unsigned iext=0; iext<in_obs.get_nextension(); iext++)
-    add_extension( in_obs.get_extension(iext)->clone() );
-
-  return *this;
-}
-
-dsp::Observation& dsp::Observation::swap_data(Observation& obs){
-  dsp::Observation temp = *this;
-  operator=( obs );
-  obs = temp;
-
   return *this;
 }
 
@@ -494,15 +429,6 @@ double dsp::Observation::get_base_frequency () const
     return centre_frequency - 0.5*bandwidth + 0.5*bandwidth/double(get_nchan());
 }
 
-void dsp::Observation::get_minmax_frequencies (double& min, double& max) const
-{
-  min = get_base_frequency();
-  max = min + bandwidth*(1.0-1.0/double(get_nchan()));
-
-  if (min > max)
-    std::swap (min, max);
-}
-
 //! Change the state and correct other attributes accordingly
 void dsp::Observation::change_state (Signal::State new_state)
 {
@@ -522,57 +448,6 @@ void dsp::Observation::change_state (Signal::State new_state)
 void dsp::Observation::change_start_time (int64 samples)
 {
   start_time += double(samples)/rate;
-}
-
-//! Constructs the CPSR2-header parameter, OFFSET
-uint64 dsp::Observation::get_offset()
-{
-  MJD obs_start(identifier);
-  double time_offset = (get_start_time()-obs_start).in_seconds();
-
-  return get_nbytes(uint64(time_offset*rate));
-}
-
-//! Adds a dspExtension
-void dsp::Observation::add_extension (dspExtension* ext)
-{
-  unsigned index = find (extension, ext);
-
-  if (index < extension.size())
-  {
-    if (verbose == 3)
-      cerr << "dsp::Observation::add_extension replacing" << endl;
-    extension[index] = ext;
-  }
-  else
-  {
-    if (verbose == 3)
-      cerr << "dsp::Observation::add_extension appending "
-	   << ext->get_name() << endl;
-    extension.push_back(ext);
-  }
-}
-
-//! Returns the number of dspExtensions currently stored
-unsigned dsp::Observation::get_nextension() const
-{
-  return extension.size();
-}
-
-//! Returns the i'th dspExtension stored
-dsp::dspExtension* dsp::Observation::get_extension(unsigned iext){
-  if( iext >= extension.size() )
-    throw Error(InvalidParam,"dsp::Observation::get_extension()",
-		"You requested extension '%d' but there are only %d extensions stored",iext,extension.size());
-  return extension[iext].get();
-}
-
-//! Returns the i'th dspExtension stored
-const dsp::dspExtension* dsp::Observation::get_extension(unsigned iext) const{
-  if( iext >= extension.size() )
-    throw Error(InvalidParam,"dsp::Observation::get_extension()",
-		"You requested extension '%d' but there are only %d extensions stored",iext,extension.size());
-  return extension[iext].get();
 }
 
 //! Return the end time of the trailing edge of the last time sample

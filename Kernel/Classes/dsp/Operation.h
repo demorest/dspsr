@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.42 $
-   $Date: 2009/04/15 00:14:13 $
+   $Revision: 1.43 $
+   $Date: 2009/05/04 02:14:30 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -27,6 +27,7 @@
 namespace dsp {
   
   class Scratch;
+  class Extensions;
 
   //! Defines the interface by which operations are performed on data
   /*! This pure virtual base class defines the manner in which various
@@ -74,6 +75,9 @@ namespace dsp {
     //! Prepare for data operations
     /*! This method enables optimizations by some derived classes */
     virtual void prepare ();
+
+    //! Add any extensions
+    virtual void add_extensions (Extensions*);
 
     //! Combine accumulated results with another operation
     /*! This method enables results from multiple threads to be combined */

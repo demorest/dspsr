@@ -12,7 +12,7 @@
 #include "dsp/SignalPath.h"
 #include "dsp/Input.h"
 #include "dsp/IOManager.h"
-#include "dsp/TwoBitCorrection.h"
+#include "dsp/ExcisionUnpacker.h"
 #include "dsp/Filterbank.h"
 #include "dsp/Convolution.h"
 #include "dsp/TScrunch.h"
@@ -39,14 +39,23 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
   dspR->set_name( profiles->get_machine() );
   dspR->set_scale( profiles->get_scale() );
 
-  if (!profiles->has<SignalPath>())
+  if (!profiles->has_extensions())
+  {
+    if (verbose)
+      cerr << method << " no Extensions" << endl;
+    return;
+  }
+
+  const SignalPath* path = profiles->get_extensions()->get<SignalPath>();
+
+  if (!path)
   {
     if (verbose)
       cerr << method << " no SignalPath" << endl;
     return;
   }
 
-  SignalPath::List* list = profiles->get<SignalPath>()->get_list();
+  SignalPath::List* list = path->get_list();
 
   if (!list || !list->size())
   {
@@ -76,21 +85,21 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
     //
     // TwoBitCorrection class parameters
     //
-    const TwoBitCorrection* tbc;
+    const ExcisionUnpacker* excision = 0;
 
     // ////////////////////////////////////////////////////////////////////
     //
-    // IOManager class may contain a TwoBitCorrection Unpacker
+    // IOManager class may contain an ExcisionUnpacker
     //
     IOManager* manager = dynamic_cast<IOManager*>( operation );
     if (manager)
-      tbc = dynamic_cast<const TwoBitCorrection*> ( manager->get_unpacker() );
-    else
-      tbc = dynamic_cast<const TwoBitCorrection*>( operation );
+      operation = manager->get_unpacker();
+
+    excision = dynamic_cast<const ExcisionUnpacker*> ( operation );
 
     // save it for the TwoBitStats Extension
-    if (tbc)
-      twobit = tbc;
+    if (excision)
+      excision_unpacker = excision;
 
     // ////////////////////////////////////////////////////////////////////
     //
@@ -157,6 +166,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
     if (tscrunch)
       dspR->set_ScrunchFactor ( tscrunch->get_factor() );
   }
+
 }
 catch (Error& error)
 {
@@ -169,28 +179,28 @@ void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::TwoBitStats Extension" << endl;
 
-  if (!twobit)
+  if (!excision_unpacker)
   {
     if (verbose)
-      cerr << "dsp::Archiver::set Pulsar::TwoBitStats no TwoBitCorrection"
+      cerr << "dsp::Archiver::set Pulsar::TwoBitStats no ExcisionUnpacker"
 	   << endl;
     return;
   }
 
-  unsigned ndig = twobit->get_ndig ();
-  unsigned ndat_per_weight = twobit->get_ndat_per_weight ();
+  unsigned ndig = excision_unpacker->get_ndig ();
+  unsigned ndat_per_weight = excision_unpacker->get_ndat_per_weight ();
 
   tbc->resize (ndat_per_weight, ndig);
 
-  tbc->set_threshold ( twobit->get_threshold() );
-  tbc->set_cutoff_sigma ( twobit->get_cutoff_sigma() );
+  tbc->set_threshold ( excision_unpacker->get_threshold() );
+  tbc->set_cutoff_sigma ( excision_unpacker->get_cutoff_sigma() );
 
   // temporary space
   vector<float> histogram;
 
   for (unsigned idig=0; idig<ndig; idig++)
   {
-    twobit->get_histogram (histogram, idig);
+    excision_unpacker->get_histogram (histogram, idig);
     tbc->set_histogram (histogram, idig);
   }
 }

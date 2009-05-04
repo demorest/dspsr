@@ -1,17 +1,17 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #ifndef __Observation_h
 #define __Observation_h
 
-#include "dsp/dspExtension.h"
 #include "dsp/dsp.h"
 
-#include "Error.h"
+#include "Reference.h"
 #include "sky_coord.h"
 #include "Types.h"
 #include "MJD.h"
@@ -40,11 +40,7 @@ namespace dsp {
     Observation& operator= (const Observation&);
 
     //! Same as operator= but takes a pointer
-    virtual void copy(const Observation* obs)
-    { operator=( *obs ); }
-
-    //! Swaps the 2 Observations.  Returns '*this'
-    Observation& swap_data(Observation& obs);
+    virtual void copy (const Observation* obs) { operator=( *obs ); }
 
     //! Set the type of receiver feeds
     virtual void set_basis (Signal::Basis _basis) { basis = _basis; }
@@ -108,7 +104,6 @@ namespace dsp {
     //! Set the coordinates of the source
     virtual void set_coordinates (sky_coord _coordinates)
     { coordinates=_coordinates; }
-
     //! Return the coordinates of the source
     sky_coord get_coordinates () const
     { return coordinates; }
@@ -120,11 +115,11 @@ namespace dsp {
 
     //! Returns the centre frequency of the specified channel in MHz
     double get_centre_frequency (unsigned ichan) const;
+    //! Returns the centre frequency of the reference channel in MHz
+    double get_base_frequency () const;
 
     //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
-    virtual void set_bandwidth (double _bandwidth)
-    { bandwidth = _bandwidth; }
-
+    virtual void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
     //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     double get_bandwidth () const { return bandwidth; }
 
@@ -155,53 +150,40 @@ namespace dsp {
 
     //! Set true if centre channel is centred on centre frequency
     /*! This flag is currently experimental */
-    virtual void set_dc_centred (bool _dc_centred)
-    { dc_centred = _dc_centred; }
-
-    bool get_dc_centred () const
-    { return dc_centred; }
+    virtual void set_dc_centred (bool _centred) { dc_centred = _centred; }
+    bool get_dc_centred () const { return dc_centred; }
 
     //! Set the observation identifier
-    virtual void set_identifier (const std::string& _identifier)
-    { identifier = _identifier; }
-
+    virtual void set_identifier (const std::string& _id) { identifier = _id; }
     //! Return the observation identifier
-    std::string get_identifier () const
-    { return identifier; }
+    std::string get_identifier () const { return identifier; }
 
     //! Set the instrument used to record signal
-    virtual void set_machine (const std::string& _machine)
-    { machine = _machine; }
-
+    virtual void set_machine (const std::string& _m) { machine = _m; }
     //! Return the instrument used to record signal
-    std::string get_machine () const
-    { return machine; }
-
-    //! Returns the pulsar dispersion measure
-    double get_dispersion_measure () const
-    { return dispersion_measure; }
+    std::string get_machine () const { return machine; }
 
     //! Set the pulsar dispersion mesure
     virtual void set_dispersion_measure (double dm)
     { dispersion_measure = dm; }
-
-    //! Returns the pulsar rotation measure
-    double get_rotation_measure () const
-    { return rotation_measure; }
+    //! Returns the pulsar dispersion measure
+    double get_dispersion_measure () const { return dispersion_measure; }
 
     //! Set the pulsar rotation mesure
     virtual void set_rotation_measure (double rm)
     { rotation_measure = rm; }
+    //! Returns the pulsar rotation measure
+    double get_rotation_measure () const
+    { return rotation_measure; }
 
     //! Set the observation mode
     virtual void set_mode (const std::string& _mode) { mode = _mode; }
     //! Return the observation mode
     std::string get_mode () const { return mode; }
 
-    //! Set the cal frequency
+    //! Set the calibrator frequency
     virtual void set_calfreq (double _calfreq) {calfreq = _calfreq;}
-
-    //! get the calfreq
+    //! get the calibrator frequency
     double get_calfreq() const {return calfreq;} 
 
     //! Change the state and correct other attributes accordingly
@@ -213,21 +195,8 @@ namespace dsp {
     //! Returns true if state is Detected, Coherence, or Stokes
     bool get_detected () const;
 
-    //! Returns the centre frequency of the first channel in MHz
-    double get_base_frequency () const;
-
-    //! Returns the minimum and maximum centre frequencies in MHz
-    void get_minmax_frequencies (double& min, double& max) const;
-
     //! Change the start time by the number of time samples specified
     void change_start_time (int64 _ndat);
-
-    //! Convenience function for returning the duration in seconds of the Observation
-    double get_duration() const { return (get_end_time()-get_start_time()).in_seconds(); }
-
-    //! Returns the number of samples 'latter' follows 'this' by.  (Positive means 'latter' starts later.)
-    int64 samps_diff(const Observation* latter) const
-    { return int64((latter->get_start_time() - get_start_time()).in_seconds() * get_rate()); }
 
     //! Return the end time of the trailing edge of the last time sample
     // Returns correct answer if ndat=rate=0 and avoids division by zero
@@ -254,9 +223,6 @@ namespace dsp {
     uint64 get_nsamples (uint64 nbytes) const
       { return (nbytes * 8)/(nbit*get_npol()*get_nchan()*get_ndim()); }
 
-    //! Constructs the CPSR2-header parameter, OFFSET
-    uint64 get_offset();
-
     //! Returns true if the signal may be integrated
     /* This returns a flag that is true if the Observations may be combined 
        It doesn't check the start times- you have to do that yourself!
@@ -267,20 +233,6 @@ namespace dsp {
 		     bool combinable_verbose=false,
 		     int ichan=-1,int ipol=-1) const;
 
-    //! The same as combinable, but use this for two bands of differing sky frequencies
-    bool bands_combinable(const Observation& obs,bool combinable_verbose=false) const;
-
-    //! Called by combinable() to see if bands are adjoining if the 'different_bands' variable is set to true
-    bool bands_adjoining(const Observation& obs) const;
-
-    //! Called by combinable(), and does every check but the bands_adjoining() check
-    bool ordinary_checks(const Observation& obs, bool different_bands=false,
-			 bool combinable_verbose=false,
-			 int ichan=-1,int ipol=-1) const;
-
-    //! Return true if test_rate is withing 1% of the rate attribute
-    virtual bool combinable_rate (double test_rate) const;
-
     //! Return true if the first sample of next follows the last sample of this
     //! If ichan>=0 && ipol>=0 calls combinable() for only that chanpol
     bool contiguous (const Observation& next, bool verbose_on_failure=true,
@@ -289,46 +241,11 @@ namespace dsp {
     //! Set all attributes to null default
     void init ();
 
-    //! Returns a pointer to the dspExtension
-    //! If the dspExtension is not stored this throws an Error
-    template<class ExtensionType>
-    ExtensionType* get();
-
-    //! Returns a pointer to the dspExtension
-    //! If the dspExtension is not stored this adds a new null-instatntiated one
-    template<class ExtensionType>
-    ExtensionType* getadd();
-
-    //! Returns a pointer to the dspExtension
-    //! If the dspExtension is not stored this throws an Error
-    template<class ExtensionType>
-    const ExtensionType* get() const;
-
-    //! Returns true if the given dspExtension is stored
-    //! Call like: if( obs->has<MiniExtension>() )...
-    template<class ExtensionType>
-    bool has() const;
-
-    //! Adds a dspExtension
-    void add_extension (dspExtension*);
-
-    //! Returns the number of dspExtensions currently stored
-    unsigned get_nextension () const;
-
-    //! Returns the i'th dspExtension stored
-    dspExtension* get_extension(unsigned iext);
-
-    //! Returns the i'th dspExtension stored
-    const dspExtension* get_extension(unsigned iext) const;
-
     //! Set verbosity ostream
     virtual void set_ostream (std::ostream& os) const;
 
   protected:
 
-    //! Extra stuff
-    std::vector<Reference::To<dspExtension> > extension;
-    
     //! Telescope name
     std::string telescope;
 
@@ -383,6 +300,9 @@ namespace dsp {
     //! Require equal sources in combinable
     bool require_equal_sources;
 
+    //! Require equal rates in combinable
+    bool require_equal_rates;
+
     //! Amount by which data has been scaled
     double scale;
 
@@ -428,76 +348,6 @@ namespace dsp {
 
   };
 
-}
-
-//! Returns a pointer to the dspExtension
-//! If the dspExtension is not stored this throws an Error
-template<class ExtensionType>
-ExtensionType* dsp::Observation::get(){
-  ExtensionType* ret = 0;
-
-  for( unsigned i=0; i<extension.size(); i++){
-    ret = dynamic_cast<ExtensionType*>(extension[i].get());
-    if( ret )
-      return ret;
-  }
-
-  throw Error(InvalidState,"dsp::Observation::get()",
-	      "Could not find a matching extension of the %d stored for '%s'",
-	      extension.size(), typeid(ret).name());
-  
-  return 0;
-}
-
-//! Returns a pointer to the dspExtension
-//! If the dspExtension is not stored this throws an Error
-template<class ExtensionType>
-const ExtensionType* dsp::Observation::get() const{
-  ExtensionType* ret = 0;
-
-  for( unsigned i=0; i<extension.size(); i++){
-    ret = dynamic_cast<ExtensionType*>(extension[i].get());
-    if( ret )
-      return ret;
-  }
-
-  throw Error(InvalidState,"dsp::Observation::get()",
-	      "Could not find a matching extension of the %d stored for '%s'",
-	      extension.size(), typeid(ret).name());
-  
-  return 0;
-}
-
-//! Returns a pointer to the dspExtension
-//! If the dspExtension is not stored this adds a new null-instatntiated one
-template<class ExtensionType>
-ExtensionType*
-dsp::Observation::getadd()
-{
-  // STUPID compiler won't compile this:
-  //  if( has<ExtensionType>() )
-  //return get<ExtensionType>();
-
-  for( unsigned i=0; i<extension.size(); i++)
-    if( dynamic_cast<ExtensionType*>(extension[i].get()) )
-      return dynamic_cast<ExtensionType*>(extension[i].get());
-
-  Reference::To<ExtensionType> ext = new ExtensionType;
-
-  add_extension (ext);
-  
-  return ext;
-}
-
-//! Returns true if the given dspExtension is stored
-//! Call like: if( obs->has<MiniExtension>() )...
-template<class ExtensionType>
-bool dsp::Observation::has() const{
-  for( unsigned i=0; i<extension.size(); i++)
-    if( dynamic_cast<ExtensionType*>(extension[i].get()) )
-      return true;
-
-  return false;
 }
 
 #ifdef ACTIVATE_MPI

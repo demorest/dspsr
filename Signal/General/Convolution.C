@@ -330,16 +330,3 @@ void dsp::Convolution::transformation ()
   // for each channel
 }
 
-//! Adds to the DedispersionHistory
-void
-dsp::Convolution::add_history()
-{
-  float dm_used = 0.0;
-  if( has_response() ){
-    Dedispersion* d = dynamic_cast<Dedispersion*>((Response*)get_response());
-    if( d )
-      dm_used = d->get_dispersion_measure();
-  }
-
-  output->getadd<DedispersionHistory>()->add(get_name(),dm_used);
-}

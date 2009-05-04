@@ -55,10 +55,12 @@ void dsp::OneBitCorrection::transformation ()
   if (verbose)
     cerr << "Inside dsp::OneBitCorrection::transformation" << endl;
 
+#if FIX_THIS
   if( input->has<PMDAQ_Extension>() ){
     set_first_chan( input->get<PMDAQ_Extension>()->get_chan_begin() );
     set_end_chan( input->get<PMDAQ_Extension>()->get_chan_end() );
   }
+#endif
 
   unsigned end_channel = min(input->get_nchan(),end_chan);
   unsigned required_nchan = end_channel - first_chan;

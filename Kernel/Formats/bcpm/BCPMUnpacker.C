@@ -30,7 +30,10 @@ bool dsp::BCPMUnpacker::matches (const Observation* observation){
 
 //! Does the work
 void dsp::BCPMUnpacker::unpack (){
+
+#if FIX_THIS
   if( !get_input()->has<BCPMExtension>() )
+#endif
     throw Error(InvalidState,"dsp::BCPMUnpacker::unpack ()",
 		"Input BitSeries does not have a BCPMExtension!");
 
@@ -43,7 +46,10 @@ void dsp::BCPMUnpacker::unpack (){
   get_output()->set_nbit( 32 );
   get_output()->resize( get_input()->get_ndat() );
 
+#if FIX_THIS
   const vector<int>& chtab = get_input()->get<BCPMExtension>()->chtab;
+#endif
+
   const unsigned nchan = get_input()->get_nchan();
   vector<float> tempblock(nchan);
   const unsigned char* raw = get_input()->get_rawptr();
@@ -75,8 +81,10 @@ void dsp::BCPMUnpacker::unpack (){
       tempblock[j] = lookup.data[256+in[i]]; j++;
     }
 
+#if FIX_THIS
     for( unsigned k=0; k<nchan; k++)
       datptrs[k][s] = tempblock[chtab[k]];
+#endif
 
     raw += nchan/2;
   }

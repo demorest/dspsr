@@ -6,9 +6,10 @@
  ***************************************************************************/
 
 #include "dsp/FITSFile.h"
+#include "dsp/CloneArchive.h"
+
 #include "psrfitsio.h"
 #include "fits_params.h"
-#include "dsp/CloneArchive.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Receiver.h"
@@ -98,10 +99,14 @@ void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
                 "fits_read_key (NAXIS2)");
 }
 
+void dsp::FITSFile::add_extensions (Extensions* ext)
+{
+  ext->add_extension (new CloneArchive(archive));
+}
+
 void dsp::FITSFile::open_file(const char* filename)
 {
-    Reference::To<Pulsar::Archive> archive = Pulsar::Archive::load(filename);
-    info.add_extension(new CloneArchive(archive));
+    archive = Pulsar::Archive::load(filename);
 
     Reference::To<Pulsar::FITSSUBHdrExtension> ext =
         archive->get<Pulsar::FITSSUBHdrExtension>();
@@ -176,13 +181,13 @@ int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
     // bytes to read each row 
     const uint bytes_per_row = get_bytes_per_row();
 
-    uint bytes_to_read = bytes;
+	    uint bytes_to_read = bytes;
 
-    while (bytes_to_read)
-    {
-      if (current_row > nsub)
-	throw Error (InvalidState, "dsp::FITSFile::load_bytes",
-		     "current row=%u > nrow=%u", current_row, nsub);
+	    while (bytes_to_read)
+	    {
+	      if (current_row > nsub)
+		throw Error (InvalidState, "dsp::FITSFile::load_bytes",
+			     "current row=%u > nrow=%u", current_row, nsub);
 
       // read up to the end of the current row or the number of bytes to read
       uint this_read = bytes_per_row - byte_offset;

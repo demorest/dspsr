@@ -149,20 +149,28 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     return;
   }
 
-  if (!archive)
+  if (!archive) try
   {
-    if (profiles->has<OutputArchive>())
+    const OutputArchive* out = profiles->get_extensions()->get<OutputArchive>();
+    if (out)
     {
       if (verbose)
 	cerr << "dsp::Archiver::unload using OutputArchive policy" << endl;
-      archive = profiles->get<OutputArchive>()->new_Archive();
+      archive = out->new_Archive();
     }
-    else
-    {
-      if (verbose)
-	cerr << "dsp::Archiver::unload new " << archive_class_name << endl;
-      archive = Pulsar::Archive::new_Archive (archive_class_name);
-    }
+  }
+  catch (Error& error)
+  {
+    if (verbose)
+      cerr << "dsp::Archiver::unload using OutputArchive policy failed"
+           << error << endl;
+  }
+
+  if (!archive)
+  {
+    if (verbose)
+      cerr << "dsp::Archiver::unload new " << archive_class_name << endl;
+    archive = Pulsar::Archive::new_Archive (archive_class_name);
   }
 
   if (verbose)

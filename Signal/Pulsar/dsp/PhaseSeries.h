@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.31 $
-   $Date: 2008/11/22 17:20:33 $
+   $Revision: 1.32 $
+   $Date: 2009/05/04 02:14:30 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -22,6 +22,8 @@ namespace Pulsar {
 }
 
 namespace dsp {
+
+  class Extensions;
   
   //! Data as a function of pulse phase
   class PhaseSeries : public TimeSeries {
@@ -65,13 +67,11 @@ namespace dsp {
 
     //! Set the phase predictor with which the data were folded 
     void set_folding_predictor (const Pulsar::Predictor*);
-
     //! Get the phase predictor with which the data were folded
     const Pulsar::Predictor* get_folding_predictor () const;
 
     //! Set the pulsar ephemeris used to fold.
     void set_pulsar_ephemeris (const Pulsar::Parameters*);
-    
     //! Returns the pulsar ephemeris stored
     const Pulsar::Parameters* get_pulsar_ephemeris() const;
 
@@ -84,7 +84,6 @@ namespace dsp {
 
     //! Get the end time
     MJD get_end_time () const { return end_time; }
-
     //! Set the end time
     void set_end_time (const MJD& mjd) { end_time = mjd; }
 
@@ -121,6 +120,15 @@ namespace dsp {
     //! Return the number of time samples folded into the profiles
     uint64 get_ndat_folded () const;
 
+    //! Set the Extensions to be communicated to the Archiver class
+    void set_extensions (Extensions*);
+    //! Get the Extensions to be communicated to the Archiver class
+    const Extensions* get_extensions () const;
+    Extensions* get_extensions ();
+
+    //! Return true if Extensions have been set
+    bool has_extensions () const;
+
   protected:
 
     //! Period at which CAL data is folded
@@ -131,6 +139,9 @@ namespace dsp {
 
     //! The ephemeris (if any) that was used to generate the Pulsar::Predictor
     Reference::To<const Pulsar::Parameters> pulsar_ephemeris;
+
+    //! The Extensions to be communicated to the Archiver class
+    Reference::To<Extensions> extensions;
 
     //! Reference phase (phase of bin zero)
     double reference_phase;
