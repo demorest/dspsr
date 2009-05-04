@@ -6,8 +6,11 @@
  ***************************************************************************/
 
 /*
-$Id: tci_file.c,v 1.3 2007/01/24 21:43:41 straten Exp $
+$Id: tci_file.c,v 1.4 2009/05/04 23:17:13 straten Exp $
 $Log: tci_file.c,v $
+Revision 1.4  2009/05/04 23:17:13  straten
+verbosity mods
+
 Revision 1.3  2007/01/24 21:43:41  straten
 return error code when hdr_size is incorrect
 
@@ -47,8 +50,11 @@ Initial revision
 
 #include "tci_file.h"    /* includes - tci_def.h which includes 'rcl.h' */
 
+int tci_file_verbose = 0;
+
 /* The following functions deal with writing and reading TCI information to
    and from a disk */
+
 /*****************************************************************************/
 int tci_file_open (const char* filename, tci_fd* tci_file,
 		   tci_hdr* header, char rdwt)
@@ -92,7 +98,7 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
    returned by the function.
  */
 {
-  tci_hdr       local_header;
+  tci_hdr      local_header;
   struct stat  file_info;
   int          wr_mode = O_WRONLY | O_CREAT | O_TRUNC;
   int          rd_mode = O_RDWR;
@@ -112,41 +118,61 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
    case 'r':
      rd_mode = O_RDONLY;
    case 'a':
-     if (stat (filename, &file_info) < 0)  {
-       fprintf (stderr, "TCI_FILE_OPEN: (r) file: %s\n",filename);
-       perror ("TCI_FILE_OPEN:  Error");
+     if (stat (filename, &file_info) < 0)
+     {
+       if (tci_file_verbose)
+       {
+  	 fprintf (stderr, "TCI_FILE_OPEN: (r) file: %s\n",filename);
+	 perror ("TCI_FILE_OPEN:  Error");
+       }
        return (-1);
      }
      
      tci_file->fsz = (u_long)file_info.st_size;
-     if (tci_file->fsz  < TCI_HEADER_BASE_SIZE)  {
-       fprintf (stderr, "TCI_FILE_OPEN: (r) file smaller than header base.\n");
+     if (tci_file->fsz  < TCI_HEADER_BASE_SIZE)
+     {
+       if (tci_file_verbose)
+         fprintf (stderr, "TCI_FILE_OPEN: (r) file smaller than header.\n");
        return (-1);
      }
 
-     if ((tci_file->fd = open (filename, rd_mode)) < 0)  {
-       fprintf (stderr, "TCI_FILE_OPEN: (r) can't open file: %s\n",filename);
-       perror ("TCI_FILE_OPEN:  Error");
+     if ((tci_file->fd = open (filename, rd_mode)) < 0)
+     {
+       if (tci_file_verbose)
+       {
+         fprintf (stderr, "TCI_FILE_OPEN: (r) can't open file: %s\n",filename);
+	 perror ("TCI_FILE_OPEN:  Error");
+       }
        return (-1);
      }
 
      /* Check that the header seems like a TCI header */
-     if ( read(tci_file->fd, (char*)header, TCI_HEADER_BASE_SIZE) < 0 )  {
-       perror ("TCI_FILE_OPEN: (r) File header could not be read ");
+     if ( read(tci_file->fd, (char*)header, TCI_HEADER_BASE_SIZE) < 0 )
+     {
+       if (tci_file_verbose)
+         perror ("TCI_FILE_OPEN: (r) File header could not be read ");
        close (tci_file->fd);
        return (-1);
      }
      fromBigE(&(header->hdr_size), sizeof(int));
 
-     if ( header->hdr_size < TCI_HEADER_BASE_SIZE )  {
-       fprintf (stderr, "TCI_FILE_OPEN: (r) file header too small.\n");
-       fprintf (stderr, "TCI_FILE_OPEN: hdr sz = %i.\n",header->hdr_size);
+     if ( header->hdr_size < TCI_HEADER_BASE_SIZE )
+     {
+       if (tci_file_verbose)
+       {
+         fprintf (stderr, "TCI_FILE_OPEN: (r) file header too small.\n");
+	 fprintf (stderr, "TCI_FILE_OPEN: hdr sz = %i.\n",header->hdr_size);
+       }
        return -1;
      }
      
-     if ( header->hdr_size > tci_file->fsz )  {
-       fprintf (stderr, "TCI_FILE_OPEN: (r) Hdr_Sz larger than file.\n");
-       fprintf (stderr, "TCI_FILE_OPEN: hdr sz = %i.\n",header->hdr_size);
+     if ( header->hdr_size > tci_file->fsz )
+     {
+       if (tci_file_verbose)
+       {
+         fprintf (stderr, "TCI_FILE_OPEN: (r) Hdr_Sz larger than file.\n");
+	 fprintf (stderr, "TCI_FILE_OPEN: hdr sz = %i.\n",header->hdr_size);
+       }
        return -1;
      }
      
@@ -169,8 +195,10 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
 	we must ensure that the file pointer is positioned at the beginning
 	of the data */
      tci_err = tci_file_sec_set (*tci_file, 0);
-     if (tci_err != 0)  {
-       perror ("TCI_FILE_OPEN: (r) Could not set file pointer.\n");
+     if (tci_err != 0)
+     {
+       if (tci_file_verbose)
+         perror ("TCI_FILE_OPEN: (r) Could not set file pointer.\n");
        return(tci_err);
      }
      return (0);
@@ -178,25 +206,36 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
    case 'w':
      wr_mode |= O_EXCL; /* TRY */
    case 'o':
-     if (!(header->hdr_drate))  {
-       fprintf (stderr, "TCI_FILE_OPEN: (w) Data rate not defined in hdr\n");
+     if (!(header->hdr_drate))
+     {
+       if (tci_file_verbose)
+         fprintf (stderr, "TCI_FILE_OPEN: (w) Data rate not defined in hdr\n");
        return (-1);
      }
      tci_file->fd = open(filename, wr_mode, TCI_FILE_PERMISSION);
-     if ((tci_file->fd < 0) && (errno == EEXIST) && (rdwt == 'o'))  {
-       if (remove (filename) < 0)  {
-	 fprintf (stderr, "TCI_FILE_OPEN: (%c) Could not remove file: %s\n",
-		  rdwt, filename);
-	 perror("TCI_FILE_OPEN:  Error");
+     if ((tci_file->fd < 0) && (errno == EEXIST) && (rdwt == 'o'))
+     {
+       if (remove (filename) < 0)
+       {
+	 if (tci_file_verbose)
+	 {
+	   fprintf (stderr, "TCI_FILE_OPEN: (%c) Could not remove file: %s\n",
+		    rdwt, filename);
+	   perror("TCI_FILE_OPEN:  Error");
+	 }
 	 return (-1);
        }
        /* wr_mode &= ~O_EXCL; */
        tci_file->fd = open(filename, wr_mode, TCI_FILE_PERMISSION);
      }
-     if (tci_file->fd < 0)  {
-       fprintf (stderr, "TCI_FILE_OPEN: (%c) Could not open file: %s\n",
+     if (tci_file->fd < 0)
+     {
+       if (tci_file_verbose)
+       {
+         fprintf (stderr, "TCI_FILE_OPEN: (%c) Could not open file: %s\n",
 		rdwt, filename);
-       perror("TCI_FILE_OPEN:  Error");
+	 perror("TCI_FILE_OPEN:  Error");
+       }
        return(-1);
      }
      
@@ -206,8 +245,10 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
      tci_file->data_rate = (u_int)(header->hdr_drate) * 1000000;
      
      toBigE(&(header->hdr_size), sizeof(int));
-     if (write(tci_file->fd,(char*)header,tci_file->base) < tci_file->base)  {
-       perror ("TCI_FILE_OPEN:  (w) Could not write header to file ");
+     if (write(tci_file->fd,(char*)header,tci_file->base) < tci_file->base)
+     {
+       if (tci_file_verbose)
+         perror ("TCI_FILE_OPEN:  (w) Could not write header to file ");
        return (-1);
      }
      fromBigE(&(header->hdr_size), sizeof(int));
@@ -222,8 +263,11 @@ int tci_file_open (const char* filename, tci_fd* tci_file,
 
 
    default:
-     fprintf (stderr, "TCI_FILE_OPEN:  Unknown open code.\n");
-     return (-1);
+     {
+       if (tci_file_verbose)
+	 fprintf (stderr, "TCI_FILE_OPEN:  Unknown open code.\n");
+       return (-1);
+     }
    }
 }
 
