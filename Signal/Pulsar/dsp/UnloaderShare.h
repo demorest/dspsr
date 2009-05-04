@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.8 $
-   $Date: 2009/04/14 10:38:01 $
+   $Revision: 1.9 $
+   $Date: 2009/05/04 02:14:19 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -132,9 +132,6 @@ namespace dsp {
     //! Default constructor
     Submit (UnloaderShare* parent, unsigned contributor);
 
-    //! Set the signal path that yielded the folded PhaseSeries data
-    void set_list (SignalPath::List*);
-
     //! Unload the PhaseSeries data
     void unload (const PhaseSeries*);
 
@@ -147,12 +144,7 @@ namespace dsp {
   protected:
 
     Reference::To<UnloaderShare> parent;
-
-    //! The signal path that yielded the folded PhaseSeries data
-    SignalPath::List* list;
-
     unsigned contributor;
-
   };
 
   class UnloaderShare::Storage : public Reference::Able
