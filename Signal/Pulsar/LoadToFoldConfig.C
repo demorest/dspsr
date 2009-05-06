@@ -66,6 +66,9 @@ dsp::LoadToFold::Config::Config ()
   // an optimization feature used in Detection
   ndim = 4;
 
+  // Don't allow more bins than is sensible
+  force_sensible_nbin = false;
+
   // full integrated profile by default
   single_pulse = false;
 

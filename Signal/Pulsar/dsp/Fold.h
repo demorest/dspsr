@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.54 $
-   $Date: 2009/04/15 00:14:13 $
-   $Author: straten $ */
+   $Revision: 1.55 $
+   $Date: 2009/05/06 23:06:35 $
+   $Author: sixbynine $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
@@ -77,6 +77,9 @@ namespace dsp {
     void set_nbin (unsigned _nbin) { requested_nbin = _nbin; }
     //! Get the number of phase bins into which data will be folded
     unsigned get_nbin () const { return requested_nbin; }
+
+    void set_force_sensible_nbin (bool _force_sensible) { force_sensible_nbin = _force_sensible; }
+    bool get_force_sensible_nbin () { return force_sensible_nbin; }
 
     //! Set the number of polynomial coefficients in model
     void set_ncoef (unsigned ncoef);
@@ -174,6 +177,8 @@ namespace dsp {
 
     //! Number of phase bins set using set_nbin
     unsigned requested_nbin;
+
+    bool force_sensible_nbin;
 
     //! Reference phase (phase of bin zero)
     double reference_phase;
