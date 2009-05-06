@@ -82,7 +82,8 @@ void usage ()
     " -l nlag        form lag spectrum of detected data\n"
     "\n"
     "Folding options:\n"
-    " -b nbin        fold pulse profile into nbin phase bins \n"
+    " -b nbin        fold pulse profile into exactly nbin phase bins \n"
+    " -b -nbin       fold pulse profile into a maximum of nbin phase bins \n"
     " -c period      fold with constant period (in seconds)\n"
     " -p phase       reference phase of pulse profile bin zero \n"
     " -E psr.eph     add the pulsar ephemeris, psr.eph, for use \n"
@@ -343,7 +344,15 @@ void parse_options (int argc, char** argv)
       break;
 
     case 'b':
-      config->nbin = strtol (optarg, 0, 10);
+      {
+        int value = strtol (optarg, 0, 10);
+        if (value < 0){
+         config->force_sensible_nbin = true;
+	 config->nbin = -value;
+        } else {
+	 config->nbin=value;
+        }
+      }
       break;
 
     case 'C':

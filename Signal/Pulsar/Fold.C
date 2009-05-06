@@ -28,6 +28,7 @@ dsp::Fold::Fold () :
 
   requested_nbin = 0;
   folding_nbin = 0;
+  force_sensible_nbin=false;
 
   reference_phase = -1.0; // Defaults to 0.0
 
@@ -272,16 +273,22 @@ unsigned dsp::Fold::choose_nbin ()
     // the Fold::set_nbin method has been called
     if (verbose) cerr << "dsp::Fold::choose_nbin using requested nbin="
 		      << requested_nbin << endl;
+    folding_nbin = requested_nbin;
 
     if (requested_nbin > sensible_nbin) {
-      cerr << "dsp::Fold::choose_nbin WARNING Requested nbin=" 
+      if (force_sensible_nbin){
+	 // if we are forcing sensible bins, change nbin.
+         folding_nbin=sensible_nbin;
+      } else {
+	 // otherwise tell the user they are being rather foolish/optimistic!
+        cerr << "dsp::Fold::choose_nbin WARNING Requested nbin=" 
 	   << requested_nbin << " > sensible nbin=" << sensible_nbin << "."
 	"  Where:\n"
 	"  sampling period     = " << sampling_period*1e3 << " ms and\n"
 	"  requested bin width = " << the_folding_period/requested_nbin*1e3 << 
 	" ms\n" << endl;
+      }
     }
-    folding_nbin = requested_nbin;
   }
   else {
     // the Fold::set_nbin method has not been called.  choose away ...

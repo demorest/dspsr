@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.13 $
-   $Date: 2008/11/21 00:56:47 $
-   $Author: straten $ */
+   $Revision: 1.14 $
+   $Date: 2009/05/06 23:06:35 $
+   $Author: sixbynine $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
@@ -90,6 +90,8 @@ namespace dsp {
     unsigned nbin;
     unsigned nchan;
     unsigned ndim;
+
+    bool force_sensible_nbin;
 
     bool single_pulse;
     bool single_archive;

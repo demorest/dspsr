@@ -654,8 +654,10 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (Operation::verbose)
       cerr << "dsp::LoadToFold1::prepare_fold configuring" << endl;
 
-    if (config->nbin)
+    if (config->nbin){
       fold[ifold]->set_nbin (config->nbin);
+      fold[ifold]->set_force_sensible_nbin(config->force_sensible_nbin);
+    }
 
     if (config->reference_phase)
       fold[ifold]->set_reference_phase (config->reference_phase);
