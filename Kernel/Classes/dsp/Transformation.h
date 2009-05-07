@@ -1,20 +1,22 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.47 $
-   $Date: 2009/05/04 02:14:14 $
+   $Revision: 1.48 $
+   $Date: 2009/05/07 08:09:11 $
    $Author: straten $ */
 
-#ifndef __baseband_dsp_Transformation_h
-#define __baseband_dsp_Transformation_h
+#ifndef __dsp_Transformation_h
+#define __dsp_Transformation_h
 
 #include "dsp/Operation.h"
+#include "dsp/HasInput.h"
+#include "dsp/HasOutput.h"
 #include "dsp/BufferingPolicy.h"
 
 #include "Callback.h"
@@ -27,95 +29,12 @@ namespace dsp {
   //! All Transformations must define their behaviour
   typedef enum { inplace, outofplace, anyplace } Behaviour;
 
-  //! Base class of all Transformation classes
-  /*! This interface is highly dangerous and should never be used */
-  class TransformationBase {
-  public:
-
-    virtual ~TransformationBase () {}
-
-    //! Return the Transformation type
-    virtual Behaviour get_type() const = 0;
-
-    //! Returns true if buffering_policy is set
-    virtual bool has_buffering_policy() const = 0;
-    
-    //! Set the policy for buffering input and/or output data
-    virtual void set_buffering_policy (BufferingPolicy* policy) = 0;
-
-    //! Inquire whether the class conserves time
-    virtual bool get_time_conserved() const = 0;
-
-    //! Functions called to intialize new instances
-    /*! Called during the Transformation template class
-      constructor. */
-
-    static Callback<TransformationBase*> initialization;
-
-  protected:
-
-    //! Add friend classes only as absolutely necessary
-    friend class Simultaneous;
-    friend class ProcessingStep;
-
-    virtual void vset_input (void* _input) = 0;
-    virtual void vset_output (void* _output) = 0;
-    virtual void* vget_input () = 0;
-    virtual void* vget_output () = 0;
-    virtual std::string get_input_typestring () = 0;
-    virtual std::string get_output_typestring () = 0;
-
-  };
-
-  template <class In>
-  class HasInput : virtual public TransformationBase {
-
-  public:
-
-    //! Set the container from which input data will be read
-    virtual void set_input (In* _input) { input = _input; }
-
-    //! Return pointer to the container from which input data will be read
-    const In* get_input () const { return input; }
- 
-    //! Returns true if input is set
-    bool has_input() const { return input; }
-
-  protected:
-
-    //! Container from which input data will be read
-    Reference::To <const In> input;
-
-  };
-
-
-  template <class Out>
-  class HasOutput : virtual public TransformationBase {
-
-  public:
-
-    //! Set the container into which output data will be written
-    virtual void set_output (Out* _output) { output = _output; }
-
-    //! Return pointer to the container into which output data will be written
-    Out* get_output () const { return output; }
-
-    //! Returns true if output is set
-    bool has_output() const { return output.ptr(); }
-
-  protected:
-
-    //! Container into which output data will be written
-    Reference::To <Out> output;
-
-  };
-
   //! Defines the interface by which Transformations are performed on data
   /*! This template base class defines the manner in which data
     container classes are connected to various digital signal
     processing operations. */
   template <class In, class Out>
-  class Transformation : public Operation, 
+  class Transformation : public Operation,
 			 public HasInput<In>,
 			 public HasOutput<Out>
   {
@@ -193,31 +112,6 @@ namespace dsp {
     //! If input doesn't have this many samples, operate() returns false
     int64 minimum_samps_can_process;
 
-    /** @name TransformationBase interface
-     *  These kludgey methods should never be used by anyone.
-     */
-    //@{
-
-    virtual std::string get_input_typestring()
-    { return typeid(this->input.ptr()).name(); }
-
-    virtual std::string get_output_typestring()
-    { return typeid(this->output.ptr()).name(); }
-
-    virtual void vset_input(void* _input)
-    { this->set_input( (In*)_input ); }
-
-    virtual void vset_output(void* _output)
-    { this->set_output( (Out*)_output ); }
-
-    virtual void* vget_input()
-    { return const_cast<void*>((const void*)this->get_input()); }
-
-    virtual void* vget_output()
-    { return this->get_output(); }
-
-    //@}
-
     //! Makes sure input & output are okay before calling transformation()
     virtual void vchecks();
 
@@ -256,8 +150,6 @@ dsp::Transformation<In,Out>::Transformation (const char* _name,
   type = _type;
   reset_min_samps();
   time_conserved = _time_conserved;
-
-  TransformationBase::initialization (this);
 }
 
 //! Return false if the input doesn't have enough data to proceed
@@ -310,9 +202,8 @@ void dsp::Transformation<In, Out>::vchecks()
 
 //! Define the Operation pure virtual method
 template <class In, class Out>
-void dsp::Transformation<In, Out>::operation ()
-try {
-
+void dsp::Transformation<In, Out>::operation () try
+{
   if (Operation::verbose)
     cerr << name("operation") << " call vchecks" << std::endl;
 

@@ -3,7 +3,7 @@ noinst_LTLIBRARIES = libClasses.la
 
 nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/InputBuffering.h dsp/Seekable.h dsp/BitSeries.h	     \
-	dsp/InputBufferingShare.h dsp/SetBufferingPolicy.h	     \
+	dsp/InputBufferingShare.h				     \
 	dsp/DADAFile.h dsp/BitTable.h dsp/MPIRoot.h		     \
 	dsp/SubByteTwoBitCorrection.h dsp/BitUnpacker.h		     \
 	dsp/MPIServer.h dsp/BlockFile.h				     \
@@ -21,20 +21,21 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/BlockIterator.h dsp/StepIterator.h dsp/TwoBitLookup.h    \
 	dsp/TwoBitFour.h dsp/TwoBit1or2.h dsp/FourBitTwo.h	     \
 	dsp/EightBitOne.h dsp/excision_unpack.h dsp/NLowLookup.h     \
-	dsp/ObservationChange.h dsp/SignalPath.h \
-	dsp/infodata.h dsp/PrestoObservation.h \
-	dsp/OutputArchive.h dsp/CloneArchive.h
+	dsp/ObservationChange.h dsp/SignalPath.h		     \
+	dsp/infodata.h dsp/PrestoObservation.h			     \
+	dsp/OutputArchive.h dsp/CloneArchive.h dsp/HasInput.h	     \
+	dsp/HasOutput.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
 	DADAFile.C TestInput.C BitTable.C BitUnpacker.C BlockFile.C \
-	TimeSeries.C ChannelOrder.C Transformation.C DataSeries.C   \
+	TimeSeries.C ChannelOrder.C DataSeries.C   \
 	TwoBitCorrection.C Digitizer.C MultiFile.C TwoBitTable.C    \
 	EightBitUnpacker.C Unpacker.C File.C Observation.C	    \
 	Unpacker_create.C Operation.C WeightedTimeSeries.C	    \
 	FourBitUnpacker.C dsp.C HistUnpacker.C			    \
 	dspExtension.C IOManager.C Scratch.C Input.C Seekable.C	    \
-	InputBuffering.C SetBufferingPolicy.C ExcisionUnpacker.C    \
+	InputBuffering.C ExcisionUnpacker.C    \
 	TwoBitLookup.C TwoBitFour.C TwoBit1or2.C NLowLookup.C	    \
 	UnpackerIterator.C ObservationChange.C PrestoObservation.C  \
 	CloneArchive.C SignalPath.C
