@@ -24,7 +24,7 @@ nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
 	dsp/ObservationChange.h dsp/SignalPath.h		     \
 	dsp/infodata.h dsp/PrestoObservation.h			     \
 	dsp/OutputArchive.h dsp/CloneArchive.h dsp/HasInput.h	     \
-	dsp/HasOutput.h
+	dsp/HasOutput.h dsp/Sink.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
