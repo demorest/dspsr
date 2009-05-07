@@ -7,10 +7,26 @@
 
 #include "dsp/Stats.h"
 
+#include <fstream>
+using namespace std;
+
 dsp::Stats::Stats (const char* name) : Sink<TimeSeries> (name) { }
     
 dsp::Stats::~Stats ()
 {
+  fstream out ("pdmp.stats");
+  if (!out)
+    throw Error (InvalidState, "dsp::Stats::~Stats",
+		 "could not open pdmp.stats");
+
+  const unsigned nchan = input->get_nchan();
+  const unsigned npol = input->get_npol();
+
+  out << "# nchan " << nchan << endl;
+  out << "# ntot " << total << endl;
+
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+    out << get_sigma(ichan,0) << endl;
 }
 
 //! Returns mean in given chan,pol

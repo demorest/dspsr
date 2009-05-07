@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.14 $
-   $Date: 2009/05/06 23:06:35 $
-   $Author: sixbynine $ */
+   $Revision: 1.15 $
+   $Date: 2009/05/07 11:10:23 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
@@ -85,6 +85,9 @@ namespace dsp {
 
     // compute and fold the fourth moments of the electric field
     bool fourth_moment;
+
+    // compute and output mean and variance for pdmp
+    bool pdmp_output;
 
     unsigned npol;
     unsigned nbin;

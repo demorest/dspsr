@@ -25,6 +25,7 @@
 #include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/Detection.h"
 #include "dsp/FourthMoment.h"
+#include "dsp/Stats.h"
 
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
@@ -566,6 +567,13 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 {
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::prepare_fold" << endl;
+
+  if (config->pdmp_output)
+  {
+    Stats* stats = new Stats;
+    stats->set_input (to_fold);
+    operations.push_back (stats);
+  }
 
   size_t nfold = 1 + config->additional_pulsars.size();
 
