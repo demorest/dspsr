@@ -278,7 +278,7 @@ void parse_options (int argc, char** argv)
 {
   static char* args =
     "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIj:J:k:Kl:L:"
-    "m:M:n:N:oO:p:P:qQrRsS:t:T:U:vVWx:X:yzZ:";
+    "m:M:n:N:oO:p:P:qQrRsS:t:T:U:vVWx:X:yYzZ:";
 
   string stropt;
 
@@ -645,6 +645,10 @@ void parse_options (int argc, char** argv)
 
     case 'y':
       config->fractional_pulses = true;
+      break;
+
+    case 'Y':
+      config->pdmp_output = true;
       break;
 
     case 'z':

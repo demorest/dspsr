@@ -54,6 +54,9 @@ dsp::LoadToFold::Config::Config ()
   // do not compute the fourth order moments by default
   fourth_moment = false;
 
+  // do not produce pdmp output by default
+  pdmp_output = false;
+
   // full polarization by default
   npol = 4;
 
