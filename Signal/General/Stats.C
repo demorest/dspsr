@@ -51,7 +51,7 @@ void dsp::Stats::calculation ()
   const uint64 ndat = input->get_ndat();
 
   if (sum.size() < nchan)
-    reset ();
+    init ();
 
   for (unsigned ichan = 0; ichan < nchan; ichan ++)
     for (unsigned ipol = 0; ipol < npol; ipol++)
@@ -67,7 +67,7 @@ void dsp::Stats::calculation ()
   total += ndat;
 }
 
-void dsp::Stats::reset ()
+void dsp::Stats::init ()
 {
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
