@@ -14,9 +14,9 @@ dsp::Stats::Stats (const char* name) : Sink<TimeSeries> (name) { }
     
 dsp::Stats::~Stats ()
 {
-  fstream out ("pdmp.stats");
+  ofstream out ("pdmp.stats");
   if (!out)
-    throw Error (InvalidState, "dsp::Stats::~Stats",
+    throw Error (FailedSys, "dsp::Stats::~Stats",
 		 "could not open pdmp.stats");
 
   const unsigned nchan = input->get_nchan();
