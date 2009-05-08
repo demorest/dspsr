@@ -24,8 +24,8 @@ namespace dsp {
     //! Destructor
     ~Stats ();
 
-    //! Reset accumulated results to intial values
-    void reset ();
+    //! Resize arrays and set to zero
+    void init ();
 
     //! Returns mean in given chan,pol
     float get_mean (unsigned ichan, unsigned ipol);
