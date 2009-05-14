@@ -23,7 +23,7 @@ namespace dsp {
     typedef std::vector< Reference::To<Operation> > List;
 
     //! Default constructor
-    SignalPath (List* list = 0);
+    SignalPath (const List& list);
 
     //! Clone operator
     dspExtension* clone () const;
@@ -35,15 +35,18 @@ namespace dsp {
     void reset ();
 
     //! Set the list of operations
-    void set_list (List*);
+    void set_list (const List&);
 
     //! Get the list of operations
-    List* get_list () const;
+    const List* get_list () const;
+
+    //! Add a component to the list of operations
+    void add (Operation*);
 
   protected:
 
     //! The operations in the signal path
-    List* operations;
+    List list;
 
   };
 

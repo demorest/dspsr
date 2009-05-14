@@ -10,20 +10,20 @@
 
 using namespace std;
 
-dsp::SignalPath::SignalPath (List* list)
+dsp::SignalPath::SignalPath (const List& _list)
   : dspExtension ("SignalPath")
 {
-  operations = list;
+  list = _list;
 }
 
-void dsp::SignalPath::set_list (List* list)
+void dsp::SignalPath::set_list (const List& _list)
 {
-  operations = list;
+  list = _list;
 }
 
-dsp::SignalPath::List* dsp::SignalPath::get_list () const
+const dsp::SignalPath::List* dsp::SignalPath::get_list () const
 {
-  return operations;
+  return &list;
 }
 
 dsp::dspExtension* dsp::SignalPath::clone() const
@@ -31,12 +31,14 @@ dsp::dspExtension* dsp::SignalPath::clone() const
   return new SignalPath (*this);
 }
 
+void dsp::SignalPath::add (Operation* op)
+{
+  list.push_back (op);
+}
+
 void dsp::SignalPath::combine (const SignalPath* that)
 {
-  if (!operations)
-    return;
-
-  if (operations->size() != that->operations->size())
+  if (list.size() != that->list.size())
     throw Error (InvalidState, "dsp::UnloaderShare::Storage::combine",
 		 "processes have different numbers of operations");
 
@@ -44,10 +46,10 @@ void dsp::SignalPath::combine (const SignalPath* that)
     cerr << "dsp::SignalPath::combine"
       " this=" << this << " that=" << that << endl;
 
-  for (unsigned iop=0; iop < operations->size(); iop++)
+  for (unsigned iop=0; iop < list.size(); iop++)
   {
-    Operation* this_op = (*this->operations)[iop];
-    Operation* that_op = (*that->operations)[iop];
+    Operation* this_op = this->list[iop];
+    Operation* that_op = that->list[iop];
 
     if (Operation::verbose)
       cerr << "dsp::SignalPath::combine " << this_op->get_name() << endl;
@@ -62,9 +64,6 @@ void dsp::SignalPath::combine (const SignalPath* that)
 
 void dsp::SignalPath::reset ()
 {
-  if (!operations)
-    return;
-
-  for (unsigned iop=0; iop < operations->size(); iop++)
-    (*operations)[iop]->reset ();
+  for (unsigned iop=0; iop < list.size(); iop++)
+    list[iop]->reset ();
 }

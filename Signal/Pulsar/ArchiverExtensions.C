@@ -55,7 +55,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
     return;
   }
 
-  SignalPath::List* list = path->get_list();
+  const SignalPath::List* list = path->get_list();
 
   if (!list || !list->size())
   {

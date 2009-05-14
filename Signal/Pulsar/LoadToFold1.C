@@ -445,18 +445,19 @@ void dsp::LoadToFold1::prepare_final ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
-  Reference::To<Extensions> extensions = new Extensions;
-
-  extensions->add_extension( new SignalPath (&operations) );
-
   for (unsigned iop=0; iop < operations.size(); iop++)
-  {
     operations[iop]->prepare ();
-    operations[iop]->add_extensions (extensions);
-  }
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
+  {
+    Reference::To<Extensions> extensions = new Extensions;
+    extensions->add_extension( path[ifold] );
+
+    for (unsigned iop=0; iop < operations.size(); iop++)
+      operations[iop]->add_extensions (extensions);
+
     fold[ifold]->get_output()->set_extensions (extensions);
+  }
 
   // for now ...
 
@@ -588,6 +589,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     cerr << "dsp::LoadToFold1::prepare_fold nfold=" << nfold << endl;
 
   fold.resize (nfold);
+  path.resize (nfold);
 
   bool subints = config->single_pulse || config->integration_length;
 
@@ -735,7 +737,9 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
     fold[ifold]->get_output()->zero();
 
+    path[ifold] = new SignalPath (operations);
     operations.push_back( fold[ifold].get() );
+    path[ifold]->add( fold[ifold] );
   }
 
 }
