@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.12 $
-   $Date: 2009/02/12 08:59:13 $
+   $Revision: 1.13 $
+   $Date: 2009/05/14 07:18:04 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -41,6 +41,7 @@ namespace dsp {
   class Fold;
   class Archiver;
   class PhaseSeriesUnloader;
+  class SignalPath;
 
   class LoadToFoldN;
 
@@ -102,6 +103,9 @@ namespace dsp {
     
     //! An unloader for each pulsar to be folded
     std::vector< Reference::To<PhaseSeriesUnloader> > unloader;
+
+    //! An unique signal path for each pulsar to be folded
+    std::vector< Reference::To<SignalPath> > path;
 
     //! Manage the archivers
     bool manage_archiver;
