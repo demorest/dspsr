@@ -75,14 +75,18 @@ Please see http://psrchive.sourceforge.net
 PSRCHIVE_ACLOCAL=`$psrchive_config --aclocal`
 AC_SUBST(PSRCHIVE_ACLOCAL)
 
+
 #
 # Checks for optional libraries
 #
 SWIN_LIB_PSRDADA
 SWIN_LIB_PRESTO
+SWIN_LIB_CFITSIO
 SWIN_LIB_MPI
 AX_OPENMP
 AC_SUBST(OPENMP_CFLAGS)
+
+
 #
 # Checks for graphics libraries
 #
@@ -135,7 +139,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/cpsr2/Makefile
 		Kernel/Formats/dada/Makefile
 		Kernel/Formats/fadc/Makefile
-        Kernel/Formats/fits/Makefile
+        	Kernel/Formats/fits/Makefile
 		Kernel/Formats/gmrt/Makefile
 		Kernel/Formats/lbadr/Makefile
 		Kernel/Formats/lbadr64/Makefile
