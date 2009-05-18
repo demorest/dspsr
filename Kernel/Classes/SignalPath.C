@@ -16,6 +16,14 @@ dsp::SignalPath::SignalPath (const List& _list)
   list = _list;
 }
 
+dsp::SignalPath::SignalPath (const vector< Reference::To<Operation> >& _list)
+  : dspExtension ("SignalPath")
+{
+  list.resize (_list.size());
+  for (unsigned i=0; i<list.size(); i++)
+    list[i] = _list[i];
+}
+
 void dsp::SignalPath::set_list (const List& _list)
 {
   list = _list;
