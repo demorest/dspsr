@@ -20,10 +20,13 @@ namespace dsp {
 	
   public:
 
-    typedef std::vector< Reference::To<Operation> > List;
+    typedef std::vector< Reference::To<Operation, false> > List;
 
     //! Default constructor
     SignalPath (const List& list);
+
+    //! Alternative constructor
+    SignalPath (const std::vector< Reference::To<Operation> >&);
 
     //! Clone operator
     dspExtension* clone () const;
