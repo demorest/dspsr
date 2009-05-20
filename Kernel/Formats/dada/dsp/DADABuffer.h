@@ -44,7 +44,7 @@ namespace dsp {
     virtual void set_info (const Observation& obs) { info = obs; }
 
     //! Reset DADAbuffer
-    virtual void reset ();
+    void rewind ();
  
   protected:
 
