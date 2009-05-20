@@ -125,7 +125,7 @@ void dsp::File::open (const char* filename)
   // ensure that file is set to load the first sample after the header
   seek_bytes (0);
 
-  reset ();
+  rewind ();
 }
 
 void dsp::File::close ()

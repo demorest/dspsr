@@ -61,7 +61,7 @@ void dsp::DADABuffer::close ()
   hdu = 0;
 }
 
-void dsp::DADABuffer::reset()
+void dsp::DADABuffer::rewind ()
 {
   end_of_data = false;
   current_sample = 0;

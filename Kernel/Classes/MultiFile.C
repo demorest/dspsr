@@ -151,7 +151,7 @@ void dsp::MultiFile::setup ()
   current_index = 0;
   current_filename = files[0]->get_filename();
 
-  reset();
+  rewind ();
 }
 
 //! Makes sure only these filenames are open
@@ -176,7 +176,7 @@ void dsp::MultiFile::erase_files()
   files.erase( files.begin(), files.end());
   loader = 0;
   info = Observation();
-  reset();
+  rewind ();
 }
 
 //! Erase just some of the list of loadable files
