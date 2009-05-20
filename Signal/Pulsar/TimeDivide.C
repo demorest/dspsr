@@ -41,6 +41,11 @@ dsp::TimeDivide::TimeDivide ()
   division_ndat = 0;
 
   log = 0;
+
+#ifndef _DEBUG
+  if (Operation::verbose)
+#endif
+    log = &std::cerr;
 }
 
 dsp::TimeDivide::~TimeDivide ()
@@ -545,3 +550,4 @@ uint64 dsp::TimeDivide::get_division (const MJD& epoch)
   set_boundaries( epoch );
   return division;
 }
+
