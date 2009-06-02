@@ -136,9 +136,6 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     return;
   }
 
-  cerr << "dsp::Archiver::unload " << profiles->get_integration_length() 
-       << " seconds of data" << endl;
-
   if (single_archive)
   {
     // refer to the single archive to which all sub-integration will be written
@@ -199,8 +196,9 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     return;
   }
 
-  cerr << "dsp::Archiver::unload archive '"
-       << archive->get_filename() << "'" << endl;
+  if (verbose)
+    cerr << "dsp::Archiver::unload archive '"
+         << archive->get_filename() << "'" << endl;
     
   archive -> unload();
 }
