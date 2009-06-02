@@ -21,6 +21,8 @@ dsp::SubFold::SubFold ()
 
 dsp::SubFold::~SubFold ()
 {
+  if (verbose)
+    cerr << "dsp::SubFold::~SubFold" << endl;
 }
 
 dsp::Fold* dsp::SubFold::clone () const
