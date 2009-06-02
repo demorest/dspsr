@@ -758,6 +758,9 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
     archiver->set_archive (arch);
   }
 
+  if (config->single_pulse)
+    archiver->set_store_dynamic_extensions (false);
+
   FilenameEpoch* epoch_convention = 0;
 
   if (config->single_pulse && !config->single_archive)
