@@ -153,31 +153,27 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
 
   if (integer_seconds)
   {
-    // round the epoch up into the current division
-    epoch += 0.5 * double(integer_seconds);
+    // ensure that the epoch is rounded up into the current division
+    epoch = data->get_mid_time();
 
     unsigned seconds = epoch.get_secs();
     unsigned divisions = seconds / integer_seconds;
     epoch = MJD (epoch.intday(), divisions * integer_seconds, 0.0);
 
     if (Observation::verbose)
-      cerr << "dsp::FilenameEpoch::get_filename rounded epoch=" 
+      cerr << "dsp::FilenameEpoch::get_filename division start epoch=" 
            << epoch.printall() << endl;
   }
 
-  char* fname = new char[FILENAME_MAX];
+  vector<char> fname (FILENAME_MAX);
+  char* filename = &fname[0];
 
-  char* retval = epoch.datestr( fname, FILENAME_MAX, datestr_pattern.c_str() );
-  string filename;
-
-  if (retval)
-    filename = retval;
-
-  delete[] fname;
-
-  if (!retval)
+  if (!epoch.datestr( filename, FILENAME_MAX, datestr_pattern.c_str() ))
     throw Error (FailedSys, "dsp::PhaseSeriesUnloader::get_filename",
-		   "error MJD::datestr(" + datestr_pattern + ")");
+       "error MJD::datestr(" + datestr_pattern + ")");
+
+  cerr << "unloading " << tostring(data->get_integration_length(),2)
+       << " seconds: " << filename << endl;
 
   return filename;
 }
