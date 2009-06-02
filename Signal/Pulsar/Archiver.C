@@ -52,6 +52,7 @@ dsp::Archiver::Archiver ()
   archive_dedispersed = false;
   profiles = 0;
   minimum_integration_length = 0;
+  store_dynamic_extensions = true;
 }
 
 dsp::Archiver::~Archiver ()
@@ -378,22 +379,24 @@ try
     set (dspR);
   }
 
-  Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
-  if (tbc)
+  if (store_dynamic_extensions)
   {
-    if (verbose)
-      cerr << "dsp::Archiver::set Pulsar::TwoBitStats extension" << endl;
-    set (tbc);
-  }
+    Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
+    if (tbc)
+    {
+      if (verbose)
+        cerr << "dsp::Archiver::set Pulsar::TwoBitStats extension" << endl;
+      set (tbc);
+    }
 
-  Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
-  if (pband)
-  {
-    if (verbose)
-      cerr << "dsp::Archiver::set Pulsar::Passband extension" << endl;
-    set (pband);
+    Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
+    if (pband)
+    {
+      if (verbose)
+        cerr << "dsp::Archiver::set Pulsar::Passband extension" << endl;
+      set (pband);
+    }
   }
-
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
   telescope->set_coordinates ( phase -> get_telescope() );
