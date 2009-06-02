@@ -26,6 +26,8 @@ dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
 
 dsp::UnloaderShare::~UnloaderShare ()
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::~UnloaderShare" << endl;
 }
 
 void dsp::UnloaderShare::set_context (ThreadContext* c)
