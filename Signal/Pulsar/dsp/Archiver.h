@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.27 $
-   $Date: 2009/05/04 02:14:30 $
+   $Revision: 1.28 $
+   $Date: 2009/06/02 02:05:38 $
    $Author: straten $ */
 
 
@@ -95,6 +95,9 @@ namespace dsp {
     std::string get_archive_software()
     { return archive_software; }
 
+    void set_store_dynamic_extensions (bool flag)
+    { store_dynamic_extensions = flag; }
+
   protected:
     
     //! Used only internally
@@ -126,6 +129,9 @@ namespace dsp {
 
     //! The Pulsar::Archive::Extension classes to be added to the output
     std::vector< Reference::To<Pulsar::Archive::Extension> > extensions;
+
+    //! Output dynamic header information (mostly diagnostic statistics)
+    bool store_dynamic_extensions;
 
     //! Set the Pulsar::Integration with the PhaseSeries data
     void set (Pulsar::Integration* integration, const PhaseSeries* phase,
