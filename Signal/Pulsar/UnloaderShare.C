@@ -13,6 +13,8 @@
 #include "ThreadContext.h"
 #include "Error.h"
 
+#include <errno.h>
+
 using namespace std;
 
 dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
@@ -22,12 +24,22 @@ dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
   context = 0;
   contributors = _contributors;
   wait_all = true;
+  clear_storage_thread_id = 0;
 }
 
 dsp::UnloaderShare::~UnloaderShare ()
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::~UnloaderShare" << endl;
+
+  if (clear_storage_thread_id != 0)
+  {
+    cerr << "dsp::UnloaderShare::~UnloaderShare joining clear_storage_thread"
+	 << endl;
+
+    void* result = 0;
+    pthread_join (clear_storage_thread_id, &result);
+  }
 }
 
 void dsp::UnloaderShare::set_context (ThreadContext* c)
@@ -151,21 +163,62 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
     }
   }
 
-  if (wait_all)
-    return;
-
-  istore=0;
-  while( istore < storage.size() )
+  if (!wait_all && clear_storage_thread_id == 0)
   {
-    if( storage[istore]->get_finished() )
-      unload (storage[istore]);
-    else
-      istore ++;
-  }  
+    cerr << "launching clear_storage_thread" << endl;
+
+    errno = pthread_create (&clear_storage_thread_id, 0,
+                             clear_storage_thread, this);
+
+    if (errno != 0)
+      throw Error (FailedSys, "dsp::UnloaderShare::unload", "pthread_create");
+  }
 
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
 }
+
+void dsp::UnloaderShare::clear_storage ()
+{
+  ThreadContext::Lock lock (context);
+
+  while( storage.size() || !all_finished ())
+  {
+    unsigned istore = 0;
+    unsigned finished_count = 0;
+
+    while( istore < storage.size() )
+    {
+      if( storage[istore]->get_finished() )
+      {
+        nonblocking_unload (istore);
+        finished_count ++;
+      }
+      else
+        istore ++;
+    }
+
+    if (!finished_count)
+      context->wait();
+  }
+}
+
+void* dsp::UnloaderShare::clear_storage_thread (void* context)
+{
+  dsp::UnloaderShare* unload = reinterpret_cast<dsp::UnloaderShare*>(context);
+
+  try
+  {
+    unload->clear_storage ();
+  }
+  catch (Error& error)
+  {
+    cerr << "dsp::UnloaderShare::clear_storage_thread: " << error << endl;
+  }
+
+  pthread_exit (0);
+}
+
 
 void dsp::UnloaderShare::finish_all (unsigned contributor)
 {
@@ -182,6 +235,14 @@ void dsp::UnloaderShare::finish_all (unsigned contributor)
 
   for (unsigned istore=0; istore < storage.size(); istore++)
     storage[istore]->set_finished (contributor);
+}
+
+bool dsp::UnloaderShare::all_finished ()
+{
+  for (unsigned i=0; i<finished_all.size(); i++)
+    if (!finished_all[i])
+      return false;
+  return true;
 }
 
 void dsp::UnloaderShare::finish ()
@@ -223,6 +284,33 @@ void dsp::UnloaderShare::unload (Storage* store)
       storage.erase( storage.begin() + i );
       break;
     }
+}
+
+//! Unload the storage in parallel
+void dsp::UnloaderShare::nonblocking_unload (unsigned istore)
+{
+  Storage* store = storage[istore];
+  storage.erase (storage.begin() + istore);
+
+  context->unlock ();
+
+  uint64 division = store->get_division();
+
+  if (unloader) try 
+  {
+    if (Operation::verbose)
+      cerr << "dsp::UnloaderShare::nonblocking_unload division=" << division
+	   << endl;
+    
+    unloader->unload( store->get_profiles() );
+  }
+  catch (Error& error)
+  {
+    cerr << "dsp::UnloaderShare::nonblocking_unload error division "
+         << division << error;
+  }
+
+  context->lock ();
 }
 
 //! Default constructor
