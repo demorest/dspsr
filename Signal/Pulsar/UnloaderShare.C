@@ -35,6 +35,11 @@ void dsp::UnloaderShare::set_context (ThreadContext* c)
   context = c;
 }
 
+void dsp::UnloaderShare::set_wait_all (bool flag)
+{
+  wait_all = flag;
+}
+
 //! Set the file unloader
 void dsp::UnloaderShare::set_unloader (dsp::PhaseSeriesUnloader* _unloader)
 {
