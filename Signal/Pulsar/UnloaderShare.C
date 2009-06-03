@@ -31,15 +31,6 @@ dsp::UnloaderShare::~UnloaderShare ()
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::~UnloaderShare" << endl;
-
-  if (clear_storage_thread_id != 0)
-  {
-    cerr << "dsp::UnloaderShare::~UnloaderShare joining clear_storage_thread"
-	 << endl;
-
-    void* result = 0;
-    pthread_join (clear_storage_thread_id, &result);
-  }
 }
 
 void dsp::UnloaderShare::set_context (ThreadContext* c)
@@ -161,6 +152,9 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
       temp->wait_all( context );
       unload (temp);
     }
+    else
+      temp->context = context;
+
   }
 
   if (!wait_all && clear_storage_thread_id == 0)
@@ -182,7 +176,9 @@ void dsp::UnloaderShare::clear_storage ()
 {
   ThreadContext::Lock lock (context);
 
-  while( storage.size() || !all_finished ())
+  unsigned max_storage_size = 0;
+
+  while (storage.size() || !all_finished ())
   {
     unsigned istore = 0;
     unsigned finished_count = 0;
@@ -198,9 +194,17 @@ void dsp::UnloaderShare::clear_storage ()
         istore ++;
     }
 
+    if (finished_count)
+      cerr << "finished=" << finished_count << endl;
+
     if (!finished_count)
       context->wait();
+
+    if (storage.size() > max_storage_size)
+      max_storage_size = storage.size();
   }
+
+  cerr << "maximum queue length = " << max_storage_size << endl;
 }
 
 void* dsp::UnloaderShare::clear_storage_thread (void* context)
@@ -250,8 +254,17 @@ void dsp::UnloaderShare::finish ()
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::finish size=" << storage.size() << endl;
 
-  while( storage.size() )
-    unload( storage[0] );
+  if (clear_storage_thread_id != 0)
+  {
+    cerr << "dsp::UnloaderShare::finish joining clear_storage_thread"
+         << endl;
+
+    void* result = 0;
+    pthread_join (clear_storage_thread_id, &result);
+  }
+  else
+    while( storage.size() )
+      unload( storage[0] );
 
   if (unloader)
     unloader->finish ();
@@ -289,7 +302,7 @@ void dsp::UnloaderShare::unload (Storage* store)
 //! Unload the storage in parallel
 void dsp::UnloaderShare::nonblocking_unload (unsigned istore)
 {
-  Storage* store = storage[istore];
+  Reference::To<Storage> store = storage[istore];
   storage.erase (storage.begin() + istore);
 
   context->unlock ();
