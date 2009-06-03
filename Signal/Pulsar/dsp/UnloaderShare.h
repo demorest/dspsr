@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.12 $
-   $Date: 2009/06/03 09:05:10 $
+   $Revision: 1.13 $
+   $Date: 2009/06/03 13:07:34 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -55,7 +55,8 @@ namespace dsp {
     Submit* new_Submit (unsigned contributor);
 
     //! Unload the PhaseSeries data
-    void unload (const PhaseSeries*, unsigned contributor);
+    void unload (const PhaseSeries*, unsigned contributor, 
+                 std::ostream* verbose = 0);
 
     //! Inform any waiting threads that contributor is finished
     void finish_all (unsigned contributor);
@@ -138,7 +139,7 @@ namespace dsp {
     //! Thread in which unload_thread is run
     static void* clear_storage_thread (void*);
 
-    pthread_t clear_storage_thread_id;
+    std::vector<pthread_t> clear_storage_thread_ids;
   };
 
   class UnloaderShare::Submit : public PhaseSeriesUnloader
