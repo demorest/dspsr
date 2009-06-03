@@ -174,7 +174,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
   {
     reason += separator +
 	"different centre frequencies:" + tostring(centre_frequency) + 
-         " != " + tostring(centre_frequency);
+         " != " + tostring(obs.centre_frequency);
     can_combine = false;
   }
 
@@ -182,77 +182,77 @@ bool dsp::Observation::combinable (const Observation & obs) const
   {
     reason += separator +
 	"different bandwidths:" + tostring(bandwidth) + 
-         " != " + tostring(bandwidth);
+         " != " + tostring(obs.bandwidth);
     can_combine = false;
   }
 
   if (nchan != obs.nchan)
   {
     reason += separator +
-	"different nchans:" + tostring(nchan) + " != " + tostring(nchan);
+	"different nchans:" + tostring(nchan) + " != " + tostring(obs.nchan);
     can_combine = false;
   }
  
   if (npol != obs.npol)
   {
     reason += separator +
-	"different npols:" + tostring(npol) + " != " + tostring(npol);
+	"different npols:" + tostring(npol) + " != " + tostring(obs.npol);
     can_combine = false;
   }
 
   if (ndim != obs.ndim)
   {
     reason += separator +
-	"different ndims:" + tostring(ndim) + " != " + tostring(ndim);
+	"different ndims:" + tostring(ndim) + " != " + tostring(obs.ndim);
     can_combine = false;
   }
 
   if (nbit != obs.nbit)
   {
     reason += separator +
-	"different nbits:" + tostring(nbit) + " != " + tostring(nbit);
+	"different nbits:" + tostring(nbit) + " != " + tostring(obs.nbit);
     can_combine = false;
   }
 
   if (type != obs.type)
   {
     reason += separator +
-	"different npols:" + tostring(npol) + " != " + tostring(npol);
+	"different npols:" + tostring(npol) + " != " + tostring(obs.npol);
     can_combine = false;
   }
 
   if (state != obs.state)
   {
     reason += separator +
-	"different states:" + tostring(state) + " != " + tostring(state);
+	"different states:" + tostring(state) + " != " + tostring(obs.state);
     can_combine = false;
   }
 
   if (basis != obs.basis)
   {
     reason += separator +
-	"different bases:" + tostring(basis) + " != " + tostring(basis);
+	"different bases:" + tostring(basis) + " != " + tostring(obs.basis);
     can_combine = false;
   }
   
   if (require_equal_rates && rate != obs.rate)
   {
     reason += separator +
-	"different rates:" + tostring(rate) + " != " + tostring(rate);
+	"different rates:" + tostring(rate) + " != " + tostring(obs.rate);
     can_combine = false;
   }
   
   if ( fabs(scale-obs.scale) > eps*fabs(scale) )
   {
     reason += separator +
-	"different scales:" + tostring(scale) + " != " + tostring(scale);
+	"different scales:" + tostring(scale) + " != " + tostring(obs.scale);
     can_combine = false;
   }
   
   if (swap != obs.swap)
   {
     reason += separator +
-	"different swaps:" + tostring(swap) + " != " + tostring(swap);
+	"different swaps:" + tostring(swap) + " != " + tostring(obs.swap);
     can_combine = false;
   }
   
@@ -260,7 +260,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
   {
     reason += separator +
 	"different dccs:" + tostring(dc_centred) +
-        " != " + tostring(dc_centred);
+        " != " + tostring(obs.dc_centred);
     can_combine = false;
   }
   
@@ -272,7 +272,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
     if (!(s1==s2 && s1=="2-bit"))
     {
       reason += separator +
-	"different modes:" + tostring(mode) + " != " + tostring(mode);
+	"different modes:" + tostring(mode) + " != " + tostring(obs.mode);
       can_combine = false;
     }
   }
@@ -280,7 +280,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
   if (machine != obs.machine)
   {
     reason += separator +
-	"different machines:" + tostring(machine) + " != " + tostring(machine);
+	"different machines:" + tostring(machine) + " != " + tostring(obs.machine);
     can_combine = false;
   }
   
@@ -288,7 +288,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
   {
     reason += separator +
 	"different dispersion measures:" + tostring(dispersion_measure) +
-        " != " + tostring(dispersion_measure);
+        " != " + tostring(obs.dispersion_measure);
     can_combine = false;
   }
   
@@ -296,7 +296,7 @@ bool dsp::Observation::combinable (const Observation & obs) const
   {
     reason += separator +
 	"different rotation measures:" + tostring(rotation_measure) + 
-        " != " + tostring(rotation_measure);
+        " != " + tostring(obs.rotation_measure);
     can_combine = false;
   }
 
@@ -371,8 +371,6 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_coordinates ( in_obs.get_coordinates() );
 
   dual_sideband         = in_obs.dual_sideband;
-  require_equal_sources = in_obs.require_equal_sources;
-  require_equal_rates   = in_obs.require_equal_rates;
 
   set_centre_frequency   ( in_obs.get_centre_frequency() );
   set_bandwidth          ( in_obs.get_bandwidth() );
