@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.10 $
-   $Date: 2009/06/03 07:41:22 $
+   $Revision: 1.11 $
+   $Date: 2009/06/03 08:28:16 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -102,6 +102,9 @@ namespace dsp {
     //! Unload the storage
     void unload (Storage*);
 
+    //! Unload the storage in parallel
+    void nonblocking_unload (unsigned istore);
+
     //! Temporary storage of incomplete sub-integrations
     std::vector< Reference::To<Storage> > storage;
 
@@ -126,6 +129,16 @@ namespace dsp {
     //! Flags set when a contributor calls finish_all
     std::vector<bool> finished_all;
 
+    //! Return true when all threads have finished
+    bool all_finished ();
+
+    //! Clears storage when wait_all == false
+    void clear_storage ();
+
+    //! Thread in which unload_thread is run
+    static void* clear_storage_thread (void*);
+
+    pthread_t clear_storage_thread_id;
   };
 
   class UnloaderShare::Submit : public PhaseSeriesUnloader
