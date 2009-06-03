@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.11 $
-   $Date: 2009/06/03 08:28:16 $
+   $Revision: 1.12 $
+   $Date: 2009/06/03 09:05:10 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -197,6 +197,9 @@ namespace dsp {
     //! Wait for all threads to complete
     void wait_all (ThreadContext*);
 
+    //! Thread coordination used in integrate and wait_all
+    ThreadContext* context;
+
   protected:
 
     Reference::To<PhaseSeries> profiles;
@@ -204,8 +207,6 @@ namespace dsp {
     std::vector<bool> finished;
     uint64 division;
 
-    //! Thread coordination used in integrate and wait_all
-    ThreadContext* context;
     void print_finished ();
 
   };
