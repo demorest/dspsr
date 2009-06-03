@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.32 $
-   $Date: 2009/05/04 02:14:30 $
+   $Revision: 1.33 $
+   $Date: 2009/06/03 04:55:08 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -170,6 +170,7 @@ namespace dsp {
     //! Ensure that the old operator += interface is not used
     void operator += (const PhaseSeries&);
 
+    void init ();
   };
 
 }

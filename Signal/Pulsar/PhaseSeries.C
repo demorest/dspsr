@@ -13,7 +13,7 @@
 
 using namespace std;
 
-dsp::PhaseSeries::PhaseSeries () : TimeSeries()
+void dsp::PhaseSeries::init ()
 {
   integration_length = 0;
   ndat_total = 0;
@@ -25,8 +25,14 @@ dsp::PhaseSeries::PhaseSeries () : TimeSeries()
   require_equal_rates = false;
 }
 
+dsp::PhaseSeries::PhaseSeries () : TimeSeries()
+{
+  init ();
+}
+
 dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
 {
+  init ();
   operator= (profile);
 }
 
