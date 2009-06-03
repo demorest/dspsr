@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.9 $
-   $Date: 2009/05/04 02:14:19 $
+   $Revision: 1.10 $
+   $Date: 2009/06/03 07:41:22 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -44,6 +44,9 @@ namespace dsp {
 
     //! Set the context for control of shared resources
     void set_context (ThreadContext*);
+
+    //! When sub-integration is finished, wait for all other threads to finish
+    void set_wait_all (bool);
 
     //! The PhaseSeries submission interface
     class Submit;
