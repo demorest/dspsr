@@ -224,19 +224,13 @@ namespace dsp {
       { return (nbytes * 8)/(nbit*get_npol()*get_nchan()*get_ndim()); }
 
     //! Returns true if the signal may be integrated
-    /* This returns a flag that is true if the Observations may be combined 
-       It doesn't check the start times- you have to do that yourself!
-    */
-    //! If ichan>=0 && ipol>=0 it means 'obs' should only be compared
-    //! with that particular ichan/ipol 
-    bool combinable (const Observation& obs, bool different_bands=false,
-		     bool combinable_verbose=false,
-		     int ichan=-1,int ipol=-1) const;
+    bool combinable (const Observation& obs) const;
+
+    //! Returns the reason if combinable returns false
+    std::string get_reason () { return reason; }
 
     //! Return true if the first sample of next follows the last sample of this
-    //! If ichan>=0 && ipol>=0 calls combinable() for only that chanpol
-    bool contiguous (const Observation& next, bool verbose_on_failure=true,
-		     int ichan=-1,int ipol=-1) const;
+    bool contiguous (const Observation& next) const;
 
     //! Set all attributes to null default
     void init ();
@@ -346,6 +340,8 @@ namespace dsp {
     //! Lower sideband
     char dual_sideband;
 
+    //! Reason when combinable fails
+    mutable std::string reason;
   };
 
 }
