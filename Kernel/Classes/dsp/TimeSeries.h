@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.47 $
-   $Date: 2009/01/14 20:19:42 $
+   $Revision: 1.48 $
+   $Date: 2009/06/03 02:08:27 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -116,9 +116,6 @@ namespace dsp {
 
     //! Append the given TimeSeries to the end of 'this'
     virtual uint64 append (const TimeSeries*);
-
-    //! Only append the one chan/pol pair
-    virtual uint64 append (const TimeSeries*, unsigned ichan, unsigned ipol);
 
     //! Copy data from given TimeSeries in front of the current position
     void prepend (const dsp::TimeSeries*, uint64 pre_ndat = 0);
