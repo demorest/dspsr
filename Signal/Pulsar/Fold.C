@@ -474,7 +474,7 @@ void dsp::Fold::transformation () try
 
   if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold))
     throw Error (InvalidParam, "dsp::Fold::transformation",
-		 "input and output are not PhaseSeries::mixable");
+		 "input and output are not mixable " + get_output()->get_reason());
 
   uint64 nweights = 0;
   const unsigned* weights = 0;
