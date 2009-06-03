@@ -141,187 +141,169 @@ bool dsp::Observation::get_detected () const
 /* this returns a flag that is true if the Observations may be combined 
    It doesn't check the start times- you have to do that yourself!
 */
-bool dsp::Observation::combinable (const Observation & obs,
-				   bool different_bands,
-				   bool combinable_verbose, 
-				   int ichan, int ipol) const
+bool dsp::Observation::combinable (const Observation & obs) const
 {
   bool can_combine = true;
   double eps = 0.000001;
 
-  if (telescope != obs.telescope) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different telescope:"
-	      << telescope << " and " << obs.telescope << endl;
+  reason = "";
+  string separator = "\n\t";
+
+  if (telescope != obs.telescope)
+  {
+    reason += separator +
+	"different telescopes:" + telescope + " != " + obs.telescope;
     can_combine = false;
   }
 
-  if (receiver != obs.receiver) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different receiver:"
-	   << receiver << " and " << obs.receiver << endl;
+  if (receiver != obs.receiver)
+  {
+    reason += separator +
+	"different receivers:" + receiver + " != " + obs.receiver;
     can_combine = false;
   }
 
   if (require_equal_sources && source != obs.source)
   {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different source:"
-	   << source << " and " << obs.source << endl;
+    reason += separator +
+	"different sources:" + source + " != " + obs.source;
     can_combine = false;
   }
 
-  if( !different_bands ){
-    if( ichan<0 ){
-      if( fabs(centre_frequency-obs.centre_frequency) > eps ) {
-	if (verbose || combinable_verbose)
-	  cerr << "dsp::Observation::combinable different frequencies:"
-	       << centre_frequency << " and " << obs.centre_frequency << endl;
-	can_combine = false;
-      }
-    }
-    else{
-      if( fabs(get_centre_frequency(ichan)-obs.centre_frequency) > eps ) {
-	if (verbose || combinable_verbose)
-	  cerr << "dsp::Observation::combinable different frequencies in channel"
-	       << ichan << ":" << get_centre_frequency(ichan)
-	       << " and " << obs.centre_frequency << endl;
-	can_combine = false;
-      }
-    }
-  }  
-
-  if( ichan>=0 ){
-    if( fabs(bandwidth/float(get_nchan()) - obs.bandwidth) > eps ) {
-      if (verbose || combinable_verbose)
-	cerr << "dsp::Observation::combinable different channel bandwidth:"
-	     << bandwidth/float(get_nchan()) << " and " << obs.bandwidth << endl;
-      can_combine = false;
-    }
-  }
-  else if( fabs(bandwidth-obs.bandwidth) > eps ) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different bandwidth:"
-	   << bandwidth << " and " << obs.bandwidth << endl;
+  if (fabs(centre_frequency-obs.centre_frequency) > eps)
+  {
+    reason += separator +
+	"different centre frequencies:" + tostring(centre_frequency) + 
+         " != " + tostring(centre_frequency);
     can_combine = false;
   }
 
-  if (get_nchan() != obs.get_nchan() && ichan<0) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different nchan:"
-	   << get_nchan() << " and " << obs.get_nchan() << endl;
+  else if( fabs(bandwidth-obs.bandwidth) > eps )
+  {
+    reason += separator +
+	"different bandwidths:" + tostring(bandwidth) + 
+         " != " + tostring(bandwidth);
+    can_combine = false;
+  }
+
+  if (nchan != obs.nchan)
+  {
+    reason += separator +
+	"different nchans:" + tostring(nchan) + " != " + tostring(nchan);
     can_combine = false;
   }
  
-  if (get_npol() != obs.get_npol() && ipol<0 ) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different npol:"
-	   << get_npol() << " and " << obs.get_npol() << endl;
+  if (npol != obs.npol)
+  {
+    reason += separator +
+	"different npols:" + tostring(npol) + " != " + tostring(npol);
     can_combine = false;
   }
 
-  if (get_ndim() != obs.get_ndim()) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different ndim:"
-	   << get_ndim() << " and " << obs.get_ndim() << endl;
+  if (ndim != obs.ndim)
+  {
+    reason += separator +
+	"different ndims:" + tostring(ndim) + " != " + tostring(ndim);
     can_combine = false;
   }
 
-  if (get_nbit() != obs.get_nbit()) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different nbit:"
-	   << get_nbit() << " and " << obs.get_nbit() << endl;
+  if (nbit != obs.nbit)
+  {
+    reason += separator +
+	"different nbits:" + tostring(nbit) + " != " + tostring(nbit);
     can_combine = false;
   }
 
-  if (type != obs.type) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different type:"
-	   << type << " and " << obs.type << endl;
+  if (type != obs.type)
+  {
+    reason += separator +
+	"different npols:" + tostring(npol) + " != " + tostring(npol);
     can_combine = false;
   }
 
-  if (state != obs.state) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different state:"
-	   << state << " and " << obs.state << endl;
+  if (state != obs.state)
+  {
+    reason += separator +
+	"different states:" + tostring(state) + " != " + tostring(state);
     can_combine = false;
   }
 
-  if (basis != obs.basis) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different feeds:"
-	   << basis << " and " << obs.basis << endl;
+  if (basis != obs.basis)
+  {
+    reason += separator +
+	"different bases:" + tostring(basis) + " != " + tostring(basis);
     can_combine = false;
   }
   
-  if (require_equal_rates && rate != obs.rate) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different rate:"
-	   << rate << " and " << obs.rate << endl;
+  if (require_equal_rates && rate != obs.rate)
+  {
+    reason += separator +
+	"different rates:" + tostring(rate) + " != " + tostring(rate);
     can_combine = false;
   }
   
-  if( fabs(scale-obs.scale) > eps*fabs(scale) ) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different scale:"
-	   << scale << " and " << obs.scale << endl;
+  if ( fabs(scale-obs.scale) > eps*fabs(scale) )
+  {
+    reason += separator +
+	"different scales:" + tostring(scale) + " != " + tostring(scale);
     can_combine = false;
   }
   
-  if (swap != obs.swap) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different swap:"
-	   << swap << " and " << obs.swap << endl;
+  if (swap != obs.swap)
+  {
+    reason += separator +
+	"different swaps:" + tostring(swap) + " != " + tostring(swap);
     can_combine = false;
   }
   
-  if (dc_centred != obs.dc_centred && ichan<0) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different dc_centred:"
-	   << dc_centred << " and " << obs.dc_centred << endl;
+  if (dc_centred != obs.dc_centred)
+  {
+    reason += separator +
+	"different dccs:" + tostring(dc_centred) +
+        " != " + tostring(dc_centred);
     can_combine = false;
   }
   
-  if (mode != obs.mode ) {
+  if (mode != obs.mode )
+  {
     string s1 = mode.substr(0,5);
     string s2 = obs.mode.substr(0,5);
 
-    if( !(s1==s2 && s1=="2-bit") ){
-      if (verbose || combinable_verbose)
-	cerr << "dsp::Observation::combinable different mode: '"
-	     << mode << "' and '" << obs.mode << "'" << endl;
+    if (!(s1==s2 && s1=="2-bit"))
+    {
+      reason += separator +
+	"different modes:" + tostring(mode) + " != " + tostring(mode);
       can_combine = false;
     }
   }
   
-  if (machine != obs.machine) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different machine:"
-	   << machine << " and " << obs.machine << endl;
+  if (machine != obs.machine)
+  {
+    reason += separator +
+	"different machines:" + tostring(machine) + " != " + tostring(machine);
     can_combine = false;
   }
   
-  if( fabs(dispersion_measure - obs.dispersion_measure) > eps) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different dispersion measure:"
-	   << dispersion_measure << " and " << obs.dispersion_measure << endl;
+  if( fabs(dispersion_measure - obs.dispersion_measure) > eps)
+  {
+    reason += separator +
+	"different dispersion measures:" + tostring(dispersion_measure) +
+        " != " + tostring(dispersion_measure);
     can_combine = false;
   }
   
-  if( fabs(rotation_measure - obs.rotation_measure) > eps) {
-    if (verbose || combinable_verbose)
-      cerr << "dsp::Observation::combinable different rotation measure:"
-	   << rotation_measure << " and " << obs.rotation_measure << endl;
+  if( fabs(rotation_measure - obs.rotation_measure) > eps)
+  {
+    reason += separator +
+	"different rotation measures:" + tostring(rotation_measure) + 
+        " != " + tostring(rotation_measure);
     can_combine = false;
   }
 
   return can_combine;
 }
 
-bool dsp::Observation::contiguous (const Observation & obs, 
-                                   bool verbose_on_failure,
-                                   int ichan, int ipol) const
+bool dsp::Observation::contiguous (const Observation & obs) const
 {
   if (verbose)
     cerr << "dsp::Observation::contiguous this=" << this << " obs=" << &obs
@@ -333,9 +315,10 @@ bool dsp::Observation::contiguous (const Observation & obs,
     cerr << "dsp::Observation::contiguous difference=" << difference
          << "s rate=" << rate << "Hz" << endl;
 
-  bool combinable = obs.combinable (*this,false,verbose_on_failure,ichan,ipol);
+  bool combinable = obs.combinable (*this);
   bool contiguous = fabs(difference) < 0.9/rate;
 
+#if 0
   if ( !contiguous && verbose_on_failure ) {
 
     cerr << "dsp::Observation::contiguous returning false:\n\t"
@@ -348,6 +331,7 @@ bool dsp::Observation::contiguous (const Observation & obs,
          << difference * rate << " samples" << endl;
 
   } 
+#endif
 
   if (verbose)
     cerr << "dsp::Observation::contiguous return" << endl;
@@ -386,7 +370,9 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_source      ( in_obs.get_source() );
   set_coordinates ( in_obs.get_coordinates() );
 
-  dual_sideband = in_obs.dual_sideband;
+  dual_sideband         = in_obs.dual_sideband;
+  require_equal_sources = in_obs.require_equal_sources;
+  require_equal_rates   = in_obs.require_equal_rates;
 
   set_centre_frequency   ( in_obs.get_centre_frequency() );
   set_bandwidth          ( in_obs.get_bandwidth() );
