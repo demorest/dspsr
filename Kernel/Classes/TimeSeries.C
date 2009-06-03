@@ -480,9 +480,9 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
     Observation::operator=( *little );
     set_ndat (0);
   }
-  else if( !contiguous(*little,true) )
+  else if( !contiguous(*little) )
     throw Error (InvalidState, "dsp::TimeSeries::append()",
-		 "next TimeSeries is not contiguous");
+		 "next TimeSeries is not contiguous " + get_reason());
   
   for( unsigned ichan=0; ichan<get_nchan(); ichan++)
   {
@@ -503,44 +503,6 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
 	    
   return ncopy;
 }
-
-uint64 dsp::TimeSeries::append(const dsp::TimeSeries* little,unsigned ichan,unsigned ipol){
-  if( verbose )
-    fprintf(stderr,"In dsp::TimeSeries::append()\n");
-
-  uint64 ncontain = get_ndat();
-  uint64 ncopy = little->get_ndat();
-  
-  append_checks(ncontain,ncopy,little);
-  if( ncontain==maximum_ndat() )
-    return 0;
-
-  if ( get_ndat() == 0 )
-  {
-    Observation::operator=( *little );
-    set_nchan(1);
-    set_npol(1);
-    set_centre_frequency( little->get_centre_frequency( ichan ) );
-    set_bandwidth( little->get_bandwidth()/little->get_nchan() );
-    set_dc_centred( false );
-    set_ndat (0);
-  }    
-  else if( !contiguous(*little,true,ichan,ipol) )
-    throw Error (InvalidState, "dsp::TimeSeries::append()",
-		 "next TimeSeries is not contiguous");
-  
-  const float* from = little->get_datptr (ichan,ipol);
-  float* to = get_datptr(0,0) + ncontain*get_ndim();
-  memcpy (to, from, size_t(ncopy*get_ndim()*sizeof(float)));
-  
-  set_ndat (ncontain + ncopy);
-
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::TimeSeries::append() with "UI64"\n",
-	    ncopy);
-
-  return ncopy;
-}			       
 
 void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
 				    const TimeSeries* little){
