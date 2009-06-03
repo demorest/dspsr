@@ -246,6 +246,8 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     unloader[ifold]->copy( subfold->get_divider() );
     unloader[ifold]->set_unloader( threads[0]->unloader[ifold] );
     unloader[ifold]->set_context( new ThreadContext );
+    if (configuration->single_pulse)
+      unloader[ifold]->set_wait_all (false);
 
     for (unsigned i=0; i<threads.size(); i++) 
     {
