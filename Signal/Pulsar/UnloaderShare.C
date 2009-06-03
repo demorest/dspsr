@@ -14,6 +14,7 @@
 #include "Error.h"
 
 #include <errno.h>
+#include <assert.h>
 
 using namespace std;
 
@@ -24,7 +25,6 @@ dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
   context = 0;
   contributors = _contributors;
   wait_all = true;
-  clear_storage_thread_id = 0;
 }
 
 dsp::UnloaderShare::~UnloaderShare ()
@@ -40,7 +40,7 @@ void dsp::UnloaderShare::set_context (ThreadContext* c)
 
 void dsp::UnloaderShare::set_wait_all (bool flag)
 {
-  wait_all = flag;
+  wait_all = true; // flag;
 }
 
 //! Set the file unloader
@@ -97,9 +97,11 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
 }
 
 void dsp::UnloaderShare::unload (const PhaseSeries* data,
-				 unsigned contributor)
+				 unsigned contributor, std::ostream* verbose)
 {
-  if (Operation::verbose)
+  std::ostream& cerr = *verbose;
+
+  if (verbose)
     cerr << "dsp::UnloaderShare::unload context=" << context << endl;
 
   ThreadContext::Lock lock (context);
@@ -115,7 +117,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
   MJD mid_time = 0.5 * ( data->get_start_time() + data->get_end_time() );
   unsigned division = divider.get_division( mid_time );
 
-  if (Operation::verbose)
+  if (verbose)
     cerr << "dsp::UnloaderShare::unload contributor=" << contributor 
 	 << " division=" << division << " Nstorage=" << storage.size() << endl;
 
@@ -126,9 +128,11 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
     if (storage[istore]->integrate( contributor, division, data ))
       break;
 
+  context->broadcast ();
+
   if (istore == storage.size())
   {
-    if (Operation::verbose)
+    if (verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
 
     Storage* temp = new Storage( contributors, finished_all );
@@ -145,30 +149,46 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
     else
       temp->set_profiles( data->clone() );
 
-    storage.push_back( temp );
-
     if (wait_all)
     {
+      storage.push_back( temp );
       temp->wait_all( context );
       unload (temp);
     }
     else
+    {
+      while (storage.size () > contributors)
+      {
+        if (verbose)
+          cerr << "wait on storage " << storage.size() << endl;
+        context->wait();
+        if (verbose)
+          cerr << "wait finished this=" << this << endl;
+      }
+
       temp->context = context;
-
+      storage.push_back( temp );
+    }
   }
 
-  if (!wait_all && clear_storage_thread_id == 0)
+  if (!wait_all && clear_storage_thread_ids.size() == 0)
   {
-    cerr << "launching clear_storage_thread" << endl;
+    unsigned nthreads = 1;
+    if (verbose)
+      cerr << "launching " << nthreads << " clear_storage_threads" << endl;
 
-    errno = pthread_create (&clear_storage_thread_id, 0,
-                             clear_storage_thread, this);
+    clear_storage_thread_ids.resize (nthreads);
+    for (unsigned i=0; i<nthreads; i++)
+    {
+      errno = pthread_create (&clear_storage_thread_ids[i], 0,
+                              clear_storage_thread, this);
 
-    if (errno != 0)
-      throw Error (FailedSys, "dsp::UnloaderShare::unload", "pthread_create");
+      if (errno != 0)
+        throw Error (FailedSys, "dsp::UnloaderShare::unload", "pthread_create");
+    }
   }
 
-  if (Operation::verbose)
+  if (verbose)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
 }
 
@@ -194,8 +214,7 @@ void dsp::UnloaderShare::clear_storage ()
         istore ++;
     }
 
-    if (finished_count)
-      cerr << "finished=" << finished_count << endl;
+    cerr << "finished=" << finished_count << endl;
 
     if (!finished_count)
       context->wait();
@@ -239,6 +258,8 @@ void dsp::UnloaderShare::finish_all (unsigned contributor)
 
   for (unsigned istore=0; istore < storage.size(); istore++)
     storage[istore]->set_finished (contributor);
+
+  context->signal ();
 }
 
 bool dsp::UnloaderShare::all_finished ()
@@ -254,13 +275,17 @@ void dsp::UnloaderShare::finish ()
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::finish size=" << storage.size() << endl;
 
-  if (clear_storage_thread_id != 0)
+  if (clear_storage_thread_ids.size())
   {
     cerr << "dsp::UnloaderShare::finish joining clear_storage_thread"
          << endl;
 
-    void* result = 0;
-    pthread_join (clear_storage_thread_id, &result);
+    for (unsigned i=0; i<clear_storage_thread_ids.size(); i++)
+    {
+      void* result = 0;
+      context->signal();
+      pthread_join (clear_storage_thread_ids[i], &result);
+    }
   }
   else
     while( storage.size() )
@@ -305,6 +330,7 @@ void dsp::UnloaderShare::nonblocking_unload (unsigned istore)
   Reference::To<Storage> store = storage[istore];
   storage.erase (storage.begin() + istore);
 
+  context->broadcast ();
   context->unlock ();
 
   uint64 division = store->get_division();
@@ -336,11 +362,16 @@ dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 //! Unload the PhaseSeries data
 void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
 {
+  std::ostream* verbose = 0;
+
   if (Operation::verbose)
+  {
     cerr << "dsp::UnloaderShare::Submit::unload"
       " profiles=" << profiles << " contributor=" << contributor << endl;
+    verbose = &cerr;
+  }
 
-  parent->unload( profiles, contributor );
+  parent->unload( profiles, contributor, verbose );
 }
 
 void dsp::UnloaderShare::Submit::finish () try
@@ -482,8 +513,6 @@ void dsp::UnloaderShare::Storage::wait_all (ThreadContext* ctxt)
 void dsp::UnloaderShare::Storage::set_finished (unsigned contributor)
 {
   finished[contributor] = true;
-  if (context)
-    context->signal();
 }
 
 //! Return true when all contributors are finished with this integration
