@@ -448,6 +448,7 @@ void dsp::LoadToFold1::prepare_final ()
   for (unsigned iop=0; iop < operations.size(); iop++)
     operations[iop]->prepare ();
 
+  if (!config->single_pulse)
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
     Reference::To<Extensions> extensions = new Extensions;
