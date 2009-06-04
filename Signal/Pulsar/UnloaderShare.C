@@ -135,18 +135,9 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
     if (storage[istore]->integrate( contributor, division, data ))
       break;
 
-  if (istore < storage.size())
-  {
-    // wake up any threads waiting for completion
+  context->broadcast ();
 
-    for (istore=0; istore < storage.size(); istore++)
-      if (storage[istore]->get_finished ())
-      {
-        context->broadcast ();
-	break;
-      }
-  }
-  else
+  if (istore == storage.size())
   {
     if (verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
@@ -165,9 +156,10 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
     else
       temp->set_profiles( data->clone() );
 
+    storage.push_back( temp );
+
     if (wait_all)
     {
-      storage.push_back( temp );
       temp->wait_all( context );
       unload (temp);
     }
@@ -199,7 +191,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
   while( istore < storage.size() )
   {
     if( storage[istore]->get_finished() )
-      nonblocking_unload (istore);
+      unload (storage[istore]);
     else
       istore ++;
   }  
