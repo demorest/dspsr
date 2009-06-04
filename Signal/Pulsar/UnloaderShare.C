@@ -40,7 +40,7 @@ void dsp::UnloaderShare::set_context (ThreadContext* c)
 
 void dsp::UnloaderShare::set_wait_all (bool flag)
 {
-  wait_all = true; // flag;
+  wait_all = flag;
 }
 
 //! Set the file unloader
@@ -96,6 +96,8 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
   divider.set_turns (subint_turns);
 }
 
+static unsigned max_storage_size = 0;
+
 void dsp::UnloaderShare::unload (const PhaseSeries* data,
 				 unsigned contributor, std::ostream* verbose)
 {
@@ -124,13 +126,23 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
   last_division[contributor] = division;
 
   unsigned istore = 0;
+
   for (istore=0; istore < storage.size(); istore++)
     if (storage[istore]->integrate( contributor, division, data ))
       break;
 
-  context->broadcast ();
+  if (istore < storage.size())
+  {
+    // wake up any threads waiting for completion
 
-  if (istore == storage.size())
+    for (istore=0; istore < storage.size(); istore++)
+      if (storage[istore]->get_finished ())
+      {
+        context->broadcast ();
+	break;
+      }
+  }
+  else
   {
     if (verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
@@ -155,6 +167,8 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
       temp->wait_all( context );
       unload (temp);
     }
+
+#if DEVOTED_THREAD
     else
     {
       while (storage.size () > contributors)
@@ -165,11 +179,28 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
         if (verbose)
           cerr << "wait finished this=" << this << endl;
       }
-
-      temp->context = context;
       storage.push_back( temp );
     }
+#endif
+
   }
+
+  if (wait_all)
+    return;
+
+  if (storage.size() > max_storage_size)
+    max_storage_size = storage.size();
+
+  istore=0;
+  while( istore < storage.size() )
+  {
+    if( storage[istore]->get_finished() )
+      nonblocking_unload (istore);
+    else
+      istore ++;
+  }  
+
+#if DEVOTED_THREAD
 
   if (!wait_all && clear_storage_thread_ids.size() == 0)
   {
@@ -187,6 +218,8 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data,
         throw Error (FailedSys, "dsp::UnloaderShare::unload", "pthread_create");
     }
   }
+
+#endif
 
   if (verbose)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
@@ -409,7 +442,6 @@ dsp::UnloaderShare::Storage::Storage (unsigned contributors,
                                       const std::vector<bool>& all_finished)
   : finished( all_finished )
 {
-  context = 0;
 }
 
 dsp::UnloaderShare::Storage::~Storage ()
@@ -502,12 +534,10 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
   return false;
 }
 
-void dsp::UnloaderShare::Storage::wait_all (ThreadContext* ctxt)
+void dsp::UnloaderShare::Storage::wait_all (ThreadContext* context)
 {
-  context = ctxt;
   while (!get_finished())
     context->wait();
-  context = 0;
 }
 
 void dsp::UnloaderShare::Storage::set_finished (unsigned contributor)
