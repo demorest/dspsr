@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.15 $
-   $Date: 2009/06/04 05:46:10 $
+   $Revision: 1.16 $
+   $Date: 2009/06/04 12:17:04 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -102,11 +102,11 @@ namespace dsp {
     //! Unload the storage
     void unload (Storage*);
 
-    //! Unload the storage in parallel
-    void nonblocking_unload (unsigned istore);
-
     //! Temporary storage of incomplete sub-integrations
     std::vector< Reference::To<Storage> > storage;
+
+    //! Storage of recyclable containers
+    std::vector< Reference::To<const PhaseSeries> > recycle;
 
     //! File unloader
     Reference::To<PhaseSeriesUnloader> unloader;
@@ -132,13 +132,15 @@ namespace dsp {
     //! Return true when all threads have finished
     bool all_finished ();
 
-    //! Clears storage when wait_all == false
-    void clear_storage ();
+    //! Return a container to the recyclable list
+    void set_recyclable (const PhaseSeries* data);
 
-    //! Thread in which unload_thread is run
-    static void* clear_storage_thread (void*);
+    //! Retrieve a container from the recyclable list
+    const PhaseSeries* get_recyclable ();
 
-    std::vector<pthread_t> clear_storage_thread_ids;
+    //! Setup for recycling
+    void set_recycle (Submit* submit);
+
   };
 
   class UnloaderShare::Submit : public PhaseSeriesUnloader
@@ -165,7 +167,7 @@ namespace dsp {
     friend class UnloaderShare;
 
     Reference::To<UnloaderShare> parent;
-    Reference::To<PhaseSeries> to_recycle;
+    Reference::To<const PhaseSeries> to_recycle;
 
     unsigned contributor;
     std::ostream* verbose;
@@ -182,10 +184,10 @@ namespace dsp {
     ~Storage ();
 
     //! Set the storage area
-    void set_profiles( PhaseSeries* );
+    void set_profiles( const PhaseSeries* );
 
     //! Get the storage area
-    PhaseSeries* get_profiles ();
+    const PhaseSeries* get_profiles ();
 
     //! Set the division
     void set_division( uint64 );
@@ -207,7 +209,7 @@ namespace dsp {
 
   protected:
 
-    Reference::To<PhaseSeries> profiles;
+    Reference::To<const PhaseSeries> profiles;
 
     std::vector<bool> finished;
     uint64 division;
