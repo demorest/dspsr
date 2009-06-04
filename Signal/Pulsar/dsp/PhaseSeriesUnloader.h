@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.19 $
-   $Date: 2009/04/15 19:19:15 $
+   $Revision: 1.20 $
+   $Date: 2009/06/04 05:46:10 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -42,6 +42,9 @@ namespace dsp {
 
     //! Handle partially completed PhaseSeries data
     virtual void partial (const PhaseSeries*);
+
+    //! After unload, a different PhaseSeries may be available for use
+    virtual PhaseSeries* recycle () { return 0; }
 
     //! Perform any clean up tasks before completion
     virtual void finish ();

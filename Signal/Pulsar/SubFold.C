@@ -157,7 +157,10 @@ void dsp::SubFold::transformation () try
 	cerr << "dsp::SubFold::transformation this=" << this
              << " unloader=" << unloader.get() << endl;
 
-      unloader->unload(output);
+      unloader->unload (output);
+
+      if (unloader->recycle ())
+        output = unloader->recycle();
     }
 
     zero_output ();
@@ -216,6 +219,9 @@ void dsp::SubFold::unload_partial () try
            << " unloader=" << unloader.get() << endl;
 
     unloader->partial (output);
+
+    if (unloader->recycle())
+      output = unloader->recycle();
   }
 
   zero_output ();
