@@ -27,10 +27,14 @@ dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
   wait_all = true;
 }
 
+static unsigned max_storage_size = 0;
+
 dsp::UnloaderShare::~UnloaderShare ()
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::~UnloaderShare" << endl;
+
+  cerr << "max_storage_size = " << max_storage_size << endl;
 }
 
 void dsp::UnloaderShare::set_context (ThreadContext* c)
@@ -96,12 +100,12 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
   divider.set_turns (subint_turns);
 }
 
-static unsigned max_storage_size = 0;
-
-void dsp::UnloaderShare::unload (const PhaseSeries* data,
-				 unsigned contributor, std::ostream* verbose)
+void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
 {
-  std::ostream& cerr = *verbose;
+  bool verbose = submit->verbose != 0;
+
+  std::ostream& cerr = *(submit->verbose);
+  unsigned contributor = submit->contributor;
 
   if (verbose)
     cerr << "dsp::UnloaderShare::unload context=" << context << endl;
@@ -390,13 +394,12 @@ dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 {
   parent = _parent;
   contributor = id;
+  verbose = 0;
 }
 
 //! Unload the PhaseSeries data
 void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
 {
-  std::ostream* verbose = 0;
-
   if (Operation::verbose)
   {
     cerr << "dsp::UnloaderShare::Submit::unload"
@@ -404,7 +407,13 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
     verbose = &cerr;
   }
 
-  parent->unload( profiles, contributor, verbose );
+  parent->unload( profiles, this );
+}
+
+//! Return any PhaseSeries to be recycled
+dsp::PhaseSeries* dsp::UnloaderShare::Submit::recycle ()
+{
+  return to_recycle.ptr();
 }
 
 void dsp::UnloaderShare::Submit::finish () try
