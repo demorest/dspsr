@@ -7,6 +7,7 @@
 
 #include "dsp/UnloaderShare.h"
 #include "dsp/PhaseSeries.h"
+#include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/Operation.h"
 
 #include "ThreadContext.h"
@@ -26,14 +27,10 @@ dsp::UnloaderShare::UnloaderShare (unsigned _contributors)
   wait_all = true;
 }
 
-static unsigned max_storage_size = 0;
-
 dsp::UnloaderShare::~UnloaderShare ()
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::~UnloaderShare" << endl;
-
-  cerr << "max_storage_size = " << max_storage_size << endl;
 }
 
 void dsp::UnloaderShare::set_context (ThreadContext* c)
@@ -99,12 +96,12 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
   divider.set_turns (subint_turns);
 }
 
-void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
-{
-  bool verbose = submit->verbose != 0;
+static unsigned max_storage_size = 0;
 
-  std::ostream& cerr = *(submit->verbose);
-  unsigned contributor = submit->contributor;
+void dsp::UnloaderShare::unload (const PhaseSeries* data,
+				 unsigned contributor, std::ostream* verbose)
+{
+  std::ostream& cerr = *verbose;
 
   if (verbose)
     cerr << "dsp::UnloaderShare::unload context=" << context << endl;
@@ -132,92 +129,65 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
 
   for (istore=0; istore < storage.size(); istore++)
     if (storage[istore]->integrate( contributor, division, data ))
-    {
-      if (verbose)
-        cerr << "dsp::UnloaderShare::unload exit after integrate" << endl;
+      break;
 
-      context->broadcast ();
-      return;
-    }
-
-  if (verbose)
-    cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
-
-  Storage* temp = new Storage( contributors, finished_all );
-  temp->set_division( division );
-  temp->set_finished( contributor );
-  temp->set_profiles( data );
-
-  // other contributors may be well ahead of this one
-  for (unsigned ic=0; ic < contributors; ic++)
-    if ( last_division[ic] > division )
-      temp->set_finished( ic );
-
-  storage.push_back( temp );
-
-  if (wait_all)
+  if (istore < storage.size())
   {
-    temp->wait_all( context );
-    unload (temp);
+    // wake up any threads waiting for completion
+
+    for (istore=0; istore < storage.size(); istore++)
+      if (storage[istore]->get_finished ())
+      {
+        context->broadcast ();
+	break;
+      }
   }
   else
-    set_recycle (submit);
+  {
+    if (verbose)
+      cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
+
+    Storage* temp = new Storage( contributors, finished_all );
+    temp->set_division( division );
+    temp->set_finished( contributor );
+
+    // other contributors may be well ahead of this one
+    for (unsigned ic=0; ic < contributors; ic++)
+      if ( last_division[ic] > division )
+        temp->set_finished( ic );
+
+    if (wait_all)
+      temp->set_profiles( const_cast<PhaseSeries*>(data) );
+    else
+      temp->set_profiles( data->clone() );
+
+    storage.push_back( temp );
+
+    if (wait_all)
+    {
+      temp->wait_all( context );
+      unload (temp);
+    }
+
+  }
+
+  if (wait_all)
+    return;
+
+  if (storage.size() > max_storage_size)
+    max_storage_size = storage.size();
+
+  istore=0;
+  while( istore < storage.size() )
+  {
+    if( storage[istore]->get_finished() )
+      unload (storage[istore]);
+    else
+      istore ++;
+  }  
 
   if (verbose)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
-}
-
-void dsp::UnloaderShare::set_recycle (Submit* submit)
-{
-  if (recycle.size() == 0)
-  {
-    recycle.resize( contributors );
-    for (unsigned i=0; i<contributors; i++)
-      recycle[i] = new PhaseSeries;
-  }
-
-  Reference::To<PhaseSeries> recyclable;
-
-  while (!all_finished())
-  {
-    submit->to_recycle = get_recyclable();
-
-    if (submit->to_recycle)
-      return;
-
-    for (unsigned istore=0; istore < storage.size(); )
-    {
-      if( storage[istore]->get_finished() )
-      {
-        set_recyclable (storage[istore]->get_profiles());
-	unload (storage[istore]);
-      }
-      else
-	istore ++;
-    }  
-  }
-}
-
-void dsp::UnloaderShare::set_recyclable (const PhaseSeries* data)
-{
-  for (unsigned i=0; i<contributors; i++)
-    if (!recycle[i])
-      {
-	recycle[i] = data;
-	return;
-      }
-
-  throw Error (InvalidState, "dsp::UnloaderShare::set_recyclable",
-	       "unanticipated state");
-}
-
-const dsp::PhaseSeries* dsp::UnloaderShare::get_recyclable ()
-{
-  for (unsigned i=0; i<contributors; i++)
-    if (recycle[i])
-      return recycle[i].release();
-
-  return 0;
 }
 
 void dsp::UnloaderShare::finish_all (unsigned contributor)
@@ -225,8 +195,7 @@ void dsp::UnloaderShare::finish_all (unsigned contributor)
   ThreadContext::Lock lock (context);
 
   if (Operation::verbose)
-    cerr << "dsp::UnloaderShare::finish_all"
-      " contributor=" << contributor << endl;
+    cerr << "dsp::UnloaderShare::finish_all contributor=" << contributor << endl;
 
   if (finished_all[contributor])
     throw Error (InvalidParam, "dsp::UnloaderShare::finish_all",
@@ -289,17 +258,46 @@ void dsp::UnloaderShare::unload (Storage* store)
     }
 }
 
+//! Unload the storage in parallel
+void dsp::UnloaderShare::nonblocking_unload (unsigned istore)
+{
+  Reference::To<Storage> store = storage[istore];
+  storage.erase (storage.begin() + istore);
+
+  context->broadcast ();
+  context->unlock ();
+
+  uint64 division = store->get_division();
+
+  if (unloader) try 
+  {
+    if (Operation::verbose)
+      cerr << "dsp::UnloaderShare::nonblocking_unload division=" << division
+	   << endl;
+    
+    unloader->unload( store->get_profiles() );
+  }
+  catch (Error& error)
+  {
+    cerr << "dsp::UnloaderShare::nonblocking_unload error division "
+         << division << error;
+  }
+
+  context->lock ();
+}
+
 //! Default constructor
 dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
 {
   parent = _parent;
   contributor = id;
-  verbose = 0;
 }
 
 //! Unload the PhaseSeries data
 void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
 {
+  std::ostream* verbose = 0;
+
   if (Operation::verbose)
   {
     cerr << "dsp::UnloaderShare::Submit::unload"
@@ -307,13 +305,7 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
     verbose = &cerr;
   }
 
-  parent->unload( profiles, this );
-}
-
-//! Return any PhaseSeries to be recycled
-dsp::PhaseSeries* dsp::UnloaderShare::Submit::recycle ()
-{
-  return const_cast<PhaseSeries*>( to_recycle.ptr() );
+  parent->unload( profiles, contributor, verbose );
 }
 
 void dsp::UnloaderShare::Submit::finish () try
@@ -361,13 +353,13 @@ dsp::UnloaderShare::Storage::~Storage ()
 
 
 //! Set the storage area
-void dsp::UnloaderShare::Storage::set_profiles( const PhaseSeries* data )
+void dsp::UnloaderShare::Storage::set_profiles( PhaseSeries* data )
 {
   profiles = data;
 }
 
 //! Get the storage area
-const dsp::PhaseSeries* dsp::UnloaderShare::Storage::get_profiles ()
+dsp::PhaseSeries* dsp::UnloaderShare::Storage::get_profiles ()
 {
   return profiles;
 }
@@ -409,14 +401,12 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
       PhaseSeries::combine method must be called directly
     */
 
-    PhaseSeries* phase = const_cast<PhaseSeries*>( profiles.get() );
-
 #define SIGNAL_PATH
 
 #ifdef SIGNAL_PATH
     if (profiles->has_extensions())
     {
-      SignalPath* into = phase->get_extensions()->get<SignalPath>();
+      SignalPath* into = profiles->get_extensions()->get<SignalPath>();
       const SignalPath* from = data->get_extensions()->get<SignalPath>();
 
       if (into && from)
@@ -432,7 +422,7 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
     }
     else
 #endif
-      phase->combine( data );
+      profiles->combine( data );
 
     set_finished( contributor );
 
