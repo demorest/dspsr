@@ -137,6 +137,13 @@ void dsp::Bandpass::transformation ()
 
   integration_length += double(npart*nsamp_fft) / input->get_rate();
 
+  if ( input->get_dual_sideband() )
+  {
+    if (verbose)
+      cerr << "dsp::Bandpass::transformation set swap" << endl;
+    output->set_swap (true);
+  }
+
   // for each poln
   // for each channel
 }
