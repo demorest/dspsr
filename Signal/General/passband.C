@@ -303,6 +303,7 @@ int main (int argc, char** argv) try {
 	    dynamic_spectrum[ipol].push_back( output->get_passband(ipol) );
 	else {
 	  cpgpage ();
+    output->naturalize ();
 	  plotter.plot (output, voltages);
 	}
 
