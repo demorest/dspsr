@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.16 $
-   $Date: 2009/06/04 12:17:04 $
+   $Revision: 1.17 $
+   $Date: 2009/06/05 06:59:10 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -55,7 +55,8 @@ namespace dsp {
     Submit* new_Submit (unsigned contributor);
 
     //! Unload the PhaseSeries data
-    void unload (const PhaseSeries*, Submit*);
+    void unload (const PhaseSeries*, unsigned contributor, 
+                 std::ostream* verbose = 0);
 
     //! Inform any waiting threads that contributor is finished
     void finish_all (unsigned contributor);
@@ -102,11 +103,11 @@ namespace dsp {
     //! Unload the storage
     void unload (Storage*);
 
+    //! Unload the storage in parallel
+    void nonblocking_unload (unsigned istore);
+
     //! Temporary storage of incomplete sub-integrations
     std::vector< Reference::To<Storage> > storage;
-
-    //! Storage of recyclable containers
-    std::vector< Reference::To<const PhaseSeries> > recycle;
 
     //! File unloader
     Reference::To<PhaseSeriesUnloader> unloader;
@@ -131,16 +132,6 @@ namespace dsp {
 
     //! Return true when all threads have finished
     bool all_finished ();
-
-    //! Return a container to the recyclable list
-    void set_recyclable (const PhaseSeries* data);
-
-    //! Retrieve a container from the recyclable list
-    const PhaseSeries* get_recyclable ();
-
-    //! Setup for recycling
-    void set_recycle (Submit* submit);
-
   };
 
   class UnloaderShare::Submit : public PhaseSeriesUnloader
@@ -153,9 +144,6 @@ namespace dsp {
     //! Unload the PhaseSeries data
     void unload (const PhaseSeries*);
 
-    //! Return any PhaseSeries to be recycled
-    PhaseSeries* recycle ();
-
     //! Inform any waiting threads that the current thread is finished
     void finish ();
 
@@ -164,13 +152,8 @@ namespace dsp {
 
   protected:
 
-    friend class UnloaderShare;
-
     Reference::To<UnloaderShare> parent;
-    Reference::To<const PhaseSeries> to_recycle;
-
     unsigned contributor;
-    std::ostream* verbose;
   };
 
   class UnloaderShare::Storage : public Reference::Able
@@ -184,10 +167,10 @@ namespace dsp {
     ~Storage ();
 
     //! Set the storage area
-    void set_profiles( const PhaseSeries* );
+    void set_profiles( PhaseSeries* );
 
     //! Get the storage area
-    const PhaseSeries* get_profiles ();
+    PhaseSeries* get_profiles ();
 
     //! Set the division
     void set_division( uint64 );
@@ -209,7 +192,7 @@ namespace dsp {
 
   protected:
 
-    Reference::To<const PhaseSeries> profiles;
+    Reference::To<PhaseSeries> profiles;
 
     std::vector<bool> finished;
     uint64 division;
