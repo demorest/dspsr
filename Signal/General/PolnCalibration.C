@@ -15,6 +15,7 @@
 #include "dsp/Response.h"
 
 #include "Pulsar/BasicArchive.h"
+#include "Pulsar/Integration.h"
 #include "Pulsar/Database.h"
 #include "Pulsar/CalibratorTypes.h"
 #include "Pulsar/PolnCalibrator.h"
@@ -48,6 +49,15 @@ void cpy_attributes ( const dsp::Observation* obs , Pulsar::Archive* archive )
 
  Pulsar::Receiver* receiver = archive->getadd<Pulsar::Receiver> ();
  receiver->set_name( obs->get_receiver());
+
+ archive->resize (1);
+ Pulsar::Integration* subint = archive->get_Integration (0);
+ subint->set_epoch( obs->get_start_time() );
+
+ cerr << "MJD=" << subint->get_epoch() << endl;
+ cerr << "bw=" << archive->get_bandwidth() << endl;
+ cerr << "cf=" << archive->get_centre_frequency() << endl;
+ cerr << "coord=" << archive->get_coordinates() << endl;
 }
 
 
@@ -87,11 +97,25 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
 
     cpy_attributes (input , archive);
 
+    unsigned nchan = 128;
+
+    // 1 sub-integration, 4 polarizations, nchan channels
+    archive->resize (1, 4, nchan);
+
     // the following line is equivalent to
     // Pulsar::Database* dbase = 0;
     Reference::To<Pulsar::Database> dbase;
 
     dbase = new Pulsar::Database (database_filename);
+
+    Pulsar::Database::Criterion::match_verbose = true;
+    Pulsar::PolnCalibrator::verbose = true;
+    Pulsar::Database::verbose = true;
+
+    // default searching criterion
+    Pulsar::Database::Criterion criterion;
+    criterion.check_coordinates = false;
+    Pulsar::Database::set_default_criterion (criterion);
 
     Reference::To<Pulsar::PolnCalibrator> pcal;
 
@@ -100,7 +124,11 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
 
     pcal = dbase->generatePolnCalibrator (archive , type);
 
-     vector < Jones<float> > R;
+    cerr << "PCAL LOADED nchan=" << pcal->get_nchan() << endl;
+
+    // pcal->set_response_nchan (128);
+
+    vector < Jones<float> > R (nchan);
      // unsigned nchan = pcal->get_nchan();
  
     for ( unsigned ichan = 0 ; ichan < channels ; ichan++)
@@ -108,4 +136,5 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
 
     set (R);
 
+    cerr << "PolnCalibration::match finished!" << endl;
 }
