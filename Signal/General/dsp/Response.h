@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.27 $
-   $Date: 2008/10/14 19:12:12 $
-   $Author: demorest $ */
+   $Revision: 1.28 $
+   $Date: 2009/06/05 06:54:34 $
+   $Author: straten $ */
 
 #ifndef __Response_h
 #define __Response_h
@@ -83,6 +83,12 @@ namespace dsp {
 
     //! Get the flag for a bin-centred spectrum
     bool get_dc_centred () const { return dc_centred; }
+
+    //! Set the flag for a band-swapped spectrum
+    virtual void set_swap (bool flag) { whole_swapped = flag; }
+
+    //! Get the flag for a band-swapped spectrum
+    bool get_swap () const { return whole_swapped; }
 
     //! Return the minimum useable ndat
     unsigned get_minimum_ndat () const;
