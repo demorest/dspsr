@@ -27,7 +27,6 @@
 #include "Pulsar/FITSHdrExtension.h"
 
 #include "Pulsar/Predictor.h"
-#include "psrephem.h"
 #include "Error.h"
 
 #include <iomanip>
@@ -330,10 +329,6 @@ try
     ext->set_date_str(time_str);
   }
   
-  /*! Install the given ephemeris and calls update_model
-  archive-> set_ephemeris (const psrephem& ephemeris);
-  */
-
   archive-> set_telescope ( phase->get_telescope() );
 
   archive-> set_type ( phase->get_type() );

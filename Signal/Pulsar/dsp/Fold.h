@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.55 $
-   $Date: 2009/05/06 23:06:35 $
-   $Author: sixbynine $ */
+   $Revision: 1.56 $
+   $Date: 2009/06/06 11:30:25 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
@@ -112,9 +112,6 @@ namespace dsp {
 
     //! Returns true if data will be folded using Pulsar::Predictor
     bool has_folding_predictor () const;
-
-    //! Get the ephemeris used to create the phase model
-    //   const psrephem* get_pulsar_ephemeris () const;
 
     //! Get the ephemeris used to create the phase model
     const Pulsar::Parameters* get_pulsar_ephemeris () const;

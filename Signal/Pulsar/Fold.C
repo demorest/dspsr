@@ -10,7 +10,7 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
 
-#include "psrephem.h"
+#include "Pulsar/ParametersLookup.h"
 #include "Predict.h"
 #include "Error.h"
 
@@ -160,7 +160,9 @@ void dsp::Fold::prepare (const Observation* observation)
   {
     if (verbose)
       cerr << "dsp::Fold::prepare generating ephemeris" << endl;
-    pulsar_ephemeris = new Legacy::psrephem (pulsar.c_str(), 0);
+
+    Pulsar::Parameters::Lookup lookup;
+    pulsar_ephemeris = lookup (pulsar);
   }
 
   if (verbose)
