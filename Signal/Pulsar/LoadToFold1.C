@@ -37,7 +37,6 @@
 #include "Pulsar/TextParameters.h"
 #include "Pulsar/SimplePredictor.h"
 
-#include "psrephem.h"
 #include "Error.h"
 #include "pad.h"
 
@@ -346,7 +345,8 @@ void dsp::LoadToFold1::prepare_interchan (TimeSeries* data)
     return;
 
   if (Operation::verbose)
-    cerr << "LoadToFold1::prepare correct inter-channel dispersion delay" << endl;
+    cerr << "LoadToFold1::prepare correct inter-channel dispersion delay"
+	 << endl;
 
   if (!sample_delay)
     sample_delay = new SampleDelay;
@@ -362,12 +362,7 @@ void dsp::LoadToFold1::prepare_interchan (TimeSeries* data)
 
 double get_dispersion_measure (const Pulsar::Parameters* parameters)
 {
-  const Legacy::psrephem* peph = 0;
-  peph = dynamic_cast<const Legacy::psrephem*>(parameters);
-  if (peph)
-    return peph->get_dispersion_measure ();
-
-  const Pulsar::TextParameters* teph = 0;
+  const Pulsar::TextParameters* teph;
   teph = dynamic_cast<const Pulsar::TextParameters*>(parameters);
   if (teph)
   {
