@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/06/05 06:59:10 $
+   $Revision: 1.18 $
+   $Date: 2009/06/06 21:43:40 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -55,8 +55,7 @@ namespace dsp {
     Submit* new_Submit (unsigned contributor);
 
     //! Unload the PhaseSeries data
-    void unload (const PhaseSeries*, unsigned contributor, 
-                 std::ostream* verbose = 0);
+    void unload (const PhaseSeries*, Submit*);
 
     //! Inform any waiting threads that contributor is finished
     void finish_all (unsigned contributor);
@@ -104,7 +103,7 @@ namespace dsp {
     void unload (Storage*);
 
     //! Unload the storage in parallel
-    void nonblocking_unload (unsigned istore);
+    void nonblocking_unload (unsigned istore, Submit*);
 
     //! Temporary storage of incomplete sub-integrations
     std::vector< Reference::To<Storage> > storage;
@@ -141,6 +140,12 @@ namespace dsp {
     //! Default constructor
     Submit (UnloaderShare* parent, unsigned contributor);
 
+    //! Clone operator
+    Submit* clone () const;
+
+    //! Set the shared file unloader
+    void set_unloader (PhaseSeriesUnloader* unloader);
+
     //! Unload the PhaseSeries data
     void unload (const PhaseSeries*);
 
@@ -152,7 +157,10 @@ namespace dsp {
 
   protected:
 
+    friend class UnloaderShare;
+
     Reference::To<UnloaderShare> parent;
+    Reference::To<PhaseSeriesUnloader> unloader;
     unsigned contributor;
   };
 
