@@ -98,9 +98,14 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
 
 static unsigned max_storage_size = 0;
 
-void dsp::UnloaderShare::unload (const PhaseSeries* data,
-				 unsigned contributor, std::ostream* verbose)
+void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
 {
+  std::ostream* verbose = 0;
+  if (Operation::verbose)
+    verbose = &(submit->cerr);
+
+  unsigned contributor = submit->contributor;
+
   std::ostream& cerr = *verbose;
 
   if (verbose)
@@ -259,7 +264,7 @@ void dsp::UnloaderShare::unload (Storage* store)
 }
 
 //! Unload the storage in parallel
-void dsp::UnloaderShare::nonblocking_unload (unsigned istore)
+void dsp::UnloaderShare::nonblocking_unload (unsigned istore, Submit* submit)
 {
   Reference::To<Storage> store = storage[istore];
   storage.erase (storage.begin() + istore);
@@ -275,7 +280,7 @@ void dsp::UnloaderShare::nonblocking_unload (unsigned istore)
       cerr << "dsp::UnloaderShare::nonblocking_unload division=" << division
 	   << endl;
     
-    unloader->unload( store->get_profiles() );
+    submit->unloader->unload( store->get_profiles() );
   }
   catch (Error& error)
   {
@@ -293,19 +298,25 @@ dsp::UnloaderShare::Submit::Submit (UnloaderShare* _parent, unsigned id)
   contributor = id;
 }
 
+dsp::UnloaderShare::Submit* dsp::UnloaderShare::Submit::clone () const
+{
+  return 0;
+}
+
+//! Set the file unloader
+void dsp::UnloaderShare::Submit::set_unloader (dsp::PhaseSeriesUnloader* psu)
+{
+  unloader = psu;
+}
+
 //! Unload the PhaseSeries data
 void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
 {
-  std::ostream* verbose = 0;
-
   if (Operation::verbose)
-  {
     cerr << "dsp::UnloaderShare::Submit::unload"
       " profiles=" << profiles << " contributor=" << contributor << endl;
-    verbose = &cerr;
-  }
 
-  parent->unload( profiles, contributor, verbose );
+  parent->unload( profiles, this );
 }
 
 void dsp::UnloaderShare::Submit::finish () try
