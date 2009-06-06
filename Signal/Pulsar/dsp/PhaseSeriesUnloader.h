@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.20 $
-   $Date: 2009/06/04 05:46:10 $
+   $Revision: 1.21 $
+   $Date: 2009/06/06 21:43:44 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -36,7 +36,10 @@ namespace dsp {
     
     //! Destructor
     virtual ~PhaseSeriesUnloader ();
-    
+
+    //! Clone operator
+    virtual PhaseSeriesUnloader* clone () const = 0;
+
     //! Unload the PhaseSeries data
     virtual void unload (const PhaseSeries*) = 0;
 
