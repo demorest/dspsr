@@ -54,8 +54,32 @@ dsp::Archiver::Archiver ()
   store_dynamic_extensions = true;
 }
 
+dsp::Archiver::Archiver (const Archiver& copy)
+{
+  minimum_integration_length = copy.minimum_integration_length;
+  archive_class_name = copy.archive_class_name;
+  single_archive = copy.single_archive->clone();
+  script = copy.script;
+
+  extensions.resize( copy.extensions.size() );
+  for (unsigned iext=0; iext < extensions.size(); iext++)
+    extensions[iext] = copy.extensions[iext]->clone();
+
+  store_dynamic_extensions = copy.store_dynamic_extensions;
+
+  archive_software = copy.archive_software;
+  archive_dedispersed = copy.archive_dedispersed;
+  profiles = 0;
+}
+
 dsp::Archiver::~Archiver ()
 {
+}
+
+//! Clone operator
+dsp::Archiver* dsp::Archiver::clone () const
+{
+  return new Archiver (*this);
 }
 
 void dsp::Archiver::set_minimum_integration_length (double seconds)
@@ -185,7 +209,6 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
     interpreter->set( archive );
     interpreter->script( script );
-
   }
   catch (Error& error)
   {

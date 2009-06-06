@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.28 $
-   $Date: 2009/06/02 02:05:38 $
+   $Revision: 1.29 $
+   $Date: 2009/06/06 21:43:30 $
    $Author: straten $ */
 
 
@@ -48,8 +48,14 @@ namespace dsp {
     //! Constructor
     Archiver ();
     
+    //! Copy constructor
+    Archiver (const Archiver&);
+    
     //! Destructor
     virtual ~Archiver ();
+
+    //! Clone operator
+    Archiver* clone () const;
 
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const std::string& archive_class_name);
@@ -100,9 +106,6 @@ namespace dsp {
 
   protected:
     
-    //! Used only internally
-    const PhaseSeries* profiles;
-
     //! Minimum integration length required to unload data
     double minimum_integration_length;
 
@@ -111,9 +114,6 @@ namespace dsp {
 
     //! The Pulsar::Archive instance to which data will be added
     Reference::To<Pulsar::Archive> single_archive;
-
-    //! The Pulsar::Archive instance to which data will be unloaded
-    Reference::To<Pulsar::Archive> archive;
 
     //! Commands used to process Archive data before unloading
     std::vector<std::string> script;
@@ -157,6 +157,12 @@ namespace dsp {
 
     //! String to go in the dspReduction Extension of output archive ["Software Unknown"]
     std::string archive_software;
+
+    //! Used only internally
+    const PhaseSeries* profiles;
+
+    //! The Pulsar::Archive instance to which data will be unloaded
+    Reference::To<Pulsar::Archive> archive;
   };
 
 }
