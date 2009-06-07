@@ -117,6 +117,7 @@ void dsp::SubFold::transformation () try
 
   // flag that the input TimeSeries contains data for another sub-integration
   bool more_data = true;
+  bool first_division = true;
 
   while (more_data)
   {
@@ -127,7 +128,7 @@ void dsp::SubFold::transformation () try
 
     more_data = divider.get_in_next ();
 
-    if (divider.get_new_division() && output->get_integration_length())
+    if (divider.get_new_division())
     {
       /* A new division has been started and there is still data in
 	 the current integration.  This is a sign that the current
@@ -142,9 +143,17 @@ void dsp::SubFold::transformation () try
 
     Fold::transformation ();
 
-    // flag that the current profile should be unloaded after the next fold
     if (!divider.get_end_reached())
       continue;
+
+    if (first_division)
+    {
+      /* When the end of the first division is reached, it is not 100%
+         certain that a complete sub-integration is available */
+      unload_partial ();
+      first_division = false;
+      continue;
+    }
 
     if (verbose)
       cerr << "dsp::SubFold::transformation sub-integration completed" << endl;
@@ -158,9 +167,6 @@ void dsp::SubFold::transformation () try
              << " unloader=" << unloader.get() << endl;
 
       unloader->unload (output);
-
-      if (unloader->recycle ())
-        output = unloader->recycle();
     }
 
     zero_output ();
@@ -219,9 +225,6 @@ void dsp::SubFold::unload_partial () try
            << " unloader=" << unloader.get() << endl;
 
     unloader->partial (output);
-
-    if (unloader->recycle())
-      output = unloader->recycle();
   }
 
   zero_output ();
