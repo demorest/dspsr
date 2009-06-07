@@ -55,10 +55,14 @@ dsp::Archiver::Archiver ()
 }
 
 dsp::Archiver::Archiver (const Archiver& copy)
+  : PhaseSeriesUnloader (copy)
 {
   minimum_integration_length = copy.minimum_integration_length;
   archive_class_name = copy.archive_class_name;
-  single_archive = copy.single_archive->clone();
+
+  if (copy.single_archive)
+    single_archive = copy.single_archive->clone();
+
   script = copy.script;
 
   extensions.resize( copy.extensions.size() );
