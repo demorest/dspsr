@@ -31,10 +31,10 @@ dsp::Fold* dsp::SubFold::clone () const
 }
 
 //! Set verbosity ostream
-void dsp::SubFold::set_ostream (std::ostream& os) const
+void dsp::SubFold::set_cerr (std::ostream& os) const
 {
-  Operation::set_ostream (os);
-  divider.set_ostream (os);
+  Operation::set_cerr (os);
+  divider.set_cerr (os);
 }
 
 //! Set the file unloader

@@ -186,7 +186,8 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
   while( istore < storage.size() )
   {
     if( storage[istore]->get_finished() )
-      unload (storage[istore]);
+      //unload (storage[istore]); 
+      nonblocking_unload (istore, submit);
     else
       istore ++;
   }  
@@ -266,6 +267,9 @@ void dsp::UnloaderShare::unload (Storage* store)
 //! Unload the storage in parallel
 void dsp::UnloaderShare::nonblocking_unload (unsigned istore, Submit* submit)
 {
+  if (Operation::verbose)
+    submit->cerr << "dsp::UnloaderShare::nonblocking_unload" << endl;
+
   Reference::To<Storage> store = storage[istore];
   storage.erase (storage.begin() + istore);
 
@@ -274,17 +278,17 @@ void dsp::UnloaderShare::nonblocking_unload (unsigned istore, Submit* submit)
 
   uint64 division = store->get_division();
 
-  if (unloader) try 
-  {
+  try {
+
     if (Operation::verbose)
-      cerr << "dsp::UnloaderShare::nonblocking_unload division=" << division
-	   << endl;
+      submit->cerr << "dsp::UnloaderShare::nonblocking_unload division="
+                   << division << endl;
     
     submit->unloader->unload( store->get_profiles() );
   }
   catch (Error& error)
   {
-    cerr << "dsp::UnloaderShare::nonblocking_unload error division "
+    submit->cerr << "dsp::UnloaderShare::nonblocking_unload error division "
          << division << error;
   }
 

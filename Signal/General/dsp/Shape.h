@@ -7,15 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.11 $
-   $Date: 2007/06/06 01:02:04 $
+   $Revision: 1.12 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __Shape_h
 #define __Shape_h
 
-#include "ReferenceAble.h"
-#include <iostream>
+#include "OwnStream.h"
 
 #ifdef ACTIVATE_MPI
 #include <mpi.h>
@@ -24,7 +23,7 @@
 namespace dsp {
 
   //! Base class of objects that Shape data in the time or frequency domain
-  class Shape : public Reference::Able {
+  class Shape : public OwnStream {
 
   public:
     static bool verbose;
@@ -91,9 +90,6 @@ namespace dsp {
       return buffer + offset * ipol + ndat*ndim * ichan;
     }
 
-    //! Set verbosity ostream
-    virtual void set_ostream (std::ostream& os) const;
-
   protected:
 
     //! Data points
@@ -123,9 +119,6 @@ namespace dsp {
     void init ();
     void size_dataspace ();
     void destroy ();
-
-    //! Stream to which verbose messages are sent
-    mutable std::ostream cerr;
 
 #if PGPLOT
     void plot (float centre, float width, const char* label, 

@@ -28,7 +28,6 @@ dsp::Scratch* dsp::Scratch::get_default_scratch()
 }
 
 dsp::Scratch::Scratch ()
-  : cerr (std::cerr.rdbuf())
 {
   working_space = NULL;
   working_size = 0;
@@ -80,8 +79,3 @@ void* dsp::Scratch::space (size_t nbytes)
   return working_space;
 }
 
-//! Set verbosity ostream
-void dsp::Scratch::set_ostream (ostream& os) const
-{
-  this->cerr.rdbuf( os.rdbuf() );
-}

@@ -33,14 +33,7 @@ bool dsp::Operation::preserve_data = true;
 
 int dsp::Operation::operation_status = 0;
 
-//! Set verbosity ostream
-void dsp::Operation::set_ostream (std::ostream& os) const
-{
-  this->cerr.rdbuf( os.rdbuf() );
-}
-
 dsp::Operation::Operation (const Operation& op)
-  : cerr (op.cerr.rdbuf())
 {
   scratch = op.scratch;
   name = op.name;
@@ -55,7 +48,6 @@ dsp::Operation::Operation (const Operation& op)
 
 //! All sub-classes must specify name and capacity for inplace operation
 dsp::Operation::Operation (const char* _name)
-  : cerr (std::cerr.rdbuf())
 {
   if (_name)
     name = _name;

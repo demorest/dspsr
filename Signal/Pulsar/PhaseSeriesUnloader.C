@@ -17,7 +17,6 @@ using namespace std;
 
 //! Constructor
 dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
-  : cerr (std::cerr.rdbuf())
 {
   extension = ".ar";
   path_add_source = false;
@@ -26,12 +25,6 @@ dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
 //! Destructor
 dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 {
-}
-
-//! Set verbosity ostream
-void dsp::PhaseSeriesUnloader::set_ostream (std::ostream& os) const
-{
-  this->cerr.rdbuf( os.rdbuf() );
 }
 
 void dsp::PhaseSeriesUnloader::partial (const PhaseSeries* profiles)

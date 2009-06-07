@@ -41,21 +41,21 @@ void dsp::IOManager::set_scratch (Scratch* s)
 }
 
 //! Set verbosity ostream
-void dsp::IOManager::set_ostream (std::ostream& os) const
+void dsp::IOManager::set_cerr (std::ostream& os) const
 {
-  Operation::set_ostream( os );
+  Operation::set_cerr( os );
 
   if (verbose)
-    cerr << "dsp::IOManager::set_ostream" << endl;
+    cerr << "dsp::IOManager::set_cerr" << endl;
 
   if (input && !input->context)
-    input->set_ostream( os );
+    input->set_cerr( os );
 
   if (output)
-    output->set_ostream( os );
+    output->set_cerr( os );
 
   if (unpacker)
-    unpacker->set_ostream( os );
+    unpacker->set_cerr( os );
 }
 
 void dsp::IOManager::set_output (BitSeries* raw)

@@ -8,15 +8,14 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.21 $
-   $Date: 2009/06/06 21:43:44 $
+   $Revision: 1.22 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
 #define __PhaseSeriesUnloader_h
 
-#include <string>
-
+#include "OwnStream.h"
 #include "Reference.h"
 
 namespace dsp {
@@ -26,7 +25,7 @@ namespace dsp {
   class FilenameConvention;
 
   //! Base class for things that can unload PhaseSeries data somewhere
-  class PhaseSeriesUnloader : public Reference::Able
+  class PhaseSeriesUnloader : public OwnStream
   {
 
   public:
@@ -77,12 +76,6 @@ namespace dsp {
 
     //! Set the minimum integration length required to unload data
     virtual void set_minimum_integration_length (double seconds) = 0;
-
-    //! Set verbosity ostream
-    void set_ostream (std::ostream& os) const;
-
-    //! Stream to which verbose messages are sent
-    mutable std::ostream cerr;
 
   protected:
 

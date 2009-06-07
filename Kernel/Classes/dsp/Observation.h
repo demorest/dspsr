@@ -11,16 +11,17 @@
 
 #include "dsp/dsp.h"
 
-#include "Reference.h"
+#include "OwnStream.h"
 #include "sky_coord.h"
 #include "Types.h"
 #include "MJD.h"
 #include "environ.h"
 
-namespace dsp {
-
+namespace dsp
+{
   //! Stores information about digital, band-limited, time-varying signals
-  class Observation : public Reference::Able {
+  class Observation : public OwnStream
+  {
 
   public:
 
@@ -30,14 +31,11 @@ namespace dsp {
     //! Null constructor
     Observation (); 
 
-    //! Copy constructor
-    Observation (const Observation &);
+    Observation (const Observation&);
+    const Observation& operator = (const Observation&);
 
     //! Virtual destructor (see Effective C++ Item 14)
     virtual ~Observation(); 
-
-    //! Assignment operator
-    Observation& operator= (const Observation&);
 
     //! Same as operator= but takes a pointer
     virtual void copy (const Observation* obs) { operator=( *obs ); }
@@ -235,9 +233,6 @@ namespace dsp {
     //! Set all attributes to null default
     void init ();
 
-    //! Set verbosity ostream
-    virtual void set_ostream (std::ostream& os) const;
-
   protected:
 
     //! Telescope name
@@ -287,9 +282,6 @@ namespace dsp {
 
     //! The rotation measure to be archived
     double rotation_measure;
-
-    //! Stream to which verbose messages are sent
-    mutable std::ostream cerr;
 
     //! Require equal sources in combinable
     bool require_equal_sources;
