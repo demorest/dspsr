@@ -320,6 +320,18 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
     cerr << "dsp::UnloaderShare::Submit::unload"
       " profiles=" << profiles << " contributor=" << contributor << endl;
 
+  if (unloader)
+    unloader->unload (profiles);
+  else
+    parent->unload( profiles, this );
+}
+
+void dsp::UnloaderShare::Submit::partial (const PhaseSeries* profiles)
+{
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::Submit::partial"
+      " profiles=" << profiles << " contributor=" << contributor << endl;
+
   parent->unload( profiles, this );
 }
 

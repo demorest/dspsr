@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.18 $
-   $Date: 2009/06/06 21:43:40 $
+   $Revision: 1.19 $
+   $Date: 2009/06/07 02:21:17 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -148,6 +148,9 @@ namespace dsp {
 
     //! Unload the PhaseSeries data
     void unload (const PhaseSeries*);
+
+    //! Unload partially finished PhaseSeries data
+    void partial (const PhaseSeries*);
 
     //! Inform any waiting threads that the current thread is finished
     void finish ();
