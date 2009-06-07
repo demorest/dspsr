@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.48 $
-   $Date: 2009/05/07 08:09:11 $
+   $Revision: 1.49 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __dsp_Transformation_h
@@ -86,13 +86,13 @@ namespace dsp {
     { return "dsp::Tranformation["+Operation::get_name()+"]::" + function; }
 
     //! Set verbosity ostream
-    void set_ostream (std::ostream& os) const
+    void set_cerr (std::ostream& os) const
     {
-      Operation::set_ostream (os);
+      Operation::set_cerr (os);
       if (this->input)
-	this->input->set_ostream(os);
+	this->input->set_cerr (os);
       if (this->output)
-	this->output->set_ostream(os);
+	this->output->set_cerr (os);
     }
 
   protected:

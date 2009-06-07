@@ -39,23 +39,10 @@ dsp::TimeDivide::TimeDivide ()
 
   observation = 0;
   division_ndat = 0;
-
-  log = 0;
-
-#ifndef _DEBUG
-  if (Operation::verbose)
-#endif
-    log = &std::cerr;
 }
 
 dsp::TimeDivide::~TimeDivide ()
 {
-}
-
-//! Set verbosity ostream
-void dsp::TimeDivide::set_ostream (std::ostream& os) const
-{
-  log = &os;
 }
 
 void dsp::TimeDivide::set_start_time (MJD _start_time)
@@ -63,8 +50,8 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
   if (start_time == _start_time)
     return;
 
-  if (log)
-    *log << "dsp::TimeDivide::set_start_time start_time=" 
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_start_time start_time=" 
          << _start_time.printall() << endl;
 
   start_time = _start_time;
@@ -79,8 +66,8 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
     unsigned divisions = seconds / integer_seconds;
     start_time = MJD (start_time.intday(), divisions * integer_seconds, 0.0);
 
-    if (log)
-      *log << "dsp::TimeDivide::set_start_time rounded start_time=" 
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::set_start_time rounded start_time=" 
            << _start_time.printall() << endl;
   }
 }
@@ -152,8 +139,8 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   {
     divide_start = std::max (current_end, input_start);
 
-    if (log)
-      *log << "dsp::TimeDivide::bound continue at" 
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::bound continue at" 
 	   << "\n        start = " << divide_start
 	   << "\n  current end = " << current_end
 	   << "\n  input start = " << input_start
@@ -172,14 +159,14 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
       2) the 
     */
 
-    if (log)
+    if (Operation::verbose)
     {
-      *log << "dsp::TimeDivide::bound start new division" << endl;
+      cerr << "dsp::TimeDivide::bound start new division" << endl;
       if (input_end < lower)
-        *log << "      input end = " << input_end << " precedes\n"
+        cerr << "      input end = " << input_end << " precedes\n"
                 " division start = " << lower << endl;
        else
-        *log << "          start = " << divide_start << " is after\n"
+        cerr << "          start = " << divide_start << " is after\n"
                 "   division end = " << upper << endl;
     }
 
@@ -190,8 +177,8 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   divide_start = std::max (lower, divide_start);
 
-  if (log)
-    *log << "dsp::TimeDivide::bound start division at" 
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::bound start division at" 
 	 << "\n          start = " << divide_start
 	 << "\n division start = " << lower
 	 << "\n    input start = " << input_start
@@ -205,24 +192,24 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   double start_sample = offset.in_seconds() * sampling_rate;
 
-  // *log << "start_sample=" << start_sample << endl;
+  // cerr << "start_sample=" << start_sample << endl;
   start_sample = rint (start_sample);
-  // *log << "rint(start_sample)=" << start_sample << endl;
+  // cerr << "rint(start_sample)=" << start_sample << endl;
 
   assert (start_sample >= 0);
 
   idat_start = (uint64) start_sample;
 
-  if (log)
-    *log << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
 	 << " ms (" << idat_start << "pts)" << endl;
 
   if (idat_start >= input_ndat)
   {
     // The current data end before the start of the current division
 
-    if (log)
-      *log << "dsp::TimeDivide::bound input ends before division starts"<<endl;
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::bound input ends before division starts"<<endl;
 
     is_valid = false;
     return;
@@ -234,8 +221,8 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   //
   MJD divide_end = std::min (input_end, upper);
 
-  if (log)
-    *log << "dsp::TimeDivide::bound end division at "
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::bound end division at "
          << "\n           end = " << divide_end
          << "\n  division end = " << upper
          << "\n     input end = " << input_end
@@ -245,22 +232,22 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   double end_sample = offset.in_seconds() * sampling_rate;
 
-  // *log << "end_sample=" << end_sample << endl;
+  // cerr << "end_sample=" << end_sample << endl;
   end_sample = rint (end_sample);
-  // *log << "rint(end_sample)=" << end_sample << endl;
+  // cerr << "rint(end_sample)=" << end_sample << endl;
 
   assert (end_sample >= 0);
 
   uint64 idat_end = (uint64) end_sample;
 
-  if (log)
-    *log << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
 	 << " ms (" << idat_end << "pts)" << endl;
  
   if (idat_end <= idat_start)
   {
 #ifdef _DEBUG
-    *log << "dsp::TimeDivide::bound start division at"
+    cerr << "dsp::TimeDivide::bound start division at"
          << "\n          start = " << divide_start
          << "\n division start = " << lower
          << "\n    input start = " << input_start
@@ -268,10 +255,10 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
     offset = divide_start - input_start;
 
-    *log << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
+    cerr << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
          << " ms (" << idat_start << "pts)" << endl;
 
-    *log << "dsp::TimeDivide::bound end division at "
+    cerr << "dsp::TimeDivide::bound end division at "
          << "\n           end = " << divide_end
          << "\n  division end = " << upper
          << "\n     input end = " << input_end
@@ -279,7 +266,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
     offset = divide_end - input_start;
 
-    *log << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
+    cerr << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
          << " ms (" << idat_end << "pts)" << endl; 
 #endif
 
@@ -291,8 +278,8 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   {
     // this can happen owing to rounding in the above call to rint()
 
-    if (log)
-      *log << "dsp::TimeDivide::bound division"
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::bound division"
 	"\n   end_sample=rint(" << end_sample << ")=" << idat_end << 
 	" > input ndat=" << input_ndat << endl;
 
@@ -304,8 +291,8 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
     // division.  The in_next flag indicates that the input
     // TimeSeries should be used again.
 
-    if (log)
-      *log << "dsp::TimeDivide::bound input data ends "
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::bound input data ends "
            << (input_end-divide_end).in_seconds()*1e3 <<
         " ms after current division" << endl;
 
@@ -321,24 +308,24 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   double samples_to_end = (upper - divide_end).in_seconds() * sampling_rate;
 
-  if (log)
-    *log << "dsp::TimeDivide::bound " << samples_to_end << 
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::bound " << samples_to_end << 
       " samples to end of current division" << endl;
 
   if (samples_to_end < 0.5)
   {
-    if (log)
-      *log << "dsp::TimeDivide::bound end of division" << endl;
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::bound end of division" << endl;
 
     end_reached = true;
   }
 
-  if (log)
+  if (Operation::verbose)
   {
     double start = 1e3*idat_start/sampling_rate;
     double used = 1e3*ndat/sampling_rate;
     double available = 1e3*input_ndat/sampling_rate;
-    *log << "dsp::TimeDivide::bound using "
+    cerr << "dsp::TimeDivide::bound using "
 	 << used << "/" << available << " from " << start << " ms\n  (" 
 	 << ndat << "/" << input_ndat << " from " << idat_start << " to "
 	 << idat_start + ndat - 1 << " inclusive.)" << endl;
@@ -365,8 +352,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     /* On the first call to set_boundaries, initialize to start at
        reference_phase */
 
-    if (log)
-      *log << "dsp::TimeDivide::set_boundaries first call\n\treference_phase="
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::set_boundaries first call\n\treference_phase="
            << reference_phase << " start_time=" << start_time << endl;
 
     start_phase = poly->phase(start_time);
@@ -375,7 +362,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     {
 
 #ifdef _DEBUG
-      *log << "START PHASE=" << start_phase << endl;
+      cerr << "START PHASE=" << start_phase << endl;
 #endif
 
       /* Find X, where:
@@ -400,27 +387,27 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
       }
 
 #ifdef _DEBUG
-      *log << "OFFSET FROM REFERENCE=" << XminusR << endl;
+      cerr << "OFFSET FROM REFERENCE=" << XminusR << endl;
 #endif
 
       // N = (X-R)/D
       unsigned N = (unsigned) ceil (XminusR / division_turns);
 
 #ifdef _DEBUG
-      *log << "NEXT PHASE BIN=" << N << endl;
+      cerr << "NEXT PHASE BIN=" << N << endl;
 #endif
 
       // X = R + N*D
       double X = reference_phase + N * division_turns;
 
 #ifdef _DEBUG
-      *log << "START PHASE OF NEXT PHASE BIN=" << X << endl;
+      cerr << "START PHASE OF NEXT PHASE BIN=" << X << endl;
 #endif
 
       start_phase = Phase (start_phase.intturns(), X);
 
 #ifdef _DEBUG
-      *log << "START PHASE=" << start_phase << endl;
+      cerr << "START PHASE=" << start_phase << endl;
 #endif
 
     }
@@ -434,8 +421,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 
     start_time = poly->iphase (start_phase);
 
-    if (log)
-      *log << "dsp::TimeDivide::set_boundaries first call\n\tstart_phase="
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::set_boundaries first call\n\tstart_phase="
            << start_phase << " start_time=" << start_time << endl;
   }
 
@@ -450,7 +437,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     division = uint64 (seconds/division_seconds);
 
 #ifdef _DEBUG
-    *log << " divide_start=" << divide_start.printdays(13)
+    cerr << " divide_start=" << divide_start.printdays(13)
 	 << " start_time=" << start_time.printdays(13)
 	 << "\n seconds=" << seconds 
 	 << " division=" << division << endl;
@@ -473,8 +460,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 		 "division length specified in turns "
 		 "but no folding Pulsar::Predictor");
 
-  if (log)
-    *log << "dsp::TimeDivide::set_boundaries using polynomial:\n"
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_boundaries using polynomial:\n"
       "  avg. period=" << 1.0/poly->frequency(divide_start) << endl;
 
   Phase input_phase = poly->phase (divide_start);
@@ -492,7 +479,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     phase_bin = unsigned( profile_phase.fracturns() / division_turns );
 
 #ifdef _DEBUG
-    *log << "division=" << division << " phase=" << profile_phase
+    cerr << "division=" << division << " phase=" << profile_phase
 	 << " bin=" << phase_bin << endl;
 #endif
   }
@@ -518,8 +505,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& mjd1, const MJD& mjd2) try
 
   lower = input_start + samples / sampling_rate;
 
-  if (log)
-    *log << "dsp::TimeDivide::set_boundaries \n\t"
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_boundaries \n\t"
       "input start=" << input_start << "\n\t"
       "request start=" << mjd1 << "\n\t"
       "seconds diff=" << seconds << "\n\t"
@@ -532,8 +519,8 @@ void dsp::TimeDivide::set_boundaries (const MJD& mjd1, const MJD& mjd2) try
 
   upper = lower + division_ndat / sampling_rate;
 
-  if (log)
-    *log << "dsp::TimeDivide::set_boundaries \n\t"
+  if (Operation::verbose)
+    cerr << "dsp::TimeDivide::set_boundaries \n\t"
       "input start=" << input_start << "\n\t"
       "request end=" << mjd2 << "\n\t"
       "seconds diff=" << seconds << "\n\t"

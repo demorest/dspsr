@@ -23,15 +23,8 @@ using namespace std;
 bool dsp::Observation::verbose = false;
 
 dsp::Observation::Observation ()
-  : cerr (std::cerr.rdbuf())
 {
   init ();
-}
-
-//! Set verbosity ostream
-void dsp::Observation::set_ostream (std::ostream& os) const
-{
-  this->cerr.rdbuf( os.rdbuf() );
 }
 
 void dsp::Observation::init ()
@@ -339,18 +332,18 @@ bool dsp::Observation::contiguous (const Observation & obs) const
   return contiguous && combinable;
 }
 
+dsp::Observation::~Observation()
+{
+}
+
+#if 1
 dsp::Observation::Observation (const Observation & in_obs)
-  : cerr (in_obs.cerr.rdbuf())
 {
   init ();
   dsp::Observation::operator=(in_obs);
 }
 
-dsp::Observation::~Observation()
-{
-}
-
-dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
+const dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 {
   if (this == &in_obs)
     return *this;
@@ -391,6 +384,8 @@ dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 
   return *this;
 }
+
+#endif
 
 // returns the centre_frequency of the ichan channel
 double dsp::Observation::get_centre_frequency (unsigned ichan) const

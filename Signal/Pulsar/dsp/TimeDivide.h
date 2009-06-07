@@ -7,22 +7,22 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.14 $
-   $Date: 2009/04/16 05:41:29 $
+   $Revision: 1.15 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
 #define __baseband_dsp_TimeDivide_h
 
 #include "Pulsar/Predictor.h"
-#include "Reference.h"
+#include "OwnStream.h"
 
 namespace dsp {
 
   class Observation;
 
   //! Calculates the boundaries of a division of time
-  class TimeDivide {
+  class TimeDivide : public OwnStream {
 
   public:
     
@@ -114,9 +114,6 @@ namespace dsp {
 
     //@}
 
-    //! Set verbosity ostream
-    void set_ostream (std::ostream&) const;
-
   protected:
 
     //! The start time from which to begin dividing time
@@ -148,9 +145,6 @@ namespace dsp {
 
     //! If observation is set, round boundaries to integer samples
     void set_boundaries (const MJD& mjd1, const MJD& mjd2);
-
-    //! Stream to which verbose messages are sent
-    mutable std::ostream* log;
 
   private:
 

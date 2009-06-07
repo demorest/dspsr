@@ -814,10 +814,10 @@ void dsp::LoadToFold1::run () try
 
   if (log)
   {
-    scratch->set_ostream (*log);
+    scratch->set_cerr (*log);
 
     for (unsigned iul=0; iul < unloader.size(); iul++)
-      unloader[iul]->set_ostream (*log);
+      unloader[iul]->set_cerr (*log);
   }
 
   // ensure that all operations are using the local log and scratch space
@@ -826,7 +826,7 @@ void dsp::LoadToFold1::run () try
     if (log)
     {
       cerr << "dsp::LoadToFold1::run " << operations[iop]->get_name() << endl;
-      operations[iop] -> set_ostream (*log);
+      operations[iop] -> set_cerr (*log);
     }
     operations[iop] -> set_scratch (scratch);
   }

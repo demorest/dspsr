@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Sink.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/05/07 11:11:34 $
+   $Revision: 1.2 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __dsp_Sink_h
@@ -33,11 +33,11 @@ namespace dsp {
     ~Sink () { }
 
     //! Set verbosity ostream
-    void set_ostream (std::ostream& os) const
+    void set_cerr (std::ostream& os) const
     {
-      Operation::set_ostream (os);
+      Operation::set_cerr (os);
       if (this->input)
-	this->input->set_ostream(os);
+	this->input->set_cerr(os);
     }
 
   protected:

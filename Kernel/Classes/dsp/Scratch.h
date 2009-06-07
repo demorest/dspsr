@@ -7,21 +7,22 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Scratch.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/02/14 19:33:55 $
+   $Revision: 1.4 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __dsp_Scratch_h
 #define __dsp_Scratch_h
 
-#include "Reference.h"
+#include "OwnStream.h"
 
-namespace dsp {
-  
+namespace dsp
+{
   //! Scratch space that can be shared between Operations
   /*! This simple class manages a block of memory that can be used
     as a temporary scratch spaceshared by multiple Operations */
-  class Scratch : public Reference::Able {
+  class Scratch : public OwnStream
+  {
 
   public:
 
@@ -42,16 +43,10 @@ namespace dsp {
     //! Default scratch space
     static Scratch* get_default_scratch();
 
-    //! Set verbosity ostream
-    virtual void set_ostream (std::ostream& os) const;
-
   protected:
 
     char* working_space;
     size_t working_size;
-
-    //! Stream to which verbose messages are sent
-    mutable std::ostream cerr;
 
   };
   

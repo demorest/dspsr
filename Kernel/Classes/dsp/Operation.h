@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.43 $
-   $Date: 2009/05/04 02:14:30 $
+   $Revision: 1.44 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -17,12 +17,11 @@
 #include "dsp/dsp.h"
 
 #include "RealTimer.h"
-#include "Reference.h"
+#include "OwnStream.h"
 #include "environ.h"
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace dsp {
   
@@ -33,7 +32,7 @@ namespace dsp {
   /*! This pure virtual base class defines the manner in which various
     digital signal processing routines are performed on baseband data */
 
-  class Operation : public Reference::Able {
+  class Operation : public OwnStream {
 
   public:
 
@@ -110,9 +109,6 @@ namespace dsp {
     //! Set the scratch space
     virtual void set_scratch (Scratch*);
 
-    //! Set verbosity ostream
-    virtual void set_ostream (std::ostream& os) const;
-
   protected:
 
     //! Shared scratch space, if needed
@@ -147,9 +143,6 @@ namespace dsp {
 
     //! Set true when preparation optimizations are completed
     bool prepared;
-
-    //! Stream to which verbose messages are sent
-    mutable std::ostream cerr;
 
   };
   

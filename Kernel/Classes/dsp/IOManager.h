@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.27 $
-   $Date: 2009/05/04 02:14:30 $
+   $Revision: 1.28 $
+   $Date: 2009/06/07 01:22:34 $
    $Author: straten $ */
 
 
@@ -94,7 +94,7 @@ namespace dsp {
     virtual void set_scratch (Scratch*);
 
     //! Set verbosity ostream
-    virtual void set_ostream (std::ostream& os) const;
+    virtual void set_cerr (std::ostream& os) const;
 
   protected:
 
