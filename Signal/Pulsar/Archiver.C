@@ -131,6 +131,9 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     throw Error (InvalidState, "dsp::Archiver::unload",
 		 "Profile data not provided");
 
+  if (verbose)
+    cerr << "dsp::Archiver::unload profiles=" << _profiles << endl;
+
   this->profiles = _profiles;
 
   uint64 ndat_folded = profiles->get_ndat_folded();
@@ -352,17 +355,22 @@ try
   
   if (ext)
   {
+    if (verbose)
+      cerr << "dsp::Archiver::set Pulsar::Archive FITSHdrExtension" << endl;
+
     // Make sure the start time is aligned with pulse phase zero
     // as this is what the PSRFITS format expects.
 
     MJD initial = phase->get_start_time();
 
-    Phase inphs = phase->get_folding_predictor()->phase(initial);
+    if (phase->has_folding_predictor())
+    {
+      Phase inphs = phase->get_folding_predictor()->phase(initial);
+      double dtime = inphs.fracturns() * phase->get_folding_period();
+      initial -= dtime;
+    }
 
-    double dtime = inphs.fracturns() * phase->get_folding_period();
-    initial -= dtime;
-
-    ext->set_start_time(initial);
+    ext->set_start_time (initial);
 
     // In keeping with tradition, I'll set this to a value that should
     // work in most places for the next 50 years or so ;)
@@ -380,7 +388,7 @@ try
 
     ext->set_date_str(time_str);
   }
-  
+
   archive-> set_telescope ( phase->get_telescope() );
 
   archive-> set_type ( phase->get_type() );
@@ -461,7 +469,7 @@ try
     archive -> add_extension ( extensions[iext] );
 
   // set_model must be called after the Integration::MJD has been set
-  if( phase->get_folding_predictor() )
+  if( phase->has_folding_predictor() )
   {
     if (verbose)
       cerr << "dsp::Archiver::set has predictor" << endl;
@@ -470,7 +478,7 @@ try
   else if (verbose)
     cerr << "dsp::Archiver::set PhaseSeries has no predictor" << endl;
 
-  if (phase->get_pulsar_ephemeris())
+  if (phase->has_pulsar_ephemeris())
     archive-> set_ephemeris( phase->get_pulsar_ephemeris(), false );
 
   archive-> set_filename (get_filename (phase));
