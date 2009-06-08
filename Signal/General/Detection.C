@@ -55,6 +55,11 @@ void dsp::Detection::set_output_state (Signal::State _state)
 
 }
 
+void dsp::Detection::prepare ()
+{
+  resize_output ();
+}
+
 //! Detect the input data
 void dsp::Detection::transformation () try
 {

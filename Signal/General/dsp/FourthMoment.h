@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FourthMoment.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/11/21 00:27:54 $
+   $Revision: 1.2 $
+   $Date: 2009/06/08 19:45:01 $
    $Author: straten $ */
 
 
@@ -28,6 +28,9 @@ namespace dsp {
     //! Constructor
     FourthMoment ();
     
+    //! Prepare the output TimeSeries attributes
+    void prepare ();
+
   protected:
 
     //! Detect the input data

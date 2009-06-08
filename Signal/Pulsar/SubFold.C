@@ -93,6 +93,10 @@ void dsp::SubFold::prepare ()
       cerr << "dsp::SubFold::prepare set divider start time=" 
 	   << input->get_start_time() << endl;
 
+    if (input->get_start_time() == MJD::zero)
+      throw Error (InvalidState, "dsp::SubFold::prepare",
+		   "input start time not set");
+
     divider.set_start_time (input->get_start_time());
   }
 

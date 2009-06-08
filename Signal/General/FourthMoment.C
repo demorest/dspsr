@@ -26,8 +26,7 @@ dsp::FourthMoment::FourthMoment ()
 {
 }
 
-//! Detect the input data
-void dsp::FourthMoment::transformation () try
+void dsp::FourthMoment::prepare ()
 {
   if (input->get_state() != Signal::Stokes)
     throw Error (InvalidState, "dsp::FourthMoment::transformation",
@@ -39,9 +38,15 @@ void dsp::FourthMoment::transformation () try
 
   output->copy_configuration( input );
   output->set_state( Signal::FourthMoment );
-  output->set_ndim( 10 );
+  output->set_ndim( 14 );
   output->set_npol( 1 );
   output->resize( input->get_ndat() );
+}
+
+//! Detect the input data
+void dsp::FourthMoment::transformation () try
+{
+  prepare ();
 
   const unsigned nchan = output->get_nchan();
   const unsigned ndat = output->get_ndat();
@@ -53,12 +58,16 @@ void dsp::FourthMoment::transformation () try
 
     for (unsigned idat=0; idat<ndat; idat++)
     {
+      memcpy (out, in, 4 * sizeof(float));
+      out += 4;
+
       for (unsigned i=0; i<4; i++)
 	for (unsigned j=i; j<4; j++)
 	{
 	  *out = in[i] * in[j];
 	  out ++;
 	}
+
       in += 4;
     }
   }
