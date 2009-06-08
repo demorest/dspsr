@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.49 $
-   $Date: 2009/06/07 01:22:34 $
+   $Revision: 1.50 $
+   $Date: 2009/06/08 07:39:39 $
    $Author: straten $ */
 
 #ifndef __dsp_Transformation_h
@@ -90,9 +90,11 @@ namespace dsp {
     {
       Operation::set_cerr (os);
       if (this->input)
-	this->input->set_cerr (os);
+        this->input->set_cerr (os);
       if (this->output)
-	this->output->set_cerr (os);
+        this->output->set_cerr (os);
+      if (this->buffering_policy)
+        this->buffering_policy->set_cerr (os);
     }
 
   protected:
