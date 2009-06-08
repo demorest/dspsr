@@ -73,7 +73,7 @@ void dsp::InputBuffering::Share::set_next_start (uint64 next) try
   ThreadContext::Lock lock (context);
 
   if (Operation::verbose)
-    cerr << "dsp::InputBuffering::Share::set_next_start working" << endl;
+    cerr << "dsp::InputBuffering::Share::set_next_start next=" << next << endl;
 
   buffer->set_target (target);
   buffer->set_next_start (next);
@@ -107,6 +107,12 @@ void dsp::InputBuffering::Share::pre_transformation () try
 
   while ( buffer->get_next_contiguous() != want )
   {
+    if (buffer->get_next_contiguous() > want)
+      throw Error (InvalidState, 
+                   "dsp::InputBuffering::Share::pre_transformation",
+                   "have=%"PRIu64" > want=%"PRIu64,
+                   buffer->get_next_contiguous(), want);
+
     if (Operation::verbose)
       cerr << "dsp::InputBuffering::Share::pre_transformation want=" << want 
 	   << "; have=" << buffer->get_next_contiguous() << endl;
