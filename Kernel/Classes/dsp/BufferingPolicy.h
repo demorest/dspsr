@@ -7,14 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BufferingPolicy.h,v $
-   $Revision: 1.5 $
-   $Date: 2006/08/04 00:08:09 $
+   $Revision: 1.6 $
+   $Date: 2009/06/08 07:39:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_BufferingPolicy_h
 #define __baseband_dsp_BufferingPolicy_h
 
-#include "ReferenceAble.h"
+#include "OwnStream.h"
 #include "environ.h"
 
 #include <string>
@@ -24,7 +24,7 @@ namespace dsp {
   //! Defines the interface by which Transformation data are buffered
   /*! This pure virtual base class defines the interface by which
     Transformation input and/or output may be buffered. */
-  class BufferingPolicy : public Reference::Able {
+  class BufferingPolicy : public OwnStream {
     
   public:
     
