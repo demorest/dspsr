@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.33 $
-   $Date: 2009/06/03 04:55:08 $
+   $Revision: 1.34 $
+   $Date: 2009/06/08 19:45:01 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -95,6 +95,7 @@ namespace dsp {
 
     //! Get the hits array
     unsigned* get_hits () { return &hits[0]; }
+    const unsigned* get_hits () const { return &hits[0]; }
 
     //! Set the hits in all bins
     void set_hits (unsigned value);

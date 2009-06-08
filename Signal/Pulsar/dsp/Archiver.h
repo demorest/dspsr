@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.29 $
-   $Date: 2009/06/06 21:43:30 $
+   $Revision: 1.30 $
+   $Date: 2009/06/08 19:45:01 $
    $Author: straten $ */
 
 
@@ -18,18 +18,20 @@
 #include "dsp/PhaseSeriesUnloader.h"
 #include "Pulsar/Archive.h"
 
-namespace Pulsar {
+namespace Pulsar
+{
   class Interpreter;
   class Integration;
   class Profile;
 
+  class MoreProfiles;
   class dspReduction;
   class TwoBitStats;
   class Passband;
 }
 
-namespace dsp {
-
+namespace dsp
+{
   class Response;
   class Operation;
   class ExcisionUnpacker;
@@ -80,6 +82,9 @@ namespace dsp {
 
     //! Perform any clean up tasks before completion
     void finish ();
+
+    //! Get the effective number of polarizations in the output archive
+    unsigned get_npol (const PhaseSeries* phase) const;
 
     //! Set the Pulsar::Archive with the PhaseSeries data
     void set (Pulsar::Archive* archive, const PhaseSeries* phase);
@@ -150,12 +155,18 @@ namespace dsp {
     //! Set the Pulsar::Passband Extension with the dsp::Response
     void set (Pulsar::Passband* pband);
 
+    //! Convert raw moments to central moments of means
+    void raw_to_central (unsigned ichan,
+			 Pulsar::MoreProfiles* moments,
+			 const Pulsar::Integration* means,
+			 const unsigned* hits);
+
   private:
 
-    //! Hack attribute that indicates whether the archive is dedispersed already [false]
+    //! Data are already dedispersed [default: false]
     bool archive_dedispersed;
 
-    //! String to go in the dspReduction Extension of output archive ["Software Unknown"]
+    //! String to go in the dspReduction Extension of output archive
     std::string archive_software;
 
     //! Used only internally
@@ -163,6 +174,9 @@ namespace dsp {
 
     //! The Pulsar::Archive instance to which data will be unloaded
     Reference::To<Pulsar::Archive> archive;
+
+    //! Number of fourth moments contained in output PhaseSeries
+    mutable unsigned fourth_moments;
   };
 
 }

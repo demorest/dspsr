@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.16 $
-   $Date: 2009/04/14 10:38:05 $
+   $Revision: 1.17 $
+   $Date: 2009/06/08 19:45:01 $
    $Author: straten $ */
 
 
@@ -45,6 +45,9 @@ namespace dsp {
     //! Constructor
     Detection ();
     
+    //! Prepare the output TimeSeries attributes
+    void prepare ();
+
     //! Set the state of the output data
     void set_output_state (Signal::State _state);
     //! Get the state of the output data

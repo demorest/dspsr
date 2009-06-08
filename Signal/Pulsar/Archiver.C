@@ -15,6 +15,7 @@
 #include "Pulsar/Interpreter.h"
 #include "Pulsar/Integration.h"
 #include "Pulsar/Profile.h"
+#include "Pulsar/FourthMoments.h"
 
 #include "Pulsar/Check.h"
 
@@ -52,6 +53,7 @@ dsp::Archiver::Archiver ()
   profiles = 0;
   minimum_integration_length = 0;
   store_dynamic_extensions = true;
+  fourth_moments = 0;
 }
 
 dsp::Archiver::Archiver (const Archiver& copy)
@@ -293,6 +295,32 @@ catch (Error& error)
   throw error += "dsp::Archiver::add Pulsar::Archive";
 }
 
+unsigned dsp::Archiver::get_npol (const PhaseSeries* phase) const
+{
+  unsigned npol = phase->get_npol();
+  unsigned ndim = phase->get_ndim();
+
+  unsigned effective_npol = npol * ndim;
+
+  fourth_moments = 0;
+
+  if ( phase->get_state() == Signal::FourthMoment )
+  {
+    if (verbose)
+      cerr << "dsp::Archiver::get_npol fourth moments" << endl;
+
+    if (effective_npol != 14)
+      throw Error (InvalidParam, "dsp::Archiver::get_npol",
+		   "state==FourthMoment and PhaseSeries::npol=%u != 14", 
+		   effective_npol);
+
+    fourth_moments = effective_npol - 4;
+    effective_npol = 4;
+  }
+
+  return effective_npol;
+}
+
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 try
 {
@@ -307,20 +335,17 @@ try
     throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Archive",
 		 "no PhaseSeries");
 
-  unsigned npol = phase->get_npol();
-  unsigned nchan = phase->get_nchan();
-  unsigned nbin = phase->get_nbin();
-  unsigned ndim = phase->get_ndim();
-  unsigned nsub = 1;
-
-  unsigned effective_npol = npol * ndim;
+  const unsigned npol  = get_npol (phase);
+  const unsigned nchan = phase->get_nchan();
+  const unsigned nbin  = phase->get_nbin();
+  const unsigned nsub  = 1;
 
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
-	 << " npol=" << effective_npol << " nchan=" << nchan 
-	 << " nbin=" << nbin << endl;
+	 << " npol=" << npol << " nchan=" << nchan 
+	 << " nbin=" << nbin << " fourth=" << fourth_moments << endl;
 
-  archive-> resize (nsub, effective_npol, nchan, nbin);
+  archive-> resize (nsub, npol, nchan, nbin);
 
   Pulsar::FITSHdrExtension* ext;
   ext = archive->get<Pulsar::FITSHdrExtension>();
@@ -359,14 +384,20 @@ try
   archive-> set_telescope ( phase->get_telescope() );
 
   archive-> set_type ( phase->get_type() );
-  if (phase->get_state() == Signal::NthPower ||
-      phase->get_state() == Signal::PP_State ||
-      phase->get_state() == Signal::QQ_State )
+
+  switch (phase->get_state())
   {
+  case Signal::NthPower:
+  case Signal::PP_State:
+  case Signal::QQ_State:
     archive->set_state (Signal::Intensity);
-  }
-  else
-  {
+    break;
+  
+  case Signal::FourthMoment:
+    archive->set_state (Signal::Stokes);
+    break;
+
+  default:
     archive-> set_state ( phase->get_state() );
   }
 
@@ -461,20 +492,12 @@ try
   if (verbose)
     cerr << "dsp::Archiver::set Pulsar::Integration" << endl;
 
-  unsigned npol = phase->get_npol();
-  unsigned nchan = phase->get_nchan();
-  unsigned ndim = phase->get_ndim();
+  const unsigned npol  = phase->get_npol();
+  const unsigned nchan = phase->get_nchan();
+  const unsigned ndim  = phase->get_ndim();
+  const unsigned nbin  = phase->get_nbin();
 
-  unsigned effective_npol = npol;
-
-  if (nsub > 1)
-  {
-    if (ndim != nsub)
-      cerr << "YIKES!" << endl;
-    ndim = 1;
-  }
-  else
-    effective_npol *= ndim;
+  const unsigned effective_npol = get_npol (phase);
 
   if ( integration->get_npol() != effective_npol)
     throw Error (InvalidParam, "dsp::Archiver::set (Pulsar::Integration)",
@@ -502,16 +525,35 @@ try
     offchan = nchan/2; // swap the channels (passband re-order)
 
   for (unsigned ichan=0; ichan<nchan; ichan++)
+  {
+    unsigned chan = (ichan+offchan)%nchan;
+
+    Reference::To<Pulsar::MoreProfiles> more;
+
+    if (fourth_moments)
+    {
+      more = new Pulsar::FourthMoments;
+      more->resize( fourth_moments, nbin );
+    }
+
+    if (more)
+      integration->get_Profile(0,chan)->add_extension(more);
+
     for (unsigned ipol=0; ipol<npol; ipol++)
+    {
       for (unsigned idim=0; idim<ndim; idim++)
       {
 	unsigned poln = ipol*ndim+idim;
-	unsigned chan = (ichan+offchan)%nchan;
 
 	if (nsub > 1)
 	  idim = isub;
 
-	Pulsar::Profile* profile = integration->get_Profile(poln, chan);
+	Pulsar::Profile* profile = 0;
+
+	if (more && poln >= effective_npol)
+	  profile = more->get_Profile (poln - effective_npol);
+	else
+	  profile = integration->get_Profile (poln, chan);
 
 	if (verbose)
 	  cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
@@ -519,13 +561,52 @@ try
 
 	set (profile, phase, ichan, ipol, idim);
       }
+    }
+
+    if (fourth_moments)
+      raw_to_central (chan, more, integration, phase->get_hits());
+  }
 }
 catch (Error& error)
 {
   throw error += "dsp::Archiver::set Pulsar::Integration";
 }
 
+/*! subtract the mean squared from each moment */
+void dsp::Archiver::raw_to_central (unsigned ichan,
+				    Pulsar::MoreProfiles* moments,
+				    const Pulsar::Integration* means,
+				    const unsigned* hits)
+{
+  const unsigned npol = means->get_npol();
+  const unsigned nbin = means->get_nbin();
 
+  unsigned index = 0;
+  for (unsigned ipol=0; ipol<npol; ipol++)
+  {
+    const float* mean_i = means->get_Profile(ipol, ichan)->get_amps();
+
+    for (unsigned jpol=ipol; jpol<npol; jpol++)
+    {
+      const float* mean_j = means->get_Profile(jpol, ichan)->get_amps();
+
+      float* moment = moments->get_Profile(index)->get_amps();
+
+      for (unsigned ibin=0; ibin < nbin; ibin++)
+      {
+	double pi = mean_i[ibin];
+	double pj = mean_j[ibin];
+
+	// divide by hits again to form variance of mean
+	moment[ibin] = (moment[ibin] - pi*pj) / hits[ibin];
+      }
+
+      index ++;
+    }
+  }
+
+  assert (index == moments->get_size());
+}
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
 			 const PhaseSeries* phase,
