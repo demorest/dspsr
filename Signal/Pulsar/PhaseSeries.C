@@ -95,15 +95,33 @@ void dsp::PhaseSeries::set_folding_predictor (const Pulsar::Predictor* p)
 }
 
 //! Inquire the phase polynomial(s) with which to fold data
-const Pulsar::Predictor* dsp::PhaseSeries::get_folding_predictor () const
+const Pulsar::Predictor* dsp::PhaseSeries::get_folding_predictor () const try
 {
-  return folding_predictor.ptr();
+  return folding_predictor;
+}
+catch (Error& error)
+{
+  throw error += "dsp::PhaseSeries::get_folding_predictor";
+}
+
+bool dsp::PhaseSeries::has_folding_predictor () const
+{
+  return folding_predictor;
 }
 
 //! Inquire the ephemeris used to fold the data
-const Pulsar::Parameters* dsp::PhaseSeries::get_pulsar_ephemeris () const
+const Pulsar::Parameters* dsp::PhaseSeries::get_pulsar_ephemeris () const try
 {
-  return pulsar_ephemeris.ptr();
+  return pulsar_ephemeris;
+}
+catch (Error& error)
+{
+  throw error += "dsp::PhaseSeries::get_pulsar_ephemeris";
+}
+
+bool dsp::PhaseSeries::has_pulsar_ephemeris () const
+{
+  return pulsar_ephemeris;
 }
 
 //! Get the mid-time of the integration

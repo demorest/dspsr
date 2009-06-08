@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.34 $
-   $Date: 2009/06/08 19:45:01 $
+   $Revision: 1.35 $
+   $Date: 2009/06/08 23:06:57 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -69,11 +69,15 @@ namespace dsp {
     void set_folding_predictor (const Pulsar::Predictor*);
     //! Get the phase predictor with which the data were folded
     const Pulsar::Predictor* get_folding_predictor () const;
-
+    //! Return true if the folding predictor attribute is set
+    bool has_folding_predictor () const;
+     
     //! Set the pulsar ephemeris used to fold.
     void set_pulsar_ephemeris (const Pulsar::Parameters*);
     //! Returns the pulsar ephemeris stored
-    const Pulsar::Parameters* get_pulsar_ephemeris() const;
+    const Pulsar::Parameters* get_pulsar_ephemeris () const;
+    //! Return true if the pulsar ephemeris attribute is set
+    bool has_pulsar_ephemeris () const;
 
     //! Get the number of seconds integrated
     double get_integration_length () const { return integration_length; }
