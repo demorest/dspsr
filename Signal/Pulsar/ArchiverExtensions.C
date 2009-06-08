@@ -123,11 +123,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
 
     if (convolution)
     {
-      if ( !convolution->has_response() )
-        cerr << method << " Convolution\n   "
-             << convolution->get_name() << " with no Response" << endl;
-
-      else
+      if ( convolution->has_response() )
       {
         if (verbose) cerr << method << " "
                              "Convolution with Response" << endl;
