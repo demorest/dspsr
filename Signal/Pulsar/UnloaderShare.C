@@ -139,13 +139,13 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
   if (istore < storage.size())
   {
     // wake up any threads waiting for completion
-
-    for (istore=0; istore < storage.size(); istore++)
-      if (storage[istore]->get_finished ())
-      {
-        context->broadcast ();
-	break;
-      }
+    if (wait_all)
+      for (istore=0; istore < storage.size(); istore++)
+        if (storage[istore]->get_finished ())
+        {
+          context->broadcast ();
+          break;
+        }
   }
   else
   {
@@ -198,10 +198,10 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
 
 void dsp::UnloaderShare::finish_all (unsigned contributor)
 {
-  ThreadContext::Lock lock (context);
-
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::finish_all contributor=" << contributor << endl;
+
+  ThreadContext::Lock lock (context);
 
   if (finished_all[contributor])
     throw Error (InvalidParam, "dsp::UnloaderShare::finish_all",
@@ -212,7 +212,8 @@ void dsp::UnloaderShare::finish_all (unsigned contributor)
   for (unsigned istore=0; istore < storage.size(); istore++)
     storage[istore]->set_finished (contributor);
 
-  context->signal ();
+  if (wait_all)
+    context->broadcast ();
 }
 
 bool dsp::UnloaderShare::all_finished ()
@@ -225,6 +226,8 @@ bool dsp::UnloaderShare::all_finished ()
 
 void dsp::UnloaderShare::finish ()
 {
+  ThreadContext::Lock lock (context);
+
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::finish size=" << storage.size() << endl;
 
@@ -273,7 +276,6 @@ void dsp::UnloaderShare::nonblocking_unload (unsigned istore, Submit* submit)
   Reference::To<Storage> store = storage[istore];
   storage.erase (storage.begin() + istore);
 
-  context->broadcast ();
   context->unlock ();
 
   uint64 division = store->get_division();
@@ -464,6 +466,8 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
 
 void dsp::UnloaderShare::Storage::wait_all (ThreadContext* context)
 {
+  if (Operation::verbose)
+    cerr << "dsp::UnloaderShare::Storage::wait_all" << endl;
   while (!get_finished())
     context->wait();
 }
