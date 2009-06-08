@@ -347,7 +347,9 @@ void dsp::Filterbank::transformation ()
 
   // set the input sample
   int64 input_sample = input->get_input_sample();
-  if (input_sample >= 0)
+  if (output_ndat == 0)
+    output->set_input_sample (0);
+  else if (input_sample >= 0)
     output->set_input_sample ((input_sample / nsamp_step) * nkeep * time_res);
 
   if (verbose)
@@ -356,7 +358,11 @@ void dsp::Filterbank::transformation ()
             " input_sample=" << output->get_input_sample() << endl;
 
   if (!npart)
+  {
+    if (verbose)
+      cerr << "dsp::Filterbank::transformation empty result" << endl;
     return;
+  }
 
   if (freq_res == 1 && output_order == TimeSeries::OrderTFP)
   {
@@ -634,9 +640,7 @@ void dsp::Filterbank::tfp_filterbank ()
   {
     const float* indat = input->get_datptr (input_ichan, ipol);
 
-    uint64 ipart=0;
-#pragma omp parallel for private(ipart)
-    for (ipart=0; ipart < npart; ipart++)
+    for (uint64 ipart=0; ipart < npart; ipart++)
     {
       if (input->get_state() == Signal::Nyquist)
 	      forward->frc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
