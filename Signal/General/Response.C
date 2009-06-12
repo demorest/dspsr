@@ -32,6 +32,7 @@ dsp::Response::Response ()
   npol = 2;
   ndim = 1;
   nchan = 1;
+  step  = 1;
 }
 
 //! Destructor
@@ -59,6 +60,7 @@ const dsp::Response& dsp::Response::operator = (const Response& response)
   whole_swapped = response.whole_swapped;
   chan_swapped = response.chan_swapped;
   dc_centred = response.dc_centred;
+  step = response.step;
 
   changed.send (*this);
   return *this;
@@ -391,7 +393,9 @@ dsp::Response::operate (float* spectrum, unsigned poln, int ichan_start, unsigne
   register float d_i;
   register float f_r;
   register float f_i;
-  
+
+  // cerr << "dsp::Response::operate step=" << step << endl;
+
   for (unsigned ipt=0; ipt<npts; ipt++)
   {
     d_r = d_from[0];
@@ -405,6 +409,8 @@ dsp::Response::operate (float* spectrum, unsigned poln, int ichan_start, unsigne
     d_from += 2 * step;
     f_p += 2;
   }
+
+  // cerr << "dsp::Response::operate done" << endl;
 }
 
 // /////////////////////////////////////////////////////////////////////////
