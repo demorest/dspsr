@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.28 $
-   $Date: 2009/06/05 06:54:34 $
+   $Revision: 1.29 $
+   $Date: 2009/06/12 06:18:52 $
    $Author: straten $ */
 
 #ifndef __Response_h
@@ -137,8 +137,11 @@ namespace dsp {
 
     //! Called when the Response has been changed
     Callback<Response> changed;
+    
 
   protected:
+  
+    mutable unsigned step;
 
     //! Swap halves of bandpass(es)
     void swap (bool each_chan = true);

@@ -45,6 +45,7 @@ dsp::Response::Response (const Response& response)
   operator = (response);
 }
 
+
 //! Assignment operator
 const dsp::Response& dsp::Response::operator = (const Response& response)
 {
@@ -77,10 +78,24 @@ const dsp::Response& dsp::Response::operator *= (const Response& response)
   if (npol < response.npol)
     throw Error (InvalidParam, "dsp::Response::operator *=",
 		 "npol=%d < *.npol=%d", npol, response.npol);
+   
+  /*
+    perform A = A * B where
+    A = this->buffer
+    B = response->buffer
+    (so B operates on A's buffer)
+  */
 
-  for (unsigned ipol=0; ipol < npol; ipol++)
-    for (unsigned ichan=0; ichan < nchan; ichan++)
-      response.operate (buffer + offset*ipol + ichan*ndat*ndim, ipol, ichan);
+  unsigned original_step = response.step;
+
+  response.step = 4;
+
+   for (unsigned istep=0; istep < step; istep++)
+    for (unsigned ipol=0; ipol < npol; ipol++)
+     for (unsigned ichan=0; ichan < nchan; ichan++)
+     	response.operate (buffer + offset*ipol + ichan*ndat*ndim + istep, ipol, ichan);
+
+  response.step = original_step;
 
   changed.send (*this);
   return *this;
@@ -341,7 +356,6 @@ dsp::Response::operate (float* spectrum, unsigned poln, int ichan_start, unsigne
   assert (ndim == 2);
 
   unsigned ipol = poln;
-  float* data = spectrum;
 
   // one filter may apply to two polns
   if (ipol >= npol)
@@ -356,10 +370,15 @@ dsp::Response::operate (float* spectrum, unsigned poln, int ichan_start, unsigne
   else
     npts *= nchan_op;
 
-  register float* d_from = data;
-  register float* d_to = data;
+  register float* d_from = spectrum;
   register float* f_p = buffer + offset * ipol + ichan_start * ndat * ndim;
 
+  /*
+    this operates on spectrum; i.e.  A = A * B where
+    A = spectrum
+    B = this->buffer
+  */
+    
 #ifdef _DEBUG
   cerr << "dsp::Response::operate nchan=" << nchan << " ipol=" << ipol 
        << " buf=" << buffer << " f_p=" << f_p
@@ -373,14 +392,18 @@ dsp::Response::operate (float* spectrum, unsigned poln, int ichan_start, unsigne
   register float f_r;
   register float f_i;
   
-  for (unsigned ipt=0; ipt<npts; ipt++) {
-    d_r = *d_from; d_from ++;
-    d_i = *d_from; d_from ++;
-    f_r = *f_p; f_p ++;
-    f_i = *f_p; f_p ++;
+  for (unsigned ipt=0; ipt<npts; ipt++)
+  {
+    d_r = d_from[0];
+    d_i = d_from[1];
+    f_r = f_p[0];
+    f_i = f_p[1];
 
-    *d_to = f_r * d_r - f_i * d_i; d_to ++;
-    *d_to = f_i * d_r + f_r * d_i; d_to ++;
+    d_from[0] = f_r * d_r - f_i * d_i;
+    d_from[1] = f_i * d_r + f_r * d_i;
+
+    d_from += 2 * step;
+    f_p += 2;
   }
 }
 
