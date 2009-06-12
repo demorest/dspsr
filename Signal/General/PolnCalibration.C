@@ -97,10 +97,10 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
 
     cpy_attributes (input , archive);
 
-    unsigned nchan = 128;
+    // unsigned nchan = 128;
 
-    // 1 sub-integration, 4 polarizations, nchan channels
-    archive->resize (1, 4, nchan);
+    // 1 sub-integration, 4 polarizations, ndat channels
+    archive->resize (1, 4, ndat);
 
     // the following line is equivalent to
     // Pulsar::Database* dbase = 0;
@@ -117,21 +117,25 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
     criterion.check_coordinates = false;
     Pulsar::Database::set_default_criterion (criterion);
 
-    Reference::To<Pulsar::PolnCalibrator> pcal;
-
     type = new Pulsar::CalibratorTypes::SingleAxis;
 
 
     pcal = dbase->generatePolnCalibrator (archive , type);
+}
 
-    cerr << "PCAL LOADED nchan=" << pcal->get_nchan() << endl;
+void dsp::PolnCalibration::match (const Response* boss)
+{
+  unsigned ndat = boss->get_ndat() * boss->get_nchan();
 
-    // pcal->set_response_nchan (128);
+    cerr << "PCAL WANT ndat=" << ndat << endl;
 
-    vector < Jones<float> > R (nchan);
-     // unsigned nchan = pcal->get_nchan();
+    pcal->set_response_nchan (ndat);
+
+    cerr << "PCAL LOADED nchan=" << pcal->get_response_nchan() << endl;
+
+    vector < Jones<float> > R (ndat);
  
-    for ( unsigned ichan = 0 ; ichan < channels ; ichan++)
+    for ( unsigned ichan = 0 ; ichan < ndat; ichan++)
       R[ichan] = pcal -> get_response (ichan);
 
     set (R);
