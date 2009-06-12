@@ -100,7 +100,7 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
     // unsigned nchan = 128;
 
     // 1 sub-integration, 4 polarizations, ndat channels
-    archive->resize (1, 4, ndat);
+    // archive->resize (1, 4, ndat);
 
     // the following line is equivalent to
     // Pulsar::Database* dbase = 0;
