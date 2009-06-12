@@ -277,7 +277,7 @@ void parse_error (char c, const char* arg);
 void parse_options (int argc, char** argv)
 {
   static char* args =
-    "2:4a:Ab:B:c:C:d:D:e:E:f:F:G:hiIj:J:k:Kl:L:"
+    "2:4a:Ab:B:c:C:d:D:e:E:f:F:g:G:hiIj:J:k:Kl:L:"
     "m:M:n:N:oO:p:P:qQrRsS:t:T:U:vVWx:X:yYzZ:";
 
   string stropt;
@@ -424,6 +424,10 @@ void parse_options (int argc, char** argv)
     
     case 'f':
       centre_frequency = strtod (optarg, 0);
+      break;
+
+    case 'g':
+      config->calibrator_database_filename = optarg;
       break;
 
     case 'G': {

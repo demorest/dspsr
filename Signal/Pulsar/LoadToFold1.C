@@ -19,6 +19,7 @@
 #include "dsp/ResponseProduct.h"
 #include "dsp/DedispersionSampleDelay.h"
 #include "dsp/RFIFilter.h"
+#include "dsp/PolnCalibration.h"
 
 #include "dsp/Filterbank.h"
 #include "dsp/SampleDelay.h"
@@ -168,6 +169,7 @@ void dsp::LoadToFold1::prepare () try
   else
     kernel = 0;
 
+
   if (!config->single_pulse && !passband)
     passband = new Response;
 
@@ -192,6 +194,32 @@ void dsp::LoadToFold1::prepare () try
 
       response = response_product;
     }
+
+  }
+
+  if (!config->calibrator_database_filename.empty())
+  {
+    //unsigned total = response->get_ndat() * response->get_nchan();
+
+      dsp::PolnCalibration* polcal = new PolnCalibration;
+   
+       polcal-> set_database_filename (config->calibrator_database_filename);
+       //polcal-> set_ndat (total);
+       //polcal-> set_nchan (1);
+   
+      if (kernel)
+       {
+         if (!response_product)
+	   response_product = new ResponseProduct;
+    
+          response_product->add_response (polcal);
+          response_product->add_response (kernel);
+
+	  response_product->set_copy_index (0);
+	  response_product->set_match_index (1);
+
+          response = response_product;
+     }
 
   }
 
