@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ResponseProduct.h,v $
-   $Revision: 1.5 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.6 $
+   $Date: 2009/06/12 06:18:56 $
+   $Author: straten $ */
 
 #ifndef __ResponseProduct_h
 #define __ResponseProduct_h
@@ -46,6 +46,12 @@ namespace dsp {
     //! Add a response to the product
     void add_response (Response* response);
 
+    //! Set the element that is copied
+    void set_copy_index (unsigned i);
+
+    //! Set the element to which all others are matched
+    void set_match_index (unsigned i);
+    
   protected:
 
     //! The responses
@@ -53,6 +59,9 @@ namespace dsp {
 
     //! Flag set true when a component has changed
     bool component_changed;
+
+    unsigned copy_index;
+    unsigned match_index;
 
     //! Called when a component has changed
     void set_component_changed (const Response& response);

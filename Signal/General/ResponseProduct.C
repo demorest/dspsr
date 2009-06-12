@@ -8,6 +8,7 @@
 
 dsp::ResponseProduct::ResponseProduct ()
 {
+  match_index = copy_index = 0;
 }
 
 //! Destructor
@@ -46,6 +47,20 @@ void dsp::ResponseProduct::set_component_changed (const Response& response)
   component_changed = true;
 }
 
+    //! Set the element that is copied
+void dsp::ResponseProduct::set_copy_index (unsigned i)
+{
+  copy_index = i;
+}
+
+//! Set the element to which all others are matched
+void dsp::ResponseProduct::set_match_index (unsigned i)
+{
+  match_index = i;
+}
+
+using namespace std;
+
 void dsp::ResponseProduct::build ()
 {
   if (response.size() == 0)
@@ -55,13 +70,25 @@ void dsp::ResponseProduct::build ()
   if (!component_changed)
     return;
 
-  throw Error (InvalidState, "dsp::ResponseProduct::build",
-	       "in a state of transition");
+  cerr << "ORDER" << endl;
 
-  for (unsigned iresp=1; iresp < response.size(); iresp++)
-    response[iresp]->match (response[0]);
+  for (unsigned iresp=0; iresp < response.size(); iresp++)
+    cerr << "ORDER " << iresp << " ndim=" << response[iresp]->get_ndim() << endl;
 
-  Response::operator = (*response[0]);
+  cerr  << "MATCHING" << endl;
+
+  for (unsigned iresp=0; iresp < response.size(); iresp++)
+    if (iresp != match_index)
+      response[iresp]->match (response[match_index]);
+
+  cerr << "MULTIPLYING" << endl;
+
+  Response::operator = (*response[copy_index]);
   for (unsigned iresp=1; iresp < response.size(); iresp++)
-     Response::operator *= (*response[iresp]);
+  {
+    cerr << "RESP=" << iresp << endl;
+    Response::operator *= (*response[iresp]);
+  }
+
+  cerr << "DONE!" << endl;
 }
