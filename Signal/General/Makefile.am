@@ -13,7 +13,7 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/Convolution.h dsp/Dedispersion.h dsp/DedispersionHistory.h \
 	dsp/RFIFilter.h dsp/DedispersionSampleDelay.h dsp/Response.h   \
 	dsp/Rescale.h dsp/BandpassMonitor.h dsp/PScrunch.h	       \
-	dsp/FourthMoment.h
+	dsp/FourthMoment.h dsp/PolnCalibration.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	cross_detect.ic stokes_detect.c stokes_detect.h		      \
@@ -23,7 +23,8 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	Chomper.C Response.C ResponseProduct.C Convolution.C	      \
 	Dedispersion.C SampleDelay.C DedispersionHistory.C \
 	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	      \
-	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C
+	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C \
+	PolnCalibration.C
 
 bin_PROGRAMS = dmsmear digitxt digimon digihist
 
@@ -31,6 +32,10 @@ dmsmear_SOURCES = dmsmear.C
 digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
 digihist_SOURCES = digihist.C
+
+check_PROGRAMS = test_PolnCalibration
+
+test_PolnCalibration_SOURCES = test_PolnCalibration.C
 
 if HAVE_PGPLOT
 
