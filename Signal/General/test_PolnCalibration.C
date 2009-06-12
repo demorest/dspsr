@@ -20,6 +20,7 @@
 #include "Pulsar/Receiver.h"
 #include "dsp/PolnCalibration.h"
 #include "dsp/Dedispersion.h"
+#include "dsp/ResponseProduct.h"
 
 #include "Error.h"
 
@@ -35,6 +36,27 @@ void usage ()
 }
 
 
+dsp::Response* ravi_kernel (dsp::Response* resp, dsp::Observation* obs,const std::string& name )
+{
+   unsigned total = resp->get_ndat() * resp->get_nchan();
+   
+   dsp::PolnCalibration* polcal = new dsp::PolnCalibration;
+   
+   polcal-> set_database_filename (name);
+   polcal-> set_ndat (total);
+   polcal-> set_nchan (1);
+   polcal-> match (obs);
+
+   dsp::ResponseProduct* product = new dsp::ResponseProduct;
+
+   product->add_response (polcal);
+
+   product->add_response (resp);
+
+   product->match (obs, resp->get_nchan());
+
+   return product;
+}
 
 
 int main (int argc, char** argv) try 
@@ -94,22 +116,19 @@ int main (int argc, char** argv) try
 
     dsp::Observation* obs = file->get_info();
 
-    dsp::PolnCalibration* response = new dsp::PolnCalibration;
- 
-    unsigned nchan = obs->get_nchan();
-
-    response-> set_database_filename (database_filename);
-    response-> match (obs, nchan);
-
     dsp::Dedispersion::verbose = true;
 
     dsp::Dedispersion* dedisp = new dsp::Dedispersion;
  
+   
     cerr << "try Dedispersion::match" << endl;
     obs->set_dispersion_measure (10.0);
-    dedisp->match (obs, nchan);
+    dedisp->match (obs, obs->get_nchan());
     cerr << "finish Dedispersion::match" << endl;
 
+    Reference::To<dsp::Response> RespProd;
+
+    RespProd = ravi_kernel (dedisp, obs, database_filename);
    
 
   }
