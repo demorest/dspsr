@@ -121,6 +121,7 @@ void dsp::LoadToFold1::prepare () try
 
   if (manager->get_info()->get_detected())
   {
+    config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
     prepare_fold (unpacked);
     prepare_final ();
@@ -889,11 +890,11 @@ void dsp::LoadToFold1::run () try
     catch (Error& error)
     {
       if (error.get_code() == EndOfFile)
-	break;
+        break;
 
       // ensure that remaining threads are not left waiting
       for (unsigned ifold=0; ifold < fold.size(); ifold++)
-	fold[ifold]->finish();
+        fold[ifold]->finish();
 
       throw error += "dsp::LoadToFold1::run";
     }
@@ -921,7 +922,7 @@ void dsp::LoadToFold1::run () try
   }
 
   if (Operation::verbose)
-    cerr << "dsp::LoadToFold1::run end of data" << endl;
+    cerr << "dsp::LoadToFold1::run end of data id=" << id << endl;
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
     fold[ifold]->finish();
