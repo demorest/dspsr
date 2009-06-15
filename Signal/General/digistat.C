@@ -299,11 +299,15 @@ int main (int argc, char** argv) try
 
 	for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol)
         {
-	  if (display && plotter)
+	  if (display && plotter) try
           {
 	    cpgsvp (0.7, 0.95, bottom, bottom+0.40);
 	    plotter->plot (ichan,ipol);
 	  }
+    catch (Error& e) { if (verbose) cerr << e << endl; }
+
+    cpgsch (1.0);
+    cerr << "ichan=" << ichan << " ipol=" << ipol << endl;
 
 	  float* data = voltages->get_datptr (ichan, ipol);
           uint64 nfloat = voltages->get_ndat() * voltages->get_ndim();
