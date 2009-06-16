@@ -54,10 +54,14 @@ void cpy_attributes ( const dsp::Observation* obs , Pulsar::Archive* archive )
  Pulsar::Integration* subint = archive->get_Integration (0);
  subint->set_epoch( obs->get_start_time() );
 
- cerr << "MJD=" << subint->get_epoch() << endl;
- cerr << "bw=" << archive->get_bandwidth() << endl;
- cerr << "cf=" << archive->get_centre_frequency() << endl;
- cerr << "coord=" << archive->get_coordinates() << endl;
+ if (dsp::Operation::verbose)
+ {
+   cerr << "cpy_attributes MJD=" << subint->get_epoch() << endl;
+   cerr << "cpy_attributes bw=" << archive->get_bandwidth() << endl;
+   cerr << "cpy_attributes cf=" << archive->get_centre_frequency() << endl;
+   cerr << "cpy_attributes coord=" << archive->get_coordinates() << endl;
+ }
+
 }
 
 
@@ -108,9 +112,9 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
 
     dbase = new Pulsar::Database (database_filename);
 
-    Pulsar::Database::Criterion::match_verbose = true;
-    Pulsar::PolnCalibrator::verbose = true;
-    Pulsar::Database::verbose = true;
+    // Pulsar::Database::Criterion::match_verbose = true;
+    // Pulsar::PolnCalibrator::verbose = true;
+    // Pulsar::Database::verbose = true;
 
     // default searching criterion
     Pulsar::Database::Criterion criterion;
@@ -127,18 +131,25 @@ void dsp::PolnCalibration::match (const Response* boss)
 {
   unsigned ndat = boss->get_ndat() * boss->get_nchan();
 
-    cerr << "PCAL WANT ndat=" << ndat << endl;
+  if (verbose)
+    cerr << "dsp::PolnCalibration::match WANT ndat=" << ndat << endl;
 
-    pcal->set_response_nchan (ndat);
+  pcal->set_response_nchan (ndat);
 
-    cerr << "PCAL LOADED nchan=" << pcal->get_response_nchan() << endl;
+  if (verbose)
+    cerr << "dsp::PolnCalibration::match PCAL LOADED nchan=" 
+         << pcal->get_response_nchan() << endl;
 
-    vector < Jones<float> > R (ndat);
+  vector < Jones<float> > R (ndat);
  
-    for ( unsigned ichan = 0 ; ichan < ndat; ichan++)
-      R[ichan] = pcal -> get_response (ichan);
+  for ( unsigned ichan = 0 ; ichan < ndat; ichan++)
+    R[ichan] = pcal -> get_response (ichan);
 
-    set (R);
+  set (R);
+ 
+  if (verbose) 
+    cerr << "dsp::PolnCalibration::match resize" <<endl;
 
-    cerr << "PolnCalibration::match finished!" << endl;
+  resize (1, boss->get_nchan(), boss->get_ndat(), 8);
+
 }
