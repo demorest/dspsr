@@ -166,10 +166,14 @@ void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
 {
   if (verbose)
     cerr << "dsp::Dedispersion::prepare input.nchan=" << input->get_nchan()
-	 << " channels=" << channels << endl;
+	 << " channels=" << channels << "\n\t"
+      " centre frequency=" << input->get_centre_frequency() <<
+      " bandwidth=" << input->get_bandwidth () <<
+      " dispersion measure=" << input->get_dispersion_measure() << endl;
   
   set_centre_frequency ( input->get_centre_frequency() );
   set_bandwidth ( input->get_bandwidth() );
+  set_dispersion_measure ( input->get_dispersion_measure() );
   set_dc_centred ( input->get_dc_centred() );
 
   if (!channels)
@@ -287,6 +291,8 @@ void dsp::Dedispersion::build ()
   whole_swapped = chan_swapped = false;
 
   built = true;
+
+  changed.send (*this);
 }
 
 /*!
@@ -306,6 +312,10 @@ double dsp::Dedispersion::smearing_time (double cfreq, double bw) const
 
 double dsp::Dedispersion::delay_time (double freq1, double freq2) const
 {
+  if (verbose)
+    cerr << "dsp::Dedispersion::delay_time DM=" << dispersion_measure
+         << " f1=" << freq1 << " f2=" << freq2 << endl;
+
   double dispersion = dispersion_measure/dm_dispersion;
   return dispersion * ( 1.0/sqr(freq1) - 1.0/sqr(freq2) );
 }
@@ -348,6 +358,11 @@ double dsp::Dedispersion::smearing_time (int half) const
     ch_abs_bw /= 2.0;
     lower_ch_cfreq += double(half) * ch_abs_bw;
   }
+
+  if (verbose)
+    cerr << "dsp::Dedispersion::smearing_time freq=" << lower_ch_cfreq
+	 << " bw=" << ch_abs_bw << endl;
+
   double tsmear = smearing_time (lower_ch_cfreq, ch_abs_bw);
   
   if (verbose)
