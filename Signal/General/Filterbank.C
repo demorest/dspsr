@@ -197,7 +197,11 @@ void dsp::Filterbank::make_preparations ()
     if (response)
       passband -> match (response);
 
-    passband->resize (input->get_npol(), input->get_nchan(), n_fft, 1);
+    unsigned passband_npol = input->get_npol();
+    if (matrix_convolution)
+      passband_npol = 4;
+
+    passband->resize (passband_npol, input->get_nchan(), n_fft, 1);
 
     if (!response)
       passband->match (input);
