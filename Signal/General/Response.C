@@ -69,13 +69,10 @@ const dsp::Response& dsp::Response::operator = (const Response& response)
 //! Multiplication operator
 const dsp::Response& dsp::Response::operator *= (const Response& response)
 {
-  if (ndat != response.ndat)
+  if (ndat*nchan != response.ndat * response.nchan)
     throw Error (InvalidParam, "dsp::Response::operator *=",
-		 "ndat=%d != *.ndat=%d", ndat, response.ndat);
-
-  if (nchan != response.nchan)
-    throw Error (InvalidParam, "dsp::Response::operator *=",
-		 "nchan=%d != *.nchan=%d", nchan, response.nchan);
+		 "ndat=%u*nchan=%u != other ndat=%u*nchan=%u", ndat, nchan,
+                 response.ndat, response.nchan);
 
   if (npol < response.npol)
     throw Error (InvalidParam, "dsp::Response::operator *=",
@@ -556,8 +553,13 @@ void dsp::Response::operate (float* data1, float* data2, int ichan) const
 
 void dsp::Response::integrate (float* data1, float* data2, int ichan)
 {
-  assert (ndim == 1);
-  assert (npol == 4);
+  if (ndim != 1)
+    throw Error (InvalidState, "dsp::Response::integrate",
+                 "ndim=%u != 1", ndim);
+
+  if (npol != 4)
+    throw Error (InvalidState, "dsp::Response::integrate",
+                 "npol=%u != 4", npol);
 
   // do all channels at once if ichan < 0
   unsigned npts = ndat;
@@ -575,6 +577,9 @@ void dsp::Response::integrate (float* data1, float* data2, int ichan)
 
 void dsp::Response::set (const vector<Jones<float> >& response)
 {
+  if (verbose)
+    cerr << "dsp::Response::set" <<endl;
+
   // one poln, one channel, Jones
   resize (1, 1, response.size(), 8);
 
