@@ -46,11 +46,11 @@ bool dsp::GMRTFilterbank16::matches (const Observation* observation)
 
 void dsp::GMRTFilterbank16::unpack ()
 {
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
   const unsigned npol  = input->get_npol();
 
-  const int16* base = reinterpret_cast<const int16*>(input->get_rawptr());
+  const int16_t* base = reinterpret_cast<const int16_t*>(input->get_rawptr());
 
   /*
     GMRT filterbank stores: RR, RL, LL, LR
@@ -70,7 +70,7 @@ void dsp::GMRTFilterbank16::unpack ()
 
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
-        const int16* from = base + ichan*npol + ipol;
+        const int16_t* from = base + ichan*npol + ipol;
 	float* into = output->get_datptr (ichan, timeseries_ipol);
 	
 	for (unsigned bt = 0; bt < ndat; bt++)
@@ -85,11 +85,11 @@ void dsp::GMRTFilterbank16::unpack ()
 
   case TimeSeries::OrderTFP:
   {
-    const int16* from = base;
+    const int16_t* from = base;
     float* into = output->get_dattfp();
 
-    const uint64 nfloat = nchan * ndat;
-    for (uint64 ifloat=0; ifloat < nfloat; ifloat ++)
+    const uint64_t nfloat = nchan * ndat;
+    for (uint64_t ifloat=0; ifloat < nfloat; ifloat ++)
       into[ifloat] = float( from[ifloat] );
   }
   break;

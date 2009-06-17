@@ -270,7 +270,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     cerr << "dsp::LoadToFoldN::prepare_subint_archival done" << endl;
 }
 
-uint64 dsp::LoadToFoldN::get_minimum_samples () const
+uint64_t dsp::LoadToFoldN::get_minimum_samples () const
 {
   if (threads.size() == 0)
     return 0;

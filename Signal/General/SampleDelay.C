@@ -23,14 +23,14 @@ dsp::SampleDelay::SampleDelay ()
   set_buffering_policy (new InputBuffering (this));
 }
 
-uint64 dsp::SampleDelay::get_total_delay () const
+uint64_t dsp::SampleDelay::get_total_delay () const
 {
   if (!built)
     const_cast<SampleDelay*>(this)->build();
   return total_delay;
 }
 
-int64 dsp::SampleDelay::get_zero_delay () const
+int64_t dsp::SampleDelay::get_zero_delay () const
 {
   if (!built)
     const_cast<SampleDelay*>(this)->build();
@@ -70,7 +70,7 @@ void dsp::SampleDelay::build ()
 
   for (unsigned ipol=0; ipol < input_npol; ipol++)
     for (unsigned ichan=0; ichan < input_nchan; ichan++) {
-      uint64 relative_delay = zero_delay - function->get_delay(ichan, ipol);
+      uint64_t relative_delay = zero_delay - function->get_delay(ichan, ipol);
       // cerr << "relative_delay=" << relative_delay << endl;
       if (relative_delay > total_delay)
 	total_delay = relative_delay;
@@ -105,12 +105,12 @@ void dsp::SampleDelay::transformation ()
   if (verbose)
     cerr << "dsp::SampleDelay::transformation" << endl;
 
-  const uint64   input_ndat  = input->get_ndat();
+  const uint64_t   input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
 
-  uint64 output_ndat = 0;
+  uint64_t output_ndat = 0;
 
   if (input_ndat < total_delay)
   {
@@ -139,14 +139,14 @@ void dsp::SampleDelay::transformation ()
   if (!output_ndat)
     return;
 
-  uint64 output_nfloat = output_ndat * input_ndim;
+  uint64_t output_nfloat = output_ndat * input_ndim;
 
   for (unsigned ipol=0; ipol < input_npol; ipol++) {
 
     for (unsigned ichan=0; ichan < input_nchan; ichan++) {
 
       const float* in_data = input->get_datptr (ichan, ipol);
-      int64 relative_delay = zero_delay - function->get_delay(ichan, ipol);
+      int64_t relative_delay = zero_delay - function->get_delay(ichan, ipol);
       assert (relative_delay >= 0);
 
 #ifdef _DEBUG
@@ -158,7 +158,7 @@ void dsp::SampleDelay::transformation ()
 
       float* out_data = output->get_datptr (ichan, ipol);
 
-      for (uint64 idat=0; idat < output_nfloat; idat++)
+      for (uint64_t idat=0; idat < output_nfloat; idat++)
 	out_data[idat] = in_data[idat];
 
     }

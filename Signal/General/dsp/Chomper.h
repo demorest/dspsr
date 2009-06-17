@@ -23,16 +23,16 @@ namespace dsp {
     Chomper();
 
     //! Set the new ndat
-    void set_new_ndat(uint64 _new_ndat){ new_ndat = _new_ndat; use_new_ndat = true; }
+    void set_new_ndat(uint64_t _new_ndat){ new_ndat = _new_ndat; use_new_ndat = true; }
 
     //! Inquire the new ndat
-    uint64 get_new_ndat(){ return new_ndat; }
+    uint64_t get_new_ndat(){ return new_ndat; }
 
     //! Set the new rounding factor
-    void set_rounding(uint64 _rounding){ rounding = _rounding; }
+    void set_rounding(uint64_t _rounding){ rounding = _rounding; }
 
     //! Inquire the new rounding factor
-    uint64 get_rounding(){ return rounding; }
+    uint64_t get_rounding(){ return rounding; }
 
     //! Don't chomp off the timeseries to new_ndat
     void dont_use_new_ndat(){ use_new_ndat = false; }
@@ -54,10 +54,10 @@ namespace dsp {
   private:
 
     //! The new ndat for the TimeSeries
-    uint64 new_ndat;
+    uint64_t new_ndat;
 
     //! After setting the ndat, it is rounded off to divide this number
-    uint64 rounding;
+    uint64_t rounding;
 
     //! Gets set to true on set_new_ndat
     bool use_new_ndat;

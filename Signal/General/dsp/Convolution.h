@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.21 $
-   $Date: 2009/05/04 02:14:30 $
+   $Revision: 1.22 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __Convolution_h
@@ -66,10 +66,10 @@ namespace dsp {
     void prepare () { }
 
     //! Get the minimum number of samples required for operation
-    uint64 get_minimum_samples () const { return 0; }
+    uint64_t get_minimum_samples () const { return 0; }
 
     //! Get the minimum number of samples lost
-    uint64 get_minimum_samples_lost () const { return 0; }
+    uint64_t get_minimum_samples_lost () const { return 0; }
 
     //! Return a descriptive string
     //virtual const string descriptor () const;

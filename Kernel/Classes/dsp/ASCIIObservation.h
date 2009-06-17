@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/01/07 04:30:30 $
+   $Revision: 1.5 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __ASCIIObservation_h
@@ -37,14 +37,14 @@ namespace dsp {
     void unload (char* header);
 
     //! Get the number of bytes offset from the beginning of acquisition
-    uint64 get_offset_bytes () const { return offset_bytes; }
+    uint64_t get_offset_bytes () const { return offset_bytes; }
 
   protected:
 
     std::string hdr_version;
 
     //! Number of bytes offset from the beginning of acquisition
-    uint64 offset_bytes;
+    uint64_t offset_bytes;
 
   };
   

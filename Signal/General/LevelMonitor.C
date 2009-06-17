@@ -95,7 +95,7 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 }
 
 //! Set the number of points included in each calculation of thresholds
-void dsp::LevelMonitor::set_integration (uint64 npts)
+void dsp::LevelMonitor::set_integration (uint64_t npts)
 {
   n_integrate = npts;
 }
@@ -234,13 +234,13 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
   vector<double> tot_sum (ndig, 0.0);
   vector<double> tot_sumsq (ndig, 0.0);
 
-  uint64 total_pts = 0;
+  uint64_t total_pts = 0;
 
   while (!abort && total_pts < n_integrate && !input->get_input()->eod())
   {
     input -> load (data);
 
-    uint64 ndat = data->get_ndat();
+    uint64_t ndat = data->get_ndat();
 
     // combine the statistics for real and imaginary components
     if (input_ndim == 2 && ndim == 1)

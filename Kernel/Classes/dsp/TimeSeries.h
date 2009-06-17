@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.48 $
-   $Date: 2009/06/03 02:08:27 $
+   $Revision: 1.49 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -85,19 +85,19 @@ namespace dsp {
 
     //! Copy the data of another TimeSeries instance
     virtual void copy_data (const TimeSeries* data, 
-			    uint64 idat_start = 0, uint64 ndat = 0);
+			    uint64_t idat_start = 0, uint64_t ndat = 0);
 
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);
 
     //! Allocate the space required to store nsamples time samples.
-    virtual void resize (uint64 nsamples);
+    virtual void resize (uint64_t nsamples);
 
     //! Decrease the array lengths without changing the base pointers
-    virtual void decrease_ndat (uint64 new_ndat);
+    virtual void decrease_ndat (uint64_t new_ndat);
 
     //! For nchan=1, npol=1 data this uses the data in 'buffer'
-    TimeSeries& use_data(float* _buffer, uint64 _ndat);
+    TimeSeries& use_data(float* _buffer, uint64_t _ndat);
     
     //! Return pointer to the specified data block
     float* get_datptr (unsigned ichan=0, unsigned ipol=0);
@@ -112,18 +112,18 @@ namespace dsp {
     const float* get_dattfp () const;
 
     //! Offset the base pointer by offset time samples
-    virtual void seek (int64 offset);
+    virtual void seek (int64_t offset);
 
     //! Append the given TimeSeries to the end of 'this'
-    virtual uint64 append (const TimeSeries*);
+    virtual uint64_t append (const TimeSeries*);
 
     //! Copy data from given TimeSeries in front of the current position
-    void prepend (const dsp::TimeSeries*, uint64 pre_ndat = 0);
+    void prepend (const dsp::TimeSeries*, uint64_t pre_ndat = 0);
 
     //! Return the sample offset from the start of the data source
-    int64 get_input_sample () const { return input_sample; }
+    int64_t get_input_sample () const { return input_sample; }
     //! Used to arrange pieces in order during input buffering
-    void set_input_sample (uint64 sample) { input_sample = sample; }
+    void set_input_sample (uint64_t sample) { input_sample = sample; }
 
     //! Set all values to zero
     virtual void zero ();
@@ -150,17 +150,17 @@ namespace dsp {
     virtual const unsigned char* get_data() const;
 
     //! Called by append()
-    void append_checks(uint64& ncontain,uint64& ncopy,
+    void append_checks(uint64_t& ncontain,uint64_t& ncopy,
 		       const TimeSeries* little);
     
     //! Pointer into buffer, offset to the first time sample requested by user
     float* data;
 
     //! Change the amount of memory reserved at the start of the buffer
-    void change_reserve (int64 change) const;
+    void change_reserve (int64_t change) const;
 
     //! Get the amount of memory reserved at the start of the buffer
-    uint64 get_reserve () const { return reserve_ndat; }
+    uint64_t get_reserve () const { return reserve_ndat; }
 
     friend class InputBuffering;
     friend class Unpacker;
@@ -171,14 +171,14 @@ namespace dsp {
     Order order;
 
     //! Reserve space for this many timesamples preceding the base address
-    uint64 reserve_ndat;
+    uint64_t reserve_ndat;
 
     //! Number of floats reserved
-    uint64 reserve_nfloat;
+    uint64_t reserve_nfloat;
 
     //! Sample offset from start of source
     /*! Set by Unpacker class and used by multithreaded InputBuffering */
-    int64 input_sample;
+    int64_t input_sample;
 
     //! Called by constructor to initialise variables
     void init ();

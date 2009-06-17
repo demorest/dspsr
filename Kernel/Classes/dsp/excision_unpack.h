@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/excision_unpack.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/09/09 06:34:18 $
+   $Revision: 1.4 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_excision_unpack_h
@@ -25,7 +25,7 @@ template<class U, class Iter>
   void dsp::ExcisionUnpacker::excision_unpack (U& unpack,
 					       Iter& input_data,
 					       float* output_data,
-					       uint64 nfloat,
+					       uint64_t nfloat,
 					       unsigned long* hist,
 					       unsigned* weights,
 					       unsigned nweights)

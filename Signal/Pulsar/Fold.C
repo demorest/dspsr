@@ -478,7 +478,7 @@ void dsp::Fold::transformation () try
     throw Error (InvalidParam, "dsp::Fold::transformation",
 		 "input and output are not mixable " + get_output()->get_reason());
 
-  uint64 nweights = 0;
+  uint64_t nweights = 0;
   const unsigned* weights = 0;
   unsigned ndatperweight = 0;
   unsigned weight_idat = 0;
@@ -550,7 +550,7 @@ catch (Error& error)
 
 */
 
-void dsp::Fold::fold (uint64 nweights,
+void dsp::Fold::fold (uint64_t nweights,
 		      const unsigned* weights, 
 		      unsigned ndatperweight,
 		      unsigned weight_idat)
@@ -565,8 +565,8 @@ void dsp::Fold::fold (uint64 nweights,
     throw Error (InvalidState, "dsp::Fold::fold",
 		 "no polynomial and no period specified");
 
-  uint64 ndat = get_input()->get_ndat();
-  uint64 idat_end = idat_start + ndat_fold;
+  uint64_t ndat = get_input()->get_ndat();
+  uint64_t idat_end = idat_start + ndat_fold;
 
   if (idat_end > ndat)
     throw Error (InvalidParam, "dsp::Fold:fold",
@@ -586,14 +586,14 @@ void dsp::Fold::fold (uint64 nweights,
   unsigned* binplan = scratch->space<unsigned> (ndat_fold);
 
   // index through weight array
-  uint64 iweight = 0;
+  uint64_t iweight = 0;
   // idat of last point in current weight
-  uint64 idat_nextweight = 0;
+  uint64_t idat_nextweight = 0;
   // number of bad weights encountered this run
   unsigned bad_weights = 0;
 
   // number of time samples folded
-  uint64 ndat_folded = 0;
+  uint64_t ndat_folded = 0;
 
   if (verbose)
     cerr << "dsp::Fold::fold idat_start=" << idat_start 
@@ -637,7 +637,7 @@ void dsp::Fold::fold (uint64 nweights,
   double phase_per_sample = sampling_interval / pfold;
   unsigned* hits = &(get_output()->hits[0]);
    
-  for (uint64 idat=idat_start; idat < idat_end; idat++)
+  for (uint64_t idat=idat_start; idat < idat_end; idat++)
   {
     if (ndatperweight && idat >= idat_nextweight)
     {
@@ -705,7 +705,7 @@ void dsp::Fold::fold (uint64 nweights,
 
       float* phasep = result->get_datptr(ichan,ipol);
 
-      for (uint64 idat=0; idat < ndat_fold; idat++)
+      for (uint64_t idat=0; idat < ndat_fold; idat++)
       {
 	if (binplan[idat] != folding_nbin)
         {

@@ -39,10 +39,10 @@ namespace dsp {
     void post_transformation ();
     
     //! Set the first sample to be used from the input next time
-    void set_next_start (uint64 next_start_sample);
+    void set_next_start (uint64_t next_start_sample);
     
     //! Set the minimum number of samples that can be processed
-    void set_minimum_samples (uint64 samples);
+    void set_minimum_samples (uint64_t samples);
 
   protected:
     

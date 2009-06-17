@@ -35,9 +35,9 @@ dsp::IncoherentFilterbank::~IncoherentFilterbank()
   free_plan(); 
 }
 
-uint64 power_of_two (uint64 number)
+uint64_t power_of_two (uint64_t number)
 {
-  uint64 twos = 1;
+  uint64_t twos = 1;
   while (twos < number)
     twos *= 2;
   if (twos != number)

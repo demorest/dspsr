@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.42 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.43 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -79,7 +79,7 @@ namespace dsp {
     //! Unpack a single polarization from raw into data
     virtual void dig_unpack (const unsigned char* input_data, 
 			     float* output_data,
-			     uint64 ndat,
+			     uint64_t ndat,
 			     unsigned long* hist,
 			     unsigned* weights = 0,
 			     unsigned nweights = 0);

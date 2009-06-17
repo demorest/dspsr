@@ -243,7 +243,7 @@ void dsp::UnloaderShare::unload (Storage* store)
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::unload store=" << store << endl;
 
-  uint64 division = store->get_division();
+  uint64_t division = store->get_division();
 
   if (unloader) try 
   {
@@ -278,7 +278,7 @@ void dsp::UnloaderShare::nonblocking_unload (unsigned istore, Submit* submit)
 
   context->unlock ();
 
-  uint64 division = store->get_division();
+  uint64_t division = store->get_division();
 
   try {
 
@@ -394,7 +394,7 @@ dsp::PhaseSeries* dsp::UnloaderShare::Storage::get_profiles ()
 }
 
 //! Set the division
-void dsp::UnloaderShare::Storage::set_division( uint64 d )
+void dsp::UnloaderShare::Storage::set_division( uint64_t d )
 {
   division = d;
   if (Operation::verbose)
@@ -402,14 +402,14 @@ void dsp::UnloaderShare::Storage::set_division( uint64 d )
 }
 
 //! Get the division
-uint64 dsp::UnloaderShare::Storage::get_division ()
+uint64_t dsp::UnloaderShare::Storage::get_division ()
 {
   return division;
 }
 
 //! Add to the contributors that are finished with this integration
 bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
-					     uint64 _division,
+					     uint64_t _division,
 					     const PhaseSeries* data)
 {
   if (contributor >= finished.size())

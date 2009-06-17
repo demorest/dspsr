@@ -36,7 +36,7 @@ void usage ()
 int main (int argc, char** argv) try
 {
   // 64 Mpoints
-  uint64 npts = 1 << 26;
+  uint64_t npts = 1 << 26;
 
   // number of iterations before quitting
   unsigned iterations = 0;

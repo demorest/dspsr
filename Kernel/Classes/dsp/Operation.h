@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.44 $
-   $Date: 2009/06/07 01:22:34 $
+   $Revision: 1.45 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -98,10 +98,10 @@ namespace dsp {
     double get_elapsed_time() const;
 
     //! Return the total number of timesample weights encountered
-    virtual uint64 get_total_weights () const;
+    virtual uint64_t get_total_weights () const;
 
     //! Return the number of invalid timesample weights encountered
-    virtual uint64 get_discarded_weights () const;
+    virtual uint64_t get_discarded_weights () const;
 
     //! Inquire the unique instantiation id
     int get_id(){ return id; }
@@ -127,10 +127,10 @@ namespace dsp {
     std::string name;
 
     //! Number of time sample weights encountered that are flagged invalid
-    uint64 discarded_weights;
+    uint64_t discarded_weights;
 
     //! Total number of time sample weights encountered
-    uint64 total_weights;
+    uint64_t total_weights;
 
     //! Returns the index in the 'timers' array of a particular timer
     int timers_index (const std::string& op_name);

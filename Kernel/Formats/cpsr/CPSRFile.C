@@ -92,7 +92,7 @@ void dsp::CPSRFile::open_file (const char* filename)
 
   header_bytes = sizeof(PSPM_SEARCH_HEADER);
   fprintf(stderr,"header_bytes="UI64"\n",
-	  uint64(header_bytes));
+	  uint64_t(header_bytes));
 
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)
@@ -224,20 +224,20 @@ void dsp::CPSRFile::open_file (const char* filename)
    
   info.set_ndat (hdr.ndat);
 
-  uint64 fsize = filesize(filename);
+  uint64_t fsize = filesize(filename);
 
   if( fsize-header_bytes != info.get_nbytes() ){
     info.set_ndat( info.get_nsamples(fsize-header_bytes) );
     fprintf(stderr,"WARNING: dsp::CPSRFile::open_file(): Your ndat in header ("UI64") doesn't match file size ("UI64" bytes) (The number of samples has been reduced to "UI64" because the header size is "UI64")\n",
-	    uint64(hdr.ndat),uint64(fsize),info.get_ndat(),
-	    uint64(header_bytes));
+	    uint64_t(hdr.ndat),uint64_t(fsize),info.get_ndat(),
+	    uint64_t(header_bytes));
   }
 
   //throw Error(InvalidState,"dsp::CPSRFile::open_file()",
   //      "ndat in header ("UI64") doesn't match file size ("UI64")\n",
-  //      uint64(hdr.ndat),uint64(fsize));
+  //      uint64_t(hdr.ndat),uint64_t(fsize));
 
-  fprintf(stderr,"Have set CPSR ndat to be "UI64"\n",uint64(hdr.ndat));
+  fprintf(stderr,"Have set CPSR ndat to be "UI64"\n",uint64_t(hdr.ndat));
   
   if (hdr.ndat < 1) {
     ::close (fd);

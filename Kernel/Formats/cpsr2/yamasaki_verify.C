@@ -101,8 +101,8 @@ int yama_search (const unsigned char* yama_hdr)
   return 0;
 }
 
-int yamasaki_verify (const char* filename, uint64 offset_bytes,
-		     uint64 search_offset)
+int yamasaki_verify (const char* filename, uint64_t offset_bytes,
+		     uint64_t search_offset)
 {
   if (search_offset < 2) {
     cerr << "yamasaki_verify - invalid start search_offset " << search_offset
@@ -120,8 +120,8 @@ int yamasaki_verify (const char* filename, uint64 offset_bytes,
 
   unsigned char yama_hdr [YAMASAKI_HEADER_SIZE*4];
 
-  uint64 block_size = YAMASAKI_BLOCK_SIZE;
-  uint64 block_count = 0;
+  uint64_t block_size = YAMASAKI_BLOCK_SIZE;
+  uint64_t block_count = 0;
   bool testing = true;
 
   if (lseek (fd, block_size*block_count + search_offset , SEEK_SET) < 0)
@@ -136,8 +136,8 @@ int yamasaki_verify (const char* filename, uint64 offset_bytes,
 
   search_offset += offset;
 
-  uint64 bad_count = 0;
-  uint64 toggle_count = 0;
+  uint64_t bad_count = 0;
+  uint64_t toggle_count = 0;
 
   bool bad = false;
 
@@ -149,16 +149,16 @@ int yamasaki_verify (const char* filename, uint64 offset_bytes,
     if (read(fd, yama_hdr, YAMASAKI_HEADER_SIZE) != YAMASAKI_HEADER_SIZE)
       break;
     
-    uint64 expected = offset_bytes +  block_size*block_count;
+    uint64_t expected = offset_bytes +  block_size*block_count;
 
-    uint64 yama_offset = 0;
+    uint64_t yama_offset = 0;
     int i=0;
 
     char yamasaki [YAMASAKI_HEADER_SIZE+1];
 
     for (i=0; i<YAMASAKI_HEADER_SIZE/2; i++) {
       yamasaki[i] = yama_hdr[2*i];
-      yama_offset += uint64(yama_hdr[2*i+1]) << (8*i);
+      yama_offset += uint64_t(yama_hdr[2*i+1]) << (8*i);
     }
     yamasaki[i] = '\0';
     yama_offset *= 2;	/* convert from word to byte counter */

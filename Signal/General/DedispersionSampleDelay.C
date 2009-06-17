@@ -56,7 +56,7 @@ bool dsp::Dedispersion::SampleDelay::match (const Observation* obs)
     // Compute the DM delay in seconds
     double delay = dispersion * (1.0/SQR(centre_frequency) - 1.0/SQR(freq));
 
-    delays[ichan] = int64( delay * sampling_rate );
+    delays[ichan] = int64_t( delay * sampling_rate );
 
     // cerr << "freq=" << freq << " delay=" << delay*1e3 << " ms = " 
 	 // << delays[ichan] << " samps" << endl;
@@ -67,7 +67,7 @@ bool dsp::Dedispersion::SampleDelay::match (const Observation* obs)
 }
 
 //! Return the dispersion delay for the given frequency channel
-int64 dsp::Dedispersion::SampleDelay::get_delay (unsigned ichan, unsigned ipol)
+int64_t dsp::Dedispersion::SampleDelay::get_delay (unsigned ichan, unsigned ipol)
 {
   return delays[ichan];
 }

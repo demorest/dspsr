@@ -157,8 +157,8 @@ void dsp::BCPMFile::open_file (const char* filename){
   }
 
   {
-    uint64 file_bytes = filesize(filename);
-    uint64 data_bytes = file_bytes - BPP_HEADER_SIZE;
+    uint64_t file_bytes = filesize(filename);
+    uint64_t data_bytes = file_bytes - BPP_HEADER_SIZE;
     get_info()->set_ndat( get_info()->get_nsamples(data_bytes) );
   }
 
@@ -298,14 +298,14 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
 }
 
 //! Pads gaps in data
-int64 dsp::BCPMFile::pad_bytes(unsigned char* buffer, int64 bytes){
-  if( get_info()->get_nbit() < 8 && bytes*8 % int64(get_info()->get_nbit()) != 0 )
+int64_t dsp::BCPMFile::pad_bytes(unsigned char* buffer, int64_t bytes){
+  if( get_info()->get_nbit() < 8 && bytes*8 % int64_t(get_info()->get_nbit()) != 0 )
     throw Error(InvalidState,"dsp::BCPMFile::pad_bytes()",
 		"Can only pad if the number of input bits ("I64") divides nbit (%d)",
 		bytes*8, get_info()->get_nbit());
 
   register const unsigned char val = 0;
-  for( int64 i=0; i<bytes; ++i)
+  for( int64_t i=0; i<bytes; ++i)
     buffer[i] = val;
   
   return bytes;

@@ -38,13 +38,13 @@ namespace dsp {
     //! Reopen the file
     void reopen ();
 
-    int64 load_bytes (unsigned char* buffer, uint64 nbytes);
+    int64_t load_bytes (unsigned char* buffer, uint64_t nbytes);
     
-    int64 seek_bytes (uint64 bytes);
+    int64_t seek_bytes (uint64_t bytes);
 
     void* stream;
 
-    uint64 reopen_seek;
+    uint64_t reopen_seek;
 
   };
 

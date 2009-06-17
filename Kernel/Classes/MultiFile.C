@@ -136,7 +136,7 @@ void dsp::MultiFile::setup ()
 {
   info = *(files[0]->get_info());
 
-  uint64 total_ndat = 0;
+  uint64_t total_ndat = 0;
   for( unsigned i=0; i<files.size(); i++)
     total_ndat += files[i]->get_info()->get_ndat();
 
@@ -241,7 +241,7 @@ void dsp::MultiFile::ensure_contiguity()
 }
 
 //! Load bytes from file
-int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
+int64_t dsp::MultiFile::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
   if (verbose)
     cerr << "MultiFile::load_bytes nbytes=" << bytes << endl;
@@ -250,12 +250,12 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
     throw Error(InvalidState,"dsp::MultiFile::load_bytes",
 		"No loader.  Possible MultiFile::open failure.");
 
-  uint64 bytes_loaded = 0;
+  uint64_t bytes_loaded = 0;
   unsigned index = current_index;
 
   while (bytes_loaded < bytes)
   {
-    int64 to_load = bytes - bytes_loaded;
+    int64_t to_load = bytes - bytes_loaded;
 
     if (index >= files.size())
     {
@@ -268,7 +268,7 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
     // Ensure we are loading from correct file
     set_loader (index);
 
-    int64 did_load = loader->load_bytes (buffer, to_load);
+    int64_t did_load = loader->load_bytes (buffer, to_load);
 
     if (did_load < 0)
       return -1;
@@ -285,7 +285,7 @@ int64 dsp::MultiFile::load_bytes (unsigned char* buffer, uint64 bytes)
 }
 
 //! Adjust the file pointer
-int64 dsp::MultiFile::seek_bytes (uint64 bytes)
+int64_t dsp::MultiFile::seek_bytes (uint64_t bytes)
 {
   if( !loader )
     throw Error(InvalidState, "dsp::MultiFile::seek_bytes",
@@ -295,13 +295,13 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
     cerr << "MultiFile::seek_bytes nbytes=" << bytes << endl;
 
   // Total number of bytes stored in files thus far
-  uint64 total_bytes = 0;
+  uint64_t total_bytes = 0;
 
   unsigned index;
   for (index = 0; index < files.size(); index++)
   {
     // Number of bytes stored in this file
-    uint64 file_bytes = files[index]->get_info()->get_nbytes();
+    uint64_t file_bytes = files[index]->get_info()->get_nbytes();
 
     if (bytes < total_bytes + file_bytes)
       break;
@@ -318,7 +318,7 @@ int64 dsp::MultiFile::seek_bytes (uint64 bytes)
 
   set_loader (index);
 
-  int64 seeked = loader->seek_bytes (bytes-total_bytes);
+  int64_t seeked = loader->seek_bytes (bytes-total_bytes);
   if (seeked < 0)
     return -1;
 

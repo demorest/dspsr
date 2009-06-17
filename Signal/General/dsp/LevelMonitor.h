@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/05/14 00:58:39 $
+   $Revision: 1.7 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -45,7 +45,7 @@ namespace dsp {
     virtual ~LevelMonitor ();
     
     //! Set the number of points included in each calculation of thresholds
-    void set_integration (uint64 npts);
+    void set_integration (uint64_t npts);
 
     //! Using input and converter, calculate sampling thresholds
     virtual void monitor ();
@@ -90,10 +90,10 @@ namespace dsp {
     void init();
     
     //! the number of points to integrate
-    uint64 n_integrate;
+    uint64_t n_integrate;
     
     //! the number of points to load in one iteration
-    uint64 block_size;
+    uint64_t block_size;
 
     //! Number of iterations, 0 for infinite
     unsigned max_iterations;

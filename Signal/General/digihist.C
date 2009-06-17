@@ -31,7 +31,7 @@ void usage ()
     "Usage: digihist file1 [file2 ...] \n" << endl;
 }
 
-void summarize (vector< vector<uint64> >& histogram,
+void summarize (vector< vector<uint64_t> >& histogram,
 		const dsp::ExcisionUnpacker*,
 		unsigned nbit, double start, double end);
 
@@ -40,7 +40,7 @@ int main (int argc, char** argv) try
   bool verbose = false;
 
   // number of time samples loaded at once
-  uint64 block_size = 1024;
+  uint64_t block_size = 1024;
 
   // period (in seconds) of elapsed recording time between updates
   double update_period = 1.0;
@@ -111,7 +111,7 @@ int main (int argc, char** argv) try
     MJD start = info->get_start_time();
     double next_update = update_period;
 
-    vector< vector<uint64> > histograms;
+    vector< vector<uint64_t> > histograms;
 
     unsigned nbit = info->get_nbit();
 
@@ -129,7 +129,7 @@ int main (int argc, char** argv) try
 
       if (histograms.size() < ndig)
       {
-        vector<uint64> hist_init (256, 0);
+        vector<uint64_t> hist_init (256, 0);
         histograms.resize( ndig );
         for (unsigned i=0; i<ndig; i++)
           histograms[i] = hist_init;
@@ -178,8 +178,8 @@ catch (Error& error)
 }
 
 
-void rebin (vector<uint64>& output, 
-	    const vector<uint64>& input, unsigned nbit)
+void rebin (vector<uint64_t>& output, 
+	    const vector<uint64_t>& input, unsigned nbit)
 {
   unsigned nsamp = 8 / nbit;
 
@@ -212,12 +212,12 @@ void zero (vector<T>& data)
     data[i] = 0;
 }
 
-void summarize (const vector<uint64>& histogram,
+void summarize (const vector<uint64_t>& histogram,
 		unsigned nbit, 
 		double start, double end,
 		unsigned ichan, unsigned ipol)
 {
-  vector<uint64> result;
+  vector<uint64_t> result;
 
   switch (nbit)
     {
@@ -241,7 +241,7 @@ void summarize (const vector<uint64>& histogram,
       throw Error (InvalidState, "summarize", "nbit=%d not implemented", nbit);
     }
 
-  uint64 total = 0;
+  uint64_t total = 0;
   for (unsigned i=0; i<result.size(); i++)
     total += result[i];
 
@@ -250,7 +250,7 @@ void summarize (const vector<uint64>& histogram,
 	 << " " << i << " " << double(result[i])/double(total) << endl;
 }
 
-void summarize (vector< vector<uint64> >& histograms,
+void summarize (vector< vector<uint64_t> >& histograms,
 		const dsp::ExcisionUnpacker* excision,
 		unsigned nbit, double start, double end)
 {

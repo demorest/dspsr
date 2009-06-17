@@ -56,7 +56,7 @@ unsigned dsp::BPSRUnpacker::get_output_ichan (unsigned idig) const
 
 void dsp::BPSRUnpacker::unpack ()
 {
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
 
@@ -96,8 +96,8 @@ break;
       const unsigned char* from = input->get_rawptr();
       float* into = output->get_dattfp();
 
-      const uint64 nfloat = npol * nchan * ndat;
-      for (uint64 ifloat=0; ifloat < nfloat; ifloat += 4)
+      const uint64_t nfloat = npol * nchan * ndat;
+      for (uint64_t ifloat=0; ifloat < nfloat; ifloat += 4)
       {
 	into[0] = float( from[0] );
 	into[1] = float( from[2] );

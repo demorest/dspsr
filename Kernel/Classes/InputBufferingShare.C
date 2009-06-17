@@ -5,6 +5,8 @@
  *
  ***************************************************************************/
 
+#include "environ.h"
+
 #include "dsp/InputBufferingShare.h"
 #include "ThreadContext.h"
 
@@ -47,7 +49,7 @@ dsp::InputBuffering::Share::~Share ()
 }
 
 //! Set the minimum number of samples that can be processed
-void dsp::InputBuffering::Share::set_minimum_samples (uint64 samples) try
+void dsp::InputBuffering::Share::set_minimum_samples (uint64_t samples) try
 {
   ThreadContext::Lock lock (context);
 
@@ -60,7 +62,7 @@ catch (Error& error)
 }
 
 /*! Copy remaining data from the target Transformation's input to buffer */
-void dsp::InputBuffering::Share::set_next_start (uint64 next) try
+void dsp::InputBuffering::Share::set_next_start (uint64_t next) try
 {
   // do nothing if the thread has no data
   if (target->get_input()->get_ndat() == 0)
@@ -99,7 +101,7 @@ void dsp::InputBuffering::Share::pre_transformation () try
 
   ThreadContext::Lock lock (context);
 
-  int64 want = target->get_input()->get_input_sample();
+  int64_t want = target->get_input()->get_input_sample();
 
   // don't wait for data preceding the first loaded block
   if (want <= 0)

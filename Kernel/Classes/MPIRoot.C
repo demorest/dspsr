@@ -51,7 +51,7 @@ int mpiPack (const dsp::MPIRoot& loader,
 {
   mpiPack (*loader.get_info(), outbuf, outcount, position, comm);
 
-  uint64 block_size;
+  uint64_t block_size;
   block_size = loader.get_block_size ();
   MPI_Pack (&block_size, 1, MPI_UInt64, outbuf, outcount, position, comm);
 
@@ -73,7 +73,7 @@ int mpiUnpack (void* inbuf, int insize, int* position,
 
   mpiUnpack (inbuf, insize, position, obs, comm);
 
-  uint64 block_size;
+  uint64_t block_size;
   MPI_Unpack (inbuf, insize, position, &block_size, 1, MPI_UInt64, comm);
   loader->set_block_size (block_size);
 
@@ -153,7 +153,7 @@ void dsp::MPIRoot::set_resolution (unsigned _resolution)
   resolution = _resolution;
 }
 
-void dsp::MPIRoot::set_block_size (uint64 _size)
+void dsp::MPIRoot::set_block_size (uint64_t _size)
 {
   bool resize_required = (get_block_size() != _size);
 
@@ -308,7 +308,7 @@ void dsp::MPIRoot::check_status (MPI_Status& mpi_status, const char* method)
 
 void dsp::MPIRoot::check_block_size (const char* method)
 {
-  uint64 bytes = info.get_nbytes(get_block_size()) + 2 + min_header_size;
+  uint64_t bytes = info.get_nbytes(get_block_size()) + 2 + min_header_size;
 
   if (bytes > MAXINT)
     throw Error (InvalidState, method, "block_size="UI64" -> buffer_size="UI64
@@ -380,8 +380,8 @@ void dsp::MPIRoot::send_data (BitSeries* data, int dest)
   wait (data_request, false);
 
   int nbytes = 0;
-  int64 start_sample = 0;
-  uint64 request_ndat = 0;
+  int64_t start_sample = 0;
+  uint64_t request_ndat = 0;
   unsigned request_offset = 0;
 
   char* datptr = 0;
@@ -482,8 +482,8 @@ int dsp::MPIRoot::receive_data ()
   int count;
   MPI_Get_count (&status, MPI_PACKED, &count);
 
-  int64 start_sample = 0;
-  uint64 request_ndat = 0;
+  int64_t start_sample = 0;
+  uint64_t request_ndat = 0;
   unsigned request_offset = 0;
 
   int position = 0;
@@ -517,8 +517,8 @@ void dsp::MPIRoot::load_data (BitSeries* data)
 
   int received = receive_data ();
 
-  int64 start_sample = 0;
-  uint64 request_ndat = 0;
+  int64_t start_sample = 0;
+  uint64_t request_ndat = 0;
   unsigned request_offset = 0;
 
   char* datptr = (char*) data->get_rawptr();

@@ -38,7 +38,7 @@ namespace dsp {
     virtual ~BitSeries ();
 
     //! Allocate the space required to store nsamples time samples.
-    virtual void resize (int64 nsamples);
+    virtual void resize (int64_t nsamples);
     
     //! Set this equal to data
     virtual BitSeries& operator = (const BitSeries& data);
@@ -61,21 +61,21 @@ namespace dsp {
     unsigned get_request_offset () const { return request_offset; }
 
     //! Number of time samples requested
-    uint64 get_request_ndat () const { return request_ndat; }
+    uint64_t get_request_ndat () const { return request_ndat; }
 
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
-    virtual unsigned char* get_datptr (uint64 sample = 0);
+    virtual unsigned char* get_datptr (uint64_t sample = 0);
 
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
-    virtual const unsigned char* get_datptr (uint64 sample = 0) const;
+    virtual const unsigned char* get_datptr (uint64_t sample = 0) const;
 
-    uint64 get_size () const { return data_size; }
+    uint64_t get_size () const { return data_size; }
 
     //! Append little onto the end of this
     virtual void append (const BitSeries* little);
 
     //! Return the sample offset from the start of the data source
-    int64 get_input_sample (Input* input = 0) const;
+    int64_t get_input_sample (Input* input = 0) const;
 
     //! Delete the current data buffer and attach to this one
     //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
@@ -86,9 +86,9 @@ namespace dsp {
     virtual void attach(unsigned char* _data);
 
     //! Release control of the data buffer- resizes to zero
-    virtual unsigned char* release(uint64& _size);
+    virtual unsigned char* release(uint64_t& _size);
     //! For use by MiniSeries to share the data buffer for unpacking
-    void share(unsigned char*& _buffer,uint64& _size) const;
+    void share(unsigned char*& _buffer,uint64_t& _size) const;
 
     const Input* get_loader() const { return input; }
 
@@ -102,16 +102,16 @@ namespace dsp {
     //! The size (in bytes) of the allocated data buffer
     /*! Note that more space may have been allocated than indicated by
       the ndat attribute */
-    int64 data_size;
+    int64_t data_size;
 
     //! Sample offset from start of source; attribute used by Input class
-    int64 input_sample;
+    int64_t input_sample;
 
     //! Offset (owing to resolution) to the requested time sample
     unsigned request_offset;
 
     //! Number of time samples requested
-    uint64 request_ndat;
+    uint64_t request_ndat;
 
     //! The Input instance to last set input_sample
     Input* input;

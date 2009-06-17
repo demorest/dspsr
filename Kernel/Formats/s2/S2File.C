@@ -128,7 +128,7 @@ void dsp::S2File::open_file (const char* filename)
     info.set_telescope ( "PKS" );
     
   // tci_file_open returns file size in Words (16 bits)
-  info.set_ndat ( int64(s2file.fsz) * 16 / (info.get_nbit()*info.get_npol()) );
+  info.set_ndat ( int64_t(s2file.fsz) * 16 / (info.get_nbit()*info.get_npol()) );
     
   if (verbose)
     cerr << "dsp::S2File::open " << s2file.fsz * 2 << " bytes = "

@@ -55,7 +55,7 @@ void dsp::RFIFilter::match (const Observation* obs, unsigned nchan)
 		 "requested epoch=" + epoch.printdays(6) +
 		 " precedes input data start=" + input_start.printdays(6));
 
-  uint64 ioffset = uint64 (offset / interval);
+  uint64_t ioffset = uint64_t (offset / interval);
   offset = ioffset * interval;
 
   start_time = input_start + offset;
@@ -78,9 +78,9 @@ void dsp::RFIFilter::match (const Observation* obs, unsigned nchan)
   bandpass->set_nchan (nchan_bandpass);
   bandpass->reset_output();
 
-  uint64 position = input->get_input()->tell ();
-  uint64 blocksz = input->get_input()->get_block_size ();
-  uint64 overlap = input->get_input()->get_overlap ();
+  uint64_t position = input->get_input()->tell ();
+  uint64_t blocksz = input->get_input()->get_block_size ();
+  uint64_t overlap = input->get_input()->get_overlap ();
   TimeSeries* ptr = input->get_unpacker()->get_output();
 
   input->get_input()->seek (start_time);

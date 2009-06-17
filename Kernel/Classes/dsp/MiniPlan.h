@@ -50,7 +50,7 @@ namespace dsp {
       //! When the SubInt is valid from
       MJD start_time;
       //! For how many samples the SubInt is valid for
-      uint64 duration;
+      uint64_t duration;
       //! The means for each chan/pol group
       std::vector<std::vector<float> > means;
       //! The std devs for each chan/pol group
@@ -58,7 +58,7 @@ namespace dsp {
       //! The start time of the data the SubInt was generated from
       MJD gen_start;
       //! How many samples were used to generate the SubInt
-      uint64 gen_samps;
+      uint64_t gen_samps;
 
       //! Initialise from a vector of chars
       virtual unsigned read_from_chars(std::vector<char>& info,unsigned offset);
@@ -99,8 +99,8 @@ namespace dsp {
     //! Initialises the MiniPlan from a Header
     virtual void Header2MiniPlan(Reference::To<Header> hdr);
 
-    uint64 get_requested_scan_samps() const { return requested_scan_samps; }
-    uint64 get_requested_duration() const { return requested_duration; }
+    uint64_t get_requested_scan_samps() const { return requested_scan_samps; }
+    uint64_t get_requested_duration() const { return requested_duration; }
     float get_sigma_max() const { return sigma_max; }
     double get_rate() const { return rate; }
     unsigned get_nchan() const;
@@ -111,8 +111,8 @@ namespace dsp {
     MJD get_end_time() const;
     MJD get_end_time(unsigned isub) const;
     
-    virtual void set_requested_scan_samps(uint64 _requested_scan_samps);
-    virtual void set_requested_duration(uint64 _requested_duration);
+    virtual void set_requested_scan_samps(uint64_t _requested_scan_samps);
+    virtual void set_requested_duration(uint64_t _requested_duration);
     virtual void set_sigma_max(float _sigma_max){ sigma_max = _sigma_max; }
 
     //! Returns the lower threshold- points below this are lopped off
@@ -129,12 +129,12 @@ namespace dsp {
     //! Each TimeSeries this is called on must be contiguous with the last
     //! Returns the number of samples that were added in to the plan
     //! (This is between 0 and data->get_ndat())
-    virtual uint64 add_data(const TimeSeries* data);
+    virtual uint64_t add_data(const TimeSeries* data);
 
     //! Stretch the last subint stored until it has reached the maximum
     //! number of samples it is allowed to cover (which is derived from
     //! 'requested_duration')
-    virtual uint64 stretch_last_subint(const TimeSeries* data);
+    virtual uint64_t stretch_last_subint(const TimeSeries* data);
 
     //! Append 'miniplan's subints onto the end of this
     virtual void append(Reference::To<MiniPlan> miniplan);
@@ -143,7 +143,7 @@ namespace dsp {
     virtual Reference::To<MiniPlan> extract(MJD start, MJD end);
 
     //! Makes the final subints 'ext' samples longer in duration
-    virtual void extend_last_subint(uint64 ext);
+    virtual void extend_last_subint(uint64_t ext);
 
     //! Extends the 'duration' attribute of the last SubInt so that it ends at this time
     virtual void extend(MJD _end_time);
@@ -199,7 +199,7 @@ namespace dsp {
     virtual Reference::To<Header> get_header();
 
     //! Add in a SubInt for the given TimeSeries
-    virtual void add_subint(const TimeSeries* data,uint64& offset);
+    virtual void add_subint(const TimeSeries* data,uint64_t& offset);
 
     virtual void set_rate(double _rate){ rate = _rate; }
 
@@ -220,10 +220,10 @@ namespace dsp {
     */
 
     //! Requested number of samples to generate mean etc. from (0 for all) [0]
-    uint64 requested_scan_samps;
+    uint64_t requested_scan_samps;
 
     //! Requested number of samples to pump into a single subint (0 for as big as the first TimeSeries added in.) [0]
-    uint64 requested_duration;
+    uint64_t requested_duration;
 
     //! The (positive) cutoff for digitisation.  Any samples higher than this will be lopped down to size [8.0];
     //! This number determines the step between levels.

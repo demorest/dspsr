@@ -22,7 +22,7 @@ void dsp::PScrunch::transformation ()
   if (verbose)
     cerr << "dsp::PScrunch::transformation" << endl;
 
-  const uint64   input_ndat  = input->get_ndat();
+  const uint64_t   input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
@@ -35,7 +35,7 @@ void dsp::PScrunch::transformation ()
     throw Error (InvalidState, "dsp::PScrunch::transformation",
 		 "invalid npol=%d", input_npol);
 
-  uint64 output_ndat = input_ndat;
+  uint64_t output_ndat = input_ndat;
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
@@ -61,7 +61,7 @@ void dsp::PScrunch::transformation ()
 
 				  float* out_data = output->get_datptr (ichan, 0);
 
-				  for (uint64 idat=0; idat < output_ndat; idat++)
+				  for (uint64_t idat=0; idat < output_ndat; idat++)
 					  out_data[idat] = (in_p0[idat] + in_p1[idat]) * scale;
 			  }
 			  break;
@@ -72,7 +72,7 @@ void dsp::PScrunch::transformation ()
 			  in=out=0;
 			  float* out_data = output->get_dattfp();
 			  const float* in_data = input->get_dattfp();
-			  for (uint64 idat=0; idat < output_ndat; idat++){
+			  for (uint64_t idat=0; idat < output_ndat; idat++){
 				  for (unsigned ichan=0; ichan < input_nchan; ichan++){
 					  out_data[out] = (in_data[in] + in_data[in+1])*scale;
 					  in+=2;

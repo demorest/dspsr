@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.6 $
-   $Date: 2006/07/09 13:27:05 $
-   $Author: wvanstra $ */
+   $Revision: 1.7 $
+   $Date: 2009/06/17 10:16:54 $
+   $Author: straten $ */
 
 #ifndef __pspmDbase_h
 #define __pspmDbase_h
@@ -23,11 +23,11 @@ namespace pspmDbase {
   class entry {
 
   public:
-    int32       scan;      // scan number
-    int32       num;       // scan file number
+    int32_t       scan;      // scan number
+    int32_t       num;       // scan file number
 
-    int32       tape;      // tape number
-    int32       file;      // file number
+    int32_t       tape;      // tape number
+    int32_t       file;      // file number
 
     MJD         start;     // MJD of start time
     int         ttelid;    // tempo telescope code
@@ -37,7 +37,7 @@ namespace pspmDbase {
     double    tsamp;       // sampling period in microseconds
     int       ndigchan;    // number of digitizer channels
     int       nbit;        // number of bits per sample
-    int64     ndat;        // number of time samples
+    int64_t     ndat;        // number of time samples
 
     double    duration()   // in seconds
       { return double(ndat) * tsamp * 1e-6; }
@@ -56,10 +56,10 @@ namespace pspmDbase {
     void create (void* hdr);
 
     // returns the number of members that match the arguments
-    int  match (int32 scan, int32 num, int32 tape, int32 file);
+    int  match (int32_t scan, int32_t num, int32_t tape, int32_t file);
 
     // returns true on exact match
-    bool match (int32 _tape, int32 _file)
+    bool match (int32_t _tape, int32_t _file)
       {  return tape==_tape && file==_file; }
 
     // used for sorting. by scan number, then by scan file number
@@ -101,13 +101,13 @@ namespace pspmDbase {
     // Use this interface when dealing with information taken from
     // a PSPM_SEARCH_HEADER, so that all four fields may be used to
     // make a positive match
-    entry match (int32 scan, int32 num, int32 tape, int32 file);
+    entry match (int32_t scan, int32_t num, int32_t tape, int32_t file);
 
     //
     // Returns the database entry for CPSRtape.file
     //
     // Use this interface when you positively know the tape and file
-    entry match (int32 tape, int32 file);
+    entry match (int32_t tape, int32_t file);
 
     // convenience. return match from PSPM_SEARCH_HEADER
     entry match (void* hdr);

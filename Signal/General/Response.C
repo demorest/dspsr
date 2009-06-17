@@ -265,8 +265,8 @@ unsigned dsp::Response::get_minimum_ndat () const
   return min;
 }
 
-extern "C" uint64 
-optimal_fft_length (uint64 nbadperfft, uint64 nfft_max, char verbose);
+extern "C" uint64_t 
+optimal_fft_length (uint64_t nbadperfft, uint64_t nfft_max, char verbose);
 
 /*!  Using the get_minimum_ndat method and the max_ndat static attribute,
   this method determines the optimal ndat for use in convolution. */
@@ -282,7 +282,7 @@ void dsp::Response::set_optimal_ndat ()
 		 "specified maximum ndat (%d) < required minimum ndat (%d)",
 		 ndat_max, ndat_min);
 
-  int64 optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
+  int64_t optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
 					   ndat_max, verbose);
   if (optimal_ndat < 0)
     throw Error (InvalidState, "Response::set_optimal_ndat",

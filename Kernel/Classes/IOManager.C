@@ -5,6 +5,8 @@
  *
  ***************************************************************************/
 
+#include "environ.h"
+
 #include "dsp/IOManager.h"
 #include "dsp/File.h"
 #include "dsp/BitSeries.h"
@@ -248,8 +250,8 @@ void dsp::IOManager::operation ()
   unpacker->operate ();
 }
 
-uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
-				       uint64 maximum_RAM,
+uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples,
+				       uint64_t maximum_RAM,
 				       unsigned copies)
 {
   /*
@@ -293,7 +295,7 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
     
   double nbyte_dat = nbyte * ndim * npol * nchan;
 
-  uint64 block_size = multiple_greater (minimum_samples, resolution);
+  uint64_t block_size = multiple_greater (minimum_samples, resolution);
 
   if (verbose)
     cerr << "dsp::IOManager::set_block_size required block_size="
@@ -301,7 +303,7 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
 
   if (maximum_RAM)
   {
-    block_size = (uint64(maximum_RAM / nbyte_dat) / resolution) * resolution;
+    block_size = (uint64_t(maximum_RAM / nbyte_dat) / resolution) * resolution;
     if (verbose)
       cerr << "dsp::IOManager::set_block_size possible block_size="
            << block_size << endl;
@@ -326,6 +328,6 @@ uint64 dsp::IOManager::set_block_size (uint64 minimum_samples,
 
   input->set_block_size ( block_size );
 
-  return uint64( block_size * nbyte_dat );
+  return uint64_t( block_size * nbyte_dat );
 }
 

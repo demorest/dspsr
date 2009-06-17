@@ -37,7 +37,7 @@ extern "C" int mfilter (const unsigned npts, float* spectrum, float* filter);
 void dsp::ACFilterbank::transformation ()
 {
   // number of timesamples in input data stream
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
 
   if (verbose)

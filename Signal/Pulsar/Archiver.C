@@ -136,15 +136,15 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
   this->profiles = _profiles;
 
-  uint64 ndat_folded = profiles->get_ndat_folded();
-  uint64 ndat_total = profiles->get_ndat_total();
+  uint64_t ndat_folded = profiles->get_ndat_folded();
+  uint64_t ndat_total = profiles->get_ndat_total();
   double percent = double(ndat_folded)/double(ndat_total) * 100.0;
 
   if (verbose)
     cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
 	 << ndat_total << " total samples: " << percent << "%" << endl;
 
-  uint64 ndat_expected = profiles->get_ndat_expected();
+  uint64_t ndat_expected = profiles->get_ndat_expected();
   if (ndat_expected && ndat_expected < 0.9 * ndat_total)
   {
     /*

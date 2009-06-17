@@ -283,7 +283,7 @@ void dsp::Dedispersion::build ()
 
   resize (1, nchan, ndat, 2);
   complex<float>* phasors = reinterpret_cast< complex<float>* > ( buffer );
-  uint64 npt = ndat * nchan;
+  uint64_t npt = ndat * nchan;
 
   for (unsigned ipt=0; ipt<npt; ipt++)
     phasors[ipt] = polar (float(1.0), phases[ipt]);

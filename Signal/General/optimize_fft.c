@@ -10,9 +10,9 @@
 #include <stdio.h>
 #include <math.h>
 
-uint64 power_of_two (uint64 number)
+uint64_t power_of_two (uint64_t number)
 {
-  uint64 twos = 1;
+  uint64_t twos = 1;
   while (twos < number)
     twos *= 2;
   if (twos != number)
@@ -60,10 +60,10 @@ uint64 power_of_two (uint64 number)
    Written by Willem van Straten Sep 17, 1999
    *********************************************************************** */
 
-uint64 optimal_fft_length (uint64 nbadperfft, uint64 nfft_max, char verbose)
+uint64_t optimal_fft_length (uint64_t nbadperfft, uint64_t nfft_max, char verbose)
 {  
-  uint64 nfft_min = 0;   /* the smallest FFT possible, given nbadperfft */
-  uint64 nfft = 0;       /* return value */
+  uint64_t nfft_min = 0;   /* the smallest FFT possible, given nbadperfft */
+  uint64_t nfft = 0;       /* return value */
 
   double data_kept = 0.0;  /* fractional data kept from each nfft */
   double order_fft = 0.0;  /* order NlogN assumed... */
@@ -77,7 +77,7 @@ uint64 optimal_fft_length (uint64 nbadperfft, uint64 nfft_max, char verbose)
   }
 
   /* find the next power of two up from nbadperfft */
-  nfft_min = (uint64) pow (2.0, ceil(log(nbadperfft)/log(2.0))); 
+  nfft_min = (uint64_t) pow (2.0, ceil(log(nbadperfft)/log(2.0))); 
   
   if (verbose || (nfft_max && nfft_max < nfft_min)) {
     fprintf(stderr,"optimal_fft_length: minimum FFT:"UI64" maximum FFT:"UI64"\n", 

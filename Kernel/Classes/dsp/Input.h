@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.39 $
-   $Date: 2008/10/04 11:33:21 $
+   $Revision: 1.40 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -67,34 +67,34 @@ namespace dsp {
     virtual bool has_output () const;
 
     //! Seek to the specified time sample
-    virtual void seek (int64 offset, int whence = 0);
+    virtual void seek (int64_t offset, int whence = 0);
 
     //! Return the first time sample to be read on the next call to operate
-    uint64 tell () const { return load_sample; }
+    uint64_t tell () const { return load_sample; }
 
     //! Seek to a sample close to the specified MJD
     virtual void seek (MJD mjd);
     
     //! Return the number of time samples to load on each load_block
-    virtual uint64 get_block_size () const { return block_size; }
+    virtual uint64_t get_block_size () const { return block_size; }
     //! Set the number of time samples to load on each load_block
-    virtual void set_block_size (uint64 _size);
+    virtual void set_block_size (uint64_t _size);
     
     //! Return the number of time samples by which consecutive blocks overlap
-    virtual uint64 get_overlap () const { return overlap; }
+    virtual uint64_t get_overlap () const { return overlap; }
     //! Set the number of time samples by which consecutive blocks overlap
-    virtual void set_overlap (uint64 _overlap) { overlap = _overlap; }
+    virtual void set_overlap (uint64_t _overlap) { overlap = _overlap; }
 
     //! Convenience function for returning block_size-overlap
-    virtual uint64 get_stride () const 
+    virtual uint64_t get_stride () const 
     { return get_block_size()-get_overlap(); }
 
     //! Return the total number of time samples available
-    virtual uint64 get_total_samples () const { return info.get_ndat(); }
+    virtual uint64_t get_total_samples () const { return info.get_ndat(); }
 
     //! Set the total number of time samples available
     /*! Generally useful for debugging */
-    void set_total_samples (uint64 s) { info.set_ndat(s); }
+    void set_total_samples (uint64_t s) { info.set_ndat(s); }
 
     //! Get the information about the data source
     operator const Observation* () const { return get_info(); }
@@ -106,10 +106,10 @@ namespace dsp {
     virtual const Observation* get_info () const { return &info; }
 
     //! Get the next time sample to be loaded
-    uint64 get_load_sample () const { return load_sample; }
+    uint64_t get_load_sample () const { return load_sample; }
 
     //! Get the number of samples to be loaded
-    uint64 get_load_size () const { return load_size; }
+    uint64_t get_load_size () const { return load_size; }
 
     //! Get the time sample resolution of the data source
     unsigned get_resolution () const { return resolution; }
@@ -162,7 +162,7 @@ namespace dsp {
     
     //! The ndat of the BitSeries last loaded
     //! Used by Seekable::recycle_data() and set by load()
-    uint64 last_load_ndat;
+    uint64_t last_load_ndat;
 
     //! If not "" then the source of the output gets changed to this after loading [""]
     std::string real_source;
@@ -175,14 +175,14 @@ namespace dsp {
       block_size, owing to the resolution of the data source.
       Attributes of both the BitSeries and TimeSeries classes keep
       these details transparent at the top level. */
-    uint64 block_size;
+    uint64_t block_size;
         
     //! Requested number of time samples by which data blocks overlap
     /*! The number of times samples by which data blocks overlap
       actually depends on the resolution of the data source.
       Attributes of both the BitSeries and TimeSeries classes keep
       these details transparent at the top level. */
-    uint64 overlap;
+    uint64_t overlap;
     
     //! Offset from load_sample to the time sample requested by the user
     /*! Owing to the resolution of the data source, the first sample
@@ -192,10 +192,10 @@ namespace dsp {
     unsigned resolution_offset;
 
     //! First time sample to be read on the next call to load_data
-    uint64 load_sample;
+    uint64_t load_sample;
 
     //! Number of time samples to be read on the next call to load_data
-    uint64 load_size;
+    uint64_t load_size;
 
     //! Ensures that load size is properly set
     void set_load_size ();

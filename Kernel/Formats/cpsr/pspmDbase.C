@@ -93,7 +93,7 @@ void pspmDbase::entry::create (void* vhdr)
   ndigchan  = hdr->num_chans;
   nbit      = hdr->bit_mode;
   
-  int64 fsize;
+  int64_t fsize;
   if (hdr->ll_file_size == 0)
     // old style - pre-August 1999
     fsize = hdr->file_size;
@@ -145,7 +145,7 @@ void pspmDbase::entry::unload (string& str)
   str = buffer;
 }
 
-int pspmDbase::entry::match (int32 _scan, int32 _num, int32 _tape, int32 _file)
+int pspmDbase::entry::match (int32_t _scan, int32_t _num, int32_t _tape, int32_t _file)
 {
   int matches = 0;
   if (scan == _scan)
@@ -260,7 +260,7 @@ pspmDbase::entry pspmDbase::server::match (void* vhdr)
   return result;
 }
 
-pspmDbase::entry pspmDbase::server::match (int32 tape, int32 file)
+pspmDbase::entry pspmDbase::server::match (int32_t tape, int32_t file)
 {
   for (unsigned ie=0; ie<entries.size(); ie++)
     if (entries[ie].match( tape, file ))
@@ -270,7 +270,7 @@ pspmDbase::entry pspmDbase::server::match (int32 tape, int32 file)
 }
 
 pspmDbase::entry
-pspmDbase::server::match (int32 scan, int32 num, int32 tape, int32 file)
+pspmDbase::server::match (int32_t scan, int32_t num, int32_t tape, int32_t file)
 {
   int ties=0;
   int best=0;

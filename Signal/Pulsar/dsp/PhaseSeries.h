@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.35 $
-   $Date: 2009/06/08 23:06:57 $
+   $Revision: 1.36 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -48,7 +48,7 @@ namespace dsp {
     PhaseSeries* clone() const;
 
     //! Allocate the space required to store nsamples time samples.
-    virtual void resize (int64 nsamples);
+    virtual void resize (int64_t nsamples);
 
     //! Add the given PhaseSeries to this
     void combine (const PhaseSeries*);
@@ -114,16 +114,16 @@ namespace dsp {
     bool combinable_rate (double) const { return true; }
 
     //! Set the expected number of time samples
-    void set_ndat_expected (uint64);
+    void set_ndat_expected (uint64_t);
 
     //! Return the expected number of time samples
-    uint64 get_ndat_expected () const;
+    uint64_t get_ndat_expected () const;
 
     //! Return the total number of time samples
-    uint64 get_ndat_total () const;
+    uint64_t get_ndat_total () const;
 
     //! Return the number of time samples folded into the profiles
-    uint64 get_ndat_folded () const;
+    uint64_t get_ndat_folded () const;
 
     //! Set the Extensions to be communicated to the Archiver class
     void set_extensions (Extensions*);
@@ -155,10 +155,10 @@ namespace dsp {
     std::vector<unsigned> hits;
 
     //! Total number of time samples passed to folding routine
-    uint64 ndat_total;
+    uint64_t ndat_total;
 
     //! Total number of time samples expected to be passed to folding routine
-    uint64 ndat_expected;
+    uint64_t ndat_expected;
 
     //! The number of seconds integrated into the profile(s)
     double integration_length;
@@ -168,7 +168,7 @@ namespace dsp {
 
     //! Return true when Observation can be integrated (and prepare for it)
     bool mixable (const Observation& obs, unsigned nbin,
-		  int64 istart=0, int64 fold_ndat=0);
+		  int64_t istart=0, int64_t fold_ndat=0);
 
   private:
 

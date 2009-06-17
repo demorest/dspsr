@@ -242,7 +242,7 @@ void dsp::Filterbank::make_preparations ()
     backward = Agent::current->get_plan (freq_res, FTransform::bcc);
 }
 
-void dsp::Filterbank::prepare_output (uint64 ndat)
+void dsp::Filterbank::prepare_output (uint64_t ndat)
 {
   if (ndat)
   {
@@ -318,7 +318,7 @@ void dsp::Filterbank::transformation ()
   if (!prepared)
     prepare ();
 
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation after prepare input ndat="
@@ -326,8 +326,8 @@ void dsp::Filterbank::transformation ()
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
-  uint64 npart = 0;
-  uint64 chump = nchan_subband - nsamp_tres + nsamp_overlap;
+  uint64_t npart = 0;
+  uint64_t chump = nchan_subband - nsamp_tres + nsamp_overlap;
   if (ndat > chump)
     npart = (ndat-chump)/nsamp_step;
 
@@ -337,7 +337,7 @@ void dsp::Filterbank::transformation ()
   if (has_buffering_policy())
     get_buffering_policy()->set_next_start (nsamp_step * npart);
 
-  uint64 output_ndat = npart * nkeep * time_res;
+  uint64_t output_ndat = npart * nkeep * time_res;
 
   // prepare the output TimeSeries
   prepare_output (output_ndat);
@@ -350,7 +350,7 @@ void dsp::Filterbank::transformation ()
   output->resize (output_ndat);
 
   // set the input sample
-  int64 input_sample = input->get_input_sample();
+  int64_t input_sample = input->get_input_sample();
   if (output_ndat == 0)
     output->set_input_sample (0);
   else if (input_sample >= 0)
@@ -423,12 +423,12 @@ void dsp::Filterbank::transformation ()
 
   // counters
   unsigned ipt, itres, ipol, jpol, ichan;
-  uint64 ipart;
+  uint64_t ipart;
 
   const unsigned npol = input->get_npol();
 
   // offsets into input and output
-  uint64 in_offset, tres_offset, out_offset;
+  uint64_t in_offset, tres_offset, out_offset;
 
   // some temporary pointers
   float* time_dom_ptr = NULL;  
@@ -627,7 +627,7 @@ void dsp::Filterbank::set_output_order (TimeSeries::Order order)
 
 void dsp::Filterbank::tfp_filterbank ()
 {
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned input_ichan = 0;
 
@@ -635,7 +635,7 @@ void dsp::Filterbank::tfp_filterbank ()
     cerr << "dsp::Filterbank::tfp_filterbank input ndat=" << ndat << endl;
 
   // number of FFTs
-  const uint64 npart = ndat / nsamp_fft;
+  const uint64_t npart = ndat / nsamp_fft;
   const unsigned long nfloat = nsamp_fft * input->get_ndim();
 
   float* outdat = output->get_dattfp ();
@@ -644,7 +644,7 @@ void dsp::Filterbank::tfp_filterbank ()
   {
     const float* indat = input->get_datptr (input_ichan, ipol);
 
-    for (uint64 ipart=0; ipart < npart; ipart++)
+    for (uint64_t ipart=0; ipart < npart; ipart++)
     {
       if (input->get_state() == Signal::Nyquist)
 	      forward->frc1d (nsamp_fft, outdat + ipart*nfloat, indat + ipart*nfloat);
@@ -658,13 +658,13 @@ void dsp::Filterbank::tfp_filterbank ()
     /* the data are now in TPF order, whereas TFP is desired.
        so square law detect, then pack p1 into the p0 holes */
 
-    uint64 nfloat = npart * npol * nchan;
+    uint64_t nfloat = npart * npol * nchan;
     outdat = output->get_dattfp ();
 
     if (verbose)
       cerr << "dsp::Filterbank::tfp_filterbank detecting" << endl;
 
-    for (uint64 ifloat=0; ifloat < nfloat; ifloat++)
+    for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
     {
       // Re squared
       outdat[ifloat*2] *= outdat[ifloat*2];
@@ -677,7 +677,7 @@ void dsp::Filterbank::tfp_filterbank ()
 
     nfloat = npart * nchan;
 
-    for (uint64 ifloat=0; ifloat < nfloat; ifloat++)
+    for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
     {
       // set Im[p0] = Re[p1]
       outdat[ifloat*2+1] = outdat[ifloat*2+nfloat];

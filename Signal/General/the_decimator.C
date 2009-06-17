@@ -284,7 +284,7 @@ int main (int argc, char** argv) try
     dsp::Observation* obs = manager->get_info();
 
     unsigned nchan = obs->get_nchan();
-    uint64 nsample = uint64( block_size * obs->get_rate() );
+    uint64_t nsample = uint64_t( block_size * obs->get_rate() );
 
     if (verbose)
       cerr << "the_decimator: block_size=" << block_size << " sec "
@@ -331,7 +331,7 @@ int main (int argc, char** argv) try
 #endif
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
-    uint64 lost_samps = 0;
+    uint64_t lost_samps = 0;
     while (!manager->get_input()->eod())
     {
       manager->operate ();
@@ -479,7 +479,7 @@ int main (int argc, char** argv) try
     }
 
     // output the result to stdout
-    const uint64 nbyte = bitseries->get_nbytes();
+    const uint64_t nbyte = bitseries->get_nbytes();
     unsigned char* data = bitseries->get_rawptr();
 
     fwrite (data,nbyte,1,outfile);

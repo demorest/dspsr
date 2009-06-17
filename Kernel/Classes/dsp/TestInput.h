@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TestInput.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:10 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2009/06/17 10:16:53 $
+   $Author: straten $ */
 
 #ifndef __TestInput_h
 #define __TestInput_h
@@ -44,14 +44,14 @@ namespace dsp {
     unsigned get_errors () const { return errors; }
 
     //! Return the number of time samples to load on each load_block
-    uint64 get_block_size () const { return block_size; }
+    uint64_t get_block_size () const { return block_size; }
     //! Set the number of time samples to load on each load_block
-    void set_block_size (uint64 _size) { block_size = _size; }
+    void set_block_size (uint64_t _size) { block_size = _size; }
     
   protected:
 
     //! The number of time samples to load on each load_block
-    uint64 block_size;
+    uint64_t block_size;
 
     //! The number of errors in runtest
     unsigned errors;

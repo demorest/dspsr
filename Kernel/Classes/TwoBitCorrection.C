@@ -135,7 +135,7 @@ void dsp::TwoBitCorrection::build ()
 
 void dsp::TwoBitCorrection::dig_unpack (const unsigned char* input_data, 
 					float* output_data,
-					uint64 nfloat,
+					uint64_t nfloat,
 					unsigned long* hist,
 					unsigned* weights,
 					unsigned nweights)

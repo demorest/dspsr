@@ -164,27 +164,27 @@ void dsp::File::set_total_samples ()
 }
 
 //! Load bytes from file
-int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
+int64_t dsp::File::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
   if (verbose)
     cerr << "dsp::File::load_bytes nbytes=" << bytes << endl;
 
-  int64 old_pos = lseek(fd,0,SEEK_CUR);
+  int64_t old_pos = lseek(fd,0,SEEK_CUR);
 
   ssize_t bytes_read = read (fd, buffer, size_t(bytes));
  
   if (bytes_read < 0)
     perror ("dsp::File::load_bytes read error");
 
-  int64 new_pos = lseek(fd,0,SEEK_CUR);
-  uint64 end_pos = get_info()->get_nbytes() + uint64(header_bytes);
+  int64_t new_pos = lseek(fd,0,SEEK_CUR);
+  uint64_t end_pos = get_info()->get_nbytes() + uint64_t(header_bytes);
 
   if (verbose)
     cerr << "dsp::File::load_bytes bytes_read=" << bytes_read
 	 << " old_pos=" << old_pos << " new_pos=" << new_pos 
 	 << " end_pos=" << end_pos << endl;
 
-  if( uint64(new_pos) >= end_pos ){
+  if( uint64_t(new_pos) >= end_pos ){
     bytes_read = ssize_t(end_pos - old_pos);
     lseek(fd,end_pos,SEEK_SET);
     end_of_data = true;
@@ -196,7 +196,7 @@ int64 dsp::File::load_bytes (unsigned char* buffer, uint64 bytes)
 }
 
 //! Adjust the file pointer
-int64 dsp::File::seek_bytes (uint64 bytes)
+int64_t dsp::File::seek_bytes (uint64_t bytes)
 {
   if (verbose)
     cerr << "dsp::File::seek_bytes nbytes=" << bytes 
@@ -206,11 +206,11 @@ int64 dsp::File::seek_bytes (uint64 bytes)
     throw Error (InvalidState, "dsp::File::seek_bytes", "invalid fd");
 
   bytes += header_bytes;
-  int64 retval = lseek (fd, bytes, SEEK_SET);
+  int64_t retval = lseek (fd, bytes, SEEK_SET);
   if (retval < 0)
     throw Error (FailedSys, "dsp::File::seek_bytes", "lseek error");
 
-  if( uint64(retval) == get_info()->get_nbytes()+uint64(header_bytes) )
+  if( uint64_t(retval) == get_info()->get_nbytes()+uint64_t(header_bytes) )
     end_of_data = true;
   else
     end_of_data = false;
@@ -220,7 +220,7 @@ int64 dsp::File::seek_bytes (uint64 bytes)
 }
 
 /* Determine the number of time samples from the size of the file */
-int64 dsp::File::fstat_file_ndat (uint64 tailer_bytes)
+int64_t dsp::File::fstat_file_ndat (uint64_t tailer_bytes)
 {
   if (fd < 0)
     throw Error (InvalidState, "dsp::File::fstat_file_ndat", "fd < 0");
@@ -230,12 +230,12 @@ int64 dsp::File::fstat_file_ndat (uint64 tailer_bytes)
     throw Error (FailedSys, "dsp::File::fstat_file_ndat",
                  "fstat(%s)", current_filename.c_str());
 
-  if (uint64(buf.st_size) < header_bytes + tailer_bytes)
+  if (uint64_t(buf.st_size) < header_bytes + tailer_bytes)
     throw Error (InvalidState, "dsp::File::fstat_file_ndat",
                  "file size=%d < header size=%d + tailer_size=%d",
                  buf.st_size, header_bytes, tailer_bytes);
 
-  uint64 total_bytes = buf.st_size - header_bytes - tailer_bytes;
+  uint64_t total_bytes = buf.st_size - header_bytes - tailer_bytes;
 
   if( verbose )
     cerr << "dsp::File::fstat_file_ndat(): buf=" << buf.st_size
@@ -247,7 +247,7 @@ int64 dsp::File::fstat_file_ndat (uint64 tailer_bytes)
 }
 
 //! Over-ride this function to pad data via HoleyFile
-int64 dsp::File::pad_bytes(unsigned char* buffer, int64 bytes){
+int64_t dsp::File::pad_bytes(unsigned char* buffer, int64_t bytes){
   throw Error(InvalidState,"dsp::File::pad_bytes()",
 	      "This class (%s) doesn't have a pad_bytes() function",get_name().c_str());
   return -1;

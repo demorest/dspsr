@@ -65,7 +65,7 @@ void dsp::PhaseLockedFilterbank::prepare ()
 
 void dsp::PhaseLockedFilterbank::transformation ()
 {
-  const uint64 input_ndat = input->get_ndat();
+  const uint64_t input_ndat = input->get_ndat();
   const unsigned input_nchan = input->get_nchan();
   const unsigned input_npol = input->get_npol();
   const unsigned input_ndim = input->get_ndim();
@@ -148,7 +148,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 
 	 << endl;
 
-  uint64 idat_start = 0;
+  uint64_t idat_start = 0;
   unsigned phase_bin = 0;
 
   // flag that the input TimeSeries contains data for another sub-integration

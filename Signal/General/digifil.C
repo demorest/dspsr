@@ -226,7 +226,7 @@ int main (int argc, char** argv) try
 
     dsp::Observation* obs = manager->get_info();
 
-    uint64 nsample = uint64( block_size * obs->get_rate() );
+    uint64_t nsample = uint64_t( block_size * obs->get_rate() );
     bool do_pscrunch = obs->get_npol() > 1;
 
     if (verbose)
@@ -319,7 +319,7 @@ int main (int argc, char** argv) try
       }
 
       // output the result to stdout
-      const uint64 nbyte = bitseries->get_nbytes();
+      const uint64_t nbyte = bitseries->get_nbytes();
       unsigned char* data = bitseries->get_rawptr();
 
       fwrite (data,nbyte,1,outfile);

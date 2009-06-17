@@ -45,7 +45,7 @@ namespace dsp {
     std::vector< std::vector<double> > sumsq;
 
     //! The total number of samples in each of the above sums
-    uint64 total;
+    uint64_t total;
 
   };
 

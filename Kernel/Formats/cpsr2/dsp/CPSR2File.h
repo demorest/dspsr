@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2File.h,v $
-   $Revision: 1.19 $
-   $Date: 2008/10/04 11:45:55 $
+   $Revision: 1.20 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __CPSR2File_h
@@ -40,7 +40,7 @@ namespace dsp {
   protected:
 
     //! Pads gaps in data
-    virtual int64 pad_bytes(unsigned char* buffer, int64 bytes);
+    virtual int64_t pad_bytes(unsigned char* buffer, int64_t bytes);
       
     //! Open the file
     virtual void open_file (const char* filename);

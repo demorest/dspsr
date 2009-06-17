@@ -410,7 +410,7 @@ void dsp::ASCIIObservation::unload (char* header)
   // OBS_OFFSET
   //
   double offset_samples = epoch.get_fracsec() * get_rate();
-  uint64 offset_bytes = get_nbytes( (uint64)offset_samples );
+  uint64_t offset_bytes = get_nbytes( (uint64_t)offset_samples );
 
   if (ascii_header_set (header, "OBS_OFFSET", UI64, offset_bytes) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed unload OBS_OFFSET");

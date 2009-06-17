@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.56 $
-   $Date: 2009/06/06 11:30:25 $
+   $Revision: 1.57 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -142,20 +142,20 @@ namespace dsp {
     virtual void transformation ();
 
     //! Fold nblock blocks of data
-    virtual void fold (uint64 nweights, const unsigned* weights,
+    virtual void fold (uint64_t nweights, const unsigned* weights,
 		       unsigned ndatperweight, unsigned weight_idat);
 
     //! Set the idat_start and ndat_fold attributes
     virtual void set_limits (const Observation* input);
 
     //! Used by the MultiFold class
-    void set_idat_start(uint64 _idat_start){ idat_start = _idat_start; }
+    void set_idat_start(uint64_t _idat_start){ idat_start = _idat_start; }
     //! Used by the MultiFold class
-    uint64 get_idat_start(){ return idat_start; }
+    uint64_t get_idat_start(){ return idat_start; }
     //! Used by the MultiFold class
-    void set_ndat_fold(uint64 _ndat_fold){ ndat_fold = _ndat_fold; }
+    void set_ndat_fold(uint64_t _ndat_fold){ ndat_fold = _ndat_fold; }
     //! Used by the MultiFold class
-    uint64 get_ndat_fold(){ return ndat_fold; }
+    uint64_t get_ndat_fold(){ return ndat_fold; }
 
     //! Called by fold to return pfold
     double get_pfold (const MJD& start_time);
@@ -193,10 +193,10 @@ namespace dsp {
     bool built;
 
     //! INTERNAL: the time sample at which to start folding
-    uint64 idat_start;
+    uint64_t idat_start;
 
     //! INTERNAL: the number of time samples to fold
-    uint64 ndat_fold;
+    uint64_t ndat_fold;
 
     //! Makes sure parameters are initialised
     // This is called from prepare() rather than the constructor so that reducer

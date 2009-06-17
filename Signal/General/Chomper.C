@@ -4,12 +4,12 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include "Error.h"
-#include "environ.h"
 
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Chomper.h"
+
+#include "Error.h"
 
 //! Default constructor- always inplace
 dsp::Chomper::Chomper() : Transformation<TimeSeries,TimeSeries>("Chomper",inplace,true){

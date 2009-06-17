@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark4/dsp/Mark4File.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/05/28 21:12:43 $
+   $Revision: 1.5 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __Mark4File_h
@@ -45,7 +45,7 @@ namespace dsp {
     void open_file (const char* filename);
     
     //! Locates the next SYNC pulse, relative to the 'from' position.
-    uint64 find_sync (int file_descriptor, uint64 from = 0) const;
+    uint64_t find_sync (int file_descriptor, uint64_t from = 0) const;
 
     //! Initalises the data stream.
     void initalise ();
@@ -54,7 +54,7 @@ namespace dsp {
     int count_channels (int file_descriptor) const;
 
     //! Returns the MJD date of the next header.
-    MJD decode_date(uint64 from = 0);
+    MJD decode_date(uint64_t from = 0);
     
     //! Defines the number of data channels.
     unsigned int channels;

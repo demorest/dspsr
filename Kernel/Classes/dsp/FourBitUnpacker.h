@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitUnpacker.h,v $
-   $Revision: 1.8 $
-   $Date: 2008/05/05 19:58:33 $
+   $Revision: 1.9 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __FourBitUnpacker_h
@@ -32,7 +32,7 @@ namespace dsp {
 
   protected:
 
-    void unpack (uint64 ndat, const unsigned char* from, const unsigned nskip,
+    void unpack (uint64_t ndat, const unsigned char* from, const unsigned nskip,
 		 float* into, const unsigned fskip, unsigned long* hist);
 
   };

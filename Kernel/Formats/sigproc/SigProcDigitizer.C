@@ -54,7 +54,7 @@ void dsp::SigProcDigitizer::pack ()
   const unsigned nchan = input->get_nchan();
 
   // the number of time samples
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
 
   unsigned char* outptr = output->get_rawptr();
 
@@ -113,7 +113,7 @@ void dsp::SigProcDigitizer::pack ()
       const float* inptr = input->get_dattfp();
       outptr--; // This is important, as the program increments the pointer at the start of each byte. MJK2008.
 
-      for(uint64 idat=0; idat < ndat; idat++){
+      for(uint64_t idat=0; idat < ndat; idat++){
 
 	for(unsigned ichan=0; ichan < nchan; ichan++){
 	  unsigned inChan = ichan;
@@ -175,7 +175,7 @@ void dsp::SigProcDigitizer::pack ()
 	  else
 	    inptr = input->get_datptr (ichan);
 
-	  for (uint64 idat=0; idat < ndat; idat++)
+	  for (uint64_t idat=0; idat < ndat; idat++)
 	    {
 	      int result = int( (inptr[idat] * digi_scale) + digi_mean +0.5 );
 

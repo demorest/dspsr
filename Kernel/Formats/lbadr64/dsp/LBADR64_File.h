@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr64/dsp/LBADR64_File.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/05/28 21:12:42 $
+   $Revision: 1.3 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __LBADR64_File_h
@@ -41,7 +41,7 @@ namespace dsp {
     void open_file (const char* filename);
 
     //! Pad over top of gaps in data
-    int64 pad_bytes(unsigned char* buffer, int64 bytes);
+    int64_t pad_bytes(unsigned char* buffer, int64_t bytes);
 
   private:
     

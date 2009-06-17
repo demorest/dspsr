@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.50 $
-   $Date: 2009/06/08 07:39:39 $
+   $Revision: 1.51 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __dsp_Transformation_h
@@ -112,7 +112,7 @@ namespace dsp {
     virtual void transformation () = 0;
 
     //! If input doesn't have this many samples, operate() returns false
-    int64 minimum_samps_can_process;
+    int64_t minimum_samps_can_process;
 
     //! Makes sure input & output are okay before calling transformation()
     virtual void vchecks();
@@ -123,7 +123,7 @@ namespace dsp {
     Behaviour type;
 
     //! If output is a container, its ndat is rounded off to divide this number
-    uint64 rounding;
+    uint64_t rounding;
 
     //! Returns true if the Transformation definitely conserves time
     /*! (i.e. it conserves time if the number of seconds in the output
@@ -164,7 +164,7 @@ bool dsp::Transformation<In,Out>::can_operate()
   if (minimum_samps_can_process < 0)
     return true;
 
-  if (int64(this->get_input()->get_ndat()) >= minimum_samps_can_process)
+  if (int64_t(this->get_input()->get_ndat()) >= minimum_samps_can_process)
     return true;
 
   if (Operation::verbose)

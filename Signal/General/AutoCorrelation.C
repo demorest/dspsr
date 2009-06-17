@@ -24,7 +24,7 @@ void dsp::AutoCorrelation::transformation ()
     cerr << "dsp::AutoCorrelation::transformation input ndat=" 
 	 << get_input()->get_ndat() << endl;
 
-  uint64   ndat  = input->get_ndat();
+  uint64_t   ndat  = input->get_ndat();
   unsigned npol  = input->get_npol();
   unsigned nchan = input->get_nchan();
   unsigned ndim  = input->get_ndim();
@@ -101,7 +101,7 @@ void dsp::AutoCorrelation::transformation ()
 
       for (unsigned ipart=0; ipart < npart; ipart++)  {
 	
-	uint64 offset = ipart * nlag;
+	uint64_t offset = ipart * nlag;
 	
 	iptr = input->get_datptr (ichan, ipol) + offset;
 

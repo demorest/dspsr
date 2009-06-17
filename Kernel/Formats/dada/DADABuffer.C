@@ -214,13 +214,13 @@ void dsp::DADABuffer::open_file (const char* filename)
 }
 
 //! Load bytes from shared memory
-int64 dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64 bytes)
+int64_t dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
   if (verbose)
     cerr << "DADABuffer::load_bytes ipcio_read "
          << bytes << " bytes" << endl;
 
-  int64 bytes_read = ipcio_read (hdu->data_block, (char*)buffer, bytes);
+  int64_t bytes_read = ipcio_read (hdu->data_block, (char*)buffer, bytes);
   if (bytes_read < 0)
     cerr << "DADABuffer::load_bytes error ipcio_read" << endl;
 
@@ -231,13 +231,13 @@ int64 dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64 bytes)
 }
 
 //! Adjust the shared memory pointer
-int64 dsp::DADABuffer::seek_bytes (uint64 bytes)
+int64_t dsp::DADABuffer::seek_bytes (uint64_t bytes)
 {
   if (verbose)
     cerr << "DADABuffer::seek_bytes ipcio_seek "
          << bytes << " bytes" << endl;
 
-  int64 absolute_bytes = ipcio_seek (hdu->data_block, bytes, SEEK_SET);
+  int64_t absolute_bytes = ipcio_seek (hdu->data_block, bytes, SEEK_SET);
   if (absolute_bytes < 0)
     cerr << "DADABuffer::seek_bytes error ipcio_seek" << endl;
 
@@ -247,7 +247,7 @@ int64 dsp::DADABuffer::seek_bytes (uint64 bytes)
   return absolute_bytes;
 }
 
-void dsp::DADABuffer::seek (int64 offset, int whence)
+void dsp::DADABuffer::seek (int64_t offset, int whence)
 {
   if (verbose)
     cerr << "dsp::DADABuffer::seek " << offset 
@@ -264,11 +264,11 @@ void dsp::DADABuffer::seek (int64 offset, int whence)
 }
 
 //! Ensure that block_size is an integer multiple of resolution
-void dsp::DADABuffer::set_block_size (uint64 _size)
+void dsp::DADABuffer::set_block_size (uint64_t _size)
 {
   if (resolution > 1)
   {
-    uint64 packets = _size / resolution;
+    uint64_t packets = _size / resolution;
     if (_size % resolution)
       packets ++;
     _size = resolution * packets;

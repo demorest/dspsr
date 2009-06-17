@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/RFIFilter.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2009/06/17 10:16:54 $
+   $Author: straten $ */
 
 #ifndef __RFIFilter_h
 #define __RFIFilter_h
@@ -82,7 +82,7 @@ namespace dsp {
     Reference::To<Response> data;
 
     //! The maximum block size
-    uint64 maximum_block_size;
+    uint64_t maximum_block_size;
 
     //! The number of frequency channels used in calculating the bandpass
     unsigned nchan_bandpass;

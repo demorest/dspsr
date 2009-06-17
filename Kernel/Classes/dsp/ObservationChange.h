@@ -45,7 +45,7 @@ namespace dsp {
     //! Set the number of bits per value
     virtual void set_nbit (unsigned _nbit);
 
-    virtual void set_ndat (uint64 _ndat);
+    virtual void set_ndat (uint64_t _ndat);
 
     //! Set the telescope name
     virtual void set_telescope (const std::string& name);

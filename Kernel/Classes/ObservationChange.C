@@ -286,7 +286,7 @@ void dsp::ObservationChange::set_nbit (unsigned arg)
   Observation::set_nbit (arg);
 }
 
-void dsp::ObservationChange::set_ndat (uint64 arg)
+void dsp::ObservationChange::set_ndat (uint64_t arg)
 {
   ndat_changed = true;
   Observation::set_ndat (arg);

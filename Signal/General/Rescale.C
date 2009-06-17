@@ -43,7 +43,7 @@ void dsp::Rescale::set_interval_seconds (double seconds)
 }
 
 //! Set the rescaling interval in samples
-void dsp::Rescale::set_interval_samples (uint64 samples)
+void dsp::Rescale::set_interval_samples (uint64_t samples)
 {
   interval_samples = samples;
 }
@@ -69,7 +69,7 @@ void dsp::Rescale::init ()
   if (interval_samples)
     nsample = interval_samples;
   else if (interval_seconds)
-    nsample = uint64( interval_seconds / input->get_rate() );
+    nsample = uint64_t( interval_seconds / input->get_rate() );
   else
     nsample = input->get_ndat ();
 
@@ -114,7 +114,7 @@ void dsp::Rescale::transformation ()
   if (first_call)
     init ();
 
-  const uint64   input_ndat  = input->get_ndat();
+  const uint64_t   input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
@@ -123,7 +123,7 @@ void dsp::Rescale::transformation ()
     throw Error (InvalidState, "dsp::Rescale::transformation",
 		 "invalid ndim=%d", input_ndim);
 
-  uint64 output_ndat = input_ndat;
+  uint64_t output_ndat = input_ndat;
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
@@ -136,18 +136,18 @@ void dsp::Rescale::transformation ()
   if (!output_ndat)
     return;
 
-  uint64 start_dat = 0;
-  uint64 end_dat = input_ndat;
+  uint64_t start_dat = 0;
+  uint64_t end_dat = input_ndat;
 
   do
     {
       end_dat = input_ndat;
 
-      uint64 interval_end_dat = start_dat + nsample - isample;
+      uint64_t interval_end_dat = start_dat + nsample - isample;
       if (interval_end_dat < end_dat)
         end_dat = interval_end_dat;
 
-      uint64 samp_dat = isample;
+      uint64_t samp_dat = isample;
 
       if (verbose)
         cerr << "dsp::Rescale::transformation end_dat=" << end_dat
@@ -263,7 +263,7 @@ void dsp::Rescale::transformation ()
 
 		  float the_offset = offset[ipol][ichan];
 		  float the_scale = scale[ipol][ichan];
-		  for (uint64 idat=start_dat; idat < end_dat; idat++)
+		  for (uint64_t idat=start_dat; idat < end_dat; idat++)
 		    out_data[idat] = (in_data[idat] + the_offset) * the_scale;
 		}
 	    }
@@ -351,7 +351,7 @@ const double* dsp::Rescale::get_variance (unsigned ipol) const
 }
 
 //! Get the number of samples between updates
-uint64 dsp::Rescale::get_nsample () const
+uint64_t dsp::Rescale::get_nsample () const
 {
   return nsample;
 }

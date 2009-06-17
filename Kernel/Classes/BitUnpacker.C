@@ -47,7 +47,7 @@ const dsp::BitTable* dsp::BitUnpacker::get_table () const
 
 void dsp::BitUnpacker::unpack ()
 {
-  const uint64   ndat  = input->get_ndat();
+  const uint64_t   ndat  = input->get_ndat();
 
   const unsigned nchan = input->get_nchan();
   const unsigned npol  = input->get_npol();

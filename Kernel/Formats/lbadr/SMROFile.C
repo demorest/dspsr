@@ -250,7 +250,7 @@ void dsp::SMROFile::open_file (const char* filename)
 
   // This needs to be checked and fixed?
   
-  info.set_ndat( int64((file_info.st_size - header_bytes))* 8 / 
+  info.set_ndat( int64_t((file_info.st_size - header_bytes))* 8 / 
 		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
   
 #ifdef CHAN8
@@ -270,13 +270,13 @@ void dsp::SMROFile::open_file (const char* filename)
 }
 
 //! Pads gaps in data
-int64 dsp::SMROFile::pad_bytes(unsigned char* buffer, int64 bytes){
+int64_t dsp::SMROFile::pad_bytes(unsigned char* buffer, int64_t bytes){
   if( get_info()->get_nbit() != 2 )
     throw Error(InvalidState,"dsp::SMROFile::pad_bytes()",
 		"Can only pad if nbit=2.  nbit=%d",get_info()->get_nbit());
 
   register const unsigned char val = 255;
-  for( int64 i=0; i<bytes; ++i)
+  for( int64_t i=0; i<bytes; ++i)
     buffer[i] = val;
   
   return bytes;

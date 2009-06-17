@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.6 $
-   $Date: 2007/05/19 21:52:06 $
+   $Revision: 1.7 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 
@@ -32,30 +32,30 @@ namespace dsp {
     virtual ~BlockFile ();
 
     //! Get the number of data bytes per block (frame)
-    uint64 get_block_data_bytes () const;
+    uint64_t get_block_data_bytes () const;
 
   protected:
 
     //! Total number of bytes in each block (header + data + tailer)
-    uint64 block_bytes;
+    uint64_t block_bytes;
 
     //! Number of bytes in header of each block
-    uint64 block_header_bytes;
+    uint64_t block_header_bytes;
 
     //! Number of bytes in tailer of each block
-    uint64 block_tailer_bytes;
+    uint64_t block_tailer_bytes;
 
     //! Return ndat given the file and header sizes, nchan, npol, and ndim
     /*! Called by open_file for some file types, to determine that the
     header ndat matches the file size.  Requires 'info' parameters
     nchan, npol, and ndim as well as header_bytes to be correctly set */
-    virtual int64 fstat_file_ndat(uint64 tailer_bytes=0);
+    virtual int64_t fstat_file_ndat(uint64_t tailer_bytes=0);
 
     //! Load nbyte bytes of sampled data from the device into buffer
     /*! If the data stored on the device contains information other
       than the sampled data, this method should be overloaded and the
       additional information should be filtered out. */
-    virtual int64 load_bytes (unsigned char* buffer, uint64 nbytes);
+    virtual int64_t load_bytes (unsigned char* buffer, uint64_t nbytes);
     
     //! Set the file pointer to the absolute number of sampled data bytes
     /*! If the header_bytes attribute is set, this number of bytes
@@ -63,7 +63,7 @@ namespace dsp {
       data stored on the device after the header contains information
       other than the sampled data, this method should be overloaded
       and the additional information should be skipped. */
-    virtual int64 seek_bytes (uint64 bytes);
+    virtual int64_t seek_bytes (uint64_t bytes);
 
     virtual void skip_extra ();
     
@@ -73,7 +73,7 @@ namespace dsp {
     void init();
 
     //! The current byte within a block
-    uint64 current_block_byte;
+    uint64_t current_block_byte;
 
   };
 

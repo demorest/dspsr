@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.13 $
-   $Date: 2009/05/14 07:18:04 $
+   $Revision: 1.14 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -75,7 +75,7 @@ namespace dsp {
     void finish ();
 
     //! Get the minimum number of samples required to process
-    uint64 get_minimum_samples () const;
+    uint64_t get_minimum_samples () const;
 
     //! The verbose output stream shared by all operations
     std::ostream cerr;
@@ -175,7 +175,7 @@ namespace dsp {
     Reference::To<Scratch> scratch;
 
     //! The minimum number of samples required to process
-    uint64 minimum_samples;
+    uint64_t minimum_samples;
 
   };
 

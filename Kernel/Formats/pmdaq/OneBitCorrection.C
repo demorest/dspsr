@@ -117,7 +117,7 @@ void dsp::OneBitCorrection::unpack ()
     cerr << "dsp::OneBitCorrection::unpack ndat="
 	 << ndat << " n_freq=" << n_freq << endl;
 
-  const uint32 * rawptr = (const uint32 *) input->get_rawptr();
+  const uint32_t * rawptr = (const uint32_t *) input->get_rawptr();
 
   // Note that algorithm 1 loses ndat%MM samples
   //  unsigned algorithm = 1;
@@ -132,41 +132,41 @@ void dsp::OneBitCorrection::unpack ()
 
   /*
 
-    NN is the number of channels we do in one go- it should be a power of two between 1 and 32 as there are 32 channels in a uint32
+    NN is the number of channels we do in one go- it should be a power of two between 1 and 32 as there are 32 channels in a uint32_t
 
     MM is the number of timesamples we do at any one time- when you have to write out to one of the output datptrs you may as well write several in one go as you have to copy a block of memory anyway.
 
-    How the algorithm works is you want to output MM timesamples into each of NN output arrays.  For each timesample all NN channels are in one uint32, so you bitwise 'and' ('&' operator) NN masks for that uint32.  Each time you do a bitwise 'and' you'll either get zero (0.0) or non-zero (1.0).  You do one mask at a time for the MM values of one channel though.
+    How the algorithm works is you want to output MM timesamples into each of NN output arrays.  For each timesample all NN channels are in one uint32_t, so you bitwise 'and' ('&' operator) NN masks for that uint32_t.  Each time you do a bitwise 'and' you'll either get zero (0.0) or non-zero (1.0).  You do one mask at a time for the MM values of one channel though.
 
 
 
    */
  
-  uint32 masks[NN];
+  uint32_t masks[NN];
   
-  for( uint32 i=0; i<NN; i++)
-    masks[i] = uint32(1) << i;
+  for( uint32_t i=0; i<NN; i++)
+    masks[i] = uint32_t(1) << i;
   
-  // 'nskip' is the number of uint32's you want to skip over in the input stream every time you do a new set of MM timesamples 
+  // 'nskip' is the number of uint32_t's you want to skip over in the input stream every time you do a new set of MM timesamples 
   register const unsigned nskip = MM*input->get_nchan()/32;    
-  // 'jump' is the number of uint32's between timesamples of the same channel
+  // 'jump' is the number of uint32_t's between timesamples of the same channel
   register const unsigned jump = input->get_nchan()/32;
 
   for (unsigned ichan=first_chan; ichan < n_freq+first_chan; ichan+=NN) {
-    // e.g. if NN is 16 then 'shift' is whether you want the first 16 or the second 16 bits in each uint32
-    register const uint32 shift = ichan % 32;
+    // e.g. if NN is 16 then 'shift' is whether you want the first 16 or the second 16 bits in each uint32_t
+    register const uint32_t shift = ichan % 32;
     
-    const uint32* from = rawptr + ichan / 32;
+    const uint32_t* from = rawptr + ichan / 32;
     
     register float* intos[NN];
     for( unsigned i=0; i<NN; i++)
       intos[i] = output->get_datptr(i+ichan-first_chan,0);
     
-    register uint32 dat[MM];
+    register uint32_t dat[MM];
     
     // NOTE: because idat increments in steps of MM, ndat%MM samples are lost!
     for (unsigned idat=0; idat < ndat; idat+=MM) {
-      // Grab MM uint32's, shift out the bits we're not interested in, and store those MM uint32's in a contiguous array
+      // Grab MM uint32_t's, shift out the bits we're not interested in, and store those MM uint32_t's in a contiguous array
       unsigned k = 0;
       for( unsigned j=0; j<MM; ++j, k+=jump)
 	dat[j] = from[k] >> shift;
@@ -200,15 +200,15 @@ void dsp::OneBitCorrection::unpack ()
 
     register const unsigned jump = input->get_nchan()/32;
     
-    uint32* onebit_ts = new uint32[ndat*jump];
+    uint32_t* onebit_ts = new uint32_t[ndat*jump];
     for( unsigned i=0; i<ndat*jump; i++)
       onebit_ts[i] = 0;
     
-    uint32 masks[32];
+    uint32_t masks[32];
     for( unsigned i=0; i<32; i++)
       masks[i] = 1 << i;
 
-    uint32 ndat_on_32 = ndat/32;
+    uint32_t ndat_on_32 = ndat/32;
 
     //for( unsigned idat=0; idat<ndat; idat++){
     //unsigned dat_offset = idat*jump;
@@ -218,15 +218,15 @@ void dsp::OneBitCorrection::unpack ()
     //}
 
     for (unsigned ichan=0; ichan < n_freq; ichan+=NN) {
-      register const uint32 shift = ichan % 32;
+      register const uint32_t shift = ichan % 32;
       
-      const uint32* from = rawptr + ichan / 32;
+      const uint32_t* from = rawptr + ichan / 32;
       
-      register uint32* intos[NN/32];
+      register uint32_t* intos[NN/32];
       for( unsigned i=0; i<NN/32; i++)
 	intos[i] = onebit_ts[(ichan+i)*ndat/32];
       
-      register uint32 dat[MM];
+      register uint32_t dat[MM];
       
       for (unsigned idat=0; idat < ndat; idat+=MM) {
 	unsigned k = 0;

@@ -14,7 +14,7 @@
 namespace dsp {
  
   // NOTES : The comment below may have to change
-  //         uint64 offset_bytes can probably be deleted
+  //         uint64_t offset_bytes can probably be deleted
 
   //! General means of constructing Observation attributes from FADC data
   /*! This class parses the ASCII header block used for FADC data and

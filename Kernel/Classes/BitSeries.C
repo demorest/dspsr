@@ -39,9 +39,9 @@ dsp::BitSeries::~BitSeries ()
   \post There is no guarantee that the data already contained in BitSeries
   will be preserved after a call to resize.
 */
-void dsp::BitSeries::resize (int64 nsamples)
+void dsp::BitSeries::resize (int64_t nsamples)
 {
-  int64 require = get_nbytes(nsamples);
+  int64_t require = get_nbytes(nsamples);
 
   if (require < 0)
     throw Error (InvalidParam, "dsp::BitSeries::resize",
@@ -97,18 +97,18 @@ dsp::BitSeries::operator = (const BitSeries& bitseries)
 
 
 //! Return pointer to the specified data block
-unsigned char* dsp::BitSeries::get_datptr(uint64 sample)
+unsigned char* dsp::BitSeries::get_datptr(uint64_t sample)
 {
   return data + get_nbytes(sample);
 }
 
 //! Return pointer to the specified data block
-const unsigned char* dsp::BitSeries::get_datptr(uint64 sample) const
+const unsigned char* dsp::BitSeries::get_datptr(uint64_t sample) const
 {
   return data + get_nbytes(sample);
 }
 
-int64 dsp::BitSeries::get_input_sample (Input* test_input) const
+int64_t dsp::BitSeries::get_input_sample (Input* test_input) const
 {
   if (test_input && test_input != input)
     return -1;
@@ -167,13 +167,13 @@ void dsp::BitSeries::attach(unsigned char* _data){
   data = _data;
 }
 
-void dsp::BitSeries::share(unsigned char*& _buffer,uint64& _size) const {
+void dsp::BitSeries::share(unsigned char*& _buffer,uint64_t& _size) const {
   _size = data_size;
   _buffer = data;
 }
 
 //! Release control of the data buffer- resizes to zero
-unsigned char* dsp::BitSeries::release(uint64& _size){
+unsigned char* dsp::BitSeries::release(uint64_t& _size){
   if( !data )
     return 0;
 

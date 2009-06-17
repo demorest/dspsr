@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark5/dsp/Mark5TwoBitCorrection.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/07/13 00:38:54 $
+   $Revision: 1.5 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __Mark5TwoBitCorrection_h
@@ -49,7 +49,7 @@ namespace dsp {
     //! Over-ride the SubByteTwoBitCorrection unpacking algorithm
     void dig_unpack (const unsigned char* input_data, 
 		     float* output_data,
-		     uint64 ndat,
+		     uint64_t ndat,
 		     unsigned long* hist,
 		     unsigned* weights = 0,
 		     unsigned nweights = 0);

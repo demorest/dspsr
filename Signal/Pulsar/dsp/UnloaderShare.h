@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.19 $
-   $Date: 2009/06/07 02:21:17 $
+   $Revision: 1.20 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -118,7 +118,7 @@ namespace dsp {
     unsigned contributors;
 
     //! The last division completed by a contributor
-    std::vector<uint64> last_division;
+    std::vector<uint64_t> last_division;
 
     //! Thread coordination used in unload method
     ThreadContext* context;
@@ -184,13 +184,13 @@ namespace dsp {
     PhaseSeries* get_profiles ();
 
     //! Set the division
-    void set_division( uint64 );
+    void set_division( uint64_t );
 
     //! Get the division
-    uint64 get_division ();
+    uint64_t get_division ();
 
     //! Register the last division finished by the specified contributor
-    bool integrate (unsigned contributor, uint64 division, const PhaseSeries*);
+    bool integrate (unsigned contributor, uint64_t division, const PhaseSeries*);
 
     //! Inform any waiting threads that contributor is finished this division
     void set_finished (unsigned contributor);
@@ -206,7 +206,7 @@ namespace dsp {
     Reference::To<PhaseSeries> profiles;
 
     std::vector<bool> finished;
-    uint64 division;
+    uint64_t division;
 
     void print_finished ();
 

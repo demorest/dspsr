@@ -39,7 +39,7 @@ typedef struct { float  re, im; } vlba_float_complex;
 #endif
 
 #include <stdio.h>
-#include <inttypes.h>
+#include "environ.h"
 
 #ifdef __cplusplus
 extern "C" {

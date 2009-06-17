@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.11 $
-   $Date: 2009/01/15 05:05:25 $
+   $Revision: 1.12 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -34,10 +34,10 @@ namespace dsp {
     void prepare ();
 
     //! Get the minimum number of samples required for operation
-    uint64 get_minimum_samples () { return nsamp_fft; }
+    uint64_t get_minimum_samples () { return nsamp_fft; }
 
     //! Get the minimum number of samples lost
-    uint64 get_minimum_samples_lost () { return nsamp_overlap; }
+    uint64_t get_minimum_samples_lost () { return nsamp_overlap; }
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
@@ -90,7 +90,7 @@ namespace dsp {
   private:
 
     void make_preparations ();
-    void prepare_output (uint64 ndat = 0);
+    void prepare_output (uint64_t ndat = 0);
 
     unsigned nchan_subband;
     unsigned nfilt_tot;

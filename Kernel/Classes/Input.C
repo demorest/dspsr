@@ -91,7 +91,7 @@ void dsp::Input::operation ()
     cerr << "dsp::Input::operation [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
-  uint64 maximum_load_size = block_size;
+  uint64_t maximum_load_size = block_size;
   if (resolution > 1)
     maximum_load_size += 2 * resolution;
 
@@ -114,9 +114,9 @@ void dsp::Input::operation ()
   get_output()->request_offset = resolution_offset;
   get_output()->request_ndat   = block_size;
 
-  int64 to_seek = block_size - overlap;
+  int64_t to_seek = block_size - overlap;
 
-  uint64 available = get_output()->get_ndat() - resolution_offset;
+  uint64_t available = get_output()->get_ndat() - resolution_offset;
 
   if (available < block_size)
   {
@@ -135,7 +135,7 @@ void dsp::Input::operation ()
 
     to_seek = available;
 
-    uint64 useful_ndat = multiple_smaller (output->get_ndat(), resolution);
+    uint64_t useful_ndat = multiple_smaller (output->get_ndat(), resolution);
 
     if (verbose)
       cerr << "dsp::Input::operation useful ndat=" << useful_ndat << endl;
@@ -241,10 +241,10 @@ void dsp::Input::load (BitSeries* data) try {
   \param whence from where to offset: SEEK_SET, SEEK_CUR, SEEK_END (see
   <unistd.h>)
 */
-void dsp::Input::seek (int64 offset, int whence)
+void dsp::Input::seek (int64_t offset, int whence)
 {
   // the next sample required by the user
-  uint64 next_sample = load_sample + resolution_offset;
+  uint64_t next_sample = load_sample + resolution_offset;
 
   switch (whence) {
 
@@ -255,10 +255,10 @@ void dsp::Input::seek (int64 offset, int whence)
     break;
 
   case SEEK_CUR:
-    if (offset < -(int64)next_sample)
+    if (offset < -(int64_t)next_sample)
       throw Error (InvalidRange, "dsp::Input::seek", "SEEK_CUR -ve "
 		   "offset="I64" and next_sample="I64,
-		   offset,(int64)next_sample);
+		   offset,(int64_t)next_sample);
     next_sample += offset;
     break;
 
@@ -266,7 +266,7 @@ void dsp::Input::seek (int64 offset, int whence)
     if (!info.get_ndat())
       throw Error (InvalidState, "dsp::Input::seek", "SEEK_END unknown eod");
 
-    if (offset < -int64(info.get_ndat()))
+    if (offset < -int64_t(info.get_ndat()))
       throw Error (InvalidRange, "dsp::Input::seek", "SEEK_END -ve offset");
 
     next_sample = info.get_ndat() + offset;
@@ -317,14 +317,14 @@ void dsp::Input::seek(MJD mjd)
   }
  
   double seek_samples = seek_seconds*info.get_rate();
-  uint64 actual_seek = 0;
+  uint64_t actual_seek = 0;
 
   if( seek_samples<0.0 )
     actual_seek = 0;
-  else if( uint64(seek_samples) > info.get_ndat() )
+  else if( uint64_t(seek_samples) > info.get_ndat() )
     actual_seek = info.get_ndat();
   else
-    actual_seek = uint64(seek_samples);
+    actual_seek = uint64_t(seek_samples);
 
   if( verbose )
     fprintf(stderr,"dsp::Input::seek(MJD) will seek %f = "UI64" samples\n",
@@ -339,7 +339,7 @@ void dsp::Input::seek_seconds (double seconds, int whence)
     throw Error (InvalidState, "dsp::Input::seek_seconds",
 		 "data rate unknown");
 
-  seek( int64(seconds * info.get_rate()), whence );
+  seek( int64_t(seconds * info.get_rate()), whence );
 }
 
 double dsp::Input::tell_seconds () const
@@ -362,7 +362,7 @@ void dsp::Input::set_total_seconds (double seconds)
     throw Error (InvalidState, "dsp::Input::set_total_seconds",
 		 "data rate unknown");
 
-  uint64 total_samples = uint64( seconds * info.get_rate() );
+  uint64_t total_samples = uint64_t( seconds * info.get_rate() );
 
   if (total_samples > get_total_samples ())
     throw Error (InvalidParam, "dsp::Input::set_total_seconds",
@@ -375,7 +375,7 @@ void dsp::Input::set_total_seconds (double seconds)
 
 
 /*! This method also ensures that the load_size attribute is properly set. */
-void dsp::Input::set_block_size (uint64 size)
+void dsp::Input::set_block_size (uint64_t size)
 {
   block_size = size;
   set_load_size ();
@@ -393,7 +393,7 @@ void dsp::Input::set_load_size ()
 
   load_size = block_size + resolution_offset;
 
-  uint64 remainder = load_size % resolution;
+  uint64_t remainder = load_size % resolution;
 
   if (remainder)
     load_size += resolution - remainder;

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BufferingPolicy.h,v $
-   $Revision: 1.6 $
-   $Date: 2009/06/08 07:39:26 $
+   $Revision: 1.7 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_BufferingPolicy_h
@@ -35,10 +35,10 @@ namespace dsp {
     virtual void post_transformation () = 0;
 
     //! Set the first sample to be used from the input next time
-    virtual void set_next_start (uint64 next_start_sample) = 0;
+    virtual void set_next_start (uint64_t next_start_sample) = 0;
 
     //! Set the minimum number of samples that can be processed
-    virtual void set_minimum_samples (uint64 minimum_samples) = 0;
+    virtual void set_minimum_samples (uint64_t minimum_samples) = 0;
 
     //! Returns the name
     std::string get_name() { return name; }

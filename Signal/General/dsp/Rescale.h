@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/03/02 12:04:06 $
+   $Revision: 1.8 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
@@ -41,7 +41,7 @@ namespace dsp
     void set_interval_seconds (double seconds);
 
     //! Set the rescaling interval in samples
-    void set_interval_samples (uint64 samples);
+    void set_interval_samples (uint64_t samples);
 
     //! After setting offset and scale, keep them constant
     void set_constant (bool);
@@ -62,7 +62,7 @@ namespace dsp
     const double* get_variance (unsigned ipol) const;
 
     //! Get the number of samples between updates
-    uint64 get_nsample () const;
+    uint64_t get_nsample () const;
 
     //! Get the total power time series for the given polarization
     const float* get_time (unsigned ipol) const;
@@ -80,10 +80,10 @@ namespace dsp
     std::vector< std::vector<float> > offset;
 
     double interval_seconds;
-    uint64 interval_samples;
+    uint64_t interval_samples;
 
-    uint64 nsample;
-    uint64 isample;
+    uint64_t nsample;
+    uint64_t isample;
 
     MJD update_epoch;
 
