@@ -7,18 +7,17 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.40 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.41 $
+   $Date: 2009/06/17 10:32:32 $
    $Author: straten $ */
 
 #ifndef __Input_h
 #define __Input_h
 
-#include "MJD.h"
-#include "environ.h"
-
 #include "dsp/Operation.h"
 #include "dsp/Observation.h"
+
+#include "MJD.h"
 
 class ThreadContext;
 

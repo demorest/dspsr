@@ -4,6 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#include "dsp/BlockFile.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -11,8 +14,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "dsp/BlockFile.h"
 
 using namespace std;
 
