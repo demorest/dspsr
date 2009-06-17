@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.8 $
+   $Date: 2009/06/17 10:32:32 $
    $Author: straten $ */
 
 #ifndef __pspmDbase_h
@@ -16,6 +16,8 @@
 
 #include <vector>
 #include <string>
+
+#include "environ.h"
 #include "MJD.h"
 
 namespace pspmDbase {
