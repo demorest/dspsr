@@ -105,7 +105,7 @@ int main (int argc, char** argv) try
       cerr << "Sampling rate = " << manager->get_info()->get_rate() << endl;
     }
 
-    uint64 block_size = 1024;
+    uint64_t block_size = 1024;
 
     manager->get_input()->set_block_size( block_size );
 
@@ -133,7 +133,7 @@ int main (int argc, char** argv) try
         for (unsigned ipol=0; ipol < npol; ipol++)
           data[ipol] = voltages->get_datptr (0, ipol);
 
-        for (uint64 idat=0; idat<ndat; idat++)
+        for (uint64_t idat=0; idat<ndat; idat++)
         {
           for (unsigned ipol=0; ipol < npol; ipol++)
             cout << data[ipol][idat*2] << " " << data[ipol][idat*2+1] << " ";
@@ -148,7 +148,7 @@ int main (int argc, char** argv) try
         {
 #if 0
           float* data = voltages->get_datptr (ichan, ipol);
-          for (uint64 idat=0; idat<ndim*ndat; idat++)
+          for (uint64_t idat=0; idat<ndim*ndat; idat++)
               cout << ichan << " " << ipol << " "
                    << offset+idat << " " << data[idat] << endl;
 #else
@@ -156,7 +156,7 @@ int main (int argc, char** argv) try
           {
 	    float* data = voltages->get_datptr (ichan, ipol) + idim;
 
-	    for (uint64 idat=0; idat<ndat; idat++)
+	    for (uint64_t idat=0; idat<ndat; idat++)
 	      cout << ichan << " " << ipol << " " << idim << " "
                    << offset+idat << " " << data[idat*ndim] << endl;
           }

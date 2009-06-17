@@ -121,7 +121,7 @@ unsigned dsp::Mark5TwoBitCorrection::get_input_incr () const
 
 void dsp::Mark5TwoBitCorrection::dig_unpack (const unsigned char* input_data,
 					       float* output_data,
-					       uint64 nfloat,
+					       uint64_t nfloat,
 					       unsigned long* hist,
 					       unsigned* weights,
 					       unsigned nweights)

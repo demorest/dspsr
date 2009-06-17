@@ -187,7 +187,7 @@ void dsp::Convolution::transformation ()
   unsigned nsamp_good = nsamp_fft-nsamp_overlap;
 
   // number of FFTs for this data block
-  uint64 npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
+  uint64_t npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
 
   if (verbose)
     cerr << "Convolution::transformation npart=" << npart << endl;
@@ -227,7 +227,7 @@ void dsp::Convolution::transformation ()
       weighted_output->scrunch_weights (2);
   }
 
-  uint64 output_ndat = npart * nsamp_good;
+  uint64_t output_ndat = npart * nsamp_good;
   if ( state == Signal::Nyquist )
     output_ndat /= 2;
     
@@ -259,13 +259,13 @@ void dsp::Convolution::transformation ()
   float* ptr = 0;
   unsigned jpol=0;
 
-  uint64 offset;
+  uint64_t offset;
   // number of floats to step between each FFT
-  const uint64 step = nsamp_good * ndim;
+  const uint64_t step = nsamp_good * ndim;
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
-      for (uint64 ipart=0; ipart < npart; ipart++)  {
+      for (uint64_t ipart=0; ipart < npart; ipart++)  {
 	
 	offset = ipart * step;
 		

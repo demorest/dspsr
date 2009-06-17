@@ -51,7 +51,7 @@ void dsp::WAPPUnpacker::unpack ()
 
   assert (input->get_ndim() == 1);
 
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned nbit = input->get_nbit();
   const unsigned nchan = input->get_nchan();
@@ -115,8 +115,8 @@ void dsp::WAPPUnpacker::unpack ()
     window[ichan]=(hweight+(1.0-hweight)*cos((M_PI*ichan)/nchan));
 
   const unsigned char* from8 = input->get_rawptr();
-  uint16* from16 = (uint16*) input->get_rawptr();
-  uint32* from32 = (uint32*) input->get_rawptr();
+  uint16_t* from16 = (uint16_t*) input->get_rawptr();
+  uint32_t* from32 = (uint32_t*) input->get_rawptr();
 
   bool do_vanvleck = true;
 

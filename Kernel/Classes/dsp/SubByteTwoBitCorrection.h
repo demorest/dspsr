@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/07/13 00:38:53 $
+   $Revision: 1.7 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __SubByteTwoBitCorrection_h
@@ -51,7 +51,7 @@ namespace dsp {
     //! Default unpacking algorithm
     void dig_unpack (const unsigned char* input_data, 
 		     float* output_data,
-		     uint64 ndat,
+		     uint64_t ndat,
 		     unsigned long* hist,
 		     unsigned* weights = 0,
 		     unsigned nweights = 0);

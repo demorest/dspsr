@@ -245,26 +245,26 @@ int main (int argc, char** argv) try
 
     // set the number of samples to load
     double samples = manager->get_info()->get_rate() * time_per_plot;
-    uint64 block_size = uint64(samples + 0.5);
+    uint64_t block_size = uint64_t(samples + 0.5);
     time_per_plot = double(block_size) / manager->get_info()->get_rate();
 
     cerr << block_size << " samples per " 
          << time_per_plot << "s plot" << endl;
 
-    uint64 ram = manager->set_block_size( block_size );
+    uint64_t ram = manager->set_block_size( block_size );
     double megabyte = 1024*1024;
     cerr << "digistat: blocksize=" << manager->get_input()->get_block_size()
          << " samples or " << double(ram)/megabyte << " MB" << endl;
 
     // set the number of samples to average
     samples = manager->get_info()->get_rate() * time_per_point;
-    uint64 point_size = uint64(samples + 0.5);
+    uint64_t point_size = uint64_t(samples + 0.5);
     time_per_point = double(point_size) / manager->get_info()->get_rate();
 
     cerr << point_size << " samples per " 
          << time_per_point*1e6 << "us point" << endl;
 
-    uint64 npoints = block_size / point_size;
+    uint64_t npoints = block_size / point_size;
     if (block_size % point_size)
       npoints ++;
 
@@ -310,9 +310,9 @@ int main (int argc, char** argv) try
     cerr << "ichan=" << ichan << " ipol=" << ipol << endl;
 
 	  float* data = voltages->get_datptr (ichan, ipol);
-          uint64 nfloat = voltages->get_ndat() * voltages->get_ndim();
-          uint64 npoint = point_size * voltages->get_ndim();
-	  uint64 idat = 0;
+          uint64_t nfloat = voltages->get_ndat() * voltages->get_ndim();
+          uint64_t npoint = point_size * voltages->get_ndim();
+	  uint64_t idat = 0;
 
 	  for (unsigned ipt=0; ipt<npoints; ipt++)
           {
@@ -321,7 +321,7 @@ int main (int argc, char** argv) try
             double sum = 0, sumsq = 0;
 	    unsigned count = 0;
 	    
-	    for (uint64 jdat=0; jdat<npoint && idat<nfloat; jdat++)
+	    for (uint64_t jdat=0; jdat<npoint && idat<nfloat; jdat++)
             {
 	      float sample = data[idat]; idat ++;
 

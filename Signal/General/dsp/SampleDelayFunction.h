@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelayFunction.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.4 $
+   $Date: 2009/06/17 10:16:54 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_SampleDelayFunction_h
 #define __baseband_dsp_SampleDelayFunction_h
@@ -32,7 +32,7 @@ namespace dsp {
     virtual bool match (const Observation* obs) = 0;
 
     //! Return the delay for the specified channel and polarization
-    virtual int64 get_delay (unsigned ichan=0, unsigned ipol=0) = 0;
+    virtual int64_t get_delay (unsigned ichan=0, unsigned ipol=0) = 0;
 
     //! Add to the history of operations performed on the observation
     virtual void mark (Observation* observation) { }

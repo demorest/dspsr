@@ -31,7 +31,7 @@ namespace dsp
             //! Open the file
             virtual void open_file(const char* filename);
 
-            virtual int64 load_bytes(unsigned char* buffer, uint64 bytes);
+            virtual int64_t load_bytes(unsigned char* buffer, uint64_t bytes);
 
             void set_filename(const std::string fname) {filename = fname;}
 

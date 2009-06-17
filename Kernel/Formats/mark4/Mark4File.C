@@ -64,18 +64,18 @@ void dsp::Mark4File::open_file (const char* filename)
 
   // testing
   //  cerr << "LOCATING SYNC..." << endl;
-  uint64 first_sync = find_sync(fd);
+  uint64_t first_sync = find_sync(fd);
   //  cerr << "NextSYNC: " << first_sync << "\t" << hex << first_sync << dec << endl;
 
   //  lseek(fd,first_sync+(4*channels),SEEK_CUR);
   
   //  cerr << "LOCATE SECOND SYNC..." << endl;
-  uint64 next_sync = find_sync(fd,first_sync+(4*channels));
+  uint64_t next_sync = find_sync(fd,first_sync+(4*channels));
   //  cerr << "NextSYNC: " << next_sync << "\t" << hex << next_sync << dec << endl;
     
   //  cerr << "Distances between SYNCs: " << next_sync - first_sync << endl;
 
-  uint64 sync_distance = next_sync-first_sync;
+  uint64_t sync_distance = next_sync-first_sync;
   
   if(sync_distance == 2520*channels){ // Mark4 VLBA mode;
     mode = VLBA;
@@ -121,9 +121,9 @@ void dsp::Mark4File::open_file (const char* filename)
   stat (filename, &file_info);
   
   // This needs to include information about the headers in Mark4-VLBA modes
-  info.set_ndat( int64((file_info.st_size)/info.get_npol() )*16/(info.get_nbit()*info.get_npol()*info.get_nchan()));
+  info.set_ndat( int64_t((file_info.st_size)/info.get_npol() )*16/(info.get_nbit()*info.get_npol()*info.get_nchan()));
   
-  uint64 last_sync = find_sync(fd,file_info.st_size-2500*channels);
+  uint64_t last_sync = find_sync(fd,file_info.st_size-2500*channels);
   //  cout << last_sync << "\t" << decode_date(last_sync).printall() << endl;
   
   double initial_offset_time = ((first_sync-8*channels)/(info.get_npol()))
@@ -154,9 +154,9 @@ int dsp::Mark4File::count_channels (int file_descriptor) const
   char cc[4];
   bool sync_completed = false;
   
-  uint64 inital_pos = lseek(file_descriptor, 0, SEEK_CUR);
+  uint64_t inital_pos = lseek(file_descriptor, 0, SEEK_CUR);
   
-  uint64 sync_pos = find_sync(file_descriptor);
+  uint64_t sync_pos = find_sync(file_descriptor);
   
   lseek(file_descriptor,sync_pos,SEEK_SET); // seek to the SYNC
   
@@ -176,18 +176,18 @@ int dsp::Mark4File::count_channels (int file_descriptor) const
   
 }
 
-uint64 dsp::Mark4File::find_sync (int file_descriptor, uint64 from) const
+uint64_t dsp::Mark4File::find_sync (int file_descriptor, uint64_t from) const
 {
   // If from is defined it uses that offset, otherwise it defaults to the current position
   // returned number is position relative to current position where the next sync is.
   
-  uint64 next_sync = 0;
+  uint64_t next_sync = 0;
   bool sync_found = false;
   char cc[4];
   unsigned int syncs = 0;
   unsigned int search_length = 0;
 
-  uint64 inital_pos = lseek(file_descriptor, 0, SEEK_CUR);
+  uint64_t inital_pos = lseek(file_descriptor, 0, SEEK_CUR);
 
   if(from !=0)
     lseek(file_descriptor, from, SEEK_CUR);
@@ -219,7 +219,7 @@ uint64 dsp::Mark4File::find_sync (int file_descriptor, uint64 from) const
   
 }
 
-MJD dsp::Mark4File::decode_date(uint64 from)
+MJD dsp::Mark4File::decode_date(uint64_t from)
 {
   char *timecode = new char[8*channels]; // 8 bytes per channel
 
@@ -235,9 +235,9 @@ MJD dsp::Mark4File::decode_date(uint64 from)
 
   current.Construct(time(NULL));
   
-  uint64 inital_pos = lseek(fd, 0, SEEK_CUR);
+  uint64_t inital_pos = lseek(fd, 0, SEEK_CUR);
   
-  uint64 next_sync = find_sync(fd, from);
+  uint64_t next_sync = find_sync(fd, from);
   
   // Read the 8 bytes after the SYNC - and handle them as per modes
   lseek(fd,next_sync+4*channels,SEEK_SET);

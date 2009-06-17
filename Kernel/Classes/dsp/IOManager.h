@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.28 $
-   $Date: 2009/06/07 01:22:34 $
+   $Revision: 1.29 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 
@@ -83,8 +83,8 @@ namespace dsp {
     virtual void set_output (BitSeries* output);
 
     //! Set the block size according to constraints
-    virtual uint64 set_block_size (uint64 minimum_samples,
-				   uint64 maximum_RAM = 0,
+    virtual uint64_t set_block_size (uint64_t minimum_samples,
+				   uint64_t maximum_RAM = 0,
 				   unsigned copies = 1);
 
     //! Load and convert the next block of data

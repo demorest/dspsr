@@ -41,7 +41,7 @@ unsigned dsp::GMRTUnpacker::get_output_ipol (unsigned idig) const
 
 void dsp::GMRTUnpacker::unpack ()
 {
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned npol = input->get_npol();
   const unsigned ndim = input->get_ndim();
   const unsigned nskip = npol * ndim;

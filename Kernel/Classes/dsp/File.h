@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.31 $
-   $Date: 2009/03/02 17:33:49 $
+   $Revision: 1.32 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 
@@ -92,10 +92,10 @@ namespace dsp {
     /*! Called by open_file for some file types, to determine that the
     header ndat matches the file size.  Requires 'info' parameters
     nchan, npol, and ndim as well as header_bytes to be correctly set */
-    virtual int64 fstat_file_ndat(uint64 tailer_bytes=0);
+    virtual int64_t fstat_file_ndat(uint64_t tailer_bytes=0);
 
     //! Over-ride this function to pad data via HoleyFile
-    virtual int64 pad_bytes(unsigned char* buffer, int64 bytes);
+    virtual int64_t pad_bytes(unsigned char* buffer, int64_t bytes);
 
     /** @name Derived Class Defined
      *  These attributes must be set by the open_file method of the
@@ -117,7 +117,7 @@ namespace dsp {
     /*! If the data stored on the device contains information other
       than the sampled data, this method should be overloaded and the
       additional information should be filtered out. */
-    virtual int64 load_bytes (unsigned char* buffer, uint64 nbytes);
+    virtual int64_t load_bytes (unsigned char* buffer, uint64_t nbytes);
     
     //! Set the file pointer to the absolute number of sampled data bytes
     /*! If the header_bytes attribute is set, this number of bytes
@@ -125,7 +125,7 @@ namespace dsp {
       data stored on the device after the header contains information
       other than the sampled data, this method should be overloaded
       and the additional information should be skipped. */
-    virtual int64 seek_bytes (uint64 bytes);
+    virtual int64_t seek_bytes (uint64_t bytes);
     
     //! Calculates the total number of samples in the file, based on its size
     virtual void set_total_samples ();

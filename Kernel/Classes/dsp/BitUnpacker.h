@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BitUnpacker.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/09/08 06:33:39 $
+   $Revision: 1.6 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __BitUnpacker_h
@@ -42,7 +42,7 @@ namespace dsp {
     const BitTable* get_table () const;
 
     //! Unpack a single digitizer output
-    virtual void unpack (uint64 ndat,
+    virtual void unpack (uint64_t ndat,
                          const unsigned char* from, const unsigned nskip,
                          float* into, const unsigned fskip,
                          unsigned long* hist) = 0;

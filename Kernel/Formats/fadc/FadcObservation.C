@@ -223,7 +223,7 @@ cerr<<"FadcObservation: Sampling Freq Hz = "<<sampling_freq<<"\n";
   //
   // MJD_START   
   // Unix time = sec since start of 1970        MJD = days since Nov 17 1858 0:00
-  uint64 unix_start;
+  uint64_t unix_start;
   if (fadc_header_get (header, "Unix Start Time", UI64, &unix_start) < 0)
     throw Error (InvalidState, "FadcObservation", "failed read Unix Start Time");
   
@@ -244,12 +244,12 @@ cerr<<"FadcObservation: MJD Start (Days since Nov 17 1858) = "<<mjd_start<<"\n";
   long bytes_per_buffer=0;
   read_blockMap(&buffers_per_file, &bytes_per_buffer);
   
-  uint64 samples_per_file = (uint64) buffers_per_file * bytes_per_buffer *4 / (scan_nbit * scan_npol); 
+  uint64_t samples_per_file = (uint64_t) buffers_per_file * bytes_per_buffer *4 / (scan_nbit * scan_npol); 
          // each sample consists of two nbit numbers per polarization
         // so each sample has 2*nbit*npol bit, 
         // nbit*npol/4  * number of samples=number of bytes
   
-  uint64 offset_samples = samples_per_file * firstFile;  // because files are numbered starting with zero
+  uint64_t offset_samples = samples_per_file * firstFile;  // because files are numbered starting with zero
 cerr<<"FadcObservation: offset samples due to choice of first file = "<<offset_samples<<"\n";
 
 // NOTE: expect magic code since mjd_start>52852.  (CHECK THIS !!)  1.August 2003 (or some other time in Aug. 2003)
@@ -280,7 +280,7 @@ cerr<<"FadcObservation: Recording Start time set\n";
   // 2 bit example: We have four 2bit values per timesample -> no timesamples = no bytes
   // note: we omitted offset_tsmps time samples in first file
 
-  uint64 total_samples = static_cast <uint64> ((lastFile-firstFile +1)) * buffers_per_file * bytes_per_buffer * 4 / (scan_npol * scan_nbit) - offset_tsmps;   
+  uint64_t total_samples = static_cast <uint64_t> ((lastFile-firstFile +1)) * buffers_per_file * bytes_per_buffer * 4 / (scan_npol * scan_nbit) - offset_tsmps;   
   set_ndat( total_samples );  // need -skipped samples
 cerr<<"FadcObservation: used offset_tsmps = "<<offset_tsmps<<'\n';  
 cerr<<"FadcObservation: total_samples = "<<total_samples<<'\n';

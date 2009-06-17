@@ -36,10 +36,10 @@ void dsp::ACFUnpack::unpack ()
   if (verbose)
     cerr << "dsp::ACFUnpack::unpack" << endl;;
 
-  uint64 ndat = input->get_ndat();
+  uint64_t ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
-  const uint16* input16 = reinterpret_cast<const uint16*>(input->get_rawptr());
+  const uint16_t* input16 = reinterpret_cast<const uint16_t*>(input->get_rawptr());
 
   float* input_fft = scratch->space<float> (nchan * 4 + 2);
   float* output_fft = input_fft + nchan * 2;

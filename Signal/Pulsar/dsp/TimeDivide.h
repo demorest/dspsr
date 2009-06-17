@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.15 $
-   $Date: 2009/06/07 01:22:34 $
+   $Revision: 1.16 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_TimeDivide_h
@@ -95,22 +95,22 @@ namespace dsp {
     bool get_end_reached () const { return end_reached; }
 
     //! Get the first time sample from observation in the current division
-    uint64 get_idat_start () const { return idat_start; }
+    uint64_t get_idat_start () const { return idat_start; }
 
     //! Get the number of time samples from observation in the current division
-    uint64 get_ndat () const { return ndat; }
+    uint64_t get_ndat () const { return ndat; }
 
     //! Get the total number of time samples in the current division
-    uint64 get_division_ndat () const { return division_ndat; }
+    uint64_t get_division_ndat () const { return division_ndat; }
 
     //! Get the phase bin of the current division (turns < 1)
     unsigned get_phase_bin () const { return phase_bin; }
 
     //! Get the current division
-    uint64 get_division () const { return division; }
+    uint64_t get_division () const { return division; }
 
     //! Get the division associated with the specified epoch
-    uint64 get_division (const MJD& epoch);
+    uint64_t get_division (const MJD& epoch);
 
     //@}
 
@@ -158,7 +158,7 @@ namespace dsp {
     MJD current_end;
 
     //! The index of the current division
-    uint64 division;
+    uint64_t division;
 
     //! Flag set when the divided time range is within the current division
     bool is_valid;
@@ -176,13 +176,13 @@ namespace dsp {
     mutable const Observation* observation;
 
     //! The first time sample from observation in the current division
-    uint64 idat_start;
+    uint64_t idat_start;
 
     //! The number of time samples from observation in the current division
-    uint64 ndat;
+    uint64_t ndat;
 
     //! The total number of time samples in the current division
-    uint64 division_ndat;
+    uint64_t division_ndat;
 
     //! The phase bin of the current division (division_turns < 1)
     unsigned phase_bin;

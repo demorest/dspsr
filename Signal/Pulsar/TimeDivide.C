@@ -124,7 +124,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
   observation = input;
 
   double sampling_rate = input->get_rate();
-  uint64 input_ndat = input->get_ndat();
+  uint64_t input_ndat = input->get_ndat();
 
   MJD input_start = input->get_start_time();
   MJD input_end   = input->get_end_time();
@@ -198,7 +198,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   assert (start_sample >= 0);
 
-  idat_start = (uint64) start_sample;
+  idat_start = (uint64_t) start_sample;
 
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::bound start offset " << offset.in_seconds()*1e3
@@ -238,7 +238,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
 
   assert (end_sample >= 0);
 
-  uint64 idat_end = (uint64) end_sample;
+  uint64_t idat_end = (uint64_t) end_sample;
 
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::bound end offset " << offset.in_seconds()*1e3
@@ -434,7 +434,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     double seconds = (divide_start - start_time).in_seconds();
 
     // assumption: integer cast truncates
-    division = uint64 (seconds/division_seconds);
+    division = uint64_t (seconds/division_seconds);
 
 #ifdef _DEBUG
     cerr << " divide_start=" << divide_start.printdays(13)
@@ -469,7 +469,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   double turns = (input_phase - start_phase).in_turns();
 
   // assumption: integer cast truncates
-  division = uint64 (turns/division_turns);
+  division = uint64_t (turns/division_turns);
 
   input_phase = start_phase + division * division_turns;
   
@@ -501,7 +501,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& mjd1, const MJD& mjd2) try
   MJD input_start = observation->get_start_time ();
 
   double seconds = (mjd1-input_start).in_seconds();
-  int64 samples = lrint( seconds * sampling_rate );
+  int64_t samples = lrint( seconds * sampling_rate );
 
   lower = input_start + samples / sampling_rate;
 
@@ -532,7 +532,7 @@ catch (Error& error)
   throw error += "dsp::TimeDivide::set_boundaries";
 }
 
-uint64 dsp::TimeDivide::get_division (const MJD& epoch)
+uint64_t dsp::TimeDivide::get_division (const MJD& epoch)
 {
   set_boundaries( epoch );
   return division;

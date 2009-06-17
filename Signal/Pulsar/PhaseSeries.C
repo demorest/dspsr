@@ -48,7 +48,7 @@ dsp::PhaseSeries* dsp::PhaseSeries::clone() const
 }
 
 //! Set the number of phase bins into which data will be PhaseSeriesed
-void dsp::PhaseSeries::resize (int64 nbin)
+void dsp::PhaseSeries::resize (int64_t nbin)
 {
   TimeSeries::resize (nbin);
   hits.resize (nbin);
@@ -167,7 +167,7 @@ void dsp::PhaseSeries::set_hits (unsigned value)
 }
 
 bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
-				int64 istart, int64 fold_ndat)
+				int64_t istart, int64_t fold_ndat)
 {
   MJD obsStart = obs.get_start_time() + double (istart) / obs.get_rate();
 
@@ -203,7 +203,7 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
       the integration length may be zero only because all of the samples
       have been dropped - maintain the record of dropped samples
     */
-    uint64 backup_ndat_total = ndat_total;
+    uint64_t backup_ndat_total = ndat_total;
 
     resize (nbin);
     zero ();
@@ -291,15 +291,15 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof)
 }
 
 //! Return the total number of time samples
-uint64 dsp::PhaseSeries::get_ndat_total () const
+uint64_t dsp::PhaseSeries::get_ndat_total () const
 {
   return ndat_total;
 }
 
 //! Return the number of time samples folded into the profiles
-uint64 dsp::PhaseSeries::get_ndat_folded () const
+uint64_t dsp::PhaseSeries::get_ndat_folded () const
 {
-  uint64 folded = 0;
+  uint64_t folded = 0;
 
   const unsigned nbin = get_nbin();
   for (unsigned i=0; i<nbin; i++)
@@ -309,13 +309,13 @@ uint64 dsp::PhaseSeries::get_ndat_folded () const
 }
 
 //! Set the expected number of time samples
-void dsp::PhaseSeries::set_ndat_expected (uint64 n)
+void dsp::PhaseSeries::set_ndat_expected (uint64_t n)
 {
   ndat_expected = n;
 }
 
 //! Return the expected number of time samples
-uint64 dsp::PhaseSeries::get_ndat_expected () const
+uint64_t dsp::PhaseSeries::get_ndat_expected () const
 {
   return ndat_expected;
 }

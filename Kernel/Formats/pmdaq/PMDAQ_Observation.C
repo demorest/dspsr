@@ -182,7 +182,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
   // OFFSET (49152=48*1024 samps per block)
   //
   
-  uint64 offset_blocks = 0;
+  uint64_t offset_blocks = 0;
 
   string to_scan(&header[jump+24],8);
 
@@ -191,7 +191,7 @@ dsp::PMDAQ_Observation::PMDAQ_Observation(const char* header) : Observation()
 		"Failed to read in offset blocks");
   
   offset_blocks--; // Counting starts from one
-  uint64 offset_bytes = 49152*offset_blocks;
+  uint64_t offset_bytes = 49152*offset_blocks;
 
   set_start_time (recording_start_time + get_nsamples(offset_bytes)/get_rate());
 

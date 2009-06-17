@@ -50,7 +50,7 @@ namespace dsp {
     mutable bool use_tres; 
 
     unsigned sfactor;
-    uint64 output_ndat;
+    uint64_t output_ndat;
   };
 
 }

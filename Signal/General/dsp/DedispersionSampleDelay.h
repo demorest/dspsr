@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/DedispersionSampleDelay.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/05/31 05:59:22 $
+   $Revision: 1.2 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __Dedispersion_SampleDelay_h
@@ -30,7 +30,7 @@ namespace dsp {
     bool match (const Observation* obs);
     
     //! Return the dispersion delay for the given frequency channel
-    int64 get_delay (unsigned ichan, unsigned ipol);
+    int64_t get_delay (unsigned ichan, unsigned ipol);
     
     //! Add to the history of operations performed on the observation
     void mark (Observation* observation);
@@ -50,7 +50,7 @@ namespace dsp {
     double sampling_rate;
     
     //! The dispersive delays
-    std::vector<int64> delays;
+    std::vector<int64_t> delays;
     
   };
 

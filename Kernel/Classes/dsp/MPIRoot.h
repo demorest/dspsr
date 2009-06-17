@@ -47,7 +47,7 @@ namespace dsp {
     void set_tag (int tag) { mpi_tag = tag; }
 
     //! Setting the block_size requires resizing the buffer
-    void set_block_size (uint64 _size);
+    void set_block_size (uint64_t _size);
 
     //! Prepare for sending or receiving from root node
     void prepare ();

@@ -581,7 +581,7 @@ void parse_options (int argc, char** argv)
 	}
       }
 
-      config->set_maximum_RAM (uint64( strtod (optarg, 0) * 1024 * 1024 ));
+      config->set_maximum_RAM (uint64_t( strtod (optarg, 0) * 1024 * 1024 ));
       break;
     }
 

@@ -4,6 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
+#include "environ.h"
+
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"

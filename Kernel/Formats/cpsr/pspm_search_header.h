@@ -25,6 +25,9 @@
  *
  *
  * $Log: pspm_search_header.h,v $
+ * Revision 1.5  2009/06/17 10:16:54  straten
+ * use ISO C99 integer types directly
+ *
  * Revision 1.4  2006/11/11 20:56:38  straten
  * compile against psrchive 6.0
  *
@@ -143,22 +146,22 @@ typedef struct {
     double tick_offset;
     double bw;
     double length_of_integration; /* some fixed number */
-    int32 header_version;
-    int32 scan_file_number;
-    int32 bit_mode;
-    int32 scan_num;
-    int32 tc;
-    int32 num_chans;
-    int32 pasmon_wrap;
-    int32 pasmon_feed;
-    int32 pasmon_daynumber;
-    int32 pasmon_ast;		/* hhmmss */
+    int32_t header_version;
+    int32_t scan_file_number;
+    int32_t bit_mode;
+    int32_t scan_num;
+    int32_t tc;
+    int32_t num_chans;
+    int32_t pasmon_wrap;
+    int32_t pasmon_feed;
+    int32_t pasmon_daynumber;
+    int32_t pasmon_ast;		/* hhmmss */
     char psr_name[12];
     char date[12];
     char start_time[12];
-    int32 file_size;
-    int32 tape_num;
-    int32 tape_file_number;
+    int32_t file_size;
+    int32_t tape_num;
+    int32_t tape_file_number;
     char obs_group[12];
     char even_word_boundary_filler[4];
     double user_ra;		/* J2000 (10000.*rah+100.*ram+ras)	    */
@@ -175,16 +178,16 @@ typedef struct {
      * and you should use the (long) file_size above. Note, there was
      * no equivalent offset number prior to ll_file_offset.
      */
-    int64 ll_file_offset;       /* Cummulative size of all of the previous  */
+    int64_t ll_file_offset;       /* Cummulative size of all of the previous  */
                                 /* files in this scan (Bytes) which can,    */
                                 /* e.g. be used to calculate the start time */
                                 /* of this file.                            */
-    int64 ll_file_size;         /* Size of this particular file (Bytes).    */
+    int64_t ll_file_size;         /* Size of this particular file (Bytes).    */
 
     char filler[32500];
-    int32 BACKEND_TYPE;
-    int32 UPDATE_DONE;
-    int32 HEADER_TYPE;
+    int32_t BACKEND_TYPE;
+    int32_t UPDATE_DONE;
+    int32_t HEADER_TYPE;
 
 #elif BPP
 

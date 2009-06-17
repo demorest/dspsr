@@ -122,13 +122,13 @@ double dsp::Operation::get_elapsed_time () const
 }
 
 //! Return the number of invalid timesample weights encountered
-uint64 dsp::Operation::get_discarded_weights () const
+uint64_t dsp::Operation::get_discarded_weights () const
 {
   return discarded_weights;
 }
 
 //! Return the number of invalid timesample weights encountered
-uint64 dsp::Operation::get_total_weights () const
+uint64_t dsp::Operation::get_total_weights () const
 {
   return total_weights;
 }

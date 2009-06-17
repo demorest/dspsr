@@ -246,11 +246,11 @@ void dsp::Detection::polarimetry () try
     cerr << "dsp::Detection::polarimetry "
 	 << ((inplace) ? "in" : "outof") << "place" << endl;
 
-  uint64 ndat = input->get_ndat();
+  uint64_t ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
 
-  uint64 required_space = 0;
-  uint64 copy_bytes = 0;
+  uint64_t required_space = 0;
+  uint64_t copy_bytes = 0;
 
   float* copyp  = NULL;
   float* copyq = NULL;
@@ -334,7 +334,7 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
     {
       r[0] = get_output()->get_datptr (ichan,0);
       r[2] = get_output()->get_datptr (ichan,0);
-      uint64 diff = uint64(r[2] - r[0])/2;
+      uint64_t diff = uint64_t(r[2] - r[0])/2;
       r[1] = r[0] + diff;
       r[3] = r[2] + diff;
     }

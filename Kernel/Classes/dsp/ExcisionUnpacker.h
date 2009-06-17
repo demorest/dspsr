@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/07/14 01:24:52 $
+   $Revision: 1.5 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_h
@@ -103,7 +103,7 @@ namespace dsp
     //! Unpack a single digitized stream from raw into data
     virtual void dig_unpack (const unsigned char* input_data, 
 			     float* output_data,
-			     uint64 ndat,
+			     uint64_t ndat,
 			     unsigned long* hist,
 			     unsigned* weights = 0,
 			     unsigned nweights = 0) = 0;
@@ -111,7 +111,7 @@ namespace dsp
     //! Template method can be used to implement pure virtual dig_unpack
     template<class U, class Iterator>
     void excision_unpack (U& unpack, Iterator& input,
-		          float* output_data, uint64 ndat,
+		          float* output_data, uint64_t ndat,
 		          unsigned long* hist,
 		          unsigned* weights, unsigned nweights);
 

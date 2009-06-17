@@ -9,13 +9,13 @@
 #ifndef __Observation_h
 #define __Observation_h
 
+#include "environ.h"
 #include "dsp/dsp.h"
 
 #include "OwnStream.h"
 #include "sky_coord.h"
 #include "Types.h"
 #include "MJD.h"
-#include "environ.h"
 
 namespace dsp
 {
@@ -80,9 +80,9 @@ namespace dsp
       nature.  For instance, the in-phase and quadrature components of
       two orthogonal polarizations, though represented by four
       independent numbers, still represent one time sample. */
-    virtual void set_ndat (uint64 _ndat) { ndat = _ndat; }
+    virtual void set_ndat (uint64_t _ndat) { ndat = _ndat; }
     //! Return the number of time samples in container
-    uint64 get_ndat () const { return ndat; }
+    uint64_t get_ndat () const { return ndat; }
 
     //! Set the telescope name
     virtual void set_telescope (const std::string& name) { telescope = name; }
@@ -194,7 +194,7 @@ namespace dsp
     bool get_detected () const;
 
     //! Change the start time by the number of time samples specified
-    void change_start_time (int64 _ndat);
+    void change_start_time (int64_t _ndat);
 
     //! Return the end time of the trailing edge of the last time sample
     // Returns correct answer if ndat=rate=0 and avoids division by zero
@@ -204,21 +204,21 @@ namespace dsp
     void rescale (double factor) { scale *= factor; }
 
     //! Return the size in bytes of nsamples time samples
-    uint64 get_nbytes (uint64 nsamples) const
+    uint64_t get_nbytes (uint64_t nsamples) const
       { return (nsamples*get_nbit()*get_npol()*get_nchan()*get_ndim())/8; }
 
     //! Return the size in bytes of ndat time samples
-    uint64 get_nbytes () const
+    uint64_t get_nbytes () const
       { return get_nbytes (get_ndat()); }
 
-    uint64 verbose_nbytes (uint64 nsamples) const;
+    uint64_t verbose_nbytes (uint64_t nsamples) const;
     
     //! Return the size in bytes of one time sample
     float get_nbyte () const
       { return float(nbit*get_npol()*get_nchan()*get_ndim()) / 8.0; }
 
     //! Return the number of samples in nbytes bytes
-    uint64 get_nsamples (uint64 nbytes) const
+    uint64_t get_nsamples (uint64_t nbytes) const
       { return (nbytes * 8)/(nbit*get_npol()*get_nchan()*get_ndim()); }
 
     //! Returns true if the signal may be integrated
@@ -309,7 +309,7 @@ namespace dsp
     /*! This is private so that classes that inherit from Observation
       and have nbit%8 != 0 can enforce resizes/set_ndat's so that
       ndat*ndim is always an integer number of bytes */
-    uint64 ndat;
+    uint64_t ndat;
 
     //! Dimension of each datum
     /*! This is private so that classes that inherit from Observation

@@ -221,7 +221,7 @@ extern "C" int next_frame (struct VLBA_stream *vs);
 /*! Uses Walter's next_frame to take care of the modbits business, then
  copies the result from the VLBA_stream::frame buffer into the buffer
  argument. */
-int64 dsp::Mark5File::load_bytes (unsigned char* buffer, uint64 bytes)
+int64_t dsp::Mark5File::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
   if (verbose) cerr << "Mark5File::load_bytes nbytes =" << bytes << endl;
 
@@ -330,7 +330,7 @@ int64 dsp::Mark5File::load_bytes (unsigned char* buffer, uint64 bytes)
   return bytes_read;
 }
 
-int64 dsp::Mark5File::seek_bytes (uint64 nbytes)
+int64_t dsp::Mark5File::seek_bytes (uint64_t nbytes)
 {
   if (verbose)
     cerr << "Mark5File::seek_bytes nbytes=" << nbytes << endl;

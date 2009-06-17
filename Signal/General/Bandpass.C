@@ -77,7 +77,7 @@ void dsp::Bandpass::transformation ()
 		 "error ndat="I64" < nfft=%d", input->get_ndat(), nsamp_fft);
 
   // number of FFTs for this data block
-  uint64 npart = input->get_ndat() / nsamp_fft;
+  uint64_t npart = input->get_ndat() / nsamp_fft;
 
   if (verbose)
     cerr << "dsp::Bandpass::transformation npart=" << npart << endl;
@@ -102,9 +102,9 @@ void dsp::Bandpass::transformation ()
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
-      for (uint64 ipart=0; ipart < npart; ipart++)  {
+      for (uint64_t ipart=0; ipart < npart; ipart++)  {
 	
-	uint64 offset = ipart * step;
+	uint64_t offset = ipart * step;
 		
 	for (unsigned jpol=0; jpol<cross_pol; jpol++) {
 	  

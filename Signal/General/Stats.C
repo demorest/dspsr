@@ -48,7 +48,7 @@ void dsp::Stats::calculation ()
 {
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
 
   if (sum.size() < nchan)
     init ();
@@ -57,7 +57,7 @@ void dsp::Stats::calculation ()
     for (unsigned ipol = 0; ipol < npol; ipol++)
     {
       const float* data = input->get_datptr (ichan, ipol);
-      for (uint64 idat = 0; idat < ndat; idat++)
+      for (uint64_t idat = 0; idat < ndat; idat++)
       {
 	sum[ichan][ipol] += data[idat];
 	sumsq[ichan][ipol] += data[idat] * data[idat];

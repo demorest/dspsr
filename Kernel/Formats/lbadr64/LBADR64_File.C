@@ -151,7 +151,7 @@ void dsp::LBADR64_File::open_file (const char* filename)
   // samples, then divide by the number of channels used to get the total
   // number of unique time samples.
 
-  info.set_ndat( (int64((file_info.st_size - header_bytes)) * 8) / 
+  info.set_ndat( (int64_t((file_info.st_size - header_bytes)) * 8) / 
 		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
 
   // Set the minimum time unit to be the number of samples per byte
@@ -161,13 +161,13 @@ void dsp::LBADR64_File::open_file (const char* filename)
 }
 
 //! Pads gaps in data
-int64 dsp::LBADR64_File::pad_bytes(unsigned char* buffer, int64 bytes){
+int64_t dsp::LBADR64_File::pad_bytes(unsigned char* buffer, int64_t bytes){
   if( get_info()->get_nbit() != 2 )
     throw Error(InvalidState,"dsp::LBADR64_File::pad_bytes()",
 		"Can only pad if nbit=2.  nbit=%d",get_info()->get_nbit());
 
   register const unsigned char val = 255;
-  for( int64 i=0; i<bytes; ++i)
+  for( int64_t i=0; i<bytes; ++i)
     buffer[i] = val;
   
   return bytes;

@@ -5,9 +5,9 @@
  *
  ***************************************************************************/
 
+#include "environ.h"
 #include "dsp/TimeSeries.h"
 
-#include "environ.h"
 #include "fsleep.h"
 #include "Error.h"
 
@@ -80,7 +80,7 @@ void dsp::TimeSeries::set_nbit (unsigned _nbit)
 }
 
 dsp::TimeSeries&
-dsp::TimeSeries::use_data(float* _buffer, uint64 _ndat)
+dsp::TimeSeries::use_data(float* _buffer, uint64_t _ndat)
 {
   if( get_nchan() != 1 || get_npol() != 1 )
     throw Error(InvalidState,"dsp::TimeSeries::use_data()",
@@ -116,7 +116,7 @@ dsp::TimeSeries::use_data(float* _buffer, uint64 _ndat)
   If the reshape flag is set, the reserve_ndat is ignored.
   </UL>
 */
-void dsp::TimeSeries::resize (uint64 nsamples)
+void dsp::TimeSeries::resize (uint64_t nsamples)
 {
   if (verbose)
   {
@@ -126,13 +126,13 @@ void dsp::TimeSeries::resize (uint64 nsamples)
     if (data && buffer) 
     {
       cerr << "dsp::TimeSeries::resize (" << nsamples << ") offset="
-	   << int64((data-(float*)buffer)) << endl
+	   << int64_t((data-(float*)buffer)) << endl
            << "dsp::TimeSeries::resize get_samps_offset=" 
 	   << get_samps_offset()  << endl;
     }
   }  
 
-  uint64 fake_ndat = reserve_nfloat / get_ndim();
+  uint64_t fake_ndat = reserve_nfloat / get_ndim();
   if (reserve_nfloat % get_ndim())
     fake_ndat ++;
 
@@ -151,7 +151,7 @@ void dsp::TimeSeries::resize (uint64 nsamples)
   return;
 }
 
-void dsp::TimeSeries::decrease_ndat (uint64 new_ndat)
+void dsp::TimeSeries::decrease_ndat (uint64_t new_ndat)
 {
   if (new_ndat > get_ndat())
     throw Error (InvalidParam, "dsp::TimeSeries::decrease_ndat",
@@ -173,7 +173,7 @@ dsp::TimeSeries& dsp::TimeSeries::operator = (const TimeSeries& copy)
 }
 
 //! Offset the base pointer by offset time samples
-void dsp::TimeSeries::seek (int64 offset)
+void dsp::TimeSeries::seek (int64_t offset)
 {
   if (verbose)
     cerr << "dsp::TimeSeries::seek " << offset << endl;
@@ -181,7 +181,7 @@ void dsp::TimeSeries::seek (int64 offset)
   if (offset == 0)
     return;
 
-  if (offset > int64(get_ndat()))
+  if (offset > int64_t(get_ndat()))
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
 		 "offset="I64" > ndat="UI64";"
                  " attempt to seek past end of data",
@@ -189,8 +189,8 @@ void dsp::TimeSeries::seek (int64 offset)
 
   float* fbuffer = (float*)buffer;
 
-  int64 current_offset = int64(data - fbuffer);
-  int64 float_offset = offset * int64(get_ndim());
+  int64_t current_offset = int64_t(data - fbuffer);
+  int64_t float_offset = offset * int64_t(get_ndim());
 
   if (-float_offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
@@ -287,7 +287,7 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   float* data = get_datptr (ichan, ipol);
   double mean = 0.0;
   
-  uint64 _ndat = get_ndat();
+  uint64_t _ndat = get_ndat();
 
   for (unsigned idat=0; idat<_ndat; idat++)
     mean += data[idat];
@@ -320,7 +320,7 @@ dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
     throw Error (InvalidState, "TimeSeries::operator+=",
 		 "ndat="UI64" != "UI64, get_ndat(), add.get_ndat());
 
-  uint64 npt = get_ndat() * get_ndim();
+  uint64_t npt = get_ndat() * get_ndim();
 
   for (unsigned ichan=0; ichan<get_nchan(); ichan++)
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
@@ -328,7 +328,7 @@ dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
       float* data1 = get_datptr (ichan, ipol);
       const float* data2 = add.get_datptr (ichan, ipol);
 
-      for (uint64 ipt=0; ipt<npt; ipt++)
+      for (uint64_t ipt=0; ipt<npt; ipt++)
         data1[ipt] += data2[ipt];
 
     }
@@ -363,11 +363,11 @@ void dsp::TimeSeries::zero ()
   if( get_ndat()==0 )
     return;
 
-  uint64 npt = get_ndat() * get_ndim();
+  uint64_t npt = get_ndat() * get_ndim();
   for (unsigned ichan=0; ichan<get_nchan(); ichan++){
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
       float* dat = get_datptr (ichan, ipol);
-      for (uint64 ipt=0; ipt<npt; ipt++)
+      for (uint64_t ipt=0; ipt<npt; ipt++)
         dat[ipt]=0.0;
     }
   }
@@ -375,7 +375,7 @@ void dsp::TimeSeries::zero ()
 }
 
 
-void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat) try
+void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64_t pre_ndat) try
 {
   if (!pre)
     return;
@@ -383,7 +383,7 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat) try
   if (!pre_ndat)
     pre_ndat = pre->get_ndat();
 
-  if (pre->input_sample + pre_ndat != uint64(input_sample))
+  if (pre->input_sample + pre_ndat != uint64_t(input_sample))
     throw Error (InvalidState, "dsp::TimeSeries::prepend",
 		 "data to be prepended end sample="I64"; "
 		 "not contiguous with start sample="I64,
@@ -392,7 +392,7 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64 pre_ndat) try
   if (verbose)
     cerr << "dsp::TimeSeries::prepend " << pre_ndat << " samples" << endl;
 
-  seek (-int64(pre_ndat));
+  seek (-int64_t(pre_ndat));
   copy_data (pre, 0, pre_ndat);
 }
 catch (Error& error)
@@ -401,7 +401,7 @@ catch (Error& error)
 }
 
 void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy, 
-                                 uint64 idat_start, uint64 copy_ndat) try
+                                 uint64_t idat_start, uint64_t copy_ndat) try
 {
   if (verbose)
     cerr << "dsp::TimeSeries::copy_data to ndat=" << get_ndat()
@@ -417,8 +417,8 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
     throw Error (InvalidParam, "dsp::TimeSeries::copy_data",
 		 "copy ndim=%u > this ndim=%u", copy->get_ndim(), get_ndim());
 
-  uint64 offset = idat_start * get_ndim();
-  uint64 byte_count = copy_ndat * get_ndim() * sizeof(float);
+  uint64_t offset = idat_start * get_ndim();
+  uint64_t byte_count = copy_ndat * get_ndim() * sizeof(float);
 
   if (copy_ndat)
   {
@@ -438,7 +438,7 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
 
     case OrderTFP:
       {
-      uint64 times = get_nchan() * get_npol();
+      uint64_t times = get_nchan() * get_npol();
       offset *= times;
       byte_count *= times;
 
@@ -463,13 +463,13 @@ catch (Error& error)
   If nonzero, but not equal to little->get_ndat(), then 'this' is full too.
   If equal to little->get_ndat(), it may/may not be full.
 */
-uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
+uint64_t dsp::TimeSeries::append (const dsp::TimeSeries* little)
 {
   if( verbose )
     fprintf(stderr,"In dsp::TimeSeries::append()\n");
 
-  uint64 ncontain = get_ndat();
-  uint64 ncopy = little->get_ndat();
+  uint64_t ncontain = get_ndat();
+  uint64_t ncopy = little->get_ndat();
 
   append_checks(ncontain,ncopy,little);
   if( ncontain==maximum_ndat() )
@@ -504,7 +504,7 @@ uint64 dsp::TimeSeries::append (const dsp::TimeSeries* little)
   return ncopy;
 }
 
-void dsp::TimeSeries::append_checks(uint64& ncontain,uint64& ncopy,
+void dsp::TimeSeries::append_checks(uint64_t& ncontain,uint64_t& ncopy,
 				    const TimeSeries* little){
   if( verbose ){
     fprintf(stderr,"dsp::TimeSeries::append_checks() ncopy="UI64"\n",ncopy);
@@ -540,14 +540,14 @@ void dsp::TimeSeries::check (float min, float max)
   min *= scale;
   max *= scale;
 
-  uint64 _ndat = get_ndat();
+  uint64_t _ndat = get_ndat();
 
   for (unsigned ichan=0; ichan<get_nchan(); ichan++)
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
 
       float* dat = get_datptr (ichan, ipol);
 
-      for (uint64 idat=0; idat<_ndat; idat++)
+      for (uint64_t idat=0; idat<_ndat; idat++)
 	for (unsigned idim=0; idim<get_ndim(); idim++) {
 	  if (isnan (*dat) || *dat < min || *dat > max)
 	    cerr << "dsp::TimeSeries::check data ["
@@ -601,7 +601,7 @@ bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries)
 
 
 /*! This method is used by the InputBuffering policy */
-void dsp::TimeSeries::change_reserve (int64 change) const
+void dsp::TimeSeries::change_reserve (int64_t change) const
 {
   if (verbose)
     cerr << "dsp::TimeSeries::change_reserve (" << change << ")" << endl;
@@ -609,7 +609,7 @@ void dsp::TimeSeries::change_reserve (int64 change) const
   TimeSeries* thiz = const_cast<TimeSeries*>(this);
 
   if (change < 0) {
-    uint64 decrease = -change;
+    uint64_t decrease = -change;
     if (decrease > reserve_ndat)
       throw Error (InvalidState, "dsp::TimeSeries::change_reserve",
 		   "decrease="I64"; reserve_ndat="UI64, 

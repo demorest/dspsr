@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.13 $
-   $Date: 2009/04/15 09:57:18 $
+   $Revision: 1.14 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 
@@ -42,7 +42,7 @@ namespace dsp {
     virtual void rewind ();
 
     //! Inquire current time sample
-    virtual uint64 get_current_sample() { return current_sample; }
+    virtual uint64_t get_current_sample() { return current_sample; }
 
   protected:
     
@@ -53,19 +53,19 @@ namespace dsp {
     virtual void load_data (BitSeries* data);
  
     //! Load data from device and return the number of bytes read.
-    virtual int64 load_bytes (unsigned char* buffer, uint64 bytes) = 0;
+    virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes) = 0;
     
     //! Seek to absolute position and return absolute position in bytes
-    virtual int64 seek_bytes (uint64 bytes) = 0;
+    virtual int64_t seek_bytes (uint64_t bytes) = 0;
     
     //! Conserve access to resources by re-using data already in BitSeries
-    virtual uint64 recycle_data (BitSeries* data);
+    virtual uint64_t recycle_data (BitSeries* data);
 
     //! end of data reached
     bool end_of_data;
     
     //! Current time sample
-    uint64 current_sample;
+    uint64_t current_sample;
 
     //! initialize variables
     void init();

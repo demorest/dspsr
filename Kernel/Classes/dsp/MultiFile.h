@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.26 $
-   $Date: 2008/11/14 17:28:54 $
+   $Revision: 1.27 $
+   $Date: 2009/06/17 10:16:53 $
    $Author: straten $ */
 
 
@@ -63,7 +63,7 @@ namespace dsp {
     unsigned get_index() const { return current_index; }
 
     //! Inquire the next sample to load for the current file
-    uint64 get_next_sample();
+    uint64_t get_next_sample();
 
   protected:
     
@@ -71,10 +71,10 @@ namespace dsp {
     virtual void open_file (const char* filename);
 
     //! Load bytes from file
-    virtual int64 load_bytes (unsigned char* buffer, uint64 bytes);
+    virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes);
     
     //! Adjust the file pointer
-    virtual int64 seek_bytes (uint64 bytes);
+    virtual int64_t seek_bytes (uint64_t bytes);
 
     //! List of files
     std::vector< Reference::To<File> > files;

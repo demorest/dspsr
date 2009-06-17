@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.10 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+   $Revision: 1.11 $
+   $Date: 2009/06/17 10:16:53 $
+   $Author: straten $ */
 
 #ifndef __WeightedTimeSeries_h
 #define __WeightedTimeSeries_h
@@ -67,13 +67,13 @@ namespace dsp {
 
     //! Copy the data of another WeightedTimeSeries instance
     virtual void copy_data (const TimeSeries* data, 
-			    uint64 idat_start = 0, uint64 ndat = 0);
+			    uint64_t idat_start = 0, uint64_t ndat = 0);
 
     //! Allocate the space required to store nsamples time samples.
-    virtual void resize (uint64 nsamples);
+    virtual void resize (uint64_t nsamples);
     
     //! Offset the base pointer by offset time samples
-    virtual void seek (int64 offset);
+    virtual void seek (int64_t offset);
 
     //! Set all values to zero
     virtual void zero ();
@@ -91,16 +91,16 @@ namespace dsp {
     void neutral_weights ();
 
     //! Get the number of weights
-    uint64 get_nweights () const;
+    uint64_t get_nweights () const;
 
     //! Get the number of weights required for a given number of samples
-    uint64 get_nweights (uint64 nsample) const;
+    uint64_t get_nweights (uint64_t nsample) const;
 
     //! Get the offset into the current weight of the first time sample
-    uint64 get_weight_idat () const { return weight_idat; }
+    uint64_t get_weight_idat () const { return weight_idat; }
 
     //! Get the number of zero weights in the ichan == ipol == 0 array
-    uint64 get_nzero () const;
+    uint64_t get_nzero () const;
 
     //! Get the weights array for the specfied polarization and frequency
     unsigned* get_weights (unsigned ichan=0, unsigned ipol=0);
@@ -127,10 +127,10 @@ namespace dsp {
 
     //! Copy the weights from copy
     void copy_weights (const WeightedTimeSeries* copy,
-		       uint64 idat_start = 0, uint64 copy_ndat = 0);
+		       uint64_t idat_start = 0, uint64_t copy_ndat = 0);
 
     //! Resize the weights array
-    void resize_weights (uint64 nsamples);
+    void resize_weights (uint64_t nsamples);
 
   private:
 
@@ -141,13 +141,13 @@ namespace dsp {
     unsigned* weights;
 
     //! The index into the first weight of the first time sample
-    uint64 weight_idat;
+    uint64_t weight_idat;
 
     //! The size of the buffer
-    uint64 weight_size;
+    uint64_t weight_size;
 
     //! The size of each division of the buffer
-    uint64 weight_subsize;
+    uint64_t weight_subsize;
   };
 
 }

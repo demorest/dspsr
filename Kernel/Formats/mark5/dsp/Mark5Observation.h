@@ -30,7 +30,7 @@ namespace dsp {
 
 	
 	//! Number of bytes offset from the beginning of the aquistion
-	uint64 offset_bytes;
+	uint64_t offset_bytes;
 	
 	int get_fanout();
 	

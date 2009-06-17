@@ -284,7 +284,7 @@ void dsp::PuMaFile::parse (const void* header)
   /* int FileNum;     Which file out of NFiles is this - not reliable
                       as it counts over all bands. */
 
-  uint64 filenum = hdr->gen.FileNum;
+  uint64_t filenum = hdr->gen.FileNum;
   int scanned = 0;
 
   char* filenum_str = strchr (hdr->gen.ThisFileName, '.');
@@ -295,12 +295,12 @@ void dsp::PuMaFile::parse (const void* header)
     throw Error (InvalidParam, "dsp::PuMaFile::parse",
                  "filename=%s not in recognized form", hdr->gen.ThisFileName);
 
-  uint64 two100MB = 200 * 1000 * 1000;
-  if (filenum > 0 && uint64(hdr->gen.DataBlkSize) < two100MB)
+  uint64_t two100MB = 200 * 1000 * 1000;
+  if (filenum > 0 && uint64_t(hdr->gen.DataBlkSize) < two100MB)
     throw Error (InvalidState, "dsp::PuMaFile::parse",
                  "refusing to process last file in set - offset unknown");
     
-  uint64 offset_samples = filenum * info.get_ndat();
+  uint64_t offset_samples = filenum * info.get_ndat();
 
   if (verbose)
     cerr << "dsp::PuMaFile::parse sampling rate=" << info.get_rate()

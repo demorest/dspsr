@@ -8,7 +8,8 @@
 #define __YAMASAKI_VERIFY_h
 
 #include "environ.h"
-int yamasaki_verify (const char* filename, uint64 offset_bytes,
-		     uint64 search_offset);
+
+int yamasaki_verify (const char* filename, uint64_t offset_bytes,
+		     uint64_t search_offset);
 
 #endif

@@ -40,16 +40,16 @@ namespace dsp {
     ChangingVariable get_rapid_variable(){ return rapid; }
 
     //! Set the ndat of the BitSeries.  This must be less than or equal to the TimeSeries' ndat.  negative values indicate just use the TimeSeries ndat
-    void set_bitseries_ndat(int64 _bitseries_ndat){ bitseries_ndat = _bitseries_ndat; }
+    void set_bitseries_ndat(int64_t _bitseries_ndat){ bitseries_ndat = _bitseries_ndat; }
 
     //! Inquire the desired ndat of the BitSeries.  This must be less than or equal to the TimeSeries' ndat.  negative values indicate just use the TimeSeries ndat
-    int64 get_bitseries_ndat(){ return bitseries_ndat; }
+    int64_t get_bitseries_ndat(){ return bitseries_ndat; }
     
     //! Set the offset (in time samples) that BitSeries will start at
-    void set_offset(uint64 _offset){ offset = _offset; }
+    void set_offset(uint64_t _offset){ offset = _offset; }
 
     //! Get the offset (in time samples) that BitSeries will start at
-    uint64 get_offset(){ return offset; }
+    uint64_t get_offset(){ return offset; }
 
   protected:
 
@@ -59,10 +59,10 @@ namespace dsp {
     ChangingVariable rapid;
 
     //! Desired ndat of the bitseries (-ve for timeseries' ndat)
-    int64 bitseries_ndat;
+    int64_t bitseries_ndat;
 
     //! How many samples into the timeseries we want to start the bitseries at
-    uint64 offset;
+    uint64_t offset;
 
   };
 

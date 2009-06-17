@@ -31,7 +31,7 @@ int main (int argc, char** argv) try
   bool verbose = false;
 
   // number of time samples loaded at once
-  uint64 block_size = 1024;
+  uint64_t block_size = 1024;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1)

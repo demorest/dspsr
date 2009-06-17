@@ -57,7 +57,7 @@ int mpiPack_size (const dsp::Observation& obs, MPI_Comm comm, int* size)
 int mpiPack (const dsp::Observation& obs,
 	     void* outbuf, int outcount, int* pos, MPI_Comm comm)
 {
-  int64 ndat = obs.get_ndat();
+  int64_t ndat = obs.get_ndat();
   MPI_Pack (&ndat, 1, MPI_Int64, outbuf, outcount, pos, comm);
 
   double temp, temp2;
@@ -123,7 +123,7 @@ int mpiPack (const dsp::Observation& obs,
 int mpiUnpack (void* inbuf, int insize, int* pos, dsp::Observation* obs,
                MPI_Comm comm)
 {
-  int64 ndat;
+  int64_t ndat;
 
   MPI_Unpack (inbuf, insize, pos, &ndat, 1, MPI_Int64,  comm);
   obs->set_ndat (ndat);

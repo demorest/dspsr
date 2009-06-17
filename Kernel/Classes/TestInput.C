@@ -102,7 +102,7 @@ void dsp::TestInput::runtest (Input* input_small, Input* input_large)
 	     << data_small->get_request_ndat() << endl;
       }
       
-      uint64 expected_offset = (ismall * modres) % resolution;
+      uint64_t expected_offset = (ismall * modres) % resolution;
       
       if (data_small->get_request_offset() != expected_offset) {
 	cerr << "ERROR: block=" << block << " BitSeries::request_offset="
@@ -118,7 +118,7 @@ void dsp::TestInput::runtest (Input* input_small, Input* input_large)
 	unsigned char* bytes_small = data_small->get_rawptr();
 	unsigned char* bytes_large = data_large->get_rawptr();
 	
-	uint64 nbyte = data_small->get_nbytes();
+	uint64_t nbyte = data_small->get_nbytes();
 	if (nbyte > data_large->get_nbytes())
           nbyte = data_large->get_nbytes();
 

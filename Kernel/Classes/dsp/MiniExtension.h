@@ -43,10 +43,10 @@ namespace dsp {
     void set_miniplan(MiniPlan* _miniplan){ miniplan = _miniplan; }
 
     //! Returns the subsize
-    uint64 get_subsize() const { return subsize; }
+    uint64_t get_subsize() const { return subsize; }
 
     //! Sets the subsize
-    void set_subsize(uint64 _subsize){ subsize = _subsize; }
+    void set_subsize(uint64_t _subsize){ subsize = _subsize; }
 
   protected:
 
@@ -54,7 +54,7 @@ namespace dsp {
     Reference::To<MiniPlan> miniplan;
 
     //! The number of bytes each chan/pol uses
-    uint64 subsize;
+    uint64_t subsize;
 
   };
 

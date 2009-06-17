@@ -118,7 +118,7 @@ void dsp::MaximFile::open_file (const char* filename)
   // file_info.st_size contains number of bytes in file, 
   // subtract header_bytes (16bytes).
 
-  info.set_ndat( int64(file_info.st_size - header_bytes) );
+  info.set_ndat( int64_t(file_info.st_size - header_bytes) );
   
   unsigned bits_per_byte = 8;
   resolution = bits_per_byte / info.get_nbit();

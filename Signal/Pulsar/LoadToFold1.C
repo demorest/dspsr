@@ -522,7 +522,7 @@ void dsp::LoadToFold1::prepare_final ()
   // cerr << "MINIMUM SAMPLES=" << minimum_samples << endl;
 
   // set the block size to at least minimum_samples
-  uint64 ram = manager->set_block_size
+  uint64_t ram = manager->set_block_size
     ( minimum_samples * config->get_times_minimum_ndat(),
       config->get_maximum_RAM(),
       config->get_nbuffers() );
@@ -535,7 +535,7 @@ void dsp::LoadToFold1::prepare_final ()
   }
 }
 
-uint64 dsp::LoadToFold1::get_minimum_samples () const
+uint64_t dsp::LoadToFold1::get_minimum_samples () const
 {
   return minimum_samples;
 }
@@ -868,7 +868,7 @@ void dsp::LoadToFold1::run () try
 
   unsigned block=0;
 
-  int64 last_decisecond = -1;
+  int64_t last_decisecond = -1;
 
   bool still_going = true;
 
@@ -904,7 +904,7 @@ void dsp::LoadToFold1::run () try
     if (id==0 && config->report_done) 
     {
       double seconds = input->tell_seconds();
-      int64 decisecond = int64( seconds * 10 );
+      int64_t decisecond = int64_t( seconds * 10 );
       
       if (decisecond > last_decisecond)
       {

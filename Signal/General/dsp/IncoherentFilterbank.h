@@ -36,7 +36,7 @@ namespace dsp{
     virtual ~IncoherentFilterbank();
   
     //! Inquire transform size of current plan (zero=no plan)
-    uint64 get_plansize(){ return wsave_size; }
+    uint64_t get_plansize(){ return wsave_size; }
 
     //! Free up the memory used by the current plan
     void free_plan(){ if(wsave) delete [] wsave; wsave = 0; wsave_size = 0; }
@@ -82,7 +82,7 @@ namespace dsp{
     float* wsave; 
     
     //! The size of the memory allocated to wsave;
-    uint64 wsave_size;
+    uint64_t wsave_size;
 
     //! The output's state (ie the number of polarisations)
     Signal::State state;

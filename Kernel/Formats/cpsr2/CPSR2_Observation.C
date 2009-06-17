@@ -32,13 +32,13 @@ dsp::CPSR2_Observation::CPSR2_Observation (const char* header)
     //
     // NMBYTES
     //
-    uint64 offset_Mbytes = 0;
+    uint64_t offset_Mbytes = 0;
     if (ascii_header_get (header, "NMBYTES", UI64, &offset_Mbytes) < 0)
       cerr << "CPSR2_Observation - no NMBYTES...  assuming local" << endl;
 
     cerr << "CPSR2_HEADER_VERSION 0.1 offset MBytes " << offset_Mbytes << endl;
 
-    uint64 MByte = 1024 * 1024;
+    uint64_t MByte = 1024 * 1024;
     offset_bytes += offset_Mbytes * MByte;
   }
 

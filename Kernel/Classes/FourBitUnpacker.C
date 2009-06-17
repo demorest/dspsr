@@ -5,6 +5,8 @@
  *
  ***************************************************************************/
 
+#include "environ.h"
+
 #include "dsp/FourBitUnpacker.h"
 #include "dsp/BitTable.h"
 
@@ -48,20 +50,20 @@ void dsp::FourBitUnpacker::get_histogram (std::vector<unsigned long>& hist,
 }
 
 
-void dsp::FourBitUnpacker::unpack (uint64 ndat, 
+void dsp::FourBitUnpacker::unpack (uint64_t ndat, 
 				   const unsigned char* from,
 				   const unsigned nskip,
 				   float* into, const unsigned fskip,
 				   unsigned long* hist)
 {
-  const uint64 ndat2  = ndat/2;
+  const uint64_t ndat2  = ndat/2;
   const float* lookup = table->get_values ();
 
   if (ndat % 2)
     throw Error (InvalidParam, "dsp::FourBitUnpacker::unpack",
                  "invalid ndat="UI64, ndat);
 
-  for (uint64 idat = 0; idat < ndat2; idat++)
+  for (uint64_t idat = 0; idat < ndat2; idat++)
   {
     into[0]    = lookup[ *from * 2 ];
     into[fskip] = lookup[ *from * 2 + 1 ];

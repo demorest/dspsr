@@ -22,7 +22,7 @@ dsp::EightBitUnpacker::EightBitUnpacker (const char* _name)
     cerr << "dsp::EightBitUnpacker ctor" << endl;
 }
 
-void dsp::EightBitUnpacker::unpack (uint64 ndat, 
+void dsp::EightBitUnpacker::unpack (uint64_t ndat, 
 				    const unsigned char* from,
 				    const unsigned nskip,
 				    float* into, 
@@ -34,7 +34,7 @@ void dsp::EightBitUnpacker::unpack (uint64 ndat,
   if (verbose)
     cerr << "dsp::EightBitUnpacker::unpack ndat=" << ndat << endl;
 
-  for (uint64 idat = 0; idat < ndat; idat++)
+  for (uint64_t idat = 0; idat < ndat; idat++)
   {
     hist[ *from ] ++;
     *into = lookup[ *from ];

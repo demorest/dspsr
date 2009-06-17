@@ -78,7 +78,7 @@ bool dsp::FadcUnpacker::matches (const Observation* observation)
 
 void dsp::FadcUnpacker::unpack ()
 {
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned int npol = input->get_npol();
 
 cerr<<"ndat = "<<ndat<<'\n';
@@ -88,10 +88,10 @@ cerr<<"npol = "<<npol<<'\n';
   {
     float* into_LCP = output->get_datptr (0, 0);
     float* into_RCP = output->get_datptr (0, 1);
-    unsigned long* hist_LCP = get_histogram (0);   //! uint64 would be better
+    unsigned long* hist_LCP = get_histogram (0);   //! uint64_t would be better
     unsigned long* hist_RCP = get_histogram (1);
   
-    uint64 sample=0;
+    uint64_t sample=0;
 
        const char* from_char = reinterpret_cast<const char*>(input->get_rawptr());
  
@@ -105,7 +105,7 @@ cerr<<"npol = "<<npol<<'\n';
   
        // the data bytes containing 4 2-bit numbers
        // 1: LCP real, 2:LCP imag, 3: RCP real, 4:RCP imag
-       for (uint64 fourbyte = 0; fourbyte < ndat/4; fourbyte++)
+       for (uint64_t fourbyte = 0; fourbyte < ndat/4; fourbyte++)
        {
             // fill histogram, original values are unsigned, i.e. 0, 1, 2, 3
             // read 2bit values, do offset, convert to float and write out
@@ -160,7 +160,7 @@ cerr<<"npol = "<<npol<<'\n';
 
        // the data bytes containing 2 4-bit numbers
        // 1: LCP real, 2:LCP imag; 1: RCP real, 2:RCP imag
-       for (uint64 fourbyte = 0; fourbyte < ndat/2; fourbyte++)
+       for (uint64_t fourbyte = 0; fourbyte < ndat/2; fourbyte++)
        {
             // fill histogram, original values are unsigned, i.e. 0, 1, 2, 3... 7
             // read 4bit values, do offset, convert to float and write out
@@ -197,7 +197,7 @@ cerr<<"npol = "<<npol<<'\n';
   
        // the data bytes containing 8-bit numbers
        // 1: LCP real, 2:LCP imag, 3: RCP real, 4:RCP imag   - four bytes
-       for (uint64 fourbyte = 0; fourbyte < ndat/1; fourbyte++)
+       for (uint64_t fourbyte = 0; fourbyte < ndat/1; fourbyte++)
        {
             // fill histogram, original values are unsigned, i.e. 0, 1, 2, 3... 255
             // read 8bit values, do offset, convert to float and write out
@@ -224,9 +224,9 @@ cerr<<"npol = "<<npol<<'\n';
   else if (npol==1)
   {
     float* into_LCP = output->get_datptr (0, 0);
-    unsigned long* hist_LCP = get_histogram (0);   //! uint64 would be better
+    unsigned long* hist_LCP = get_histogram (0);   //! uint64_t would be better
   
-    uint64 sample=0;
+    uint64_t sample=0;
 
        const char* from_char = reinterpret_cast<const char*>(input->get_rawptr());
  
@@ -240,7 +240,7 @@ cerr<<"npol = "<<npol<<'\n';
   
        // the data bytes containing 4 2-bit numbers
        // 1: LCP real, 2:LCP imag, 3: LCP real, 4:LCP imag  or other polarization
-       for (uint64 fourbyte = 0; fourbyte < ndat/8; fourbyte++)
+       for (uint64_t fourbyte = 0; fourbyte < ndat/8; fourbyte++)
        {
             // read 2bit values, do offset, convert to float and write out
             // e.g. LCP output: re, im, re, im, ...
@@ -295,7 +295,7 @@ cerr<<"npol = "<<npol<<'\n';
   
        // the data bytes containing 2 4-bit numbers
        // 1: LCP real, 2:LCP imag
-       for (uint64 fourbyte = 0; fourbyte < ndat/4; fourbyte++)
+       for (uint64_t fourbyte = 0; fourbyte < ndat/4; fourbyte++)
        {
             // read 4bit values, do offset, convert to float and write out
             // e.g. LCP output: re, im, re, im, ...
@@ -331,7 +331,7 @@ cerr<<"npol = "<<npol<<'\n';
   
        // the data bytes containing 8-bit numbers
        // 1: LCP real, 2:LCP imag, 3: LCP real, 4:LCP imag   - four bytes
-       for (uint64 fourbyte = 0; fourbyte < ndat/2; fourbyte++)
+       for (uint64_t fourbyte = 0; fourbyte < ndat/2; fourbyte++)
        {
             hist_LCP[ from[fourbyte].lRe0 ]++;   // LCP re
             hist_LCP[ from[fourbyte].lIm0 ]++;    // LCP im       

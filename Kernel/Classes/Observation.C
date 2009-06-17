@@ -424,7 +424,7 @@ void dsp::Observation::change_state (Signal::State new_state)
 }
 
 //! Change the start time by the number of time samples specified
-void dsp::Observation::change_start_time (int64 samples)
+void dsp::Observation::change_start_time (int64_t samples)
 {
   start_time += double(samples)/rate;
 }

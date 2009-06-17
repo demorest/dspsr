@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelay.h,v $
-   $Revision: 1.3 $
-   $Date: 2009/02/12 08:59:03 $
+   $Revision: 1.4 $
+   $Date: 2009/06/17 10:16:54 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_SampleDelay_h
@@ -40,18 +40,18 @@ namespace dsp {
     void transformation ();
 
     //! Get the total delay (in samples)
-    uint64 get_total_delay () const;
+    uint64_t get_total_delay () const;
 
     //! Get the zero delay (in samples)
-    int64 get_zero_delay () const;
+    int64_t get_zero_delay () const;
 
   protected:
 
     //! The total delay (in samples)
-    uint64 total_delay;
+    uint64_t total_delay;
 
     //! The zero delay (in samples)
-    int64 zero_delay;
+    int64_t zero_delay;
 
     //! Flag set when delays have been initialized
     bool built;

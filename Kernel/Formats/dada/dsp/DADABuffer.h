@@ -32,10 +32,10 @@ namespace dsp {
     bool is_valid (const char* filename) const;
 
     //! Seek to the specified time sample
-    virtual void seek (int64 offset, int whence = 0);
+    virtual void seek (int64_t offset, int whence = 0);
 
     //! Ensure that block_size is an integer multiple of resolution
-    virtual void set_block_size (uint64 _size);
+    virtual void set_block_size (uint64_t _size);
 
     //! End-of-data is defined by primary read client (passive viewer)
     virtual bool eod();
@@ -55,10 +55,10 @@ namespace dsp {
     void close ();
 
     //! Load bytes from shared memory
-    virtual int64 load_bytes (unsigned char* buffer, uint64 bytes);
+    virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes);
     
     //! Set the offset in shared memory
-    virtual int64 seek_bytes (uint64 bytes);
+    virtual int64_t seek_bytes (uint64_t bytes);
 
     //! Over-ride File::set_total_samples
     virtual void set_total_samples ();

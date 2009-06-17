@@ -50,21 +50,21 @@ void PSPMfromBigEndian (PSPM_SEARCH_HEADER* header)
   fromBigEndian (&(header->bw),          sizeof (double));
   fromBigEndian (&(header->length_of_integration), sizeof (double));
 
-  fromBigEndian (&(header->header_version),   sizeof (int32));
-  fromBigEndian (&(header->scan_file_number), sizeof (int32));
-  fromBigEndian (&(header->bit_mode),    sizeof (int32));
-  fromBigEndian (&(header->scan_num),    sizeof (int32));
-  fromBigEndian (&(header->tc),          sizeof (int32));
-  fromBigEndian (&(header->num_chans),   sizeof (int32));
+  fromBigEndian (&(header->header_version),   sizeof (int32_t));
+  fromBigEndian (&(header->scan_file_number), sizeof (int32_t));
+  fromBigEndian (&(header->bit_mode),    sizeof (int32_t));
+  fromBigEndian (&(header->scan_num),    sizeof (int32_t));
+  fromBigEndian (&(header->tc),          sizeof (int32_t));
+  fromBigEndian (&(header->num_chans),   sizeof (int32_t));
 
-  fromBigEndian (&(header->pasmon_wrap),      sizeof (int32));
-  fromBigEndian (&(header->pasmon_feed),      sizeof (int32));
-  fromBigEndian (&(header->pasmon_daynumber), sizeof (int32) );
-  fromBigEndian (&(header->pasmon_ast),       sizeof (int32));
+  fromBigEndian (&(header->pasmon_wrap),      sizeof (int32_t));
+  fromBigEndian (&(header->pasmon_feed),      sizeof (int32_t));
+  fromBigEndian (&(header->pasmon_daynumber), sizeof (int32_t) );
+  fromBigEndian (&(header->pasmon_ast),       sizeof (int32_t));
 
-  fromBigEndian (&(header->file_size),        sizeof (int32));
-  fromBigEndian (&(header->tape_num),         sizeof (int32));
-  fromBigEndian (&(header->tape_file_number), sizeof (int32));
+  fromBigEndian (&(header->file_size),        sizeof (int32_t));
+  fromBigEndian (&(header->tape_num),         sizeof (int32_t));
+  fromBigEndian (&(header->tape_file_number), sizeof (int32_t));
 
   fromBigEndian (&(header->user_ra),          sizeof (double));
   fromBigEndian (&(header->user_dec),         sizeof (double));
@@ -76,12 +76,12 @@ void PSPMfromBigEndian (PSPM_SEARCH_HEADER* header)
 
   // Do NOT byte-swap the long double MJD, as it is interpretted as big endian
 
-  fromBigEndian (&(header->ll_file_offset),   sizeof (int64));
-  fromBigEndian (&(header->ll_file_size),     sizeof (int64));
+  fromBigEndian (&(header->ll_file_offset),   sizeof (int64_t));
+  fromBigEndian (&(header->ll_file_size),     sizeof (int64_t));
 
-  fromBigEndian (&(header->BACKEND_TYPE), sizeof (int32));
-  fromBigEndian (&(header->UPDATE_DONE),  sizeof (int32));
-  fromBigEndian (&(header->HEADER_TYPE),  sizeof (int32));
+  fromBigEndian (&(header->BACKEND_TYPE), sizeof (int32_t));
+  fromBigEndian (&(header->UPDATE_DONE),  sizeof (int32_t));
+  fromBigEndian (&(header->HEADER_TYPE),  sizeof (int32_t));
 }
 
 void PSPMtoBigEndian (PSPM_SEARCH_HEADER* header)
@@ -98,21 +98,21 @@ void PSPMtoBigEndian (PSPM_SEARCH_HEADER* header)
   toBigEndian (&(header->bw),          sizeof (double));
   toBigEndian (&(header->length_of_integration), sizeof (double));
 
-  toBigEndian (&(header->header_version),   sizeof (int32));
-  toBigEndian (&(header->scan_file_number), sizeof (int32));
-  toBigEndian (&(header->bit_mode),    sizeof (int32));
-  toBigEndian (&(header->scan_num),    sizeof (int32));
-  toBigEndian (&(header->tc),          sizeof (int32));
-  toBigEndian (&(header->num_chans),   sizeof (int32));
+  toBigEndian (&(header->header_version),   sizeof (int32_t));
+  toBigEndian (&(header->scan_file_number), sizeof (int32_t));
+  toBigEndian (&(header->bit_mode),    sizeof (int32_t));
+  toBigEndian (&(header->scan_num),    sizeof (int32_t));
+  toBigEndian (&(header->tc),          sizeof (int32_t));
+  toBigEndian (&(header->num_chans),   sizeof (int32_t));
 
-  toBigEndian (&(header->pasmon_wrap),      sizeof (int32));
-  toBigEndian (&(header->pasmon_feed),      sizeof (int32));
-  toBigEndian (&(header->pasmon_daynumber), sizeof (int32) );
-  toBigEndian (&(header->pasmon_ast),       sizeof (int32));
+  toBigEndian (&(header->pasmon_wrap),      sizeof (int32_t));
+  toBigEndian (&(header->pasmon_feed),      sizeof (int32_t));
+  toBigEndian (&(header->pasmon_daynumber), sizeof (int32_t) );
+  toBigEndian (&(header->pasmon_ast),       sizeof (int32_t));
 
-  toBigEndian (&(header->file_size),        sizeof (int32));
-  toBigEndian (&(header->tape_num),         sizeof (int32));
-  toBigEndian (&(header->tape_file_number), sizeof (int32));
+  toBigEndian (&(header->file_size),        sizeof (int32_t));
+  toBigEndian (&(header->tape_num),         sizeof (int32_t));
+  toBigEndian (&(header->tape_file_number), sizeof (int32_t));
 
   toBigEndian (&(header->user_ra),          sizeof (double));
   toBigEndian (&(header->user_dec),         sizeof (double));
@@ -122,12 +122,12 @@ void PSPMtoBigEndian (PSPM_SEARCH_HEADER* header)
   toBigEndian (&(header->SIDEBAND),         sizeof (int));
   toBigEndian (&(header->observatory),      sizeof (int));
 
-  toBigEndian (&(header->ll_file_offset),   sizeof (int64));
-  toBigEndian (&(header->ll_file_size),     sizeof (int64));
+  toBigEndian (&(header->ll_file_offset),   sizeof (int64_t));
+  toBigEndian (&(header->ll_file_size),     sizeof (int64_t));
 
-  toBigEndian (&(header->BACKEND_TYPE), sizeof (int32));
-  toBigEndian (&(header->UPDATE_DONE),  sizeof (int32));
-  toBigEndian (&(header->HEADER_TYPE),  sizeof (int32));
+  toBigEndian (&(header->BACKEND_TYPE), sizeof (int32_t));
+  toBigEndian (&(header->UPDATE_DONE),  sizeof (int32_t));
+  toBigEndian (&(header->HEADER_TYPE),  sizeof (int32_t));
 }
 
 string PSPMsource (const PSPM_SEARCH_HEADER* header)
@@ -237,7 +237,7 @@ bool PSPMverify (PSPM_SEARCH_HEADER* hdr, bool verbose)
   // some more sanity checks
   if (hdr->ll_file_size) {
     // double check that the file_offset is a multiple of 1MB
-    int64 mb = 1024 * 1024;
+    int64_t mb = 1024 * 1024;
     if (hdr->ll_file_offset % mb) {
       if (verbose)
 	fprintf (stderr, "PSPMverify: offset="I64" corrupted.\n",

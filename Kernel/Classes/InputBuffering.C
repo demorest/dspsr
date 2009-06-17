@@ -24,7 +24,7 @@ void dsp::InputBuffering::set_target (HasInput<TimeSeries>* _target)
 }
 
 //! Set the minimum number of samples that can be processed
-void dsp::InputBuffering::set_minimum_samples (uint64 samples)
+void dsp::InputBuffering::set_minimum_samples (uint64_t samples)
 {
   minimum_samples = samples;
 
@@ -35,14 +35,14 @@ void dsp::InputBuffering::set_minimum_samples (uint64 samples)
 }
 
 /*! Copy remaining data from the target Transformation's input to buffer */
-void dsp::InputBuffering::set_next_start (uint64 next)
+void dsp::InputBuffering::set_next_start (uint64_t next)
 {
   const TimeSeries* input = target->get_input();
 
   next_start_sample = next;
 
   // the number of samples in the target
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
 
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::set_next_start next=" << next 
@@ -53,7 +53,7 @@ void dsp::InputBuffering::set_next_start (uint64 next)
                  "input_sample of target input TimeSeries is not set");
 
   // the number of samples to be buffered
-  uint64 buffer_ndat = ndat - next_start_sample;
+  uint64_t buffer_ndat = ndat - next_start_sample;
 
   if (next_start_sample > ndat)
     buffer_ndat = 0;
@@ -93,7 +93,7 @@ void dsp::InputBuffering::pre_transformation ()
 
   const TimeSeries* container = target->get_input();
 
-  int64 want = container->get_input_sample();
+  int64_t want = container->get_input_sample();
 
   // don't wait for data preceding the first loaded block or last empty block
   if (want <= 0)
@@ -114,7 +114,7 @@ void dsp::InputBuffering::post_transformation ()
 }
 
 
-int64 dsp::InputBuffering::get_next_contiguous () const
+int64_t dsp::InputBuffering::get_next_contiguous () const
 {
   if (!buffer)
     return -1;

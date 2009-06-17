@@ -55,7 +55,7 @@ unsigned dsp::SigProcOne::get_output_ichan (unsigned idig) const
 
 void dsp::SigProcOne::unpack ()
 {
-  const uint64 ndat = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
 
   switch ( output->get_order() )
@@ -87,8 +87,8 @@ void dsp::SigProcOne::unpack ()
       const unsigned char* from = input->get_rawptr();
       float* into = output->get_dattfp();
 
-      const uint64 nfloat = nchan * ndat;
-      for (uint64 ifloat=0; ifloat < nfloat; ifloat += 8)
+      const uint64_t nfloat = nchan * ndat;
+      for (uint64_t ifloat=0; ifloat < nfloat; ifloat += 8)
       {
 	unsigned char byte = *from;
 

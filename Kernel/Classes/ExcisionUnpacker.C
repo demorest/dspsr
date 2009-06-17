@@ -176,7 +176,7 @@ void dsp::ExcisionUnpacker::unpack ()
   if (verbose)
     cerr << "dsp::ExcisionUnpacker::unpack" << endl;;
 
-  uint64 ndat = input->get_ndat();
+  uint64_t ndat = input->get_ndat();
 
   if (ndat < get_ndat_per_weight())
     return;
@@ -195,10 +195,10 @@ void dsp::ExcisionUnpacker::unpack ()
 
   // weights are used only if output is a WeightedTimeseries
   unsigned* weights = 0;
-  uint64 nweights = 0;
+  uint64_t nweights = 0;
 
   // the number of floating point numbers to unpack from each digitizer
-  uint64 nfloat = ndat * get_ndim_per_digitizer();
+  uint64_t nfloat = ndat * get_ndim_per_digitizer();
 
   for (unsigned idig=0; idig<ndig; idig++)
   {
@@ -243,7 +243,7 @@ void dsp::ExcisionUnpacker::unpack ()
   if (weighted_output)
   {
     weighted_output -> mask_weights ();
-    uint64 nbad = weighted_output -> get_nzero ();
+    uint64_t nbad = weighted_output -> get_nzero ();
     discarded_weights += nbad;
 
     if (nbad && verbose)

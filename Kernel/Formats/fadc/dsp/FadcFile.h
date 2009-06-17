@@ -60,7 +60,7 @@ namespace dsp {
 		int read_blockMap(long *buffers_per_file, long *bytes_per_buffer);
 		
 		bool fileExists (char* fileName);
-		uint64 fileSize(char* fileName);
+		uint64_t fileSize(char* fileName);
 	};
 
 }

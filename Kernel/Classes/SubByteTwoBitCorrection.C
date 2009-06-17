@@ -54,7 +54,7 @@ dsp::SubByteTwoBitCorrection::get_shift (unsigned idig, unsigned samp) const
    different way, please see mark5/Mark5TwoBitCorrection.C. */
 void dsp::SubByteTwoBitCorrection::dig_unpack (const unsigned char* input_data,
 					       float* output_data,
-					       uint64 nfloat,
+					       uint64_t nfloat,
 					       unsigned long* hist,
 					       unsigned* weights,
 					       unsigned nweights)

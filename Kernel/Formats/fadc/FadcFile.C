@@ -203,18 +203,18 @@ bool dsp::FadcFile::fileExists (char* fileName)
    return ret;
 }
 
-uint64 dsp::FadcFile::fileSize(char* fileName)
+uint64_t dsp::FadcFile::fileSize(char* fileName)
 {
    FILE* testFile;
-   uint64 sz = 0;
+   uint64_t sz = 0;
    if ((testFile = fopen(fileName, "rb")) == NULL) sz = 0;
    else if (feof(testFile)) sz = 0;
    else
    {
       fseeko(testFile, 0, SEEK_SET);
-      uint64 beg = static_cast <uint64> (ftello(testFile));
+      uint64_t beg = static_cast <uint64_t> (ftello(testFile));
       fseeko(testFile, 0, SEEK_END);
-      sz = (static_cast <uint64> (ftello(testFile))) - beg;
+      sz = (static_cast <uint64_t> (ftello(testFile))) - beg;
    }
    fclose(testFile);
 cerr<<"fileSize going to return "<<sz<<"\n";
@@ -397,7 +397,7 @@ cerr<<"FadcFile: expect_magic_code = "<<expect_magic_code<<"\n";
     lastrun.close();
     if (fileExists("swindata"))
     {
-       uint64 predicted_size = (static_cast <uint64> (buffers_per_file)) *bytes_per_buffer*(lastFile-firstFile+1)-nbit*nPol*offset_tsmps/4; 
+       uint64_t predicted_size = (static_cast <uint64_t> (buffers_per_file)) *bytes_per_buffer*(lastFile-firstFile+1)-nbit*nPol*offset_tsmps/4; 
        char answer=' ';
 cerr<<"predicted size "<<predicted_size<<'\n';
        if (fileSize("swindata")==predicted_size)
@@ -562,8 +562,8 @@ cerr<<"\nFound "<<test<<"\n\n";
   char* dataFileName = (char*) ((string) pathData + "/" + expFileName + ".000000").c_str();
   
 // make sure that datafiles have the correct length
-  uint64 expected_size = (uint64) buffers_per_file*bytes_per_buffer;
-  uint64 measured_size = fileSize(dataFileName);
+  uint64_t expected_size = (uint64_t) buffers_per_file*bytes_per_buffer;
+  uint64_t measured_size = fileSize(dataFileName);
   if (expected_size == measured_size) cerr<<"Datafiles have the correct size: "<<expected_size<<" bytes\n";
   else 
   {

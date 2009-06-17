@@ -172,7 +172,7 @@ void dsp::FITSFile::open_file(const char* filename)
                 "failed open(%s)", filename);
 }
 
-int64 dsp::FITSFile::load_bytes (unsigned char* buffer, uint64 bytes)
+int64_t dsp::FITSFile::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
     const int colnum = get_data_colnum();
     const uint nsamp = get_nsamples();

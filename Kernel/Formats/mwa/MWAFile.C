@@ -92,9 +92,9 @@ dsp::MWAFile::open_file (const char* filename)
   info.set_centre_frequency( 200.0 );
 
   {
-    uint64 bits_per_sample = info.get_nbit() * info.get_nchan() * info.get_npol();
+    uint64_t bits_per_sample = info.get_nbit() * info.get_nchan() * info.get_npol();
     
-    uint64 data_bits = 8*filesize(filename);
+    uint64_t data_bits = 8*filesize(filename);
     
     info.set_ndat( data_bits / bits_per_sample );
   }
