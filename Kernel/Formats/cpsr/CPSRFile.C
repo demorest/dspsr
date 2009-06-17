@@ -213,7 +213,7 @@ void dsp::CPSRFile::open_file (const char* filename)
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
   // default_basis
-  info.set_telescope( string(1, hdr.ttelid) );
+  info.set_telescope( "parkes" ); // string(1, hdr.ttelid) );
   info.set_centre_frequency (hdr.frequency);
     
   // CPSR samples the analytic representation of the voltages
