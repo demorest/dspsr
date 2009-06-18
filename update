@@ -2,6 +2,5 @@
 
 echo "Running CVS update ..."
 
-cvs -z3 update -APd |& tee update.log
-
+cvs -z3 update -APd |& tee update.log | grep -v '^?'
 
