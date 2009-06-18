@@ -1,9 +1,9 @@
 
 noinst_LTLIBRARIES = libClasses.la
 
-nobase_include_HEADERS = ascii_header.h dsp/ASCIIObservation.h	     \
-	dsp/InputBuffering.h dsp/Seekable.h dsp/BitSeries.h	     \
-	dsp/InputBufferingShare.h				     \
+nobase_include_HEADERS = environ.h ascii_header.h \
+	dsp/ASCIIObservation.h dsp/Seekable.h dsp/BitSeries.h	     \
+	dsp/InputBuffering.h dsp/InputBufferingShare.h		     \
 	dsp/DADAFile.h dsp/BitTable.h dsp/MPIRoot.h		     \
 	dsp/SubByteTwoBitCorrection.h dsp/BitUnpacker.h		     \
 	dsp/MPIServer.h dsp/BlockFile.h				     \
