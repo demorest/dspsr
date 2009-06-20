@@ -44,7 +44,7 @@ if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
-check_PROGRAMS = test_BlockIterator
+check_PROGRAMS = test_BlockIterator test_environ
 
 test_BlockIterator_SOURCES = test_BlockIterator.C
 
