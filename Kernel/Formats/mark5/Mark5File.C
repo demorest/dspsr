@@ -113,8 +113,9 @@ void dsp::Mark5File::open_file (const char* filename)
   cerr << "TRACKS = " << vlba_stream->tracks << endl;
   Input::resolution = vlba_stream->tracks / nbit;  
 
-  cerr << "NCHAN = " << vlba_stream->nchan/fanout << endl;
-  info.set_nchan( vlba_stream->nchan/fanout );	
+  // The factor of 2 should only apply for dual-pol data.
+  cerr << "NCHAN = " << vlba_stream->nchan / 2 << endl;
+  info.set_nchan( vlba_stream->nchan / 2 ); 
 
   cerr << "SAMPRATE = " << vlba_stream->samprate << endl;
   info.set_rate ( vlba_stream->samprate );
