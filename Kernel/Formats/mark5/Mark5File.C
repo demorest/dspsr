@@ -156,6 +156,40 @@ void dsp::Mark5File::open_file (const char* filename)
 
   info.set_source (hdrstr);
 
+  // ///////////////////////////////////////////////////////////////	
+  // COORDINATES
+  //
+  int rv=0;
+  bool got_coords = true;
+  double ra=0.0, dec=0.0;
+  if (got_coords && ascii_header_get (header, "RA", "%s", hdrstr) >= 0) {
+    cerr << "RASTR = '" << hdrstr << "'" << endl;
+    rv = str2dec2(&ra, hdrstr);
+    ra *= 360.0/24.0;
+    if (rv==0) 
+      got_coords = true;
+    else 
+      got_coords = false;
+  } else 
+    got_coords = false;
+  if (got_coords && ascii_header_get (header, "DEC", "%s", hdrstr) >= 0) {
+    cerr << "DECSTR = '" << hdrstr << "'" << endl;
+    if (str2dec2(&dec, hdrstr)==0)
+      got_coords = true;
+    else 
+      got_coords = false;
+  } else
+    got_coords = false;
+
+  if (got_coords) {
+    cerr << "RA = " << ra*12.0/M_PI << endl;
+    cerr << "DEC = " << dec*180.0/M_PI << endl;
+    sky_coord coords;
+    coords.setRadians(ra,dec);
+    info.set_coordinates(coords);
+  }
+
+
   // ///////////////////////////////////////////////////////////////
   // FREQ
   //
