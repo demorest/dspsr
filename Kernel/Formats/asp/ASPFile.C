@@ -117,6 +117,18 @@ bool dsp::ASPFile::is_valid (const char* filename) const
     return false;
   }
 
+  if (header.n_ds<1 || header.n_ds>4) {
+    if (verbose)
+      cerr << "dsp::ASPFile invalid n_ds=" << header.n_ds << endl;
+    return false;
+  }
+
+  if (header.n_chan<1 || header.n_chan>32) {
+    if (verbose)
+      cerr << "dsp::ASPFile invalid n_chan=" << header.n_chan << endl;
+    return false;
+  }
+
   return true;
 }
 
@@ -125,14 +137,18 @@ void dsp::ASPFile::open_file (const char* filename)
   struct asp_params header;
   struct data2rcv block;
 
-  cerr << "sizeof(struct asp_params) = " << sizeof(struct asp_params) << endl;
-  cerr << "sizeof(struct data2rcv) = " << sizeof(struct data2rcv) << endl;
+  if (verbose) {
+    cerr << "sizeof(struct asp_params) = " << sizeof(struct asp_params) << endl;
+    cerr << "sizeof(struct data2rcv) = " << sizeof(struct data2rcv) << endl;
+  }
   
   fd = open_read_header (filename, &header, &block);
  
-  cerr << "n_ds = " << header.n_ds << endl;
-  cerr << "n_chan = " << header.n_chan << endl;
-  cerr << "i_chan = " << block.FreqChanNo << endl;
+  if (verbose) {
+    cerr << "n_ds = " << header.n_ds << endl;
+    cerr << "n_chan = " << header.n_chan << endl;
+    cerr << "i_chan = " << block.FreqChanNo << endl;
+  }
 
   info.set_nbit (8);
 
@@ -140,8 +156,10 @@ void dsp::ASPFile::open_file (const char* filename)
   info.set_bandwidth (bw);
   info.set_centre_frequency (header.rf + (block.FreqChanNo + 0.5) * bw);
  
-  cerr << "cf = " << info.get_centre_frequency() << endl;
-  cerr << "bw = " << bw << endl;
+  if (verbose) {
+    cerr << "cf = " << info.get_centre_frequency() << endl;
+    cerr << "bw = " << bw << endl;
+  }
 
   info.set_npol(2);
   info.set_state (Signal::Analytic);
@@ -151,18 +169,22 @@ void dsp::ASPFile::open_file (const char* filename)
   epoch += block.ipts1 / info.get_rate();
 
   info.set_start_time( epoch );
-  cerr << "MJD = " << info.get_start_time() << endl;
-  cerr << "telescope = " << header.telescope << endl;
+  if (verbose) {
+    cerr << "MJD = " << info.get_start_time() << endl;
+    cerr << "telescope = " << header.telescope << endl;
+  }
   info.set_telescope (header.telescope);
 
   info.set_source (header.psr_name);
 
   header_bytes = sizeof(struct asp_params);
 
-  cerr << "totalsize=" << block.totalsize << endl;
-  cerr << "NPtsSend=" << block.NPtsSend << endl;
-  cerr << "overlap=" << header.overlap << endl;
-  cerr << "n_samp_dump=" << header.n_samp_dump << endl;
+  if (verbose) {
+    cerr << "totalsize=" << block.totalsize << endl;
+    cerr << "NPtsSend=" << block.NPtsSend << endl;
+    cerr << "overlap=" << header.overlap << endl;
+    cerr << "n_samp_dump=" << header.n_samp_dump << endl;
+  }
 
   block_header_bytes = sizeof(struct data2rcv);
   //block_tailer_bytes = header.overlap * 4;
