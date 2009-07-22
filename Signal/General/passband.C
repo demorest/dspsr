@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Bandpass.h"
 #include "dsp/RFIFilter.h"
 
@@ -30,9 +31,11 @@ void usage ()
   cout << "passband - plot passband\n"
     "Usage: passband [options] file1 [file2 ...] \n"
     "Options:\n"
+    " -b         plot frequency bins (histogram style) \n"
     " -c cmap    set the colour map (0 to 7) \n"
     " -d         produce dynamic spectrum (greyscale) \n"
-    " -r min,max set the min,max value in the plot (e.g. saturate birdies) \n"
+    " -F min,max set the min,max x-value (e.g. frequency zoom) \n" 
+    " -r min,max set the min,max y-value (e.g. saturate birdies) \n"
     " -n nchan   number of frequency channels in each spectrum \n"
     " -t seconds integration interval for each spectrum \n"
     " -R         test RFIFilter class \n"
@@ -85,13 +88,17 @@ int main (int argc, char** argv) try {
 
   int c;
 
-  static char* args = "iB:c:dD:f:lr:n:RS:T:t:hvV";
+  static char* args = "ibB:c:dD:f:F:lr:n:RS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
 
     case 'i':
       plotter.xlabel_ichan = true;
+      break;
+
+    case 'b':
+      plotter.histogram = true;
       break;
 
     case 'B':
@@ -146,6 +153,14 @@ int main (int argc, char** argv) try {
       metafile = optarg;
       break;
       
+    case 'F':
+    {
+      float min, max;
+      sscanf (optarg, "%f,%f", &min, &max);
+      plotter.set_fminmax (min, max);
+      break;
+    }
+
     case 'r':
     {
       float min, max;
@@ -210,14 +225,16 @@ int main (int argc, char** argv) try {
   passband->set_nchan (nchan);
   operations.push_back (passband);
 
-  if (cpgopen(display.c_str()) < 0) {
+  if (cpgopen(display.c_str()) < 0)
+  {
     cerr << "passband: Could not open plot device" << endl;
     return -1;
   }
   cpgsvp (0.1, 0.9, 0.15, 0.9);
   cmap.set_name (colour_map);
 
-  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try {
+  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
+  {
 
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
@@ -227,14 +244,16 @@ int main (int argc, char** argv) try {
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
-    if (bandwidth != 0) {
+    if (bandwidth != 0)
+    {
       cerr << "passband: over-riding bandwidth"
               " old=" << manager->get_info()->get_bandwidth() <<
               " new=" << bandwidth << endl;
       manager->get_info()->set_bandwidth (bandwidth);
     }
 
-    if (centre_frequency != 0) {
+    if (centre_frequency != 0)
+    {
       cerr << "passband: over-riding centre_frequency"
               " old=" << manager->get_info()->get_centre_frequency() <<
               " new=" << centre_frequency << endl;
@@ -256,7 +275,7 @@ int main (int argc, char** argv) try {
     manager->set_block_size ( block_size );
 
     dsp::ExcisionUnpacker* excision;
-    excision = dynamic_cast<dsp::ExcisionUnpacker*> ( manager->get_unpacker() );
+    excision = dynamic_cast<dsp::ExcisionUnpacker*>( manager->get_unpacker() );
 
     if ( excision )
       excision -> set_cutoff_sigma ( 0.0 );
@@ -265,10 +284,10 @@ int main (int argc, char** argv) try {
 
     double time_into_file = 0.0;
 
-    while (!manager->get_input()->eod()) {
-
-      for (unsigned iop=0; iop < operations.size(); iop++) try {
-	
+    while (!manager->get_input()->eod())
+    {
+      for (unsigned iop=0; iop < operations.size(); iop++) try
+      {
         if (verbose) cerr << "passband: calling " 
                           << operations[iop]->get_name() << endl;
 	
@@ -276,19 +295,17 @@ int main (int argc, char** argv) try {
 	
         if (verbose) cerr << "passband: " << operations[iop]->get_name() 
                           << " done" << endl;
-	
       }
-      catch (Error& error)  {
-	
+      catch (Error& error)
+      {
 	cerr << "passband: " << operations[iop]->get_name() << " error\n"
 	     << error.get_message() << endl;
 	
 	break;
-	
       }
 
-      if (passband->get_integration_length() > integrate) {
-
+      if (passband->get_integration_length() > integrate)
+      {
 	cerr << "\npassband: plotting passband from t=" << time_into_file
 	     << "->" << time_into_file + passband->get_integration_length()
 	     << " seconds" << endl;
@@ -301,27 +318,28 @@ int main (int argc, char** argv) try {
 	if (dynamic)
 	  for (unsigned ipol=0; ipol < output->get_npol(); ipol++)
 	    dynamic_spectrum[ipol].push_back( output->get_passband(ipol) );
-	else {
+	else 
+	{
 	  cpgpage ();
-    output->naturalize ();
+	  output->naturalize ();
 	  plotter.plot (output, voltages);
 	}
 
 	passband->reset_output();
-
       }
-
     }
 
     if (dynamic)
-      for (unsigned ipol=0; ipol < output->get_npol(); ipol++) {
+      for (unsigned ipol=0; ipol < output->get_npol(); ipol++)
+      {
 	cerr << "Plotting dynamic spectrum for ipol=" << ipol << endl;
 	cpgpage ();
 	plotter.plot (dynamic_spectrum[ipol], time_into_file, voltages);
       }
 
   }
-  catch (Error& error)  {
+  catch (Error& error)
+  {
     cerr << "passband: " << filenames[ifile] << " error\n"
 	 << error.get_message() << endl;
   }
