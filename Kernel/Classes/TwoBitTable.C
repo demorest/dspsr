@@ -8,10 +8,13 @@
 #include "dsp/TwoBitTable.h"
 
 dsp::TwoBitTable::TwoBitTable (Type _type, bool _reverse)
- : BitTable (2, _type, _reverse)
+  : BitTable (2, _type, _reverse)
 {
   lo_val = 0.25;
   hi_val = 0.75;
+  reverse_2bit = false;
+
+  build ();
 }
 
 //! Set the value of the low voltage state
@@ -26,6 +29,11 @@ void dsp::TwoBitTable::set_hi_val (float _hi_val)
   hi_val = _hi_val;
 }
 
+void dsp::TwoBitTable::set_reverse_2bit (bool flag)
+{
+  reverse_2bit = flag;
+}
+
 void dsp::TwoBitTable::rebuild ()
 {
   build ();
@@ -33,8 +41,8 @@ void dsp::TwoBitTable::rebuild ()
 
 void dsp::TwoBitTable::generate_unique_values (float* vals) const
 {
-  switch (type)
-  {
+  switch (type) {
+
   case OffsetBinary:
     vals[0] = -hi_val;
     vals[1] = -lo_val;
@@ -60,4 +68,8 @@ void dsp::TwoBitTable::generate_unique_values (float* vals) const
     throw Error (InvalidState, "TwoBitTable::generate_unique_values",
 		 "unsupported type");
   }
+  
+  // Swap the order of the bits, e.g. SignMag becomes MagSign
+  if (reverse_2bit)
+    std::swap (vals[1], vals[2]);
 }
