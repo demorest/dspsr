@@ -18,7 +18,7 @@ bool dsp::LBADR64_TwoBitCorrection::matches (const Observation* observation)
 dsp::LBADR64_TwoBitCorrection::LBADR64_TwoBitCorrection ()
   : TwoBitCorrection ("LBADR64_TwoBitCorrection")
 {
-  bool reverse_bits = true;
-  table = new TwoBitTable (TwoBitTable::SignMagnitude, reverse_bits);
+  table = new TwoBitTable (TwoBitTable::SignMagnitude);
+  table->set_reverse_2bit ();
 }
 
