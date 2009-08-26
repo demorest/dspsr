@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.18 $
+   $Date: 2009/08/26 07:33:21 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -138,6 +138,9 @@ namespace dsp {
 
     // output archive post-processing jobs
     std::vector<std::string> jobs;
+
+    // dump points
+    std::vector<std::string> dump_before;
 
     // get the number of buffers required to process the data
     unsigned get_nbuffers () const { return buffers; }
