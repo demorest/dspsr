@@ -591,6 +591,8 @@ void dsp::Fold::fold (uint64_t nweights,
   uint64_t idat_nextweight = 0;
   // number of bad weights encountered this run
   unsigned bad_weights = 0;
+  // number of weights encountered this run
+  unsigned tot_weights = 0;
 
   // number of time samples folded
   uint64_t ndat_folded = 0;
@@ -622,7 +624,7 @@ void dsp::Fold::fold (uint64_t nweights,
       throw error;
     }
 
-    total_weights ++;
+    tot_weights ++;
 
     if (weights[iweight] == 0)
     {
@@ -642,7 +644,7 @@ void dsp::Fold::fold (uint64_t nweights,
     if (ndatperweight && idat >= idat_nextweight)
     {
       iweight ++;
-      total_weights ++;
+      tot_weights ++;
 
       assert (iweight < nweights);
 
@@ -679,12 +681,13 @@ void dsp::Fold::fold (uint64_t nweights,
   if (verbose)
     cerr << "dsp::Fold::fold ndat_folded=" << ndat_folded 
 	 << " time=" << time_folded*1e3 << " ms"
-	 << " (bad=" << bad_weights << "/" << iweight+1 << ")" << endl;
+	 << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
 
   PhaseSeries* result = get_output();
  
   result->integration_length += time_folded;
   result->ndat_total += ndat_fold;
+  total_weights += tot_weights;
 
   if ( result->get_nbin() != folding_nbin )
     throw Error (InvalidParam,"dsp::Fold::fold",
