@@ -37,8 +37,8 @@ dsp::LoadToFold::Config::Config ()
   // remove inter-channel dispersion delays
   interchan_dedispersion = false;
 
-  // use the dispersion measure from the folding ephemeris
-  dispersion_measure = 0;
+  // over-ride the dispersion measure from the folding ephemeris
+  dispersion_measure = 0.0;
 
   zap_rfi = false;
 

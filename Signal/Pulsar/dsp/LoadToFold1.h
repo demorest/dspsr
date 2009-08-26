@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.14 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.15 $
+   $Date: 2009/08/26 07:33:10 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -162,10 +162,10 @@ namespace dsp {
     //! The operations to be performed
     std::vector< Reference::To<Operation> > operations;
 
-    //! Prepared to remove interchannel dispersion delays in the given TimeSeries
+    //! Prepare to remove interchannel dispersion delays
     void prepare_interchan (TimeSeries*);
 
-    //! Prepared to fold the given TimeSeries
+    //! Prepare to fold the given TimeSeries
     void prepare_fold (TimeSeries*);
 
     //! Prepare the given Archiver
