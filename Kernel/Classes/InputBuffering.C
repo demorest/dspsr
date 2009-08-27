@@ -79,8 +79,11 @@ void dsp::InputBuffering::set_next_start (uint64_t next)
   }
 
   if (Operation::verbose)
+  {
     cerr << "dsp::InputBuffering::set_next_start copying from input sample "
 	 << input->get_input_sample() + next_start_sample << endl;
+    buffer->set_cerr (cerr);
+  }
 
   buffer->set_nchan( input->get_nchan() );
   buffer->set_npol ( input->get_npol() );
@@ -131,3 +134,4 @@ int64_t dsp::InputBuffering::get_next_contiguous () const
 
   return buffer->get_input_sample() + buffer->get_ndat();
 }
+
