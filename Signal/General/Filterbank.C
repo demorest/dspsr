@@ -266,6 +266,9 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
     weighted_output->scrunch_weights (nsamp_fft / (freq_res * time_res));
   }
 
+  if (ndat)
+    output->resize (ndat);
+
   output->rescale (scalefac);
   
   if (verbose) cerr << "dsp::Filterbank::prepare_output scale="
