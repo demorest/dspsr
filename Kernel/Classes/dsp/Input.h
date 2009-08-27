@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.41 $
-   $Date: 2009/06/17 10:32:32 $
+   $Revision: 1.42 $
+   $Date: 2009/08/27 06:53:58 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -48,6 +48,9 @@ namespace dsp {
 
     //! Prepare the output with the attributes of the data source
     void prepare ();
+
+    //! Reserve the maximum amount of output space required
+    void reserve ();
 
     //! End of data
     virtual bool eod() = 0;

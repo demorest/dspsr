@@ -45,11 +45,23 @@ void dsp::Input::prepare ()
 
   // set the Observation information
   get_output()->Observation::operator=(info);
-  get_output()->set_ndat(0);
+  get_output()->set_ndat (0);
 
   if (verbose)
     cerr << "dsp::Input::prepare output start_time="
 	 << output->get_start_time() << endl;
+}
+
+void dsp::Input::reserve ()
+{
+  uint64_t maximum_load_size = block_size;
+  if (resolution > 1)
+    maximum_load_size += 2 * resolution;
+
+  if (verbose)
+    cerr << "dsp::Input::reserve " << maximum_load_size << endl;
+
+  get_output()->resize (maximum_load_size);
 }
 
 //! Return the number nearest to and larger than big and divisible by small
@@ -91,15 +103,11 @@ void dsp::Input::operation ()
     cerr << "dsp::Input::operation [INTERNAL] load_size=" << load_size 
 	 << " load_sample=" << load_sample << endl;
 
-  uint64_t maximum_load_size = block_size;
-  if (resolution > 1)
-    maximum_load_size += 2 * resolution;
-
-  get_output()->resize (maximum_load_size);
-
   if (verbose)
     cerr << "dsp::Input::operation call load_data Bit_Stream::ndat=" 
          << get_output()->get_ndat () << endl;
+
+  reserve ();
 
   load_data (get_output());
 
@@ -146,7 +154,8 @@ void dsp::Input::operation ()
     get_output()->request_ndat = get_output()->get_ndat() - resolution_offset;
 
     if (verbose)
-      cerr << "dsp::Input::operation eod request_ndat=" << output->request_ndat << endl;
+      cerr << "dsp::Input::operation"
+	" eod request_ndat=" << output->request_ndat << endl;
   }
 
   last_load_ndat = get_output()->get_ndat();

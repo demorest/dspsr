@@ -19,10 +19,10 @@ void dsp::Digitizer::prepare ()
   output->Observation::operator=(*input);
 }
 
-void dsp::Digitizer::resize_output ()
+void dsp::Digitizer::reserve ()
 {
   if (verbose)
-    cerr << "dsp::Digitizer::resize_output" << endl;
+    cerr << "dsp::Digitizer::reserve" << endl;
 
   // resize the output
   output->resize (input->get_ndat());
@@ -35,7 +35,7 @@ void dsp::Digitizer::transformation ()
     cerr << "dsp::Digitizer::transformation" << endl;;
 
   prepare ();
-  resize_output ();
+  reserve ();
   pack ();
 
   if (verbose)

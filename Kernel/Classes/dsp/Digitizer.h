@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Digitizer.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/12/18 11:54:11 $
+   $Revision: 1.2 $
+   $Date: 2009/08/27 06:53:58 $
    $Author: straten $ */
 
 
@@ -34,7 +34,7 @@ namespace dsp {
     virtual void prepare ();
 
     //! Resize the output
-    virtual void resize_output ();
+    virtual void reserve ();
 
    protected:
 

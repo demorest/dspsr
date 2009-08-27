@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.45 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.46 $
+   $Date: 2009/08/27 06:53:58 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -74,6 +74,10 @@ namespace dsp {
     //! Prepare for data operations
     /*! This method enables optimizations by some derived classes */
     virtual void prepare ();
+
+    //! Reserve the maximum amount of memory required
+    /*! This avoids the need to reallocate and copy later */
+    virtual void reserve ();
 
     //! Add any extensions
     virtual void add_extensions (Extensions*);

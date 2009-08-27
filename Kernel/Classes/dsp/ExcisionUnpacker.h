@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.6 $
+   $Date: 2009/08/27 06:53:58 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_h
@@ -30,6 +30,9 @@ namespace dsp
 
     //! Null constructor
     ExcisionUnpacker (const char* name = "ExcisionUnpacker");
+
+    //! Initialize the WeightedTimeSeries dimensions
+    void reserve ();
 
     //! Overload Transformation::set_output to also set weighted_output
     void set_output (TimeSeries*);
@@ -87,9 +90,6 @@ namespace dsp
 
     //! Set when Transformation::output is a WeightedTimeSeries
     Reference::To<WeightedTimeSeries> weighted_output;
-
-    //! Initialize the WeightedTimeSeries dimensions
-    void resize_output ();
 
     //! Set nlow_min and nlow_max using current attributes
     void set_limits ();

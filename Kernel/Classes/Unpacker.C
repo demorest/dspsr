@@ -30,7 +30,7 @@ void dsp::Unpacker::prepare ()
 	 << output->get_start_time() << endl;
 }
 
-void dsp::Unpacker::resize_output ()
+void dsp::Unpacker::reserve ()
 {
   // resize the output
   output->set_order (output_order);
@@ -61,7 +61,7 @@ void dsp::Unpacker::transformation ()
   // set the Observation information
   prepare ();
 
-  resize_output ();
+  reserve ();
 
   // unpack the data
   unpack ();

@@ -48,7 +48,7 @@ void dsp::ExcisionUnpacker::set_output (TimeSeries* _output)
 }
 
 //! Initialize and resize the output before calling unpack
-void dsp::ExcisionUnpacker::resize_output ()
+void dsp::ExcisionUnpacker::reserve ()
 {
   if (weighted_output)
   {
