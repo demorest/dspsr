@@ -555,7 +555,8 @@ void dsp::Fold::fold (uint64_t nweights,
 		      unsigned ndatperweight,
 		      unsigned weight_idat)
 {
-  if (!folding_nbin) {
+  if (!folding_nbin)
+  {
     if (!requested_nbin)
       throw Error (InvalidState, "dsp::Fold::fold", "nbin not set");
     folding_nbin = requested_nbin;
@@ -597,8 +598,11 @@ void dsp::Fold::fold (uint64_t nweights,
   // number of time samples folded
   uint64_t ndat_folded = 0;
 
+  // unique identifier for this fold (helps with multi-threaded debugging)
+  uint64_t id = input->get_input_sample() + idat_start;
+
   if (verbose)
-    cerr << "dsp::Fold::fold idat_start=" << idat_start 
+    cerr << "dsp::Fold::fold " << id << " idat_start=" << idat_start 
 	 << " ndat_fold=" << ndat_fold << endl;
 
   bool bad_data = false;
@@ -610,7 +614,7 @@ void dsp::Fold::fold (uint64_t nweights,
     idat_nextweight = (iweight + 1) * ndatperweight - weight_idat;
 
     if (verbose)
-      cerr << "dsp::Fold::fold ndatperweight=" << ndatperweight 
+      cerr << "dsp::Fold::fold " << id << " ndatperweight=" << ndatperweight 
 	   << " weight_idat=" << weight_idat << " iweight=" << iweight 
 	   << " nweights=" << nweights << endl;
 
@@ -679,7 +683,7 @@ void dsp::Fold::fold (uint64_t nweights,
   double time_folded = double(ndat_folded) / get_input()->get_rate();
 
   if (verbose)
-    cerr << "dsp::Fold::fold ndat_folded=" << ndat_folded 
+    cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded 
 	 << " time=" << time_folded*1e3 << " ms"
 	 << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
 
