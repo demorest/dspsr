@@ -201,6 +201,15 @@ void dsp::IOManager::prepare ()
   prepared = true;
 }
 
+void dsp::IOManager::reserve ()
+{
+  if (verbose)
+    cerr << "dsp::IOManager::reserve" << endl;
+
+  input->reserve();
+  unpacker->reserve();
+}
+
 void dsp::IOManager::add_extensions (Extensions* ext)
 {
   if (input)
