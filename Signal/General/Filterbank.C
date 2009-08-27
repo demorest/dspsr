@@ -302,31 +302,24 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
 
   if (verbose)
     cerr << "dsp::Filterbank::prepare_output start time += "
-	 << nfilt_pos << " samps" << endl;
+	 << nfilt_pos << " samps -> " << output->get_start_time() << endl;
 
   // enable the Response to record its effect on the output Timeseries
   if (response)
     response->mark (output);
 }
 
-void dsp::Filterbank::transformation ()
+void dsp::Filterbank::reserve ()
 {
-  if (verbose)
-    cerr << "dsp::Filterbank::transformation input ndat=" << input->get_ndat()
-	 << " nchan=" << input->get_nchan() << endl;
-
-  if (!prepared)
-    prepare ();
-
   const uint64_t ndat = input->get_ndat();
 
   if (verbose)
-    cerr << "dsp::Filterbank::transformation after prepare input ndat="
-         << ndat << endl;
+    cerr << "dsp::Filterbank::reserve input ndat=" << ndat << endl;
 
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
-  uint64_t npart = 0;
+  this->npart = 0;
+
   uint64_t chump = nchan_subband - nsamp_tres + nsamp_overlap;
   if (ndat > chump)
     npart = (ndat-chump)/nsamp_step;
@@ -341,13 +334,27 @@ void dsp::Filterbank::transformation ()
 
   // prepare the output TimeSeries
   prepare_output (output_ndat);
+}
+
+void dsp::Filterbank::transformation ()
+{
+  if (verbose)
+    cerr << "dsp::Filterbank::transformation input ndat=" << input->get_ndat()
+	 << " nchan=" << input->get_nchan() << endl;
+
+  if (!prepared)
+    prepare ();
+
+  reserve ();
+
+  uint64_t output_ndat = output->get_ndat();
+
+  // points kept from each small fft
+  unsigned nkeep = freq_res - nfilt_tot;
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation npart=" << npart 
 	 << " nkeep=" << nkeep << " output_ndat=" << output_ndat << endl;
-
-  // resize to new number of valid time samples
-  output->resize (output_ndat);
 
   // set the input sample
   int64_t input_sample = input->get_input_sample();
