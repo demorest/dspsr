@@ -533,6 +533,9 @@ void dsp::LoadToFold1::prepare_final ()
     cerr << "dspsr: blocksize=" << manager->get_input()->get_block_size()
 	 << " samples or " << double(ram)/megabyte << " MB" << endl;
   }
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+    operations[iop]->reserve ();
 }
 
 uint64_t dsp::LoadToFold1::get_minimum_samples () const

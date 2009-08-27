@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.12 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.13 $
+   $Date: 2009/08/27 07:14:39 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -32,6 +32,9 @@ namespace dsp {
 
     //! Prepare all relevant attributes
     void prepare ();
+
+    //! Reserve the maximum amount of output space required
+    void reserve ();
 
     //! Get the minimum number of samples required for operation
     uint64_t get_minimum_samples () { return nsamp_fft; }
@@ -109,6 +112,7 @@ namespace dsp {
     FTransform::Plan* forward;
     FTransform::Plan* backward;
 
+    uint64_t npart;
   };
   
 }
