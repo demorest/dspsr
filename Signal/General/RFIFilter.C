@@ -119,7 +119,8 @@ void dsp::RFIFilter::calculate (Response* bp)
   fft::median_smooth (spectrum, median_window);
 
   double variance = 0.0;
-  for (ichan=0; ichan < nchan_bp; ichan++) {
+  for (ichan=0; ichan < nchan_bp; ichan++)
+  {
     spectrum[ichan] -= (p0ptr[ichan]+p1ptr[ichan]);
     spectrum[ichan] *= spectrum[ichan];
     // p0ptr[ichan] = spectrum[ichan];
