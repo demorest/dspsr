@@ -154,12 +154,12 @@ uint64_t dsp::WeightedTimeSeries::get_nweights (uint64_t nsamples) const
   return nweights;
 }
 
-dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::clone()
+dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::clone() const
 {
   return new WeightedTimeSeries(*this);
 }
 
-dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::null_clone()
+dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::null_clone() const
 {
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::null_clone" << endl;

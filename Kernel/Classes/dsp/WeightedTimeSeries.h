@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.11 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.12 $
+   $Date: 2009/08/27 02:56:10 $
    $Author: straten $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -57,10 +57,10 @@ namespace dsp {
     unsigned get_nchan_weight () const { return nchan_weight; }
 
     //! Cloner (calls new)
-    virtual WeightedTimeSeries* clone();
+    virtual WeightedTimeSeries* clone() const;
 
     //! Returns a null-instantiation (calls new)
-    virtual WeightedTimeSeries* null_clone();
+    virtual WeightedTimeSeries* null_clone() const;
 
     //! Copy the configuration of another WeightedTimeSeries instance
     virtual void copy_configuration (const Observation* copy);
