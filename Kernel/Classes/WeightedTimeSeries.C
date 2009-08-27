@@ -330,12 +330,34 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
   if (!copy_ndat)
     copy_ndat = copy->get_ndat();
 
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_weights idat_start=" << idat_start
+         << " copy weight_idat=" << copy->weight_idat << endl;
+
   uint64_t iwt_start = (idat_start + copy->weight_idat) / ndat_per_weight;
   uint64_t idat_wt_start = (idat_start + copy->weight_idat) % ndat_per_weight;
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_weights iwt_start=" << iwt_start
+         << " idat_wt_start=" << idat_wt_start << endl;
+
   uint64_t nweights = get_nweights (copy_ndat + idat_wt_start);
 
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_weights"
+         << " nweights=" << nweights << endl;
+
   uint64_t copy_nweights = copy->get_nweights();
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_weights"
+         << " copy_nweights=" << copy_nweights << endl;
+
   uint64_t have_nweights = get_nweights();
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::copy_weights"
+         << " have_nweights=" << have_nweights << endl;
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights copy_ndat=" << copy_ndat 
@@ -576,11 +598,13 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
   // the points per weight after time resolution decreases
   double points_per_weight = double(ndat_per_weight) / double(nscrunch);
 
-  if (points_per_weight >= 1.0) {
+  if (points_per_weight >= 1.0)
+  {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::scrunch_weights new points_per_weight="
 	   << points_per_weight << endl;
-    ndat_per_weight = unsigned (points_per_weight);	
+
+    ndat_per_weight = unsigned (points_per_weight);
     return;
   }
 
@@ -595,8 +619,8 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
   if (extra)
     new_nweights ++;
 
-  for (uint64_t iwt=0; iwt < new_nweights; iwt++) {
-    
+  for (uint64_t iwt=0; iwt < new_nweights; iwt++)
+  {
     unsigned* indi_weight = weights + iwt * nscrunch;
     
     if ((iwt+1)*nscrunch > nweights_tot)

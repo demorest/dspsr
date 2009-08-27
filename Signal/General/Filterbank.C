@@ -245,6 +245,9 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
 {
   if (ndat)
   {
+    if (verbose)
+      cerr << "dsp::Filterbank::prepare_output ndat=" << ndat << endl;
+
     output->set_nchan( nchan );
     output->set_ndim( 2 );
     output->set_state( Signal::Analytic);
@@ -268,6 +271,10 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
 
   if (ndat)
     output->resize (ndat);
+
+  if (verbose)
+    cerr << "dsp::Filterbank::prepare_output output ndat="
+         << output->get_ndat() << endl;
 
   output->rescale (scalefac);
   
