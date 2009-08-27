@@ -26,11 +26,6 @@ int dsp::Operation::instantiation_count = 0;
 
 bool dsp::Operation::check_state = true;
 
-/*! Input buffering is enabled by default.  If input buffering is not
-  desired, this flag must be lowered before any Operation-derived
-  classes are instantiated */
-bool dsp::Operation::preserve_data = true;
-
 int dsp::Operation::operation_status = 0;
 
 dsp::Operation::Operation (const Operation& op)

@@ -26,8 +26,7 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
 
   output_order = TimeSeries::OrderFPT;
 
-  if (preserve_data)
-    set_buffering_policy (new InputBuffering (this));
+  set_buffering_policy (new InputBuffering (this));
 }
 
 void dsp::Filterbank::prepare ()
