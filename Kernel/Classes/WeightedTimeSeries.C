@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -76,8 +76,21 @@ void dsp::WeightedTimeSeries::copy_data (const TimeSeries* copy,
 
   const WeightedTimeSeries* wt = dynamic_cast<const WeightedTimeSeries*>(copy);
 
-  if (!wt || wt == this)
+  if (!wt)
+  {
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::copy_data"
+	" copy is not a WeightedTimeSeries" << endl;
     return;
+  }
+
+  if (wt == this)
+  {
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::copy_data"
+	" copy is equal to this" << endl;
+    return;
+  }
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_data call copy_weights" << endl;
@@ -148,6 +161,9 @@ dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::clone()
 
 dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::null_clone()
 {
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::null_clone" << endl;
+
   WeightedTimeSeries* retval = new WeightedTimeSeries;
   retval->npol_weight = npol_weight;
   retval->nchan_weight = nchan_weight;
