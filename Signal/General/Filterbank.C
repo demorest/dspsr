@@ -326,9 +326,6 @@ void dsp::Filterbank::reserve ()
   // points kept from each small fft
   unsigned nkeep = freq_res - nfilt_tot;
 
-  if (has_buffering_policy())
-    get_buffering_policy()->set_next_start (nsamp_step * npart);
-
   uint64_t output_ndat = npart * nkeep * time_res;
 
   // prepare the output TimeSeries
@@ -345,6 +342,9 @@ void dsp::Filterbank::transformation ()
     prepare ();
 
   reserve ();
+
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
 
   uint64_t output_ndat = output->get_ndat();
 
