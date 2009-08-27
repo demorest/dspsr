@@ -69,7 +69,8 @@ void dsp::SampleDelay::build ()
   total_delay = 0;
 
   for (unsigned ipol=0; ipol < input_npol; ipol++)
-    for (unsigned ichan=0; ichan < input_nchan; ichan++) {
+    for (unsigned ichan=0; ichan < input_nchan; ichan++)
+    {
       uint64_t relative_delay = zero_delay - function->get_delay(ichan, ipol);
       // cerr << "relative_delay=" << relative_delay << endl;
       if (relative_delay > total_delay)
@@ -105,7 +106,7 @@ void dsp::SampleDelay::transformation ()
   if (verbose)
     cerr << "dsp::SampleDelay::transformation" << endl;
 
-  const uint64_t   input_ndat  = input->get_ndat();
+  const uint64_t input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
