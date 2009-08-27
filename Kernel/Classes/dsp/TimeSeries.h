@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.49 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.50 $
+   $Date: 2009/08/27 21:32:53 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -152,7 +152,9 @@ namespace dsp {
     //! Called by append()
     void append_checks(uint64_t& ncontain,uint64_t& ncopy,
 		       const TimeSeries* little);
-    
+
+    virtual void prepend_checks (const TimeSeries*, uint64_t pre_ndat);
+
     //! Pointer into buffer, offset to the first time sample requested by user
     float* data;
 

@@ -374,6 +374,14 @@ void dsp::TimeSeries::zero ()
 
 }
 
+void dsp::TimeSeries::prepend_checks (const dsp::TimeSeries* pre, uint64_t pre_ndat)
+{
+  if (pre->input_sample + pre_ndat != uint64_t(input_sample))
+    throw Error (InvalidState, "dsp::TimeSeries::prepend_checks",
+                 "data to be prepended end sample="I64"; "
+                 "not contiguous with start sample="I64,
+                 pre->input_sample + pre_ndat, input_sample);
+}
 
 void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64_t pre_ndat) try
 {
@@ -383,11 +391,7 @@ void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64_t pre_ndat) tr
   if (!pre_ndat)
     pre_ndat = pre->get_ndat();
 
-  if (pre->input_sample + pre_ndat != uint64_t(input_sample))
-    throw Error (InvalidState, "dsp::TimeSeries::prepend",
-		 "data to be prepended end sample="I64"; "
-		 "not contiguous with start sample="I64,
-		 pre->input_sample + pre_ndat, input_sample);
+  prepend_checks (pre, pre_ndat);
 
   if (verbose)
     cerr << "dsp::TimeSeries::prepend " << pre_ndat << " samples" << endl;
