@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.27 $
-   $Date: 2008/10/03 01:16:06 $
+   $Revision: 1.28 $
+   $Date: 2009/08/27 06:53:58 $
    $Author: straten $ */
 
 
@@ -67,7 +67,10 @@ namespace dsp {
     virtual unsigned get_resolution () const { return 0; }
 
     //! Copy the input attributes to the output
-    virtual void prepare ();
+    void prepare ();
+
+    //! Reserve the maximum amount of space required in the output
+    void reserve ();
 
     // Declare friends with Registry entries
     friend class Registry::Entry<Unpacker>;
@@ -90,9 +93,6 @@ namespace dsp {
     /*! This method must unpack the data from the BitSeries Input into
       the TimeSeries output. */
     virtual void unpack () = 0;
-
-    //! Derived classes may redefine this
-    virtual void resize_output ();
 
     //! Specialize the Unpacker for the Observation
     virtual void match (const Observation* observation);

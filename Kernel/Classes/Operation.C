@@ -82,6 +82,10 @@ void dsp::Operation::prepare ()
   prepared = true;
 }
 
+void dsp::Operation::reserve ()
+{
+}
+
 void dsp::Operation::add_extensions (Extensions*)
 {
 }

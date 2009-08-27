@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.51 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.52 $
+   $Date: 2009/08/27 06:53:58 $
    $Author: straten $ */
 
 #ifndef __dsp_Transformation_h
@@ -25,6 +25,16 @@
 #include <iostream>
 
 namespace dsp {
+
+  //! By default, the reserve method does nothing
+  template <class In, class Out>
+  void reserve_trait (Reference::To<const In>&, Reference::To<Out>&)
+  { /* do nothing */ }
+
+  //! When input and output have the same type, make them equal in size
+  template <class Same>
+  void reserve_trait (Reference::To<const Same>& in, Reference::To<Same>& out)
+  { out->resize( in->get_ndat() ); }
 
   //! All Transformations must define their behaviour
   typedef enum { inplace, outofplace, anyplace } Behaviour;
@@ -47,6 +57,10 @@ namespace dsp {
 
     //! Destructor
     virtual ~Transformation ();
+
+    //! Set the size of the output to that of the input by default
+    void reserve () 
+    { reserve_trait (this->input, this->output); }
 
     //! Set the container from which input data will be read
     void set_input (const In* input);
@@ -83,7 +97,7 @@ namespace dsp {
 
     //! String preceding output in verbose mode
     std::string name (const std::string& function) 
-    { return "dsp::Tranformation["+Operation::get_name()+"]::" + function; }
+    { return "dsp::Transformation["+Operation::get_name()+"]::" + function; }
 
     //! Set verbosity ostream
     void set_cerr (std::ostream& os) const
