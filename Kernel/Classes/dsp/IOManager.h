@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.29 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.30 $
+   $Date: 2009/08/27 07:27:19 $
    $Author: straten $ */
 
 
@@ -41,6 +41,9 @@ namespace dsp {
     
     //! Prepare the input and unpacker
     void prepare ();
+
+    //! Reserve the maximum amount of output space required
+    void reserve ();
 
     //! Add any input and unpacker extensions
     void add_extensions (Extensions*);
