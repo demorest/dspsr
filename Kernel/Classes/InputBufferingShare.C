@@ -1,11 +1,9 @@
 /***************************************************************************
  *
- *   Copyright (C) 2007 by Willem van Straten
+ *   Copyright (C) 2007-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-
-#include "environ.h"
 
 #include "dsp/InputBufferingShare.h"
 #include "ThreadContext.h"
@@ -53,6 +51,9 @@ void dsp::InputBuffering::Share::set_minimum_samples (uint64_t samples) try
 {
   ThreadContext::Lock lock (context);
 
+  if (Operation::verbose)
+    buffer->set_cerr (cerr);
+
   buffer->set_target(target);
   buffer->set_minimum_samples (samples);
 }
@@ -75,7 +76,10 @@ void dsp::InputBuffering::Share::set_next_start (uint64_t next) try
   ThreadContext::Lock lock (context);
 
   if (Operation::verbose)
+  {
     cerr << "dsp::InputBuffering::Share::set_next_start next=" << next << endl;
+    buffer->set_cerr (cerr);
+  }
 
   buffer->set_target (target);
   buffer->set_next_start (next);
@@ -123,7 +127,10 @@ void dsp::InputBuffering::Share::pre_transformation () try
   }
 
   if (Operation::verbose)
+  {
     cerr << "dsp::InputBuffering::Share::pre_transformation working" << endl;
+    buffer->set_cerr (cerr);
+  }
 
   buffer->set_target (target);
   buffer->pre_transformation ();
