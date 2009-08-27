@@ -44,7 +44,8 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
   const WeightedTimeSeries* weighted_copy;
   weighted_copy = dynamic_cast< const WeightedTimeSeries* > (copy);
 
-  if (!weighted_copy) {
+  if (!weighted_copy)
+  {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::copy_weights "
 	"not a WeightedTimeSeries" << endl;
@@ -137,6 +138,11 @@ uint64_t dsp::WeightedTimeSeries::get_nweights () const
   return nweights;
 }
 
+uint64_t dsp::WeightedTimeSeries::have_nweights () const
+{
+  return weight_subsize - (weights - base);
+}
+
 //! Get the number of weights
 uint64_t dsp::WeightedTimeSeries::get_nweights (uint64_t nsamples) const
 {
@@ -195,13 +201,13 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
       " nsamples=" << nsamples << endl;
 
-  uint64_t nweights = get_nweights(nsamples);
+  uint64_t nweights = get_nweights(weight_idat + nsamples);
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
       " reserve=" << get_reserve() << endl;
 
-  nweights += get_nweights(get_reserve());
+  nweights += get_nweights (get_reserve()) + 1;
 
   uint64_t require = nweights * get_npol_weight() * get_nchan_weight();
   
@@ -223,12 +229,14 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
   if (!require)
     return;
   
-  if (!weight_size) {
+  if (!weight_size)
+  {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::resize_weights new " << require <<endl;
 
     base = new unsigned [require];
     weight_size = require;
+    weight_idat = 0;
   }
   
   weight_subsize = nweights;
@@ -237,8 +245,6 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights base=" << base
 	 << " weights=" << weights << endl;
-
-  weight_idat = 0;
 }
 
 //! Offset the base pointer by offset time samples
@@ -317,6 +323,34 @@ dsp::WeightedTimeSeries::operator = (const WeightedTimeSeries& copy)
   return *this;
 }
 
+void dsp::WeightedTimeSeries::prepend_checks (const TimeSeries* pre,
+					      uint64_t pre_ndat)
+{
+  TimeSeries::prepend_checks (pre, pre_ndat);
+
+#if 0
+
+  /* This does not work in multi-threaded applications */
+
+  const WeightedTimeSeries* wt = dynamic_cast<const WeightedTimeSeries*> (pre);
+  if (!wt)
+    throw Error (InvalidState, "dsp::WeightedTimeSeries::prepend_checks",
+                 "pre is not a WeightedTimeSeries");
+
+  uint64_t pwdat = (wt->weight_idat+pre_ndat)%ndat_per_weight;
+  uint64_t twdat = (weight_idat)%ndat_per_weight;
+
+  if (pwdat != twdat && pwdat != (twdat+1)%ndat_per_weight)
+    throw Error (InvalidState, "dsp::WeightedTimeSeries::prepend_checks",
+                 "pre->weight_idat=%u + pre_ndat="I64
+                 " modulo ndat_per_weight=%u equals "I64
+                 " is not contiguous with weight_idat=%u",
+                 wt->weight_idat, pre_ndat, 
+                 ndat_per_weight, pwdat,
+                 weight_idat);
+#endif
+}
+
 void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
 					    uint64_t idat_start, 
 					    uint64_t copy_ndat)
@@ -332,16 +366,17 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights idat_start=" << idat_start
-         << " copy weight_idat=" << copy->weight_idat << endl;
+         << " weight_idat this=" << weight_idat 
+         << " copy=" << copy->weight_idat << endl;
 
   uint64_t iwt_start = (idat_start + copy->weight_idat) / ndat_per_weight;
-  uint64_t idat_wt_start = (idat_start + copy->weight_idat) % ndat_per_weight;
+  weight_idat = (idat_start + copy->weight_idat) % ndat_per_weight;
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights iwt_start=" << iwt_start
-         << " idat_wt_start=" << idat_wt_start << endl;
+         << " weight_idat=" << weight_idat << endl;
 
-  uint64_t nweights = get_nweights (copy_ndat + idat_wt_start);
+  uint64_t nweights = get_nweights (weight_idat + copy_ndat);
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights"
@@ -353,35 +388,30 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
     cerr << "dsp::WeightedTimeSeries::copy_weights"
          << " copy_nweights=" << copy_nweights << endl;
 
-  uint64_t have_nweights = get_nweights();
+  uint64_t have_weights = have_nweights();
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights"
-         << " have_nweights=" << have_nweights << endl;
+         << " have_nweights=" << have_weights << endl;
 
-  if (verbose)
-    cerr << "dsp::WeightedTimeSeries::copy_weights copy_ndat=" << copy_ndat 
-	 << " idat_start=" << idat_start
-	 << "\n  OR nweights=" << nweights 
-	 << " iwt_start=" << iwt_start
-	 << "\n  FROM ndat=" << copy->get_ndat()
-	 << " nweights=" << copy_nweights
-	 << " weight_idat=" << copy->weight_idat << endl;
-	 
   assert (iwt_start + nweights <= copy_nweights);
 
-  if (nweights > have_nweights)
-    nweights = have_nweights;
+  if (nweights > have_weights)
+    throw Error (InvalidState, "dsp::WeightedTimeSeries::copy_weights",
+                 "nweights need=%u > have=%u", nweights, have_weights);
 
   for (unsigned ichan=0; ichan<get_nchan_weight(); ichan++)
-    for (unsigned ipol=0; ipol<get_npol_weight(); ipol++) {
-      
+    for (unsigned ipol=0; ipol<get_npol_weight(); ipol++)
+    {
       unsigned* data1 = get_weights (ichan, ipol);
       const unsigned* data2 = copy->get_weights (ichan, ipol) + iwt_start;
       
       for (uint64_t iwt=0; iwt<nweights; iwt++)
+      {
+        //if (!data2[iwt])
+          //cerr << "COPY BAD iwt=" << iwt + iwt_start << endl;
         data1[iwt] = data2[iwt];
-      
+      }
     }
 }
 
@@ -431,6 +461,8 @@ void dsp::WeightedTimeSeries::neutral_weights ()
 
   for (uint64_t i=0; i<weight_size; i++)
     base[i] = 1;
+
+  weight_idat = 0;
 }
 
 uint64_t dsp::WeightedTimeSeries::get_nzero () const
@@ -502,7 +534,8 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
     uint64_t nzero = get_nzero ();
     cerr << "dsp::WeightedTimeSeries::convolve_weights nfft=" << nfft
 	 << " nkeep=" << nkeep << "\n  ndat_per_weight=" << ndat_per_weight
-	 << " nweights=" << nweights_tot << " bad=" << nzero << endl;
+	 << " nweights=" << nweights_tot << " weight_idat=" << weight_idat
+         << " bad=" << nzero << endl;
   }
 
   if (ndat_per_weight == 0)
@@ -519,8 +552,10 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
 
   for (uint64_t start_idat=0; start_idat < end_idat; start_idat += nkeep)
   {
-    uint64_t start_weight = uint64_t(start_idat * weights_per_dat);
-    uint64_t end_weight = uint64_t(ceil ((start_idat+nfft) * weights_per_dat));
+    uint64_t wt_idat = start_idat + weight_idat;
+
+    uint64_t start_weight = uint64_t(wt_idat * weights_per_dat);
+    uint64_t end_weight = uint64_t(ceil ((wt_idat+nfft) * weights_per_dat));
 
     if (end_weight > nweights_tot)
       throw Error (InvalidState, "dsp::WeightedTimeSeries::convolve_weights",
@@ -590,7 +625,8 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::scrunch_weights nscrunch=" << nscrunch
 	 << " ndat_per_weight=" << ndat_per_weight
-	 << " nweights=" << nweights_tot << endl;
+	 << " nweights=" << nweights_tot 
+         << " weight_idat=" << weight_idat << endl;
 
   if (!ndat_per_weight)
     return;
@@ -605,6 +641,16 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
 	   << points_per_weight << endl;
 
     ndat_per_weight = unsigned (points_per_weight);
+
+    bool leftover = (weight_idat % ndat_per_weight != 0);
+    weight_idat /= ndat_per_weight;
+    if (leftover)
+      weight_idat ++;
+
+    if (verbose)
+      cerr << "dsp::WeightedTimeSeries::scrunch_weights new weight_idat="
+           << weight_idat << endl;
+
     return;
   }
 
