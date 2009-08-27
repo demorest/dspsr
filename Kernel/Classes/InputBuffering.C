@@ -29,7 +29,12 @@ void dsp::InputBuffering::set_minimum_samples (uint64_t samples)
 {
   minimum_samples = samples;
 
-  if (requested_reserve < minimum_samples) {
+  if (requested_reserve < minimum_samples)
+  {
+    if (Operation::verbose)
+      cerr << "dsp::InputBuffering::set_minimum_samples"
+              " increasing reserve to " << minimum_samples << endl;
+
     target->get_input()->change_reserve (minimum_samples-requested_reserve);
     requested_reserve = minimum_samples;
   }
