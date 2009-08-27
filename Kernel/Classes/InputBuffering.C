@@ -1,9 +1,10 @@
 /***************************************************************************
  *
- *   Copyright (C) 2005 by Willem van Straten
+ *   Copyright (C) 2005-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/InputBuffering.h"
 
 using namespace std;
@@ -66,7 +67,11 @@ void dsp::InputBuffering::set_next_start (uint64_t next)
     set_minimum_samples (buffer_ndat);
 
   if (!buffer)
+  {
+    if (Operation::verbose)
+      cerr << "dsp::InputBuffering::set_next_start null_clone input" << endl;
     buffer = input->null_clone();
+  }
 
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::set_next_start copying from input sample "
