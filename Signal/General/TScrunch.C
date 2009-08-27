@@ -19,8 +19,7 @@ dsp::TScrunch::TScrunch (Behaviour place)
   time_resolution = 0;
   use_tres = false;
 
-  if (preserve_data)
-    set_buffering_policy (new InputBuffering (this));
+  set_buffering_policy (new InputBuffering (this));
 }
 
 void dsp::TScrunch::set_factor( unsigned samples )

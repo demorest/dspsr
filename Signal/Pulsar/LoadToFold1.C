@@ -103,8 +103,6 @@ dsp::TimeSeries* dsp::LoadToFold1::new_time_series ()
 
 void dsp::LoadToFold1::prepare () try
 {
-  // SetBufferingPolicy::policy = SetBufferingPolicy::Input;
-  Operation::preserve_data = true;
   TimeSeries::auto_delete = false;
 
   operations.resize (0);
