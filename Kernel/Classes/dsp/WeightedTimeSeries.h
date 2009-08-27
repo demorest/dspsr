@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.12 $
-   $Date: 2009/08/27 02:56:10 $
+   $Revision: 1.13 $
+   $Date: 2009/08/27 21:33:08 $
    $Author: straten $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -131,6 +131,11 @@ namespace dsp {
 
     //! Resize the weights array
     void resize_weights (uint64_t nsamples);
+
+    //! Get the number of weights possible given allocated space
+    uint64_t have_nweights () const;
+
+    void prepend_checks (const TimeSeries*, uint64_t pre_ndat);
 
   private:
 
