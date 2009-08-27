@@ -72,24 +72,14 @@ unsigned nthread = 1;
 // load filenames from the ascii file named metafile
 string metafile;
 
+// names of data files to be processed
+vector<string> filenames;
+
 int main (int argc, char** argv) try
 {
   config = new dsp::LoadToFold::Config;
 
   parse_options (argc, argv);
-
-  vector<string> filenames;
-
-  if (!metafile.empty())
-    stringfload (&filenames, metafile);
-  else 
-    for (int ai=optind; ai<argc; ai++)
-      dirglob (&filenames, argv[ai]);
-
-  if (filenames.size() == 0) {
-    // XXX usage ();
-    return 0;
-  }
 
   Reference::To<dsp::LoadToFold> engine;
 
@@ -211,7 +201,7 @@ void parse_options (int argc, char** argv) try
   
   *********************************************************************** */
 
-  menu.add ("\n" "File handling options:");
+  menu.add ("File handling options:");
 
   vector<string> unpack;
   arg = menu.add (unpack, '2', "code");
@@ -444,6 +434,15 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("dump time series before performing operation");
 
   menu.parse (argc, argv);
+
+  if (!metafile.empty())
+    stringfload (&filenames, metafile);
+  else
+    for (int ai=optind; ai<argc; ai++)
+      dirglob (&filenames, argv[ai]);
+
+  if (filenames.size() == 0)
+    menu.help ();
 
   // interpret the unpacker options
 
