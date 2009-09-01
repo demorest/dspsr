@@ -1,6 +1,6 @@
 #!/bin/sh
 
-available_formats=`cd Kernel/Formats && echo */Makefile.am | sed -e 's|/Makefile.am||g'`
+available_formats=`cd Kernel/Formats > /dev/null && echo */Makefile.am | sed -e 's|/Makefile.am||g'`
 
 echo Available formats:
 
