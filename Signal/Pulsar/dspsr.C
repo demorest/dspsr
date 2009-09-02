@@ -442,7 +442,10 @@ void parse_options (int argc, char** argv) try
       dirglob (&filenames, argv[ai]);
 
   if (filenames.size() == 0)
-    menu.help ();
+  {
+    cerr << "dspsr: please specify filename[s]  (or -h for help)" << endl;
+    exit (-1);
+  }
 
   // interpret the unpacker options
 
