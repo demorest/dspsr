@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.27 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+   $Revision: 1.28 $
+   $Date: 2009/09/10 01:02:34 $
+   $Author: tcaotiaafoc $ */
 
 
 #ifndef __MultiFile_h
@@ -21,6 +21,8 @@ namespace dsp {
 
   //! Loads BitSeries data from multiple files
   class MultiFile : public File {
+
+    friend class Multiplex;
 
   public:
   

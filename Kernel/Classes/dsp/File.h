@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.32 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+   $Revision: 1.33 $
+   $Date: 2009/09/10 01:02:34 $
+   $Author: tcaotiaafoc $ */
 
 
 #ifndef __File_h
@@ -36,6 +36,7 @@ namespace dsp {
   class File : public Seekable
   {
     friend class MultiFile;
+    friend class Multiplex;
     friend class HoleyFile;
     friend class RingBuffer;
     
