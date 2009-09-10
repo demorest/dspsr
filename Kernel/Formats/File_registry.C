@@ -176,3 +176,5 @@ static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
 #include "dsp/MultiFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MultiFile> multifile;
 
+#include "dsp/Multiplex.h"
+static Registry::List<dsp::File>::Enter<dsp::Multiplex> multiplex;
