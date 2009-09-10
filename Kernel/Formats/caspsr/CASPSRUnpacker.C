@@ -17,7 +17,7 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* name) : EightBitUnpacker (name)
 bool dsp::CASPSRUnpacker::matches (const Observation* observation)
 {
   return observation->get_machine() == "CASPSR" 
-    && observation->get_nbit() == 8
-    && observation->get_state() == Signal::Analytic;
+    && observation->get_nbit() == 8;
+    //&& observation->get_state() == Signal::Analytic;
 }
 
