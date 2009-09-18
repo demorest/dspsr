@@ -20,7 +20,7 @@ using namespace std;
 
 dsp::Multiplex::Multiplex () : MultiFile ()
 {
-  current_index = 0;
+  //current_index = 0;
 }
 
 dsp::Multiplex::~Multiplex ()
@@ -139,6 +139,7 @@ void dsp::Multiplex::open (const vector<string>& new_filenames)
 
   //  ensure_contiguity();
   setup();
+  cerr << "Multiplex::open total_ndat=" << info.get_ndat() << endl;
 }
 
 int64_t dsp::Multiplex::load_bytes (unsigned char* buffer, uint64_t bytes)
@@ -155,8 +156,10 @@ int64_t dsp::Multiplex::load_bytes (unsigned char* buffer, uint64_t bytes)
   uint64_t packet_size = 8192;
   uint64_t end_of_packet = 0;
   uint64_t byte_offset = 0;
-  unsigned index = current_index;
+  uint64_t load_index = current_index;
   bool increment_index = false;
+
+  //cerr << "current index " << current_index << endl;
 
   while (bytes_loaded < bytes)
   {
@@ -173,14 +176,28 @@ int64_t dsp::Multiplex::load_bytes (unsigned char* buffer, uint64_t bytes)
 
     if (did_load < 0)
       return -1;
-
+	
+    if (did_load < to_load)
+     {
+	end_of_data = true;
+	if (verbose)
+	cerr << "dsp::Multiplex::end_of_data" << endl;
+	break;
+	}
     //  if (did_load < to_load)
       // this File has reached the end of data
     // index ++;
 
    if (increment_index)
       {
-	index++;
+	load_index++;
+        if (load_index >= files.size())
+          load_index = 0;
+
+        //cerr << "next load_index " << load_index << endl;
+	//cerr << "files.size " << files.size() << endl;
+        loader = files[load_index];
+
 	byte_offset = 0;
 	increment_index = false;
       }
@@ -188,20 +205,19 @@ int64_t dsp::Multiplex::load_bytes (unsigned char* buffer, uint64_t bytes)
       {
 	byte_offset += to_load;
       }
-    if (index >= files.size())
+    if (load_index >= files.size())
     {
-      index = 0;
+      load_index = 0;
       // byte_offset = 0;
       if (verbose)
-	cerr << "dsp::Multiplex::load_bytes recycling index" << endl;
+	cerr << "dsp::Multiplex::load_bytes recycling load_index" << endl;
       //end_of_data = true;
       //break;
     }
-
     bytes_loaded += did_load;
     buffer += did_load;
   }
-
+  current_index = load_index;
   return bytes_loaded;
 }
 
@@ -254,9 +270,10 @@ int64_t dsp::Multiplex::seek_bytes (uint64_t bytes)
       loader = files[index];
       current_index = index;
       current_filename = files[index]->get_filename();
-      }*/
+    }*/
   
-  int64_t seeked = loader->seek_bytes (bytes - packet_counter*packet_size);
+  //int64_t seeked = loader->seek_bytes (bytes - packet_counter*packet_size);
+  int64_t seeked = loader->seek_bytes (bytes - file_bytes);
   if (seeked < 0)
     return -1;
   

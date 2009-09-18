@@ -332,7 +332,7 @@ void dsp::MultiFile::set_loader (unsigned index)
 
   loader = files[index];
 
-  loader->set_output( get_output() );
+  //loader->set_output( get_output() );
   loader->reopen();
 
   current_index = index;
