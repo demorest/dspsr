@@ -146,6 +146,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/mark4/Makefile
 		Kernel/Formats/mark5/Makefile
 		Kernel/Formats/maxim/Makefile
+		Kernel/Formats/multiplex/Makefile
 		Kernel/Formats/mwa/Makefile
 		Kernel/Formats/pmdaq/Makefile
 		Kernel/Formats/puma/Makefile
@@ -159,8 +160,7 @@ AC_CONFIG_FILES([Makefile
 		Signal/Pulsar/Makefile
 		Management/Makefile
 		Management/dspsr_ldflags
-		Management/dspsr_cflags
-		Management/release.csh])
+		Management/dspsr_cflags])
 
 AC_OUTPUT
 

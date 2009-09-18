@@ -192,3 +192,7 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::Dumb_LBAUnpacker> unpacker_regi
 static Registry::List<dsp::Unpacker>::Enter<dsp::K5TwoBitCorrection>  k5;
 #endif
 
+//#if HAVE_Multiplex
+#include "dsp/MultiplexUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::MultiplexUnpacker> multiplex;
+//#endif
