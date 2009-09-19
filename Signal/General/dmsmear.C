@@ -37,10 +37,10 @@ void usage()
 }
 
 void report_dc_centred_impact (dsp::Dedispersion&);
+bool verbose = false;
 
 int main(int argc, char ** argv) try
 {
-  bool verbose = false;
   bool quiet = false;
   bool dc_centred_report = false;
 
@@ -141,8 +141,8 @@ int main(int argc, char ** argv) try
       "Sub-bands:          " << kernel.get_nchan() << endl;
   
   cerr << "\nOutput parameters:\n"
-    "Dispersion delay:   " << kernel.delay_time() << " s\n"
-    "Smearing time:      " << smear_us << " us\n";
+    "Dispersion delay:   " << kernel.delay_time() << " s (wrt lambda=0)\n"
+    "Smearing time:      " << smear_us << " us (across band)\n";
 
   if (nchan > 1)
   {
@@ -155,19 +155,33 @@ int main(int argc, char ** argv) try
   unsigned nfilt = kernel.get_impulse_pos() + kernel.get_impulse_neg();
   unsigned nfft = kernel.get_minimum_ndat ();
 
-  cerr << "\nWrap-Around: " << nfilt << " samples" << endl;
-  cerr << "Minimum Kernel Length " << nfft
+  cerr <<
+    "\n"
+    "Wrap-Around: " << nfilt << " samples \n"
+    "Minimum Kernel Length " << nfft
        << " (" << float(nfilt)/float(nfft)*100.0 << "% wrap)" << endl;
+
+  if (!set_nfft)
+    kernel.set_optimal_ndat();
 
   nfft = kernel.get_ndat ();
 
   if (set_nfft)
-    cerr << "Specified Kernel Length " << nfft;
+    cerr << "Specified kernel length: " << nfft;
   else
-    cerr << "Optimal Kernel Length " << nfft;
+    cerr << "Optimal kernel length: " << nfft;
 
   cerr << " (" << float(nfilt)/float(nfft)*100.0 << "% wrap)" << endl;
 
+  // bw in MHz = number of complex samples per microsecond
+  double max_realtime_us = (nfft-nfilt) / bw;
+  double min_Mflops = 5.0 * nfft * log2(nfft) / max_realtime_us;
+
+  cerr <<
+    "\n"
+    "Minimum Mflops = " << min_Mflops << endl;
+
+  cerr << endl;
   return 0;
 
 }
