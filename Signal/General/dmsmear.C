@@ -175,7 +175,9 @@ int main(int argc, char ** argv) try
 
   // bw in MHz = number of complex samples per microsecond
   double max_realtime_us = (nfft-nfilt) / bw;
-  double min_Mflops = 5.0 * nfft * log2(nfft) / max_realtime_us;
+
+  // forward and backward
+  double min_Mflops = 2 * 5.0 * nfft * log2(nfft) / max_realtime_us;
 
   cerr <<
     "\n"
