@@ -515,7 +515,8 @@ void parse_options (int argc, char** argv) try
 
   if (!filterbank.empty())
   {
-    const char* carg = filterbank.c_str();
+    char* carg = new char[filterbank.length() + 1];
+    strcpy(carg, filterbank.c_str());
 
     char* pfr = strchr (carg, ':');
     if (pfr)
@@ -549,6 +550,7 @@ void parse_options (int argc, char** argv) try
     }
 
     cerr << "dspsr: Filterbank channels: " << config->nchan << endl;
+    delete [] carg;
   }
 
   for (unsigned i=0; i<jobs.size(); i++)
@@ -610,7 +612,8 @@ void parse_options (int argc, char** argv) try
 
   if (!fft_length.empty())
   {
-    const char* carg = fft_length.c_str();
+    char* carg = new char[fft_length.length() + 1];
+    strcpy(carg, filterbank.c_str());
     char* colon = strchr (carg, ':');
     if (colon)
     {
@@ -641,6 +644,7 @@ void parse_options (int argc, char** argv) try
 	exit (-1);
       }
     }
+    delete [] carg;
   }
 
   if (!fft_lib.empty())
