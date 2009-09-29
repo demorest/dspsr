@@ -26,6 +26,16 @@
   - the Hermitian transpose [F(-w)=F*(w)] of the original band in this half
   - the Hermitian transpose of the other half of the band
 
+  Each component is added after multiplication by a different complex
+  phase factor in each half of the band.
+
+  The correction is performed by noting that sets of four corrupted
+  channels are simply linear combinations of the original four
+  channels.  A 4x4 matrix representing this linear transformation is
+  inverted and used to recover the original four channels.  Noise is
+  amplified in the process, but this version of this code does nothing
+  to compensate for this effect.
+
 */
 
 #include "Pulsar/Application.h"
@@ -72,7 +82,7 @@ int main (int argc, char** argv)
 lbadr64_fix::lbadr64_fix ()
   : Pulsar::Application ("lbadr64_fix", "corrects LBADR 2-bit unpacker bug")
 {
-  version = "$Id: lbadr64_fix.C,v 1.2 2009/09/29 07:13:35 straten Exp $";
+  version = "$Id: lbadr64_fix.C,v 1.3 2009/09/29 07:19:12 straten Exp $";
   add( new Pulsar::UnloadOptions );
 }
 
