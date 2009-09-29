@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2004 by Willem van Straten
+ *   Copyright (C) 2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -17,6 +17,14 @@
   The problem is modeled using 4 separate under-sampled and offset
   sampling functions which are shifted by +3,+1,-1,-3 samples before
   being recombined.
+
+  Under-sampling by a factor of four divides the band in two.  Each
+  half contains the sum of
+
+  - the original band in this half
+  - the other half of the band
+  - the Hermitian transpose [F(-w)=F*(w)] of the original band in this half
+  - the Hermitian transpose of the other half of the band
 
 */
 
@@ -64,7 +72,7 @@ int main (int argc, char** argv)
 lbadr64_fix::lbadr64_fix ()
   : Pulsar::Application ("lbadr64_fix", "corrects LBADR 2-bit unpacker bug")
 {
-  version = "$Id: lbadr64_fix.C,v 1.1 2009/09/29 07:06:15 straten Exp $";
+  version = "$Id: lbadr64_fix.C,v 1.2 2009/09/29 07:13:35 straten Exp $";
   add( new Pulsar::UnloadOptions );
 }
 
