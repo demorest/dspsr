@@ -10,8 +10,8 @@
 dsp::LoadToFold::Config::Config ()
 {
   // be a little bit verbose by default
-  report_done = 1;
-  report_vitals = 1;
+  report_done = true;
+  report_vitals = true;
 
   maximum_RAM = 256 * 1024 * 1024;
   times_minimum_ndat = 1;
