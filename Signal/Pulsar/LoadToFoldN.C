@@ -93,9 +93,6 @@ void dsp::LoadToFoldN::prepare ()
   if (threads[0]->kernel && !threads[0]->kernel->context)
     threads[0]->kernel->context = new ThreadContext;
 
-  if (configuration->report_done)
-    configuration->report_done = threads.size();
-
   //
   // install InputBuffering::Share policy
   //

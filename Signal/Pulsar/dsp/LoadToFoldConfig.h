@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.18 $
-   $Date: 2009/08/26 07:33:21 $
+   $Revision: 1.19 $
+   $Date: 2009/10/05 13:24:40 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -38,10 +38,10 @@ namespace dsp {
     Config ();
 
     // report vital statistics
-    unsigned report_vitals;
+    bool report_vitals;
 
     // report the percentage finished
-    unsigned report_done;
+    bool report_done;
 
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);
