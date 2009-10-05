@@ -612,8 +612,7 @@ void parse_options (int argc, char** argv) try
 
   if (!fft_length.empty())
   {
-    char* carg = new char[fft_length.length() + 1];
-    strcpy(carg, filterbank.c_str());
+    char* carg = strdup( fft_length.c_str() );
     char* colon = strchr (carg, ':');
     if (colon)
     {
