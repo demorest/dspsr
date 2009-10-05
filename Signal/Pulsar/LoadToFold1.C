@@ -914,7 +914,7 @@ void dsp::LoadToFold1::run () try
 
 	if (nblocks_tot)
 	  cerr << " (" 
-	       << int (100.0*config->report_done*float(block)/float(nblocks_tot))
+	       << int (100.0*input->tell()/float(input->get_total_samples()))
 	       << "%)";
 
 	cerr << "   \r";
