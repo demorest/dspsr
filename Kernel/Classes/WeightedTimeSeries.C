@@ -361,9 +361,6 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
   if (!ndat_per_weight)
     return;
 
-  if (!copy_ndat)
-    copy_ndat = copy->get_ndat();
-
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights idat_start=" << idat_start
          << " weight_idat this=" << weight_idat 
@@ -375,6 +372,9 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::copy_weights iwt_start=" << iwt_start
          << " weight_idat=" << weight_idat << endl;
+
+  if (!copy_ndat)
+    return;
 
   uint64_t nweights = get_nweights (weight_idat + copy_ndat);
 
@@ -394,7 +394,13 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
     cerr << "dsp::WeightedTimeSeries::copy_weights"
          << " have_nweights=" << have_weights << endl;
 
-  assert (iwt_start + nweights <= copy_nweights);
+  if (copy_nweights < iwt_start + nweights)
+  {
+    cerr << "dsp::WeightedTimeSeries::copy_weights FATAL ERROR:\n\t"
+            "copy_nweights=" << copy_nweights << " < "
+            "iwt_start=" << iwt_start << " + nweights=" << nweights << endl;
+    exit (-1);
+  }
 
   if (nweights > have_weights)
     throw Error (InvalidState, "dsp::WeightedTimeSeries::copy_weights",
