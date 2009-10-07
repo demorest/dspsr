@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Attic/LoadToFold.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.6 $
+   $Date: 2009/10/07 11:37:35 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold_h
@@ -32,8 +32,11 @@ namespace dsp {
     //! Set the configuration to be used in prepare and run
     virtual void set_configuration (Config*) = 0;
 
-    //! Set the Input from which data will be read
+    //! Set the Input from which data are read
     virtual void set_input (Input*) = 0;
+
+    //! Get the Input from which data are read
+    virtual Input* get_input () = 0;
 
     //! Prepare to fold the input TimeSeries
     virtual void prepare () = 0;

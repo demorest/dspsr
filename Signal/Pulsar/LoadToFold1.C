@@ -82,6 +82,11 @@ void dsp::LoadToFold1::set_input (Input* input)
   manager->set_input (input);
 }
 
+dsp::Input* dsp::LoadToFold1::get_input ()
+{
+  return manager->get_input ();
+}
+
 dsp::TimeSeries* dsp::LoadToFold1::new_time_series ()
 {
   config->buffers ++;
@@ -871,9 +876,7 @@ void dsp::LoadToFold1::run () try
 
   int64_t last_decisecond = -1;
 
-  bool still_going = true;
-
-  while (!input->eod() && still_going)
+  while (!input->eod())
   {
     for (unsigned iop=0; iop < operations.size(); iop++) try
     {

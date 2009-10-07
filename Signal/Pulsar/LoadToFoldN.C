@@ -82,6 +82,11 @@ void dsp::LoadToFoldN::set_input (Input* _input)
     threads[i]->set_input( input );
 }
 
+dsp::Input* dsp::LoadToFoldN::get_input ()
+{
+  return input;
+}
+
 //! Prepare to fold the input TimeSeries
 void dsp::LoadToFoldN::prepare ()
 {
