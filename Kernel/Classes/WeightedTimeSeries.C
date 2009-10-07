@@ -62,6 +62,9 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
   set_npol_weight  ( weighted_copy->get_npol_weight() );
   set_nchan_weight ( weighted_copy->get_nchan_weight() );
   set_ndat_per_weight ( weighted_copy->get_ndat_per_weight() );
+
+  weight_idat = weighted_copy->weight_idat;
+
   resize_weights ( weighted_copy->get_ndat() );
 
   copy_weights (weighted_copy, 0, weighted_copy->get_ndat());
@@ -201,7 +204,7 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
       " nsamples=" << nsamples << endl;
 
-  uint64_t nweights = get_nweights(weight_idat + nsamples);
+  uint64_t nweights = get_nweights (weight_idat + nsamples);
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
@@ -405,7 +408,11 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
 
   if (nweights > have_weights)
     throw Error (InvalidState, "dsp::WeightedTimeSeries::copy_weights",
-                 "nweights need=%u > have=%u", nweights, have_weights);
+                 "nweights need=%u > have=%u" "\n\t"
+                 "weight_idat this=%u copy=%u" "\n\t"
+                 "copy_ndat=%u ppweight=%u",
+                 nweights, have_weights, weight_idat, copy->weight_idat,
+                 copy_ndat, ndat_per_weight);
 
   for (unsigned ichan=0; ichan<get_nchan_weight(); ichan++)
     for (unsigned ipol=0; ipol<get_npol_weight(); ipol++)
