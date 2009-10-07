@@ -458,6 +458,10 @@ void parse_options (int argc, char** argv) try
     exit (-1);
   }
 
+  // -Q implies -q
+  if (!config->report_vitals)
+    config->report_done = false;
+
   // interpret the unpacker options
 
   for (unsigned i=0; i<unpack.size(); i++)
