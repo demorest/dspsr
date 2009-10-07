@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.9 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.10 $
+   $Date: 2009/10/07 11:37:35 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -39,8 +39,11 @@ namespace dsp {
     //! Set the configuration to be used in prepare and run
     void set_configuration (Config*);
 
-    //! Set the Input from which data will be read
+    //! Set the Input from which data are read
     void set_input (Input*);
+
+    //! Get the Input from which data are read
+    Input* get_input ();
 
     //! Prepare to fold the input TimeSeries
     void prepare ();
