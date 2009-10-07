@@ -48,7 +48,7 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
   {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::copy_weights "
-	"not a WeightedTimeSeries" << endl;
+              "not a WeightedTimeSeries" << endl;
     ndat_per_weight = 0;
     return;
   }
@@ -64,7 +64,7 @@ void dsp::WeightedTimeSeries::copy_weights (const Observation* copy)
   set_ndat_per_weight ( weighted_copy->get_ndat_per_weight() );
   resize_weights ( weighted_copy->get_ndat() );
 
-  copy_weights (weighted_copy);
+  copy_weights (weighted_copy, 0, weighted_copy->get_ndat());
 }
 
 void dsp::WeightedTimeSeries::copy_data (const TimeSeries* copy, 
@@ -81,7 +81,7 @@ void dsp::WeightedTimeSeries::copy_data (const TimeSeries* copy,
   {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::copy_data"
-	" copy is not a WeightedTimeSeries" << endl;
+              " copy is not a WeightedTimeSeries" << endl;
     return;
   }
 
@@ -89,7 +89,7 @@ void dsp::WeightedTimeSeries::copy_data (const TimeSeries* copy,
   {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::copy_data"
-	" copy is equal to this" << endl;
+              " copy is equal to this" << endl;
     return;
   }
 
@@ -207,7 +207,7 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
       " reserve=" << get_reserve() << endl;
 
-  nweights += get_nweights (get_reserve()) + 1;
+  nweights += get_nweights (get_reserve());
 
   uint64_t require = nweights * get_npol_weight() * get_nchan_weight();
   
@@ -215,11 +215,12 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     cerr << "dsp::WeightedTimeSeries::resize_weights nweights=" << nweights
 	 << " require=" << require << " have=" << weight_size << endl;
 
-  if (!require || require > weight_size) {
-
-    if (base) {
+  if (!require || require > weight_size)
+  {
+    if (base)
+    {
       if (verbose)
-	cerr << "dsp::WeightedTimeSeries::resize_weights delete" << endl;
+        cerr << "dsp::WeightedTimeSeries::resize_weights delete" << endl;
       delete [] base; base = weights = 0;
     }
 
@@ -234,6 +235,9 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::resize_weights new " << require <<endl;
 
+    require += 2 * get_npol_weight() * get_nchan_weight();
+    nweights += 2;
+
     base = new unsigned [require];
     weight_size = require;
     weight_idat = 0;
@@ -244,7 +248,7 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights base=" << base
-	 << " weights=" << weights << endl;
+         << " weights=" << weights << endl;
 }
 
 //! Offset the base pointer by offset time samples
@@ -395,12 +399,9 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
          << " have_nweights=" << have_weights << endl;
 
   if (copy_nweights < iwt_start + nweights)
-  {
-    cerr << "dsp::WeightedTimeSeries::copy_weights FATAL ERROR:\n\t"
-            "copy_nweights=" << copy_nweights << " < "
-            "iwt_start=" << iwt_start << " + nweights=" << nweights << endl;
-    exit (-1);
-  }
+    throw Error (InvalidState, "dsp::WeightedTimeSeries::copy_weights",
+                 "copy_nweights=%u < iwt_start=%u + nweights=%u",
+                 copy_nweights, iwt_start, nweights);
 
   if (nweights > have_weights)
     throw Error (InvalidState, "dsp::WeightedTimeSeries::copy_weights",
@@ -414,8 +415,8 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
       
       for (uint64_t iwt=0; iwt<nweights; iwt++)
       {
-        //if (!data2[iwt])
-          //cerr << "COPY BAD iwt=" << iwt + iwt_start << endl;
+        // if (!data2[iwt])
+          // cerr << "COPY BAD iwt=" << iwt + iwt_start << endl;
         data1[iwt] = data2[iwt];
       }
     }
@@ -476,8 +477,13 @@ uint64_t dsp::WeightedTimeSeries::get_nzero () const
   uint64_t nweights = get_nweights ();
   uint64_t zeroes = 0;
   for (uint64_t i=0; i<nweights; i++)
+  {
     if (weights[i] == 0)
+    {
+      // cerr << "ZERO[" << i << "]" << endl;
       zeroes ++;
+    }
+  }
 
   return zeroes;
 }
