@@ -912,15 +912,15 @@ void dsp::LoadToFold1::run () try
       
       if (decisecond > last_decisecond)
       {
-	last_decisecond = decisecond;
-	cerr << "Finished " << decisecond/10.0 << " s";
+        last_decisecond = decisecond;
+        cerr << "Finished " << decisecond/10.0 << " s";
 
-	if (nblocks_tot)
-	  cerr << " (" 
-	       << int (100.0*input->tell()/float(input->get_total_samples()))
-	       << "%)";
+        if (nblocks_tot)
+          cerr << " (" 
+               << int (100.0*input->tell()/float(input->get_total_samples()))
+               << "%)";
 
-	cerr << "   \r";
+        cerr << "   \r";
       }
     }
   }
