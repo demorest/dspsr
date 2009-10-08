@@ -93,7 +93,7 @@ void dsp::Convolution::prepare ()
 		 "invalid response size");
 
   // if the response has 8 dimensions, then perform matrix convolution
-  bool matrix_convolution = response->get_ndim() == 8;
+  matrix_convolution = response->get_ndim() == 8;
 
   Signal::State state = input->get_state();
   const unsigned npol  = input->get_npol();
