@@ -246,7 +246,7 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
   if (ndat)
   {
     if (verbose)
-      cerr << "dsp::Filterbank::prepare_output ndat=" << ndat << endl;
+      cerr << "dsp::Filterbank::prepare_output set ndat=" << ndat << endl;
 
     output->set_nchan( nchan );
     output->set_ndim( 2 );
@@ -270,7 +270,19 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
   }
 
   if (ndat)
+  {
+    if (verbose)
+      cerr << "dsp::Filterbank::prepare_output reset ndat=" << ndat << endl;
     output->resize (ndat);
+  }
+  else
+  {
+    ndat = input->get_ndat() / nchan;
+
+    if (verbose)
+      cerr << "dsp::Filterbank::prepare_output guess ndat=" << ndat << endl;
+    output->resize (ndat);
+  }
 
   if (verbose)
     cerr << "dsp::Filterbank::prepare_output output ndat="
