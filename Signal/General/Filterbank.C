@@ -261,12 +261,14 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
   output->set_state( Signal::Analytic );
   output->set_order( output_order );
 
+  unsigned tres_ratio = nsamp_fft / (freq_res * time_res);
+
   WeightedTimeSeries* weighted_output;
   weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
   if (weighted_output)
   {
     weighted_output->convolve_weights (nsamp_fft, nsamp_step);
-    weighted_output->scrunch_weights (nsamp_fft / (freq_res * time_res));
+    weighted_output->scrunch_weights (tres_ratio);
   }
 
   if (ndat)
@@ -277,10 +279,10 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
   }
   else
   {
-    ndat = input->get_ndat() / nchan;
+    ndat = input->get_ndat() / tres_ratio;
 
     if (verbose)
-      cerr << "dsp::Filterbank::prepare_output guess ndat=" << ndat << endl;
+      cerr << "dsp::Filterbank::prepare_output scrunch ndat=" << ndat << endl;
     output->resize (ndat);
   }
 
