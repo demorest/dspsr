@@ -71,6 +71,181 @@ void dsp::Convolution::set_passband (Response* _passband)
   passband = _passband; 
 }
 
+//! Prepare all relevant attributes
+void dsp::Convolution::prepare ()
+{
+  if (!response)
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "no frequency response");
+
+  if (input->get_detected())
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "input data are detected");
+
+  response->match (input);
+
+  if (passband)
+    passband->match (response);
+
+  // response must have at least two points in it
+  if (response->get_ndat() < 2)
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "invalid response size");
+
+  // if the response has 8 dimensions, then perform matrix convolution
+  bool matrix_convolution = response->get_ndim() == 8;
+
+  Signal::State state = input->get_state();
+  const unsigned npol  = input->get_npol();
+  const unsigned nchan = input->get_nchan();
+
+  // if matrix convolution, then there must be two polns
+  if (matrix_convolution && npol != 2)
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "matrix response and input.npol != 2");
+
+  // response must contain a unique kernel for each channel
+  if (response->get_nchan() != nchan)
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "invalid response nsub=%d != nchan=%d",
+		 response->get_nchan(), nchan);
+
+  // number of points after first fft
+  n_fft = response->get_ndat();
+
+  //! Complex samples dropped from beginning of cyclical convolution result
+  nfilt_pos = response->get_impulse_pos ();
+
+  //! Complex samples dropped from end of cyclical convolution result
+  nfilt_neg = response->get_impulse_neg ();
+
+  nfilt_tot = nfilt_pos + nfilt_neg;
+
+  if (verbose)
+    cerr << "Convolution::prepare filt=" << n_fft 
+	 << " smear=" << nfilt_tot << endl;
+
+  // 2 arrays needed: one for each of the forward and backward FFT results
+  // 2 floats per complex number
+  scratch_needed = n_fft * 2 * 2;
+
+  if (matrix_convolution)
+    // need space for one more complex spectrum
+    scratch_needed += n_fft * 2;
+
+  // number of time samples in forward fft and overlap region
+  nsamp_fft = 0;
+  nsamp_overlap = 0;
+
+  if (state == Signal::Nyquist)
+  {
+    nsamp_fft = n_fft * 2;
+    nsamp_overlap = nfilt_tot * 2;
+    scratch_needed += 4;
+  }
+  else if (state == Signal::Analytic)
+  {
+    nsamp_fft = n_fft;
+    nsamp_overlap = nfilt_tot;
+  }
+  else
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "Cannot transform Signal::State="
+		 + tostring(input->get_state()));
+
+  // the FFT size must be greater than the number of discarded points
+  if (nsamp_fft < nsamp_overlap)
+    throw Error (InvalidState, "dsp::Convolution::prepare",
+		 "error nfft=%d < nfilt=%d", nsamp_fft, nsamp_overlap);
+
+  if (has_buffering_policy())
+  {
+    if (verbose)
+      cerr << "dsp::Convolution::prepare"
+	" reserve=" << nsamp_fft << endl;
+
+    get_buffering_policy()->set_minimum_samples (nsamp_fft);
+  }
+
+  using namespace FTransform;
+
+  if (state == Signal::Nyquist)
+    forward = Agent::current->get_plan (nsamp_fft, FTransform::frc);
+  else
+    forward = Agent::current->get_plan (nsamp_fft, FTransform::fcc);
+
+  backward = Agent::current->get_plan (n_fft, FTransform::bcc);
+
+  prepared = true;
+}
+
+//! Reserve the maximum amount of output space required
+void dsp::Convolution::reserve ()
+{
+  const uint64_t ndat = input->get_ndat();
+  Signal::State state = input->get_state();
+
+#ifdef DEBUG
+  fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
+	   mpi_rank, (int)matrix_convolution, ndat, nsamp_fft, nsamp_overlap);
+  fflush (stderr);
+#endif
+
+  // there must be at least enough data for one FFT
+  if (ndat < nsamp_fft)
+    throw Error (InvalidState, "dsp::Convolution::reserve",
+		 "error ndat="I64" < nfft=%d", input->get_ndat(), nsamp_fft);
+
+  // valid time samples per FFT
+  nsamp_step = nsamp_fft-nsamp_overlap;
+
+  // number of FFTs for this data block
+  npart = (input->get_ndat()-nsamp_overlap)/nsamp_step;
+
+  if (verbose)
+    cerr << "Convolution::reserve npart=" << npart << endl;
+
+  // prepare the output TimeSeries
+  output->copy_configuration (input);
+
+  output->set_state( Signal::Analytic );
+  output->set_ndim( 2 );
+
+  if ( state == Signal::Nyquist )
+    output->set_rate( 0.5*get_input()->get_rate() );
+
+  WeightedTimeSeries* weighted_output;
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
+  if (weighted_output)
+  {
+    weighted_output->convolve_weights (nsamp_fft, nsamp_step);
+    if (state == Signal::Nyquist)
+      weighted_output->scrunch_weights (2);
+  }
+
+  uint64_t output_ndat = npart * nsamp_step;
+  if ( state == Signal::Nyquist )
+    output_ndat /= 2;
+    
+  if( input != output )
+    output->resize (output_ndat);
+  else
+    output->set_ndat (output_ndat);
+    
+  // nfilt_pos complex points are dropped from the start of the first FFT
+  output->change_start_time (nfilt_pos);
+
+  // data will be scaled by the FFT
+  if (FTransform::get_norm() == FTransform::unnormalized)
+    // after performing forward and backward FFTs the data will be scaled
+    output->rescale (double(nsamp_fft) * double(n_fft));
+
+  if (verbose)
+    cerr << "Convolution::reserve scale="<< output->get_scale() <<endl;
+
+  response->mark (output);
+}
+
 /*!
   \pre input TimeSeries must contain phase coherent (undetected) data
   \post output TimeSeries will contain complex (Analytic) data
@@ -86,85 +261,15 @@ void dsp::Convolution::set_passband (Response* _passband)
 */
 void dsp::Convolution::transformation ()
 {
-  if (!response) {
-    if (verbose)
-      cerr << "Convolution::transformation no frequency response" << endl;
-    return;
-  }
+  if (!prepared)
+    prepare ();
 
-  if (input->get_detected())
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "input data are detected");
-
-  response->match (input);
-
-  if (passband)
-    passband->match (response);
-
-  // response must have at least two points in it
-  if (response->get_ndat() < 2)
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "invalid response size");
-
-  // if the response has 8 dimensions, then perform matrix convolution
-  bool matrix_convolution = response->get_ndim() == 8;
+  reserve ();
 
   Signal::State state = input->get_state();
-  unsigned npol  = input->get_npol();
-  unsigned nchan = input->get_nchan();
-  unsigned ndim  = input->get_ndim();
-
-  // if matrix convolution, then there must be two polns
-  if (matrix_convolution && npol != 2)
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "matrix response and input.npol != 2");
-
-  // response must contain a unique kernel for each channel
-  if (response->get_nchan() != nchan)
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "invalid response nsub=%d != nchan=%d",
-		 response->get_nchan(), nchan);
-
-  // number of points after first fft
-  unsigned n_fft = response->get_ndat();
-
-  //! Complex samples dropped from beginning of cyclical convolution result
-  unsigned nfilt_pos = response->get_impulse_pos ();
-
-  //! Complex samples dropped from end of cyclical convolution result
-  unsigned nfilt_neg = response->get_impulse_neg ();
-
-  unsigned n_overlap = nfilt_pos + nfilt_neg;
-
-  if (verbose)
-    cerr << "Convolution::transformation filt=" << n_fft 
-	 << " smear=" << n_overlap << endl;
-
-  // 2 arrays needed: one for each of the forward and backward FFT results
-  // 2 floats per complex number
-  unsigned pts_reqd = n_fft * 2 * 2;
-
-  if (matrix_convolution)
-    // need space for one more complex spectrum
-    pts_reqd += n_fft * 2;
-
-  // number of time samples in forward fft and overlap region
-  unsigned nsamp_fft = 0;
-  unsigned nsamp_overlap = 0;
-
-  if (state == Signal::Nyquist) {
-    nsamp_fft = n_fft * 2;
-    nsamp_overlap = n_overlap * 2;
-    pts_reqd += 4;
-  }
-  else if (state == Signal::Analytic) {
-    nsamp_fft = n_fft;
-    nsamp_overlap = n_overlap;
-  }
-  else
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "Cannot transform Signal::State="
-		 + tostring(input->get_state()));
+  const unsigned npol  = input->get_npol();
+  const unsigned nchan = input->get_nchan();
+  const unsigned ndim  = input->get_ndim();
 
 #ifdef DEBUG
   fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
@@ -172,32 +277,11 @@ void dsp::Convolution::transformation ()
   fflush (stderr);
 #endif
 
-  // there must be at least enough data for one FFT
-  if (input->get_ndat() < nsamp_fft)
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "error ndat="I64" < nfft=%d", input->get_ndat(), nsamp_fft);
-
-  // the FFT size must be greater than the number of discarded points
-  if (nsamp_fft < nsamp_overlap)
-    throw Error (InvalidState, "dsp::Convolution::transformation",
-		 "error nfft=%d < nfilt=%d", nsamp_fft, nsamp_overlap);
-
-  // valid time samples per FFT
-  unsigned nsamp_good = nsamp_fft-nsamp_overlap;
-
-  // number of FFTs for this data block
-  uint64_t npart = (input->get_ndat()-nsamp_overlap)/nsamp_good;
-
-  if (verbose)
-    cerr << "Convolution::transformation npart=" << npart << endl;
-
-  if (has_buffering_policy()) {
-    get_buffering_policy()->set_minimum_samples (nsamp_fft);
-    get_buffering_policy()->set_next_start (nsamp_good * npart);
-  }
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
 
   float* spectrum[2];
-  spectrum[0] = scratch->space<float> (pts_reqd);
+  spectrum[0] = scratch->space<float> (scratch_needed);
   spectrum[1] = spectrum[0];
   if (matrix_convolution)
     spectrum[1] += n_fft * 2;
@@ -209,48 +293,7 @@ void dsp::Convolution::transformation ()
   if (state == Signal::Nyquist)
     complex_time += 4;
 
-  // prepare the output TimeSeries
-  output->copy_configuration (input);
-
-  get_output()->set_state( Signal::Analytic );
-  get_output()->set_ndim( 2 );
-
-  if ( state == Signal::Nyquist )
-    get_output()->set_rate( 0.5*get_input()->get_rate() );
-
-  WeightedTimeSeries* weighted_output;
-  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
-  if (weighted_output) {
-    weighted_output->convolve_weights (nsamp_fft, nsamp_good);
-    if (state == Signal::Nyquist)
-      weighted_output->scrunch_weights (2);
-  }
-
-  uint64_t output_ndat = npart * nsamp_good;
-  if ( state == Signal::Nyquist )
-    output_ndat /= 2;
-    
-  if( get_input() != get_output() )
-    output->resize (output_ndat);
-  else
-    output->set_ndat (output_ndat);
-    
-  get_output()->check_sanity();
-
-  // nfilt_pos complex points are dropped from the start of the first FFT
-  output->change_start_time (nfilt_pos);
-
-  // data will be scaled by the FFT
-  if (FTransform::get_norm() == FTransform::unnormalized)
-    // after performing forward and backward FFTs the data will be scaled
-    output->rescale (double(nsamp_fft) * double(n_fft));
-
-  if (verbose)
-    cerr << "Convolution::transformation scale="<< output->get_scale() <<endl;
-
-  response->mark (output);
-
-  const unsigned nbytes_good = nsamp_good * ndim * sizeof(float);
+  const unsigned nbytes_step = nsamp_step * ndim * sizeof(float);
  
   const unsigned cross_pol = matrix_convolution ? 2 : 1;
  
@@ -260,7 +303,7 @@ void dsp::Convolution::transformation ()
 
   uint64_t offset;
   // number of floats to step between each FFT
-  const uint64_t step = nsamp_good * ndim;
+  const uint64_t step = nsamp_step * ndim;
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
@@ -281,10 +324,10 @@ void dsp::Convolution::transformation ()
 	  }
 
 	  if (state == Signal::Nyquist)
-	    FTransform::frc1d (nsamp_fft, spectrum[ipol], ptr);
+	    forward->frc1d (nsamp_fft, spectrum[ipol], ptr);
 
 	  else if (state == Signal::Analytic)
-	    FTransform::fcc1d (nsamp_fft, spectrum[ipol], ptr);
+	    forward->fcc1d (nsamp_fft, spectrum[ipol], ptr);
 	  
 	}
 	
@@ -317,11 +360,11 @@ void dsp::Convolution::transformation ()
 	  fflush (stderr);
 #endif
 	  // fft back to the complex time domain
-	  FTransform::bcc1d (n_fft, complex_time, spectrum[ipol]);
+	  backward->bcc1d (n_fft, complex_time, spectrum[ipol]);
 	  
 	  // copy the good (complex) data back into the time stream
 	  ptr = output -> get_datptr (ichan, ipol) + offset;
-	  memcpy (ptr, complex_time + nfilt_pos*2, nbytes_good);
+	  memcpy (ptr, complex_time + nfilt_pos*2, nbytes_step);
 
 	}  // for each poln, if matrix convolution
       }  // for each part of the time series
