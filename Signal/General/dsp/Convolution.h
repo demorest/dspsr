@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.22 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.23 $
+   $Date: 2009/10/08 05:28:21 $
    $Author: straten $ */
 
 #ifndef __Convolution_h
@@ -18,6 +18,7 @@
 
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
+#include "FTransformAgent.h"
 
 namespace dsp {
   
@@ -57,19 +58,23 @@ namespace dsp {
   public:
 
     //! Null constructor
-    Convolution (const char* name = "Convolution", Behaviour type = anyplace,bool _time_conserved=false);
+    Convolution (const char* name = "Convolution", 
+		 Behaviour type = anyplace, bool _time_conserved=false);
 
     //! Destructor
     virtual ~Convolution ();
 
-    //! Set internal attributes
-    void prepare () { }
+    //! Prepare all relevant attributes
+    void prepare ();
+
+    //! Reserve the maximum amount of output space required
+    void reserve ();
 
     //! Get the minimum number of samples required for operation
-    uint64_t get_minimum_samples () const { return 0; }
+    uint64_t get_minimum_samples () { return nsamp_fft; }
 
     //! Get the minimum number of samples lost
-    uint64_t get_minimum_samples_lost () const { return 0; }
+    uint64_t get_minimum_samples_lost () { return nsamp_overlap; }
 
     //! Return a descriptive string
     //virtual const string descriptor () const;
@@ -112,6 +117,28 @@ namespace dsp {
     //! Integrated passband
     Reference::To<Response> passband;
 
+  private:
+
+    friend class Filterbank;
+
+    unsigned nfilt_tot;
+    unsigned nfilt_pos;
+    unsigned nfilt_neg;
+
+    unsigned nsamp_overlap;
+    unsigned nsamp_step;
+    unsigned nsamp_fft;
+
+    double scalefac;
+
+    bool matrix_convolution;
+
+    FTransform::Plan* forward;
+    FTransform::Plan* backward;
+
+    unsigned scratch_needed;
+    uint64_t npart;
+    unsigned n_fft;
   };
   
 }
