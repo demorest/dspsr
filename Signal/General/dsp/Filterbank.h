@@ -7,15 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.13 $
-   $Date: 2009/08/27 07:14:39 $
+   $Revision: 1.14 $
+   $Date: 2009/10/08 05:28:26 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
 
 #include "dsp/Convolution.h"
-#include "FTransformAgent.h"
 
 namespace dsp {
   
@@ -96,23 +95,7 @@ namespace dsp {
     void prepare_output (uint64_t ndat = 0);
 
     unsigned nchan_subband;
-    unsigned nfilt_tot;
-    unsigned nfilt_pos;
-    unsigned nfilt_neg;
-
-    unsigned nsamp_overlap;
-    unsigned nsamp_fft;
-    unsigned nsamp_step;
     unsigned nsamp_tres;
-
-    double scalefac;
-
-    bool matrix_convolution;
-
-    FTransform::Plan* forward;
-    FTransform::Plan* backward;
-
-    uint64_t npart;
   };
   
 }
