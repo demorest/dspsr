@@ -479,7 +479,7 @@ void dsp::WeightedTimeSeries::neutral_weights ()
   weight_idat = 0;
 }
 
-uint64_t dsp::WeightedTimeSeries::get_nzero () const
+uint64_t dsp::WeightedTimeSeries::get_nzero () const try
 {
   uint64_t nweights = get_nweights ();
   uint64_t zeroes = 0;
@@ -494,10 +494,14 @@ uint64_t dsp::WeightedTimeSeries::get_nzero () const
 
   return zeroes;
 }
+catch (Error& error)
+{
+  throw error += "dsp::WeightedTimeSeries::get_nzero";
+}
 
 /*! The algorithm is written so that only two sections of the array are
   used at one time.  Should minimize the number of cache hits */
-void dsp::WeightedTimeSeries::mask_weights ()
+void dsp::WeightedTimeSeries::mask_weights () try
 {
   uint64_t nweights = get_nweights ();
   unsigned nparts = get_npol_weight() * get_nchan_weight();
@@ -507,25 +511,34 @@ void dsp::WeightedTimeSeries::mask_weights ()
 	 << " nparts=" << nparts << endl;
 
   // collect all of the bad weights in the first array
-  for (unsigned ipart=1; ipart<nparts; ipart++) {
+  for (unsigned ipart=1; ipart<nparts; ipart++)
+  {
     unsigned* wptr = weights + ipart * weight_subsize;
-    for (unsigned iwt=0; iwt < nweights; iwt++) {
+    for (unsigned iwt=0; iwt < nweights; iwt++)
+    {
       if (wptr[iwt] == 0)
 	weights[iwt] = 0;
     }
   }
 
   // distribute the bad weights to all of the arrays
-  for (unsigned ipart=1; ipart<nparts; ipart++) {
+  for (unsigned ipart=1; ipart<nparts; ipart++)
+  {
     unsigned* wptr = weights + ipart * weight_subsize;
-    for (unsigned iwt=0; iwt < nweights; iwt++) {
+    for (unsigned iwt=0; iwt < nweights; iwt++)
+    {
       if (weights[iwt] == 0)
 	wptr[iwt] = 0;
     }
   }
 }
+catch (Error& error)
+{
+  throw error += "dsp::WeightedTimeSeries::mask_weights";
+}
 
-void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
+void 
+dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep) try
 {
   if (ndat_per_weight >= nfft)
   {
@@ -636,8 +649,12 @@ void dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep)
       "/" << nweights_tot << endl;
   }
 }
+catch (Error& error)
+{
+  throw error += "dsp::WeightedTimeSeries::convolve_weights";
+}
 
-void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
+void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch) try
 {
   uint64_t nweights_tot = get_nweights();
 
@@ -709,4 +726,8 @@ void dsp::WeightedTimeSeries::scrunch_weights (unsigned nscrunch)
 
   ndat_per_weight = 1;
 
+}
+catch (Error& error)
+{
+  throw error += "dsp::WeightedTimeSeries::scrunch_weights";
 }
