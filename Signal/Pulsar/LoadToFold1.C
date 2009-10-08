@@ -516,11 +516,15 @@ void dsp::LoadToFold1::prepare_final ()
 
   if (convolution)
   {
-    minimum_samples = convolution->get_minimum_samples ();
+    minimum_samples = convolution->get_minimum_samples () * config->nchan;
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
-	   << minimum_samples << " samples" << endl;
+           << minimum_samples << " samples" << endl;
   }
+
+  if (minimum_samples == 0)
+    throw Error (InvalidState, "dsp::LoadToFold1::prepare_final",
+                 "minimum samples == 0");
 
   // cerr << "MINIMUM SAMPLES=" << minimum_samples << endl;
 
@@ -845,7 +849,7 @@ void dsp::LoadToFold1::run () try
 {
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::run this=" << this 
-	 << " nops=" << operations.size() << endl;
+         << " nops=" << operations.size() << endl;
 
   if (log)
   {
@@ -869,6 +873,10 @@ void dsp::LoadToFold1::run () try
   Input* input = manager->get_input();
 
   uint64_t block_size = input->get_block_size();
+
+  if (block_size == 0)
+    throw Error (InvalidState, "dsp::LoadToFold1::run", "block_size=0");
+
   uint64_t total_samples = input->get_total_samples();
   uint64_t nblocks_tot = total_samples/block_size;
 
