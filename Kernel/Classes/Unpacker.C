@@ -34,6 +34,10 @@ void dsp::Unpacker::reserve ()
 {
   // resize the output
   output->set_order (output_order);
+
+  if (verbose)
+    cerr << "dsp::Unpacker::reserve input ndat=" << input->get_ndat() << endl;
+
   output->resize (input->get_ndat());
 }
 
