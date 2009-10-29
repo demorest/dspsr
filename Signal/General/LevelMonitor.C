@@ -322,7 +322,7 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
     {
       for (unsigned idim=0; idim < ndim; idim++)
       {
-        if (variance[idig] == 0.0)
+        if (variance[idig] <= 0.0)
         {
           idig ++;
           continue;
@@ -346,7 +346,13 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
       
           // calculate the change in gain
           double delta_gain = sqrt(optimal_variance / variance[idig]);
-    
+
+          if (!isfinite(delta_gain))
+          {
+            idig ++;
+            continue;
+          }
+
           if (verbose)
 	    cerr << "LevelMonitor::set_thresholds change_gain (" 
 	         << idig << ", " << delta_gain << ")" << endl;
