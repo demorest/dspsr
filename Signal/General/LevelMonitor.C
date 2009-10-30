@@ -12,7 +12,7 @@
 #include "dsp/HistUnpacker.h"
 #include "dsp/Input.h"
 
-#include "dsp/TimeSeries.h"
+#include "dsp/WeightedTimeSeries.h"
 #include "fsleep.h"
 
 #include <assert.h>
@@ -40,7 +40,7 @@ dsp::LevelMonitor::LevelMonitor ()
 
   far_from_good = false;
 
-  data = new TimeSeries;
+  data = new WeightedTimeSeries;
 }
 
 dsp::LevelMonitor::~LevelMonitor ()
@@ -115,9 +115,17 @@ void dsp::LevelMonitor::monitor_abort ()
   This method should be redefined by sub-classes which implement actual
   control over a physical/virtual digitizer
 */
-int dsp::LevelMonitor::change_gain (unsigned ichan, unsigned ipol, unsigned idim, double delta_gain)
+int dsp::LevelMonitor::change_gain (unsigned ichan,
+				    unsigned ipol,
+				    unsigned idim,
+				    double delta_gain)
 {
-  cout << "GAIN " << ichan << " " << ipol << " " << idim << " " << delta_gain << endl;
+  cout << "GAIN " 
+       << ichan << " " 
+       << ipol << " " 
+       << idim << " " 
+       << delta_gain << endl;
+
   return 0;
 }
 
@@ -125,9 +133,17 @@ int dsp::LevelMonitor::change_gain (unsigned ichan, unsigned ipol, unsigned idim
   This method should be redefined by sub-classes which implement actual
   control over a physical/virtual digitizer
 */
-int dsp::LevelMonitor::change_levels (unsigned ichan, unsigned ipol, unsigned idim, double delta_mean)
+int dsp::LevelMonitor::change_levels (unsigned ichan,
+				      unsigned ipol,
+				      unsigned idim,
+				      double delta_mean)
 {
-  cout << "LEVEL " << ichan << " " << ipol << " " << idim << " " << delta_mean << endl;
+  cout << "LEVEL " 
+       << ichan << " "
+       << ipol << " " 
+       << idim << " "
+       << delta_mean << endl;
+
   return 0;
 }
 
@@ -233,18 +249,19 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
   // ... and empty sums
   vector<double> tot_sum (ndig, 0.0);
   vector<double> tot_sumsq (ndig, 0.0);
+  vector<uint64_t> tot_pts (ndig, 0);
 
-  uint64_t total_pts = 0;
-
-  while (!abort && total_pts < n_integrate && !input->get_input()->eod())
+  while (!abort && tot_pts[0] < n_integrate && !input->get_input()->eod())
   {
     input -> load (data);
 
     uint64_t ndat = data->get_ndat();
+    unsigned ppweight = data->get_ndat_per_weight ();
+    uint64_t nweight = ndat / ppweight;
 
     // combine the statistics for real and imaginary components
     if (input_ndim == 2 && ndim == 1)
-      ndat *= 2;
+      ppweight *= 2;
 
     if (verbose)
       cerr << "LevelMonitor::accumulate_stats loaded ndat=" << ndat << endl;
@@ -252,27 +269,40 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
     unsigned idig = 0;
 
     for (unsigned ichan=0; ichan < nchan; ichan++)
+    {
       for (unsigned ipol=0; ipol < npol; ipol++)
+      {
 	for (unsigned idim=0; idim < ndim; idim++)
 	{
-	  float* ptr = data->get_datptr (ichan, ipol) + idim;
+	  float* dat = data->get_datptr (ichan, ipol) + idim;
+	  unsigned* wt = data->get_weights (ichan, ipol);
+
 	  double sum = 0;
 	  double sumsq = 0;
-	  for (unsigned i=0; i<ndat; i++)
+
+	  for (unsigned iwt=0; iwt < nweight; iwt++)
 	  {
-	    float val = ptr[i*ndim];
-	    sum += val;
-	    sumsq += val*val;
+	    if (wt[iwt] == 0)
+	      continue;
+
+	    for (unsigned i=0; i<ppweight; i++)
+	    {
+	      float val = dat[ iwt*ppweight + i*ndim ];
+	      sum += val;
+	      sumsq += val*val;
+	    }
+
+	    tot_sum[idig] += sum;
+	    tot_sumsq[idig] += sumsq;
+	    tot_pts[idig] += ppweight;
 	  }
-	  tot_sum[idig] += sum;
-	  tot_sumsq[idig] += sumsq;
+
 	  idig ++;
 	}
+      }
+    }
 
-    total_pts += ndat;
-    
     assert (idig == ndig);
-
   }
 
   mean.resize (ndig);
@@ -280,14 +310,14 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 
   for (unsigned idig=0; idig < ndig; idig++) 
   {
-    if (total_pts == 0)
+    if (tot_pts[idig] == 0)
     {
-       mean[idig] = variance[idig] = 0.0;
-       continue;
+      mean[idig] = variance[idig] = 0.0;
+      continue;
     }
 
-    double x = tot_sum[idig] / total_pts;
-    double xsq = tot_sumsq[idig] / total_pts;
+    double x = tot_sum[idig] / tot_pts[idig];
+    double xsq = tot_sumsq[idig] / tot_pts[idig];
 
     mean[idig] = x;
     variance[idig] = xsq - x*x;
@@ -295,10 +325,10 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 
   return 0;
 }
- catch (Error& error)
-   {
-     throw error += "dsp::LevelMonitor::accumulate_stats";
-   }
+catch (Error& error)
+{
+  throw error += "dsp::LevelMonitor::accumulate_stats";
+}
 
 int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 				       vector<double>& variance)

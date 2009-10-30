@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.8 $
+   $Date: 2009/10/30 00:15:13 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -21,8 +21,8 @@
 
 namespace dsp {
 
+  class WeightedTimeSeries;
   class LevelHistory;
-  class TimeSeries;
   class IOManager;
   class HistUnpacker;
 
@@ -127,7 +127,7 @@ namespace dsp {
   private:
 
     //! the converted data
-    Reference::To<TimeSeries> data;
+    Reference::To<WeightedTimeSeries> data;
 
     //! the source of data
     Reference::To<IOManager> input;
