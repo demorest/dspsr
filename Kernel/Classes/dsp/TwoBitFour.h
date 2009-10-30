@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/07/17 01:17:29 $
+   $Revision: 1.4 $
+   $Date: 2009/10/30 00:15:03 $
    $Author: straten $ */
 
 #ifndef __TwoBitFour_h
@@ -26,6 +26,7 @@ namespace dsp
 
     static const unsigned samples_per_byte;
     static const unsigned lookup_block_size;
+    bool bad;
 
     //! Build counts of low voltage 2-bit states in each byte
     void nlow_build (TwoBitTable* table);
@@ -41,11 +42,16 @@ namespace dsp
     {
       const unsigned nbyte = ndat / samples_per_byte;
       nlow = 0;
+      unsigned total;
+
       for (unsigned bt=0; bt < nbyte; bt++)
       {
         nlow += nlow_lookup[ *input ];
+	total += *input;
 	++ input;
       }
+
+      bad = (total == 0);
     }
     
     template<class Iterator>
