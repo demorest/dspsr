@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/excision_unpack.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.5 $
+   $Date: 2009/10/30 00:15:08 $
    $Author: straten $ */
 
 #ifndef __ExcisionUnpacker_excision_unpack_h
@@ -74,10 +74,18 @@ template<class U, class Iter>
     if (hist && n_low < hist_size)
       hist [n_low] ++;
 
-    // test if the number of low voltage states is outside the
-    // acceptable limit or if this section of data has been previously
-    // flagged bad (for example, due to bad data in the other polarization)
-    if ( n_low<nlow_min || n_low>nlow_max || (weights && weights[wt] == 0) )
+    /*
+      Data are flagged as bad and set to zero if:
+
+      1) the unpacker says it is bad;
+      2) the number of low voltage states is outside thresholds; or
+      3) this section of data has been previously flagged bad 
+         (e.g. due to bad data in the other polarization).
+    */
+
+    if ( unpack.bad ||
+	 n_low<nlow_min || n_low>nlow_max ||
+	 (weights && weights[wt] == 0) )
     {
 #ifdef _DEBUG2
       cerr << "w[" << wt << "]=0 ";
