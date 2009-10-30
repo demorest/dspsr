@@ -13,6 +13,8 @@
 #include <malloc.h>
 #endif
 
+#include <stdlib.h>
+
 using namespace std;
 
 #include "dsp/Scratch.h"
