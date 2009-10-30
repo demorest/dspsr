@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/EightBitOne.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:53 $
+   $Revision: 1.3 $
+   $Date: 2009/10/30 00:15:03 $
    $Author: straten $ */
 
 #ifndef __EightBitOne_h
@@ -24,7 +24,9 @@ namespace dsp
 
   public:
 
-    EightBitOne (BitTable* table) : NLowLookup (table) { }
+    EightBitOne (BitTable* table) : NLowLookup (table) { bad = false; }
+
+    bool bad;
 
     template<class Iterator>
     inline void prepare (const Iterator& input, unsigned ndat) { }
@@ -35,12 +37,18 @@ namespace dsp
     {
       nlow = 0;
 
+      unsigned total = 0;
+
       for (unsigned idat = 0; idat < ndat; idat++)
       {
 	output[idat * output_incr] = lookup[ *input ];
 	nlow += nlow_lookup[ *input ];
+	total += *input;
+
 	++ input;
       }
+
+      bad = (total == 0);
     }
   };
 

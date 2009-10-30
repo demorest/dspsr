@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBit1or2.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/07/17 01:17:29 $
+   $Revision: 1.4 $
+   $Date: 2009/10/30 00:15:03 $
    $Author: straten $ */
 
 #ifndef __TwoBit1or2_h
@@ -96,13 +96,15 @@ namespace dsp
   {
 
     TwoBitToChar<N> unpacker;
-
+    
   public:
 
     Mask mask;
 
     static const unsigned samples_per_byte;
     static const unsigned lookup_block_size;
+
+    bool bad;
 
     template<class Iterator>
     inline void prepare (Iterator& input, unsigned ndat)
@@ -115,8 +117,16 @@ namespace dsp
       unpacker (input, mask, temp_values, ndat);
 
       nlow = 0;
+
+      unsigned total = 0;
+
       for (unsigned idat=0; idat < ndat; idat++)
+      {
 	nlow += nlow_lookup[ temp_values[idat] ];
+	total += temp_values[idat];
+      }
+
+      bad = (total == 0);
     }
     
     template<class Iterator>

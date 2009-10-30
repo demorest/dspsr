@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitTwo.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:41:38 $
+   $Revision: 1.3 $
+   $Date: 2009/10/30 00:15:03 $
    $Author: straten $ */
 
 #ifndef __FourBitTwo_h
@@ -24,7 +24,9 @@ namespace dsp
 
   public:
 
-    FourBitTwo (BitTable* table) : NLowLookup (table) { }
+    FourBitTwo (BitTable* table) : NLowLookup (table) { bad = false; }
+
+    bool bad;
 
     template<class Iterator>
     inline void prepare (const Iterator& input, unsigned ndat) { }
@@ -36,9 +38,13 @@ namespace dsp
       const unsigned ndat2 = ndat/2;
       nlow = 0;
 
+      unsigned total = 0;
+
       for (unsigned idat = 0; idat < ndat2; idat++)
       {
 	unsigned index = *input;
+	total += index;
+
 	++ input;
 
 	*output = lookup[ index*2 ];     output += output_incr;
@@ -46,6 +52,8 @@ namespace dsp
 	
 	nlow += nlow_lookup [index];
       }
+
+      bad = (total == 0);
     }
   };
 
