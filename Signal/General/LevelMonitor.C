@@ -91,6 +91,8 @@ void dsp::LevelMonitor::set_input (IOManager* _input)
 
   optimal_variance = unpacker->get_optimal_variance();
 
+  cerr << "dsp::LevelMonitor optimal_variance=" << optimal_variance << endl;
+
   ndig = nchan * npol * ndim;
 }
 
@@ -277,13 +279,13 @@ int dsp::LevelMonitor::accumulate_stats (vector<double>& mean,
 	  float* dat = data->get_datptr (ichan, ipol) + idim;
 	  unsigned* wt = data->get_weights (ichan, ipol);
 
-	  double sum = 0;
-	  double sumsq = 0;
-
 	  for (unsigned iwt=0; iwt < nweight; iwt++)
 	  {
 	    if (wt[iwt] == 0)
 	      continue;
+
+            double sum = 0;
+            double sumsq = 0;
 
 	    for (unsigned i=0; i<ppweight; i++)
 	    {
@@ -373,7 +375,7 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
 	      cerr << "LevelMonitor::set_thresholds hold the trim" << endl;
 	    far_from_good = true;
           }
-      
+
           // calculate the change in gain
           double delta_gain = sqrt(optimal_variance / variance[idig]);
 
