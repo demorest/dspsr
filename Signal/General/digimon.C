@@ -126,18 +126,18 @@ int main (int argc, char** argv) try
 
   if (verbose)
     cerr << "digimon: creating LevelMonitor" << endl;
-  dsp::LevelMonitor* digitizer = new dsp::LevelMonitor ();
+  dsp::LevelMonitor* monitor = new dsp::LevelMonitor ();
   
-  digitizer->set_input (manager);
+  monitor->set_input (manager);
 
-  digitizer->set_between_iterations (between_iterations);
-  digitizer->set_max_iterations (iterations);
-  digitizer->set_swap_polarizations (swap_polarizations);
-  digitizer->set_consecutive (consecutive);
+  monitor->set_between_iterations (between_iterations);
+  monitor->set_max_iterations (iterations);
+  monitor->set_swap_polarizations (swap_polarizations);
+  monitor->set_consecutive (consecutive);
   
   while (!manager->get_input()->eod())
   {
-    digitizer->monitor ();
+    monitor->monitor ();
 
     if (rest_seconds && !manager->get_input()->eod())
     {
