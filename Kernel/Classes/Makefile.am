@@ -45,17 +45,12 @@ libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
 check_PROGRAMS = test_BlockIterator test_environ
-
 test_BlockIterator_SOURCES = test_BlockIterator.C
 
 #############################################################################
 #
 
 include $(top_srcdir)/config/Makefile.include
-
-AM_CPPFLAGS += @PRESTO_CFLAGS@
-
-libClasses_la_LDFLAGS = @PRESTO_LIBS@
 
 LDADD = libClasses.la
 
