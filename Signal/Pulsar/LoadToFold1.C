@@ -522,11 +522,11 @@ void dsp::LoadToFold1::prepare_final ()
            << minimum_samples << " samples" << endl;
   }
 
+#if 0
   if (minimum_samples == 0)
     throw Error (InvalidState, "dsp::LoadToFold1::prepare_final",
                  "minimum samples == 0");
-
-  // cerr << "MINIMUM SAMPLES=" << minimum_samples << endl;
+#endif
 
   // set the block size to at least minimum_samples
   uint64_t ram = manager->set_block_size
