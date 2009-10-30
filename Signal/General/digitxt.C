@@ -107,7 +107,10 @@ int main (int argc, char** argv) try
 
     uint64_t block_size = 1024;
 
-    manager->get_input()->set_block_size( block_size );
+    if (verbose)
+      cerr << "digitxt: set block_size=" << block_size << endl;
+
+    manager->set_block_size( block_size );
 
     while (!manager->get_input()->eod())
     {
