@@ -14,9 +14,15 @@ namespace dsp {
   //! Manages memory allocation and destruction
   class Memory
   {
+  protected:
+    virtual void* do_allocate (unsigned nbytes);
+    virtual void  do_free (void*);
+    static Memory* manager;
+
   public:
-    virtual void* allocate (unsigned nbytes);
-    virtual void free (void*);
+    static void* allocate (unsigned nbytes);
+    static void free (void*);
+    static void set_manager (Memory*);
   };
 
 }
