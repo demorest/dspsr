@@ -6,10 +6,13 @@
  ***************************************************************************/
 
 #include "dsp/DataSeries.h"
+#include "dsp/Memory.h"
+
 #include "Error.h"
-#include "malloc16.h"
 
 #include <string.h>
+
+#define USING_GPU 1
 
 using namespace std;
 
@@ -124,9 +127,9 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
       else
       {
 	if (verbose)
-          cerr << "dsp::DataSeries::resize free16 size=" << size << " buffer="
+          cerr << "dsp::DataSeries::resize Memory::free size=" << size << " buffer="
 	       << (void*)buffer << endl;
-	free16 (buffer);
+	Memory::free (buffer);
 	memory_used -= size;
       }
       buffer = 0;
@@ -142,13 +145,13 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
   if (size == 0)
   {
     if (verbose)
-      cerr << "dsp::DataSeries::resize malloc16 (" << require << ")" << endl;
-    buffer = (unsigned char*) malloc16 (require);
+      cerr << "dsp::DataSeries::resize Memory::allocate (" << require << ")" << endl;
+    buffer = (unsigned char*) Memory::allocate (require);
 
     if (verbose)
       cerr << "dsp::DataSeries::resize buffer=" << (void*) buffer << endl;
 
-    if( !buffer )
+    if (!buffer)
       throw Error(InvalidState,"dsp::DataSeries::resize()",
 		  "Could not allocate another "UI64" bytes!",
 		  require+8);
