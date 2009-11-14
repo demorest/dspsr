@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/Filterbank.h"
+
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Response.h"
 #include "dsp/Apodization.h"
@@ -34,6 +35,7 @@ void dsp::Filterbank::prepare ()
   make_preparations ();
   prepared = true;
 }
+
 
 /*
   These are preparations that could be performed once at the start of
@@ -230,6 +232,12 @@ void dsp::Filterbank::make_preparations ()
 
   prepare_output ();
 
+  if (engine)
+  {
+    engine->setup (nchan, freq_res, response->get_datptr(0,0));
+    return;
+  }
+
   using namespace FTransform;
 
   if (input->get_state() == Signal::Nyquist)
@@ -239,6 +247,7 @@ void dsp::Filterbank::make_preparations ()
 
   if (freq_res > 1)
     backward = Agent::current->get_plan (freq_res, FTransform::bcc);
+
 }
 
 void dsp::Filterbank::prepare_output (uint64_t ndat)
@@ -290,7 +299,7 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
     cerr << "dsp::Filterbank::prepare_output output ndat="
          << output->get_ndat() << endl;
 
-  output->rescale (scalefac);
+   output->rescale (scalefac);
   
   if (verbose) cerr << "dsp::Filterbank::prepare_output scale="
                     << output->get_scale() <<endl;
@@ -354,6 +363,15 @@ void dsp::Filterbank::reserve ()
 
   // prepare the output TimeSeries
   prepare_output (output_ndat);
+}
+
+void dsp::Filterbank::Engine::perform (const float* in, float* out)
+{
+  Job job;
+  job.in = in;
+  job.out = out;
+
+  launch(&job)->join();
 }
 
 void dsp::Filterbank::transformation ()
@@ -468,6 +486,57 @@ void dsp::Filterbank::transformation ()
 
   for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
   {
+
+if (engine) {
+
+    for (ipol=0; ipol < npol; ipol++)
+    {
+      for (ipart=0; ipart<npart; ipart++)
+      {
+#ifdef _DEBUG
+	cerr << "ipart=" << ipart << endl;
+#endif
+	in_offset = ipart * in_step;
+	out_offset = ipart * out_step;
+      
+	time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, ipol)) + in_offset;
+
+	/*
+	cerr << "PART=" << ipart << " POL=" << ipol << " CHAN=" << input_ichan
+	     << " PTR=" << time_dom_ptr << endl;
+	*/
+
+	// cerr << "nchan =" << nchan << " fft=" << freq_res*2 << " tot=" << freq_res*2*nchan << endl;
+
+        engine->perform (time_dom_ptr, c_spectrum[0]);
+
+	for (ichan=0; ichan < nchan_subband; ichan++)
+	{
+	  c_time = c_spectrum[0] + ichan*freq_res*2;
+
+	  data_into = output->get_datptr (ichan, ipol) + out_offset;
+	  data_from = c_time + nfilt_pos*2;  // complex nos.
+	      
+	  for (ipt=0; ipt < nkeep; ipt++)
+	  {
+
+	    // cout << ipart << " " << ipol << " " << ichan << " " << ipt << " " << data_from[0] << " " << data_from[1] << endl;
+
+	    *data_into = *data_from;     // copy the Re[z]
+	    data_into ++; data_from ++;
+	    *data_into = *data_from;     // copy the Im[z]
+	    data_into ++; data_from ++;
+	    data_into += tres_skip;      // leave space for in-betweeners
+	  }
+	  
+	} // for each output channel
+	
+      } // for each part
+
+    } // for each polarization
+
+} else {  // not using engine
+
     for (ipart=0; ipart<npart; ipart++)
     {
 #ifdef _DEBUG
@@ -479,6 +548,8 @@ void dsp::Filterbank::transformation ()
       
       for (ipol=0; ipol < npol; ipol++)
       {
+
+
 	for (itres=0; itres < time_res; itres ++)
         {
 	  tres_offset = itres * tres_step;
@@ -507,6 +578,11 @@ void dsp::Filterbank::transformation ()
 		 << "," << (void*)time_dom_ptr << ")" << endl;
 #endif
 
+	    /*
+	      cerr << "PART=" << ipart << " POL=" << ipol << " CHAN=" << input_ichan
+	      << " PTR=" << time_dom_ptr << endl;
+	    */
+
 	    if (input->get_state() == Signal::Nyquist)
 	      forward->frc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
 	    else
@@ -527,7 +603,7 @@ void dsp::Filterbank::transformation ()
 	    }
 #endif
 
-	}
+	  }
 	  
 	  if (matrix_convolution) {
 
@@ -554,7 +630,6 @@ cerr << "apply response" << endl;
 	    if (response)
 	      response->operate (c_spectrum[ipol], ipol,
 				 input_ichan*nchan_subband, nchan_subband);
-
 	  }
 
 #ifdef _DEBUG
@@ -624,7 +699,8 @@ cerr << "bcc1d done" << endl;
 	      data_into = output->get_datptr (jchan+ichan, ipol) + t_off;
 	      data_from = c_time + nfilt_pos*2;  // complex nos.
 	      
-	      for (ipt=0; ipt < nkeep; ipt++) {
+	      for (ipt=0; ipt < nkeep; ipt++)
+	      {
 		*data_into = *data_from;     // copy the Re[z]
 		data_into ++; data_from ++;
 		*data_into = *data_from;     // copy the Im[z]
@@ -642,11 +718,28 @@ cerr << "bcc1d done" << endl;
       
     } // for each big fft (ipart)
     
+   } // if not using engine
+
   } // for each input channel
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation return with output ndat="
 	 << output->get_ndat() << endl;
+
+#if 0
+
+  uint64_t nfloat = output->get_ndat() * output->get_ndim();
+
+  for (unsigned ichan=0; ichan < output->get_nchan(); ichan++)
+    for (unsigned ipol=0; ipol < output->get_npol(); ipol++)
+      {
+	float* data = output->get_datptr(ichan, ipol);
+	for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
+	  cout << ichan <<" "<< ipol <<" "<< ifloat 
+	       <<" "<< std::setprecision(3) << data[ifloat] << endl;
+      }
+
+#endif
 
 }
 

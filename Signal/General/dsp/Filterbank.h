@@ -7,14 +7,16 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.14 $
-   $Date: 2009/10/08 05:28:26 $
+   $Revision: 1.15 $
+   $Date: 2009/11/14 10:46:46 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
 
 #include "dsp/Convolution.h"
+
+#include "QuasiMutex.h"
 
 namespace dsp {
   
@@ -69,6 +71,10 @@ namespace dsp {
     //! Set the order of the dimensions in the output TimeSeries
     void set_output_order (TimeSeries::Order);
 
+    //! Engine used to perform discrete convolution step
+    class Engine;
+    void set_engine (Engine*);
+
   protected:
 
     //! Perform the convolution transformation on the input TimeSeries
@@ -89,6 +95,9 @@ namespace dsp {
     //! The order of the dimensions in the output TimeSeries
     TimeSeries::Order output_order;
 
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
+
   private:
 
     void make_preparations ();
@@ -97,7 +106,21 @@ namespace dsp {
     unsigned nchan_subband;
     unsigned nsamp_tres;
   };
-  
+ 
+  class Filterbank::Engine : public QuasiMutex
+  {
+    public:
+      virtual void setup (unsigned nchan, unsigned bwd_nfft, float* kernel) = 0;
+      void perform (const float* in, float* out);
+
+    class Job {
+    public:
+      const float* in;
+      float* out;
+    };
+
+  }; 
 }
 
 #endif
+
