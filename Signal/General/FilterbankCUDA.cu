@@ -12,7 +12,7 @@
 __global__ void performConvCUDA (float2*, float2*);	
 __global__ void performRealtr (float2*, unsigned, float*, float*);
 
-void FilterbankCUDA::setup (unsigned nchan, unsigned bwd_nfft, float* kernel) 
+void CUDA::Filterbank::setup (unsigned nchan, unsigned bwd_nfft, float* kernel) 
 {
   if (stream.size() == nstream)
     return;
@@ -24,15 +24,15 @@ void FilterbankCUDA::setup (unsigned nchan, unsigned bwd_nfft, float* kernel)
     add_stream ( new Stream (*str) );
 }
 
-FilterbankCUDA::Stream* FilterbankCUDA::get_stream (unsigned i)
+CUDA::Filterbank::Stream* CUDA::Filterbank::get_stream (unsigned i)
 {
   return dynamic_cast<Stream*>( stream[i].get() );
 }
 
-void FilterbankCUDA::run ()
+void CUDA::Filterbank::run ()
 {
   if (stream.size() == 0)
-    throw Error (InvalidState, "FilterbankCUDA::run", "no streams");
+    throw Error (InvalidState, "CUDA::Filterbank::run", "no streams");
 
   for (unsigned i=0; i<stream.size(); i++)
     get_stream(i)->forward_fft ();
@@ -50,7 +50,7 @@ void FilterbankCUDA::run ()
     get_stream(i)->retrieve ();
 }
 
-void FilterbankCUDA::Stream::init ()
+void CUDA::Filterbank::Stream::init ()
 {
   unsigned data_size = nchan * bwd_nfft * 2;
   unsigned mem_size = data_size * sizeof(cufftReal);
@@ -62,27 +62,46 @@ void FilterbankCUDA::Stream::init ()
   cutilSafeCall(cudaMalloc((void**)&d_out, mem_size + 2*sizeof(cufftReal)));
 }
 
-FilterbankCUDA::Stream::Stream (const FilterbankCUDA::Stream& copy)
+void CUDA::Filterbank::Stream::zero ()
 {
-  bwd_nfft = copy.bwd_nfft;
-  nchan = copy.nchan;
+  d_in = d_out = d_kernel = 0;
+}
+
+CUDA::Filterbank::Stream::Stream (const CUDA::Filterbank::Stream* copy)
+{
+  zero ();
+
+  copy = _copy;
+  kernel = 0;
+}
+
+void CUDA::Filterbank::Stream::copy_init ()
+{
+  bwd_nfft = copy->bwd_nfft;
+  nchan = copy->nchan;
 
   init ();
 
-  plan_fwd = copy.plan_fwd;
-  plan_bwd = copy.plan_bwd;
-  d_kernel = copy.d_kernel;
-  d_SN = copy.d_SN;
-  d_CN = copy.d_CN;
+  plan_fwd = copy->plan_fwd;
+  plan_bwd = copy->plan_bwd;
+  d_kernel = copy->d_kernel;
+  d_SN = copy->d_SN;
+  d_CN = copy->d_CN;
 }
 
-FilterbankCUDA::Stream::Stream (unsigned _nchan,
+CUDA::Filterbank::Stream::Stream (unsigned _nchan,
                                 unsigned _bwd_nfft, 
-			        float* kernel)
+			        float* _kernel)
 {
+  zero ();
+
   bwd_nfft = _bwd_nfft;
   nchan = _nchan;
+  kernel = _kernel;
+}
 
+void CUDA::Filterbank::Stream::work_init ()
+{
   init ();
 
   unsigned data_size = nchan * bwd_nfft * 2;
@@ -127,8 +146,16 @@ FilterbankCUDA::Stream::Stream (unsigned _nchan,
   cutilSafeCall(cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice));
 }
 
-void FilterbankCUDA::Stream::queue ()
+void CUDA::Filterbank::Stream::queue ()
 {
+  if (!d_kernel)
+  {
+    if (copy)
+      copy_init ();
+    else
+      work_init ();
+  }
+
   Job* my_job = static_cast<Job*> (job);
 
   unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
@@ -137,18 +164,18 @@ void FilterbankCUDA::Stream::queue ()
 				 cudaMemcpyHostToDevice, stream ));
 }
 
-void FilterbankCUDA::Stream::wait ()
+void CUDA::Filterbank::Stream::wait ()
 {
 
 }
 
-void FilterbankCUDA::Stream::forward_fft ()
+void CUDA::Filterbank::Stream::forward_fft ()
 {
   cufftSetStream (plan_fwd, stream);
   cufftSafeCall(cufftExecC2C(plan_fwd, d_in, d_out,CUFFT_FORWARD));
 }
 
-void FilterbankCUDA::Stream::realtr ()
+void CUDA::Filterbank::Stream::realtr ()
 {
   int Blks = 256;
   unsigned data_size = nchan * bwd_nfft;
@@ -157,7 +184,7 @@ void FilterbankCUDA::Stream::realtr ()
   performRealtr<<<realtrThread+1,Blks,0,stream>>>(d_out,data_size,d_SN,d_CN);
 }
 
-void FilterbankCUDA::Stream::convolve ()
+void CUDA::Filterbank::Stream::convolve ()
 {
   int Blks = 256;
   unsigned data_size = nchan * bwd_nfft;
@@ -166,13 +193,13 @@ void FilterbankCUDA::Stream::convolve ()
   performConvCUDA<<<BlkThread,Blks,0,stream>>>(d_out,d_kernel);
 }
 
-void FilterbankCUDA::Stream::backward_fft ()
+void CUDA::Filterbank::Stream::backward_fft ()
 {
   cufftSetStream (plan_bwd, stream);
   cufftSafeCall(cufftExecC2C(plan_bwd, d_out, d_out, CUFFT_INVERSE));
 }
 
-void FilterbankCUDA::Stream::retrieve ()
+void CUDA::Filterbank::Stream::retrieve ()
 {
   Job* my_job = static_cast<Job*>(job);
 
@@ -183,9 +210,9 @@ void FilterbankCUDA::Stream::retrieve ()
 				 cudaMemcpyDeviceToHost, stream ));
 }
 
-void FilterbankCUDA::Stream::run ()
+void CUDA::Filterbank::Stream::run ()
 {
-  throw Error (InvalidState, "FilterbankCUDA::Stream::run",
+  throw Error (InvalidState, "CUDA::Filterbank::Stream::run",
 	       "should not be called directly");
 }
 
