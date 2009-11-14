@@ -17,8 +17,8 @@ namespace CUDA
   class Memory : public dsp::Memory
   {
   public:
-    void* allocate (unsigned nbytes);
-    void free (void*);
+    void* do_allocate (unsigned nbytes);
+    void do_free (void*);
   };
 }
 
