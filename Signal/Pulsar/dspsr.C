@@ -322,6 +322,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (fft_lib, 'Z', "lib");
   arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
+  arg = menu.add (config->cuda_nstream, "cuda", "nstream");
+  arg->set_help ("set the number of CUDA streams");
+
   /* ***********************************************************************
 
   Detection Options
