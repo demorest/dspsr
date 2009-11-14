@@ -1,8 +1,13 @@
 //-*-C++-*-
 
-#include "dsp/FilterbankCUDA.h"
+/***************************************************************************
+ *
+ *   Copyright (C) 2009 by Willem van Straten and Jonathon Kocz
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
 
-#include <math.h>
+#include "dsp/FilterbankCUDA.h"
 
 __global__ void performConvCUDA (float2*, float2*);	
 __global__ void performRealtr (float2*, unsigned, float*, float*);

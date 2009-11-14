@@ -1,5 +1,20 @@
 //-*-C++-*-
 
+/***************************************************************************
+ *
+ *   Copyright (C) 2009 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
+
+/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
+   $Revision: 1.2 $
+   $Date: 2009/11/14 11:11:41 $
+   $Author: straten $ */
+
+#ifndef __FilterbankCUDA_h
+#define __FilterbankCUDA_h
+
 #include "dsp/Filterbank.h"
 
 #include <cufft.h>
@@ -76,3 +91,4 @@ public:
   };
 };
 
+#endif
