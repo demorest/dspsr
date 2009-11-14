@@ -30,6 +30,11 @@ dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
   set_buffering_policy (new InputBuffering (this));
 }
 
+void dsp::Filterbank::set_engine (Engine* _engine)
+{
+  engine = _engine;
+}
+
 void dsp::Filterbank::prepare ()
 {
   make_preparations ();
