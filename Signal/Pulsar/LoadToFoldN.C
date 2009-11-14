@@ -167,8 +167,15 @@ void dsp::LoadToFoldN::prepare ()
 
     //
     // only the first thread must manage archival
+    //
     if (subints)
       threads[i]->manage_archiver = false;
+
+    //
+    // copy the filterbank engine, a shared resource
+    //
+    if (threads[0]->filterbank_engine)
+      threads[i]->filterbank_engine = threads[0]->filterbank_engine;
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFoldN::prepare preparing thread " << i << endl;
