@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/11/14 11:11:41 $
+   $Revision: 1.3 $
+   $Date: 2009/11/14 18:16:08 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -20,75 +20,91 @@
 #include <cufft.h>
 #include <cutil_inline.h>
 
-class FilterbankCUDA : public dsp::Filterbank::Engine
+namespace CUDA
 {
-  unsigned nstream;
+  //! Discrete convolution filterbank step implemented using CUDA streams
+  class Filterbank : public dsp::Filterbank::Engine
+  {
+    unsigned nstream;
 
-public:
-
-  FilterbankCUDA (unsigned _nstream) { nstream = _nstream; }
-
-  class Stream;
-
-  void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
-
-  void run ();
-
-  Stream* get_stream (unsigned i);
-};
-
-class FilterbankCUDA::Stream : public QuasiMutex::Stream
-{
-protected:
-
-  //! stream identifier
-  cudaStream_t stream;
-
-  //! forward fft plan 
-  cufftHandle plan_fwd;
-  //! backward fft plan
-  cufftHandle plan_bwd;
-
-  //! the backward fft length
-  unsigned bwd_nfft;
-  //! the number of frequency channels produced by filterbank
-  unsigned nchan;
-
-  //! input data in CUDA memory
-  float2* d_in;
-  //! output data in CUDA memory
-  float2* d_out;
-  //! convolution kernel in CUDA memory
-  float2* d_kernel;
-
-  //! real-to-complex trick arrays in CUDA memory
-  float *d_SN, *d_CN;
- 
-  //! Initializes the attributes that are not shared
-  void init ();
-
-  friend class FilterbankCUDA;
-
-  void forward_fft ();
-  void realtr ();
-  void convolve ();
-  void backward_fft ();
-  void retrieve ();
-
-public:
-
-  Stream (unsigned nchan, unsigned bwd_nfft, float* kernel);
-  Stream (const FilterbankCUDA::Stream&);
-
-  void queue () ;
-  void run () ;
-  void wait () ;
-
-  class Job {
   public:
-    float* in;
-    float* out;
+
+    //! Construct with number of streams
+    Filterbank (unsigned _nstream) { nstream = _nstream; }
+
+    //! Manages stream-specific resources
+    class Stream;
+
+    //! Adds the streams
+    void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
+
+    //! Starts the data reduction steps for all streams
+    void run ();
+
+    Stream* get_stream (unsigned i);
   };
-};
+
+  class Filterbank::Stream : public QuasiMutex::Stream
+  {
+  private:
+    Stream* copy;
+    float* kernel;
+
+    //! Sets some attributes to zero
+    void zero ();
+
+    //! Initializes CUDA stream-specific resources
+    void init ();
+
+    //! Initializes CUDA resources that are shared between streams
+    void work_init ();
+
+    //! Copies CUDA resources from the copy attribute
+    void copy_init ();
+
+  protected:
+
+    //! stream identifier
+    cudaStream_t stream;
+    
+    //! forward fft plan 
+    cufftHandle plan_fwd;
+    //! backward fft plan
+    cufftHandle plan_bwd;
+
+    //! the backward fft length
+    unsigned bwd_nfft;
+    //! the number of frequency channels produced by filterbank
+    unsigned nchan;
+
+    //! input data in CUDA memory
+    float2* d_in;
+    //! output data in CUDA memory
+    float2* d_out;
+    //! convolution kernel in CUDA memory
+    float2* d_kernel;
+
+    //! real-to-complex trick arrays in CUDA memory
+    float *d_SN, *d_CN;
+        
+    friend class Filterbank;
+    
+    void forward_fft ();
+    void realtr ();
+    void convolve ();
+    void backward_fft ();
+    void retrieve ();
+    
+  public:
+    
+    Stream (unsigned nchan, unsigned bwd_nfft, float* kernel);
+    Stream (const Stream* copy);
+    
+    void queue () ;
+    void run () ;
+    void wait () ;
+  };
+
+}
 
 #endif
