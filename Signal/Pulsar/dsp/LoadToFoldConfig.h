@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.19 $
-   $Date: 2009/10/05 13:24:40 $
+   $Revision: 1.20 $
+   $Date: 2009/11/14 10:46:52 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -60,10 +60,14 @@ namespace dsp {
 
     // use weighted time series
     bool weighted_time_series;
+
     // perform coherent dedispersion
     bool coherent_dedispersion;
     // perform coherent dedispersion while forming the filterbank
     bool simultaneous_filterbank;
+    // use a GPU, via CUDA streams, shared between all threads
+    unsigned cuda_nstream;
+
     // remove inter-channel dispersion delays
     bool interchan_dedispersion;
 

@@ -34,6 +34,9 @@ dsp::LoadToFold::Config::Config ()
   // perform coherent dedispersion while forming the filterbank
   simultaneous_filterbank = false;
 
+  // no CUDA streams by default
+  cuda_nstream = 0;
+
   // remove inter-channel dispersion delays
   interchan_dedispersion = false;
 
