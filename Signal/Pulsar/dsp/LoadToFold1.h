@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.16 $
-   $Date: 2009/10/07 11:37:35 $
+   $Revision: 1.17 $
+   $Date: 2009/11/14 12:21:24 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
 #define __baseband_dsp_LoadToFold1_h
 
 #include "dsp/LoadToFold.h"
+#include "dsp/Filterbank.h"
 
 #include <assert.h>
 
@@ -33,7 +34,6 @@ namespace dsp {
 
   class Operation;
   class Convolution;
-  class Filterbank;
   class SampleDelay;
   class PhaseLockedFilterbank;
 
@@ -141,6 +141,9 @@ namespace dsp {
 
     //! Creates the filterbank
     Reference::To<Filterbank> filterbank;
+
+    //! Optional filterbank engine
+    Reference::To<Filterbank::Engine> filterbank_engine;
 
     //! Performs coherent dedispersion
     Reference::To<Convolution> convolution;
