@@ -8,7 +8,7 @@
 #include "dsp/MemoryCUDA.h"
 #include <cuda_runtime.h>
 
-void* CUDA::Memory::allocate (unsigned nbytes)
+void* CUDA::Memory::do_allocate (unsigned nbytes)
 {
   // cerr << "CUDA::Memory::allocate cudaMallocHost (" << nbytes << ")" << endl;
   void* ptr = 0;
@@ -16,7 +16,7 @@ void* CUDA::Memory::allocate (unsigned nbytes)
   return ptr;
 }
 
-void CUDA::Memory::free (void* ptr)
+void CUDA::Memory::do_free (void* ptr)
 {
   // cerr << "CUDA::Memory::free cudaFreeHost (" << ptr << ")" << endl;
   cudaFreeHost (ptr);
