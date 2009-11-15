@@ -6,11 +6,15 @@
  ***************************************************************************/
 
 #include "dsp/MemoryCUDA.h"
+
 #include <cuda_runtime.h>
+
+#include <iostream>
+using namespace std;
 
 void* CUDA::Memory::do_allocate (unsigned nbytes)
 {
-  // cerr << "CUDA::Memory::allocate cudaMallocHost (" << nbytes << ")" << endl;
+  cerr << "CUDA::Memory::allocate cudaMallocHost (" << nbytes << ")" << endl;
   void* ptr = 0;
   cudaMallocHost (&ptr, nbytes);
   return ptr;
@@ -18,6 +22,6 @@ void* CUDA::Memory::do_allocate (unsigned nbytes)
 
 void CUDA::Memory::do_free (void* ptr)
 {
-  // cerr << "CUDA::Memory::free cudaFreeHost (" << ptr << ")" << endl;
+  cerr << "CUDA::Memory::free cudaFreeHost (" << ptr << ")" << endl;
   cudaFreeHost (ptr);
 }

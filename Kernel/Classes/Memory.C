@@ -7,19 +7,21 @@
 
 #include "dsp/Memory.h"
 #include "malloc16.h"
+#include "debug.h"
+
 #include <assert.h>
 
 dsp::Memory* dsp::Memory::manager = new dsp::Memory;
 
 void* dsp::Memory::do_allocate (unsigned nbytes)
 {
-  // cerr << "dsp::Memory::allocate malloc16 (" << nbytes << ")" << endl;
+  DEBUG("dsp::Memory::allocate malloc16 (" << nbytes << ")");
   return malloc16 (nbytes);
 }
 
 void dsp::Memory::do_free (void* ptr)
 {
-  // cerr << "dsp::Memory::free free16 (" << ptr << ")" << endl;
+  DEBUG("dsp::Memory::free free16 (" << ptr << ")");
   free16 (ptr);
 }
 
