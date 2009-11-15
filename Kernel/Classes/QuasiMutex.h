@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/Attic/QuasiMutex.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/11/14 10:46:41 $
+   $Revision: 1.2 $
+   $Date: 2009/11/15 00:51:11 $
    $Author: straten $ */
 
 #ifndef __QuasiMutex_h
@@ -61,6 +61,9 @@ public:
  
   //! Launch a job on one of the streams
   Stream* launch (void* job);
+
+  //! Tell the gateway thread to exit
+  void exit ();
   
 protected:
 
@@ -78,7 +81,7 @@ protected:
 
   static void* gateway_thread (void*);
   void gateway ();
-
+  unsigned quit;
 };
 
 class QuasiMutex::Stream : public Reference::Able
