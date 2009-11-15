@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/Attic/QuasiMutex.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/11/15 00:51:11 $
+   $Revision: 1.3 $
+   $Date: 2009/11/15 03:49:08 $
    $Author: straten $ */
 
 #ifndef __QuasiMutex_h
@@ -62,9 +62,10 @@ public:
   //! Launch a job on one of the streams
   Stream* launch (void* job);
 
-  //! Tell the gateway thread to exit
-  void exit ();
-  
+  //! Tell the gateway thread to quit
+  void quit ();
+  void set_must_quit (unsigned threads) { must_quit = threads; }
+
 protected:
 
   //! Run the jobs
@@ -81,7 +82,9 @@ protected:
 
   static void* gateway_thread (void*);
   void gateway ();
-  unsigned quit;
+
+  unsigned must_quit;
+  unsigned have_quit;
 };
 
 class QuasiMutex::Stream : public Reference::Able
