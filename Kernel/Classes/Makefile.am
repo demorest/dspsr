@@ -25,7 +25,7 @@ nobase_include_HEADERS = environ.h ascii_header.h \
 	dsp/infodata.h dsp/PrestoObservation.h			     \
 	dsp/OutputArchive.h dsp/CloneArchive.h dsp/HasInput.h	     \
 	dsp/HasOutput.h dsp/Sink.h dsp/Multiplex.h \
-	QuasiMutex.h dsp/Memory.h
+	QuasiMutex.h dsp/Memory.h debug.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
