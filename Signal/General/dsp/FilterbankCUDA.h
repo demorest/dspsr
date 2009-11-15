@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.3 $
-   $Date: 2009/11/14 18:16:08 $
+   $Revision: 1.4 $
+   $Date: 2009/11/15 00:51:17 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -29,8 +29,8 @@ namespace CUDA
 
   public:
 
-    //! Construct with number of streams
-    Filterbank (unsigned _nstream) { nstream = _nstream; }
+    //! Construct with number of streams and install CUDA::Memory policy
+    Filterbank (unsigned _nstream);
 
     //! Manages stream-specific resources
     class Stream;
@@ -47,7 +47,7 @@ namespace CUDA
   class Filterbank::Stream : public QuasiMutex::Stream
   {
   private:
-    Stream* copy;
+    const Stream* copy;
     float* kernel;
 
     //! Sets some attributes to zero
@@ -83,6 +83,9 @@ namespace CUDA
     float2* d_out;
     //! convolution kernel in CUDA memory
     float2* d_kernel;
+
+    //! pinned memory on host used for asynchronous memcpy to GPU
+    float* pinned;
 
     //! real-to-complex trick arrays in CUDA memory
     float *d_SN, *d_CN;

@@ -8,9 +8,15 @@
  ***************************************************************************/
 
 #include "dsp/FilterbankCUDA.h"
+#include "debug.h"
 
 __global__ void performConvCUDA (float2*, float2*);	
 __global__ void performRealtr (float2*, unsigned, float*, float*);
+
+CUDA::Filterbank::Filterbank (unsigned _nstream)
+{
+  nstream = _nstream;
+}
 
 void CUDA::Filterbank::setup (unsigned nchan, unsigned bwd_nfft, float* kernel) 
 {
@@ -20,8 +26,8 @@ void CUDA::Filterbank::setup (unsigned nchan, unsigned bwd_nfft, float* kernel)
   Stream* str = new Stream (nchan, bwd_nfft, kernel);
   add_stream (str);
 
-  for (unsigned i=0; i<nstream; i++)
-    add_stream ( new Stream (*str) );
+  for (unsigned i=1; i<nstream; i++)
+    add_stream ( new Stream (str) );
 }
 
 CUDA::Filterbank::Stream* CUDA::Filterbank::get_stream (unsigned i)
@@ -52,10 +58,16 @@ void CUDA::Filterbank::run ()
 
 void CUDA::Filterbank::Stream::init ()
 {
+  DEBUG("CUDA::Filterbank::Stream::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
+
   unsigned data_size = nchan * bwd_nfft * 2;
   unsigned mem_size = data_size * sizeof(cufftReal);
 
+  DEBUG("CUDA::Filterbank::Stream::init data_size=" << data_size);
+
   cutilSafeCall( cudaStreamCreate(&stream) );
+
+  cutilSafeCall(cudaMallocHost ((void**)&pinned, mem_size));
 
   cutilSafeCall(cudaMalloc((void**)&d_in, mem_size)); 
 
@@ -64,10 +76,15 @@ void CUDA::Filterbank::Stream::init ()
 
 void CUDA::Filterbank::Stream::zero ()
 {
+  copy = 0;
+
+  nchan = 0;
+  bwd_nfft = 0;
+
   d_in = d_out = d_kernel = 0;
 }
 
-CUDA::Filterbank::Stream::Stream (const CUDA::Filterbank::Stream* copy)
+CUDA::Filterbank::Stream::Stream (const CUDA::Filterbank::Stream* _copy)
 {
   zero ();
 
@@ -77,6 +94,8 @@ CUDA::Filterbank::Stream::Stream (const CUDA::Filterbank::Stream* copy)
 
 void CUDA::Filterbank::Stream::copy_init ()
 {
+  DEBUG("CUDA::Filterbank::Stream::copy_init");
+
   bwd_nfft = copy->bwd_nfft;
   nchan = copy->nchan;
 
@@ -102,6 +121,8 @@ CUDA::Filterbank::Stream::Stream (unsigned _nchan,
 
 void CUDA::Filterbank::Stream::work_init ()
 {
+  DEBUG("CUDA::Filterbank::Stream::work_init");
+
   init ();
 
   unsigned data_size = nchan * bwd_nfft * 2;
@@ -148,6 +169,8 @@ void CUDA::Filterbank::Stream::work_init ()
 
 void CUDA::Filterbank::Stream::queue ()
 {
+  DEBUG("CUDA::Filterbank::Stream::queue");
+
   if (!d_kernel)
   {
     if (copy)
@@ -158,15 +181,29 @@ void CUDA::Filterbank::Stream::queue ()
 
   Job* my_job = static_cast<Job*> (job);
 
+  DEBUG("CUDA::Filterbank::Stream::queue nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
+
   unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
 
-  cutilSafeCall(cudaMemcpyAsync( d_in, my_job->in, mem_size,
+  memcpy (pinned, my_job->in, mem_size);
+
+  DEBUG("CUDA::Filterbank::Stream::queue d_in=" << d_in << " in=" << my_job->in);
+
+  cutilSafeCall(cudaMemcpyAsync( d_in, pinned, mem_size,
 				 cudaMemcpyHostToDevice, stream ));
 }
 
 void CUDA::Filterbank::Stream::wait ()
 {
+  DEBUG("CUDA::Filterbank::Stream::wait call cudaStreamSynchronize");
 
+  cutilSafeCall(cudaStreamSynchronize (stream));
+
+  DEBUG("CUDA::Filterbank::Stream::wait memcpy result from pinned");
+
+  unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
+  Job* my_job = static_cast<Job*>(job);
+  memcpy (my_job->out, pinned, mem_size);
 }
 
 void CUDA::Filterbank::Stream::forward_fft ()
@@ -201,12 +238,10 @@ void CUDA::Filterbank::Stream::backward_fft ()
 
 void CUDA::Filterbank::Stream::retrieve ()
 {
-  Job* my_job = static_cast<Job*>(job);
-
   unsigned data_size = nchan * bwd_nfft * 2;
   unsigned mem_size = data_size * sizeof(cufftReal);
 
-  cutilSafeCall(cudaMemcpyAsync( my_job->out, d_out, mem_size,
+  cutilSafeCall(cudaMemcpyAsync( pinned, d_out, mem_size,
 				 cudaMemcpyDeviceToHost, stream ));
 }
 
