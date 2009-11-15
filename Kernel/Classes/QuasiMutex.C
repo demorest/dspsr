@@ -6,10 +6,20 @@
  ***************************************************************************/
 
 #include "QuasiMutex.h"
+
+//#define _DEBUG
+#include "debug.h"
+
 #include <errno.h>
 
 QuasiMutex::QuasiMutex ()
 {
+  quit = 0;
+
+  DEBUG("QuasiMutex ctor quit=" << quit);
+
+  current_stream = 0;
+
   context = new ThreadContext;
 
   pthread_attr_t pat;
@@ -21,19 +31,31 @@ QuasiMutex::QuasiMutex ()
 
   if (errno != 0)
     throw Error (FailedSys, "BatchQueue::solve", "pthread_create");
-
-  current_stream = 0;
 }
 
 QuasiMutex::~QuasiMutex ()
 {
+  DEBUG("QuasiMutex dtor");
   delete context;
+}
+
+#include <iostream>
+
+void QuasiMutex::exit ()
+{
+  std::cerr << "EXIT" << std::endl;
+  DEBUG("QuasiMutex::exit");
+
+  ThreadContext::Lock lock (context);
+  quit ++;
+  context->broadcast ();
 }
 
 void QuasiMutex::add_stream (Stream* s)
 {
   ThreadContext::Lock lock (context);
   stream.push_back (s);
+  s->mutex = this;
   context->signal();
 }
 
@@ -46,28 +68,53 @@ void QuasiMutex::gateway ()
 {
   ThreadContext::Lock lock (context);
 
-  // wait until a stream has been added
+  DEBUG("QUIT FLAG=" << quit);
+
+  DEBUG("QuasiMutex::gateway wait until a stream has been added");
+
   while (stream.size() == 0)
     context->wait ();
 
-  bool quit = false;
-  while (!quit)
+  DEBUG("QuasiMutex::gateway stream added");
+
+  while (stream.size())
   {
-    // wait until the current stream is ready (set by Stream::submit)
-    while (stream[current_stream]->state != Stream::Ready)
+    DEBUG("QuasiMutex::gateway wait until current stream is ready");
+    // (set by Stream::submit)
+
+    while (current_stream + quit < stream.size() 
+           && stream[current_stream]->state != Stream::Ready)
       context->wait ();
 
-    // mark the stream as busy
-    stream[current_stream]->state == Stream::Busy;
-
-    // pure virtual queue method does the cudaMemcpyAsync, for example
-    stream[current_stream]->queue ();
-
-    current_stream ++;
-
-    if (current_stream == stream.size())
+    if (stream[current_stream]->state == Stream::Ready)
     {
+      DEBUG("QuasiMutex::gateway current stream is ready");
+
+      // mark the stream as busy
+      stream[current_stream]->state == Stream::Busy;
+
+      // pure virtual queue method does the cudaMemcpyAsync, for example
+      stream[current_stream]->queue ();
+
+      current_stream ++;
+    }
+
+    DEBUG("QuasiMutex::gateway current=" << current_stream << " size=" << stream.size());
+
+    if (current_stream+quit == stream.size())
+    {
+      if (current_stream < stream.size())
+      {
+        stream.resize (current_stream);
+        quit = 0;
+        if (stream.size() == 0)
+          break;
+      }
+
+      DEBUG("QuasiMutex::gateway launching " << stream.size() << " jobs");
+
       // jobs have been queued up on each stream
+      current_stream = 0;
 
       context->unlock();
 
@@ -82,9 +129,12 @@ void QuasiMutex::gateway ()
 	stream[i]->signal ();
       }
 
+      DEBUG("QuasiMutex::gateway jobs launched");
       context->lock();
     }
   }
+
+  DEBUG("QuasiMutex::gateway exit");
 }
 
 
@@ -93,7 +143,11 @@ void QuasiMutex::gateway ()
 //! Launch a job on one of the streams
 QuasiMutex::Stream* QuasiMutex::launch (void* job)
 {
+  DEBUG("QuasiMutex::launch lock mutex");
+
   ThreadContext::Lock lock (context);
+
+  DEBUG("QuasiMutex::launch mutex locked");
 
   if (stream.size() == 0)
     throw Error (InvalidState, "QuasiMutex::launch",
@@ -103,6 +157,8 @@ QuasiMutex::Stream* QuasiMutex::launch (void* job)
 
   // wait for the stream to be idle
   cur_stream->join ();
+
+  DEBUG("QuasiMutex::launch current stream joined");
 
   // submit the job, waking up the gateway thread
   cur_stream->submit (job);
@@ -134,27 +190,36 @@ QuasiMutex::Stream::~Stream ()
 void QuasiMutex::Stream::submit (void* _job)
 {
   if (!mutex)
-    throw Error (InvalidState, "QuasiMutex::Stream::submit");
+    throw Error (InvalidState, "QuasiMutex::Stream::submit",
+                 "parent QuasiMutex not set");
 
   job = _job;
   state = Ready;
 
   // wake up the gateway thread
-  ThreadContext::Lock lock (mutex->context);
-  mutex->context->signal();
+  mutex->context->broadcast ();
 }
 
 void QuasiMutex::Stream::signal ()
 {
+  DEBUG("QuasiMutex::Stream::signal lock mutex");
   ThreadContext::Lock lock (context);
   state = Idle;
+
+  DEBUG("QuasiMutex::Stream::signal signal");
   context->signal();
+
+  DEBUG("QuasiMutex::Stream::signal return");
 }
 
   
 void QuasiMutex::Stream::join ()
 {
+  DEBUG("QuasiMutex::Stream::join lock mutex");
   ThreadContext::Lock lock (context);
+  DEBUG("QuasiMutex::Stream::join wait");
   while (state != Idle)
     context->wait();
+  DEBUG("QuasiMutex::Stream::join return");
 };
+
