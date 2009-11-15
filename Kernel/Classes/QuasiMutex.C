@@ -14,9 +14,8 @@
 
 QuasiMutex::QuasiMutex ()
 {
-  quit = 0;
-
-  DEBUG("QuasiMutex ctor quit=" << quit);
+  have_quit = 0;
+  must_quit = 0;
 
   current_stream = 0;
 
@@ -41,13 +40,15 @@ QuasiMutex::~QuasiMutex ()
 
 #include <iostream>
 
-void QuasiMutex::exit ()
+void QuasiMutex::quit ()
 {
-  std::cerr << "EXIT" << std::endl;
-  DEBUG("QuasiMutex::exit");
+  DEBUG("QuasiMutex::quit lock mutex");
 
   ThreadContext::Lock lock (context);
-  quit ++;
+
+  have_quit ++;
+  DEBUG("QuasiMutex::quit have_quit=" << have_quit);
+
   context->broadcast ();
 }
 
@@ -62,13 +63,12 @@ void QuasiMutex::add_stream (Stream* s)
 void* QuasiMutex::gateway_thread (void* thiz)
 {
   static_cast<QuasiMutex*>(thiz)->gateway();
+  return 0;
 }
 
 void QuasiMutex::gateway ()
 {
   ThreadContext::Lock lock (context);
-
-  DEBUG("QUIT FLAG=" << quit);
 
   DEBUG("QuasiMutex::gateway wait until a stream has been added");
 
@@ -82,16 +82,24 @@ void QuasiMutex::gateway ()
     DEBUG("QuasiMutex::gateway wait until current stream is ready");
     // (set by Stream::submit)
 
-    while (current_stream + quit < stream.size() 
-           && stream[current_stream]->state != Stream::Ready)
+    while (stream.size() && stream[current_stream]->state != Stream::Ready)
+    {
       context->wait ();
+
+      unsigned remaining = must_quit - have_quit;
+      if (remaining < stream.size())
+	stream.resize (remaining);
+    }
+
+    if (!stream.size())
+      return;
 
     if (stream[current_stream]->state == Stream::Ready)
     {
       DEBUG("QuasiMutex::gateway current stream is ready");
 
       // mark the stream as busy
-      stream[current_stream]->state == Stream::Busy;
+      stream[current_stream]->state = Stream::Busy;
 
       // pure virtual queue method does the cudaMemcpyAsync, for example
       stream[current_stream]->queue ();
@@ -99,18 +107,10 @@ void QuasiMutex::gateway ()
       current_stream ++;
     }
 
-    DEBUG("QuasiMutex::gateway current=" << current_stream << " size=" << stream.size());
+    DEBUG("QuasiMutex::gateway current=" << current_stream << " size=" << stream.size() << " quit=" << have_quit);
 
-    if (current_stream+quit == stream.size())
+    if (current_stream + have_quit == stream.size())
     {
-      if (current_stream < stream.size())
-      {
-        stream.resize (current_stream);
-        quit = 0;
-        if (stream.size() == 0)
-          break;
-      }
-
       DEBUG("QuasiMutex::gateway launching " << stream.size() << " jobs");
 
       // jobs have been queued up on each stream
@@ -134,7 +134,7 @@ void QuasiMutex::gateway ()
     }
   }
 
-  DEBUG("QuasiMutex::gateway exit");
+  DEBUG("QuasiMutex::gateway quit");
 }
 
 
