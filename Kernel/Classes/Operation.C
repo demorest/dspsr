@@ -140,8 +140,12 @@ void dsp::Operation::set_scratch (Scratch* s)
 //! Combine accumulated results with another operation
 void dsp::Operation::combine (const Operation* other)
 {
+  if (this == other)
+    return;
+
   total_weights += other->total_weights;
   discarded_weights += other->discarded_weights;
+
   optime += other->optime;
 }
 
