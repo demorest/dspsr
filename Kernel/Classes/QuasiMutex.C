@@ -10,6 +10,7 @@
 //#define _DEBUG
 #include "debug.h"
 
+#include <iostream>
 #include <errno.h>
 
 QuasiMutex::QuasiMutex ()
@@ -60,9 +61,14 @@ void QuasiMutex::add_stream (Stream* s)
   context->signal();
 }
 
-void* QuasiMutex::gateway_thread (void* thiz)
+void* QuasiMutex::gateway_thread (void* thiz) try
 {
   static_cast<QuasiMutex*>(thiz)->gateway();
+  return 0;
+}
+catch (Error& error)
+{
+  std::cerr << "QuasiMutex::gateway_thread error" << error << std::endl;
   return 0;
 }
 
@@ -109,7 +115,7 @@ void QuasiMutex::gateway ()
 
     DEBUG("QuasiMutex::gateway current=" << current_stream << " size=" << stream.size() << " quit=" << have_quit);
 
-    if (current_stream + have_quit == stream.size())
+    if (current_stream == stream.size())
     {
       DEBUG("QuasiMutex::gateway launching " << stream.size() << " jobs");
 
@@ -131,6 +137,7 @@ void QuasiMutex::gateway ()
 
       DEBUG("QuasiMutex::gateway jobs launched");
       context->lock();
+      context->broadcast();
     }
   }
 
@@ -153,17 +160,15 @@ QuasiMutex::Stream* QuasiMutex::launch (void* job)
     throw Error (InvalidState, "QuasiMutex::launch",
 		 "no streams have been added to the scheduler");
 
-  Stream* cur_stream = stream[current_stream];
+  while (stream[current_stream]->state != Stream::Idle)
+    context->wait ();
 
-  // wait for the stream to be idle
-  cur_stream->join ();
-
-  DEBUG("QuasiMutex::launch current stream joined");
+  DEBUG("QuasiMutex::launch current stream=" << current_stream);
 
   // submit the job, waking up the gateway thread
-  cur_stream->submit (job);
+  stream[current_stream]->submit (job);
 
-  return cur_stream;
+  return stream[current_stream];
 }
 
 void QuasiMutex::run ()
@@ -217,9 +222,11 @@ void QuasiMutex::Stream::join ()
 {
   DEBUG("QuasiMutex::Stream::join lock mutex");
   ThreadContext::Lock lock (context);
+
   DEBUG("QuasiMutex::Stream::join wait");
   while (state != Idle)
     context->wait();
+
   DEBUG("QuasiMutex::Stream::join return");
 };
 
