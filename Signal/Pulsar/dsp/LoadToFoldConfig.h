@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.20 $
-   $Date: 2009/11/14 10:46:52 $
+   $Revision: 1.21 $
+   $Date: 2009/11/16 05:16:20 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -65,7 +65,11 @@ namespace dsp {
     bool coherent_dedispersion;
     // perform coherent dedispersion while forming the filterbank
     bool simultaneous_filterbank;
-    // use a GPU, via CUDA streams, shared between all threads
+
+    // number of CUDA devices available for computation
+    unsigned cuda_ndevice;
+
+    // number of CUDA streams per device
     unsigned cuda_nstream;
 
     // remove inter-channel dispersion delays
