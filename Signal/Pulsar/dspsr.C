@@ -322,8 +322,11 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (fft_lib, 'Z', "lib");
   arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
-  arg = menu.add (config->cuda_nstream, "cuda", "nstream");
-  arg->set_help ("set the number of CUDA streams");
+  arg = menu.add (config->cuda_ndevice, "cuda", "ndevice");
+  arg->set_help ("set the number of CUDA devices to use");
+
+  arg = menu.add (config->cuda_nstream, "stream", "nstream");
+  arg->set_help ("set the number of CUDA streams per device");
 
   /* ***********************************************************************
 
@@ -427,6 +430,8 @@ void parse_options (int argc, char** argv) try
   *********************************************************************** */
 
   menu.add ("\n" "Debugging options:");
+
+  dsp::Operation::report_time = false;
 
   arg = menu.add (dsp::Operation::record_time, 'r');
   arg->set_help ("report time spent performing each operation");
