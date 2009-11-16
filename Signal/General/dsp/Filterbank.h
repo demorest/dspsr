@@ -7,16 +7,14 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.15 $
-   $Date: 2009/11/14 10:46:46 $
+   $Revision: 1.16 $
+   $Date: 2009/11/16 05:16:10 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
 #define __Filterbank_h
 
 #include "dsp/Convolution.h"
-
-#include "QuasiMutex.h"
 
 namespace dsp {
   
@@ -107,18 +105,11 @@ namespace dsp {
     unsigned nsamp_tres;
   };
  
-  class Filterbank::Engine : public QuasiMutex
+  class Filterbank::Engine : public Reference::Able
   {
-    public:
-      virtual void setup (unsigned nchan, unsigned bwd_nfft, float* kernel) = 0;
-      void perform (const float* in, float* out);
-
-    class Job {
-    public:
-      const float* in;
-      float* out;
-    };
-
+  public:
+    virtual void setup (unsigned nchan, unsigned bwd_nfft, float* kernel) = 0;
+    virtual void perform (const float* in, float* out) = 0;
   }; 
 }
 

@@ -370,15 +370,6 @@ void dsp::Filterbank::reserve ()
   prepare_output (output_ndat);
 }
 
-void dsp::Filterbank::Engine::perform (const float* in, float* out)
-{
-  Job job;
-  job.in = in;
-  job.out = out;
-
-  launch(&job)->join();
-}
-
 void dsp::Filterbank::transformation ()
 {
   if (verbose)
