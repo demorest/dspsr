@@ -322,11 +322,13 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (fft_lib, 'Z', "lib");
   arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
+#if HAVE_CUDA
   arg = menu.add (config->cuda_ndevice, "cuda", "ndevice");
   arg->set_help ("set the number of CUDA devices to use");
 
   arg = menu.add (config->cuda_nstream, "stream", "nstream");
   arg->set_help ("set the number of CUDA streams per device");
+#endif
 
   /* ***********************************************************************
 
