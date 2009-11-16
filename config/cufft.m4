@@ -25,7 +25,7 @@ AC_DEFUN([SWIN_LIB_CUFFT],
 
   AC_SUBST(CUFFT_LIBS)
   AC_SUBST(CUFFT_CFLAGS)
-  AM_CONDITIONAL(HAVE_CUFFT,[test x"$have_cufft" != xno])
+  AM_CONDITIONAL(HAVE_CUFFT,[test x"$with_cufft" = xyes])
 
 ])
 
