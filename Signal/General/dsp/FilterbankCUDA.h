@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/11/15 00:51:17 $
+   $Revision: 1.5 $
+   $Date: 2009/11/16 05:16:14 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -22,45 +22,38 @@
 
 namespace CUDA
 {
+  class elapsed
+  {
+  public:
+    elapsed ();
+    void wrt (cudaEvent_t before);
+
+    double total;
+    cudaEvent_t after;
+  };
+
   //! Discrete convolution filterbank step implemented using CUDA streams
-  class Filterbank : public dsp::Filterbank::Engine
+  class Engine : public dsp::Filterbank::Engine
   {
     unsigned nstream;
 
   public:
 
     //! Construct with number of streams and install CUDA::Memory policy
-    Filterbank (unsigned _nstream);
-
-    //! Manages stream-specific resources
-    class Stream;
+    Engine (int device = 0);
+    ~Engine ();
 
     //! Adds the streams
     void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
+    void perform (const float* in, float* out);
 
-    //! Starts the data reduction steps for all streams
-    void run ();
-
-    Stream* get_stream (unsigned i);
-  };
-
-  class Filterbank::Stream : public QuasiMutex::Stream
-  {
   private:
-    const Stream* copy;
-    float* kernel;
 
-    //! Sets some attributes to zero
-    void zero ();
+    float* kernel;
+    int device;
 
     //! Initializes CUDA stream-specific resources
     void init ();
-
-    //! Initializes CUDA resources that are shared between streams
-    void work_init ();
-
-    //! Copies CUDA resources from the copy attribute
-    void copy_init ();
 
   protected:
 
@@ -77,10 +70,8 @@ namespace CUDA
     //! the number of frequency channels produced by filterbank
     unsigned nchan;
 
-    //! input data in CUDA memory
-    float2* d_in;
-    //! output data in CUDA memory
-    float2* d_out;
+    //! inplace FFT in CUDA memory
+    float2* d_fft;
     //! convolution kernel in CUDA memory
     float2* d_kernel;
 
@@ -89,23 +80,23 @@ namespace CUDA
 
     //! real-to-complex trick arrays in CUDA memory
     float *d_SN, *d_CN;
-        
-    friend class Filterbank;
-    
-    void forward_fft ();
-    void realtr ();
-    void convolve ();
-    void backward_fft ();
-    void retrieve ();
-    
-  public:
-    
-    Stream (unsigned nchan, unsigned bwd_nfft, float* kernel);
-    Stream (const Stream* copy);
-    
-    void queue () ;
-    void run () ;
-    void wait () ;
+
+  private:
+
+    cudaEvent_t start;
+
+    class Timers
+    {
+    public:
+      elapsed copy_to;
+      elapsed fwd;    
+      elapsed realtr; 
+      elapsed conv;   
+      elapsed bwd;    
+      elapsed copy_from;
+    };
+
+    Timers* timers;
   };
 
 }
