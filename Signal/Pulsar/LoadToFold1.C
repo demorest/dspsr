@@ -5,6 +5,10 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/LoadToFold1.h"
 #include "dsp/LoadToFoldConfig.h"
 
@@ -22,6 +26,11 @@
 #include "dsp/PolnCalibration.h"
 
 #include "dsp/Filterbank.h"
+
+#if HAVE_CUFFT
+#include "dsp/FilterbankCUDA.h"
+#endif
+
 #include "dsp/SampleDelay.h"
 #include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/Detection.h"
@@ -52,7 +61,7 @@ dsp::LoadToFold1::LoadToFold1 ()
   log = 0;
   minimum_samples = 0;
   status = 0;
-  id = 0;
+  thread_id = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -131,7 +140,7 @@ void dsp::LoadToFold1::prepare () try
     return;
   }
 
-  bool report_vitals = id==0 && config->report_vitals;
+  bool report_vitals = thread_id==0 && config->report_vitals;
 
   if (manager->get_info()->get_type() != Signal::Pulsar)
   {
@@ -252,6 +261,16 @@ void dsp::LoadToFold1::prepare () try
 
     if (config->nfft)
       filterbank->set_frequency_resolution (config->nfft);
+
+#if HAVE_CUFFT
+    if (thread_id < config->cuda_ndevice * config->cuda_nstream)
+    {
+      int device = thread_id % config->cuda_ndevice;
+      cerr << "dspsr: thread " << thread_id 
+	   << " using CUDA device " << device << endl;
+      filterbank->set_engine (new CUDA::Engine(device));
+    }
+#endif
 
     operations.push_back (filterbank.get());
   }
@@ -491,7 +510,7 @@ void dsp::LoadToFold1::prepare_final ()
 
   minimum_samples = 0;
 
-  bool report_vitals = id==0 && config->report_vitals;
+  bool report_vitals = thread_id==0 && config->report_vitals;
 
   if (kernel && report_vitals)
     cerr << "dspsr: dedispersion filter length=" << kernel->get_ndat ()
@@ -913,7 +932,7 @@ void dsp::LoadToFold1::run () try
     
     block++;
     
-    if (id==0 && config->report_done) 
+    if (thread_id==0 && config->report_done) 
     {
       double seconds = input->tell_seconds();
       int64_t decisecond = int64_t( seconds * 10 );
@@ -934,7 +953,7 @@ void dsp::LoadToFold1::run () try
   }
 
   if (Operation::verbose)
-    cerr << "dsp::LoadToFold1::run end of data id=" << id << endl;
+    cerr << "dsp::LoadToFold1::run end of data id=" << thread_id << endl;
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
     fold[ifold]->finish();
