@@ -26,6 +26,19 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C \
 	PolnCalibration.C Dump.C
 
+if HAVE_CUFFT
+
+nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/MemoryCUDA.h
+libdspdsp_la_SOURCES += MemoryCUDA.C FilterbankCUDA.cu
+
+libdspdsp_la_LIBADD = FilterbankCUDA.lo 
+
+FilterbankCUDA.lo : FilterbankCUDA.cu
+	/opt/local/cuda/bin/nvcc -c -I/lfs/data0/bbarsdel/g2x/NVIDIA_CUDA_SDK/common/inc -I../../local_include `psrchive --cflags` FilterbankCUDA.cu
+	sed -e 's/Filterbank/FilterbankCUDA/' Filterbank.lo > FilterbankCUDA.lo 
+
+endif
+
 bin_PROGRAMS = dmsmear digitxt digimon digihist
 
 dmsmear_SOURCES = dmsmear.C 
@@ -87,9 +100,10 @@ endif
 
 include $(top_srcdir)/config/Makefile.include
 
-LDADD = libdspdsp.la $(top_builddir)/Kernel/libdspbase.la @PGPLOT_LIBS@
+LDADD = libdspdsp.la $(top_builddir)/Kernel/libdspbase.la \
+	@PGPLOT_LIBS@ @CUFFT_LIBS@
 
-AM_CPPFLAGS += @PGPLOT_CFLAGS@
+AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@
 AM_CXXFLAGS = @OPENMP_CFLAGS@
 
 
