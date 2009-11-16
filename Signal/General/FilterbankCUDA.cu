@@ -7,137 +7,102 @@
  *
  ***************************************************************************/
 
+#define _RECORD_EVENTS
+
 #include "dsp/FilterbankCUDA.h"
+
+//#define _DEBUG
 #include "debug.h"
 
-__global__ void performConvCUDA (float2*, float2*);	
-__global__ void performRealtr (float2*, unsigned, float*, float*);
+#ifdef _RECORD_EVENTS
+#include <iostream>
+using namespace std;
+#endif
 
-CUDA::Filterbank::Filterbank (unsigned _nstream)
+CUDA::elapsed::elapsed ()
 {
-  nstream = _nstream;
+  cudaEventCreate (&after);
+  total = 0;
 }
 
-void CUDA::Filterbank::setup (unsigned nchan, unsigned bwd_nfft, float* kernel) 
+void CUDA::elapsed::wrt (cudaEvent_t before)
 {
-  if (stream.size() == nstream)
-    return;
-
-  Stream* str = new Stream (nchan, bwd_nfft, kernel);
-  add_stream (str);
-
-  for (unsigned i=1; i<nstream; i++)
-    add_stream ( new Stream (str) );
+  float time;
+  cudaEventSynchronize (after);
+  cutilSafeCall( cudaEventElapsedTime (&time, before, after) );
+  total += time;
 }
 
-CUDA::Filterbank::Stream* CUDA::Filterbank::get_stream (unsigned i)
+CUDA::Engine::Engine (int _device)
 {
-  return dynamic_cast<Stream*>( stream[i].get() );
-}
+  device = _device;
 
-void CUDA::Filterbank::run ()
-{
-  if (stream.size() == 0)
-    throw Error (InvalidState, "CUDA::Filterbank::run", "no streams");
-
-  for (unsigned i=0; i<stream.size(); i++)
-    get_stream(i)->forward_fft ();
-
-  for (unsigned i=0; i<stream.size(); i++)
-    get_stream(i)->realtr ();
-
-  for (unsigned i=0; i<stream.size(); i++)
-    get_stream(i)->convolve ();
-
-  for (unsigned i=0; i<stream.size(); i++)
-    get_stream(i)->backward_fft ();
-
-  for (unsigned i=0; i<stream.size(); i++)
-    get_stream(i)->retrieve ();
-}
-
-void CUDA::Filterbank::Stream::init ()
-{
-  DEBUG("CUDA::Filterbank::Stream::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
-
-  unsigned data_size = nchan * bwd_nfft * 2;
-  unsigned mem_size = data_size * sizeof(cufftReal);
-
-  DEBUG("CUDA::Filterbank::Stream::init data_size=" << data_size);
-
-  cutilSafeCall( cudaStreamCreate(&stream) );
-
-  cutilSafeCall(cudaMallocHost ((void**)&pinned, mem_size));
-
-  cutilSafeCall(cudaMalloc((void**)&d_in, mem_size)); 
-
-  cutilSafeCall(cudaMalloc((void**)&d_out, mem_size + 2*sizeof(cufftReal)));
-}
-
-void CUDA::Filterbank::Stream::zero ()
-{
-  copy = 0;
+  timers = 0;
 
   nchan = 0;
   bwd_nfft = 0;
 
-  d_in = d_out = d_kernel = 0;
+  d_fft = d_kernel = 0;
 }
 
-CUDA::Filterbank::Stream::Stream (const CUDA::Filterbank::Stream* _copy)
+CUDA::Engine::~Engine ()
 {
-  zero ();
-
-  copy = _copy;
-  kernel = 0;
+#ifdef _RECORD_EVENTS
+  cerr << "******************************************************" << endl;
+  cerr << "memcpy to device: " << timers->copy_to.total << " ms" << endl;
+  cerr << "forward FFT: " << timers->fwd.total << " ms" << endl;
+  cerr << "realtr: " << timers->realtr.total << " ms" << endl;
+  cerr << "conv: " << timers->conv.total << " ms" << endl;
+  cerr << "backward FFT: " << timers->bwd.total << " ms" << endl;
+  cerr << "memcpy from device: " << timers->copy_from.total << " ms" << endl;
+  cerr << endl;
+#endif
 }
 
-void CUDA::Filterbank::Stream::copy_init ()
+void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel) 
 {
-  DEBUG("CUDA::Filterbank::Stream::copy_init");
-
-  bwd_nfft = copy->bwd_nfft;
-  nchan = copy->nchan;
-
-  init ();
-
-  plan_fwd = copy->plan_fwd;
-  plan_bwd = copy->plan_bwd;
-  d_kernel = copy->d_kernel;
-  d_SN = copy->d_SN;
-  d_CN = copy->d_CN;
-}
-
-CUDA::Filterbank::Stream::Stream (unsigned _nchan,
-                                unsigned _bwd_nfft, 
-			        float* _kernel)
-{
-  zero ();
-
   bwd_nfft = _bwd_nfft;
   nchan = _nchan;
   kernel = _kernel;
 }
 
-void CUDA::Filterbank::Stream::work_init ()
+void CUDA::Engine::init ()
 {
-  DEBUG("CUDA::Filterbank::Stream::work_init");
+  int ndevice = 0;
+  cutilSafeCall( cudaGetDeviceCount(&ndevice) );
 
-  init ();
+  if (device >= ndevice)
+    throw Error (InvalidParam, "CUDA::Engine::init",
+		 "device=%d >= ndevice=%d", device, ndevice);
+
+  cutilSafeCall( cudaSetDevice(device) );
+
+  DEBUG("CUDA::Engine::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
 
   unsigned data_size = nchan * bwd_nfft * 2;
   unsigned mem_size = data_size * sizeof(cufftReal);
 
-  // allocate space for the convolution kernel
-  cutilSafeCall(cudaMalloc((void**)&d_kernel, mem_size));
- 
-  // copy the kernel accross
-  cutilSafeCall(cudaMemcpy(d_kernel,kernel,mem_size,cudaMemcpyHostToDevice));
+  DEBUG("CUDA::Engine::init data_size=" << data_size);
+
+  cutilSafeCall( cudaStreamCreate(&stream) );
+
+  cutilSafeCall( cudaMallocHost((void**)&pinned, mem_size) );
+
+  cutilSafeCall( cudaMalloc((void**)&d_fft, mem_size + 2*sizeof(cufftReal)) );
 
   // one forward big FFT
-  cufftSafeCall(cufftPlan1d(&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1));
+  cufftSafeCall( cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1) );
+  cufftSafeCall( cufftSetStream (plan_fwd, stream) );
+
   // nchan backward little FFTs
-  cufftSafeCall(cufftPlan1d(&plan_bwd, bwd_nfft, CUFFT_C2C, nchan));
+  cufftSafeCall( cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan) );
+  cufftSafeCall( cufftSetStream (plan_bwd, stream) );
+
+  // allocate space for the convolution kernel
+  cutilSafeCall( cudaMalloc((void**)&d_kernel, mem_size) );
+ 
+  // copy the kernel accross
+  cutilSafeCall( cudaMemcpy(d_kernel,kernel,mem_size,cudaMemcpyHostToDevice) );
 
   unsigned n_half = nchan * bwd_nfft / 2 + 1;
   unsigned n_half_size = n_half * sizeof(cufftReal);
@@ -160,99 +125,22 @@ void CUDA::Filterbank::Stream::work_init ()
     SN[j]=(SD*CN[j-1]-CD*SN[j-1])+SN[j-1];
   }
 
-  cutilSafeCall(cudaMalloc((void**)&d_CN, n_half_size));
-  cutilSafeCall(cudaMalloc((void**)&d_SN, n_half_size));
+  cutilSafeCall( cudaMalloc((void**)&d_CN, n_half_size) );
+  cutilSafeCall( cudaMalloc((void**)&d_SN, n_half_size) );
 
-  cutilSafeCall(cudaMemcpy(d_CN,&(CN[0]),n_half_size,cudaMemcpyHostToDevice));
-  cutilSafeCall(cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice));
-}
+  cutilSafeCall( cudaMemcpy(d_CN,&(CN[0]),n_half_size,cudaMemcpyHostToDevice));
+  cutilSafeCall( cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice));
 
-void CUDA::Filterbank::Stream::queue ()
-{
-  DEBUG("CUDA::Filterbank::Stream::queue");
+#ifdef _RECORD_EVENTS
+  cudaEventCreate (&start);
+  timers = new Timers;
+#endif
 
-  if (!d_kernel)
-  {
-    if (copy)
-      copy_init ();
-    else
-      work_init ();
-  }
-
-  Job* my_job = static_cast<Job*> (job);
-
-  DEBUG("CUDA::Filterbank::Stream::queue nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
-
-  unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
-
-  memcpy (pinned, my_job->in, mem_size);
-
-  DEBUG("CUDA::Filterbank::Stream::queue d_in=" << d_in << " in=" << my_job->in);
-
-  cutilSafeCall(cudaMemcpyAsync( d_in, pinned, mem_size,
-				 cudaMemcpyHostToDevice, stream ));
-}
-
-void CUDA::Filterbank::Stream::wait ()
-{
-  DEBUG("CUDA::Filterbank::Stream::wait call cudaStreamSynchronize");
-
-  cutilSafeCall(cudaStreamSynchronize (stream));
-
-  DEBUG("CUDA::Filterbank::Stream::wait memcpy result from pinned");
-
-  unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
-  Job* my_job = static_cast<Job*>(job);
-  memcpy (my_job->out, pinned, mem_size);
-}
-
-void CUDA::Filterbank::Stream::forward_fft ()
-{
-  cufftSetStream (plan_fwd, stream);
-  cufftSafeCall(cufftExecC2C(plan_fwd, d_in, d_out,CUFFT_FORWARD));
-}
-
-void CUDA::Filterbank::Stream::realtr ()
-{
-  int Blks = 256;
-  unsigned data_size = nchan * bwd_nfft;
-  int realtrThread = data_size / (Blks*2);
-
-  performRealtr<<<realtrThread+1,Blks,0,stream>>>(d_out,data_size,d_SN,d_CN);
-}
-
-void CUDA::Filterbank::Stream::convolve ()
-{
-  int Blks = 256;
-  unsigned data_size = nchan * bwd_nfft;
-  int BlkThread = data_size / Blks;
-
-  performConvCUDA<<<BlkThread,Blks,0,stream>>>(d_out,d_kernel);
-}
-
-void CUDA::Filterbank::Stream::backward_fft ()
-{
-  cufftSetStream (plan_bwd, stream);
-  cufftSafeCall(cufftExecC2C(plan_bwd, d_out, d_out, CUFFT_INVERSE));
-}
-
-void CUDA::Filterbank::Stream::retrieve ()
-{
-  unsigned data_size = nchan * bwd_nfft * 2;
-  unsigned mem_size = data_size * sizeof(cufftReal);
-
-  cutilSafeCall(cudaMemcpyAsync( pinned, d_out, mem_size,
-				 cudaMemcpyDeviceToHost, stream ));
-}
-
-void CUDA::Filterbank::Stream::run ()
-{
-  throw Error (InvalidState, "CUDA::Filterbank::Stream::run",
-	       "should not be called directly");
 }
 
 
-__global__ void performRealtr (float2* d_out, unsigned bwd_nfft,
+
+__global__ void performRealtr (float2* d_fft, unsigned bwd_nfft,
 			       float* k_SN, float* k_CN)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -266,33 +154,105 @@ __global__ void performRealtr (float2* d_out, unsigned bwd_nfft,
   //fprintf(stderr,"k : %d\n", k);
  
   
-  real_aa=d_out[i].x+d_out[k].x;
-  real_ab=d_out[k].x-d_out[i].x;
+  real_aa=d_fft[i].x+d_fft[k].x;
+  real_ab=d_fft[k].x-d_fft[i].x;
   
-  imag_ba=d_out[i].y+d_out[k].y;
-  imag_bb=d_out[k].y-d_out[i].y;
+  imag_ba=d_fft[i].y+d_fft[k].y;
+  imag_bb=d_fft[k].y-d_fft[i].y;
 
   temp_real=k_CN[i]*imag_ba+k_SN[i]*real_ab;
   temp_imag=k_SN[i]*imag_ba-k_CN[i]*real_ab;
 
-  d_out[k].y = (-1)*(temp_imag-imag_bb)/2;
-  d_out[i].y = (-1)*(temp_imag+imag_bb)/2;
+  d_fft[k].y = -0.5*(temp_imag-imag_bb);
+  d_fft[i].y = -0.5*(temp_imag+imag_bb);
 
-  d_out[k].x = (real_aa-temp_real)/2;
-  d_out[i].x = (real_aa+temp_real)/2;
-  
-  // d_out[i].x = 0;
-  //d_out[k].x = 0;
-  //d_out[i].y = 0;
-  //d_out[k].y = 0;
-
+  d_fft[k].x = 0.5*(real_aa-temp_real);
+  d_fft[i].x = 0.5*(real_aa+temp_real);
 }
 
-__global__ void performConvCUDA (float2* d_out,float2* kernel_data)
+__global__ void performConvCUDA (float2* d_fft, float2* kernel)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-  float x = d_out[i].x * kernel_data[i].x - d_out[i].y * kernel_data[i].y;
-  d_out[i].y = d_out[i].x * kernel_data[i].y + d_out[i].y * kernel_data[i].x;
-  d_out[i].x = x;
+  float x = d_fft[i].x * kernel[i].x - d_fft[i].y * kernel[i].y;
+  d_fft[i].y = d_fft[i].x * kernel[i].y + d_fft[i].y * kernel[i].x;
+  d_fft[i].x = x;
+}
+
+void CUDA::Engine::perform (const float* in, float* out)
+{
+  if (!d_kernel)
+    init ();
+
+  unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
+
+  memcpy (pinned, in, mem_size);
+
+  DEBUG("CUDA::Engine::perform d_fft=" << d_fft << " in=" << in);
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (start, stream);
+#endif
+
+  cutilSafeCall(cudaMemcpyAsync( d_fft, pinned, mem_size,
+				 cudaMemcpyHostToDevice, stream ));
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (timers->copy_to.after, stream);
+#endif
+
+  cufftSafeCall (cufftExecC2C(plan_fwd, d_fft, d_fft, CUFFT_FORWARD));
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (timers->fwd.after, stream);
+#endif
+
+  int Blks = 256;
+  unsigned data_size = nchan * bwd_nfft;
+  int realtrThread = data_size / (Blks*2);
+
+  performRealtr<<<realtrThread,Blks,0,stream>>>(d_fft,data_size,d_SN,d_CN);
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (timers->realtr.after, stream);
+#endif
+
+  int BlkThread = data_size / Blks;
+
+  performConvCUDA<<<BlkThread,Blks,0,stream>>>(d_fft,d_kernel);
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (timers->conv.after, stream);
+#endif
+
+  cufftSafeCall(cufftExecC2C(plan_bwd, d_fft, d_fft, CUFFT_INVERSE));
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (timers->bwd.after, stream);
+#endif
+
+  cutilSafeCall(cudaMemcpyAsync( pinned, d_fft, mem_size,
+				 cudaMemcpyDeviceToHost, stream ));
+
+#ifdef _RECORD_EVENTS
+  cudaEventRecord (timers->copy_from.after, stream);
+#endif
+
+  DEBUG("CUDA::Engine::wait call cudaStreamSynchronize");
+
+  cutilSafeCall(cudaStreamSynchronize (stream));
+
+#ifdef _RECORD_EVENTS
+  cudaEventSynchronize (start);
+  timers->copy_to.wrt (start);
+  timers->fwd.wrt (timers->copy_to.after);
+  timers->realtr.wrt (timers->fwd.after);
+  timers->conv.wrt (timers->realtr.after);
+  timers->bwd.wrt (timers->conv.after);
+  timers->copy_from.wrt (timers->bwd.after);
+#endif
+
+  DEBUG("CUDA::Engine::wait memcpy result from pinned");
+
+  memcpy (out, pinned, mem_size);
 }
