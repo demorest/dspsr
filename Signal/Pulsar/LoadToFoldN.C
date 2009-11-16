@@ -15,7 +15,6 @@
 #include "dsp/Fold.h"
 #include "dsp/SubFold.h"
 #include "dsp/UnloaderShare.h"
-
 #include "FTransformAgent.h"
 #include "ThreadContext.h"
 
@@ -163,19 +162,13 @@ void dsp::LoadToFoldN::prepare ()
     //
     // only the first thread prints updates
     //
-    threads[i]->id = i;
+    threads[i]->thread_id = i;
 
     //
     // only the first thread must manage archival
     //
     if (subints)
       threads[i]->manage_archiver = false;
-
-    //
-    // copy the filterbank engine, a shared resource
-    //
-    if (threads[0]->filterbank_engine)
-      threads[i]->filterbank_engine = threads[0]->filterbank_engine;
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFoldN::prepare preparing thread " << i << endl;
