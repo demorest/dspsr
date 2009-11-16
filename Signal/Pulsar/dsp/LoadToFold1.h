@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/11/14 12:21:24 $
+   $Revision: 1.18 $
+   $Date: 2009/11/16 05:16:29 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -86,7 +86,7 @@ namespace dsp {
     //! Take and manage a new ostream instance
     void take_ostream (std::ostream* newlog);
 
-    unsigned id;
+    unsigned thread_id;
 
   protected:
 
