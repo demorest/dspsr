@@ -5,6 +5,10 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/dsp.h"
 #include "dsp/File.h"
 #include "dsp/MultiFile.h"
@@ -322,7 +326,7 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (fft_lib, 'Z', "lib");
   arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
-#if HAVE_CUDA
+#if HAVE_CUFFT
   arg = menu.add (config->cuda_ndevice, "cuda", "ndevice");
   arg->set_help ("set the number of CUDA devices to use");
 
