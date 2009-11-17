@@ -40,7 +40,7 @@
 
 using namespace std;
 
-bool dsp::Archiver::verbose = false;
+unsigned dsp::Archiver::verbose = 1;
 
 dsp::Archiver::Archiver ()
 {
@@ -131,7 +131,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     throw Error (InvalidState, "dsp::Archiver::unload",
 		 "Profile data not provided");
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::unload profiles=" << _profiles << endl;
 
   this->profiles = _profiles;
@@ -140,7 +140,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
   uint64_t ndat_total = profiles->get_ndat_total();
   double percent = double(ndat_folded)/double(ndat_total) * 100.0;
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
 	 << ndat_total << " total samples: " << percent << "%" << endl;
 
@@ -153,7 +153,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
       due to different rounding in different thread (an untested assertion).
     */
 
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::unload ignoring incomplete sub-integration \n\t"
 	"expected=" << ndat_expected << " total=" << ndat_total << endl;
 
@@ -184,33 +184,33 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     const OutputArchive* out = profiles->get_extensions()->get<OutputArchive>();
     if (out)
     {
-      if (verbose)
+      if (verbose > 2)
 	cerr << "dsp::Archiver::unload using OutputArchive policy" << endl;
       archive = out->new_Archive();
     }
   }
   catch (Error& error)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::unload using OutputArchive policy failed"
            << error << endl;
   }
 
   if (!archive)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::unload new " << archive_class_name << endl;
     archive = Pulsar::Archive::new_Archive (archive_class_name);
   }
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::unload set Pulsar::Archive" << endl;
 
   set (archive, profiles);
 
   if (script.size()) try
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archive::unload post-processing" << endl;
 
     if (!interpreter)
@@ -221,13 +221,14 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
   }
   catch (Error& error)
   {
-    cerr << "dsp::Archive::unload post-processing "
-	 << archive->get_filename() << " failed:\n"
-	 << error.get_message() << endl;
+    if (verbose)
+      cerr << "dsp::Archive::unload post-processing "
+	   << archive->get_filename() << " failed:\n"
+	   << error.get_message() << endl;
     return;
   }
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::unload archive '"
          << archive->get_filename() << "'" << endl;
     
@@ -255,7 +256,7 @@ catch (Error& error)
 void dsp::Archiver::add (Pulsar::Archive* archive, const PhaseSeries* phase)
 try 
 {
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::add Pulsar::Archive" << endl;
 
   if (!archive)
@@ -309,7 +310,7 @@ unsigned dsp::Archiver::get_npol (const PhaseSeries* phase) const
 
   if ( phase->get_state() == Signal::FourthMoment )
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::get_npol fourth moments" << endl;
 
     if (effective_npol != 14)
@@ -327,7 +328,7 @@ unsigned dsp::Archiver::get_npol (const PhaseSeries* phase) const
 void dsp::Archiver::set (Pulsar::Archive* archive, const PhaseSeries* phase)
 try
 {
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Archive" << endl;
 
   if (!archive)
@@ -343,7 +344,7 @@ try
   const unsigned nbin  = phase->get_nbin();
   const unsigned nsub  = 1;
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
 	 << " npol=" << npol << " nchan=" << nchan 
 	 << " nbin=" << nbin << " fourth=" << fourth_moments << endl;
@@ -355,7 +356,7 @@ try
   
   if (ext)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::Archive FITSHdrExtension" << endl;
 
     // Make sure the start time is aligned with pulse phase zero
@@ -411,7 +412,7 @@ try
 
   archive-> set_scale ( Signal::FluxDensity );
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Archive source=" << phase->get_source()
 	 << "\n  coord=" << phase->get_coordinates()
 	 << "\n  bw=" << phase->get_bandwidth()
@@ -433,7 +434,7 @@ try
   Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
   if (dspR)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::dspReduction extension" << endl;
     set (dspR);
   }
@@ -443,7 +444,7 @@ try
     Pulsar::TwoBitStats* tbc = archive -> getadd<Pulsar::TwoBitStats>();
     if (tbc)
     {
-      if (verbose)
+      if (verbose > 2)
         cerr << "dsp::Archiver::set Pulsar::TwoBitStats extension" << endl;
       set (tbc);
     }
@@ -451,7 +452,7 @@ try
     Pulsar::Passband* pband = archive -> getadd<Pulsar::Passband>();
     if (pband)
     {
-      if (verbose)
+      if (verbose > 2)
         cerr << "dsp::Archiver::set Pulsar::Passband extension" << endl;
       set (pband);
     }
@@ -471,11 +472,11 @@ try
   // set_model must be called after the Integration::MJD has been set
   if( phase->has_folding_predictor() )
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set has predictor" << endl;
     archive-> set_model ( phase->get_folding_predictor(), false );
   }
-  else if (verbose)
+  else if (verbose > 2)
     cerr << "dsp::Archiver::set PhaseSeries has no predictor" << endl;
 
   if (phase->has_pulsar_ephemeris())
@@ -483,7 +484,7 @@ try
 
   archive-> set_filename (get_filename (phase));
 
-  if (verbose) cerr << "dsp::Archiver set archive filename to '"
+  if (verbose > 2) cerr << "dsp::Archiver set archive filename to '"
 		    << archive->get_filename() << "'" << endl;
 }
 catch (Error& error)
@@ -497,7 +498,7 @@ void dsp::Archiver::set (Pulsar::Integration* integration,
 			 unsigned isub, unsigned nsub) 
 try
 {
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Integration" << endl;
 
   const unsigned npol  = phase->get_npol();
@@ -522,7 +523,7 @@ try
 
   integration-> set_folding_period ( phase->get_folding_period () );
 
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set"
          << " epoch=" << integration->get_epoch().printdays(13)
          << " duration=" << integration->get_duration()
@@ -563,7 +564,7 @@ try
 	else
 	  profile = integration->get_Profile (poln, chan);
 
-	if (verbose)
+	if (verbose > 2)
 	  cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
 	       << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
@@ -621,7 +622,7 @@ void dsp::Archiver::set (Pulsar::Profile* profile,
 			 unsigned ichan, unsigned ipol, unsigned idim)
 try
 {
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Profile"
       " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << "\r";
 
@@ -658,7 +659,7 @@ try
     else if (!finite(*from))
     {
       not_finite ++;
-      if (verbose)
+      if (verbose > 2)
         cerr << "non-finite: hit=" << phase->get_hit(ibin) << endl;
     }
     else
@@ -674,7 +675,7 @@ try
 
   if (zeroes)
   {
-    if (verbose)
+    if (verbose > 2)
       warn << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
 	   << " out of " << nbin << " bins with zero hits" << endl;
 

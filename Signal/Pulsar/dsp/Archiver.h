@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.30 $
-   $Date: 2009/06/08 19:45:01 $
+   $Revision: 1.31 $
+   $Date: 2009/11/17 00:27:28 $
    $Author: straten $ */
 
 
@@ -45,7 +45,7 @@ namespace dsp
   public:
 
     //! Verbose flag
-    static bool verbose;
+    static unsigned verbose;
 
     //! Constructor
     Archiver ();
