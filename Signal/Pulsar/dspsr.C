@@ -445,7 +445,8 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->report_done, 'q');
   arg->set_help ("quiet mode");
 
-  arg = menu.add (config->report_vitals, 'Q');
+  bool quiet = false;
+  arg = menu.add (quiet, 'Q');
   arg->set_help ("very quiet mode");
 
   arg = menu.add (verbose, 'v');
@@ -472,9 +473,27 @@ void parse_options (int argc, char** argv) try
     exit (-1);
   }
 
-  // -Q implies -q
-  if (!config->report_vitals)
+  // default verbosity is 1
+
+  if (quiet)
+  {
+    config->report_vitals = false;
     config->report_done = false;
+    Pulsar::Archive::set_verbosity (0);
+    dsp::set_verbosity (0);
+  }
+  else if (verbose)
+  {
+    Pulsar::Archive::set_verbosity (2);
+    dsp::set_verbosity (2);
+  }
+  else if (vverbose)
+  {
+    cerr << "dspsr: Entering very verbose mode" << endl;
+    Pulsar::Archive::set_verbosity (3);
+    dsp::set_verbosity (3);
+    verbose = true;
+  }
 
   // interpret the unpacker options
 
@@ -623,21 +642,6 @@ void parse_options (int argc, char** argv) try
       }
     }
   }
-
-  if (vverbose)
-  {
-    cerr << "dspsr: Entering very verbose mode" << endl;
-    Pulsar::Archive::set_verbosity (3);
-    dsp::set_verbosity (3);
-    verbose = true;
-  }
-
-  else if (verbose)
-  {
-    Pulsar::Archive::set_verbosity (2);
-    dsp::set_verbosity (2);
-  }
-
 
   if (!fft_length.empty())
   {
