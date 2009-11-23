@@ -18,6 +18,7 @@
 #include "ColourMap.h"
 #include "dirutil.h"
 #include "strutil.h"
+#include "pgutil.h"
 #include "Error.h"
 
 #include <cpgplot.h>
@@ -88,7 +89,10 @@ int main (int argc, char** argv) try {
 
   int c;
 
-  static char* args = "ibB:c:dD:f:F:lr:n:RS:T:t:hvV";
+  int width_pixels  = 0;
+  int height_pixels = 0;
+
+  static char* args = "ibB:c:dD:f:F:g:lr:n:RS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -122,8 +126,15 @@ int main (int argc, char** argv) try {
       break;
 
     case 'g':
-      ffts = atoi (optarg);
+    {
+      char separator = 0;
+      if (sscanf (optarg, "%d%c%d", &width_pixels, &separator, &height_pixels) != 3)
+      {
+        cerr << "passband: could not parse WxH from '" << optarg << "'" << endl;
+        return 0;
+      }
       break;
+    }
 
     case 'l':
       plotter.logarithmic = true;
@@ -232,6 +243,9 @@ int main (int argc, char** argv) try {
   }
   cpgsvp (0.1, 0.9, 0.15, 0.9);
   cmap.set_name (colour_map);
+
+  if (width_pixels && height_pixels)
+    pgplot::set_dimensions (width_pixels, height_pixels);
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
