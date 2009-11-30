@@ -8,6 +8,8 @@
 
 #include <inttypes.h>
 
+#include "environ.h"
+
 int main ()
 {
   int64_t test_int64_t = -987654321;
