@@ -91,6 +91,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection> lbadr;
 static Registry::List<dsp::Unpacker>::Enter<dsp::LBADR64_TwoBitCorrection> lbadr64;
 #endif
 
+#if HAVE_spda1k
+#include "dsp/spda1k_Unpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::SPDA1K_Unpacker> spda1k;
+#endif
+
 #if HAVE_mark4
 #include "dsp/Mark4TwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::Mark4TwoBitCorrection> mark4;

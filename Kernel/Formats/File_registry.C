@@ -100,6 +100,11 @@ static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
 static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
 #endif
 
+#if HAVE_spda1k
+#include "dsp/spda1k_File.h"
+static Registry::List<dsp::File>::Enter<dsp::SPDA1K_File> register_spda1k;
+#endif
+
 #if HAVE_mini
 #include "dsp/MiniFile.h"
 static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
