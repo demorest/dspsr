@@ -34,10 +34,6 @@
 #include <assert.h>
 #include <time.h>
 
-#ifdef sun
-#include <ieeefp.h>
-#endif
-
 using namespace std;
 
 unsigned dsp::Archiver::verbose = 1;
@@ -459,7 +455,17 @@ try
   }
 
   Pulsar::Telescope* telescope = archive -> getadd<Pulsar::Telescope>();
-  telescope->set_coordinates ( phase -> get_telescope() );
+
+  try
+  {
+    telescope->set_coordinates ( phase -> get_telescope() );
+  }
+  catch (Error& error)
+  {
+    if (verbose)
+      cerr << "dsp::Archiver WARNING could not set telescope coordinates\n\t"
+           << error.get_message() << endl;
+  }
 
   // default Receiver extension
   Pulsar::Receiver* receiver = archive -> getadd<Pulsar::Receiver>();
