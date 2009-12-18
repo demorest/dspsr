@@ -255,9 +255,9 @@ void dsp::Filterbank::make_preparations ()
 
 }
 
-void dsp::Filterbank::prepare_output (uint64_t ndat)
+void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
 {
-  if (ndat)
+  if (set_ndat)
   {
     if (verbose)
       cerr << "dsp::Filterbank::prepare_output set ndat=" << ndat << endl;
@@ -285,7 +285,7 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
     weighted_output->scrunch_weights (tres_ratio);
   }
 
-  if (ndat)
+  if (set_ndat)
   {
     if (verbose)
       cerr << "dsp::Filterbank::prepare_output reset ndat=" << ndat << endl;
@@ -304,7 +304,7 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
     cerr << "dsp::Filterbank::prepare_output output ndat="
          << output->get_ndat() << endl;
 
-   output->rescale (scalefac);
+  output->rescale (scalefac);
   
   if (verbose) cerr << "dsp::Filterbank::prepare_output scale="
                     << output->get_scale() <<endl;
@@ -348,6 +348,11 @@ void dsp::Filterbank::prepare_output (uint64_t ndat)
 
 void dsp::Filterbank::reserve ()
 {
+  resize_output (true);
+}
+
+void dsp::Filterbank::resize_output (bool reserve_extra)
+{
   const uint64_t ndat = input->get_ndat();
 
   if (verbose)
@@ -361,13 +366,17 @@ void dsp::Filterbank::reserve ()
   if (ndat > chump)
     npart = (ndat-chump)/nsamp_step;
 
+  // on some iterations, ndat could be large enough to fit an extra part
+  if (reserve_extra)
+    npart ++;
+
   // points kept from each small fft
   unsigned nkeep = freq_res - nfilt_tot;
 
   uint64_t output_ndat = npart * nkeep * time_res;
 
   // prepare the output TimeSeries
-  prepare_output (output_ndat);
+  prepare_output (output_ndat, true);
 }
 
 void dsp::Filterbank::transformation ()
@@ -379,7 +388,7 @@ void dsp::Filterbank::transformation ()
   if (!prepared)
     prepare ();
 
-  reserve ();
+  resize_output ();
 
   if (has_buffering_policy())
     get_buffering_policy()->set_next_start (nsamp_step * npart);
