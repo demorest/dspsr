@@ -32,7 +32,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
   if (!profiles)
     throw Error (InvalidState, method, "Profile data not provided");
 
-  if (verbose)
+  if (verbose > 2)
     cerr << method << " start" << endl;
 
   dspR->set_software( archive_software );
@@ -41,7 +41,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
 
   if (!profiles->has_extensions())
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << method << " no Extensions" << endl;
     return;
   }
@@ -50,7 +50,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
 
   if (!path)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << method << " no SignalPath" << endl;
     return;
   }
@@ -59,7 +59,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
 
   if (!list || !list->size())
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << method << " empty SignalPath" << endl;
     return;
   }
@@ -125,8 +125,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
     {
       if ( convolution->has_response() )
       {
-        if (verbose) cerr << method << " "
-                             "Convolution with Response" << endl;
+        if (verbose > 2) cerr << method << " Convolution with Response" << endl;
 
         const Response* response = convolution->get_response ();
 
@@ -172,12 +171,12 @@ catch (Error& error)
 
 void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try
 {
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::TwoBitStats Extension" << endl;
 
   if (!excision_unpacker)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::TwoBitStats no ExcisionUnpacker"
 	   << endl;
     return;
@@ -208,12 +207,12 @@ catch (Error& error)
 
 void dsp::Archiver::set (Pulsar::Passband* pband) try
 {
-  if (verbose)
+  if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Passband Extension" << endl;
 
   if (!passband)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::Passband no passband" << endl;
     return;
   }
@@ -225,7 +224,7 @@ void dsp::Archiver::set (Pulsar::Passband* pband) try
 
   if (npol==0 || nband==0 || nchan==0)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::Passband empty passband" << endl;
     return;
   }
@@ -233,9 +232,10 @@ void dsp::Archiver::set (Pulsar::Passband* pband) try
   dsp::Response copy (*passband);
   copy.naturalize ();
   
-  if (verbose) cerr << "dsp::Archiver::set Pulsar::Passband Extension copy\n"
-		 "  npol=" << npol << " nband=" << nband <<
-		 " nchan/band=" << nchan << endl;
+  if (verbose > 2)
+    cerr << "dsp::Archiver::set Pulsar::Passband Extension copy\n\t"
+            " npol=" << npol << " nband=" << nband <<
+            " nchan/band=" << nchan << endl;
   
   pband->resize (nchan, npol, nband);
   
