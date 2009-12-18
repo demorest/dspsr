@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/10/30 00:15:03 $
+   $Revision: 1.5 $
+   $Date: 2009/12/18 01:05:49 $
    $Author: straten $ */
 
 #ifndef __TwoBitFour_h
@@ -26,6 +26,8 @@ namespace dsp
 
     static const unsigned samples_per_byte;
     static const unsigned lookup_block_size;
+
+    //! Flag set when the data should be flagged as bad
     bool bad;
 
     //! Build counts of low voltage 2-bit states in each byte
@@ -41,8 +43,9 @@ namespace dsp
     inline void prepare (Iterator input, unsigned ndat)
     {
       const unsigned nbyte = ndat / samples_per_byte;
+      unsigned total = 0;
+
       nlow = 0;
-      unsigned total;
 
       for (unsigned bt=0; bt < nbyte; bt++)
       {
