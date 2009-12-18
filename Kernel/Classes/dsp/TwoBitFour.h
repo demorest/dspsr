@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/12/18 01:05:49 $
+   $Revision: 1.6 $
+   $Date: 2009/12/18 11:57:39 $
    $Author: straten $ */
 
 #ifndef __TwoBitFour_h
@@ -67,8 +67,11 @@ namespace dsp
       // if data are complex, divide n_low by two
       nlow /= ndim;
 
-      if (nlow < nlow_min || nlow > nlow_max)
-	return;
+      if (nlow < nlow_min)
+	nlow = nlow_min;
+
+      else if (nlow > nlow_max)
+	nlow = nlow_max;
       
       float* lookup = lookup_base + (nlow-nlow_min) * lookup_block_size;
 
