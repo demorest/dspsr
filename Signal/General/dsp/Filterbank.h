@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.16 $
-   $Date: 2009/11/16 05:16:10 $
+   $Revision: 1.17 $
+   $Date: 2009/12/18 11:57:49 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -99,7 +99,8 @@ namespace dsp {
   private:
 
     void make_preparations ();
-    void prepare_output (uint64_t ndat = 0);
+    void prepare_output (uint64_t ndat = 0, bool set_ndat = false);
+    void resize_output (bool reserve_extra = false);
 
     unsigned nchan_subband;
     unsigned nsamp_tres;
