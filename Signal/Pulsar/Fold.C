@@ -179,18 +179,28 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
 {
   MJD time = observation->get_start_time();
 
-  Tempo::Predict predict;
-  predict.set_nspan ( nspan );
-  predict.set_ncoef ( ncoef );
-  predict.set_site( observation->get_telescope() );
-  predict.set_frequency ( observation->get_centre_frequency() );
-  predict.set_parameters ( params );
+  Pulsar::Generator* generator = Pulsar::Generator::factory (params);
+
+  Tempo::Predict* predict = dynamic_cast<Tempo::Predict*>( generator );
+  if (predict)
+  {
+    predict->set_nspan ( nspan );
+    predict->set_ncoef ( ncoef );    
+  }
+
+  generator->set_site( observation->get_telescope() );
+  generator->set_parameters( params );
+  generator->set_time_span( time, time );
+
+  double freq = observation->get_centre_frequency();
+  double bw = fabs( observation->get_bandwidth() );
+  generator->set_frequency_span( freq-bw/2, freq+bw/2 );
 
   if (verbose)
     cerr << "dsp::Fold::get_folding_predictor"
             " calling Tempo::Predict::get_polyco" << endl;
 
-  return new polyco( predict.get_polyco (time, time) );
+  return generator->generate ();
 }
 
 
