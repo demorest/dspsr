@@ -96,27 +96,34 @@ void dsp::DataSeries::resize (uint64_t nsamples)
 void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
 {
   if (verbose)
-    cerr << "dsp::DataSeries::resize (" << nsamples << ") nbit="
-         << get_nbit() << " ndim=" << get_ndim()
-	 << " ndat=" << get_ndat() << endl;
+    cerr << "dsp::DataSeries::resize"
+            " nsamp=" << nsamples << 
+            " nbit=" << get_nbit() <<
+            " ndim=" << get_ndim() << 
+            " (current ndat=" << get_ndat() << ")" << endl;
 
   // Number of bits needed to allocate a single pol/chan group
   uint64_t nbits_required = nsamples * get_nbit() * get_ndim();
 
   if (verbose)
-    cerr << "dsp::DataSeries::resize nbits=" << nbits_required << endl;
+    cerr << "dsp::DataSeries::resize nbits=nsamp*nbit*ndim=" << nbits_required << endl;
 
   if (nbits_required & 0x07)  // 8 bits per byte
     throw Error (InvalidParam,"dsp::DataSeries::resize",
 		"nbit=%d ndim=%d nsamp="UI64" not an integer number of bytes",
 		get_nbit(), get_ndim(), nsamples);
 
+  if (verbose)
+    cerr << "dsp::DataSeries::resize"
+            " npol=" << get_npol() << 
+            " nchan=" << get_nchan() << endl;
+
   // Number of bytes needed to be allocated
   uint64_t require = (nbits_required*get_npol()*get_nchan())/8;
 
   if (verbose)
-    cerr << "dsp::DataSeries::resize require uchar[" << require << "];"
-      " have uchar[" << size << "]" << endl;
+    cerr << "dsp::DataSeries::resize nbytes=nbits/8*npol*nchan=" << require 
+         << " (current size=" << size << ")" << endl;
 
   if (!require || require > size) {
     if (buffer){
