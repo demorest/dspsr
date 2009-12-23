@@ -330,6 +330,9 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
   double ratechange = double(freq_res * time_res) / double (nsamp_fft);
   output->set_rate (input->get_rate() * ratechange);
 
+  if (freq_res == 1)
+    output->set_dual_sideband (true);
+
   /*
    * if freq_res is even, then each sub-band will be centred on a frequency
    * that lies on a spectral bin *edge* - not the centre of the spectral bin
