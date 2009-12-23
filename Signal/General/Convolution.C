@@ -191,16 +191,13 @@ void dsp::Convolution::reserve ()
   fflush (stderr);
 #endif
 
-  // there must be at least enough data for one FFT
-  if (ndat < nsamp_fft)
-    throw Error (InvalidState, "dsp::Convolution::reserve",
-		 "error ndat="I64" < nfft=%d", input->get_ndat(), nsamp_fft);
-
   // valid time samples per FFT
   nsamp_step = nsamp_fft-nsamp_overlap;
 
   // number of FFTs for this data block
-  npart = (input->get_ndat()-nsamp_overlap)/nsamp_step;
+  npart = 0;
+  if (ndat > nsamp_fft)
+    npart = (ndat-nsamp_overlap)/nsamp_step;
 
   if (verbose)
     cerr << "Convolution::reserve npart=" << npart << endl;
