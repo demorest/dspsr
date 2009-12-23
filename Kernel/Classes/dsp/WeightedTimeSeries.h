@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.13 $
-   $Date: 2009/08/27 21:33:08 $
+   $Revision: 1.14 $
+   $Date: 2009/12/23 07:40:12 $
    $Author: straten $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -61,6 +61,9 @@ namespace dsp {
 
     //! Returns a null-instantiation (calls new)
     virtual WeightedTimeSeries* null_clone() const;
+
+    //! Set the reserve kludge factor
+    void set_reserve_kludge_factor (unsigned);
 
     //! Copy the configuration of another WeightedTimeSeries instance
     virtual void copy_configuration (const Observation* copy);
@@ -124,6 +127,9 @@ namespace dsp {
 
     //! The number of time samples per weight
     unsigned ndat_per_weight;
+
+    //! The reserve kludge factor is required by the Filterbank
+    unsigned reserve_kludge_factor;
 
     //! Copy the weights from copy
     void copy_weights (const WeightedTimeSeries* copy,

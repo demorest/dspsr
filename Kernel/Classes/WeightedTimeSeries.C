@@ -10,6 +10,8 @@
 #include "dsp/WeightedTimeSeries.h"
 #include "Error.h"
 
+#include "debug.h"
+
 #include <stdlib.h>
 #include <assert.h>
 
@@ -20,6 +22,8 @@ dsp::WeightedTimeSeries::WeightedTimeSeries()
   npol_weight = 1;
   nchan_weight = 1;
   ndat_per_weight = 0;
+
+  reserve_kludge_factor = 1;
 
   base = NULL;
   weights = NULL;
@@ -210,7 +214,7 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
       " reserve=" << get_reserve() << endl;
 
-  nweights += get_nweights (get_reserve());
+  nweights += get_nweights (get_reserve() * reserve_kludge_factor);
 
   uint64_t require = nweights * get_npol_weight() * get_nchan_weight();
   
@@ -247,11 +251,24 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
   }
   
   weight_subsize = nweights;
-  weights = base + get_nweights(get_reserve());
+  unsigned reserve_weights = get_nweights(get_reserve() * reserve_kludge_factor);
+
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::resize_weights reserve"
+         << " kludge=" << reserve_kludge_factor
+         << " ndat=" << get_reserve()
+         << " -> nwt=" << reserve_weights << endl;
+
+  weights = base + reserve_weights;
 
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights base=" << base
          << " weights=" << weights << endl;
+}
+
+void dsp::WeightedTimeSeries::set_reserve_kludge_factor (unsigned factor)
+{
+  reserve_kludge_factor = factor;
 }
 
 //! Offset the base pointer by offset time samples
@@ -415,23 +432,28 @@ void dsp::WeightedTimeSeries::copy_weights (const WeightedTimeSeries* copy,
                  copy_ndat, ndat_per_weight);
 
   for (unsigned ichan=0; ichan<get_nchan_weight(); ichan++)
+  {
     for (unsigned ipol=0; ipol<get_npol_weight(); ipol++)
     {
       unsigned* data1 = get_weights (ichan, ipol);
+      DEBUG("COPY base=" << data1);
       const unsigned* data2 = copy->get_weights (ichan, ipol) + iwt_start;
       
       for (uint64_t iwt=0; iwt<nweights; iwt++)
       {
-        // if (!data2[iwt])
-          // cerr << "COPY BAD iwt=" << iwt + iwt_start << endl;
+        DEBUG("COPY iwt=" << iwt << " weight=" << data2[iwt]);
         data1[iwt] = data2[iwt];
       }
     }
+  }
 }
 
 dsp::WeightedTimeSeries& 
 dsp::WeightedTimeSeries::operator += (const WeightedTimeSeries& add)
 {
+  if (verbose)
+    cerr << "dsp::WeightedTimeSeries::operator +=" << endl;
+
   TimeSeries::operator += (add);
   
   uint64_t nweights = get_nweights ();
@@ -487,7 +509,7 @@ uint64_t dsp::WeightedTimeSeries::get_nzero () const try
   {
     if (weights[i] == 0)
     {
-      // cerr << "ZERO[" << i << "]" << endl;
+      DEBUG("dsp::WeightedTimeSeries::get_nzero ZERO[" << i << "]");
       zeroes ++;
     }
   }
@@ -517,7 +539,10 @@ void dsp::WeightedTimeSeries::mask_weights () try
     for (unsigned iwt=0; iwt < nweights; iwt++)
     {
       if (wptr[iwt] == 0)
-	weights[iwt] = 0;
+      {
+        DEBUG("MASK1 " << iwt);
+        weights[iwt] = 0;
+      }
     }
   }
 
@@ -528,7 +553,10 @@ void dsp::WeightedTimeSeries::mask_weights () try
     for (unsigned iwt=0; iwt < nweights; iwt++)
     {
       if (weights[iwt] == 0)
-	wptr[iwt] = 0;
+      {
+        DEBUG("MASK2 " << iwt);
+        wptr[iwt] = 0;
+      }
     }
   }
 }
@@ -544,7 +572,7 @@ dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep) try
   {
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::convolve_weights ndat_per_weight="
-	   << ndat_per_weight << " >= nfft=" << nfft << endl;
+           << ndat_per_weight << " >= nfft=" << nfft << endl;
 
     // the fft happens within one weight, no "convolution" required
     return;
@@ -603,8 +631,11 @@ dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep) try
     uint64_t iweight = 0;
     for (iweight=start_weight; iweight<end_weight; iweight++)
       if (weights[iweight] == 0)
-	zero_weights ++;
-    
+      {
+        DEBUG("FOUND BAD " << iweight);
+        zero_weights ++;
+      }
+ 
     /* If there exists bad data in the transform, the whole transform
        must be flagged as invalid; otherwise, the FFT will mix the bad
        data into the good data.  However, we cannot immediately flag
@@ -614,6 +645,7 @@ dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep) try
 
     for (iweight=zero_start; iweight < zero_end; iweight++)
     {
+      DEBUG("inside FLAGGING " << iweight);
       weights[iweight] = 0;
       total_bad ++;
     }
@@ -631,13 +663,14 @@ dsp::WeightedTimeSeries::convolve_weights (unsigned nfft, unsigned nkeep) try
       zero_end = uint64_t( ceil((start_idat+nkeep) * weights_per_dat) );
 
       if (verbose)
-	cerr << "dsp::WeightedTimeSeries::convolve_weights"
-	  " flagging " << zero_end-zero_start << " bad weights" << endl;
+        cerr << "dsp::WeightedTimeSeries::convolve_weights"
+                " flagging " << zero_end-zero_start << " bad weights" << endl;
     }
   } 
 
   for (uint64_t iweight=zero_start; iweight < zero_end; iweight++)
   {
+    DEBUG("outside FLAGGING " << iweight);
     weights[iweight] = 0;
     total_bad ++;
   }
