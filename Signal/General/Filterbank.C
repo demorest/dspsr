@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2009 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -262,11 +262,27 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
     if (verbose)
       cerr << "dsp::Filterbank::prepare_output set ndat=" << ndat << endl;
 
+    output->set_npol( input->get_npol() );
     output->set_nchan( nchan );
     output->set_ndim( 2 );
     output->set_state( Signal::Analytic);
     output->resize( ndat );
   }
+
+  unsigned tres_ratio = nsamp_fft / (freq_res * time_res);
+
+  WeightedTimeSeries* weighted_output;
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
+
+  /* the problem: copy_configuration copies the weights array, which
+     results in a call to resize_weights, which sets some offsets
+     according to the reserve (for later prepend).  However, the
+     offset is computed based on values that are about to be changed.
+     This kludge allows the offsets to reflect the correct values
+     that will be set later */
+
+  if (weighted_output)
+    weighted_output->set_reserve_kludge_factor (tres_ratio);
 
   output->copy_configuration ( get_input() );
 
@@ -275,12 +291,9 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
   output->set_state( Signal::Analytic );
   output->set_order( output_order );
 
-  unsigned tres_ratio = nsamp_fft / (freq_res * time_res);
-
-  WeightedTimeSeries* weighted_output;
-  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
   if (weighted_output)
   {
+    weighted_output->set_reserve_kludge_factor (1);
     weighted_output->convolve_weights (nsamp_fft, nsamp_step);
     weighted_output->scrunch_weights (tres_ratio);
   }
