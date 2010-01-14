@@ -817,7 +817,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
 
   FilenameEpoch* epoch_convention = 0;
 
-  if (config->single_pulse && !config->single_archive)
+  if (config->single_pulse_archives())
     archiver->set_convention( new FilenamePulse );
   else
     archiver->set_convention( epoch_convention = new FilenameEpoch );

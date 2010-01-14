@@ -250,7 +250,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 
     PhaseSeriesUnloader* primary_unloader = threads[0]->unloader[ifold];
 
-    if (configuration->single_pulse)
+    if (configuration->single_pulse_archives())
       unloader[ifold]->set_wait_all (false);
     else
       unloader[ifold]->set_unloader( primary_unloader );
@@ -259,7 +259,7 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
     {
       UnloaderShare::Submit* submit = unloader[ifold]->new_Submit (i);
 
-      if (configuration->single_pulse)
+      if (configuration->single_pulse_archives())
         submit->set_unloader( primary_unloader->clone() );
 
       threads[i]->unloader[ifold] = submit;
