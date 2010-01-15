@@ -124,6 +124,7 @@ dsp::FilenameEpoch::FilenameEpoch ()
 {
   datestr_pattern = "%Y-%m-%d-%H:%M:%S";
   integer_seconds = 0;
+  report_unload = true;
 }
 
 void dsp::FilenameEpoch::set_datestr_pattern (const std::string& pattern)
@@ -165,8 +166,9 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
     throw Error (FailedSys, "dsp::PhaseSeriesUnloader::get_filename",
        "error MJD::datestr(" + datestr_pattern + ")");
 
-  cerr << "unloading " << tostring(data->get_integration_length(),2)
-       << " seconds: " << filename << endl;
+  if (report_unload)
+    cerr << "unloading " << tostring(data->get_integration_length(),2)
+	 << " seconds: " << filename << endl;
 
   return filename;
 }
