@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.18 $
-   $Date: 2009/11/16 05:16:29 $
+   $Revision: 1.19 $
+   $Date: 2010/01/15 11:55:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -119,14 +119,29 @@ namespace dsp {
     //! Pointer to the ostream
     std::ostream* log;
 
-    //! Status
-    int status;
+    //! Processing thread states
+    enum State
+      {
+	Fail,      //! an error has occurred
+	Idle,      //! nothing happening
+	Prepare,   //! request to prepare
+	Prepared,  //! preparations completed
+	Run,       //! processing started
+	Done,      //! processing completed
+	Joined     //! completion acknowledged 
+      };
+
+    //! Processing state
+    State state;
 
     //! Error status
     Error error;
 
-    //! Completion notice
-    ThreadContext* completion;
+    //! State change communication
+    ThreadContext* state_change;
+
+    //! Processing thread with whom sharing will occur
+    LoadToFold1* share;
 
   private:
 

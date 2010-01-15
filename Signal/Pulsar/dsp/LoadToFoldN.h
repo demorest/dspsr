@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.10 $
-   $Date: 2009/10/07 11:37:35 $
+   $Revision: 1.11 $
+   $Date: 2010/01/15 11:55:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -73,8 +73,8 @@ namespace dsp {
     //! Thread lock for Input::load
     ThreadContext* input_context;
 
-    //! Condition for thread completion
-    ThreadContext* completion;
+    //! Condition for processing thread state changes
+    ThreadContext* state_changes;
 
     //! The creator of new LoadToFold1 threads
     virtual LoadToFold1* new_thread ();
@@ -88,6 +88,13 @@ namespace dsp {
     static void* thread (void*);
 
     void prepare_subint_archival ();
+    void launch_threads ();
+
+    static void share (LoadToFold1* fold, LoadToFold1* share);
+    static void prepare (LoadToFold1* fold);
+    static void wait (LoadToFold1* fold, LoadToFold1::State st);
+    static void signal (LoadToFold1* fold, LoadToFold1::State st);
+
   };
 
 }
