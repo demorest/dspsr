@@ -8,8 +8,8 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.22 $
-   $Date: 2009/06/07 01:22:34 $
+   $Revision: 1.23 $
+   $Date: 2010/01/15 11:55:32 $
    $Author: straten $ */
 
 #ifndef __PhaseSeriesUnloader_h
@@ -111,6 +111,8 @@ namespace dsp {
     void set_datestr_pattern (const std::string&);
     void set_integer_seconds (unsigned);
     std::string get_filename (const PhaseSeries* data) const;
+
+    bool report_unload;
 
   protected:
     std::string datestr_pattern;
