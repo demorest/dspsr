@@ -60,8 +60,11 @@ dsp::LoadToFold1::LoadToFold1 ()
   manage_archiver = true;
   log = 0;
   minimum_samples = 0;
-  status = 0;
+
+  state = Idle;
+  state_change = 0;
   thread_id = 0;
+  share = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -718,7 +721,8 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (Operation::verbose)
       cerr << "dsp::LoadToFold1::prepare_fold configuring" << endl;
 
-    if (config->nbin){
+    if (config->nbin)
+    {
       fold[ifold]->set_nbin (config->nbin);
       fold[ifold]->set_force_sensible_nbin(config->force_sensible_nbin);
     }
@@ -806,7 +810,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
 
   if (subints && config->single_archive)
   {
-    cerr << "Single archive with multiple sub-integrations" << endl;
+    cerr << "dspsr: Single archive with multiple sub-integrations" << endl;
     Pulsar::Archive* arch;
     arch = Pulsar::Archive::new_Archive (config->archive_class);
     archiver->set_archive (arch);
@@ -821,6 +825,9 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
     archiver->set_convention( new FilenamePulse );
   else
     archiver->set_convention( epoch_convention = new FilenameEpoch );
+
+  if (subints && config->single_archive)
+    epoch_convention->report_unload = false;
 
   unsigned integer_seconds = unsigned(config->integration_length);
 
