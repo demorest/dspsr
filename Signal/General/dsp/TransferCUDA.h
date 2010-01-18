@@ -1,0 +1,39 @@
+//-*-C++-*-
+/***************************************************************************
+ *
+ *   Copyright (C) 2010 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
+
+#ifndef __TransferCUDA_h
+#define __TransferCUDA_h
+
+#include "dsp/Transformation.h"
+#include "dsp/TimeSeries.h"
+
+#include <cuda_runtime.h>
+
+namespace dsp {
+
+  class TransferCUDA : public Transformation<TimeSeries,TimeSeries>
+  {
+  public:
+
+    //! Default constructor - always out of place
+    TransferCUDA();
+
+    void set_kind (cudaMemcpyKind);
+
+  protected:
+
+    //! Do stuff
+    void transformation();
+
+    cudaMemcpyKind kind;
+
+  };
+
+}
+
+#endif
