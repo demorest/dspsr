@@ -19,6 +19,7 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
     cerr << "dsp::CASPSRUnpacker ctor" << endl;
   set_nstate (256);
   table = new BitTable (8, BitTable::TwosComplement);
+
 }
 
 dsp::CASPSRUnpacker::~CASPSRUnpacker ()
