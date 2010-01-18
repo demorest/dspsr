@@ -14,7 +14,15 @@
 namespace CUDA
 {
   //! Manages CUDA pinned memory allocation and destruction
-  class Memory : public dsp::Memory
+  class PinnedMemory : public dsp::Memory
+  {
+  public:
+    void* do_allocate (unsigned nbytes);
+    void do_free (void*);
+  };
+
+  //! Manages CUDA device memory allocation and destruction
+  class DeviceMemory : public dsp::Memory
   {
   public:
     void* do_allocate (unsigned nbytes);
