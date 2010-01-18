@@ -52,6 +52,11 @@ dsp::DataSeries::~DataSeries()
   instantiation_count--;
 }
 
+void dsp::DataSeries::set_memory (Memory* m)
+{
+  memory = m;
+}
+
 //! Enforces that ndat*ndim must be an integer number of bytes
 void dsp::DataSeries::set_ndat (uint64_t _ndat)
 {
