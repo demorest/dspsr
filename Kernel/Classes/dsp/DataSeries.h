@@ -13,7 +13,9 @@
 
 
 namespace dsp {
-  
+
+  class Memory;
+
   //! Container of dimension/time-major order floating point data.
   /* The DataSeries class contains n-bit data arranged as a
      function of frequency, polarization, time, and dimension, ie.
@@ -111,6 +113,9 @@ namespace dsp {
     //! Checks that ndat is not too big for size and subsize
     virtual void check_sanity() const;
 
+    //! Set the memory manager
+    virtual void set_memory (Memory*);
+
   protected:
     
     //! Returns a uchar pointer to the first piece of data
@@ -126,6 +131,9 @@ namespace dsp {
 
     //! The number of BYTES in a data sub-division
     uint64_t subsize;
+
+    //! The memory manager
+    Reference::To<Memory> memory;
 
   };
 
