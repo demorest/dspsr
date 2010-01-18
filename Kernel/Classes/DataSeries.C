@@ -32,6 +32,8 @@ void dsp::DataSeries::initi()
 
   Observation::init();
   
+  memory = Memory::get_manager();
+
   buffer = NULL;
   size = 0;
   subsize = 0;
@@ -136,7 +138,7 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
 	if (verbose)
           cerr << "dsp::DataSeries::resize Memory::free size=" << size << " buffer="
 	       << (void*)buffer << endl;
-	Memory::free (buffer);
+	memory->do_free (buffer);
 	memory_used -= size;
       }
       buffer = 0;
@@ -153,7 +155,7 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
   {
     if (verbose)
       cerr << "dsp::DataSeries::resize Memory::allocate (" << require << ")" << endl;
-    buffer = (unsigned char*) Memory::allocate (require);
+    buffer = (unsigned char*) memory->do_allocate (require);
 
     if (verbose)
       cerr << "dsp::DataSeries::resize buffer=" << (void*) buffer << endl;
