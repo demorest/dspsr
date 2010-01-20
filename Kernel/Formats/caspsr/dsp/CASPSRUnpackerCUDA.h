@@ -2,35 +2,13 @@
 
  */
 
-#ifndef __dsp_CASPSRUnpacker_h
-#define __dsp_CASPSRUnpacker_h
+#ifndef __dsp_CASPSRUnpackerCUDA_h
+#define __dsp_CASPSRUnpackerCUDA_h
 
-namespace CUDA {
+#include<stdint.h>
+//#include "dsp/HistUnpacker.h"
+
+void caspsr_unpack (const uint64_t nadt, unsigned char* host_mem,unsigned char* stagingBufGPU,float* unpackBufGPU,int dimBlockUnpack,int dimGridUnpack,unsigned halfData);
   
-  //
-  class CASPSRUnpackerGPU : public CASPSRUnpacker
-  {
-  public:
-
-    //! Constructor
-    CASPSRUnpackerGPU (const char* name = "CASPSRUpackerGPU");
-
-    //! Destructor
-    virtual ~CASPSRUnpacker ();
-    
-
-  protected:
-    
-    virtual void unpack ();
-
-
-    //! staging buffer on the GPU for packed data
-    float* stagingBufGPU;
-
-    //! buffer for unpacked data on the GPU
-    float* unpackBufGPU;
-
-  };
-}
 
 #endif
