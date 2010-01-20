@@ -1,98 +1,81 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2009
+ *   Copyright (C) 2010
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/CASPSRUnpackerCUDA.h"
+//#include "dsp/BitTable.h"
 
 #include "Error.h"
-#include <cutil_inline.h>
+
+//#include <cutil_inline.h>
 
 
 using namespace std;
 
 typedef float2 Complex;
 
-const float UPPER_BITS 0xff000000;
-const float MID_BITS 0xff0000;
-const float LOW_BITS 0xff00;
-const float BOTTOM_BITS 0xff;
+//const uint32_t UPPER_BITS=0xff000000;
+//const uint32_t MID_BITS=0xff0000;
+//const uint32_t LOW_BITS=0xff00;
+//const uint32_t BOTTOM_BITS=0xff;
 
-//static float stagingBufGPU; 
-//static float unpackBufGPU;
-
-__global__ void unpackDataGPU(float*, float*,
-			      int, float, float,
-			      float, float);
-
-
-dsp::CASPSRUnpackerGPU::CASPSRUnpackerGPU (const char* _name) 
-{
-  if (verbose)
-    cerr << "dsp::CASPSRUnpacker ctor" << endl;
-}
-
-dsp::CASPSRUnpackerGPU::~CASPSRUnpackerGPU ()
-{
-
-}
-
-void dsp::CASPSRUnpackerGPU::unpack()
-{
-  
-  
-  // in theory we already know what all of these values are...
-
-  //const unsigned nchan = input->get_nchan();
-  //const unsigned ndim  = input->get_ndim();
-  const uint64_t ndat  = input->get_ndat();
-  
-    
-  int dimBlockUnpack(512);
-  //int dataSize = nchan * bwd_nfft;// need to get hold of bwd_nfft
-  unsigned dataSize = ndat;
-
-  int dimGridUnpack(dataSize / dimBlockUnpack); // must be less than 33Mpt. Otherwise should be ok. (Max thread per block 512, max grid dim 65535)
-
-  //int packedDim = (nchan * bwd_nfft)/4 ;
-  unsigned packedDim = ndat/4;
-  unsigned halfData = dataSize / 2;
-
-  // buffer on host - should already be allocated
-
-  // buffer on gpu for packed data
-  cudaSafeCall(cudaMalloc((void **) &stagingBufGPU,packedDim*sizeof(cufftReal)));
-
-  cutilSafeCall(cudaMemcpy(stagingBufGPU,host_mem,packedDim*sizeof(cufftReal),cudaMemcpyHostToDevice));
-
-  // buffer on gpu for unpacked data
-  cudaSafeCall(cudaMalloc((void **) &unpackBufGPU,packedDim*sizeof(cufftReal)*4));
-
-  // mem cpy data from cpu to gpu staging buf
- 
-  unpackDataGPU<<<dimGridUnpack,dimBlockUnpack>>>(stagingBufGPU,unpackBufGPU, halfData, UPPER_BITS, MID_BITS, LOW_BITS, BOTTOM_BITS);
-}
 
 /* unpack the byte data into float format on the GPU.
    The input is a sequence of 4 8-bit numbers for 1 pol, then 4 8-bit numbers for the next
 */
-__global__ void unpackDataGPU(float *stagingBufGPU, float *unpackBufGPU,
-			      int halfData, float UPPER_BITS, float MID_BITS,
-			      float LOW_BITS, float BOTTOM_BITS) 
+
+__global__ void unpackDataCUDA(unsigned char* stagingBufGPU, float *unpackBufGPU,
+			      unsigned halfData) 
 {
-  int outputIndex,sampleIndex;
-  float sample;
+  unsigned int sampleIndex,sampleTmp;
+  unsigned char sample;
   
 
   // output will also be based on pol. if sample index is odd... output index must
   // be put after midpoint of data
 
-  sampleIndex = blockIdx.x*blockDim.x + threadIdx.x; 
-  
-  if (sampleIndex & 0x01)
+  sampleTmp = blockIdx.x*blockDim.x + threadIdx.x; 
+  sampleTmp = sampleTmp * 8;
+
+  sampleIndex= sampleTmp;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex]=sample;
+
+  sampleIndex = sampleTmp + 1;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex]=sample;
+
+  sampleIndex = sampleTmp + 2;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex]=sample;
+
+  sampleIndex = sampleTmp + 3;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex]=sample;
+
+  sampleIndex = sampleTmp + 4;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex+halfData]=sample;
+
+  sampleIndex = sampleTmp + 5;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex+halfData]=sample;
+
+  sampleIndex = sampleTmp + 6;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex+halfData]=sample;
+
+  sampleIndex = sampleTmp + 7;
+  sample = stagingBufGPU[sampleIndex];
+  unpackBufGPU[sampleIndex+halfData]=sample;
+
+
+
+  /*  if (sampleIndex & 0x01)
     {
       outputIndex= (sampleIndex-1)*2 + halfData;
     }
@@ -101,13 +84,24 @@ __global__ void unpackDataGPU(float *stagingBufGPU, float *unpackBufGPU,
       outputIndex= sampleIndex*2;
     }
   
-  sample = stagingBufGPU[sampleIndex];
+    sample = stagingBufGPU[sampleIndex];*/
+
+  // unpacker assumed 32-bit numbers - will actually be getting as 8-bit.
   // needs to be shifted by 24 bits
-  unpackBufGPU[outputIndex] = (sample&UPPER_BITS)>>24;
+  //  unpackBufGPU[outputIndex] = (sample&UPPER_BITS)>>24;
   // needs to be shifted by 16 bits 
-  unpackBufGPU[outputIndex+1] = (sample&MID_BITS)>>16;
+  //unpackBufGPU[outputIndex+1] = (sample&MID_BITS)>>16;
   // needs to be shifted by 8 bits 
-  unpackBufGPU[outputIndex+2] =(sample&LOW_BITS)>>8;
+  //unpackBufGPU[outputIndex+2] =(sample&LOW_BITS)>>8;
   // is fine 
-  unpackBufGPU[outputIndex+3] = sample&BOTTOM_BITS; 
+  //unpackBufGPU[outputIndex+3] = sample&BOTTOM_BITS; 
 }
+
+
+void caspsr_unpack(const uint64_t ndat, unsigned char* host_mem, unsigned char* stagingBufGPU,float* unpackBufGPU,int dimBlockUnpack,int dimGridUnpack,unsigned halfData)
+{
+    
+  unpackDataCUDA<<<dimGridUnpack,dimBlockUnpack>>>(stagingBufGPU,unpackBufGPU, halfData);
+
+}
+
