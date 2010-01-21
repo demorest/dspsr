@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/11/16 05:16:14 $
+   $Revision: 1.6 $
+   $Date: 2010/01/21 23:36:45 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -45,7 +45,7 @@ namespace CUDA
 
     //! Adds the streams
     void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
-    void perform (const float* in, float* out);
+    void perform (const float* in);
 
   private:
 

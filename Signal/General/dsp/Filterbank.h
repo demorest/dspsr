@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/12/18 11:57:49 $
+   $Revision: 1.18 $
+   $Date: 2010/01/21 23:36:45 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -110,7 +110,12 @@ namespace dsp {
   {
   public:
     virtual void setup (unsigned nchan, unsigned bwd_nfft, float* kernel) = 0;
-    virtual void perform (const float* in, float* out) = 0;
+    virtual void perform (const float* in) = 0;
+    std::vector<float*> output_ptr;
+    float* scratch;
+    unsigned nfilt_pos;
+    unsigned nkeep;
+    unsigned freq_res;
   }; 
 }
 

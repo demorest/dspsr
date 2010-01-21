@@ -395,6 +395,16 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
   prepare_output (output_ndat, true);
 }
 
+void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output, 
+                   unsigned ipol, uint64_t out_offset)
+{
+  const unsigned nchan = output->get_nchan();
+  engine->output_ptr.resize (nchan);
+
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+    engine->output_ptr[ichan] = output->get_datptr (ichan, ipol) + out_offset;
+}
+
 void dsp::Filterbank::transformation ()
 {
   if (verbose)
@@ -505,6 +515,14 @@ void dsp::Filterbank::transformation ()
   float* data_into = NULL;
   float* data_from = NULL;
 
+  if (engine)
+  {
+    engine->scratch = c_spectrum[0];
+    engine->nfilt_pos = nfilt_pos;
+    engine->freq_res = freq_res;
+    engine->nkeep = nkeep;
+  }
+
   for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
   {
 
@@ -529,8 +547,11 @@ if (engine) {
 
 	// cerr << "nchan =" << nchan << " fft=" << freq_res*2 << " tot=" << freq_res*2*nchan << endl;
 
-        engine->perform (time_dom_ptr, c_spectrum[0]);
+        set_pointers (engine, output, ipol, out_offset);
 
+        engine->perform (time_dom_ptr);
+
+#if ENGINE_DOES_NOT_COPY
 	for (ichan=0; ichan < nchan_subband; ichan++)
 	{
 	  c_time = c_spectrum[0] + ichan*freq_res*2;
@@ -551,7 +572,8 @@ if (engine) {
 	  }
 	  
 	} // for each output channel
-	
+#endif
+
       } // for each part
 
     } // for each polarization
