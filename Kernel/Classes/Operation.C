@@ -31,6 +31,7 @@ int dsp::Operation::operation_status = 0;
 dsp::Operation::Operation (const Operation& op)
 {
   scratch = op.scratch;
+  set_scratch_called = op.set_scratch_called;
   name = op.name;
   prepared = false;
 
@@ -56,6 +57,7 @@ dsp::Operation::Operation (const char* _name)
   total_weights = 0;
 
   scratch = Scratch::get_default_scratch();
+  set_scratch_called = false;
 
   prepared = false;
 }
@@ -135,6 +137,12 @@ uint64_t dsp::Operation::get_total_weights () const
 void dsp::Operation::set_scratch (Scratch* s)
 {
   scratch = s;
+  set_scratch_called = true;
+}
+
+bool dsp::Operation::scratch_was_set () const
+{
+  return set_scratch_called;
 }
 
 //! Combine accumulated results with another operation
