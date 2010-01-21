@@ -178,9 +178,11 @@ dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::null_clone() const
     cerr << "dsp::WeightedTimeSeries::null_clone" << endl;
 
   WeightedTimeSeries* retval = new WeightedTimeSeries;
+  retval->null_work (this);
   retval->npol_weight = npol_weight;
   retval->nchan_weight = nchan_weight;
   retval->ndat_per_weight = ndat_per_weight;
+
   return retval;
 }
 

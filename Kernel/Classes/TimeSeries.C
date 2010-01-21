@@ -52,10 +52,18 @@ dsp::TimeSeries* dsp::TimeSeries::clone () const
 
 dsp::TimeSeries* dsp::TimeSeries::null_clone () const
 {
+  if (verbose)
+    cerr << "dsp::TimeSeries::null_clone" << endl;
+
   TimeSeries* result = new TimeSeries;
-  result->order = order;
-  result->memory = memory;
+  result->null_work (this);
   return result;
+}
+
+void dsp::TimeSeries::null_work (const TimeSeries* from)
+{
+  order = from->order;
+  memory = from->memory;
 }
 
 dsp::TimeSeries::~TimeSeries()
