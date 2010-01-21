@@ -21,12 +21,12 @@ void dsp::TransferCUDA::transformation ()
 {
   const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
-  const unsigned ndim = input->get-ndim();
+  const unsigned ndim = input->get_ndim();
   const uint64_t ndat = input->get_ndat();
 
   const uint64_t nbyte = ndat * ndim * sizeof(float);
 
-  output->copy_configuration(input);
+  prepare ();
   
   for (unsigned ipol=0; ipol < npol; ipol++)
     for (unsigned ichan=0; ichan < nchan; ichan++)
@@ -36,3 +36,10 @@ void dsp::TransferCUDA::transformation ()
       cudaMemcpy (to, from, nbyte, kind);
     }
 }
+
+void dsp::TransferCUDA::prepare ()
+{
+  output->copy_configuration( input );
+  output->resize( input->get_ndat () );
+}
+

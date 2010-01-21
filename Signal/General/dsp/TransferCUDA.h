@@ -23,7 +23,8 @@ namespace dsp {
     //! Default constructor - always out of place
     TransferCUDA();
 
-    void set_kind (cudaMemcpyKind);
+    void set_kind (cudaMemcpyKind k) { kind = k; }
+    void prepare ();
 
   protected:
 
