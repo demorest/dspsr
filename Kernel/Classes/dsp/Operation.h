@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.47 $
-   $Date: 2009/08/27 07:27:24 $
+   $Revision: 1.48 $
+   $Date: 2010/01/21 23:36:34 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -109,11 +109,13 @@ namespace dsp {
 
     //! Set the scratch space
     virtual void set_scratch (Scratch*);
+    bool scratch_was_set () const;
 
   protected:
 
     //! Shared scratch space, if needed
     Scratch* scratch;
+    bool set_scratch_called;
 
     //! Return false if the operation doesn't have enough data to proceed
     virtual bool can_operate();
