@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/Scratch.h"
-#include "dsp/Memory.h"
 
 #include <stdlib.h>
 
@@ -26,11 +25,17 @@ dsp::Scratch::Scratch ()
 {
   working_space = NULL;
   working_size = 0;
+  memory = Memory::get_manager();
 }
 
 dsp::Scratch::~Scratch ()
 {
   space (0);
+}
+
+void dsp::Scratch::set_memory (Memory* m)
+{
+  memory = m;
 }
 
 //! Return pointer to a memory resource shared by operations
@@ -43,7 +48,7 @@ void* dsp::Scratch::space (size_t nbytes)
 
   if (!nbytes || working_size < nbytes)
   {
-    if (working_space) Memory::free (working_space); working_space = 0;
+    if (working_space) memory->do_free (working_space); working_space = 0;
   }
 
   if (!nbytes)
@@ -51,7 +56,7 @@ void* dsp::Scratch::space (size_t nbytes)
 
   if (working_space == 0)
   {
-    working_space = (char*) Memory::allocate (nbytes);
+    working_space = (char*) memory->do_allocate (nbytes);
 
     if (!working_space)
       throw Error (BadAllocation, "Scratch::space",

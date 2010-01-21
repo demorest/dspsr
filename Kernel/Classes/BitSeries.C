@@ -23,13 +23,20 @@ dsp::BitSeries::BitSeries ()
 
   request_offset = 0;
   request_ndat = 0;
+
+  memory = Memory::get_manager ();
 }
 
 //! Destructor
 dsp::BitSeries::~BitSeries ()
 {
-  if (data) delete [] data; data = 0;
+  if (data) memory->do_free(data); data = 0;
   data_size = 0;
+}
+
+void dsp::BitSeries::set_memory (Memory* m)
+{
+  memory = m;
 }
 
 //! Allocate the space required to store nsamples time samples.
@@ -53,7 +60,7 @@ void dsp::BitSeries::resize (int64_t nsamples)
       cerr << "dsp::BitSeries::resize current size = " << data_size << " bytes"
           " -- required size = " << require << " bytes" << endl;
  
-    if (data) delete [] data; data = 0;
+    if (data) memory->do_free( data ); data = 0;
     data_size = 0;
     //! data has been deleted. input sample is no longer valid
     input_sample = -1;
@@ -72,7 +79,7 @@ void dsp::BitSeries::resize (int64_t nsamples)
     return;
 
   if (data_size == 0) {
-    data = new unsigned char [require];
+    data = (unsigned char*) memory->do_allocate (require);
     data_size = require;
   }
 
@@ -143,51 +150,5 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
   memcpy(to,from,size_t(get_nbytes()));
 
   set_ndat( get_ndat() + little->get_ndat() );
-}
-
-//! Delete the current data buffer and attach to this one
-//! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
-//! Also do not try to delete the old memory once you have called this- the BitSeries::data member now owns it.
-void dsp::BitSeries::attach(auto_ptr<unsigned char> _data){
-  if( !_data.get() )
-    throw Error(InvalidState,"dsp::BitSeries::attach()",
-		"NULL auto_ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
-
-  if (data) delete [] data; data = 0;
-  data = _data.release();
-}
-
-//! Call this when you want the array to still be owned by it's owner
-void dsp::BitSeries::attach(unsigned char* _data){
-  if( !_data )
-    throw Error(InvalidState,"dsp::BitSeries::attach()",
-		"NULL ptr has been passed in- you haven't properly allocated it using 'new' before passing it into this method");
-
-  if (data) delete [] data; data = 0;
-  data = _data;
-}
-
-void dsp::BitSeries::share(unsigned char*& _buffer,uint64_t& _size) const {
-  _size = data_size;
-  _buffer = data;
-}
-
-//! Release control of the data buffer- resizes to zero
-unsigned char* dsp::BitSeries::release(uint64_t& _size){
-  if( !data )
-    return 0;
-
-  unsigned char* ret = data;
-  _size = data_size;
-
-  data = 0;
-  data_size = 0;
-  input_sample = -1;
-  input = 0;
-  set_ndat( 0 );
-  request_ndat = 0;
-  request_offset = 0;
-
-  return ret;
 }
 
