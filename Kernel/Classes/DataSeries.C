@@ -166,9 +166,8 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
       cerr << "dsp::DataSeries::resize buffer=" << (void*) buffer << endl;
 
     if (!buffer)
-      throw Error(InvalidState,"dsp::DataSeries::resize()",
-		  "Could not allocate another "UI64" bytes!",
-		  require+8);
+      throw Error (InvalidState,"dsp::DataSeries::resize",
+		  "Could not allocate "UI64" bytes", require);
 
     size = require;
     memory_used += size;
