@@ -29,6 +29,8 @@
 
 #if HAVE_CUFFT
 #include "dsp/FilterbankCUDA.h"
+#include "dsp/TransferCUDA.h"
+#include "dsp/MemoryCUDA.h"
 #endif
 
 #include "dsp/SampleDelay.h"
@@ -131,6 +133,22 @@ void dsp::LoadToFold1::prepare () try
     unpacked = new_time_series();
 
   manager->set_output (unpacked);
+
+#if HAVE_CUFFT
+  bool run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
+
+  Reference::To<CUDA::DeviceMemory> device_memory;
+
+  if (run_on_gpu)
+  {
+    BitSeries* bits = new BitSeries;
+    bits->set_memory (new CUDA::PinnedMemory);
+    manager->set_output (bits);
+
+    device_memory = new CUDA::DeviceMemory;
+    unpacked->set_memory (device_memory);
+  }
+#endif
 
   operations.push_back (manager.get());
 
@@ -265,17 +283,34 @@ void dsp::LoadToFold1::prepare () try
     if (config->nfft)
       filterbank->set_frequency_resolution (config->nfft);
 
+    operations.push_back (filterbank.get());
+
 #if HAVE_CUFFT
-    if (thread_id < config->cuda_ndevice * config->cuda_nstream)
+    if (run_on_gpu)
     {
       int device = thread_id % config->cuda_ndevice;
       cerr << "dspsr: thread " << thread_id 
 	   << " using CUDA device " << device << endl;
       filterbank->set_engine (new CUDA::Engine(device));
+      convolved->set_memory (device_memory);
+
+      Scratch* gpu_scratch = new Scratch;
+      gpu_scratch->set_memory (device_memory);
+      filterbank->set_scratch (gpu_scratch);
+
+      TransferCUDA* transfer = new TransferCUDA;
+      transfer->set_kind( cudaMemcpyDeviceToHost );
+      transfer->set_input( convolved );
+
+      convolved = new_time_series ();
+
+      transfer->set_output( convolved );
+
+      operations.push_back (transfer);
+
     }
 #endif
 
-    operations.push_back (filterbank.get());
   }
 
   if (config->coherent_dedispersion &&
@@ -893,7 +928,8 @@ void dsp::LoadToFold1::run () try
       cerr << "dsp::LoadToFold1::run " << operations[iop]->get_name() << endl;
       operations[iop] -> set_cerr (*log);
     }
-    operations[iop] -> set_scratch (scratch);
+    if (!operations[iop] -> scratch_was_set ())
+      operations[iop] -> set_scratch (scratch);
   }
 
   Input* input = manager->get_input();
