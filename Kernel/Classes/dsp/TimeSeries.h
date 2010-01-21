@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.50 $
-   $Date: 2009/08/27 21:32:53 $
+   $Revision: 1.51 $
+   $Date: 2010/01/21 23:36:39 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -166,6 +166,9 @@ namespace dsp {
 
     friend class InputBuffering;
     friend class Unpacker;
+
+    // do the work of the null_clone: copy necessary attributes from the given TimeSeries
+    void null_work (const TimeSeries* from);
 
   private:
 
