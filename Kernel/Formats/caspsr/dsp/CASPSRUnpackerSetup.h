@@ -31,13 +31,6 @@ namespace dsp {
     
     void unpack();
 
-    //! staging buffer on the GPU for packed data
-    unsigned char* stagingBufGPU;
-
-    //! buffer for unpacked data on the GPU
-    float* unpackBufGPU;
-
-    unsigned char* host_mem;
 
   };
 }
