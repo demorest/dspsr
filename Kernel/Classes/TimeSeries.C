@@ -5,8 +5,8 @@
  *
  ***************************************************************************/
 
-#include "environ.h"
 #include "dsp/TimeSeries.h"
+#include "dsp/Memory.h"
 
 #include "fsleep.h"
 #include "Error.h"
@@ -54,6 +54,7 @@ dsp::TimeSeries* dsp::TimeSeries::null_clone () const
 {
   TimeSeries* result = new TimeSeries;
   result->order = order;
+  result->memory = memory;
   return result;
 }
 
@@ -374,7 +375,8 @@ void dsp::TimeSeries::zero ()
 
 }
 
-void dsp::TimeSeries::prepend_checks (const dsp::TimeSeries* pre, uint64_t pre_ndat)
+void dsp::TimeSeries::prepend_checks (const dsp::TimeSeries* pre, 
+				      uint64_t pre_ndat)
 {
   if (pre->input_sample + pre_ndat != uint64_t(input_sample))
     throw Error (InvalidState, "dsp::TimeSeries::prepend_checks",
@@ -383,7 +385,8 @@ void dsp::TimeSeries::prepend_checks (const dsp::TimeSeries* pre, uint64_t pre_n
                  pre->input_sample + pre_ndat, input_sample);
 }
 
-void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64_t pre_ndat) try
+void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64_t pre_ndat)
+try
 {
   if (!pre)
     return;
@@ -435,7 +438,7 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
         {
           float* to = get_datptr (ichan, ipol);
           const float* from = copy->get_datptr(ichan,ipol) + offset;
-          memcpy (to, from, size_t(byte_count));
+          memory->do_copy (to, from, size_t(byte_count));
         }
       }
       break;
@@ -448,7 +451,7 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
 
       float* to = get_dattfp ();
       const float* from = copy->get_dattfp() + offset;
-      memcpy (to, from, size_t(byte_count));
+      memory->do_copy (to, from, size_t(byte_count));
       }
       break;
     }
