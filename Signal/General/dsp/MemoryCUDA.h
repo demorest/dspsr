@@ -19,6 +19,7 @@ namespace CUDA
   public:
     void* do_allocate (unsigned nbytes);
     void do_free (void*);
+    void do_copy (void* to, const void* from, size_t bytes);
   };
 
   //! Manages CUDA device memory allocation and destruction
@@ -27,6 +28,7 @@ namespace CUDA
   public:
     void* do_allocate (unsigned nbytes);
     void do_free (void*);
+    void do_copy (void* to, const void* from, size_t bytes);
   };
 }
 
