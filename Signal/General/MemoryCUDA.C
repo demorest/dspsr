@@ -5,10 +5,13 @@
  *
  ***************************************************************************/
 
+// #define _DEBUG
+
 #include "dsp/MemoryCUDA.h"
 #include "debug.h"
 
 #include <cuda_runtime.h>
+#include <cutil_inline.h>
 
 #include <iostream>
 using namespace std;
@@ -47,20 +50,25 @@ void CUDA::PinnedMemory::do_copy (void* to, const void* from, size_t bytes)
 
 void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
 {
-  DEBUG("CUDA::DeviceMemory::allocate cudaMalloc (" << nbytes << ")" << endl;
+  DEBUG("CUDA::DeviceMemory::allocate cudaMalloc (" << nbytes << ")");
   void* ptr = 0;
-  cudaMalloc (&ptr, nbytes);
+  cutilSafeCall( cudaMalloc (&ptr, nbytes) );
+  cudaError err = cudaGetLastError ();
+  if (err != cudaSuccess)
+    throw Error (InvalidState, "CUDA::DeviceMemory::do_allocate",
+                 "cudaMalloc failed: %s", cudaGetErrorString(err));
   return ptr;
 }
 
 void CUDA::DeviceMemory::do_free (void* ptr)
 {
-  cerr << "CUDA::DeviceMemory::free cudaFree (" << ptr << ")" << endl;
+  DEBUG("CUDA::DeviceMemory::free cudaFree (" << ptr << ")");
   cudaFree (ptr);
 }
 
 void CUDA::DeviceMemory::do_copy (void* to, const void* from, size_t bytes)
 {
-  DEBUG("CUDA::PinnedMemory::copy (" << to <<","<< from <<","<< bytes << ")");
+  DEBUG("CUDA::DeviceMemory::copy (" << to <<","<< from <<","<< bytes << ")");
   cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
 }
+
