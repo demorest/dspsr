@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "dsp/Observation.h"
+#include "dsp/Memory.h"
 
 namespace dsp {
   
@@ -77,20 +78,9 @@ namespace dsp {
     //! Return the sample offset from the start of the data source
     int64_t get_input_sample (Input* input = 0) const;
 
-    //! Delete the current data buffer and attach to this one
-    //! This is dangerous as it ASSUMES new data buffer has been pre-allocated and is big enough.  Beware of segmentation faults when using this routine.
-    //! Also do not try to delete the old memory once you have called this- the BitSeries::data member now owns it.
-    virtual void attach(std::auto_ptr<unsigned char> _data);
-
-    //! Call this when you want the array to still be owned by it's owner
-    virtual void attach(unsigned char* _data);
-
-    //! Release control of the data buffer- resizes to zero
-    virtual unsigned char* release(uint64_t& _size);
-    //! For use by MiniSeries to share the data buffer for unpacking
-    void share(unsigned char*& _buffer,uint64_t& _size) const;
-
     const Input* get_loader() const { return input; }
+
+    void set_memory (Memory*);
 
   protected:
 
@@ -115,6 +105,9 @@ namespace dsp {
 
     //! The Input instance to last set input_sample
     Input* input;
+
+    //! The memory manager
+    Reference::To<Memory> memory;
 
   };
   

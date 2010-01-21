@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Scratch.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/06/07 01:22:34 $
+   $Revision: 1.5 $
+   $Date: 2010/01/21 23:36:23 $
    $Author: straten $ */
 
 #ifndef __dsp_Scratch_h
 #define __dsp_Scratch_h
 
 #include "OwnStream.h"
+#include "Memory.h"
 
 namespace dsp
 {
@@ -43,7 +44,13 @@ namespace dsp
     //! Default scratch space
     static Scratch* get_default_scratch();
 
+    //! Set the memory manager
+    virtual void set_memory (Memory*);
+
   protected:
+    
+    //! The memory manager
+    Reference::To<Memory> memory;
 
     char* working_space;
     size_t working_size;
