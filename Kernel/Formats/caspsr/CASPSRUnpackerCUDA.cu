@@ -28,51 +28,51 @@ typedef float2 Complex;
    The input is a sequence of 4 8-bit numbers for 1 pol, then 4 8-bit numbers for the next
 */
 
-__global__ void unpackDataCUDA(unsigned char* stagingBufGPU, float *unpackBufGPU,
+__global__ void unpackDataCUDA(const unsigned char* stagingBufGPU,
 			       unsigned halfData, float* into_pola, float* into_polb) 
 {
   unsigned int sampleIndex,sampleTmp;
   unsigned char sample;
-  
 
   // output will also be based on pol. if sample index is odd... output index must
   // be put after midpoint of data
 
   sampleTmp = blockIdx.x*blockDim.x + threadIdx.x; 
   sampleTmp = sampleTmp * 8;
+  
 
   sampleIndex= sampleTmp;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_pola]=sample;
+  into_pola[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 1;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_pola+1]=sample;
+  into_pola[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 2;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_pola+2]=sample;
+  into_pola[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 3;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_pola+3]=sample;
+  into_pola[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 4;
   sample = stagingBufGPU[sampleIndex];
   //  unpackBufGPU[sampleIndex+halfData]=sample;
-  unpackBufGPU[into_polb]=sample;
+  into_polb[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 5;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_polb+1]=sample;
+  into_polb[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 6;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_polb+2]=sample;
+  into_polb[sampleIndex]=sample;
 
   sampleIndex = sampleTmp + 7;
   sample = stagingBufGPU[sampleIndex];
-  unpackBufGPU[into_polb+3]=sample;
+  into_polb[sampleIndex]=sample;
 
 
 
@@ -99,10 +99,10 @@ __global__ void unpackDataCUDA(unsigned char* stagingBufGPU, float *unpackBufGPU
 }
 
 
-void caspsr_unpack(const uint64_t ndat, unsigned char* stagingBufGPU,float* unpackBufGPU,int dimBlockUnpack,int dimGridUnpack,unsigned halfData, float* into_pola, float* into_polb)
+void caspsr_unpack(const uint64_t ndat, unsigned char* stagingBufGPU,int dimBlockUnpack,int dimGridUnpack,unsigned halfData, float* into_pola, float* into_polb)
 {
     
-  unpackDataCUDA<<<dimGridUnpack,dimBlockUnpack>>>(stagingBufGPU,unpackBufGPU, halfData,into_pola,into_polb);
+  unpackDataCUDA<<<dimGridUnpack,dimBlockUnpack>>>(stagingBufGPU, halfData,into_pola,into_polb);
 
 }
 
