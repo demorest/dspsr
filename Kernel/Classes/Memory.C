@@ -10,6 +10,7 @@
 #include "debug.h"
 
 #include <assert.h>
+#include <string.h>
 
 dsp::Memory* dsp::Memory::manager = 0;
 
