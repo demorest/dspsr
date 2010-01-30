@@ -9,6 +9,8 @@
 #include "dsp/CASPSRUnpackerSetup.h"
 #include "dsp/BitTable.h"
 #include "dsp/CASPSRUnpackerCUDA.h"
+#include "dsp/MemoryCUDA.h"
+
 #include "Error.h"
 #include <cutil_inline.h>
 #include <cufft.h>
@@ -16,6 +18,7 @@ using namespace std;
 
 dsp::CASPSRUnpackerSetup::CASPSRUnpackerSetup (const char* _name) : HistUnpacker (_name)
 {
+  staging.set_memory( new CUDA::DeviceMemory );
 }
 
 
@@ -23,48 +26,114 @@ dsp::CASPSRUnpackerSetup::~CASPSRUnpackerSetup ()
 {
 }
 
+bool dsp::CASPSRUnpackerSetup::matches (const Observation* observation)
+{
+  //  return observation->get_machine()== "MULTIPLEX"
+  //  && observation->get_nbit() == 8;
+
+  return observation->get_machine()== "CASPSR"
+    && observation->get_nbit() == 8;
+}
+
 void dsp::CASPSRUnpackerSetup::unpack()
 {
-    
-  // in theory we already know what all of these values are...
-  //const uint64_t ndat  = input->get_ndat();
+  const uint64_t ndat = input->get_ndat();
+
+  staging.Observation::operator=( *input );
+  staging.resize(ndat);
 
   // staging buffer on the GPU for packed data
-  //unsigned char* stagingBufGPU; -- should not be necessary, cause it'll be
-  //                              -- directly pointed to by get_rawptr();
+  unsigned char* stagingBufGPU = staging.get_rawptr();
+  //float* from_tmp;
+  //float* from_tmp_cpu;
+  //float* out_tmp;
+  //float* out_tmp_cpu;
 
-  // buffer for unpacked data on the GPU
-  //float* unpackBufGPU; -- replaced by "output->get_datptr"
+  //from_tmp_cpu = (float*) malloc(ndat*2*sizeof(float));
+  //out_tmp_cpu = (float*) malloc(ndat*2*sizeof(float));
   
-  //unsigned char* host_mem; -- replaced by "input->get_rawptr()"
-  
-  
-  const uint64_t ndat = input->get_ndat();
-  const unsigned char* stagingBufGPU = input->get_rawptr();
+
+  const unsigned char*  from= input->get_rawptr();
+
   float* into_pola = output->get_datptr(0,0);
   float* into_polb = output->get_datptr(0,1);
 
-
   //uint64_t dataSize = ndat;
-  int dimBlockUnpack(512);
-  int dimGridUnpack(ndat / dimBlockUnpack*8); 
+  int dimBlockUnpack(256);
+  int dimGridUnpack(ndat / (dimBlockUnpack*4)); 
 
-  //int packedDim = (nchan * bwd_nfft)/4 ;
-  //unsigned packedDim = ndat/4;
-  unsigned halfData = ndat / 2;
+  if (dimBlockUnpack*dimGridUnpack*4 != ndat)
+  {
+     cerr << "dsp::CASPSRUnpackerSetup::unpack increasing dimGridUnpack by 1" << endl;
+     dimGridUnpack = dimGridUnpack + 1;
+  }
+  cutilSafeCall(cudaMemcpy(stagingBufGPU,from,ndat*2*(sizeof(unsigned char)),cudaMemcpyHostToDevice));
 
-  // buffer on host - should already be allocated
+  ///////////////////////
 
-  // buffer on gpu for packed data
-  //cutilSafeCall(cudaMalloc((void **) &stagingBufGPU,packedDim*sizeof(cufftReal)));
+  //cerr << "casting input...";
+  
+  //for (uint i=0;i<ndat*2;i++)
+  // {
+      //cerr << (float) from[i] << endl;
+      //  from_tmp_cpu[i] = 1; // (float) from[i];
+      //cerr << ".." << i;
+      //if (from_tmp_cpu[i] < 0 || from_tmp_cpu[i] > 255 || from_tmp_cpu[i] != int(from_tmp_cpu[i]))
+      //cerr << "SOMETHING BADLY WRONG!!!" << endl;
+  //}
 
-  //cutilSafeCall(cudaMemcpy(stagingBufGPU,from,packedDim*sizeof(cufftReal),cudaMemcpyHostToDevice));
+  
+
+  //cutilSafeCall(cudaMalloc((void**) &from_tmp,ndat*2*sizeof(float)));
+  //cutilSafeCall(cudaMemset(from_tmp,0,ndat*2*sizeof(float)));
+
+  //cerr << "...cudaMalloc...";
+
+  //cutilSafeCall(cudaMemcpy(from_tmp,from_tmp_cpu,ndat*2*sizeof(float),cudaMemcpyHostToDevice));
+
+  //cerr << "cudaMemcpy" << endl;
+  
+
+  //cutilSafeCall(cudaMalloc((void**) &out_tmp,ndat*2*sizeof(float)));
+  //cutilSafeCall(cudaMemset(out_tmp,0,ndat*2*sizeof(float)));
+
+  ///////////////////
+  //cutilSafeCall(cudaMemcpy(tmp_copy,stagingBufGPU,ndat*2,cudaMemcpyDeviceToHost));
+
+  cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "CASPSRUnpackerSetup::unpack() cudaMemcpy FAIL: " << cudaGetErrorString (error) << endl;
 
   // buffer on gpu for unpacked data
   // should be malloc earlier along with the stagin buf? just need the pointers getdatprt? 
   //cutilSafeCall(cudaMalloc((void **) &unpackBufGPU,ndat*sizeof(cufftReal)));
 
   //call function
-  caspsr_unpack(ndat,stagingBufGPU,dimBlockUnpack,dimGridUnpack,halfData,into_pola,into_polb);
+  //int device_no;
+  //cudaGetDevice(&device_no);
+  //cerr << "cuda device: " << device_no << endl;
+  //cerr << "dsp::CASPSRUnpackerSetup::unpack() calling caspsr_unpack" << endl;
+  //cerr << "from = " << &from << " input = " << &stagingBufGPU << " output [0] = " << into_pola << " output[1] = " << into_polb << endl;
+
+
+  caspsr_unpack(ndat,stagingBufGPU,dimBlockUnpack,dimGridUnpack,into_pola,into_polb);
+
+  //cutilSafeCall(cudaMemcpy(out_tmp_cpu,out_tmp,ndat*2*sizeof(float),cudaMemcpyDeviceToHost));
+
+  //for (int i=0;i<ndat*2;i++)
+  //  {
+  //    if (from_tmp_cpu[i] != out_tmp_cpu[i])
+  //	cerr << "ndat :" << i << " from " << from_tmp_cpu[i] <<" NOT EQUAL " << out_tmp_cpu[i] << endl;
+      //else 
+      //	 cerr << "ndat :" << i << " from " << from_tmp_cpu[i] << " IS EQUAL " << out_tmp_cpu[i] << endl;
+  //  }
+  
+  //cerr << "dsp::CASPSRUnpackerSetup::unpack() end of not equal test" << endl;
+
+  //cudaFree(out_tmp);
+  //cudaFree(from_tmp);
+  //free(out_tmp_cpu);
+  //free(from_tmp_cpu);
 }
+
 
