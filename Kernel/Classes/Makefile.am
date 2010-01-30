@@ -45,6 +45,11 @@ if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
+if HAVE_CUFFT
+nobase_include_HEADERS += dsp/MemoryCUDA.h
+libClasses_la_SOURCES += MemoryCUDA.C
+endif
+
 check_PROGRAMS = test_BlockIterator test_environ
 test_BlockIterator_SOURCES = test_BlockIterator.C
 
@@ -54,4 +59,6 @@ test_BlockIterator_SOURCES = test_BlockIterator.C
 include $(top_srcdir)/config/Makefile.include
 
 LDADD = libClasses.la
+
+AM_CPPFLAGS += @CUFFT_CFLAGS@
 
