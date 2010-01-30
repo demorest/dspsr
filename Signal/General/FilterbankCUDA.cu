@@ -7,7 +7,7 @@
  *
  ***************************************************************************/
 
-#define _RECORD_EVENTS
+// #define _RECORD_EVENTS
 
 #include "dsp/FilterbankCUDA.h"
 
@@ -16,8 +16,9 @@
 
 #ifdef _RECORD_EVENTS
 #include <iostream>
-using namespace std;
 #endif
+
+using namespace std;
 
 CUDA::elapsed::elapsed ()
 {
@@ -43,6 +44,8 @@ CUDA::Engine::Engine (int _device)
   bwd_nfft = 0;
 
   d_fft = d_kernel = 0;
+
+  scratch = 0;
 }
 
 CUDA::Engine::~Engine ()
@@ -75,7 +78,8 @@ void CUDA::Engine::init ()
     throw Error (InvalidParam, "CUDA::Engine::init",
 		 "device=%d >= ndevice=%d", device, ndevice);
 
-  cutilSafeCall( cudaSetDevice(device) );
+  // cutilSafeCall ( cudaSetDevice (device) );
+  //cutilSafeCall( cudaSetDevice(1) );
 
   DEBUG("CUDA::Engine::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
 
@@ -84,19 +88,15 @@ void CUDA::Engine::init ()
 
   DEBUG("CUDA::Engine::init data_size=" << data_size);
 
-  cutilSafeCall( cudaStreamCreate(&stream) );
-
-  cutilSafeCall( cudaMallocHost((void**)&pinned, mem_size) );
-
-  cutilSafeCall( cudaMalloc((void**)&d_fft, mem_size + 2*sizeof(cufftReal)) );
+  //cutilSafeCall( cudaStreamCreate(&stream) );
 
   // one forward big FFT
   cufftSafeCall( cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1) );
-  cufftSafeCall( cufftSetStream (plan_fwd, stream) );
+  //cufftSafeCall( cufftSetStream (plan_fwd, stream) );
 
   // nchan backward little FFTs
   cufftSafeCall( cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan) );
-  cufftSafeCall( cufftSetStream (plan_bwd, stream) );
+  //cufftSafeCall( cufftSetStream (plan_bwd, stream) );
 
   // allocate space for the convolution kernel
   cutilSafeCall( cudaMalloc((void**)&d_kernel, mem_size) );
@@ -178,81 +178,71 @@ __global__ void performConvCUDA (float2* d_fft, float2* kernel)
   d_fft[i].y = d_fft[i].x * kernel[i].y + d_fft[i].y * kernel[i].x;
   d_fft[i].x = x;
 }
-
-void CUDA::Engine::perform (const float* in, float* out)
+void CUDA::Engine::perform (const float* in)
 {
   if (!d_kernel)
     init ();
 
-  unsigned mem_size = bwd_nfft * nchan * 2 * sizeof(float);
+  cudaThreadSynchronize ();
+ 
+  //cerr << "CUDA::Engine::perform scratch=" << scratch << endl;
 
-  memcpy (pinned, in, mem_size);
+  float2* cscratch = (float2*) scratch;
+  float2* cin = (float2*) in;
 
-  DEBUG("CUDA::Engine::perform d_fft=" << d_fft << " in=" << in);
+  cufftSafeCall (cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD));
 
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (start, stream);
-#endif
 
-  cutilSafeCall(cudaMemcpyAsync( d_fft, pinned, mem_size,
-				 cudaMemcpyHostToDevice, stream ));
+  cudaThreadSynchronize ();
+  cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL CUFFT_FORWARD: " << cudaGetErrorString (error) << endl;
 
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (timers->copy_to.after, stream);
-#endif
-
-  cufftSafeCall (cufftExecC2C(plan_fwd, d_fft, d_fft, CUFFT_FORWARD));
-
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (timers->fwd.after, stream);
-#endif
+  
 
   int Blks = 256;
   unsigned data_size = nchan * bwd_nfft;
   int realtrThread = data_size / (Blks*2);
 
-  performRealtr<<<realtrThread,Blks,0,stream>>>(d_fft,data_size,d_SN,d_CN);
+  performRealtr<<<realtrThread,Blks>>>(cscratch,data_size,d_SN,d_CN);
+ 
+  cudaThreadSynchronize ();
 
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (timers->realtr.after, stream);
-#endif
-
+  error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL REALTR: " << cudaGetErrorString (error) << endl;
+  
+  
   int BlkThread = data_size / Blks;
 
-  performConvCUDA<<<BlkThread,Blks,0,stream>>>(d_fft,d_kernel);
+  performConvCUDA<<<BlkThread,Blks>>>(cscratch,d_kernel);
+  
+  cudaThreadSynchronize();
 
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (timers->conv.after, stream);
-#endif
+  error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL ConvCUDA: " << cudaGetErrorString (error) << endl;
 
-  cufftSafeCall(cufftExecC2C(plan_bwd, d_fft, d_fft, CUFFT_INVERSE));
+  cufftSafeCall(cufftExecC2C(plan_bwd, cscratch, cscratch, CUFFT_INVERSE));
 
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (timers->bwd.after, stream);
-#endif
+  cudaThreadSynchronize ();
 
-  cutilSafeCall(cudaMemcpyAsync( pinned, d_fft, mem_size,
-				 cudaMemcpyDeviceToHost, stream ));
+  error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL CUFFT_INVERSE: " << cudaGetErrorString (error) << endl;
+  
+  // given we still get errors even when the above are commented out, suspect this loop
+  // is causeing a problem, just, - only seem to get 1 bad memory at a time without the above calls
+  // including above calls, can get several. However, taking out the cudaMemcpy, does not fix problem.
+  unsigned nchan = output_ptr.size();
 
-#ifdef _RECORD_EVENTS
-  cudaEventRecord (timers->copy_from.after, stream);
-#endif
+  for (unsigned ichan=0; ichan < nchan; ichan++)
+  {
+    float* c_time = scratch + ichan*freq_res*2;
+    void* data_into = output_ptr[ichan];
+    const void* data_from = c_time + nfilt_pos*2;  // complex nos.
 
-  DEBUG("CUDA::Engine::wait call cudaStreamSynchronize");
-
-  cutilSafeCall(cudaStreamSynchronize (stream));
-
-#ifdef _RECORD_EVENTS
-  cudaEventSynchronize (start);
-  timers->copy_to.wrt (start);
-  timers->fwd.wrt (timers->copy_to.after);
-  timers->realtr.wrt (timers->fwd.after);
-  timers->conv.wrt (timers->realtr.after);
-  timers->bwd.wrt (timers->conv.after);
-  timers->copy_from.wrt (timers->bwd.after);
-#endif
-
-  DEBUG("CUDA::Engine::wait memcpy result from pinned");
-
-  memcpy (out, pinned, mem_size);
+     cudaMemcpy (data_into, data_from, nkeep * 2 * sizeof(float), cudaMemcpyDeviceToDevice);
+  }
 }
+
