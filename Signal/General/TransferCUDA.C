@@ -40,6 +40,7 @@ void dsp::TransferCUDA::transformation ()
 void dsp::TransferCUDA::prepare ()
 {
   output->copy_configuration( input );
+  output->set_input_sample( input->get_input_sample() );
   output->resize( input->get_ndat () );
 }
 
