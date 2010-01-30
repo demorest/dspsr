@@ -30,7 +30,8 @@ namespace dsp {
   protected:
     
     void unpack();
-
+    bool matches (const Observation*);
+    BitSeries staging;
 
   };
 }
