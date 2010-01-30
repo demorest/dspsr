@@ -28,10 +28,9 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FilterbankCUDA.h \
-	dsp/TransferCUDA.h dsp/MemoryCUDA.h
+nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/TransferCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C MemoryCUDA.C 
+libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C
 
 libdspdsp_la_LIBADD = FilterbankCUDA.lo 
 
