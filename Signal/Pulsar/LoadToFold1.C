@@ -44,6 +44,7 @@
 
 #include "dsp/Archiver.h"
 #include "dsp/ObservationChange.h"
+#include "dsp/Dump.h"
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/TextParameters.h"
@@ -51,6 +52,8 @@
 
 #include "Error.h"
 #include "pad.h"
+
+#define UNPACK_ON_GPU 0
 
 using namespace std;
 
@@ -134,6 +137,8 @@ void dsp::LoadToFold1::prepare () try
 
   manager->set_output (unpacked);
 
+  operations.push_back (manager.get());
+
 #if HAVE_CUFFT
   bool run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
 
@@ -141,16 +146,50 @@ void dsp::LoadToFold1::prepare () try
 
   if (run_on_gpu)
   {
+    //cudaSetDevice(1);
+    //cerr << "run on gpu true, creating device_memory" << endl;
+    device_memory = new CUDA::DeviceMemory;
+    //cerr << "LoadtoFold1::run_on_gpu device memory created" << endl;
+
+#if UNPACK_ON_GPU
+
+    //cerr << "unpack on gpu set, creating bitseries and pinned memory" << endl;
     BitSeries* bits = new BitSeries;
     bits->set_memory (new CUDA::PinnedMemory);
+    //cerr << "LoadtoFold1::unpack_on_gpu pinned memory set" << endl;
     manager->set_output (bits);
 
-    device_memory = new CUDA::DeviceMemory;
     unpacked->set_memory (device_memory);
-  }
-#endif
 
-  operations.push_back (manager.get());
+    TransferCUDA* transfer = new TransferCUDA;
+    transfer->set_kind( cudaMemcpyDeviceToHost );
+    transfer->set_input( unpacked );
+
+    //TimeSeries* sniff = new_time_series ();
+    //transfer->set_output( sniff );
+    //operations.push_back (transfer);
+    //Dump* dump = new Dump;
+    //dump->set_output( fopen("post_GPU_unpack.dat", "w") );
+    //dump->set_input(sniff);
+    //operations.push_back (dump);
+
+#else
+
+    TransferCUDA* transfer = new TransferCUDA;
+    transfer->set_kind( cudaMemcpyHostToDevice );
+    transfer->set_input( unpacked );
+
+    unpacked = new_time_series ();
+    unpacked->set_memory (device_memory);
+    transfer->set_output( unpacked );
+    operations.push_back (transfer);
+    
+    
+#endif // UNPACK_ON_GPU
+
+  }
+
+#endif // HAVE_CUFFT
 
   if (manager->get_info()->get_detected())
   {
@@ -288,7 +327,7 @@ void dsp::LoadToFold1::prepare () try
 #if HAVE_CUFFT
     if (run_on_gpu)
     {
-      int device = thread_id % config->cuda_ndevice;
+      int device =  thread_id % config->cuda_ndevice;
       cerr << "dspsr: thread " << thread_id 
 	   << " using CUDA device " << device << endl;
       filterbank->set_engine (new CUDA::Engine(device));
@@ -297,6 +336,7 @@ void dsp::LoadToFold1::prepare () try
       Scratch* gpu_scratch = new Scratch;
       gpu_scratch->set_memory (device_memory);
       filterbank->set_scratch (gpu_scratch);
+      //cerr << "LoadToFold1::run_on_gpu Scratch memory set" << endl;
 
       TransferCUDA* transfer = new TransferCUDA;
       transfer->set_kind( cudaMemcpyDeviceToHost );
