@@ -5,12 +5,9 @@
 #ifndef __dsp_CASPSRUnpacker_h
 #define __dsp_CASPSRUnpacker_h
 
-#include "dsp/HistUnpacker.h"
-//#include "dsp/CASPSRUnpacker.h"
+#include "dsp/EightBitUnpacker.h"
+
 namespace dsp {
-  
-  //
-  class BitTable;
   
   class CASPSRUnpacker : public HistUnpacker
   {
@@ -19,28 +16,29 @@ namespace dsp {
     //! Constructor
     CASPSRUnpacker (const char* name = "CASPSRUpacker");
 
-    //! Destructor
-    virtual ~CASPSRUnpacker ();
+    //! Return true if the unpacker can operate on the specified device
+    bool get_device_supported (Memory*) const;
 
-    double get_optimal_variance ();
+    //! Set the device on which the unpacker will operate
+    void set_device (Memory*);
 
-    void set_table (BitTable* table);
-
-    const BitTable* get_table () const;
-
-
-    void unpack (uint64_t ndat,
-			 const unsigned char* from, const unsigned nskip,
-			 float* into, const unsigned fskip,
-			 unsigned long* hist);
   protected:
     
     Reference::To<BitTable> table;
 
     //! Return true if we can convert the Observation
-    virtual bool matches (const Observation* observation);
+    bool matches (const Observation* observation);
 
-    virtual void unpack ();
+    void unpack ();
+
+    void unpack (uint64_t ndat,
+		 const unsigned char* from, const unsigned nskip,
+		 float* into, const unsigned fskip,
+		 unsigned long* hist);
+
+    BitSeries staging;
+    bool on_gpu;
+    void unpack_on_gpu ();
   };
 }
 
