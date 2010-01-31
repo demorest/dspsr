@@ -56,6 +56,19 @@ void dsp::Unpacker::set_output_order (TimeSeries::Order order)
 		 "unsupported output order");
 }
 
+//! Return true if the unpacker can operate on the specified device
+bool dsp::Unpacker::get_device_supported (Memory*) const
+{
+  return false;
+}
+
+//! Set the device on which the unpacker will operate
+void dsp::Unpacker::set_device (Memory*)
+{
+  throw Error (InvalidState, "dsp::Unpacker::set_device",
+	       "unsupported device");
+}
+
 //! Initialize and resize the output before calling unpack
 void dsp::Unpacker::transformation ()
 {
