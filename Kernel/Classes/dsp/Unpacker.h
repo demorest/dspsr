@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.28 $
-   $Date: 2009/08/27 06:53:58 $
+   $Revision: 1.29 $
+   $Date: 2010/01/31 09:51:43 $
    $Author: straten $ */
 
 
@@ -49,11 +49,17 @@ namespace dsp {
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);
 
-    //! Return true if the unpacker support the specified output order
+    //! Return true if the unpacker supports the specified output order
     virtual bool get_order_supported (TimeSeries::Order) const;
 
     //! Set the order of the dimensions in the output TimeSeries
     virtual void set_output_order (TimeSeries::Order);
+
+    //! Return true if the unpacker can operate on the specified device
+    virtual bool get_device_supported (Memory*) const;
+
+    //! Set the device on which the unpacker will operate
+    virtual void set_device (Memory*);
 
     //! Return true if the derived class can convert the Observation
     /*! Derived classes must define the conditions under which they can
