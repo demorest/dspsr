@@ -29,7 +29,7 @@ include $(top_srcdir)/config/Makefile.include
 LDADD = libdspsr.la \
 	$(top_builddir)/Signal/General/libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la \
-	@CUFFT_LIBS@
+	@CUFFT_LIBS@ @CUDA_LIBS@
 
 AM_CPPFLAGS += @CUFFT_CFLAGS@
 AM_CXXFLAGS = @OPENMP_CFLAGS@
