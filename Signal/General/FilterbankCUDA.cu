@@ -34,10 +34,8 @@ void CUDA::elapsed::wrt (cudaEvent_t before)
   total += time;
 }
 
-CUDA::Engine::Engine (int _device)
+CUDA::Engine::Engine ()
 {
-  device = _device;
-
   timers = 0;
 
   nchan = 0;
@@ -71,13 +69,6 @@ void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel)
 
 void CUDA::Engine::init ()
 {
-  int ndevice = 0;
-  cudaGetDeviceCount(&ndevice);
-
-  if (device >= ndevice)
-    throw Error (InvalidParam, "CUDA::Engine::init",
-		 "device=%d >= ndevice=%d", device, ndevice);
-
   DEBUG("CUDA::Engine::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
 
   unsigned data_size = nchan * bwd_nfft * 2;
@@ -87,13 +78,9 @@ void CUDA::Engine::init ()
 
   // cudaStreamCreate(&stream);
 
-  // one forward big FFT
   cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1);
-  //cufftSafeCall( cufftSetStream (plan_fwd, stream) );
 
-  // nchan backward little FFTs
   cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan);
-  //cufftSafeCall( cufftSetStream (plan_bwd, stream) );
 
   // allocate space for the convolution kernel
   cudaMalloc((void**)&d_kernel, mem_size);
@@ -180,8 +167,16 @@ void CUDA::Engine::perform (const float* in)
   if (!d_kernel)
     init ();
 
+  int device =9;
+  cudaGetDevice (&device);
+  //cerr << "CUDA::Engine::perform device: " << device << endl;
+
   cudaThreadSynchronize ();
  
+ cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "BEFORE CUFFT_FORWARD: " << cudaGetErrorString (error) << " device: " << device << endl;
+
   //cerr << "CUDA::Engine::perform scratch=" << scratch << endl;
 
   float2* cscratch = (float2*) scratch;
@@ -190,11 +185,9 @@ void CUDA::Engine::perform (const float* in)
   cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
 
   cudaThreadSynchronize ();
-  cudaError error = cudaGetLastError();
+   error = cudaGetLastError();
   if (error != cudaSuccess)
-    cerr << "FAIL CUFFT_FORWARD: " << cudaGetErrorString (error) << endl;
-
-  
+    cerr << "FAIL CUFFT_FORWARD: " << cudaGetErrorString (error) << " device: " << device << endl;
 
   int Blks = 256;
   unsigned data_size = nchan * bwd_nfft;
@@ -227,18 +220,18 @@ void CUDA::Engine::perform (const float* in)
   if (error != cudaSuccess)
     cerr << "FAIL CUFFT_INVERSE: " << cudaGetErrorString (error) << endl;
   
-  // given we still get errors even when the above are commented out, suspect this loop
-  // is causeing a problem, just, - only seem to get 1 bad memory at a time without the above calls
-  // including above calls, can get several. However, taking out the cudaMemcpy, does not fix problem.
+  
   unsigned nchan = output_ptr.size();
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
   {
     float* c_time = scratch + ichan*freq_res*2;
-    void* data_into = output_ptr[ichan];
-    const void* data_from = c_time + nfilt_pos*2;  // complex nos.
-
-     cudaMemcpy (data_into, data_from, nkeep * 2 * sizeof(float), cudaMemcpyDeviceToDevice);
+    float* data_into = output_ptr[ichan];
+    const float* data_from = c_time + nfilt_pos*2;  // complex nos.
+    cudaError err = cudaMemcpy (data_into, data_from, nkeep * 2 * sizeof(float), cudaMemcpyDeviceToDevice);
+    if (error != cudaSuccess)
+    cerr << "FAIL MEMCPY: " << cudaGetErrorString (error) << " device: " << device << endl;
+  
   }
 }
 

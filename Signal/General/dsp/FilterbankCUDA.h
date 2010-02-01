@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.7 $
-   $Date: 2010/02/01 00:44:18 $
+   $Revision: 1.8 $
+   $Date: 2010/02/01 07:19:01 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -38,8 +38,8 @@ namespace CUDA
 
   public:
 
-    //! Construct with number of streams and install CUDA::Memory policy
-    Engine (int device = 0);
+    //! Default Constructor
+    Engine ();
     ~Engine ();
 
     //! Adds the streams
@@ -49,7 +49,6 @@ namespace CUDA
   private:
 
     float* kernel;
-    int device;
 
     //! Initializes CUDA stream-specific resources
     void init ();
@@ -57,7 +56,7 @@ namespace CUDA
   protected:
 
     //! stream identifier
-    cudaStream_t stream;
+    //cudaStream_t stream;
     
     //! forward fft plan 
     cufftHandle plan_fwd;
