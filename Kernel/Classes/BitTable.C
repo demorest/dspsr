@@ -67,6 +67,14 @@ const float* dsp::BitTable::get_values (unsigned byte) const
   return table + values_per_byte * byte; 
 }
 
+double dsp::BitTable::get_scale () const
+{
+  if (!table)
+    const_cast<BitTable*>(this)->build ();
+
+  return scale;
+}
+
 void dsp::BitTable::build ()
 {
   if (!table)
@@ -181,13 +189,16 @@ void dsp::BitTable::generate_unique_values (float* values) const
   variance *= 2.0;
 
   // scale such that the variance is unity
-  double scale = 1.0/sqrt(variance);
+  scale = 1.0/sqrt(variance);
   for (unsigned i=0; i<unique_values; i++)
   {
     // cerr << i << " " << values[i];
     values[i] *= scale;
     // cerr << " " << values[i] << endl;
   }
+
+  // set scale such that spacing = 1
+  scale *= output_spacing;
 }
 
 double dsp::BitTable::get_optimal_variance () const
