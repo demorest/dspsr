@@ -35,8 +35,8 @@ libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C
 libdspdsp_la_LIBADD = FilterbankCUDA.lo 
 
 FilterbankCUDA.lo : FilterbankCUDA.cu
-	/opt/local/cuda/bin/nvcc -c -I/lfs/data0/bbarsdel/g2x/NVIDIA_CUDA_SDK/common/inc -I../../local_include `psrchive --cflags` FilterbankCUDA.cu
-	sed -e 's/Filterbank/FilterbankCUDA/' Filterbank.lo > FilterbankCUDA.lo 
+	@CUDA_NVCC@ -c $(CPPFLAGS) @PSRCHIVE_CFLAGS@ FilterbankCUDA.cu
+	sed -e 's/Filterbank/FilterbankCUDA/' Filterbank.lo > FilterbankCUDA.lo
 
 endif
 
