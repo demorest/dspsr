@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.6 $
-   $Date: 2010/01/21 23:36:45 $
+   $Revision: 1.7 $
+   $Date: 2010/02/01 00:44:18 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -18,7 +18,6 @@
 #include "dsp/Filterbank.h"
 
 #include <cufft.h>
-#include <cutil_inline.h>
 
 namespace CUDA
 {

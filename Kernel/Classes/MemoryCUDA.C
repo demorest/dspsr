@@ -11,7 +11,6 @@
 #include "debug.h"
 
 #include <cuda_runtime.h>
-#include <cutil_inline.h>
 
 #include <iostream>
 using namespace std;
@@ -52,8 +51,7 @@ void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
 {
   DEBUG("CUDA::DeviceMemory::allocate cudaMalloc (" << nbytes << ")");
   void* ptr = 0;
-  cutilSafeCall( cudaMalloc (&ptr, nbytes) );
-  cudaError err = cudaGetLastError ();
+  cudaError err = cudaMalloc (&ptr, nbytes);
   if (err != cudaSuccess)
     throw Error (InvalidState, "CUDA::DeviceMemory::do_allocate",
                  "cudaMalloc failed: %s", cudaGetErrorString(err));

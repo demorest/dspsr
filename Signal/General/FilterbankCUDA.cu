@@ -30,7 +30,7 @@ void CUDA::elapsed::wrt (cudaEvent_t before)
 {
   float time;
   cudaEventSynchronize (after);
-  cutilSafeCall( cudaEventElapsedTime (&time, before, after) );
+  cudaEventElapsedTime (&time, before, after);
   total += time;
 }
 
@@ -72,14 +72,11 @@ void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel)
 void CUDA::Engine::init ()
 {
   int ndevice = 0;
-  cutilSafeCall( cudaGetDeviceCount(&ndevice) );
+  cudaGetDeviceCount(&ndevice);
 
   if (device >= ndevice)
     throw Error (InvalidParam, "CUDA::Engine::init",
 		 "device=%d >= ndevice=%d", device, ndevice);
-
-  // cutilSafeCall ( cudaSetDevice (device) );
-  //cutilSafeCall( cudaSetDevice(1) );
 
   DEBUG("CUDA::Engine::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
 
@@ -88,21 +85,21 @@ void CUDA::Engine::init ()
 
   DEBUG("CUDA::Engine::init data_size=" << data_size);
 
-  //cutilSafeCall( cudaStreamCreate(&stream) );
+  // cudaStreamCreate(&stream);
 
   // one forward big FFT
-  cufftSafeCall( cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1) );
+  cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1);
   //cufftSafeCall( cufftSetStream (plan_fwd, stream) );
 
   // nchan backward little FFTs
-  cufftSafeCall( cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan) );
+  cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan);
   //cufftSafeCall( cufftSetStream (plan_bwd, stream) );
 
   // allocate space for the convolution kernel
-  cutilSafeCall( cudaMalloc((void**)&d_kernel, mem_size) );
+  cudaMalloc((void**)&d_kernel, mem_size);
  
   // copy the kernel accross
-  cutilSafeCall( cudaMemcpy(d_kernel,kernel,mem_size,cudaMemcpyHostToDevice) );
+  cudaMemcpy(d_kernel,kernel,mem_size,cudaMemcpyHostToDevice);
 
   unsigned n_half = nchan * bwd_nfft / 2 + 1;
   unsigned n_half_size = n_half * sizeof(cufftReal);
@@ -125,11 +122,11 @@ void CUDA::Engine::init ()
     SN[j]=(SD*CN[j-1]-CD*SN[j-1])+SN[j-1];
   }
 
-  cutilSafeCall( cudaMalloc((void**)&d_CN, n_half_size) );
-  cutilSafeCall( cudaMalloc((void**)&d_SN, n_half_size) );
+  cudaMalloc((void**)&d_CN, n_half_size);
+  cudaMalloc((void**)&d_SN, n_half_size);
 
-  cutilSafeCall( cudaMemcpy(d_CN,&(CN[0]),n_half_size,cudaMemcpyHostToDevice));
-  cutilSafeCall( cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice));
+  cudaMemcpy(d_CN,&(CN[0]),n_half_size,cudaMemcpyHostToDevice);
+  cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice);
 
 #ifdef _RECORD_EVENTS
   cudaEventCreate (&start);
@@ -190,8 +187,7 @@ void CUDA::Engine::perform (const float* in)
   float2* cscratch = (float2*) scratch;
   float2* cin = (float2*) in;
 
-  cufftSafeCall (cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD));
-
+  cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
 
   cudaThreadSynchronize ();
   cudaError error = cudaGetLastError();
@@ -223,7 +219,7 @@ void CUDA::Engine::perform (const float* in)
   if (error != cudaSuccess)
     cerr << "FAIL ConvCUDA: " << cudaGetErrorString (error) << endl;
 
-  cufftSafeCall(cufftExecC2C(plan_bwd, cscratch, cscratch, CUFFT_INVERSE));
+  cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
 
   cudaThreadSynchronize ();
 
