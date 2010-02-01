@@ -53,8 +53,6 @@
 #include "Error.h"
 #include "pad.h"
 
-#define UNPACK_ON_GPU 0
-
 using namespace std;
 
 dsp::LoadToFold1::LoadToFold1 ()
@@ -149,9 +147,27 @@ void dsp::LoadToFold1::prepare () try
   {
     device_memory = new CUDA::DeviceMemory;
 
+    int device =  thread_id % config->cuda_ndevice;
+    cerr << "dspsr: thread " << thread_id 
+	 << " using CUDA device " << device << endl;
+
+    int ndevice = 0;
+    cudaGetDeviceCount(&ndevice);
+
+    if (device >= ndevice)
+      throw Error (InvalidParam, "dsp::LoadToFold1::prepare",
+		   "device=%d >= ndevice=%d", device, ndevice);
+
+    cudaError err = cudaSetDevice (device);
+    if (err != cudaSuccess)
+      throw Error (InvalidState, "dsp::LoadToFold1::prepare",
+		   "cudaMalloc failed: %s", cudaGetErrorString(err));
+
     Unpacker* unpacker = manager->get_unpacker ();
     if (unpacker->get_device_supported( device_memory ))
     {
+      //cerr << "LoadToFold1: unpack on GraphicsPU" << endl;
+
       unpacker->set_device( device_memory );
       unpacked->set_memory( device_memory );
 
@@ -159,7 +175,9 @@ void dsp::LoadToFold1::prepare () try
       bits->set_memory (new CUDA::PinnedMemory);
       manager->set_output (bits);
 
+#define DUMP_UNPACKED 0
 #if DUMP_UNPACKED
+      cerr << "LoadToFold1.C DUMPING" << endl;
       TransferCUDA* transfer = new TransferCUDA;
       transfer->set_kind( cudaMemcpyDeviceToHost );
       transfer->set_input( unpacked );
@@ -175,6 +193,7 @@ void dsp::LoadToFold1::prepare () try
     }
     else
     {
+      cerr << "LoadToFold1: unpack on CPU" << endl;
       TransferCUDA* transfer = new TransferCUDA;
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
@@ -324,10 +343,7 @@ void dsp::LoadToFold1::prepare () try
 #if HAVE_CUFFT
     if (run_on_gpu)
     {
-      int device =  thread_id % config->cuda_ndevice;
-      cerr << "dspsr: thread " << thread_id 
-	   << " using CUDA device " << device << endl;
-      filterbank->set_engine (new CUDA::Engine(device));
+      filterbank->set_engine (new CUDA::Engine);
       convolved->set_memory (device_memory);
 
       Scratch* gpu_scratch = new Scratch;
@@ -340,6 +356,7 @@ void dsp::LoadToFold1::prepare () try
       transfer->set_input( convolved );
 
       convolved = new_time_series ();
+      convolved->set_memory (new CUDA::PinnedMemory);
 
       transfer->set_output( convolved );
 
