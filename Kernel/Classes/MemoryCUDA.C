@@ -53,8 +53,12 @@ void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
   void* ptr = 0;
   cudaError err = cudaMalloc (&ptr, nbytes);
   if (err != cudaSuccess)
+  {
+    int device;
+    cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::DeviceMemory::do_allocate",
-                 "cudaMalloc failed: %s", cudaGetErrorString(err));
+                 "cudaMalloc failed on device %d: %s", device, cudaGetErrorString(err));
+  }
 
   DEBUG("CUDA::DeviceMemory::allocate cudaMalloc ptr=" << ptr);
   return ptr;
@@ -69,6 +73,41 @@ void CUDA::DeviceMemory::do_free (void* ptr)
 void CUDA::DeviceMemory::do_copy (void* to, const void* from, size_t bytes)
 {
   DEBUG("CUDA::DeviceMemory::copy (" << to <<","<< from <<","<< bytes << ")");
-  cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
+  cudaError err = cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
+  if (err != cudaSuccess)
+  {
+    int device;
+    cudaGetDevice (&device);
+    throw Error (InvalidState, "CUDA::DeviceMemory::do_copy",
+                 "cudaMemcpy failed on device %d: %s", device, cudaGetErrorString(err));
+  }
 }
 
+
+/***************************************************************************
+ *
+ *   Shared pinned memory on host
+ *
+ ***************************************************************************/
+
+
+
+void* CUDA::SharedPinnedMemory::do_allocate (unsigned nbytes)
+{
+  DEBUG("CUDA::SharedPinnedMemory::allocate cudaMallocHost (" << nbytes << ")");
+  void* ptr = 0;
+  cudaHostAlloc (&ptr, nbytes,cudaHostAllocPortable);
+  return ptr;
+}
+
+void CUDA::SharedPinnedMemory::do_free (void* ptr)
+{
+  DEBUG("CUDA::SharedPinnedMemory::free cudaFreeHost (" << ptr << ")");
+  cudaFreeHost (ptr);
+}
+
+void CUDA::SharedPinnedMemory::do_copy (void* to, const void* from, size_t bytes)
+{
+  DEBUG("CUDA::SharedPinnedMemory::copy (" << to <<","<< from <<","<< bytes << ")");
+  cudaMemcpy (to, from, bytes, cudaMemcpyHostToHost);
+}
