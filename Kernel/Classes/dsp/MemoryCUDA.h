@@ -30,6 +30,14 @@ namespace CUDA
     void do_free (void*);
     void do_copy (void* to, const void* from, size_t bytes);
   };
+
+  class SharedPinnedMemory : public dsp::Memory
+  {
+  public:
+    void * do_allocate (unsigned nbytes);
+    void do_free (void*);
+    void do_copy (void* to, const void* from, size_t bytes);
+  };
 }
 
 #endif
