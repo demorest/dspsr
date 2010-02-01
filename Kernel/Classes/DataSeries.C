@@ -12,8 +12,6 @@
 
 #include <string.h>
 
-#define USING_GPU 1
-
 using namespace std;
 
 int dsp::DataSeries::instantiation_count = 0;
