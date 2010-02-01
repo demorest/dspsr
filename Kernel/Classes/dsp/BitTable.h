@@ -43,6 +43,9 @@ namespace dsp {
     //! Get the number of unique values of an N-bit integer, 2^N
     unsigned get_unique_values () const { return unique_values; }
 
+    //! Get the scale factor used to normalize the variance to unity
+    double get_scale () const;
+
     //! Return the digitization convention
     Type get_type () const { return type; }
 
@@ -89,6 +92,9 @@ namespace dsp {
 
     //! N-bit mask
     const unsigned nbit_mask;
+
+    //! The scale factor used to normalize the variance to unity
+    mutable double scale;
 
     //! Build the lookup table
     void build ();
