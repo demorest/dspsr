@@ -7,102 +7,109 @@
  ***************************************************************************/
 
 #include "dsp/CASPSRUnpackerCUDA.h"
-//#include "dsp/BitTable.h"
 
 #include "Error.h"
-
-//#include <cutil_inline.h>
-
 
 using namespace std;
 
 typedef float2 Complex;
 
-//const uint32_t UPPER_BITS=0xff000000;
-//const uint32_t MID_BITS=0xff0000;
-//const uint32_t LOW_BITS=0xff00;
-//const uint32_t BOTTOM_BITS=0xff;
-
-
 /* unpack the byte data into float format on the GPU.
    The input is a sequence of 4 8-bit numbers for 1 pol, then 4 8-bit numbers for the next
 */
 
-__global__ void unpackDataCUDA(const unsigned char* stagingBufGPU,
-			       unsigned halfData, float* into_pola, float* into_polb) 
+__global__ void unpackDataCUDA(uint64_t ndat, float scale,
+			       const unsigned char* stagingBufGPU,
+			       float* into_pola, float* into_polb) 
 {
-  unsigned int sampleIndex,sampleTmp;
-  unsigned char sample;
-
-  // output will also be based on pol. if sample index is odd... output index must
-  // be put after midpoint of data
+  
+  uint64_t sampleIndex,sampleTmp;
+  char sample;
+  uint64_t outputIndex;
 
   sampleTmp = blockIdx.x*blockDim.x + threadIdx.x; 
+
+  outputIndex = sampleTmp * 4;
   sampleTmp = sampleTmp * 8;
+ 
+  float* to_A = into_pola + outputIndex;
+  float* to_B = into_polb + outputIndex;
+  const int8_t* from_A = reinterpret_cast<const int8_t*>( stagingBufGPU ) + sampleTmp;
+  const int8_t* from_B = from_A + 4;
   
+  unsigned nunpack = 4;
+  if (outputIndex + 4 > ndat)
+    nunpack = ndat - outputIndex;
 
+  for (unsigned i=0; i<nunpack; i++)
+  {
+    // ensure that mean is zero then scale so that variance is unity
+    to_A[i] = ((float) from_A[i] + 0.5) * scale; 
+    to_B[i] = ((float) from_B[i] + 0.5) * scale; 
+  }
+  
+  return; 
+  /*
   sampleIndex= sampleTmp;
+  if (sampleIndex > ndat*2)
+	return;
   sample = stagingBufGPU[sampleIndex];
-  into_pola[sampleIndex]=sample;
-
+  into_pola[outputIndex]= (float) sample;
+ 
   sampleIndex = sampleTmp + 1;
+  if (sampleIndex > ndat*2)
+	return;
   sample = stagingBufGPU[sampleIndex];
-  into_pola[sampleIndex]=sample;
-
+  into_pola[outputIndex+1]= (float) sample;
+   
   sampleIndex = sampleTmp + 2;
+  if (sampleIndex > ndat*2)
+	return;
   sample = stagingBufGPU[sampleIndex];
-  into_pola[sampleIndex]=sample;
-
+  into_pola[outputIndex+2]= (float) sample;
+ 
   sampleIndex = sampleTmp + 3;
+  if (sampleIndex > ndat*2)
+	return;
   sample = stagingBufGPU[sampleIndex];
-  into_pola[sampleIndex]=sample;
-
+  into_pola[outputIndex+3]= (float) sample;
+ 
   sampleIndex = sampleTmp + 4;
+ // if (sampleIndex > ndat*2)
+ //	return;
   sample = stagingBufGPU[sampleIndex];
-  //  unpackBufGPU[sampleIndex+halfData]=sample;
-  into_polb[sampleIndex]=sample;
-
+  into_polb[outputIndex]= (float) sample;
+    
   sampleIndex = sampleTmp + 5;
+ //if (sampleIndex > ndat*2)
+ //	return;
   sample = stagingBufGPU[sampleIndex];
-  into_polb[sampleIndex]=sample;
-
+  into_polb[outputIndex+1]= (float) sample;
+    
   sampleIndex = sampleTmp + 6;
+ // if (sampleIndex > ndat*2)
+ //	return;
   sample = stagingBufGPU[sampleIndex];
-  into_polb[sampleIndex]=sample;
-
+  into_polb[outputIndex+2]= (float) sample;
+    
   sampleIndex = sampleTmp + 7;
+ // if (sampleIndex > ndat*2)
+ //	return;
   sample = stagingBufGPU[sampleIndex];
-  into_polb[sampleIndex]=sample;
-
-
-
-  /*  if (sampleIndex & 0x01)
-    {
-      outputIndex= (sampleIndex-1)*2 + halfData;
-    }
-  else
-    {
-      outputIndex= sampleIndex*2;
-    }
-  
-    sample = stagingBufGPU[sampleIndex];*/
-
-  // unpacker assumed 32-bit numbers - will actually be getting as 8-bit.
-  // needs to be shifted by 24 bits
-  //  unpackBufGPU[outputIndex] = (sample&UPPER_BITS)>>24;
-  // needs to be shifted by 16 bits 
-  //unpackBufGPU[outputIndex+1] = (sample&MID_BITS)>>16;
-  // needs to be shifted by 8 bits 
-  //unpackBufGPU[outputIndex+2] =(sample&LOW_BITS)>>8;
-  // is fine 
-  //unpackBufGPU[outputIndex+3] = sample&BOTTOM_BITS; 
+  into_polb[outputIndex+3]= (float) sample;
+   */
+ 
 }
 
-
-void caspsr_unpack(const uint64_t ndat, unsigned char* stagingBufGPU,int dimBlockUnpack,int dimGridUnpack,unsigned halfData, float* into_pola, float* into_polb)
+void caspsr_unpack(const uint64_t ndat, float scale, unsigned char const* stagingBufGPU,int dimBlockUnpack,int dimGridUnpack,float* into_pola, float* into_polb)
 {
-    
-  unpackDataCUDA<<<dimGridUnpack,dimBlockUnpack>>>(stagingBufGPU, halfData,into_pola,into_polb);
+  //cerr << "SCALE=" << scale << endl;
 
+  unpackDataCUDA<<<dimGridUnpack,dimBlockUnpack>>>(ndat,scale,stagingBufGPU, into_pola,into_polb);
+
+  cudaThreadSynchronize ();
+  cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL: " << cudaGetErrorString (error) << endl;
 }
 
