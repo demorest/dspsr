@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.30 $
-   $Date: 2009/08/27 07:27:19 $
+   $Revision: 1.31 $
+   $Date: 2010/02/02 04:10:08 $
    $Author: straten $ */
 
 
@@ -89,6 +89,8 @@ namespace dsp {
     virtual uint64_t set_block_size (uint64_t minimum_samples,
 				   uint64_t maximum_RAM = 0,
 				   unsigned copies = 1);
+
+    virtual void set_overlap (uint64_t overlap);
 
     //! Load and convert the next block of data
     virtual void load (TimeSeries* data);

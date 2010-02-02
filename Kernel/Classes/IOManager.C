@@ -260,8 +260,8 @@ void dsp::IOManager::operation ()
 }
 
 uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples,
-				       uint64_t maximum_RAM,
-				       unsigned copies)
+					 uint64_t maximum_RAM,
+					 unsigned copies)
 {
   /*
     This simple calculation of the maximum block size does not
@@ -340,3 +340,38 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples,
   return uint64_t( block_size * nbyte_dat );
 }
 
+void dsp::IOManager::set_overlap (uint64_t overlap)
+{
+  if (verbose)
+    cerr << "dsp::IOManager::set_overlap request overlap=" << overlap << endl;
+
+  unsigned resolution = input->get_resolution();
+
+  if (verbose)
+    cerr << "dsp::IOManager::set_overlap input resolution="
+         << resolution << endl;
+
+  if (unpacker->get_resolution())
+  {
+    resolution = unpacker->get_resolution();
+    if (verbose)
+      cerr << "dsp::IOManager::set_overlap unpacker resolution="
+           << resolution << endl;
+  }
+
+  // ensure that the block size is a multiple of four
+  if (resolution % 4)
+  {
+    if (resolution % 2 == 0)
+      resolution *= 2;
+    else
+      resolution *= 4;
+  }
+
+  overlap = multiple_greater (overlap, resolution);
+
+  if (verbose)
+    cerr << "dsp::IOManager::set_overlap require overlap=" << overlap << endl;
+    
+  input->set_overlap( overlap );
+}
