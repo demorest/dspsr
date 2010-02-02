@@ -63,6 +63,8 @@ void dsp::LoadToFoldN::set_nthread (unsigned nthread)
 void dsp::LoadToFoldN::set_configuration (Config* config)
 {
   configuration = config;
+  configuration->nthread = threads.size();
+
   for (unsigned i=0; i<threads.size(); i++)
     threads[i]->set_configuration( config );
 }
