@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.8 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.9 $
+   $Date: 2010/02/02 11:18:41 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Rescale_h
@@ -46,6 +46,12 @@ namespace dsp
     //! After setting offset and scale, keep them constant
     void set_constant (bool);
 
+    //! Do not output any data before the first integration interval has passed
+    void set_output_after_interval (bool);
+
+    //! Maintain fscrunched total that can be output
+    void set_output_time_total (bool);
+
     //! Get the epoch of the last scale/offset update
     MJD get_update_epoch () const;
 
@@ -78,6 +84,9 @@ namespace dsp
 
     std::vector< std::vector<float> > scale;
     std::vector< std::vector<float> > offset;
+
+    bool output_time_total;
+    bool output_after_interval;
 
     double interval_seconds;
     uint64_t interval_samples;

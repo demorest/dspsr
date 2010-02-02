@@ -18,6 +18,8 @@ dsp::Rescale::Rescale ()
   interval_seconds = 0.0;
   interval_samples = 0;
   constant_offset_scale = false;
+  output_time_total = false;
+  output_after_interval = false;
 }
 
 dsp::Rescale::~Rescale ()
@@ -29,6 +31,16 @@ dsp::Rescale::~Rescale ()
     compute_various ();
     update (this);
   }
+}
+
+void dsp::Rescale::set_output_after_interval (bool flag)
+{
+  output_after_interval = flag;
+}
+
+void dsp::Rescale::set_output_time_total (bool flag)
+{
+  output_time_total = flag;
 }
 
 void dsp::Rescale::set_constant (bool value)
@@ -69,16 +81,25 @@ void dsp::Rescale::init ()
   if (interval_samples)
     nsample = interval_samples;
   else if (interval_seconds)
-    nsample = uint64_t( interval_seconds / input->get_rate() );
+    nsample = uint64_t( interval_seconds * input->get_rate() );
   else
     nsample = input->get_ndat ();
 
   if (verbose)
     cerr << "dsp::Rescale::init interval samples = " << nsample << endl;
 
+  if (!nsample)
+  {
+    Error error (InvalidState, "dsp::Rescale::init", "nsample == 0");
+    error << " (interval samples=" << interval_samples
+	  << " seconds=" << interval_seconds << ")";
+    throw error;
+  }
+ 
   isample = 0;
 
-  time_total.resize (input_npol);
+  if (output_time_total)
+    time_total.resize (input_npol);
   freq_total.resize (input_npol);
   freq_totalsq.resize (input_npol);
 
@@ -86,19 +107,22 @@ void dsp::Rescale::init ()
   offset.resize (input_npol);
 
   for (unsigned ipol=0; ipol < input_npol; ipol++)
+  {
+    if (output_time_total)
     {
       time_total[ipol].resize (nsample);
       zero (time_total[ipol]);
-
-      freq_total[ipol].resize (input_nchan);
-      zero (freq_total[ipol]);
-
-      freq_totalsq[ipol].resize (input_nchan);
-      zero (freq_total[ipol]);
-
-      scale[ipol].resize (input_nchan);
-      offset[ipol].resize (input_nchan);
     }
+  
+    freq_total[ipol].resize (input_nchan);
+    zero (freq_total[ipol]);
+
+    freq_totalsq[ipol].resize (input_nchan);
+    zero (freq_total[ipol]);
+
+    scale[ipol].resize (input_nchan);
+    offset[ipol].resize (input_nchan);
+  }
 }
 
 /*!
@@ -114,10 +138,13 @@ void dsp::Rescale::transformation ()
   if (first_call)
     init ();
 
-  const uint64_t   input_ndat  = input->get_ndat();
+  const uint64_t input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
+
+  cerr << "dsp::Rescale::transformation input_ndat=" << input_ndat 
+       << " nsample=" << nsample << endl;
 
   if (input_ndim != 1)
     throw Error (InvalidState, "dsp::Rescale::transformation",
@@ -165,7 +192,8 @@ void dsp::Rescale::transformation ()
 		freq_total[ipol][ichan]  += (*in_data);
 		freq_totalsq[ipol][ichan]  += (*in_data)*(*in_data);
 
-		time_total[ipol][samp_dat] += (*in_data);
+		if (output_time_total)
+		  time_total[ipol][samp_dat] += (*in_data);
 		in_data++;
 
 	      }
@@ -192,7 +220,8 @@ void dsp::Rescale::transformation ()
 		      sum += in_data[idat];
 		      sumsq += in_data[idat] * in_data[idat];
 
-		      time_total[ipol][samp_dat] += in_data[idat];
+		      if (output_time_total)
+			time_total[ipol][samp_dat] += in_data[idat];
 
 		      samp_dat++;
 		    }
@@ -211,29 +240,34 @@ void dsp::Rescale::transformation ()
       isample = samp_dat;
 
       if (samp_dat == nsample || first_call)
+      {
+	if (verbose)
+	  cerr << "dsp::Rescale::transformation rescale"
+	       << " nsample=" << nsample
+	       << " isample=" << isample 
+	       << " first_call=" << first_call << endl;
+
+	if (first_call)
+	  update_epoch = input->get_start_time();
+
+	compute_various (first_call);
+	update (this);
+
+	update_epoch += isample / input->get_rate();
+	isample = 0;
+	first_call = false;
+
+	for (unsigned ipol=0; ipol < input_npol; ipol++)
 	{
-    if (verbose)
-      cerr << "dsp::Rescale::transformation rescale nsample=" << nsample
-           << " isample=" << isample << " first_call=" << first_call << endl;
-
-	  if (first_call)
-      update_epoch = input->get_start_time();
-
-    compute_various (first_call);
-	  update (this);
-
-    update_epoch += isample / input->get_rate();
-    isample = 0;
-    first_call = false;
-
-	  for (unsigned ipol=0; ipol < input_npol; ipol++)
-	    {
-	      zero (freq_total[ipol]);
-	      zero (freq_totalsq[ipol]);
-	      zero (time_total[ipol]);
-	    }
+	  zero (freq_total[ipol]);
+	  zero (freq_totalsq[ipol]);
+	  if (output_time_total)
+	    zero (time_total[ipol]);
 	}
-      switch(input->get_order()){
+      }
+
+      switch(input->get_order())
+      {
       case TimeSeries::OrderTFP:
 	{
 	  const float* in_data = input->get_dattfp();
