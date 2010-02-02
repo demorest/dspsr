@@ -9,6 +9,9 @@
 
 #include "Error.h"
 
+#include <iostream>
+using namespace std;
+
 //! Default constructor- always inplace
 dsp::TransferCUDA::TransferCUDA()
   : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer",outofplace,true)
@@ -24,7 +27,7 @@ void dsp::TransferCUDA::transformation ()
   const unsigned ndim = input->get_ndim();
   const uint64_t ndat = input->get_ndat();
 
-  const uint64_t nbyte = ndat * ndim * sizeof(float);
+  uint64_t nbyte = ndat * ndim * sizeof(float);
 
   prepare ();
 
@@ -45,7 +48,7 @@ void dsp::TransferCUDA::transformation ()
   {
     // check the pointers of the next blocks
     const float* from2 = input->get_datptr( ichan, ipol );
-    float* to2 = input->get_datptr( ichan, ipol );
+    const float* to2 = input->get_datptr( ichan, ipol );
 
     if ( (from2 - from == ndat * ndim)
 	 && (to2 - to == ndat * ndim) )
