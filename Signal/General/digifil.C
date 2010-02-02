@@ -35,7 +35,7 @@
 
 using namespace std;
 
-static char* args = "b:B:F:co:prt:hvVZ:";
+static char* args = "b:B:F:cIo:prt:hvVZ:";
 
 void usage ()
 {
@@ -44,8 +44,9 @@ void usage ()
     "Options:\n"
     "\n"
     "  -b bits   number of bits per sample output to file \n" 
-    "  -B secs   block size in seconds \n"
+    "  -B MB     block size in megabytes \n"
     "  -c        keep offset and scale constant \n"
+    "  -I secs   number of seconds between level updates \n"
     "  -F nchan  create a filterbank (voltages only) \n"
     "  -t nsamp  decimate in time \n"
     "  -I secs   rescale interval in seconds \n"
@@ -64,8 +65,9 @@ int main (int argc, char** argv) try
   unsigned filterbank_nchan = 0;
   unsigned tscrunch_factor = 0;
 
-  // block size in seconds
-  double block_size = 10;
+  // block size in MB
+  double block_size = 2.0;
+  double rescale_seconds = 10.0;
 
   char* output_filename = 0;
 
@@ -106,6 +108,10 @@ int main (int argc, char** argv) try
 
     case 't':
       tscrunch_factor = atoi (optarg);
+      break;
+
+    case 'I':
+      rescale_seconds = atof (optarg);
       break;
 
     case 'h':
@@ -161,7 +167,9 @@ int main (int argc, char** argv) try
 
   FILE* outfile = stdout;
 
-  if (output_filename)
+  if (!output_filename)
+    fprintf (stderr, "digifil: output on stdout \n");
+  else
   {
     outfile = fopen (output_filename, "w");
     if (!outfile)
@@ -192,6 +200,7 @@ int main (int argc, char** argv) try
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
   rescale->set_constant (constant_offset_scale);
+  rescale->set_interval_seconds (rescale_seconds);
 
   if (verbose)
     cerr << "digifil: creating pscrunch transformation" << endl;
@@ -206,7 +215,7 @@ int main (int argc, char** argv) try
   if (verbose)
     cerr << "digifil: creating sigproc digitizer" << endl;
   Reference::To<dsp::SigProcDigitizer> digitizer = new dsp::SigProcDigitizer;
-  digitizer->set_nbit(nbits);
+  digitizer->set_nbit (nbits);
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
 
@@ -225,19 +234,31 @@ int main (int argc, char** argv) try
     manager->open (filenames[ifile]);
 
     dsp::Observation* obs = manager->get_info();
+    const unsigned nchan = obs->get_nchan ();
+    const unsigned npol = obs->get_npol ();
+    const unsigned ndim = obs->get_ndim ();
 
-    uint64_t nsample = uint64_t( block_size * obs->get_rate() );
-    bool do_pscrunch = obs->get_npol() > 1;
+    // the unpacked input will occupy nbytes_per_sample
+    double nbytes_per_sample = sizeof(float) * nchan * npol * ndim;
+
+    double MB = 1024.0 * 1024.0;
+    uint64_t nsample = uint64_t( block_size*MB / nbytes_per_sample );
 
     if (verbose)
-      cerr << "digifil: block_size=" << block_size << " sec "
+      cerr << "digifil: block_size=" << block_size << " MB "
         "(" << nsample << " samp)" << endl;
+
+    bool do_pscrunch = obs->get_npol() > 1;
 
     if (!obs->get_detected())
     {
 
       if (filterbank_nchan)
       {
+	if (verbose)
+	  cerr << "digifil: creating " << filterbank_nchan 
+	       << " channel filterbank" << endl;
+
 	filterbank = new dsp::Filterbank;
 	filterbank_input = new dsp::TimeSeries;
 
@@ -252,6 +273,9 @@ int main (int argc, char** argv) try
       }
       else
       {
+	if (verbose)
+	  cerr << "digifil: detecting data directly" << endl;
+
         detection = new dsp::Detection;
         detection->set_input( timeseries );
         detection->set_output( timeseries );
@@ -259,6 +283,15 @@ int main (int argc, char** argv) try
         // detection will do pscrunch
         do_pscrunch = false;
       }
+    }
+
+    if (tscrunch_factor)
+    {
+      tscrunch = new dsp::TScrunch;
+
+      tscrunch->set_factor (tscrunch_factor);
+      tscrunch->set_input( timeseries );
+      tscrunch->set_output( timeseries );
     }
 
     manager->set_block_size( nsample );
@@ -280,15 +313,6 @@ int main (int argc, char** argv) try
       cerr << "Sampling rate = " << obs->get_rate() << endl;
     }
 
-    if (tscrunch_factor)
-    {
-      tscrunch = new dsp::TScrunch;
-
-      tscrunch->set_factor (tscrunch_factor);
-      tscrunch->set_input( timeseries );
-      tscrunch->set_output( timeseries );
-    }
-
     dsp::SigProcObservation sigproc;
 
     while (!manager->get_input()->eod())
@@ -296,18 +320,41 @@ int main (int argc, char** argv) try
       manager->operate ();
 
       if (filterbank)
+      {
+	if (verbose)
+	  cerr << "digifil: filterbank" << endl;
+
 	filterbank->operate();
+      }
 
       if (detection)
+      {
+	if (verbose)
+	  cerr << "digifil: detection" << endl;
+
 	detection->operate();
+      }
 
       if (tscrunch)
-        tscrunch->operate();
+      {
+	if (verbose)
+	  cerr << "digifil: tscrunch" << endl;
 
+        tscrunch->operate();
+      }
+
+      if (verbose)
+	cerr << "digifil: rescale" << endl;
+      
       rescale->operate ();
 
       if (do_pscrunch)
+      {
+	if (verbose)
+	  cerr << "digifil: tscrunch" << endl;
+	  
 	pscrunch->operate ();
+      }
 
       digitizer->operate ();
 
@@ -321,6 +368,9 @@ int main (int argc, char** argv) try
       // output the result to stdout
       const uint64_t nbyte = bitseries->get_nbytes();
       unsigned char* data = bitseries->get_rawptr();
+
+      if (verbose)
+	cerr << "digifil: writing " << nbyte << " bytes to file" << endl;
 
       fwrite (data,nbyte,1,outfile);
 
