@@ -219,6 +219,7 @@ int main (int argc, char** argv) try
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
   rescale->set_interval_seconds (update_interval);
+  rescale->set_output_time_total (true);
   rescale->set_constant (constant_offset_scale);
   rescale->update.connect (monitor, &dsp::BandpassMonitor::output_state);
 
