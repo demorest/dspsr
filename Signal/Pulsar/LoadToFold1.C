@@ -145,6 +145,10 @@ void dsp::LoadToFold1::prepare () try
 
   if (run_on_gpu)
   {
+    // mandatorily disable input buffering
+    if (config->nthread > 1)
+      config->input_buffering = false;
+
     device_memory = new CUDA::DeviceMemory;
 
     int device =  thread_id % config->cuda_ndevice;
@@ -323,6 +327,9 @@ void dsp::LoadToFold1::prepare () try
     // software filterbank constructor
     if (!filterbank)
       filterbank = new Filterbank;
+
+    if (!config->input_buffering)
+      filterbank->set_buffering_policy (NULL);
 
     filterbank->set_input (unpacked);
     filterbank->set_output (convolved);
@@ -601,6 +608,7 @@ void dsp::LoadToFold1::prepare_final ()
   // for now ...
 
   minimum_samples = 0;
+  unsigned block_overlap = 0;
 
   bool report_vitals = thread_id==0 && config->report_vitals;
 
@@ -623,6 +631,9 @@ void dsp::LoadToFold1::prepare_final ()
 
       cerr << "filterbank requires " << minimum_samples << " samples" << endl;
     }
+
+    if (!config->input_buffering)
+      block_overlap = filterbank->get_minimum_samples_lost ();
   }
 
   if (convolution)
@@ -631,6 +642,9 @@ void dsp::LoadToFold1::prepare_final ()
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
            << minimum_samples << " samples" << endl;
+
+    if (!config->input_buffering)
+      block_overlap = convolution->get_minimum_samples_lost () * config->nchan;
   }
 
 #if 0
@@ -639,11 +653,16 @@ void dsp::LoadToFold1::prepare_final ()
                  "minimum samples == 0");
 #endif
 
+  uint64_t block_size = ( minimum_samples - block_overlap ) * config->get_times_minimum_ndat() + block_overlap;
+
   // set the block size to at least minimum_samples
   uint64_t ram = manager->set_block_size
-    ( minimum_samples * config->get_times_minimum_ndat(),
+    ( block_size,
       config->get_maximum_RAM(),
       config->get_nbuffers() );
+
+  if (block_overlap)
+    manager->set_overlap( block_overlap );
 
   if (report_vitals)
   {
