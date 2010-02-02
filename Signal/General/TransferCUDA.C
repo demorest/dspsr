@@ -38,7 +38,7 @@ void dsp::TransferCUDA::transformation ()
 
   if (nchan > 1)
     ichan = 1;
-  if (npol > 1)
+  else if (npol > 1)
     ipol = 1;
 
   if (ichan || ipol)
