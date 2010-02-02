@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.22 $
-   $Date: 2010/01/14 01:33:49 $
+   $Revision: 1.23 $
+   $Date: 2010/02/02 04:10:18 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -72,6 +72,12 @@ namespace dsp {
     // number of CUDA streams per device
     unsigned cuda_nstream;
 
+    // number of threads in operation
+    unsigned nthread;
+
+    // use input-buffering to compensate for operation edge effects
+    bool input_buffering;
+
     // remove inter-channel dispersion delays
     bool interchan_dedispersion;
 
@@ -121,8 +127,8 @@ namespace dsp {
     /* There are three ways to fold multiple pulsars:
 
     1) give names: Fold will generate ephemeris and predictor
-    2) give ephemeris: Fold will generate predictor
-    3) give predictor: Fold will use it
+    2) give ephemerides: Fold will generate predictors
+    3) give predictors: Fold will use them
 
     You may specify any combination of the above, but the highest numbered
     information will always be used.

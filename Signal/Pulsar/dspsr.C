@@ -235,6 +235,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (nthread, 't', "threads");
   arg->set_help ("number of processor threads");
 
+  arg = menu.add (config->input_buffering, "overlap");
+  arg->set_help ("disable input buffering");
+
   string ram_limit;
   arg = menu.add (ram_limit, 'U', "MB|minX");
   arg->set_help ("upper limit on RAM usage");

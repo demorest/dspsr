@@ -38,6 +38,11 @@ dsp::LoadToFold::Config::Config ()
   cuda_ndevice = 0;
   // one stream per CUDA device by default
   cuda_nstream = 1;
+  // one thread by default
+  nthread = 1;
+
+  // use input buffering
+  input_buffering = true;
 
   // remove inter-channel dispersion delays
   interchan_dedispersion = false;
