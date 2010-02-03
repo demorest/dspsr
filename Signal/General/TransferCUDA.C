@@ -48,7 +48,10 @@ void dsp::TransferCUDA::transformation ()
   {
     // check the pointers of the next blocks
     const float* from2 = input->get_datptr( ichan, ipol );
-    const float* to2 = input->get_datptr( ichan, ipol );
+    float* to2 = output->get_datptr( ichan, ipol );
+
+    //cerr << "from2 - from: " << (from2 - from) << " ndat*ndim: " << (ndat*ndim) << endl;
+    //cerr << "to2 - to: " << (to2 - to) << endl; 
 
     if ( (from2 - from == ndat * ndim)
 	 && (to2 - to == ndat * ndim) )
