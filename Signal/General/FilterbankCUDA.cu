@@ -76,7 +76,9 @@ void CUDA::Engine::init ()
 
   DEBUG("CUDA::Engine::init data_size=" << data_size);
 
-  // cudaStreamCreate(&stream);
+  int device =0;
+  cudaGetDevice (&device);
+  cerr << "CUDA::Engine::init device: " << device << endl;
 
   cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1);
 
@@ -162,6 +164,21 @@ __global__ void performConvCUDA (float2* d_fft, float2* kernel)
   d_fft[i].y = d_fft[i].x * kernel[i].y + d_fft[i].y * kernel[i].x;
   d_fft[i].x = x;
 }
+
+__global__ void performPrependCUDA (const float2* from_data,float2* into_data,unsigned into_stride,  unsigned from_stride, unsigned to_copy)
+{
+  unsigned datum = blockIdx.x*blockDim.x+threadIdx.x;
+
+ unsigned block = datum / to_copy;
+ unsigned index = datum - block* to_copy;
+ into_data += block * into_stride;
+ from_data += block * from_stride;
+
+ into_data[index] = from_data[index];  
+}
+
+
+
 void CUDA::Engine::perform (const float* in)
 {
   if (!d_kernel)
@@ -183,6 +200,7 @@ void CUDA::Engine::perform (const float* in)
   float2* cin = (float2*) in;
 
   cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
+  //cufftExecC2C(plan_fwd, cscratch, cscratch, CUFFT_FORWARD);
 
   cudaThreadSynchronize ();
    error = cudaGetLastError();
@@ -220,18 +238,35 @@ void CUDA::Engine::perform (const float* in)
   if (error != cudaSuccess)
     cerr << "FAIL CUFFT_INVERSE: " << cudaGetErrorString (error) << endl;
   
-  
-  unsigned nchan = output_ptr.size();
 
-  for (unsigned ichan=0; ichan < nchan; ichan++)
+  unsigned nchan = output_ptr.size();
+  int prependThread = nchan*nkeep / Blks;
+
+
+  const float2* from_data = cscratch + nfilt_pos;
+  unsigned from_stride = freq_res;
+  float2* into_data = (float2*) output_ptr[0];
+  unsigned into_stride = (output_ptr[1] - output_ptr[0]) / 2;
+  unsigned to_copy = nkeep;
+
+  performPrependCUDA<<<prependThread,Blks>>>(from_data, into_data,into_stride,from_stride,to_copy);
+
+
+  // Replaced by performPrependCUDA
+  /* for (unsigned ichan=0; ichan < nchan; ichan++)
   {
+    //cerr << "nchan :" << nchan << endl;
     float* c_time = scratch + ichan*freq_res*2;
     float* data_into = output_ptr[ichan];
     const float* data_from = c_time + nfilt_pos*2;  // complex nos.
+
     cudaError err = cudaMemcpy (data_into, data_from, nkeep * 2 * sizeof(float), cudaMemcpyDeviceToDevice);
     if (error != cudaSuccess)
     cerr << "FAIL MEMCPY: " << cudaGetErrorString (error) << " device: " << device << endl;
   
-  }
+    }*/
 }
+
+
+
 
