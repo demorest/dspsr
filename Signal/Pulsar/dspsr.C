@@ -103,8 +103,18 @@ int main (int argc, char** argv) try
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
     
+    RealTimer preptime;
+    if (dsp::Operation::record_time)
+      preptime.start();
+    
     prepare (engine, dsp::File::create( filenames[ifile] ));
-        
+
+    if (dsp::Operation::record_time)
+    {
+      preptime.stop();
+      cerr << "dspsr: prepared in " << preptime << endl;
+    }
+
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
