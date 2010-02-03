@@ -39,21 +39,18 @@ void dsp::TransferCUDA::transformation ()
 
   // check for contiguity
 
-  unsigned block_step = ndat * ndim;
-
-  if (nchan > 1)
-  {
-    ichan = 1;
-    block_step *= npol;
-  }
-  else if (npol > 1)
+  if (npol > 1)
     ipol = 1;
+  else if (nchan > 1)
+    ichan = 1;
 
   if (ichan || ipol)
   {
     // check the pointers of the next blocks
     const float* from2 = input->get_datptr( ichan, ipol );
     float* to2 = output->get_datptr( ichan, ipol );
+
+    unsigned block_step = ndat * ndim;
 
     if ( (from2 - from == block_step) && (to2 - to == block_step) )
     {
