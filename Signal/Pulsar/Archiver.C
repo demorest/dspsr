@@ -117,7 +117,7 @@ void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
   extensions.push_back (extension);
 }
 
-void dsp::Archiver::unload (const PhaseSeries* _profiles)
+void dsp::Archiver::unload (const PhaseSeries* _profiles) try
 {
   if (!single_archive && archive_class_name.size() == 0)
     throw Error (InvalidState, "dsp::Archiver::unload", 
@@ -129,6 +129,12 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
 
   if (verbose > 2)
     cerr << "dsp::Archiver::unload profiles=" << _profiles << endl;
+
+  if (profiles->get_nbin() == 0)
+  {
+    cerr << "dsp::Archiver::unload ignoring empty sub-integration" << endl;
+    return;
+  }
 
   this->profiles = _profiles;
 
@@ -207,7 +213,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
   if (script.size()) try
   {
     if (verbose > 2)
-      cerr << "dsp::Archive::unload post-processing" << endl;
+      cerr << "dsp::Archiver::unload post-processing" << endl;
 
     if (!interpreter)
       interpreter = standard_shell();
@@ -218,7 +224,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
   catch (Error& error)
   {
     if (verbose)
-      cerr << "dsp::Archive::unload post-processing "
+      cerr << "dsp::Archiver::unload post-processing "
 	   << archive->get_filename() << " failed:\n"
 	   << error.get_message() << endl;
     return;
@@ -230,7 +236,10 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles)
     
   archive -> unload();
 }
-
+catch (Error& error)
+{
+  throw error += "dsp::Archiver::unload";
+}
 
 void dsp::Archiver::finish () try
 {
