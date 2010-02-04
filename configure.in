@@ -7,8 +7,10 @@ AC_INIT([DSPSR],[2.0],[dspsr-developers@lists.sourceforge.net])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([Kernel/Makefile.am])
 
-AC_ARG_VAR([PSRHOME],[Standard pulsar home directory])
-AC_ARG_VAR([LOGIN_ARCH],[Architecture-dependent sub-directory of PSRHOME])
+AC_ARG_VAR([PSRHOME],    [Standard pulsar home directory])
+AC_ARG_VAR([LOGIN_ARCH], [Architecture-dependent sub-directory of PSRHOME])
+AC_ARG_VAR([PACKAGES],   [Root directories of third-party packages])
+
 AC_PREFIX_DEFAULT([${PSRHOME:-"/usr/local"}${PSRHOME:+"/$LOGIN_ARCH"}])
 
 if test x"$PSRHOME" = x; then
