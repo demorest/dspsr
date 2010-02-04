@@ -1082,6 +1082,19 @@ catch (Error& error)
   throw error += "dsp::LoadToFold1::run";
 }
 
+bool same_name (const dsp::Operation* A, const dsp::Operation* B)
+{
+  return A->get_name() == B->get_name();
+}
+
+template<typename C>
+unsigned find_name (const C& container, unsigned i, const dsp::Operation* B)
+{
+  while (i < container.size() && ! same_name(container[i], B))
+    i++;
+  return i;
+}
+
 void dsp::LoadToFold1::combine (const LoadToFold1* that)
 {
   if (Operation::verbose)
@@ -1094,23 +1107,50 @@ void dsp::LoadToFold1::combine (const LoadToFold1* that)
   unsigned ithis = 0;
   unsigned ithat = 0;
 
-  while (ithis < operations.size() && ithat < operations.size())
+  while (ithis < operations.size() && ithat < that->operations.size())
   {
-    if (operations[ithis]->get_function() != Operation::Procedural)
+    if (! same_name(operations[ithis], that->operations[ithat]))
     {
-      ithis ++;
-      continue;
-    }
+      // search for that in this
+      unsigned jthis = find_name (operations, ithis, that->operations[ithat]);
+      if (jthis == operations.size())
+      {
+	if (Operation::verbose)
+	  cerr << "dsp::LoadToFold1::combine insert "
+	       << that->operations[ithat]->get_name() << endl;
 
-    if (that->operations[ithat]->get_function() != Operation::Procedural)
-    {
-      ithat ++;
-      continue;
-    }
+	// that was not found in this ... insert it and skip it
+	operations.insert( operations.begin()+ithis, that->operations[ithat] );
+	ithis ++;
+	ithat ++;
+      }
+      else
+      {
+	// that was found later in this ... skip to it
+	ithis = jthis;
+      }
 
-    if (operations[ithis]->get_name() != that->operations[ithat]->get_name())
+      continue;
+
+#if 0
+      if (operations[ithis]->get_function() != Operation::Procedural)
+      {
+	ithis ++;
+	continue;
+      }
+
+      if (that->operations[ithat]->get_function() != Operation::Procedural)
+      {
+	ithat ++;
+	continue;
+      }
+
       throw Error (InvalidState, "dsp::LoadToFold1::combine",
-		   "operation names do not match");
+		   "operation names do not match "
+		   "'"+ operations[ithis]->get_name()+"'"
+		   " != '"+that->operations[ithat]->get_name()+"'");
+#endif
+    }
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFold1::combine "
