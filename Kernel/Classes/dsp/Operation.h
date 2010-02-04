@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.48 $
-   $Date: 2010/01/21 23:36:34 $
+   $Revision: 1.49 $
+   $Date: 2010/02/04 09:15:10 $
    $Author: straten $ */
 
 #ifndef __Operation_h
@@ -106,6 +106,15 @@ namespace dsp {
 
     //! Inquire the unique instantiation id
     int get_id(){ return id; }
+
+    //! The function of the operator
+    enum Function
+      {
+	Procedural,    //! operations that process data
+	Structural     //! operations that don't modify data
+      };
+
+    virtual Function get_function () const { return Procedural; }
 
     //! Set the scratch space
     virtual void set_scratch (Scratch*);
