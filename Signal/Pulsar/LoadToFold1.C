@@ -1084,27 +1084,47 @@ catch (Error& error)
 
 void dsp::LoadToFold1::combine (const LoadToFold1* that)
 {
-  if (operations.size() != that->operations.size())
-    throw Error (InvalidState, "dsp::LoadToFold1::combine",
-		 "processes have different numbers of operations");
-
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::combine"
-	 << " this.ops=" << &(this->operations)
-	 << " that.ops=" << &(that->operations) << endl;
+	 << " this size=" << operations.size() 
+	 << " ptr=" << &(this->operations)
+	 << " that size=" << that->operations.size()
+	 << " ptr=" << &(that->operations) << endl;
 
-  for (unsigned iop=0; iop < operations.size(); iop++)
+  unsigned ithis = 0;
+  unsigned ithat = 0;
+
+  while (ithis < operations.size() && ithat < operations.size())
   {
-    if (operations[iop]->get_name() != that->operations[iop]->get_name())
+    if (operations[ithis]->get_function() != Operation::Procedural)
+    {
+      ithis ++;
+      continue;
+    }
+
+    if (that->operations[ithat]->get_function() != Operation::Procedural)
+    {
+      ithat ++;
+      continue;
+    }
+
+    if (operations[ithis]->get_name() != that->operations[ithat]->get_name())
       throw Error (InvalidState, "dsp::LoadToFold1::combine",
 		   "operation names do not match");
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFold1::combine "
-	   << operations[iop]->get_name() << endl;
+	   << operations[ithis]->get_name() << endl;
 
-    operations[iop]->combine( that->operations[iop] );
+    operations[ithis]->combine( that->operations[ithat] );
+
+    ithis ++;
+    ithat ++;
   }
+
+  if (ithis != operations.size() || ithat != that->operations.size())
+    throw Error (InvalidState, "dsp::LoadToFold1::combine",
+		 "processes have different numbers of operations");
 }
 
 //! Run through the data
