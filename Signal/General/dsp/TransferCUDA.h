@@ -26,6 +26,8 @@ namespace dsp {
     void set_kind (cudaMemcpyKind k) { kind = k; }
     void prepare ();
 
+    Operation::Function get_function () const { return Operation::Structural; }
+
   protected:
 
     //! Do stuff

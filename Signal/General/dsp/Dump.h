@@ -32,6 +32,8 @@ namespace dsp {
     //! Set the flag to output binary data
     void set_output_binary (bool flag=true);
 
+    Operation::Function get_function () const { return Operation::Structural; }
+
   protected:
 
     //! Write to the open file descriptor
