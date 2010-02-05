@@ -33,7 +33,7 @@ AC_DEFUN([SWIN_LIB_CUDA],
 
     if test -x $cuda_nvcc; then
 
-      CUDA_NVCC=$cuda_nvcc
+      CUDA_NVCC="$cuda_nvcc \$(DEFAULT_INCLUDES) \$(INCLUDES) \$(AM_CPPFLAGS) \$(CPPFLAGS)"
 
       SWIN_PACKAGE_FIND([cuda],[cuda_runtime.h])
       SWIN_PACKAGE_TRY_COMPILE([cuda],[#include <cuda_runtime.h>])

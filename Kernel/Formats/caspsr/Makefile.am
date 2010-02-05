@@ -13,7 +13,7 @@ libcaspsr_la_SOURCES += CASPSRUnpackerCUDA.cu
 libcaspsr_la_LIBADD = CASPSRUnpackerCUDA.lo 
 
 CASPSRUnpackerCUDA.lo : CASPSRUnpackerCUDA.cu
-	@CUDA_NVCC@ -c $(CPPFLAGS) @PSRCHIVE_CFLAGS@ $(srcdir)/CASPSRUnpackerCUDA.cu
+	@CUDA_NVCC@ -c $(srcdir)/CASPSRUnpackerCUDA.cu
 	sed -e 's/CASPSRUnpacker/CASPSRUnpackerCUDA/' CASPSRUnpacker.lo > CASPSRUnpackerCUDA.lo 
 
 endif
