@@ -54,7 +54,8 @@ void dsp::TransferCUDA::transformation ()
 
     if ( (from2 - from == block_step) && (to2 - to == block_step) )
     {
-      cerr << "dsp::TransferCUDA::transformation contiguous blocks" << endl;
+      if (verbose)
+        cerr << "dsp::TransferCUDA::transformation contiguous blocks" << endl;
       nbyte *= npol * nchan;
       cudaMemcpy (to, from, nbyte, kind);
       return;
