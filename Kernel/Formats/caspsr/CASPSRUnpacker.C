@@ -38,7 +38,8 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
 bool dsp::CASPSRUnpacker::get_device_supported (Memory* memory) const
 {
 #if HAVE_CUDA
-  cerr << "dsp::CASPSRUnpacker::get_device_supported HAVE_CUDA" << endl;
+  if (verbose)
+    cerr << "dsp::CASPSRUnpacker::get_device_supported HAVE_CUDA" << endl;
   return dynamic_cast< CUDA::DeviceMemory*> ( memory );
 #else
   return false;
