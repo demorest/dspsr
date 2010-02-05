@@ -38,7 +38,7 @@ AC_DEFUN([SWIN_LIB_CUDA],
       SWIN_PACKAGE_FIND([cuda],[cuda_runtime.h])
       SWIN_PACKAGE_TRY_COMPILE([cuda],[#include <cuda_runtime.h>])
 
-      SWIN_PACKAGE_FIND([cuda],[libcuda.*])
+      SWIN_PACKAGE_FIND([cuda],[libcudart.*])
       SWIN_PACKAGE_TRY_LINK([cuda],[#include <cuda_runtime.h>],
                             [cudaMalloc (0, 0);],[-lcudart])
 
