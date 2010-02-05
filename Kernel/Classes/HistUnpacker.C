@@ -223,8 +223,14 @@ void dsp::HistUnpacker::combine (const Operation* other)
 {
   Operation::combine (other);
 
+  if (histograms.size() == 0)
+    return;
+
   const HistUnpacker* like = dynamic_cast<const HistUnpacker*>( other );
   if (!like)
+    return;
+
+  if (like->histograms.size() == 0)
     return;
 
   if (verbose)
