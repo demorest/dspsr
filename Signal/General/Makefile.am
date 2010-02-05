@@ -35,7 +35,7 @@ libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C
 libdspdsp_la_LIBADD = FilterbankCUDA.lo 
 
 FilterbankCUDA.lo : FilterbankCUDA.cu
-	@CUDA_NVCC@ -c $(CPPFLAGS) @PSRCHIVE_CFLAGS@ $(srcdir)/FilterbankCUDA.cu
+	@CUDA_NVCC@ -c $(srcdir)/FilterbankCUDA.cu
 	sed -e 's/Filterbank/FilterbankCUDA/' Filterbank.lo > FilterbankCUDA.lo
 
 endif
