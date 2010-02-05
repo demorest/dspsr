@@ -130,7 +130,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
   if (verbose > 2)
     cerr << "dsp::Archiver::unload profiles=" << _profiles << endl;
 
-  if (profiles->get_nbin() == 0)
+  if (_profiles->get_nbin() == 0)
   {
     cerr << "dsp::Archiver::unload ignoring empty sub-integration" << endl;
     return;
