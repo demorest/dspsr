@@ -178,7 +178,6 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
 				  const Observation* observation)
 {
   MJD time = observation->get_start_time();
-
   Pulsar::Generator* generator = Pulsar::Generator::factory (params);
 
   Tempo::Predict* predict = dynamic_cast<Tempo::Predict*>( generator );
@@ -188,9 +187,21 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
     predict->set_ncoef ( ncoef );    
   }
 
+  /*
+   * Tempo2 predictor code:
+   *
+   * Here we make a predictor valid for the next 24 hours
+   * I consider this to be a bit of a hack, since theoreticaly
+   * observations could be longer, and it's a bit silly to make
+   * such a polyco for a 10 min obs.
+   *
+   */
+  MJD endtime = time + 86400;
+
+
   generator->set_site( observation->get_telescope() );
   generator->set_parameters( params );
-  generator->set_time_span( time, time );
+  generator->set_time_span( time, endtime );
 
   double freq = observation->get_centre_frequency();
   double bw = fabs( observation->get_bandwidth() );
