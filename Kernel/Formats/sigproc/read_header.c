@@ -1,10 +1,13 @@
 /* read_header.c - general handling routines for SIGPROC headers */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "header.h"
 #include "sigproc.h"
+
+char sigproc_verbose = 0;
 
 int nbins;
 double period;
@@ -23,7 +26,7 @@ void get_string(FILE *inputfile, int *nbytes, char string[]) /* includefile */
 }
 
 /* attempt to read in the general header info from a pulsar data file */
-int read_header(FILE *inputfile) /* includefile */
+int read_header (FILE *inputfile) /* includefile */
 {
   char string[80], message[80];
   int itmp,nbytes,expecting_rawdatafile=0,expecting_source_name=0; 
@@ -32,10 +35,15 @@ int read_header(FILE *inputfile) /* includefile */
 
   /* try to read in the first line of the header */
   get_string(inputfile,&nbytes,string);
-  if (!strings_equal(string,"HEADER_START")) {
-	/* the data file is not in standard format, rewind and return */
-	rewind(inputfile);
-	return 0;
+
+  if (!strings_equal(string,"HEADER_START"))
+  {
+    if (sigproc_verbose)
+      fprintf (stderr, "sigproc::read_header - no HEADER_START\n");
+
+    /* the data file is not in standard format, rewind and return */
+    rewind(inputfile);
+    return 0;
   }
 
   /* loop over and read remaining header lines until HEADER_END reached */

@@ -4,9 +4,11 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #include "dsp/SigProcObservation.h"
 #include "FilePtr.h"
 
@@ -43,6 +45,8 @@ dsp::SigProcObservation::SigProcObservation (FILE* header)
 
 void dsp::SigProcObservation::load (FILE* header)
 {
+  sigproc_verbose = verbose;
+
   header_bytes = read_header (header);
 
   if (header_bytes < 1)
@@ -88,6 +92,8 @@ void dsp::SigProcObservation::load_global ()
 
 void dsp::SigProcObservation::unload (FILE* header)
 {
+  sigproc_verbose = verbose;
+
   unload_global ();
   filterbank_header (header);
 }
@@ -95,6 +101,8 @@ void dsp::SigProcObservation::unload (FILE* header)
 void dsp::SigProcObservation::unload_global ()
 {
   // set_receiver (buffer);
+
+  // set the machine to a non-zero value so that header will be written
   machine_id = 0;
   telescope_id = 0;
 
@@ -105,11 +113,8 @@ void dsp::SigProcObservation::unload_global ()
   * M.Keith 2008-07-14
   */
   if(get_telescope().compare("PKS")==0)telescope_id=4;
-  if(get_machine().compare("BPSR")==0)machine_id=10;
-  if(get_machine().compare("SCAMP")==0)machine_id=6;
-
-
-
+  else if(get_machine().compare("BPSR")==0)machine_id=10;
+  else if(get_machine().compare("SCAMP")==0)machine_id=6;
 
   strcpy( source_name, get_source().c_str() );
 
