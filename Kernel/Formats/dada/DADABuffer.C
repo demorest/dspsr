@@ -8,6 +8,7 @@
 #include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
 #include "ascii_header.h"
+#include "FilePtr.h"
 
 #include <fstream>
 using namespace std;
@@ -75,15 +76,22 @@ void dsp::DADABuffer::rewind ()
 //! Returns true if filename = DADA
 bool dsp::DADABuffer::is_valid (const char* filename) const
 {
-  ifstream input (filename);
-  if (!input)
+  FilePtr ptr = fopen (filename, "r");
+  if (!ptr)
     return false;
 
-  std::string line;
-  std::getline (input, line);
+  char first[16];
+  fgets (first, 16, ptr);
+  first[10] = '\0';
 
-  if (line == "DADA INFO:")
+  char expect[16] = "DADA INFO:";
+
+  if (strcmp (first, expect) == 0)
     return true;
+
+  if (verbose)
+    cerr << "dsp::DADABuffer::is_valid first 10 characters '" << first << "'"
+            " != '" << expect << "'" << endl;
 
   return false;
 }

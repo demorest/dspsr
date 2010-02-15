@@ -9,6 +9,7 @@
 #include "dsp/ASCIIObservation.h"
 #include "ascii_header.h"
 
+#include "FilePtr.h"
 #include "Error.h"
 
 #include <fstream>
@@ -24,18 +25,43 @@ dsp::DADAFile::DADAFile (const char* filename) : File ("DADA")
 
 string dsp::DADAFile::get_header (const char* filename)
 {
-  std::string line;
-  std::ifstream input (filename);
+  FilePtr fptr = fopen (filename, "r");
+  if (!fptr)
+    throw Error (FailedSys, "dsp::DADAFile::get_header",
+		 "fopen (%s)", filename);
 
-  if (!input)
-    return line;
+  // default DADA header size
+  unsigned hdr_size = 4096;
+  vector<char> buffer;
+  char* header = 0;
 
-  std::getline (input, line, '\0');
+  do
+  {
+    ::rewind (fptr);
 
-  return line;
+    buffer.resize (hdr_size);
+    header = &(buffer[0]);
+
+    if (fread (header, 1, hdr_size, fptr) != hdr_size)
+      throw Error (FailedSys, "dsp::DADAFile::get_header",
+		   "fread (nbyte=%u)", hdr_size);
+
+    /* Get the header size */
+    if (ascii_header_get (header, "HDR_SIZE", "%u", &hdr_size) != 1)
+      throw Error (InvalidState, "dsp::DADAFile::get_header",
+		   "could not parse HDR_SIZE");
+
+    /* Ensure that the incoming header fits in the client header buffer */
+  }
+  while (hdr_size > buffer.size());
+
+  if (!header)
+    return string();
+
+  return header;
 }
 
-bool dsp::DADAFile::is_valid (const char* filename) const
+bool dsp::DADAFile::is_valid (const char* filename) const try
 {
   string header = get_header (filename);
 
@@ -66,6 +92,12 @@ bool dsp::DADAFile::is_valid (const char* filename) const
 
   return true;
 }
+ catch (Error& error)
+   {
+     if (verbose)
+       cerr << "dsp::DADAFile::is_valid " << error.get_message() << endl;
+     return false;
+   }
 
 void dsp::DADAFile::open_file (const char* filename)
 {  

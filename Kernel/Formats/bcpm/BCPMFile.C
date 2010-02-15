@@ -7,6 +7,8 @@
 
 #include "dsp/BCPMFile.h"
 #include "dsp/BCPMExtension.h"
+
+#include "FilePtr.h"
 #include "tostring.h"
 #include "dirutil.h"
 
@@ -48,15 +50,24 @@ string read_line (const char* filename)
 }
 
 //! Returns true if filename appears to name a valid BCPM file
-bool dsp::BCPMFile::is_valid (const char* filename) const{
-  string ss = read_line(filename);
+bool dsp::BCPMFile::is_valid (const char* filename) const
+{
+  FilePtr ptr = fopen (filename, "r");
+  if (!ptr)
+    return false;
 
-  if( ss == "NBPPSEARCH" )
+  char first[16];
+  fgets (first, 16, ptr);
+  first[10] = '\0';
+
+  char expect[16] = "NBPPSEARCH";
+
+  if (strcmp (first, expect) == 0)
     return true;
 
-  if( verbose )
-    fprintf(stderr,"dsp::BCPMFile::is_valid() returning false as first line was '%s'- which is not 'NBPPSEARCH'\n",
-	    ss.c_str());
+  if (verbose)
+    cerr << "dsp::BCPMFile::is_valid first 10 characters '" << first << "'"
+            " != '" << expect << "'" << endl;
 
   return false;
 }
