@@ -1,8 +1,20 @@
-/* sigproc.h: Automatically generated include file for sigproc-3.7 */
+/*
+
+  sigproc.h: Automatically generated include file for sigproc-3.7
+
+  modified by Willem van Straten, 15 Feb 2010
+  - added sigproc_verbose flag
+
+*/
+
 #include <stdio.h>
+
 #include "polyco.h"
 #include "epn.h"
 #include "version.h"
+
+extern char sigproc_verbose;
+
 char *backend_name (int machine_id) ;
 char *data_category (int data_type) ;
 char *headername (char *filename) ;
