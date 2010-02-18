@@ -111,7 +111,7 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
     {
       dspR->set_nchan ( filterbank->get_nchan() );
       dspR->set_freq_res ( filterbank->get_freq_res() );
-      dspR->set_time_res ( filterbank->get_time_res() );
+      dspR->set_time_res ( 1 ); // filterbank->get_time_res() );
     }
 
     // ////////////////////////////////////////////////////////////////////

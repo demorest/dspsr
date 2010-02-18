@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.18 $
-   $Date: 2010/01/21 23:36:45 $
+   $Revision: 1.19 $
+   $Date: 2010/02/18 13:07:17 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -60,12 +60,6 @@ namespace dsp {
     //! Get the frequency resolution factor
     unsigned get_freq_res () const { return freq_res; } 
 
-    //! Set the time resolution factor
-    void set_time_res (unsigned _time_res) { time_res = _time_res; }
-
-    //! Get the time resolution factor
-    unsigned get_time_res () const { return time_res; } 
-
     //! Set the order of the dimensions in the output TimeSeries
     void set_output_order (TimeSeries::Order);
 
@@ -84,9 +78,6 @@ namespace dsp {
     //! Number of channels into which the input will be divided
     unsigned nchan;
 
-    //! Time resolution factor
-    unsigned time_res;
-
     //! Frequency resolution factor
     unsigned freq_res;
 
@@ -103,7 +94,6 @@ namespace dsp {
     void resize_output (bool reserve_extra = false);
 
     unsigned nchan_subband;
-    unsigned nsamp_tres;
   };
  
   class Filterbank::Engine : public Reference::Able
