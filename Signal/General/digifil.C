@@ -360,6 +360,9 @@ int main (int argc, char** argv) try
 
       if (!written_header)
       {
+	if (verbose)
+	  cerr << "digifil: unload header" << endl;
+
 	sigproc.copy( bitseries );
 	sigproc.unload( outfile );
 	written_header = true;
