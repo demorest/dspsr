@@ -143,8 +143,9 @@ void dsp::Rescale::transformation ()
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
 
-  cerr << "dsp::Rescale::transformation input_ndat=" << input_ndat 
-       << " nsample=" << nsample << endl;
+  if (verbose)
+    cerr << "dsp::Rescale::transformation input_ndat=" << input_ndat 
+	 << " nsample=" << nsample << endl;
 
   if (input_ndim != 1)
     throw Error (InvalidState, "dsp::Rescale::transformation",
