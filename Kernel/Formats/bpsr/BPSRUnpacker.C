@@ -31,13 +31,18 @@ void dsp::BPSRUnpacker::set_output_order (TimeSeries::Order order)
 
 bool dsp::BPSRUnpacker::matches (const Observation* observation)
 {
-#ifdef _DEBUG
-  cerr << "dsp::BPSRUnpacker::matches machine=" << observation->get_machine()
-       << " nbit=" << observation->get_nbit()
-       << " ndim=" << observation->get_ndim() << endl;
-#endif
+  if (verbose)
+    cerr << "dsp::BPSRUnpacker::matches \n"
+      " machine=" << observation->get_machine() << " should be BPSR \n"
+      " state=" << observation->get_state() << " should be PPQQ \n"
+      " npol=" << observation->get_npol() << " should be 2 \n"
+      " nbit=" << observation->get_nbit() << " should be 8 \n"
+      " ndim=" << observation->get_ndim() << " should be 1 \n"
+	 << endl;
 
   return observation->get_machine() == "BPSR" 
+    && observation->get_state() == Signal::PPQQ
+    && observation->get_npol() == 2
     && observation->get_nbit() == 8
     && observation->get_ndim() == 1;
 }
