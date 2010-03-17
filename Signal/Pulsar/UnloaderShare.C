@@ -147,7 +147,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
           break;
         }
   }
-  else
+  else if (data->get_integration_length() > 0)
   {
     if (verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
