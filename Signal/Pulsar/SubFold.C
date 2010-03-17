@@ -191,10 +191,13 @@ void dsp::SubFold::set_limits (const Observation* input)
 
 void dsp::SubFold::finish () try
 {
-  if (verbose)
-    cerr << "dsp::SubFold::finish unload_partial" << endl;
+  if (!output->get_integration_length())
+  {
+    if (verbose)
+      cerr << "dsp::SubFold::finish unload_partial" << endl;
 
-  unload_partial ();
+    unload_partial ();
+  }
 
   if (unloader)
   {
@@ -211,12 +214,6 @@ catch (Error& error)
 
 void dsp::SubFold::unload_partial () try
 {
-  if (!output->get_integration_length())
-  {
-    zero_output();
-    return;
-  }
-
   if (verbose)
     cerr << "dsp::SubFold::unload_partial to callback" << endl;
   
