@@ -39,6 +39,8 @@ void dsp::TransferCUDA::transformation ()
 
   // check for contiguity
 
+  cudaThreadSynchronize();
+
   if (npol > 1)
     ipol = 1;
   else if (nchan > 1)
@@ -51,13 +53,14 @@ void dsp::TransferCUDA::transformation ()
     float* to2 = output->get_datptr( ichan, ipol );
 
     unsigned block_step = ndat * ndim;
-
+    
     if ( (from2 - from == block_step) && (to2 - to == block_step) )
-    {
+    {   
       if (verbose)
         cerr << "dsp::TransferCUDA::transformation contiguous blocks" << endl;
       nbyte *= npol * nchan;
       cudaMemcpy (to, from, nbyte, kind);
+      //cudaThreadSynchronize();
       return;
     }
   }

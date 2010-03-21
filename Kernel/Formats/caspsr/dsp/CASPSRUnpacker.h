@@ -39,6 +39,8 @@ namespace dsp {
     BitSeries staging;
     bool on_gpu;
     void unpack_on_gpu ();
+
+    unsigned get_resolution ()const ;
   };
 }
 

@@ -563,6 +563,8 @@ void dsp::Filterbank::transformation ()
 	      forward->frc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
 	    else
 	      forward->fcc1d (nsamp_fft, c_spectrum[ipol], time_dom_ptr);
+	    
+	    
 	  }
 	  
 	  if (matrix_convolution)
@@ -601,7 +603,8 @@ void dsp::Filterbank::transformation ()
 	      }
 	      continue;
 	    }
-	    
+
+
 	    // freq_res > 1 requires a backward fft into the time domain
 	    // for each channel
 
@@ -632,6 +635,7 @@ void dsp::Filterbank::transformation ()
     } // if not using engine
 
   } // for each input channel
+
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation return with output ndat="
