@@ -230,6 +230,7 @@ void CUDA::Engine::perform (const float* in)
   if (error != cudaSuccess)
     cerr << "FAIL ConvCUDA: " << cudaGetErrorString (error) << endl;
 
+
   cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
 
   cudaThreadSynchronize ();
@@ -237,6 +238,7 @@ void CUDA::Engine::perform (const float* in)
   error = cudaGetLastError();
   if (error != cudaSuccess)
     cerr << "FAIL CUFFT_INVERSE: " << cudaGetErrorString (error) << endl;
+
   
 
   unsigned nchan = output_ptr.size();
@@ -251,6 +253,7 @@ void CUDA::Engine::perform (const float* in)
 
   performPrependCUDA<<<prependThread,Blks>>>(from_data, into_data,into_stride,from_stride,to_copy);
 
+  cudaThreadSynchronize();
 
   // Replaced by performPrependCUDA
   /* for (unsigned ichan=0; ichan < nchan; ichan++)
@@ -265,6 +268,15 @@ void CUDA::Engine::perform (const float* in)
     cerr << "FAIL MEMCPY: " << cudaGetErrorString (error) << " device: " << device << endl;
   
     }*/
+
+  // float2* cscratch_cpu = (float2 *) malloc(10*sizeof(float2));
+  //cudaMemcpy(cscratch_cpu,cscratch,10*sizeof(float2),cudaMemcpyDeviceToHost);
+
+  //for (unsigned i=0;i<10;i++)
+  //  cerr << "cscratch.x: " << cscratch_cpu[i].x << " cscratch.y: " << cscratch_cpu[i].y << endl;
+
+  //cerr << "*** complete *** " << endl;
+
 }
 
 

@@ -570,6 +570,9 @@ void dsp::Response::integrate (float* data1, float* data2, int ichan)
 
   float* data = buffer + ichan * ndat * ndim;
 
+  if (verbose)
+    cerr << "dsp::Response::integrate::cross_detect_int" << endl;
+
   cross_detect_int (npts, data1, data2,
 		    data, data + offset, 
 		    data + 2*offset, data + 3*offset, 1);

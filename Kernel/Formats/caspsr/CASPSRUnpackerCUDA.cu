@@ -37,11 +37,16 @@ __global__ void unpackDataCUDA(uint64_t ndat, float scale,
   const int8_t* from_A = reinterpret_cast<const int8_t*>( stagingBufGPU ) + sampleTmp;
   const int8_t* from_B = from_A + 4;
   
-  unsigned nunpack = 4;
-  if (outputIndex + 4 > ndat)
-    nunpack = ndat - outputIndex;
+  //  unsigned nunpack = 4;
+    /* if (outputIndex + 4 > ndat) 
+  {
+    if ((ndat - outputIndex > 0) && (ndat - outputIndex < 4))
+      nunpack = ndat - outputIndex;
+    else
+      nunpack = 0;
+      }*/
 
-  for (unsigned i=0; i<nunpack; i++)
+  for (unsigned i=0; i<4; i++)
   {
     // ensure that mean is zero then scale so that variance is unity
     to_A[i] = ((float) from_A[i] + 0.5) * scale; 
@@ -103,7 +108,7 @@ __global__ void unpackDataCUDA(uint64_t ndat, float scale,
 
 void caspsr_unpack(const uint64_t ndat, float scale, unsigned char const* stagingBufGPU,int dimBlockUnpack,int dimGridUnpack,float* into_pola, float* into_polb)
 {
-  //cerr << "SCALE=" << scale << endl;
+  //cerr << "dimGrid: " << dimGridUnpack << " dimBlock: " << dimBlockUnpack << endl;
 
   unpackDataCUDA<<<dimGridUnpack,dimBlockUnpack>>>(ndat,scale,stagingBufGPU, into_pola,into_polb);
 

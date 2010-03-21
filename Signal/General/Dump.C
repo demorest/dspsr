@@ -30,9 +30,9 @@ void dsp::Dump::set_output_binary (bool flag)
 //! Adds to the totals
 void dsp::Dump::calculation ()
 {
-  if (!output)
-    throw Error (InvalidState, "dsp::Dump::calculation",
-		 "output FILE* not set");
+  //if (!output)
+  //  throw Error (InvalidState, "dsp::Dump::calculation",
+  //		 "output FILE* not set");
 
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
@@ -55,9 +55,18 @@ void dsp::Dump::calculation ()
       }
       else
       {
-	for (uint64_t idat = 0; idat < ndat; idat++)
-	  fprintf (output, "%"PRIu64" %u %u %f",
-		   istart+idat, ichan, ipol, data[idat]);
+	//if (verbose) 
+	  cerr << "About to write to dump file" << endl;
+
+	for (uint64_t idat=0; idat < 10; idat++)
+	  cerr << istart+idat << " " << ichan << " " << ipol << " " << data[idat] << endl;
+
+	//for (uint64_t idat = 0; idat < ndat; idat++)
+	//  fprintf (output, "%"PRIu64" %u %u %f",
+	//		   istart+idat, ichan, ipol, data[idat]);
+	
+	//if (verbose)
+	  cerr << "written to dump file" << endl;
       }
     }
   }

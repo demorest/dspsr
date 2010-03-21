@@ -27,7 +27,7 @@
 
 #include "dsp/Filterbank.h"
 
-#if HAVE_CUFFT
+#if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/TransferCUDA.h"
 #include "dsp/MemoryCUDA.h"
@@ -136,10 +136,11 @@ void dsp::LoadToFold1::prepare () try
   manager->set_output (unpacked);
 
   operations.push_back (manager.get());
+  bool run_on_gpu = 0;
 
-#if HAVE_CUFFT
+#if HAVE_CUDA
 
-  bool run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
+  run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
 
   Reference::To<CUDA::DeviceMemory> device_memory;
 
@@ -151,7 +152,9 @@ void dsp::LoadToFold1::prepare () try
 
     device_memory = new CUDA::DeviceMemory;
 
+
     int device =  thread_id % config->cuda_ndevice;
+    //device =4;
     cerr << "dspsr: thread " << thread_id 
 	 << " using CUDA device " << device << endl;
 
@@ -169,47 +172,61 @@ void dsp::LoadToFold1::prepare () try
 
     Unpacker* unpacker = manager->get_unpacker ();
     if (unpacker->get_device_supported( device_memory ))
-    {
-      //cerr << "LoadToFold1: unpack on GraphicsPU" << endl;
+      {
+	cerr << "LoadToFold1: unpack on GraphicsPU" << endl;
 
-      unpacker->set_device( device_memory );
-      unpacked->set_memory( device_memory );
-
-      BitSeries* bits = new BitSeries;
-      bits->set_memory (new CUDA::PinnedMemory);
-      manager->set_output (bits);
-
+	unpacker->set_device( device_memory );
+	unpacked->set_memory( device_memory );
+	
+	BitSeries* bits = new BitSeries;
+	bits->set_memory (new CUDA::PinnedMemory);
+	manager->set_output (bits);
+	
 #define DUMP_UNPACKED 0
 #if DUMP_UNPACKED
-      cerr << "LoadToFold1.C DUMPING" << endl;
-      TransferCUDA* transfer = new TransferCUDA;
-      transfer->set_kind( cudaMemcpyDeviceToHost );
-      transfer->set_input( unpacked );
-
-      TimeSeries* sniff = new_time_series ();
-      transfer->set_output( sniff );
-      operations.push_back (transfer);
-      Dump* dump = new Dump;
-      dump->set_output( fopen("post_GPU_unpack.dat", "w") );
-      dump->set_input(sniff);
-      operations.push_back (dump);
+	cerr << "LoadToFold1.C DUMPING" << endl;
+	TransferCUDA* transfer = new TransferCUDA;
+	transfer->set_kind( cudaMemcpyDeviceToHost );
+	transfer->set_input( unpacked );
+	
+	TimeSeries* sniff = new_time_series ();
+	transfer->set_output( sniff );
+	operations.push_back (transfer);
+	Dump* dump = new Dump;
+	dump->set_output( fopen("post_GPU_unpack.dat", "w") );
+	dump->set_input(sniff);
+	operations.push_back (dump);
 #endif
-    }
+      }
     else
-    {
-      cerr << "LoadToFold1: unpack on CPU" << endl;
-      TransferCUDA* transfer = new TransferCUDA;
-      transfer->set_kind( cudaMemcpyHostToDevice );
-      transfer->set_input( unpacked );
+      {
+	cerr << "LoadToFold1: unpack on CPU" << endl;
+	TransferCUDA* transfer = new TransferCUDA;
+	transfer->set_kind( cudaMemcpyHostToDevice );
+	transfer->set_input( unpacked );
+	
+	unpacked = new_time_series ();
+	unpacked->set_memory (device_memory);
+	transfer->set_output( unpacked );
+	operations.push_back (transfer);
 
-      unpacked = new_time_series ();
-      unpacked->set_memory (device_memory);
-      transfer->set_output( unpacked );
-      operations.push_back (transfer);
-    }    
+      }    
   }
 
 #endif // HAVE_CUFFT
+
+#define CPU_DUMP_UNPACKED 0
+#if CPU_DUMP_UNPACKED
+      Dump* dump = new Dump;
+      dump->set_output( fopen("post_GPU_unpack.dat", "w") );
+      dump->set_input(unpacked);
+      operations.push_back (dump);
+#endif
+
+  //      Dump* dump = new Dump;
+  //    dump->set_output( fopen("post_GPU_unpack.dat", "w") );
+  //    dump->set_input(unpacked);
+  //    operations.push_back (dump);
 
   if (manager->get_info()->get_detected())
   {
@@ -347,7 +364,11 @@ void dsp::LoadToFold1::prepare () try
 
     operations.push_back (filterbank.get());
 
-#if HAVE_CUFFT
+    //Dump* dumpCPU = new Dump;
+    //dumpCPU->set_input(convolved);
+    //operations.push_back(dumpCPU);
+
+#if HAVE_CUDA
     if (run_on_gpu)
     {
       filterbank->set_engine (new CUDA::Engine);
@@ -357,6 +378,27 @@ void dsp::LoadToFold1::prepare () try
       gpu_scratch->set_memory (device_memory);
       filterbank->set_scratch (gpu_scratch);
       //cerr << "LoadToFold1::run_on_gpu Scratch memory set" << endl;
+
+#define DUMP_UNPACKED_THREE 0
+#if DUMP_UNPACKED_THREE    
+      cudaThreadSynchronize();
+      TransferCUDA* transferX = new TransferCUDA;
+      transferX->set_kind( cudaMemcpyDeviceToHost );
+      transferX->set_input( convolved );
+      TimeSeries* sniffX = new_time_series ();
+      transferX->set_output( sniffX );
+      operations.push_back (transferX);
+      //cudaThreadSynchronize();
+      Dump* dumpX = new Dump;
+      dumpX->set_output( fopen("post_GPU_unpack.dat", "w") );
+      dumpX->set_input(sniffX);
+      operations.push_back (dumpX);     
+#endif
+
+
+      /*
+      // Moving this code further down to allow for 
+      // detection occuring on device
 
       TransferCUDA* transfer = new TransferCUDA;
       transfer->set_kind( cudaMemcpyDeviceToHost );
@@ -369,6 +411,7 @@ void dsp::LoadToFold1::prepare () try
 
       operations.push_back (transfer);
 
+      */
     }
 #endif
 
@@ -420,7 +463,7 @@ void dsp::LoadToFold1::prepare () try
   }
  
   if (!detect)
-    detect = new Detection;
+    detect = new Detection(run_on_gpu);
 
   if (manager->get_info()->get_npol() == 1) 
   {
@@ -451,36 +494,97 @@ void dsp::LoadToFold1::prepare () try
                    config->npol, manager->get_info()->get_npol() );
   }
 
+
+
+      //Dump* dumpCPU = new Dump;
+      //dumpCPU->set_input(convolved);
+      //operations.push_back(dumpCPU);
+
   operations.push_back (detect.get());
-  
-  if (config->npol == 3)
-  {
-    TimeSeries* detected = new_time_series ();
-    detect->set_input (convolved);
-    detect->set_output (detected);
-    prepare_fold (detected);
-  }
-  else
-  {
-    detect->set_input (convolved);
-    detect->set_output (convolved);
-
-    if (config->fourth_moment)
+ 
+  if (run_on_gpu)
     {
-      if (Operation::verbose)
-	cerr << "LoadToFold1::prepare fourth order moments" << endl;
-   
-      FourthMoment* fourth = new FourthMoment;
-      operations.push_back (fourth);
+#if HAVE_CUDA
+      //cerr << "LoadToFold HAVE_CUDA " << endl;
 
-      TimeSeries* moment = new_time_series ();
-      fourth->set_input (convolved);
-      fourth->set_output (moment);
-      prepare_fold (moment);
+      detect->set_input (convolved);
+      detect->set_output (convolved);
+ 
+#define DUMP_UNPACKED_TWO 0
+#if DUMP_UNPACKED_TWO
+      cerr << "LoadToFold1.C DUMPING" << endl;
+      TransferCUDA* transfer = new TransferCUDA;
+      transfer->set_kind( cudaMemcpyDeviceToHost );
+      transfer->set_input( convolved );
+
+      TimeSeries* sniff = new_time_series ();
+      transfer->set_output( sniff );
+      operations.push_back (transfer);
+      Dump* dump = new Dump;
+      dump->set_output( fopen("post_GPU_unpack.dat", "w") );
+      dump->set_input(sniff);
+      operations.push_back (dump);
+
+      prepare_fold(sniff);
+#else
+     
+      TransferCUDA* transfer = new TransferCUDA;
+      transfer->set_kind( cudaMemcpyDeviceToHost );
+      transfer->set_input( convolved );
+      
+      TimeSeries* detected = new_time_series ();
+      detected->set_memory (new CUDA::PinnedMemory);
+      
+      transfer->set_output( detected );
+      
+      operations.push_back (transfer);
+      
+      prepare_fold(detected);
+#endif // dump unpacked
+#endif // have cuda
     }
-    else
-      prepare_fold (convolved);
-  }
+  else
+    { 
+      if (config->npol == 3)
+	{
+	  TimeSeries* detected = new_time_series ();
+	  detect->set_input (convolved);
+	  detect->set_output (detected);
+	  prepare_fold (detected);
+	}
+      else
+	{
+	  cerr << "LoadToFold CPU inplace" << endl;
+
+	  //Dump* dumpPre = new Dump;
+	  //dumpPre->set_input(convolved);
+	  //operations.push_back(dumpPre);
+
+	  detect->set_input (convolved);
+	  detect->set_output (convolved);
+
+	  //cerr << "LoadToFold CPU dump post conv" << endl;
+	  //Dump* dumpCPU = new Dump;
+	  //dumpCPU->set_input(convolved);
+	  //operations.push_back (dumpCPU);
+
+	  if (config->fourth_moment)
+	    {
+	      if (Operation::verbose)
+		cerr << "LoadToFold1::prepare fourth order moments" << endl;
+	      
+	      FourthMoment* fourth = new FourthMoment;
+	      operations.push_back (fourth);
+	      
+	      TimeSeries* moment = new_time_series ();
+	      fourth->set_input (convolved);
+	      fourth->set_output (moment);
+	      prepare_fold (moment);
+	    }
+	  else
+	    prepare_fold (convolved);
+	}
+    } 
   
   prepare_final ();
 }

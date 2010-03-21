@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/06/08 19:45:01 $
-   $Author: straten $ */
+   $Revision: 1.18 $
+   $Date: 2010/03/21 23:21:42 $
+   $Author: tcaotiaafoc $ */
 
 
 #ifndef __Detection_h
@@ -43,7 +43,7 @@ namespace dsp {
   public:
     
     //! Constructor
-    Detection ();
+    Detection (bool on_gpu);
     
     //! Prepare the output TimeSeries attributes
     void prepare ();
@@ -86,6 +86,8 @@ namespace dsp {
 
     //! Quick and dirty method for detecting to PP or QQ
     void onepol_detect();
+
+    bool run_on_gpu;
 
   };
 

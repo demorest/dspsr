@@ -38,5 +38,6 @@ void cross_detect (unsigned ndat, float* p, float* q,
     *qq  CD_OP q_r * q_r + q_i * q_i;  qq += span;    /*  q* q      */
     *Rpq CD_OP p_r * q_r + p_i * q_i;  Rpq += span;   /*  Re[p* q]  */
     *Ipq CD_OP p_r * q_i - p_i * q_r;  Ipq += span;   /*  Im[p* q]  */
+
   }
 }

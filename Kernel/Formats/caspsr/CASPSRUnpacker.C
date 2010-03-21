@@ -147,7 +147,10 @@ void dsp::CASPSRUnpacker::unpack ()
   }
 }
 
+unsigned dsp::CASPSRUnpacker::get_resolution () const { return 1024; }
+
 #if HAVE_CUDA
+
 
 void dsp::CASPSRUnpacker::unpack_on_gpu ()
 {
@@ -169,11 +172,12 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
   int dimBlockUnpack(256);
   int dimGridUnpack(ndat / (dimBlockUnpack*4)); 
 
-  if (dimBlockUnpack*dimGridUnpack*4 != ndat)
-  {
-     cerr << "dsp::CASPSRUnpacker::unpack increasing dimGridUnpack by 1" << endl;
-     dimGridUnpack = dimGridUnpack + 1;
-  }
+  // if (dimBlockUnpack*dimGridUnpack*4 != ndat)
+  // {
+  //   cerr << "dsp::CASPSRUnpacker::unpack increasing dimGridUnpack by 1" << endl;
+  //   dimGridUnpack = dimGridUnpack + 1;
+     //dimBlockUnpack = dimBlockUnpack + 1;
+  //}
 
   cudaError error = cudaMemcpy(stagingBufGPU,from,ndat*2*(sizeof(unsigned char)),cudaMemcpyHostToDevice);
 
