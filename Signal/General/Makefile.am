@@ -50,9 +50,10 @@ digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
 digihist_SOURCES = digihist.C
 
-check_PROGRAMS = test_PolnCalibration
+check_PROGRAMS = test_PolnCalibration test_OptimalFFT
 
 test_PolnCalibration_SOURCES = test_PolnCalibration.C
+test_OptimalFFT_SOURCES = test_OptimalFFT.C
 
 if HAVE_PGPLOT
 
