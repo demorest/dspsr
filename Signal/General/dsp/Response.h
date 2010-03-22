@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.29 $
-   $Date: 2009/06/12 06:18:52 $
+   $Revision: 1.30 $
+   $Date: 2010/03/22 10:27:44 $
    $Author: straten $ */
 
 #ifndef __Response_h
@@ -25,6 +25,7 @@
 namespace dsp {
 
   class Observation;
+  class OptimalFFT;
 
   //! Describes a frequency (or impulse) response
   class Response : public Shape {
@@ -96,6 +97,9 @@ namespace dsp {
     //! Resize with ndat set to the optimal value
     void set_optimal_ndat ();
 
+    //! Set the policy used to compute the optimal FFT length
+    void set_optimal_fft (OptimalFFT*);
+
     //! Given impulse_pos and impulse_neg, check that ndat is large enough
     void check_ndat () const;
 
@@ -112,7 +116,8 @@ namespace dsp {
     void operate (float* spectrum, unsigned poln=0, int ichan=-1) const;
 
     //! Multiply spectrum by complex frequency response
-    void operate (float* spectrum, unsigned poln, int ichan_start, unsigned nchan_op) const;
+    void operate (float* spectrum, unsigned poln, 
+		  int ichan_start, unsigned nchan_op) const;
 
     //! Multiply spectrum vector by complex matrix frequency response
     void operate (float* spectrum1, float* spectrum2, int ichan=-1) const;
@@ -142,6 +147,8 @@ namespace dsp {
   protected:
   
     mutable unsigned step;
+
+    Reference::To<OptimalFFT> optimal_fft;
 
     //! Swap halves of bandpass(es)
     void swap (bool each_chan = true);

@@ -1,18 +1,20 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#include <assert.h>
-#include <math.h>
 
 #include "dsp/Response.h"
 #include "dsp/Observation.h"
+#include "dsp/OptimalFFT.h"
 
 #include "Error.h"
 #include "Jones.h"
 #include "cross_detect.h"
+
+#include <assert.h>
+#include <math.h>
 
 using namespace std;
 
@@ -225,19 +227,22 @@ void dsp::Response::naturalize ()
   if (verbose)
     cerr << "dsp::Response::naturalize" << endl;
 
-  if ( whole_swapped ) {
+  if ( whole_swapped )
+  {
     if (verbose)
       cerr << "dsp::Response::naturalize whole bandpass swap" << endl;
     swap (false);
   }
 
-  if ( chan_swapped ) {
+  if ( chan_swapped )
+  {
     if (verbose)
       cerr << "dsp::Response::naturalize sub-bandpass swap" << endl;
     swap (true);
   }
   
-  if ( dc_centred ) {
+  if ( dc_centred )
+  {
     if (verbose)
       cerr << "dsp::Response::naturalize rotation" << endl;
     rotate (ndat/2);
@@ -257,6 +262,8 @@ unsigned dsp::Response::get_minimum_ndat () const
     return 0;
 
   unsigned min = unsigned( pow (2.0, ceil( log(impulse_tot)/log(2.0) )) );
+  while (min <= impulse_tot)
+    min *= 2;
 
   if (verbose)
     cerr << "dsp::Response::get_minimum_ndat impulse_tot=" << impulse_tot 
@@ -279,18 +286,32 @@ void dsp::Response::set_optimal_ndat ()
   
   if (ndat_max && ndat_max < ndat_min)
     throw Error (InvalidState, "Response::set_optimal_ndat",
-		 "specified maximum ndat (%d) < required minimum ndat (%d)",
-		 ndat_max, ndat_min);
+		  "specified maximum ndat (%d) < required minimum ndat (%d)",
+		  ndat_max, ndat_min);
 
-  int64_t optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
-					   ndat_max, verbose);
-  if (optimal_ndat < 0)
-    throw Error (InvalidState, "Response::set_optimal_ndat",
-		 "optimal_fft_length failed");
+  int64_t optimal_ndat = 0;
+
+  if (optimal_fft)
+  {
+    optimal_fft->set_nchan (nchan);
+    optimal_ndat = optimal_fft->get_nfft (impulse_pos+impulse_neg);
+  }
+  else
+  {
+    optimal_ndat = optimal_fft_length (impulse_pos+impulse_neg,
+				       ndat_max, verbose);
+    if (optimal_ndat < 0)
+      throw Error (InvalidState, "Response::set_optimal_ndat",
+		   "optimal_fft_length failed");
+  }
 
   resize (npol, nchan, unsigned(optimal_ndat), ndim);
 }
 
+void dsp::Response::set_optimal_fft (OptimalFFT* policy)
+{
+  optimal_fft = policy;
+}
 
 void dsp::Response::check_ndat () const
 {
