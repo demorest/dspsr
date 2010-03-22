@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.8 $
-   $Date: 2009/10/30 00:15:13 $
+   $Revision: 1.9 $
+   $Date: 2010/03/22 06:06:58 $
    $Author: straten $ */
 
 #ifndef __LevelMonitor_h
@@ -103,7 +103,12 @@ namespace dsp {
  
     //! abort current integration
     bool abort;
-    
+
+    //! stop setting the thresholds after they are good
+    bool stop_after_good;
+    //! call set_thresholds on each loop
+    bool setting_thresholds;
+
     //! the optimal variance
     double optimal_variance;
     //! the optimal dBm
