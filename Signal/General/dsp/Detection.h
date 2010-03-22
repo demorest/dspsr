@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.18 $
-   $Date: 2010/03/21 23:21:42 $
-   $Author: tcaotiaafoc $ */
+   $Revision: 1.19 $
+   $Date: 2010/03/22 00:48:51 $
+   $Author: straten $ */
 
 
 #ifndef __Detection_h
@@ -43,7 +43,7 @@ namespace dsp {
   public:
     
     //! Constructor
-    Detection (bool on_gpu);
+    Detection (bool on_gpu = false);
     
     //! Prepare the output TimeSeries attributes
     void prepare ();
