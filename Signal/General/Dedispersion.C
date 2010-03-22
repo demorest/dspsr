@@ -1,12 +1,13 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/Dedispersion.h"
 #include "dsp/Observation.h"
+#include "dsp/OptimalFFT.h"
 
 #include "ThreadContext.h"
 #include "Error.h"
@@ -273,8 +274,12 @@ void dsp::Dedispersion::build ()
       set_frequency_resolution( times_minimum_nfft * get_minimum_ndat() );
     check_ndat ();
   }
-  else 
+  else
+  {
+    if (optimal_fft)
+      optimal_fft->set_simultaneous (nchan > 1);
     set_optimal_ndat ();
+  }
 
   // calculate the complex frequency response function
   vector<float> phases (ndat * nchan);
