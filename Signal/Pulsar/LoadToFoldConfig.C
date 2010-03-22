@@ -51,6 +51,7 @@ dsp::LoadToFold::Config::Config ()
   dispersion_measure = 0.0;
 
   zap_rfi = false;
+  use_fft_bench = false;
 
   times_minimum_nfft = 0;
   nfft = 0;
