@@ -12,7 +12,7 @@
 
 using namespace std;
 
-bool dsp::OptimalFFT::verbose = true;
+bool dsp::OptimalFFT::verbose = false;
 
 dsp::OptimalFFT::OptimalFFT ()
 {
@@ -76,6 +76,8 @@ unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
 
   // the smallest FFT possible, given nfilt, is the next power of two higher
   unsigned nfft_min = (unsigned) pow (2.0, ceil(log2(nfilt))); 
+  while (nfft_min <= nfilt)
+    nfft_min *= 2;
 
   unsigned best_nfft = nfft_min;
   double best_cost = 0;
