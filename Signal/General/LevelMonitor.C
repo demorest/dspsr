@@ -34,11 +34,14 @@ dsp::LevelMonitor::LevelMonitor ()
   n_integrate = 1 << 26;
   block_size = 1 << 18;
 
-  mean_tolerance = var_tolerance = 5e-4;
+  mean_tolerance = var_tolerance = 0.01;
   max_iterations = 0;
   between_iterations = 1.0;
 
   far_from_good = false;
+
+  setting_thresholds = true;
+  stop_after_good = false;
 
   data = new WeightedTimeSeries;
 }
@@ -187,13 +190,16 @@ void dsp::LevelMonitor::monitor ()
       return;
     }
 
-    if (verbose)
-      cerr << "LevelMonitor::monitor call set thresholds ..." << endl;
-
-    if (set_thresholds (mean, variance) < 0)
+    if (setting_thresholds)
     {
-      cerr << "LevelMonitor::monitor fail set_thresholds" << endl;
-      return;
+      if (verbose)
+        cerr << "LevelMonitor::monitor call set thresholds ..." << endl;
+
+      if (set_thresholds (mean, variance) < 0)
+      {
+        cerr << "LevelMonitor::monitor fail set_thresholds" << endl;
+        return;
+      }
     }
 
     if (history)
@@ -205,7 +211,11 @@ void dsp::LevelMonitor::monitor ()
     }
     
     if (!far_from_good)
+    {
+      if (verbose)
+        cerr << "LevelMonitor::monitor not far from good; returning" << endl;
       return;
+    }
 
     if (between_iterations)
     {
@@ -366,7 +376,16 @@ int dsp::LevelMonitor::set_thresholds (vector<double>& mean,
           cerr << "LevelMonitor::set_thresholds idig=" << idig
 	       << " dvar=" << delta_var << " max=" << var_tolerance << endl;
 
-        if (delta_var > var_tolerance)
+        if (delta_var < var_tolerance)
+        {
+          if (stop_after_good)
+          {
+            if (verbose)
+              cerr << "LevelMonitor::set_thresholds stopping on good" << endl;
+            setting_thresholds = false;
+          }
+        }
+        else
         {   
           // don't bother adjusting the trim while the gain is improperly set
           if (delta_var > 5 * var_tolerance)
