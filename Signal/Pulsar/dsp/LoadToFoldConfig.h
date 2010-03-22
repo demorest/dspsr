@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.23 $
-   $Date: 2010/02/02 04:10:18 $
+   $Revision: 1.24 $
+   $Date: 2010/03/22 10:27:50 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -86,6 +86,9 @@ namespace dsp {
 
     // zap RFI during convolution
     bool zap_rfi;
+
+    // use FFT benchmarks to choose an optimal FFT length
+    bool use_fft_bench;
 
     // perform phase-coherent matrix convolution (calibration)
     std::string calibrator_database_filename;

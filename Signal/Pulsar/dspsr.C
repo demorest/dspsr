@@ -352,6 +352,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (fft_lib, 'Z', "lib");
   arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
+  arg = menu.add (config->use_fft_bench, "fft-bench");
+  arg->set_help ("use benchmark data to choose optimal FFT length");
+
 #if HAVE_CUFFT
   arg = menu.add (config->cuda_ndevice, "cuda", "ndevice");
   arg->set_help ("set the number of CUDA devices to use");

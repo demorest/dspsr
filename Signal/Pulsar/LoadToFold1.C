@@ -26,6 +26,7 @@
 #include "dsp/PolnCalibration.h"
 
 #include "dsp/Filterbank.h"
+#include "dsp/OptimalFFT.h"
 
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
@@ -274,6 +275,13 @@ void dsp::LoadToFold1::prepare () try
       if (report_vitals)
 	cerr << "dspsr: setting smearing to " << config->nsmear << endl;
       kernel->set_smearing_samples (config->nsmear);
+    }
+
+    if (config->use_fft_bench)
+    {
+      if (report_vitals)
+	cerr << "dspsr: using benchmarks to choose optimal FFT length" << endl;
+      kernel->set_optimal_fft( new OptimalFFT );
     }
   }
   else
