@@ -158,9 +158,22 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
   if (bandwidth != 0)
   {
     cerr << "dspsr: over-riding bandwidth"
-      " old=" << info->get_bandwidth() <<
-      " new=" << bandwidth << endl;
+      " old=" << info->get_bandwidth() << " MHz"
+      " new=" << bandwidth << " MHz" << endl;
     info->set_bandwidth (bandwidth);
+
+    if (info->get_state() == Signal::Nyquist)
+    {
+      info->set_rate( bandwidth * 2e6 );
+      cerr << "dspsr: corrected Nyquist (real-valued) sampling rate=" 
+           << info->get_rate() << " Hz" << endl;
+    }
+    else if (info->get_state () == Signal::Analytic)
+    {
+      info->set_rate( bandwidth * 1e6 );
+      cerr << "dspsr: corrected Analytic (complex-valued) sampling rate="
+           << info->get_rate() << " Hz" << endl;
+    }
   }
   
   if (centre_frequency != 0)
