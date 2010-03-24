@@ -110,7 +110,7 @@ dsp::LoadToFold::Config::Config ()
 void dsp::LoadToFold::Config::set_times_minimum_ndat (unsigned ndat)
 {
   times_minimum_ndat = ndat;
-  maximum_RAM = 0.0;
+  maximum_RAM = 0;
 }
 
 // set block_size to result in approximately this much RAM usage
