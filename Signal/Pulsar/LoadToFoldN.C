@@ -305,7 +305,7 @@ void dsp::LoadToFoldN::signal (LoadToFold1* fold, LoadToFold1::State state)
   fold->state_change->broadcast();
 }
 
-void* dsp::LoadToFoldN::thread (void* context)
+void* dsp::LoadToFoldN::thread (void* context) try
 {
   dsp::LoadToFold1* fold = reinterpret_cast<dsp::LoadToFold1*>( context );
 
@@ -325,7 +325,7 @@ void* dsp::LoadToFoldN::thread (void* context)
   try
   {
     if (fold->log) *(fold->log) << "THREAD STARTED" << endl;
-  
+
     fold->run();
 
     if (fold->log) *(fold->log) << "THREAD run ENDED" << endl;
@@ -349,6 +349,11 @@ void* dsp::LoadToFoldN::thread (void* context)
   if (fold->log) *(fold->log) << "THREAD EXIT" << endl;
 
   pthread_exit (0);
+}
+catch (Error& error)
+{
+  cerr << "THREAD ERROR: " << error << endl;
+  exit (-1);
 }
 
 //! Run through the data
