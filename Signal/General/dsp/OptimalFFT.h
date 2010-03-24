@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/OptimalFFT.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/12/31 20:36:43 $
+   $Revision: 1.2 $
+   $Date: 2010/03/24 04:17:45 $
    $Author: straten $ */
 
 #ifndef __OptimalFFT_h
@@ -36,6 +36,9 @@ namespace dsp
     unsigned get_nfft (unsigned nfilt) const;
 
     double compute_cost (unsigned nfft, unsigned nfilt) const;
+
+    //! Get the name of the FFT library to use for the given FFT length
+    std::string get_library (unsigned nfft);
 
   protected:
 
