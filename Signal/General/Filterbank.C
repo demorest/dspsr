@@ -12,6 +12,7 @@
 #include "dsp/Apodization.h"
 #include "dsp/InputBuffering.h"
 #include "dsp/Scratch.h"
+#include "dsp/OptimalFFT.h"
 
 #include "FTransform.h"
 
@@ -235,10 +236,20 @@ void dsp::Filterbank::make_preparations ()
 
   using namespace FTransform;
 
+  OptimalFFT* optimal = 0;
+  if (response->has_optimal_fft())
+    optimal = response->get_optimal_fft();
+
+  if (optimal)
+    FTransform::set_library( optimal->get_library( nsamp_fft ) );
+
   if (input->get_state() == Signal::Nyquist)
     forward = Agent::current->get_plan (nsamp_fft, FTransform::frc);
   else
     forward = Agent::current->get_plan (nsamp_fft, FTransform::fcc);
+
+  if (optimal)
+    FTransform::set_library( optimal->get_library( freq_res ) );
 
   if (freq_res > 1)
     backward = Agent::current->get_plan (freq_res, FTransform::bcc);
