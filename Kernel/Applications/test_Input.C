@@ -92,6 +92,9 @@ int main (int argc, char** argv)
 
     cerr << "data file " << filenames[ifile] << " opened" << endl;
 
+    dsp::Observation* obs = input_small->get_info();
+    cerr << "soure name = " << obs->get_source() << endl;
+
     test.runtest (input_small, input_large);
 
     cerr << "end of data file " << filenames[ifile] << endl << endl;
