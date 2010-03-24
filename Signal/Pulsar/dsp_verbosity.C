@@ -9,12 +9,15 @@
 #include "dsp/Operation.h"
 #include "dsp/Shape.h"
 #include "dsp/Archiver.h"
+#include "dsp/OptimalFFT.h"
 
 void dsp::set_verbosity (unsigned level)
 {
   dsp::Observation::verbose = (level >= 3);
   dsp::Operation::verbose =   (level >= 3);
   dsp::Shape::verbose =       (level >= 3);
+  dsp::OptimalFFT::verbose =  (level >= 3);
+
   dsp::Archiver::verbose = level;
 }
 
