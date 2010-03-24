@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.30 $
-   $Date: 2010/03/22 10:27:44 $
+   $Revision: 1.31 $
+   $Date: 2010/03/24 04:17:51 $
    $Author: straten $ */
 
 #ifndef __Response_h
@@ -99,6 +99,8 @@ namespace dsp {
 
     //! Set the policy used to compute the optimal FFT length
     void set_optimal_fft (OptimalFFT*);
+    OptimalFFT* get_optimal_fft ();
+    bool has_optimal_fft () const;
 
     //! Given impulse_pos and impulse_neg, check that ndat is large enough
     void check_ndat () const;

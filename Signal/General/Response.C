@@ -313,6 +313,16 @@ void dsp::Response::set_optimal_fft (OptimalFFT* policy)
   optimal_fft = policy;
 }
 
+dsp::OptimalFFT* dsp::Response::get_optimal_fft ()
+{
+  return optimal_fft;
+}
+
+bool dsp::Response::has_optimal_fft () const
+{
+  return optimal_fft;
+}
+
 void dsp::Response::check_ndat () const
 {
   if (ndat_max && ndat > ndat_max)
