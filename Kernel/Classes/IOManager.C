@@ -21,10 +21,30 @@ using namespace std;
 //! Constructor
 dsp::IOManager::IOManager () : Operation ("IOManager")
 {
+  maximum_RAM = 0;
+  minimum_RAM = 0;
+  copies = 1;
 }
 
 dsp::IOManager::~IOManager()
 {
+}
+
+void dsp::IOManager::set_maximum_RAM (uint64_t max)
+{
+  maximum_RAM = max;
+}
+
+//! Set the minimum RAM usage constraint in set_block_size
+void dsp::IOManager::set_minimum_RAM (uint64_t min)
+{
+  minimum_RAM = min;
+}
+
+//! Set the number of copies of data constraint in set_block_size
+void dsp::IOManager::set_copies (unsigned nbuf)
+{
+  copies = nbuf;
 }
 
 //! Set the scratch space
@@ -259,9 +279,7 @@ void dsp::IOManager::operation ()
   unpacker->operate ();
 }
 
-uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples,
-					 uint64_t maximum_RAM,
-					 unsigned copies)
+uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
 {
   if (verbose)
     cerr << "dsp::IOManager::set_block_size minimum_samples=" 
@@ -314,11 +332,21 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples,
     cerr << "dsp::IOManager::set_block_size required block_size="
          << block_size << endl;
 
+  if (minimum_RAM)
+  {
+    uint64_t size = (uint64_t(minimum_RAM/nbyte_dat)/resolution) * resolution;
+    if (verbose)
+      cerr << "dsp::IOManager::set_block_size"
+	" minimum block_size=" << size << endl;
+
+    block_size = std::max (block_size, size);
+  }
+
   if (maximum_RAM)
   {
     block_size = (uint64_t(maximum_RAM / nbyte_dat) / resolution) * resolution;
     if (verbose)
-      cerr << "dsp::IOManager::set_block_size possible block_size="
+      cerr << "dsp::IOManager::set_block_size maximum block_size="
            << block_size << endl;
   }
  

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.31 $
-   $Date: 2010/02/02 04:10:08 $
+   $Revision: 1.32 $
+   $Date: 2010/03/24 05:34:16 $
    $Author: straten $ */
 
 
@@ -85,10 +85,15 @@ namespace dsp {
     // (should not normally need to be used)
     virtual void set_output (BitSeries* output);
 
-    //! Set the block size according to constraints
-    virtual uint64_t set_block_size (uint64_t minimum_samples,
-				   uint64_t maximum_RAM = 0,
-				   unsigned copies = 1);
+    //! Set the maximum RAM usage constraint in set_block_size
+    void set_maximum_RAM (uint64_t);
+    //! Set the minimum RAM usage constraint in set_block_size
+    void set_minimum_RAM (uint64_t);
+    //! Set the number of copies of data constraint in set_block_size
+    void set_copies (unsigned);
+
+    //! Set the block size according to above constraints
+    virtual uint64_t set_block_size (uint64_t minimum_samples);
 
     virtual void set_overlap (uint64_t overlap);
 
@@ -118,6 +123,9 @@ namespace dsp {
     //! The container in which the TimeSeries data is unpacked
     Reference::To<TimeSeries> data;
 
+    uint64_t maximum_RAM;
+    uint64_t minimum_RAM;
+    unsigned copies;
   };
 
 }
