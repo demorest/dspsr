@@ -13,6 +13,7 @@ dsp::LoadToFold::Config::Config ()
   report_done = true;
   report_vitals = true;
 
+  minimum_RAM = 0;
   maximum_RAM = 256 * 1024 * 1024;
   times_minimum_ndat = 1;
 
@@ -117,6 +118,13 @@ void dsp::LoadToFold::Config::set_times_minimum_ndat (unsigned ndat)
 void dsp::LoadToFold::Config::set_maximum_RAM (uint64_t ram)
 {
   maximum_RAM = ram;
+  times_minimum_ndat = 1;
+}
+
+// set block_size to result in at least this much RAM usage
+void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
+{
+  minimum_RAM = ram;
   times_minimum_ndat = 1;
 }
 
