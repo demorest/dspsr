@@ -765,13 +765,15 @@ void dsp::LoadToFold1::prepare_final ()
                  "minimum samples == 0");
 #endif
 
-  uint64_t block_size = ( minimum_samples - block_overlap ) * config->get_times_minimum_ndat() + block_overlap;
+  uint64_t block_size = ( minimum_samples - block_overlap )
+    * config->get_times_minimum_ndat() + block_overlap;
 
   // set the block size to at least minimum_samples
-  uint64_t ram = manager->set_block_size
-    ( block_size,
-      config->get_maximum_RAM(),
-      config->get_nbuffers() );
+  manager->set_maximum_RAM( config->get_maximum_RAM() );
+  manager->set_minimum_RAM( config->get_minimum_RAM() );
+  manager->set_copies( config->get_nbuffers() );
+
+  uint64_t ram = manager->set_block_size( block_size );
 
   if (block_overlap)
     manager->set_overlap( block_overlap );
