@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.24 $
-   $Date: 2010/03/22 10:27:50 $
+   $Revision: 1.25 $
+   $Date: 2010/03/24 05:34:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -32,6 +32,9 @@ namespace dsp {
     // set block size to result in approximately this much RAM usage
     uint64_t maximum_RAM;
 
+    // set block size to result in at least this much RAM usage
+    uint64_t minimum_RAM;
+
   public:
 
     //! Default constructor
@@ -50,6 +53,10 @@ namespace dsp {
     // set block_size to result in approximately this much RAM usage
     void set_maximum_RAM (uint64_t);
     uint64_t get_maximum_RAM () const { return maximum_RAM; }
+
+    // set block_size to result in at least this much RAM usage
+    void set_minimum_RAM (uint64_t);
+    uint64_t get_minimum_RAM () const { return minimum_RAM; }
 
     // number of time samples used to estimate undigitized power
     unsigned excision_nsample;
