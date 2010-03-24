@@ -562,7 +562,7 @@ void dsp::LoadToFold1::prepare () try
 	}
       else
 	{
-	  cerr << "LoadToFold CPU inplace" << endl;
+	  //cerr << "LoadToFold CPU inplace" << endl;
 
 	  //Dump* dumpPre = new Dump;
 	  //dumpPre->set_input(convolved);
