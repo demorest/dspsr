@@ -92,6 +92,8 @@ unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
   }
 
   unsigned nfft_max = bench->get_max_nfft ();
+  if (simultaneous)
+    nfft_max /= nchan;
 
   for (unsigned nfft = nfft_min; nfft <= nfft_max; nfft *= 2)
   {
@@ -115,11 +117,24 @@ unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
     }
   }
 
-  cerr << "best=" << best_nfft << endl;
-  cerr << "theory=" << theory_nfft << endl;
+  if (verbose)
+    cerr << "dsp::OptimalFFT::get_nfft best=" << best_nfft 
+         << " theory=" << theory_nfft << endl;
 
   return best_nfft;
 }
+
+std::string dsp::OptimalFFT::get_library (unsigned nfft)
+{
+  if (!bench)
+  {
+    bench = new FTransform::Bench;
+    bench->set_path( Pulsar::Config::get_runtime() );
+  }
+
+  return bench->get_best( nfft ).library;
+}
+
 
 double dsp::OptimalFFT::compute_cost (unsigned nfft, unsigned nfilt) const
 {
