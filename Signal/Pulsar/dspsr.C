@@ -261,13 +261,6 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->input_buffering, "overlap");
   arg->set_help ("disable input buffering");
 
-  string ram_limit;
-  arg = menu.add (ram_limit, 'U', "MB|minX");
-  arg->set_help ("upper limit on RAM usage");
-  arg->set_long_help
-    ("specify either the floating point number of megabytes; e.g. -U 256 \n"
-     "or a multiple of the minimum possible block size; e.g. -U minX2 \n");
-
   arg = menu.add (config->weighted_time_series, 'W');
   arg->set_help ("ignore weights (fold bad data)");
 
@@ -276,6 +269,17 @@ void parse_options (int argc, char** argv) try
 
   arg = menu.add (run_repeatedly, "repeat");
   arg->set_help ("repeatedly read from input until an empty is encountered");
+
+  string ram_min;
+  arg = menu.add (ram_min, "minram", "MB");
+  arg->set_help ("minimum RAM usage in MB");
+
+  string ram_limit;
+  arg = menu.add (ram_limit, 'U', "MB|minX");
+  arg->set_help ("upper limit on RAM usage");
+  arg->set_long_help
+    ("specify either the floating point number of megabytes; e.g. -U 256 \n"
+     "or a multiple of the minimum possible block size; e.g. -U minX2 \n");
 
   /* ***********************************************************************
 
@@ -653,6 +657,12 @@ void parse_options (int argc, char** argv) try
       cerr << "dspsr: Source name set to " << pulsar_name << endl;
   }
   
+  if (!ram_min.empty())
+  {
+    double MB = fromstring<double> (ram_min);
+    config->set_minimum_RAM (uint64_t( MB * 1024.0 * 1024.0 ));
+  }
+
   if (!ram_limit.empty())
   {
     if (ram_limit == "min")
