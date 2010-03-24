@@ -263,6 +263,10 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples,
 					 uint64_t maximum_RAM,
 					 unsigned copies)
 {
+  if (verbose)
+    cerr << "dsp::IOManager::set_block_size minimum_samples=" 
+         << minimum_samples << endl;
+
   /*
     This simple calculation of the maximum block size does not
     consider the RAM required for FFT plans, etc.
