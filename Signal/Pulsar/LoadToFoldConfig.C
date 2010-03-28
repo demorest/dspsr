@@ -102,6 +102,9 @@ dsp::LoadToFold::Config::Config ()
   // do not fold the fractional pulses at the beginning and end of data
   fractional_pulses = false;
 
+  // do not fold asynchronously by default
+  asynchronous_fold = false;
+
   // produce BasebandArchive output by default
   archive_class = "Baseband";
 

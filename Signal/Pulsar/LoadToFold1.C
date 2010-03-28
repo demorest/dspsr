@@ -42,6 +42,7 @@
 
 #include "dsp/SubFold.h"
 #include "dsp/PhaseSeries.h"
+#include "dsp/OperationThread.h"
 
 #include "dsp/Archiver.h"
 #include "dsp/ObservationChange.h"
@@ -544,10 +545,23 @@ void dsp::LoadToFold1::prepare () try
       detected->set_memory (new CUDA::PinnedMemory);
       
       transfer->set_output( detected );
+
+      if (!config->asynchronous_fold)
+	operations.push_back (transfer);
       
-      operations.push_back (transfer);
-      
-      prepare_fold(detected);
+      prepare_fold (detected);
+
+      if (config->asynchronous_fold)
+      {
+	for (unsigned ifold=0; ifold<asynch_fold.size(); ifold++)
+	  operations.push_back (new OperationThread::Wait(asynch_fold[ifold]));
+
+	operations.push_back (transfer);
+
+	for (unsigned ifold=0; ifold<asynch_fold.size(); ifold++)
+	  operations.push_back (asynch_fold[ifold]);
+      }
+
 #endif // dump unpacked
 #endif // have cuda
     }
@@ -870,6 +884,9 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
   fold.resize (nfold);
   path.resize (nfold);
 
+  if (config->asynchronous_fold)
+    asynch_fold.resize( nfold );
+
   bool subints = config->single_pulse || config->integration_length;
 
   if (manage_archiver)
@@ -1018,7 +1035,12 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     fold[ifold]->get_output()->zero();
 
     path[ifold] = new SignalPath (operations);
-    operations.push_back( fold[ifold].get() );
+
+    if (config->asynchronous_fold)
+      asynch_fold[ifold] = new OperationThread (fold[ifold]);
+    else
+      operations.push_back( fold[ifold].get() );
+
     path[ifold]->add( fold[ifold] );
   }
 
