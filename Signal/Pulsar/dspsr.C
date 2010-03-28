@@ -413,8 +413,10 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->additional_pulsars, 'X', "name");
   arg->set_help ("additional pulsar to be folded");
 
+#if HAVE_CUFFT
   arg = menu.add (config->asynchronous_fold, "asynch-fold");
-  arg->set_help ("useful when processing on GPU");
+  arg->set_help ("fold on CPU while processing on GPU");
+#endif
 
   /* ***********************************************************************
 
