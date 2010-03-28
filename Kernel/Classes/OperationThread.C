@@ -21,6 +21,11 @@ dsp::OperationThread::OperationThread (Operation* op)
     throw Error (FailedSys, "dsp::OperationThread", "pthread_create");
 }
 
+dsp::OperationThread::~OperationThread ()
+{
+  
+}
+
 void* dsp::OperationThread::operation_thread (void* ptr)
 {
   reinterpret_cast<OperationThread*>( ptr )->thread ();
@@ -44,6 +49,16 @@ void dsp::OperationThread::thread ()
     state = Idle;
     context->broadcast ();
   }
+}
+
+void dsp::OperationThread::operation ()
+{
+  ThreadContext::Lock lock (context);
+  while (state != Idle)
+    context->wait ();
+
+  state = Active;
+  context->broadcast ();
 }
 
 void dsp::OperationThread::prepare ()
@@ -80,3 +95,16 @@ void dsp::OperationThread::reset ()
   the_operation->reset ();
 }
 
+dsp::OperationThread::Wait::Wait (OperationThread* opthread)
+  : Operation ( ("Wait[" + opthread->the_operation->get_name() + "]").c_str() )
+{
+  parent = opthread;
+}
+
+void dsp::OperationThread::Wait::operation ()
+{
+  ThreadContext::Lock lock (parent->context);
+
+  while (parent->state == Active)
+    parent->context->wait ();
+}
