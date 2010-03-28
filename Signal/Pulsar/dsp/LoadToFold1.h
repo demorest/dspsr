@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.20 $
-   $Date: 2010/02/02 04:10:18 $
+   $Revision: 1.21 $
+   $Date: 2010/03/28 07:11:35 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -33,6 +33,7 @@ namespace dsp {
   class ResponseProduct;
 
   class Operation;
+  class OperationThread;
   class Convolution;
   class SampleDelay;
   class PhaseLockedFilterbank;
@@ -103,7 +104,10 @@ namespace dsp {
 
     //! A folding algorithm for each pulsar to be folded
     std::vector< Reference::To<Fold> > fold;
-    
+
+    //! Wrap each folder in a separate thread of execution
+    std::vector< Reference::To<OperationThread> > asynch_fold;
+
     //! An unloader for each pulsar to be folded
     std::vector< Reference::To<PhaseSeriesUnloader> > unloader;
 
