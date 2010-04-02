@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcDigitizer.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/01 10:18:44 $
+   $Revision: 1.2 $
+   $Date: 2010/04/02 21:27:37 $
    $Author: straten $ */
 
 #ifndef __SigProcDigitizer_h
@@ -26,18 +26,16 @@ namespace dsp
     //! Default constructor
     SigProcDigitizer ();
 
-    //! Set the number of bits per sample
-    void set_nbit (unsigned);
+    void set_nbit (int);
 
-    //! Get the number of bits per sample
-    unsigned get_nbit () const;
-
-    //! Assumes all data are offset to zero mean and scaled to unit variance
+    //! Pack the data
     void pack ();
 
-  protected:
-    unsigned nbit;
+    //! Special case for floating point data
+    void pack_float ();
 
+  private:
+    bool flip_band;
   };
 }
 
