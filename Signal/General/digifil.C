@@ -61,7 +61,7 @@ int main (int argc, char** argv) try
   bool verbose = false;
   bool constant_offset_scale = false;
 
-  unsigned nbits = 2;
+  int nbits = 2;
   unsigned filterbank_nchan = 0;
   unsigned tscrunch_factor = 0;
 
@@ -194,13 +194,17 @@ int main (int argc, char** argv) try
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
   manager->set_output (timeseries);
 
-  if (verbose)
-    cerr << "digifil: creating rescale transformation" << endl;
-  Reference::To<dsp::Rescale> rescale = new dsp::Rescale;
-  rescale->set_input (timeseries);
-  rescale->set_output (timeseries);
-  rescale->set_constant (constant_offset_scale);
-  rescale->set_interval_seconds (rescale_seconds);
+  Reference::To<dsp::Rescale> rescale;
+  if (rescale_seconds)
+  {
+    if (verbose)
+      cerr << "digifil: creating rescale transformation" << endl;
+    rescale = new dsp::Rescale;
+    rescale->set_input (timeseries);
+    rescale->set_output (timeseries);
+    rescale->set_constant (constant_offset_scale);
+    rescale->set_interval_seconds (rescale_seconds);
+  }
 
   if (verbose)
     cerr << "digifil: creating pscrunch transformation" << endl;
@@ -343,10 +347,13 @@ int main (int argc, char** argv) try
         tscrunch->operate();
       }
 
-      if (verbose)
-	cerr << "digifil: rescale" << endl;
+      if (rescale)
+      {
+	if (verbose)
+	  cerr << "digifil: rescale" << endl;
       
-      rescale->operate ();
+	rescale->operate ();
+      }
 
       if (do_pscrunch)
       {
