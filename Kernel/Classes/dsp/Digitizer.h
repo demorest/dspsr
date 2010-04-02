@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Digitizer.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/08/27 06:53:58 $
+   $Revision: 1.3 $
+   $Date: 2010/04/02 21:27:32 $
    $Author: straten $ */
 
 
@@ -30,6 +30,12 @@ namespace dsp {
     //! Constructor
     Digitizer (const char* name = "Digitizer");
     
+    //! Set the number of bits per sample (FITS BITPIX convention)
+    virtual void set_nbit (int);
+
+    //! Get the number of bits per sample (FITS BITPIX convention)
+    int get_nbit () const;
+
     //! Copy the input attributes to the output
     virtual void prepare ();
 
@@ -42,6 +48,8 @@ namespace dsp {
     
     //! Perform the digitization
     virtual void pack () = 0;
+
+    int nbit;
 
   };
 
