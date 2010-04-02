@@ -14,26 +14,22 @@ dsp::SigProcDigitizer::SigProcDigitizer () : Digitizer ("SigProcDigitizer")
 }
 
 //! Set the number of bits per sample
-void dsp::SigProcDigitizer::set_nbit (unsigned _nbit)
+void dsp::SigProcDigitizer::set_nbit (int _nbit)
 {
-  switch(_nbit){
-
+  switch(_nbit)
+  {
   case 1:
   case 2:
   case 4:
   case 8:
+  case -32:
     nbit=_nbit;
     break;
   default:
     throw Error (InvalidState, "dsp::SigProcDigitizer::set_nbit",
-		 "only 8 bit sampling implemented");
+		 "nbit=%i not understood", _nbit);
     break;
   }
-}
-
-unsigned dsp::SigProcDigitizer::get_nbit () const
-{
-  return nbit;
 }
 
 /*! 
@@ -49,6 +45,13 @@ void dsp::SigProcDigitizer::pack ()
   if (input->get_npol() != 1)
     throw Error (InvalidState, "dsp::SigProcDigitizer::pack",
 		 "cannot handle npol=%d", input->get_npol());
+
+  flip_band = input->get_bandwidth() > 0;
+  if (flip_band)
+    output->set_bandwidth(-input->get_bandwidth());
+
+  if (nbit == -32)
+    pack_float ();
 
   // the number of frequency channels
   const unsigned nchan = input->get_nchan();
@@ -92,14 +95,6 @@ void dsp::SigProcDigitizer::pack ()
     digi_max = 255;
     break;
   }
-
-
-
-  bool flip_band = input->get_bandwidth() > 0;
-  if (flip_band)
-    output->set_bandwidth(-input->get_bandwidth());
-
-  output->set_nbit(nbit);
 
 
   /*
@@ -216,4 +211,67 @@ void dsp::SigProcDigitizer::pack ()
   }
 }
 
+
+
+
+void dsp::SigProcDigitizer::pack_float ()
+{
+  // the number of frequency channels
+  const unsigned nchan = input->get_nchan();
+
+  // the number of time samples
+  const uint64_t ndat = input->get_ndat();
+
+  float* outptr = reinterpret_cast<float*>( output->get_rawptr() );
+
+  switch (input->get_order())
+  {
+  case TimeSeries::OrderTFP:
+  {
+    const float* inptr = input->get_dattfp();
+
+    for (uint64_t idat=0; idat < ndat; idat++)
+    {
+      if (flip_band)
+      {
+	unsigned in_chan = nchan-1;
+	for (unsigned ichan=0; ichan < nchan; ichan++)
+	{
+	  outptr[ichan] = inptr[in_chan];
+	  in_chan --;
+	}
+      }
+      else
+      {
+	unsigned in_chan = 0;
+	for (unsigned ichan=0; ichan < nchan; ichan++)
+	{
+	  outptr[ichan] = inptr[in_chan];
+	  in_chan ++;
+	}
+      }
+
+      inptr += nchan;
+    }
+  }
+  case TimeSeries::OrderFPT:
+  {
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+    {
+      const float* inptr;
+      if (flip_band)
+	inptr = input->get_datptr (nchan-ichan-1);
+      else
+	inptr = input->get_datptr (ichan);
+
+      for (uint64_t idat=0; idat < ndat; idat++)
+	outptr[idat*nchan + ichan] = inptr[idat];
+    }
+  }
+
+  default:
+    throw Error (InvalidState, "dsp::SigProcDigitizer::pack_float",
+		 "Can only operate on data ordered FTP or PFT.");
+  }
+}
 
