@@ -17,6 +17,19 @@ void dsp::Digitizer::prepare ()
 
   // set the Observation information
   output->Observation::operator=(*input);
+
+  // nbit may equal -32 for float (FITS BITPIX convention)
+  output->set_nbit( abs(nbit) );
+}
+
+void dsp::Digitizer::set_nbit (int n)
+{
+  nbit = n;
+}
+
+int dsp::Digitizer::get_nbit () const
+{
+  return nbit;
 }
 
 void dsp::Digitizer::reserve ()
