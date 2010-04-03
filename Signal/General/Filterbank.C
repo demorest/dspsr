@@ -230,6 +230,7 @@ void dsp::Filterbank::make_preparations ()
 
   if (engine)
   {
+    cerr << "dsp::Filterbank::make_preparations setup engine" << endl;
     engine->setup (nchan, freq_res, response->get_datptr(0,0));
     return;
   }
@@ -237,7 +238,7 @@ void dsp::Filterbank::make_preparations ()
   using namespace FTransform;
 
   OptimalFFT* optimal = 0;
-  if (response->has_optimal_fft())
+  if (response && response->has_optimal_fft())
     optimal = response->get_optimal_fft();
 
   if (optimal)
