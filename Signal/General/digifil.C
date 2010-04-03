@@ -35,7 +35,7 @@
 
 using namespace std;
 
-static char* args = "b:B:F:cIo:prt:hvVZ:";
+static char* args = "b:B:F:cI:o:prt:hvVZ:";
 
 void usage ()
 {
