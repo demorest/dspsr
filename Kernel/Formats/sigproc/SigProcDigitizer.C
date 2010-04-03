@@ -214,7 +214,7 @@ void dsp::SigProcDigitizer::pack ()
 
 
 
-void dsp::SigProcDigitizer::pack_float ()
+void dsp::SigProcDigitizer::pack_float () try
 {
   // the number of frequency channels
   const unsigned nchan = input->get_nchan();
@@ -253,6 +253,7 @@ void dsp::SigProcDigitizer::pack_float ()
 
       inptr += nchan;
     }
+    return;
   }
   case TimeSeries::OrderFPT:
   {
@@ -273,5 +274,9 @@ void dsp::SigProcDigitizer::pack_float ()
     throw Error (InvalidState, "dsp::SigProcDigitizer::pack_float",
 		 "Can only operate on data ordered FTP or PFT.");
   }
+}
+catch (Error& error)
+{
+  throw error += "dsp::SigProcDigitizer::pack_float";
 }
 
