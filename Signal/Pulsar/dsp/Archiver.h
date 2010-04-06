@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.31 $
-   $Date: 2009/11/17 00:27:28 $
+   $Revision: 1.32 $
+   $Date: 2010/04/06 22:32:30 $
    $Author: straten $ */
 
 
@@ -148,6 +148,9 @@ namespace dsp
 
     //! Set the Pulsar::dspReduction Extension with the dsp::Operation
     void set (Pulsar::dspReduction* dspR);
+
+    void set_coherent_dedispersion (Signal::State state,
+				    const Response* response);
 
     //! Set the Pulsar::TwoBitStats Extension with the dsp::TwoBitCorrection
     void set (Pulsar::TwoBitStats* twobit);
