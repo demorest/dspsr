@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/Archiver.h"
-#include "dsp/Response.h"
 #include "dsp/PhaseSeries.h"
 
 #include "dsp/SignalPath.h"
@@ -15,17 +14,20 @@
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/Filterbank.h"
 #include "dsp/Convolution.h"
+#include "dsp/Dedispersion.h"
 #include "dsp/TScrunch.h"
 
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
+#include "Pulsar/CoherentDedispersion.h"
 #include "Pulsar/Passband.h"
 
 #include "Error.h"
 
 using namespace std;
+using namespace Pulsar;
 
-void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
+void dsp::Archiver::set (dspReduction* dspR) try
 {
   const char* method = "dsp::Archiver::set Pulsar::dspReduction";
 
@@ -135,6 +137,8 @@ void dsp::Archiver::set (Pulsar::dspReduction* dspR) try
 
         const TimeSeries* input = convolution->get_input ();
 
+        set_coherent_dedispersion (input->get_state(), response);
+
         if (input->get_state() == Signal::Nyquist)
 	{
 	  nsamp_fft *= 2;
@@ -168,8 +172,73 @@ catch (Error& error)
   throw error += "dsp::Archiver::set Pulsar::dspReduction";
 }
 
+void dsp::Archiver::set_coherent_dedispersion (Signal::State state,
+					       const Response* response)
+{
+  if (verbose > 2)
+    cerr << "dsp::Archiver::set_coherent_dedispersion" << endl;
 
-void dsp::Archiver::set (Pulsar::TwoBitStats* tbc) try
+  const Dedispersion* dedisp = dynamic_cast<const Dedispersion*> (response);
+  if (!dedisp)
+    return;
+
+  CoherentDedispersion* ext = archive -> getadd<CoherentDedispersion>();
+
+  if (!ext)
+    return;
+
+  if (verbose > 2)
+    cerr << "dsp::Archiver::set_coherent_dedispersion adding extension" <<endl;
+
+  unsigned nsamp_fft = response->get_ndat();
+  unsigned nsamp_overlap_pos = response->get_impulse_pos ();
+  unsigned nsamp_overlap_neg = response->get_impulse_neg ();
+
+  if (state == Signal::Nyquist)
+  {
+    nsamp_fft *= 2;
+    nsamp_overlap_pos *= 2;
+    nsamp_overlap_neg *= 2;
+  }
+
+  ext->set_description ("dspsr version");
+  ext->set_dispersion_measure( dedisp->get_dispersion_measure() );
+  ext->set_doppler_correction( dedisp->get_Doppler_shift() - 1.0 );
+
+  unsigned nchan_input = dedisp->frequency_input.size();
+  unsigned nchan_total = dedisp->frequency_output.size();
+  unsigned nchan_output = nchan_total / nchan_input;
+
+  ext->set_nchan_input( nchan_input );
+
+  unsigned ichan_total = 0;
+
+  for (unsigned ichan_input=0; ichan_input<nchan_input; ichan_input++)
+  {
+    CoherentDedispersion::InputChannel& input = ext->get_input( ichan_input );
+
+    input.set_centre_frequency( dedisp->frequency_input[ichan_input] );
+    input.set_bandwidth( dedisp->bandwidth_input[ichan_input] );
+    input.set_nchan_output( nchan_output );
+
+    for (unsigned ichan_output=0; ichan_output<nchan_output; ichan_output++)
+    {
+      CoherentDedispersion::OutputChannel& output 
+	= input.get_output( ichan_output );
+
+      output.set_centre_frequency( dedisp->frequency_output[ichan_total] );
+      output.set_bandwidth( dedisp->bandwidth_output[ichan_total] );
+
+      ichan_total ++;
+
+      output.set_nsamp ( nsamp_fft );
+      output.set_nsamp_overlap_pos ( nsamp_overlap_pos );
+      output.set_nsamp_overlap_neg ( nsamp_overlap_neg );
+    }
+  }
+}
+
+void dsp::Archiver::set (TwoBitStats* tbc) try
 {
   if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::TwoBitStats Extension" << endl;
@@ -205,7 +274,7 @@ catch (Error& error)
 }
 
 
-void dsp::Archiver::set (Pulsar::Passband* pband) try
+void dsp::Archiver::set (Passband* pband) try
 {
   if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Passband Extension" << endl;
