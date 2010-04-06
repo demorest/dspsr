@@ -234,7 +234,18 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
     cerr << "dsp::Archiver::unload archive '"
          << archive->get_filename() << "'" << endl;
     
+  RealTimer timer;
+  if (dsp::Operation::record_time)
+    timer.start();
+    
   archive -> unload();
+  
+  if (dsp::Operation::record_time)
+  {
+    timer.stop();
+    cerr << "dsp::Archiver::unload in " << timer << endl;
+  }
+
 }
 catch (Error& error)
 {
