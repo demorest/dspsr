@@ -177,6 +177,15 @@ void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
   set_dispersion_measure ( input->get_dispersion_measure() );
   set_dc_centred ( input->get_dc_centred() );
 
+  frequency_input.resize( input->get_nchan() );
+  bandwidth_input.resize( input->get_nchan() );
+
+  for (unsigned ichan=0; ichan<input->get_nchan(); ichan++)
+  {
+    frequency_input[ichan] = input->get_centre_frequency( ichan );
+    bandwidth_input[ichan] = input->get_bandwidth() / input->get_nchan();
+  }
+
   if (!channels)
     channels = input->get_nchan();
 
@@ -471,11 +480,15 @@ void dsp::Dedispersion::build (vector<float>& phases,
 
   phases.resize (_ndat * _nchan);
 
+  frequency_output.resize( _nchan );
+  bandwidth_output.resize( _nchan );
+
   for (unsigned ichan = 0; ichan < _nchan; ichan++)
   {
     double chan_cfreq = lower_cfreq + double(ichan) * chanwidth;
 
-    // cerr << "chan_cfreq=" << chan_cfreq << endl;
+    frequency_output[ichan] = chan_cfreq;
+    bandwidth_output[ichan] = chanwidth;
 
     if (fractional_delay)
     {

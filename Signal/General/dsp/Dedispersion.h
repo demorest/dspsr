@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.28 $
-   $Date: 2008/06/25 05:20:59 $
+   $Revision: 1.29 $
+   $Date: 2010/04/11 05:21:43 $
    $Author: straten $ */
 
 #ifndef __Dedispersion_h
@@ -144,6 +144,12 @@ namespace dsp {
 
     //!
     ThreadContext* context;
+
+    std::vector<double> frequency_input;
+    std::vector<double> bandwidth_input;
+
+    std::vector<double> frequency_output;
+    std::vector<double> bandwidth_output;
 
   protected:
 
