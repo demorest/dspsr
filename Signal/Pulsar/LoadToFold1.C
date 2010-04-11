@@ -559,7 +559,7 @@ void dsp::LoadToFold1::prepare () try
 	operations.push_back (transfer);
 
 	for (unsigned ifold=0; ifold<asynch_fold.size(); ifold++)
-	  operations.push_back (asynch_fold[ifold]);
+	  operations.push_back (asynch_fold[ifold].get());
       }
 
 #endif // dump unpacked
