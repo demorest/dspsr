@@ -121,6 +121,7 @@ void dsp::LoadToFold::Config::set_times_minimum_ndat (unsigned ndat)
 void dsp::LoadToFold::Config::set_maximum_RAM (uint64_t ram)
 {
   maximum_RAM = ram;
+  minimum_RAM = 0;
   times_minimum_ndat = 1;
 }
 
@@ -128,6 +129,7 @@ void dsp::LoadToFold::Config::set_maximum_RAM (uint64_t ram)
 void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
 {
   minimum_RAM = ram;
+  maximum_RAM = 0;
   times_minimum_ndat = 1;
 }
 
