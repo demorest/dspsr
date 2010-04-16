@@ -2,15 +2,42 @@
 
 /***************************************************************************
  *
- *   Copyright (C) 2010 by Willem van Straten
+ *   Copyright (C) 2009 by Willem van Straten and Jonathon Kocz
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
+// #define _RECORD_EVENTS
+
 #include "dsp/FilterbankCUDA.h"
+
+//#define _DEBUG
+#include "debug.h"
+
+#ifdef _RECORD_EVENTS
+#include <iostream>
+#endif
+
+using namespace std;
+
+CUDA::elapsed::elapsed ()
+{
+  cudaEventCreate (&after);
+  total = 0;
+}
+
+void CUDA::elapsed::wrt (cudaEvent_t before)
+{
+  float time;
+  cudaEventSynchronize (after);
+  cudaEventElapsedTime (&time, before, after);
+  total += time;
+}
 
 CUDA::Engine::Engine ()
 {
+  timers = 0;
+
   nchan = 0;
   bwd_nfft = 0;
 
@@ -21,6 +48,16 @@ CUDA::Engine::Engine ()
 
 CUDA::Engine::~Engine ()
 {
+#ifdef _RECORD_EVENTS
+  cerr << "******************************************************" << endl;
+  cerr << "memcpy to device: " << timers->copy_to.total << " ms" << endl;
+  cerr << "forward FFT: " << timers->fwd.total << " ms" << endl;
+  cerr << "realtr: " << timers->realtr.total << " ms" << endl;
+  cerr << "conv: " << timers->conv.total << " ms" << endl;
+  cerr << "backward FFT: " << timers->bwd.total << " ms" << endl;
+  cerr << "memcpy from device: " << timers->copy_from.total << " ms" << endl;
+  cerr << endl;
+#endif
 }
 
 void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel) 
@@ -43,45 +80,83 @@ void CUDA::Engine::init ()
   cudaGetDevice (&device);
   cerr << "CUDA::Engine::init device: " << device << endl;
 
-  cufftPlan1d (&plan_fwd, bwd_nfft*nchan*2, CUFFT_C2C, 1);
+  cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1);
 
-  cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*2);
+  cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan);
 
   // allocate space for the convolution kernel
-  cudaMalloc ((void**)&d_kernel, mem_size);
+  cudaMalloc((void**)&d_kernel, mem_size);
  
   // copy the kernel accross
-  cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_kernel,kernel,mem_size,cudaMemcpyHostToDevice);
+
+  unsigned n_half = nchan * bwd_nfft / 2 + 1;
+  unsigned n_half_size = n_half * sizeof(cufftReal);
+
+  // setup realtr coeffients and variables, copy to CUDA
+  double arg = 1.570796327 / (nchan * bwd_nfft); 
+  double CD = 2*sin(arg)*sin(arg);
+  double SD = sin(arg+arg);
+  
+  // used by realtr SN and CN to be copied to kernel
+  std::vector<float> SN (n_half);
+  std::vector<float> CN (n_half);
+
+  SN[0]=0.0;
+  CN[0]=1.0;
+
+  for (int j=1; j<n_half; j++)
+  {
+    CN[j]=CN[j-1]-(CD*CN[j-1]+SD*SN[j-1]);
+    SN[j]=(SD*CN[j-1]-CD*SN[j-1])+SN[j-1];
+  }
+
+  cudaMalloc((void**)&d_CN, n_half_size);
+  cudaMalloc((void**)&d_SN, n_half_size);
+
+  cudaMemcpy(d_CN,&(CN[0]),n_half_size,cudaMemcpyHostToDevice);
+  cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice);
+
+#ifdef _RECORD_EVENTS
+  cudaEventCreate (&start);
+  timers = new Timers;
+#endif
+
 }
 
-// compute Z(w) + Z^*(-w) 
-#define sep_p0(p0,z,zh) p0.x = z.x + zh.x; p0.y = z.y - zh.y;
 
-// compute iZ^*(-w) - iZ(w)
-#define sep_p1(p1,z,zh) p1.x = zh.y + z.y; p1.y = zh.x - z.x;
 
-__global__ void separate (float2* d_fft, int nfft)
+__global__ void performRealtr (float2* d_fft, unsigned bwd_nfft,
+			       float* k_SN, float* k_CN)
 {
-  int i = blockIdx.x*blockDim.x + threadIdx.x + 1;
-  int k = nfft - i;
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  int k = bwd_nfft - i;
+ 
+  float real_aa, real_ab, imag_ba, imag_bb, temp_real, temp_imag;
 
-  float2* p0 = d_fft;
-  float2* p1 = d_fft + nfft;
+  // eg Final result = 16 elements. N = 8, NK = 8, NH = 4;
 
-  float2 p0i = p0[i];
-  float2 p0k = p0[k];
+  //fprintf(stderr,"i : %d\n", i);
+  //fprintf(stderr,"k : %d\n", k);
+ 
+  
+  real_aa=d_fft[i].x+d_fft[k].x;
+  real_ab=d_fft[k].x-d_fft[i].x;
+  
+  imag_ba=d_fft[i].y+d_fft[k].y;
+  imag_bb=d_fft[k].y-d_fft[i].y;
 
-  float2 p1i = p1[i];
-  float2 p1k = p1[k];
+  temp_real=k_CN[i]*imag_ba+k_SN[i]*real_ab;
+  temp_imag=k_SN[i]*imag_ba-k_CN[i]*real_ab;
 
-  sep_p0( p0[i], p0i, p1k );
-  sep_p0( p0[k], p0i, p1i );
+  d_fft[k].y = -0.5*(temp_imag-imag_bb);
+  d_fft[i].y = -0.5*(temp_imag+imag_bb);
 
-  sep_p1( p1[i], p0i, p1k );
-  sep_p1( p1[k], p0i, p1i );
+  d_fft[k].x = 0.5*(real_aa-temp_real);
+  d_fft[i].x = 0.5*(real_aa+temp_real);
 }
 
-__global__ void multiply (float2* d_fft, float2* kernel)
+__global__ void performConvCUDA (float2* d_fft, float2* kernel)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -90,20 +165,16 @@ __global__ void multiply (float2* d_fft, float2* kernel)
   d_fft[i].x = x;
 }
 
-typedef struct { float2 p0; float2 p1 } evect;
-
-__global__ void merge (evect* into_data, unsigned into_stride, 
-		       const float2* p0, const float2* p1, unsigned stride,
-		       unsigned to_copy)
+__global__ void performPrependCUDA (const float2* from_data,float2* into_data,unsigned into_stride,  unsigned from_stride, unsigned to_copy)
 {
   unsigned datum = blockIdx.x*blockDim.x+threadIdx.x;
 
-  into_data += blockIdx.x * into_stride;
-  from_p0 += blockIdx.x * from_stride;
-  from_p1 += blockIdx.x * from_stride;
+ unsigned block = datum / to_copy;
+ unsigned index = datum - block* to_copy;
+ into_data += block * into_stride;
+ from_data += block * from_stride;
 
-  evect result = { p0[threadIdx.x], p1[threadIdx.x] };
-  into_data[threadIdx.x] = result;
+ into_data[index] = from_data[index];  
 }
 
 
@@ -113,41 +184,99 @@ void CUDA::Engine::perform (const float* in)
   if (!d_kernel)
     init ();
 
+  int device =9;
+  cudaGetDevice (&device);
+  //cerr << "CUDA::Engine::perform device: " << device << endl;
+
+  cudaThreadSynchronize ();
+ 
+ cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "BEFORE CUFFT_FORWARD: " << cudaGetErrorString (error) << " device: " << device << endl;
+
+  //cerr << "CUDA::Engine::perform scratch=" << scratch << endl;
+
   float2* cscratch = (float2*) scratch;
   float2* cin = (float2*) in;
 
   cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
+  //cufftExecC2C(plan_fwd, cscratch, cscratch, CUFFT_FORWARD);
 
+  cudaThreadSynchronize ();
+   error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL CUFFT_FORWARD: " << cudaGetErrorString (error) << " device: " << device << endl;
+
+  int Blks = 256;
   unsigned data_size = nchan * bwd_nfft;
+  int realtrThread = data_size / (Blks*2);
 
-  int blocks = 256;
-  int threads = data_size / (blocks*2);
-
-  separate<<<threads,blocks>>> (cscratch, data_size);
+  performRealtr<<<realtrThread,Blks>>>(cscratch,data_size,d_SN,d_CN);
  
-  int threads = data_size / blocks;
+  cudaThreadSynchronize ();
 
-  performConvCUDA<<<threads,blocks>>> (cscratch, d_kernel);
-  performConvCUDA<<<threads,blocks>>> (cscratch+data_size, d_kernel);
+  error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL REALTR: " << cudaGetErrorString (error) << endl;
   
+  
+  int BlkThread = data_size / Blks;
+
+  performConvCUDA<<<BlkThread,Blks>>>(cscratch,d_kernel);
+  
+  cudaThreadSynchronize();
+
+  error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL ConvCUDA: " << cudaGetErrorString (error) << endl;
+
+
   cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
 
+  cudaThreadSynchronize ();
+
+  error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL CUFFT_INVERSE: " << cudaGetErrorString (error) << endl;
+
+  
+
   unsigned nchan = output_ptr.size();
-  blocks = nchan;
-  threads = nkeep;
+  int prependThread = nchan*nkeep / Blks;
 
-  const float2* from_p0 = cscratch + nfilt_pos;
-  const float2* from_p1 = from_p0 + data_size;
-  unsigned from_stride = bwd_nfft;
 
-  evect* into_base = (evect*) output_ptr[0];
-  evect* into_next = (evect*) output_ptr[1];
-
-  unsigned into_stride = into_next - into_data;
+  const float2* from_data = cscratch + nfilt_pos;
+  unsigned from_stride = freq_res;
+  float2* into_data = (float2*) output_ptr[0];
+  unsigned into_stride = (output_ptr[1] - output_ptr[0]) / 2;
   unsigned to_copy = nkeep;
 
-  merge<<<threads,blocks>>> (into_base, into_stride,
-			     from_p0, from_p1, from_stride, to_copy);
+  performPrependCUDA<<<prependThread,Blks>>>(from_data, into_data,into_stride,from_stride,to_copy);
+
+  cudaThreadSynchronize();
+
+  // Replaced by performPrependCUDA
+  /* for (unsigned ichan=0; ichan < nchan; ichan++)
+  {
+    //cerr << "nchan :" << nchan << endl;
+    float* c_time = scratch + ichan*freq_res*2;
+    float* data_into = output_ptr[ichan];
+    const float* data_from = c_time + nfilt_pos*2;  // complex nos.
+
+    cudaError err = cudaMemcpy (data_into, data_from, nkeep * 2 * sizeof(float), cudaMemcpyDeviceToDevice);
+    if (error != cudaSuccess)
+    cerr << "FAIL MEMCPY: " << cudaGetErrorString (error) << " device: " << device << endl;
+  
+    }*/
+
+  // float2* cscratch_cpu = (float2 *) malloc(10*sizeof(float2));
+  //cudaMemcpy(cscratch_cpu,cscratch,10*sizeof(float2),cudaMemcpyDeviceToHost);
+
+  //for (unsigned i=0;i<10;i++)
+  //  cerr << "cscratch.x: " << cscratch_cpu[i].x << " cscratch.y: " << cscratch_cpu[i].y << endl;
+
+  //cerr << "*** complete *** " << endl;
+
 }
 
 
