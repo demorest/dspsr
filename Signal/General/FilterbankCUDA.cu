@@ -32,7 +32,7 @@ void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel)
   bwd_nfft = _bwd_nfft;
   nchan = _nchan;
   kernel = _kernel;
-  dual_poln = false;
+  twofft = false;
 }
 
 void CUDA::Engine::init ()
@@ -46,7 +46,7 @@ void CUDA::Engine::init ()
 
   // if using the twofft trick, double the forward/backward fft length
   unsigned npol = 1;
-  if (dual_poln)
+  if (twofft)
     npol = 2;
 
   cufftPlan1d (&plan_fwd, bwd_nfft*nchan*npol, CUFFT_C2C, 1);
@@ -59,7 +59,7 @@ void CUDA::Engine::init ()
   // copy the kernel accross
   cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
 
-  if (dual_poln)
+  if (twofft)
     return;
 
   unsigned n_half = nchan * bwd_nfft / 2 + 1;
@@ -239,7 +239,7 @@ void CUDA::Engine::perform (const float* in)
   // note that each thread will set two complex numbers in each poln
   int blocks = data_size / (threads*2);
 
-  if (dual_poln)
+  if (twofft)
     separate<<<blocks,threads>>> (cscratch, data_size);
   else
     performRealtr<<<blocks,threads>>> (cscratch,data_size,d_SN,d_CN);
