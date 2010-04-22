@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.53 $
-   $Date: 2010/04/22 05:44:21 $
+   $Revision: 1.54 $
+   $Date: 2010/04/22 07:42:57 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -130,9 +130,6 @@ namespace dsp {
 
     //! Get the span (number of floats)
     uint64_t get_nfloat_span () const;
-
-    //! Set all values to zero
-    virtual void zero ();
 
     //! Return the mean of the data for the specified channel and poln
     double mean (unsigned ichan, unsigned ipol);

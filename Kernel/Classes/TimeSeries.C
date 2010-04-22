@@ -387,22 +387,6 @@ dsp::TimeSeries& dsp::TimeSeries::operator *= (float mult){
   return *this;
 }
 
-void dsp::TimeSeries::zero ()
-{
-  if( get_ndat()==0 )
-    return;
-
-  uint64_t npt = get_ndat() * get_ndim();
-  for (unsigned ichan=0; ichan<get_nchan(); ichan++){
-    for (unsigned ipol=0; ipol<get_npol(); ipol++) {
-      float* dat = get_datptr (ichan, ipol);
-      for (uint64_t ipt=0; ipt<npt; ipt++)
-        dat[ipt]=0.0;
-    }
-  }
-
-}
-
 void dsp::TimeSeries::prepend_checks (const dsp::TimeSeries* pre, 
 				      uint64_t pre_ndat)
 {
