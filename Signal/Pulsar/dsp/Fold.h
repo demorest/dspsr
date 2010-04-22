@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.57 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.58 $
+   $Date: 2010/04/22 05:44:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -136,6 +136,10 @@ namespace dsp {
     //! Choose an appropriate number of pulse phase bins
     unsigned choose_nbin ();
 
+    //! Engine used to perform folding
+    class Engine;
+    void set_engine (Engine*);
+
   protected:
 
     //! The transformation folds the data into the profile
@@ -219,13 +223,35 @@ namespace dsp {
     //! The folding period last used in the fold method
     double pfold;
 
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
+
   };
 
+  class Fold::Engine : public Reference::Able
+  {
+  public:
+
+    void set_parent (Fold*);
+
+    virtual void set_binplan (uint64_t ndat, unsigned* bins) = 0;
+    virtual void setup (uint64_t idat_fold);
+    virtual void fold () = 0;
+
+  private:
+
+    float* output;
+    unsigned output_span;
+
+    const float* input;
+    unsigned input_span;
+
+    unsigned ndat_fold;
+
+    unsigned nchan, npol, ndim;
+
+    Fold* parent;
+  }; 
 }
 
 #endif // !defined(__Fold_h)
-
-
-
-
-

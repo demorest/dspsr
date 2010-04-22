@@ -40,6 +40,14 @@ dsp::Fold::Fold () :
   idat_start = ndat_fold = 0;
 }
 
+void dsp::Fold::set_engine (Engine* _engine)
+{
+  engine = _engine;
+
+  if (engine)
+    engine->set_parent (this);
+}
+
 //! Set any unititialized parameters
 void dsp::Fold::initialise()
 {
@@ -725,6 +733,13 @@ void dsp::Fold::fold (uint64_t nweights,
   const unsigned npol = in->get_npol();
   const unsigned nchan = in->get_nchan();
 
+  if (engine)
+  {
+    engine->set_binplan (ndat_fold, binplan);
+    engine->setup (idat_start);
+    engine->fold ();
+    return;
+  }
 
   //#pragma omp parallel for private(ichan,ipol,timep,phasep,idat,phdimp)   
   for (unsigned ichan=0; ichan<nchan; ichan++)
@@ -808,3 +823,28 @@ void dsp::Fold::set_limits (const Observation* input)
 }
 
 
+void dsp::Fold::Engine::set_parent (Fold* fold)
+{
+  parent = fold;
+}
+
+void dsp::Fold::Engine::setup (uint64_t idat_start)
+{
+  if (!parent)
+    throw Error (InvalidState, "dsp::Fold::Engine::setup",
+		 "no parent");
+
+  const TimeSeries* in = parent->get_input();
+
+  nchan = in->get_nchan();
+  npol = in->get_npol();
+  ndim = in->get_ndim();
+
+  input = in->get_datptr(0,0) + idat_start * ndim;
+  input_span = in->get_nfloat_span();
+
+  PhaseSeries* out = parent->get_output();
+
+  output = out->get_datptr(0,0);
+  output_span = out->get_nfloat_span();
+}

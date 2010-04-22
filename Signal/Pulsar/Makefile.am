@@ -17,6 +17,20 @@ LoadToFold1.C           PhaseLockedFilterbank.C dsp_verbosity.C \
 LoadToFoldConfig.C      PhaseSeries.C  \
 LoadToFoldN.C           PhaseSeriesUnloader.C
 
+if HAVE_CUFFT
+
+nobase_include_HEADERS += dsp/FoldCUDA.h
+
+libdspsr_la_SOURCES += FoldCUDA.cu
+
+libdspsr_la_LIBADD = FoldCUDA.lo
+
+FoldCUDA.lo : FoldCUDA.cu
+	@CUDA_NVCC@ -c $(srcdir)/FoldCUDA.cu
+	sed -e 's/Fold/FoldCUDA/' Fold.lo > FoldCUDA.lo
+
+endif
+
 bin_PROGRAMS = dspsr
 
 dspsr_SOURCES = dspsr.C 
