@@ -11,7 +11,7 @@
 void caspsr_unpack (const uint64_t ndat,
 		    float scale,
 		    const unsigned char* stagingBufGPU,
-		    float* into);
+		    float* pol0, float* pol1);
   
 
 #endif
