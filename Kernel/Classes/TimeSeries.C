@@ -288,6 +288,11 @@ const float* dsp::TimeSeries::get_dattfp () const
   return reinterpret_cast<const float*>( get_udatptr(0,0) );
 }
 
+uint64_t dsp::TimeSeries::get_nfloat_span () const
+{
+  return internal_get_subsize() / sizeof(float);
+}
+
 double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
 {
   if (get_ndim() != 1)
