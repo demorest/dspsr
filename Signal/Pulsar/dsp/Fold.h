@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.58 $
-   $Date: 2010/04/22 05:44:26 $
+   $Revision: 1.59 $
+   $Date: 2010/04/22 07:43:27 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -238,7 +238,7 @@ namespace dsp {
     virtual void setup (uint64_t idat_fold);
     virtual void fold () = 0;
 
-  private:
+  protected:
 
     float* output;
     unsigned output_span;
@@ -252,6 +252,7 @@ namespace dsp {
 
     Fold* parent;
   }; 
+
 }
 
 #endif // !defined(__Fold_h)
