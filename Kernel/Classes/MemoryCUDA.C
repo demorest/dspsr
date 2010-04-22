@@ -25,7 +25,19 @@ void* CUDA::PinnedMemory::do_allocate (unsigned nbytes)
 {
   DEBUG("CUDA::PinnedMemory::allocate cudaMallocHost (" << nbytes << ")");
   void* ptr = 0;
-  cudaMallocHost (&ptr, nbytes);
+
+  cudaError error = cudaMallocHost (&ptr, nbytes);
+  if (error != cudaSuccess)
+    throw Error (FailedCall, "CUDA::PinnedMemory::do_allocate",
+                 "cudaMallocHost (%x, %u): %s", &ptr, nbytes,
+                 cudaGetErrorString (error));
+
+  // error = cudaMemset (ptr, 0, nbytes);
+  if (error != cudaSuccess)
+    throw Error (FailedCall, "CUDA::PinnedMemory::do_allocate",
+                 "cudaMemset (%x, 0, %u): %s", ptr, nbytes,
+                 cudaGetErrorString (error));
+
   return ptr;
 }
 

@@ -171,12 +171,22 @@ void dsp::Detection::resize_output ()
 
   if (!inplace)
   {
+    if (verbose)
+      cerr << "dsp::Detection::resize_output resize npol=" << output_npol
+           << " ndim=" << output_ndim << endl;
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
   }
   else
+  {
+    if (verbose)
+      cerr << "dsp::Detection::resize_output reshape npol=" << output_npol
+           << " ndim=" << output_ndim << " FROM npol=" << output->get_npol()
+           << " ndim=" << output->get_ndim() << endl;
+
     get_output()->reshape ( output_npol, output_ndim );
+  }
 }
 
 void dsp::Detection::square_law ()
@@ -329,40 +339,48 @@ void dsp::Detection::polarimetry () try
 
   float* r[4];
 
-  if (run_on_gpu)
-    {
 #if HAVE_CUDA
-      if (verbose)
-	cerr << "dsp::Detection::polarimetry HAVE_CUDA  ndim=" << ndim << endl;
 
-      int Blks = 256;
-      int BlkThread = ndat*nchan / Blks;
-      unsigned sdet = 0;
-      
-      if (state == Signal::Stokes)
-	sdet = 1;
-      
-      if (Blks*BlkThread != ndat*nchan)
-	{
-	  if (verbose)
-	    cerr << "dsp::Detection::polarimetry NO LOOP HAVE_CUDA increasing BlkThread by 1" << endl;
-	  BlkThread = BlkThread + 1;
-	}
-      
-      const float* p = input->get_datptr (0, 0);
-      const float* q = input->get_datptr (0, 1);
-      
-      get_result_pointers(0,inplace,r);
+  if (run_on_gpu)
+  {
+    if (verbose)
+	    cerr << "dsp::Detection::polarimetry HAVE_CUDA  ndim=" << ndim << endl;
 
-      //cerr << "calling polarimetryCUDA...";
-      polarimetryCUDA(BlkThread,Blks,nchan,sdet,p,q,ndat,ndim,r[0],r[2]);
-      //cerr << "done!" << endl;
- #endif
-    }
-  else 
+    unsigned ichan, ipol;
+
+    float* base = output->get_datptr (ichan=0, ipol=0);
+
+#if 0
+    uint64_t span = output->get_datptr (ichan=1, ipol=0) - base;
+    output->set_ndim(4);
+    output->set_npol(1);
+    output->reshape();
+    polarimetry_ndim4 (base, span, ndat, nchan);
+#else
+
+    uint64_t span = output->get_datptr (ichan=0, ipol=1) - base;
+
+    if (verbose)
+    cerr << "dsp::Detection::polarimetry ndim=" << output->get_ndim () 
+         << " ndat=" << ndat << " span=" << span << endl;
+
+    polarimetry_ndim2 (base, span, ndat, nchan);
+#endif
+
+    if (Operation::record_time)
     {
-      
-      for (unsigned ichan=0; ichan<nchan; ichan++)
+      cudaThreadSynchronize ();
+ 
+	cudaError error = cudaGetLastError();
+	if (error != cudaSuccess)
+	  throw Error (InvalidState, "dsp::Detection::polarimetry", cudaGetErrorString (error));
+      }
+
+    return;
+  }
+#endif
+
+  for (unsigned ichan=0; ichan<nchan; ichan++)
 	{
 	  const float* p = input->get_datptr (ichan, 0);
 	  const float* q = input->get_datptr (ichan, 1);
@@ -393,7 +411,6 @@ void dsp::Detection::polarimetry () try
 	  //for (unsigned zz=0; zz<10;zz++)
 	  //  cout << "r[0]cpu: " << r[0][zz] << endl;
 	}
-    }
 
   if (verbose)
     cerr << "dsp::Detection::polarimetry exit" << endl;

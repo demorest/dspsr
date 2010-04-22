@@ -221,6 +221,9 @@ namespace dsp
     uint64_t get_nsamples (uint64_t nbytes) const
       { return (nbytes * 8)/(nbit*get_npol()*get_nchan()*get_ndim()); }
 
+    //! Copy the dimensions of another observation
+    void copy_dimensions (const Observation*);
+
     //! Returns true if the signal may be integrated
     bool combinable (const Observation& obs) const;
 

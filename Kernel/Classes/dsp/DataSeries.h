@@ -32,10 +32,6 @@ namespace dsp {
     
   public:
 
-    uint64_t hack_get_size(){ return size; }
-    unsigned char* hack_get_buffer(){ return buffer; }
-    uint64_t hack_get_subsize(){ return subsize; }
-
     //! Counts number of DataSeries's in existence
     static int instantiation_count;
     //! Stores the cumulative amount of memory used
@@ -113,8 +109,22 @@ namespace dsp {
     //! Checks that ndat is not too big for size and subsize
     virtual void check_sanity() const;
 
+    //! Match the internal memory layout of another DataSeries
+    virtual void internal_match (const DataSeries*);
+
+    //! Return the internal memory base address
+    unsigned char* internal_get_buffer() { return buffer; }
+    const unsigned char* internal_get_buffer() const { return buffer; }
+
+    //! Return the internal memory size
+    uint64_t internal_get_size() const { return size; }
+
+    //! Return the internal memory sub-division size
+    uint64_t internal_get_subsize() const { return subsize; }
+
     //! Set the memory manager
     virtual void set_memory (Memory*);
+    const Memory* get_memory () const;
 
   protected:
     
