@@ -94,8 +94,7 @@ void caspsr_unpack (const uint64_t ndat, float scale,
   unpack_real_ndim2<<<nblock, nthread>>> (ndat, scale,
 					  (const char8*) input, pol0);
 #else
-  unpack_real_ndim2<<<nblock, nthread>>> (ndat, scale,
-					  input, pol0, pol1);
+  unpack_real_ndim1<<<nblock, nthread>>> (ndat, scale, input, pol0, pol1);
 #endif
 
   if (dsp::Operation::record_time)

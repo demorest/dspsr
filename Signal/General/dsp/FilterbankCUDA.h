@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.10 $
-   $Date: 2010/04/22 03:17:20 $
+   $Revision: 1.11 $
+   $Date: 2010/04/22 03:25:05 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -45,7 +45,7 @@ namespace CUDA
     //! Adds the streams
     void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
     void perform (const float* in);
-    bool dual_poln () { return dual_poln; }
+    bool dual_poln () { return twofft; }
     void finish ();
 
   private:
@@ -66,7 +66,7 @@ namespace CUDA
     unsigned bwd_nfft;
 
     //! Use the twofft trick from NR
-    bool dual_poln;
+    bool twofft;
 
     //! inplace FFT in CUDA memory
     float2* d_fft;
