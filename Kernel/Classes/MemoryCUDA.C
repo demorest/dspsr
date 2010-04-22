@@ -31,13 +31,6 @@ void* CUDA::PinnedMemory::do_allocate (unsigned nbytes)
     throw Error (FailedCall, "CUDA::PinnedMemory::do_allocate",
                  "cudaMallocHost (%x, %u): %s", &ptr, nbytes,
                  cudaGetErrorString (error));
-
-  // error = cudaMemset (ptr, 0, nbytes);
-  if (error != cudaSuccess)
-    throw Error (FailedCall, "CUDA::PinnedMemory::do_allocate",
-                 "cudaMemset (%x, 0, %u): %s", ptr, nbytes,
-                 cudaGetErrorString (error));
-
   return ptr;
 }
 
@@ -63,17 +56,26 @@ void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
 {
   DEBUG("CUDA::DeviceMemory::allocate cudaMalloc (" << nbytes << ")");
   void* ptr = 0;
-  cudaError err = cudaMalloc (&ptr, nbytes);
-  if (err != cudaSuccess)
+  cudaError error = cudaMalloc (&ptr, nbytes);
+  if (error != cudaSuccess)
   {
     int device;
     cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::DeviceMemory::do_allocate",
-                 "cudaMalloc failed on device %d: %s", device, cudaGetErrorString(err));
+                 "cudaMalloc failed on device %d: %s", device, cudaGetErrorString(error));
   }
-
   DEBUG("CUDA::DeviceMemory::allocate cudaMalloc ptr=" << ptr);
   return ptr;
+}
+
+
+void CUDA::DeviceMemory::do_zero (void* ptr, unsigned nbytes)
+{
+  cudaError error = cudaMemset (ptr, 0, nbytes);
+  if (error != cudaSuccess)
+    throw Error (FailedCall, "CUDA::DeviceMemory::do_zero",
+                 "cudaMemset (%x, 0, %u): %s", ptr, nbytes,
+                 cudaGetErrorString (error));
 }
 
 void CUDA::DeviceMemory::do_free (void* ptr)
