@@ -168,13 +168,14 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
   float* into_pola = output->get_datptr(0,0);
   float* into_polb = output->get_datptr(0,1);
 
+
   cudaError error = cudaMemcpy(d_staging,from,ndat*2,cudaMemcpyHostToDevice);
 
   if (error != cudaSuccess)
-    cerr << "CASPSRUnpacker::unpack() cudaMemcpy FAIL: " << cudaGetErrorString (error) << endl;
+    cerr << "CASPSRUnpacker::unpack() cudaMemcpy FAIL: " 
+	 << cudaGetErrorString (error) << endl;
 
-  caspsr_unpack (ndat,table->get_scale(), d_staging,into_pola); 
-
+  caspsr_unpack (ndat,table->get_scale(), d_staging, into_pola, into_polb); 
 }
 
 #endif
