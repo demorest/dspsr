@@ -31,6 +31,7 @@
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
 #endif
 
@@ -138,13 +139,11 @@ void dsp::LoadToFold1::prepare () try
   manager->set_output (unpacked);
 
   operations.push_back (manager.get());
-  bool run_on_gpu = 0;
+  run_on_gpu = false;
 
 #if HAVE_CUDA
 
   run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
-
-  Reference::To<CUDA::DeviceMemory> device_memory;
 
   if (run_on_gpu)
   {
@@ -362,7 +361,7 @@ void dsp::LoadToFold1::prepare () try
 #define DUMP_FILTERBANK 0
 #if DUMP_FILTERBANK
     Dump* dump = new Dump;
-    // dump->set_output( fopen("post_filterbank.dat", "w") );
+    dump->set_output( fopen("post_filterbank.dat", "w") );
     dump->set_input (convolved);
     operations.push_back (dump);
 #endif
@@ -455,11 +454,15 @@ void dsp::LoadToFold1::prepare () try
 
   if (run_on_gpu)
   {    
+
+#define FOLD_ON_CPU 0
+#if FOLD_ON_CPU
+
     TransferCUDA* transfer = new TransferCUDA;
     transfer->set_kind( cudaMemcpyDeviceToHost );
     transfer->set_input( convolved );
       
-    detected = new_time_series ();
+    detected = new TimeSeries; // new_time_series ();
     // detected->set_memory (new CUDA::PinnedMemory);
       
     transfer->set_output( detected );
@@ -479,6 +482,12 @@ void dsp::LoadToFold1::prepare () try
       for (unsigned ifold=0; ifold<asynch_fold.size(); ifold++)
 	operations.push_back (asynch_fold[ifold].get());
     }
+
+#else
+
+    prepare_fold (detected);
+
+#endif
 
 #define DUMP_DETECT 0
 #if DUMP_DETECT
@@ -946,6 +955,15 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       asynch_fold[ifold] = new OperationThread (fold[ifold]);
     else
       operations.push_back( fold[ifold].get() );
+
+#if HAVE_CUDA && !FOLD_ON_CPU
+    if (run_on_gpu)
+    {
+      cerr << thread_id << ": creating CUDA::FoldEngine" << endl;
+      fold[ifold]->set_engine (new CUDA::FoldEngine);
+      fold[ifold]->get_output()->set_memory (device_memory);
+    }
+#endif
 
     path[ifold]->add( fold[ifold] );
   }

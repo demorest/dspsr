@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.21 $
-   $Date: 2010/03/28 07:11:35 $
+   $Revision: 1.22 $
+   $Date: 2010/04/22 07:43:12 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -201,6 +201,12 @@ namespace dsp {
 
     //! The minimum number of samples required to process
     uint64_t minimum_samples;
+
+  private:
+
+    bool run_on_gpu;
+    Reference::To<Memory> device_memory;
+
   };
 
 }
