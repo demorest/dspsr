@@ -159,6 +159,36 @@ void dsp::PhaseSeries::zero ()
   TimeSeries::zero ();
 }
 
+void dsp::PhaseSeries::copy_configuration (const Observation* copy)
+{
+  if (verbose)
+    cerr << "dsp::PhaseSeries::copy_configuration" << endl;
+
+  TimeSeries::copy_configuration (copy);
+
+  const PhaseSeries* like = dynamic_cast<const PhaseSeries*>(copy);
+  if (like)
+  {
+    if (verbose)
+      cerr << "dsp::PhaseSeries::copy_configuration copy PhaseSeries" << endl;
+    copy_attributes (like);  
+  }
+}
+
+void dsp::PhaseSeries::copy_attributes (const PhaseSeries* copy)
+{
+  reference_phase    = copy->reference_phase;
+  integration_length = copy->integration_length;
+  ndat_total         = copy->ndat_total;
+  ndat_expected      = copy->ndat_expected;
+
+  end_time           = copy->end_time;
+  folding_period     = copy->folding_period;
+  folding_predictor  = copy->folding_predictor->clone();
+  pulsar_ephemeris   = copy->pulsar_ephemeris->clone();
+  hits               = copy->hits;
+}
+
 //! Set the hits in all bins
 void dsp::PhaseSeries::set_hits (unsigned value)
 {
@@ -246,16 +276,7 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
   if (verbose)
     cerr << "dsp::PhaseSeries::operator = copy attributes" << endl;
 
-  reference_phase    = prof.reference_phase;
-  integration_length = prof.integration_length;
-  ndat_total         = prof.ndat_total;
-  ndat_expected      = prof.ndat_expected;
-
-  end_time           = prof.end_time;
-  folding_period     = prof.folding_period;
-  folding_predictor  = prof.folding_predictor->clone();
-  pulsar_ephemeris   = prof.pulsar_ephemeris->clone();
-  hits               = prof.hits;
+  copy_attributes (&prof);
 
   return *this;
 }
