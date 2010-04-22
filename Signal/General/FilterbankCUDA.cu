@@ -44,7 +44,9 @@ void CUDA::Engine::init ()
 
   DEBUG("CUDA::Engine::init data_size=" << data_size);
 
-  // if using the twofft trick, double the forward/backward fft length
+  // if using the twofft trick, double the forward FFT length and
+  // double the number of backward FFTs
+
   unsigned npol = 1;
   if (twofft)
     npol = 2;
@@ -249,7 +251,9 @@ void CUDA::Engine::perform (const float* in)
   blocks = data_size / threads;
 
   multiply<<<blocks,threads>>> (cscratch, d_kernel);
-  multiply<<<blocks,threads>>> (cscratch+data_size, d_kernel);
+
+  if (twofft)
+    multiply<<<blocks,threads>>> (cscratch+data_size, d_kernel);
 
   CHECK_ERROR ("CUDA::Engine::perform multiply");
 
@@ -288,8 +292,9 @@ void CUDA::Engine::perform (const float* in)
   ncopy<<<blocks,threads>>> (output_base, output_stride,
 			     input_p0, input_stride, to_copy);
 
-  ncopy<<<blocks,threads>>> (output_base+output_stride/2, output_stride,
-			     input_p1, input_stride, to_copy);
+  if (twofft)
+    ncopy<<<blocks,threads>>> (output_base+output_stride/2, output_stride,
+                               input_p1, input_stride, to_copy);
 }
 
 }
