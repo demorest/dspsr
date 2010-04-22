@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.1 $
-   $Date: 2010/04/22 05:40:47 $
+   $Revision: 1.2 $
+   $Date: 2010/04/22 07:43:06 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
@@ -22,6 +22,9 @@ namespace CUDA
   {
   public:
 
+    FoldEngine ();
+    ~FoldEngine ();
+
     void set_binplan (uint64_t ndat, unsigned* bins);
     void fold ();
 
@@ -30,5 +33,6 @@ namespace CUDA
     unsigned* binplan_ptr;
     uint64_t binplan_size;
   };
+}
 
 #endif
