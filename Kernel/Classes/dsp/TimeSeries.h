@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.52 $
-   $Date: 2010/04/22 02:56:45 $
+   $Revision: 1.53 $
+   $Date: 2010/04/22 05:44:21 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -127,6 +127,9 @@ namespace dsp {
     int64_t get_input_sample () const { return input_sample; }
     //! Used to arrange pieces in order during input buffering
     void set_input_sample (uint64_t sample) { input_sample = sample; }
+
+    //! Get the span (number of floats)
+    uint64_t get_nfloat_span () const;
 
     //! Set all values to zero
     virtual void zero ();
