@@ -15,7 +15,19 @@
 
 using namespace std;
 
-CUDA::FoldEngine::set_binplan (uint64_t ndat, unsigned* bins)
+CUDA::FoldEngine::FoldEngine ()
+{
+  binplan_ptr = 0;
+  binplan_size = 0;
+}
+
+CUDA::FoldEngine::~FoldEngine ()
+{
+  if (binplan_ptr)
+    cudaFree (binplan_ptr);
+}
+
+void CUDA::FoldEngine::set_binplan (uint64_t ndat, unsigned* bins)
 {
   uint64_t mem_size = ndat * sizeof(unsigned);
 
@@ -29,7 +41,11 @@ CUDA::FoldEngine::set_binplan (uint64_t ndat, unsigned* bins)
   }
  
   // copy the kernel accross
-  cudaMemcpy (binplan_ptr, bins, mem_size, cudaMemcpyHostToDevice);
+  cudaError error;
+  error = cudaMemcpy (binplan_ptr, bins, mem_size, cudaMemcpyHostToDevice);
+  if (error != cudaSuccess)
+    throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",
+                 "this=%x %s", this, cudaGetErrorString (error));
 
   ndat_fold = ndat;
 }
@@ -42,7 +58,7 @@ CUDA::FoldEngine::set_binplan (uint64_t ndat, unsigned* bins)
 //}
 
 
-__global__ void performFold (float* in_base,
+__global__ void performFold (const float* in_base,
 			     unsigned in_span,
 			     float* out_base,
 			     unsigned out_span,
@@ -62,18 +78,32 @@ __global__ void performFold (float* in_base,
     out_base[binplan[i]*ndim] += in_base[i*ndim];
 }
 
+std::ostream& operator<< (std::ostream& ostr, const dim3& v)
+{
+  return ostr << "(" << v.x << "," << v.y << "," << v.z << ")";
+}
+
 void CUDA::FoldEngine::fold ()
 {
-  dim3 blockDim (256, npol, ndim);
-  dim3 gridDim (nchan/256, 1, 1);
+  dim3 blockDim (64, npol, ndim);
+  dim3 gridDim (nchan/blockDim.x, 1, 1);
+
+#if 0
+  cerr << "blockDim=" << blockDim << endl;
+  cerr << "gridDim=" << gridDim << endl;
+#endif
 
   performFold<<<gridDim,blockDim>>> (input, input_span,
 				     output, output_span,
 				     npol, ndim,
 				     ndat_fold, binplan_ptr);
+
+  cudaThreadSynchronize ();
+
+  cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    throw Error (InvalidState, "CUDA::FoldEngine::fold", 
+                 cudaGetErrorString (error));
+
 }
-
-
-
-
 
