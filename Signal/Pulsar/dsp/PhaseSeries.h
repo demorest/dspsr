@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.36 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.37 $
+   $Date: 2010/04/22 07:43:17 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -134,6 +134,9 @@ namespace dsp {
     //! Return true if Extensions have been set
     bool has_extensions () const;
 
+    //! Copy the configuration of another PhaseSeries instance (hits array)
+    virtual void copy_configuration (const Observation* copy);
+
   protected:
 
     //! Period at which CAL data is folded
@@ -176,6 +179,8 @@ namespace dsp {
     void operator += (const PhaseSeries&);
 
     void init ();
+    void copy_attributes (const PhaseSeries*);
+
   };
 
 }
