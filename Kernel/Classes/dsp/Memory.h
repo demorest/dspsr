@@ -27,6 +27,7 @@ namespace dsp {
 
     virtual void* do_allocate (unsigned nbytes);
     virtual void  do_free (void*);
+    virtual void  do_zero (void* ptr, unsigned nbytes);
     virtual void  do_copy (void* to, const void* from, size_t bytes);
   };
 

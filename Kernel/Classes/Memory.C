@@ -26,6 +26,11 @@ void dsp::Memory::do_free (void* ptr)
   free16 (ptr);
 }
 
+void dsp::Memory::do_zero (void* ptr, unsigned nbytes)
+{
+  memset (ptr, 0, nbytes);
+}
+
 void dsp::Memory::do_copy (void* to, const void* from, size_t bytes)
 {
   DEBUG("dsp::Memory::copy (" << to << "," << from << "," << bytes << ")");
