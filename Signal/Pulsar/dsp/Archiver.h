@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.32 $
-   $Date: 2010/04/06 22:32:30 $
+   $Revision: 1.33 $
+   $Date: 2010/04/22 07:43:22 $
    $Author: straten $ */
 
 
@@ -173,7 +173,7 @@ namespace dsp
     std::string archive_software;
 
     //! Used only internally
-    const PhaseSeries* profiles;
+    Reference::To<const PhaseSeries> profiles;
 
     //! The Pulsar::Archive instance to which data will be unloaded
     Reference::To<Pulsar::Archive> archive;
