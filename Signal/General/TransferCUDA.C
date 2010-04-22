@@ -22,61 +22,31 @@ dsp::TransferCUDA::TransferCUDA()
 //! Do stuff
 void dsp::TransferCUDA::transformation ()
 {
-  const unsigned npol = input->get_npol();
-  const unsigned nchan = input->get_nchan();
-  const unsigned ndim = input->get_ndim();
-  const uint64_t ndat = input->get_ndat();
-
-  uint64_t nbyte = ndat * ndim * sizeof(float);
-
   prepare ();
-
-  unsigned ichan = 0;
-  unsigned ipol = 0;
-
-  const float* from = input->get_datptr( ichan, ipol );
-  float* to = output->get_datptr( ichan, ipol );
-
-  // check for contiguity
 
   cudaThreadSynchronize();
 
-  if (npol > 1)
-    ipol = 1;
-  else if (nchan > 1)
-    ichan = 1;
+  if (verbose)
+    cerr << "dsp::TransferCUDA::transformation input ndat="
+         << input->get_ndat() << " ndim=" << input->get_ndim()
+         << " span=" << input->get_datptr (0, 1) - input->get_datptr(0,0)
+         << " offset=" << input->get_datptr(0,0) - (float*)input->internal_get_buffer()
+         << endl;
 
-  if (ichan || ipol)
-  {
-    // check the pointers of the next blocks
-    const float* from2 = input->get_datptr( ichan, ipol );
-    float* to2 = output->get_datptr( ichan, ipol );
+  cudaMemcpy (output->internal_get_buffer(), input->internal_get_buffer(), 
+	      input->internal_get_size(), kind);
 
-    unsigned block_step = ndat * ndim;
-    
-    if ( (from2 - from == block_step) && (to2 - to == block_step) )
-    {   
-      if (verbose)
-        cerr << "dsp::TransferCUDA::transformation contiguous blocks" << endl;
-      nbyte *= npol * nchan;
-      cudaMemcpy (to, from, nbyte, kind);
-      //cudaThreadSynchronize();
-      return;
-    }
-  }
-
-  for (unsigned ipol=0; ipol < npol; ipol++)
-    for (unsigned ichan=0; ichan < nchan; ichan++)
-    {
-      void* to = output->get_datptr( ichan, ipol );
-      cudaMemcpy (to, from, nbyte, kind);
-    }
+  if (verbose)
+    cerr << "dsp::TransferCUDA::transformation output ndat=" 
+       << output->get_ndat() << " ndim=" << output->get_ndim() 
+       << " span=" << output->get_datptr (0, 1) - output->get_datptr(0,0)
+       << " offset=" << output->get_datptr(0,0) - (float*)output->internal_get_buffer()
+       << endl;
 }
 
 void dsp::TransferCUDA::prepare ()
 {
+  output->internal_match( input );
   output->copy_configuration( input );
-  output->set_input_sample( input->get_input_sample() );
-  output->resize( input->get_ndat () );
 }
 

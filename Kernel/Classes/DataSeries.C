@@ -25,8 +25,6 @@ dsp::DataSeries::DataSeries() : Observation()
 void dsp::DataSeries::initi()
 {
   instantiation_count++;
-  //  fprintf(stderr,"New dataseries: %p count=%d\n", this,
-  //  instantiation_count);
 
   Observation::init();
   
@@ -52,7 +50,15 @@ dsp::DataSeries::~DataSeries()
 
 void dsp::DataSeries::set_memory (Memory* m)
 {
+  if (memory && buffer)
+    resize (0);
+
   memory = m;
+}
+
+const dsp::Memory* dsp::DataSeries::get_memory () const
+{
+  return memory;
 }
 
 //! Enforces that ndat*ndim must be an integer number of bytes
@@ -111,9 +117,11 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
   uint64_t nbits_required = nsamples * get_nbit() * get_ndim();
 
   if (verbose)
-    cerr << "dsp::DataSeries::resize nbits=nsamp*nbit*ndim=" << nbits_required << endl;
+    cerr << "dsp::DataSeries::resize nbits=nsamp*nbit*ndim=" 
+	 << nbits_required << endl;
 
-  if (nbits_required & 0x07)  // 8 bits per byte
+  // check that nbits is a multiple of 8 (bits per byte)
+  if (nbits_required & 0x07)
     throw Error (InvalidParam,"dsp::DataSeries::resize",
 		"nbit=%d ndim=%d nsamp="UI64" not an integer number of bytes",
 		get_nbit(), get_ndim(), nsamples);
@@ -326,3 +334,33 @@ void dsp::DataSeries::check_sanity() const {
 		(get_nbit()*get_ndim()*(get_ndat()+get_samps_offset()))/8,
 		subsize);
 }
+
+
+//! Match the internal memory layout of another DataSeries
+void dsp::DataSeries::internal_match (const DataSeries* other)
+{
+  if (size < other->size)
+  {
+    if (verbose)
+      cerr << "dsp::DataSeries::internal_match Memory::free"
+	" size=" << size << " buffer=" << (void*)buffer << endl;
+    memory->do_free (buffer);
+    memory_used -= size;
+
+    if (verbose)
+      cerr << "dsp::DataSeries::internal_match"
+	" Memory::allocate (" << other->size << ")" << endl;
+
+    buffer = (unsigned char*) memory->do_allocate (other->size);
+    if (!buffer)
+      throw Error (InvalidState,"dsp::DataSeries::internal_match",
+		  "could not allocate "UI64" bytes", other->size);
+
+    size = other->size;
+    memory_used += size;
+  }
+
+  subsize = other->subsize;
+  copy_dimensions( other );
+}
+

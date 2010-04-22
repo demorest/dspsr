@@ -25,7 +25,8 @@ namespace dsp {
 
     //! Null constructor
     Dump (const char* name = "Dump");
-    
+    ~Dump ();
+
     //! Set the ostream to which data will be dumped
     void set_output (FILE*);
 

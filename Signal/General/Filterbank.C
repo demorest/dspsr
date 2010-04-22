@@ -397,13 +397,12 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
 }
 
 void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output, 
-                   unsigned ipol, uint64_t out_offset)
+                   uint64_t out_offset, unsigned ipol = 0)
 {
-  const unsigned nchan = output->get_nchan();
-  engine->output_ptr.resize (nchan);
-
-  for (unsigned ichan=0; ichan < nchan; ichan++)
-    engine->output_ptr[ichan] = output->get_datptr (ichan, ipol) + out_offset;
+  engine->nchan = output->get_nchan();
+  engine->output = output->get_datptr (0, ipol) + out_offset;
+  engine->output_span = 
+    output->get_datptr (1, ipol) - output->get_datptr (0, ipol);
 }
 
 void dsp::Filterbank::transformation ()
@@ -458,8 +457,10 @@ void dsp::Filterbank::transformation ()
 
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;
+  if (engine && engine->dual_poln())
+    bigfftsize *= 2;
   if (input->get_state() == Signal::Nyquist)
-    bigfftsize += 8;
+    bigfftsize += 256;
 
   // also need space to hold backward FFTs
   unsigned scratch_needed = bigfftsize + 2 * freq_res;
@@ -514,6 +515,7 @@ void dsp::Filterbank::transformation ()
   if (engine)
   {
     engine->scratch = c_spectrum[0];
+    engine->nchan = nchan;
     engine->nfilt_pos = nfilt_pos;
     engine->freq_res = freq_res;
     engine->nkeep = nkeep;
@@ -523,6 +525,22 @@ void dsp::Filterbank::transformation ()
   {
     if (engine)
     {
+      if (engine->dual_poln())
+      {
+	for (ipart=0; ipart<npart; ipart++)
+	{
+	  in_offset = ipart * in_step * 2;
+	  out_offset = ipart * out_step;
+	
+	  time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, 0)) + in_offset;
+	
+	  set_pointers (engine, output, out_offset);
+	  
+	  engine->perform (time_dom_ptr);
+	}
+	break;
+      }
+
       for (ipol=0; ipol < npol; ipol++)
       {
 	for (ipart=0; ipart<npart; ipart++)
@@ -535,7 +553,7 @@ void dsp::Filterbank::transformation ()
       
 	  time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, ipol)) + in_offset;
 
-	  set_pointers (engine, output, ipol, out_offset);
+	  set_pointers (engine, output, out_offset, ipol);
 	  
 	  engine->perform (time_dom_ptr);
 
@@ -543,11 +561,11 @@ void dsp::Filterbank::transformation ()
 
       } // for each polarization
 
+      break;
     }
-    else // not using engine
+
+    for (ipart=0; ipart<npart; ipart++)
     {
-      for (ipart=0; ipart<npart; ipart++)
-      {
 #ifdef _DEBUG
 	cerr << "ipart=" << ipart << endl;
 #endif
@@ -644,10 +662,10 @@ void dsp::Filterbank::transformation ()
       
       } // for each big fft (ipart)
     
-    } // if not using engine
-
   } // for each input channel
 
+  if (Operation::record_time && engine)
+    engine->finish ();
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation return with output ndat="

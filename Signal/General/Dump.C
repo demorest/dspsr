@@ -5,7 +5,16 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/Dump.h"
+
+#if HAVE_CUDA
+#include "dsp/TransferCUDA.h"
+#include "dsp/MemoryCUDA.h"
+#endif
 
 #include <fstream>
 using namespace std;
@@ -15,9 +24,16 @@ dsp::Dump::Dump (const char* name) : Sink<TimeSeries> (name)
   binary = false;
 }
 
-    //! Set the ostream to which data will be dumped
+dsp::Dump::~Dump ()
+{
+  if (output)
+    cerr << "dsp::Dump::~Dump fptr=" << (FILE*) output << endl;
+}
+
+//! Set the ostream to which data will be dumped
 void dsp::Dump::set_output (FILE* fptr)
 {
+  cerr << "dsp::Dump::set_output fptr=" << (void*)fptr << endl;
   output = fptr;
 }
 
@@ -30,44 +46,91 @@ void dsp::Dump::set_output_binary (bool flag)
 //! Adds to the totals
 void dsp::Dump::calculation ()
 {
-  //if (!output)
-  //  throw Error (InvalidState, "dsp::Dump::calculation",
-  //		 "output FILE* not set");
+  Reference::To<const TimeSeries> use = input;
 
-  const unsigned nchan = input->get_nchan();
-  const unsigned npol = input->get_npol();
-  const uint64_t ndat = input->get_ndat();
+#if HAVE_CUDA
+  if ( dynamic_cast<const CUDA::DeviceMemory*>( input->get_memory() ) )
+  {
+    cerr << "dsp::Dump::calculate retrieving from GPU" << endl;
+    TransferCUDA transfer;
+    transfer.set_kind( cudaMemcpyDeviceToHost );
+    transfer.set_input( input );
+	
+    Reference::To<TimeSeries> host = new TimeSeries;
+    transfer.set_output( host );
+    transfer.operate ();
 
-  const int64_t istart = input->get_input_sample();
+    use = host;
+  }
+#endif
+
+  const unsigned nchan = use->get_nchan();
+  const unsigned npol = use->get_npol();
+  const uint64_t ndat = use->get_ndat();
+  const unsigned ndim = use->get_ndim();
+
+  const int64_t istart = use->get_input_sample();
+
+  if (verbose)
+    cerr << "dsp::Dump::calculate nchan=" << nchan << " npol=" << npol 
+         << " ndat=" << ndat << " ndim=" << ndim << endl; 
 
   for (unsigned ichan = 0; ichan < nchan; ichan ++)
   {
     for (unsigned ipol = 0; ipol < npol; ipol++)
     {
-      const float* data = input->get_datptr (ichan, ipol);
-      if (binary)
-      {
-	fwrite (&ichan, sizeof(unsigned), 1, output);
-	fwrite (&ipol,  sizeof(unsigned), 1, output);
-	fwrite (&istart, sizeof(int64_t), 1, output);
-	fwrite (&ndat,  sizeof(uint64_t), 1, output);
-	fwrite (data,   sizeof(float), ndat, output);
-      }
-      else
-      {
-	//if (verbose) 
-	  cerr << "About to write to dump file" << endl;
+      const float* data = use->get_datptr (ichan, ipol);
 
-	for (uint64_t idat=0; idat < 10; idat++)
-	  cerr << istart+idat << " " << ichan << " " << ipol << " " << data[idat] << endl;
-
-	//for (uint64_t idat = 0; idat < ndat; idat++)
-	//  fprintf (output, "%"PRIu64" %u %u %f",
-	//		   istart+idat, ichan, ipol, data[idat]);
-	
-	//if (verbose)
-	  cerr << "written to dump file" << endl;
+      if (output)
+      {
+#if 0
+	fwrite (&ichan,  sizeof(unsigned), 1, output);
+	fwrite (&ipol,   sizeof(unsigned), 1, output);
+	fwrite (&istart, sizeof(int64_t),  1, output);
+	fwrite (&ndat,   sizeof(uint64_t), 1, output);
+	fwrite (data,    sizeof(float), ndat, output);
+#else
+  for (unsigned i=0; i < 10; i++)
+  {
+    fprintf (output, "%u %u %u %f", ichan, ipol, istart+i, data[i*ndim]);
+    for (unsigned j=1; j<ndim; j++)
+      fprintf (output, " %f", data[i*ndim+j]);
+    fprintf (output, "\n");
+  }
+#endif
+	continue;
       }
+
+#if 0
+      float min = std::numeric_limits<float>::max();
+      float max = -min;
+      double tot = 0.0;
+      double totsq = 0.0;
+
+      for (uint64_t idat = 0; idat < ndat*ndim; idat++)
+      {
+	if (data[idat] < min)
+	  min = data[idat];
+	if (data[idat] > max)
+	  max = data[idat];
+
+	tot += data[idat];
+	totsq += data[idat] * data[idat];
+      }
+
+      double mean = tot / (ndat*ndim);
+      double var = totsq / (ndat*ndim) - mean * mean;
+
+      cerr << "ichan=" << ichan << " ipol=" << ipol
+	   << " min=" << min << " max=" << max
+	   << " mean=" << tot/(ndat*ndim) << " rms=" << sqrt(var) << endl;
+#endif
+
+      for (uint64_t idat = 0; idat < ndat*ndim; idat++)
+	if (!finite(data[idat]))
+	  cerr << "NaN/Inf ichan=" << ichan << " ipol=" << ipol
+	       << " ifloat=" << idat << endl;
+
     }
   }
 }

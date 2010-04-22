@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.8 $
-   $Date: 2010/02/01 07:19:01 $
+   $Revision: 1.9 $
+   $Date: 2010/04/22 02:56:45 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -45,6 +45,8 @@ namespace CUDA
     //! Adds the streams
     void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
     void perform (const float* in);
+    bool dual_poln () { return true; }
+    void finish ();
 
   private:
 
@@ -54,10 +56,7 @@ namespace CUDA
     void init ();
 
   protected:
-
-    //! stream identifier
-    //cudaStream_t stream;
-    
+  
     //! forward fft plan 
     cufftHandle plan_fwd;
     //! backward fft plan
@@ -65,36 +64,14 @@ namespace CUDA
 
     //! the backward fft length
     unsigned bwd_nfft;
-    //! the number of frequency channels produced by filterbank
-    unsigned nchan;
 
     //! inplace FFT in CUDA memory
     float2* d_fft;
     //! convolution kernel in CUDA memory
     float2* d_kernel;
 
-    //! pinned memory on host used for asynchronous memcpy to GPU
-    float* pinned;
-
-    //! real-to-complex trick arrays in CUDA memory
-    float *d_SN, *d_CN;
-
   private:
 
-    cudaEvent_t start;
-
-    class Timers
-    {
-    public:
-      elapsed copy_to;
-      elapsed fwd;    
-      elapsed realtr; 
-      elapsed conv;   
-      elapsed bwd;    
-      elapsed copy_from;
-    };
-
-    Timers* timers;
   };
 
 }

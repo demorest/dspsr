@@ -304,6 +304,21 @@ double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
   return mean/double(get_ndat());
 }
 
+//! Match the internal memory layout of another DataSeries
+void dsp::TimeSeries::internal_match (const TimeSeries* other)
+{
+  DataSeries::internal_match (other);
+
+  order = other->order;
+  reserve_ndat = other->reserve_ndat;
+  reserve_nfloat = other->reserve_nfloat;
+  input_sample = other->input_sample;
+
+  unsigned offset = other->data - (float*)other->buffer;
+
+  data = (float*)buffer + offset;
+}
+
 void dsp::TimeSeries::copy_configuration (const Observation* copy)
 {
   if( copy==this )

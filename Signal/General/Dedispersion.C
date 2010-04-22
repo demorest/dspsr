@@ -260,6 +260,8 @@ void dsp::Dedispersion::match (const Observation* input, unsigned channels)
 
   Response::match (input, channels);
 
+  buffer[0] = buffer[1] = 0.0;
+
   if (verbose)
     cerr << "dsp::Dedispersion::match exit" << endl;
 

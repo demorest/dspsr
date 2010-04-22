@@ -160,7 +160,7 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
   staging.resize(ndat);
 
   // staging buffer on the GPU for packed data
-  unsigned char* stagingBufGPU = staging.get_rawptr();
+  unsigned char* d_staging = staging.get_rawptr();
  
 
   const unsigned char*  from= input->get_rawptr();
@@ -168,25 +168,12 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
   float* into_pola = output->get_datptr(0,0);
   float* into_polb = output->get_datptr(0,1);
 
-  //uint64_t dataSize = ndat;
-  int dimBlockUnpack(256);
-  int dimGridUnpack(ndat / (dimBlockUnpack*4)); 
-
-  // if (dimBlockUnpack*dimGridUnpack*4 != ndat)
-  // {
-  //   cerr << "dsp::CASPSRUnpacker::unpack increasing dimGridUnpack by 1" << endl;
-  //   dimGridUnpack = dimGridUnpack + 1;
-     //dimBlockUnpack = dimBlockUnpack + 1;
-  //}
-
-  cudaError error = cudaMemcpy(stagingBufGPU,from,ndat*2*(sizeof(unsigned char)),cudaMemcpyHostToDevice);
+  cudaError error = cudaMemcpy(d_staging,from,ndat*2,cudaMemcpyHostToDevice);
 
   if (error != cudaSuccess)
     cerr << "CASPSRUnpacker::unpack() cudaMemcpy FAIL: " << cudaGetErrorString (error) << endl;
 
-  caspsr_unpack(ndat,table->get_scale(),
-		stagingBufGPU,dimBlockUnpack,dimGridUnpack,into_pola,into_polb);
-
+  caspsr_unpack (ndat,table->get_scale(), d_staging,into_pola); 
 
 }
 

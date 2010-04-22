@@ -21,116 +21,113 @@
 
 using namespace std;
 
+/*
+  PP   = p^* p
+  QQ   = q^* q
+  RePQ = Re[p^* q]
+  ImPQ = Im[p^* q]
+*/
 
-__global__ void performPolarimetry (unsigned nchan,const float* p,const float* q,uint64_t ndat,float* S0,float* S2)
+#define COHERENCE(PP,QQ,RePQ,ImPQ,p,q) \
+  PP   = (p.x * p.x) + (p.y * p.y); \
+  QQ   = (q.x * q.x) + (q.y * q.y); \
+  RePQ = (p.x * q.x) + (p.y * q.y); \
+  ImPQ = (p.x * q.y) - (p.y * q.x);
+
+
+#define COHERENCE4(r,p,q) COHERENCE(r.w,r.x,r.y,r.z,p,q)
+
+__global__ void coherence4 (float4* base, uint64_t span)
 {
-  unsigned threadIndex = blockIdx.x*blockDim.x + threadIdx.x;
+  base += blockIdx.y * span;
+  unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
 
-  float p_r;
-  float p_i;
-  float q_r;
-  float q_i;
-  float pp;
-  float qq;
+  float2 p, q;
+  float4 result = base[i];
 
-  if (threadIndex >= ndat*nchan)
-    return;
+  p.x = result.w;
+  p.y = result.x;
+  q.x = result.y;
+  q.y = result.z;
 
-  unsigned k = (threadIndex*2)+(ndat*2*((threadIndex)/ndat));
-  //unsigned k = threadIndex*2;
-  //unsigned m = threadIndex*2;
+  COHERENCE4 (result,p,q);
 
-  
-  //indexLogGPU[m] = &S0[k];
-  //indexLogGPU[m+1] = &S0[k+1];
-  //indexLogGPUS2[m] = &S2[k];
-  //indexLogGPUS2[m+1] = &S2[k+1];
-  
-  p_r = p[k]; 
-  p_i = p[k+1];
-  q_r = q[k]; 
-  q_i = q[k+1]; 
-  
-  
-  //debugDat[m] = m; 
-  //debugDat[m+1] = p_r*p_r + p_i*p_i;
-  
-  S0[k]   = (p_r * p_r) + (p_i * p_i);  // p * p
-  S0[k+1] = (q_r * q_r) + (q_i * q_i);// q * q
-  S2[k]   = (p_r * q_r) + (p_i * q_i);  // Re[p * q]
-  S2[k+1] = (p_r * q_i) - (p_i * q_r);// Im[p * q]
-      
-   
+  base[i] = result;
 }
 
+/*
+  The input data are arrays of ndat pairs of complex numbers: 
 
+  Re[p0],Im[p0],Re[p1],Im[p1]
 
-void polarimetryCUDA (int BlkThread, int Blks, unsigned nchan, unsigned sdet, const float* p, const float* q, uint64_t ndat, unsigned ndim, float* S0, float* S2) 
+  There are nchan such arrays; base pointers are separated by span.
+*/
+
+void polarimetry_ndim4 (float* data, uint64_t span,
+			uint64_t ndat, unsigned nchan)
 {
-  
-  //float** indexLogGPU;
-  //cudaMalloc((void**)&indexLogGPU, 2*BlkThread*Blks*sizeof(float*));
-  //cudaMemset(indexLogGPU,0,2*BlkThread*Blks*sizeof(float*));
+  int threads = 256;
 
-  //float** indexLogGPUS2;
-  //cudaMalloc((void**)&indexLogGPUS2, 2*BlkThread*Blks*sizeof(float*));
-  //cudaMemset(indexLogGPUS2,0,2*BlkThread*Blks*sizeof(float*));
+  dim3 blocks;
+  blocks.x = ndat/threads;
+  blocks.y = nchan;
 
+  coherence4<<<blocks,threads>>> ((float4*)data, span/4); 
 
-  //float* debugDat;
-  //cudaMalloc((void**)&debugDat,2*BlkThread*Blks*sizeof(float));
-  //cudaMemset(debugDat,0,2*BlkThread*Blks*sizeof(float));
-  
-
-  //cout << "polarimetryCUDA ndim= " << ndim << " nchan: " << nchan << " sdat " << sdet << " ndat: " << ndat << " BlkThread: " << BlkThread << " Blks: " << Blks << endl;
- 
-  performPolarimetry<<<BlkThread,Blks>>>(nchan,p,q,ndat,S0,S2);
-
+  cudaThreadSynchronize();
   cudaError error = cudaGetLastError();
   if (error != cudaSuccess)
-    cerr << "FAIL performPolarimetry: " << cudaGetErrorString (error) << endl;
-  cudaThreadSynchronize();
-  
-
-  //float* debugDatCPU;
-  //debugDatCPU = (float*) malloc(2*BlkThread*Blks*sizeof(float));
-  //cudaMemcpy(debugDatCPU,S0,2*BlkThread*Blks*sizeof(float),cudaMemcpyDeviceToHost);
-  /*
-
-  float** indexLogCPU;
-  indexLogCPU = (float**) malloc(2*BlkThread*Blks*sizeof(float*));
-  
-  for (unsigned i=0;i<BlkThread*Blks*2;i++)
-    indexLogCPU[i] = 0;
-
-  cudaMemcpy(indexLogCPU,indexLogGPU,2*BlkThread*Blks*sizeof(float*),cudaMemcpyDeviceToHost);
-
-  float** indexLogCPUS2;
-  indexLogCPUS2 = (float**) malloc(2*BlkThread*Blks*sizeof(float*));
-  
-  for (unsigned i=0;i<BlkThread*Blks*2;i++)
-    indexLogCPUS2[i] = 0;
-
-    cudaMemcpy(indexLogCPUS2,indexLogGPUS2,2*BlkThread*Blks*sizeof(float*),cudaMemcpyDeviceToHost);
-    // if (ndat == 1362) {*/
-
-
-
-  //    for (unsigned i=0;i<10;i++)
-  //    cout << "debugDat: " << debugDatCPU[i] << endl;
-
-
-    //cout << "ndat: " << ndat << " indexLogCPU: " << indexLogCPU[i] << " indexLogCPUS2: " << indexLogCPUS2[i] << " debugDat: " << debugDatCPU[i] << endl;
-	  //}
-    //cudaFree(indexLogGPU);
-    //cudaFree(indexLogGPUS2);
-    //cudaFree(debugDat);
-  //free(indexLogCPUS2);
-  //free(indexLogCPU);
-  //free(debugDatCPU);
-  //cout << "finished" << endl;
-  
+    cerr << "FAIL coherence: " << cudaGetErrorString (error) << endl;
 }
 
+/*
+  The input data are pairs of arrays of ndat complex numbers: 
 
+  Re[p0],Im[p0] ...
+
+  Re[p1],Im[p1] ...
+
+  There are nchan such pairs of arrays; base pointers p0 and p1 are 
+  separated by span.
+*/
+
+#define COHERENCE2(s0,s1,p,q) COHERENCE(s0.x,s0.y,s1.x,s1.y,p,q)
+
+__global__ void coherence2 (float2* base, unsigned span, unsigned ndat)
+{
+  float2* p0 = base + blockIdx.y * span * 2;
+  float2* p1 = p0 + span;
+
+  unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (i >= ndat)
+    return;
+
+  float2 s0, s1;
+
+  COHERENCE2(s0,s1,p0[i],p1[i]);
+
+  p0[i] = s0;
+  p1[i] = s1;
+}
+
+void polarimetry_ndim2 (float* data, uint64_t span,
+			uint64_t ndat, unsigned nchan)
+{
+  dim3 threads (128);
+  dim3 blocks (ndat/threads.x, nchan);
+
+  if (ndat % threads.x)
+    blocks.x ++;
+
+  // cerr << "polarimetry_ndim2 ndat=" << ndat << " span=" << span << " blocks=" << blocks.x << " threads=" << threads.x << endl;
+
+  // pass span as number of complex values
+  coherence2<<<blocks,threads>>> ((float2*)data, span/2, ndat); 
+
+  cudaThreadSynchronize();
+  cudaError error = cudaGetLastError();
+  if (error != cudaSuccess)
+    cerr << "FAIL coherence: " << cudaGetErrorString (error) << endl;
+}
 

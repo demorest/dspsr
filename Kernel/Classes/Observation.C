@@ -343,6 +343,17 @@ dsp::Observation::Observation (const Observation & in_obs)
   dsp::Observation::operator=(in_obs);
 }
 
+//! Copy the dimensions of another observation
+void dsp::Observation::copy_dimensions (const Observation* other)
+{
+  set_state( other->get_state() );
+  set_ndim ( other->get_ndim() );
+  set_nchan( other->get_nchan() );
+  set_npol ( other->get_npol() );
+  set_nbit ( other->get_nbit() );
+  set_ndat ( other->get_ndat() );
+}
+
 const dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 {
   if (this == &in_obs)

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.51 $
-   $Date: 2010/01/21 23:36:39 $
+   $Revision: 1.52 $
+   $Date: 2010/04/22 02:56:45 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -86,6 +86,9 @@ namespace dsp {
     //! Copy the data of another TimeSeries instance
     virtual void copy_data (const TimeSeries* data, 
 			    uint64_t idat_start = 0, uint64_t ndat = 0);
+
+    //! Match the internal memory layout of another TimeSeries
+    virtual void internal_match (const TimeSeries*);
 
     //! Disable the set_nbit method of the Observation base class
     virtual void set_nbit (unsigned);

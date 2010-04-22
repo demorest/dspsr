@@ -4,6 +4,10 @@
 
 #include<stdint.h>
 
-void polarimetryCUDA (int BlkThread, int Blks,unsigned nchan, unsigned sdet, const float* p, const float* q, uint64_t ndat, unsigned ndim, float* S0, float* S2);
+void polarimetry_ndim4 (float* base, uint64_t span, 
+			uint64_t ndat, unsigned nchan);
+
+void polarimetry_ndim2 (float* base, uint64_t span, 
+			uint64_t ndat, unsigned nchan);
 
 #endif

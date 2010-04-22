@@ -208,7 +208,14 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
       " new=" << mjd << endl;
     info->set_start_time( mjd );
   }
-  
+
+  if (offset_clock)
+  {
+     MJD old = info->get_start_time();
+     cerr << "dspsr: offset clock by " << offset_clock << " seconds" << endl;
+     info->set_start_time( old + offset_clock );
+  }
+
   if (seek_seconds)
     input->seek_seconds (seek_seconds);
     
@@ -664,6 +671,7 @@ void parse_options (int argc, char** argv) try
   if (!ram_min.empty())
   {
     double MB = fromstring<double> (ram_min);
+    cerr << "dspsr: Using at least " << MB << " MB" << endl;
     config->set_minimum_RAM (uint64_t( MB * 1024.0 * 1024.0 ));
   }
 
