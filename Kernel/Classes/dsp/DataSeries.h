@@ -84,6 +84,9 @@ namespace dsp {
     //! Reshape the buffer to match the specified attributes
     void reshape (unsigned npol, unsigned ndim);
 
+    //! Set all values to zero
+    virtual void zero ();
+
     //! Return pointer to the specified block of time samples
     virtual unsigned char* get_udatptr (unsigned ichan=0,unsigned ipol=0);
 

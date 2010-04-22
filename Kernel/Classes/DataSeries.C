@@ -185,6 +185,11 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
   reshape ();
 }
 
+void dsp::DataSeries::zero ()
+{
+  memory->do_zero (buffer, size);
+}
+
 void dsp::DataSeries::reshape ()
 {
   subsize = (get_ndim() * get_ndat() * get_nbit()) / 8;
