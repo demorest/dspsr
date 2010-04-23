@@ -184,9 +184,17 @@ void dsp::PhaseSeries::copy_attributes (const PhaseSeries* copy)
 
   end_time           = copy->end_time;
   folding_period     = copy->folding_period;
-  folding_predictor  = copy->folding_predictor->clone();
-  pulsar_ephemeris   = copy->pulsar_ephemeris->clone();
   hits               = copy->hits;
+
+  if (copy->folding_predictor)
+    folding_predictor = copy->folding_predictor->clone();
+  else
+    folding_predictor = 0;
+
+  if (copy->pulsar_ephemeris)
+    pulsar_ephemeris = copy->pulsar_ephemeris->clone();
+  else
+    pulsar_ephemeris = 0;
 }
 
 //! Set the hits in all bins
