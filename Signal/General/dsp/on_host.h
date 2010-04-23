@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/on_host.h,v $
-   $Revision: 1.1 $
-   $Date: 2010/04/23 05:37:58 $
+   $Revision: 1.2 $
+   $Date: 2010/04/23 11:10:42 $
    $Author: straten $ */
 
 #ifndef __on_host_h
@@ -25,6 +25,20 @@
 #include "dsp/MemoryCUDA.h"
 #endif
 
+template<typename T>
+class unconst
+{
+public:
+  typedef T type;
+};
+
+template<typename T>
+class unconst<const T>
+{
+public:
+  typedef T type;
+};
+
 template<class Container>
 Container* on_host (Container* container, bool clone = false)
 {
@@ -39,14 +53,18 @@ Container* on_host (Container* container, bool clone = false)
 #if HAVE_CUDA
   if ( dynamic_cast<const CUDA::DeviceMemory*>( container->get_memory() ) )
   {
-    cerr << "dsp::Archiver::unload retrieving from GPU" << endl;
-    TransferCUDA transfer;
+    dsp::TransferCUDA transfer;
     transfer.set_kind( cudaMemcpyDeviceToHost );
     transfer.set_input( container );
 
-    Reference::To<Container> host = new Container;
+    typedef typename unconst<Container>::type UnConst;
+    Reference::To<UnConst> host = new UnConst;
     transfer.set_output( host );
     transfer.operate ();
+
+    // The TransferCUDA destructor must not destroy the output when it
+    // goes out of scope
+    transfer.set_output( 0 );
 
     return host.release();
   }
