@@ -131,9 +131,10 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
   if (verbose > 2)
     cerr << "dsp::Archiver::unload profiles=" << _profiles << endl;
 
-  if (_profiles->get_nbin() == 0)
+  if (_profiles->get_nbin() == 0 || _profiles->get_ndat_folded() == 0)
   {
-    cerr << "dsp::Archiver::unload ignoring empty sub-integration" << endl;
+    if (verbose > 2)
+      cerr << "dsp::Archiver::unload ignoring empty sub-integration" << endl;
     return;
   }
 
@@ -650,7 +651,7 @@ try
 {
   if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Profile"
-      " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << "\r";
+      " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << endl;
 
   unsigned nbin = phase->get_nbin();
   unsigned npol = phase->get_npol();
@@ -669,6 +670,9 @@ try
   unsigned zeroes = 0;
 
   double scale = phase->get_scale ();
+
+  if (verbose > 2)
+    cerr << "dsp::Archiver::set Pulsar::Profile scale=" << scale << endl;
 
   if (scale == 0 || !finite(scale))
     throw Error (InvalidParam, string(), "invalid scale=%lf", scale);
