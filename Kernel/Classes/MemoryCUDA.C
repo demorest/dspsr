@@ -40,12 +40,6 @@ void CUDA::PinnedMemory::do_free (void* ptr)
   cudaFreeHost (ptr);
 }
 
-void CUDA::PinnedMemory::do_copy (void* to, const void* from, size_t bytes)
-{
-  DEBUG("CUDA::PinnedMemory::copy (" << to <<","<< from <<","<< bytes << ")");
-  cudaMemcpy (to, from, bytes, cudaMemcpyHostToHost);
-}
-
 /***************************************************************************
  *
  *   Memory on device
@@ -93,7 +87,8 @@ void CUDA::DeviceMemory::do_copy (void* to, const void* from, size_t bytes)
     int device;
     cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::DeviceMemory::do_copy",
-                 "cudaMemcpy failed on device %d: %s", device, cudaGetErrorString(err));
+                 "cudaMemcpy failed on device %d: %s", device,
+		 cudaGetErrorString(err));
   }
 }
 
@@ -120,8 +115,3 @@ void CUDA::SharedPinnedMemory::do_free (void* ptr)
   cudaFreeHost (ptr);
 }
 
-void CUDA::SharedPinnedMemory::do_copy (void* to, const void* from, size_t bytes)
-{
-  DEBUG("CUDA::SharedPinnedMemory::copy (" << to <<","<< from <<","<< bytes << ")");
-  cudaMemcpy (to, from, bytes, cudaMemcpyHostToHost);
-}
