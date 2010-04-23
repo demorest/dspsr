@@ -482,7 +482,7 @@ try
   }
   catch (Error& error)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver WARNING could not set telescope coordinates\n\t"
            << error.get_message() << endl;
   }
