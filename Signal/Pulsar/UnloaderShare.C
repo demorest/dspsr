@@ -99,7 +99,7 @@ void dsp::UnloaderShare::set_subint_turns (unsigned subint_turns)
 
 static unsigned max_storage_size = 0;
 
-void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
+void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
 {
   std::ostream* verbose = 0;
   if (Operation::verbose)
@@ -193,6 +193,10 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit)
 
   if (verbose)
     cerr << "dsp::UnloaderShare::unload exit" << endl;
+}
+catch (Error& error)
+{
+  throw error += "dsp::UnloaderShare::unload";
 }
 
 void dsp::UnloaderShare::finish_all (unsigned contributor)
@@ -315,7 +319,7 @@ void dsp::UnloaderShare::Submit::set_unloader (dsp::PhaseSeriesUnloader* psu)
 }
 
 //! Unload the PhaseSeries data
-void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
+void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles) try
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::Submit::unload"
@@ -326,14 +330,22 @@ void dsp::UnloaderShare::Submit::unload (const PhaseSeries* profiles)
   else
     parent->unload( profiles, this );
 }
+catch (Error& error)
+{
+  throw error += "dsp::UnloaderShare::Submit::unload";
+}
 
-void dsp::UnloaderShare::Submit::partial (const PhaseSeries* profiles)
+void dsp::UnloaderShare::Submit::partial (const PhaseSeries* profiles) try
 {
   if (Operation::verbose)
     cerr << "dsp::UnloaderShare::Submit::partial"
       " profiles=" << profiles << " contributor=" << contributor << endl;
 
   parent->unload( profiles, this );
+}
+catch (Error& error)
+{
+  throw error += "dsp::UnloaderShare::Submit::partial";
 }
 
 void dsp::UnloaderShare::Submit::finish () try
