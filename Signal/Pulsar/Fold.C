@@ -672,6 +672,9 @@ void dsp::Fold::fold (uint64_t nweights,
   double phase_per_sample = sampling_interval / pfold;
   unsigned* hits = &(get_output()->hits[0]);
    
+  if (engine)
+    engine->set_nbin (folding_nbin);
+
   for (uint64_t idat=idat_start; idat < idat_end; idat++)
   {
     if (ndatperweight && idat >= idat_nextweight)
@@ -698,7 +701,11 @@ void dsp::Fold::fold (uint64_t nweights,
     phi += phase_per_sample;
 
     assert (ibin < folding_nbin);
-    binplan[idat-idat_start] = ibin;
+
+    if (engine)
+      engine->set_bin( idat, ibin );
+    else
+      binplan[idat-idat_start] = ibin;
 
     if (bad_data)
       binplan[idat-idat_start] = folding_nbin;
@@ -735,7 +742,6 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (engine)
   {
-    engine->set_binplan (ndat_fold, binplan);
     engine->setup (idat_start);
     engine->fold ();
     return;
