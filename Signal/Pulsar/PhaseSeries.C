@@ -15,6 +15,9 @@ using namespace std;
 
 void dsp::PhaseSeries::init ()
 {
+  if (verbose)
+    cerr << "dsp::PhaseSeries::init this=" << this << endl;
+
   integration_length = 0;
   ndat_total = 0;
   ndat_expected = 0;
@@ -39,11 +42,14 @@ dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
 dsp::PhaseSeries::~PhaseSeries ()
 {
   if (verbose)
-    cerr << "dsp::PhaseSeries::~PhaseSeries" << endl;
+    cerr << "dsp::PhaseSeries::~PhaseSeries this=" << this << endl;
 }
 
 dsp::PhaseSeries* dsp::PhaseSeries::clone() const
 {
+  if (verbose)
+    cerr << "dsp::PhaseSeries::clone" << endl;
+
   return new PhaseSeries (*this);
 }
 
