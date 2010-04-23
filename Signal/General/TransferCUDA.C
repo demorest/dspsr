@@ -33,8 +33,13 @@ void dsp::TransferCUDA::transformation ()
          << " offset=" << input->get_datptr(0,0) - (float*)input->internal_get_buffer()
          << endl;
 
-  cudaMemcpy (output->internal_get_buffer(), input->internal_get_buffer(), 
-	      input->internal_get_size(), kind);
+  cudaError error;
+  error = cudaMemcpy (output->internal_get_buffer(), 
+                      input->internal_get_buffer(), 
+	                    input->internal_get_size(), kind);
+  if (error != cudaSuccess)
+    throw Error (InvalidState, "dsp::TransferCUDA::transformation",
+                 cudaGetErrorString (error));
 
   if (verbose)
     cerr << "dsp::TransferCUDA::transformation output ndat=" 
