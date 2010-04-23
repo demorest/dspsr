@@ -31,6 +31,7 @@ void CUDA::FoldEngine::set_nbin (unsigned nbin)
 {
   current_bin = folding_nbin = nbin;
   current_hits = 0;
+  ndat_fold = 0;
   binplan.resize (0);
 }
 
@@ -39,7 +40,7 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
   if (ibin != current_bin)
   {
     if (current_bin != folding_nbin)
-      binplan.last().hits = current_hits;
+      binplan.back().hits = current_hits;
 
     bin start;
     start.offset = idat;
@@ -50,12 +51,16 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
     current_bin = ibin;
     current_hits = 0;
   }
-
+  ndat_fold ++;
   current_hits ++;
 }
 
 void CUDA::FoldEngine::send_binplan ()
 {
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::FoldEngine::send_binplan ndat=" << ndat_fold 
+         << " intervals=" << binplan.size() << endl;
+
   uint64_t mem_size = binplan.size() * sizeof(bin);
 
   if (binplan.size() > d_bin_size)
@@ -83,33 +88,31 @@ void CUDA::FoldEngine::send_binplan ()
 //}
 
 
-__global__ void performFold (const float* in_base,
+__global__ void fold1bin (const float* in_base,
 			     unsigned in_span,
 			     float* out_base,
 			     unsigned out_span,
 			     unsigned ndim,
 			     unsigned nbin,
 			     unsigned binplan_size,
-			     bin* binplan)
+			     CUDA::bin* binplan)
 {
   unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
-  unsigned iblock = blockIdx.y;
-  unsigned idim = threadIdx.z;
 
-  in_base += in_span * iblock + idim;
-  out_base += out_span * iblock + idim;
+  in_base += in_span * blockIdx.y + threadIdx.z;
+  out_base += out_span * blockIdx.y + threadIdx.z;
 
   float total = 0;
 
   for (unsigned jbin=ibin; jbin < binplan_size; jbin += nbin)
   {
-    float* input = in_base + binplan[jbin].offset * ndim;
+    const float* input = in_base + binplan[jbin].offset * ndim;
 
     for (unsigned i=0; i < binplan[jbin].hits; i++)
       total += input[i*ndim];
   }
 
-  out_base[ibin*ndim] += total;
+  out_base[ binplan[ibin].ibin * ndim ] += total;
 }
 
 std::ostream& operator<< (std::ostream& ostr, const dim3& v)
@@ -129,10 +132,8 @@ void CUDA::FoldEngine::fold ()
   cerr << "gridDim=" << gridDim << endl;
 #endif
 
-  add_bin<<<gridDim,blockDim>>> (input, input_span,
-				 output, output_span,
-				 ndim,
-				 nbin, binplan.size(), d_bin);
+  fold1bin<<<gridDim,blockDim>>> (input, input_span, output, output_span,
+                                  ndim, folding_nbin, binplan.size(), d_bin);
 
   cudaThreadSynchronize ();
 
