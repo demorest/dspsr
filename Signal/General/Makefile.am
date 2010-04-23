@@ -14,7 +14,7 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/RFIFilter.h dsp/DedispersionSampleDelay.h dsp/Response.h   \
 	dsp/Rescale.h dsp/BandpassMonitor.h dsp/PScrunch.h	       \
 	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h \
-	dsp/OptimalFFT.h
+	dsp/OptimalFFT.h dsp/on_host.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
 	cross_detect.ic stokes_detect.c stokes_detect.h		      \

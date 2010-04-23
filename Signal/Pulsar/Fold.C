@@ -9,6 +9,7 @@
 #include "dsp/ObservationChange.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
+#include "dsp/on_host.h"
 
 #include "Pulsar/ParametersLookup.h"
 #include "Predict.h"
@@ -92,7 +93,7 @@ void dsp::Fold::combine (const Operation* other)
 
   const Fold* fold = dynamic_cast<const Fold*>( other );
   if (fold)
-    get_output()->combine( fold->get_output() );
+    get_output()->combine(on_host( fold->get_output() ));
 }
 
 void dsp::Fold::reset ()
