@@ -74,8 +74,19 @@ __global__ void performFold (const float* in_base,
   in_base += in_span * ( ipol + ichan*npol ) + idim;
   out_base += out_span * ( ipol + ichan*npol ) + idim;
 
+  float total = 0;
+  unsigned ibin = binplan[0];
+
   for (unsigned i=0; i < ndat_fold; i++)
-    out_base[binplan[i]*ndim] += in_base[i*ndim];
+  {
+    if (binplan[i] != ibin)
+    {
+      out_base[ibin*ndim] += total;
+      total = 0;
+      ibin = binplan[i];
+    }
+    total += in_base[i*ndim];
+  }
 }
 
 std::ostream& operator<< (std::ostream& ostr, const dim3& v)
