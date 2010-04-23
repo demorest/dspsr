@@ -5,6 +5,7 @@
  *
  ***************************************************************************/
 
+#include <stdlib.h>
 #include "dsp/Digitizer.h"
 #include "Error.h"
 
