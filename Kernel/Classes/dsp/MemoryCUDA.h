@@ -19,7 +19,6 @@ namespace CUDA
   public:
     void* do_allocate (unsigned nbytes);
     void do_free (void*);
-    void do_copy (void* to, const void* from, size_t bytes);
   };
 
   //! Manages CUDA device memory allocation and destruction
@@ -30,6 +29,7 @@ namespace CUDA
     void do_free (void*);
     void do_copy (void* to, const void* from, size_t bytes);
     void do_zero (void*, unsigned);
+    bool on_host () const { return false; }
   };
 
   class SharedPinnedMemory : public dsp::Memory
@@ -37,7 +37,6 @@ namespace CUDA
   public:
     void * do_allocate (unsigned nbytes);
     void do_free (void*);
-    void do_copy (void* to, const void* from, size_t bytes);
   };
 }
 
