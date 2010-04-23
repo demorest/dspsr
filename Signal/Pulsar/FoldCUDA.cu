@@ -81,13 +81,6 @@ void CUDA::FoldEngine::send_binplan ()
 }
 
 
-// header for if we decide to calculate weights on gpu too...
-//__global__ void calculateWeight ()
-//{
-//  unsigned threadIndex = blockIdx.x * blockDim.x + threadIdx.x;
-//}
-
-
 __global__ void fold1bin (const float* in_base,
 			     unsigned in_span,
 			     float* out_base,
@@ -99,20 +92,25 @@ __global__ void fold1bin (const float* in_base,
 {
   unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
 
+  if (ibin >= binplan_size)
+    return;
+
+  unsigned output_ibin = binplan[ibin].ibin;
+
   in_base += in_span * blockIdx.y + threadIdx.z;
   out_base += out_span * blockIdx.y + threadIdx.z;
 
   float total = 0;
 
-  for (unsigned jbin=ibin; jbin < binplan_size; jbin += nbin)
+  for (; ibin < binplan_size; ibin += nbin)
   {
-    const float* input = in_base + binplan[jbin].offset * ndim;
+    const float* input = in_base + binplan[ibin].offset * ndim;
 
-    for (unsigned i=0; i < binplan[jbin].hits; i++)
+    for (unsigned i=0; i < binplan[ibin].hits; i++)
       total += input[i*ndim];
   }
 
-  out_base[ binplan[ibin].ibin * ndim ] += total;
+  out_base[ output_ibin * ndim ] += total;
 }
 
 std::ostream& operator<< (std::ostream& ostr, const dim3& v)
