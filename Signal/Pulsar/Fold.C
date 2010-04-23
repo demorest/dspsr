@@ -92,8 +92,16 @@ void dsp::Fold::combine (const Operation* other)
   Operation::combine (other);
 
   const Fold* fold = dynamic_cast<const Fold*>( other );
-  if (fold)
-    get_output()->combine(on_host( fold->get_output() ));
+  if (!fold)
+    return;
+
+  if (verbose)
+    cerr << "dsp::Fold::combine another Fold" << endl;
+
+  get_output()->combine( fold->get_output() );
+
+  if (verbose)
+    cerr << "dsp::Fold::combine another Fold exit" << endl;
 }
 
 void dsp::Fold::reset ()
@@ -109,6 +117,8 @@ void dsp::Fold::reset ()
 
 void dsp::Fold::finish ()
 {
+  // retrieve data from compute device, if necessary
+  set_output( on_host( get_output() ) );
 }
 
 //! Prepare for folding the given Observation
