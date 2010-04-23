@@ -58,6 +58,11 @@ static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
 static Registry::List<dsp::File>::Enter<dsp::DADABuffer> dada_buffer;
 #endif
 
+#if HAVE_dummy
+#include "dsp/DummyFile.h"
+static Registry::List<dsp::File>::Enter<dsp::DummyFile> register_dummy;
+#endif
+
 #if HAVE_fadc
 #include "dsp/FadcFile.h"
 static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;

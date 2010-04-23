@@ -67,6 +67,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::CPSRTwoBitCorrection> cpsr;
 static Registry::List<dsp::Unpacker>::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #endif
 
+#if HAVE_dummy
+#include "dsp/DummyUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::DummyUnpacker> dummy;
+#endif
+
 #if HAVE_fadc
 #include "dsp/FadcUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::FadcUnpacker> fadc;
