@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.59 $
-   $Date: 2010/04/22 07:43:27 $
+   $Revision: 1.60 $
+   $Date: 2010/04/23 01:49:22 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -234,7 +234,9 @@ namespace dsp {
 
     void set_parent (Fold*);
 
-    virtual void set_binplan (uint64_t ndat, unsigned* bins) = 0;
+    virtual void set_nbin (unsigned nbin) = 0;
+    virtual void set_bin (uint64_t idat, unsigned ibin) = 0;
+
     virtual void setup (uint64_t idat_fold);
     virtual void fold () = 0;
 
