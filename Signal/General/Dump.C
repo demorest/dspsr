@@ -5,16 +5,8 @@
  *
  ***************************************************************************/
 
-#if HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include "dsp/Dump.h"
-
-#if HAVE_CUDA
-#include "dsp/TransferCUDA.h"
-#include "dsp/MemoryCUDA.h"
-#endif
+#include "dsp/on_host.h"
 
 #include <fstream>
 using namespace std;
@@ -46,23 +38,7 @@ void dsp::Dump::set_output_binary (bool flag)
 //! Adds to the totals
 void dsp::Dump::calculation ()
 {
-  Reference::To<const TimeSeries> use = input;
-
-#if HAVE_CUDA
-  if ( dynamic_cast<const CUDA::DeviceMemory*>( input->get_memory() ) )
-  {
-    cerr << "dsp::Dump::calculate retrieving from GPU" << endl;
-    TransferCUDA transfer;
-    transfer.set_kind( cudaMemcpyDeviceToHost );
-    transfer.set_input( input );
-	
-    Reference::To<TimeSeries> host = new TimeSeries;
-    transfer.set_output( host );
-    transfer.operate ();
-
-    use = host;
-  }
-#endif
+  Reference::To<const TimeSeries> use = on_host( input.get() );
 
   const unsigned nchan = use->get_nchan();
   const unsigned npol = use->get_npol();

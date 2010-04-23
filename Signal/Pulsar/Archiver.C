@@ -5,16 +5,13 @@
  *
  ***************************************************************************/
 
-#if HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include "dsp/Archiver.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Response.h"
 #include "dsp/Operation.h"
 #include "dsp/TwoBitCorrection.h"
 #include "dsp/OutputArchive.h"
+#include "dsp/on_host.h"
 
 #include "Pulsar/Interpreter.h"
 #include "Pulsar/Integration.h"
@@ -33,12 +30,6 @@
 
 #include "Pulsar/Predictor.h"
 #include "Error.h"
-
-#if HAVE_CUDA
-#include "dsp/TransferCUDA.h"
-#include "dsp/MemoryCUDA.h"
-#endif
-
 
 #include <iomanip>
 #include <assert.h>
@@ -146,23 +137,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
     return;
   }
 
-  this->profiles = _profiles;
-
-#if HAVE_CUDA
-  if ( dynamic_cast<const CUDA::DeviceMemory*>( profiles->get_memory() ) )
-  {
-    cerr << "dsp::Archiver::unload retrieving from GPU" << endl;
-    TransferCUDA transfer;
-    transfer.set_kind( cudaMemcpyDeviceToHost );
-    transfer.set_input( profiles );
-
-    Reference::To<PhaseSeries> host = new PhaseSeries;
-    transfer.set_output( host );
-    transfer.operate ();
-
-    profiles = host;
-  }
-#endif
+  this->profiles = on_host( _profiles );
 
   uint64_t ndat_folded = profiles->get_ndat_folded();
   uint64_t ndat_total = profiles->get_ndat_total();
