@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/on_host.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/04/24 14:03:15 $
+   $Revision: 1.4 $
+   $Date: 2010/04/24 14:13:38 $
    $Author: straten $ */
 
 #ifndef __on_host_h
@@ -35,12 +35,14 @@ void on_host (const Container* input, Reference::To<const Container>& output,
     if (clone)
     {
       if (!output)
-	output = input->clone();
+        output = input->clone();
       else
-	*const_cast<Container*>(output.ptr()) = *input;
+        *const_cast<Container*>(output.ptr()) = *input;
     }
     else
       output = input;
+
+    return;
   }
 
 #if HAVE_CUDA
@@ -54,6 +56,8 @@ void on_host (const Container* input, Reference::To<const Container>& output,
       output = new Container;
     transfer.set_output( const_cast<Container*>(output.ptr()) );
     transfer.operate ();
+
+    return;
   }
 #endif
 
@@ -74,11 +78,11 @@ void on_host (const Container* input, Reference::To<Container>& output,
 }
 
 template<class Container>
-const Container* on_host (const Container* container, bool clone = false)
+Container* on_host (const Container* container, bool clone = false)
 {
   Reference::To<const Container> host;
   on_host (container, host, clone);
-  return host.release();
+  return const_cast<Container*>( host.release() );
 }
 
 #endif
