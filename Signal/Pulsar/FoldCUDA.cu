@@ -39,18 +39,22 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
 {
   if (ibin != current_bin)
   {
-    if (current_bin != folding_nbin)
+    /* store the number of time samples to integrate
+       in the interval that just ended */
+    if (binplan.size())
       binplan.back().hits = current_hits;
 
     bin start;
     start.offset = idat;
     start.ibin = ibin;
 
+    /* start a new interval */
     binplan.push_back ( start );
 
     current_bin = ibin;
     current_hits = 0;
   }
+
   ndat_fold ++;
   current_hits ++;
 }
