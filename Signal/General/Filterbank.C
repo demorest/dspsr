@@ -373,12 +373,9 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
 {
   const uint64_t ndat = input->get_ndat();
 
-  if (verbose)
-    cerr << "dsp::Filterbank::reserve input ndat=" << ndat << endl;
-
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
-  this->npart = 0;
+  npart = 0;
 
   if (ndat > nsamp_overlap)
     npart = (ndat-nsamp_overlap)/nsamp_step;
@@ -391,6 +388,12 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
   unsigned nkeep = freq_res - nfilt_tot;
 
   uint64_t output_ndat = npart * nkeep;
+
+  if (verbose)
+    cerr << "dsp::Filterbank::reserve input ndat=" << ndat 
+         << " overlap=" << nsamp_overlap << " step=" << nsamp_step
+         << " reserve=" << reserve_extra << " nkeep=" << nkeep
+         << " npart=" << npart << " output ndat=" << output_ndat << endl;
 
   // prepare the output TimeSeries
   prepare_output (output_ndat, true);
