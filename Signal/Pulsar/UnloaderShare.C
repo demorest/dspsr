@@ -162,8 +162,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
       if ( last_division[ic] > division )
         temp->set_finished( ic );
 
-    // if !wait_all, then clone the PhaseSeries in on_host if necessary
-    temp->set_profiles( on_host(const_cast<PhaseSeries*>(data), !wait_all) );
+    temp->set_profiles( data, !wait_all );
 
     storage.push_back( temp );
 
@@ -393,9 +392,10 @@ dsp::UnloaderShare::Storage::~Storage ()
 
 
 //! Set the storage area
-void dsp::UnloaderShare::Storage::set_profiles( PhaseSeries* data )
+void dsp::UnloaderShare::Storage::set_profiles (const PhaseSeries* data,
+						bool clone)
 {
-  profiles = data;
+  on_host( data, profiles, clone );
 }
 
 //! Get the storage area

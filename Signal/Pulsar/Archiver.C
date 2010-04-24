@@ -138,7 +138,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
     return;
   }
 
-  this->profiles = on_host( _profiles );
+  on_host( _profiles, profiles );
 
   uint64_t ndat_folded = profiles->get_ndat_folded();
   uint64_t ndat_total = profiles->get_ndat_total();

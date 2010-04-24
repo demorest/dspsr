@@ -29,7 +29,7 @@ dsp::Fold::Fold () :
 
   requested_nbin = 0;
   folding_nbin = 0;
-  force_sensible_nbin=false;
+  force_sensible_nbin = false;
 
   reference_phase = -1.0; // Defaults to 0.0
 
@@ -118,7 +118,7 @@ void dsp::Fold::reset ()
 void dsp::Fold::finish ()
 {
   // retrieve data from compute device, if necessary
-  set_output( on_host( get_output() ) );
+  on_host( output.get(), output );
 }
 
 //! Prepare for folding the given Observation
@@ -684,7 +684,11 @@ void dsp::Fold::fold (uint64_t nweights,
   unsigned* hits = &(get_output()->hits[0]);
    
   if (engine)
+  {
+    if (verbose)
+      cerr << "dsp::Fold::fold using engine ptr=" << engine.ptr() << endl;
     engine->set_nbin (folding_nbin);
+  }
 
   for (uint64_t idat=idat_start; idat < idat_end; idat++)
   {
