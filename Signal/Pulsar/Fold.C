@@ -118,7 +118,7 @@ void dsp::Fold::reset ()
 void dsp::Fold::finish ()
 {
   // retrieve data from compute device, if necessary
-  on_host( output.get(), output );
+  set_output( on_host( get_output() ) );
 }
 
 //! Prepare for folding the given Observation
