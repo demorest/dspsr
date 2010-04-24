@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/on_host.h,v $
-   $Revision: 1.2 $
-   $Date: 2010/04/23 11:10:42 $
+   $Revision: 1.3 $
+   $Date: 2010/04/24 14:03:15 $
    $Author: straten $ */
 
 #ifndef __on_host_h
@@ -25,52 +25,60 @@
 #include "dsp/MemoryCUDA.h"
 #endif
 
-template<typename T>
-class unconst
-{
-public:
-  typedef T type;
-};
-
-template<typename T>
-class unconst<const T>
-{
-public:
-  typedef T type;
-};
 
 template<class Container>
-Container* on_host (Container* container, bool clone = false)
+void on_host (const Container* input, Reference::To<const Container>& output,
+	      bool clone = false)
 {
-  if (container->get_memory()->on_host())
+  if (input->get_memory()->on_host())
   {
     if (clone)
-      return container->clone();
+    {
+      if (!output)
+	output = input->clone();
+      else
+	*const_cast<Container*>(output.ptr()) = *input;
+    }
     else
-      return container;
+      output = input;
   }
 
 #if HAVE_CUDA
-  if ( dynamic_cast<const CUDA::DeviceMemory*>( container->get_memory() ) )
+  if ( dynamic_cast<const CUDA::DeviceMemory*>( input->get_memory() ) )
   {
     dsp::TransferCUDA transfer;
     transfer.set_kind( cudaMemcpyDeviceToHost );
-    transfer.set_input( container );
+    transfer.set_input( input );
 
-    typedef typename unconst<Container>::type UnConst;
-    Reference::To<UnConst> host = new UnConst;
-    transfer.set_output( host );
+    if (!output)
+      output = new Container;
+    transfer.set_output( const_cast<Container*>(output.ptr()) );
     transfer.operate ();
-
-    // The TransferCUDA destructor must not destroy the output when it
-    // goes out of scope
-    transfer.set_output( 0 );
-
-    return host.release();
   }
 #endif
 
   throw Error (InvalidState, "on_host", "unknown memory manager");
+}
+
+template<class Container>
+void on_host (const Container* input, Reference::To<Container>& output,
+	      bool clone = false)
+{
+  Reference::To<const Container> const_output;
+  if (output)
+    const_output = output;
+
+  on_host (input, const_output, clone);
+
+  output = const_cast<Container*>( const_output.ptr() );
+}
+
+template<class Container>
+const Container* on_host (const Container* container, bool clone = false)
+{
+  Reference::To<const Container> host;
+  on_host (container, host, clone);
+  return host.release();
 }
 
 #endif
