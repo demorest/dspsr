@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.20 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.21 $
+   $Date: 2010/04/24 14:03:26 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -178,7 +178,7 @@ namespace dsp {
     ~Storage ();
 
     //! Set the storage area
-    void set_profiles( PhaseSeries* );
+    void set_profiles( const PhaseSeries*, bool clone = false );
 
     //! Get the storage area
     PhaseSeries* get_profiles ();
