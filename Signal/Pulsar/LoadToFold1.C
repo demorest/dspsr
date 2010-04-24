@@ -702,10 +702,10 @@ void dsp::LoadToFold1::prepare_final ()
   manager->set_minimum_RAM( config->get_minimum_RAM() );
   manager->set_copies( config->get_nbuffers() );
 
-  uint64_t ram = manager->set_block_size( block_size );
-
   if (block_overlap)
     manager->set_overlap( block_overlap );
+
+  uint64_t ram = manager->set_block_size( block_size );
 
   if (report_vitals)
   {
