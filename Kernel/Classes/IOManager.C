@@ -371,6 +371,23 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
 		 minimum_samples, min_ram/megabyte);
   }
 
+  if (input->get_overlap())
+  {
+    unsigned overlap = input->get_overlap();
+
+    double parts = (block_size - overlap) / (minimum_samples - overlap);
+
+    cerr << "dsp::IOManager::set_block_size input"
+            " overlap=" << overlap << " parts=" << parts << endl;
+
+    uint64_t block_resize = unsigned(parts)*(minimum_samples-overlap) + overlap;
+
+    cerr << "dsp::IOManager::set_block_size old=" << block_size
+         << " new=" << block_resize << endl;
+
+    block_size = block_resize;
+  }
+
   input->set_block_size ( block_size );
 
   return uint64_t( block_size * nbyte_dat );
@@ -411,3 +428,4 @@ void dsp::IOManager::set_overlap (uint64_t overlap)
     
   input->set_overlap( overlap );
 }
+
