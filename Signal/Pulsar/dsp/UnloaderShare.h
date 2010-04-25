@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.21 $
-   $Date: 2010/04/24 14:03:26 $
+   $Revision: 1.22 $
+   $Date: 2010/04/25 04:56:39 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -178,13 +178,13 @@ namespace dsp {
     ~Storage ();
 
     //! Set the storage area
-    void set_profiles( const PhaseSeries*, bool clone = false );
+    void set_profiles (const PhaseSeries*);
 
     //! Get the storage area
     PhaseSeries* get_profiles ();
 
     //! Set the division
-    void set_division( uint64_t );
+    void set_division (uint64_t);
 
     //! Get the division
     uint64_t get_division ();
