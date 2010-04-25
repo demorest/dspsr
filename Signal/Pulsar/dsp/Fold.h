@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.60 $
-   $Date: 2010/04/23 01:49:22 $
+   $Revision: 1.61 $
+   $Date: 2010/04/25 04:56:25 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -66,6 +66,9 @@ namespace dsp {
 
     //! If Operation is a Fold, integrate its PhaseSeries
     void combine (const Operation*);
+
+    //! Before returning output, ensure that it is synchronized with Engine
+    PhaseSeries* get_output () const;
 
     //! Reset the PhaseSeries
     void reset ();
@@ -234,11 +237,26 @@ namespace dsp {
 
     void set_parent (Fold*);
 
+    //! Set the number of phase bins and initialize any other data structures
     virtual void set_nbin (unsigned nbin) = 0;
+
+    //! Set the phase bin into which the idat'th sample will be integrated
     virtual void set_bin (uint64_t idat, unsigned ibin) = 0;
 
+    //! Set the offset into the input TimeSeries at which folding will start
     virtual void setup (uint64_t idat_fold);
+
+    //! Return the PhaseSeries into which data will be folded
+    virtual PhaseSeries* get_profiles ();
+
+    //! Perform the fold operation
     virtual void fold () = 0;
+
+    //! Synchronize the folded profile with the parent
+    virtual void synch () = 0;
+
+    //! Zero the folded profile
+    virtual void zero () = 0;
 
   protected:
 
