@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.4 $
-   $Date: 2010/04/25 04:56:34 $
+   $Revision: 1.5 $
+   $Date: 2010/04/25 07:05:09 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
 #define __baseband_cuda_Fold_h
 
 #include "dsp/Fold.h"
+#include "dsp/TransferCUDA.h"
 
 namespace CUDA
 {
@@ -38,9 +39,9 @@ namespace CUDA
 
     void fold ();
 
-    PhaseSeries* get_profiles ();
+    dsp::PhaseSeries* get_profiles ();
 
-    void synch ();
+    void synch (dsp::PhaseSeries*);
 
     void zero ();
 
@@ -58,7 +59,11 @@ namespace CUDA
     uint64_t d_bin_size;
 
     // memory for profiles on the device
-    Reference::To<PhaseSeries> d_profiles;
+    Reference::To<dsp::PhaseSeries> d_profiles;
+
+    // operation used to transfer data from device to host
+    Reference::To<dsp::TransferCUDA> transfer;
+
   };
 }
 
