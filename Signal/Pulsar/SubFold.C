@@ -128,7 +128,7 @@ void dsp::SubFold::transformation () try
     divider.set_bounds( get_input() );
 
     if (!divider.get_fractional_pulses())
-      output->set_ndat_expected( divider.get_division_ndat() );
+      get_output()->set_ndat_expected( divider.get_division_ndat() );
 
     more_data = divider.get_in_next ();
 
@@ -162,15 +162,17 @@ void dsp::SubFold::transformation () try
     if (verbose)
       cerr << "dsp::SubFold::transformation sub-integration completed" << endl;
 
-    complete.send (output);
+    PhaseSeries* result = get_result ();
 
-    if (unloader && keep(output))
+    complete.send (result);
+
+    if (unloader && keep(result))
     {
       if (verbose)
 	cerr << "dsp::SubFold::transformation this=" << this
              << " unloader=" << unloader.get() << endl;
 
-      unloader->unload (output);
+      unloader->unload (result);
     }
 
     zero_output ();
@@ -191,7 +193,7 @@ void dsp::SubFold::set_limits (const Observation* input)
 
 void dsp::SubFold::finish () try
 {
-  if (!output->get_integration_length())
+  if (!get_result()->get_integration_length())
   {
     if (verbose)
       cerr << "dsp::SubFold::finish unload_partial" << endl;
@@ -216,8 +218,10 @@ void dsp::SubFold::unload_partial () try
 {
   if (verbose)
     cerr << "dsp::SubFold::unload_partial to callback" << endl;
-  
-  partial.send (output);
+
+  PhaseSeries* result = get_result ();
+
+  partial.send (result);
 
   if (unloader)
   {
@@ -225,7 +229,7 @@ void dsp::SubFold::unload_partial () try
       cerr << "dsp::SubFold::unload_partial this=" << this
            << " unloader=" << unloader.get() << endl;
 
-    unloader->partial (output);
+    unloader->partial (result);
   }
 
   zero_output ();
@@ -249,6 +253,6 @@ void dsp::SubFold::zero_output ()
     path->reset();
   else
 #endif
-    output->zero();
+    get_output()->zero();
 }
 
