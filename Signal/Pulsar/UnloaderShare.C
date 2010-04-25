@@ -9,7 +9,6 @@
 #include "dsp/PhaseSeries.h"
 #include "dsp/PhaseSeriesUnloader.h"
 #include "dsp/Operation.h"
-#include "dsp/on_host.h"
 
 #include "ThreadContext.h"
 #include "Error.h"
@@ -162,7 +161,10 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
       if ( last_division[ic] > division )
         temp->set_finished( ic );
 
-    temp->set_profiles( data, !wait_all );
+    if (wait_all)
+      temp->set_profiles( data->clone() );
+    else
+      temp->set_profiles( data );
 
     storage.push_back( temp );
 
@@ -392,10 +394,9 @@ dsp::UnloaderShare::Storage::~Storage ()
 
 
 //! Set the storage area
-void dsp::UnloaderShare::Storage::set_profiles (const PhaseSeries* data,
-						bool clone)
+void dsp::UnloaderShare::Storage::set_profiles (const PhaseSeries* data)
 {
-  on_host( data, profiles, clone );
+  profiles = const_cast<PhaseSeries*>( data );
 }
 
 //! Get the storage area
@@ -462,7 +463,7 @@ bool dsp::UnloaderShare::Storage::integrate( unsigned contributor,
     }
     else
 #endif
-      profiles->combine( on_host(data) );
+      profiles->combine (data);
 
     set_finished( contributor );
 
