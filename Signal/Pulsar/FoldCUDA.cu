@@ -2,12 +2,13 @@
 
 /***************************************************************************
  *
- *   Copyright (C) 2010
+ *   Copyright (C) 2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/FoldCUDA.h"
+#include "dsp/MemoryCUDA.h"
 
 #include "Error.h"
 
@@ -19,6 +20,9 @@ CUDA::FoldEngine::FoldEngine ()
 {
   d_bin = 0;
   d_bin_size = 0;
+
+  d_profiles = new PhaseSeries;
+  d_profiles->set_memory( new CUDA::DeviceMemory );
 }
 
 CUDA::FoldEngine::~FoldEngine ()
@@ -57,6 +61,31 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
 
   ndat_fold ++;
   current_hits ++;
+}
+
+dsp::PhaseSeries* CUDA::FoldEngine::get_profiles ()
+{
+  d_profiles->internal_match( parent->get_output() );
+  return d_profiles;
+}
+
+void CUDA::FoldEngine::synch ()
+{
+  parent->get_output()->internal_match( d_profiles );
+
+  cudaError error;
+  error = cudaMemcpy (parent->get_output()->internal_get_buffer(), 
+                      d_profiles->internal_get_buffer(), 
+		      d_profiles->internal_get_size(), cudaMemcpyHostToDevice);
+
+  if (error != cudaSuccess)
+    throw Error (InvalidState, "dsp::FoldEngine::synch",
+                 cudaGetErrorString (error));
+}
+
+void CUDA::FoldEngine::zero ()
+{
+  d_profiles->zero();
 }
 
 void CUDA::FoldEngine::send_binplan ()
