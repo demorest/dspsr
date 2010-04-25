@@ -450,60 +450,6 @@ void dsp::LoadToFold1::prepare () try
 
   operations.push_back (detect.get());
 
-#if HAVE_CUDA
-
-  if (run_on_gpu)
-  {    
-
-#define FOLD_ON_CPU 0
-#if FOLD_ON_CPU
-
-    TransferCUDA* transfer = new TransferCUDA;
-    transfer->set_kind( cudaMemcpyDeviceToHost );
-    transfer->set_input( convolved );
-      
-    detected = new TimeSeries; // new_time_series ();
-    // detected->set_memory (new CUDA::PinnedMemory);
-      
-    transfer->set_output( detected );
-
-    if (!config->asynchronous_fold)
-      operations.push_back (transfer);
-      
-    prepare_fold (detected);
-
-    if (config->asynchronous_fold)
-    {
-      for (unsigned ifold=0; ifold<asynch_fold.size(); ifold++)
-	operations.push_back (new OperationThread::Wait(asynch_fold[ifold]));
-
-      operations.push_back (transfer);
-
-      for (unsigned ifold=0; ifold<asynch_fold.size(); ifold++)
-	operations.push_back (asynch_fold[ifold].get());
-    }
-
-#else
-
-    prepare_fold (detected);
-
-#endif
-
-#define DUMP_DETECT 0
-#if DUMP_DETECT
-    Dump* dump = new Dump;
-    // dump->set_output( fopen("post_detect.dat", "w") );
-    dump->set_input ( detected );
-    operations.push_back (dump);
-#endif
-
-    prepare_final ();
-
-    return;
-  }
-
-#endif // have cuda
-
   if (config->npol == 3)
   {
     detected = new_time_series ();
@@ -956,12 +902,11 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     else
       operations.push_back( fold[ifold].get() );
 
-#if HAVE_CUDA && !FOLD_ON_CPU
+#if HAVE_CUDA
     if (run_on_gpu)
     {
       cerr << thread_id << ": creating CUDA::FoldEngine" << endl;
       fold[ifold]->set_engine (new CUDA::FoldEngine);
-      fold[ifold]->get_output()->set_memory (device_memory);
     }
 #endif
 
