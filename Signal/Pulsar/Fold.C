@@ -76,6 +76,14 @@ dsp::Fold* dsp::Fold::clone () const
   return new Fold(*this);
 }
 
+dsp::PhaseSeries* dsp::Fold::get_output () const
+{
+  if (engine)
+    return engine->get_profiles ();
+
+  return output;
+}
+
 //! Prepare for folding the input TimeSeries
 void dsp::Fold::prepare ()
 {
@@ -97,16 +105,16 @@ void dsp::Fold::combine (const Operation* other)
   if (verbose)
     cerr << "dsp::Fold::combine another Fold" << endl;
 
-  get_output()->combine( fold->get_output() );
+  get_result()->combine( fold->get_result() );
 
   if (verbose)
     cerr << "dsp::Fold::combine another Fold exit" << endl;
 }
 
-dsp::PhaseSeries* dsp::Fold::get_output () const
+dsp::PhaseSeries* dsp::Fold::get_result () const
 {
   if (engine)
-    engine->synch ();
+    engine->synch (output);
 
   return output;
 }
@@ -118,14 +126,12 @@ void dsp::Fold::reset ()
 
   Operation::reset ();
 
-  if (engine)
-    engine->zero();
-  else if (output)
-    output->zero();
+  get_output()->zero();
 }
 
 void dsp::Fold::finish ()
 {
+  get_result();
 }
 
 //! Prepare for folding the given Observation
@@ -507,23 +513,25 @@ void dsp::Fold::transformation () try
     choose_nbin ();
   }
 
-  if ( output->integration_length &&
-       output->get_reference_phase() != get_reference_phase() )
+  PhaseSeries* use = get_output();
+
+  if ( use->integration_length &&
+       use->get_reference_phase() != get_reference_phase() )
     throw Error (InvalidState, "dsp::Fold::transformation",
 		 "output reference phase=%lf != reference phase=%lf",
-		 output->get_reference_phase(), get_reference_phase() );
+		 use->get_reference_phase(), get_reference_phase() );
 
   // Temporarily make sure the DMs are the same
-  output->set_dispersion_measure( input->get_dispersion_measure() ); 
+  use->set_dispersion_measure( input->get_dispersion_measure() ); 
 
   if (verbose)
     cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
 
   set_limits (input);
 
-  if (!output->mixable (*input, folding_nbin, idat_start, ndat_fold))
+  if (!use->mixable (*input, folding_nbin, idat_start, ndat_fold))
     throw Error (InvalidParam, "dsp::Fold::transformation",
-		 "input and output are not mixable " + output->get_reason());
+		 "input and output are not mixable " + use->get_reason());
 
   uint64_t nweights = 0;
   const unsigned* weights = 0;
@@ -545,32 +553,32 @@ void dsp::Fold::transformation () try
   fold (nweights, weights, ndatperweight, weight_idat);
   
   if (folding_period > 0.0)
-    output->set_folding_period( folding_period );
+    use->set_folding_period( folding_period );
   else
   {
     if (pulsar_ephemeris)
     {
       if (verbose)
         cerr << "dsp::Fold::transformation set output ephemeris" << endl;
-      output->set_pulsar_ephemeris( pulsar_ephemeris );
+      use->set_pulsar_ephemeris( pulsar_ephemeris );
     }
 
     if (folding_predictor)
     {
       if (verbose)
         cerr << "dsp::Fold::transformation set output predictor" << endl;
-      output->set_folding_predictor( folding_predictor );
+      use->set_folding_predictor( folding_predictor );
     }
   }
 
-  output->set_reference_phase( reference_phase );
+  use->set_reference_phase( reference_phase );
 
   // set the sampling rate of the output PhaseSeries
   double sampling_interval = pfold / double(folding_nbin);
-  output->set_rate (1.0/sampling_interval);
+  use->set_rate (1.0/sampling_interval);
 
   if (change)
-    change->change( output );
+    change->change (use);
 }
 catch (Error& error)
 {
@@ -688,7 +696,7 @@ void dsp::Fold::fold (uint64_t nweights,
   double sampling_interval = 1.0/get_input()->get_rate();
   double double_nbin = double (folding_nbin);
   double phase_per_sample = sampling_interval / pfold;
-  unsigned* hits = &(output->hits[0]);
+  unsigned* hits = &(get_output()->hits[0]);
    
   if (engine)
   {
@@ -745,7 +753,7 @@ void dsp::Fold::fold (uint64_t nweights,
 	 << " time=" << time_folded*1e3 << " ms"
 	 << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
 
-  PhaseSeries* result = output;
+  PhaseSeries* result = get_output();
  
   result->integration_length += time_folded;
   result->ndat_total += ndat_fold;
@@ -854,11 +862,6 @@ void dsp::Fold::set_limits (const Observation* input)
 void dsp::Fold::Engine::set_parent (Fold* fold)
 {
   parent = fold;
-}
-
-dsp::PhaseSeries* dsp::Fold::Engine::get_profiles ()
-{
-  return parent->get_output();
 }
 
 void dsp::Fold::Engine::setup (uint64_t idat_start)

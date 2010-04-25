@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.61 $
-   $Date: 2010/04/25 04:56:25 $
+   $Revision: 1.62 $
+   $Date: 2010/04/25 07:05:03 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -58,6 +58,8 @@ namespace dsp {
     //! Create a clonse
     Fold* clone () const;
 
+    PhaseSeries* get_output () const;
+
     //! Prepare to fold the input TimeSeries
     void prepare ();
 
@@ -67,14 +69,14 @@ namespace dsp {
     //! If Operation is a Fold, integrate its PhaseSeries
     void combine (const Operation*);
 
-    //! Before returning output, ensure that it is synchronized with Engine
-    PhaseSeries* get_output () const;
-
     //! Reset the PhaseSeries
     void reset ();
 
     //! Perform any final operations
     virtual void finish ();
+
+    //! Before returning output, ensure that it is synchronized with Engine
+    PhaseSeries* get_result () const;
 
     //! Set the number of phase bins into which data will be folded
     void set_nbin (unsigned _nbin) { requested_nbin = _nbin; }
@@ -247,13 +249,13 @@ namespace dsp {
     virtual void setup (uint64_t idat_fold);
 
     //! Return the PhaseSeries into which data will be folded
-    virtual PhaseSeries* get_profiles ();
+    virtual PhaseSeries* get_profiles () = 0;
 
     //! Perform the fold operation
     virtual void fold () = 0;
 
-    //! Synchronize the folded profile with the parent
-    virtual void synch () = 0;
+    //! Synchronize the folded profile
+    virtual void synch (PhaseSeries*) = 0;
 
     //! Zero the folded profile
     virtual void zero () = 0;
@@ -271,6 +273,8 @@ namespace dsp {
     unsigned nchan, npol, ndim;
 
     Fold* parent;
+
+    bool synchronized;
   }; 
 
 }

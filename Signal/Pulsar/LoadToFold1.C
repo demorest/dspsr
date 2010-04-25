@@ -893,7 +893,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       change->set_dispersion_measure( get_dispersion_measure(ephem) );
     }
 
-    fold[ifold]->get_output()->zero();
+    fold[ifold]->reset();
 
     path[ifold] = new SignalPath (operations);
 
@@ -1208,7 +1208,7 @@ void dsp::LoadToFold1::finish () try
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
 
-      archiver->unload( fold[i]->get_output() );
+      archiver->unload( fold[i]->get_result() );
     }
   }
 }
