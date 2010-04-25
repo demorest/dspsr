@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002-2008 by Willem van Straten
+ *   Copyright (C) 2002-2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -9,7 +9,6 @@
 #include "dsp/ObservationChange.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Scratch.h"
-#include "dsp/on_host.h"
 
 #include "Pulsar/ParametersLookup.h"
 #include "Predict.h"
@@ -104,6 +103,14 @@ void dsp::Fold::combine (const Operation* other)
     cerr << "dsp::Fold::combine another Fold exit" << endl;
 }
 
+dsp::PhaseSeries* dsp::Fold::get_output () const
+{
+  if (engine)
+    engine->synch ();
+
+  return output;
+}
+
 void dsp::Fold::reset ()
 {
   if (verbose)
@@ -111,14 +118,14 @@ void dsp::Fold::reset ()
 
   Operation::reset ();
 
-  if (output)
+  if (engine)
+    engine->zero();
+  else if (output)
     output->zero();
 }
 
 void dsp::Fold::finish ()
 {
-  // retrieve data from compute device, if necessary
-  set_output( on_host( get_output() ) );
 }
 
 //! Prepare for folding the given Observation
@@ -514,9 +521,9 @@ void dsp::Fold::transformation () try
 
   set_limits (input);
 
-  if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold))
+  if (!output->mixable (*input, folding_nbin, idat_start, ndat_fold))
     throw Error (InvalidParam, "dsp::Fold::transformation",
-		 "input and output are not mixable " + get_output()->get_reason());
+		 "input and output are not mixable " + output->get_reason());
 
   uint64_t nweights = 0;
   const unsigned* weights = 0;
@@ -681,7 +688,7 @@ void dsp::Fold::fold (uint64_t nweights,
   double sampling_interval = 1.0/get_input()->get_rate();
   double double_nbin = double (folding_nbin);
   double phase_per_sample = sampling_interval / pfold;
-  unsigned* hits = &(get_output()->hits[0]);
+  unsigned* hits = &(output->hits[0]);
    
   if (engine)
   {
@@ -738,7 +745,7 @@ void dsp::Fold::fold (uint64_t nweights,
 	 << " time=" << time_folded*1e3 << " ms"
 	 << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
 
-  PhaseSeries* result = get_output();
+  PhaseSeries* result = output;
  
   result->integration_length += time_folded;
   result->ndat_total += ndat_fold;
@@ -849,6 +856,11 @@ void dsp::Fold::Engine::set_parent (Fold* fold)
   parent = fold;
 }
 
+dsp::PhaseSeries* dsp::Fold::Engine::get_profiles ()
+{
+  return parent->get_output();
+}
+
 void dsp::Fold::Engine::setup (uint64_t idat_start)
 {
   if (!parent)
@@ -864,7 +876,7 @@ void dsp::Fold::Engine::setup (uint64_t idat_start)
   input = in->get_datptr(0,0) + idat_start * ndim;
   input_span = in->get_nfloat_span();
 
-  PhaseSeries* out = parent->get_output();
+  PhaseSeries* out = get_profiles();
 
   output = out->get_datptr(0,0);
   output_span = out->get_nfloat_span();
