@@ -21,8 +21,11 @@ CUDA::FoldEngine::FoldEngine ()
   d_bin = 0;
   d_bin_size = 0;
 
-  d_profiles = new PhaseSeries;
+  d_profiles = new dsp::PhaseSeries;
   d_profiles->set_memory( new CUDA::DeviceMemory );
+
+  // no data on either the host or device
+  synchronized = true;
 }
 
 CUDA::FoldEngine::~FoldEngine ()
@@ -65,22 +68,30 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
 
 dsp::PhaseSeries* CUDA::FoldEngine::get_profiles ()
 {
-  d_profiles->internal_match( parent->get_output() );
   return d_profiles;
 }
 
-void CUDA::FoldEngine::synch ()
+void CUDA::FoldEngine::synch (dsp::PhaseSeries* output) try
 {
-  parent->get_output()->internal_match( d_profiles );
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::FoldEngine::synch this=" << this << endl;
 
-  cudaError error;
-  error = cudaMemcpy (parent->get_output()->internal_get_buffer(), 
-                      d_profiles->internal_get_buffer(), 
-		      d_profiles->internal_get_size(), cudaMemcpyHostToDevice);
+  if (synchronized)
+    return;
 
-  if (error != cudaSuccess)
-    throw Error (InvalidState, "dsp::FoldEngine::synch",
-                 cudaGetErrorString (error));
+  if (!transfer)
+    transfer = new dsp::TransferCUDA;
+
+  transfer->set_kind( cudaMemcpyDeviceToHost );
+  transfer->set_input( d_profiles );
+  transfer->set_output( output );
+  transfer->operate ();
+
+  synchronized = true;
+}
+catch (Error& error)
+{
+  throw error += "CUDA::FoldEngine::synch";
 }
 
 void CUDA::FoldEngine::zero ()
@@ -165,6 +176,9 @@ void CUDA::FoldEngine::fold ()
 
   fold1bin<<<gridDim,blockDim>>> (input, input_span, output, output_span,
                                   ndim, folding_nbin, binplan.size(), d_bin);
+
+  // profile on the device is no longer synchronized with the one on the host
+  synchronized = false;
 
   cudaThreadSynchronize ();
 
