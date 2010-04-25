@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/04/23 01:49:22 $
+   $Revision: 1.4 $
+   $Date: 2010/04/25 04:56:34 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
@@ -38,6 +38,12 @@ namespace CUDA
 
     void fold ();
 
+    PhaseSeries* get_profiles ();
+
+    void synch ();
+
+    void zero ();
+
   protected:
 
     std::vector<bin> binplan;
@@ -50,6 +56,9 @@ namespace CUDA
 
     bin* d_bin;
     uint64_t d_bin_size;
+
+    // memory for profiles on the device
+    Reference::To<PhaseSeries> d_profiles;
   };
 }
 
