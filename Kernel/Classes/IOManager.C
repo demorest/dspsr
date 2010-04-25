@@ -377,13 +377,15 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
 
     double parts = (block_size - overlap) / (minimum_samples - overlap);
 
-    cerr << "dsp::IOManager::set_block_size input"
-            " overlap=" << overlap << " parts=" << parts << endl;
+    if (verbose)
+      cerr << "dsp::IOManager::set_block_size input"
+              " overlap=" << overlap << " parts=" << parts << endl;
 
     uint64_t block_resize = unsigned(parts)*(minimum_samples-overlap) + overlap;
 
-    cerr << "dsp::IOManager::set_block_size old=" << block_size
-         << " new=" << block_resize << endl;
+    if (verbose)
+      cerr << "dsp::IOManager::set_block_size old=" << block_size
+           << " new=" << block_resize << endl;
 
     block_size = block_resize;
   }
