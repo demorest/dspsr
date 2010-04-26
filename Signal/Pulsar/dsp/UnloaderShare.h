@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.22 $
-   $Date: 2010/04/25 04:56:39 $
+   $Revision: 1.23 $
+   $Date: 2010/04/26 21:01:04 $
    $Author: straten $ */
 
 #ifndef __UnloaderShare_h
@@ -157,6 +157,9 @@ namespace dsp {
 
     //! Set the minimum integration length required to unload data
     void set_minimum_integration_length (double seconds);
+
+    //! Set verbosity ostream
+    void set_cerr (std::ostream& os) const;
 
   protected:
 

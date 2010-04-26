@@ -161,7 +161,7 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
       if ( last_division[ic] > division )
         temp->set_finished( ic );
 
-    if (wait_all)
+    if (!wait_all)
       temp->set_profiles( data->clone() );
     else
       temp->set_profiles( data );
@@ -313,10 +313,20 @@ dsp::UnloaderShare::Submit* dsp::UnloaderShare::Submit::clone () const
   return 0;
 }
 
+//! Set verbosity ostream
+void dsp::UnloaderShare::Submit::set_cerr (std::ostream& os) const
+{
+  PhaseSeriesUnloader::set_cerr (os);
+  if (unloader)
+    unloader->set_cerr (os);
+}
+
 //! Set the file unloader
 void dsp::UnloaderShare::Submit::set_unloader (dsp::PhaseSeriesUnloader* psu)
 {
   unloader = psu;
+  if (unloader)
+    unloader->set_cerr (cerr);
 }
 
 //! Unload the PhaseSeries data
@@ -389,7 +399,7 @@ dsp::UnloaderShare::Storage::Storage (unsigned contributors,
 dsp::UnloaderShare::Storage::~Storage ()
 {
   if (Operation::verbose)
-    cerr << "dsp::UnloaderShare::Storage::~Storage" << endl;
+    std::cerr << "dsp::UnloaderShare::Storage::~Storage" << endl;
 }
 
 
