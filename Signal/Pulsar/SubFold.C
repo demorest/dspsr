@@ -35,6 +35,8 @@ void dsp::SubFold::set_cerr (std::ostream& os) const
 {
   Operation::set_cerr (os);
   divider.set_cerr (os);
+  if (unloader)
+    unloader->set_cerr (os);
 }
 
 //! Set the file unloader
@@ -45,6 +47,8 @@ void dsp::SubFold::set_unloader (dsp::PhaseSeriesUnloader* _unloader)
          << " unloader=" << _unloader << endl;
 
   unloader = _unloader;
+  if (unloader)
+    unloader->set_cerr (cerr);
 }
 
 //! Get the file unloader
@@ -132,7 +136,7 @@ void dsp::SubFold::transformation () try
 
     more_data = divider.get_in_next ();
 
-    if (divider.get_new_division())
+    if (first_division && divider.get_new_division())
     {
       /* A new division has been started and there is still data in
 	 the current integration.  This is a sign that the current
@@ -140,6 +144,7 @@ void dsp::SubFold::transformation () try
 	 processing in parallel. */
 
       unload_partial ();
+      first_division = false;
     }
 
     if (!divider.get_is_valid())
