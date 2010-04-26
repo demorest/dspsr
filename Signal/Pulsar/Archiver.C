@@ -706,8 +706,8 @@ try
   if (zeroes)
   {
     if (verbose > 2)
-      warn << "dsp::Archiver::set Pulsar::Profile Warning: " << zeroes 
-	   << " out of " << nbin << " bins with zero hits" << endl;
+      cerr << "dsp::Archiver::set Pulsar::Profile WARNING " << zeroes 
+	         << " out of " << nbin << " bins with zero hits" << endl;
 
     // find the mean of the hit bins
     double sum = 0.0;
