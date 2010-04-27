@@ -325,7 +325,7 @@ void dsp::TimeDivide::set_bounds (const Observation* input)
     double start = 1e3*idat_start/sampling_rate;
     double used = 1e3*ndat/sampling_rate;
     double available = 1e3*input_ndat/sampling_rate;
-    cerr << "dsp::TimeDivide::bound using "
+    cerr << "dsp::TimeDivide::bound division=" << division << " using "
 	 << used << "/" << available << " from " << start << " ms\n  (" 
 	 << ndat << "/" << input_ndat << " from " << idat_start << " to "
 	 << idat_start + ndat - 1 << " inclusive.)" << endl;
