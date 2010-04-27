@@ -139,9 +139,9 @@ void dsp::SubFold::transformation () try
     if (first_division && divider.get_new_division())
     {
       /* A new division has been started and there is still data in
-	 the current integration.  This is a sign that the current
-	 input comes from uncontiguous data, which can arise when
-	 processing in parallel. */
+         the current integration.  This is a sign that the current
+         input comes from uncontiguous data, which can arise when
+         processing in parallel. */
 
       unload_partial ();
       first_division = false;
@@ -159,6 +159,7 @@ void dsp::SubFold::transformation () try
     {
       /* When the end of the first division is reached, it is not 100%
          certain that a complete sub-integration is available */
+
       unload_partial ();
       first_division = false;
       continue;
@@ -174,13 +175,12 @@ void dsp::SubFold::transformation () try
     if (unloader && keep(result))
     {
       if (verbose)
-	cerr << "dsp::SubFold::transformation this=" << this
+        cerr << "dsp::SubFold::transformation this=" << this
              << " unloader=" << unloader.get() << endl;
 
       unloader->unload (result);
+      zero_output ();
     }
-
-    zero_output ();
   }
 }
 catch (Error& error)

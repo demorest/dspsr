@@ -163,6 +163,9 @@ void dsp::PhaseSeries::zero ()
 
   set_hits (0);
   TimeSeries::zero ();
+
+  if (verbose)
+    cerr << "PhaseSeries::zero exit" << endl;
 }
 
 void dsp::PhaseSeries::copy_configuration (const Observation* copy)
