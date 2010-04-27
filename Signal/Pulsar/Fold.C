@@ -121,7 +121,7 @@ dsp::PhaseSeries* dsp::Fold::get_result () const
 
 void dsp::Fold::reset ()
 {
-  if (verbose)
+  // if (verbose)
     cerr << "dsp::Fold::reset" << endl;
 
   Operation::reset ();
@@ -733,7 +733,7 @@ void dsp::Fold::fold (uint64_t nweights,
     assert (ibin < folding_nbin);
 
     if (engine)
-      engine->set_bin( idat, ibin );
+      engine->set_bin( idat-idat_start, ibin );
     else
       binplan[idat-idat_start] = ibin;
 
@@ -883,4 +883,10 @@ void dsp::Fold::Engine::setup (uint64_t idat_start)
 
   output = out->get_datptr(0,0);
   output_span = out->get_nfloat_span();
+
+  if (verbose)
+    parent->cerr << "dsp::Fold::Engine::setup"
+    " input=" << input << " span=" << input_span << 
+    " output=" << output << " span=" << output_span << endl;
 }
+
