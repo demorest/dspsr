@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.62 $
-   $Date: 2010/04/25 07:05:03 $
+   $Revision: 1.63 $
+   $Date: 2010/04/27 05:26:38 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -245,9 +245,6 @@ namespace dsp {
     //! Set the phase bin into which the idat'th sample will be integrated
     virtual void set_bin (uint64_t idat, unsigned ibin) = 0;
 
-    //! Set the offset into the input TimeSeries at which folding will start
-    virtual void setup (uint64_t idat_fold);
-
     //! Return the PhaseSeries into which data will be folded
     virtual PhaseSeries* get_profiles () = 0;
 
@@ -271,6 +268,9 @@ namespace dsp {
     unsigned ndat_fold;
 
     unsigned nchan, npol, ndim;
+
+    //! Set the above attributes
+    void setup ();
 
     Fold* parent;
 
