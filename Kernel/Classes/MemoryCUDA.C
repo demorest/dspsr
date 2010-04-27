@@ -5,7 +5,7 @@
  *
  ***************************************************************************/
 
-//#define _DEBUG
+// #define _DEBUG
 
 #include "dsp/MemoryCUDA.h"
 #include "debug.h"
@@ -65,6 +65,8 @@ void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
 
 void CUDA::DeviceMemory::do_zero (void* ptr, unsigned nbytes)
 {
+  DEBUG("CUDA::DeviceMemory::do_zero ptr=" << ptr << " nbytes=" << nbytes);
+
   cudaError error = cudaMemset (ptr, 0, nbytes);
   if (error != cudaSuccess)
     throw Error (FailedCall, "CUDA::DeviceMemory::do_zero",
