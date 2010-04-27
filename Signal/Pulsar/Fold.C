@@ -733,7 +733,7 @@ void dsp::Fold::fold (uint64_t nweights,
     assert (ibin < folding_nbin);
 
     if (engine)
-      engine->set_bin( idat-idat_start, ibin );
+      engine->set_bin( idat, ibin );
     else
       binplan[idat-idat_start] = ibin;
 
@@ -772,7 +772,6 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (engine)
   {
-    engine->setup (idat_start);
     engine->fold ();
     return;
   }
@@ -864,7 +863,7 @@ void dsp::Fold::Engine::set_parent (Fold* fold)
   parent = fold;
 }
 
-void dsp::Fold::Engine::setup (uint64_t idat_start)
+void dsp::Fold::Engine::setup ()
 {
   if (!parent)
     throw Error (InvalidState, "dsp::Fold::Engine::setup",
@@ -876,7 +875,7 @@ void dsp::Fold::Engine::setup (uint64_t idat_start)
   npol = in->get_npol();
   ndim = in->get_ndim();
 
-  input = in->get_datptr(0,0) + idat_start * ndim;
+  input = in->get_datptr(0,0);
   input_span = in->get_nfloat_span();
 
   PhaseSeries* out = get_profiles();

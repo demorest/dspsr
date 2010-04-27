@@ -176,6 +176,7 @@ std::ostream& operator<< (std::ostream& ostr, const dim3& v)
 
 void CUDA::FoldEngine::fold ()
 {
+  setup ();
   send_binplan ();
 
   dim3 blockDim (128, 1, ndim);
