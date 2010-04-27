@@ -144,7 +144,6 @@ void dsp::SubFold::transformation () try
          processing in parallel. */
 
       unload_partial ();
-      first_division = false;
     }
 
     if (!divider.get_is_valid())
