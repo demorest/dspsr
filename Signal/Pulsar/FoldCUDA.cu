@@ -79,6 +79,9 @@ void CUDA::FoldEngine::synch (dsp::PhaseSeries* output) try
   if (synchronized)
     return;
 
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::FoldEngine::synch output=" << output << endl;
+
   if (!transfer)
     transfer = new dsp::TransferCUDA;
 
@@ -96,6 +99,7 @@ catch (Error& error)
 
 void CUDA::FoldEngine::zero ()
 {
+  cerr << "CUDA::FoldEngine::zero" << endl;
   d_profiles->zero();
 }
 
@@ -104,6 +108,14 @@ void CUDA::FoldEngine::send_binplan ()
   if (dsp::Operation::verbose)
     cerr << "CUDA::FoldEngine::send_binplan ndat=" << ndat_fold 
          << " intervals=" << binplan.size() << endl;
+
+  if (binplan.size() == 0)
+    return;
+
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::FoldEngine::send_binplan"
+            " first=" << binplan.front().ibin << 
+            " last=" << binplan.back().ibin << endl;
 
   uint64_t mem_size = binplan.size() * sizeof(bin);
 
