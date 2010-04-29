@@ -121,7 +121,7 @@ dsp::PhaseSeries* dsp::Fold::get_result () const
 
 void dsp::Fold::reset ()
 {
-  // if (verbose)
+  if (verbose)
     cerr << "dsp::Fold::reset" << endl;
 
   Operation::reset ();
