@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.5 $
-   $Date: 2010/04/25 07:05:09 $
+   $Revision: 1.6 $
+   $Date: 2010/04/29 04:05:24 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
@@ -42,8 +42,6 @@ namespace CUDA
     dsp::PhaseSeries* get_profiles ();
 
     void synch (dsp::PhaseSeries*);
-
-    void zero ();
 
   protected:
 

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.63 $
-   $Date: 2010/04/27 05:26:38 $
+   $Revision: 1.64 $
+   $Date: 2010/04/29 04:05:24 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -253,9 +253,6 @@ namespace dsp {
 
     //! Synchronize the folded profile
     virtual void synch (PhaseSeries*) = 0;
-
-    //! Zero the folded profile
-    virtual void zero () = 0;
 
   protected:
 
