@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.23 $
-   $Date: 2009/10/08 05:28:21 $
+   $Revision: 1.24 $
+   $Date: 2010/04/29 04:12:36 $
    $Author: straten $ */
 
 #ifndef __Convolution_h
@@ -116,6 +116,9 @@ namespace dsp {
 
     //! Integrated passband
     Reference::To<Response> passband;
+
+    //! Prepare the output TimeSeries
+    void prepare_output ();
 
   private:
 

@@ -16,11 +16,12 @@
 
 #include "FTransform.h"
 
+//#define _DEBUG 1
+#include "debug.h"
+
 #include <string.h>
 
 using namespace std;
-
-//#define DEBUG
 
 dsp::Convolution::Convolution (const char* _name, Behaviour _type,
 			       bool _time_conserved)
@@ -96,7 +97,7 @@ void dsp::Convolution::prepare ()
   matrix_convolution = response->get_ndim() == 8;
 
   Signal::State state = input->get_state();
-  const unsigned npol  = input->get_npol();
+  const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
 
   // if matrix convolution, then there must be two polns
@@ -167,6 +168,8 @@ void dsp::Convolution::prepare ()
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
   }
 
+  prepare_output ();
+
   using namespace FTransform;
 
   if (state == Signal::Nyquist)
@@ -179,28 +182,29 @@ void dsp::Convolution::prepare ()
   prepared = true;
 }
 
-//! Reserve the maximum amount of output space required
-void dsp::Convolution::reserve ()
+void dsp::Convolution::prepare_output ()
 {
-  const uint64_t ndat = input->get_ndat();
   Signal::State state = input->get_state();
-
-#ifdef DEBUG
-  fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
-	   mpi_rank, (int)matrix_convolution, ndat, nsamp_fft, nsamp_overlap);
-  fflush (stderr);
-#endif
+  const uint64_t ndat = input->get_ndat();
 
   // valid time samples per FFT
   nsamp_step = nsamp_fft-nsamp_overlap;
 
+  if (verbose)
+    cerr << "dsp::Convolution::prepare_output nsamp fft=" << nsamp_fft
+	 << " overlap=" << nsamp_overlap << " step=" << nsamp_step << endl;
+
   // number of FFTs for this data block
   npart = 0;
-  if (ndat > nsamp_fft)
+  if (ndat >= nsamp_fft)
     npart = (ndat-nsamp_overlap)/nsamp_step;
 
-  if (verbose)
-    cerr << "Convolution::reserve npart=" << npart << endl;
+  /*
+    The input must be buffered before the output is modified
+    because the transformation may be inplace
+  */
+  if (has_buffering_policy() && input->get_input_sample() >= 0)
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
@@ -210,15 +214,19 @@ void dsp::Convolution::reserve ()
 
   if ( state == Signal::Nyquist )
     output->set_rate( 0.5*get_input()->get_rate() );
+}
 
-  WeightedTimeSeries* weighted_output;
-  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
-  if (weighted_output)
-  {
-    weighted_output->convolve_weights (nsamp_fft, nsamp_step);
-    if (state == Signal::Nyquist)
-      weighted_output->scrunch_weights (2);
-  }
+//! Reserve the maximum amount of output space required
+void dsp::Convolution::reserve ()
+{
+  const uint64_t ndat = input->get_ndat();
+  Signal::State state = input->get_state();
+
+  prepare_output ();
+
+  if (verbose)
+    cerr << "Convolution::reserve ndat=" << ndat << " nfft=" << nsamp_fft
+	 << " npart=" << npart << endl;
 
   uint64_t output_ndat = npart * nsamp_step;
   if ( state == Signal::Nyquist )
@@ -241,6 +249,18 @@ void dsp::Convolution::reserve ()
     cerr << "Convolution::reserve scale="<< output->get_scale() <<endl;
 
   response->mark (output);
+
+  WeightedTimeSeries* weighted_output;
+  weighted_output = dynamic_cast<WeightedTimeSeries*> (output.get());
+  if (weighted_output)
+  {
+    weighted_output->convolve_weights (nsamp_fft, nsamp_step);
+    if (state == Signal::Nyquist)
+      weighted_output->scrunch_weights (2);
+  }
+
+  if (verbose)
+    cerr << "Convolution::reserve done" << endl;
 }
 
 /*!
@@ -258,24 +278,19 @@ void dsp::Convolution::reserve ()
 */
 void dsp::Convolution::transformation ()
 {
+  Signal::State state  = input->get_state();
+  const unsigned npol  = input->get_npol();
+  const unsigned nchan = input->get_nchan();
+  const unsigned ndim  = input->get_ndim();
+
   if (!prepared)
     prepare ();
 
   reserve ();
 
-  Signal::State state = input->get_state();
-  const unsigned npol  = input->get_npol();
-  const unsigned nchan = input->get_nchan();
-  const unsigned ndim  = input->get_ndim();
-
-#ifdef DEBUG
-  fprintf (stderr, "%d:: X:%d NDAT="I64" NFFT=%d NOVERLAP: %d\n", 
-	   mpi_rank, (int)matrix_convolution, ndat, nsamp_fft, nsamp_overlap);
-  fflush (stderr);
-#endif
-
-  if (has_buffering_policy())
-    get_buffering_policy()->set_next_start (nsamp_step * npart);
+  if (verbose)
+    cerr << "dsp::Convolution::transformation scratch"
+      " size=" << scratch_needed  << endl;
 
   float* spectrum[2];
   spectrum[0] = scratch->space<float> (scratch_needed);
@@ -291,6 +306,10 @@ void dsp::Convolution::transformation ()
     complex_time += 4;
 
   const unsigned nbytes_step = nsamp_step * ndim * sizeof(float);
+
+  if (verbose)
+    cerr << "dsp::Convolution::transformation step nsamp=" << nsamp_step
+	 << " bytes=" << nbytes_step << " ndim=" << ndim << endl;
  
   const unsigned cross_pol = matrix_convolution ? 2 : 1;
  
@@ -304,21 +323,25 @@ void dsp::Convolution::transformation ()
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
-      for (uint64_t ipart=0; ipart < npart; ipart++)  {
-	
+      for (uint64_t ipart=0; ipart < npart; ipart++)
+      {
 	offset = ipart * step;
 		
-	for (jpol=0; jpol<cross_pol; jpol++) {
-	  
+	for (jpol=0; jpol<cross_pol; jpol++)
+	{
 	  if (matrix_convolution)
 	    ipol = jpol;
 	  
 	  ptr = const_cast<float*>(input->get_datptr (ichan, ipol)) + offset;
 	  
-	  if (apodization) {
+	  if (apodization)
+	  {
 	    apodization -> operate (ptr, complex_time);
 	    ptr = complex_time;
 	  }
+
+	  DEBUG("FORWARD: nfft=" << nsamp_fft << " in=" << ptr \
+		<< " out=" << spectrum[ipol]);
 
 	  if (state == Signal::Nyquist)
 	    forward->frc1d (nsamp_fft, spectrum[ipol], ptr);
@@ -346,21 +369,24 @@ void dsp::Convolution::transformation ()
 
 	}
 	
-	for (jpol=0; jpol<cross_pol; jpol++) {
-	  
+	for (jpol=0; jpol<cross_pol; jpol++)
+	{
 	  if (matrix_convolution)
 	    ipol = jpol;
 	  
-#ifdef DEBUG
-	  fprintf (stderr, "%d:: %d:%d:%ld backward FFT.\n",
-		   mpi_rank, ichan, ipol, ipart);
-	  fflush (stderr);
-#endif
+	  DEBUG("BACKWARD: nfft=" << n_fft << " in=" << spectrum[ipol] \
+		<< " out=" << complex_time);
+
 	  // fft back to the complex time domain
 	  backward->bcc1d (n_fft, complex_time, spectrum[ipol]);
 	  
 	  // copy the good (complex) data back into the time stream
 	  ptr = output -> get_datptr (ichan, ipol) + offset;
+
+	  DEBUG("memcpy: nbytes=" << nbytes_step \
+		<< " in=" << complex_time + nfilt_pos*2 \
+		<< " out=" << ptr << " offset=" << offset);
+
 	  memcpy (ptr, complex_time + nfilt_pos*2, nbytes_step);
 
 	}  // for each poln, if matrix convolution
