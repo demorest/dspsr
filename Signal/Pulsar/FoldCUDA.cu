@@ -97,12 +97,6 @@ catch (Error& error)
   throw error += "CUDA::FoldEngine::synch";
 }
 
-void CUDA::FoldEngine::zero ()
-{
-  cerr << "CUDA::FoldEngine::zero" << endl;
-  d_profiles->zero();
-}
-
 void CUDA::FoldEngine::send_binplan ()
 {
   if (dsp::Operation::verbose)
