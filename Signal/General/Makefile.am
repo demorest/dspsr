@@ -44,12 +44,13 @@ DetectCUDA.lo : DetectCUDA.cu
 	sed -e 's/Detection/DetectCUDA/' Detection.lo > DetectCUDA.lo
 endif
 
-bin_PROGRAMS = dmsmear digitxt digimon digihist
+bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
 
 dmsmear_SOURCES = dmsmear.C 
 digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
 digihist_SOURCES = digihist.C
+filterbank_speed_SOURCES = filterbank_speed.C
 
 check_PROGRAMS = test_PolnCalibration test_OptimalFFT
 
