@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.11 $
-   $Date: 2010/04/22 03:25:05 $
+   $Revision: 1.12 $
+   $Date: 2010/05/02 17:58:44 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -77,6 +77,8 @@ namespace CUDA
     float *d_SN, *d_CN;
 
   private:
+
+    bool built;
 
   };
 
