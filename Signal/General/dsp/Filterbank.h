@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.20 $
-   $Date: 2010/04/22 02:56:45 $
+   $Revision: 1.21 $
+   $Date: 2010/05/02 17:58:44 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -99,7 +99,12 @@ namespace dsp {
   class Filterbank::Engine : public Reference::Able
   {
   public:
-    virtual void setup (unsigned nchan, unsigned bwd_nfft, float* kernel) = 0;
+
+    Engine () { scratch = output = 0; }
+
+    //! If kernel is not set, then the engine should set up for benchmark only
+    virtual void setup (unsigned nchan, unsigned bwd_nfft, 
+			float* kernel=0) = 0;
     
     virtual void perform (const float* in) = 0;
 

@@ -21,6 +21,8 @@ CUDA::Engine::Engine ()
   d_fft = d_kernel = 0;
 
   scratch = 0;
+
+  built = false;
 }
 
 CUDA::Engine::~Engine ()
@@ -33,6 +35,7 @@ void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel)
   nchan = _nchan;
   kernel = _kernel;
   twofft = false;
+  built = false;
 }
 
 void CUDA::Engine::init ()
@@ -55,11 +58,16 @@ void CUDA::Engine::init ()
 
   cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
 
-  // allocate space for the convolution kernel
-  cudaMalloc ((void**)&d_kernel, mem_size);
+  if (kernel)
+  {
+    // allocate space for the convolution kernel
+    cudaMalloc ((void**)&d_kernel, mem_size);
  
-  // copy the kernel accross
-  cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
+    // copy the kernel accross
+    cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
+  }
+
+  built = true;
 
   if (twofft)
     return;
@@ -168,22 +176,14 @@ __global__ void performRealtr (float2* d_fft, unsigned bwd_nfft,
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   int k = bwd_nfft - i;
  
-  float real_aa, real_ab, imag_ba, imag_bb, temp_real, temp_imag;
-
-  // eg Final result = 16 elements. N = 8, NK = 8, NH = 4;
-
-  //fprintf(stderr,"i : %d\n", i);
-  //fprintf(stderr,"k : %d\n", k);
- 
+  float real_aa=d_fft[i].x+d_fft[k].x;
+  float real_ab=d_fft[k].x-d_fft[i].x;
   
-  real_aa=d_fft[i].x+d_fft[k].x;
-  real_ab=d_fft[k].x-d_fft[i].x;
-  
-  imag_ba=d_fft[i].y+d_fft[k].y;
-  imag_bb=d_fft[k].y-d_fft[i].y;
+  float imag_ba=d_fft[i].y+d_fft[k].y;
+  float imag_bb=d_fft[k].y-d_fft[i].y;
 
-  temp_real=k_CN[i]*imag_ba+k_SN[i]*real_ab;
-  temp_imag=k_SN[i]*imag_ba-k_CN[i]*real_ab;
+  float temp_real=k_CN[i]*imag_ba+k_SN[i]*real_ab;
+  float temp_imag=k_SN[i]*imag_ba-k_CN[i]*real_ab;
 
   d_fft[k].y = -0.5*(temp_imag-imag_bb);
   d_fft[i].y = -0.5*(temp_imag+imag_bb);
@@ -224,7 +224,7 @@ __global__ void ncopy (float2* output_data, unsigned output_stride,
 
 void CUDA::Engine::perform (const float* in)
 {
-  if (!d_kernel)
+  if (!built)
     init ();
 
   float2* cscratch = (float2*) scratch;
@@ -250,16 +250,22 @@ void CUDA::Engine::perform (const float* in)
 
   blocks = data_size / threads;
 
-  multiply<<<blocks,threads>>> (cscratch, d_kernel);
+  if (d_kernel)
+  {
+    multiply<<<blocks,threads>>> (cscratch, d_kernel);
 
-  if (twofft)
-    multiply<<<blocks,threads>>> (cscratch+data_size, d_kernel);
+    if (twofft)
+      multiply<<<blocks,threads>>> (cscratch+data_size, d_kernel);
 
-  CHECK_ERROR ("CUDA::Engine::perform multiply");
+    CHECK_ERROR ("CUDA::Engine::perform multiply");
+  }
 
   cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
 
   CHECK_ERROR ("CUDA::Engine::perform cufftExecC2C BACKWARD");
+
+  if (!output)
+    return;
 
   const float2* input_p0 = cscratch + nfilt_pos;
   const float2* input_p1 = input_p0 + data_size;
