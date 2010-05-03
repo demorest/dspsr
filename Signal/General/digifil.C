@@ -74,6 +74,8 @@ int main (int argc, char** argv) try
 
   char* output_filename = 0;
 
+  string datestr_pattern = "%Y-%m-%d-%H:%M:%S";
+
   dsp::TimeSeries::Order order = dsp::TimeSeries::OrderTFP;
 
   int c;
@@ -172,11 +174,9 @@ int main (int argc, char** argv) try
     return 0;
   }
 
-  FILE* outfile = stdout;
+  FILE* outfile = 0;
 
-  if (!output_filename)
-    fprintf (stderr, "digifil: output on stdout \n");
-  else
+  if (output_filename)
   {
     outfile = fopen (output_filename, "w");
     if (!outfile)
@@ -389,6 +389,31 @@ int main (int argc, char** argv) try
       }
 
       digitizer->operate ();
+
+      if (!outfile)
+      {
+	MJD epoch = obs->get_start_time();
+
+	vector<char> buffer (FILENAME_MAX);
+	char* filename = &buffer[0];
+
+	if (!epoch.datestr( filename, FILENAME_MAX, datestr_pattern.c_str() ))
+	{
+	  cerr << "digifil: error MJD::datestr("+datestr_pattern+")" << endl;
+	  return -1;
+	}
+
+	string fname = filename + string(".fil");
+	cerr << "digifil: output in " << fname << endl;
+
+	outfile = fopen (fname.c_str(), "w");
+	if (!outfile)
+	{
+	  cerr << "digifil: could not open "+fname+" - " << strerror (errno)
+	       << endl;;
+	  return -1;
+	}
+      }
 
       if (!written_header)
       {
