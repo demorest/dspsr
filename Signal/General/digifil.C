@@ -19,6 +19,7 @@
 
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
+#include "dsp/FScrunch.h"
 #include "dsp/TScrunch.h"
 #include "dsp/Filterbank.h"
 #include "dsp/Detection.h"
@@ -35,7 +36,7 @@
 
 using namespace std;
 
-static char* args = "b:B:F:cI:o:prt:hvVZ:";
+static char* args = "b:B:F:f:cI:o:prt:hvVZ:";
 
 void usage ()
 {
@@ -49,6 +50,7 @@ void usage ()
     "  -I secs   number of seconds between level updates \n"
     "  -F nchan  create a filterbank (voltages only) \n"
     "  -t nsamp  decimate in time \n"
+    "  -f nchan  decimate in frequency \n"
     "  -I secs   rescale interval in seconds \n"
     "  -o file   output filename \n" 
     "  -r        report total Operation times \n"
@@ -64,6 +66,7 @@ int main (int argc, char** argv) try
   int nbits = 2;
   unsigned filterbank_nchan = 0;
   unsigned tscrunch_factor = 0;
+  unsigned fscrunch_factor = 0;
 
   // block size in MB
   double block_size = 2.0;
@@ -108,6 +111,10 @@ int main (int argc, char** argv) try
 
     case 't':
       tscrunch_factor = atoi (optarg);
+      break;
+
+    case 'f':
+      fscrunch_factor = atoi (optarg);
       break;
 
     case 'I':
@@ -231,6 +238,7 @@ int main (int argc, char** argv) try
     Reference::To<dsp::TimeSeries> filterbank_input;
     Reference::To<dsp::Detection> detection;
     Reference::To<dsp::TScrunch> tscrunch;
+    Reference::To<dsp::FScrunch> fscrunch;
 
     if (verbose)
       cerr << "digifil: opening file " << filenames[ifile] << endl;
@@ -289,6 +297,15 @@ int main (int argc, char** argv) try
       }
     }
 
+    if (fscrunch_factor)
+    {
+      fscrunch = new dsp::FScrunch;
+
+      fscrunch->set_factor (fscrunch_factor);
+      fscrunch->set_input( timeseries );
+      fscrunch->set_output( timeseries );
+    }
+
     if (tscrunch_factor)
     {
       tscrunch = new dsp::TScrunch;
@@ -339,6 +356,14 @@ int main (int argc, char** argv) try
 	detection->operate();
       }
 
+      if (fscrunch)
+      {
+	if (verbose)
+	  cerr << "digifil: fscrunch" << endl;
+
+        fscrunch->operate();
+      }
+
       if (tscrunch)
       {
 	if (verbose)
@@ -358,7 +383,7 @@ int main (int argc, char** argv) try
       if (do_pscrunch)
       {
 	if (verbose)
-	  cerr << "digifil: tscrunch" << endl;
+	  cerr << "digifil: pscrunch" << endl;
 	  
 	pscrunch->operate ();
       }

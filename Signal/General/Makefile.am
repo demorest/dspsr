@@ -2,7 +2,7 @@
 lib_LTLIBRARIES = libdspdsp.la
 
 nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
-	dsp/ResponseProduct.h dsp/Accumulator.h	       \
+	dsp/ResponseProduct.h dsp/Accumulator.h			       \
 	dsp/Apodization.h dsp/SampleDelay.h dsp/AutoCorrelation.h      \
 	dsp/SampleDelayFunction.h dsp/Example.h dsp/Shape.h	       \
 	dsp/Bandpass.h dsp/Simultaneous.h dsp/Stats.h dsp/Filterbank.h \
@@ -13,19 +13,19 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/Convolution.h dsp/Dedispersion.h dsp/DedispersionHistory.h \
 	dsp/RFIFilter.h dsp/DedispersionSampleDelay.h dsp/Response.h   \
 	dsp/Rescale.h dsp/BandpassMonitor.h dsp/PScrunch.h	       \
-	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h \
-	dsp/OptimalFFT.h dsp/on_host.h
+	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h	       \
+	dsp/OptimalFFT.h dsp/on_host.h dsp/FScrunch.h
 
-libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h   \
-	cross_detect.ic stokes_detect.c stokes_detect.h		      \
-	stokes_detect.ic ACFilterbank.C TScrunch.C Accumulator.C      \
-	TimeOrder.C Apodization.C AutoCorrelation.C Filterbank.C      \
-	IncoherentFilterbank.C Bandpass.C LevelMonitor.C RFIFilter.C  \
-	Chomper.C Response.C ResponseProduct.C Convolution.C	      \
-	Dedispersion.C SampleDelay.C DedispersionHistory.C \
-	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	      \
-	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C \
-	PolnCalibration.C Dump.C OptimalFFT.C
+libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
+	cross_detect.ic stokes_detect.c stokes_detect.h		     \
+	stokes_detect.ic ACFilterbank.C TScrunch.C Accumulator.C     \
+	TimeOrder.C Apodization.C AutoCorrelation.C Filterbank.C     \
+	IncoherentFilterbank.C Bandpass.C LevelMonitor.C RFIFilter.C \
+	Chomper.C Response.C ResponseProduct.C Convolution.C	     \
+	Dedispersion.C SampleDelay.C DedispersionHistory.C	     \
+	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	     \
+	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C	     \
+	PolnCalibration.C Dump.C OptimalFFT.C FScrunch.C
 
 if HAVE_CUFFT
 
