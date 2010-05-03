@@ -7,6 +7,7 @@
 
 #include "dsp/FScrunch.h"
 #include "Error.h"
+#include <assert.h>
 
 using namespace std;
 
@@ -104,7 +105,7 @@ void dsp::FScrunch::transformation ()
       break;
   }
 
-  if( input.get() == output.get() )
+  if (input.get() == output.get())
     output->set_nchan( output_nchan );
 }
 
@@ -143,24 +144,39 @@ void dsp::FScrunch::tfp_fscrunch ()
   const unsigned ndim = input->get_ndim();
   const uint64_t ndat = input->get_ndat();
 
+  if (verbose)
+    cerr << "dsp::FScrunch::tfp_fscrunch factor=" << sfactor 
+         << " input nchan=" << input->get_nchan() 
+         << " output nchan=" << output_nchan << endl;
+
   unsigned nfloat = npol * ndim;
+
+  // cerr << "dsp::FScrunch::tfp_fscrunch nfloat=" << nfloat << endl;
 
   const float* indat = input->get_dattfp ();
   float* outdat = output->get_dattfp ();
+
+  //unsigned out_index = 0;
+  //unsigned in_index = 0;
   
-  for (unsigned idat=0; idat<ndat; idat++)
+  for (unsigned idat=0; idat<ndat*output_nchan; idat++)
   {
+    // cerr << "set " << out_index << " = " << in_index << endl;
+
     for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
       outdat[ifloat] = indat[ifloat];
 
     for (unsigned ifactor=1; ifactor < sfactor; ifactor++)
     {
-      indat += nfloat;
+      indat += nfloat; //in_index ++;
+
+      // cerr << "add " << out_index << " + " << in_index << endl;
+
       for (unsigned ifloat=0; ifloat < nfloat; ifloat++)
         outdat[ifloat] += indat[ifloat];
     }
 
-    indat += nfloat;
-    outdat += nfloat;
+    indat += nfloat;  //in_index ++;
+    outdat += nfloat; //out_index ++;
   }
 }
