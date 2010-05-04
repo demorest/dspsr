@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.12 $
-   $Date: 2010/05/02 17:58:44 $
+   $Revision: 1.13 $
+   $Date: 2010/05/04 17:49:12 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -48,15 +48,8 @@ namespace CUDA
     bool dual_poln () { return twofft; }
     void finish ();
 
-  private:
-
-    float* kernel;
-
-    //! Initializes CUDA stream-specific resources
-    void init ();
-
   protected:
-  
+
     //! forward fft plan 
     cufftHandle plan_fwd;
     //! backward fft plan
@@ -75,10 +68,6 @@ namespace CUDA
 
     //! real-to-complex trick arrays in CUDA memory
     float *d_SN, *d_CN;
-
-  private:
-
-    bool built;
 
   };
 

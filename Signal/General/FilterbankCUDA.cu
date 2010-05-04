@@ -21,31 +21,24 @@ CUDA::Engine::Engine ()
   d_fft = d_kernel = 0;
 
   scratch = 0;
-
-  built = false;
 }
 
 CUDA::Engine::~Engine ()
 {
 }
 
-void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* _kernel) 
+void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* kernel) 
 {
   bwd_nfft = _bwd_nfft;
   nchan = _nchan;
-  kernel = _kernel;
   twofft = false;
-  built = false;
-}
 
-void CUDA::Engine::init ()
-{
-  DEBUG("CUDA::Engine::init nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
+  DEBUG("CUDA::Engine::setup nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
 
   unsigned data_size = nchan * bwd_nfft * 2;
   unsigned mem_size = data_size * sizeof(cufftReal);
 
-  DEBUG("CUDA::Engine::init data_size=" << data_size);
+  DEBUG("CUDA::Engine::setup data_size=" << data_size);
 
   // if using the twofft trick, double the forward FFT length and
   // double the number of backward FFTs
@@ -56,7 +49,8 @@ void CUDA::Engine::init ()
 
   cufftPlan1d (&plan_fwd, bwd_nfft*nchan*npol, CUFFT_C2C, 1);
 
-  cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
+  if (nchan > 1)
+    cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
 
   if (kernel)
   {
@@ -66,8 +60,6 @@ void CUDA::Engine::init ()
     // copy the kernel accross
     cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
   }
-
-  built = true;
 
   if (twofft)
     return;
@@ -224,15 +216,15 @@ __global__ void ncopy (float2* output_data, unsigned output_stride,
 
 void CUDA::Engine::perform (const float* in)
 {
-  if (!built)
-    init ();
-
   float2* cscratch = (float2*) scratch;
   float2* cin = (float2*) in;
 
   cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
 
   CHECK_ERROR ("CUDA::Engine::perform cufftExecC2C FORWARD");
+
+  if (nchan == 1)
+    return;
 
   unsigned data_size = nchan * bwd_nfft;
 
