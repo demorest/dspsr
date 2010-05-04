@@ -1,32 +1,32 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2008 by Willem van Straten
+ *   Copyright (C) 2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/Attic/SigProcTwo.h,v $
+/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcUnpacker.h,v $
    $Revision: 1.1 $
-   $Date: 2008/10/31 06:33:36 $
+   $Date: 2010/05/04 15:30:40 $
    $Author: straten $ */
 
-#ifndef __SigProcTwo_h
-#define __SigProcTwo_h
+#ifndef __SigProcUnpacker_h
+#define __SigProcUnpacker_h
 
 #include "dsp/HistUnpacker.h"
 
 namespace dsp
 {
 
-  //! Simple 8-bit to float unpacker for the BPSR files
-  class SigProcTwo : public HistUnpacker 
+  //! Unpack SIGPROC data (1, 2, 4, or 8 bits per sample)
+  class SigProcUnpacker : public HistUnpacker 
   {
 
   public:
     
     //! Constructor
-    SigProcTwo (const char* name = "SigProcTwo");
+    SigProcUnpacker (const char* name = "SigProcUnpacker");
 
    protected:
     
@@ -50,4 +50,4 @@ namespace dsp
 
 }
 
-#endif // !defined(__SigProcTwo_h)
+#endif // !defined(__SigProcUnpacker_h)
