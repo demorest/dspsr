@@ -14,6 +14,7 @@
 #include "cross_detect.h"
 #include "stokes_detect.h"
 #include "templates.h"
+#include "debug.h"
 
 #include <memory>
 
@@ -120,7 +121,9 @@ void polarimetry_ndim2 (float* data, uint64_t span,
   if (ndat % threads.x)
     blocks.x ++;
 
-  // cerr << "polarimetry_ndim2 ndat=" << ndat << " span=" << span << " blocks=" << blocks.x << " threads=" << threads.x << endl;
+  DEBUG("polarimetry_ndim2 ndat=" << ndat << " span=" << span \
+        << " blocks=" << blocks.x << " threads=" << threads.x \
+        << " data=" << data);
 
   // pass span as number of complex values
   coherence2<<<blocks,threads>>> ((float2*)data, span/2, ndat); 
