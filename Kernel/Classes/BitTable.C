@@ -51,12 +51,19 @@ dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _reverse)
        << " values per byte=" << values_per_byte << endl;
 #endif
 
+  effective_nbit = nbit;
   table = 0;
 }
 
 dsp::BitTable::~BitTable ()
 {
   if (table) delete [] table; table = 0;
+}
+
+void dsp::BitTable::set_effective_nbit (unsigned bits)
+{
+  if (table) delete [] table; table = 0;
+  effective_nbit = bits;
 }
 
 const float* dsp::BitTable::get_values (unsigned byte) const
@@ -111,11 +118,7 @@ void dsp::BitTable::generate (float* table) const
     unsigned byte = b;
 
     if (reverse_bits)
-    {
-      // cerr << byte << " -> ";
       byte = reverse (byte, 8);
-      // cerr << byte << endl;
-    }
 
     for (unsigned val=0; val<values_per_byte; val++)
     {
@@ -148,7 +151,7 @@ void dsp::BitTable::generate_unique_values (float* values) const
   double output_middle = double(unique_values - 1) / 2.0;
 
   unsigned input_middle = unique_values / 2;
-  double input_spacing = JenetAnderson98::get_optimal_spacing (nbit);
+  double input_spacing = JenetAnderson98::get_optimal_spacing (effective_nbit);
 
 #if _DEBUG
   cerr << "optimal input spacing = " << input_spacing << endl;
@@ -191,11 +194,7 @@ void dsp::BitTable::generate_unique_values (float* values) const
   // scale such that the variance is unity
   scale = 1.0/sqrt(variance);
   for (unsigned i=0; i<unique_values; i++)
-  {
-    // cerr << i << " " << values[i];
     values[i] *= scale;
-    // cerr << " " << values[i] << endl;
-  }
 
   // set scale such that spacing = 1
   scale *= output_spacing;
@@ -211,7 +210,7 @@ double dsp::BitTable::get_optimal_variance () const
 */
 double dsp::BitTable::get_nlow_threshold () const
 {
-  double input_spacing = JenetAnderson98::get_optimal_spacing (nbit);
+  double input_spacing = JenetAnderson98::get_optimal_spacing (effective_nbit);
   unsigned steps = unsigned (1.0 / input_spacing);
   return steps * input_spacing;
 }
