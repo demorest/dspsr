@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.22 $
-   $Date: 2010/04/22 07:43:12 $
+   $Revision: 1.23 $
+   $Date: 2010/05/04 17:49:27 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -143,6 +143,9 @@ namespace dsp {
 
     //! State change communication
     ThreadContext* state_change;
+
+    //! Mutex protecting input
+    ThreadContext* input_context;
 
     //! Processing thread with whom sharing will occur
     LoadToFold1* share;

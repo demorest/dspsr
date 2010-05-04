@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.26 $
-   $Date: 2010/03/28 07:11:35 $
+   $Revision: 1.27 $
+   $Date: 2010/05/04 17:49:27 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -45,6 +45,9 @@ namespace dsp {
 
     // report the percentage finished
     bool report_done;
+
+    // run repeatedly on the same input
+    bool run_repeatedly;
 
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);
@@ -181,6 +184,7 @@ namespace dsp {
 
     unsigned buffers;
 
+    unsigned repeated;
   };
 
 }
