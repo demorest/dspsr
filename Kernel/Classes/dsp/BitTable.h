@@ -37,6 +37,12 @@ namespace dsp {
     //! Destructor
     virtual ~BitTable ();
 
+    //! Set the effective number of bits
+    /*! For example, a digitizer may set 8-bit thresholds to effect a
+      6-bit digitizer, leaving head room for RFI */
+    void set_effective_nbit (unsigned bits);
+    unsigned get_effective_nbit () const { return effective_nbit; }
+
     //! Get the number of floating point values per byte, 8/N
     unsigned get_values_per_byte () const { return values_per_byte; }
 
@@ -80,6 +86,9 @@ namespace dsp {
 
     //! Number of bits
     const unsigned nbit;
+
+    //! The effective number of bits
+    unsigned effective_nbit;
 
     //! Reverse the order of the bits
     const bool reverse_bits;
