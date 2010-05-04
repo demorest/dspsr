@@ -11,6 +11,7 @@
 #include "dsp/MemoryCUDA.h"
 
 #include "Error.h"
+#include "debug.h"
 
 #include <memory>
 
@@ -106,6 +107,11 @@ void CUDA::FoldEngine::send_binplan ()
   if (binplan.size() == 0)
     return;
 
+  if (current_hits)
+    binplan.back().hits = current_hits;
+
+  current_hits = 0;
+
   if (dsp::Operation::verbose)
     cerr << "CUDA::FoldEngine::send_binplan"
             " first=" << binplan.front().ibin << 
@@ -180,6 +186,8 @@ void CUDA::FoldEngine::fold ()
   cerr << "blockDim=" << blockDim << endl;
   cerr << "gridDim=" << gridDim << endl;
 #endif
+
+  DEBUG("input span=" << input_span << " output span=" << output_span);
 
   fold1bin<<<gridDim,blockDim>>> (input, input_span, output, output_span,
                                   ndim, folding_nbin, binplan.size(), d_bin);
