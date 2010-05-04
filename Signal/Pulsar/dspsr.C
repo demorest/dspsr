@@ -79,9 +79,6 @@ string metafile;
 // names of data files to be processed
 vector<string> filenames;
 
-// run repeatedly on the same input
-bool run_repeatedly = false;
-
 int main (int argc, char** argv) try
 {
   config = new dsp::LoadToFold::Config;
@@ -106,7 +103,7 @@ int main (int argc, char** argv) try
     RealTimer preptime;
     if (dsp::Operation::record_time)
       preptime.start();
-    
+
     prepare (engine, dsp::File::create( filenames[ifile] ));
 
     if (dsp::Operation::record_time)
@@ -118,13 +115,8 @@ int main (int argc, char** argv) try
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
 
-    do
-    {
-      engine->run();
-      engine->finish();
-    }
-    while (run_repeatedly && engine->get_input()->tell() != 0);
-
+    engine->run();
+    engine->finish();
   }
   catch (Error& error)
   {
@@ -274,7 +266,7 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (dsp::psrdisp_compatible, 'z');
   arg->set_help ("emulate psrdisp");
 
-  arg = menu.add (run_repeatedly, "repeat");
+  arg = menu.add (config->run_repeatedly, "repeat");
   arg->set_help ("repeatedly read from input until an empty is encountered");
 
   string ram_min;

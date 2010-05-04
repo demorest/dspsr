@@ -16,6 +16,7 @@
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
 #include "dsp/Scratch.h"
+#include "dsp/File.h"
 
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
@@ -71,6 +72,8 @@ dsp::LoadToFold1::LoadToFold1 ()
   state_change = 0;
   thread_id = 0;
   share = 0;
+
+  input_context = 0;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -414,6 +417,9 @@ void dsp::LoadToFold1::prepare () try
  
   if (!detect)
     detect = new Detection(run_on_gpu);
+
+  if (run_on_gpu)
+    config->ndim = 2;
 
   TimeSeries* detected = convolved;
   detect->set_input (convolved);
@@ -904,10 +910,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
 #if HAVE_CUDA
     if (run_on_gpu)
-    {
-      cerr << thread_id << ": creating CUDA::FoldEngine" << endl;
       fold[ifold]->set_engine (new CUDA::FoldEngine);
-    }
 #endif
 
     path[ifold]->add( fold[ifold] );
@@ -1024,6 +1027,10 @@ void dsp::LoadToFold1::run () try
 
   int64_t last_decisecond = -1;
 
+  bool finished = false;
+
+while (!finished)
+{
   while (!input->eod())
   {
     for (unsigned iop=0; iop < operations.size(); iop++) try
@@ -1072,6 +1079,38 @@ void dsp::LoadToFold1::run () try
       }
     }
   }
+
+  finished = true;
+
+  if (config->run_repeatedly)
+  {
+    ThreadContext::Lock context (input_context);
+
+    if (config->repeated == 0 && input->tell() != 0)
+    {
+      // cerr << "dspsr: do it again" << endl;
+      File* file = dynamic_cast<File*> (input);
+      if (file)
+      {
+        finished = false;
+        string filename = file->get_filename();
+        file->close();
+        // cerr << "file closed" << endl;
+        file->open(filename);
+        // cerr << "file opened" << endl;
+        config->repeated = 1;
+      }
+    }
+    else if (config->repeated)
+    {
+      config->repeated ++;
+      finished = false;
+
+      if (config->repeated == config->nthread)
+        config->repeated = 0;
+    }
+  }
+}
 
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::run end of data id=" << thread_id << endl;

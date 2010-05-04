@@ -80,7 +80,10 @@ void dsp::LoadToFoldN::set_input (Input* _input)
   input->set_context( input_context );
 
   for (unsigned i=0; i<threads.size(); i++)
+  {
     threads[i]->set_input( input );
+    threads[i]->input_context = input_context;
+  }
 }
 
 dsp::Input* dsp::LoadToFoldN::get_input ()

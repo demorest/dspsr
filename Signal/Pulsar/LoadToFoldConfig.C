@@ -13,6 +13,10 @@ dsp::LoadToFold::Config::Config ()
   report_done = true;
   report_vitals = true;
 
+  // process each file once
+  run_repeatedly = false;
+  repeated = 0;
+
   minimum_RAM = 0;
   maximum_RAM = 256 * 1024 * 1024;
   times_minimum_ndat = 1;
