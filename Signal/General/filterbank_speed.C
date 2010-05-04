@@ -45,14 +45,17 @@ protected:
   unsigned nloop;
   unsigned nfft;
   unsigned nchan;
+  unsigned niter;
   bool real_to_complex;
 };
 
 
 Speed::Speed ()
 {
+  niter = 10;
   nloop = 0;
-  nfft = 4;
+  nfft = 1024;
+  nchan = 1;
   real_to_complex = false;
 }
 
@@ -86,7 +89,7 @@ void Speed::parseOptions (int argc, char** argv)
   arg = menu.add (nchan, 'c', "nchan");
   arg->set_help ("number of channels");
 
-  arg = menu.add (nloop, 'i', "niter");
+  arg = menu.add (niter, 'N', "niter");
   arg->set_help ("number of iterations");
 
   menu.parse (argc, argv);
@@ -99,14 +102,22 @@ double order (unsigned nfft)
 
 void Speed::runTest ()
 {
-  if (!nloop)
-    throw Error (InvalidState, "Speed::runTest", "number of loops not set");
+  // pretend like 256 MB of memory will be used
+  uint64_t data_length = 256*1024*1024;
 
-  unsigned nfloat = nfft;
+  unsigned nfloat = nchan * nfft;
   if (!real_to_complex)
     nfloat *= 2;
 
   unsigned size = sizeof(float) * nfloat;
+
+  if (!nloop)
+  {
+    nloop = data_length / size;
+    if (nloop > 2000)
+      nloop = 2000;
+    cerr << "Speed::runTest nloop=" << nloop << endl;
+  }
 
   dsp::Filterbank::Engine* engine = 0;
   dsp::Memory* memory = 0;
@@ -123,21 +134,32 @@ void Speed::runTest ()
     throw Error (InvalidState, "Speed::runTest",
 		 "engine not set");
 
-  float* in = (float*) memory->do_allocate (size);
-  memory->do_zero (in, size);
+  float* in = (float*) memory->do_allocate (data_length);
+  memory->do_zero (in, data_length);
 
   engine->scratch = (float*) memory->do_allocate (size + 4*sizeof(float));
   engine->setup (nchan, nfft);
 
-  RealTimer timer;
-  timer.start ();
+  cerr << "entering loop" << endl;
 
-  for (unsigned i=0; i<nloop; i++)
-    engine->perform (in);
+  double total_time = 0;
 
-  timer.stop ();
+  for (unsigned j=0; j<niter; j++)
+  {
+    RealTimer timer;
+    timer.start ();
 
-  double time_us = timer.get_elapsed() * 1e6 / nloop;
+    for (unsigned i=0; i<nloop; i++)
+      engine->perform (in);
+
+    engine->finish ();
+
+    timer.stop ();
+
+    total_time += timer.get_elapsed();
+  }
+
+  double time_us = total_time * 1e6 / (nloop*niter);
 
   // cerr << "time=" << time << endl;
 
