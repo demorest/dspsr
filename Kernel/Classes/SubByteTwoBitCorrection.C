@@ -62,11 +62,33 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (const unsigned char* input_data,
   StepIterator<const unsigned char> iterator (input_data);
   iterator.set_increment ( get_input_incr() );
 
-  unpacker.mask.shift[0] = get_shift (current_digitizer, 0);
+  const unsigned ndig_per_byte = get_ndig_per_byte();
 
-  ExcisionUnpacker::excision_unpack (unpacker, iterator,
-				     output_data, nfloat,
-                                     hist, weights, nweights);
+  if (ndig_per_byte == 2)
+  {
+    // unpack 2 samples per byte
+
+    unpack2.mask.shift[0] = get_shift (current_digitizer, 0);
+    unpack2.mask.shift[1] = get_shift (current_digitizer, 1);
+
+    ExcisionUnpacker::excision_unpack (unpack2, iterator,
+				       output_data, nfloat,
+				       hist, weights, nweights);
+  }
+  else if (ndig_per_byte == 4)
+  {
+    // unpack 1 sample per byte
+
+    unpack1.mask.shift[0] = get_shift (current_digitizer, 0);
+
+    ExcisionUnpacker::excision_unpack (unpack1, iterator,
+				       output_data, nfloat,
+				       hist, weights, nweights);
+  }
+  else
+    throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
+		 "invalid number of digitizers per byte: %u", ndig_per_byte);
+
 }
 
 void dsp::SubByteTwoBitCorrection::build ()
