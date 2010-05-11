@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitCorrection.h,v $
-   $Revision: 1.43 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.44 $
+   $Date: 2010/05/11 06:21:17 $
    $Author: straten $ */
 
 #ifndef __TwoBitCorrection_h
@@ -86,6 +86,8 @@ namespace dsp {
 
     //! Two-bit conversion table generator
     Reference::To<TwoBitTable> table;
+
+    virtual TwoBitLookup* get_unpacker () { return &unpacker; }
 
     //! Two-bit unpacker
     TwoBitFour unpacker;

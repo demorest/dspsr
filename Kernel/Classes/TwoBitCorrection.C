@@ -122,13 +122,14 @@ void dsp::TwoBitCorrection::build ()
 
   ExcisionUnpacker::build ();
 
-  unpacker.set_nlow_min (nlow_min);
-  unpacker.set_nlow_max (nlow_max);
-  unpacker.set_ndat (get_ndat_per_weight());
-  unpacker.set_ndim (get_ndim_per_digitizer());
+  TwoBitLookup* lookup = get_unpacker ();
 
-  unpacker.nlow_build (table);
-  unpacker.lookup_build (table, &ja98);
+  lookup->set_nlow_min (nlow_min);
+  lookup->set_nlow_max (nlow_max);
+  lookup->set_ndat (get_ndat_per_weight());
+  lookup->set_ndim (get_ndim_per_digitizer());
+
+  lookup->lookup_build (table, &ja98);
 
   if (verbose) cerr << "dsp::TwoBitCorrection::build exits\n";
 }
@@ -144,7 +145,8 @@ void dsp::TwoBitCorrection::dig_unpack (const unsigned char* input_data,
   iterator.set_increment ( get_input_incr() );
 
   ExcisionUnpacker::excision_unpack (unpacker, iterator,
-				output_data, nfloat, hist, weights, nweights);
+				     output_data, nfloat,
+				     hist, weights, nweights);
 
 }
 
