@@ -91,19 +91,18 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (const unsigned char* input_data,
 
 }
 
-void dsp::SubByteTwoBitCorrection::build ()
+dsp::TwoBitLookup* dsp::SubByteTwoBitCorrection::get_unpacker ()
 {
-  //if (verbose)
-    cerr << "dsp::SubByteTwoBitCorrection::build" << endl;
-
-  ExcisionUnpacker::build ();
-
-  unpacker.set_nlow_min (nlow_min);
-  unpacker.set_nlow_max (nlow_max);
-  unpacker.set_ndat (get_ndat_per_weight());
-  unpacker.set_ndim (get_ndim_per_digitizer());
-
-  unpacker.lookup_build (table, &ja98);
-  unpacker.nlow_build (table);
+  switch (get_ndig_per_byte())
+  {
+  case 2:
+    return &unpack2;
+  case 4:
+    return &unpack1;
+  default:
+    throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::get_unpacker",
+		 "invalid number of digitizers per byte: %u",
+		 get_ndig_per_byte());
+  }
 }
 
