@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.8 $
+   $Date: 2010/05/11 02:20:09 $
    $Author: straten $ */
 
 #ifndef __SubByteTwoBitCorrection_h
@@ -56,7 +56,11 @@ namespace dsp {
 		     unsigned* weights = 0,
 		     unsigned nweights = 0);
 
-    TwoBit< 1, ShiftMask<1> > unpacker;
+    //! Used to unpack one 2-bit sample from each byte
+    TwoBit< 1, ShiftMask<1> > unpack1;
+
+    //! Used to unpack two 2-bit samples from each byte
+    TwoBit< 2, ShiftMask<2> > unpack2;
 
     //! Build the dynamic level setting lookup table and temporary space
     void build ();
