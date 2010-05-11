@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.6 $
-   $Date: 2009/12/18 11:57:39 $
+   $Revision: 1.7 $
+   $Date: 2010/05/11 06:22:25 $
    $Author: straten $ */
 
 #ifndef __TwoBitFour_h
@@ -29,6 +29,9 @@ namespace dsp
 
     //! Flag set when the data should be flagged as bad
     bool bad;
+
+    //! Build the output value lookup table
+    void lookup_build (TwoBitTable*, JenetAnderson98* = 0);
 
     //! Build counts of low voltage 2-bit states in each byte
     void nlow_build (TwoBitTable* table);

@@ -20,6 +20,13 @@ dsp::TwoBit1or2::~TwoBit1or2 ()
   destroy ();
 }
 
+//! Build the output value lookup table
+void dsp::TwoBit1or2::lookup_build (TwoBitTable* table, JenetAnderson98* ja98)
+{
+  nlow_build (table);
+  TwoBitLookup::lookup_build (table, ja98);
+}
+
 void dsp::TwoBit1or2::destroy ()
 {
   if (temp_values) delete [] temp_values; temp_values = 0;
