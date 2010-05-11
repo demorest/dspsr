@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBit1or2.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/10/30 00:15:03 $
+   $Revision: 1.5 $
+   $Date: 2010/05/11 06:22:25 $
    $Author: straten $ */
 
 #ifndef __TwoBit1or2_h
@@ -24,6 +24,9 @@ namespace dsp
 
     TwoBit1or2 ();
     ~TwoBit1or2 ();
+
+    //! Build the output value lookup table
+    void lookup_build (TwoBitTable*, JenetAnderson98* = 0);
 
     //! Build the nlow per byte lookup table
     void nlow_build (TwoBitTable* table);

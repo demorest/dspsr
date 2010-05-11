@@ -13,6 +13,13 @@ const unsigned dsp::TwoBitFour::samples_per_byte = 4;
 // 4 floating-point samples per byte times 256 unique bytes
 const unsigned dsp::TwoBitFour::lookup_block_size = 4 * 256;
 
+//! Build the output value lookup table
+void dsp::TwoBitFour::lookup_build (TwoBitTable* table, JenetAnderson98* ja98)
+{
+  TwoBitLookup::lookup_build (table, ja98);
+  nlow_build (table);
+}
+
 void dsp::TwoBitFour::nlow_build (TwoBitTable* table)
 {
   table->set_lo_val (1.0);
