@@ -284,6 +284,12 @@ int main (int argc, char** argv) try {
       
     unsigned block_size = ffts * nchan * real_complex;
 
+    if (manager->get_info()->get_detected())
+    {
+      cerr << "passband: input data are detected" << endl;
+      block_size = integrate * manager->get_info()->get_rate();
+    }
+
     cerr << "Blocksz=" << block_size << endl;
 
     manager->set_block_size ( block_size );
