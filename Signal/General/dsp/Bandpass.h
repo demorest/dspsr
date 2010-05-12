@@ -49,6 +49,7 @@ namespace dsp {
     
     //! Perform the transformation on the input time series
     void transformation ();
+    void detected_input ();
 
     //! Number of channels in bandpass
     unsigned resolution;

@@ -36,7 +36,6 @@ void dsp::Bandpass::transformation ()
     throw Error (InvalidState, "dsp::Bandpass::transformation",
 		 "number of output frequency channels == 0");
 
-  // Number of points in fft
   unsigned npol = input->get_npol ();
   unsigned nchan = input->get_nchan ();
 
@@ -59,17 +58,20 @@ void dsp::Bandpass::transformation ()
 
   Signal::State state = input->get_state();
 
-  if (state == Signal::Nyquist) {
+  if (state == Signal::Nyquist)
+  {
     nsamp_fft = resolution * 2;
     pts_reqd += 4;
   }
-  else if (state == Signal::Analytic) {
+  else if (state == Signal::Analytic)
+  {
     nsamp_fft = resolution;
   }
   else
-    throw Error (InvalidState, "dsp::Bandpass::transformation",
-		 "Cannot transform Signal::State="
-		 + tostring(input->get_state()));
+    {
+      detected_input ();
+      return;
+    }
 
   // there must be at least enough data for one FFT
   if (input->get_ndat() < nsamp_fft)
@@ -146,6 +148,32 @@ void dsp::Bandpass::transformation ()
 
   // for each poln
   // for each channel
+}
+
+void dsp::Bandpass::detected_input ()
+{
+  unsigned npol = input->get_npol ();
+  unsigned nchan = input->get_nchan ();
+  uint64_t ndat = input->get_ndat();
+
+  output->resize (npol, 1, nchan, 1);
+
+  for (unsigned ipol=0; ipol < npol; ipol++)
+  {
+    float* result = output->get_datptr( 0, ipol );
+
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+    {
+      const float* dat = input->get_datptr( ichan, ipol );
+      double tot = 0;
+      for (uint64_t idat=0; idat < ndat; idat++)
+	tot += dat[idat];
+
+      result[ichan] += tot;
+    }
+  }
+
+  integration_length += ndat / input->get_rate();
 }
 
 //! Set the integration length and bandpass to zero
