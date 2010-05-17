@@ -43,11 +43,6 @@ void dsp::ASCIIObservation::load (const char* header)
       set_machine ("CPSR2");
   }
 
-  //
-  // no idea about the size of the data
-  //
-  set_ndat( 0 );
-
   char buffer[64];
 
   // //////////////////////////////////////////////////////////////////////
@@ -174,6 +169,23 @@ void dsp::ASCIIObservation::load (const char* header)
     throw Error (InvalidState, "ASCIIObservation",
 		 "invalid NDIM=%d\n", scan_ndim);
   }
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // NDAT
+  //
+
+  /*
+    This parameter is optional because it can be unknown, as in the case
+    of reading data from a ring buffer, or determined from the size of
+    the file, in which case it is a function of NCHAN, NPOL, NDIM, NBIT.
+  */
+
+  uint64_t scan_ndat;
+  if (ascii_header_get (header, "NDAT", "%"PRIu64, &scan_ndat) < 0)
+    set_ndat( scan_ndat );
+  else
+    set_ndat( 0 );
 
   // //////////////////////////////////////////////////////////////////////
   //
