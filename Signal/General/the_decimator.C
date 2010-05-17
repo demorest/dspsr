@@ -25,6 +25,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define SIGPROC_FILTERBANK_RINGBUFFER
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
