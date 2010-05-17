@@ -119,7 +119,9 @@ void dsp::File::open (const char* filename)
       
   if (info.get_ndat() == 0)
     set_total_samples ();
-
+  else if (verbose)
+    cerr << "dsp::File::open ndat=" << info.get_ndat() << endl;
+ 
   current_filename = filename;
 
   // ensure that file is set to load the first sample after the header

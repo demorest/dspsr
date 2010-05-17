@@ -138,7 +138,8 @@ void dsp::Input::operation ()
     }
 
     if (verbose)
-      cerr << "dsp::Input::operation available=" << available 
+      cerr << "dsp::Input::operation total_ndat=" << get_output()->get_ndat()
+           << " available=" << available 
            << " < block_size=" << block_size << endl;
 
     to_seek = available;
@@ -154,8 +155,8 @@ void dsp::Input::operation ()
     get_output()->request_ndat = get_output()->get_ndat() - resolution_offset;
 
     if (verbose)
-      cerr << "dsp::Input::operation"
-	" eod request_ndat=" << output->request_ndat << endl;
+      cerr << "dsp::Input::operation eod request_ndat="
+           << output->request_ndat << endl;
   }
 
   last_load_ndat = get_output()->get_ndat();
