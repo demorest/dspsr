@@ -43,6 +43,11 @@ namespace dsp {
 
     void set_total_samples();
 
+#if GENERATE_BIT_PATTERN
+  /*
+    WvS 2010 05 17 - not sure, but perhaps the data array was intended to
+    hold a generated random pattern of bits?
+  */
     //! Block of junk data to use
     unsigned char *data;
 
@@ -51,6 +56,7 @@ namespace dsp {
 
     //! Total number of bytes generated
     uint64_t total_bytes;
+#endif
 
     //! Number of bytes to stop after
     uint64_t max_bytes;
