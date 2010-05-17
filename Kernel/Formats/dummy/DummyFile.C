@@ -21,15 +21,19 @@ using namespace std;
 dsp::DummyFile::DummyFile (const char* filename,const char* headername)
   : File ("Dummy")
 {
+#if GENERATE_BIT_PATTERN
   data = NULL;
   data_size = 0;
   total_bytes = 0;
-  max_bytes = 1 * (1L<<30); // Default 1GB
+#endif
+  max_bytes = 0;
 }
 
 dsp::DummyFile::~DummyFile ( )
 {
+#if GENERATE_BIT_PATTERN
   if (data!=NULL) free(data);
+#endif
 }
 
 bool dsp::DummyFile::is_valid (const char* filename) const
@@ -71,18 +75,25 @@ void dsp::DummyFile::open_file (const char* filename)
 
 void dsp::DummyFile::close ()
 {
+#if GENERATE_BIT_PATTERN
   if (data!=NULL) free(data);
   data = NULL;
+#endif
 }
 
-int64_t dsp::DummyFile::load_bytes(unsigned char *buffer, uint64_t bytes)
+int64_t dsp::DummyFile::load_bytes (unsigned char *buffer, uint64_t bytes)
 {
   //cerr << "DummyFile::load_bytes " << bytes << endl;
+  memset (buffer, 0, bytes);
+
+#if GENERATE_BIT_PATTERN
   if (bytes > max_bytes-total_bytes) { bytes = max_bytes-total_bytes; }
   data = (unsigned char *)realloc(data, bytes); // Maybe not thread-safe...??
   data_size = bytes;
   buffer = data;
   total_bytes += bytes;
+#endif
+
   return bytes;
 }
 
@@ -94,4 +105,6 @@ int64_t dsp::DummyFile::seek_bytes(uint64_t bytes)
 
 void dsp::DummyFile::set_total_samples()
 {
+  if (max_bytes)
+    info.set_ndat( info.get_nsamples(max_bytes) );
 }
