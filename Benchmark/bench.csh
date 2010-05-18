@@ -55,6 +55,8 @@ foreach bwtrial ( 1 2 3 4 )
         ( time dspsr --fft-bench -t$nthread --minram=$cache $args ) >>& $file
       endif
 
+      rm -f *.ar
+
     end
 
   end
