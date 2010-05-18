@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/OptimalFFT.h,v $
-   $Revision: 1.2 $
-   $Date: 2010/03/24 04:17:45 $
+   $Revision: 1.3 $
+   $Date: 2010/05/18 15:39:58 $
    $Author: straten $ */
 
 #ifndef __OptimalFFT_h
@@ -27,22 +27,26 @@ namespace dsp
 
     OptimalFFT ();
 
-    //! Set the number of channels into which the data will be divided
-    void set_nchan (unsigned nchan);
-
     //! Set true when convolution is performed during filterbank synthesis
     void set_simultaneous (bool flag);
 
     unsigned get_nfft (unsigned nfilt) const;
 
-    double compute_cost (unsigned nfft, unsigned nfilt) const;
+    //! Set the number of channels into which the data will be divided
+    virtual void set_nchan (unsigned nchan);
+
+    //! Return the time required to execute in microseconds
+    virtual double compute_cost (unsigned nfft, unsigned nfilt) const;
 
     //! Get the name of the FFT library to use for the given FFT length
-    std::string get_library (unsigned nfft);
+    virtual std::string get_library (unsigned nfft);
 
   protected:
 
     mutable Reference::To<FTransform::Bench> bench;
+
+    virtual FTransform::Bench* new_bench () const;
+
     unsigned nchan;
     bool simultaneous;
   };
