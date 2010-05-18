@@ -18,6 +18,8 @@ dsp::OptimalFilterbank::OptimalFilterbank (const std::string& _library)
 {
   nchan = 1;
   library = _library;
+
+  DEBUG("dsp::OptimalFilterbank library=" << library);
 }
 
 void dsp::OptimalFilterbank::set_nchan (unsigned n)
@@ -32,6 +34,8 @@ void dsp::OptimalFilterbank::set_nchan (unsigned n)
 
 FTransform::Bench* dsp::OptimalFilterbank::new_bench () const
 {
+  DEBUG("dsp::OptimalFilterbank::new_bench nchan=" << nchan);
+
   fbench = new FilterbankBench (library);
   fbench->set_path( Pulsar::Config::get_runtime() );
   fbench->set_nchan( nchan );
@@ -47,5 +51,7 @@ std::string dsp::OptimalFilterbank::get_library (unsigned nfft)
 
 double dsp::OptimalFilterbank::compute_cost (unsigned nfft, unsigned nfilt) const
 {
-  return bench->get_best( nfft ).cost / ((nfft - nfilt) * nchan);
+  DEBUG("dsp::OptimalFilterbank::compute_cost nfft=" << nfft << " nfilt=" << nfilt);
+  return fbench->get_best( nfft ).cost / ((nfft - nfilt) * nchan);
 }
+
