@@ -21,3 +21,9 @@ foreach freq ( 375 750 1500 3000 )
 
 end
 
+cd results
+gnuplot ../plot.gnu
+
+echo Benchmark completed.
+echo Results in results/
+
