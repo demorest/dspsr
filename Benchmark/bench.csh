@@ -43,16 +43,16 @@ foreach bwtrial ( 1 2 3 4 )
     rm -f $file
 
     set psr="-E pulsar.par -P polyco.dat -D $DM -B $bw -f $freq"
-    set args="-r -F ${nchan}:D -T $time $psr header.dada"
+    set args="--fft-bench -r -F ${nchan}:D -T $time $psr header.dada"
 
     foreach trial ( a b c d e f )
 
       echo trial $trial
 
       if ( $gpu ) then
-        ( time dspsr --cuda=$gpu -t$gpu $args ) >>& $file
+        ( time dspsr --cuda=$gpu -t $gpu $args ) >>& $file
       else
-        ( time dspsr --fft-bench -t$nthread --minram=$cache $args ) >>& $file
+        ( time dspsr -t $nthread --minram=$cache $args ) >>& $file
       endif
 
       rm -f *.ar
