@@ -19,9 +19,6 @@ dsp::FilterbankBench::FilterbankBench (const std::string& name)
 {
   library = name;
   nchan = 0;
-  path = ".";
-  loaded = false;
-  max_nfft = 0;
 }
 
 //! Set the number of channels
@@ -37,7 +34,7 @@ void dsp::FilterbankBench::load () const
 {
   max_nfft = 0;
 
-  string filename = path + "/fft_bench_" + library + ".dat";
+  string filename = path + "/filterbank_bench_" + library + ".dat";
 
   if (verbose)
     cerr << "dsp::FilterbankBench::load filename=" << filename << endl;
@@ -69,8 +66,11 @@ void dsp::FilterbankBench::load (const std::string& library,
     
     DEBUG(library << " " << _chan << " " << entry.nfft << " " << entry.cost);
 
-    if (_chan == nchan)
-      entries.push_back (entry);
+    if (_chan != nchan)
+      continue;
+
+    DEBUG("ADD nchan=" << nchan << " nfft=" << entry.nfft);
+    entries.push_back (entry);
 
     if (entry.nfft > max_nfft)
       max_nfft = entry.nfft;
