@@ -42,7 +42,8 @@ foreach bwtrial ( 1 2 3 4 )
     set file=f${freq}_b${bw}_DM${DM}.time
     rm -f $file
 
-    set args="-r -F ${nchan}:D -T $time -B $bw -f $freq -D $DM header.dada"
+    set psr="-E pulsar.par -P polyco.dat -D $DM -B $bw -f $freq"
+    set args="-r -F ${nchan}:D -T $time $psr header.dada"
 
     foreach trial ( a b c d e f )
 
