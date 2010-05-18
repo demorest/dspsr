@@ -102,9 +102,6 @@ double order (unsigned nfft)
 
 void Speed::runTest ()
 {
-  // pretend like 256 MB of memory will be used
-  uint64_t data_length = 256*1024*1024;
-
   unsigned nfloat = nchan * nfft;
   if (!real_to_complex)
     nfloat *= 2;
@@ -113,7 +110,7 @@ void Speed::runTest ()
 
   if (!nloop)
   {
-    nloop = data_length / size;
+    nloop = (1024*1024*256) / size;
     if (nloop > 2000)
       nloop = 2000;
     cerr << "Speed::runTest nloop=" << nloop << endl;
@@ -134,8 +131,8 @@ void Speed::runTest ()
     throw Error (InvalidState, "Speed::runTest",
 		 "engine not set");
 
-  float* in = (float*) memory->do_allocate (data_length);
-  memory->do_zero (in, data_length);
+  float* in = (float*) memory->do_allocate (size);
+  memory->do_zero (in, size);
 
   engine->scratch = (float*) memory->do_allocate (size + 4*sizeof(float));
   engine->setup (nchan, nfft);
@@ -167,14 +164,20 @@ void Speed::runTest ()
   memory->do_free (engine->scratch);
 
   double log2_nfft = log2(nfft);
+  double log2_nchan = log2(nchan);
 
-  double mflops = 5.0 * nfft * log2_nfft / time_us;
+  double bwd = 2;
+  if (nchan == 1)
+    bwd = 1;
+
+  double mflops = 5.0 * nfft * nchan * (bwd*log2_nfft + log2_nchan) / time_us;
 
   cerr << "nchan=" << nchan << " nfft=" << nfft << " time=" << time_us << "us"
-    " log2(nfft)=" << log2_nfft << " mflops=" << mflops << endl;
+    " log2(nfft)=" << log2_nfft << " log2(nchan)=" << log2_nchan << 
+    " mflops=" << mflops << endl;
 
   cout << nchan << " " << nfft << " " << time_us << " "
-       << log2_nfft << " " << mflops << endl;
+       << log2_nchan << " " << log2_nfft << " " << mflops << endl;
 }
 
 
