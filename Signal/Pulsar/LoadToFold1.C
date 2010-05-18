@@ -31,6 +31,7 @@
 
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
+#include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
@@ -263,7 +264,13 @@ void dsp::LoadToFold1::prepare () try
     {
       if (report_vitals)
 	cerr << "dspsr: using benchmarks to choose optimal FFT length" << endl;
-      kernel->set_optimal_fft( new OptimalFFT );
+
+#if HAVE_CUDA
+      if (run_on_gpu)
+	kernel->set_optimal_fft( new OptimalFilterbank("CUDA") );
+      else
+#endif
+	kernel->set_optimal_fft( new OptimalFFT );
     }
   }
   else
