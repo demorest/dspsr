@@ -31,6 +31,13 @@ void dsp::OptimalFFT::set_simultaneous (bool flag)
   simultaneous = flag;
 }
 
+FTransform::Bench* dsp::OptimalFFT::new_bench () const
+{
+  FTransform::Bench* new_bench = new FTransform::Bench;
+  new_bench->set_path( Pulsar::Config::get_runtime() );
+  return new_bench;
+}
+
 /*! This method computes the optimal FFT length to use when performing
     multiple FFTs on a long time series.  If FFT cost measurements
     are not available, this function assumes that the FFT is an
@@ -86,10 +93,7 @@ unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
   double theory_cost = 0;
 
   if (!bench)
-  {
-    bench = new FTransform::Bench;
-    bench->set_path( Pulsar::Config::get_runtime() );
-  }
+    bench = new_bench ();
 
   unsigned nfft_max = bench->get_max_nfft ();
   if (simultaneous)
@@ -127,10 +131,7 @@ unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
 std::string dsp::OptimalFFT::get_library (unsigned nfft)
 {
   if (!bench)
-  {
-    bench = new FTransform::Bench;
-    bench->set_path( Pulsar::Config::get_runtime() );
-  }
+    bench = new_bench ();
 
   return bench->get_best( nfft ).library;
 }
