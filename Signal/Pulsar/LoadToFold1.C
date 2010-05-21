@@ -793,25 +793,11 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       if (config->integration_length)
       {
-	subfold -> set_subint_seconds (config->integration_length);
+        subfold -> set_subint_seconds (config->integration_length);
 
-	/*
-	  rationale: If data are divided into blocks, and blocks may
-	  be sent down different data reduction paths, then it is possible
-	  for blocks on different paths to overlap by a small amount.
-	  
-	  The minimum integration length is a simple attempt to avoid
-	  producing a small overlap archive with the same name as the
-	  full integration length archive.
-
-	  10% should do the trick.
-	*/
-
-	double min = config->integration_length * 0.10;
-
-	unloader[ifold] -> set_minimum_integration_length (min);
+        if (config->minimum_integration_length > 0)
+          unloader[ifold]->set_minimum_integration_length (config->minimum_integration_length);
       }
-
       else
       {
 	subfold -> set_subint_turns (1);

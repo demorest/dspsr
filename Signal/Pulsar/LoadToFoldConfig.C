@@ -94,8 +94,10 @@ dsp::LoadToFold::Config::Config ()
   // in single_pulse mode, unload integrations to separate files by default
   single_archive = false;
 
-  // in single_pulse mode, integrate for specified time
+  // integrate for specified interval length
   integration_length = 0;
+  // by default, no minimum is specified
+  minimum_integration_length = -1;
 
   // rotate the pulsar with respect to the predictor
   reference_phase = 0;

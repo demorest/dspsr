@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.27 $
-   $Date: 2010/05/04 17:49:27 $
+   $Revision: 1.28 $
+   $Date: 2010/05/21 00:54:46 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -132,6 +132,7 @@ namespace dsp {
     bool single_pulse_archives () { return single_pulse && !single_archive; }
 
     double integration_length;
+    double minimum_integration_length;
 
     double reference_phase;
     double folding_period;
