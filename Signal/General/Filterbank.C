@@ -230,13 +230,9 @@ void dsp::Filterbank::make_preparations ()
 
   if (engine)
   {
-    float* kernel = 0;
-    if (response)
-      kernel = response->get_datptr(0,0);
-
     if (verbose)
       cerr << "dsp::Filterbank::make_preparations setup engine" << endl;
-    engine->setup (nchan, freq_res, kernel);
+    engine->setup (this);
     return;
   }
 
