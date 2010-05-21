@@ -21,6 +21,10 @@
 #include "dsp/PScrunch.h"
 #include "dsp/FScrunch.h"
 #include "dsp/TScrunch.h"
+
+#include "dsp/DedispersionSampleDelay.h"
+#include "dsp/SampleDelay.h"
+
 #include "dsp/Filterbank.h"
 #include "dsp/Detection.h"
 
@@ -36,7 +40,7 @@
 
 using namespace std;
 
-static char* args = "b:B:F:f:cI:o:prt:hvVZ:";
+static char* args = "b:B:D:F:f:cI:K:o:prt:hvVZ:";
 
 void usage ()
 {
@@ -49,6 +53,8 @@ void usage ()
     "  -c        keep offset and scale constant \n"
     "  -I secs   number of seconds between level updates \n"
     "  -F nchan  create a filterbank (voltages only) \n"
+    "  -K        remove inter-channel dispersion delays \n"
+    "  -D dm     set the dispersion measure \n"
     "  -t nsamp  decimate in time \n"
     "  -f nchan  decimate in frequency \n"
     "  -I secs   rescale interval in seconds \n"
@@ -74,6 +80,10 @@ int main (int argc, char** argv) try
 
   char* output_filename = 0;
 
+  //! Removes inter-channel dispersion delays
+  Reference::To<dsp::SampleDelay> sample_delay;
+  double dm = 0.0;
+
   string datestr_pattern = "%Y-%m-%d-%H:%M:%S";
 
   dsp::TimeSeries::Order order = dsp::TimeSeries::OrderTFP;
@@ -94,8 +104,17 @@ int main (int argc, char** argv) try
       constant_offset_scale = true;
       break;
 
+    case 'D':
+      dm = atof (optarg);
+      break;
+
     case 'F':
       filterbank_nchan = atoi (optarg);
+      break;
+
+    case 'K':
+      if (!sample_delay)
+	sample_delay = new dsp::SampleDelay;
       break;
 
     case 'o':
@@ -250,6 +269,8 @@ int main (int argc, char** argv) try
     const unsigned npol = obs->get_npol ();
     const unsigned ndim = obs->get_ndim ();
 
+    obs->set_dispersion_measure( dm );
+
     // the unpacked input will occupy nbytes_per_sample
     double nbytes_per_sample = sizeof(float) * nchan * npol * ndim;
 
@@ -295,6 +316,13 @@ int main (int argc, char** argv) try
         // detection will do pscrunch
         do_pscrunch = false;
       }
+    }
+
+    if (sample_delay)
+    {
+      sample_delay->set_input (timeseries);
+      sample_delay->set_output (timeseries);
+      sample_delay->set_function (new dsp::Dedispersion::SampleDelay);
     }
 
     if (fscrunch_factor)
@@ -354,6 +382,14 @@ int main (int argc, char** argv) try
 	  cerr << "digifil: detection" << endl;
 
 	detection->operate();
+      }
+
+      if (sample_delay)
+      {
+	if (verbose)
+	  cerr << "digifil: dedisperse" << endl;
+
+        sample_delay->operate();
       }
 
       if (fscrunch)
