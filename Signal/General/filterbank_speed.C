@@ -135,7 +135,11 @@ void Speed::runTest ()
   memory->do_zero (in, size);
 
   engine->scratch = (float*) memory->do_allocate (size + 4*sizeof(float));
-  engine->setup (nchan, nfft);
+
+  dsp::Filterbank temp;
+  temp.set_nchan(nchan);
+  temp.set_frequency_resolution(nfft);
+  engine->setup (&temp);
 
   cerr << "entering loop" << endl;
 
