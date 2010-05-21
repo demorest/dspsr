@@ -435,7 +435,10 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("create single pulse integrations");
 
   arg = menu.add (config->fractional_pulses, 'y');
-  arg->set_help ("output partially compled integrations");
+  arg->set_help ("output partially completed integrations");
+
+  arg = menu.add (config->minimum_integration_length, "Lmin", "seconds");
+  arg->set_help ("minimum integration length output");
 
   /* ***********************************************************************
 
@@ -531,6 +534,24 @@ void parse_options (int argc, char** argv) try
     verbose = true;
   }
 
+  if (config->integration_length && config->minimum_integration_length < 0)
+  {
+    /*
+      rationale: If data are divided into blocks, and blocks are 
+      sent down different data reduction paths, then it is possible
+      for blocks on different paths to overlap by a small amount.
+      
+      The minimum integration length is a simple attempt to avoid
+      producing a small overlap archive with the same name as the
+      full integration length archive.
+  
+      If minimum_integration_length is not specified, a default of 10%
+      of the integration length is applied.
+    */
+
+    config->minimum_integration_length = 0.1 * config->integration_length;
+  }
+
   // interpret the unpacker options
 
   for (unsigned i=0; i<unpack.size(); i++)
@@ -571,7 +592,7 @@ void parse_options (int argc, char** argv) try
   if (nbin > 0)
     config->nbin = nbin;
    
-
+  // over-ride the dispersion measure
   if (dm != -1.0)
   {
     config->dispersion_measure = dm;
