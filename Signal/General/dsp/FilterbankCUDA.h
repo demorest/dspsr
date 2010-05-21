@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.13 $
-   $Date: 2010/05/04 17:49:12 $
+   $Revision: 1.14 $
+   $Date: 2010/05/21 00:00:51 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -42,8 +42,7 @@ namespace CUDA
     Engine ();
     ~Engine ();
 
-    //! Adds the streams
-    void setup (unsigned nchan, unsigned bwd_nfft, float* kernel);
+    void setup (dsp::Filterbank*);
     void perform (const float* in);
     bool dual_poln () { return twofft; }
     void finish ();
@@ -57,6 +56,8 @@ namespace CUDA
 
     //! the backward fft length
     unsigned bwd_nfft;
+
+    bool real_to_complex;
 
     //! Use the twofft trick from NR
     bool twofft;
