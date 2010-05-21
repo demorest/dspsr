@@ -37,14 +37,21 @@ bool dsp::Dedispersion::SampleDelay::match (const Observation* obs)
   bandwidth = obs->get_bandwidth();
   dispersion_measure = obs->get_dispersion_measure();
   sampling_rate = obs->get_rate();
-  delays.resize( obs->get_nchan() );
 
-  if (verbose)
+  bool error = (sampling_rate == 0 || bandwidth == 0 || centre_frequency == 0);
+
+  if (verbose || error)
     std::cerr << "dsp::Dedispersion::SampleDelay::match"
 	      << "\n  centre frequency = " << centre_frequency
 	      << "\n  bandwidth = " << bandwidth
 	      << "\n  dispersion measure = " << dispersion_measure
 	      << "\n  sampling rate = " << sampling_rate << endl;
+
+  if (error)
+    throw Error (InvalidParam, "dsp::Dedispersion::SampleDelay::match",
+		 "invalid input");
+
+  delays.resize( obs->get_nchan() );
   
   // when divided by MHz, yields a dimensionless value
   double dispersion = dispersion_measure / dm_dispersion;
