@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelay.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.5 $
+   $Date: 2010/05/21 07:29:37 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_SampleDelay_h
@@ -35,6 +35,9 @@ namespace dsp {
 
     //! Computes the total delay and prepares the input buffer
     void prepare ();
+
+    //! Get the minimum number of samples required for operation
+    uint64_t get_minimum_samples () { return total_delay; }
 
     //! Applies the delays to the input
     void transformation ();
