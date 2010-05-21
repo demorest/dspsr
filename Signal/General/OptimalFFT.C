@@ -7,6 +7,7 @@
 
 #include "dsp/OptimalFFT.h"
 #include "Pulsar/Config.h"
+#include "stringtok.h"
 
 #include <math.h>
 
@@ -78,6 +79,8 @@ FTransform::Bench* dsp::OptimalFFT::new_bench () const
 
 unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
 {
+  cerr << "dsp::OptimalFFT::get_nfft nfilt=" << nfilt << endl;
+
   if (!nfilt)
     throw Error (InvalidParam, "dsp::OptimalFFT::get_nfft", "nfilt == 0");
 
@@ -98,6 +101,8 @@ unsigned dsp::OptimalFFT::get_nfft (unsigned nfilt) const
   unsigned nfft_max = bench->get_max_nfft ();
   if (simultaneous)
     nfft_max /= nchan;
+
+  DEBUG("nfft_max=" << nfft_max);
 
   for (unsigned nfft = nfft_min; nfft <= nfft_max; nfft *= 2)
   {
@@ -133,7 +138,10 @@ std::string dsp::OptimalFFT::get_library (unsigned nfft)
   if (!bench)
     bench = new_bench ();
 
-  return bench->get_best( nfft ).library;
+  string full_name = bench->get_best( nfft ).library;
+
+  // cut off the "+theory" if necessary
+  return stringtok (full_name, "+");
 }
 
 
