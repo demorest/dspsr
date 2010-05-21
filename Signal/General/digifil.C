@@ -40,7 +40,7 @@
 
 using namespace std;
 
-static char* args = "b:B:D:F:f:cI:K:o:prt:hvVZ:";
+static char* args = "b:B:D:F:f:cI:Ko:prt:hvVZ:";
 
 void usage ()
 {
@@ -146,6 +146,7 @@ int main (int argc, char** argv) try
       usage ();
       return 0;
     case 'V':
+      dsp::Response::verbose = true;
       dsp::Operation::verbose = true;
       dsp::Observation::verbose = true;
     case 'v':
@@ -320,6 +321,9 @@ int main (int argc, char** argv) try
 
     if (sample_delay)
     {
+      if (verbose)
+	cerr << "digifil: removing dispserion delays" << endl;
+
       sample_delay->set_input (timeseries);
       sample_delay->set_output (timeseries);
       sample_delay->set_function (new dsp::Dedispersion::SampleDelay);
@@ -347,7 +351,7 @@ int main (int argc, char** argv) try
 
     dsp::Unpacker* unpacker = manager->get_unpacker();
 
-    if (unpacker->get_order_supported (order))
+    if (!sample_delay && unpacker->get_order_supported (order))
       unpacker->set_output_order (order);
 
     if (verbose)
@@ -363,6 +367,8 @@ int main (int argc, char** argv) try
     }
 
     dsp::SigProcObservation sigproc;
+
+    bool start = true;
 
     while (!manager->get_input()->eod())
     {
@@ -386,6 +392,15 @@ int main (int argc, char** argv) try
 
       if (sample_delay)
       {
+	if (start)
+	{
+	  sample_delay->prepare ();
+	  if (sample_delay->get_minimum_samples () > timeseries->get_ndat())
+	    cerr << "digifil: WARNING block size nsample=" 
+		 << nsample << " < dispersion delay nsample="
+		 << sample_delay->get_minimum_samples () << endl;
+	}
+
 	if (verbose)
 	  cerr << "digifil: dedisperse" << endl;
 
@@ -470,6 +485,7 @@ int main (int argc, char** argv) try
 
       fwrite (data,nbyte,1,outfile);
 
+      start = false;
     }
 
     if (verbose)
