@@ -15,6 +15,7 @@ using namespace std;
 
 CUDA::Engine::Engine ()
 {
+  real_to_complex = false;
   nchan = 0;
   bwd_nfft = 0;
 
@@ -27,10 +28,13 @@ CUDA::Engine::~Engine ()
 {
 }
 
-void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* kernel) 
+void CUDA::Engine::setup (dsp::Filterbank* filterbank)
 {
-  bwd_nfft = _bwd_nfft;
-  nchan = _nchan;
+  bwd_nfft = filterbank->get_freq_res ();
+  nchan = filterbank->get_nchan ();
+
+  real_to_complex = (filterbank->get_input()->get_state() == Signal::Nyquist);
+
   twofft = false;
 
   DEBUG("CUDA::Engine::setup nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
@@ -52,17 +56,21 @@ void CUDA::Engine::setup (unsigned _nchan, unsigned _bwd_nfft, float* kernel)
   if (nchan > 1)
     cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
 
-  if (kernel)
+  if (filterbank->has_response())
   {
     // allocate space for the convolution kernel
     cudaMalloc ((void**)&d_kernel, mem_size);
  
     // copy the kernel accross
+    const float* kernel = filterbank->get_response()->get_datptr(0,0);
+
     cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
   }
 
-  if (twofft)
+  if (!real_to_complex || twofft)
     return;
+
+  DEBUG("CUDA::Engine::setup real-to-complex");
 
   unsigned n_half = nchan * bwd_nfft / 2 + 1;
   unsigned n_half_size = n_half * sizeof(cufftReal);
@@ -233,12 +241,17 @@ void CUDA::Engine::perform (const float* in)
   // note that each thread will set two complex numbers in each poln
   int blocks = data_size / (threads*2);
 
-  if (twofft)
-    separate<<<blocks,threads>>> (cscratch, data_size);
-  else
-    performRealtr<<<blocks,threads>>> (cscratch,data_size,d_SN,d_CN);
- 
-  CHECK_ERROR ("CUDA::Engine::perform separate");
+  if (real_to_complex)
+  {
+    DEBUG("CUDA::Engine::perform real-to-complex");
+
+    if (twofft)
+      separate<<<blocks,threads>>> (cscratch, data_size);
+    else
+      performRealtr<<<blocks,threads>>> (cscratch,data_size,d_SN,d_CN);
+
+    CHECK_ERROR ("CUDA::Engine::perform separate");
+  }
 
   blocks = data_size / threads;
 
@@ -274,14 +287,6 @@ void CUDA::Engine::perform (const float* in)
     blocks.x ++;
 
   blocks.y = nchan;
-
-  int remainder = nkeep % threads.x;
-
-#if 0
-  cerr << "nkeep=" << nkeep 
-       << " blocks=" << blocks.x << " threads=" << threads.x
-       << " rem=" << remainder << endl;
-#endif
 
   // divide by two for complex data
   float2* output_base = (float2*) output;
