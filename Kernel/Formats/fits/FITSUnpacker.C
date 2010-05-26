@@ -5,6 +5,8 @@
  *
  ***************************************************************************/
 
+#include "assert.h"
+
 #include "dsp/FITSUnpacker.h"
 #include "Error.h"
 
@@ -16,10 +18,14 @@
 #define FOURBIT_SCALE 7.5
 #define EIGHTBIT_SCALE 31.5
 
+
+
 using std::cerr;
 using std::endl;
 using std::vector;
 using std::cout;
+
+const int BYTE_SIZE = 8;
 
 dsp::FITSUnpacker::FITSUnpacker(const char* name) : HistUnpacker(name) {}
 
@@ -32,54 +38,65 @@ dsp::FITSUnpacker::FITSUnpacker(const char* name) : HistUnpacker(name) {}
 
 void dsp::FITSUnpacker::unpack()
 {
-    if (verbose)
-        cerr << "dsp::FITSUnpacker::unpack" << endl;
+  if (verbose) {
+    cerr << "dsp::FITSUnpacker::unpack" << endl;
+  }
 
-    const uint npol = input->get_npol();
-    const uint nchan = input->get_nchan();
-    const uint nbit = input->get_nbit();
-    const uint samps_per_byte = 8 / nbit;
+  // Determine which mapping function to use depending on how many
+  // samples exist per byte.
+  float (*bitNumber)(int) = NULL;
 
-    float (*bitNumber)(int) = NULL;
-    bitNumber = &oneBitNumber;
+  const unsigned nbit = input->get_nbit();
+  switch (nbit) {
+    case 1:
+      bitNumber = &oneBitNumber;
+      break;
+    case 2:
+      bitNumber = &twoBitNumber;
+      break;
+    case 4:
+      bitNumber = &fourBitNumber;
+      break;
+    case 8:
+      bitNumber = &eightBitNumber;
+      break;
+    default:
+      throw Error(InvalidState, "FITSUnpacker::unpack",
+          "invalid nbit=%d", nbit);
+  }
 
-    switch (nbit) {
-        case 1:
-            bitNumber = &oneBitNumber;
-            break;
-        case 2:
-            bitNumber = &twoBitNumber;
-            break;
-        case 4:
-            bitNumber = &fourBitNumber;
-            break;
-        case 8:
-            bitNumber = &eightBitNumber;
-            break;
-        default:
-            throw Error(InvalidState, "FITSUnpacker::unpack",
-                    "invalid nbit=%d", nbit);
-    }
+  const unsigned npol  = input->get_npol();
+  const unsigned nchan = input->get_nchan();
+  const unsigned ndat  = input->get_ndat();
 
-    const uint ndat = input->get_ndat();
+  // Number of of samples in a byte.
+  const int samples_per_byte = BYTE_SIZE / nbit;
+  const int mod_offset = samples_per_byte - 1;
 
-    for (uint idat = 0; idat < ndat; ++idat) {
-        for (uint ipol = 0; ipol < npol; ++ipol) {
-            const unsigned char* from = input->get_rawptr() +
-                (idat * nchan * npol / samps_per_byte) +
-                (ipol * nchan / samps_per_byte);
-            for (uint ichan = 0; ichan < nchan;) {
-                const int mod = (samps_per_byte - 1) - (ichan % samps_per_byte);
-                const int shiftedNumber = *from >> (mod * nbit);
+  const unsigned char* from = input->get_rawptr();
 
-                float* into = output->get_datptr(ichan, ipol) + idat;
-                *into = bitNumber(shiftedNumber);
+  // Iterate through input data, split the byte depending on number of 
+  // samples per byte, get corresponding mapped value and store it
+  // as pol-chan-dat.
+  //
+  // TODO: Use a lookup table.
+  for (unsigned idat = 0; idat < ndat; ++idat) {
+    for (unsigned ipol = 0; ipol < npol; ++ipol) {
+      for (unsigned ichan = 0; ichan < nchan;) {
 
-                if ((++ichan) % samps_per_byte == 0)
-                    ++from;
-            }
+        const int mod = mod_offset - (ichan % samples_per_byte);
+        const int shifted_number = *from >> (mod * nbit);
+
+        float* into = output->get_datptr(ichan, ipol) + idat;
+        *into = bitNumber(shifted_number);
+
+        // Move to next byte when the entire byte has been split.
+        if ((++ichan) % (samples_per_byte) == 0) {
+          ++from;
         }
+      }
     }
+  }
 }
 
 
