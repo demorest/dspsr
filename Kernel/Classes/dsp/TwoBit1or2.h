@@ -7,14 +7,17 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBit1or2.h,v $
-   $Revision: 1.5 $
-   $Date: 2010/05/11 06:22:25 $
+   $Revision: 1.6 $
+   $Date: 2010/05/28 14:13:32 $
    $Author: straten $ */
 
 #ifndef __TwoBit1or2_h
 #define __TwoBit1or2_h
 
+// #define _DEBUG
+
 #include "dsp/TwoBitLookup.h"
+#include <vector>
 
 namespace dsp
 {
@@ -41,9 +44,8 @@ namespace dsp
     
     char nlow_lookup [4];
 
-    unsigned char* temp_values;
+    std::vector<unsigned char> temp_values;
     void create ();
-    void destroy ();
   };
 
 
@@ -79,7 +81,7 @@ namespace dsp
     inline void operator() (Iterator& from, Mask& mask,
 			    unsigned char* to, unsigned n)
     {
-      const unsigned n2 = n/2;
+      const unsigned n2 = n >> 1;  // quick division by 2
       for (unsigned i=0; i<n2; i++)
       {
 	to[i*2] = mask (*from, 0);
@@ -112,12 +114,13 @@ namespace dsp
     template<class Iterator>
     inline void prepare (Iterator& input, unsigned ndat)
     {
+      temp_values.resize (ndat);
+
 #ifdef _DEBUG
-      std::cerr << "TwoBit<" << N << ">::prepare ndat=" << ndat 
-                << " temp=" << (void*) temp_values << std::endl;
+      std::cerr << "TwoBit<" << N << ">::prepare ndat=" << ndat << std::endl;
 #endif
 
-      unpacker (input, mask, temp_values, ndat);
+      unpacker (input, mask, &(temp_values[0]), ndat);
 
       nlow = 0;
 
@@ -139,7 +142,12 @@ namespace dsp
       _nlow = nlow;
 
       nlow /= ndim;
-      
+
+#ifdef _DEBUG
+      std::cerr << "TwoBit<" << N << ">::unpack ndat=" << ndat 
+                << " nlow=" << nlow << " nlow_min=" << nlow_min << std::endl;
+#endif
+
       if (nlow < nlow_min || nlow > nlow_max)
 	return;
       
@@ -148,9 +156,7 @@ namespace dsp
       for (unsigned idat=0; idat < ndat; idat++)
 	output[idat*output_incr] = fourval[ temp_values[idat] ];
     }
-   
   };
-
 }
 
 template<unsigned N, class Mask>
@@ -160,3 +166,4 @@ template<unsigned N, class Mask>
 const unsigned dsp::TwoBit<N,Mask>::lookup_block_size = 4;
 
 #endif
+
