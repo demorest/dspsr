@@ -27,6 +27,7 @@ dsp::ObservationChange::ObservationChange ()
   machine_changed = false;
   coordinates_changed = false;
   dispersion_measure_changed = false;
+  rotation_measure_changed = false;
   ndat_changed = false;
   ndim_changed = false;
   nchan_changed = false;
