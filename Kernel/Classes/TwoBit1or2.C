@@ -12,12 +12,10 @@
 
 dsp::TwoBit1or2::TwoBit1or2 ()
 {
-  temp_values = 0;
 }
 
 dsp::TwoBit1or2::~TwoBit1or2 ()
 {
-  destroy ();
 }
 
 //! Build the output value lookup table
@@ -25,11 +23,6 @@ void dsp::TwoBit1or2::lookup_build (TwoBitTable* table, JenetAnderson98* ja98)
 {
   nlow_build (table);
   TwoBitLookup::lookup_build (table, ja98);
-}
-
-void dsp::TwoBit1or2::destroy ()
-{
-  if (temp_values) delete [] temp_values; temp_values = 0;
 }
 
 void dsp::TwoBit1or2::nlow_build (TwoBitTable* table)
@@ -63,7 +56,6 @@ unsigned dsp::TwoBit1or2::get_lookup_block_size ()
 void dsp::TwoBit1or2::create ()
 {
   TwoBitLookup::create ();
-
-  destroy ();
   lookup_base = new float [(nlow_max - nlow_min + 1) * 4];
 }
+
