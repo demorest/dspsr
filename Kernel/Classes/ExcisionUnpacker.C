@@ -231,7 +231,7 @@ void dsp::ExcisionUnpacker::unpack ()
 
     unsigned long* hist = 0;
     if (keep_histogram)
-      hist = get_histogram (idig);
+      hist = get_histogram (idig, get_ndat_per_weight());
 
     current_digitizer = idig;
 

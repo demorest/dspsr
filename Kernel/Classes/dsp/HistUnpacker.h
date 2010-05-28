@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.16 $
-   $Date: 2009/04/15 00:14:13 $
+   $Revision: 1.17 $
+   $Date: 2010/05/28 14:13:15 $
    $Author: straten $ */
 
 #ifndef __HistUnpacker_h
@@ -73,7 +73,7 @@ namespace dsp {
     void get_histogram (std::vector<T>& data, unsigned idig) const;
 
     //! Get the pointer to the histogram array
-    unsigned long* get_histogram (unsigned idig);
+    unsigned long* get_histogram (unsigned idig, unsigned expect = 0);
     const unsigned long* get_histogram (unsigned idig) const;
 
     //! Get the centroid of the histogram for the given digitizer

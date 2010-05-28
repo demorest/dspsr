@@ -130,11 +130,12 @@ unsigned dsp::HistUnpacker::get_output_ichan (unsigned idig) const
 void dsp::HistUnpacker::resize ()
 {
   if (verbose)
-    cerr << "dsp::HistUnpacker::resize ndig=" << ndig
-         << " nstate=" << nstate << endl;
+    cerr << "dsp::HistUnpacker::resize this=" << this << " ndig=" << get_ndig()
+         << " nstate=" << nstate
+         << " internal=" << get_nstate_internal() << endl;
 
   histograms.resize( get_ndig() );
-  for (unsigned idig=0; idig<ndig; idig++)
+  for (unsigned idig=0; idig<get_ndig(); idig++)
     histograms[idig].resize( get_nstate_internal() );
 
   resize_needed = false;
@@ -153,9 +154,17 @@ void dsp::HistUnpacker::zero_histogram ()
   if (verbose)
     cerr << "dsp::HistUnpacker::zero_histogram" << endl;;
 
-  for (unsigned ichan=0; ichan < histograms.size(); ichan++)
-    for (unsigned ibin=0; ibin<histograms[ichan].size(); ibin++)
-      histograms[ichan][ibin] = 0;
+  if (resize_needed)
+    resize ();
+
+  for (unsigned idig=0; idig < histograms.size(); idig++)
+  {
+    if (verbose)
+      cerr << "dsp::HistUnpacker::zero_histogram idig=" << idig
+           << " size=" << histograms[idig].size() << endl;
+    for (unsigned ibin=0; ibin<histograms[idig].size(); ibin++)
+      histograms[idig][ibin] = 0;
+  }
 }
 
 void dsp::HistUnpacker::get_histogram (std::vector<unsigned long>& hist,
@@ -164,6 +173,10 @@ void dsp::HistUnpacker::get_histogram (std::vector<unsigned long>& hist,
   if (idig >= histograms.size())
     throw Error (InvalidParam, "dsp::HistUnpacker::get_histogram",
 		 "invalid idig=%d >= ndig=%d", idig, histograms.size());
+
+  if (verbose)
+    cerr << "dsp::HistUnpacker::get_histogram this=" << this
+         << " idig=" << idig << " size=" << histograms[idig].size() << endl;
 
   hist = histograms[idig];
 }
@@ -200,14 +213,24 @@ unsigned long dsp::HistUnpacker::get_histogram_total (unsigned idig) const
   return nweights;
 }
 
-unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig)
+unsigned long* dsp::HistUnpacker::get_histogram (unsigned idig, unsigned expect)
 {
+  if (verbose)
+    cerr << "dsp::HistUnpacker::get_histogram idig=" << idig
+         << " expect=" << expect << endl;
+
   if (resize_needed)
     resize ();
 
   if (idig >= histograms.size())
     throw Error (InvalidRange, "dsp::HistUnpacker::get_histogram",
                  "invalid idig=%d >= ndig=%d", idig, histograms.size());
+
+  if (expect && histograms[idig].size() != expect)
+    throw Error (InvalidState, "dsp::HistUnpacker::get_histogram",
+                 "this=%x histograms[%d].size = %u != expected = %u", this,
+                 idig, histograms[idig].size(), expect);
+
 
   return &histograms[idig][0];
 }
@@ -239,11 +262,11 @@ void dsp::HistUnpacker::combine (const Operation* other)
 
   assert (histograms.size() == like->histograms.size());
 
-  for (unsigned ichan=0; ichan < histograms.size(); ichan++)
+  for (unsigned idig=0; idig < histograms.size(); idig++)
   {
-    assert (histograms[ichan].size() == like->histograms[ichan].size());
-    for (unsigned ibin=0; ibin<histograms[ichan].size(); ibin++)
-      histograms[ichan][ibin] += like->histograms[ichan][ibin];
+    assert (histograms[idig].size() == like->histograms[idig].size());
+    for (unsigned ibin=0; ibin<histograms[idig].size(); ibin++)
+      histograms[idig][ibin] += like->histograms[idig][ibin];
   }
 }
 
