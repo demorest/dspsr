@@ -64,6 +64,11 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (const unsigned char* input_data,
 
   const unsigned ndig_per_byte = get_ndig_per_byte();
 
+  if (verbose)
+    cerr << "dsp::SubByteTwoBitCorrection::dig_unpack input_data=" 
+         << (void*) input_data << " input_incr=" << get_input_incr() 
+         << " ndig_per_byte=" << ndig_per_byte << endl;
+
   if (ndig_per_byte == 2)
   {
     // unpack 2 samples per byte
@@ -88,7 +93,6 @@ void dsp::SubByteTwoBitCorrection::dig_unpack (const unsigned char* input_data,
   else
     throw Error (InvalidState, "dsp::SubByteTwoBitCorrection::dig_unpack",
 		 "invalid number of digitizers per byte: %u", ndig_per_byte);
-
 }
 
 dsp::TwoBitLookup* dsp::SubByteTwoBitCorrection::get_unpacker ()
