@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/DetectionCUDA.h,v $
-   $Revision: 1.1 $
-   $Date: 2010/06/01 08:50:29 $
+   $Revision: 1.2 $
+   $Date: 2010/06/01 09:32:07 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Detection_h
@@ -21,6 +21,10 @@ namespace CUDA
   class DetectionEngine : public dsp::Detection::Engine
   {
   public:
-    void polarimetry (unsigned ndim, const TimeSeries* in, TimeSeries* out);
+    void polarimetry (unsigned ndim,
+                      const dsp::TimeSeries* in, dsp::TimeSeries* out);
   };
 }
+
+#endif
+

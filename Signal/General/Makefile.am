@@ -31,19 +31,19 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/TransferCUDA.h dsp/DetectCUDA.h
+nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/TransferCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C DetectCUDA.cu 
+libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C DetectionCUDA.cu 
 
-libdspdsp_la_LIBADD = FilterbankCUDA.lo DetectCUDA.lo
+libdspdsp_la_LIBADD = FilterbankCUDA.lo DetectionCUDA.lo
 
 FilterbankCUDA.lo : FilterbankCUDA.cu
 	@CUDA_NVCC@ -c $(srcdir)/FilterbankCUDA.cu
 	sed -e 's/Filterbank/FilterbankCUDA/' Filterbank.lo > FilterbankCUDA.lo
 
-DetectCUDA.lo : DetectCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/DetectCUDA.cu
-	sed -e 's/Detection/DetectCUDA/' Detection.lo > DetectCUDA.lo
+DetectionCUDA.lo : DetectionCUDA.cu
+	@CUDA_NVCC@ -c $(srcdir)/DetectionCUDA.cu
+	sed -e 's/Detection/DetectionCUDA/' Detection.lo > DetectionCUDA.lo
 endif
 
 bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed

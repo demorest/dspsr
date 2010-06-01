@@ -23,12 +23,6 @@
 #endif
 
 
-#if HAVE_CUDA
-#include <cuda_runtime.h>
-#include "dsp/DetectCUDA.h"
-#include "dsp/MemoryCUDA.h"
-#endif
-
 using namespace std;
 
 //! Constructor
@@ -37,6 +31,11 @@ dsp::Detection::Detection ()
 {
   state = Signal::Intensity;
   ndim = 1;
+}
+
+void dsp::Detection::set_engine (Engine* _engine)
+{
+  engine = _engine;
 }
 
 //! Set the state of output data

@@ -134,40 +134,39 @@ void polarimetry_ndim2 (float* data, uint64_t span,
 }
 
 void CUDA::DetectionEngine::polarimetry (unsigned ndim,
-					 const dsp::TimeSeries* in, 
-					 dsp::TimeSeries* out)
+					 const dsp::TimeSeries* input, 
+					 dsp::TimeSeries* output)
 {
   if (ndim != 2)
-    throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry"
+    throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry",
 		 "cannot handle ndim=%u != 2", ndim);
 
-  if (in != out)
+  if (input != output)
     throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry"
 		 "cannot handle out-of-place data");
 
-  unsigned ichan, ipol;
+  uint64_t ndat = output->get_ndat ();
+  unsigned nchan = output->get_nchan ();
+
+  unsigned ichan=0, ipol=0;
 
   float* base = output->get_datptr (ichan=0, ipol=0);
 
   uint64_t span = output->get_datptr (ichan=0, ipol=1) - base;
 
-  if (verbose)
+  if (dsp::Operation::verbose)
     cerr << "CUDA::DetectionEngine::polarimetry ndim=" << output->get_ndim () 
          << " ndat=" << ndat << " span=" << span << endl;
 
   polarimetry_ndim2 (base, span, ndat, nchan);
 
-
-
-    if (Operation::record_time)
-    {
-      cudaThreadSynchronize ();
- 
-	cudaError error = cudaGetLastError();
-	if (error != cudaSuccess)
-	  throw Error (InvalidState, "dsp::Detection::polarimetry", cudaGetErrorString (error));
-      }
-
-    return;
+  if (dsp::Operation::record_time)
+  {
+    cudaThreadSynchronize ();
+    cudaError error = cudaGetLastError();
+    if (error != cudaSuccess)
+      throw Error (InvalidState, "CUDA::DetectionEngine::polarimetry", 
+                   cudaGetErrorString (error));
   }
-#endif
+}
+
