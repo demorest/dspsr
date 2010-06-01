@@ -29,6 +29,10 @@
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::File> dsp::File::registry;
 
+/*! DummyFile is built in */
+#include "dsp/DummyFile.h"
+static Registry::List<dsp::File>::Enter<dsp::DummyFile> dummy_file;
+
 /*! DADAFile is built in */
 #include "dsp/DADAFile.h"
 static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
