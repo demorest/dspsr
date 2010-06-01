@@ -4,7 +4,7 @@ noinst_LTLIBRARIES = libClasses.la
 nobase_include_HEADERS = environ.h ascii_header.h \
 	dsp/ASCIIObservation.h dsp/Seekable.h dsp/BitSeries.h	     \
 	dsp/InputBuffering.h dsp/InputBufferingShare.h		     \
-	dsp/DADAFile.h dsp/BitTable.h dsp/MPIRoot.h		     \
+	dsp/DADAFile.h dsp/DummyFile.h dsp/BitTable.h dsp/MPIRoot.h		     \
 	dsp/SubByteTwoBitCorrection.h dsp/BitUnpacker.h		     \
 	dsp/MPIServer.h dsp/BlockFile.h				     \
 	dsp/MPITrans.h dsp/TestInput.h dsp/BufferingPolicy.h	     \
@@ -29,7 +29,7 @@ nobase_include_HEADERS = environ.h ascii_header.h \
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
-	DADAFile.C TestInput.C BitTable.C BitUnpacker.C BlockFile.C \
+	DADAFile.C DummyFile.C TestInput.C BitTable.C BitUnpacker.C BlockFile.C \
 	TimeSeries.C ChannelOrder.C DataSeries.C   \
 	TwoBitCorrection.C Digitizer.C MultiFile.C TwoBitTable.C    \
 	EightBitUnpacker.C Unpacker.C File.C Observation.C	    \
