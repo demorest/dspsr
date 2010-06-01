@@ -33,6 +33,7 @@
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/DetectionCUDA.h"
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
 #endif
@@ -423,7 +424,7 @@ void dsp::LoadToFold1::prepare () try
   }
  
   if (!detect)
-    detect = new Detection(run_on_gpu);
+    detect = new Detection;
 
   if (run_on_gpu)
     config->ndim = 2;
@@ -431,6 +432,11 @@ void dsp::LoadToFold1::prepare () try
   TimeSeries* detected = convolved;
   detect->set_input (convolved);
   detect->set_output (convolved);
+
+#if HAVE_CUDA
+  if (run_on_gpu)
+    detect->set_engine (new CUDA::DetectionEngine);
+#endif
 
   if (manager->get_info()->get_npol() == 1) 
   {
