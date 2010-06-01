@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.64 $
-   $Date: 2010/04/29 04:05:24 $
+   $Revision: 1.65 $
+   $Date: 2010/06/01 11:44:30 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -253,6 +253,9 @@ namespace dsp {
 
     //! Synchronize the folded profile
     virtual void synch (PhaseSeries*) = 0;
+
+    //! Enable engine to prepare any internal memory required for the plan
+    virtual void set_ndat (uint64_t ndat) {}
 
   protected:
 
