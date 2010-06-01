@@ -703,6 +703,7 @@ void dsp::Fold::fold (uint64_t nweights,
     if (verbose)
       cerr << "dsp::Fold::fold using engine ptr=" << engine.ptr() << endl;
     engine->set_nbin (folding_nbin);
+    engine->set_ndat (idat_end - idat_start);
   }
 
   for (uint64_t idat=idat_start; idat < idat_end; idat++)
