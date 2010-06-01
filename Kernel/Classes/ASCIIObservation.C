@@ -181,7 +181,7 @@ void dsp::ASCIIObservation::load (const char* header)
     the file, in which case it is a function of NCHAN, NPOL, NDIM, NBIT.
   */
 
-  uint64_t scan_ndat;
+  uint64_t scan_ndat = 0;
   if (ascii_header_get (header, "NDAT", "%"PRIu64, &scan_ndat) >= 0)
     set_ndat( scan_ndat );
   else
