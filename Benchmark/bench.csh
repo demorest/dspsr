@@ -47,13 +47,14 @@ foreach bwtrial ( 1 2 3 4 )
 
     foreach trial ( a b c d e f )
 
-      echo trial $trial
-
       if ( $gpu ) then
-        ( time dspsr --cuda=$gpu -t $gpu $args ) >>& $file
+        set cmd="dspsr --cuda=$gpu -t $gpu $args"
       else
-        ( time dspsr -t $nthread --minram=$cache $args ) >>& $file
+        set cmd="dspsr -t $nthread --minram=$cache $args"
       endif
+
+      echo "trial ${trial}: $cmd"
+      ( time $cmd ) >>& $file
 
       rm -f *.ar
 
