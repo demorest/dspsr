@@ -360,7 +360,7 @@ void dsp::LoadToFold1::prepare () try
 #if HAVE_CUDA
     if (run_on_gpu)
     {
-      filterbank->set_engine (new CUDA::Engine);
+      filterbank->set_engine (new CUDA::FilterbankEngine);
       convolved->set_memory (device_memory);
 
       Scratch* gpu_scratch = new Scratch;
