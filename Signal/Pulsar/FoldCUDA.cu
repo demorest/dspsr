@@ -22,6 +22,10 @@ CUDA::FoldEngine::FoldEngine (cudaStream_t _stream)
   d_bin = 0;
   d_bin_size = 0;
 
+  binplan = 0;
+  binplan_size = 0;
+  binplan_nbin = 0;
+
   d_profiles = new dsp::PhaseSeries;
   d_profiles->set_memory( new CUDA::DeviceMemory );
 
@@ -42,7 +46,19 @@ void CUDA::FoldEngine::set_nbin (unsigned nbin)
   current_bin = folding_nbin = nbin;
   current_hits = 0;
   ndat_fold = 0;
-  binplan.resize (0);
+  binplan_nbin = 0;
+}
+
+void CUDA::FoldEngine::set_ndat (uint64_t ndat)
+{
+  if (ndat > binplan_size)
+  {
+    if (binplan)
+      cudaFreeHost (binplan);
+
+    cudaMallocHost ((void**)&binplan, ndat * sizeof(bin));
+    binplan_size = ndat;
+  }
 }
 
 void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
@@ -51,16 +67,19 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
   {
     /* store the number of time samples to integrate
        in the interval that just ended */
-    if (binplan.size())
-      binplan.back().hits = current_hits;
+    if (binplan_nbin)
+      binplan[binplan_nbin-1].hits = current_hits;
 
     bin start;
     start.offset = idat;
     start.ibin = ibin;
 
-    /* start a new interval */
-    binplan.push_back ( start );
+    assert (binplan_nbin < binplan_size);
 
+    /* start a new interval */
+    binplan[binplan_nbin] = start;
+
+    binplan_nbin ++;
     current_bin = ibin;
     current_hits = 0;
   }
@@ -106,28 +125,28 @@ void CUDA::FoldEngine::send_binplan ()
     cerr << "CUDA::FoldEngine::send_binplan ndat=" << ndat_fold 
          << " intervals=" << binplan.size() << endl;
 
-  if (binplan.size() == 0)
+  if (binplan_nbin == 0)
     return;
 
   if (current_hits)
-    binplan.back().hits = current_hits;
+    binplan[binplan_nbin-1].hits = current_hits;
 
   current_hits = 0;
 
   if (dsp::Operation::verbose)
     cerr << "CUDA::FoldEngine::send_binplan"
-            " first=" << binplan.front().ibin << 
-            " last=" << binplan.back().ibin << endl;
+            " first=" << binplan[0].ibin << 
+            " last=" << binplan[binplan_nbin-1].ibin << endl;
 
-  uint64_t mem_size = binplan.size() * sizeof(bin);
+  uint64_t mem_size = binplan_nbin * sizeof(bin);
 
-  if (binplan.size() > d_bin_size)
+  if (binplan_nbin > d_bin_size)
   {
     if (d_bin)
       cudaFree (d_bin);
 
     cudaMalloc ((void**)&d_bin, mem_size);
-    d_bin_size = binplan.size();
+    d_bin_size = binplan_nbin;
   }
  
   // copy the kernel accross
@@ -137,7 +156,7 @@ void CUDA::FoldEngine::send_binplan ()
 
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",
-                 "this=%x %s", this, cudaGetErrorString (error));
+                 "cudaMemcpy %s", this, cudaGetErrorString (error));
 }
 
 

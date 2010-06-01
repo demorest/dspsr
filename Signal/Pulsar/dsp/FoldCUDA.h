@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.7 $
-   $Date: 2010/06/01 10:46:29 $
+   $Revision: 1.8 $
+   $Date: 2010/06/01 11:38:57 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
@@ -34,6 +34,7 @@ namespace CUDA
     ~FoldEngine ();
 
     void set_nbin (unsigned nbin);
+    void set_ndat (uint64_t ndat);
 
     void set_bin (uint64_t idat, unsigned ibin);
 
@@ -45,7 +46,9 @@ namespace CUDA
 
   protected:
 
-    std::vector<bin> binplan;
+    bin* binplan;
+    uint64_t binplan_size;
+    uint64_t binplan_nbin;
 
     unsigned current_bin;
     unsigned current_hits;
