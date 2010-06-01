@@ -32,12 +32,11 @@
 using namespace std;
 
 //! Constructor
-dsp::Detection::Detection (bool on_gpu) 
+dsp::Detection::Detection ()
   : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace, true)
 {
   state = Signal::Intensity;
   ndim = 1;
-  run_on_gpu = on_gpu;
 }
 
 //! Set the state of output data
@@ -201,94 +200,69 @@ void dsp::Detection::square_law ()
   // if nyq is 2, then we are going to do signal analytic, and will need only 
   // half as many threads
 
-  if (run_on_gpu) 
+  for (unsigned ichan=0; ichan<nchan; ichan++)
+  {
+    for (unsigned ipol=0; ipol<npol; ipol++)
     {
-#if HAVE_CUDA     
-      unsigned nyq = 2;
+      register const float* in_ptr = input->get_datptr (ichan,ipol);
+      register const float* dend = in_ptr + nfloat;
+	      
+      register float* out_ptr = output->get_datptr (ichan,ipol);
       
       if (input->get_state()==Signal::Nyquist)
-	nyq = 1;
+	while( in_ptr != dend)
+	  {
+	    *out_ptr = *in_ptr * *in_ptr;
+	    out_ptr++;
+	    in_ptr++;
+	  } 
       
-      uint64_t ndat = input->get_ndat(); 
+      else if (input->get_state()==Signal::Analytic)
+	while( in_ptr!=dend)
+	  {
+	    *out_ptr = *in_ptr * *in_ptr;  // Re*Re
+	    in_ptr++;
+	    
+	    *out_ptr += *in_ptr * *in_ptr; // Add in Im*Im
+	    in_ptr++;
+	    out_ptr++;
+	  } 
       
-      int Blks = 256;
-      int BlkThread = ndat / nyq*Blks;
-      
-      const float* inputA = input->get_datptr(0,0);
-      const float* inputB = input->get_datptr(0,1);
-      
-      float* outputA = output->get_datptr(0,0);
-      float* outputB = output->get_datptr(0,1);
-      
-      cout << "Square Law CUDA not implemented" << endl;
-      //square_lawCUDA(BlkThread,Blks,inputA,inputB,outputA,outputB,nyq);
-      
-      if (state == Signal::Intensity && npol == 2) 
-	{     
-	  cout << "pscrunchCUDA not implemented" << endl;
-	  //pscrunchCUDA(BlkThread,Blks,outputA,outputB);
-	}
-#endif
-    }
-  else
+    }  // for each ipol
+  }  // for each ichan
+  
+  if (state == Signal::Intensity && npol == 2)
+  {
+    // pscrunching
+    for (unsigned ichan=0; ichan<nchan; ichan++)
     {
-      for (unsigned ichan=0; ichan<nchan; ichan++)
-	{
-	  for (unsigned ipol=0; ipol<npol; ipol++)
-	    {
-	      register const float* in_ptr = input->get_datptr (ichan,ipol);
-	      register const float* dend = in_ptr + nfloat;
-	      
-	      register float* out_ptr = output->get_datptr (ichan,ipol);
-	      
-	      if (input->get_state()==Signal::Nyquist)
-		while( in_ptr != dend)
-		  {
-		    *out_ptr = *in_ptr * *in_ptr;
-		    out_ptr++;
-		    in_ptr++;
-		  } 
-	      
-	      else if (input->get_state()==Signal::Analytic)
-		while( in_ptr!=dend)
-		  {
-		    *out_ptr = *in_ptr * *in_ptr;  // Re*Re
-		    in_ptr++;
-		    
-		    *out_ptr += *in_ptr * *in_ptr; // Add in Im*Im
-		    in_ptr++;
-		    out_ptr++;
-		  } 
-
-	    }  // for each ipol
-	}  // for each ichan
-
-      if (state == Signal::Intensity && npol == 2)
-	{
-	  // pscrunching
-	  for (unsigned ichan=0; ichan<nchan; ichan++)
-	    {
-	      register float* p0 = output->get_datptr (ichan, 0);
-	      register float* p1 = output->get_datptr (ichan, 1);
-	      const register float* pend = p0 + output->get_ndat();
-	      
-	      while( p0!=pend)
-		{
-		  *p0 += *p1;
-		  p0 ++;
-		  p1 ++;
-		}
-	    }
-	} 
+      register float* p0 = output->get_datptr (ichan, 0);
+      register float* p1 = output->get_datptr (ichan, 1);
+      const register float* pend = p0 + output->get_ndat();
+      
+      while (p0!=pend)
+      {
+	*p0 += *p1;
+	p0 ++;
+	p1 ++;
+      }
     }
+  } 
 }
-
-
 
 void dsp::Detection::polarimetry () try
 {
   if (verbose)
     cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
+
+  if (engine)
+  {
+    if (verbose)
+      cerr << "dsp::Detection::polarimetry using Engine" << endl;
+
+    engine->polarimetry (ndim, input, output);
+    return;
+  }
 
   const unsigned input_npol = get_input()->get_npol();
   const unsigned input_ndim = get_input()->get_ndim();
@@ -339,79 +313,35 @@ void dsp::Detection::polarimetry () try
 
   float* r[4];
 
-#if HAVE_CUDA
-
-  if (run_on_gpu)
-  {
-    if (verbose)
-	    cerr << "dsp::Detection::polarimetry HAVE_CUDA  ndim=" << ndim << endl;
-
-    unsigned ichan, ipol;
-
-    float* base = output->get_datptr (ichan=0, ipol=0);
-
-#if 0
-    uint64_t span = output->get_datptr (ichan=1, ipol=0) - base;
-    output->set_ndim(4);
-    output->set_npol(1);
-    output->reshape();
-    polarimetry_ndim4 (base, span, ndat, nchan);
-#else
-
-    uint64_t span = output->get_datptr (ichan=0, ipol=1) - base;
-
-    if (verbose)
-    cerr << "dsp::Detection::polarimetry ndim=" << output->get_ndim () 
-         << " ndat=" << ndat << " span=" << span << endl;
-
-    polarimetry_ndim2 (base, span, ndat, nchan);
-#endif
-
-    if (Operation::record_time)
-    {
-      cudaThreadSynchronize ();
- 
-	cudaError error = cudaGetLastError();
-	if (error != cudaSuccess)
-	  throw Error (InvalidState, "dsp::Detection::polarimetry", cudaGetErrorString (error));
-      }
-
-    return;
-  }
-#endif
-
   for (unsigned ichan=0; ichan<nchan; ichan++)
-	{
-	  const float* p = input->get_datptr (ichan, 0);
-	  const float* q = input->get_datptr (ichan, 1);
+  {
+    const float* p = input->get_datptr (ichan, 0);
+    const float* q = input->get_datptr (ichan, 1);
 	  
-	  if (inplace && ndim != 2)
-	    {
-	      if (verbose && ichan == 0)
-		cerr << "dsp::Detection::polarimetry copy_bytes="
-		     << copy_bytes << endl;
+    if (inplace && ndim != 2)
+    {
+      if (verbose && ichan == 0)
+	cerr << "dsp::Detection::polarimetry copy_bytes="
+	     << copy_bytes << endl;
 	      
-	      memcpy (copyp, p, size_t(copy_bytes));
-	      p = copyp;
-	      
-	      if (ndim == 1)
-		{
-		  memcpy (copyq, q, size_t(copy_bytes));
-		  q = copyq;
-		}
-	    }
-
-	  get_result_pointers (ichan, inplace, r);
-	  
-	  if (state == Signal::Stokes)
-	      stokes_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
-	  else
-	    cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
-	
-	  //for (unsigned zz=0; zz<10;zz++)
-	  //  cout << "r[0]cpu: " << r[0][zz] << endl;
-	}
-
+      memcpy (copyp, p, size_t(copy_bytes));
+      p = copyp;
+      
+      if (ndim == 1)
+      {
+	memcpy (copyq, q, size_t(copy_bytes));
+	q = copyq;
+      }
+    }
+    
+    get_result_pointers (ichan, inplace, r);
+    
+    if (state == Signal::Stokes)
+      stokes_detect (unsigned(ndat), p, q, r[0], r[1], r[2], r[3], ndim);
+    else
+      cross_detect (ndat, p, q, r[0], r[1], r[2], r[3], ndim);
+  }
+  
   if (verbose)
     cerr << "dsp::Detection::polarimetry exit" << endl;
   

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.19 $
-   $Date: 2010/03/22 00:48:51 $
+   $Revision: 1.20 $
+   $Date: 2010/06/01 09:12:18 $
    $Author: straten $ */
 
 
@@ -43,7 +43,7 @@ namespace dsp {
   public:
     
     //! Constructor
-    Detection (bool on_gpu = false);
+    Detection ();
     
     //! Prepare the output TimeSeries attributes
     void prepare ();
@@ -58,6 +58,10 @@ namespace dsp {
     //! Get the dimension of the output data
     bool get_output_ndim () const { return ndim; }
 
+    //! Engine used to perform discrete convolution step
+    class Engine;
+    void set_engine (Engine*);
+
   protected:
 
     //! Detect the input data
@@ -68,6 +72,9 @@ namespace dsp {
 
     //! Dimension of the output data
     int ndim;
+
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
 
     //! Called by polarimetry to return pointers to the result channels
     void get_result_pointers (unsigned ichan, bool inplace, float* r[4]);
@@ -86,11 +93,14 @@ namespace dsp {
 
     //! Quick and dirty method for detecting to PP or QQ
     void onepol_detect();
-
-    bool run_on_gpu;
-
   };
 
+  class Detection::Engine : public Reference::Able
+  {
+  public:
+    virtual void polarimetry (unsigned ndim,
+			      const TimeSeries* in, TimeSeries* out) = 0;
+  }; 
 }
 
 #endif // !defined(__Detection_h)
