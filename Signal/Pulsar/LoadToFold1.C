@@ -144,14 +144,15 @@ void dsp::LoadToFold1::prepare () try
   manager->set_output (unpacked);
 
   operations.push_back (manager.get());
-  run_on_gpu = false;
+  gpu_stream = 0;
 
 #if HAVE_CUDA
 
-  run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
+  bool run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
 
   cudaStream_t stream;
   cudaStreamCreate( &stream );
+  gpu_stream = &stream;
 
   if (run_on_gpu)
   {
@@ -911,8 +912,11 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       operations.push_back( fold[ifold].get() );
 
 #if HAVE_CUDA
-    if (run_on_gpu)
-      fold[ifold]->set_engine (new CUDA::FoldEngine(stream));
+    if (gpu_stream)
+    {
+      cudaStream_t* stream = reinterpret_cast<cudaStream_t*>(gpu_stream);
+      fold[ifold]->set_engine (new CUDA::FoldEngine(*stream));
+    }
 #endif
 
     path[ifold]->add( fold[ifold] );

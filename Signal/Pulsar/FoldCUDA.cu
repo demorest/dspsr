@@ -132,7 +132,7 @@ void CUDA::FoldEngine::send_binplan ()
  
   // copy the kernel accross
   cudaError error;
-  error = cudaMemcpy (d_bin, &(binplan[0]), mem_size,
+  error = cudaMemcpyAsync (d_bin, &(binplan[0]), mem_size,
 		      cudaMemcpyHostToDevice, stream);
 
   if (error != cudaSuccess)
@@ -201,7 +201,7 @@ void CUDA::FoldEngine::fold ()
   // profile on the device is no longer synchronized with the one on the host
   synchronized = false;
 
-  if (Operation::record_time)
+  if (dsp::Operation::record_time)
   {
     cudaThreadSynchronize ();
 

@@ -120,7 +120,9 @@ void Speed::runTest ()
   dsp::Memory* memory = 0;
 
 #if HAVE_CUFFT
-  engine = new CUDA::FilterbankEngine;
+  cudaStream_t stream;
+  cudaStreamCreate( &stream );
+  engine = new CUDA::FilterbankEngine (stream);
   memory = new CUDA::DeviceMemory;
 #endif
 
