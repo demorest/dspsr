@@ -17,7 +17,7 @@
 
 using namespace std;
 
-CUDA::FoldEngine::FoldEngine ()
+CUDA::FoldEngine::FoldEngine (cudaStream_t _stream)
 {
   d_bin = 0;
   d_bin_size = 0;
@@ -27,6 +27,8 @@ CUDA::FoldEngine::FoldEngine ()
 
   // no data on either the host or device
   synchronized = true;
+
+  stream = _stream;
 }
 
 CUDA::FoldEngine::~FoldEngine ()
@@ -130,7 +132,9 @@ void CUDA::FoldEngine::send_binplan ()
  
   // copy the kernel accross
   cudaError error;
-  error = cudaMemcpy (d_bin, &(binplan[0]), mem_size, cudaMemcpyHostToDevice);
+  error = cudaMemcpy (d_bin, &(binplan[0]), mem_size,
+		      cudaMemcpyHostToDevice, stream);
+
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",
                  "this=%x %s", this, cudaGetErrorString (error));
@@ -189,18 +193,21 @@ void CUDA::FoldEngine::fold ()
 
   DEBUG("input span=" << input_span << " output span=" << output_span);
 
-  fold1bin<<<gridDim,blockDim>>> (input, input_span, output, output_span,
-                                  ndim, folding_nbin, binplan.size(), d_bin);
+  fold1bin<<<gridDim,blockDim,0,stream>>> (input, input_span,
+					   output, output_span,
+					   ndim, folding_nbin,
+					   binplan.size(), d_bin);
 
   // profile on the device is no longer synchronized with the one on the host
   synchronized = false;
 
-  cudaThreadSynchronize ();
+  if (Operation::record_time)
+  {
+    cudaThreadSynchronize ();
 
-  cudaError error = cudaGetLastError();
-  if (error != cudaSuccess)
-    throw Error (InvalidState, "CUDA::FoldEngine::fold", 
-                 cudaGetErrorString (error));
-
+    cudaError error = cudaGetLastError();
+    if (error != cudaSuccess)
+      throw Error (InvalidState, "CUDA::FoldEngine::fold", 
+		   cudaGetErrorString (error));
+  }
 }
-

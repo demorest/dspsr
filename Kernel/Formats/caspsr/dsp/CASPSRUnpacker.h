@@ -37,7 +37,7 @@ namespace dsp {
 		 unsigned long* hist);
 
     BitSeries staging;
-    bool on_gpu;
+    void* gpu_stream;
     void unpack_on_gpu ();
 
     unsigned get_resolution ()const ;

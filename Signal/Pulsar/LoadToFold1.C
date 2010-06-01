@@ -150,13 +150,16 @@ void dsp::LoadToFold1::prepare () try
 
   run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
 
+  cudaStream_t stream;
+  cudaStreamCreate( &stream );
+
   if (run_on_gpu)
   {
     // disable input buffering when data must be copied between devices
     if (config->nthread > 1)
       config->input_buffering = false;
 
-    device_memory = new CUDA::DeviceMemory;
+    device_memory = new CUDA::DeviceMemory (&stream);
 
     int device =  thread_id % config->cuda_ndevice;
     cerr << "dspsr: thread " << thread_id 
@@ -360,7 +363,7 @@ void dsp::LoadToFold1::prepare () try
 #if HAVE_CUDA
     if (run_on_gpu)
     {
-      filterbank->set_engine (new CUDA::FilterbankEngine);
+      filterbank->set_engine (new CUDA::FilterbankEngine (stream));
       convolved->set_memory (device_memory);
 
       Scratch* gpu_scratch = new Scratch;
@@ -435,7 +438,7 @@ void dsp::LoadToFold1::prepare () try
 
 #if HAVE_CUDA
   if (run_on_gpu)
-    detect->set_engine (new CUDA::DetectionEngine);
+    detect->set_engine (new CUDA::DetectionEngine(stream));
 #endif
 
   if (manager->get_info()->get_npol() == 1) 
@@ -909,7 +912,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
 #if HAVE_CUDA
     if (run_on_gpu)
-      fold[ifold]->set_engine (new CUDA::FoldEngine);
+      fold[ifold]->set_engine (new CUDA::FoldEngine(stream));
 #endif
 
     path[ifold]->add( fold[ifold] );

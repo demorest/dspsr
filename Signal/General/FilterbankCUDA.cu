@@ -13,7 +13,7 @@
 #include <iostream>
 using namespace std;
 
-CUDA::FilterbankEngine::FilterbankEngine ()
+CUDA::FilterbankEngine::FilterbankEngine (cudaStream_t _stream)
 {
   real_to_complex = false;
   nchan = 0;
@@ -22,6 +22,8 @@ CUDA::FilterbankEngine::FilterbankEngine ()
   d_fft = d_kernel = 0;
 
   scratch = 0;
+
+  stream = _stream;
 }
 
 CUDA::FilterbankEngine::~FilterbankEngine ()
@@ -53,9 +55,13 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     npol = 2;
 
   cufftPlan1d (&plan_fwd, bwd_nfft*nchan*npol, CUFFT_C2C, 1);
+  cufftSetStream (plan_fwd, stream);
 
   if (nchan > 1)
+  {
     cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
+    cufftSetStream (plan_bwd, stream);
+  }
 
   if (filterbank->has_response())
   {
@@ -171,8 +177,8 @@ __global__ void separate (float2* d_fft, int nfft)
  *
  ************************************************************************* */
 
-__global__ void performRealtr (float2* d_fft, unsigned bwd_nfft,
-			       float* k_SN, float* k_CN)
+__global__ void realtr (float2* d_fft, unsigned bwd_nfft,
+			float* k_SN, float* k_CN)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   int k = bwd_nfft - i;
@@ -247,9 +253,9 @@ void CUDA::FilterbankEngine::perform (const float* in)
     DEBUG("CUDA::FilterbankEngine::perform real-to-complex");
 
     if (twofft)
-      separate<<<blocks,threads>>> (cscratch, data_size);
+      separate<<<blocks,threads,0,stream>>> (cscratch, data_size);
     else
-      performRealtr<<<blocks,threads>>> (cscratch,data_size,d_SN,d_CN);
+      realtr<<<blocks,threads,0,stream>>> (cscratch,data_size,d_SN,d_CN);
 
     CHECK_ERROR ("CUDA::FilterbankEngine::perform separate");
   }
@@ -258,10 +264,10 @@ void CUDA::FilterbankEngine::perform (const float* in)
 
   if (d_kernel)
   {
-    multiply<<<blocks,threads>>> (cscratch, d_kernel);
+    multiply<<<blocks,threads,0,stream>>> (cscratch, d_kernel);
 
     if (twofft)
-      multiply<<<blocks,threads>>> (cscratch+data_size, d_kernel);
+      multiply<<<blocks,threads,0,stream>>> (cscratch+data_size, d_kernel);
 
     CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply");
   }
@@ -293,13 +299,13 @@ void CUDA::FilterbankEngine::perform (const float* in)
   float2* output_base = (float2*) output;
   unsigned output_stride = output_span / 2;
 
-  ncopy<<<blocks,threads>>> (output_base, output_stride,
+  ncopy<<<blocks,threads,0,stream>>> (output_base, output_stride,
 			     input_p0, input_stride, to_copy);
 
   if (twofft)
-    ncopy<<<blocks,threads>>> (output_base+output_stride/2, output_stride,
-                               input_p1, input_stride, to_copy);
+    ncopy<<<blocks,threads,0,stream>>> (output_base+output_stride/2,
+					output_stride,
+					input_p1, input_stride, to_copy);
 }
 
 }
-
