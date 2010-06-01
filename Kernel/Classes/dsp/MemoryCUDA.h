@@ -25,11 +25,18 @@ namespace CUDA
   class DeviceMemory : public dsp::Memory
   {
   public:
+    DeviceMemory (cudaStream_t* _stream = 0) { stream = _stream };
+
     void* do_allocate (unsigned nbytes);
     void do_free (void*);
     void do_copy (void* to, const void* from, size_t bytes);
     void do_zero (void*, unsigned);
     bool on_host () const { return false; }
+
+    cudaStream_t* get_stream () { return stream; }
+
+  protected:
+    cudaStream_t* stream;
   };
 
   class SharedPinnedMemory : public dsp::Memory
