@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.28 $
-   $Date: 2010/05/21 00:54:46 $
+   $Revision: 1.29 $
+   $Date: 2010/06/01 20:00:04 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -76,11 +76,9 @@ namespace dsp {
     // perform coherent dedispersion while forming the filterbank
     bool simultaneous_filterbank;
 
-    // number of CUDA devices available for computation
-    unsigned cuda_ndevice;
-
-    // number of CUDA streams per device
-    unsigned cuda_nstream;
+    // set the cuda devices to be used
+    void set_cuda_devices (std::string);
+    unsigned get_cuda_ndevice () const { return cuda_device.size(); }
 
     // number of threads in operation
     unsigned nthread;
@@ -182,6 +180,9 @@ namespace dsp {
 
     // These attributes are set only by the LoadToFold classes, including
     friend class LoadToFold1;
+
+    // number of CUDA devices available for computation
+    std::vector<unsigned> cuda_device;
 
     unsigned buffers;
 

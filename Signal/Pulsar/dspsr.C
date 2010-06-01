@@ -71,7 +71,7 @@ string baseband_options;
 Reference::To<dsp::LoadToFold::Config> config;
 
 // Number of threads used to process the data
-unsigned nthread = 1;
+unsigned nthread = 0;
 
 // load filenames from the ascii file named metafile
 string metafile;
@@ -359,11 +359,8 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("use benchmark data to choose optimal FFT length");
 
 #if HAVE_CUFFT
-  arg = menu.add (config->cuda_ndevice, "cuda", "ndevice");
-  arg->set_help ("set the number of CUDA devices to use");
-
-  arg = menu.add (config->cuda_nstream, "stream", "nstream");
-  arg->set_help ("set the number of CUDA streams per device");
+  arg = menu.add (config->set_cuda_devices, "cuda", "devices");
+  arg->set_help ("set the CUDA devices to use");
 #endif
 
   /* ***********************************************************************
@@ -533,6 +530,14 @@ void parse_options (int argc, char** argv) try
     dsp::set_verbosity (3);
     verbose = true;
   }
+
+  if (nthread == 0)
+    nthread = config->get_cuda_ndevice();
+  else
+    nthread += config->get_cuda_ndevice();
+
+  if (nthread == 0)
+    nthread = 1;
 
   if (config->integration_length && config->minimum_integration_length < 0)
   {
