@@ -29,7 +29,7 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
     cerr << "dsp::CASPSRUnpacker ctor" << endl;
 
   set_nstate (256);
-  on_gpu = false;
+  gpu_stream = 0;
 
   table = new BitTable (8, BitTable::TwosComplement);
 }
@@ -50,9 +50,13 @@ bool dsp::CASPSRUnpacker::get_device_supported (Memory* memory) const
 void dsp::CASPSRUnpacker::set_device (Memory* memory)
 {
 #if HAVE_CUDA
-  on_gpu = dynamic_cast< CUDA::DeviceMemory*> ( memory );
-  if (on_gpu)
+  CUDA::DeviceMemory* gpu = dynamic_cast< CUDA::DeviceMemory*>( memory );
+  if (gpu)
+  {
     staging.set_memory( memory );
+    gpu_stream = gpu->get_stream();
+  }
+
 #else
   throw Error (InvalidState, "dsp::CASPSRUnpacker::set_device",
 	       "unsupported device");
@@ -104,7 +108,7 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
 void dsp::CASPSRUnpacker::unpack ()
 {
 #if HAVE_CUDA
-  if (on_gpu)
+  if (gpu_stream)
   {
     unpack_on_gpu ();
     return;
@@ -162,14 +166,15 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
   // staging buffer on the GPU for packed data
   unsigned char* d_staging = staging.get_rawptr();
  
-
   const unsigned char*  from= input->get_rawptr();
 
   float* into_pola = output->get_datptr(0,0);
   float* into_polb = output->get_datptr(0,1);
 
+  cudaStream_t* stream = reinterpret_cast<cudaStream_t*>( gpu_stream );
 
-  cudaError error = cudaMemcpy(d_staging,from,ndat*2,cudaMemcpyHostToDevice);
+  cudaError error = cudaMemcpyAsync (d_staging, from, ndat*2,
+				     cudaMemcpyHostToDevice, *stream);
 
   if (error != cudaSuccess)
     cerr << "CASPSRUnpacker::unpack() cudaMemcpy FAIL: " 

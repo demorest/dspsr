@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.6 $
-   $Date: 2010/04/29 04:05:24 $
+   $Revision: 1.7 $
+   $Date: 2010/06/01 10:46:29 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
@@ -30,7 +30,7 @@ namespace CUDA
   {
   public:
 
-    FoldEngine ();
+    FoldEngine (cudaStream_t stream);
     ~FoldEngine ();
 
     void set_nbin (unsigned nbin);
@@ -62,6 +62,7 @@ namespace CUDA
     // operation used to transfer data from device to host
     Reference::To<dsp::TransferCUDA> transfer;
 
+    cudaStream_t stream;
   };
 }
 

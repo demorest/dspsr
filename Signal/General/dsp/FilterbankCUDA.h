@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.15 $
-   $Date: 2010/06/01 09:18:51 $
+   $Revision: 1.16 $
+   $Date: 2010/06/01 10:46:29 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -39,7 +39,7 @@ namespace CUDA
   public:
 
     //! Default Constructor
-    FilterbankEngine ();
+    FilterbankEngine (cudaStream_t stream);
     ~FilterbankEngine ();
 
     void setup (dsp::Filterbank*);
@@ -70,6 +70,7 @@ namespace CUDA
     //! real-to-complex trick arrays in CUDA memory
     float *d_SN, *d_CN;
 
+    cudaStream_t stream;
   };
 
 }

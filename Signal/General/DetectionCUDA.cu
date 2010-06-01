@@ -111,26 +111,10 @@ __global__ void coherence2 (float2* base, unsigned span, unsigned ndat)
   p1[i] = s1;
 }
 
-void polarimetry_ndim2 (float* data, uint64_t span,
-			uint64_t ndat, unsigned nchan)
+
+CUDA::DetectionEngine::DetectionEngine (cudaStream_t _stream)
 {
-  dim3 threads (128);
-  dim3 blocks (ndat/threads.x, nchan);
-
-  if (ndat % threads.x)
-    blocks.x ++;
-
-  DEBUG("polarimetry_ndim2 ndat=" << ndat << " span=" << span \
-        << " blocks=" << blocks.x << " threads=" << threads.x \
-        << " data=" << data);
-
-  // pass span as number of complex values
-  coherence2<<<blocks,threads>>> ((float2*)data, span/2, ndat); 
-
-  cudaThreadSynchronize();
-  cudaError error = cudaGetLastError();
-  if (error != cudaSuccess)
-    cerr << "FAIL coherence: " << cudaGetErrorString (error) << endl;
+  stream = _stream;
 }
 
 void CUDA::DetectionEngine::polarimetry (unsigned ndim,
@@ -158,7 +142,14 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
     cerr << "CUDA::DetectionEngine::polarimetry ndim=" << output->get_ndim () 
          << " ndat=" << ndat << " span=" << span << endl;
 
-  polarimetry_ndim2 (base, span, ndat, nchan);
+  dim3 threads (128);
+  dim3 blocks (ndat/threads.x, nchan);
+
+  if (ndat % threads.x)
+    blocks.x ++;
+
+  // pass span as number of complex values
+  coherence2<<<blocks,threads,0,stream>>> ((float2*)base, span/2, ndat); 
 
   if (dsp::Operation::record_time)
   {

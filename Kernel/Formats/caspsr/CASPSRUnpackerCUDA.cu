@@ -85,17 +85,15 @@ void caspsr_unpack (const uint64_t ndat, float scale,
   int nblock = ndat / (4*nthread);
 
 #ifdef _DEBUG
-    cerr << "caspsr_unpack ndat=" << ndat << " scale=" << scale 
-         << " input=" << (void*) input << " nblock=" << nblock
-         << " nthread=" << nthread << endl;
+  cerr << "caspsr_unpack ndat=" << ndat << " scale=" << scale 
+       << " input=" << (void*) input << " nblock=" << nblock
+       << " nthread=" << nthread << endl;
 #endif
 
-#if 0
-  unpack_real_ndim2<<<nblock, nthread>>> (ndat, scale,
-					  (const char8*) input, pol0);
-#else
-  unpack_real_ndim1<<<nblock, nthread>>> (ndat, scale, input, pol0, pol1);
-#endif
+  cudaStream_t* stream = reinterpret_cast<cudaStream_t*>( gpu_stream );
+
+  unpack_real_ndim1<<<nblock,nthread,0,*stream>>> (ndat, scale, input,
+						  pol0, pol1);
 
   if (dsp::Operation::record_time)
   {
