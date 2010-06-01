@@ -359,7 +359,8 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("use benchmark data to choose optimal FFT length");
 
 #if HAVE_CUFFT
-  arg = menu.add (config->set_cuda_devices, "cuda", "devices");
+  arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_cuda_devices,
+		  "cuda", "devices");
   arg->set_help ("set the CUDA devices to use");
 #endif
 
