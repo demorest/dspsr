@@ -11,6 +11,8 @@
 
 #include "dsp/Memory.h"
 
+#include <cuda_runtime.h>
+
 namespace CUDA
 {
   //! Manages CUDA pinned memory allocation and destruction
@@ -25,7 +27,7 @@ namespace CUDA
   class DeviceMemory : public dsp::Memory
   {
   public:
-    DeviceMemory (cudaStream_t* _stream = 0) { stream = _stream };
+    DeviceMemory (cudaStream_t* _stream = 0) { stream = _stream; }
 
     void* do_allocate (unsigned nbytes);
     void do_free (void*);

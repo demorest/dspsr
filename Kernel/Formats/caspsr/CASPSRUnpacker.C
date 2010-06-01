@@ -180,7 +180,7 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
     cerr << "CASPSRUnpacker::unpack() cudaMemcpy FAIL: " 
 	 << cudaGetErrorString (error) << endl;
 
-  caspsr_unpack (ndat,table->get_scale(), d_staging, into_pola, into_polb); 
+  caspsr_unpack (*stream, ndat,table->get_scale(), d_staging, into_pola, into_polb); 
 }
 
 #endif

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.23 $
-   $Date: 2010/05/04 17:49:27 $
+   $Revision: 1.24 $
+   $Date: 2010/06/01 11:14:49 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
@@ -207,7 +207,7 @@ namespace dsp {
 
   private:
 
-    bool run_on_gpu;
+    void* gpu_stream;
     Reference::To<Memory> device_memory;
 
   };
