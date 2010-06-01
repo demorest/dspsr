@@ -29,7 +29,7 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
     cerr << "dsp::CASPSRUnpacker ctor" << endl;
 
   set_nstate (256);
-  gpu_stream = 0;
+  gpu_stream = -1;
 
   table = new BitTable (8, BitTable::TwosComplement);
 }
@@ -108,7 +108,7 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
 void dsp::CASPSRUnpacker::unpack ()
 {
 #if HAVE_CUDA
-  if (gpu_stream)
+  if (gpu_stream != -1)
   {
     unpack_on_gpu ();
     return;
@@ -155,7 +155,6 @@ unsigned dsp::CASPSRUnpacker::get_resolution () const { return 1024; }
 
 #if HAVE_CUDA
 
-
 void dsp::CASPSRUnpacker::unpack_on_gpu ()
 {
   const uint64_t ndat = input->get_ndat();
@@ -166,21 +165,21 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
   // staging buffer on the GPU for packed data
   unsigned char* d_staging = staging.get_rawptr();
  
-  const unsigned char*  from= input->get_rawptr();
+  const unsigned char* from= input->get_rawptr();
 
   float* into_pola = output->get_datptr(0,0);
   float* into_polb = output->get_datptr(0,1);
 
-  cudaStream_t* stream = reinterpret_cast<cudaStream_t*>( gpu_stream );
+  cudaStream_t stream = (cudaStream_t) gpu_stream;
 
   cudaError error = cudaMemcpyAsync (d_staging, from, ndat*2,
-				     cudaMemcpyHostToDevice, *stream);
+                                     cudaMemcpyHostToDevice, stream);
 
   if (error != cudaSuccess)
-    cerr << "CASPSRUnpacker::unpack() cudaMemcpy FAIL: " 
-	 << cudaGetErrorString (error) << endl;
+    throw Error (FailedCall, "CASPSRUnpacker::unpack_on_gpu",
+                 "cudaMemcpyAsync %s", cudaGetErrorString (error));
 
-  caspsr_unpack (*stream, ndat,table->get_scale(), d_staging, into_pola, into_polb); 
+  caspsr_unpack (stream, ndat,table->get_scale(), d_staging, into_pola, into_polb); 
 }
 
 #endif

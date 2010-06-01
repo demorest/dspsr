@@ -151,16 +151,12 @@ void dsp::LoadToFold1::prepare () try
   bool run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
 
   cudaStream_t stream;
-  cudaStreamCreate( &stream );
-  gpu_stream = &stream;
 
   if (run_on_gpu)
   {
     // disable input buffering when data must be copied between devices
     if (config->nthread > 1)
       config->input_buffering = false;
-
-    device_memory = new CUDA::DeviceMemory (&stream);
 
     int device =  thread_id % config->cuda_ndevice;
     cerr << "dspsr: thread " << thread_id 
@@ -177,6 +173,11 @@ void dsp::LoadToFold1::prepare () try
     if (err != cudaSuccess)
       throw Error (InvalidState, "dsp::LoadToFold1::prepare",
 		   "cudaMalloc failed: %s", cudaGetErrorString(err));
+
+    cudaStreamCreate( &stream );
+    gpu_stream = &stream;
+
+    device_memory = new CUDA::DeviceMemory (stream);
 
     Unpacker* unpacker = manager->get_unpacker ();
     if (unpacker->get_device_supported( device_memory ))
