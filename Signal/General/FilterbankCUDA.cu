@@ -13,7 +13,7 @@
 #include <iostream>
 using namespace std;
 
-CUDA::Engine::Engine ()
+CUDA::FilterbankEngine::FilterbankEngine ()
 {
   real_to_complex = false;
   nchan = 0;
@@ -24,11 +24,11 @@ CUDA::Engine::Engine ()
   scratch = 0;
 }
 
-CUDA::Engine::~Engine ()
+CUDA::FilterbankEngine::~FilterbankEngine ()
 {
 }
 
-void CUDA::Engine::setup (dsp::Filterbank* filterbank)
+void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 {
   bwd_nfft = filterbank->get_freq_res ();
   nchan = filterbank->get_nchan ();
@@ -37,12 +37,13 @@ void CUDA::Engine::setup (dsp::Filterbank* filterbank)
 
   twofft = false;
 
-  DEBUG("CUDA::Engine::setup nchan=" << nchan << " bwd_nfft=" << bwd_nfft);
+  DEBUG("CUDA::FilterbankEngine::setup nchan=" << nchan \
+	<< " bwd_nfft=" << bwd_nfft);
 
   unsigned data_size = nchan * bwd_nfft * 2;
   unsigned mem_size = data_size * sizeof(cufftReal);
 
-  DEBUG("CUDA::Engine::setup data_size=" << data_size);
+  DEBUG("CUDA::FilterbankEngine::setup data_size=" << data_size);
 
   // if using the twofft trick, double the forward FFT length and
   // double the number of backward FFTs
@@ -70,7 +71,7 @@ void CUDA::Engine::setup (dsp::Filterbank* filterbank)
   if (!real_to_complex || twofft)
     return;
 
-  DEBUG("CUDA::Engine::setup real-to-complex");
+  DEBUG("CUDA::FilterbankEngine::setup real-to-complex");
 
   unsigned n_half = nchan * bwd_nfft / 2 + 1;
   unsigned n_half_size = n_half * sizeof(cufftReal);
@@ -115,9 +116,9 @@ void check_error (const char* method)
 #define CHECK_ERROR(x)
 #endif
 
-void CUDA::Engine::finish ()
+void CUDA::FilterbankEngine::finish ()
 {
-  check_error ("CUDA::Engine::finish");
+  check_error ("CUDA::FilterbankEngine::finish");
 }
 
 /* *************************************************************************
@@ -222,14 +223,14 @@ __global__ void ncopy (float2* output_data, unsigned output_stride,
     output_data[index] = input_data[index];
 }
 
-void CUDA::Engine::perform (const float* in)
+void CUDA::FilterbankEngine::perform (const float* in)
 {
   float2* cscratch = (float2*) scratch;
   float2* cin = (float2*) in;
 
   cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
 
-  CHECK_ERROR ("CUDA::Engine::perform cufftExecC2C FORWARD");
+  CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
 
   if (nchan == 1)
     return;
@@ -243,14 +244,14 @@ void CUDA::Engine::perform (const float* in)
 
   if (real_to_complex)
   {
-    DEBUG("CUDA::Engine::perform real-to-complex");
+    DEBUG("CUDA::FilterbankEngine::perform real-to-complex");
 
     if (twofft)
       separate<<<blocks,threads>>> (cscratch, data_size);
     else
       performRealtr<<<blocks,threads>>> (cscratch,data_size,d_SN,d_CN);
 
-    CHECK_ERROR ("CUDA::Engine::perform separate");
+    CHECK_ERROR ("CUDA::FilterbankEngine::perform separate");
   }
 
   blocks = data_size / threads;
@@ -262,12 +263,12 @@ void CUDA::Engine::perform (const float* in)
     if (twofft)
       multiply<<<blocks,threads>>> (cscratch+data_size, d_kernel);
 
-    CHECK_ERROR ("CUDA::Engine::perform multiply");
+    CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply");
   }
 
   cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
 
-  CHECK_ERROR ("CUDA::Engine::perform cufftExecC2C BACKWARD");
+  CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD");
 
   if (!output)
     return;

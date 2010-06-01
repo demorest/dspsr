@@ -8,8 +8,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.14 $
-   $Date: 2010/05/21 00:00:51 $
+   $Revision: 1.15 $
+   $Date: 2010/06/01 09:18:51 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
@@ -32,15 +32,15 @@ namespace CUDA
   };
 
   //! Discrete convolution filterbank step implemented using CUDA streams
-  class Engine : public dsp::Filterbank::Engine
+  class FilterbankEngine : public dsp::Filterbank::Engine
   {
     unsigned nstream;
 
   public:
 
     //! Default Constructor
-    Engine ();
-    ~Engine ();
+    FilterbankEngine ();
+    ~FilterbankEngine ();
 
     void setup (dsp::Filterbank*);
     void perform (const float* in);
