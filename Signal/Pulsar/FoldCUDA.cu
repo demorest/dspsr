@@ -74,7 +74,9 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
     start.offset = idat;
     start.ibin = ibin;
 
-    assert (binplan_nbin < binplan_size);
+    if (binplan_nbin >= binplan_size)
+      throw Error (InvalidState, "CUDA::FoldEngine::set_bin",
+                   "binplan nbin=%u >= size=%u", binplan_nbin, binplan_size);
 
     /* start a new interval */
     binplan[binplan_nbin] = start;
@@ -123,7 +125,7 @@ void CUDA::FoldEngine::send_binplan ()
 {
   if (dsp::Operation::verbose)
     cerr << "CUDA::FoldEngine::send_binplan ndat=" << ndat_fold 
-         << " intervals=" << binplan.size() << endl;
+         << " intervals=" << binplan_nbin << endl;
 
   if (binplan_nbin == 0)
     return;
@@ -148,15 +150,15 @@ void CUDA::FoldEngine::send_binplan ()
     cudaMalloc ((void**)&d_bin, mem_size);
     d_bin_size = binplan_nbin;
   }
- 
+
   // copy the kernel accross
   cudaError error;
-  error = cudaMemcpyAsync (d_bin, &(binplan[0]), mem_size,
+  error = cudaMemcpyAsync (d_bin, binplan, mem_size,
 		      cudaMemcpyHostToDevice, stream);
 
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",
-                 "cudaMemcpy %s", this, cudaGetErrorString (error));
+                 "cudaMemcpyAsync %s", cudaGetErrorString (error));
 }
 
 
@@ -215,7 +217,7 @@ void CUDA::FoldEngine::fold ()
   fold1bin<<<gridDim,blockDim,0,stream>>> (input, input_span,
 					   output, output_span,
 					   ndim, folding_nbin,
-					   binplan.size(), d_bin);
+					   binplan_nbin, d_bin);
 
   // profile on the device is no longer synchronized with the one on the host
   synchronized = false;
