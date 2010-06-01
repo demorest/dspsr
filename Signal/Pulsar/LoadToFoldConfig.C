@@ -6,6 +6,9 @@
  ***************************************************************************/
 
 #include "dsp/LoadToFoldConfig.h"
+#include "stringtok.h"
+
+using namespace std;
 
 dsp::LoadToFold::Config::Config ()
 {
@@ -39,10 +42,6 @@ dsp::LoadToFold::Config::Config ()
   // perform coherent dedispersion while forming the filterbank
   simultaneous_filterbank = false;
 
-  // no CUDA devices by default
-  cuda_ndevice = 0;
-  // one stream per CUDA device by default
-  cuda_nstream = 1;
   // one thread by default
   nthread = 1;
 
@@ -139,3 +138,13 @@ void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
   times_minimum_ndat = 1;
 }
 
+// set the cuda devices to be used
+void dsp::LoadToFold::Config::set_cuda_devices (string txt)
+{
+  while (txt != "")
+  {
+    string dev = stringtok (txt, ",");
+    cerr << "add CUDA device '" << dev << "'" << endl;
+    cuda_device.push_back( fromstring<unsigned>(dev) );
+  }
+}

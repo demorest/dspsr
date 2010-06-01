@@ -148,7 +148,7 @@ void dsp::LoadToFold1::prepare () try
 
 #if HAVE_CUDA
 
-  bool run_on_gpu = thread_id < config->cuda_ndevice * config->cuda_nstream;
+  bool run_on_gpu = thread_id < config->cuda_get_ndevice();
 
   cudaStream_t stream;
 
@@ -158,7 +158,7 @@ void dsp::LoadToFold1::prepare () try
     if (config->nthread > 1)
       config->input_buffering = false;
 
-    int device =  thread_id % config->cuda_ndevice;
+    int device = config->cuda_device[thread_id];
     cerr << "dspsr: thread " << thread_id 
 	 << " using CUDA device " << device << endl;
 
@@ -431,16 +431,16 @@ void dsp::LoadToFold1::prepare () try
   if (!detect)
     detect = new Detection;
 
-  if (run_on_gpu)
-    config->ndim = 2;
-
   TimeSeries* detected = convolved;
   detect->set_input (convolved);
   detect->set_output (convolved);
 
 #if HAVE_CUDA
   if (run_on_gpu)
+  {
+    config->ndim = 2;
     detect->set_engine (new CUDA::DetectionEngine(stream));
+  }
 #endif
 
   if (manager->get_info()->get_npol() == 1) 
