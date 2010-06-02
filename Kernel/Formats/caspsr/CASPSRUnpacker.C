@@ -172,14 +172,20 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
 
   cudaStream_t stream = (cudaStream_t) gpu_stream;
 
-  cudaError error = cudaMemcpyAsync (d_staging, from, ndat*2,
-                                     cudaMemcpyHostToDevice, stream);
+  cudaError error;
+
+  if (stream)
+    error = cudaMemcpyAsync (d_staging, from, ndat*2,
+			     cudaMemcpyHostToDevice, stream);
+  else
+    error = cudaMemcpy (d_staging, from, ndat*2, cudaMemcpyHostToDevice);
 
   if (error != cudaSuccess)
     throw Error (FailedCall, "CASPSRUnpacker::unpack_on_gpu",
                  "cudaMemcpyAsync %s", cudaGetErrorString (error));
 
-  caspsr_unpack (stream, ndat,table->get_scale(), d_staging, into_pola, into_polb); 
+  caspsr_unpack (stream, ndat, table->get_scale(), 
+		 d_staging, into_pola, into_polb); 
 }
 
 #endif
