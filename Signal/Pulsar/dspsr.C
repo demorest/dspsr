@@ -233,6 +233,44 @@ void parse_options (int argc, char** argv) try
 
   /* ***********************************************************************
 
+  General Processing Options
+  
+  *********************************************************************** */
+
+  menu.add ("\n" "Processor options:");
+
+  arg = menu.add (nthread, 't', "threads");
+  arg->set_help ("number of processor threads");
+
+  arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_affinity,
+		  "cpu", "cores");
+  arg->set_help ("set the CPU on which each thread will run");
+
+  arg = menu.add (config->input_buffering, "overlap");
+  arg->set_help ("disable input buffering");
+
+  arg = menu.add (dsp::psrdisp_compatible, 'z');
+  arg->set_help ("emulate psrdisp");
+
+  string ram_min;
+  arg = menu.add (ram_min, "minram", "MB");
+  arg->set_help ("minimum RAM usage in MB");
+
+  string ram_limit;
+  arg = menu.add (ram_limit, 'U', "MB|minX");
+  arg->set_help ("upper limit on RAM usage");
+  arg->set_long_help
+    ("specify either the floating point number of megabytes; e.g. -U 256 \n"
+     "or a multiple of the minimum possible block size; e.g. -U minX2 \n");
+
+#if HAVE_CUFFT
+  arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_cuda_device,
+		  "cuda", "devices");
+  arg->set_help ("set the CUDA devices to use");
+#endif
+
+  /* ***********************************************************************
+
   File Handling Options
   
   *********************************************************************** */
@@ -256,31 +294,11 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (total_seconds, 'T', "total");
   arg->set_help ("process only t=total seconds");
 
-  arg = menu.add (nthread, 't', "threads");
-  arg->set_help ("number of processor threads");
-
-  arg = menu.add (config->input_buffering, "overlap");
-  arg->set_help ("disable input buffering");
-
   arg = menu.add (config->weighted_time_series, 'W');
   arg->set_help ("ignore weights (fold bad data)");
 
-  arg = menu.add (dsp::psrdisp_compatible, 'z');
-  arg->set_help ("emulate psrdisp");
-
   arg = menu.add (config->run_repeatedly, "repeat");
   arg->set_help ("repeatedly read from input until an empty is encountered");
-
-  string ram_min;
-  arg = menu.add (ram_min, "minram", "MB");
-  arg->set_help ("minimum RAM usage in MB");
-
-  string ram_limit;
-  arg = menu.add (ram_limit, 'U', "MB|minX");
-  arg->set_help ("upper limit on RAM usage");
-  arg->set_long_help
-    ("specify either the floating point number of megabytes; e.g. -U 256 \n"
-     "or a multiple of the minimum possible block size; e.g. -U minX2 \n");
 
   /* ***********************************************************************
 
@@ -359,12 +377,6 @@ void parse_options (int argc, char** argv) try
 
   arg = menu.add (config->use_fft_bench, "fft-bench");
   arg->set_help ("use benchmark data to choose optimal FFT length");
-
-#if HAVE_CUFFT
-  arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_cuda_devices,
-		  "cuda", "devices");
-  arg->set_help ("set the CUDA devices to use");
-#endif
 
   /* ***********************************************************************
 

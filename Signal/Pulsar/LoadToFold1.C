@@ -59,6 +59,8 @@
 #include "Error.h"
 #include "pad.h"
 
+#include <sched.h>
+
 using namespace std;
 
 dsp::LoadToFold1::LoadToFold1 ()
@@ -128,6 +130,24 @@ dsp::TimeSeries* dsp::LoadToFold1::new_time_series ()
   }
 }
 
+void dsp::LoadToFold1::set_affinity (int core)
+{
+#if HAVE_SCHED_SETAFFINITY
+  cpu_set_t set;
+  CPU_ZERO (&set);
+  CPU_SET (core, &set);
+
+  pid_t tpid = syscall (SYS_gettid);
+
+  if (verbose)
+    cerr << "dsp::LoadToFold1::set_affinity thread=" << thread_id
+	 << " tpid=" << tpid << " core=" << core << endl;
+
+  if (sched_setaffinity(tpid, sizeof(cpu_set_t), &set) < 0)
+    throw Error (FailedSys, "dsp::LoadToFold1::set_affinity",
+		 "sched_setaffinity (%d)", core);
+#endif
+}
 
 void dsp::LoadToFold1::prepare () try
 {
@@ -137,6 +157,9 @@ void dsp::LoadToFold1::prepare () try
 
   // each timeseries created will be counted in new_time_series
   config->buffers = 0;
+
+  if (thread_id < config->affinity.size())
+    set_affinity (config->affinity[thread_id]);
 
   if (!unpacked)
     unpacked = new_time_series();
