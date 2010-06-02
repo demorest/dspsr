@@ -242,15 +242,19 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (nthread, 't', "threads");
   arg->set_help ("number of processor threads");
 
+#if HAVE_SCHED_SETAFFINITY
   arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_affinity,
 		  "cpu", "cores");
-  arg->set_help ("set the CPU on which each thread will run");
+  arg->set_help ("comma-separated list of CPU cores");
+#endif
 
   arg = menu.add (config->input_buffering, "overlap");
   arg->set_help ("disable input buffering");
 
+#if 0
   arg = menu.add (dsp::psrdisp_compatible, 'z');
   arg->set_help ("emulate psrdisp");
+#endif
 
   string ram_min;
   arg = menu.add (ram_min, "minram", "MB");
@@ -266,7 +270,7 @@ void parse_options (int argc, char** argv) try
 #if HAVE_CUFFT
   arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_cuda_device,
 		  "cuda", "devices");
-  arg->set_help ("set the CUDA devices to use");
+  arg->set_help ("comma-separated list of CUDA devices");
 #endif
 
   /* ***********************************************************************
