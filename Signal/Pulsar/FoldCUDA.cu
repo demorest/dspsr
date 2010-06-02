@@ -153,8 +153,12 @@ void CUDA::FoldEngine::send_binplan ()
 
   // copy the kernel accross
   cudaError error;
-  error = cudaMemcpyAsync (d_bin, binplan, mem_size,
-		      cudaMemcpyHostToDevice, stream);
+
+  if (stream)
+    error = cudaMemcpyAsync (d_bin, binplan, mem_size,
+			     cudaMemcpyHostToDevice, stream);
+  else
+    error = cudaMemcpy (d_bin, binplan, mem_size, cudaMemcpyHostToDevice);
 
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",

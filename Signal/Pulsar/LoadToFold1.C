@@ -80,6 +80,7 @@ dsp::LoadToFold1::LoadToFold1 ()
   share = 0;
 
   input_context = 0;
+  gpu_stream = -1;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -151,6 +152,16 @@ void dsp::LoadToFold1::set_affinity (int core)
 #endif
 }
 
+template<typename T>
+unsigned count (const std::vector<T>& data, T element)
+{
+  unsigned c = 0;
+  for (unsigned i=0; i<data.size; i++)
+    if (data[i] == element)
+      c ++;
+  return c;
+}
+
 void dsp::LoadToFold1::prepare () try
 {
   TimeSeries::auto_delete = false;
@@ -173,13 +184,12 @@ void dsp::LoadToFold1::prepare () try
   manager->set_output (unpacked);
 
   operations.push_back (manager.get());
-  gpu_stream = 0;
 
 #if HAVE_CUDA
 
   bool run_on_gpu = thread_id < config->get_cuda_ndevice();
 
-  cudaStream_t stream;
+  cudaStream_t stream = 0;
 
   if (run_on_gpu)
   {
@@ -203,8 +213,15 @@ void dsp::LoadToFold1::prepare () try
       throw Error (InvalidState, "dsp::LoadToFold1::prepare",
 		   "cudaMalloc failed: %s", cudaGetErrorString(err));
 
-    cudaStreamCreate( &stream );
-    gpu_stream = &stream;
+    unsigned nstream = count (config->cuda_device, device);
+
+    if (nstream > 1)
+    {
+      cudaStreamCreate( &stream );
+      cerr << "dspsr: thread " << thread_id << " on stream " << stream << endl;
+    }
+
+    gpu_stream = stream;
 
     device_memory = new CUDA::DeviceMemory (stream);
 
@@ -945,7 +962,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       operations.push_back( fold[ifold].get() );
 
 #if HAVE_CUDA
-    if (gpu_stream)
+    if (gpu_stream != -1)
     {
       cudaStream_t* stream = reinterpret_cast<cudaStream_t*>(gpu_stream);
       fold[ifold]->set_engine (new CUDA::FoldEngine(*stream));
