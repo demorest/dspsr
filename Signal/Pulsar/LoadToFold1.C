@@ -60,6 +60,8 @@
 #include "pad.h"
 
 #include <sched.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -139,7 +141,7 @@ void dsp::LoadToFold1::set_affinity (int core)
 
   pid_t tpid = syscall (SYS_gettid);
 
-  if (verbose)
+  //if (Operation::verbose)
     cerr << "dsp::LoadToFold1::set_affinity thread=" << thread_id
 	 << " tpid=" << tpid << " core=" << core << endl;
 
