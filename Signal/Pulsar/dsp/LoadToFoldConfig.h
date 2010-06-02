@@ -7,16 +7,18 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.30 $
-   $Date: 2010/06/02 02:23:26 $
+   $Revision: 1.31 $
+   $Date: 2010/06/02 05:30:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
 
-#include "LoadToFold.h"
+#include "dsp/LoadToFold.h"
+#include "Functor.h"
 
-namespace Pulsar {
+namespace Pulsar
+{
   class Parameters;
   class Predictor;
 }
@@ -39,6 +41,9 @@ namespace dsp {
 
     //! Default constructor
     Config ();
+
+    // external function used to prepare the input each time it is opened
+    Functor< void(Input*) > input_prepare;
 
     // report vital statistics
     bool report_vitals;
