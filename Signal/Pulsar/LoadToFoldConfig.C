@@ -139,12 +139,21 @@ void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
 }
 
 // set the cuda devices to be used
-void dsp::LoadToFold::Config::set_cuda_devices (string txt)
+void dsp::LoadToFold::Config::set_cuda_device (string txt)
 {
   while (txt != "")
   {
     string dev = stringtok (txt, ",");
-    cerr << "add CUDA device '" << dev << "'" << endl;
     cuda_device.push_back( fromstring<unsigned>(dev) );
+  }
+}
+
+// set the cpu on which threads will run
+void dsp::LoadToFold::Config::set_affinity (string txt)
+{
+  while (txt != "")
+  {
+    string cpu = stringtok (txt, ",");
+    affinity.push_back( fromstring<unsigned>(cpu) );
   }
 }

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.29 $
-   $Date: 2010/06/01 20:00:04 $
+   $Revision: 1.30 $
+   $Date: 2010/06/02 02:23:26 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -77,11 +77,13 @@ namespace dsp {
     bool simultaneous_filterbank;
 
     // set the cuda devices to be used
-    void set_cuda_devices (std::string);
+    void set_cuda_device (std::string);
     unsigned get_cuda_ndevice () const { return cuda_device.size(); }
 
     // number of threads in operation
     unsigned nthread;
+    // set the cpus on which each thread will run
+    void set_affinity (std::string);
 
     // use input-buffering to compensate for operation edge effects
     bool input_buffering;
@@ -181,8 +183,11 @@ namespace dsp {
     // These attributes are set only by the LoadToFold classes, including
     friend class LoadToFold1;
 
-    // number of CUDA devices available for computation
+    // CUDA devices on which computations will take place
     std::vector<unsigned> cuda_device;
+
+    // CPUs on which threads will run
+    std::vector<unsigned> affinity;
 
     unsigned buffers;
 
