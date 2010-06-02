@@ -163,6 +163,10 @@ void dsp::LoadToFold1::prepare () try
   if (thread_id < config->affinity.size())
     set_affinity (config->affinity[thread_id]);
 
+  // only the first thread should run input_prepare
+  if (thread_id == 0 && config->input_prepare)
+    config->input_prepare( manager->get_input() );
+
   if (!unpacked)
     unpacked = new_time_series();
 
@@ -582,7 +586,7 @@ void dsp::LoadToFold1::prepare_final ()
   {
     dm = config->dispersion_measure;
     if (Operation::verbose)
-      cerr << "LoadToFold1::prepare_final user DM=" << dm << endl;
+      cerr << "LoadToFold1::prepare_final config DM=" << dm << endl;
   }
   else if (parameters)
   {
@@ -602,6 +606,9 @@ void dsp::LoadToFold1::prepare_final ()
   }
 
   manager->get_info()->set_dispersion_measure( dm );
+
+  // --repeat must reset the dm when the input is re-opened
+  config->dispersion_measure = dm;
 
   /*
     In the case of unpacking two-bit data, set the corresponding
@@ -1131,6 +1138,11 @@ while (!finished)
         file->open(filename);
         // cerr << "file opened" << endl;
         config->repeated = 1;
+
+	if (config->input_prepare)
+	  config->input_prepare (file);
+
+	file->get_info()->set_dispersion_measure (config->dispersion_measure);
       }
     }
     else if (config->repeated)

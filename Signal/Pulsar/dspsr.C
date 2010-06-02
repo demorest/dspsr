@@ -135,19 +135,9 @@ catch (Error& error)
   return -1;
 }
 
-
-void prepare (dsp::LoadToFold* engine, dsp::Input* input)
+void input_prepare (dsp::Input* input)
 {
-  engine->set_input( input );
-
   dsp::Observation* info = input->get_info();
-
-  if (info->get_detected() && !baseband_options.empty())
-    throw Error (InvalidState, "prepare",
-		 "input type " + input->get_name() +
-		 " yields detected data and the command line option(s):"
-		 "\n\n" + baseband_options + "\n\n"
-		 " are specific to baseband (undetected) data.");
 
   if (bandwidth != 0)
   {
@@ -215,7 +205,23 @@ void prepare (dsp::LoadToFold* engine, dsp::Input* input)
     
   if (total_seconds)
     input->set_total_seconds (seek_seconds + total_seconds);
-  
+}
+
+void prepare (dsp::LoadToFold* engine, dsp::Input* input)
+{
+  config->input_prepare.set( input_prepare );
+
+  engine->set_input( input );
+
+  dsp::Observation* info = input->get_info();
+
+  if (info->get_detected() && !baseband_options.empty())
+    throw Error (InvalidState, "prepare",
+		 "input type " + input->get_name() +
+		 " yields detected data and the command line option(s):"
+		 "\n\n" + baseband_options + "\n\n"
+		 " are specific to baseband (undetected) data.");
+
   engine->prepare ();    
 }
 
