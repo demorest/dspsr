@@ -95,18 +95,20 @@ int main (int argc, char** argv) try
   // configure the processing engine
   engine->set_configuration( config );
 
+  bool time_prep = dsp::Operation::record_time || config->get_cuda_ndevice();
+
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
     if (verbose)
       cerr << "opening data file " << filenames[ifile] << endl;
     
     RealTimer preptime;
-    if (dsp::Operation::record_time)
+    if (time_prep)
       preptime.start();
 
     prepare (engine, dsp::File::create( filenames[ifile] ));
 
-    if (dsp::Operation::record_time)
+    if (time_prep)
     {
       preptime.stop();
       cerr << "dspsr: prepared in " << preptime << endl;
