@@ -115,6 +115,7 @@ MJK_LIB_PSRXML
 # Checks for library functions.
 #
 SWIN_FUNC_GETOPT_LONG
+SWIN_FUNC_AFFINITY
 
 #
 # Initialize variables used by Makefile.include 
