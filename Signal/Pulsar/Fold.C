@@ -19,11 +19,8 @@
 using namespace std;
 
 dsp::Fold::Fold () :
-  Transformation <TimeSeries, PhaseSeries> ("Fold", outofplace, false) 
+  Transformation <TimeSeries, PhaseSeries> ("Fold", outofplace) 
 {
-  // reducer relies on these defaults being what they are
-  // Be sure to check it works if you change them
-
   folding_period = 0;
 
   requested_nbin = 0;

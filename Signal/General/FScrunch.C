@@ -12,7 +12,7 @@
 using namespace std;
 
 dsp::FScrunch::FScrunch (Behaviour place) 
-  : Transformation <TimeSeries, TimeSeries> ("FScrunch", place, true)
+  : Transformation <TimeSeries, TimeSeries> ("FScrunch", place)
 {
   factor = 0;
   frequency_resolution = 0;

@@ -20,7 +20,7 @@ using namespace std;
 
 // #define _DEBUG 1
 
-dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace,true)
+dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
 {
   nchan = 0;
   freq_res = 1;

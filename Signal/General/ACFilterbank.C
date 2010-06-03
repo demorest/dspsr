@@ -20,7 +20,7 @@ using namespace std;
 // #define _DEBUG 1
 
 dsp::ACFilterbank::ACFilterbank () 
-  : Transformation<TimeSeries,TimeSeries> ("ACFilterbank", outofplace, true)
+  : Transformation<TimeSeries,TimeSeries> ("ACFilterbank", outofplace)
 {
   nchan = 0;
   nlag = 0;

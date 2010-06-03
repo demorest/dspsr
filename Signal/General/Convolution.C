@@ -23,9 +23,8 @@
 
 using namespace std;
 
-dsp::Convolution::Convolution (const char* _name, Behaviour _type,
-			       bool _time_conserved)
-  : Transformation<TimeSeries,TimeSeries> (_name, _type, _time_conserved)
+dsp::Convolution::Convolution (const char* _name, Behaviour _type)
+  : Transformation<TimeSeries,TimeSeries> (_name, _type)
 {
   set_buffering_policy (new InputBuffering (this));
 }

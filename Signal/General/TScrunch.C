@@ -13,7 +13,7 @@
 using namespace std;
 
 dsp::TScrunch::TScrunch (Behaviour place) 
-  : Transformation <TimeSeries, TimeSeries> ("TScrunch", place, true)
+  : Transformation <TimeSeries, TimeSeries> ("TScrunch", place)
 {
   factor = 0;
   time_resolution = 0;

@@ -12,7 +12,7 @@ using namespace std;
 
 //! Constructor
 dsp::Unpacker::Unpacker (const char* name)
-  : Transformation <BitSeries, TimeSeries> (name, outofplace, true) 
+  : Transformation <BitSeries, TimeSeries> (name, outofplace) 
 {
   output_order = TimeSeries::OrderFPT;
 }
