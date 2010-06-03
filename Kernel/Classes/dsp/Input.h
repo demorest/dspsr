@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.42 $
-   $Date: 2009/08/27 06:53:58 $
+   $Revision: 1.43 $
+   $Date: 2010/06/03 20:45:17 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -125,12 +125,7 @@ namespace dsp {
     //! Convenience method used to set the number of seconds
     void set_total_seconds (double seconds);
 
-    //! Change the source name after each call to operate()
-    void set_real_source (const std::string& src) { real_source = src; }
-    //! Inquire what source name will be changed to after each call to operate ["" meaning no change]
-    //! get_info()->get_source() will return the sourcename if this is ""
-    std::string get_real_source(){ return real_source; }
-
+    //! In multi-threaded programs, a mutual exclusion and a condition
     void set_context (ThreadContext* context);
 
     //! Input derived types may specify a prefix to be added to output files
