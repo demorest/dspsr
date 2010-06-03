@@ -197,7 +197,7 @@ void dsp::SubFold::set_limits (const Observation* input)
 
 void dsp::SubFold::finish () try
 {
-  if (!get_result()->get_integration_length())
+  if (get_result()->get_integration_length() != 0)
   {
     if (verbose)
       cerr << "dsp::SubFold::finish unload_partial" << endl;
