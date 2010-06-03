@@ -156,7 +156,7 @@ template<typename T>
 unsigned count (const std::vector<T>& data, T element)
 {
   unsigned c = 0;
-  for (unsigned i=0; i<data.size; i++)
+  for (unsigned i=0; i<data.size(); i++)
     if (data[i] == element)
       c ++;
   return c;
@@ -213,7 +213,7 @@ void dsp::LoadToFold1::prepare () try
       throw Error (InvalidState, "dsp::LoadToFold1::prepare",
 		   "cudaMalloc failed: %s", cudaGetErrorString(err));
 
-    unsigned nstream = count (config->cuda_device, device);
+    unsigned nstream = count (config->cuda_device, (unsigned)device);
 
     if (nstream > 1)
     {
@@ -964,8 +964,8 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 #if HAVE_CUDA
     if (gpu_stream != -1)
     {
-      cudaStream_t* stream = reinterpret_cast<cudaStream_t*>(gpu_stream);
-      fold[ifold]->set_engine (new CUDA::FoldEngine(*stream));
+      cudaStream_t stream = gpu_stream;
+      fold[ifold]->set_engine (new CUDA::FoldEngine(stream));
     }
 #endif
 
