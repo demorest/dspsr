@@ -197,6 +197,8 @@ void dsp::SubFold::set_limits (const Observation* input)
 
 void dsp::SubFold::finish () try
 {
+  Fold::finish ();
+
   if (get_result()->get_integration_length() != 0)
   {
     if (verbose)
