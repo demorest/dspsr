@@ -27,7 +27,7 @@ using namespace std;
 
 //! Constructor
 dsp::Detection::Detection ()
-  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace, true)
+  : Transformation <TimeSeries,TimeSeries> ("Detection", anyplace)
 {
   state = Signal::Intensity;
   ndim = 1;

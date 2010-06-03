@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.52 $
-   $Date: 2009/08/27 06:53:58 $
+   $Revision: 1.53 $
+   $Date: 2010/06/03 20:45:30 $
    $Author: straten $ */
 
 #ifndef __dsp_Transformation_h
@@ -52,8 +52,7 @@ namespace dsp {
   public:
 
     //! All sub-classes must specify name and capacity for inplace operation
-    Transformation (const char* _name, Behaviour _type,
-		    bool _time_conserved=false);
+    Transformation (const char* _name, Behaviour _type);
 
     //! Destructor
     virtual ~Transformation ();
@@ -91,9 +90,6 @@ namespace dsp {
     //! Reset minimum_samps_can_process
     void reset_min_samps()
     { minimum_samps_can_process = -1; }
-
-    //! Inquire whether the class conserves time
-    bool get_time_conserved() const { return time_conserved; }
 
     //! String preceding output in verbose mode
     std::string name (const std::string& function) 
@@ -138,17 +134,6 @@ namespace dsp {
 
     //! If output is a container, its ndat is rounded off to divide this number
     uint64_t rounding;
-
-    //! Returns true if the Transformation definitely conserves time
-    /*! (i.e. it conserves time if the number of seconds in the output
-      corresponds to the number of seconds in the input processed).
-      Acceleration classes don't conserve time. This must be set in
-      the constructor to be true if it is true- some constructors may
-      conserve time but may not yet have had their constructors change
-      to reflect this [false] */
-    bool time_conserved;
-
-
   };
 
 }
@@ -156,8 +141,7 @@ namespace dsp {
 //! All sub-classes must specify name and capacity for inplace operation
 template<class In, class Out>
 dsp::Transformation<In,Out>::Transformation (const char* _name, 
-					     Behaviour _type,
-					     bool _time_conserved)
+					     Behaviour _type)
   : Operation (_name)
 {
   if (Operation::verbose)
@@ -165,7 +149,6 @@ dsp::Transformation<In,Out>::Transformation (const char* _name,
 
   type = _type;
   reset_min_samps();
-  time_conserved = _time_conserved;
 }
 
 //! Return false if the input doesn't have enough data to proceed

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.24 $
-   $Date: 2010/04/29 04:12:36 $
+   $Revision: 1.25 $
+   $Date: 2010/06/03 20:45:30 $
    $Author: straten $ */
 
 #ifndef __Convolution_h
@@ -59,7 +59,7 @@ namespace dsp {
 
     //! Null constructor
     Convolution (const char* name = "Convolution", 
-		 Behaviour type = anyplace, bool _time_conserved=false);
+		 Behaviour type = anyplace);
 
     //! Destructor
     virtual ~Convolution ();

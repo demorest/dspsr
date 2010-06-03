@@ -18,8 +18,7 @@
 using namespace std;
 
 dsp::IncoherentFilterbank::IncoherentFilterbank ()
-  : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank",
-					   outofplace, true)
+  : Transformation<TimeSeries,TimeSeries> ("IncoherentFilterbank", outofplace)
 {
   nchan = 0;
   state = Signal::Intensity;

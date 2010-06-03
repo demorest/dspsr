@@ -22,7 +22,7 @@ using namespace std;
 
 //! Constructor
 dsp::FourthMoment::FourthMoment () 
-  : Transformation <TimeSeries,TimeSeries> ("FourthMoment", outofplace, true)
+  : Transformation <TimeSeries,TimeSeries> ("FourthMoment", outofplace)
 {
 }
 

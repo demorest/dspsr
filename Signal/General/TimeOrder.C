@@ -10,7 +10,9 @@
 
 #include "dsp/TimeOrder.h"
 
-dsp::TimeOrder::TimeOrder() : Transformation<TimeSeries,BitSeries>("TimeOrder",outofplace,true){
+dsp::TimeOrder::TimeOrder()
+ : Transformation<TimeSeries,BitSeries>("TimeOrder",outofplace)
+{
   rapid = Polarisation;
   bitseries_ndat = -1;  // ie use the timeseries' ndat
   offset = 0;

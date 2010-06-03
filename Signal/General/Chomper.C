@@ -12,7 +12,9 @@
 #include "Error.h"
 
 //! Default constructor- always inplace
-dsp::Chomper::Chomper() : Transformation<TimeSeries,TimeSeries>("Chomper",inplace,true){
+dsp::Chomper::Chomper()
+  : Transformation<TimeSeries,TimeSeries>("Chomper",inplace)
+{
   new_ndat = 0;
   rounding = 1;
   use_new_ndat = false;

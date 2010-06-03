@@ -60,6 +60,6 @@ void dsp::Digitizer::transformation ()
 
 //! Constructor
 dsp::Digitizer::Digitizer (const char* name)
-  : Transformation <TimeSeries, BitSeries> (name, outofplace, true) 
+  : Transformation <TimeSeries, BitSeries> (name, outofplace) 
 {
 }
