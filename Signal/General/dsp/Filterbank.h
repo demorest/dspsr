@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.22 $
-   $Date: 2010/05/21 00:00:46 $
+   $Revision: 1.23 $
+   $Date: 2010/06/03 20:45:22 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -40,12 +40,6 @@ namespace dsp {
 
     //! Get the minimum number of samples lost
     uint64_t get_minimum_samples_lost () { return nsamp_overlap; }
-
-    //! Return a descriptive string
-    //virtual const string descriptor () const;
-
-    //! Initialize from a descriptor string as output by above
-    //virtual void initialize (const string& descriptor);
 
     //! Set the number of channels into which the input will be divided
     void set_nchan (unsigned _nchan) { nchan = _nchan; }
