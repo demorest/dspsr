@@ -155,11 +155,6 @@ void dsp::Seekable::load_data (BitSeries* data)
   current_sample += read_size;
 
   data->set_ndat (recycled + read_size);
-
-  if( real_source != "" )
-    data->set_source( real_source );
-
-  // verbose = false;
 }
 
 /*!  Based on the next time sample, get_load_sample, and the number of
