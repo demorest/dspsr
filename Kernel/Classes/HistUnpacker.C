@@ -47,11 +47,16 @@ unsigned dsp::HistUnpacker::get_ndig () const
 
 void dsp::HistUnpacker::set_default_ndig ()
 {
+  if (!input)
+    throw Error (InvalidState, "dsp::HistUnpacker::set_default_ndig",
+                 "input not set");
+
   set_ndig( (input->get_nchan() * input->get_npol() * input->get_ndim())
             / get_ndim_per_digitizer() );
   if (verbose)
     cerr << "dsp::HistUnpacker::set_default_ndig ndig=" << ndig << endl;
 }
+
 
 /*! By default, there are two digitizers, one for each polarization */
 void dsp::HistUnpacker::set_ndig (unsigned _ndig)
@@ -139,6 +144,8 @@ void dsp::HistUnpacker::resize ()
     histograms[idig].resize( get_nstate_internal() );
 
   resize_needed = false;
+
+  zero_histogram();
 }
 
 unsigned dsp::HistUnpacker::get_nstate_internal () const
@@ -153,6 +160,10 @@ void dsp::HistUnpacker::zero_histogram ()
 {
   if (verbose)
     cerr << "dsp::HistUnpacker::zero_histogram" << endl;;
+
+  // if the input is not set, there may be no way to resize
+  if (!input)
+    return;
 
   if (resize_needed)
     resize ();
