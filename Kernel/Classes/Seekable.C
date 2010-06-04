@@ -278,3 +278,9 @@ uint64_t dsp::Seekable::recycle_data (BitSeries* data)
   return to_recycle;
 }
 
+void dsp::Seekable::set_overlap_buffer (BitSeries* buffer)
+{
+  overlap_buffer = buffer;
+}
+
+
