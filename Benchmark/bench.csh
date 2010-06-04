@@ -2,13 +2,13 @@
 
 set nthread=8
 set cache=1
-set gpu=0
+set gpu=""
 
 if ( "$1" == "" ) then
-  echo "USAGE: bench.csh <freq> <bw> [ngpu]"
+  echo "USAGE: bench.csh <freq> <bw> [gpu]"
   echo "where: <freq> is the centre frequency"
   echo "       <bw> is the starting bandwidth"
-  echo "   and [ngpu] is the optional number of GPUs to use"
+  echo "   and [gpu] is the optional GPU configuration"
   exit
 endif
 
@@ -21,8 +21,8 @@ if ( "$3" != "" ) then
   set gpu=$3
 endif
 
-if ( $gpu ) then
-  echo using $gpu GPUs
+if ( "$gpu" != "" ) then
+  echo using GPUs: $gpu
 else
   echo using $nthread CPU threads
   echo using at least $cache MB of cache
@@ -47,8 +47,8 @@ foreach bwtrial ( 1 2 3 4 )
 
     foreach trial ( a b c d e f )
 
-      if ( $gpu ) then
-        set cmd="dspsr --cuda=$gpu -t $gpu $args"
+      if ( "$gpu" != "" ) then
+        set cmd="dspsr --cuda=$gpu $args"
       else
         set cmd="dspsr -t $nthread --minram=$cache $args"
       endif
