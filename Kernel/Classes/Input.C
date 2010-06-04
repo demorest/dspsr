@@ -72,6 +72,15 @@ inline Big multiple_smaller (Big big, Small small)
   return divides * small;
 }
 
+void dsp::Input::mark_output ()
+{
+  output->input_sample = load_sample;
+  output->input = this;
+
+  output->request_offset = resolution_offset;
+  output->request_ndat   = block_size;
+}
+
 //! Load data into the BitSeries specified by set_output
 void dsp::Input::operation ()
 {
@@ -93,11 +102,11 @@ void dsp::Input::operation ()
 	 << " next_sample=" << load_sample+resolution_offset << endl;
 
   // set the Observation information
-  get_output()->Observation::operator=(info);
+  output->Observation::operator=(info);
 
   // set the time as expected will result from the next call to load_data
-  // note that get_output()->start_time was set in the above call to operator=
-  get_output()->change_start_time (load_sample);
+  // note that output->start_time was set in the above call to operator=
+  output->change_start_time (load_sample);
 
   if (verbose)
     cerr << "dsp::Input::operation [INTERNAL] load_size=" << load_size 
@@ -105,26 +114,22 @@ void dsp::Input::operation ()
 
   if (verbose)
     cerr << "dsp::Input::operation call load_data Bit_Stream::ndat=" 
-         << get_output()->get_ndat () << endl;
+         << output->get_ndat () << endl;
 
   reserve ();
 
-  load_data (get_output());
+  load_data (output);
+
+  // mark the input_sample and input attributes of the BitSeries
+  mark_output ();
 
   if (verbose)
     cerr << "dsp::Input::operation load_data done"
       " load_sample=" << get_load_sample() << " name='" + get_name() + "'\n";
 
-  // mark the input_sample and input attributes of the BitSeries
-  get_output()->input_sample = load_sample;
-  get_output()->input = this;
-
-  get_output()->request_offset = resolution_offset;
-  get_output()->request_ndat   = block_size;
-
   int64_t to_seek = block_size - overlap;
 
-  uint64_t available = get_output()->get_ndat() - resolution_offset;
+  uint64_t available = output->get_ndat() - resolution_offset;
 
   if (available < block_size)
   {
@@ -138,7 +143,7 @@ void dsp::Input::operation ()
     }
 
     if (verbose)
-      cerr << "dsp::Input::operation total_ndat=" << get_output()->get_ndat()
+      cerr << "dsp::Input::operation total_ndat=" << output->get_ndat()
            << " available=" << available 
            << " < block_size=" << block_size << endl;
 
@@ -150,16 +155,16 @@ void dsp::Input::operation ()
       cerr << "dsp::Input::operation useful ndat=" << useful_ndat << endl;
 
     // ensure that ndat is a multiple of resolution
-    get_output()->resize ( useful_ndat );
-    get_output()->request_offset = resolution_offset;
-    get_output()->request_ndat = get_output()->get_ndat() - resolution_offset;
+    output->resize ( useful_ndat );
+    output->request_offset = resolution_offset;
+    output->request_ndat = output->get_ndat() - resolution_offset;
 
     if (verbose)
       cerr << "dsp::Input::operation eod request_ndat="
            << output->request_ndat << endl;
   }
 
-  last_load_ndat = get_output()->get_ndat();
+  last_load_ndat = output->get_ndat();
 
   if (verbose)
     cerr << "dsp::Input::operation calling seek(" << to_seek << ")" << endl;
@@ -182,7 +187,7 @@ void dsp::Input::set_output (BitSeries* data)
   output = data;
 }
 
-/*! This method throws an exception if the output is not set.  To test
+/*! throws an exception if the output is not set.  To test
   if the output attribute is set, use Input::has_output. */
 dsp::BitSeries* dsp::Input::get_output ()
 {
@@ -197,7 +202,7 @@ bool dsp::Input::has_output () const
   return output;
 }
 
-/*! This method copies the following behavioural and informational attributes:
+/*! copies the following behavioural and informational attributes:
 
   <UL>
   <LI> block_size
@@ -217,7 +222,7 @@ void dsp::Input::copy (const Input* input)
 
 /*! 
   Sets the Observation attributes of data and load the next block of data.
-  Because set_output and operate must be called separately, this is the
+  Because set_output and operate must be called separately, the
   only thread-safe interface to the Input class.
  */
 void dsp::Input::load (BitSeries* data) try {
@@ -240,8 +245,8 @@ void dsp::Input::load (BitSeries* data) try {
  }
 
 /*! 
-  This method ensures that the load_sample attribute accomodates any extra 
-  time samples required owing to time sample resolution. This method also 
+  ensures that the load_sample attribute accomodates any extra 
+  time samples required owing to time sample resolution. also 
   ensures that the load_size attribute is properly set.
 
   \param offset the number of time samples to offset
@@ -381,14 +386,14 @@ void dsp::Input::set_total_seconds (double seconds)
 
 
 
-/*! This method also ensures that the load_size attribute is properly set. */
+/*! ensures that the load_size attribute is properly set. */
 void dsp::Input::set_block_size (uint64_t size)
 {
   block_size = size;
   set_load_size ();
 }
 
-/*! This method ensures that the load_size attribute is large enough to load
+/*! ensures that the load_size attribute is large enough to load
   the number of time samples requested by Input::set_block_size, as well
   as any extra time samples required owing to time sample resolution and
   the next time sample requested by Input::seek. */
@@ -404,6 +409,14 @@ void dsp::Input::set_load_size ()
 
   if (remainder)
     load_size += resolution - remainder;
+
+  if (info.get_ndat() && load_sample + load_size > info.get_ndat())
+  {
+    if (verbose)
+      cerr << "dsp::Input::set_load_size near end of data" << endl;
+
+    load_size = info.get_ndat() - load_sample;
+  }
 
   if (verbose)
     cerr << "dsp::Input::set_load_size load_size=" << load_size << endl;
