@@ -14,7 +14,7 @@ using namespace std;
 
 //! Default constructor- always inplace
 dsp::TransferCUDA::TransferCUDA()
-  : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer",outofplace,true)
+  : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer", outofplace)
 {
   kind = cudaMemcpyHostToDevice;
 }
