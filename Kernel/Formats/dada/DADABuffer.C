@@ -1,14 +1,17 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2010 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
+#include "dsp/BitSeries.h"
+
 #include "ascii_header.h"
 #include "FilePtr.h"
+
 #include <stdlib.h>
 #include <string.h>
 
