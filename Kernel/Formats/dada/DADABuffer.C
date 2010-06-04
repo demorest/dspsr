@@ -21,6 +21,13 @@ dsp::DADABuffer::DADABuffer ()
 {
   hdu = 0;
   passive = false;
+
+  /*
+    when a block overlap policy is necessary (e.g. when using two GPUs)
+    different threads cannot recycle BitSeries data and must share a
+    single overlap buffer.
+  */
+  set_overlap_buffer( new BitSeries );
 }
 
 dsp::DADABuffer::~DADABuffer ()
