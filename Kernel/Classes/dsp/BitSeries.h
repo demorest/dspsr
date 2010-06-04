@@ -70,6 +70,10 @@ namespace dsp {
     //! Return pointer to the specified time slice (ie ch0,pol0,dim0)
     virtual const unsigned char* get_datptr (uint64_t sample = 0) const;
 
+    //! Copy the data of another BitSeries instance
+    virtual void copy_data (const BitSeries* data, 
+			    uint64_t idat_start = 0, uint64_t ndat = 0);
+
     uint64_t get_size () const { return data_size; }
 
     //! Append little onto the end of this

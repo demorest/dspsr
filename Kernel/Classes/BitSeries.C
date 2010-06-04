@@ -123,6 +123,42 @@ int64_t dsp::BitSeries::get_input_sample (Input* test_input) const
   return input_sample; 
 }
 
+void dsp::BitSeries::copy_data (const dsp::BitSeries* copy, 
+				uint64_t idat_start, uint64_t copy_ndat) try
+{
+  if (verbose)
+    cerr << "dsp::BitSeries::copy_data to ndat=" << get_ndat()
+	 << " from ndat=" << copy->get_ndat() 
+	 << "\n  idat_start=" << idat_start 
+	 << " copy_ndat=" << copy_ndat << endl;
+
+  if (copy_ndat > get_ndat())
+    throw Error (InvalidParam, "dsp::BitSeries::copy_data",
+		 "copy ndat="UI64" > this ndat="UI64, copy_ndat, get_ndat());
+
+  if (copy_ndat)
+  {
+    uint64_t bytes = get_nbytes (copy_ndat);
+    uint64_t offset = get_nbytes (idat_start);
+
+    if (verbose)
+      cerr << "dsp::BitSeries::copy_data"
+	" bytes=" << bytes << " offset=" << offset << endl;
+
+    unsigned char *into = get_rawptr();
+    const unsigned char *from = copy->get_rawptr() + offset;
+
+    memcpy (into, from, size_t(bytes));
+  }
+
+  input_sample = copy->input_sample + idat_start;
+  input = copy->input;
+}
+catch (Error& error)
+{
+  throw error += "dsp::BitSeries::copy_data";
+}
+
 void dsp::BitSeries::append (const dsp::BitSeries* little)
 {
   if( !get_ndat() ){
