@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.14 $
-   $Date: 2009/06/17 10:16:53 $
+   $Revision: 1.15 $
+   $Date: 2010/06/04 03:36:31 $
    $Author: straten $ */
 
 
@@ -44,6 +44,9 @@ namespace dsp {
     //! Inquire current time sample
     virtual uint64_t get_current_sample() { return current_sample; }
 
+    //! Buffer used to store overlap (useful in multi-threaded applications)
+    void set_overlap_buffer (BitSeries*);
+
   protected:
     
     //! set end_of_data
@@ -66,6 +69,9 @@ namespace dsp {
     
     //! Current time sample
     uint64_t current_sample;
+
+    //! Buffer used to store overlap
+    Reference::To<BitSeries> overlap_buffer;
 
     //! initialize variables
     void init();
