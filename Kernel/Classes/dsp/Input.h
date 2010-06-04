@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.43 $
-   $Date: 2010/06/03 20:45:17 $
+   $Revision: 1.44 $
+   $Date: 2010/06/04 03:36:25 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -134,7 +134,7 @@ namespace dsp {
   protected:
 
     //! Set the 'end_of_data' flag in dsp::Seekable
-    virtual void set_eod(bool _eod) = 0;
+    virtual void set_eod (bool) = 0;
 
     //! The BitSeries to which data will be loaded on next call to operate
     Reference::To<BitSeries> output;
@@ -146,6 +146,9 @@ namespace dsp {
 
     //! Load data into the BitSeries specified with set_output
     virtual void operation ();
+
+    //! Mark the output BitSeries with sequence informatin
+    virtual void mark_output ();
 
     //! Information about the data source (passed on to BitSeries in load)
     Observation info;
