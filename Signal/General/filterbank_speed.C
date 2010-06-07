@@ -120,8 +120,8 @@ void Speed::runTest ()
   dsp::Memory* memory = 0;
 
 #if HAVE_CUFFT
-  cudaStream_t stream;
-  cudaStreamCreate( &stream );
+  cudaStream_t stream = 0;
+  // cudaStreamCreate( &stream );
   engine = new CUDA::FilterbankEngine (stream);
   memory = new CUDA::DeviceMemory;
 #endif
@@ -138,9 +138,13 @@ void Speed::runTest ()
 
   engine->scratch = (float*) memory->do_allocate (size + 4*sizeof(float));
 
+  dsp::TimeSeries ts;
+  ts.set_state( Signal::Analytic );
+
   dsp::Filterbank temp;
-  temp.set_nchan(nchan);
-  temp.set_frequency_resolution(nfft);
+  temp.set_nchan (nchan);
+  temp.set_frequency_resolution (nfft);
+  temp.set_input (&ts);
   engine->setup (&temp);
 
   cerr << "entering loop" << endl;
