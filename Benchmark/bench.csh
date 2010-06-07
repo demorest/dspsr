@@ -4,21 +4,83 @@ set nthread=8
 set cache=1
 set gpu=""
 
-if ( "$1" == "" ) then
-  echo "USAGE: bench.csh <freq> <bw> [gpu]"
-  echo "where: <freq> is the centre frequency"
-  echo "       <bw> is the starting bandwidth"
-  echo "   and [gpu] is the optional GPU configuration"
+set freq=""
+set bw=""
+
+foreach option ( $* )
+
+  switch ( $option )
+
+  case -*=*:
+    set arg=`echo "$option" | awk -F= '{print $1}' | sed -e 's/-//g'`
+    set optarg=`echo "$option" | awk -F= '{print $2}'`
+    breaksw
+
+  case *:
+    set arg=$option
+    set optarg=
+    breaksw
+
+  endsw
+
+  ##########################################################################
+  #
+  ##########################################################################
+
+  switch ( $arg )
+
+  case gpu:
+    set gpu="$optarg"
+    breaksw
+
+  case nthread:
+    set nthread="$optarg"
+    breaksw
+
+  case cache:
+    set cache="$optarg"
+    breaksw
+
+  case freq:
+    set freq="$optarg"
+    breaksw
+
+  case bw:
+    set bw="$optarg"
+    breaksw
+
+  case *:
+    cat <<EOF
+
+Run the dspsr benchmark presented in van Straten & Bailes (2010)
+
+Usage: all.csh [OPTION]
+
+Known values for OPTION are:
+
+  --gpu=device[s]    comma-separated list of CUDA devices
+  --nthread=N        number of CPU threads
+  --cache=MB         minimum CPU memory to use
+
+  --freq=MHz         centre frequency
+  --bw=MHz           bandwidth
+  --nchan=N          number of channels in filterbank
+
+EOF
+    breaksw
+
+  endsw
+
+end
+
+if ( "$freq" == "" ) then
+  echo "please set the centre frequency with --freq"
   exit
 endif
 
-if ( "$2" == "" ) then
-  echo "must set starting bandwidth"
+if ( "$bw" == "" ) then
+  echo "please set the bandwidth with --bw"
   exit
-endif
-
-if ( "$3" != "" ) then
-  set gpu=$3
 endif
 
 if ( "$gpu" != "" ) then
@@ -27,9 +89,6 @@ else
   echo using $nthread CPU threads
   echo using at least $cache MB of cache
 endif
-
-set freq=$1
-set bw=$2
 
 foreach bwtrial ( 1 2 3 4 )
 
