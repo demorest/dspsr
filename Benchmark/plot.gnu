@@ -1,6 +1,6 @@
 
 set terminal postscript eps enhanced mono solid "helvetica" 25
-set output "fbench.eps"
+set output "dspsr_bench.eps"
 
 set size 1,3.2
 
