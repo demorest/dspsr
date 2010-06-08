@@ -46,7 +46,8 @@ Known values for OPTION are:
   --queue=name       name of batch queue on which jobs are run
 
 EOF
-    breaksw
+
+    exit 0
 
   endsw
 
@@ -62,19 +63,31 @@ set bw=8
 
 foreach freq ( 375 750 1500 3000 )
 
-  ./bench.csh --freq=$freq --bw=$bw --gpu$gpu
-  ./report.csh $freq $bw
+  echo "s/FREQ/$freq/g" > template.sed
+  echo "s/BW/$bw/g" >> template.sed
+  echo "s/GPU/$gpu/g" >> template.sed
+  echo "s|DIR|$PWD|g" >> template.sed
 
-  mkdir -p results/freq$freq/
-  mv f*.time f*.dat results/freq$freq/
+  sed -f template.sed template.csh > run${freq}.csh
 
+  if ( "$queue" != "" ) then
+    qsub -q fermi run${freq}.csh
+  else
+    source run${freq}.csh
+  endif
+ 
   @ bw = $bw * 2
 
 end
 
+cat << EOF
+
+When all of the benchmark scripts have completed, run
+
 cd results
 gnuplot ../plot.gnu
 
-echo Benchmark completed.
-echo Results in results/
+to produce dspsr_bench.eps
+
+EOF
 
