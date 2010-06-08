@@ -107,7 +107,7 @@ foreach bwtrial ( 1 2 3 4 )
     foreach trial ( a b c d e f )
 
       if ( "$gpu" != "" ) then
-        set cmd="dspsr --cuda=$gpu $args"
+        set cmd="dspsr --cuda=$gpu --minram=256 $args"
       else
         set cmd="dspsr -t $nthread --minram=$cache $args"
       endif
