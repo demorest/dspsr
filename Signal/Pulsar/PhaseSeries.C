@@ -131,9 +131,12 @@ bool dsp::PhaseSeries::has_pulsar_ephemeris () const
 }
 
 //! Get the mid-time of the integration
-MJD dsp::PhaseSeries::get_mid_time () const
+MJD dsp::PhaseSeries::get_mid_time (bool phased) const
 {
   MJD midtime = 0.5 * (start_time + end_time);
+
+  if (!phased)
+    return midtime;
 
   if (folding_predictor)
   {

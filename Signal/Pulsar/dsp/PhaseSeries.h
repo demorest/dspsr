@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.37 $
-   $Date: 2010/04/22 07:43:17 $
+   $Revision: 1.38 $
+   $Date: 2010/06/09 04:34:50 $
    $Author: straten $ */
 
 #ifndef __PhaseSeries_h
@@ -104,8 +104,9 @@ namespace dsp {
     //! Set the hits in all bins
     void set_hits (unsigned value);
 
-    //! Get the mid-time of the integration
-    MJD get_mid_time () const;
+    //! Get the mid-time of the integration 
+    /*! \param phased if true, round to the nearest reference phase */
+    MJD get_mid_time (bool phased = true) const;
 
     //! Reset all phase bin totals to zero
     void zero ();
