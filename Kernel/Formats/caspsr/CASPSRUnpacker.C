@@ -182,7 +182,8 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
 
   if (error != cudaSuccess)
     throw Error (FailedCall, "CASPSRUnpacker::unpack_on_gpu",
-                 "cudaMemcpyAsync %s", cudaGetErrorString (error));
+                 "cudaMemcpy%s %s", stream?"Async":"", 
+                 cudaGetErrorString (error));
 
   caspsr_unpack (stream, ndat, table->get_scale(), 
 		 d_staging, into_pola, into_polb); 
