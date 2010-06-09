@@ -12,6 +12,7 @@
 #include "Pulsar/Predictor.h"
 #include "dirutil.h"
 #include "strutil.h"
+#include "debug.h"
 
 using namespace std;
 
@@ -134,6 +135,7 @@ void dsp::FilenameEpoch::set_datestr_pattern (const std::string& pattern)
 
 void dsp::FilenameEpoch::set_integer_seconds (unsigned seconds)
 {
+  DEBUG("dsp::FilenameEpoch::set_integer_seconds " << seconds);
   integer_seconds = seconds;
 }
 
@@ -148,14 +150,16 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
   if (integer_seconds)
   {
     // ensure that the epoch is rounded up into the current division
-    epoch = data->get_mid_time();
+    epoch = data->get_mid_time (false);
+
+    DEBUG("dsp::FilenameEpoch::get_filename mid_time=" << epoch.printall());
 
     unsigned seconds = epoch.get_secs();
     unsigned divisions = seconds / integer_seconds;
     epoch = MJD (epoch.intday(), divisions * integer_seconds, 0.0);
 
     if (Observation::verbose)
-      cerr << "dsp::FilenameEpoch::get_filename division start epoch=" 
+      cerr << "dsp::FilenameEpoch::get_filename division_start=" 
            << epoch.printall() << endl;
   }
 
