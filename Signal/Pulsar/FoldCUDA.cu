@@ -162,7 +162,8 @@ void CUDA::FoldEngine::send_binplan ()
 
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",
-                 "cudaMemcpyAsync %s", cudaGetErrorString (error));
+                 "cudaMemcpy%s %s", 
+                 stream?"Async":"", cudaGetErrorString (error));
 }
 
 
