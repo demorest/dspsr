@@ -123,7 +123,10 @@ void dsp::Fold::reset ()
 
   Operation::reset ();
 
-  get_output()->zero();
+  if (engine)
+    engine->get_profiles()->zero();
+  if (output)
+    output->zero();
 }
 
 void dsp::Fold::finish ()

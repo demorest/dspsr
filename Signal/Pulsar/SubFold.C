@@ -259,6 +259,6 @@ void dsp::SubFold::zero_output ()
     path->reset();
   else
 #endif
-    get_output()->zero();
+    reset();
 }
 
