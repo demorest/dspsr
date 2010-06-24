@@ -10,6 +10,8 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/MultiFile.h"
+#include "dsp/SampleDelay.h"
+#include "dsp/GeometricDelay.h"
 
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
@@ -39,6 +41,7 @@ void usage ()
     " -r min,max set the min,max y-value (e.g. saturate birdies) \n"
     " -n nchan   number of frequency channels in each spectrum \n"
     " -t seconds integration interval for each spectrum \n"
+    " -p         detect the full-polarization bandpass \n"
     " -R         test RFIFilter class \n"
        << endl;
 }
@@ -50,6 +53,9 @@ int main (int argc, char** argv) try {
 
   // number of FFTs per block
   unsigned ffts = 16;
+
+  // detect only the power in each polarization
+  Signal::State state = Signal::PPQQ;
 
   // bandwidth
   double bandwidth = 0.0;
@@ -92,7 +98,7 @@ int main (int argc, char** argv) try {
   int width_pixels  = 0;
   int height_pixels = 0;
 
-  static char* args = "ibB:c:dD:f:F:g:lr:n:RS:T:t:hvV";
+  static char* args = "ibB:c:dD:f:F:g:lr:n:pRS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -184,6 +190,10 @@ int main (int argc, char** argv) try {
       nchan = atoi (optarg);
       break;
 
+    case 'p':
+      state = Signal::Coherence;
+      break;
+
     case 'V':
       dsp::Observation::verbose = true;
       dsp::Operation::verbose = true;
@@ -227,6 +237,13 @@ int main (int argc, char** argv) try {
   manager->set_output (voltages);
   operations.push_back (manager);
 
+  dsp::SampleDelay* sample_delay = new dsp::SampleDelay;
+  dsp::GeometricDelay* geometry = new dsp::GeometricDelay;
+  sample_delay -> set_function (geometry);
+
+  // HERE is where I would insert a SampleDelay object into the signal path
+  // operations.push_back (delay);
+
   if (verbose)
     cerr << "Creating Bandpass instance" << endl;
 
@@ -234,6 +251,8 @@ int main (int argc, char** argv) try {
   passband->set_input (voltages);
   passband->set_output (output);
   passband->set_nchan (nchan);
+  passband->set_state (state);
+
   operations.push_back (passband);
 
   if (cpgopen(display.c_str()) < 0)
@@ -294,6 +313,16 @@ int main (int argc, char** argv) try {
 
     manager->set_block_size ( block_size );
 
+    // HERE is where to set overlap
+    // manager->set_overlap (nchan * real_complex);
+
+    /*
+      HERE the file/ringbuffer is open
+      set the delay based on file contents
+
+      sample_delay -> delay_poln (nsamp);
+    */
+
     dsp::ExcisionUnpacker* excision;
     excision = dynamic_cast<dsp::ExcisionUnpacker*>( manager->get_unpacker() );
 
@@ -323,6 +352,8 @@ int main (int argc, char** argv) try {
 	
 	break;
       }
+
+      // HERE is where you could write results to disk
 
       if (passband->get_integration_length() > integrate)
       {
