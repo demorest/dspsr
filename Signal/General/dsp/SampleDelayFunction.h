@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelayFunction.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/06/17 10:16:54 $
+   $Revision: 1.5 $
+   $Date: 2010/06/24 13:30:06 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_SampleDelayFunction_h
@@ -18,6 +18,8 @@
 #include "environ.h"
 
 namespace dsp {
+
+  class Observation;
 
   //! Virtual base class of sample delay functions
   class SampleDelayFunction : public Reference::Able {
