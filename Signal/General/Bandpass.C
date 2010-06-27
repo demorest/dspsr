@@ -4,6 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/Bandpass.h"
 #include "dsp/Apodization.h"
 #include "dsp/Scratch.h"
@@ -28,6 +29,22 @@ dsp::Bandpass::~Bandpass ()
 void dsp::Bandpass::set_apodization (Apodization* _function)
 {
   apodization = _function; 
+}
+
+//! Set the frequency response function
+void dsp::Bandpass::set_response (Response* _response)
+{
+  response = _response;
+}
+
+bool dsp::Bandpass::has_response () const
+{
+  return response;
+}
+
+const dsp::Response* dsp::Bandpass::get_response() const
+{
+  return response;
 }
 
 void dsp::Bandpass::transformation ()
@@ -103,13 +120,15 @@ void dsp::Bandpass::transformation ()
   unsigned step = resolution * 2;
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
+  {
     for (unsigned ipol=0; ipol < npol; ipol++)
-      for (uint64_t ipart=0; ipart < npart; ipart++)  {
-	
+    {
+      for (uint64_t ipart=0; ipart < npart; ipart++)
+      {
 	uint64_t offset = ipart * step;
 		
-	for (unsigned jpol=0; jpol<cross_pol; jpol++) {
-	  
+	for (unsigned jpol=0; jpol<cross_pol; jpol++)
+	{
 	  if (full_poln)
 	    ipol = jpol;
 	  
@@ -126,6 +145,9 @@ void dsp::Bandpass::transformation ()
 	  else if (state == Signal::Analytic)
 	    FTransform::fcc1d (nsamp_fft, spectrum[ipol], ptr);
 	  
+	  // HERE is where the new fractional phase delay + fringe is applied
+	  if (response)
+	    response->operate (spectrum[ipol], ipol, ichan);
 	}
 	
 	if (full_poln) 
@@ -136,6 +158,8 @@ void dsp::Bandpass::transformation ()
 
 
       }  // for each part of the time series
+    } // for each polarization
+  } // for each frequency channel
 
   integration_length += double(npart*nsamp_fft) / input->get_rate();
 

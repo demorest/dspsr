@@ -36,6 +36,15 @@ namespace dsp {
     //! Get the state of the output
     Signal::State get_state () const { return output_state; }
 
+    //! Set the frequency response function
+    virtual void set_response (Response* response);
+
+    //! Return true if the response attribute has been set
+    bool has_response () const;
+
+    //! Return a pointer to the frequency response function
+    virtual const Response* get_response() const;
+
     //! Set the apodization function
     virtual void set_apodization (Apodization* function);
 
@@ -63,6 +72,8 @@ namespace dsp {
     //! Apodization function (time domain window)
     Reference::To<Apodization> apodization;
 
+    //! Frequency response (fractional delay and fringe, for example)
+    Reference::To<Response> response;
   };
 
 }
