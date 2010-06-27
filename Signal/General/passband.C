@@ -86,6 +86,9 @@ int main (int argc, char** argv) try {
   fft::BandpassPlotter<dsp::Response, dsp::TimeSeries> plotter;
   plotter.title = "Bandpass";
 
+  // GeometricDelay computes the required delays
+  dsp::GeometricDelay* geometry = 0;
+
   // the colour map
   pgplot::ColourMap::Name colour_map = pgplot::ColourMap::Heat;
   pgplot::ColourMap cmap;
@@ -98,7 +101,7 @@ int main (int argc, char** argv) try {
   int width_pixels  = 0;
   int height_pixels = 0;
 
-  static char* args = "ibB:c:dD:f:F:g:lr:n:pRS:T:t:hvV";
+  static char* args = "ibB:c:dD:f:F:G:g:lr:n:pRS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -139,6 +142,22 @@ int main (int argc, char** argv) try {
         cerr << "passband: could not parse WxH from '" << optarg << "'" << endl;
         return 0;
       }
+      break;
+    }
+
+    case 'G':
+    {
+      geometry = new dsp::GeometricDelay;
+
+      cerr << "passband -G " << optarg << endl;
+
+      /*
+	HERE is where I would load the file that describes telescope 
+	coordinates and other information, and set GeometricDelay attributes
+
+	The filename is given by 'optarg'
+      */
+
       break;
     }
 
@@ -237,12 +256,20 @@ int main (int argc, char** argv) try {
   manager->set_output (voltages);
   operations.push_back (manager);
 
-  dsp::SampleDelay* sample_delay = new dsp::SampleDelay;
-  dsp::GeometricDelay* geometry = new dsp::GeometricDelay;
-  sample_delay -> set_function (geometry);
+  if (geometry)
+  {
+    cerr << "Creating SampleDelay instance" << endl;
 
-  // HERE is where I would insert a SampleDelay object into the signal path
-  // operations.push_back (delay);
+    // SampleDelay performs the delay operation
+    dsp::SampleDelay* sample_delay = new dsp::SampleDelay;
+
+    // set the delay function 
+    sample_delay -> set_function (geometry);
+    sample_delay -> set_input (voltages);
+    sample_delay -> set_output (voltages);
+
+    operations.push_back (sample_delay);
+  }
 
   if (verbose)
     cerr << "Creating Bandpass instance" << endl;
@@ -252,6 +279,10 @@ int main (int argc, char** argv) try {
   passband->set_output (output);
   passband->set_nchan (nchan);
   passband->set_state (state);
+
+  if (geometry)
+    passband->set_response( geometry->get_response() );
+
 
   operations.push_back (passband);
 
