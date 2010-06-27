@@ -9,6 +9,8 @@
 #include "dsp/SampleDelayFunction.h"
 #include "dsp/InputBuffering.h"
 
+// #define _DEBUG 1
+
 #include <assert.h>
 
 using namespace std;
@@ -54,6 +56,20 @@ void dsp::SampleDelay::build ()
 
   unsigned input_npol  = input->get_npol();
   unsigned input_nchan = input->get_nchan();
+
+  if (function->get_absolute())
+  {
+    zero_delay = 0;
+
+    total_delay = function->get_delay (0, 0);
+
+    for (unsigned ipol=0; ipol < input_npol; ipol++)
+      for (unsigned ichan=0; ichan < input_nchan; ichan++)
+	if (function->get_delay (ichan, ipol) > total_delay)
+	  total_delay = function->get_delay (ichan, ipol);
+    
+    return;
+  }
 
   zero_delay = function->get_delay (0, 0);
 
@@ -106,6 +122,8 @@ void dsp::SampleDelay::transformation ()
   if (verbose)
     cerr << "dsp::SampleDelay::transformation" << endl;
 
+  prepare ();
+
   const uint64_t input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
@@ -147,15 +165,24 @@ void dsp::SampleDelay::transformation ()
     for (unsigned ichan=0; ichan < input_nchan; ichan++) {
 
       const float* in_data = input->get_datptr (ichan, ipol);
-      int64_t relative_delay = zero_delay - function->get_delay(ichan, ipol);
-      assert (relative_delay >= 0);
+
+      int64_t applied_delay = 0;
+
+      if (zero_delay)
+	// delays are relative to maximum delay
+	applied_delay = zero_delay - function->get_delay(ichan, ipol);
+      else
+	// delays are absolute and guaranteed positive
+	applied_delay = function->get_delay(ichan, ipol);
+
+      assert (applied_delay >= 0);
 
 #ifdef _DEBUG
       cerr << "ipol=" << ipol << " ichan=" << ichan 
-	   << " delay=" << relative_delay << endl;
+	   << " delay=" << applied_delay << endl;
 #endif
 
-      in_data += relative_delay * input_ndim;
+      in_data += applied_delay * input_ndim;
 
       float* out_data = output->get_datptr (ichan, ipol);
 
