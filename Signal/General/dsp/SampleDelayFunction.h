@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelayFunction.h,v $
-   $Revision: 1.5 $
-   $Date: 2010/06/24 13:30:06 $
+   $Revision: 1.6 $
+   $Date: 2010/06/27 10:56:25 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_SampleDelayFunction_h
@@ -38,6 +38,9 @@ namespace dsp {
 
     //! Add to the history of operations performed on the observation
     virtual void mark (Observation* observation) { }
+
+    //! Return true if delays are absolute (and guaranteed positive)
+    virtual bool get_absolute () const { return false; }
 
   };
 
