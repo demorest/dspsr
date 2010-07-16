@@ -1,8 +1,8 @@
-#! /bin/csh -f
+#! /bin/sh
 
-set psrchive=`sh -c 'which psrchive 2> /dev/null'`
+psrchive=`which psrchive 2> /dev/null`
 
-if ( "$psrchive" == "" ) then
+if test -z $psrchive; then
 
   echo
   echo "PSRCHIVE installation not found."
@@ -11,7 +11,7 @@ if ( "$psrchive" == "" ) then
   echo
   exit -1
 
-endif
+fi
 
 echo "Copying autoconf and automake tools from PSRCHIVE ..."
 
@@ -21,9 +21,7 @@ sh config/formats.sh
 
 echo "Running the GNU autotools.  Please be patient ..."
 
-autoreconf --install --force
-
-if ( ! $status ) then
+if autoreconf --install --force; then
 
   echo
   echo "Bootstrap complete.  You can now run the configure script."
@@ -38,5 +36,5 @@ else
   echo
   exit -1
 
-endif
+fi
 
