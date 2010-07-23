@@ -100,7 +100,7 @@ void dsp::SigProcUnpacker::unpack ()
       const unsigned char* from = from_base + (ichan >> div_shift);
 
       // shift = ichan % (8/nbit)
-      const unsigned shift = (ichan & mod_mask);
+      const unsigned shift = (ichan & mod_mask) * nbit; // MKeith: Need to move by nbits each channel!
  
       float* into = output->get_datptr (ichan, 0);
       
