@@ -26,9 +26,6 @@ namespace dsp
     };
 }
 
-float getChan(fitsfile *fp, const int sample, const int subint, const int npol, const int pol,
-        const int samplesperbyte, const int nchan, const int chan, const int colnum);
-
 float oneBitNumber(int num);
 float eightBitNumber(int num);
 float fourBitNumber(int num);
