@@ -7,6 +7,9 @@ set gpu=""
 set freq=""
 set bw=""
 
+@ nbwtrial = 4
+@ nchan = 0
+
 foreach option ( $* )
 
   switch ( $option )
@@ -49,6 +52,10 @@ foreach option ( $* )
     set bw="$optarg"
     breaksw
 
+  case nbw:
+    set nbwtrial="$optarg"
+    breaksw
+
   case *:
     cat <<EOF
 
@@ -63,7 +70,8 @@ Known values for OPTION are:
   --cache=MB         minimum CPU memory to use
 
   --freq=MHz         centre frequency
-  --bw=MHz           bandwidth
+  --bw=MHz           starting bandwidth
+  --nbw=N            number of bandwidth benchmarks (default N=4)
   --nchan=N          number of channels in filterbank
 
 EOF
@@ -90,10 +98,24 @@ else
   echo using at least $cache MB of cache
 endif
 
-foreach bwtrial ( 1 2 3 4 )
+@ bwtrial = 0
 
-  @ nchan = $bw * 2
+while ( $bwtrial < $nbwtrial )
+
+  if ( $nchan == 0 ) then
+    # ensure that nchan is a power of two
+    @ nchan = 2
+    while ( $nchan <= $bw )
+      @ nchan = $nchan * 2
+    end
+  endif
+
   @ time = 1024 / $bw
+
+  @ bwtrial = $bwtrial + 1
+
+  set outfile=f${freq}_b${bw}.dat
+  rm -f $outfile
 
   foreach DM ( 1 3 10 30 100 300 1000 )
 
@@ -118,6 +140,12 @@ foreach bwtrial ( 1 2 3 4 )
       rm -f *.ar
 
     end
+
+    set preptime=`grep prepared $file | tail -5 | awk -vtot=0 'tot+=$4 {print tot/5}' | tail -1`
+
+    set realtime=`grep -F % $file | grep -v Operation | tail -5 | awk '{print $3}' | awk -F: -vtot=0 'tot+=$1*60+$2 {print tot/5}' | tail -1`
+
+    echo "$DM $realtime $preptime" | awk '{print $1, ($2-$3)/'$time'}' >> $outfile
 
   end
 
