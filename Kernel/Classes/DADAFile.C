@@ -5,6 +5,10 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/DADAFile.h"
 #include "dsp/ASCIIObservation.h"
 #include "ascii_header.h"
