@@ -65,6 +65,8 @@
 
 using namespace std;
 
+static void* const undefined_stream = (void *) -1;
+
 dsp::LoadToFold1::LoadToFold1 ()
   : cerr( std::cerr.rdbuf() ), error (InvalidState, "")
 {
@@ -80,7 +82,7 @@ dsp::LoadToFold1::LoadToFold1 ()
   share = 0;
 
   input_context = 0;
-  gpu_stream = -1;
+  gpu_stream = undefined_stream;
 }
 
 dsp::LoadToFold1::~LoadToFold1 ()
@@ -962,9 +964,9 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       operations.push_back( fold[ifold].get() );
 
 #if HAVE_CUDA
-    if (gpu_stream != -1)
+    if (gpu_stream != undefined_stream)
     {
-      cudaStream_t stream = gpu_stream;
+      cudaStream_t stream = (cudaStream_t) gpu_stream;
       fold[ifold]->set_engine (new CUDA::FoldEngine(stream));
     }
 #endif
