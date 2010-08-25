@@ -23,13 +23,15 @@
 
 using namespace std;
 
+static void* const undefined_stream = (void *) -1;
+
 dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
 {
   if (verbose)
     cerr << "dsp::CASPSRUnpacker ctor" << endl;
 
   set_nstate (256);
-  gpu_stream = -1;
+  gpu_stream = undefined_stream;
 
   table = new BitTable (8, BitTable::TwosComplement);
 }
@@ -54,7 +56,7 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
   if (gpu)
   {
     staging.set_memory( memory );
-    gpu_stream = gpu->get_stream();
+    gpu_stream = (void *) gpu->get_stream();
   }
 
 #else
@@ -108,7 +110,7 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
 void dsp::CASPSRUnpacker::unpack ()
 {
 #if HAVE_CUDA
-  if (gpu_stream != -1)
+  if (gpu_stream != undefined_stream)
   {
     unpack_on_gpu ();
     return;
