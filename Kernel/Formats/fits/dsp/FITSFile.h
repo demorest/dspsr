@@ -27,6 +27,10 @@ namespace dsp
 
             void add_extensions (Extensions*);
 
+            void set_current_row(const unsigned row);
+
+            unsigned get_current_row();
+
         protected:
             //! Open the file
             virtual void open_file(const char* filename);
@@ -71,10 +75,5 @@ namespace dsp
             Reference::To<Pulsar::Archive> archive;
     };
 }
-
-float oneBitNumber(int num);
-float eightBitNumber(int num);
-float fourBitNumber(int num);
-float twoBitNumber(int num);
 
 #endif
