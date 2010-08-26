@@ -127,24 +127,7 @@ void dsp::FITSFile::open_file(const char* filename)
     info.set_bandwidth(archive->get_bandwidth());
     info.set_nchan(nchan);
     info.set_nbit(nbits);
-
-    switch (npol) {
-        case 1:
-            info.set_state (Signal::Intensity);
-            break;
-        case 2:
-            info.set_state (Signal::PPQQ);
-            break;
-        case 4:
-            info.set_state (Signal::Coherence);
-            info.set_ndim(1);
-            info.set_npol(4);
-            break;
-        default:
-            throw Error(InvalidState, "FITSFile::open_file",
-                    "invalid header npol=%d", npol);
-    }
-
+    info.set_state(archive->get_state());
     info.set_rate(1.0 / header.tsamp);
     info.set_coordinates( archive->get_coordinates() );
     info.set_receiver( archive->get<Pulsar::Receiver>()->get_name() );
@@ -155,7 +138,7 @@ void dsp::FITSFile::open_file(const char* filename)
     info.set_ndat(header.nsubint * nsamp);
 
     set_nsamples(nsamp);
-    set_bytes_per_row( (nsamp * npol * nchan * nbits) / 8 );
+    set_bytes_per_row((nsamp*npol*nchan*nbits) / 8);
 
     int colnum;
     fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
@@ -170,58 +153,91 @@ void dsp::FITSFile::open_file(const char* filename)
     if (fd < 0)
         throw Error(FailedSys, "dsp::FITSFile::open",
                 "failed open(%s)", filename);
-}
+} 
 
-int64_t dsp::FITSFile::load_bytes (unsigned char* buffer, uint64_t bytes)
+int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 {
-    const int colnum = get_data_colnum();
-    const uint nsamp = get_nsamples();
-    const uint nsub = info.get_ndat() / nsamp;
+  const unsigned bytes_per_row = get_bytes_per_row();
+  const int colnum = get_data_colnum();
+  const unsigned nsamp = get_nsamples();
+  const unsigned nrow = info.get_ndat() / nsamp;
 
-    // bytes to read each row 
-    const uint bytes_per_row = get_bytes_per_row();
+  // Adjust current_row and byte_offset depending on next sample to read.
+  const uint64_t sample = get_load_sample();
 
-	    uint bytes_to_read = bytes;
+  current_row = (int)(sample/(nsamp)) + 1;
 
-	    while (bytes_to_read)
-	    {
-	      if (current_row > nsub)
-		throw Error (InvalidState, "dsp::FITSFile::load_bytes",
-			     "current row=%u > nrow=%u", current_row, nsub);
+  const unsigned nchan = info.get_nchan();
+  const unsigned npol  = info.get_npol();
+  const unsigned nbit  = info.get_nbit();
+  const unsigned bytes_per_sample = (nchan*npol*nbit) / 8;
 
-      // read up to the end of the current row or the number of bytes to read
-      uint this_read = bytes_per_row - byte_offset;
-      if (this_read > bytes_to_read)
-	this_read = bytes_to_read;
+  byte_offset = (sample % nsamp) * bytes_per_sample;
 
-      // read from the current row offset by byte_offset
-      unsigned char nval = '0';
-      int initflag = 0;
-      int status = 0;
+  unsigned char nval = '0';
+  int initflag       = 0;
+  int status         = 0;
 
-      if (verbose)
-        cerr << "dsp::FITSFile::load_bytes row=" << current_row 
-	     << " offset=" << byte_offset << " read=" << this_read << endl;
+  // TODO: Check for current_row >= && current_row <= nrow
 
-      fits_read_col_byt (fp, colnum, current_row, byte_offset+1, this_read, nval,
-			 buffer, &initflag, &status);
+  unsigned bytes_remaining = bytes;
 
-      if (status)
-	throw FITSError (status, "dsp::FITSFile::load_bytes",
-			 "fits_read_col_byt");
-
-      // offset the base pointer and byte_offset in the current row
-      buffer += this_read;
-      byte_offset += this_read;
-
-      if (byte_offset == bytes_per_row)
-      {
-        ++current_row;
-	byte_offset = 0;
-      }
-
-      bytes_to_read -= this_read;
+  while (bytes_remaining > 0) {
+    // current_row = [1:nrow]
+    if (current_row > nrow) {
+      throw Error (InvalidState, "dsp::FITSFile::load_bytes",
+          "current row=%u > nrow=%u", current_row, nrow);
     }
 
-    return bytes;
+    // Read from byte_offset to end of the row.
+    unsigned this_read = bytes_per_row - byte_offset;
+
+    // Ensure we don't read more than expected.
+    if (this_read > bytes_remaining) {
+      this_read = bytes_remaining;
+    }
+
+    if (verbose) {
+      cerr << "dsp::FITSFile::load_bytes row=" << current_row
+        << " offset=" << byte_offset << " read=" << this_read << endl;
+    }
+
+    fits_read_col_byt(fp, colnum, current_row, byte_offset+1, this_read, nval,
+        buffer, &initflag, &status);
+
+    if (status) {
+      fits_report_error(stderr, status);
+
+      throw FITSError (status, "dsp::FITSFile::load_bytes",
+          "fits_read_col_byt");
+    }
+
+    buffer      += this_read;
+    byte_offset += this_read;
+
+    // Toggle the 'end of data' flag after the last byte has been read.
+    if (current_row == nrow & byte_offset >= bytes_per_row) {
+      set_eod(true);
+    }
+
+    // Adjust byte offset when entire row is read.
+    if (byte_offset >= bytes_per_row) {
+      ++current_row;
+      byte_offset = byte_offset % bytes_per_row;
+    }
+
+    bytes_remaining -= this_read;
+  }
+
+  return bytes;
+}
+
+unsigned dsp::FITSFile::get_current_row()
+{
+  return current_row;
+}
+
+void dsp::FITSFile::set_current_row(const unsigned row)
+{
+  current_row = row;
 }
