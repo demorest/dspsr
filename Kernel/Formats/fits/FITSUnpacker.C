@@ -5,8 +5,6 @@
  *
  ***************************************************************************/
 
-#include "assert.h"
-
 #include "dsp/FITSUnpacker.h"
 #include "Error.h"
 
@@ -14,20 +12,26 @@
 #define TWOBIT_MASK 0x3
 #define FOURBIT_MASK 0xf
 
-#define ONEBIT_SCALE 0.5
-#define FOURBIT_SCALE 7.5
-#define EIGHTBIT_SCALE 31.5
-
-
+typedef float (dsp::FITSUnpacker::*BitNumberFn) (const int num);
 
 using std::cerr;
 using std::endl;
 using std::vector;
 using std::cout;
 
+// Default zero offset for one-bit data.
+const float ONEBIT_SCALE = 0.5;
+
+// Default zero offset for four-bit data.
+const float FOURBIT_SCALE = 7.5;
+
+// Default zero offset for eight-bit data.
+const float EIGHTBIT_SCALE = 31.5;
+
+// Number of bits per byte.
 const int BYTE_SIZE = 8;
 
-dsp::FITSUnpacker::FITSUnpacker(const char* name) : HistUnpacker(name) {}
+dsp::FITSUnpacker::FITSUnpacker(const char* name) : Unpacker(name) {}
 
 /**
  * @brief Iterate each row (subint) and sample extracting the values
@@ -42,23 +46,22 @@ void dsp::FITSUnpacker::unpack()
     cerr << "dsp::FITSUnpacker::unpack" << endl;
   }
 
-  // Determine which mapping function to use depending on how many
-  // samples exist per byte.
-  float (*bitNumber)(int) = NULL;
-
+  // Allocate mapping method to use depending on how many bits per value.
+  BitNumberFn p;
   const unsigned nbit = input->get_nbit();
+
   switch (nbit) {
     case 1:
-      bitNumber = &oneBitNumber;
+      p = &dsp::FITSUnpacker::oneBitNumber;
       break;
     case 2:
-      bitNumber = &twoBitNumber;
+      p = &dsp::FITSUnpacker::twoBitNumber;
       break;
     case 4:
-      bitNumber = &fourBitNumber;
+      p = &dsp::FITSUnpacker::fourBitNumber;
       break;
     case 8:
-      bitNumber = &eightBitNumber;
+      p = &dsp::FITSUnpacker::eightBitNumber;
       break;
     default:
       throw Error(InvalidState, "FITSUnpacker::unpack",
@@ -69,17 +72,17 @@ void dsp::FITSUnpacker::unpack()
   const unsigned nchan = input->get_nchan();
   const unsigned ndat  = input->get_ndat();
 
-  // Number of of samples in a byte.
+  // Number of samples in one byte.
   const int samples_per_byte = BYTE_SIZE / nbit;
   const int mod_offset = samples_per_byte - 1;
 
   const unsigned char* from = input->get_rawptr();
 
-  // Iterate through input data, split the byte depending on number of 
+  // Iterate through input data, split the byte depending on number of
   // samples per byte, get corresponding mapped value and store it
   // as pol-chan-dat.
   //
-  // TODO: Use a lookup table.
+  // TODO: Use a lookup table???
   for (unsigned idat = 0; idat < ndat; ++idat) {
     for (unsigned ipol = 0; ipol < npol; ++ipol) {
       for (unsigned ichan = 0; ichan < nchan;) {
@@ -88,7 +91,7 @@ void dsp::FITSUnpacker::unpack()
         const int shifted_number = *from >> (mod * nbit);
 
         float* into = output->get_datptr(ichan, ipol) + idat;
-        *into = bitNumber(shifted_number);
+        *into = (*this.*p)(shifted_number);
 
         // Move to next byte when the entire byte has been split.
         if ((++ichan) % (samples_per_byte) == 0) {
@@ -99,10 +102,9 @@ void dsp::FITSUnpacker::unpack()
   }
 }
 
-
 bool dsp::FITSUnpacker::matches(const Observation* observation)
 {
-    return observation->get_machine() == "FITS";
+  return observation->get_machine() == "FITS";
 }
 
 
@@ -112,10 +114,10 @@ bool dsp::FITSUnpacker::matches(const Observation* observation)
  * @return Scaled one-bit value.
  */
 
-float oneBitNumber(const int num)
+float dsp::FITSUnpacker::oneBitNumber(const int num)
 {
-    const int masked_number = num & ONEBIT_MASK;
-    return masked_number - ONEBIT_SCALE;
+  const int masked_number = num & ONEBIT_MASK;
+  return masked_number - ONEBIT_SCALE;
 }
 
 
@@ -125,9 +127,9 @@ float oneBitNumber(const int num)
  * @return Scaled eight-bit value.
  */
 
-float eightBitNumber(const int num)
+float dsp::FITSUnpacker::eightBitNumber(const int num)
 {
-    return num - EIGHTBIT_SCALE;
+  return num - EIGHTBIT_SCALE;
 }
 
 
@@ -137,10 +139,10 @@ float eightBitNumber(const int num)
  * @returns float Scaled four-bit value.
  */
 
-float fourBitNumber(const int num)
+float dsp::FITSUnpacker::fourBitNumber(const int num)
 {
-    const int masked_number = num & FOURBIT_MASK;
-    return masked_number - FOURBIT_SCALE;
+  const int masked_number = num & FOURBIT_MASK;
+  return masked_number - FOURBIT_SCALE;
 }
 
 
@@ -155,20 +157,19 @@ float fourBitNumber(const int num)
  * @returns float Scaled two-bit value.
  */
 
-float twoBitNumber(const int num)
+float dsp::FITSUnpacker::twoBitNumber(const int num)
 {
-    const int masked_number = num & TWOBIT_MASK;
-    switch (masked_number) {
-        case 0:
-            return -2.0;
-        case 1:
-            return -0.5;
-        case 2:
-            return 0.5;
-        case 3:
-            return 2.0;
-        default:
-            return 0.0;
-    }
+  const int masked_number = num & TWOBIT_MASK;
+  switch (masked_number) {
+    case 0:
+      return -2.0;
+    case 1:
+      return -0.5;
+    case 2:
+      return 0.5;
+    case 3:
+      return 2.0;
+    default:
+      return 0.0;
+  }
 }
-
