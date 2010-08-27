@@ -31,72 +31,72 @@ dsp::FITSFile::FITSFile (const char* filename)
 
 bool dsp::FITSFile::is_valid (const char* filename) const
 {
-    fitsfile* test_fptr = 0;
-    int status = 0;
+  fitsfile* test_fptr = 0;
+  int status = 0;
 
-    fits_open_file(&test_fptr, filename, READONLY, &status);
-    if (status) {
-        if (verbose) {
-            char error[FLEN_ERRMSG];
-            fits_get_errstatus(status, error);
-            cerr << "FITSFile::is_valid fits_open_file: " << error << endl;
-        }
-
-        return false;
+  fits_open_file(&test_fptr, filename, READONLY, &status);
+  if (status) {
+    if (verbose) {
+      char error[FLEN_ERRMSG];
+      fits_get_errstatus(status, error);
+      cerr << "FITSFile::is_valid fits_open_file: " << error << endl;
     }
+    return false;
+  }
 
-    if (verbose)
-        cerr << "FITSFile::is_valid test reading MJD" << endl;
+  if (verbose) {
+    cerr << "FITSFile::is_valid test reading MJD" << endl;
+  }
 
-    bool result = true;
-
-    try {
-        // try to read the MJD from the header
-        long day;
-        long sec;
-        double frac;
-
-        psrfits_read_key (test_fptr, "STT_IMJD", &day);
-        psrfits_read_key (test_fptr, "STT_SMJD", &sec);
-        psrfits_read_key (test_fptr, "STT_OFFS", &frac);
-
-    } catch (Error& error) {
-        if (verbose)
-            cerr << "FITSFile::is_valid failed to read MJD "
-                << error.get_message() << endl;
-
-        result = false;
-    }
-
-    fits_close_file(test_fptr, &status);
-
-    return result;
-}
-
-void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
-{
+  bool result = true;
+  try {
+    // try to read the MJD from the header
     long day;
     long sec;
     double frac;
 
-    psrfits_read_key(fp, "STT_IMJD", &day);
-    psrfits_read_key(fp, "STT_SMJD", &sec);
-    psrfits_read_key(fp, "STT_OFFS", &frac);
-    header->start_time = MJD((int)day, (int)sec, frac);
+    psrfits_read_key (test_fptr, "STT_IMJD", &day);
+    psrfits_read_key (test_fptr, "STT_SMJD", &sec);
+    psrfits_read_key (test_fptr, "STT_OFFS", &frac);
 
-    int status = 0;
-    fits_movnam_hdu(fp, BINARY_TBL, "SUBINT", 0, &status);
-    psrfits_read_key(fp, "TBIN", &(header->tsamp));
+  } catch (Error& error) {
+    if (verbose) {
+      cerr << "FITSFile::is_valid failed to read MJD "
+        << error.get_message() << endl;
+    }
+    result = false;
+  }
 
-    if (status)
-        throw FITSError(status, "FITSFile - read_header",
-                "fits_read_key (TBIN)");
+  fits_close_file(test_fptr, &status);
+  return result;
+}
 
-    psrfits_read_key(fp, "NAXIS2", &(header->nsubint));
+void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
+{
+  long day;
+  long sec;
+  double frac;
 
-    if (status)
-        throw FITSError(status, "FITSFile - read_header",
-                "fits_read_key (NAXIS2)");
+  psrfits_read_key(fp, "STT_IMJD", &day);
+  psrfits_read_key(fp, "STT_SMJD", &sec);
+  psrfits_read_key(fp, "STT_OFFS", &frac);
+  header->start_time = MJD((int)day, (int)sec, frac);
+
+  int status = 0;
+  fits_movnam_hdu(fp, BINARY_TBL, "SUBINT", 0, &status);
+  psrfits_read_key(fp, "TBIN", &(header->tsamp));
+
+  if (status) {
+    throw FITSError(status, "FITSFile - read_header",
+        "fits_read_key (TBIN)");
+  }
+
+  psrfits_read_key(fp, "NAXIS2", &(header->nsubint));
+
+  if (status) {
+    throw FITSError(status, "FITSFile - read_header",
+        "fits_read_key (NAXIS2)");
+  }
 }
 
 void dsp::FITSFile::add_extensions (Extensions* ext)
@@ -106,53 +106,64 @@ void dsp::FITSFile::add_extensions (Extensions* ext)
 
 void dsp::FITSFile::open_file(const char* filename)
 {
-    archive = Pulsar::Archive::load(filename);
+  archive = Pulsar::Archive::load(filename);
 
-    Reference::To<Pulsar::FITSSUBHdrExtension> ext =
-        archive->get<Pulsar::FITSSUBHdrExtension>();
+  unsigned nbits = 0;
+  unsigned nsamp = 0;
 
-    const uint nbits = ext->get_nbits();
-    const uint nsamp = ext->get_nsblk();
-    const uint npol = archive->get_npol();
-    const uint nchan = archive->get_nchan();
+  Reference::To<Pulsar::FITSSUBHdrExtension> ext =
+    archive->get<Pulsar::FITSSUBHdrExtension>();
 
-    int status = 0;
-    fits_open_file(&fp, filename, READONLY, &status);
-    fits_params header;
-    read_header(fp, filename, &header);
+  if (ext) {
+    nbits = ext->get_nbits();
+    nsamp = ext->get_nsblk(); // Samples per row.
+  } else {
+    throw Error(InvalidState, "FITSFile::open_file",
+        "Could not access FITSSUBHdrExtension");
+  }
 
-    info.set_source(archive->get_source());
-    info.set_type(Signal::Pulsar);
-    info.set_centre_frequency(archive->get_centre_frequency());
-    info.set_bandwidth(archive->get_bandwidth());
-    info.set_nchan(nchan);
-    info.set_nbit(nbits);
-    info.set_state(archive->get_state());
-    info.set_rate(1.0 / header.tsamp);
-    info.set_coordinates( archive->get_coordinates() );
-    info.set_receiver( archive->get<Pulsar::Receiver>()->get_name() );
-    info.set_basis( archive->get_basis() );
-    info.set_start_time(header.start_time);
-    info.set_machine("FITS");
-    info.set_telescope(archive->get_telescope());
-    info.set_ndat(header.nsubint * nsamp);
+  const unsigned npol  = archive->get_npol();
+  const unsigned nchan = archive->get_nchan();
 
-    set_nsamples(nsamp);
-    set_bytes_per_row((nsamp*npol*nchan*nbits) / 8);
+  int status = 0;
+  fits_open_file(&fp, filename, READONLY, &status);
+  fits_params header;
+  read_header(fp, filename, &header);
 
-    int colnum;
-    fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
+  info.set_source(archive->get_source());
+  info.set_type(Signal::Pulsar);
+  info.set_centre_frequency(archive->get_centre_frequency());
+  info.set_bandwidth(archive->get_bandwidth());
+  info.set_nchan(nchan);
+  info.set_nbit(nbits);
+  info.set_state(archive->get_state());
+  info.set_rate(1.0/header.tsamp);
+  info.set_coordinates(archive->get_coordinates());
+  info.set_receiver(archive->get<Pulsar::Receiver>()->get_name());
+  info.set_basis(archive->get_basis());
+  info.set_start_time(header.start_time);
+  info.set_machine("FITS");
+  info.set_telescope(archive->get_telescope());
+  info.set_ndat(header.nsubint*nsamp); // nrow * samples per row
 
-    if (status)
-        throw FITSError(status, "FITSFile::open_file",
-                "fits_get_colnum (DATA)");
+  set_nsamples(nsamp);
+  set_bytes_per_row((nsamp*npol*nchan*nbits) / 8);
 
-    set_data_colnum(colnum);
+  int colnum;
+  fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
 
-    fd = ::open(filename, O_RDONLY);
-    if (fd < 0)
-        throw Error(FailedSys, "dsp::FITSFile::open",
-                "failed open(%s)", filename);
+  if (status) {
+    throw FITSError(status, "FITSFile::open_file",
+        "fits_get_colnum (DATA)");
+  }
+
+  set_data_colnum(colnum);
+
+  fd = ::open(filename, O_RDONLY);
+  if (fd < 0) {
+    throw Error(FailedSys, "dsp::FITSFile::open",
+        "failed open(%s)", filename);
+  }
 } 
 
 int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
