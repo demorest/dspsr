@@ -148,7 +148,7 @@ void input_prepare (dsp::Input* input)
 
     if (info->get_state() == Signal::Nyquist)
     {
-      info->set_rate( bandwidth * 2e6 );
+      info->set_rate( fabs(bandwidth) * 2e6 );
       cerr << "dspsr: corrected Nyquist (real-valued) sampling rate=" 
            << info->get_rate() << " Hz" << endl;
     }
