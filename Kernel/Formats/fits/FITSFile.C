@@ -1,3 +1,4 @@
+//-*-C++-*-
 /***************************************************************************
  *
  *   Copyright (C) 2008 by Jonathan Khoo & Willem van Straten
@@ -5,17 +6,17 @@
  *
  ***************************************************************************/
 
-#include "dsp/FITSFile.h"
-#include "dsp/CloneArchive.h"
-
-#include "psrfitsio.h"
-#include "fits_params.h"
+#include <fcntl.h>
 
 #include "Pulsar/Archive.h"
 #include "Pulsar/Receiver.h"
 #include "Pulsar/FITSSUBHdrExtension.h"
 
-#include <fcntl.h>
+#include "psrfitsio.h"
+#include "fits_params.h"
+
+#include "dsp/FITSFile.h"
+#include "dsp/CloneArchive.h"
 
 using std::cout;
 using std::cerr;
@@ -23,11 +24,8 @@ using std::endl;
 using std::string;
 
 dsp::FITSFile::FITSFile (const char* filename)
-  : File("FITSFile"), 
-    current_row(1),
-    byte_offset(0)
-{
-}
+  : File("FITSFile")
+{}
 
 bool dsp::FITSFile::is_valid (const char* filename) const
 {
@@ -91,7 +89,7 @@ void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
         "fits_read_key (TBIN)");
   }
 
-  psrfits_read_key(fp, "NAXIS2", &(header->nsubint));
+  psrfits_read_key(fp, "NAXIS2", &(header->nrow));
 
   if (status) {
     throw FITSError(status, "FITSFile - read_header",
@@ -109,14 +107,13 @@ void dsp::FITSFile::open_file(const char* filename)
   archive = Pulsar::Archive::load(filename);
 
   unsigned nbits = 0;
-  unsigned nsamp = 0;
-
+  unsigned samples_in_row = 0;
   Reference::To<Pulsar::FITSSUBHdrExtension> ext =
     archive->get<Pulsar::FITSSUBHdrExtension>();
 
   if (ext) {
     nbits = ext->get_nbits();
-    nsamp = ext->get_nsblk(); // Samples per row.
+    samples_in_row = ext->get_nsblk(); // Samples per row.
   } else {
     throw Error(InvalidState, "FITSFile::open_file",
         "Could not access FITSSUBHdrExtension");
@@ -144,10 +141,10 @@ void dsp::FITSFile::open_file(const char* filename)
   info.set_start_time(header.start_time);
   info.set_machine("FITS");
   info.set_telescope(archive->get_telescope());
-  info.set_ndat(header.nsubint*nsamp); // nrow * samples per row
+  info.set_ndat(header.nrow*samples_in_row);
 
-  set_nsamples(nsamp);
-  set_bytes_per_row((nsamp*npol*nchan*nbits) / 8);
+  set_samples_in_row(samples_in_row);
+  set_bytes_per_row((samples_in_row*npol*nchan*nbits) / 8);
 
   int colnum;
   fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
@@ -164,26 +161,30 @@ void dsp::FITSFile::open_file(const char* filename)
     throw Error(FailedSys, "dsp::FITSFile::open",
         "failed open(%s)", filename);
   }
-} 
+}
 
 int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 {
+  // Column number of the DATA column in the SUBINT table.
+  const int colnum             = get_data_colnum();
+  const unsigned nsamp         = get_samples_in_row();
+
+  // Bytes in a row, within the SUBINT table.
   const unsigned bytes_per_row = get_bytes_per_row();
-  const int colnum = get_data_colnum();
-  const unsigned nsamp = get_nsamples();
-  const unsigned nrow = info.get_ndat() / nsamp;
+
+  // Number of rows in the SUBINT table.
+  const unsigned nrow          = info.get_ndat()/nsamp;
 
   // Adjust current_row and byte_offset depending on next sample to read.
   const uint64_t sample = get_load_sample();
 
-  current_row = (int)(sample/(nsamp)) + 1;
+  // Calculate the row within the SUBINT table of the target sample to be read.
+  unsigned current_row = (int)(sample/(nsamp)) + 1;
 
   const unsigned nchan = info.get_nchan();
   const unsigned npol  = info.get_npol();
   const unsigned nbit  = info.get_nbit();
   const unsigned bytes_per_sample = (nchan*npol*nbit) / 8;
-
-  byte_offset = (sample % nsamp) * bytes_per_sample;
 
   unsigned char nval = '0';
   int initflag       = 0;
@@ -191,12 +192,13 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 
   // TODO: Check for current_row >= && current_row <= nrow
 
+  unsigned byte_offset = (sample % nsamp) * bytes_per_sample;
   unsigned bytes_remaining = bytes;
 
   while (bytes_remaining > 0) {
     // current_row = [1:nrow]
     if (current_row > nrow) {
-      throw Error (InvalidState, "dsp::FITSFile::load_bytes",
+      throw Error(InvalidState, "FITSFile::load_bytes",
           "current row=%u > nrow=%u", current_row, nrow);
     }
 
@@ -209,7 +211,7 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
     }
 
     if (verbose) {
-      cerr << "dsp::FITSFile::load_bytes row=" << current_row
+      cerr << "FITSFile::load_bytes row=" << current_row
         << " offset=" << byte_offset << " read=" << this_read << endl;
     }
 
@@ -218,9 +220,7 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 
     if (status) {
       fits_report_error(stderr, status);
-
-      throw FITSError (status, "dsp::FITSFile::load_bytes",
-          "fits_read_col_byt");
+      throw FITSError(status, "FITSFile::load_bytes", "fits_read_col_byt");
     }
 
     buffer      += this_read;
@@ -241,14 +241,4 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
   }
 
   return bytes;
-}
-
-unsigned dsp::FITSFile::get_current_row()
-{
-  return current_row;
-}
-
-void dsp::FITSFile::set_current_row(const unsigned row)
-{
-  current_row = row;
 }

@@ -9,71 +9,60 @@
 #ifndef __FITSFile_h
 #define __FITSFile_h
 
-#include "Pulsar/Archive.h"
 #include "fitsio.h"
+
+#include "Pulsar/Archive.h"
+
 #include "dsp/File.h"
 
 namespace dsp
 {
-    //! Loads BitSeries data from a FITS data file
-    class FITSFile : public File
-    {
-        public:
-            //! Construct and open file
-            FITSFile(const char* filename = 0);
+  //! Loads BitSeries data from a PSRFITS data file
+  class FITSFile : public File
+  {
+    public:
+      //! Construct and open file
+      FITSFile(const char* filename = 0);
 
-            //! Returns true if filename appears to name a valid FITS file
-            bool is_valid(const char* filename) const;
+      //! Returns true if filename appears to name a valid FITS file
+      bool is_valid(const char* filename) const;
 
-            void add_extensions (Extensions*);
+      void add_extensions (Extensions*);
 
-            void set_current_row(const unsigned row);
+    protected:
+      //! Open the file
+      virtual void open_file(const char* filename);
 
-            unsigned get_current_row();
+      //! Load nbyte bytes of sampled data from the device into buffer.
+      virtual int64_t load_bytes(unsigned char* buffer, uint64_t bytes);
 
-        protected:
-            //! Open the file
-            virtual void open_file(const char* filename);
+      void set_samples_in_row(const unsigned _samples_in_row) { samples_in_row =
+        _samples_in_row; }
 
-            virtual int64_t load_bytes(unsigned char* buffer, uint64_t bytes);
+      unsigned get_samples_in_row() const { return samples_in_row; }
 
-            void set_filename(const std::string fname) {filename = fname;}
+      void set_bytes_per_row(const unsigned bytes) { bytes_per_row = bytes; }
 
-            std::string get_filename() {return filename;}
+      unsigned get_bytes_per_row() { return bytes_per_row; }
 
-            void set_nsamples(const uint nsamp) {nsamples = nsamp;}
+      void set_data_colnum(const int colnum) { data_colnum = colnum; }
 
-            uint get_nsamples() {return nsamples;}
+      int get_data_colnum() const { return data_colnum; }
 
-            std::string filename;
-            uint nsamples;
+      Reference::To<Pulsar::Archive> archive;
 
-            uint current_row;
+      //! Column number of the DATA column in the SUBINT table.
+      int data_colnum;
 
-            uint byte_offset;
+      //! Store the instance of fitsfile, so it is only opened once.
+      fitsfile* fp;
 
-            void set_bytes_per_row(const uint bytes) {bytes_per_row = bytes;}
+      //! Number of samples per row
+      unsigned samples_in_row;
 
-            uint get_bytes_per_row() {return bytes_per_row;}
-
-            void set_num_rows(const uint rows) {num_rows = rows;}
-
-            uint get_num_rows() {return num_rows;}
-
-            uint num_rows;
-
-            uint bytes_per_row;
-
-            fitsfile* fp;
-
-            void set_data_colnum(const int colnum) {data_colnum = colnum;}
-
-            int get_data_colnum() {return data_colnum;}
-
-            int data_colnum;
-
-            Reference::To<Pulsar::Archive> archive;
-    };
+      //! Number of bytes per row in the SUBINT table.
+      unsigned bytes_per_row;
+  };
 }
 
 #endif
