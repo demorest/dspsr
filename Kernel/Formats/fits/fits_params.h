@@ -6,13 +6,15 @@
 
 struct fits_params
 {
-    MJD start_time;
-    long day;
-    long sec;
-    double frac;
+  MJD start_time;
+  long day;
+  long sec;
+  double frac;
 
-    int nsubint;
-    double tsamp;
+  int nsubint;
+  int nrow;
+
+  double tsamp;
 };
 
 #endif
