@@ -3,7 +3,7 @@ bin_SCRIPTS = dspsr_ldflags dspsr_cflags
 noinst_SCRIPTS = release.csh
 
 all:
-	chmod +x $(noinst_SCRIPTS)
+	-chmod +x $(noinst_SCRIPTS)
 
 libs: fix_prefix
 
