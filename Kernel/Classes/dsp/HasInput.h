@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HasInput.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/05/07 08:08:13 $
-   $Author: straten $ */
+   $Revision: 1.2 $
+   $Date: 2010/09/16 17:45:34 $
+   $Author: demorest $ */
 
 #ifndef __dsp_HasInput_h
 #define __dsp_HasInput_h
@@ -18,6 +18,7 @@
 
 namespace dsp
 {
+  //! Attaches to Operations with input
   template <class In>
   class HasInput
   {
