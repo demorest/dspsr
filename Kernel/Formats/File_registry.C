@@ -84,6 +84,11 @@ static Registry::List<dsp::File>::Enter<dsp::GMRTFile> register_gmrt;
 static Registry::List<dsp::File>::Enter<dsp::GMRTFilterbankFile> gmrt_fb;
 #endif
 
+#if HAVE_guppi
+#include "dsp/GUPPIFile.h"
+static Registry::List<dsp::File>::Enter<dsp::GUPPIFile> register_guppi;
+#endif
+
 #if HAVE_lbadr
 #include "dsp/SMROFile.h"
 static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;

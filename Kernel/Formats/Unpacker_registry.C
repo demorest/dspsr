@@ -86,6 +86,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::GMRTUnpacker> gmrt;
 static Registry::List<dsp::Unpacker>::Enter<dsp::GMRTFilterbank16> gmrt16;
 #endif
 
+#if HAVE_guppi
+#include "dsp/GUPPIUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::GUPPIUnpacker> guppi;
+#endif
+
 #if HAVE_lbadr
 #include "dsp/SMROTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::SMROTwoBitCorrection> lbadr;
