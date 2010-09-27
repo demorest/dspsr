@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.44 $
-   $Date: 2010/06/04 03:36:25 $
+   $Revision: 1.45 $
+   $Date: 2010/09/27 06:50:44 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -122,6 +122,9 @@ namespace dsp {
     //! Convenience method used to report the offset in seconds
     double tell_seconds () const;
 
+    //! Set the start of observation offset in units of seconds
+    void set_start_seconds (double seconds);
+
     //! Convenience method used to set the number of seconds
     void set_total_seconds (double seconds);
 
@@ -196,6 +199,9 @@ namespace dsp {
 
     //! Number of time samples to be read on the next call to load_data
     uint64_t load_size;
+
+    //! Offset into data stream set by set_start_seconds
+    uint64_t start_offset;
 
     //! Ensures that load size is properly set
     void set_load_size ();
