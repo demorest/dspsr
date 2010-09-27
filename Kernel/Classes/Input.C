@@ -74,7 +74,7 @@ inline Big multiple_smaller (Big big, Small small)
 
 void dsp::Input::mark_output ()
 {
-  output->input_sample = load_sample;
+  output->input_sample = load_sample - start_offset;
   output->input = this;
 
   output->request_offset = resolution_offset;
@@ -361,6 +361,18 @@ double dsp::Input::tell_seconds () const
 		 "data rate unknown");
 
   return load_sample / info.get_rate();
+}
+
+void dsp::Input::set_start_seconds (double seconds)
+{
+  if (seconds < 0)
+    throw Error (InvalidParam, "dsp::Input::set_start_seconds",
+		 "seconds = %lf < 0", seconds);
+
+  seek_seconds (seconds);
+
+  // the next sample required by the user
+  start_offset = load_sample + resolution_offset;
 }
 
 //! Convenience method used to set the number of seconds

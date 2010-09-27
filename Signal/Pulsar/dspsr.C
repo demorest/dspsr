@@ -201,7 +201,7 @@ void input_prepare (dsp::Input* input)
   }
 
   if (seek_seconds)
-    input->seek_seconds (seek_seconds);
+    input->set_start_seconds (seek_seconds);
     
   if (total_seconds)
     input->set_total_seconds (seek_seconds + total_seconds);
