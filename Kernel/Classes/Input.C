@@ -21,6 +21,8 @@ dsp::Input::Input (const char* name) : Operation (name)
   resolution = 1;
   resolution_offset = 0;
 
+  start_offset = 0;
+
   last_load_ndat = 0;
 
   context = 0;
