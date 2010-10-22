@@ -213,6 +213,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
   info.set_machine(ctmp);
 
   info.set_dc_centred(false);
+  info.set_swap(false);
+  info.set_dual_sideband(false);
 
   // TODO: could set recvr, etc..
   
