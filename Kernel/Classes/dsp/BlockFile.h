@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+   $Revision: 1.8 $
+   $Date: 2010/10/22 19:17:56 $
+   $Author: demorest $ */
 
 
 #ifndef __dsp_BlockFile_h
@@ -45,6 +45,9 @@ namespace dsp {
     //! Number of bytes in tailer of each block
     uint64_t block_tailer_bytes;
 
+    //! The current byte within a block
+    uint64_t current_block_byte;
+
     //! Return ndat given the file and header sizes, nchan, npol, and ndim
     /*! Called by open_file for some file types, to determine that the
     header ndat matches the file size.  Requires 'info' parameters
@@ -71,9 +74,6 @@ namespace dsp {
 
     //! Initialize variables to sensible null values
     void init();
-
-    //! The current byte within a block
-    uint64_t current_block_byte;
 
   };
 
