@@ -32,8 +32,14 @@ namespace dsp {
     //! Open the file
     void open_file (const char* filename);
 
+    //! Load some data
+    int64_t load_bytes (unsigned char *buffer, uint64_t nbytes);
+
     //! Skip a header
     void skip_extra ();
+
+    //! Temp buffer space for transpose
+    unsigned char *tmpbuf;
 
     //! Header string
     char *hdr;

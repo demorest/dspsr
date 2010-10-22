@@ -21,11 +21,13 @@ dsp::GUPPIFile::GUPPIFile (const char* filename)
   : BlockFile ("GUPPI")
 {
   hdr = NULL;
+  tmpbuf = NULL;
 }
 
 dsp::GUPPIFile::~GUPPIFile ( )
 {
   if (hdr!=NULL) free(hdr);
+  if (tmpbuf!=NULL) free(tmpbuf);
 }
 
 // Read header starting from current spot in file.  Puts header info
@@ -33,8 +35,10 @@ dsp::GUPPIFile::~GUPPIFile ( )
 // "END" is found, frees hdr and return 0.
 int get_header(int fd, char **hdr) {
   const size_t cs = 80;
-  char card[cs];  // Note these do not have terminating nulls!
-  char end[cs];   // No null here either!
+  char card[cs+1];
+  char end[cs+1];
+  card[cs] = '\0';
+  end[cs] = '\0';
   memset(end, ' ', cs);
   strncpy(end, "END", 3);
   const int max_cards = 2304;
@@ -54,6 +58,9 @@ int get_header(int fd, char **hdr) {
 
     count++;
 
+    // Print line for debug
+    // cerr << card << endl;
+
     // Copy into hdr buf
     *hdr = (char *)realloc(*hdr, count*cs + 1);
     strncpy(&(*hdr)[(count-1)*cs], card, cs);
@@ -72,10 +79,15 @@ int get_header(int fd, char **hdr) {
     // TODO make this an error if the '=' is not present?
   }
 
-  // Strip out single quotes for parsing.. may cause problems
-  // for strings with spaces.
+  // Strip out single quotes for parsing, replace spaces with _
+  // TODO this is kind of hacky.. figure out how to do it better/easier.
+  bool in_quoted_string = false;
   for (int i=0; i<count*cs; i++) {
-    if ((*hdr)[i]=='\'') (*hdr)[i]=' ';
+    if ((*hdr)[i]=='\'')  { 
+        (*hdr)[i]=' '; 
+        in_quoted_string = !in_quoted_string; 
+    }
+    //if (in_quoted_string && (*hdr)[i]==' ') (*hdr)[i]='_';
   }
 
   return count;
@@ -175,7 +187,7 @@ void dsp::GUPPIFile::open_file (const char* filename)
   header_get_check("STT_SMJD", "%d", &smjd);
   header_get_check("STT_OFFS", "%lf", &t_offset);
   MJD epoch (imjd, (double)smjd/86400.0 + t_offset);
-  info.set_start_time( epoch );
+  info.set_start_time(epoch);
 
   header_get_check("TELESCOP", "%s", ctmp);
   info.set_telescope(ctmp);
@@ -188,7 +200,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
   //       What about overlap?
   header_bytes = 0;
   block_header_bytes = 80*hdr_keys;
-  block_tailer_bytes = 0;
+  header_get_check("OVERLAP", "%d", &itmp);
+  block_tailer_bytes = itmp*info.get_nchan()*4; // Assumes 8-bit, 2-pol
   header_get_check("BLOCSIZE", "%d", &itmp);
   block_bytes = itmp + block_header_bytes;
 
@@ -199,16 +212,120 @@ void dsp::GUPPIFile::open_file (const char* filename)
   header_get_check("BACKEND", "%s", ctmp);
   info.set_machine(ctmp);
 
+  info.set_dc_centred(false);
+
   // TODO: could set recvr, etc..
   
 }
 
 void dsp::GUPPIFile::skip_extra ()
 {
+  if (verbose) 
+    cerr << "dsp::GUPPIFile::skip_extra()" << endl;
   // We should be at a new header now
   int nkeys = get_header(fd, &hdr);
   if (nkeys!=hdr_keys)
     throw Error (InvalidState, "dsp::GUPPIFile::skip_extra", 
-        "Number of header keys changed, can't deal with this yet.");
+        "Number of header keys changed (old=%d, new=%d), can't deal with this yet.",
+        hdr_keys, nkeys);
 }
 
+//! Load bytes from file.
+// This "untransposes" the GUPPI block structure... necessary??
+// Based on original from BlockFile
+int64_t dsp::GUPPIFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
+{
+  if (verbose) 
+    cerr << "dsp::GUPPIFile::load_bytes() nbytes=" << nbytes << endl;
+
+  const uint64_t block_data_bytes = get_block_data_bytes();
+  uint64_t to_load = nbytes;
+
+  // Need to know nchan to do the transpose
+  // Only considers 8-bit, 2-pol data now..
+  const unsigned nchan = info.get_nchan();
+
+  const uint64_t block_data_bytes_per_chan = block_data_bytes / nchan;
+  uint64_t to_load_per_chan = to_load / nchan;
+  uint64_t bytes_read_per_chan = 0;
+
+  const uint64_t block_tailer_bytes_per_chan = block_tailer_bytes / nchan;
+  const uint64_t full_block_bytes = block_data_bytes + block_tailer_bytes;
+  const uint64_t full_block_bytes_per_chan = full_block_bytes / nchan;
+
+  tmpbuf = (unsigned char *)realloc(tmpbuf, to_load);
+
+  while (to_load) {
+
+    // Here current_block_byte is not the location in the file, 
+    // but the number of bytes that have been read from the
+    // current block.
+    uint64_t to_read = block_data_bytes - current_block_byte;
+    if (to_read > to_load)
+      to_read = to_load;
+
+    // Hopefully to_read is always a multiple of nchan
+    uint64_t to_read_per_chan = to_read / nchan;
+
+    // Jump around in the file and get a bit of data from each channel
+    // Assume we start at the current spot for chan 0.
+    off_t start_pos = lseek(fd, 0, SEEK_CUR);
+    for (unsigned ichan=0; ichan<nchan; ichan++) {
+
+      // Go to this channel's spot
+      int rv = lseek(fd, start_pos + ichan*full_block_bytes_per_chan, SEEK_SET);
+      if (rv<0) 
+        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "lseek(%d)", fd);
+
+      // Read the data
+      size_t bytes_read = read(fd, tmpbuf + ichan*to_load_per_chan + 
+          bytes_read_per_chan, to_read_per_chan);
+
+      if (bytes_read < to_read_per_chan)
+        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "read");
+
+    }
+
+    // Go back to right spot in file
+    lseek(fd, start_pos + to_read_per_chan, SEEK_SET);
+
+    // Increment read counter
+    bytes_read_per_chan += to_read_per_chan;
+    to_load -= to_read_per_chan*nchan;
+    current_block_byte += to_read_per_chan*nchan;
+
+    // Go to next block
+    if (current_block_byte == block_data_bytes) {
+
+      int rv = lseek(fd, 
+          full_block_bytes_per_chan*(nchan-1) + block_tailer_bytes_per_chan, 
+          SEEK_CUR);
+      if (rv<0)
+        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "lseek(%d)", fd);
+
+      skip_extra();
+      current_block_byte = 0;
+
+    }
+
+  }
+
+#if 1 
+  // Transpose out of PTF into FPT(?) order
+  const int npol = 2;
+  const size_t bps = 2;
+  const int nsamp = to_load_per_chan/bps/npol;
+  for (unsigned ichan=0; ichan<nchan; ichan++) {
+    for (unsigned isamp=0; isamp<nsamp; isamp++) {
+      for (unsigned ipol=0; ipol<npol; ipol++) {
+        memcpy(buffer + isamp*nchan*npol*bps + ipol*nchan*bps + ichan*bps,
+            tmpbuf + ichan*nsamp*npol*bps + isamp*npol*bps + ipol*bps,
+            bps);
+      }
+    }
+  }
+#endif
+
+  return nbytes - to_load;
+
+}

@@ -47,10 +47,11 @@ void dsp::GUPPIUnpacker::unpack ()
   const unsigned npol = input->get_npol();
   const unsigned ndim = input->get_ndim();
   const unsigned nchan = input->get_nchan();
-  const unsigned nskip = npol * ndim;
+  //const unsigned nskip = npol * ndim;
+  const unsigned nskip = npol * ndim * nchan;
 
   //cerr << "npol=" << npol << " ndim=" << ndim << endl;
-  cerr << "ndat=" << ndat << endl;
+  //cerr << "ndat=" << ndat << endl;
 
   // TODO how to deal with structure of the file where large chunks of
   // each channel come in one at a time...
@@ -61,7 +62,8 @@ void dsp::GUPPIUnpacker::unpack ()
 
         unsigned idig = ichan*ndim*npol + ipol*ndim + idim;
         // XXX this only works if ndat always equals 1 data block:
-        unsigned off = ichan*ndim*npol*ndat + ipol*ndim + idim;
+        //unsigned off = ichan*ndim*npol*ndat + ipol*ndim + idim;
+        unsigned off = ipol*ndim*nchan + ichan*ndim + idim;
 
         const char* from = 
           reinterpret_cast<const char*>(input->get_rawptr()+off);
