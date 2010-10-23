@@ -50,9 +50,11 @@ int get_header(int fd, char **hdr) {
 
     // Read next card
     unsigned rv = read(fd, card, cs);
-    if (rv!=cs)
+    if (rv<0) // Error
       throw Error (FailedSys, "dsp::GUPPIFile::get_header", 
           "read() failed");
+    else if (rv!=cs) // Probably EOF
+      break;
 
     // Check for END
     if (strncmp(card,end,cs)==0) 
@@ -228,7 +230,7 @@ void dsp::GUPPIFile::skip_extra ()
     cerr << "dsp::GUPPIFile::skip_extra()" << endl;
   // We should be at a new header now
   int nkeys = get_header(fd, &hdr);
-  if (nkeys!=hdr_keys)
+  if (nkeys>0 && nkeys!=hdr_keys)
     throw Error (InvalidState, "dsp::GUPPIFile::skip_extra", 
         "Number of header keys changed (old=%d, new=%d), can't deal with this yet.",
         hdr_keys, nkeys);
