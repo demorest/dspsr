@@ -212,9 +212,9 @@ void dsp::GUPPIFile::open_file (const char* filename)
   header_get_check("BACKEND", "%s", ctmp);
   info.set_machine(ctmp);
 
-  info.set_dc_centred(false);
-  info.set_swap(false);
-  info.set_dual_sideband(false);
+  //info.set_dc_centred(false);
+  //info.set_swap(false);
+  //info.set_dual_sideband(false);
 
   // TODO: could set recvr, etc..
   
