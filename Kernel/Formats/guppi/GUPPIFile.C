@@ -10,7 +10,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
 
 #include "ascii_header.h"
@@ -271,13 +273,16 @@ int64_t dsp::GUPPIFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
 
     // Jump around in the file and get a bit of data from each channel
     // Assume we start at the current spot for chan 0.
-    off_t start_pos = lseek(fd, 0, SEEK_CUR);
+    uint64_t start_pos = lseek(fd, 0, SEEK_CUR);
     for (unsigned ichan=0; ichan<nchan; ichan++) {
 
       // Go to this channel's spot
-      int rv = lseek(fd, start_pos + ichan*full_block_bytes_per_chan, SEEK_SET);
+      uint64_t offset = start_pos + (uint64_t)ichan*full_block_bytes_per_chan;
+      int64_t rv = lseek(fd, offset, SEEK_SET);
       if (rv<0) 
-        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "lseek(%d)", fd);
+        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", 
+            "lseek1(%d) ichan=%d start_pos=%lld full_bytes_per_chan=%lld off=%lld", 
+            fd, ichan, start_pos, full_block_bytes_per_chan, offset);
 
       // Read the data
       size_t bytes_read = read(fd, tmpbuf + ichan*to_load_per_chan + 
@@ -299,11 +304,11 @@ int64_t dsp::GUPPIFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
     // Go to next block
     if (current_block_byte == block_data_bytes) {
 
-      int rv = lseek(fd, 
+      int64_t rv = lseek(fd, 
           full_block_bytes_per_chan*(nchan-1) + block_tailer_bytes_per_chan, 
           SEEK_CUR);
       if (rv<0)
-        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "lseek(%d)", fd);
+        throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "lseek2(%d)", fd);
 
       skip_extra();
       current_block_byte = 0;
