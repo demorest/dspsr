@@ -556,13 +556,9 @@ try
          << " duration=" << integration->get_duration()
          << " period=" << integration->get_folding_period() << endl;
 
-  unsigned offchan = 0;
-  if ( phase->get_swap() )
-    offchan = nchan/2; // swap the channels (passband re-order)
-
   for (unsigned ichan=0; ichan<nchan; ichan++)
   {
-    unsigned chan = (ichan+offchan)%nchan;
+    unsigned chan = phase->get_unswapped_ichan (ichan);
 
     Reference::To<Pulsar::MoreProfiles> more;
 
@@ -699,9 +695,13 @@ try
   }
 
   if (not_finite)
-    throw Error (InvalidParam, string(),
+  {
+    Error error (InvalidParam, string(),
 		 "%u/%u non-finite amplitudes in ichan=%d ipol=%d idim=%d",
 		 not_finite, nbin, ichan, ipol, idim);
+    cerr << error << endl;
+    profile->set_weight(0);
+  }
 
   if (zeroes)
   {
