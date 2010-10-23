@@ -116,6 +116,9 @@ namespace dsp
     //! Returns the centre frequency of the reference channel in MHz
     double get_base_frequency () const;
 
+    //! Returns the unswapped channel index of the specified channel
+    unsigned get_unswapped_ichan (unsigned ichan) const;
+
     //! Set the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
     virtual void set_bandwidth (double _bandwidth) { bandwidth = _bandwidth; }
     //! Return the bandwidth of signal in MHz (-ve = lsb; +ve = usb)
@@ -140,6 +143,11 @@ namespace dsp
     virtual void set_swap (bool _swap) { swap = _swap; }
     //! Return true if frequency channels are out of order (band swappped)
     bool get_swap () const { return swap; }
+
+    //! Set the number of sub-bands that must be band swapped
+    virtual void set_nsub_swap (unsigned _nsub) { nsub_swap = _nsub; }
+    //! Return the number of sub-bands that must be band swapped
+    unsigned get_nsub_swap () const { return nsub_swap; }
 
     //! Set true if the data are dual sideband
     virtual void set_dual_sideband (bool _dual);
@@ -297,6 +305,9 @@ namespace dsp
 
     //! Flag set when frequency channels are out of order (band swappped)
     bool swap;
+
+    //! The number of sub-bands that must be band swapped
+    unsigned nsub_swap;
 
     //! Flag set when centre channel is centred on centre frequency
     bool dc_centred;

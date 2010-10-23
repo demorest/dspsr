@@ -52,6 +52,7 @@ void dsp::Observation::init ()
   scale = 1.0;
 
   swap = dc_centred = false;
+  nsub_swap = 0;
 
   identifier = mode = machine = "";
   coordinates = sky_coord();
@@ -249,6 +250,13 @@ bool dsp::Observation::combinable (const Observation & obs) const
     can_combine = false;
   }
   
+  if (nsub_swap != obs.nsub_swap)
+  {
+    reason += separator +
+	"different nsub_swaps:" + tostring(swap) + " != " + tostring(obs.swap);
+    can_combine = false;
+  }
+
   if (dc_centred != obs.dc_centred)
   {
     reason += separator +
@@ -386,6 +394,7 @@ const dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_rate        ( in_obs.get_rate() );
   set_scale       ( in_obs.get_scale() );
   set_swap        ( in_obs.get_swap() );
+  set_nsub_swap   ( in_obs.get_nsub_swap() );
   set_dc_centred  ( in_obs.get_dc_centred() );
 
   set_identifier  ( in_obs.get_identifier() );
@@ -398,15 +407,27 @@ const dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 
 #endif
 
+unsigned dsp::Observation::get_unswapped_ichan (unsigned ichan) const
+{
+  if (swap)
+    ichan = (ichan + get_nchan()/2) % get_nchan();
+
+  if (nsub_swap)
+  {
+    unsigned sub_nchan = get_nchan() / nsub_swap;
+    ldiv_t result = std::div ( (long)ichan, (long)sub_nchan );
+    unsigned sub_band = result.quot;
+    unsigned sub_ichan = (result.rem + sub_nchan/2) % sub_nchan;
+    ichan = sub_band * sub_nchan + sub_ichan;
+  }
+
+  return ichan;
+}
+
 // returns the centre_frequency of the ichan channel
 double dsp::Observation::get_centre_frequency (unsigned ichan) const
 {
-  unsigned swap_chan = 0;
-  if (swap)
-    swap_chan = get_nchan()/2;
-
-  double channel = double ( (ichan+swap_chan) % get_nchan() );
-
+  double channel = get_unswapped_ichan (ichan);
   return get_base_frequency() + channel * bandwidth / double(get_nchan());
 }
 
