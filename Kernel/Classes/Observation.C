@@ -415,7 +415,7 @@ unsigned dsp::Observation::get_unswapped_ichan (unsigned ichan) const
   if (nsub_swap)
   {
     unsigned sub_nchan = get_nchan() / nsub_swap;
-    ldiv_t result = std::div ( (long)ichan, (long)sub_nchan );
+    div_t result = div ( (int)ichan, (int)sub_nchan );
     unsigned sub_band = result.quot;
     unsigned sub_ichan = (result.rem + sub_nchan/2) % sub_nchan;
     ichan = sub_band * sub_nchan + sub_ichan;
