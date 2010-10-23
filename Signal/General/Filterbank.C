@@ -351,7 +351,12 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
 
   // dual sideband data produces a band swapped result
   if (input->get_dual_sideband())
-    output->set_swap (true);
+  {
+    if (input->get_nchan() > 1)
+      output->set_nsub_swap (input->get_nchan());
+    else
+      output->set_swap (true);
+  }
 
   // increment the start time by the number of samples dropped from the fft
   output->change_start_time (nfilt_pos);
