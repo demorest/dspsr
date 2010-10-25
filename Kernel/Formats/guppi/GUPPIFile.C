@@ -163,6 +163,7 @@ void dsp::GUPPIFile::open_file (const char* filename)
  
   // Read header params
   int rv, itmp;
+  uint64_t ltmp;
   float ftmp;
   char ctmp[80];
 
@@ -190,7 +191,12 @@ void dsp::GUPPIFile::open_file (const char* filename)
   header_get_check("STT_IMJD", "%d", &imjd);
   header_get_check("STT_SMJD", "%d", &smjd);
   header_get_check("STT_OFFS", "%lf", &t_offset);
-  MJD epoch (imjd, (double)smjd/86400.0 + t_offset);
+  header_get_check("PKTIDX", "%lld", &ltmp);
+  header_get_check("PKTSIZE", "%d", &itmp);
+  t_offset += ltmp * itmp * 8.0 / info.get_rate() / 
+      (info.get_nbit() * info.get_nchan() * info.get_npol() * 2.0);
+  //cerr << "t_offset=" << t_offset << "s" << endl;
+  MJD epoch (imjd, (double)smjd/86400.0 + t_offset/86400.0);
   info.set_start_time(epoch);
 
   header_get_check("TELESCOP", "%s", ctmp);
@@ -201,7 +207,6 @@ void dsp::GUPPIFile::open_file (const char* filename)
 
   // Header, data sizes per block.
   // TODO: Assume header size doesn't change?
-  //       What about overlap?
   header_bytes = 0;
   block_header_bytes = 80*hdr_keys;
   header_get_check("OVERLAP", "%d", &itmp);
@@ -215,10 +220,6 @@ void dsp::GUPPIFile::open_file (const char* filename)
   info.set_mode(ctmp);
   header_get_check("BACKEND", "%s", ctmp);
   info.set_machine(ctmp);
-
-  //info.set_dc_centred(false);
-  //info.set_swap(false);
-  //info.set_dual_sideband(false);
 
   // TODO: could set recvr, etc..
   
@@ -276,6 +277,7 @@ int64_t dsp::GUPPIFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
     // Jump around in the file and get a bit of data from each channel
     // Assume we start at the current spot for chan 0.
     uint64_t start_pos = lseek(fd, 0, SEEK_CUR);
+    bool eof = false;
     for (unsigned ichan=0; ichan<nchan; ichan++) {
 
       // Go to this channel's spot
@@ -290,10 +292,19 @@ int64_t dsp::GUPPIFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
       size_t bytes_read = read(fd, tmpbuf + ichan*to_load_per_chan + 
           bytes_read_per_chan, to_read_per_chan);
 
-      if (bytes_read < to_read_per_chan)
+      if (bytes_read < 0)
         throw Error (FailedSys, "dsp::GUPPIFile::load_bytes", "read");
+                //"read (got=%d expected=%d)",
+                //bytes_read, to_read_per_chan);
+
+      if (bytes_read < to_read_per_chan) {
+          eof = true;
+          break;
+      }
 
     }
+
+    if (eof) break;
 
     // Go back to right spot in file
     lseek(fd, start_pos + to_read_per_chan, SEEK_SET);
