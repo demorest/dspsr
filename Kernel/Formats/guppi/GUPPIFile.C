@@ -165,7 +165,7 @@ void dsp::GUPPIFile::open_file (const char* filename)
   int rv, itmp;
   uint64_t ltmp;
   float ftmp;
-  char ctmp[80];
+  char ctmp[80], ctmp2[80];
 
   header_get_check("NBIT", "%d", &itmp);
   info.set_nbit(itmp);
@@ -216,12 +216,31 @@ void dsp::GUPPIFile::open_file (const char* filename)
 
   set_total_samples();
 
-  header_get_check("FD_POLN", "%s", ctmp);
-  info.set_mode(ctmp);
   header_get_check("BACKEND", "%s", ctmp);
   info.set_machine(ctmp);
 
-  // TODO: could set recvr, etc..
+  // Maybe the following aren't strictly required ...
+
+  // Poln type
+  header_get_check("FD_POLN", "%s", ctmp);
+  if (strncasecmp(ctmp, "CIR", 3)==0) 
+    info.set_basis(Signal::Circular);
+  else
+    info.set_basis(Signal::Linear);
+
+  // Coordinates
+  sky_coord coords;
+  header_get_check("RA_STR", "%s", ctmp);
+  header_get_check("DEC_STR", "%s", ctmp2);
+  coords.setHMSDMS(ctmp, ctmp2);
+  info.set_coordinates(coords);
+
+  // Receiver
+  header_get_check("FRONTEND", "%s", ctmp);
+  info.set_receiver(ctmp);
+  // How to set feed hand, symm angle, etc?
+  // Note: GBT recvrs have fd_hand=-1, PF has fd_sang=+45deg, 
+  //       otherwise fd_sang=-45deg.
   
 }
 
