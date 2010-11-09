@@ -132,6 +132,8 @@ void dsp::FITSFile::open_file(const char* filename)
   info.set_centre_frequency(archive->get_centre_frequency());
   info.set_bandwidth(archive->get_bandwidth());
   info.set_nchan(nchan);
+  info.set_npol(npol);
+
   info.set_nbit(nbits);
   info.set_state(archive->get_state());
   info.set_rate(1.0/header.tsamp);
@@ -142,6 +144,7 @@ void dsp::FITSFile::open_file(const char* filename)
   info.set_machine("FITS");
   info.set_telescope(archive->get_telescope());
   info.set_ndat(header.nrow*samples_in_row);
+
 
   set_samples_in_row(samples_in_row);
   set_bytes_per_row((samples_in_row*npol*nchan*nbits) / 8);
