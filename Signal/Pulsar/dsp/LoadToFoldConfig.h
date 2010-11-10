@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.31 $
-   $Date: 2010/06/02 05:30:26 $
-   $Author: straten $ */
+   $Revision: 1.32 $
+   $Date: 2010/11/10 20:08:44 $
+   $Author: demorest $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
@@ -80,6 +80,8 @@ namespace dsp {
     bool coherent_dedispersion;
     // perform coherent dedispersion while forming the filterbank
     bool simultaneous_filterbank;
+    // perform filterbank after coherent dedisp
+    bool filterbank_after_dedisp;
 
     // set the cuda devices to be used
     void set_cuda_device (std::string);

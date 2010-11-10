@@ -42,6 +42,9 @@ dsp::LoadToFold::Config::Config ()
   // perform coherent dedispersion while forming the filterbank
   simultaneous_filterbank = false;
 
+  // perform filterbank after coherent dedisp
+  filterbank_after_dedisp = false;
+
   // one thread by default
   nthread = 1;
 
