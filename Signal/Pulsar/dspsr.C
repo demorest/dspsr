@@ -358,6 +358,7 @@ void parse_options (int argc, char** argv) try
   arg->set_long_help
     ("either simply specify the number of channels; e.g. -F 256 \n"
      "or perform simultaneous coherent dedispersion with -F 256:D \n"
+     "or perform coherent dedispersion before the filterbank with -F 256:B \n"
      "or reduce the spectral leakage function bandwidth with -F 256:<N> \n"
      "where <N> is the reduction factor");
 
@@ -664,6 +665,13 @@ void parse_options (int argc, char** argv) try
 	// to match that required by coherent dedispersion
 	cerr << "dspsr: Coherent dedispersion filterbank enabled" << endl;
 	config->simultaneous_filterbank = true;
+      }
+      else if (*pfr == 'B' || *pfr == 'b')
+      {
+        // Flag that says to perform coherent dedisp on the full bank
+        // before putting the data into the filterbank
+        cerr << "dspsr: Dedisperse before filterbank enabled" << endl;
+        config->filterbank_after_dedisp = true;
       }
       else
       {

@@ -408,7 +408,9 @@ void dsp::LoadToFold1::prepare () try
     if (config->nfft)
       filterbank->set_frequency_resolution (config->nfft);
 
-    operations.push_back (filterbank.get());
+    // Get order of operations correct
+    if (!config->filterbank_after_dedisp)
+      operations.push_back (filterbank.get());
 
 #if HAVE_CUDA
     if (run_on_gpu)
@@ -442,13 +444,28 @@ void dsp::LoadToFold1::prepare () try
     if (!config->single_pulse)
       convolution->set_passband (passband);
     
-    convolution->set_input  (convolved);  
-    convolution->set_output (convolved);  // inplace
+    if (config->filterbank_after_dedisp)
+    {
+      convolution->set_input  (unpacked);  
+      convolution->set_output (unpacked);  // inplace
+    }
+    else
+    {
+      convolution->set_input  (convolved);  
+      convolution->set_output (convolved);  // inplace
+    }
     
     operations.push_back (convolution.get());
+
   }
 
-  prepare_interchan (convolved);
+  if (config->filterbank_after_dedisp)
+    prepare_interchan (unpacked);
+  else
+    prepare_interchan (convolved);
+
+  if (config->filterbank_after_dedisp && filterbank)
+    operations.push_back (filterbank.get());
 
   if (config->plfb_nbin)
   {
@@ -700,13 +717,15 @@ void dsp::LoadToFold1::prepare_final ()
 
   if (convolution)
   {
-    minimum_samples = convolution->get_minimum_samples () * config->nchan;
+    minimum_samples = convolution->get_minimum_samples () * 
+      convolution->get_input()->get_nchan();
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
            << minimum_samples << " samples" << endl;
 
     if (!config->input_buffering)
-      block_overlap = convolution->get_minimum_samples_lost () * config->nchan;
+      block_overlap = convolution->get_minimum_samples_lost () *
+        convolution->get_input()->get_nchan();
   }
 
 #if 0
