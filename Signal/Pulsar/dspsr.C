@@ -362,6 +362,9 @@ void parse_options (int argc, char** argv) try
      "or reduce the spectral leakage function bandwidth with -F 256:<N> \n"
      "where <N> is the reduction factor");
 
+  arg = menu.add (config->plfb_nbin, 'G', "nbin");
+  arg->set_help ("create phase-locked filterbank");
+
   double dm = -1.0;
   arg = menu.add (dm, 'D', "dm");
   arg->set_help ("over-ride dispersion measure");
