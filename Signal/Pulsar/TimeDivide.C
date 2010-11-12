@@ -476,7 +476,9 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   if (division_turns < 1.0)
   {
     Phase profile_phase = input_phase - reference_phase + 0.5 * division_turns;
-    phase_bin = unsigned( profile_phase.fracturns() / division_turns );
+    double ft = profile_phase.fracturns();
+    if (ft<0.0) ft += 1.0;
+    phase_bin = unsigned( ft / division_turns );
 
 #ifdef _DEBUG
     cerr << "division=" << division << " phase=" << profile_phase
