@@ -95,7 +95,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     // the integration is currently empty; prepare for integration
     get_output()->Observation::operator = (*input);
 
-    get_output()->set_nchan (nbin);
+    get_output()->set_nchan (nchan * input_nchan);
     get_output()->set_npol (1);
     get_output()->set_ndim (1);
     get_output()->set_state (Signal::Intensity);
@@ -106,10 +106,9 @@ void dsp::PhaseLockedFilterbank::transformation ()
     output->set_rate (input->get_rate() / ndat_fft);
 
     // complex to complex FFT produces a band swapped result
-    if (input->get_state() == Signal::Analytic)
-      output->set_swap (true);
+    output->set_nsub_swap (input_nchan);
 
-    get_output()->resize (nchan * input_nchan);
+    get_output()->resize (nbin);
     get_output()->zero ();
     get_output()->set_hits (1);
 
@@ -128,15 +127,17 @@ void dsp::PhaseLockedFilterbank::transformation ()
   output->set_rate (input->get_rate() / ndat_fft);
 
   // complex to complex FFT produces a band swapped result
-  if (input->get_state() == Signal::Analytic)
-    output->set_swap (true);
+  output->set_nsub_swap (input_nchan);
+
+  // Does it matter when this is done?
+  get_output()->set_folding_predictor( divider.get_predictor() );
 
   bool first = false;
 
   // if unspecified, the first TimeSeries to be folded will define the
   // start time from which to begin cutting up the observation
   if (divider.get_start_time() == MJD::zero)  {
-    cerr << "First call\n" << endl;
+    cerr << "First call" << endl;
     first = true;
     divider.set_start_time (input->get_start_time());
   }
@@ -180,17 +181,15 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
     phase_bin = divider.get_phase_bin ();
 
-    // cerr << "phase bin = " << phase_bin << endl;
+    //cerr << "phase bin = " << phase_bin << endl;
     get_output()->get_hits()[phase_bin] ++;
     total_integrated += time_per_fft; 
 
-    for (unsigned ichan=0; ichan < input_nchan; ichan++) {
-
-      float* amps = output->get_datptr (phase_bin, 0) + ichan * nchan;
+    for (unsigned inchan=0; inchan < input_nchan; inchan++) {
 
       for (unsigned ipol=0; ipol < input_npol; ipol++) {
 
-	const float* dat_ptr = input->get_datptr (ichan, ipol);
+	const float* dat_ptr = input->get_datptr (inchan, ipol);
 	dat_ptr += idat_start * input_ndim;
 	  
 	if (input_ndim == 1)
@@ -198,10 +197,12 @@ void dsp::PhaseLockedFilterbank::transformation ()
 	else
 	  FTransform::fcc1d (ndat_fft, complex_spectrum, dat_ptr);
 
+
 	// square-law detect
 	for (unsigned ichan=0; ichan < nchan; ichan++) {
-	  amps[ichan] += sqr(complex_spectrum[ichan*2]);
-	  amps[ichan] += sqr(complex_spectrum[ichan*2+1]);
+          float *amps = output->get_datptr(inchan*nchan + ichan, 0);
+	  amps[phase_bin] += sqr(complex_spectrum[ichan*2]);
+	  amps[phase_bin] += sqr(complex_spectrum[ichan*2+1]);
 	}
 
       } // for each polarization
@@ -221,6 +222,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
 void dsp::PhaseLockedFilterbank::normalize_output ()
 {
+// This is unnecessary if the output data is in the expected order.
+#if 0 
   unsigned output_nbin = get_output()->get_nbin();
   unsigned output_nchan = get_output()->get_nchan();
 
@@ -231,11 +234,12 @@ void dsp::PhaseLockedFilterbank::normalize_output ()
   
   for (unsigned ichan=0; ichan < output_nchan; ichan++) {
 
-    cerr << "hits[" << ichan << "]=" << hits[ichan] << endl;
+    //cerr << "hits[" << ichan << "]=" << hits[ichan] << endl;
 
     float* amps = output->get_datptr (ichan, 0);
     for (unsigned ibin=0; ibin < output_nbin; ibin++)  {
-      amps[ibin] /= hits[ichan];
+      //amps[ibin] /= hits[ichan];
+      amps[ibin] /= hits[ibin];
 #if 0
           cerr << "amps[" << ichan << "," << ibin << "]="
                << amps[ibin] << endl;
@@ -244,4 +248,5 @@ void dsp::PhaseLockedFilterbank::normalize_output ()
   }
 
   get_output()->set_hits(1);
+#endif
 }
