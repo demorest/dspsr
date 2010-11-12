@@ -484,13 +484,32 @@ void dsp::LoadToFold1::prepare () try
 
     phased_filterbank->divider.set_reference_phase (config->reference_phase);
 
+    // Make dummy fold instance so that polycos get created
+    fold.resize(1);
+    fold[0] = new dsp::Fold;
+    if (config->ephemerides.size() > 0)
+      fold[0]->set_pulsar_ephemeris ( config->ephemerides[0] );
+    else if (config->predictors.size() > 0)
+      fold[0]->set_folding_predictor ( config->predictors[0] );
+    fold[0]->set_output ( phased_filterbank->get_output() );
+    fold[0]->prepare ( manager->get_info() );
+
+    // Set up output
+    Archiver* archiver = new Archiver;
+    unloader.resize(1);
+    unloader[0] = archiver;
+    prepare_archiver( archiver );
+
     operations.push_back (phased_filterbank.get());
 
-    // TO-DO: Archiver?
+    path.resize(1);
+    path[0] = new SignalPath (operations);
+
+    prepare_final();
 
     return;
-
     // the phase-locked filterbank does its own detection and folding
+    
   }
  
   if (!detect)
@@ -1329,7 +1348,11 @@ void dsp::LoadToFold1::finish () try
       if (Operation::verbose)
 	cerr << "Creating archive " << i+1 << endl;
 
-      archiver->unload( fold[i]->get_result() );
+      if (phased_filterbank)
+        archiver->unload( phased_filterbank->get_output() );
+      else
+        archiver->unload( fold[i]->get_result() );
+
     }
   }
 }
