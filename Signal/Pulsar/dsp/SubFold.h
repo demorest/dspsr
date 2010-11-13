@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.19 $
-   $Date: 2009/06/07 01:22:34 $
-   $Author: straten $ */
+   $Revision: 1.20 $
+   $Date: 2010/11/13 01:42:50 $
+   $Author: demorest $ */
 
 #ifndef __SubFold_h
 #define __SubFold_h
@@ -22,6 +22,8 @@
 
 namespace dsp {
 
+  class PhaseSeriesUnloader;
+
   //! Fold data into sub-integrations
   /*! The SubFold class is useful for producing multiple sub-integrations
     from a single observation.  Given a Predictor and the number of pulses
@@ -31,8 +33,6 @@ namespace dsp {
     the SubFold class will store folded sub-integrations in the subints 
     vector.  If set, the SubFold class will call unloader->unload (output)
   */
-
-  class PhaseSeriesUnloader;
 
   class SubFold : public Fold {
 
