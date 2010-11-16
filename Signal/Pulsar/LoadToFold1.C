@@ -470,8 +470,44 @@ void dsp::LoadToFold1::prepare () try
 
   if (config->plfb_nbin)
   {
+
+    bool subints = config->single_pulse || config->integration_length;
+
+    // Set up output
+    Archiver* archiver = new Archiver;
+    unloader.resize(1);
+    unloader[0] = archiver;
+    prepare_archiver( archiver );
+
     if (!phased_filterbank)
-      phased_filterbank = new PhaseLockedFilterbank;
+    {
+      if (subints) 
+      {
+
+        Subint<PhaseLockedFilterbank> *sub_plfb = 
+          new Subint<PhaseLockedFilterbank>;
+
+        if (config->integration_length)
+        {
+          sub_plfb->set_subint_seconds (config->integration_length);
+        }
+
+        else if (config->single_pulse) 
+        {
+          sub_plfb->set_subint_turns (1);
+          sub_plfb->set_fractional_pulses (config->fractional_pulses);
+        }
+
+        sub_plfb->set_unloader (unloader[0]);
+
+        phased_filterbank = sub_plfb;
+
+      }
+      else
+      {
+        phased_filterbank = new PhaseLockedFilterbank;
+      }
+    }
 
     phased_filterbank->set_nbin (config->plfb_nbin);
 
@@ -483,7 +519,7 @@ void dsp::LoadToFold1::prepare () try
     if (!phased_filterbank->has_output())
       phased_filterbank->set_output (new PhaseSeries);
 
-    phased_filterbank->divider.set_reference_phase (config->reference_phase);
+    phased_filterbank->bin_divider.set_reference_phase(config->reference_phase);
 
     // Make dummy fold instance so that polycos get created
     fold.resize(1);
@@ -494,12 +530,6 @@ void dsp::LoadToFold1::prepare () try
       fold[0]->set_folding_predictor ( config->predictors[0] );
     fold[0]->set_output ( phased_filterbank->get_output() );
     fold[0]->prepare ( manager->get_info() );
-
-    // Set up output
-    Archiver* archiver = new Archiver;
-    unloader.resize(1);
-    unloader[0] = archiver;
-    prepare_archiver( archiver );
 
     operations.push_back (phased_filterbank.get());
 
@@ -630,7 +660,7 @@ void dsp::LoadToFold1::prepare_final ()
     predictor = fold[0]->get_folding_predictor();
 
   if (phased_filterbank)
-    phased_filterbank->divider.set_predictor( predictor );
+    phased_filterbank->bin_divider.set_predictor( predictor );
 
   const Pulsar::Parameters* parameters = 0;
   if (fold[0]->has_pulsar_ephemeris())

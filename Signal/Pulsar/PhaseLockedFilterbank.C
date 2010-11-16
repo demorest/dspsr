@@ -19,6 +19,9 @@ dsp::PhaseLockedFilterbank::PhaseLockedFilterbank () :
 {
   nchan = 0;
   nbin = 0;
+
+  idat_start = ndat_fold = 0;
+
   built = false;
 
   set_buffering_policy (new InputBuffering (this));
@@ -32,7 +35,7 @@ void dsp::PhaseLockedFilterbank::set_nchan (unsigned _nchan)
 void dsp::PhaseLockedFilterbank::set_nbin (unsigned _nbin)
 {
   nbin = _nbin;
-  divider.set_turns (1.0/double(nbin));
+  bin_divider.set_turns (1.0/double(nbin));
 }
 
 template<class T> T sqr (T x) { return x*x; }
@@ -44,7 +47,7 @@ void dsp::PhaseLockedFilterbank::prepare ()
 		 "invalid dimensions.  nchan=%d nbin=%d", nchan, nbin);
 
   MJD epoch = input->get_start_time();
-  double period = 1.0/divider.get_predictor()->frequency(epoch);
+  double period = 1.0/bin_divider.get_predictor()->frequency(epoch);
 
   double samples_per_bin = period * input->get_rate() / nbin;
 
@@ -130,16 +133,17 @@ void dsp::PhaseLockedFilterbank::transformation ()
   output->set_nsub_swap (input_nchan);
 
   // Does it matter when this is done?
-  get_output()->set_folding_predictor( divider.get_predictor() );
+  get_output()->set_folding_predictor( bin_divider.get_predictor() );
 
   bool first = false;
 
   // if unspecified, the first TimeSeries to be folded will define the
   // start time from which to begin cutting up the observation
-  if (divider.get_start_time() == MJD::zero)  {
+  if (bin_divider.get_start_time() == MJD::zero)  {
     cerr << "First call" << endl;
     first = true;
-    divider.set_start_time (input->get_start_time());
+    bin_divider.set_start_time (input->get_start_time() + 
+        (double)idat_start / input->get_rate());
   }
 
   // set up the scratch space
@@ -149,7 +153,9 @@ void dsp::PhaseLockedFilterbank::transformation ()
     cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 
 	 << endl;
 
-  uint64_t idat_start = 0;
+  //uint64_t idat_start = 0;
+  uint64_t idat_end = ndat_fold==0 ? input_ndat : idat_start + ndat_fold;
+  if (idat_end > input_ndat) idat_end = input_ndat;
   unsigned phase_bin = 0;
 
   // flag that the input TimeSeries contains data for another sub-integration
@@ -162,24 +168,26 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
   while (more_data) {
 
-    divider.set_bounds( get_input() );
+    bin_divider.set_bounds( get_input() );
 
-    idat_start = divider.get_idat_start ();
+    idat_start = bin_divider.get_idat_start ();
 
+#if 0 
     if (!first && idat_start != last_used)
       throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation",
                    "Sample dropped? last="UI64" start="UI64,
                    last_used, idat_start);
+#endif
 
     first = false;
-    last_used = idat_start + divider.get_ndat ();
+    last_used = idat_start + bin_divider.get_ndat ();
 
-    if (idat_start + ndat_fft > input_ndat)  {
-      divider.discard_bounds( get_input() );
+    if (idat_start + ndat_fft > idat_end) {
+      bin_divider.discard_bounds( get_input() );
       break;
     }
 
-    phase_bin = divider.get_phase_bin ();
+    phase_bin = bin_divider.get_phase_bin ();
 
     //cerr << "phase bin = " << phase_bin << endl;
     get_output()->get_hits()[phase_bin] ++;
@@ -249,4 +257,21 @@ void dsp::PhaseLockedFilterbank::normalize_output ()
 
   get_output()->set_hits(1);
 #endif
+}
+
+void dsp::PhaseLockedFilterbank::reset () 
+{
+  if (verbose)
+    cerr << "dsp::PhaseLockedFilterbank::reset" << endl;
+
+  Operation::reset();
+
+  if (output)
+    output->zero();
+}
+
+void dsp::PhaseLockedFilterbank::finish ()
+{
+  if (verbose)
+    cerr << "dsp::PhaseLockedFilterbank::finish" << endl;
 }
