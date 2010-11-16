@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseLockedFilterbank.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:13 $
-   $Author: wvanstra $ */
+   $Revision: 1.3 $
+   $Date: 2010/11/16 13:57:56 $
+   $Author: demorest $ */
 
 #ifndef __baseband_dsp_PhaseLockedFilterbank_h
 #define __baseband_dsp_PhaseLockedFilterbank_h
@@ -18,6 +18,10 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/TimeDivide.h"
+
+namespace Pulsar {
+  class Predictor;
+}
 
 namespace dsp {
   
@@ -44,11 +48,27 @@ namespace dsp {
     //! Get the number of pulse phase windows in which to compute spectra
     unsigned get_nbin () const { return nbin; }
 
+    //! Has a folding predictor been set?
+    bool has_folding_predictor() const { return bin_divider.get_predictor(); }
+
+    //! Get the predictor
+    const Pulsar::Predictor* get_folding_predictor() const
+      { return bin_divider.get_predictor(); }
+
     //! The phase divider
-    TimeDivide divider;
+    TimeDivide bin_divider;
+
+    //! Get pointer to the output
+    PhaseSeries* get_result() const { return output; }
 
     //! Normalize the spectra by the hits array
     void normalize_output ();
+
+    //! Reset the output
+    void reset ();
+
+    //! Finalize anything
+    void finish ();
 
   protected:
 
@@ -66,6 +86,12 @@ namespace dsp {
 
     //! Prepare internal variables
     void prepare ();
+
+    //! Internal:  time to start processing data
+    uint64_t idat_start;
+
+    //! Internal:  number of samples to process
+    uint64_t ndat_fold;
 
   };
   
