@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/UnloaderShare.h,v $
-   $Revision: 1.23 $
-   $Date: 2010/04/26 21:01:04 $
-   $Author: straten $ */
+   $Revision: 1.24 $
+   $Date: 2010/11/16 01:43:21 $
+   $Author: demorest $ */
 
 #ifndef __UnloaderShare_h
 #define __UnloaderShare_h
@@ -22,7 +22,6 @@ class ThreadContext;
 
 namespace dsp {
 
-  class SubFold;
   class PhaseSeries;
   class PhaseSeriesUnloader;
 
