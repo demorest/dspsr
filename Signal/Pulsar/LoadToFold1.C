@@ -44,7 +44,8 @@
 #include "dsp/FourthMoment.h"
 #include "dsp/Stats.h"
 
-#include "dsp/SubFold.h"
+#include "dsp/Fold.h"
+#include "dsp/Subint.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/OperationThread.h"
 
@@ -887,9 +888,9 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (subints)
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold1::prepare_fold prepare SubFold" << endl;
+	cerr << "dsp::LoadToFold1::prepare_fold prepare Subint" << endl;
 
-      SubFold* subfold = setup<SubFold> (fold[ifold].ptr());
+      Subint<Fold>* subfold = setup< Subint<Fold> > (fold[ifold].ptr());
 
       if (config->integration_length)
       {
@@ -914,7 +915,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare Fold" << endl;
 
-      fold[ifold] = setup_not<SubFold> (fold[ifold].ptr());
+      fold[ifold] = setup_not< Subint<Fold> > (fold[ifold].ptr());
     }
 
     if (Operation::verbose)

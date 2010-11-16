@@ -2,15 +2,15 @@
 lib_LTLIBRARIES = libdspsr.la
 
 nobase_include_HEADERS = \
-dsp/Archiver.h                  dsp/SubFold.h \
+dsp/Archiver.h                  dsp/Subint.h \
 dsp/Fold.h                      dsp/TimeDivide.h \
 dsp/LoadToFold.h                dsp/UnloaderShare.h \
 dsp/LoadToFold1.h               dsp/PhaseLockedFilterbank.h \
 dsp/LoadToFoldConfig.h          dsp/PhaseSeries.h \
-dsp/LoadToFoldN.h               dsp/PhaseSeriesUnloader.h
+dsp/LoadToFoldN.h               dsp/PhaseSeriesUnloader.h 
 
 libdspsr_la_SOURCES = \
-Archiver.C              SubFold.C               \
+Archiver.C                            \
 ArchiverExtensions.C    TimeDivide.C            \
 Fold.C                  UnloaderShare.C \
 LoadToFold1.C           PhaseLockedFilterbank.C dsp_verbosity.C \
