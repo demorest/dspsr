@@ -13,7 +13,7 @@
 
 #include "dsp/Dedispersion.h"
 #include "dsp/Fold.h"
-#include "dsp/SubFold.h"
+#include "dsp/Subint.h"
 #include "dsp/UnloaderShare.h"
 #include "FTransformAgent.h"
 #include "ThreadContext.h"
@@ -214,7 +214,8 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 
   for (unsigned ifold = 0; ifold < nfold; ifold ++)
   {
-    SubFold* subfold = dynamic_cast<SubFold*>( threads[0]->fold[ifold].get() );
+    Subint<Fold>* subfold = 
+      dynamic_cast< Subint<Fold>* >( threads[0]->fold[ifold].get() );
     if (!subfold)
       throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
 		   "folder is not a SubFold" );
