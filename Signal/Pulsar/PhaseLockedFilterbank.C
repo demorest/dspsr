@@ -38,6 +38,13 @@ void dsp::PhaseLockedFilterbank::set_nbin (unsigned _nbin)
   bin_divider.set_turns (1.0/double(nbin));
 }
 
+/*! sets idat_start to zero and ndat_fold to input->get_ndat() */
+void dsp::PhaseLockedFilterbank::set_limits (const Observation* input)
+{
+  idat_start = 0;
+  ndat_fold = input->get_ndat();
+}
+
 template<class T> T sqr (T x) { return x*x; }
 
 void dsp::PhaseLockedFilterbank::prepare ()
@@ -93,7 +100,10 @@ void dsp::PhaseLockedFilterbank::transformation ()
     throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation",
 		 "invalid input data state = " + tostring(input->get_state()));
 
+  bool new_integration = false;
   if (get_output()->get_integration_length() == 0.0) {
+
+    new_integration = true;
 
     // the integration is currently empty; prepare for integration
     get_output()->Observation::operator = (*input);
@@ -113,16 +123,21 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
     get_output()->resize (nbin);
     get_output()->zero ();
-    get_output()->set_hits (1);
 
   }
+#if 0 
   else {
     MJD end_time = std::max (output->get_end_time(), input->get_end_time());
     MJD st_time = std::min (output->get_start_time(), input->get_start_time());
 
+    if (verbose) 
+      cerr << "dsp::PhaseLockedFilterbank::transformation setting times st=" 
+        << st_time << " end=" << end_time << endl;
+
     output->set_end_time (end_time);
     output->set_start_time (st_time);
   }
+#endif
 
   if (FTransform::get_norm() == FTransform::unnormalized)
     output->rescale (nchan);
@@ -137,10 +152,22 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
   bool first = false;
 
+  // set_limits sets idat_start and ndat_fold
+  set_limits (input);
+  uint64_t idat_end = ndat_fold==0 ? input_ndat : idat_start + ndat_fold;
+  if (idat_end > input_ndat) idat_end = input_ndat;
+  if (verbose)
+    cerr << "dsp::PhaseLockedFilterbank::transformation"
+      << " idat_start=" << idat_start
+      << " idat_end=" << idat_end
+      << endl;
+
   // if unspecified, the first TimeSeries to be folded will define the
   // start time from which to begin cutting up the observation
-  if (bin_divider.get_start_time() == MJD::zero)  {
-    cerr << "First call" << endl;
+  // XXX do this every time???
+  //if (bin_divider.get_start_time() == MJD::zero)  
+  {
+    //cerr << "First call" << endl;
     first = true;
     bin_divider.set_start_time (input->get_start_time() + 
         (double)idat_start / input->get_rate());
@@ -153,9 +180,6 @@ void dsp::PhaseLockedFilterbank::transformation ()
     cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 
 	 << endl;
 
-  //uint64_t idat_start = 0;
-  uint64_t idat_end = ndat_fold==0 ? input_ndat : idat_start + ndat_fold;
-  if (idat_end > input_ndat) idat_end = input_ndat;
   unsigned phase_bin = 0;
 
   // flag that the input TimeSeries contains data for another sub-integration
@@ -189,9 +213,27 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
     phase_bin = bin_divider.get_phase_bin ();
 
-    //cerr << "phase bin = " << phase_bin << endl;
+    // Update totals
     get_output()->get_hits()[phase_bin] ++;
+    get_output()->ndat_total ++;
     total_integrated += time_per_fft; 
+
+    // Set times as necessary
+    MJD time0 = input->get_start_time() + (double)idat_start/input->get_rate();
+    MJD time1 = time0 + (double)ndat_fft/input->get_rate();
+    if (new_integration)
+    {
+      if (verbose)
+        cerr << "dsp::PhaseLockedFilterbank::transformation "
+          << "new_integration set start time" << endl;
+      new_integration = false;
+      get_output()->set_start_time(time0);
+    }
+    else 
+    {
+      get_output()->set_start_time(std::min(output->get_start_time(), time0));
+    }
+    get_output()->set_end_time(std::max(output->get_end_time(), time1));
 
     for (unsigned inchan=0; inchan < input_nchan; inchan++) {
 
@@ -225,6 +267,15 @@ void dsp::PhaseLockedFilterbank::transformation ()
   get_buffering_policy()->set_next_start (idat_start);
 
   get_output()->increment_integration_length( total_integrated );
+
+  // Check int times
+  if (verbose) {
+    MJD span = get_output()->get_end_time() - get_output()->get_start_time();
+    cerr << "dsp::PhaseLockedFilterbank transformation end "
+      << "span=" << span.in_seconds() 
+      << " int=" << get_output()->get_integration_length()
+      << endl;
+  }
 
 }
 
@@ -262,7 +313,13 @@ void dsp::PhaseLockedFilterbank::normalize_output ()
 void dsp::PhaseLockedFilterbank::reset () 
 {
   if (verbose)
+  {
     cerr << "dsp::PhaseLockedFilterbank::reset" << endl;
+    cerr << "dsp::PhaseLockedFilterbank::reset start_time=" 
+      << get_output()->get_start_time().printall() << endl;
+    cerr << "dsp::PhaseLockedFilterbank::reset end_time="
+      << get_output()->get_end_time().printall() << endl;
+  }
 
   Operation::reset();
 
@@ -274,4 +331,5 @@ void dsp::PhaseLockedFilterbank::finish ()
 {
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::finish" << endl;
+
 }

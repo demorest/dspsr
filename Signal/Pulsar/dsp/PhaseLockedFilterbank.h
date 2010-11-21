@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseLockedFilterbank.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/11/16 13:57:56 $
+   $Revision: 1.4 $
+   $Date: 2010/11/21 23:05:15 $
    $Author: demorest $ */
 
 #ifndef __baseband_dsp_PhaseLockedFilterbank_h
@@ -86,6 +86,9 @@ namespace dsp {
 
     //! Prepare internal variables
     void prepare ();
+
+    //! Set the idat_start and ndat_fold attributes
+    virtual void set_limits (const Observation* input);
 
     //! Internal:  time to start processing data
     uint64_t idat_start;

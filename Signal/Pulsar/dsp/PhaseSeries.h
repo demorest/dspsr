@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.38 $
-   $Date: 2010/06/09 04:34:50 $
-   $Author: straten $ */
+   $Revision: 1.39 $
+   $Date: 2010/11/21 23:05:15 $
+   $Author: demorest $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
@@ -29,6 +29,7 @@ namespace dsp {
   class PhaseSeries : public TimeSeries {
 
     friend class Fold;
+    friend class PhaseLockedFilterbank;
 
   public:
 
