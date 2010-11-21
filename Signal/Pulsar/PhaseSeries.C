@@ -133,6 +133,12 @@ bool dsp::PhaseSeries::has_pulsar_ephemeris () const
 //! Get the mid-time of the integration
 MJD dsp::PhaseSeries::get_mid_time (bool phased) const
 {
+  if (verbose)
+  {
+    cerr << "PhaseSeries::get_mid_time start=" 
+      << start_time << " end=" << end_time << endl;
+  }
+
   MJD midtime = 0.5 * (start_time + end_time);
 
   if (!phased)
