@@ -138,7 +138,6 @@ namespace dsp {
 }
 
 #include "dsp/SignalPath.h"
-
 #include "dsp/PhaseSeriesUnloader.h"
 
 #include "Error.h"
@@ -364,10 +363,11 @@ void dsp::Subint<Op>::zero_output ()
   SignalPath* path = 0;
   PhaseSeries* out_ptr = Op::output;
 
-  //if (Op::output->has_extensions())
-  //  path = Op::output->get_extensions()->get<SignalPath>();
   if (out_ptr->has_extensions())
-    path = out_ptr->get_extensions()->get<SignalPath>();
+  {
+    Extensions* ext = out_ptr->get_extensions();
+    path = ext->get<SignalPath>();
+  }
 
   if (path)
     path->reset();
