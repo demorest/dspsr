@@ -103,6 +103,10 @@ void dsp::PhaseLockedFilterbank::transformation ()
   bool new_integration = false;
   if (get_output()->get_integration_length() == 0.0) {
 
+    if (verbose)
+      cerr << "dsp::PhaseLockedFilterbank::transformation"
+        << " starting new integration" << endl;
+
     new_integration = true;
 
     // the integration is currently empty; prepare for integration
@@ -125,23 +129,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     get_output()->zero ();
 
   }
-#if 0 
-  else {
-    MJD end_time = std::max (output->get_end_time(), input->get_end_time());
-    MJD st_time = std::min (output->get_start_time(), input->get_start_time());
 
-    if (verbose) 
-      cerr << "dsp::PhaseLockedFilterbank::transformation setting times st=" 
-        << st_time << " end=" << end_time << endl;
-
-    output->set_end_time (end_time);
-    output->set_start_time (st_time);
-  }
-#endif
-
-  if (FTransform::get_norm() == FTransform::unnormalized)
-    output->rescale (nchan);
-  
   output->set_rate (input->get_rate() / ndat_fft);
 
   // complex to complex FFT produces a band swapped result
