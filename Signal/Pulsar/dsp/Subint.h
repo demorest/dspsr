@@ -148,6 +148,8 @@ template <class Op>
 dsp::Subint<Op>::Subint ()
 {
   built = false;
+  std::string orig_name = Op::get_name();
+  Op::set_name("Subint<" + orig_name + ">");
 }
 
 template <class Op>
