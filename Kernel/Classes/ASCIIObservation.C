@@ -195,7 +195,11 @@ void dsp::ASCIIObservation::load (const char* header)
   // STATE
   //
   if (ascii_header_get (header, "STATE", "%s", buffer) >= 0)
-    set_state( fromstring<Signal::State> (buffer) );
+  {
+    if (verbose)
+      cerr << "dsp::ASCIIObservation::load STATE=" << buffer << endl;
+    set_state( Signal::string2State(buffer) );
+  }
 
   int scan_dsb;
   if (ascii_header_get (header, "DSB", "%d", &scan_dsb) >= 0)
@@ -221,10 +225,16 @@ void dsp::ASCIIObservation::load (const char* header)
   if (ascii_header_get (header, "UTC_START", "%s", buffer) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed load UTC_START");
 
+  if (verbose)
+    cerr << "dsp::ASCIIObservation::load UTC_START='" << buffer << "'" << endl;
+
   struct tm utc;
   if (strptime (buffer, "%Y-%m-%d-%H:%M:%S", &utc) == NULL)
     throw Error (InvalidState, "ASCIIObservation",
 		 "failed strptime (%s)", buffer);
+
+  if (verbose)
+    cerr << "dsp::ASCIIObservation::load asctime=" << asctime (&utc) << endl;
 
   MJD recording_start_time( timegm (&utc) );
 
@@ -233,6 +243,10 @@ void dsp::ASCIIObservation::load (const char* header)
     cerr << "MJD_START=" << buffer
 	 << " MJD(UTC)=" << recording_start_time.printdays(13) << endl;
 #endif
+
+  if (verbose)
+    cerr << "dsp::ASCIIObservation::load start_mjd=" 
+         << recording_start_time << endl;
 
   // //////////////////////////////////////////////////////////////////////
   //
