@@ -14,7 +14,7 @@ TELESCOPE  PKS
 RECEIVER   MULTI
 INSTRUMENT Dummy	# determines the unpacker used in the benchmark
 
-SOURCE J0437-4715
+SOURCE J0835-4510
 MODE PSR
 
 STATE Coherence
