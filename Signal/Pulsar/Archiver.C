@@ -263,6 +263,26 @@ void dsp::Archiver::finish () try
        << single_archive->get_filename() << "' with "
        << single_archive->get_nsubint () << " integrations" << endl;
 
+  if (script.size()) try
+  {
+    if (verbose > 2)
+      cerr << "dsp::Archiver::finish post-processing" << endl;
+
+    if (!interpreter)
+      interpreter = standard_shell();
+
+    interpreter->set( single_archive );
+    interpreter->script( script );
+  }
+  catch (Error& error)
+  {
+    if (verbose)
+      cerr << "dsp::Archiver::finish post-processing "
+	   << single_archive->get_filename() << " failed:\n"
+	   << error.get_message() << endl;
+    return;
+  }
+
   if (single_archive->get_nsubint ())
     single_archive->unload ();
 }
