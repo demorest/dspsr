@@ -390,7 +390,7 @@ void dsp::Input::set_total_seconds (double seconds)
 
   uint64_t total_samples = uint64_t( seconds * info.get_rate() );
 
-  if (total_samples > get_total_samples ())
+  if ((total_samples > get_total_samples()) && (get_total_samples() > 0) )
     throw Error (InvalidParam, "dsp::Input::set_total_seconds",
 		 "samples="UI64" > total samples="UI64, total_samples,
 		 get_total_samples());
