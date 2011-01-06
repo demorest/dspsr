@@ -167,7 +167,7 @@ void dsp::Bandpass::transformation ()
   {
     if (verbose)
       cerr << "dsp::Bandpass::transformation set swap" << endl;
-    output->set_swap (true);
+    output->flagswap ( input->get_nchan() );
   }
 
   // for each poln
