@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.32 $
-   $Date: 2011/01/06 05:08:36 $
+   $Revision: 1.33 $
+   $Date: 2011/01/06 05:16:55 $
    $Author: straten $ */
 
 #ifndef __Response_h
@@ -145,6 +145,8 @@ namespace dsp {
     //! Called when the Response has been changed
     Callback<Response> changed;
     
+    //! Set flags that response should be swapped
+    void flagswap (unsigned divisions = 1);
 
   protected:
   

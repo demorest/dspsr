@@ -698,3 +698,11 @@ void dsp::Response::doswap (unsigned divisions)
   else
     swap_divisions = divisions;
 }
+
+void dsp::Response::flagswap (unsigned divisions)
+{
+  if (divisions == 1)
+    whole_swapped = true;
+  else
+    swap_divisions = divisions;
+}
