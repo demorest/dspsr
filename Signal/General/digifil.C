@@ -40,7 +40,7 @@
 
 using namespace std;
 
-static char* args = "b:B:D:F:f:cI:Ko:prt:hvVZ:";
+static const char* args = "b:B:D:F:f:cI:Ko:prt:hvVZ:";
 
 void usage ()
 {
