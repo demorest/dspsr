@@ -230,7 +230,6 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
    */
   MJD endtime = time + 86400;
 
-
   generator->set_site( observation->get_telescope() );
   generator->set_parameters( params );
   generator->set_time_span( time, endtime );
@@ -241,7 +240,7 @@ dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
 
   if (verbose)
     cerr << "dsp::Fold::get_folding_predictor"
-            " calling Tempo::Predict::get_polyco" << endl;
+            " calling Pulsar::Generator::generate" << endl;
 
   return generator->generate ();
 }
