@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.31 $
-   $Date: 2010/03/24 04:17:51 $
+   $Revision: 1.32 $
+   $Date: 2011/01/06 05:08:36 $
    $Author: straten $ */
 
 #ifndef __Response_h
@@ -153,7 +153,7 @@ namespace dsp {
     Reference::To<OptimalFFT> optimal_fft;
 
     //! Swap halves of bandpass(es)
-    void swap (bool each_chan = true);
+    void doswap (unsigned divisions = 1);
 
     //! Complex time samples in t>0 half of corresponding impulse response
     unsigned impulse_pos;
@@ -161,11 +161,11 @@ namespace dsp {
     //! Complex time samples in t<0 half of corresponding impulse response
     unsigned impulse_neg;
 
-    //! Toggled every time Response::swap(false) is called (default: false)
+    //! Toggled every time Response::doswap(1) is called (default: false)
     bool whole_swapped;
 
-    //! Toggled every time Response::swap(true) is called (default: false)
-    bool chan_swapped;
+    //! Toggled every time Response::doswap(divisions > 1) is called
+    unsigned swap_divisions;
 
     //! Toggled when built for a bin-centred spectrum
     bool dc_centred;
