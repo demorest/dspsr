@@ -29,7 +29,8 @@ dsp::Response::Response ()
 {
   impulse_pos = impulse_neg = 0;
 
-  whole_swapped = chan_swapped = dc_centred = false;
+  whole_swapped = dc_centred = false;
+  swap_divisions = 0;
 
   npol = 2;
   ndim = 1;
@@ -60,7 +61,7 @@ const dsp::Response& dsp::Response::operator = (const Response& response)
   impulse_pos = response.impulse_pos;
   impulse_neg = response.impulse_neg;
   whole_swapped = response.whole_swapped;
-  chan_swapped = response.chan_swapped;
+  swap_divisions = response.swap_divisions;
   dc_centred = response.dc_centred;
   step = response.step;
 
@@ -142,7 +143,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
     if ( input->get_dual_sideband() && !whole_swapped ) {
       if (verbose)
 	cerr << "dsp::Response::match swap whole" << endl;
-      swap (false);
+      doswap ();
     }
   }      
   else  {
@@ -152,8 +153,8 @@ void dsp::Response::match (const Observation* input, unsigned channels)
       if (verbose)
 	cerr << "dsp::Response::match rotate half channel" << endl;
 
-      if ( chan_swapped )
-        swap (true);
+      if ( swap_divisions )
+        doswap ( swap_divisions );
 
       rotate (-int(ndat/2));
       dc_centred = true;
@@ -161,11 +162,12 @@ void dsp::Response::match (const Observation* input, unsigned channels)
 
     // if the input Observation is multi-channel, complex sampled data,
     // then each FFT performed will result in little swapped spectra
-    if ( input->get_dual_sideband() && !chan_swapped ) {
+    if ( input->get_dual_sideband() && swap_divisions != input->get_nchan() )
+    {
       if (verbose)
-	cerr << "dsp::Response::match swap channels (nchan=" << nchan << ")"
-	     << endl;
-      swap (true);
+	cerr << "dsp::Response::match swap channels"
+	  " (nchan=" << input->get_nchan() << ")" << endl;
+      doswap ( input->get_nchan() );
     }
 
     // the ordering of the filterbank channels may be swapped
@@ -173,7 +175,7 @@ void dsp::Response::match (const Observation* input, unsigned channels)
       if (verbose)
 	cerr << "dsp::Response::match swap whole (nchan=" << nchan << ")"
 	     << endl;
-      swap (false);
+      doswap ();
     }
   }
 }
@@ -183,7 +185,7 @@ bool dsp::Response::matches (const Response* response)
 {
   return
     whole_swapped == response->whole_swapped &&
-    chan_swapped == response->chan_swapped &&
+    swap_divisions == response->swap_divisions &&
     dc_centred == response->dc_centred &&
 
     nchan == response->get_nchan() &&
@@ -205,7 +207,7 @@ void dsp::Response::match (const Response* response)
 	  response->get_ndat(), ndim);
   
   whole_swapped = response->whole_swapped;
-  chan_swapped = response->chan_swapped;
+  swap_divisions = response->swap_divisions;
   dc_centred = response->dc_centred;
   
   zero();
@@ -231,14 +233,14 @@ void dsp::Response::naturalize ()
   {
     if (verbose)
       cerr << "dsp::Response::naturalize whole bandpass swap" << endl;
-    swap (false);
+    doswap ();
   }
 
-  if ( chan_swapped )
+  if ( swap_divisions )
   {
     if (verbose)
       cerr << "dsp::Response::naturalize sub-bandpass swap" << endl;
-    swap (true);
+    doswap ( swap_divisions );
   }
   
   if ( dc_centred )
@@ -639,29 +641,22 @@ void dsp::Response::set (const vector<Jones<float> >& response)
 
 // ////////////////////////////////////////////////////////////////
 //
-// dsp::Response::swap swaps the passband(s)
+// dsp::Response::doswap swaps the passband(s)
 //
 // If 'each_chan' is true, then the nchan units (channels) into which
 // the Response is logically divided will be swapped individually
 //
-void dsp::Response::swap (bool each_chan)
+void dsp::Response::doswap (unsigned divisions)
 {
   if (nchan == 0)
     throw Error (InvalidState, "dsp::Response::swap",
 		 "invalid nchan=%d", nchan);
 
-  unsigned half_npts = (ndat * ndim) / 2;
-
-  if (!each_chan)
-    half_npts *= nchan;
+  unsigned half_npts = (ndat * ndim * nchan) / (2 * divisions);
 
   if (half_npts < 2)
     throw Error (InvalidState, "dsp::Response::swap",
 		 "invalid npts=%d", half_npts);
-
-  unsigned ndiv = 1;
-  if (each_chan)
-    ndiv = nchan;
 
 #ifdef _DEBUG
   cerr << "dsp::Response::swap"
@@ -676,14 +671,16 @@ void dsp::Response::swap (bool each_chan)
   float* ptr2 = 0;
   float  temp = 0;
 
-  for (unsigned ipol=0; ipol<npol; ipol++) {
-
+  for (unsigned ipol=0; ipol<npol; ipol++)
+  {
     ptr1 = buffer + offset * ipol;
     ptr2 = ptr1 + half_npts;
 
-    for (unsigned idiv=0; idiv<ndiv; idiv++) {
+    for (unsigned idiv=0; idiv<divisions; idiv++)
+    {
 
-      for (unsigned ipt=0; ipt<half_npts; ipt++) {
+      for (unsigned ipt=0; ipt<half_npts; ipt++)
+      {
 	temp = *ptr1;
 	*ptr1 = *ptr2; ptr1++;
 	*ptr2 = temp; ptr2++;
@@ -694,8 +691,10 @@ void dsp::Response::swap (bool each_chan)
     }
   }
 
-  if (each_chan)
-    chan_swapped = !chan_swapped;
-  else
+  if (divisions == 1)
     whole_swapped = !whole_swapped;
+  else if (divisions == swap_divisions)
+    swap_divisions = 0;
+  else
+    swap_divisions = divisions;
 }
