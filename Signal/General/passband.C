@@ -101,7 +101,7 @@ int main (int argc, char** argv) try {
   int width_pixels  = 0;
   int height_pixels = 0;
 
-  static char* args = "ibB:c:dD:f:F:G:g:lr:n:pRS:T:t:hvV";
+  static const char* args = "ibB:c:dD:f:F:G:g:lr:n:pRS:T:t:hvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
