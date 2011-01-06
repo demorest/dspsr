@@ -17,7 +17,7 @@ dsp::PuMa2Unpacker::PuMa2Unpacker (const char* name) : EightBitUnpacker (name)
 bool dsp::PuMa2Unpacker::matches (const Observation* observation)
 {
   return observation->get_machine() == "PuMa2" 
-    && observation->get_nbit() == 8
-    && observation->get_state() == Signal::Nyquist;
+    && observation->get_nbit() == 8;
+//    && observation->get_state() == Signal::Nyquist;
 }
 
