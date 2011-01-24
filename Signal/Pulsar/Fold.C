@@ -776,28 +776,48 @@ void dsp::Fold::fold (uint64_t nweights,
     return;
   }
 
-  //#pragma omp parallel for private(ichan,ipol,timep,phasep,idat,phdimp)   
-  for (unsigned ichan=0; ichan<nchan; ichan++)
+  if (in->get_order() == TimeSeries::OrderFPT)
   {
-    for (unsigned ipol=0; ipol<npol; ipol++)
+    for (unsigned ichan=0; ichan<nchan; ichan++)
     {
-      const float* timep = in->get_datptr(ichan,ipol) + idat_start * ndim;
-
-      float* phasep = result->get_datptr(ichan,ipol);
-
-      for (uint64_t idat=0; idat < ndat_fold; idat++)
+      for (unsigned ipol=0; ipol<npol; ipol++)
       {
-	if (binplan[idat] != folding_nbin)
-        {
-	  float* phdimp = phasep + binplan[idat] * ndim;
-	  for (unsigned idim=0; idim<ndim; idim++)
-	    phdimp[idim] += timep[idim];
-	}
-	timep += ndim;
-      } // for each idat
-    } // for each chan
-  } // for each pol
+	const float* timep = in->get_datptr(ichan,ipol) + idat_start * ndim;
+	float* phasep = result->get_datptr(ichan,ipol);
+
+	for (uint64_t idat=0; idat < ndat_fold; idat++)
+	{
+	  if (binplan[idat] != folding_nbin)
+	  {
+	    float* phdimp = phasep + binplan[idat] * ndim;
+	    for (unsigned idim=0; idim<ndim; idim++)
+	      phdimp[idim] += timep[idim];
+	  }
+	  timep += ndim;
+	} // for each idat
+      } // for each chan
+    } // for each pol
+  }
+  else
+  {
+    uint64_t nfloat = nchan * npol * ndim;
+
+    const float* timep = in->get_dattfp() + idat_start * nfloat;
+    float* phasep = result->get_dattfp();
+
+    for (uint64_t idat=0; idat < ndat_fold; idat++)
+    {
+      if (binplan[idat] != folding_nbin)
+      {
+	float* php = phasep + binplan[idat] * nfloat;
+	for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
+	  php[ifloat] += timep[ifloat];
+      }
+      timep += nfloat;
+    }
+  }
 }
+
 /* changes for omp
   const float* timep;
   float* phasep;
