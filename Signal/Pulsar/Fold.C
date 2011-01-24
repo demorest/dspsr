@@ -883,7 +883,7 @@ void dsp::Fold::Engine::set_parent (Fold* fold)
   parent = fold;
 }
 
-void dsp::Fold::Engine::setup ()
+void dsp::Fold::Engine::setup () try
 {
   if (!parent)
     throw Error (InvalidState, "dsp::Fold::Engine::setup",
@@ -908,4 +908,7 @@ void dsp::Fold::Engine::setup ()
     " input=" << input << " span=" << input_span << 
     " output=" << output << " span=" << output_span << endl;
 }
-
+ catch (Error& error)
+   {
+     throw error += "dsp::Fold::Engine::setup";
+   }
