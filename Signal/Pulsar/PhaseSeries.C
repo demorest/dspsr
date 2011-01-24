@@ -252,6 +252,10 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
     if (verbose)
       cerr << "dsp::PhaseSeries::mixable rate=" << get_rate() << endl;
 
+    const TimeSeries* series = dynamic_cast<const TimeSeries*> (&obs);
+    if (series)
+      set_order( series->get_order() );
+
     end_time = obsEnd;
     start_time = obsStart;
 
