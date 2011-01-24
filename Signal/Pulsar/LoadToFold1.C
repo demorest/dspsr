@@ -269,6 +269,12 @@ void dsp::LoadToFold1::prepare () try
 
   if (manager->get_info()->get_detected())
   {
+    Unpacker* unpacker = manager->get_unpacker();
+
+    // detected data is handled much more efficiently in TFP order
+    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
+      unpacker->set_output_order (TimeSeries::OrderTFP);
+
     config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
     prepare_fold (unpacked);

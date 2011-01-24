@@ -669,9 +669,10 @@ try
     cerr << "dsp::Archiver::set Pulsar::Profile"
       " ichan=" << ichan << " ipol=" << ipol << " idim=" << idim << endl;
 
-  unsigned nbin = phase->get_nbin();
-  unsigned npol = phase->get_npol();
-  unsigned ndim = phase->get_ndim();
+  const unsigned nbin = phase->get_nbin();
+  const unsigned npol = phase->get_npol();
+  const unsigned ndim = phase->get_ndim();
+  const unsigned nchan = phase->get_nchan();
 
   assert (ipol < npol);
   assert (idim < ndim);
@@ -680,9 +681,21 @@ try
   profile-> set_centre_frequency (phase->get_centre_frequency (ichan));
   profile-> set_weight (1.0);
 
-  const float* from = phase->get_datptr (ichan, ipol) + idim;
   float* into = profile->get_amps ();
+  const float* from = 0;
+  unsigned nstride = 0;
 
+  if (phase->get_order() == TimeSeries::OrderFPT)
+  {
+    from = phase->get_datptr (ichan, ipol) + idim;
+    nstride = ndim;
+  }
+  else if (phase->get_order() == TimeSeries::OrderTFP)
+  {
+    from = phase->get_dattfp() + ichan * npol*ndim + ipol * ndim + idim;
+    nstride = nchan * npol * ndim;
+  }
+  
   unsigned zeroes = 0;
 
   double scale = phase->get_scale ();
@@ -711,7 +724,7 @@ try
     else
       into[ibin] = *from / (scale * double( phase->get_hit(ibin) ));
 
-    from += ndim;
+    from += nstride;
   }
 
   if (not_finite)
