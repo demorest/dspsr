@@ -272,7 +272,7 @@ dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
 float* dsp::TimeSeries::get_dattfp ()
 {
   if (order != OrderTFP)
-    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
+    throw Error (InvalidState, "dsp::TimeSeries::get_dattfp",
 		 "Not in Time, Frequency, Polarization Order");
 
   return reinterpret_cast<float*>( get_udatptr(0,0) );
@@ -282,7 +282,7 @@ float* dsp::TimeSeries::get_dattfp ()
 const float* dsp::TimeSeries::get_dattfp () const
 {
   if (order != OrderTFP)
-    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
+    throw Error (InvalidState, "dsp::TimeSeries::get_dattfp",
 		 "Not in Time, Frequency, Polarization Order");
 
   return reinterpret_cast<const float*>( get_udatptr(0,0) );
