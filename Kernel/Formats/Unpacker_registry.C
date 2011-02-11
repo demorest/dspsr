@@ -167,6 +167,11 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::ACFUnpack> spigot;
 static Registry::List<dsp::Unpacker>::Enter<dsp::FITSUnpacker> fits;
 #endif
 
+#if HAVE_vdif
+#include "dsp/VDIFTwoBitCorrection.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::VDIFTwoBitCorrection> vdif;
+#endif
+
 #if HAVE_wapp
 #include "dsp/WAPPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::WAPPUnpacker> wapp;
