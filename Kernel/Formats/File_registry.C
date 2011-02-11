@@ -159,6 +159,11 @@ static Registry::List<dsp::File>::Enter<dsp::SigProcFile> register_sigproc;
 static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
 #endif
 
+#if HAVE_vdif
+#include "dsp/VDIFFile.h"
+static Registry::List<dsp::File>::Enter<dsp::VDIFFile> register_vdif;
+#endif
+
 #if HAVE_wapp
 #include "dsp/WAPPFile.h"
 static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
