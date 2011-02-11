@@ -13,7 +13,9 @@
 
 namespace dsp {
 
-  //! Loads BitSeries data from a MkV file
+  //! Loads BitSeries data from a VDIF file
+  /*! Loads data from a file containing raw VLBI Data Interchange Format 
+   * (VDIF) packets. */
   class VDIFFile : public BlockFile
   {
   public:
@@ -24,7 +26,7 @@ namespace dsp {
     //! Destructor
     ~VDIFFile ();
 	  
-    //! Returns true if filename is a valid Mk5 file
+    //! Returns true if file starts with a valid VDIF packet header
     bool is_valid (const char* filename) const;
 
   protected:
