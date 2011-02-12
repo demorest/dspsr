@@ -351,16 +351,29 @@ dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
 
   uint64_t npt = get_ndat() * get_ndim();
 
-  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
-    for (unsigned ipol=0; ipol<get_npol(); ipol++) {
+  if (order == OrderTFP)
+  {
+    npt *= get_nchan() * get_npol();
+    float* data1 = get_dattfp ();
+    const float* data2 = add.get_dattfp ();
 
+    for (uint64_t ipt=0; ipt<npt; ipt++)
+      data1[ipt] += data2[ipt];
+
+    return *this;
+  }
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+  {
+    for (unsigned ipol=0; ipol<get_npol(); ipol++)
+    {
       float* data1 = get_datptr (ichan, ipol);
       const float* data2 = add.get_datptr (ichan, ipol);
 
       for (uint64_t ipt=0; ipt<npt; ipt++)
         data1[ipt] += data2[ipt];
-
     }
+  }
 
   return *this;
 }
