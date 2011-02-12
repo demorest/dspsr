@@ -162,7 +162,7 @@ MJD dsp::PhaseSeries::get_mid_time (bool phased) const
 }
 
 //! Reset all phase bin totals to zero
-void dsp::PhaseSeries::zero ()
+void dsp::PhaseSeries::zero () try
 {
   if (verbose)
     cerr << "PhaseSeries::zero" << endl;
@@ -176,6 +176,10 @@ void dsp::PhaseSeries::zero ()
   if (verbose)
     cerr << "PhaseSeries::zero exit" << endl;
 }
+ catch (Error& error)
+   {
+     throw error += "dsp::PhaseSeries::zero";
+   }
 
 void dsp::PhaseSeries::copy_configuration (const Observation* copy)
 {
@@ -294,7 +298,7 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
 }
 
 dsp::PhaseSeries& 
-dsp::PhaseSeries::operator = (const PhaseSeries& prof)
+dsp::PhaseSeries::operator = (const PhaseSeries& prof) try
 {
   if (this == &prof)
     return *this;
@@ -310,8 +314,12 @@ dsp::PhaseSeries::operator = (const PhaseSeries& prof)
 
   return *this;
 }
+ catch (Error& error)
+   {
+     throw error += "dsp::PhaseSeries::operator =";
+   }
 
-void dsp::PhaseSeries::combine (const PhaseSeries* prof)
+void dsp::PhaseSeries::combine (const PhaseSeries* prof) try
 {
   if (verbose)
     cerr << "dsp::PhaseSeries::combine"
@@ -340,6 +348,10 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof)
   if (!ndat_expected)
     ndat_expected = prof->ndat_expected;
 }
+ catch (Error& error)
+   {
+     throw error += "dsp::PhaseSeries::combine";
+   }
 
 //! Return the total number of time samples
 uint64_t dsp::PhaseSeries::get_ndat_total () const
