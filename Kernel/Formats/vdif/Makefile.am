@@ -1,9 +1,11 @@
 
 noinst_LTLIBRARIES = libvdif.la
 
-nobase_include_HEADERS =  dsp/VDIFFile.h dsp/VDIFTwoBitCorrection.h
+nobase_include_HEADERS =  dsp/VDIFFile.h dsp/VDIFTwoBitCorrection.h \
+			  dsp/VDIFTwoBitTable.h
 
 libvdif_la_SOURCES = VDIFFile.C VDIFTwoBitCorrection.C \
+		     VDIFTwoBitTable.C \
 		     vdifio.c vdifio.h
 
 #############################################################################
