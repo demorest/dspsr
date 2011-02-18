@@ -6,6 +6,7 @@
  ***************************************************************************/
 #include "dsp/VDIFTwoBitCorrection.h"
 #include "dsp/TwoBitTable.h"
+#include "dsp/VDIFTwoBitTable.h"
 
 bool dsp::VDIFTwoBitCorrection::matches (const Observation* observation)
 {
@@ -16,7 +17,7 @@ bool dsp::VDIFTwoBitCorrection::matches (const Observation* observation)
 dsp::VDIFTwoBitCorrection::VDIFTwoBitCorrection ()
   : TwoBitCorrection ("VDIFTwoBitCorrection")
 {
-  table = new TwoBitTable (TwoBitTable::OffsetBinary);
+  table = new VDIFTwoBitTable (TwoBitTable::OffsetBinary);
   set_ndig(1);
 }
 
