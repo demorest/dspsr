@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.65 $
-   $Date: 2010/06/01 11:44:30 $
-   $Author: straten $ */
+   $Revision: 1.66 $
+   $Date: 2011/03/03 16:12:42 $
+   $Author: demorest $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
@@ -233,6 +233,7 @@ namespace dsp {
 
   };
 
+  //! Interface to alternate processing engine (e.g. GPU)
   class Fold::Engine : public Reference::Able
   {
   public:
