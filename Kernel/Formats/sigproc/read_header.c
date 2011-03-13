@@ -109,6 +109,8 @@ int read_header (FILE *inputfile) /* includefile */
       fread(&npuls,sizeof(npuls),1,inputfile);
     } else if (strings_equal(string,"refdm")) {
       fread(&refdm,sizeof(refdm),1,inputfile);
+    } else if (strings_equal(string,"signed")) {
+      fread(&isign,sizeof(isign),1,inputfile);
     } else if (expecting_rawdatafile) {
       strcpy(rawdatafile,string);
       expecting_rawdatafile=0;
@@ -121,6 +123,15 @@ int read_header (FILE *inputfile) /* includefile */
       exit(1);
     } 
   } 
+
+  if (isign < 0 && OSIGN > 0){
+	  fprintf(stderr,"WARNING! You are reading unsigned numbers with a signed version of dspsr/sigproc\n");
+  }
+  if (isign > 0 && OSIGN < 0){
+	  fprintf(stderr,"WARNING! You are reading signed numbers with a unsigned version of dspsr/sigproc\n");
+  }
+
+
 
   /* return total number of bytes read */
   return ftell(inputfile);

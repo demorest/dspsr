@@ -59,14 +59,12 @@ void dsp::SigProcDigitizer::pack ()
   // the number of time samples
   const uint64_t ndat = input->get_ndat();
 
-  unsigned char* outptr = output->get_rawptr();
 
   float digi_mean=0;
   float digi_sigma=6;
   float digi_scale=0;
   int digi_max=0;
   int digi_min=0;
-  int bit_counter=0;
   int samp_per_byte = 8/nbit;
 
   switch (nbit){
@@ -105,11 +103,14 @@ void dsp::SigProcDigitizer::pack ()
 
   case TimeSeries::OrderTFP:
     {
-      const float* inptr = input->get_dattfp();
-      outptr--; // This is important, as the program increments the pointer at the start of each byte. MJK2008.
+#pragma omp parallel for
+      for(int idat=0; idat < ndat; idat++){
 
-      for(uint64_t idat=0; idat < ndat; idat++){
+	      unsigned char* outptr = output->get_rawptr() + idat * nchan/samp_per_byte;
+	      const float* inptr = input->get_dattfp() + idat*nchan;
+	      outptr--; // This is important, as the program increments the pointer at the start of each byte. MJK2008.
 
+	      int bit_counter=0;
 	for(unsigned ichan=0; ichan < nchan; ichan++){
 	  unsigned inChan = ichan;
 	  if (flip_band)
@@ -155,13 +156,15 @@ void dsp::SigProcDigitizer::pack ()
 
 
 	}
-	inptr+=nchan;
       }
 
       return;
     }
   case TimeSeries::OrderFPT:
     {
+	    unsigned char* outptr = output->get_rawptr();
+
+	    int bit_counter=0;
       for (unsigned ichan=0; ichan < nchan; ichan++)
 	{
 	  const float* inptr;
