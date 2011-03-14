@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2010 by Willem van Straten
+ *   Copyright (C) 2010 - 2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -12,33 +12,58 @@
 #include "dsp/Operation.h"
 #include "ThreadContext.h"
 
-namespace dsp {
+namespace dsp
+{
 
-  //! Wraps an Operation in a separate thread of execution
+  //! Executes one or more Operations in sequence in a separate thread
+  /*! The Operations are performed in the order that they are added */
   class OperationThread : public Operation
   {
 
   public:
 
-    OperationThread (Operation*);
+    //! Default constructor with optional first Operation
+    OperationThread (Operation* = 0);
+
+    //! Destructor destroys all Operation instances
     ~OperationThread();
-    
-    void operation ();
-    void prepare ();
+
+    //! Calls the reserve method of each Operation
     void reserve ();
-    void add_extensions (Extensions*);
+
+    //! Calls the prepare method of each Operation
+    void prepare ();
+
+    //! Calls the add_extensions method of each Operation
+    void add_extensions (Extensions* ext);
+
+    //! Signals the operation thread to start
+    void operation ();
+
+    //! Calls the combine method of each Operation
     void combine (const Operation*);
+
+    //! Calls the report method of each Operation
     void report () const;
+
+    //! Calls the reset method of each Operation
     void reset ();
 
+    //! Use this Operation to wait for completion of the operation thread
     class Wait;
 
   protected:
 
+    //! Operation thread calls thread method
     static void* operation_thread (void*);
+
+    //! Calls the operation method of each Operation instance
     void thread ();
 
-    Reference::To<Operation> the_operation;
+    //! The operations performed on each call to operation
+    std::vector< Reference::To<Operation> > operations;
+
+    //! Used to communicate between calling thread and operation thread
     ThreadContext* context;
     pthread_t id;
 
