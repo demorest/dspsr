@@ -8,10 +8,14 @@
 #include "dsp/OperationThread.h"
 #include <errno.h>
 
+using namespace std;
+
 dsp::OperationThread::OperationThread (Operation* op)
-  : Operation ( ("Thread[" + op->get_name() + "]").c_str() )
+  : Operation ( "OperationThread" )
 {
-  the_operation = op;
+  if (op)
+    operations.push_back( op );
+
   context = new ThreadContext;
   state = Idle;
 
@@ -23,7 +27,6 @@ dsp::OperationThread::OperationThread (Operation* op)
 
 dsp::OperationThread::~OperationThread ()
 {
-  
 }
 
 void* dsp::OperationThread::operation_thread (void* ptr)
@@ -44,7 +47,8 @@ void dsp::OperationThread::thread ()
     if (state == Quit)
       return;
 
-    the_operation->operate ();
+    for_each( operations.begin(), operations.end(),
+	      mem_fun(&Operation::operate) );
 
     state = Idle;
     context->broadcast ();
@@ -63,40 +67,57 @@ void dsp::OperationThread::operation ()
 
 void dsp::OperationThread::prepare ()
 {
-  the_operation->prepare();
+  for_each( operations.begin(), operations.end(),
+	    mem_fun(&Operation::prepare) );
 }
 
 void dsp::OperationThread::reserve ()
 {
-  the_operation->reserve();
+  for_each( operations.begin(), operations.end(),
+	    mem_fun(&Operation::reserve) );
 }
 
 void dsp::OperationThread::add_extensions (Extensions* ext)
 {
-  the_operation->add_extensions (ext);
+  for_each( operations.begin(), operations.end(),
+	    bind2nd( mem_fun(&Operation::add_extensions), ext) );
 }
 
 void dsp::OperationThread::combine (const Operation* op)
 {
   const OperationThread* top = dynamic_cast<const OperationThread*>( op );
   if (top)
-    op = top->the_operation;
+  {
+    if (top->operations.size() != operations.size())
+      throw Error (InvalidState, "dsp::OperationThread::combine",
+		   "thread length=%u != other thread length=%u",
+		   operations.size(), top->operations.size());
 
-  the_operation->combine (op);
+    for (unsigned i=0; i<operations.size(); i++)
+      operations[i] -> combine( top->operations[i] );
+  }
+  else if (operations.size() == 1)
+    operations[0] -> combine( op );
+  else
+    throw Error (InvalidState, "dsp::OperationThread::combine",
+		 "cannot combine single Operation when thread length=%u",
+		 operations.size());
 }
 
 void dsp::OperationThread::report () const
 {
-  the_operation->report ();
+  for_each( operations.begin(), operations.end(),
+	    mem_fun(&Operation::report) );
 }
 
 void dsp::OperationThread::reset ()
 {
-  the_operation->reset ();
+  for_each( operations.begin(), operations.end(),
+	    mem_fun(&Operation::reset) );
 }
 
 dsp::OperationThread::Wait::Wait (OperationThread* opthread)
-  : Operation ( ("Wait[" + opthread->the_operation->get_name() + "]").c_str() )
+  : Operation ( "OperationThread::Wait" )
 {
   parent = opthread;
 }
