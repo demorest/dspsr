@@ -7,6 +7,7 @@
 
 #include "dsp/OperationThread.h"
 #include <errno.h>
+#include <algorithm>
 
 using namespace std;
 
