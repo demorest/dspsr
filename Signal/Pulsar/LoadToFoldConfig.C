@@ -69,6 +69,9 @@ dsp::LoadToFold::Config::Config ()
   // phase-locked filterbank channels
   plfb_nchan = 0;
 
+  // default cyclic spectrum off
+  cyclic_nchan = 0;
+
   // do not compute the fourth order moments by default
   fourth_moment = false;
 

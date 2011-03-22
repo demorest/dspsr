@@ -365,6 +365,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->plfb_nbin, 'G', "nbin");
   arg->set_help ("create phase-locked filterbank");
 
+  arg = menu.add (config->cyclic_nchan, "cyclic", "N");
+  arg->set_help ("form cyclic spectra with N channels (per input channel)");
+
   double dm = -1.0;
   arg = menu.add (dm, 'D', "dm");
   arg->set_help ("over-ride dispersion measure");
