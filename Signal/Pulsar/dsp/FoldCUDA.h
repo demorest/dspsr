@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.8 $
-   $Date: 2010/06/01 11:38:57 $
-   $Author: straten $ */
+   $Revision: 1.9 $
+   $Date: 2011/03/22 19:07:04 $
+   $Author: demorest $ */
 
 #ifndef __baseband_cuda_Fold_h
 #define __baseband_cuda_Fold_h
@@ -34,7 +34,7 @@ namespace CUDA
     ~FoldEngine ();
 
     void set_nbin (unsigned nbin);
-    void set_ndat (uint64_t ndat);
+    void set_ndat (uint64_t ndat, uint64_t idat_start);
 
     void set_bin (uint64_t idat, unsigned ibin);
 
@@ -43,6 +43,8 @@ namespace CUDA
     dsp::PhaseSeries* get_profiles ();
 
     void synch (dsp::PhaseSeries*);
+
+    void zero () { get_profiles()->zero(); }
 
   protected:
 
