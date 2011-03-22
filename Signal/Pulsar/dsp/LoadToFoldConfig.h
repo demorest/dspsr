@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.32 $
-   $Date: 2010/11/10 20:08:44 $
+   $Revision: 1.33 $
+   $Date: 2011/03/22 19:08:03 $
    $Author: demorest $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -119,6 +119,9 @@ namespace dsp {
     unsigned plfb_nbin;
     // phase-locked filterbank channels
     unsigned plfb_nchan;
+
+    // cyclic spectrum options
+    unsigned cyclic_nchan;
 
     // compute and fold the fourth moments of the electric field
     bool fourth_moment;

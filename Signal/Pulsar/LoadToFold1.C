@@ -49,6 +49,8 @@
 #include "dsp/PhaseSeries.h"
 #include "dsp/OperationThread.h"
 
+#include "dsp/CyclicFold.h"
+
 #include "dsp/Archiver.h"
 #include "dsp/ObservationChange.h"
 #include "dsp/Dump.h"
@@ -548,6 +550,14 @@ void dsp::LoadToFold1::prepare () try
     // the phase-locked filterbank does its own detection and folding
     
   }
+
+  // Cyclic spectrum also detects and folds
+  if (config->cyclic_nchan) 
+  {
+    prepare_fold(convolved);
+    prepare_final();
+    return;
+  }
  
   if (!detect)
     detect = new Detection;
@@ -926,24 +936,55 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold1::prepare_fold prepare Subint" << endl;
 
-      Subint<Fold>* subfold = setup< Subint<Fold> > (fold[ifold].ptr());
-
-      if (config->integration_length)
+      if (config->cyclic_nchan) 
       {
-        subfold -> set_subint_seconds (config->integration_length);
 
-        if (config->minimum_integration_length > 0)
-          unloader[ifold]->set_minimum_integration_length (config->minimum_integration_length);
+        Subint<CyclicFold>* subfold = 
+          setup< Subint<CyclicFold> > (fold[ifold].ptr());
+
+        subfold -> set_nchan(config->cyclic_nchan);
+        subfold -> set_npol(config->npol);
+
+        if (config->integration_length)
+        {
+          subfold -> set_subint_seconds (config->integration_length);
+
+          if (config->minimum_integration_length > 0)
+            unloader[ifold]->set_minimum_integration_length (config->minimum_integration_length);
+        }
+        else
+          throw Error (InvalidState, "dsp::LoadToFold1::prepare_fold", 
+              "Single-pulse cyclic spectra not supported");
+
+        subfold -> set_unloader (unloader[ifold]);
+
+        fold[ifold] = subfold;
+
       }
-      else
+
+      else 
       {
-	subfold -> set_subint_turns (1);
-	subfold -> set_fractional_pulses (config->fractional_pulses);
+
+        Subint<Fold>* subfold = setup< Subint<Fold> > (fold[ifold].ptr());
+
+        if (config->integration_length)
+        {
+          subfold -> set_subint_seconds (config->integration_length);
+
+          if (config->minimum_integration_length > 0)
+            unloader[ifold]->set_minimum_integration_length (config->minimum_integration_length);
+        }
+        else
+        {
+          subfold -> set_subint_turns (1);
+          subfold -> set_fractional_pulses (config->fractional_pulses);
+        }
+
+        subfold -> set_unloader (unloader[ifold]);
+
+        fold[ifold] = subfold;
+
       }
-
-      subfold -> set_unloader (unloader[ifold]);
-
-      fold[ifold] = subfold;
 
     }
     else
