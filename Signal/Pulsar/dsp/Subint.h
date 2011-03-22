@@ -353,7 +353,7 @@ void dsp::Subint<Op>::unload_partial () try
 }
 catch (Error& error)
 {
-  throw error += "dsp::Subint::finish";
+  throw error += "dsp::Subint::unload_partial";
 }
 
 #define SIGNAL_PATH
