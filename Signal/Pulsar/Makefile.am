@@ -7,7 +7,8 @@ dsp/Fold.h                      dsp/TimeDivide.h \
 dsp/LoadToFold.h                dsp/UnloaderShare.h \
 dsp/LoadToFold1.h               dsp/PhaseLockedFilterbank.h \
 dsp/LoadToFoldConfig.h          dsp/PhaseSeries.h \
-dsp/LoadToFoldN.h               dsp/PhaseSeriesUnloader.h 
+dsp/LoadToFoldN.h               dsp/PhaseSeriesUnloader.h \
+dsp/CyclicFold.h
 
 libdspsr_la_SOURCES = \
 Archiver.C                            \
@@ -15,7 +16,8 @@ ArchiverExtensions.C    TimeDivide.C            \
 Fold.C                  UnloaderShare.C \
 LoadToFold1.C           PhaseLockedFilterbank.C dsp_verbosity.C \
 LoadToFoldConfig.C      PhaseSeries.C  \
-LoadToFoldN.C           PhaseSeriesUnloader.C
+LoadToFoldN.C           PhaseSeriesUnloader.C \
+CyclicFold.C
 
 if HAVE_CUFFT
 
