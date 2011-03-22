@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.66 $
-   $Date: 2011/03/03 16:12:42 $
+   $Revision: 1.67 $
+   $Date: 2011/03/22 19:07:04 $
    $Author: demorest $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -61,7 +61,7 @@ namespace dsp {
     PhaseSeries* get_output () const;
 
     //! Prepare to fold the input TimeSeries
-    void prepare ();
+    virtual void prepare ();
 
     //! Prepare to fold the given Observation
     void prepare (const Observation* observation);
@@ -157,6 +157,12 @@ namespace dsp {
     //! Set the idat_start and ndat_fold attributes
     virtual void set_limits (const Observation* input);
 
+    //! Check that the input state is appropriate for folding
+    virtual void check_input();
+
+    //! Prepare output PhaseSeries parameters
+    virtual void prepare_output();
+
     //! Used by the MultiFold class
     void set_idat_start(uint64_t _idat_start){ idat_start = _idat_start; }
     //! Used by the MultiFold class
@@ -213,6 +219,9 @@ namespace dsp {
     // dsp::Fold
     void initialise();
 
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
+
   private:
 
     // Generates folding_predictor from the given ephemeris
@@ -228,9 +237,6 @@ namespace dsp {
     //! The folding period last used in the fold method
     double pfold;
 
-    //! Interface to alternate processing engine (e.g. GPU)
-    Reference::To<Engine> engine;
-
   };
 
   //! Interface to alternate processing engine (e.g. GPU)
@@ -244,7 +250,7 @@ namespace dsp {
     virtual void set_nbin (unsigned nbin) = 0;
 
     //! Set the phase bin into which the idat'th sample will be integrated
-    virtual void set_bin (uint64_t idat, unsigned ibin) = 0;
+    virtual void set_bin (uint64_t idat, double ibin, double bins_per_samp) = 0;
 
     //! Return the PhaseSeries into which data will be folded
     virtual PhaseSeries* get_profiles () = 0;
@@ -255,8 +261,11 @@ namespace dsp {
     //! Synchronize the folded profile
     virtual void synch (PhaseSeries*) = 0;
 
+    //! Zero out internal data
+    virtual void zero () = 0;
+
     //! Enable engine to prepare any internal memory required for the plan
-    virtual void set_ndat (uint64_t ndat) {}
+    virtual void set_ndat (uint64_t ndat, uint64_t idat_start) {}
 
   protected:
 
@@ -267,6 +276,7 @@ namespace dsp {
     unsigned input_span;
 
     unsigned ndat_fold;
+    uint64_t idat_start;
 
     unsigned nchan, npol, ndim;
 

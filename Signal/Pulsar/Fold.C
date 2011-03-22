@@ -124,7 +124,7 @@ void dsp::Fold::reset ()
   Operation::reset ();
 
   if (engine)
-    engine->get_profiles()->zero();
+    engine->zero();
   if (output)
     output->zero();
 }
@@ -482,6 +482,32 @@ void dsp::Fold::set_input (const TimeSeries* _input)
     cerr << "dsp::Fold::set_input input is a WeightedTimeSeries" << endl;
 }
 
+void dsp::Fold::check_input() try
+{
+  if (!input->get_detected ())
+    throw Error (InvalidParam, "dsp::Fold::check_input",
+		 "input is not detected");
+}
+catch (Error &error) 
+{
+  throw error += "dsp::Fold::check_input";
+}
+
+void dsp::Fold::prepare_output() try
+{
+  if (verbose)
+    cerr << "dsp::Fold::prepare_output call PhaseSeries::mixable" << endl;
+
+  if (!get_output()->mixable (*input, folding_nbin, idat_start, ndat_fold))
+    throw Error (InvalidParam, "dsp::Fold::prepare_output",
+		 "input and output are not mixable " 
+                 + get_output()->get_reason());
+}
+catch (Error &error)
+{
+  throw error += "dsp::Fold::prepare_output()";
+}
+
 void dsp::Fold::transformation () try
 {
   if (verbose)
@@ -490,9 +516,7 @@ void dsp::Fold::transformation () try
   if (input->get_ndat() == 0)
     return;
 
-  if (!input->get_detected ())
-    throw Error (InvalidParam, "dsp::Fold::transformation",
-		 "input is not detected");
+  check_input();
 
   if (!built)
   {
@@ -524,13 +548,11 @@ void dsp::Fold::transformation () try
   use->set_dispersion_measure( input->get_dispersion_measure() ); 
 
   if (verbose)
-    cerr << "dsp::Fold::transformation call PhaseSeries::mixable" << endl;
+    cerr << "dsp::Fold::transformation call Fold::prepare_output" << endl;
 
   set_limits (input);
 
-  if (!use->mixable (*input, folding_nbin, idat_start, ndat_fold))
-    throw Error (InvalidParam, "dsp::Fold::transformation",
-		 "input and output are not mixable " + use->get_reason());
+  prepare_output();
 
   uint64_t nweights = 0;
   const unsigned* weights = 0;
@@ -702,7 +724,7 @@ void dsp::Fold::fold (uint64_t nweights,
     if (verbose)
       cerr << "dsp::Fold::fold using engine ptr=" << engine.ptr() << endl;
     engine->set_nbin (folding_nbin);
-    engine->set_ndat (idat_end - idat_start);
+    engine->set_ndat (idat_end - idat_start, idat_start);
   }
 
   for (uint64_t idat=idat_start; idat < idat_end; idat++)
@@ -727,13 +749,14 @@ void dsp::Fold::fold (uint64_t nweights,
     }
 
     phi -= floor(phi);
-    unsigned ibin = unsigned (phi * double_nbin);
+    double double_ibin = phi * double_nbin;
+    unsigned ibin = unsigned (double_ibin);
     phi += phase_per_sample;
 
     assert (ibin < folding_nbin);
 
     if (engine)
-      engine->set_bin( idat, ibin );
+      engine->set_bin( idat, double_ibin, phase_per_sample*double_nbin );
     else
       binplan[idat-idat_start] = ibin;
 

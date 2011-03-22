@@ -49,7 +49,7 @@ void CUDA::FoldEngine::set_nbin (unsigned nbin)
   binplan_nbin = 0;
 }
 
-void CUDA::FoldEngine::set_ndat (uint64_t ndat)
+void CUDA::FoldEngine::set_ndat (uint64_t ndat, uint64_t idat_start)
 {
   if (ndat > binplan_size)
   {
@@ -61,8 +61,10 @@ void CUDA::FoldEngine::set_ndat (uint64_t ndat)
   }
 }
 
-void CUDA::FoldEngine::set_bin (uint64_t idat, unsigned ibin)
+void CUDA::FoldEngine::set_bin (uint64_t idat, double d_ibin, 
+        double bins_per_sample)
 {
+  unsigned ibin = unsigned (d_ibin);
   if (ibin != current_bin)
   {
     /* store the number of time samples to integrate
