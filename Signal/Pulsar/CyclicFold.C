@@ -150,6 +150,9 @@ catch (Error &error)
 
 dsp::CyclicFoldEngine::CyclicFoldEngine()
 {
+  nbin=npol=ndim=0;
+  npol_out = 0;
+  nlag = 0;
   binplan_size = 0;
   binplan[0] = NULL;
   binplan[1] = NULL;
