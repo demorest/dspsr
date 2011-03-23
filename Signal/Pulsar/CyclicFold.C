@@ -28,7 +28,7 @@ void dsp::CyclicFold::prepare ()
 {
 
   if (verbose) 
-    cerr << "CyclicFold::prepare" << endl;
+    cerr << "dsp::CyclicFold::prepare" << endl;
 
   // Init engine if it's not already
   if (!engine) 
@@ -65,7 +65,7 @@ catch (Error &error)
 void dsp::CyclicFold::prepare_output() try
 {
   if (verbose) 
-    cerr << "CyclicFold::prepare_output start" << endl;
+    cerr << "dsp::CyclicFold::prepare_output start" << endl;
 
   // Need to do steps that happen in PhaseSeries::mixable
   // but without constraint that input chans, polns, etc need to
@@ -85,7 +85,7 @@ void dsp::CyclicFold::prepare_output() try
   if (out->get_integration_length() == 0.0) 
   {
     if (verbose)
-      cerr << "CyclicFold::prepare_output reset" << endl;
+      cerr << "dsp::CyclicFold::prepare_output reset" << endl;
 
     out->Observation::operator = (*in);
 
@@ -95,7 +95,7 @@ void dsp::CyclicFold::prepare_output() try
     out->set_nchan(nchan_out*nchan_in);
 
     if (verbose)
-      cerr << "CyclicFold::prepare_output npol=" << npol << endl;
+      cerr << "dsp::CyclicFold::prepare_output npol=" << npol << endl;
 
     out->set_npol(npol);
     out->set_ndim(1);
@@ -168,17 +168,28 @@ dsp::CyclicFoldEngine::~CyclicFoldEngine()
   if (lagdata) delete [] lagdata;
 }
 
+void dsp::CyclicFoldEngine::set_nlag(unsigned _nlag) 
+{
+  if (nlag != _nlag)
+  {
+    unsigned nchan_spec = 2*_nlag - 2;
+    lag2chan = FTransform::Agent::current->get_plan (nchan_spec,
+        FTransform::bcr);
+    nlag = _nlag;
+  }
+}
+
 void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
 {
   setup();
 
   if (parent->verbose)
-    cerr << "CyclicFoldEngine::set_ndat ndat=" << _ndat << endl;
+    cerr << "dsp::CyclicFoldEngine::set_ndat ndat=" << _ndat << endl;
 
   if (_ndat > binplan_size) {
 
     if (parent->verbose)
-      cerr << "CyclicFoldEngine::set_ndat alloc binplan" << endl;
+      cerr << "dsp::CyclicFoldEngine::set_ndat alloc binplan" << endl;
 
     if (binplan[0]) delete [] binplan[0];
     if (binplan[1]) delete [] binplan[1];
@@ -193,7 +204,7 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
   idat_start = _idat_start;
 
   if (parent->verbose)
-    cerr << "CyclicFoldEngine::set_ndat "
+    cerr << "dsp::CyclicFoldEngine::set_ndat "
       << "nlag=" << nlag << " "
       << "nbin=" << nbin << " "
       << "npol=" << npol_out << " "
@@ -202,11 +213,11 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
   uint64_t _lagdata_size = nlag * nbin * npol_out * ndim * nchan;
 
   if (parent->verbose)
-    cerr << "CyclicFoldEngine::set_ndat lagdata_size=" << _lagdata_size << endl;
+    cerr << "dsp::CyclicFoldEngine::set_ndat lagdata_size=" << _lagdata_size << endl;
 
   if (_lagdata_size > lagdata_size) {
     if (parent->verbose)
-      cerr << "CyclicFoldEngine::set_ndat alloc lagdata" << endl;
+      cerr << "dsp::CyclicFoldEngine::set_ndat alloc lagdata" << endl;
     if (lagdata) delete [] lagdata;
     lagdata = new float [_lagdata_size];
     lagdata_size = _lagdata_size;
@@ -275,7 +286,7 @@ void dsp::CyclicFoldEngine::fold ()
   setup();
 
   if (parent->verbose)
-    cerr << "CyclicFoldEngine::fold entering fold loop" << endl;
+    cerr << "dsp::CyclicFoldEngine::fold entering fold loop" << endl;
 
   if (in->get_npol() == 2) 
   {
@@ -348,7 +359,7 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   // the output PhaseSeries
 
   if (parent->verbose)
-    cerr << "CyclicFoldEngine::synch" << endl;
+    cerr << "dsp::CyclicFoldEngine::synch" << endl;
 
   unsigned nchan_spec = 2*nlag - 2;
   float *spec = new float[nchan_spec];
@@ -361,7 +372,7 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
         float *lags = get_lagdata_ptr(ichan, ipol, ibin);
-        FTransform::bcr1d(nchan_spec, spec, lags);
+        lag2chan->bcr1d(nchan_spec, spec, lags);
         for (unsigned schan=0; schan<nchan_spec; schan++) 
         {
           float* phasep = out->get_datptr(ichan*nchan_spec+schan,ipol);

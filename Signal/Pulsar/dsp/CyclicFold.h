@@ -13,6 +13,7 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/Fold.h"
+#include "FTransformAgent.h"
 
 namespace dsp {
 
@@ -91,7 +92,7 @@ namespace dsp {
     ~CyclicFoldEngine();
 
     //! Set the number of lags to fold
-    virtual void set_nlag (unsigned _nlag) { nlag = _nlag; }
+    virtual void set_nlag (unsigned _nlag);
 
     //! Set the number of phase bins and initialize any other data structures
     virtual void set_nbin (unsigned _nbin) { nbin = _nbin; }
@@ -136,6 +137,9 @@ namespace dsp {
     float* lagdata;
     uint64_t lagdata_size;
     float* get_lagdata_ptr(unsigned ichan, unsigned ipol, unsigned ibin);
+
+    // FFT plan for going from lags to channels
+    FTransform::Plan* lag2chan;
 
   }; 
 
