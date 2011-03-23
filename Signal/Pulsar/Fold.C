@@ -42,7 +42,17 @@ void dsp::Fold::set_engine (Engine* _engine)
   engine = _engine;
 
   if (engine)
+  {
     engine->set_parent (this);
+    engine->set_cerr (this->cerr);
+  }
+}
+
+void dsp::Fold::set_cerr (ostream& os) const
+{
+  if (engine)
+    engine->set_cerr(os);
+  Transformation<TimeSeries,PhaseSeries>::set_cerr(os);
 }
 
 //! Set any unititialized parameters
@@ -911,6 +921,10 @@ void dsp::Fold::Engine::setup () try
   if (!parent)
     throw Error (InvalidState, "dsp::Fold::Engine::setup",
 		 "no parent");
+
+  if (verbose)
+    parent->cerr << "dsp::Fold::Engine::setup"
+      " parent=" << parent << endl;
 
   const TimeSeries* in = parent->get_input();
 
