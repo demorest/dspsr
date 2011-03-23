@@ -172,6 +172,9 @@ void dsp::LoadToFoldN::prepare ()
 
       // ... and its own output.  New ones will be created in prepare()
       threads[i]->fold[ifold]->set_output( 0 );
+
+      // and its own Fold::Engine
+      threads[i]->fold[ifold]->set_engine( 0 ) ;
     }
 
     //
