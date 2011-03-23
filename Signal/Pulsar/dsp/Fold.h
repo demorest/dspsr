@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.67 $
-   $Date: 2011/03/22 19:07:04 $
+   $Revision: 1.68 $
+   $Date: 2011/03/23 14:53:54 $
    $Author: demorest $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -145,6 +145,9 @@ namespace dsp {
     class Engine;
     void set_engine (Engine*);
 
+    //! Set output cerr stream
+    virtual void set_cerr (std::ostream& os) const;
+
   protected:
 
     //! The transformation folds the data into the profile
@@ -240,7 +243,7 @@ namespace dsp {
   };
 
   //! Interface to alternate processing engine (e.g. GPU)
-  class Fold::Engine : public Reference::Able
+  class Fold::Engine : public OwnStream
   {
   public:
 
