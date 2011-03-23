@@ -169,7 +169,7 @@ Op* dsp::Subint<Op>::clone () const
 template <class Op>
 void dsp::Subint<Op>::set_cerr (std::ostream& os) const
 {
-  Operation::set_cerr (os);
+  Op::set_cerr (os);
   divider.set_cerr (os);
   if (unloader)
     unloader->set_cerr (os);
