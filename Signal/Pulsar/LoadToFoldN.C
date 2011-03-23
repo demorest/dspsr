@@ -18,6 +18,9 @@
 #include "FTransformAgent.h"
 #include "ThreadContext.h"
 
+#include "dsp/CyclicFold.h"
+#include "dsp/PhaseLockedFilterbank.h"
+
 #include <fstream>
 #include <stdlib.h>
 #include <errno.h>
@@ -134,8 +137,15 @@ void dsp::LoadToFoldN::prepare ()
   bool subints = configuration->single_pulse 
     || configuration->integration_length;
 
-  if (subints)
-    prepare_subint_archival ();
+  if (subints) 
+  {
+    bool subints_ok = prepare_subint_archival <Fold> ();
+    if (!subints_ok)
+      subints_ok = prepare_subint_archival <CyclicFold> ();
+    if (!subints_ok)
+      throw Error (InvalidState, "dsp::LoadToFoldN::prepare",
+          "folder is not a recognized Subint<> type.");
+  }
 
   for (unsigned i=1; i<threads.size(); i++)
   {
@@ -189,7 +199,8 @@ void dsp::LoadToFoldN::prepare ()
   }
 }
 
-void dsp::LoadToFoldN::prepare_subint_archival ()
+template <class T>
+bool dsp::LoadToFoldN::prepare_subint_archival ()
 {
   unsigned nfold = threads[0]->fold.size();
 
@@ -214,11 +225,12 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 
   for (unsigned ifold = 0; ifold < nfold; ifold ++)
   {
-    Subint<Fold>* subfold = 
-      dynamic_cast< Subint<Fold>* >( threads[0]->fold[ifold].get() );
+    Subint<T>* subfold = 
+      dynamic_cast< Subint<T>* >( threads[0]->fold[ifold].get() );
     if (!subfold)
-      throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
-		   "folder is not a SubFold" );
+      return false;
+      //throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
+//		   "folder is not a Subint<Fold>" );
 
     unloader[ifold] = new UnloaderShare( threads.size() );
     unloader[ifold]->copy( subfold->get_divider() );
@@ -246,6 +258,8 @@ void dsp::LoadToFoldN::prepare_subint_archival ()
 
   if (Operation::verbose)
     cerr << "dsp::LoadToFoldN::prepare_subint_archival done" << endl;
+
+  return true;
 }
 
 uint64_t dsp::LoadToFoldN::get_minimum_samples () const

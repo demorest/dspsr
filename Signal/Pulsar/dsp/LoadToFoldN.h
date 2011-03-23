@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.11 $
-   $Date: 2010/01/15 11:55:26 $
-   $Author: straten $ */
+   $Revision: 1.12 $
+   $Date: 2011/03/23 01:57:18 $
+   $Author: demorest $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
 #define __baseband_dsp_LoadToFoldN_h
@@ -87,7 +87,8 @@ namespace dsp {
 
     static void* thread (void*);
 
-    void prepare_subint_archival ();
+    template <class T>
+    bool prepare_subint_archival ();
     void launch_threads ();
 
     static void share (LoadToFold1* fold, LoadToFold1* share);
