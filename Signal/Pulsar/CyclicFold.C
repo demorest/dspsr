@@ -353,6 +353,8 @@ void dsp::CyclicFoldEngine::fold ()
   else
     throw Error (InvalidParam, "dsp::CyclicFoldEngine::fold", 
         "Invalid npol=%d", npol);
+
+  synchronized = false;
 }
 
 void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
@@ -363,12 +365,17 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::synch" << endl;
 
+  if (synchronized)
+    return;
+
+  if (parent->verbose)
+    cerr << "dsp::CyclicFoldEngine::synch calling bcr FFT" << endl;
+
   unsigned nchan_spec = 2*nlag - 2;
   float *spec = new float[nchan_spec];
 
   for (unsigned ibin=0; ibin<nbin; ibin++) 
   {
-    //cerr << "CyclicFoldEngine::synch ibin=" << ibin << endl;
     for (unsigned ipol=0; ipol<npol_out; ipol++) 
     {
       for (unsigned ichan=0; ichan<nchan; ichan++) 
@@ -385,4 +392,6 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   }
 
   delete [] spec;
+
+  synchronized = true;
 }
