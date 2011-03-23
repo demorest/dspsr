@@ -127,7 +127,11 @@ void dsp::CyclicFold::prepare_output() try
 
     out->ndat_total = backup_ndat_total;
 
-    out->set_nsub_swap (in->get_nchan());
+    if (in->get_nchan() == 1) 
+      out->set_swap(true);
+
+    if (in->get_nchan() > 1 && in->get_swap() == false)
+      out->set_nsub_swap (in->get_nchan());
 
     return;
   }
@@ -373,6 +377,34 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
 
   unsigned nchan_spec = 2*nlag - 2;
   float *spec = new float[nchan_spec];
+
+#if 0 
+  // In the 4-pol case, we need to sum/diff the lag functions to get
+  // cross-terms equivalent to the usual Coherence products.
+  // TODO still testing this..
+  if (npol_out == 4)
+  {
+    for (unsigned ibin=0; ibin<nbin; ibin++) 
+    {
+      for (unsigned ichan=0; ichan<nchan; ichan++)
+      {
+        float *lags2 = get_lagdata_ptr(ichan, 2, ibin);
+        float *lags3 = get_lagdata_ptr(ichan, 3, ibin);
+        for (unsigned ilag=0; ilag<nlag; ilag+=2) 
+        {
+          float pos_r = lags2[ilag];
+          float pos_i = lags2[ilag+1];
+          float neg_r = lags3[ilag];
+          float neg_i = lags3[ilag+1];
+          lags2[ilag]   = 0.5*(pos_r + neg_r);
+          lags2[ilag+1] = 0.5*(pos_i - neg_i);
+          lags3[ilag]   = 0.5*(pos_r - neg_r);
+          lags3[ilag+1] = 0.5*(pos_i + neg_i);
+        }
+      }
+    }
+  }
+#endif
 
   for (unsigned ibin=0; ibin<nbin; ibin++) 
   {
