@@ -36,9 +36,6 @@ namespace dsp {
   class CyclicFold : public Fold {
 
     /* TODO:
-     * Need to figure out how to mark output as having the right number
-     * of channels.
-     *
      * Need to figure out how to overlap input by nlag points...
      */
 
@@ -50,14 +47,8 @@ namespace dsp {
     //! Destructor
     ~CyclicFold ();
 
-    //! Create a clone: XXX check if needed...
-    //CyclicFold* clone () const;
-
     //! Prepare for folding
     virtual void prepare ();
-
-    //! Perform any final operations XXX check if needed
-    //virtual void finish ();
 
     //! Set the number of lags to fold
     void set_nlag(unsigned _nlag) { nlag = _nlag; }
@@ -73,9 +64,6 @@ namespace dsp {
     unsigned get_npol() const { return npol; }
 
   protected:
-
-    //! Set the idat_start and ndat_fold attributes XXX need?
-    //virtual void set_limits (const Observation* input);
 
     //! Check that the input state is appropriate
     virtual void check_input();
