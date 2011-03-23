@@ -18,6 +18,7 @@ dsp::CyclicFold::CyclicFold()
 {
   nlag = 0;
   npol = 0;
+  set_name("CyclicFold");
 }
 
 dsp::CyclicFold::~CyclicFold()
@@ -159,6 +160,7 @@ dsp::CyclicFoldEngine::CyclicFoldEngine()
   lagdata_size = 0;
   lagdata = NULL;
   idat_start = 0;
+  lag2chan = NULL;
 }
 
 dsp::CyclicFoldEngine::~CyclicFoldEngine()
