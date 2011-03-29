@@ -14,20 +14,77 @@
 
 #include <string.h>
 
+#include <algorithm>
+
 using namespace std;
 
 dsp::ASCIIObservation::ASCIIObservation (const char* header)
 {
   hdr_version = "HDR_VERSION";
 
+  // The default-required keywords
+  required_keys.clear();
+  required_keys.push_back("TELESCOPE");
+  required_keys.push_back("SOURCE");
+  required_keys.push_back("CALFREQ");
+  required_keys.push_back("FREQ");
+  required_keys.push_back("BW");
+  required_keys.push_back("NCHAN");
+  required_keys.push_back("NPOL");
+  required_keys.push_back("NBIT");
+  required_keys.push_back("NDIM");
+  required_keys.push_back("TSAMP");
+  required_keys.push_back("UTC_START");
+  required_keys.push_back("OBS_OFFSET");
+
   if (header)
     load (header);
+}
+
+bool dsp::ASCIIObservation::is_required (std::string key)
+{
+  if ( count(required_keys.begin(), required_keys.end(), key) > 0 )
+    return true;
+  else
+    return false;
+}
+
+void dsp::ASCIIObservation::set_required (std::string key,
+    bool required)
+{
+
+  if ( required && is_required(key))
+    return;
+
+  if ( !required && !is_required(key) )
+    return;
+
+  if (required)
+  {
+    required_keys.push_back(key);
+  }
+
+  else
+  {
+    std::vector< std::string >::iterator it;
+    it = remove(required_keys.begin(), required_keys.end(), key);
+    required_keys.erase(it, required_keys.end());
+  }
+
 }
 
 void dsp::ASCIIObservation::load (const char* header)
 {
   if (header == NULL)
     throw Error (InvalidState, "ASCIIObservation::load", "no header!");
+
+  if (verbose)
+  {
+    cerr << "ASCIIObservation::load required keywords:" << endl;
+    for (unsigned i=0; i<required_keys.size(); i++)
+      cerr << "  " << required_keys[i] << endl;
+  }
+
 
   // //////////////////////////////////////////////////////////////////////
   //
@@ -49,16 +106,23 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   // TELESCOPE
   //
-  if (ascii_header_get (header, "TELESCOPE", "%s", buffer) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load TELESCOPE");
-  
-  set_telescope (buffer);
+  // Note: The function ascii_header_check will check the list of 
+  // required keywords and throw an error only if the requested
+  // keyword is required and not present.
+  // If a value < 0 is returned here, then the keyword
+  // has been marked as not required so rather than throwing an error, 
+  // some default/unknown value should be used.
+  //
+  if (ascii_header_check (header, "TELESCOPE", "%s", buffer) < 0)
+    set_telescope ("unknown");
+  else
+    set_telescope (buffer);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // RECEIVER
   //
-  if (ascii_header_get (header, "RECEIVER", "%s", buffer) < 0)
+  if (ascii_header_check (header, "RECEIVER", "%s", buffer) < 0)
     set_receiver ("unknown");
   else
     set_receiver (buffer);
@@ -67,17 +131,16 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   // SOURCE
   //
-  if (ascii_header_get (header, "SOURCE", "%s", buffer) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load SOURCE");
-
-  set_source (buffer);
-
+  if (ascii_header_check (header, "SOURCE", "%s", buffer) < 0)
+    set_source ("unknown");
+  else
+    set_source (buffer);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // MODE
   //
-  ascii_header_get (header, "MODE", "%s", buffer);
+  ascii_header_check (header, "MODE", "%s", buffer);
     
   if (strncmp(buffer,"PSR",3) == 0)
     set_type(Signal::Pulsar);
@@ -94,9 +157,10 @@ void dsp::ASCIIObservation::load (const char* header)
   if (get_type() == Signal::PolnCal)
   {
     double calfreq;
-    if (ascii_header_get (header, "CALFREQ", "%lf", &calfreq) < 0)
-      throw Error (InvalidState, "ASCIIObservation", "failed load FREQ");
-    set_calfreq(calfreq);
+    if (ascii_header_check (header, "CALFREQ", "%lf", &calfreq) < 0)
+      set_calfreq(0.0);
+    else
+      set_calfreq(calfreq);
   }
 
   // //////////////////////////////////////////////////////////////////////
@@ -104,27 +168,27 @@ void dsp::ASCIIObservation::load (const char* header)
   // FREQ
   //
   double freq;
-  if (ascii_header_get (header, "FREQ", "%lf", &freq) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load FREQ");
-
-  set_centre_frequency (freq);
+  if (ascii_header_check (header, "FREQ", "%lf", &freq) < 0)
+    set_centre_frequency (0.0);
+  else
+    set_centre_frequency (freq);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // BW
   //
   double bw;
-  if (ascii_header_get (header, "BW", "%lf", &bw) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load BW");
-
-  set_bandwidth (bw);
+  if (ascii_header_check (header, "BW", "%lf", &bw) < 0)
+    set_bandwidth (0.0);
+  else
+    set_bandwidth (bw);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // NCHAN
   //
   int scan_nchan;
-  if (ascii_header_get (header, "NCHAN", "%d", &scan_nchan) < 0)
+  if (ascii_header_check (header, "NCHAN", "%d", &scan_nchan) < 0)
     set_nchan (1);
   else
     set_nchan (scan_nchan);
@@ -134,30 +198,31 @@ void dsp::ASCIIObservation::load (const char* header)
   // NPOL
   //
   int scan_npol;
-  if (ascii_header_get (header, "NPOL", "%d", &scan_npol) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load NPOL");
-
-  set_npol (scan_npol);
+  if (ascii_header_check (header, "NPOL", "%d", &scan_npol) < 0)
+    set_npol (1);
+  else
+    set_npol (scan_npol);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // NBIT
   //
   int scan_nbit;
-  if (ascii_header_get (header, "NBIT", "%d", &scan_nbit) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load NBIT");
+  if (ascii_header_check (header, "NBIT", "%d", &scan_nbit) < 0)
+    set_nbit (2);
+  else
+    set_nbit (scan_nbit);
 
-  set_nbit (scan_nbit);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // NDIM
   //
   int scan_ndim;
-  if (ascii_header_get (header, "NDIM", "%d", &scan_ndim) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load NDIM");
-
-  set_ndim (scan_ndim);
+  if (ascii_header_check (header, "NDIM", "%d", &scan_ndim) < 0)
+    set_ndim (1);
+  else
+    set_ndim (scan_ndim);
 
   switch (scan_ndim)
   {
@@ -182,7 +247,7 @@ void dsp::ASCIIObservation::load (const char* header)
   */
 
   uint64_t scan_ndat = 0;
-  if (ascii_header_get (header, "NDAT", "%"PRIu64, &scan_ndat) >= 0)
+  if (ascii_header_check (header, "NDAT", "%"PRIu64, &scan_ndat) >= 0)
     set_ndat( scan_ndat );
   else
     set_ndat( 0 );
@@ -194,7 +259,7 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   // STATE
   //
-  if (ascii_header_get (header, "STATE", "%s", buffer) >= 0)
+  if (ascii_header_check (header, "STATE", "%s", buffer) >= 0)
   {
     if (verbose)
       cerr << "dsp::ASCIIObservation::load STATE=" << buffer << endl;
@@ -202,16 +267,15 @@ void dsp::ASCIIObservation::load (const char* header)
   }
 
   int scan_dsb;
-  if (ascii_header_get (header, "DSB", "%d", &scan_dsb) >= 0)
+  if (ascii_header_check (header, "DSB", "%d", &scan_dsb) >= 0)
     set_dual_sideband (scan_dsb == 1);
 
   // //////////////////////////////////////////////////////////////////////
   //
   // TSAMP
   //
-  double sampling_interval;
-  if (ascii_header_get (header, "TSAMP", "%lf", &sampling_interval)<0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load TSAMP");
+  double sampling_interval=0.0;
+  ascii_header_check (header, "TSAMP", "%lf", &sampling_interval);
 
   /* IMPORTANT: TSAMP is the sampling period in microseconds */
   sampling_interval *= 1e-6;
@@ -222,54 +286,66 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   // UTC_START
   //
-  if (ascii_header_get (header, "UTC_START", "%s", buffer) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load UTC_START");
+  MJD recording_start_time( MJD::zero );
+  if (ascii_header_check (header, "UTC_START", "%s", buffer) > 0)
+  {
 
-  if (verbose)
-    cerr << "dsp::ASCIIObservation::load UTC_START='" << buffer << "'" << endl;
+    if (verbose)
+      cerr << "dsp::ASCIIObservation::load UTC_START='" 
+        << buffer << "'" << endl;
 
-  struct tm utc;
-  if (strptime (buffer, "%Y-%m-%d-%H:%M:%S", &utc) == NULL)
-    throw Error (InvalidState, "ASCIIObservation",
-		 "failed strptime (%s)", buffer);
+    struct tm utc;
+    if (strptime (buffer, "%Y-%m-%d-%H:%M:%S", &utc) == NULL)
+      throw Error (InvalidState, "ASCIIObservation",
+                   "failed strptime (%s)", buffer);
 
-  if (verbose)
-    cerr << "dsp::ASCIIObservation::load asctime=" << asctime (&utc) << endl;
+    if (verbose)
+      cerr << "dsp::ASCIIObservation::load asctime=" << asctime (&utc) << endl;
 
-  MJD recording_start_time( timegm (&utc) );
+    recording_start_time = MJD( timegm (&utc) );
 
 #ifdef _DEBUG
-  if (ascii_header_get (header, "MJD_START", "%s", buffer) >= 0)
-    cerr << "MJD_START=" << buffer
-	 << " MJD(UTC)=" << recording_start_time.printdays(13) << endl;
+    if (ascii_header_check (header, "MJD_START", "%s", buffer) >= 0)
+      cerr << "MJD_START=" << buffer
+           << " MJD(UTC)=" << recording_start_time.printdays(13) << endl;
 #endif
 
-  if (verbose)
-    cerr << "dsp::ASCIIObservation::load start_mjd=" 
-         << recording_start_time << endl;
+    if (verbose)
+      cerr << "dsp::ASCIIObservation::load start_mjd=" 
+           << recording_start_time << endl;
+  }
 
   // //////////////////////////////////////////////////////////////////////
   //
   // OBS_OFFSET
   //
   offset_bytes = 0;
-  if (ascii_header_get (header, "OBS_OFFSET", UI64, &offset_bytes) < 0 &&
-      ascii_header_get (header, "OFFSET", UI64, &offset_bytes) < 0)
-    throw Error (InvalidState, "ASCIIObservation", "failed load OBS_OFFSET");
+  try
+  {
+    ascii_header_check (header, "OBS_OFFSET", UI64, &offset_bytes);
+  }
+  catch (Error &error)
+  {
+    if (ascii_header_check (header, "OFFSET", UI64, &offset_bytes) < 0)
+      throw error;
+  }
 
   // //////////////////////////////////////////////////////////////////////
   //
   // CALCULATE the various offsets and sizes
   //
   
-  double offset_seconds = get_nsamples(offset_bytes) * sampling_interval;
-  set_start_time (recording_start_time + offset_seconds);
+  if ( recording_start_time != MJD::zero )
+  {
+    double offset_seconds = get_nsamples(offset_bytes) * sampling_interval;
+    set_start_time (recording_start_time + offset_seconds);
+  }
 
   // //////////////////////////////////////////////////////////////////////
   //
   // INSTRUMENT
   //
-  if (ascii_header_get (header, "INSTRUMENT", "%s", buffer) == 1)
+  if (ascii_header_check (header, "INSTRUMENT", "%s", buffer) == 1)
     set_machine (buffer);
 
   // //////////////////////////////////////////////////////////////////////
@@ -280,13 +356,13 @@ void dsp::ASCIIObservation::load (const char* header)
   double ra, dec;
 
   if (has_position)
-    has_position = (ascii_header_get (header, "RA", "%s", buffer) == 1);
+    has_position = (ascii_header_check (header, "RA", "%s", buffer) == 1);
 
   if (has_position)
     has_position = (str2ra (&ra, buffer) == 0);
 
   if (has_position)
-    has_position = (ascii_header_get (header, "DEC", "%s", buffer) == 1);
+    has_position = (ascii_header_check (header, "DEC", "%s", buffer) == 1);
 
   if (has_position)
     has_position = (str2dec2 (&dec, buffer) == 0);
