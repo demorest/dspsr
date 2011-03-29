@@ -129,6 +129,11 @@ static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
 static Registry::List<dsp::File>::Enter<dsp::MWAFile> file_register_mwa;
 #endif
 
+#if HAVE_pdev
+#include "dsp/PdevFile.h"
+static Registry::List<dsp::File>::Enter<dsp::PdevFile> register_pdev;
+#endif
+
 #if HAVE_pmdaq
 #include "dsp/PMDAQFile.h"
 static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;

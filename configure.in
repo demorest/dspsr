@@ -154,6 +154,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/maxim/Makefile
 		Kernel/Formats/mwa/Makefile
 		Kernel/Formats/pmdaq/Makefile
+		Kernel/Formats/pdev/Makefile
 		Kernel/Formats/puma/Makefile
 		Kernel/Formats/puma2/Makefile
 		Kernel/Formats/s2/Makefile
