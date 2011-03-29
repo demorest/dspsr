@@ -17,7 +17,9 @@ dsp::ASPUnpacker::ASPUnpacker (const char* name) : HistUnpacker (name)
 
 bool dsp::ASPUnpacker::matches (const Observation* observation)
 {
-  return observation->get_machine() == "ASP" 
+  // Mock spectrometer data happens to be in the same format...
+  return (observation->get_machine() == "ASP" 
+      || observation->get_machine() == "Mock")
     && observation->get_nbit() == 8;
 }
 
