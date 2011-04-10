@@ -22,7 +22,7 @@ dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()
   extension = ".ar";
   path_add_source = false;
 }
-    
+
 //! Destructor
 dsp::PhaseSeriesUnloader::~PhaseSeriesUnloader ()
 {
@@ -73,7 +73,7 @@ std::string dsp::PhaseSeriesUnloader::get_directory () const
 {
   return directory;
 }
-    
+
 //! place output files in a sub-directory named by source
 void dsp::PhaseSeriesUnloader::set_path_add_source (bool flag)
 {
@@ -144,7 +144,7 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
   MJD epoch = data->get_start_time();
 
   if (Observation::verbose)
-    cerr << "dsp::FilenameEpoch::get_filename epoch=" 
+    cerr << "dsp::FilenameEpoch::get_filename epoch="
          << epoch.printall() << endl;
 
   if (integer_seconds)
@@ -159,7 +159,7 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
     epoch = MJD (epoch.intday(), divisions * integer_seconds, 0.0);
 
     if (Observation::verbose)
-      cerr << "dsp::FilenameEpoch::get_filename division_start=" 
+      cerr << "dsp::FilenameEpoch::get_filename division_start="
            << epoch.printall() << endl;
   }
 
@@ -188,10 +188,29 @@ std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data) const
   Phase phase = poly->phase ( data->get_start_time() );
 
   if (Observation::verbose)
-    cerr << "dsp::FilenamePulse::get_filename phase=" << phase 
+    cerr << "dsp::FilenamePulse::get_filename phase=" << phase
 	 << " ref=" << data->get_reference_phase() << endl;
 
   phase = (phase + 0.5 - data->get_reference_phase()).Floor();
 
   return stringprintf ("pulse_"I64, phase.intturns());
+}
+
+dsp::FilenameOriginal::FilenameOriginal (const std::string& _input_filename)
+  : input_filename(_input_filename),
+  report_unload(true)
+{}
+
+//! Return the input filename without the extension.
+std::string dsp::FilenameOriginal::get_filename (const PhaseSeries* data) const
+{
+  const size_t dot_pos = input_filename.find_last_of(".");
+  const string filename = input_filename.substr(0, dot_pos);
+
+  if (report_unload)
+    cerr << "unloading " << tostring(data->get_integration_length(),2)
+	 << " seconds: " << filename << endl;
+
+  return filename;
+
 }

@@ -176,6 +176,9 @@ namespace dsp {
     // name of the output archive file
     std::string archive_filename;
 
+    // name of the input file
+    std::string input_filename;
+
     // extension appended to the output archive filename
     std::string archive_extension;
 

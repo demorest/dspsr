@@ -125,6 +125,20 @@ namespace dsp {
   public:
     std::string get_filename (const PhaseSeries* data) const;
   };
+
+  //! Defines the output filename convention
+  class FilenameOriginal : public FilenameConvention
+  {
+    public:
+      FilenameOriginal ();
+      FilenameOriginal (const std::string&);
+      std::string get_filename (const PhaseSeries* data) const;
+
+      bool report_unload;
+
+    protected:
+      std::string input_filename;
+  };
 }
 
 #endif // !defined(__PhaseSeriesUnloader_h)

@@ -39,8 +39,7 @@ void parse_options (int argc, char** argv);
 static bool verbose = false;
 
 // sets up the LoadToFold engine using the following attributes
-
-void prepare (dsp::LoadToFold* engine, dsp::Input* input);
+void prepare (dsp::LoadToFold* engine, const string& filename);
 
 // number of seconds to seek into data
 double seek_seconds = 0.0;
@@ -106,7 +105,7 @@ int main (int argc, char** argv) try
     if (time_prep)
       preptime.start();
 
-    prepare (engine, dsp::File::create( filenames[ifile] ));
+    prepare (engine, filenames[ifile] );
 
     if (time_prep)
     {
@@ -207,8 +206,12 @@ void input_prepare (dsp::Input* input)
     input->set_total_seconds (seek_seconds + total_seconds);
 }
 
-void prepare (dsp::LoadToFold* engine, dsp::Input* input)
+void prepare (dsp::LoadToFold* engine, const string& filename)
 {
+  dsp::Input* input = dsp::File::create(filename);
+
+  config->input_filename = filename;
+
   config->input_prepare.set( input_prepare );
 
   engine->set_input( input );

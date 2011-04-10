@@ -1114,7 +1114,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   if (config->single_pulse_archives())
     archiver->set_convention( new FilenamePulse );
   else
-    archiver->set_convention( epoch_convention = new FilenameEpoch );
+    archiver->set_convention (new FilenameOriginal(config->input_filename));
 
   if (subints && config->single_archive)
     epoch_convention->report_unload = false;
