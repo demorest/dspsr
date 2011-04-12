@@ -11,6 +11,8 @@
 
 #include "dsp/File.h"
 
+#define PDEV_HEADER_BYTES ((size_t)1024)
+
 namespace dsp {
 
   //! PdevFile reads baseband data from the Mock Spectrometers at Arecibo
@@ -30,6 +32,9 @@ namespace dsp {
    *    p2613.20110323.b0s1g0.00000.pdev
    *
    *  The correct base name is 'p2613.20110323.b0s1g0'.
+   *
+   *  The first file in the set contains the obs start timestamp, 
+   *  so its index must be stated via the STARTFILE keyword.
    *
    *  The ASCII file must have INSTRUMENT set to 'Mock' for this
    *  class to recognize the file.
@@ -52,16 +57,37 @@ namespace dsp {
     //! Open the file
     void open_file (const char* filename);
 
+    //! Get stats about the whole set of files
+    void check_file_set ();
+
+    //! Return number of samples
+    int64_t fstat_file_ndat (uint64_t tailer_bytes=0);
+
+    //! Load bytes from the file set
+    int64_t load_bytes (unsigned char *buffer, uint64_t nbytes);
+
+    //! Seek to a certain spot in the file set
+    int64_t seek_bytes (uint64_t bytes);
+
   private:
 
     //! Raw header
-    unsigned int rawhdr[256];
+    unsigned int rawhdr[PDEV_HEADER_BYTES / 4];
 
     //! Base file name
     char basename[256];
 
     //! Current file index
     int curfile;
+
+    //! Start file index
+    int startfile;
+
+    //! Final file index
+    int endfile;
+
+    //! Total number of bytes in file set
+    uint64_t total_bytes;
 
   };
 }
