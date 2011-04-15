@@ -27,6 +27,7 @@ dsp::PdevFile::PdevFile (const char* filename,const char* headername)
   curfile = 0;
   total_bytes = 0;
   basename[0] = '\0';
+  file_bytes.resize(0);
 }
 
 dsp::PdevFile::~PdevFile ( )
@@ -71,6 +72,7 @@ void dsp::PdevFile::check_file_set ()
   unsigned ifile = startfile;
   int tmp_fd = 0;
   total_bytes = 0;
+  file_bytes.resize(0);
   while (more_files) 
   {
     char tmp_file[256];
@@ -94,6 +96,7 @@ void dsp::PdevFile::check_file_set ()
             "fstat(%s) failed", tmp_file);
       total_bytes += buf.st_size;
       ::close(tmp_fd);
+      file_bytes.push_back(buf.st_size);
       ifile++;
     }
   }
@@ -217,8 +220,47 @@ int64_t dsp::PdevFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
 
 int64_t dsp::PdevFile::seek_bytes (uint64_t bytes)
 {
-  if (bytes != 0)
-    throw Error (InvalidState, "dsp::PdevFile::seek_bytes",
-        "seek_bytes() not implemented for pdev data");
-  return bytes;
+
+  // Include header in byte count
+  bytes += PDEV_HEADER_BYTES;
+
+  // Can't go past the end
+  if (bytes >= total_bytes)
+  {
+    end_of_data = true;
+    File::close();
+    return total_bytes - PDEV_HEADER_BYTES;
+  }
+
+  end_of_data = false;
+
+  // Figure out which file has the right spot
+  uint64_t cum_bytes;
+  unsigned ifile;
+  for (ifile=startfile; ifile<=endfile; ifile++) 
+  {
+    if ((cum_bytes + file_bytes[ifile-startfile]) > bytes)
+      break;
+    cum_bytes += file_bytes[ifile-startfile];
+  }
+
+  // Close current file, open new file
+  File::close();
+  curfile = ifile;
+  char datafile[256];
+  sprintf(datafile, "%s.%5.5d.pdev", basename, curfile);
+  if (verbose)
+    cerr << "dsp::PdevFile::seek_bytes opening '" << datafile << "'" << endl;
+  fd = ::open(datafile, O_RDONLY);
+  if (fd<0)
+    throw Error (FailedSys, "dsp::PdevFile::seek_bytes",
+        "open(%s) failed", datafile);
+
+  // Seek to spot in file
+  int64_t rv = lseek(fd, bytes - cum_bytes, SEEK_SET);
+  if (rv < 0)
+    throw Error (FailedSys, "dsp::PdevFile::seek_bytes", "lseek error");
+
+  return rv - PDEV_HEADER_BYTES;
+
 }

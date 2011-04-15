@@ -86,6 +86,9 @@ namespace dsp {
     //! Final file index
     int endfile;
 
+    //! Size of each file
+    std::vector<uint64_t> file_bytes;
+
     //! Total number of bytes in file set
     uint64_t total_bytes;
 
