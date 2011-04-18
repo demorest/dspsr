@@ -235,7 +235,7 @@ int64_t dsp::PdevFile::seek_bytes (uint64_t bytes)
   end_of_data = false;
 
   // Figure out which file has the right spot
-  uint64_t cum_bytes;
+  uint64_t cum_bytes=0;
   unsigned ifile;
   for (ifile=startfile; ifile<=endfile; ifile++) 
   {
