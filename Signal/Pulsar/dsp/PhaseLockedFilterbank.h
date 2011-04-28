@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseLockedFilterbank.h,v $
-   $Revision: 1.4 $
-   $Date: 2010/11/21 23:05:15 $
+   $Revision: 1.5 $
+   $Date: 2011/04/28 23:30:12 $
    $Author: demorest $ */
 
 #ifndef __baseband_dsp_PhaseLockedFilterbank_h
@@ -48,6 +48,12 @@ namespace dsp {
     //! Get the number of pulse phase windows in which to compute spectra
     unsigned get_nbin () const { return nbin; }
 
+    //! Set the number of polarization to compute
+    void set_npol (unsigned npol);
+
+    //! Get the number of polarizations
+    unsigned get_npol () const { return npol; }
+
     //! Has a folding predictor been set?
     bool has_folding_predictor() const { return bin_divider.get_predictor(); }
 
@@ -80,6 +86,9 @@ namespace dsp {
 
     //! Number of pulse phase windows in which to compute spectra
     unsigned nbin;
+
+    //! Number of polarization products to compute
+    unsigned npol;
 
     //! Flag set when built
     bool built;

@@ -518,6 +518,7 @@ void dsp::LoadToFold1::prepare () try
     }
 
     phased_filterbank->set_nbin (config->plfb_nbin);
+    phased_filterbank->set_npol (config->npol);
 
     if (config->plfb_nchan)
       phased_filterbank->set_nchan (config->plfb_nchan);

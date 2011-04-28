@@ -19,6 +19,7 @@ dsp::PhaseLockedFilterbank::PhaseLockedFilterbank () :
 {
   nchan = 0;
   nbin = 0;
+  npol = 1;
 
   idat_start = ndat_fold = 0;
 
@@ -36,6 +37,14 @@ void dsp::PhaseLockedFilterbank::set_nbin (unsigned _nbin)
 {
   nbin = _nbin;
   bin_divider.set_turns (1.0/double(nbin));
+}
+
+void dsp::PhaseLockedFilterbank::set_npol (unsigned _npol)
+{
+  if (_npol!=1 && _npol!=2 && _npol!=4)
+    throw Error (InvalidParam, "dsp::PhaseLockedFilterbank::set_npol",
+        "Invalid npol (%d)", _npol);
+  npol = _npol;
 }
 
 /*! sets idat_start to zero and ndat_fold to input->get_ndat() */
@@ -101,7 +110,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
 		 "invalid input data state = " + tostring(input->get_state()));
 
   bool new_integration = false;
-  if (get_output()->get_integration_length() == 0.0) {
+  if (get_output()->get_integration_length() == 0.0) 
+  {
 
     if (verbose)
       cerr << "dsp::PhaseLockedFilterbank::transformation"
@@ -113,9 +123,22 @@ void dsp::PhaseLockedFilterbank::transformation ()
     get_output()->Observation::operator = (*input);
 
     get_output()->set_nchan (nchan * input_nchan);
-    get_output()->set_npol (1);
+    get_output()->set_npol (npol);
     get_output()->set_ndim (1);
-    get_output()->set_state (Signal::Intensity);
+    if (npol==1)
+      get_output()->set_state (Signal::Intensity);
+    else if (npol==2)
+      get_output()->set_state (Signal::PPQQ);
+    else if (npol==4)
+      get_output()->set_state (Signal::Coherence);
+    else
+      throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation", 
+          "Invalid npol setting (%d)", npol);
+
+    if (input_npol < 2 && npol > 1)
+      throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation",
+          "Not enough input polns (%d) for output npol (%d)", 
+          input_npol, npol);
 
     if (FTransform::get_norm() == FTransform::unnormalized)
       output->rescale (nchan);
@@ -162,7 +185,11 @@ void dsp::PhaseLockedFilterbank::transformation ()
   }
 
   // set up the scratch space
-  float* complex_spectrum = scratch->space<float> (nchan * 2);
+  unsigned polfac = npol==4 ? 2 : 1;
+  float* complex_spectrum_dat = scratch->space<float> (nchan * 2 * polfac);
+  float* complex_spectrum[2];
+  complex_spectrum[0] = complex_spectrum_dat;
+  complex_spectrum[1] = complex_spectrum_dat + (polfac-1)*nchan*2;
 
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 
@@ -194,7 +221,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
     first = false;
     last_used = idat_start + bin_divider.get_ndat ();
 
-    if (idat_start + ndat_fft > idat_end) {
+    if (idat_start + ndat_fft > idat_end) 
+    {
       bin_divider.discard_bounds( get_input() );
       break;
     }
@@ -223,27 +251,48 @@ void dsp::PhaseLockedFilterbank::transformation ()
     }
     get_output()->set_end_time(std::max(output->get_end_time(), time1));
 
-    for (unsigned inchan=0; inchan < input_nchan; inchan++) {
+    for (unsigned inchan=0; inchan < input_nchan; inchan++) 
+    {
 
-      for (unsigned ipol=0; ipol < input_npol; ipol++) {
+      for (unsigned ipol=0; ipol < input_npol; ipol++) 
+      {
 
 	const float* dat_ptr = input->get_datptr (inchan, ipol);
 	dat_ptr += idat_start * input_ndim;
 	  
 	if (input_ndim == 1)
-	  FTransform::frc1d (ndat_fft, complex_spectrum, dat_ptr);
+	  FTransform::frc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
 	else
-	  FTransform::fcc1d (ndat_fft, complex_spectrum, dat_ptr);
+	  FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
 
 
 	// square-law detect
-	for (unsigned ichan=0; ichan < nchan; ichan++) {
-          float *amps = output->get_datptr(inchan*nchan + ichan, 0);
-	  amps[phase_bin] += sqr(complex_spectrum[ichan*2]);
-	  amps[phase_bin] += sqr(complex_spectrum[ichan*2+1]);
-	}
+        for (unsigned ichan=0; ichan < nchan; ichan++) 
+        {
+          unsigned out_ipol = ipol;
+          if (npol==1) out_ipol = 0;
+          float *amps = output->get_datptr(inchan*nchan + ichan, out_ipol);
+          amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2]);
+          amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2+1]);
+        }
 
       } // for each polarization
+
+      // Compute poln cross terms
+      if (npol>2) 
+      {
+        for (unsigned ichan=0; ichan < nchan; ichan++)
+        {
+          float *amps_re = output->get_datptr(inchan*nchan + ichan, 2);
+          float *amps_im = output->get_datptr(inchan*nchan + ichan, 3);
+          amps_re[phase_bin] += 
+            complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2]
+            + complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2+1];
+          amps_im[phase_bin] += 
+            complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2+1]
+            - complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2];
+        }
+      }
     
     } // for each frequency channel
 
@@ -257,7 +306,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
   get_output()->increment_integration_length( total_integrated );
 
   // Check int times
-  if (verbose) {
+  if (verbose) 
+  {
     MJD span = get_output()->get_end_time() - get_output()->get_start_time();
     cerr << "dsp::PhaseLockedFilterbank transformation end "
       << "span=" << span.in_seconds() 
