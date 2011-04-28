@@ -532,6 +532,8 @@ void dsp::LoadToFold1::prepare () try
     // Make dummy fold instance so that polycos get created
     fold.resize(1);
     fold[0] = new dsp::Fold;
+    if (config->folding_period)
+      fold[0]->set_folding_period (config->folding_period);
     if (config->ephemerides.size() > 0)
       fold[0]->set_pulsar_ephemeris ( config->ephemerides[0] );
     else if (config->predictors.size() > 0)
