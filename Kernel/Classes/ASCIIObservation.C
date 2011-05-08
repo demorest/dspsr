@@ -29,10 +29,9 @@ dsp::ASCIIObservation::ASCIIObservation (const char* header)
   required_keys.push_back("CALFREQ");
   required_keys.push_back("FREQ");
   required_keys.push_back("BW");
-  required_keys.push_back("NCHAN");
   required_keys.push_back("NPOL");
   required_keys.push_back("NBIT");
-  required_keys.push_back("NDIM");
+  // NDIM and NCHAN have a default value of 1
   required_keys.push_back("TSAMP");
   required_keys.push_back("UTC_START");
   required_keys.push_back("OBS_OFFSET");
