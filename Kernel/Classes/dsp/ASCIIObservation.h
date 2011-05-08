@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.6 $
-   $Date: 2011/03/29 14:55:34 $
-   $Author: demorest $ */
+   $Revision: 1.7 $
+   $Date: 2011/05/08 05:07:30 $
+   $Author: straten $ */
 
 #ifndef __ASCIIObservation_h
 #define __ASCIIObservation_h
@@ -75,9 +75,7 @@ int dsp::ASCIIObservation::ascii_header_check (const char *header,
   if ( rv>0 || !is_required(key) ) 
     return rv;
 
-  if ( rv<=0 && is_required(key) )
-    throw Error (InvalidState, "ASCIIObservation", "failed load " + key);
-
+  throw Error (InvalidState, "ASCIIObservation", "failed load " + key);
 }
 
 #endif
