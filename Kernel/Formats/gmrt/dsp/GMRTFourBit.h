@@ -17,8 +17,13 @@ namespace dsp
   class GMRTFourBit: public FourBitUnpacker
   {
   public:
+
     //! Constructor initializes bit table
     GMRTFourBit ();
+
+    //! Return true if this unpacker can handle the observation
+    bool matches (const Observation*);
+
   };
 }
 
