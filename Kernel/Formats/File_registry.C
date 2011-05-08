@@ -80,6 +80,8 @@ static Registry::List<dsp::File>::Enter<dsp::FITSFile> register_fits;
 #if HAVE_gmrt
 #include "dsp/GMRTFile.h"
 static Registry::List<dsp::File>::Enter<dsp::GMRTFile> register_gmrt;
+#include "dsp/GMRTBinaryFile.h"
+static Registry::List<dsp::File>::Enter<dsp::GMRTBinaryFile> register_gmrt_b;
 #include "dsp/GMRTFilterbankFile.h"
 static Registry::List<dsp::File>::Enter<dsp::GMRTFilterbankFile> gmrt_fb;
 #endif
