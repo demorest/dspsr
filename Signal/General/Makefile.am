@@ -27,7 +27,8 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	     \
 	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C	     \
 	PolnCalibration.C Dump.C OptimalFFT.C FScrunch.C	     \
-	FilterbankBench.C OptimalFilterbank.C GeometricDelay.C
+	FilterbankBench.C OptimalFilterbank.C GeometricDelay.C       \
+	mfilter.c
 
 if HAVE_CUFFT
 
