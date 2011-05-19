@@ -118,6 +118,20 @@ SWIN_FUNC_GETOPT_LONG
 SWIN_FUNC_AFFINITY
 
 #
+# Generate python module if --enable-shared is used
+#
+if test x"$enable_shared" == xyes; then
+  AM_PATH_PYTHON(,, [:])
+  AC_PROG_SWIG
+  SWIG_ENABLE_CXX
+  SWIG_PYTHON
+else
+  PYTHON=":"
+fi
+
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
+
+#
 # Initialize variables used by Makefile.include 
 #
 INCLUDE_CPPFLAGS="$PSRCHIVE_CFLAGS"
@@ -168,7 +182,8 @@ AC_CONFIG_FILES([Makefile
 		Management/Makefile
 		Management/dspsr_ldflags
 		Management/dspsr_cflags
-		Management/release.csh])
+		Management/release.csh
+		python/Makefile])
 
 AC_OUTPUT
 

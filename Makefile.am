@@ -1,6 +1,10 @@
 
 SUBDIRS	= config Kernel Signal Management
 
+if HAVE_PYTHON
+SUBDIRS += python
+endif
+
 include $(top_srcdir)/config/Makefile.root
 
 ACLOCAL_AMFLAGS = -I config
