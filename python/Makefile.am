@@ -14,7 +14,7 @@ _dspsr_la_LIBADD = \
 		   $(top_builddir)/Signal/General/libdspdsp.la \
 		   $(top_builddir)/Kernel/libdspbase.la 
 
-SWIG_FLAGS = -Wall -python -I$(top_builddir)/local_include -I/data1/demorest/local/include/psrchive
+SWIG_FLAGS = -Wall -python -I$(top_builddir)/local_include @PSRCHIVE_INCLUDE@
 
 dspsr_wrap.cxx: $(srcdir)/dspsr.i
 	$(SWIG) $(SWIG_FLAGS) $(srcdir)/dspsr.i
