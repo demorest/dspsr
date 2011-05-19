@@ -77,6 +77,8 @@ Please see http://psrchive.sourceforge.net
 PSRCHIVE_ACLOCAL=`$psrchive_config --aclocal`
 AC_SUBST(PSRCHIVE_ACLOCAL)
 
+PSRCHIVE_INCLUDE=`$psrchive_config --cflags | sed s/-pthread//`
+AC_SUBST(PSRCHIVE_INCLUDE)
 
 #
 # Checks for optional libraries
