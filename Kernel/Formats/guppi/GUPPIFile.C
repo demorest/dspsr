@@ -164,16 +164,16 @@ void dsp::GUPPIFile::open_file (const char* filename)
   // Read header params
   int rv, itmp;
   uint64_t ltmp;
-  float ftmp;
+  double ftmp;
   char ctmp[80], ctmp2[80];
 
   header_get_check("NBIT", "%d", &itmp);
   info.set_nbit(itmp);
 
-  header_get_check("OBSBW", "%f", &ftmp);
+  header_get_check("OBSBW", "%lf", &ftmp);
   info.set_bandwidth(ftmp);
 
-  header_get_check("OBSFREQ", "%f", &ftmp);
+  header_get_check("OBSFREQ", "%lf", &ftmp);
   info.set_centre_frequency(ftmp);
  
   header_get_check("OBSNCHAN", "%d", &itmp);
@@ -183,7 +183,7 @@ void dsp::GUPPIFile::open_file (const char* filename)
   info.set_npol(2);
   info.set_state(Signal::Analytic);
 
-  header_get_check("TBIN", "%f", &ftmp);
+  header_get_check("TBIN", "%lf", &ftmp);
   info.set_rate(1.0/ftmp);
 
   int imjd, smjd;
