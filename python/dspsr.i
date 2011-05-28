@@ -134,12 +134,13 @@ void pointer_tracker_remove(Reference::Able *ptr) {
     {
         PyArrayObject *arr;
         float *ptr;
-        npy_intp n;
+        npy_intp dims[2];
         
-        n = self->get_ndat();
+        dims[0] = self->get_ndat();
+        dims[1] = self->get_ndim();
         ptr = self->get_datptr(ichan, ipol);
         arr = (PyArrayObject *)                                         \
-            PyArray_SimpleNewFromData(1, &n, PyArray_FLOAT, (char *)ptr);
+            PyArray_SimpleNewFromData(2, dims, PyArray_FLOAT, (char *)ptr);
         if (arr == NULL) return NULL;
         return (PyObject *)arr;
     }
