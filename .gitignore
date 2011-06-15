@@ -47,6 +47,7 @@ Management/Makefile
 Management/dspsr_cflags
 Management/dspsr_ldflags
 Management/release.csh
+More/Applications/searchplot
 Signal/General/Makefile
 Signal/General/digihist
 Signal/General/digimon
