@@ -292,7 +292,7 @@ int main (int argc, char** argv) try
 
       for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan)
       {
-	if (display && plotter)
+	if (display)
 	  cpgpage();
 	
 	float bottom = 0.52;
