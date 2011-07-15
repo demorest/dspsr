@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.33 $
-   $Date: 2011/03/22 19:08:03 $
-   $Author: demorest $ */
+   $Revision: 1.34 $
+   $Date: 2011/07/15 04:18:27 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
 
 #include "dsp/LoadToFold.h"
+#include "dsp/FilterbankConfig.h"
 #include "Functor.h"
 
 namespace Pulsar
@@ -78,10 +79,6 @@ namespace dsp {
 
     // perform coherent dedispersion
     bool coherent_dedispersion;
-    // perform coherent dedispersion while forming the filterbank
-    bool simultaneous_filterbank;
-    // perform filterbank after coherent dedisp
-    bool filterbank_after_dedisp;
 
     // set the cuda devices to be used
     void set_cuda_device (std::string);
@@ -111,7 +108,6 @@ namespace dsp {
     std::string calibrator_database_filename;
 
     // set fft lengths and convolution edge effect lengths
-    unsigned nfft;
     unsigned nsmear;
     unsigned times_minimum_nfft;
 
@@ -131,8 +127,10 @@ namespace dsp {
 
     unsigned npol;
     unsigned nbin;
-    unsigned nchan;
     unsigned ndim;
+
+    // Filterbank configuration options
+    Filterbank::Config filterbank;
 
     bool force_sensible_nbin;
 

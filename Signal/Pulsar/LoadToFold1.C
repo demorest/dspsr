@@ -295,17 +295,18 @@ void dsp::LoadToFold1::prepare () try
   }
 
   // the data are not detected, so set up phase coherent reduction path
+  unsigned frequency_resolution = config->filterbank.get_freq_res ();
 
   if (config->coherent_dedispersion)
   {
     if (!kernel)
       kernel = new Dedispersion;
 
-    if (config->nfft)
+    if (frequency_resolution)
     {
       if (report_vitals)
-	cerr << "dspsr: setting filter length to " << config->nfft << endl;
-      kernel->set_frequency_resolution (config->nfft);
+	cerr << "dspsr: setting filter length to " << frequency_resolution << endl;
+      kernel->set_frequency_resolution (frequency_resolution);
     }
 
     if (config->times_minimum_nfft)
@@ -391,7 +392,7 @@ void dsp::LoadToFold1::prepare () try
   // only the Filterbank must be out-of-place
   TimeSeries* convolved = unpacked;
 
-  if (config->nchan > 1)
+  if (config->filterbank.get_nchan() > 1)
   {
     // new storage for filterbank output (must be out-of-place)
     convolved = new_time_series ();
@@ -405,20 +406,20 @@ void dsp::LoadToFold1::prepare () try
 
     filterbank->set_input (unpacked);
     filterbank->set_output (convolved);
-    filterbank->set_nchan (config->nchan);
+    filterbank->set_nchan (config->filterbank.get_nchan ());
     
-    if (config->simultaneous_filterbank)
+    if (config->filterbank.get_convolve_when() == Filterbank::Config::During)
     {
       filterbank->set_response (response);
       if (!config->single_pulse)
         filterbank->set_passband (passband);
     }
 
-    if (config->nfft)
-      filterbank->set_frequency_resolution (config->nfft);
+    if (frequency_resolution)
+      filterbank->set_frequency_resolution (frequency_resolution);
 
     // Get order of operations correct
-    if (!config->filterbank_after_dedisp)
+    if (!config->filterbank.get_convolve_when() == Filterbank::Config::Before)
       operations.push_back (filterbank.get());
 
 #if HAVE_CUDA
@@ -443,8 +444,11 @@ void dsp::LoadToFold1::prepare () try
 
   }
 
+  bool filterbank_after_dedisp
+    = config->filterbank.get_convolve_when() == Filterbank::Config::Before;
+
   if (config->coherent_dedispersion &&
-      ( config->nchan == 1 || !config->simultaneous_filterbank ))
+      config->filterbank.get_convolve_when() != Filterbank::Config::During)
   {
     if (!convolution)
       convolution = new Convolution;
@@ -453,7 +457,7 @@ void dsp::LoadToFold1::prepare () try
     if (!config->single_pulse)
       convolution->set_passband (passband);
     
-    if (config->filterbank_after_dedisp)
+    if (filterbank_after_dedisp)
     {
       convolution->set_input  (unpacked);  
       convolution->set_output (unpacked);  // inplace
@@ -465,15 +469,14 @@ void dsp::LoadToFold1::prepare () try
     }
     
     operations.push_back (convolution.get());
-
   }
 
-  if (config->filterbank_after_dedisp)
+  if (filterbank_after_dedisp)
     prepare_interchan (unpacked);
   else
     prepare_interchan (convolved);
 
-  if (config->filterbank_after_dedisp && filterbank)
+  if (filterbank_after_dedisp && filterbank)
     operations.push_back (filterbank.get());
 
   if (config->plfb_nbin)
@@ -770,9 +773,10 @@ void dsp::LoadToFold1::prepare_final ()
     minimum_samples = filterbank->get_minimum_samples ();
     if (report_vitals)
     {
-      cerr << "dspsr: " << config->nchan << " channel ";
+      cerr << "dspsr: " << config->filterbank.get_nchan() << " channel ";
 
-      if (config->coherent_dedispersion && config->simultaneous_filterbank)
+      if (config->coherent_dedispersion &&
+	  config->filterbank.get_convolve_when() == Filterbank::Config::During)
 	cerr << "dedispersing ";
       else if (filterbank->get_freq_res() > 1)
 	cerr << "by " << filterbank->get_freq_res() << " back ";

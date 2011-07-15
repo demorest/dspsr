@@ -39,12 +39,6 @@ dsp::LoadToFold::Config::Config ()
   // perform coherent dedispersion
   coherent_dedispersion = true;
 
-  // perform coherent dedispersion while forming the filterbank
-  simultaneous_filterbank = false;
-
-  // perform filterbank after coherent dedisp
-  filterbank_after_dedisp = false;
-
   // one thread by default
   nthread = 1;
 
@@ -61,7 +55,6 @@ dsp::LoadToFold::Config::Config ()
   use_fft_bench = false;
 
   times_minimum_nfft = 0;
-  nfft = 0;
   nsmear = 0;
 
   // phase-locked filterbank phase bins
@@ -83,9 +76,6 @@ dsp::LoadToFold::Config::Config ()
 
   // let Fold choose the number of bins
   nbin = 0;
-
-  // no filterbank by default
-  nchan = 1;
 
   // an optimization feature used in Detection
   ndim = 4;

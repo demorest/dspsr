@@ -352,12 +352,11 @@ void parse_options (int argc, char** argv) try
 
   menu.add ("\n" "Dispersion removal options:");
 
-  string filterbank;
-  arg = menu.add (filterbank, 'F', "N[:D]");
+  arg = menu.add (config->filterbank, 'F', "N[:D]");
   arg->set_help ("create an N-channel filterbank");
   arg->set_long_help
     ("either simply specify the number of channels; e.g. -F 256 \n"
-     "or perform simultaneous coherent dedispersion with -F 256:D \n"
+     "or perform coherent dedispersion during the filterbank with -F 256:D \n"
      "or perform coherent dedispersion before the filterbank with -F 256:B \n"
      "or reduce the spectral leakage function bandwidth with -F 256:<N> \n"
      "where <N> is the reduction factor");
@@ -655,53 +654,6 @@ void parse_options (int argc, char** argv) try
       ( factory<Pulsar::Predictor> (predictor[i]) );
   }
 
-  if (!filterbank.empty())
-  {
-    char* carg = new char[filterbank.length() + 1];
-    strcpy(carg, filterbank.c_str());
-
-    char* pfr = strchr (carg, ':');
-    if (pfr)
-    {
-      *pfr = '\0';
-      pfr++;
-      if (*pfr == 'D' || *pfr == 'd')
-      {
-	// FLAG that says "set the spectral resolution of the filterbank
-	// to match that required by coherent dedispersion
-	cerr << "dspsr: Coherent dedispersion filterbank enabled" << endl;
-	config->simultaneous_filterbank = true;
-      }
-      else if (*pfr == 'B' || *pfr == 'b')
-      {
-        // Flag that says to perform coherent dedisp on the full bank
-        // before putting the data into the filterbank
-        cerr << "dspsr: Dedisperse before filterbank enabled" << endl;
-        config->filterbank_after_dedisp = true;
-      }
-      else
-      {
-	if (sscanf (pfr, "%u", &config->nfft) < 1)
-	{
-	  fprintf (stderr,
-		   "Error parsing %s as filterbank frequency resolution\n",
-		   carg);
-	  exit (-1);
-	}
-      }
-    }
-    if (sscanf (carg, "%u", &config->nchan) < 1)
-    {
-      fprintf(stderr,
-	      "Cannot parse '%s' as number of filterbank channels\n",
-	      carg);
-      exit (-1);
-    }
-
-    cerr << "dspsr: Filterbank channels: " << config->nchan << endl;
-    delete [] carg;
-  }
-
   for (unsigned i=0; i<jobs.size(); i++)
     separate (jobs[i], config->jobs, ",");
 
@@ -776,13 +728,14 @@ void parse_options (int argc, char** argv) try
       config->times_minimum_nfft = times;
     else
     {
-      config->nfft = strtol (carg, 0, 10);
-      if (colon && config->nsmear >= config->nfft)
+      unsigned nfft = strtol (carg, 0, 10);
+      if (colon && config->nsmear >= nfft)
       {
-	cerr << "dspsr -x: nfft=" << config->nfft
+	cerr << "dspsr -x: nfft=" << nfft
 	     << " must be greater than nsmear=" << config->nsmear << endl;
 	exit (-1);
       }
+      config->filterbank.set_freq_res( nfft );
     }
     delete [] carg;
   }
