@@ -52,18 +52,30 @@ dsp::BitTable::BitTable (unsigned _nbit, Type _type, bool _reverse)
 #endif
 
   effective_nbit = nbit;
+  order = MostToLeast;
   table = 0;
+}
+
+void dsp::BitTable::destroy ()
+{
+  if (table) delete [] table; table = 0;
 }
 
 dsp::BitTable::~BitTable ()
 {
-  if (table) delete [] table; table = 0;
+  destroy ();
 }
 
 void dsp::BitTable::set_effective_nbit (unsigned bits)
 {
-  if (table) delete [] table; table = 0;
+  destroy ();
   effective_nbit = bits;
+}
+
+void dsp::BitTable::set_order (Order _order)
+{
+  destroy ();
+  order = _order;
 }
 
 const float* dsp::BitTable::get_values (unsigned byte) const
@@ -133,14 +145,19 @@ void dsp::BitTable::generate (float* table) const
 }
 
 /*! Each byte is treated as unique_values consecutive values, from
-  most significant bit to least significant bit
+  most significant bit to least significant bit, or vice versa
+  (depending on order).
 
   \param byte the byte pattern containing unique_values values
   \param i the index of the value to extract from the byte
 */
 unsigned dsp::BitTable::extract (unsigned byte, unsigned i) const
 {
-  unsigned shift = bits_per_byte - nbit * (i+1);
+  unsigned shift;
+  if (order == MostToLeast)
+    shift = bits_per_byte - nbit * (i+1);
+  else
+    shift = nbit * i;
 
   return (byte>>shift) & nbit_mask;
 }

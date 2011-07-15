@@ -24,11 +24,19 @@ namespace dsp {
     //! Number of unique 8-bit combinations
     static const unsigned unique_bytes;
 
+    //! Interpretation of the bits in each value
     enum Type
     {
       OffsetBinary,
       TwosComplement,
       SignMagnitude    // for 2-bit only
+    };
+
+    //! The order of values in each byte (bit significance)
+    enum Order
+    {
+      MostToLeast,
+      LeastToMost
     };
 
     //! Constructor
@@ -42,6 +50,10 @@ namespace dsp {
       6-bit digitizer, leaving head room for RFI */
     void set_effective_nbit (unsigned bits);
     unsigned get_effective_nbit () const { return effective_nbit; }
+
+    //! Set the order of the samples in each byte
+    void set_order (Order);
+    Order get_order () const { return order; }
 
     //! Get the number of floating point values per byte, 8/N
     unsigned get_values_per_byte () const { return values_per_byte; }
@@ -93,6 +105,9 @@ namespace dsp {
     //! Reverse the order of the bits
     const bool reverse_bits;
 
+    //! The order of the samples in each byte
+    Order order;
+
     //! Number of N-bit values per byte
     const unsigned values_per_byte;
 
@@ -108,6 +123,8 @@ namespace dsp {
     //! Build the lookup table
     void build ();
 
+    //! Destroy the lookup table
+    void destroy ();
   };
 
 }
