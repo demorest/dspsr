@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.23 $
-   $Date: 2010/06/03 20:45:22 $
+   $Revision: 1.24 $
+   $Date: 2011/07/15 04:18:16 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -25,6 +25,9 @@ namespace dsp {
   class Filterbank: public Convolution {
 
   public:
+
+    //! Configuration options
+    class Config;
 
     //! Null constructor
     Filterbank ();

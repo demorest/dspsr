@@ -15,7 +15,8 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/Rescale.h dsp/BandpassMonitor.h dsp/PScrunch.h	       \
 	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h	       \
 	dsp/OptimalFFT.h dsp/OptimalFilterbank.h dsp/on_host.h	       \
-	dsp/FScrunch.h dsp/FilterbankBench.h dsp/GeometricDelay.h
+	dsp/FScrunch.h dsp/FilterbankBench.h dsp/FilterbankConfig.h \
+	dsp/GeometricDelay.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -27,8 +28,8 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	Shape.C DedispersionSampleDelay.C Detection.C Rescale.C	     \
 	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C	     \
 	PolnCalibration.C Dump.C OptimalFFT.C FScrunch.C	     \
-	FilterbankBench.C OptimalFilterbank.C GeometricDelay.C       \
-	mfilter.c
+	FilterbankBench.C OptimalFilterbank.C FilterbankConfig.C \
+	GeometricDelay.C mfilter.c
 
 if HAVE_CUFFT
 
