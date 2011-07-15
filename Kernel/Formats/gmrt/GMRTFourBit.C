@@ -14,7 +14,9 @@ using namespace std;
 dsp::GMRTFourBit::GMRTFourBit ()
   : FourBitUnpacker ("GMRTFourBit")
 {
-  set_table( new BitTable (4, BitTable::TwosComplement) );
+  BitTable* table = new BitTable (4, BitTable::TwosComplement);
+  table->set_order( BitTable::LeastToMost );
+  set_table( table );
 }
 
 bool dsp::GMRTFourBit::matches (const Observation* observation)
