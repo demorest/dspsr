@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcDigitizer.h,v $
-   $Revision: 1.2 $
-   $Date: 2010/04/02 21:27:37 $
+   $Revision: 1.3 $
+   $Date: 2011/07/19 14:59:41 $
    $Author: straten $ */
 
 #ifndef __SigProcDigitizer_h
@@ -34,8 +34,6 @@ namespace dsp
     //! Special case for floating point data
     void pack_float ();
 
-  private:
-    bool flip_band;
   };
 }
 
