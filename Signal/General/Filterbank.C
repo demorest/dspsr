@@ -534,6 +534,13 @@ void dsp::Filterbank::transformation ()
   {
     if (engine)
     {
+
+      // /////////////////////////////////////////////////////////////////////
+      //
+      // PERFORM FILTERBANK VIA ENGINE (e.g. on GPU)
+      //
+      // /////////////////////////////////////////////////////////////////////
+
       if (engine->dual_poln())
       {
 	for (ipart=0; ipart<npart; ipart++)
@@ -572,6 +579,12 @@ void dsp::Filterbank::transformation ()
 
       break;
     }
+
+    // /////////////////////////////////////////////////////////////////////
+    //
+    // PERFORM FILTERBANK DIRECTLY (on CPU)
+    //
+    // /////////////////////////////////////////////////////////////////////
 
     for (ipart=0; ipart<npart; ipart++)
     {
@@ -744,7 +757,7 @@ void dsp::Filterbank::tfp_filterbank ()
     for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
     {
       // set Im[p0] = Re[p1]
-      outdat[ifloat*2+1] = outdat[ifloat*2+nfloat];
+      outdat[ifloat*2+1] = outdat[(ifloat+nfloat)*2];
     }
 
     output->set_state (Signal::PPQQ);
