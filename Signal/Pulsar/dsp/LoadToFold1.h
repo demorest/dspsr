@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.27 $
-   $Date: 2010/08/25 05:25:25 $
-   $Author: ajameson $ */
+   $Revision: 1.28 $
+   $Date: 2011/07/26 12:40:43 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFold1_h
 #define __baseband_dsp_LoadToFold1_h
@@ -199,6 +199,9 @@ namespace dsp {
 
     //! Prepare the given Archiver
     void prepare_archiver (Archiver*);
+
+    //! Insert a dump point before the named operation
+    void insert_dump_point (const std::string& transformation_name);
 
     //! The scratch space shared by all operations
     Reference::To<Scratch> scratch;

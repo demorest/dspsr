@@ -756,6 +756,9 @@ void dsp::LoadToFold1::prepare_final ()
     fold[ifold]->get_output()->set_extensions (extensions);
   }
 
+  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
+    insert_dump_point (config->dump_before[idump]);
+
   // for now ...
 
   minimum_samples = 0;
@@ -829,6 +832,39 @@ void dsp::LoadToFold1::prepare_final ()
 
   for (unsigned iop=0; iop < operations.size(); iop++)
     operations[iop]->reserve ();
+}
+
+void dsp::LoadToFold1::insert_dump_point (const std::string& transform_name)
+{
+  typedef HasInput<TimeSeries> Xform;
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
+    if (operations[iop]->get_name() == transform_name)
+    {
+      Xform* xform = dynamic_cast<Xform*>( operations[iop].get() );
+      if (!xform)
+	throw Error (InvalidParam, "dsp::LoadToFold1::insert_dump_point",
+		     transform_name + " does not have TimeSeries input");
+
+      string filename = "pre_" + transform_name;
+
+      if (config->nthread > 1)
+	filename += "." + tostring (thread_id);
+
+      filename += ".dump";
+
+      cerr << "dspsr: dump output in " << filename << endl;
+
+      Dump* dump = new Dump;
+      dump->set_output( fopen(filename.c_str(), "w") );
+      dump->set_input( xform->get_input() ) ;
+      dump->set_output_binary (true);
+
+      operations.push_back (dump);
+      iop++;
+    }
+  }
 }
 
 uint64_t dsp::LoadToFold1::get_minimum_samples () const
