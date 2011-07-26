@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HasInput.h,v $
-   $Revision: 1.2 $
-   $Date: 2010/09/16 17:45:34 $
-   $Author: demorest $ */
+   $Revision: 1.3 $
+   $Date: 2011/07/26 12:40:30 $
+   $Author: straten $ */
 
 #ifndef __dsp_HasInput_h
 #define __dsp_HasInput_h
@@ -28,7 +28,7 @@ namespace dsp
     virtual ~HasInput () {}
 
     //! Set the container from which input data will be read
-    virtual void set_input (In* _input) { input = _input; }
+    virtual void set_input (const In* _input) { input = _input; }
 
     //! Return pointer to the container from which input data will be read
     const In* get_input () const { return input; }
