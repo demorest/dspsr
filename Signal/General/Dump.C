@@ -51,6 +51,20 @@ void dsp::Dump::calculation ()
     cerr << "dsp::Dump::calculate nchan=" << nchan << " npol=" << npol 
          << " ndat=" << ndat << " ndim=" << ndim << endl; 
 
+  if (binary)
+  {
+    for (uint64_t idat = 0; idat < ndat; idat++)
+      for (unsigned ichan = 0; ichan < nchan; ichan ++)
+	for (unsigned ipol = 0; ipol < npol; ipol++)
+	{
+	  const float* data = use->get_datptr (ichan, ipol);
+	  for (unsigned idim = 0; idim < ndim; idim++)
+	    fwrite (data + idat*ndim + idim, sizeof(float), 1, output);
+	}
+
+    return;
+  }
+
   for (unsigned ichan = 0; ichan < nchan; ichan ++)
   {
     for (unsigned ipol = 0; ipol < npol; ipol++)
