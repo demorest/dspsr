@@ -741,23 +741,28 @@ void dsp::LoadToFold1::prepare_final ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
+  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
+    insert_dump_point (config->dump_before[idump]);
+
   for (unsigned iop=0; iop < operations.size(); iop++)
     operations[iop]->prepare ();
 
   if (!config->single_pulse)
-  for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
-    Reference::To<Extensions> extensions = new Extensions;
-    extensions->add_extension( path[ifold] );
-
-    for (unsigned iop=0; iop < operations.size(); iop++)
-      operations[iop]->add_extensions (extensions);
-
-    fold[ifold]->get_output()->set_extensions (extensions);
+    //
+    // Data extensions are added only when not in single pulse mode
+    //
+    for (unsigned ifold=0; ifold < fold.size(); ifold++)
+    {
+      Reference::To<Extensions> extensions = new Extensions;
+      extensions->add_extension( path[ifold] );
+      
+      for (unsigned iop=0; iop < operations.size(); iop++)
+	operations[iop]->add_extensions (extensions);
+      
+      fold[ifold]->get_output()->set_extensions (extensions);
+    }
   }
-
-  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
-    insert_dump_point (config->dump_before[idump]);
 
   // for now ...
 
