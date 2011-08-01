@@ -25,7 +25,7 @@ nobase_include_HEADERS = environ.h ascii_header.h \
 	dsp/infodata.h dsp/PrestoObservation.h			     \
 	dsp/OutputArchive.h dsp/CloneArchive.h dsp/HasInput.h	     \
 	dsp/HasOutput.h dsp/Sink.h dsp/Multiplex.h \
-	dsp/Memory.h debug.h dsp/OperationThread.h
+	dsp/Memory.h debug.h dsp/OperationThread.h dsp/FloatUnpacker.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
@@ -40,7 +40,7 @@ libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	TwoBitLookup.C TwoBitFour.C TwoBit1or2.C NLowLookup.C	    \
 	UnpackerIterator.C ObservationChange.C PrestoObservation.C  \
 	CloneArchive.C SignalPath.C Multiplex.C Memory.C \
-	OperationThread.C
+	OperationThread.C FloatUnpacker.C
 
 if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C

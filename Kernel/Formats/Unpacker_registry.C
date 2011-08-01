@@ -19,10 +19,15 @@
 #include <config.h>
 #endif
 
-#include "dsp/Unpacker.h"
+#include "dsp/FloatUnpacker.h"
 
 /*! The registry must always be constructed before the entries. */
 Registry::List<dsp::Unpacker> dsp::Unpacker::registry;
+
+/*! built-in FloatUnpacker reads the format output by Dump operation */
+#include "dsp/FloatUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::FloatUnpacker> dump;
+
 
 #if HAVE_apsr
 
