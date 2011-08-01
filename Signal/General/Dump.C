@@ -1,14 +1,17 @@
 /***************************************************************************
  *
- *   Copyright (C) 2009 by Willem van Straten
+ *   Copyright (C) 2009-2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/Dump.h"
+#include "dsp/ASCIIObservation.h"
+
 #include "dsp/on_host.h"
 
 #include <fstream>
+
 using namespace std;
 
 dsp::Dump::Dump (const char* name) : Sink<TimeSeries> (name)
@@ -25,7 +28,7 @@ dsp::Dump::~Dump ()
 //! Set the ostream to which data will be dumped
 void dsp::Dump::set_output (FILE* fptr)
 {
-  cerr << "dsp::Dump::set_output fptr=" << (void*)fptr << endl;
+  // cerr << "dsp::Dump::set_output fptr=" << (void*)fptr << endl;
   output = fptr;
 }
 
@@ -34,6 +37,33 @@ void dsp::Dump::set_output_binary (bool flag)
 {
   binary = flag;
 }
+
+void dsp::Dump::prepare ()
+{
+  // cerr << "dsp::Dump::prepare" << endl;
+
+  if (!binary)
+    return;
+
+  // in binary mode, write a 4k ASCII (DADA) header
+  ASCIIObservation ascii (input);
+  ascii.set_machine ("dspsr");
+
+  const unsigned header_size = 4096;
+  vector<char> header (header_size, 0);
+  char* buffer = &header[0];
+
+  ascii.unload (buffer);
+
+  if (ascii_header_set (buffer, "HDR_SIZE", "%d", header_size) < 0)
+    throw Error (InvalidState, "dsp::Dump::prepare",
+		 "failed to set HDR_SIZE in output file header");
+
+  fwrite (buffer, sizeof(char), header_size, output);
+
+  // cerr << "dsp::Dump::prepare header written" << endl;
+}
+
 
 //! Adds to the totals
 void dsp::Dump::calculation ()
@@ -58,8 +88,7 @@ void dsp::Dump::calculation ()
 	for (unsigned ipol = 0; ipol < npol; ipol++)
 	{
 	  const float* data = use->get_datptr (ichan, ipol);
-	  for (unsigned idim = 0; idim < ndim; idim++)
-	    fwrite (data + idat*ndim + idim, sizeof(float), 1, output);
+	  fwrite (data + idat*ndim, sizeof(float), ndim, output);
 	}
 
     return;

@@ -27,11 +27,14 @@ namespace dsp {
     Dump (const char* name = "Dump");
     ~Dump ();
 
-    //! Set the ostream to which data will be dumped
+    //! Set the output stream to which data will be dumped
     void set_output (FILE*);
 
     //! Set the flag to output binary data
     void set_output_binary (bool flag=true);
+
+    //! In binary mode, write an ASCII (DADA) header
+    void prepare ();
 
     Operation::Function get_function () const { return Operation::Structural; }
 
