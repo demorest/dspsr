@@ -205,7 +205,7 @@ dsp::FilenameOriginal::FilenameOriginal (const std::string& _input_filename)
 std::string dsp::FilenameOriginal::get_filename (const PhaseSeries* data) const
 {
   const size_t dot_pos = input_filename.find_last_of(".");
-  const string filename = input_filename.substr(0, dot_pos);
+  string filename = input_filename.substr(0, dot_pos);
 
   if (report_unload)
     cerr << "unloading " << tostring(data->get_integration_length(),2)

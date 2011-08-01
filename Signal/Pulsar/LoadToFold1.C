@@ -1113,8 +1113,9 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
 
   if (config->single_pulse_archives())
     archiver->set_convention( new FilenamePulse );
-  else if (!config->archive_extension.empty())
-    archiver->set_convention (new FilenameOriginal(config->input_filename));
+  else if (!config->archive_extension.empty() && (config->input_filename,config->single_archive || !config->integration_length)){
+    archiver->set_convention (epoch_convention = new FilenameOriginal(config->input_filename));
+  }
   else 
     archiver->set_convention (epoch_convention = new FilenameEpoch);
 

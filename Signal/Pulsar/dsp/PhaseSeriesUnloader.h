@@ -127,7 +127,7 @@ namespace dsp {
   };
 
   //! Defines the output filename convention
-  class FilenameOriginal : public FilenameConvention
+  class FilenameOriginal : public FilenameEpoch
   {
     public:
       FilenameOriginal ();
