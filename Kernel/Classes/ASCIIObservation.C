@@ -72,6 +72,12 @@ void dsp::ASCIIObservation::set_required (std::string key,
 
 }
 
+dsp::ASCIIObservation::ASCIIObservation (const Observation* obs)
+  : Observation (*obs) 
+{
+  hdr_version = "HDR_VERSION";
+}
+
 void dsp::ASCIIObservation::load (const char* header)
 {
   if (header == NULL)
@@ -229,6 +235,8 @@ void dsp::ASCIIObservation::load (const char* header)
     set_state (Signal::Nyquist); break;
   case 2:
     set_state (Signal::Analytic); break;
+  case 4:
+    set_state (Signal::Coherence); break;
   default:
     throw Error (InvalidState, "ASCIIObservation",
 		 "invalid NDIM=%d\n", scan_ndim);
@@ -265,6 +273,10 @@ void dsp::ASCIIObservation::load (const char* header)
     set_state( Signal::string2State(buffer) );
   }
 
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // DSB = dual-sideband
+  //
   int scan_dsb;
   if (ascii_header_check (header, "DSB", "%d", &scan_dsb) >= 0)
     set_dual_sideband (scan_dsb == 1);
@@ -388,7 +400,7 @@ void dsp::ASCIIObservation::unload (char* header)
   //
   // HDR_VERSION
   //
-  float version = 0.0;
+  float version = 1.0;
   if (ascii_header_set (header, hdr_version.c_str(), "%f", version) < 0)
     cerr << "ASCIIObservation: failed unload " << hdr_version << endl;
 
@@ -484,6 +496,14 @@ void dsp::ASCIIObservation::unload (char* header)
   if (ascii_header_set (header, "NDIM", "%d", get_ndim()) < 0)
     throw Error (InvalidState, "ASCIIObservation", "failed unload NDIM");
 
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // STATE
+  //
+  std::string state = Signal::State2string( get_state() );
+  if (ascii_header_set (header, "STATE", "%s", state.c_str()) < 0)
+    throw Error (InvalidState, "ASCIIObservation", "failed unload STATE");
 
   // //////////////////////////////////////////////////////////////////////
   //

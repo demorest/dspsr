@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.7 $
-   $Date: 2011/05/08 05:07:30 $
+   $Revision: 1.8 $
+   $Date: 2011/08/01 10:05:37 $
    $Author: straten $ */
 
 #ifndef __ASCIIObservation_h
@@ -30,6 +30,9 @@ namespace dsp {
 
     //! Construct from an ASCII header block
     ASCIIObservation (const char* header=0);
+
+    //! Construct from an Observation
+    ASCIIObservation (const Observation*);
 
     //! Read the ASCII header block
     void load (const char* header);
