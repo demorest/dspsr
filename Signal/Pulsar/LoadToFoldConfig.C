@@ -71,6 +71,33 @@ dsp::LoadToFold::Config::Config ()
   // do not produce pdmp output by default
   pdmp_output = false;
 
+  // do not use spectral kurtocis filterbank by default
+  sk_zap = false;
+
+  // samples to integrate to form spectral kurtocis statistic
+  sk_m = 128;
+
+  // samples to integrate to form spectral kurtocis statistic
+  sk_std_devs = 3;
+
+  // first channel to conduct spectral kurtosis detection
+  sk_chan_start = 0;
+
+  // last channel to conduct spectral kurtosis detection
+  sk_chan_end = 0;
+
+  // disables SKDetector's Fscrunch feature
+  sk_no_fscr = false;
+
+  // disables SKDetector's Tscrunch feature
+  sk_no_tscr = false;
+
+  // disables SKDetector's freq by time despeckeler
+  sk_no_ft = false;
+
+  // by default onl 1 SK thread [per CPU thread]
+  sk_nthreads = 1;
+
   // full polarization by default
   npol = 4;
 

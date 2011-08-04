@@ -310,6 +310,35 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->run_repeatedly, "repeat");
   arg->set_help ("repeatedly read from input until an empty is encountered");
 
+  arg = menu.add (config->sk_zap, "skz");
+  arg->set_help ("apply spectral kurtoscis filterbank RFI zapping");
+
+  arg = menu.add (config->sk_m, "skzm", "samples");
+  arg->set_help ("samples to integrate for spectral kurtoscis statistics");
+
+  arg = menu.add (config->sk_std_devs, "skzs", "stddevs");
+  arg->set_help ("number of std deviations to use for spectral kurtocis excisions");
+
+  arg = menu.add (config->sk_chan_start, "skz_start", "chan");
+  arg->set_help ("first channel where signal is expected");
+
+  arg = menu.add (config->sk_chan_end, "skz_end", "chan");
+  arg->set_help ("last channel where signal is expected");
+
+  arg = menu.add (config->sk_no_fscr, "skz_no_fscr");
+  arg->set_help ("do not use SKDetector Fscrunch feature");
+
+  arg = menu.add (config->sk_no_tscr, "skz_no_tscr");
+  arg->set_help ("do not use SKDetector Tscrunch feature");
+
+  arg = menu.add (config->sk_no_ft, "skz_no_ft");
+  arg->set_help ("do not use SKDetector despeckeler");
+
+#ifdef HAVE_CUFFT
+  arg = menu.add (config->sk_nthreads, "skzn", "threads");
+  arg->set_help ("number of CPU threads for spectral kurtocis filterbank");
+#endif
+
   /* ***********************************************************************
 
   Source Options

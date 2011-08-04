@@ -27,15 +27,20 @@
 #include "dsp/PolnCalibration.h"
 
 #include "dsp/Filterbank.h"
+#include "dsp/SKFilterbank.h"
+#include "dsp/SKDetector.h"
+#include "dsp/SKMasker.h"
 #include "dsp/OptimalFFT.h"
 
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/TransferBitSeriesCUDA.h"
 #include "dsp/DetectionCUDA.h"
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
+#include "dsp/SKMaskerCUDA.h"
 #endif
 
 #include "dsp/SampleDelay.h"
@@ -65,6 +70,7 @@
 #include <sched.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+
 
 using namespace std;
 
@@ -149,11 +155,11 @@ void dsp::LoadToFold1::set_affinity (int core)
 
   //if (Operation::verbose)
     cerr << "dsp::LoadToFold1::set_affinity thread=" << thread_id
-	 << " tpid=" << tpid << " core=" << core << endl;
+         << " tpid=" << tpid << " core=" << core << endl;
 
   if (sched_setaffinity(tpid, sizeof(cpu_set_t), &set) < 0)
     throw Error (FailedSys, "dsp::LoadToFold1::set_affinity",
-		 "sched_setaffinity (%d)", core);
+                 "sched_setaffinity (%d)", core);
 #endif
 }
 
@@ -196,6 +202,10 @@ void dsp::LoadToFold1::prepare () try
 
   cudaStream_t stream = 0;
 
+  Unpacker* unpack_on_cpu = 0;
+  if (config->sk_zap)
+    unpack_on_cpu = manager->get_unpacker()->clone();
+
   if (run_on_gpu)
   {
     // disable input buffering when data must be copied between devices
@@ -204,19 +214,19 @@ void dsp::LoadToFold1::prepare () try
 
     int device = config->cuda_device[thread_id];
     cerr << "dspsr: thread " << thread_id 
-	 << " using CUDA device " << device << endl;
+         << " using CUDA device " << device << endl;
 
     int ndevice = 0;
     cudaGetDeviceCount(&ndevice);
 
     if (device >= ndevice)
       throw Error (InvalidParam, "dsp::LoadToFold1::prepare",
-		   "device=%d >= ndevice=%d", device, ndevice);
+                   "device=%d >= ndevice=%d", device, ndevice);
 
     cudaError err = cudaSetDevice (device);
     if (err != cudaSuccess)
       throw Error (InvalidState, "dsp::LoadToFold1::prepare",
-		   "cudaMalloc failed: %s", cudaGetErrorString(err));
+                   "cudaMalloc failed: %s", cudaGetErrorString(err));
 
     unsigned nstream = count (config->cuda_device, (unsigned)device);
 
@@ -234,11 +244,11 @@ void dsp::LoadToFold1::prepare () try
     if (unpacker->get_device_supported( device_memory ))
     {
       if (Operation::verbose)
-	cerr << "LoadToFold1: unpack on GraphicsPU" << endl;
+        cerr << "LoadToFold1: unpack on GraphicsPU" << endl;
 
       unpacker->set_device( device_memory );
       unpacked->set_memory( device_memory );
-	
+        
       BitSeries* bits = new BitSeries;
       bits->set_memory (new CUDA::PinnedMemory);
       manager->set_output (bits);
@@ -246,12 +256,12 @@ void dsp::LoadToFold1::prepare () try
     else
     {
       if (Operation::verbose)
-	cerr << "LoadToFold1: unpack on CPU" << endl;
+        cerr << "LoadToFold1: unpack on CPU" << endl;
 
       TransferCUDA* transfer = new TransferCUDA;
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
-	
+        
       unpacked = new_time_series ();
       unpacked->set_memory (device_memory);
       transfer->set_output( unpacked );
@@ -312,29 +322,29 @@ void dsp::LoadToFold1::prepare () try
     if (config->times_minimum_nfft)
     {
       if (report_vitals)
-	cerr << "dspsr: setting filter length to minimum times " 
-	     << config->times_minimum_nfft << endl;
+        cerr << "dspsr: setting filter length to minimum times " 
+             << config->times_minimum_nfft << endl;
       kernel->set_times_minimum_nfft (config->times_minimum_nfft);
     }
 
     if (config->nsmear)
     {
       if (report_vitals)
-	cerr << "dspsr: setting smearing to " << config->nsmear << endl;
+        cerr << "dspsr: setting smearing to " << config->nsmear << endl;
       kernel->set_smearing_samples (config->nsmear);
     }
 
     if (config->use_fft_bench)
     {
       if (report_vitals)
-	cerr << "dspsr: using benchmarks to choose optimal FFT length" << endl;
+        cerr << "dspsr: using benchmarks to choose optimal FFT length" << endl;
 
 #if HAVE_CUDA
       if (run_on_gpu)
-	kernel->set_optimal_fft( new OptimalFilterbank("CUDA") );
+        kernel->set_optimal_fft( new OptimalFilterbank("CUDA") );
       else
 #endif
-	kernel->set_optimal_fft( new OptimalFFT );
+        kernel->set_optimal_fft( new OptimalFFT );
     }
   }
   else
@@ -358,7 +368,7 @@ void dsp::LoadToFold1::prepare () try
     if (kernel)
     {
       if (!response_product)
-	response_product = new ResponseProduct;
+        response_product = new ResponseProduct;
 
       response_product->add_response (kernel);
       response_product->add_response (rfi_filter);
@@ -377,7 +387,7 @@ void dsp::LoadToFold1::prepare () try
     if (kernel)
     {
       if (!response_product)
-	response_product = new ResponseProduct;
+        response_product = new ResponseProduct;
     
       response_product->add_response (polcal);
       response_product->add_response (kernel);
@@ -391,6 +401,84 @@ void dsp::LoadToFold1::prepare () try
 
   // only the Filterbank must be out-of-place
   TimeSeries* convolved = unpacked;
+
+  TimeSeries* skoutput = 0;
+  BitSeries * skzapmask = 0;
+  Reference::To<OperationThread> skthread;
+
+  if (config->sk_zap)
+  {
+    // put the SK signal path into a separate thread
+    skthread = new OperationThread();
+
+    if (run_on_gpu) 
+    {
+      unpack_on_cpu->set_input( manager->get_unpacker()->get_input() );
+      unpack_on_cpu->set_output( new_time_series() );
+      skthread->append_operation( unpack_on_cpu );
+      manager->set_post_load_operation( skthread.get() );
+    }
+
+    skoutput = new_time_series ();
+
+    // Spectral Kurtocis filterbank constructor
+    if (!skfilterbank)
+      skfilterbank = new SKFilterbank (config->sk_nthreads);
+
+    if (!config->input_buffering)
+      skfilterbank->set_buffering_policy (NULL);
+
+    if (run_on_gpu)
+      skfilterbank->set_input ( unpack_on_cpu->get_output() );
+    else
+      skfilterbank->set_input ( unpacked );
+    skfilterbank->set_output ( skoutput );
+    skfilterbank->set_nchan ( config->filterbank.get_nchan() );
+    skfilterbank->set_M ( config->sk_m );
+
+    // SKFB also maintains trscunched SK stats
+    TimeSeries* skoutput_tscr = new_time_series();
+
+    skfilterbank->set_output_tscr (skoutput_tscr);
+
+
+    skthread->append_operation (skfilterbank.get());
+
+    // SK Mask Generator
+    skzapmask = new BitSeries;
+    skzapmask->set_nbit (8);
+    skzapmask->set_npol (1);
+    skzapmask->set_nchan (config->filterbank.get_nchan());
+
+    SKDetector * skdetector = new SKDetector;
+    skdetector->set_input (skoutput);
+    skdetector->set_input_tscr (skoutput_tscr);
+    skdetector->set_output (skzapmask);
+
+    skdetector->set_thresholds (config->sk_m, config->sk_std_devs);
+    if (config->sk_chan_start > 0 && config->sk_chan_end < config->filterbank.get_nchan())
+      skdetector->set_channel_range (config->sk_chan_start, config->sk_chan_end);
+    skdetector->set_options (config->sk_no_fscr, config->sk_no_tscr, config->sk_no_ft); 
+
+    skthread->append_operation (skdetector);
+
+    if (!run_on_gpu)
+    {
+      operations.push_back (skthread.get());
+      OperationThread::Wait * skthread_wait = skthread->get_wait();
+      operations.push_back (skthread_wait);
+    }
+
+    // since the blocksize is artificially increased for the SKFB,
+    // we must return it to the required size for the SKFB
+    if (!skresize)
+      skresize = new Resize;
+    
+    skresize->set_input(unpacked);
+    skresize->set_output(unpacked);
+    operations.push_back (skresize.get());
+
+  }
 
   if (config->filterbank.get_nchan() > 1)
   {
@@ -557,6 +645,55 @@ void dsp::LoadToFold1::prepare () try
     
   }
 
+  // peform zapping based on the results of the SKFilterbank
+  if (config->sk_zap)
+  { 
+
+#if HAVE_CUDA
+    if (run_on_gpu)
+    {
+      OperationThread::Wait * skthread_wait = skthread->get_wait();
+      operations.push_back (skthread_wait);
+    }
+#endif
+
+    SKMasker * skmasker = new SKMasker;
+    if (!config->input_buffering)
+      skmasker->set_buffering_policy (NULL);
+
+#if HAVE_CUDA
+    if (run_on_gpu)
+    {
+      // transfer the zap mask to the GPU
+      BitSeries * skzapmask_on_gpu = new BitSeries();
+      skzapmask_on_gpu->set_nbit (8);
+      skzapmask_on_gpu->set_npol (1);
+      skzapmask_on_gpu->set_nchan (config->filterbank.get_nchan());
+      skzapmask_on_gpu->set_memory (device_memory);
+
+      TransferBitSeriesCUDA* transfer = new TransferBitSeriesCUDA;
+      transfer->set_kind( cudaMemcpyHostToDevice );
+      transfer->set_input( skzapmask );
+      transfer->set_output( skzapmask_on_gpu );
+      operations.push_back (transfer);
+
+      skmasker->set_mask_input (skzapmask_on_gpu);
+      skmasker->set_engine (new CUDA::SKMaskerEngine (stream));
+    }
+    else
+      skmasker->set_mask_input (skzapmask);
+#else
+    skmasker->set_mask_input (skzapmask);
+#endif
+
+    skmasker->set_input (convolved);
+    skmasker->set_output (convolved);
+    skmasker->set_M (config->sk_m);
+
+    operations.push_back (skmasker);
+
+  }
+
   // Cyclic spectrum also detects and folds
   if (config->cyclic_nchan) 
   {
@@ -564,7 +701,7 @@ void dsp::LoadToFold1::prepare () try
     prepare_final();
     return;
   }
- 
+
   if (!detect)
     detect = new Detection;
 
@@ -605,7 +742,7 @@ void dsp::LoadToFold1::prepare () try
       detect->set_output_state (Signal::Intensity);
     else
       throw Error( InvalidState, "LoadToFold1::prepare",
-		   "invalid npol config=%d input=%d",
+                   "invalid npol config=%d input=%d",
                    config->npol, manager->get_info()->get_npol() );
   }
 
@@ -620,7 +757,7 @@ void dsp::LoadToFold1::prepare () try
   {
     if (Operation::verbose)
       cerr << "LoadToFold1::prepare fourth order moments" << endl;
-	      
+              
     FourthMoment* fourth = new FourthMoment;
     operations.push_back (fourth);
 
@@ -630,6 +767,7 @@ void dsp::LoadToFold1::prepare () try
   }
 
   prepare_fold (detected);
+  //prepare_fold (skoutput);
   prepare_final ();
 }
 catch (Error& error)
@@ -644,7 +782,7 @@ void dsp::LoadToFold1::prepare_interchan (TimeSeries* data)
 
   if (Operation::verbose)
     cerr << "LoadToFold1::prepare correct inter-channel dispersion delay"
-	 << endl;
+         << endl;
 
   if (!sample_delay)
     sample_delay = new SampleDelay;
@@ -670,7 +808,7 @@ double get_dispersion_measure (const Pulsar::Parameters* parameters)
   }
 
   throw Error (InvalidState, "get_dispersion_measure (Pulsar::Parameters*)",
-	       "unknown Parameters class");
+               "unknown Parameters class");
 }
 
 void dsp::LoadToFold1::prepare_final ()
@@ -707,7 +845,7 @@ void dsp::LoadToFold1::prepare_final ()
   {
     if (dm == 0.0)
       throw Error (InvalidState, "LoadToFold1::prepare_final",
-		   "coherent dedispersion enabled, but DM unknown");
+                   "coherent dedispersion enabled, but DM unknown");
 
     if (kernel)
       kernel->set_dispersion_measure (dm);
@@ -771,10 +909,10 @@ void dsp::LoadToFold1::prepare_final ()
 
   bool report_vitals = thread_id==0 && config->report_vitals;
 
-  if (kernel && report_vitals)
+  if (kernel)
     cerr << "dspsr: dedispersion filter length=" << kernel->get_ndat ()
-	 << " (minimum=" << kernel->get_minimum_ndat () << ")" 
-	 << " complex samples" << endl;
+         << " (minimum=" << kernel->get_minimum_ndat () << ")" 
+         << " complex samples" << endl;
 
   if (filterbank)
   {
@@ -787,7 +925,7 @@ void dsp::LoadToFold1::prepare_final ()
 	  config->filterbank.get_convolve_when() == Filterbank::Config::During)
 	cerr << "dedispersing ";
       else if (filterbank->get_freq_res() > 1)
-	cerr << "by " << filterbank->get_freq_res() << " back ";
+        cerr << "by " << filterbank->get_freq_res() << " back ";
 
       cerr << "filterbank requires " << minimum_samples << " samples" << endl;
     }
@@ -828,11 +966,31 @@ void dsp::LoadToFold1::prepare_final ()
 
   uint64_t ram = manager->set_block_size( block_size );
 
+  // add the increased block size if the SKFB is being used
+  if (skfilterbank)
+  {
+    int64_t skfb_increment = (int64_t) skfilterbank->get_skfb_inc (manager->get_input()->get_block_size());
+
+    block_size += skfb_increment;
+    block_overlap += skfb_increment;
+
+    if (block_overlap)
+      manager->set_overlap( block_overlap );
+    ram = manager->set_block_size( block_size );
+
+    skfb_increment *= -1;
+    skresize->set_resize_samples (skfb_increment);
+
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold1::prepare_final block_size will be adjusted by " 
+          << skfb_increment << " samples for SKFB" << endl;
+  }
+
   if (report_vitals)
   {
     double megabyte = 1024*1024;
     cerr << "dspsr: blocksize=" << manager->get_input()->get_block_size()
-	 << " samples or " << double(ram)/megabyte << " MB" << endl;
+         << " samples or " << double(ram)/megabyte << " MB" << endl;
   }
 
   for (unsigned iop=0; iop < operations.size(); iop++)
@@ -945,7 +1103,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
   if (nfold > 1 && !config->archive_filename.empty())
     throw Error (InvalidState, "dsp::LoadToFold1::prepare_fold",
-		 multifold_error, config->archive_filename.c_str());
+                 multifold_error, config->archive_filename.c_str());
 
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::prepare_fold nfold=" << nfold << endl;
@@ -971,7 +1129,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (manage_archiver && ( ifold == 0 || subints ))
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold1::prepare_fold prepare Archiver" << endl;
+        cerr << "dsp::LoadToFold1::prepare_fold prepare Archiver" << endl;
 
       Archiver* archiver = new Archiver;
       unloader[ifold] = archiver;
@@ -982,7 +1140,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (subints)
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold1::prepare_fold prepare Subint" << endl;
+        cerr << "dsp::LoadToFold1::prepare_fold prepare Subint" << endl;
 
       if (config->cyclic_nchan) 
       {
@@ -1012,7 +1170,6 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
 
       else 
       {
-
         Subint<Fold>* subfold = setup< Subint<Fold> > (fold[ifold].ptr());
 
         if (config->integration_length)
@@ -1038,7 +1195,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     else
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold1::prepare_fold prepare Fold" << endl;
+        cerr << "dsp::LoadToFold1::prepare_fold prepare Fold" << endl;
 
       fold[ifold] = setup_not< Subint<Fold> > (fold[ifold].ptr());
     }
@@ -1083,7 +1240,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
       fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
 
       Pulsar::SimplePredictor* simple
-	= dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
+        = dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
 
       if (simple)
       {
@@ -1131,7 +1288,7 @@ void dsp::LoadToFold1::prepare_fold (TimeSeries* to_fold)
     if (gpu_stream != undefined_stream)
     {
       cudaStream_t stream = (cudaStream_t) gpu_stream;
-      fold[ifold]->set_engine (new CUDA::FoldEngine(stream));
+      fold[ifold]->set_engine (new CUDA::FoldEngine(stream, config->sk_zap));
     }
 #endif
 
@@ -1174,7 +1331,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   {
     if (!epoch_convention)
       throw Error (InvalidState, "dsp::LoadToFold1::prepare_archiver",
-		   "cannot set integration length in single pulse mode");
+                   "cannot set integration length in single pulse mode");
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFold1::prepare_archiver integer_seconds="
@@ -1187,7 +1344,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   {
     if (!epoch_convention)
       throw Error (InvalidState, "dsp::LoadToFold1::prepare_archiver",
-		   "cannot set archive filename in single pulse mode");
+                   "cannot set archive filename in single pulse mode");
     epoch_convention->set_datestr_pattern (config->archive_filename);
   }
 
@@ -1258,14 +1415,14 @@ while (!finished)
     for (unsigned iop=0; iop < operations.size(); iop++) try
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold1::run calling " 
-	     << operations[iop]->get_name() << endl;
+        cerr << "dsp::LoadToFold1::run calling " 
+             << operations[iop]->get_name() << endl;
       
       operations[iop]->operate ();
       
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold1::run "
-	     << operations[iop]->get_name() << " done" << endl;
+        cerr << "dsp::LoadToFold1::run "
+             << operations[iop]->get_name() << " done" << endl;
       
     }
     catch (Error& error)
@@ -1322,10 +1479,10 @@ while (!finished)
         // cerr << "file opened" << endl;
         config->repeated = 1;
 
-	if (config->input_prepare)
-	  config->input_prepare (file);
+        if (config->input_prepare)
+          config->input_prepare (file);
 
-	file->get_info()->set_dispersion_measure (config->dispersion_measure);
+        file->get_info()->set_dispersion_measure (config->dispersion_measure);
       }
     }
     else if (config->repeated)
@@ -1370,10 +1527,10 @@ void dsp::LoadToFold1::combine (const LoadToFold1* that)
 {
   if (Operation::verbose)
     cerr << "dsp::LoadToFold1::combine"
-	 << " this size=" << operations.size() 
-	 << " ptr=" << &(this->operations)
-	 << " that size=" << that->operations.size()
-	 << " ptr=" << &(that->operations) << endl;
+         << " this size=" << operations.size() 
+         << " ptr=" << &(this->operations)
+         << " that size=" << that->operations.size()
+         << " ptr=" << &(that->operations) << endl;
 
   unsigned ithis = 0;
   unsigned ithat = 0;
@@ -1386,19 +1543,19 @@ void dsp::LoadToFold1::combine (const LoadToFold1* that)
       unsigned jthis = find_name (operations, ithis, that->operations[ithat]);
       if (jthis == operations.size())
       {
-	if (Operation::verbose)
-	  cerr << "dsp::LoadToFold1::combine insert "
-	       << that->operations[ithat]->get_name() << endl;
+        if (Operation::verbose)
+          cerr << "dsp::LoadToFold1::combine insert "
+               << that->operations[ithat]->get_name() << endl;
 
-	// that was not found in this ... insert it and skip it
-	operations.insert( operations.begin()+ithis, that->operations[ithat] );
-	ithis ++;
-	ithat ++;
+        // that was not found in this ... insert it and skip it
+        operations.insert( operations.begin()+ithis, that->operations[ithat] );
+        ithis ++;
+        ithat ++;
       }
       else
       {
-	// that was found later in this ... skip to it
-	ithis = jthis;
+        // that was found later in this ... skip to it
+        ithis = jthis;
       }
 
       continue;
@@ -1406,26 +1563,26 @@ void dsp::LoadToFold1::combine (const LoadToFold1* that)
 #if 0
       if (operations[ithis]->get_function() != Operation::Procedural)
       {
-	ithis ++;
-	continue;
+        ithis ++;
+        continue;
       }
 
       if (that->operations[ithat]->get_function() != Operation::Procedural)
       {
-	ithat ++;
-	continue;
+        ithat ++;
+        continue;
       }
 
       throw Error (InvalidState, "dsp::LoadToFold1::combine",
-		   "operation names do not match "
-		   "'"+ operations[ithis]->get_name()+"'"
-		   " != '"+that->operations[ithat]->get_name()+"'");
+                   "operation names do not match "
+                   "'"+ operations[ithis]->get_name()+"'"
+                   " != '"+that->operations[ithat]->get_name()+"'");
 #endif
     }
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFold1::combine "
-	   << operations[ithis]->get_name() << endl;
+           << operations[ithis]->get_name() << endl;
 
     operations[ithis]->combine( that->operations[ithat] );
 
@@ -1435,7 +1592,7 @@ void dsp::LoadToFold1::combine (const LoadToFold1* that)
 
   if (ithis != operations.size() || ithat != that->operations.size())
     throw Error (InvalidState, "dsp::LoadToFold1::combine",
-		 "processes have different numbers of operations");
+                 "processes have different numbers of operations");
 }
 
 //! Run through the data
@@ -1462,17 +1619,17 @@ void dsp::LoadToFold1::finish () try
     {
       Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
       if (!archiver)
-	throw Error (InvalidState, "dsp::LoadToFold1::finish",
-		     "unloader is not an archiver (single integration)");
+        throw Error (InvalidState, "dsp::LoadToFold1::finish",
+                     "unloader is not an archiver (single integration)");
 
       /*
-	In multi-threaded applications, the thread that calls the
-	finish method may not be the thread that called the prepare
-	method.
+        In multi-threaded applications, the thread that calls the
+        finish method may not be the thread that called the prepare
+        method.
       */
 
       if (Operation::verbose)
-	cerr << "Creating archive " << i+1 << endl;
+        cerr << "Creating archive " << i+1 << endl;
 
       if (phased_filterbank)
         archiver->unload( phased_filterbank->get_output() );
