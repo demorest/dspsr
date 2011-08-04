@@ -17,6 +17,14 @@ dsp::Unpacker::Unpacker (const char* name)
   output_order = TimeSeries::OrderFPT;
 }
 
+dsp::Unpacker * dsp::Unpacker::clone() const
+{
+  throw Error (InvalidState, "dsp::Unpacker::clone",
+     "Not implemented in derived class");
+
+  return 0;
+}
+
 void dsp::Unpacker::prepare ()
 {
   if (verbose)
