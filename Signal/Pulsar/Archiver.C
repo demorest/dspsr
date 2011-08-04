@@ -122,15 +122,15 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
 {
   if (!single_archive && archive_class_name.size() == 0)
     throw Error (InvalidState, "dsp::Archiver::unload", 
-		 "neither Archive nor class name specified");
+        	 "neither Archive nor class name specified");
 
   if (!_profiles)
     throw Error (InvalidState, "dsp::Archiver::unload",
-		 "Profile data not provided");
+        	 "Profile data not provided");
 
   if (verbose > 2)
     cerr << "dsp::Archiver::unload profiles=" << _profiles << endl;
-
+  
   if (_profiles->get_nbin() == 0 || _profiles->get_ndat_folded() == 0)
   {
     if (verbose > 2)
@@ -146,7 +146,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
 
   if (verbose > 2)
     cerr << "dsp::Archiver::unload folded " << ndat_folded << " out of "
-	 << ndat_total << " total samples: " << percent << "%" << endl;
+         << ndat_total << " total samples: " << percent << "%" << endl;
 
   uint64_t ndat_expected = profiles->get_ndat_expected();
   if (ndat_expected && ndat_expected < 0.9 * ndat_total)
@@ -159,7 +159,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
 
     if (verbose > 2)
       cerr << "dsp::Archiver::unload ignoring incomplete sub-integration \n\t"
-	"expected=" << ndat_expected << " total=" << ndat_total << endl;
+        "expected=" << ndat_expected << " total=" << ndat_total << endl;
 
     return;
   }
@@ -167,7 +167,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
   if (profiles->get_integration_length() < minimum_integration_length)
   {
     cerr << "dsp::Archiver::unload ignoring " 
-	 << profiles->get_integration_length() << " seconds of data" << endl;
+         << profiles->get_integration_length() << " seconds of data" << endl;
 
     return;
   }
@@ -189,7 +189,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
     if (out)
     {
       if (verbose > 2)
-	cerr << "dsp::Archiver::unload using OutputArchive policy" << endl;
+        cerr << "dsp::Archiver::unload using OutputArchive policy" << endl;
       archive = out->new_Archive();
     }
   }
@@ -227,8 +227,8 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
   {
     if (verbose)
       cerr << "dsp::Archiver::unload post-processing "
-	   << archive->get_filename() << " failed:\n"
-	   << error.get_message() << endl;
+           << archive->get_filename() << " failed:\n"
+           << error.get_message() << endl;
     return;
   }
 
@@ -278,8 +278,8 @@ void dsp::Archiver::finish () try
   {
     if (verbose)
       cerr << "dsp::Archiver::finish post-processing "
-	   << single_archive->get_filename() << " failed:\n"
-	   << error.get_message() << endl;
+           << single_archive->get_filename() << " failed:\n"
+           << error.get_message() << endl;
     return;
   }
 
@@ -299,11 +299,11 @@ try
 
   if (!archive)
     throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
-		 "no Archive");
+        	 "no Archive");
 
   if (!phase) 
     throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
-		 "no PhaseSeries");
+        	 "no PhaseSeries");
 
   unsigned nsub = archive->get_nsubint();
 
@@ -318,16 +318,16 @@ try
   // simple sanity check
   if (archive->get_npol() != npol)
     throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
-		 "Pulsar::Archive::npol=%d != PhaseSeries::npol=%d",
-		 archive->get_npol(), npol);
+        	 "Pulsar::Archive::npol=%d != PhaseSeries::npol=%d",
+        	 archive->get_npol(), npol);
   if (archive->get_nchan() != phase->get_nchan())
     throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
-		 "Pulsar::Archive::nchan=%d != PhaseSeries::nchan=%d",
-		 archive->get_nchan(), phase->get_nchan());
+        	 "Pulsar::Archive::nchan=%d != PhaseSeries::nchan=%d",
+        	 archive->get_nchan(), phase->get_nchan());
   if (archive->get_nbin() != phase->get_nbin())
     throw Error (InvalidParam, "dsp::Archiver::add Pulsar::Archive",
-		 "Pulsar::Archive::nbin=%d != PhaseSeries::nbin=%d",
-		 archive->get_nbin(), phase->get_nbin());
+        	 "Pulsar::Archive::nbin=%d != PhaseSeries::nbin=%d",
+        	 archive->get_nbin(), phase->get_nbin());
   
   archive-> resize (nsub + 1);
   set (archive-> get_Integration(nsub), phase);
@@ -353,8 +353,8 @@ unsigned dsp::Archiver::get_npol (const PhaseSeries* phase) const
 
     if (effective_npol != 14)
       throw Error (InvalidParam, "dsp::Archiver::get_npol",
-		   "state==FourthMoment and PhaseSeries::npol=%u != 14", 
-		   effective_npol);
+        	   "state==FourthMoment and PhaseSeries::npol=%u != 14", 
+        	   effective_npol);
 
     fourth_moments = effective_npol - 4;
     effective_npol = 4;
@@ -371,11 +371,11 @@ try
 
   if (!archive)
     throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Archive",
-		 "no Archive");
+        	 "no Archive");
 
   if (!phase)
     throw Error (InvalidParam, "dsp::Archiver::set Pulsar::Archive",
-		 "no PhaseSeries");
+        	 "no PhaseSeries");
 
   const unsigned npol  = get_npol (phase);
   const unsigned nchan = phase->get_nchan();
@@ -384,8 +384,8 @@ try
 
   if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Archive nsub=" << nsub 
-	 << " npol=" << npol << " nchan=" << nchan 
-	 << " nbin=" << nbin << " fourth=" << fourth_moments << endl;
+         << " npol=" << npol << " nchan=" << nchan 
+         << " nbin=" << nbin << " fourth=" << fourth_moments << endl;
 
   archive-> resize (nsub, npol, nchan, nbin);
 
@@ -451,9 +451,9 @@ try
 
   if (verbose > 2)
     cerr << "dsp::Archiver::set Archive source=" << phase->get_source()
-	 << "\n  coord=" << phase->get_coordinates()
-	 << "\n  bw=" << phase->get_bandwidth()
-	 << "\n  freq=" << phase->get_centre_frequency () << endl;
+         << "\n  coord=" << phase->get_coordinates()
+         << "\n  bw=" << phase->get_bandwidth()
+         << "\n  freq=" << phase->get_centre_frequency () << endl;
 
   archive-> set_source ( phase->get_source() );
   archive-> set_coordinates ( phase->get_coordinates() );
@@ -532,7 +532,7 @@ try
   archive-> set_filename (get_filename (phase));
 
   if (verbose > 2) cerr << "dsp::Archiver set archive filename to '"
-		    << archive->get_filename() << "'" << endl;
+        	    << archive->get_filename() << "'" << endl;
 }
 catch (Error& error)
 {
@@ -541,8 +541,8 @@ catch (Error& error)
 
 
 void dsp::Archiver::set (Pulsar::Integration* integration,
-			 const PhaseSeries* phase,
-			 unsigned isub, unsigned nsub) 
+        		 const PhaseSeries* phase,
+        		 unsigned isub, unsigned nsub) 
 try
 {
   if (verbose > 2)
@@ -595,30 +595,42 @@ try
     {
       for (unsigned idim=0; idim<ndim; idim++)
       {
-	unsigned poln = ipol*ndim+idim;
+        unsigned poln = ipol*ndim+idim;
 
-	if (nsub > 1)
-	  idim = isub;
+        if (nsub > 1)
+          idim = isub;
 
-	Pulsar::Profile* profile = 0;
+        Pulsar::Profile* profile = 0;
 
-	if (more && poln >= effective_npol)
-	  profile = more->get_Profile (poln - effective_npol);
-	else
-	  profile = integration->get_Profile (poln, chan);
+        if (more && poln >= effective_npol)
+          profile = more->get_Profile (poln - effective_npol);
+        else
+          profile = integration->get_Profile (poln, chan);
 
-	if (verbose > 2)
-	  cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
-	       << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
+        if (verbose > 2)
+          cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
+               << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
-	set (profile, phase, ichan, ipol, idim);
+        set (profile, phase, ichan, ipol, idim);
+
       }
     }
 
     if (fourth_moments)
-      raw_to_central (chan, more, integration, phase->get_hits());
+    {
+      cerr << "dsp::Archiver::set fourth_moments=true" << endl;
+      const unsigned * hits = 0;
+      if (phase->get_zeroed_data())
+        hits = phase->get_hits(ichan);
+      else
+        hits = phase->get_hits();
+      raw_to_central (chan, more, integration, hits);
+      //raw_to_central (chan, more, integration, phase->get_hits());
+    }
+
   }
 }
+
 catch (Error& error)
 {
   throw error += "dsp::Archiver::set Pulsar::Integration";
@@ -626,9 +638,9 @@ catch (Error& error)
 
 /*! subtract the mean squared from each moment */
 void dsp::Archiver::raw_to_central (unsigned ichan,
-				    Pulsar::MoreProfiles* moments,
-				    const Pulsar::Integration* means,
-				    const unsigned* hits)
+        			    Pulsar::MoreProfiles* moments,
+        			    const Pulsar::Integration* means,
+        			    const unsigned* hits)
 {
   const unsigned npol = means->get_npol();
   const unsigned nbin = means->get_nbin();
@@ -646,11 +658,11 @@ void dsp::Archiver::raw_to_central (unsigned ichan,
 
       for (unsigned ibin=0; ibin < nbin; ibin++)
       {
-	double pi = mean_i[ibin];
-	double pj = mean_j[ibin];
+        double pi = mean_i[ibin];
+        double pj = mean_j[ibin];
 
-	// divide by hits again to form variance of mean
-	moment[ibin] = (moment[ibin] - pi*pj) / hits[ibin];
+        // divide by hits again to form variance of mean
+        moment[ibin] = (moment[ibin] - pi*pj) / hits[ibin];
       }
 
       index ++;
@@ -661,8 +673,8 @@ void dsp::Archiver::raw_to_central (unsigned ichan,
 }
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
-			 const PhaseSeries* phase,
-			 unsigned ichan, unsigned ipol, unsigned idim)
+        		 const PhaseSeries* phase,
+        		 unsigned ichan, unsigned ipol, unsigned idim)
 try
 {
   if (verbose > 2)
@@ -684,6 +696,12 @@ try
   float* into = profile->get_amps ();
   const float* from = 0;
   unsigned nstride = 0;
+
+  const unsigned * hits = 0;
+  if (phase->get_zeroed_data())
+    hits = phase->get_hits(ichan);
+  else
+    hits = phase->get_hits();
 
   if (phase->get_order() == TimeSeries::OrderFPT)
   {
@@ -707,10 +725,13 @@ try
     throw Error (InvalidParam, string(), "invalid scale=%lf", scale);
 
   unsigned not_finite = 0;
+  unsigned hits_sum = 0;
 
   for (unsigned ibin = 0; ibin<nbin; ibin++)
   {
-    if (phase->get_hit(ibin) == 0)
+    hits_sum += hits[ibin];
+
+    if (hits[ibin] == 0)
     {
       zeroes ++;
       into[ibin] = 0.0;
@@ -719,10 +740,10 @@ try
     {
       not_finite ++;
       if (verbose > 2)
-        cerr << "non-finite: hit=" << phase->get_hit(ibin) << endl;
+        cerr << "non-finite: hit=" << hits[ibin] << endl;
     }
     else
-      into[ibin] = *from / (scale * double( phase->get_hit(ibin) ));
+      into[ibin] = *from / (scale * double( hits[ibin] ));
 
     from += nstride;
   }
@@ -730,8 +751,8 @@ try
   if (not_finite)
   {
     Error error (InvalidParam, string(),
-		 "%u/%u non-finite amplitudes in ichan=%d ipol=%d idim=%d",
-		 not_finite, nbin, ichan, ipol, idim);
+        	 "%u/%u non-finite amplitudes in ichan=%d ipol=%d idim=%d",
+        	 not_finite, nbin, ichan, ipol, idim);
     cerr << error << endl;
     profile->set_weight(0);
   }
@@ -740,17 +761,17 @@ try
   {
     if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::Profile WARNING " << zeroes 
-	         << " out of " << nbin << " bins with zero hits" << endl;
+                 << " out of " << nbin << " bins with zero hits" << endl;
 
     // find the mean of the hit bins
     double sum = 0.0;
     unsigned count = 0;
     for (unsigned ibin = 0; ibin<nbin; ibin++)
-      if (phase->get_hit(ibin) != 0)
-      {
-	sum += into[ibin];
-	count ++;
-      }
+    if (hits[ibin] != 0)
+    {
+      sum += into[ibin];
+      count ++;
+    }
 
     // avoid division by zero
     if (count == 0)
@@ -759,8 +780,13 @@ try
     // set the unhit bins to the mean
     double mean = sum / count;
     for (unsigned ibin = 0; ibin<nbin; ibin++)
-      if (phase->get_hit(ibin) == 0)
-	into[ibin] = mean;
+      if (hits[ibin] == 0)
+        into[ibin] = mean;
+  }
+  if (phase->get_zeroed_data())
+  {
+    float chan_weight = (float) hits_sum / (float) phase->get_ndat_total();
+    profile->set_weight (chan_weight);
   }
 
 }
