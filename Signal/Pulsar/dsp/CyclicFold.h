@@ -120,6 +120,9 @@ namespace dsp {
     //! Enable engine to prepare any internal memory required for the plan
     virtual void set_ndat (uint64_t ndat, uint64_t idat_start);
 
+    /* WvS - this is called only when data have been masked by weights */
+    uint64_t get_ndat_folded () const { return 0; }
+
   protected:
 
     // Copy of output
