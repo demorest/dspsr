@@ -24,6 +24,9 @@ CUDA::FilterbankEngine::FilterbankEngine (cudaStream_t _stream)
   scratch = 0;
 
   stream = _stream;
+
+  plan_fwd = 0;
+  plan_bwd = 0;
 }
 
 CUDA::FilterbankEngine::~FilterbankEngine ()
@@ -54,14 +57,19 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   if (twofft)
     npol = 2;
 
+  DEBUG("CUDA::FilterbankEngine::setup plan size=" << bwd_nfft*nchan*npol);
   cufftPlan1d (&plan_fwd, bwd_nfft*nchan*npol, CUFFT_C2C, 1);
+  DEBUG("CUDA::FilterbankEngine::setup setting stream" << stream);
   cufftSetStream (plan_fwd, stream);
 
+  DEBUG("CUDA::FilterbankEngine::setup fwd FFT plan set");
   if (nchan > 1)
   {
     cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
     cufftSetStream (plan_bwd, stream);
   }
+
+  DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set");
 
   if (filterbank->has_response())
   {
@@ -243,7 +251,7 @@ void CUDA::FilterbankEngine::perform (const float* in)
 
   unsigned data_size = nchan * bwd_nfft;
 
-  int threads = 128;
+  int threads = 256;
 
   // note that each thread will set two complex numbers in each poln
   int blocks = data_size / (threads*2);
@@ -307,5 +315,16 @@ void CUDA::FilterbankEngine::perform (const float* in)
 					output_stride,
 					input_p1, input_stride, to_copy);
 }
+
+  if (dsp::Operation::record_time)
+  {
+    cudaThreadSynchronize ();
+
+    cudaError error = cudaGetLastError();
+    if (error != cudaSuccess)
+      throw Error (InvalidState, "CUDA::FilterbankEngine::perform",
+       cudaGetErrorString (error));
+  }
+
 
 }
