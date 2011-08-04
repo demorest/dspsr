@@ -15,8 +15,10 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/Rescale.h dsp/BandpassMonitor.h dsp/PScrunch.h	       \
 	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h	       \
 	dsp/OptimalFFT.h dsp/OptimalFilterbank.h dsp/on_host.h	       \
-	dsp/FScrunch.h dsp/FilterbankBench.h dsp/FilterbankConfig.h \
-	dsp/GeometricDelay.h
+	dsp/FScrunch.h dsp/FilterbankBench.h dsp/FilterbankConfig.h    \
+	dsp/GeometricDelay.h					       \
+	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
+	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -29,15 +31,19 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C	     \
 	PolnCalibration.C Dump.C OptimalFFT.C FScrunch.C	     \
 	FilterbankBench.C OptimalFilterbank.C FilterbankConfig.C \
-	GeometricDelay.C mfilter.c
+	GeometricDelay.C mfilter.c \
+	TFPFilterbank.C RFIZapper.C SKFilterbank.C \
+	Resize.C SKDetector.C SKMasker.C
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/TransferCUDA.h dsp/DetectionCUDA.h
+nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/TransferCUDA.h \
+	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C DetectionCUDA.cu 
+libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C \
+	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
 
-libdspdsp_la_LIBADD = FilterbankCUDA.lo DetectionCUDA.lo
+libdspdsp_la_LIBADD = FilterbankCUDA.lo DetectionCUDA.lo SKMaskerCUDA.lo
 
 FilterbankCUDA.lo : FilterbankCUDA.cu
 	@CUDA_NVCC@ -c $(srcdir)/FilterbankCUDA.cu
@@ -46,6 +52,12 @@ FilterbankCUDA.lo : FilterbankCUDA.cu
 DetectionCUDA.lo : DetectionCUDA.cu
 	@CUDA_NVCC@ -c $(srcdir)/DetectionCUDA.cu
 	sed -e 's/Detection/DetectionCUDA/' Detection.lo > DetectionCUDA.lo
+
+SKMaskerCUDA.lo : SKMaskerCUDA.cu
+	@CUDA_NVCC@ -c $(srcdir)/SKMaskerCUDA.cu
+	sed -e 's/SKMasker/SKMaskerCUDA/' SKMasker.lo > SKMaskerCUDA.lo
+
+
 endif
 
 bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
