@@ -115,6 +115,7 @@ const unsigned char* dsp::BitSeries::get_datptr(uint64_t sample) const
   return data + get_nbytes(sample);
 }
 
+
 int64_t dsp::BitSeries::get_input_sample (Input* test_input) const
 {
   if (test_input && test_input != input)
@@ -187,4 +188,28 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
 
   set_ndat( get_ndat() + little->get_ndat() );
 }
+
+//! Match the internal memory layout of another BitSeries
+void dsp::BitSeries::internal_match (const BitSeries* other)
+{   
+
+  request_offset = other->request_offset;
+  request_ndat = other->request_ndat;
+  input_sample = other->input_sample;
+  data_size = other->data_size;
+    
+}
+
+void dsp::BitSeries::copy_configuration (const Observation* copy)
+{
+  if( copy==this )
+    return;
+
+  Observation::operator=( *copy );
+
+  if (verbose)
+    cerr << "dsp::BitSeries::copy_configuration ndat=" << get_ndat()
+         << endl;
+}
+
 

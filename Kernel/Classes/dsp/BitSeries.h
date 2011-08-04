@@ -79,12 +79,21 @@ namespace dsp {
     //! Append little onto the end of this
     virtual void append (const BitSeries* little);
 
+    //! Set the sample offset from start of the data source
+    void set_input_sample (int64_t sample) { input_sample = sample; }
+
     //! Return the sample offset from the start of the data source
     int64_t get_input_sample (Input* input = 0) const;
 
     const Input* get_loader() const { return input; }
 
     void set_memory (Memory*);
+
+    //! Match the internal memory layout of another BitSeries
+    void internal_match (const BitSeries*);
+
+    //! Copy the configuration of another TimeSeries instance (not the data)
+    void copy_configuration (const Observation* copy);
 
   protected:
 
