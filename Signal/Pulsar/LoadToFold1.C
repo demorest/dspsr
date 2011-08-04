@@ -423,7 +423,7 @@ void dsp::LoadToFold1::prepare () try
 
     skoutput = new_time_series ();
 
-    // Spectral Kurtocis filterbank constructor
+    // Spectral Kurtosis filterbank constructor
     if (!skfilterbank)
       skfilterbank = new SKFilterbank (config->sk_nthreads);
 

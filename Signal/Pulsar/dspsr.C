@@ -317,7 +317,7 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("samples to integrate for spectral kurtoscis statistics");
 
   arg = menu.add (config->sk_std_devs, "skzs", "stddevs");
-  arg->set_help ("number of std deviations to use for spectral kurtocis excisions");
+  arg->set_help ("number of std deviations to use for spectral kurtosis excisions");
 
   arg = menu.add (config->sk_chan_start, "skz_start", "chan");
   arg->set_help ("first channel where signal is expected");
@@ -336,7 +336,7 @@ void parse_options (int argc, char** argv) try
 
 #ifdef HAVE_CUFFT
   arg = menu.add (config->sk_nthreads, "skzn", "threads");
-  arg->set_help ("number of CPU threads for spectral kurtocis filterbank");
+  arg->set_help ("number of CPU threads for spectral kurtosis filterbank");
 #endif
 
   /* ***********************************************************************

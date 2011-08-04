@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.35 $
-   $Date: 2011/08/04 21:06:50 $
+   $Revision: 1.36 $
+   $Date: 2011/08/04 21:25:02 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -125,13 +125,13 @@ namespace dsp {
     // compute and output mean and variance for pdmp
     bool pdmp_output;
 
-    // apply spectral kurtocis filterbank
+    // apply spectral kurtosis filterbank
     bool sk_zap;
 
     // spectral kurtoscis integration factor
     unsigned sk_m;
 
-    // number of stddevs to use for spectral kurtocis excision
+    // number of stddevs to use for spectral kurtosis excision
     unsigned sk_std_devs;
 
     // first channel to begin SK Detection
@@ -149,7 +149,7 @@ namespace dsp {
     // to disable SKDetector FT feature
     bool sk_no_ft;
 
-    // number of CPU threads for spectral kurtocis filterbank
+    // number of CPU threads for spectral kurtosis filterbank
     unsigned sk_nthreads;
 
     unsigned npol;

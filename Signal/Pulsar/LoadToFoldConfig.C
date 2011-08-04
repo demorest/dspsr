@@ -71,13 +71,13 @@ dsp::LoadToFold::Config::Config ()
   // do not produce pdmp output by default
   pdmp_output = false;
 
-  // do not use spectral kurtocis filterbank by default
+  // do not use spectral kurtosis filterbank by default
   sk_zap = false;
 
-  // samples to integrate to form spectral kurtocis statistic
+  // samples to integrate to form spectral kurtosis statistic
   sk_m = 128;
 
-  // samples to integrate to form spectral kurtocis statistic
+  // samples to integrate to form spectral kurtosis statistic
   sk_std_devs = 3;
 
   // first channel to conduct spectral kurtosis detection
