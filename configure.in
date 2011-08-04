@@ -179,6 +179,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/vdif/Makefile
 		Kernel/Formats/wapp/Makefile
 		Signal/Makefile
+		Signal/Statistics/Makefile
 		Signal/General/Makefile
 		Signal/Pulsar/Makefile
 		Management/Makefile
