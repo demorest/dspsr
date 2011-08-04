@@ -25,7 +25,7 @@
 #include "dsp/DedispersionSampleDelay.h"
 #include "dsp/SampleDelay.h"
 
-#include "dsp/Filterbank.h"
+#include "dsp/TFPFilterbank.h"
 #include "dsp/Detection.h"
 
 #include "dirutil.h"
@@ -254,7 +254,7 @@ int main (int argc, char** argv) try
 
   for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
   {
-    Reference::To<dsp::Filterbank> filterbank;
+    Reference::To<dsp::TFPFilterbank> filterbank;
     Reference::To<dsp::TimeSeries> filterbank_input;
     Reference::To<dsp::Detection> detection;
     Reference::To<dsp::TScrunch> tscrunch;
@@ -293,7 +293,7 @@ int main (int argc, char** argv) try
 	  cerr << "digifil: creating " << filterbank_nchan 
 	       << " channel filterbank" << endl;
 
-	filterbank = new dsp::Filterbank;
+	filterbank = new dsp::TFPFilterbank;
 	filterbank_input = new dsp::TimeSeries;
 
 	manager->set_output (filterbank_input);
@@ -303,7 +303,7 @@ int main (int argc, char** argv) try
 	filterbank->set_output( timeseries );
 
         // filterbank will do detection
-        filterbank->set_output_order( dsp::TimeSeries::OrderTFP );
+        // filterbank->set_output_order( dsp::TimeSeries::OrderTFP );
       }
       else
       {
