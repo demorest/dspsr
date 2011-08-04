@@ -35,7 +35,7 @@ void dsp::InputBuffering::set_minimum_samples (uint64_t samples)
       cerr << "dsp::InputBuffering::set_minimum_samples"
               " increasing reserve to " << minimum_samples << endl;
 
-    target->get_input()->change_reserve (minimum_samples-requested_reserve);
+    get_input()->change_reserve (minimum_samples-requested_reserve);
     requested_reserve = minimum_samples;
   }
 }
@@ -43,7 +43,7 @@ void dsp::InputBuffering::set_minimum_samples (uint64_t samples)
 /*! Copy remaining data from the target Transformation's input to buffer */
 void dsp::InputBuffering::set_next_start (uint64_t next)
 {
-  const TimeSeries* input = target->get_input();
+  const TimeSeries* input = get_input();
 
   next_start_sample = next;
 
@@ -104,7 +104,7 @@ void dsp::InputBuffering::pre_transformation ()
   if (!requested_reserve || !buffer || !buffer->get_ndat())
     return;
 
-  const TimeSeries* container = target->get_input();
+  const TimeSeries* container = get_input();
 
   int64_t want = container->get_input_sample();
 
@@ -112,11 +112,25 @@ void dsp::InputBuffering::pre_transformation ()
   if (want <= 0)
     return;
 
+  if (buffer->get_input_sample() >= want)
+    return;
+
+  int64_t have = buffer->get_input_sample() + buffer->get_ndat();
+  if (have > want)
+  {
+    if (Operation::verbose)
+      cerr << "dsp::InputBuffering::pre_transformation buffer->get_ndat()" 
+           << buffer->get_ndat() << " have=" << have << " want=" << want << endl;
+    buffer->set_ndat ( buffer->get_ndat() - have + want );
+  }
+
   if (Operation::verbose)
+  {
     cerr << "dsp::InputBuffering::pre_transformation prepend "
-	 << buffer->get_ndat() << " samples \n"
-         << "dsp::InputBuffering::pre_transformation target input sample="
+	       << buffer->get_ndat() << " samples" << endl;
+    cerr << "dsp::InputBuffering::pre_transformation target input sample="
          << want << endl;
+  }
 
   const_cast<TimeSeries*>( container )->prepend (buffer);
 }

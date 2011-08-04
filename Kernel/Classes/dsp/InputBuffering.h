@@ -44,6 +44,9 @@ namespace dsp {
     //! Shares a single InputBuffering instance between multiple threads
     class Share;
 
+    //! Get the TimeSeries to be buffered
+    virtual const TimeSeries* get_input () { return target->get_input(); }
+
   protected:
     
     //! The next start sample
