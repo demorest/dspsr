@@ -7,6 +7,7 @@
 
 #include "dsp/PhaseSeries.h"
 #include "dsp/dspExtension.h"
+#include "dsp/Memory.h"
 
 #include "Pulsar/Predictor.h"
 #include "Pulsar/Parameters.h"
@@ -26,6 +27,12 @@ void dsp::PhaseSeries::init ()
   reference_phase = 0;
   require_equal_sources = false;
   require_equal_rates = false;
+
+  hits_memory = Memory::get_manager();
+
+  hits = 0;
+  hits_nchan = 1;
+  hits_size = 0;
 }
 
 dsp::PhaseSeries::PhaseSeries () : TimeSeries()
@@ -42,8 +49,25 @@ dsp::PhaseSeries::PhaseSeries (const PhaseSeries& profile) : TimeSeries ()
 dsp::PhaseSeries::~PhaseSeries ()
 {
   if (verbose)
-    cerr << "dsp::PhaseSeries::~PhaseSeries this=" << this << endl;
+    cerr << "dsp::PhaseSeries::~PhaseSeries this=" << this << " hits=" << hits << endl;
+  if (hits)
+    hits_memory->do_free(hits);
+  hits = 0;
 }
+
+void dsp::PhaseSeries::set_hits_memory (Memory* m)
+{
+  if (hits_memory && hits)
+    resize_hits (0);
+
+  hits_memory = m;
+}
+
+const dsp::Memory* dsp::PhaseSeries::get_hits_memory () const
+{ 
+  return hits_memory;
+}
+
 
 dsp::PhaseSeries* dsp::PhaseSeries::clone() const
 {
@@ -56,8 +80,33 @@ dsp::PhaseSeries* dsp::PhaseSeries::clone() const
 //! Set the number of phase bins into which data will be PhaseSeriesed
 void dsp::PhaseSeries::resize (int64_t nbin)
 {
+  if (verbose)
+    cerr << "dsp::PhaseSeries::resize nbin=" << nbin << endl;
   TimeSeries::resize (nbin);
-  hits.resize (nbin);
+  resize_hits (nbin);
+}
+
+//! Resize the hits arary
+void dsp::PhaseSeries::resize_hits (int64_t nbin)
+{
+  if (verbose)
+    cerr << "dsp::PhaseSeries::resize_hits nchan=" << get_nchan()
+         << " nbin=" << nbin << " hits_nchan=" << hits_nchan << endl;
+
+  if (hits)
+  {
+    if (verbose)
+      cerr << "dsp::PhaseSeries::resize_hits Memory::do_free()" << endl;
+    hits_memory->do_free (hits);
+  }
+
+  hits_size = nbin * hits_nchan * sizeof (unsigned);
+
+  if (verbose)
+    cerr << "dsp::PhaseSeries::resize_hits Memory::do_allocate (" 
+         << hits_size << ")" << endl;
+  hits = (unsigned *) hits_memory->do_allocate (hits_size);
+
 }
 
 //! Set the period at which to fold data (in seconds)
@@ -128,6 +177,31 @@ catch (Error& error)
 bool dsp::PhaseSeries::has_pulsar_ephemeris () const
 {
   return pulsar_ephemeris;
+}
+
+unsigned dsp::PhaseSeries::get_hit (unsigned ibin, unsigned ichan) const
+{
+  if (ichan >= hits_nchan)
+    throw Error (InvalidParam, "PhaseSeries::get_hit", "ichan >= hits_nchan"); 
+
+  return hits[ichan * get_nbin() + ibin];
+}
+
+unsigned* dsp::PhaseSeries::get_hits (unsigned ichan)
+{
+
+  if (ichan >= hits_nchan)
+    throw Error (InvalidParam, "PhaseSeries::get_hits", "ichan >= hits_nchan");
+
+  return &(hits[ichan * get_nbin()]);
+}
+
+const unsigned* dsp::PhaseSeries::get_hits (unsigned ichan) const
+{
+  if (ichan >= hits_nchan)
+    throw Error (InvalidParam, "PhaseSeries::get_hits", "ichan >= hits_nchan");
+
+  return &(hits[ichan * get_nbin()]);
 }
 
 //! Get the mid-time of the integration
@@ -206,7 +280,30 @@ void dsp::PhaseSeries::copy_attributes (const PhaseSeries* copy)
 
   end_time           = copy->end_time;
   folding_period     = copy->folding_period;
-  hits               = copy->hits;
+
+  if (verbose)
+    cerr << "dsp::PhaseSeries::copy_attributes hits_size=" << hits_size 
+         << " copy->hits_size=" << copy->hits_size 
+         << " copy->hits_nchan=" << copy->hits_nchan << endl;
+
+  if (hits_size < copy->hits_size)
+  {
+    if (hits)
+      hits_memory->do_free (hits);
+
+    hits = (unsigned *) hits_memory->do_allocate (copy->hits_size);
+    if (verbose)
+      cerr << "dsp::PhaseSeries::copy_attributes hits_memory::do_allocate(" 
+           << copy->hits_size << ")" << endl;
+  }
+
+  // if both hits arrays are on host memory
+  if (get_hits_memory()->on_host() && copy->get_hits_memory()->on_host())
+    hits_memory->do_copy ( hits, copy->hits, copy->hits_size);
+
+  zeroed_data = copy->zeroed_data;
+  hits_nchan = copy->hits_nchan;
+  hits_size = copy->hits_size;
 
   if (copy->folding_predictor)
     folding_predictor = copy->folding_predictor->clone();
@@ -222,8 +319,18 @@ void dsp::PhaseSeries::copy_attributes (const PhaseSeries* copy)
 //! Set the hits in all bins
 void dsp::PhaseSeries::set_hits (unsigned value)
 {
-  for (unsigned ipt=0; ipt<hits.size(); ipt++)
-    hits[ipt] = value;
+  if (verbose)
+    cerr << "PhaseSeries::set_hits(" << value << ")" << endl;
+
+  if (value == 0)
+    hits_memory->do_zero(hits, hits_size);
+  else
+  {
+
+    const unsigned nhits = get_nbin() * hits_nchan;
+    for (unsigned ihit=0; ihit<nhits; ihit++)
+      hits[ihit] = value;
+  }
 }
 
 bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
@@ -258,7 +365,16 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
 
     const TimeSeries* series = dynamic_cast<const TimeSeries*> (&obs);
     if (series)
+    {
+      if (verbose)
+        cerr << "dsp::PhaseSeries::mixable calling set_order" << endl;
       set_order( series->get_order() );
+      if (verbose)
+        cerr << "dsp::PhaseSeries::mixable calling set_zeroed_data" << endl;
+      set_zeroed_data( series->get_zeroed_data() );
+      if (get_zeroed_data())
+        set_hits_nchan( series->get_nchan() );
+    }
 
     end_time = obsEnd;
     start_time = obsStart;
@@ -269,7 +385,11 @@ bool dsp::PhaseSeries::mixable (const Observation& obs, unsigned nbin,
     */
     uint64_t backup_ndat_total = ndat_total;
 
+    if (verbose)
+      cerr << "dsp::PhaseSeries::mixable calling resize(" << nbin << ")" << endl;
     resize (nbin);
+    if (verbose)
+      cerr << "dsp::PhaseSeries::mixable calling zero()" << endl;
     zero ();
 
     ndat_total = backup_ndat_total;
@@ -334,9 +454,10 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof) try
 
   TimeSeries::operator += (*prof);
 
-  for (unsigned ibin=0; ibin<hits.size(); ibin++)
-    hits[ibin] += prof->hits[ibin];
-
+  const unsigned nhits = get_nbin() * hits_nchan;
+  for (unsigned ihit=0; ihit<nhits; ihit++)
+    hits[ihit] += prof->hits[ihit];
+  
   if (verbose)
     cerr << "dsp::PhaseSeries::combine length add=" 
          << prof->integration_length 
@@ -359,15 +480,29 @@ uint64_t dsp::PhaseSeries::get_ndat_total () const
   return ndat_total;
 }
 
-//! Return the number of time samples folded into the profiles
 uint64_t dsp::PhaseSeries::get_ndat_folded () const
 {
   uint64_t folded = 0;
+  const unsigned nhits = get_nbin() * hits_nchan;
+  for (unsigned ihit=0; ihit<nhits; ihit++)
+    folded += hits[ihit];
 
+  return folded;
+}
+
+
+//! Return the number of time samples folded into the profiles
+uint64_t dsp::PhaseSeries::get_ndat_folded (unsigned ichan) const
+{
+  uint64_t folded = 0;
   const unsigned nbin = get_nbin();
-  for (unsigned i=0; i<nbin; i++)
-    folded += hits[i];
 
+  if (ichan > hits_nchan)
+    throw Error (InvalidParam, "PhaseSeries::get_ndat_folded", "ichan >= hits_nchan");
+
+  for (unsigned ibin=0; ibin<nbin; ibin++)
+    folded += hits[ichan * nbin + ibin];
+  
   return folded;
 }
 

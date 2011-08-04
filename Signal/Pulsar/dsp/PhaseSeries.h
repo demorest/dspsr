@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.40 $
-   $Date: 2011/03/22 19:07:04 $
-   $Author: demorest $ */
+   $Revision: 1.41 $
+   $Date: 2011/08/04 21:07:02 $
+   $Author: straten $ */
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h
@@ -22,6 +22,8 @@ namespace Pulsar {
 }
 
 namespace dsp {
+
+  class Memory;
 
   class Extensions;
   
@@ -51,6 +53,9 @@ namespace dsp {
 
     //! Allocate the space required to store nsamples time samples.
     virtual void resize (int64_t nsamples);
+
+    //! Allocate the space required for the hits array
+    void resize_hits (int64_t nbin);
 
     //! Add the given PhaseSeries to this
     void combine (const PhaseSeries*);
@@ -96,15 +101,24 @@ namespace dsp {
     //! Get the number of phase bins
     unsigned get_nbin () const { return unsigned(get_ndat()); }
 
-    //! Get the hit for the given bin
-    unsigned get_hit (unsigned ibin) const { return hits[ibin]; }
+    //! Get the hit for the given bin and channel
+    unsigned get_hit (unsigned ibin, unsigned ichan=0) const;
 
-    //! Get the hits array
-    unsigned* get_hits () { return &hits[0]; }
-    const unsigned* get_hits () const { return &hits[0]; }
+    //! Get the hits array for the specified ichan
+    unsigned* get_hits (unsigned ichan=0);
 
-    //! Set the hits in all bins
+    const unsigned* get_hits (unsigned ichan=0) const;
+
+    const uint64_t get_hits_size() const { return hits_size; }
+
+    //! Set the hits in all bins and channels
     void set_hits (unsigned value);
+
+    //! Get the number of channels in the hits array
+    unsigned get_hits_nchan () { return hits_nchan; }
+
+    //! Set the number of channels in the hits array
+    void set_hits_nchan (unsigned _hits_nchan) { hits_nchan = _hits_nchan; }
 
     //! Get the mid-time of the integration 
     /*! \param phased if true, round to the nearest reference phase */
@@ -125,8 +139,11 @@ namespace dsp {
     //! Return the total number of time samples
     uint64_t get_ndat_total () const;
 
-    //! Return the number of time samples folded into the profiles
+    //! Return the number of time samples folded into the profiles for all channels
     uint64_t get_ndat_folded () const;
+
+    //! Return the number of time samples folded into the profiles
+    uint64_t get_ndat_folded (unsigned ichan) const;
 
     //! Set the Extensions to be communicated to the Archiver class
     void set_extensions (Extensions*);
@@ -139,6 +156,12 @@ namespace dsp {
 
     //! Copy the configuration of another PhaseSeries instance (hits array)
     virtual void copy_configuration (const Observation* copy);
+
+    //! Set the hits memory manager
+    void set_hits_memory (Memory*);
+
+    //! Get the hits memory manager
+    const Memory* get_hits_memory () const;
 
   protected:
 
@@ -157,8 +180,14 @@ namespace dsp {
     //! Reference phase (phase of bin zero)
     double reference_phase;
 
-    //! Number of time samples integrated into each phase bin
-    std::vector<unsigned> hits;
+    //! Number of time samples integrated into each phase bin for each channel
+    unsigned * hits;
+
+    //! Number of channels in the hits array
+    unsigned hits_nchan;
+
+    //! Total size of the hits array (nchan * nbin)
+    uint64_t hits_size;
 
     //! Total number of time samples passed to folding routine
     uint64_t ndat_total;
@@ -175,6 +204,9 @@ namespace dsp {
     //! Return true when Observation can be integrated (and prepare for it)
     bool mixable (const Observation& obs, unsigned nbin,
 		  int64_t istart=0, int64_t fold_ndat=0);
+
+    //! The hits memory manager
+    Reference::To<Memory> hits_memory;
 
   private:
 
