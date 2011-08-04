@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.54 $
-   $Date: 2010/04/22 07:42:57 $
+   $Revision: 1.55 $
+   $Date: 2011/08/04 21:05:19 $
    $Author: straten $ */
 
 #ifndef __TimeSeries_h
@@ -125,6 +125,7 @@ namespace dsp {
 
     //! Return the sample offset from the start of the data source
     int64_t get_input_sample () const { return input_sample; }
+
     //! Used to arrange pieces in order during input buffering
     void set_input_sample (uint64_t sample) { input_sample = sample; }
 
@@ -142,6 +143,12 @@ namespace dsp {
 
     //! Call this when you do not want to transfer ownership of the array
     virtual void attach (float* _data);
+
+    //! Set the timeseries as containing zerod data
+    void set_zeroed_data (bool _zeroed_data) { zeroed_data = _zeroed_data; }
+
+    //! Set the timeseries as containing zerod data
+    bool get_zeroed_data () const { return zeroed_data; }
 
     void finite_check () const;
 
@@ -166,6 +173,9 @@ namespace dsp {
 
     //! Get the amount of memory reserved at the start of the buffer
     uint64_t get_reserve () const { return reserve_ndat; }
+
+    //! Flag for whether the data contains zero values. See ZapWeight
+    bool zeroed_data;
 
     friend class InputBuffering;
     friend class Unpacker;
