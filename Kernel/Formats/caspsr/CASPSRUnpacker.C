@@ -21,6 +21,8 @@
 #include <cuda_runtime.h>
 #endif
 
+#define FAST_UNPACK
+
 using namespace std;
 
 static void* const undefined_stream = (void *) -1;
@@ -34,6 +36,15 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
   gpu_stream = undefined_stream;
 
   table = new BitTable (8, BitTable::TwosComplement);
+}
+
+dsp::CASPSRUnpacker::~CASPSRUnpacker ()
+{
+}
+
+dsp::CASPSRUnpacker * dsp::CASPSRUnpacker::clone () const
+{
+  return new CASPSRUnpacker (*this);
 }
 
 //! Return true if the unpacker can operate on the specified device
@@ -61,7 +72,7 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
 
 #else
   throw Error (InvalidState, "dsp::CASPSRUnpacker::set_device",
-	       "unsupported device");
+               "unsupported device");
 #endif
 }
 
@@ -73,13 +84,30 @@ bool dsp::CASPSRUnpacker::matches (const Observation* observation)
 }
 
 void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
-				  const unsigned char* from,
-				  const unsigned nskip,
-				  float* into,
-				  const unsigned fskip,
-				  unsigned long* hist)
+                                  const unsigned char* from,
+                                  const unsigned nskip,
+                                  float* into,
+                                  const unsigned fskip,
+                                  unsigned long* hist)
 {
   const float* lookup = table->get_values ();
+
+#ifdef FAST_UNPACK
+
+  const unsigned into_stride = fskip * 4;
+  const unsigned from_stride = 8;
+
+  for (uint64_t idat=0; idat < ndat; idat+=4)
+  {
+    into[0] = lookup[ from[0] ];
+    into[1] = lookup[ from[1] ];
+    into[2] = lookup[ from[2] ];
+    into[3] = lookup[ from[3] ];
+
+    from += from_stride;
+    into += into_stride;
+  }
+#else
   int counter_four = 0;
 
   if (verbose)
@@ -89,22 +117,25 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
   {
     hist[ *from ] ++;
     *into = lookup[ *from ];
+    n_unpacked ++;
     
-    #ifdef _DEBUG
-    cerr << idat << " " << int(*from) << "=" << *into << endl;
-    #endif
+#ifdef _DEBUG
+      cerr << idat << " " << int(*from) << " -> " << *into << endl;
+#endif
     counter_four++;
     if (counter_four == 4)
       {
-	counter_four = 0;
-	from += 5; //(nskip+4);
+        counter_four = 0;
+        from += 5; //(nskip+4);
       }
     else
       {
-	from ++; //=nskip;
+        from ++; //=nskip;
       }
     into += fskip;
   }
+#endif
+
 }
 
 void dsp::CASPSRUnpacker::unpack ()
@@ -128,26 +159,24 @@ void dsp::CASPSRUnpacker::unpack ()
   
   unsigned offset = 0;
   
-  //cerr << "dsp::CASPSRUnpacker::unpack()" << endl;
-
   for (unsigned ichan=0; ichan<nchan; ichan++)
   {
     for (unsigned ipol=0; ipol<npol; ipol++)
     {
       if (ipol==1)
-	offset = 4;
+        offset = 4;
       for (unsigned idim=0; idim<ndim; idim++)
       {
-	const unsigned char* from = input->get_rawptr() + offset;
-	float* into = output->get_datptr (ichan, ipol) + idim;
-	unsigned long* hist = get_histogram (ipol);
-	      
+        const unsigned char* from = input->get_rawptr() + offset;
+        float* into = output->get_datptr (ichan, ipol) + idim;
+        unsigned long* hist = get_histogram (ipol);
+              
 #ifdef _DEBUG
-	cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
+        cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
 #endif
-	      
-	unpack (ndat, from, nskip, into, fskip, hist);
-	offset ++;
+              
+        unpack (ndat, from, nskip, into, fskip, hist);
+        offset ++;
       }
     }
   }
@@ -178,7 +207,7 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
 
   if (stream)
     error = cudaMemcpyAsync (d_staging, from, ndat*2,
-			     cudaMemcpyHostToDevice, stream);
+                             cudaMemcpyHostToDevice, stream);
   else
     error = cudaMemcpy (d_staging, from, ndat*2, cudaMemcpyHostToDevice);
 
@@ -188,7 +217,7 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
                  cudaGetErrorString (error));
 
   caspsr_unpack (stream, ndat, table->get_scale(), 
-		 d_staging, into_pola, into_polb); 
+                 d_staging, into_pola, into_polb); 
 }
 
 #endif
