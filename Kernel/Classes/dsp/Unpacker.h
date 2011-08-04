@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.29 $
-   $Date: 2010/01/31 09:51:43 $
+   $Revision: 1.30 $
+   $Date: 2011/08/04 21:12:32 $
    $Author: straten $ */
 
 
@@ -45,6 +45,9 @@ namespace dsp {
     
     //! Constructor
     Unpacker (const char* name = "Unpacker");
+
+    //! Clone operator
+    virtual Unpacker* clone() const;
     
     //! Return a pointer to a new instance of the appropriate sub-class
     static Unpacker* create (const Observation* observation);
