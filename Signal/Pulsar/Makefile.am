@@ -21,9 +21,9 @@ CyclicFold.C
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FoldCUDA.h
+nobase_include_HEADERS += dsp/FoldCUDA.h dsp/TransferPhaseSeriesCUDA.h
 
-libdspsr_la_SOURCES += FoldCUDA.cu
+libdspsr_la_SOURCES += FoldCUDA.cu TransferPhaseSeriesCUDA.C
 
 libdspsr_la_LIBADD = FoldCUDA.lo
 
@@ -45,6 +45,7 @@ include $(top_srcdir)/config/Makefile.include
 LDADD = libdspsr.la \
 	$(top_builddir)/Signal/General/libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la \
+	$(top_builddir)/Signal/Statistics/libdspstats.la \
 	@CUFFT_LIBS@ @CUDA_LIBS@
 
 AM_CPPFLAGS += @CUFFT_CFLAGS@
