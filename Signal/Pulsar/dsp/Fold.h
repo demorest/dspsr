@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.68 $
-   $Date: 2011/03/23 14:53:54 $
-   $Author: demorest $ */
+   $Revision: 1.69 $
+   $Date: 2011/08/04 21:06:43 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h
@@ -143,10 +143,13 @@ namespace dsp {
 
     //! Engine used to perform folding
     class Engine;
+
     void set_engine (Engine*);
 
     //! Set output cerr stream
     virtual void set_cerr (std::ostream& os) const;
+
+    virtual Engine * get_engine() { return engine; }
 
   protected:
 
@@ -255,6 +258,9 @@ namespace dsp {
     //! Set the phase bin into which the idat'th sample will be integrated
     virtual void set_bin (uint64_t idat, double ibin, double bins_per_samp) = 0;
 
+    //! Return the number of time samples folded
+    virtual uint64_t get_ndat_folded () const = 0;
+
     //! Return the PhaseSeries into which data will be folded
     virtual PhaseSeries* get_profiles () = 0;
 
@@ -270,6 +276,9 @@ namespace dsp {
     //! Enable engine to prepare any internal memory required for the plan
     virtual void set_ndat (uint64_t ndat, uint64_t idat_start) {}
 
+    //! Set whether the input contains zeroed samples
+    //virtual void set_zereod_samples (bool _zeroed_samples) = 0;
+
   protected:
 
     float* output;
@@ -277,6 +286,10 @@ namespace dsp {
 
     const float* input;
     unsigned input_span;
+
+    unsigned* hits;
+    unsigned hits_nchan;
+    bool zeroed_samples;
 
     unsigned ndat_fold;
     uint64_t idat_start;

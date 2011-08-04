@@ -7,6 +7,8 @@
  *
  ***************************************************************************/
 
+//#define _DEBUG 1
+
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
 
@@ -17,7 +19,7 @@
 
 using namespace std;
 
-CUDA::FoldEngine::FoldEngine (cudaStream_t _stream)
+CUDA::FoldEngine::FoldEngine (cudaStream_t _stream, bool _hits_on_gpu)
 {
   d_bin = 0;
   d_bin_size = 0;
@@ -28,6 +30,13 @@ CUDA::FoldEngine::FoldEngine (cudaStream_t _stream)
 
   d_profiles = new dsp::PhaseSeries;
   d_profiles->set_memory( new CUDA::DeviceMemory );
+  
+  hits_on_gpu = _hits_on_gpu;
+  if (hits_on_gpu)
+    d_profiles->set_hits_memory (new CUDA::DeviceMemory);
+
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::FoldEngine::FoldEngine hits_on_gpu=" << hits_on_gpu << endl;
 
   // no data on either the host or device
   synchronized = true;
@@ -109,11 +118,12 @@ void CUDA::FoldEngine::synch (dsp::PhaseSeries* output) try
     cerr << "CUDA::FoldEngine::synch output=" << output << endl;
 
   if (!transfer)
-    transfer = new dsp::TransferCUDA;
+    transfer = new dsp::TransferPhaseSeriesCUDA;
 
   transfer->set_kind( cudaMemcpyDeviceToHost );
   transfer->set_input( d_profiles );
   transfer->set_output( output );
+  transfer->set_transfer_hits( hits_on_gpu );
   transfer->operate ();
 
   synchronized = true;
@@ -169,15 +179,25 @@ void CUDA::FoldEngine::send_binplan ()
 }
 
 
+/* 
+ * CUDA Folding Kernels
+ *   ipol = threadIdx.y
+ *   npol = blockDim.y
+ *   ichan = blockIdx.y
+ *   nchan = gridDim.y
+ *   idim = threadIdx.z
+ */
+
 __global__ void fold1bin (const float* in_base,
-			     unsigned in_span,
-			     float* out_base,
-			     unsigned out_span,
-			     unsigned ndim,
-			     unsigned nbin,
-			     unsigned binplan_size,
-			     CUDA::bin* binplan)
+           unsigned in_span,
+           float* out_base,
+           unsigned out_span,
+           unsigned ndim,
+           unsigned nbin,
+           unsigned binplan_size,
+           CUDA::bin* binplan)
 {
+
   unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (ibin >= binplan_size)
@@ -185,8 +205,8 @@ __global__ void fold1bin (const float* in_base,
 
   unsigned output_ibin = binplan[ibin].ibin;
 
-  in_base += in_span * blockIdx.y + threadIdx.z;
-  out_base += out_span * blockIdx.y + threadIdx.z;
+  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y) + threadIdx.z;
+  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y) + threadIdx.z;
 
   float total = 0;
 
@@ -201,6 +221,48 @@ __global__ void fold1bin (const float* in_base,
   out_base[ output_ibin * ndim ] += total;
 }
 
+
+__global__ void fold1binhits (const float* in_base,
+			     unsigned in_span,
+			     float* out_base,
+			     unsigned out_span,
+           unsigned* hits_base,
+			     unsigned ndim,
+			     unsigned nbin,
+			     unsigned binplan_size,
+			     CUDA::bin* binplan)
+{
+  unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (ibin >= binplan_size)
+    return;
+
+  unsigned output_ibin = binplan[ibin].ibin;
+
+  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y) + threadIdx.z;
+  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y) + threadIdx.z;
+  hits_base += nbin * blockIdx.y;
+
+  float total = 0;
+  unsigned hits = 0;
+
+  for (; ibin < binplan_size; ibin += nbin)
+  {
+    const float* input = in_base + binplan[ibin].offset * ndim;
+
+    for (unsigned i=0; i < binplan[ibin].hits; i++)
+    {
+      total += input[i*ndim];
+      hits += (input[i*ndim] != 0);
+    }
+  }
+
+  out_base[ output_ibin * ndim ] += total;
+  // if ipol and idim both equal 0
+  if ((threadIdx.y + threadIdx.z) == 0)
+    hits_base[ output_ibin ] += hits;
+}
+
 std::ostream& operator<< (std::ostream& ostr, const dim3& v)
 {
   return ostr << "(" << v.x << "," << v.y << "," << v.z << ")";
@@ -211,8 +273,20 @@ void CUDA::FoldEngine::fold ()
   setup ();
   send_binplan ();
 
-  dim3 blockDim (128, 1, ndim);
-  dim3 gridDim (folding_nbin/128, npol*nchan, 1);
+  unsigned bin_dim = folding_nbin;
+  if (binplan_nbin < folding_nbin)
+    bin_dim = binplan_nbin;
+
+  unsigned bin_threads = 128;
+  if (bin_threads > bin_dim)
+    bin_threads = 32;
+
+  unsigned bin_blocks = bin_dim / bin_threads;
+  if (bin_dim % bin_threads)
+    bin_blocks ++;
+
+  dim3 blockDim (bin_threads, npol, ndim);
+  dim3 gridDim (bin_blocks, nchan, 1);
 
 #if 0
   cerr << "blockDim=" << blockDim << endl;
@@ -220,11 +294,24 @@ void CUDA::FoldEngine::fold ()
 #endif
 
   DEBUG("input span=" << input_span << " output span=" << output_span);
+  DEBUG("ndim=" << ndim << " nbin=" << folding_nbin << " binplan_nbin=" << binplan_nbin);
 
-  fold1bin<<<gridDim,blockDim,0,stream>>> (input, input_span,
-					   output, output_span,
-					   ndim, folding_nbin,
-					   binplan_nbin, d_bin);
+  if (hits_on_gpu && zeroed_samples && hits_nchan == nchan)
+  {
+    fold1binhits<<<gridDim,blockDim,0,stream>>> (input, input_span,
+	  				   output, output_span, hits,
+		  			   ndim, folding_nbin,
+			  		   binplan_nbin, d_bin);
+
+  }
+  else
+  {
+    fold1bin<<<gridDim,blockDim,0,stream>>> (input, input_span,
+               output, output_span,
+               ndim, folding_nbin,
+               binplan_nbin, d_bin);
+
+  }
 
   // profile on the device is no longer synchronized with the one on the host
   synchronized = false;
@@ -239,3 +326,4 @@ void CUDA::FoldEngine::fold ()
 		   cudaGetErrorString (error));
   }
 }
+

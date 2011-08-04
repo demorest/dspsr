@@ -65,7 +65,7 @@ void dsp::Fold::initialise()
     nspan = 120;   
     if (psrdisp_compatible) {
       cerr << "dsp::Fold psrdisp compatibility\n"
-	"   using nspan of 960 instead of 120" << endl;
+        "   using nspan of 960 instead of 120" << endl;
       nspan = 960;
     }
   }
@@ -183,7 +183,7 @@ void dsp::Fold::prepare (const Observation* observation)
   {
     if (verbose)
       cerr << "dsp::Fold::prepare using folding_period="
-	   << folding_period << endl;
+           << folding_period << endl;
     pulsar_ephemeris = 0;
     folding_predictor = 0;
     built = true;
@@ -217,7 +217,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
 Pulsar::Predictor*
 dsp::Fold::get_folding_predictor (const Pulsar::Parameters* params,
-				  const Observation* observation)
+                                  const Observation* observation)
 {
   MJD time = observation->get_start_time();
   Pulsar::Generator* generator = Pulsar::Generator::factory (params);
@@ -286,35 +286,36 @@ unsigned dsp::Fold::choose_nbin ()
 
   if (verbose)
     cerr << "dsp::Fold::choose_nbin folding_period=" 
-	 << the_folding_period << endl;
+         << the_folding_period << endl;
 
   if (the_folding_period <= 0.0)
+  {
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
-		 "no folding period or Pulsar::Predictor set. eph=%p",
-		 pulsar_ephemeris.ptr());
-
+                 "no folding period or Pulsar::Predictor set. eph=%p",
+                 pulsar_ephemeris.ptr());
+  }
   double sampling_period = 1.0 / input->get_rate();
 
   if (verbose)
     cerr << "dsp::Fold::choose_nbin sampling_period=" 
-	 << sampling_period << endl;
+         << sampling_period << endl;
 
   if (sampling_period < 0)
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
-		 "input has a negative sampling rate");
+                 "input has a negative sampling rate");
 
   double binwidth = minimum_bin_width * sampling_period;
 
   if (verbose)
     cerr << "dsp::Fold::choose_nbin minimum_bin_width=" 
-	 << minimum_bin_width << " bins or " << binwidth << " seconds"
-	 << endl;
+         << minimum_bin_width << " bins or " << binwidth << " seconds"
+         << endl;
 
   unsigned sensible_nbin = unsigned (the_folding_period / binwidth);
 
   if (verbose)
     cerr << "dsp::Fold::choose_nbin sensible nbin=" 
-	 << sensible_nbin << endl;
+         << sensible_nbin << endl;
 
   if (power_of_two) {
     double log2bin = log(the_folding_period/binwidth) / log(2.0);
@@ -323,7 +324,7 @@ unsigned dsp::Fold::choose_nbin ()
 
     if (verbose)
       cerr << "dsp::Fold::choose_nbin largest power of 2 < nbin=" 
-	   << sensible_nbin << endl;
+           << sensible_nbin << endl;
   }
 
   if (sensible_nbin == 0) {
@@ -336,21 +337,21 @@ unsigned dsp::Fold::choose_nbin ()
   if (requested_nbin > 1) {
     // the Fold::set_nbin method has been called
     if (verbose) cerr << "dsp::Fold::choose_nbin using requested nbin="
-		      << requested_nbin << endl;
+                      << requested_nbin << endl;
     folding_nbin = requested_nbin;
 
     if (requested_nbin > sensible_nbin) {
       if (force_sensible_nbin){
-	 // if we are forcing sensible bins, change nbin.
+         // if we are forcing sensible bins, change nbin.
          folding_nbin=sensible_nbin;
       } else {
-	 // otherwise tell the user they are being rather foolish/optimistic!
+         // otherwise tell the user they are being rather foolish/optimistic!
         cerr << "dsp::Fold::choose_nbin WARNING Requested nbin=" 
-	   << requested_nbin << " > sensible nbin=" << sensible_nbin << "."
-	"  Where:\n"
-	"  sampling period     = " << sampling_period*1e3 << " ms and\n"
-	"  requested bin width = " << the_folding_period/requested_nbin*1e3 << 
-	" ms\n" << endl;
+           << requested_nbin << " > sensible nbin=" << sensible_nbin << "."
+        "  Where:\n"
+        "  sampling period     = " << sampling_period*1e3 << " ms and\n"
+        "  requested bin width = " << the_folding_period/requested_nbin*1e3 << 
+        " ms\n" << endl;
       }
     }
   }
@@ -358,12 +359,12 @@ unsigned dsp::Fold::choose_nbin ()
     // the Fold::set_nbin method has not been called.  choose away ...
     if (maximum_nbin && sensible_nbin > maximum_nbin) {
       if (verbose) cerr << "dsp::Fold::choose_nbin using maximum nbin=" 
-			<< maximum_nbin << endl;
+                        << maximum_nbin << endl;
       folding_nbin = maximum_nbin;
     }
     else {
       if (verbose) cerr << "dsp::Fold::choose_nbin using sensible nbin=" 
-			<< sensible_nbin << endl;
+                        << sensible_nbin << endl;
       folding_nbin = sensible_nbin;
     }
   }
@@ -526,8 +527,6 @@ void dsp::Fold::transformation () try
   if (input->get_ndat() == 0)
     return;
 
-  check_input();
-
   if (!built)
   {
     if (verbose)
@@ -537,7 +536,7 @@ void dsp::Fold::transformation () try
 
   if (folding_period <= 0 && !folding_predictor)
     throw Error (InvalidState, "dsp::Fold::transformation",
-		 "no folding period or Pulsar::Predictor set");
+                 "no folding period or Pulsar::Predictor set");
 
   if (folding_nbin == 0)
   {
@@ -551,8 +550,8 @@ void dsp::Fold::transformation () try
   if ( use->integration_length &&
        use->get_reference_phase() != get_reference_phase() )
     throw Error (InvalidState, "dsp::Fold::transformation",
-		 "output reference phase=%lf != reference phase=%lf",
-		 use->get_reference_phase(), get_reference_phase() );
+                 "output reference phase=%lf != reference phase=%lf",
+                 use->get_reference_phase(), get_reference_phase() );
 
   // Temporarily make sure the DMs are the same
   use->set_dispersion_measure( input->get_dispersion_measure() ); 
@@ -578,7 +577,7 @@ void dsp::Fold::transformation () try
 
     if (verbose)
       cerr << "dsp::Fold::transformation WeightedTimeSeries weights="
-	   << weights << " ndatperweight=" << ndatperweight << endl;
+           << weights << " ndatperweight=" << ndatperweight << endl;
   }
 
   fold (nweights, weights, ndatperweight, weight_idat);
@@ -637,9 +636,9 @@ catch (Error& error)
 */
 
 void dsp::Fold::fold (uint64_t nweights,
-		      const unsigned* weights, 
-		      unsigned ndatperweight,
-		      unsigned weight_idat)
+                      const unsigned* weights, 
+                      unsigned ndatperweight,
+                      unsigned weight_idat)
 {
   if (!folding_nbin)
   {
@@ -650,15 +649,15 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (!folding_predictor && !folding_period)
     throw Error (InvalidState, "dsp::Fold::fold",
-		 "no polynomial and no period specified");
+                 "no polynomial and no period specified");
 
   uint64_t ndat = get_input()->get_ndat();
   uint64_t idat_end = idat_start + ndat_fold;
 
   if (idat_end > ndat)
     throw Error (InvalidParam, "dsp::Fold:fold",
-		 "idat_start="UI64" + ndat_fold="UI64" > ndat="UI64,
-		 idat_start, ndat_fold, ndat);
+                 "idat_start="UI64" + ndat_fold="UI64" > ndat="UI64,
+                 idat_start, ndat_fold, ndat);
 
   // midpoint of the first sample
   double mid_idat_start = double(idat_start) + 0.5;
@@ -683,13 +682,17 @@ void dsp::Fold::fold (uint64_t nweights,
 
   // number of time samples folded
   uint64_t ndat_folded = 0;
+  uint64_t ndat_not_folded = 0;
+
+  // if the input contains zeroed samples that have been zapped by RFI mitigation
+  const bool zeroed_samples = input->get_zeroed_data();
 
   // unique identifier for this fold (helps with multi-threaded debugging)
   uint64_t id = input->get_input_sample() + idat_start;
 
   if (verbose)
     cerr << "dsp::Fold::fold " << id << " idat_start=" << idat_start 
-	 << " ndat_fold=" << ndat_fold << endl;
+         << " ndat_fold=" << ndat_fold << endl;
 
   bool bad_data = false;
 
@@ -701,22 +704,22 @@ void dsp::Fold::fold (uint64_t nweights,
 
     if (verbose)
       cerr << "dsp::Fold::fold " << id << " ndatperweight=" << ndatperweight 
-	   << " weight_idat=" << weight_idat << " iweight=" << iweight 
-	   << " nweights=" << nweights << endl;
+           << " weight_idat=" << weight_idat << " iweight=" << iweight 
+           << " nweights=" << nweights << endl;
 
     if (iweight >= nweights)
     {
       Error error (InvalidState, "dsp::Fold::fold");
       error << "iweight=" << iweight << " >= nweight=" << nweights << "\n\t"
-	    << "idat_start=" << idat_start 
-	    << " weight_idat=" << weight_idat 
-	    << " ndatperweight=" << ndatperweight;
+            << "idat_start=" << idat_start 
+            << " weight_idat=" << weight_idat 
+            << " ndatperweight=" << ndatperweight;
       throw error;
     }
 
     tot_weights ++;
 
-    if (weights[iweight] == 0)
+    if (!zeroed_samples && (weights[iweight] == 0))
     {
       discarded_weights ++;
       bad_weights ++;
@@ -727,7 +730,7 @@ void dsp::Fold::fold (uint64_t nweights,
   double sampling_interval = 1.0/get_input()->get_rate();
   double double_nbin = double (folding_nbin);
   double phase_per_sample = sampling_interval / pfold;
-  unsigned* hits = &(get_output()->hits[0]);
+  unsigned* hits = get_output()->get_hits();
    
   if (engine)
   {
@@ -746,14 +749,14 @@ void dsp::Fold::fold (uint64_t nweights,
 
       assert (iweight < nweights);
 
-      if (weights[iweight] == 0)
+      if (!zeroed_samples && (weights[iweight] == 0))
       {
-	bad_data = true;
-	discarded_weights ++;
-	bad_weights ++;
+        bad_data = true;
+        discarded_weights ++;
+        bad_weights ++;
       }
       else
-	bad_data = false;
+        bad_data = false;
 
       idat_nextweight += ndatperweight;
     }
@@ -774,8 +777,11 @@ void dsp::Fold::fold (uint64_t nweights,
       binplan[idat-idat_start] = folding_nbin;
     else
     {
-      hits[ibin]++;
-      ndat_folded ++;
+      if (!zeroed_samples)
+      {
+        hits[ibin]++;
+        ndat_folded ++;
+      }
     }
   }
 
@@ -783,19 +789,19 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (verbose)
     cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded 
-	 << " time=" << time_folded*1e3 << " ms"
-	 << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
+         << " time=" << time_folded*1e3 << " ms"
+         << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
 
   PhaseSeries* result = get_output();
- 
+
   result->integration_length += time_folded;
   result->ndat_total += ndat_fold;
   total_weights += tot_weights;
 
   if ( result->get_nbin() != folding_nbin )
     throw Error (InvalidParam,"dsp::Fold::fold",
-		 "folding_nbin != output->nbin (%d != %d)",
-		 folding_nbin, result->get_nbin());
+                 "folding_nbin != output->nbin (%d != %d)",
+                 folding_nbin, result->get_nbin());
 
   const TimeSeries* in = get_input();
 
@@ -806,8 +812,14 @@ void dsp::Fold::fold (uint64_t nweights,
   if (engine)
   {
     engine->fold ();
+    if (zeroed_samples)
+      result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
     return;
   }
+
+  if (verbose)
+    cerr << "dsp::Fold::fold ndim=" << ndim << " folding_nbin=" << folding_nbin 
+         << " nbin=" << result->get_nbin() << endl;
 
   if (in->get_order() == TimeSeries::OrderFPT)
   {
@@ -815,21 +827,38 @@ void dsp::Fold::fold (uint64_t nweights,
     {
       for (unsigned ipol=0; ipol<npol; ipol++)
       {
-	const float* timep = in->get_datptr(ichan,ipol) + idat_start * ndim;
-	float* phasep = result->get_datptr(ichan,ipol);
+        const float* timep = in->get_datptr(ichan,ipol) + idat_start * ndim;
+        float* phasep = result->get_datptr(ichan,ipol);
 
-	for (uint64_t idat=0; idat < ndat_fold; idat++)
-	{
-	  if (binplan[idat] != folding_nbin)
-	  {
-	    float* phdimp = phasep + binplan[idat] * ndim;
-	    for (unsigned idim=0; idim<ndim; idim++)
-	      phdimp[idim] += timep[idim];
-	  }
-	  timep += ndim;
-	} // for each idat
-      } // for each chan
-    } // for each pol
+        for (uint64_t idat=0; idat < ndat_fold; idat++)
+        {
+          if (binplan[idat] != folding_nbin)
+          {
+            float* phdimp = phasep + binplan[idat] * ndim;
+            for (unsigned idim=0; idim<ndim; idim++)
+            {
+              phdimp[idim] += timep[idim];
+            }
+            if (zeroed_samples && ipol==0)
+            {
+              if (timep[0] != 0)
+              {
+                hits[binplan[idat]]++;
+                ndat_folded++;
+              }
+              else
+              {
+                ndat_not_folded++;
+              }
+            } 
+          }
+          timep += ndim;
+        } // for each idat
+      } // for each pol
+
+      if (zeroed_samples && ichan < nchan-1)
+        hits += folding_nbin;
+    } // for each chan 
   }
   else
   {
@@ -842,11 +871,25 @@ void dsp::Fold::fold (uint64_t nweights,
     {
       if (binplan[idat] != folding_nbin)
       {
-	float* php = phasep + binplan[idat] * nfloat;
-	for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
-	  php[ifloat] += timep[ifloat];
+        float* php = phasep + binplan[idat] * nfloat;
+        for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
+          php[ifloat] += timep[ifloat];
       }
       timep += nfloat;
+    }
+  }
+
+  if (zeroed_samples)
+  {
+    time_folded = double (ndat_folded) / (get_input()->get_rate() * nchan);
+    result->integration_length += time_folded;
+    if (verbose)
+    {
+      double percent_folded = (double) ndat_folded / (double) (ndat_folded + ndat_not_folded);
+      percent_folded *= 100;
+      cerr << "dsp::Fold::fold folded " << ndat_folded << " of " 
+           << ndat_not_folded + ndat_folded << " " << percent_folded
+           << "\% time_folded=" << time_folded << endl;
     }
   }
 }
@@ -870,16 +913,16 @@ void dsp::Fold::fold (uint64_t nweights,
 
       for (idat=0; idat < ndat_fold; idat++)
       {
-	if (binplan[idat] != folding_nbin)
+        if (binplan[idat] != folding_nbin)
         {
-	  phdimp = phasep + binplan[idat] * ndim;
-	  //for (unsigned idim=0; idim<ndim; idim++)
-	  //  phdimp[idim] += timep[idim];
+          phdimp = phasep + binplan[idat] * ndim;
+          //for (unsigned idim=0; idim<ndim; idim++)
+          //  phdimp[idim] += timep[idim];
 
-	  phdimp[0] += timep[0];
-	  phdimp[1] += timep[1];	
-	}
-	timep += ndim;
+          phdimp[0] += timep[0];
+          phdimp[1] += timep[1];        
+        }
+        timep += ndim;
       } // for each idat
     } // for each chan
   } // for each pol
@@ -920,7 +963,7 @@ void dsp::Fold::Engine::setup () try
 {
   if (!parent)
     throw Error (InvalidState, "dsp::Fold::Engine::setup",
-		 "no parent");
+                 "no parent");
 
   if (verbose)
     parent->cerr << "dsp::Fold::Engine::setup"
@@ -940,10 +983,16 @@ void dsp::Fold::Engine::setup () try
   output = out->get_datptr(0,0);
   output_span = out->get_nfloat_span();
 
+  hits = out->get_hits();
+  hits_nchan = out->get_hits_nchan();
+  zeroed_samples = in->get_zeroed_data(); 
+
   if (verbose)
     parent->cerr << "dsp::Fold::Engine::setup"
     " input=" << input << " span=" << input_span << 
-    " output=" << output << " span=" << output_span << endl;
+    " output=" << output << " span=" << output_span <<
+    " hits=" << hits << " hits_nchan=" << hits_nchan <<
+    " zeroed_samples=" << zeroed_samples << endl;
 }
  catch (Error& error)
    {

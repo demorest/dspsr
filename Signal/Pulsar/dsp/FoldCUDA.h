@@ -7,15 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.10 $
-   $Date: 2011/03/23 19:42:24 $
+   $Revision: 1.11 $
+   $Date: 2011/08/04 21:06:43 $
    $Author: straten $ */
 
 #ifndef __baseband_cuda_Fold_h
 #define __baseband_cuda_Fold_h
 
 #include "dsp/Fold.h"
-#include "dsp/TransferCUDA.h"
+#include "dsp/TransferPhaseSeriesCUDA.h"
 
 namespace CUDA
 {
@@ -30,11 +30,12 @@ namespace CUDA
   {
   public:
 
-    FoldEngine (cudaStream_t stream);
+    FoldEngine (cudaStream_t stream, bool hits_on_gpu=false);
     ~FoldEngine ();
 
     void set_nbin (unsigned nbin);
     void set_ndat (uint64_t ndat, uint64_t idat_start);
+    uint64_t get_ndat_folded () const { return ndat_fold; }
 
     void set_bin (uint64_t idat, double ibin, double unused=0);
 
@@ -65,9 +66,11 @@ namespace CUDA
     Reference::To<dsp::PhaseSeries> d_profiles;
 
     // operation used to transfer data from device to host
-    Reference::To<dsp::TransferCUDA> transfer;
+    Reference::To<dsp::TransferPhaseSeriesCUDA> transfer;
 
     cudaStream_t stream;
+
+    bool hits_on_gpu;
   };
 }
 
