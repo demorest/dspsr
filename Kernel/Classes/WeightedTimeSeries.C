@@ -129,6 +129,8 @@ uint64_t dsp::WeightedTimeSeries::get_nweights () const
 {
   uint64_t nweights = get_nweights (get_ndat() + weight_idat);
 
+  //cerr << "WVS2 NWEIGHTS *************************** " << nweights << endl;
+
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::get_nweights weight_idat=" 
 	 << weight_idat << " nweights=" << nweights << endl;
@@ -166,6 +168,13 @@ uint64_t dsp::WeightedTimeSeries::get_nweights (uint64_t nsamples) const
   
   return nweights;
 }
+
+//! Set the offset of the first time sample in the current weight array
+void dsp::WeightedTimeSeries::set_weight_idat (uint64_t _weight_idat)
+{
+  weight_idat = _weight_idat;
+}
+
 
 dsp::WeightedTimeSeries* dsp::WeightedTimeSeries::clone() const
 {
@@ -212,6 +221,8 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
 
   uint64_t nweights = get_nweights (weight_idat + nsamples);
 
+  // cerr << "WVS ******************************** NWEIGHTS=" << nweights << endl;
+
   if (verbose)
     cerr << "dsp::WeightedTimeSeries::resize_weights"
       " reserve=" << get_reserve() << endl;
@@ -244,8 +255,8 @@ void dsp::WeightedTimeSeries::resize_weights (uint64_t nsamples)
     if (verbose)
       cerr << "dsp::WeightedTimeSeries::resize_weights new " << require <<endl;
 
-    require += 2 * get_npol_weight() * get_nchan_weight();
-    nweights += 2;
+    require += 4 * get_npol_weight() * get_nchan_weight();
+    nweights += 4;
 
     base = new unsigned [require];
     weight_size = require;

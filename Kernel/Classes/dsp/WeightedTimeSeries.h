@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.14 $
-   $Date: 2009/12/23 07:40:12 $
+   $Revision: 1.15 $
+   $Date: 2011/08/04 21:05:36 $
    $Author: straten $ */
 
 #ifndef __WeightedTimeSeries_h
@@ -98,6 +98,9 @@ namespace dsp {
 
     //! Get the number of weights required for a given number of samples
     uint64_t get_nweights (uint64_t nsample) const;
+
+    //! Set the offset of the first time sample in the current weight array
+    void set_weight_idat (uint64_t weight_idat);
 
     //! Get the offset into the current weight of the first time sample
     uint64_t get_weight_idat () const { return weight_idat; }
