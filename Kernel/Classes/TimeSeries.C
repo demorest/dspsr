@@ -1,4 +1,5 @@
-/***************************************************************************
+
+ /***************************************************************************
  *
  *   Copyright (C) 2002 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
@@ -43,6 +44,7 @@ void dsp::TimeSeries::init ()
   reserve_ndat = 0;
   reserve_nfloat = 0;
   input_sample = -1;
+  zeroed_data = false;
 }
 
 dsp::TimeSeries* dsp::TimeSeries::clone () const
@@ -198,8 +200,12 @@ void dsp::TimeSeries::seek (int64_t offset)
 
   float* fbuffer = (float*)buffer;
 
+  int64_t reserve_step = get_ndim();
+  if (order == OrderTFP)
+    reserve_step *= get_nchan() * get_npol();
+
   int64_t current_offset = int64_t(data - fbuffer);
-  int64_t float_offset = offset * int64_t(get_ndim());
+  int64_t float_offset = offset * reserve_step;
 
   if (-float_offset > current_offset)
     throw Error (InvalidRange, "dsp::TimeSeries::seek",
@@ -640,7 +646,12 @@ void dsp::TimeSeries::change_reserve (int64_t change) const
 
   TimeSeries* thiz = const_cast<TimeSeries*>(this);
 
-  if (change < 0) {
+  uint64_t reserve_step = get_ndim();
+  if (order == OrderTFP)
+    reserve_step *= get_nchan() * get_npol();
+
+  if (change < 0)
+  {
     uint64_t decrease = -change;
     if (decrease > reserve_ndat)
       throw Error (InvalidState, "dsp::TimeSeries::change_reserve",
@@ -648,11 +659,12 @@ void dsp::TimeSeries::change_reserve (int64_t change) const
 		   decrease, reserve_ndat);
 
     thiz->reserve_ndat -= decrease;
-    thiz->reserve_nfloat -= decrease * get_ndim();
+    thiz->reserve_nfloat -= decrease * reserve_step;
   }
-  else {
+  else 
+  {
     thiz->reserve_ndat += change;
-    thiz->reserve_nfloat += change * get_ndim();
+    thiz->reserve_nfloat += change * reserve_step;
   }
 
 }
