@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.25 $
-   $Date: 2010/06/03 20:45:30 $
+   $Revision: 1.26 $
+   $Date: 2011/08/04 21:06:30 $
    $Author: straten $ */
 
 #ifndef __Convolution_h
@@ -123,6 +123,8 @@ namespace dsp {
   private:
 
     friend class Filterbank;
+    friend class TFPFilterbank;
+    friend class SKFilterbank;
 
     unsigned nfilt_tot;
     unsigned nfilt_pos;
