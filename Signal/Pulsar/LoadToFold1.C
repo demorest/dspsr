@@ -411,6 +411,7 @@ void dsp::LoadToFold1::prepare () try
     // put the SK signal path into a separate thread
     skthread = new OperationThread();
 
+#if HAVE_CUDA
     if (run_on_gpu) 
     {
       unpack_on_cpu->set_input( manager->get_unpacker()->get_input() );
@@ -418,6 +419,7 @@ void dsp::LoadToFold1::prepare () try
       skthread->append_operation( unpack_on_cpu );
       manager->set_post_load_operation( skthread.get() );
     }
+#endif
 
     skoutput = new_time_series ();
 
@@ -428,10 +430,13 @@ void dsp::LoadToFold1::prepare () try
     if (!config->input_buffering)
       skfilterbank->set_buffering_policy (NULL);
 
+#if HAVE_CUDA
     if (run_on_gpu)
       skfilterbank->set_input ( unpack_on_cpu->get_output() );
     else
+#endif
       skfilterbank->set_input ( unpacked );
+
     skfilterbank->set_output ( skoutput );
     skfilterbank->set_nchan ( config->filterbank.get_nchan() );
     skfilterbank->set_M ( config->sk_m );
@@ -462,7 +467,9 @@ void dsp::LoadToFold1::prepare () try
 
     skthread->append_operation (skdetector);
 
+#if HAVE_CUDA
     if (!run_on_gpu)
+#endif
     {
       operations.push_back (skthread.get());
       OperationThread::Wait * skthread_wait = skthread->get_wait();
