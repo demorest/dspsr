@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-set nthread=8
+set nthread=2
 set cache=1
 set gpu=""
 
@@ -141,9 +141,9 @@ while ( $bwtrial < $nbwtrial )
 
     end
 
-    set preptime=`grep prepared $file | tail -5 | awk -vtot=0 'tot+=$4 {print tot/5}' | tail -1`
+    set preptime=`grep prepared $file | tail -5 | awk 'tot+=$4 {print tot/5}' | tail -1`
 
-    set realtime=`grep -F % $file | grep -v Operation | tail -5 | awk '{print $3}' | awk -F: -vtot=0 'tot+=$1*60+$2 {print tot/5}' | tail -1`
+    set realtime=`grep -F % $file | grep -v Operation | tail -5 | awk '{print $3}' | awk -F: 'tot+=$1*60+$2 {print tot/5}' | tail -1`
 
     echo "$DM $realtime $preptime" | awk '{print $1, ($2-$3)/'$time'}' >> $outfile
 
