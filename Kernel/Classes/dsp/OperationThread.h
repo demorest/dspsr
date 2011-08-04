@@ -28,6 +28,9 @@ namespace dsp
     //! Destructor destroys all Operation instances
     ~OperationThread();
 
+    //! Append operation to the list of operations, thread state must be Idle
+    void append_operation (Operation* op);
+
     //! Calls the reserve method of each Operation
     void reserve ();
 
@@ -51,6 +54,9 @@ namespace dsp
 
     //! Use this Operation to wait for completion of the operation thread
     class Wait;
+
+    //! Return a new Wait operation for this thread
+    Wait * get_wait();
 
   protected:
 

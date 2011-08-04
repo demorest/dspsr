@@ -28,6 +28,8 @@ dsp::OperationThread::OperationThread (Operation* op)
 
 dsp::OperationThread::~OperationThread ()
 {
+  if (verbose)
+    cerr << "dsp::OperationThread::~OperationThread()" << endl;
 }
 
 void* dsp::OperationThread::operation_thread (void* ptr)
@@ -64,6 +66,16 @@ void dsp::OperationThread::operation ()
 
   state = Active;
   context->broadcast ();
+}
+
+void dsp::OperationThread::append_operation (Operation* op)
+{
+  if (state != Idle)
+    throw Error (InvalidState, "dsp::OperationThread::append_operation",
+       "cannot append operation when state != Idle");
+  else
+    if (op)
+      operations.push_back( op );    
 }
 
 void dsp::OperationThread::prepare ()
@@ -130,3 +142,9 @@ void dsp::OperationThread::Wait::operation ()
   while (parent->state == Active)
     parent->context->wait ();
 }
+
+dsp::OperationThread::Wait* dsp::OperationThread::get_wait()
+{
+  return new Wait(this);
+}
+
