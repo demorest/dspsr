@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.32 $
-   $Date: 2010/03/24 05:34:16 $
+   $Revision: 1.33 $
+   $Date: 2011/08/04 21:04:38 $
    $Author: straten $ */
 
 
@@ -92,6 +92,10 @@ namespace dsp {
     //! Set the number of copies of data constraint in set_block_size
     void set_copies (unsigned);
 
+    //! Set custom post load operation
+    void set_post_load_operation (Operation * op);
+
+
     //! Set the block size according to above constraints
     virtual uint64_t set_block_size (uint64_t minimum_samples);
 
@@ -105,6 +109,7 @@ namespace dsp {
 
     //! Set verbosity ostream
     virtual void set_cerr (std::ostream& os) const;
+
 
   protected:
 
@@ -123,9 +128,13 @@ namespace dsp {
     //! The container in which the TimeSeries data is unpacked
     Reference::To<TimeSeries> data;
 
+    //! Optional operation performed between load and unpack
+    Reference::To<Operation> post_load_operation;
+
     uint64_t maximum_RAM;
     uint64_t minimum_RAM;
     unsigned copies;
+
   };
 
 }

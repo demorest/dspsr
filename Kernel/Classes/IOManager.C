@@ -217,6 +217,9 @@ void dsp::IOManager::prepare ()
 
   input->prepare();
   unpacker->prepare();
+  if (post_load_operation)
+    post_load_operation->prepare ();
+
 
   prepared = true;
 }
@@ -228,6 +231,9 @@ void dsp::IOManager::reserve ()
 
   input->reserve();
   unpacker->reserve();
+  if (post_load_operation)
+    post_load_operation->reserve ();
+
 }
 
 void dsp::IOManager::add_extensions (Extensions* ext)
@@ -236,6 +242,9 @@ void dsp::IOManager::add_extensions (Extensions* ext)
     input->add_extensions (ext);
   if (unpacker)
     unpacker->add_extensions (ext);
+  if (post_load_operation)
+    post_load_operation->add_extensions (ext);
+
 }
 
 void dsp::IOManager::combine (const Operation* other)
@@ -248,6 +257,9 @@ void dsp::IOManager::combine (const Operation* other)
 
   input->combine (like->input);
   unpacker->combine (like->unpacker);
+  if (post_load_operation)
+    post_load_operation->combine (like->post_load_operation);
+
 }
 
 void dsp::IOManager::reset ()
@@ -256,6 +268,8 @@ void dsp::IOManager::reset ()
 
   input->reset ();
   unpacker->reset ();
+  if (post_load_operation)
+    post_load_operation->reset ();
 }
 
 void dsp::IOManager::report () const
@@ -264,6 +278,9 @@ void dsp::IOManager::report () const
     input->report ();
   if (unpacker)
     unpacker->report ();
+  if (post_load_operation)
+    post_load_operation->report ();
+
 }
 
 void dsp::IOManager::operation ()
@@ -273,10 +290,24 @@ void dsp::IOManager::operation ()
 
   input->load (output);
 
+  if (post_load_operation)
+  {
+    if (verbose)
+      cerr << "dsp::IOManager::operation post_load_operation->operate()" << endl;
+    post_load_operation->operate ();
+  }
+
   if (!data)
     return;
 
   unpacker->operate ();
+}
+
+void dsp::IOManager::set_post_load_operation (Operation * op)
+{
+  if (verbose)
+    cerr << "dsp::IOManager::set_post_load_operation(" << op << ")" << endl;
+  post_load_operation = op;
 }
 
 uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
