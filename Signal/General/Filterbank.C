@@ -20,12 +20,10 @@ using namespace std;
 
 // #define _DEBUG 1
 
-dsp::Filterbank::Filterbank () : Convolution ("Filterbank", outofplace)
+dsp::Filterbank::Filterbank (const char* name, Behaviour behaviour) : Convolution (name, behaviour)
 {
   nchan = 0;
   freq_res = 1;
-
-  output_order = TimeSeries::OrderFPT;
 
   set_buffering_policy (new InputBuffering (this));
 }
@@ -222,10 +220,6 @@ void dsp::Filterbank::make_preparations ()
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
   }
 
-  // can support TFP only if freq_res == 1
-  if (freq_res > 1)
-    output_order = TimeSeries::OrderFPT;
-
   prepare_output ();
 
   if (engine)
@@ -292,7 +286,8 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
   output->set_nchan( nchan );
   output->set_ndim( 2 );
   output->set_state( Signal::Analytic );
-  output->set_order( output_order );
+
+  custom_prepare ();
 
   if (weighted_output)
   {
@@ -359,6 +354,9 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
   }
 
   // increment the start time by the number of samples dropped from the fft
+
+  //cerr << "FILTERBANK OFFSET START TIME=" << nfilt_pos << endl;
+
   output->change_start_time (nfilt_pos);
 
   if (verbose)
@@ -456,14 +454,11 @@ void dsp::Filterbank::transformation ()
     return;
   }
 
-  if (freq_res == 1 && output_order == TimeSeries::OrderTFP)
-  {
-    if (verbose)
-      cerr << "dsp::Filterbank::transformation TFP filterbank" << endl;
-    tfp_filterbank ();
-    return;
-  }
+  filterbank ();
+}
 
+void dsp::Filterbank::filterbank ()
+{
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;
   if (engine && engine->dual_poln())
@@ -500,6 +495,9 @@ void dsp::Filterbank::transformation ()
 
   // number of floats to step between input to filterbank
   const unsigned long in_step = nsamp_step * input->get_ndim();
+
+  // points kept from each small fft
+  const unsigned nkeep = freq_res - nfilt_tot;
 
   // number of floats to step between output from filterbank
   const unsigned long out_step = nkeep * 2;
@@ -694,229 +692,3 @@ void dsp::Filterbank::transformation ()
 	 << output->get_ndat() << endl;
 }
 
-void dsp::Filterbank::set_output_order (TimeSeries::Order order)
-{
-  output_order = order;
-}
-
-void dsp::Filterbank::tfp_filterbank ()
-{
-  const uint64_t ndat = input->get_ndat();
-  const unsigned npol = input->get_npol();
-  const unsigned input_ichan = 0;
-
-  if (verbose)
-    cerr << "dsp::Filterbank::tfp_filterbank input ndat=" << ndat << endl;
-
-  // number of FFTs
-  const uint64_t npart = ndat / nsamp_fft;
-  const unsigned long nfloat = nsamp_fft * input->get_ndim();
-
-  float* outdat = output->get_dattfp ();
-
-  for (unsigned ipol=0; ipol < npol; ipol++)
-  {
-    const float* indat = input->get_datptr (input_ichan, ipol);
-
-    for (uint64_t ipart=0; ipart < npart; ipart++)
-    {
-      if (input->get_state() == Signal::Nyquist)
-	forward->frc1d (nsamp_fft, outdat, indat);
-      else
-        forward->fcc1d (nsamp_fft, outdat, indat);
-
-      outdat += nfloat;
-      indat += nfloat;
-    }
-  }
-
-  if (npol == 2)
-  {
-    /* the data are now in TPF order, whereas TFP is desired.
-       so square law detect, then pack p1 into the p0 holes */
-
-    uint64_t nfloat = npart * npol * nchan;
-    outdat = output->get_dattfp ();
-
-    if (verbose)
-      cerr << "dsp::Filterbank::tfp_filterbank detecting" << endl;
-
-    for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
-    {
-      // Re squared
-      outdat[ifloat*2] *= outdat[ifloat*2];
-      // plus Im squared
-      outdat[ifloat*2] += outdat[ifloat*2+1] * outdat[ifloat*2+1];
-    }
-
-    if (verbose)
-      cerr << "dsp::Filterbank::tfp_filterbank interleaving" << endl;
-
-    nfloat = npart * nchan;
-
-    for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
-    {
-      // set Im[p0] = Re[p1]
-      outdat[ifloat*2+1] = outdat[(ifloat+nfloat)*2];
-    }
-
-    output->set_state (Signal::PPQQ);
-    output->set_ndim (1);
-  }
-}
-
-#if 0
-
-void filterbank::scattered_power_correct (float_Stream& dispersed_power,
-					  const a2d_correct& digitization)
-{
-  if (!ppweight)
-    throw string ("filterbank::scattered_power_correct "
-	       "ERROR: no time weights");
-  
-  // check the validity of this transformation
-  if (dispersed_power.get_state() != Detected)
-    throw string ("filterbank::scattered_power_correct "
-	       "dispersed power must be detected");
-
-  if (dispersed_power.rate != rate)
-    throw string ("filterbank::scattered_power_correct "
-	       "dispersed power must have same sampling rate");
-
-  if (dispersed_power.start_time > start_time)
-    throw string ("filterbank::scattered_power_correct "
-	       "dispersed power does not start early enough");
-
-  if (dispersed_power.end_time < end_time)
-    throw string ("filterbank::scattered_power_correct "
-	       "dispersed power ends too soon");
-
-  if (verbose)
-    cerr << "filterbank::scattered_power_correct " << endl
-	 << " start:" << start_time << " end:" << end_time << endl
-	 << " dp.start:" << dispersed_power.start_time
-	 << " dp.end:" << dispersed_power.end_time  << endl;
-
-  double offset_time = (start_time - dispersed_power.start_time).in_seconds();
-  unsigned offset_samples = (unsigned) floor (offset_time * rate + 0.5);
-
-  if (verbose)
-    cerr << "filterbank::scattered_power_correct "
-	 << "offset (us):" << offset_time * 1e6 
-	 << " offset (samples):" << offset_samples << endl;
-
-  // sanity check
-  if (dispersed_power.ndat - offset_samples < ndat)
-    throw Error (InvalidState, "filterbank::scattered_power_correct "
-	       " dp.ndat="I64" < ndat="I64" + offset="I64,
-	       dispersed_power.ndat, ndat, offset_samples);
-  
-  // only PP and QQ are corrected...
-  int cpol = 2;
-  if (npol == 1)
-    // ...unless only Signal::Stokes I remains
-    cpol = 1;
-
-  if (dispersed_power.npol != cpol)
-    throw Error (InvalidState, "filterbank::scattered_power_correct "
-	       "dispersed power must have npol=%d", cpol);
-
-  if (!( (get_state() == Detected) || (get_state() == Signal::Coherence) ))
-    throw string ("filterbank::scattered_power_correct invalid state="
-		  + state_str());
-
-  double normalize = scale / dispersed_power.scale;
-
-  if (verbose)
-    cerr << "filterbank::scattered_power_correct "
-	 << "scale:" << scale << " dp.scale:" << dispersed_power.scale
-	 << " normalize:" << normalize << endl
-	 << " correct " << cpol
-	 << " polns by " << nchan << " chans by " << ndat << " "
-	 << state_str() << " pts" << endl;
-
-  int vincr = 0;    // steps between subsequent time samples in dispersed power
-  float* vptr = 0;  // points to ipol-T0 in the dispersed power
-
-  double cfac = 0.0;
-
-  int ipol;
-  Int64 ipt, endpt;
-    
-  for (ipol=0; ipol < cpol; ipol++) {
-
-    vptr = dispersed_power.datptr (0, ipol, vincr);
-    vptr += offset_samples * vincr;
-
-    ipt = 0;
-    endpt = ppweight;
-
-    for (unsigned iwt=0; iwt<nweights; iwt++) {
-
-      if (weights[ipol][iwt] == 0)
-	cfac = 0;
-      else
-	// the nchan denominator is absorbed in the dispersed_power scale
-	cfac = (1.0 - digitization.spc_factor(weights[ipol][iwt])) * normalize;
-      
-      if (endpt > ndat)
-	endpt = ndat;
-      
-      // set the float_Stream to equal the scattered power correction
-      for (; ipt<endpt; ipt++) {
-	*vptr *= cfac;
-	vptr += vincr;
-      }
-
-      endpt += ppweight;
-
-    } // for each weight
-  
-    // sanity check
-    if (ipt != ndat)
-      throw Error (InvalidState, "filterbank::scattered_power_correct\n"
-		 " sanity check ipt="I64" should equal ndat="I64, ipt, ndat);
-
-  } // for each polarization
-  
-  register float* vp = 0;
-  register float* fp = 0; // points to F0-ipol-T0 in the filterbank
-  register int fincr = 0;   // step between subsequent time samples in filterbank
-
-  for (ipol=0; ipol < cpol; ipol++) {
-
-    vptr = dispersed_power.datptr (0, ipol, vincr);
-    vptr += offset_samples * vincr;
-
-    for (int ichan=0; ichan < nchan; ichan++) {
-
-      fp = datptr (ichan, ipol, fincr);
-      vp = vptr;
-
-      for (ipt=0; ipt<ndat; ipt++)  {
-	*fp -= *vp;
-	fp += fincr;
-	vp += vincr;
-      }
- 
-    } // for each channel
-    
-  } // for each polarization
-
-}
-
-void filterbank::Hanning (int degree)
-{
-  if (state < Detected)
-    throw string ("filterbank::Hanning called on undetected data");
-
-  SignalProcessing::Window triangle;
-
-  // construct the parzen window triangle for real data
-  triangle.Parzen ((degree-1) * 2 + 1, false);
-  triangle.normalize();
-
-  scrunch (triangle);
-}
-
-#endif

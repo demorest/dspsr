@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.24 $
-   $Date: 2011/07/15 04:18:16 $
+   $Revision: 1.25 $
+   $Date: 2011/08/04 21:05:55 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -30,7 +30,7 @@ namespace dsp {
     class Config;
 
     //! Null constructor
-    Filterbank ();
+    Filterbank (const char* name = "Filterbank", Behaviour type = outofplace);
 
     //! Prepare all relevant attributes
     void prepare ();
@@ -57,9 +57,6 @@ namespace dsp {
     //! Get the frequency resolution factor
     unsigned get_freq_res () const { return freq_res; } 
 
-    //! Set the order of the dimensions in the output TimeSeries
-    void set_output_order (TimeSeries::Order);
-
     //! Engine used to perform discrete convolution step
     class Engine;
     void set_engine (Engine*);
@@ -69,17 +66,15 @@ namespace dsp {
     //! Perform the convolution transformation on the input TimeSeries
     virtual void transformation ();
 
-    //! Implements a time-major-order filterbank
-    void tfp_filterbank ();
+    //! Perform the filterbank step 
+    virtual void filterbank ();
+    virtual void custom_prepare () {}
 
     //! Number of channels into which the input will be divided
     unsigned nchan;
 
     //! Frequency resolution factor
     unsigned freq_res;
-
-    //! The order of the dimensions in the output TimeSeries
-    TimeSeries::Order output_order;
 
     //! Interface to alternate processing engine (e.g. GPU)
     Reference::To<Engine> engine;
