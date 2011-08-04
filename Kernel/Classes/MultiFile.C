@@ -241,7 +241,7 @@ void dsp::MultiFile::ensure_contiguity()
 }
 
 //! Load bytes from file
-int64_t dsp::MultiFile::load_bytes (unsigned char* buffer, uint64_t bytes)
+int64_t dsp::MultiFile::load_bytes (unsigned char* buffer, uint64_t bytes) try 
 {
   if (verbose)
     cerr << "MultiFile::load_bytes nbytes=" << bytes << endl;
@@ -282,6 +282,10 @@ int64_t dsp::MultiFile::load_bytes (unsigned char* buffer, uint64_t bytes)
   }
 
   return bytes_loaded;
+}
+catch (Error& err)
+{
+  throw err += "dsp::MultiFile::load_bytes";
 }
 
 //! Adjust the file pointer
@@ -325,10 +329,11 @@ int64_t dsp::MultiFile::seek_bytes (uint64_t bytes)
   return total_bytes + seeked;
 }
 
-void dsp::MultiFile::set_loader (unsigned index)
+void dsp::MultiFile::set_loader (unsigned index) try
 {
   if (index == current_index)
     return;
+
 
   loader = files[index];
 
@@ -338,6 +343,11 @@ void dsp::MultiFile::set_loader (unsigned index)
   current_index = index;
   current_filename = files[index]->get_filename();
 }
+catch (Error& err)
+{
+  throw err += "dsp::MultiFile::set_loader";
+}
+
 
 bool dsp::MultiFile::has_loader ()
 {
