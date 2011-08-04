@@ -15,6 +15,10 @@ namespace dsp {
 
     //! Constructor
     CASPSRUnpacker (const char* name = "CASPSRUpacker");
+    ~CASPSRUnpacker ();
+
+    //! Cloner (calls new)
+    virtual CASPSRUnpacker * clone () const;
 
     //! Return true if the unpacker can operate on the specified device
     bool get_device_supported (Memory*) const;
