@@ -123,7 +123,9 @@ endif
 
 include $(top_srcdir)/config/Makefile.include
 
-LDADD = libdspdsp.la $(top_builddir)/Kernel/libdspbase.la \
+LDADD = libdspdsp.la \
+	$(top_builddir)/Kernel/libdspbase.la \
+	$(top_builddir)/Signal/Statistics/libdspstats.la \
 	@PGPLOT_LIBS@ @CUFFT_LIBS@ @CUDA_LIBS@
 
 AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@
