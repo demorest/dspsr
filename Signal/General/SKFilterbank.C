@@ -10,6 +10,7 @@
 
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 
 using namespace std;
 
