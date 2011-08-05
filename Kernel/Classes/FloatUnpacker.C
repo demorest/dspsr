@@ -9,6 +9,8 @@
 
 #include "Error.h"
 
+#include <string.h>
+
 // #define _DEBUG 1
 
 using namespace std;
