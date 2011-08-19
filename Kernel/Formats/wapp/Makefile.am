@@ -26,10 +26,10 @@ wapphead_SOURCES = wapphead.C
 head_parse.lo: mkheaderlex.c y.tab.h
 
 mkheaderlex.c: mkheader.l y.tab.c
-	lex -t mkheader.l > mkheaderlex.c
+	lex -t $(srcdir)/mkheader.l > mkheaderlex.c
 
 y.tab.c: mkheader.y
-	yacc -vdt mkheader.y
+	yacc -vdt $(srcdir)/mkheader.y
 
 #############################################################################
 #
