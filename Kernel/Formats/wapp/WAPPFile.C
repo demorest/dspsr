@@ -4,9 +4,9 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
+
 #include "dsp/WAPPFile.h"
 #include "Error.h"
-#include "tmutil.h"
 
 // from sigproc-2.4
 #include "key.h"
@@ -255,12 +255,44 @@ void dsp::WAPPFile::open_file (const char* filename)
   /* UT seconds after midnight (start on 1-sec tick) [hh:mm:ss] */
   utc += head->start_time;
 
+#if WVS_FIXES_STR2TM
+
   struct tm time;
+
+  /* the str2tm function has been deprecated in favour of the standard C strptime */
   if (str2tm (&time, utc.c_str()) < 0)
     throw Error (InvalidState, "dsp::WAPPFile::open_file",
 		 "Could not parse UTC from " + utc);
 
   MJD mjd (time);
+
+#else
+
+  // copied from WAPPArchive
+
+  struct tm obs_date_greg;
+  struct WAPP_HEADER* hdr = head;
+
+  int rv = sscanf(hdr->obs_date, "%4d%2d%2d", 
+      &obs_date_greg.tm_year, &obs_date_greg.tm_mon,
+      &obs_date_greg.tm_mday);
+  obs_date_greg.tm_year -= 1900;
+  obs_date_greg.tm_mon -= 1;
+  if (rv!=3) 
+    throw Error (InvalidState, "dsp::WAPPFile::open_file",
+        "Error converting obs_date string (rv=%d, obs_date=%s)", 
+        rv, hdr->obs_date);
+  rv = sscanf(hdr->start_time, "%2d:%2d:%2d", 
+      &obs_date_greg.tm_hour, &obs_date_greg.tm_min, 
+      &obs_date_greg.tm_sec);
+  if (rv!=3) 
+    throw Error (InvalidState, "dsp::WAPPFile::open_file",
+        "Error converting start_time string (rv=%d, start_time=%s)", 
+        rv, hdr->start_time);
+
+  MJD mjd (obs_date_greg); 
+
+#endif
 
   char buff[64];
   cerr << "UTC=" << utc << " MJD=" << mjd << " -> "
