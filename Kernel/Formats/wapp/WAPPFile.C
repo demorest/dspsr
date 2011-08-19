@@ -20,6 +20,7 @@
 #endif
 
 #include <fcntl.h>
+#include <stdlib.h>
 
 extern "C" double wappcorrect (double mjd);
 
