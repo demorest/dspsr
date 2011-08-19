@@ -51,6 +51,7 @@ dsp::Archiver::Archiver ()
   minimum_integration_length = 0;
   store_dynamic_extensions = true;
   fourth_moments = 0;
+  subints_per_file = 0;
 }
 
 dsp::Archiver::Archiver (const Archiver& copy)
@@ -179,6 +180,15 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
 
     // add the profile data
     add (archive, profiles);
+
+    // See if we've reached max subints per file, if not, we're done for now
+    if (subints_per_file == 0 || (archive->get_nsubint() < subints_per_file))
+      return;
+
+    // Max subint limit reached so we need to unload this file and
+    // start a new one.
+    finish();
+    single_archive = Pulsar::Archive::new_Archive (archive_class_name);
 
     return;
   }

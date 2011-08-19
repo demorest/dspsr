@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.33 $
-   $Date: 2010/04/22 07:43:22 $
-   $Author: straten $ */
+   $Revision: 1.34 $
+   $Date: 2011/08/19 19:58:59 $
+   $Author: demorest $ */
 
 
 #ifndef __Archiver_h
@@ -119,6 +119,9 @@ namespace dsp
 
     //! The Pulsar::Archive instance to which data will be added
     Reference::To<Pulsar::Archive> single_archive;
+
+    //! Number of subints per output Archive (0 implies no limit)
+    unsigned subints_per_file;
 
     //! Commands used to process Archive data before unloading
     std::vector<std::string> script;
