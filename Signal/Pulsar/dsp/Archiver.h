@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.34 $
-   $Date: 2011/08/19 19:58:59 $
+   $Revision: 1.35 $
+   $Date: 2011/08/20 03:57:01 $
    $Author: demorest $ */
 
 
@@ -109,6 +109,9 @@ namespace dsp
     void set_store_dynamic_extensions (bool flag)
     { store_dynamic_extensions = flag; }
 
+    void set_use_single_archive (bool flag)
+    { use_single_archive = flag; }
+
   protected:
     
     //! Minimum integration length required to unload data
@@ -116,6 +119,9 @@ namespace dsp
 
     //! Name of the Pulsar::Archive class used to create new instances
     std::string archive_class_name;
+
+    //! Store all output in a single archive
+    bool use_single_archive;
 
     //! The Pulsar::Archive instance to which data will be added
     Reference::To<Pulsar::Archive> single_archive;
@@ -166,6 +172,9 @@ namespace dsp
 			 Pulsar::MoreProfiles* moments,
 			 const Pulsar::Integration* means,
 			 const unsigned* hits);
+
+    //! Generate a new Archive for output
+    Pulsar::Archive* new_Archive() const;
 
   private:
 

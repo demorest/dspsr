@@ -52,6 +52,7 @@ dsp::Archiver::Archiver ()
   store_dynamic_extensions = true;
   fourth_moments = 0;
   subints_per_file = 0;
+  use_single_archive = false;
 }
 
 dsp::Archiver::Archiver (const Archiver& copy)
@@ -119,6 +120,31 @@ void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
   extensions.push_back (extension);
 }
 
+//! Return a new Archive instance
+Pulsar::Archive* dsp::Archiver::new_Archive() const
+{
+  try
+  {
+    const OutputArchive* out = profiles->get_extensions()->get<OutputArchive>();
+    if (out)
+    {
+      if (verbose > 2)
+        cerr << "dsp::Archiver::new_Archive using OutputArchive policy" << endl;
+      return out->new_Archive();
+    }
+  }
+  catch (Error& error)
+  {
+    if (verbose > 2)
+      cerr << "dsp::Archiver::new_Archive using OutputArchive policy failed"
+           << error << endl;
+  }
+
+  if (verbose > 2)
+    cerr << "dsp::Archiver::new_Archive new " << archive_class_name << endl;
+  return Pulsar::Archive::new_Archive (archive_class_name);
+}
+
 void dsp::Archiver::unload (const PhaseSeries* _profiles) try
 {
   if (!single_archive && archive_class_name.size() == 0)
@@ -173,8 +199,12 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
     return;
   }
 
-  if (single_archive)
+  if (use_single_archive)
   {
+    // Generate new archive if needed
+    if (!single_archive)
+      single_archive = new_Archive();
+
     // refer to the single archive to which all sub-integration will be written
     archive = single_archive;
 
@@ -186,36 +216,15 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
       return;
 
     // Max subint limit reached so we need to unload this file and
-    // start a new one.
+    // start a new one next time.
     finish();
-    single_archive = Pulsar::Archive::new_Archive (archive_class_name);
+    single_archive = 0;
 
     return;
   }
 
-  if (!archive) try
-  {
-    const OutputArchive* out = profiles->get_extensions()->get<OutputArchive>();
-    if (out)
-    {
-      if (verbose > 2)
-        cerr << "dsp::Archiver::unload using OutputArchive policy" << endl;
-      archive = out->new_Archive();
-    }
-  }
-  catch (Error& error)
-  {
-    if (verbose > 2)
-      cerr << "dsp::Archiver::unload using OutputArchive policy failed"
-           << error << endl;
-  }
-
   if (!archive)
-  {
-    if (verbose > 2)
-      cerr << "dsp::Archiver::unload new " << archive_class_name << endl;
-    archive = Pulsar::Archive::new_Archive (archive_class_name);
-  }
+    archive = new_Archive();
 
   if (verbose > 2)
     cerr << "dsp::Archiver::unload set Pulsar::Archive" << endl;
