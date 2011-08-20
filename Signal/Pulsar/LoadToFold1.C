@@ -892,7 +892,7 @@ void dsp::LoadToFold1::prepare_final ()
   for (unsigned iop=0; iop < operations.size(); iop++)
     operations[iop]->prepare ();
 
-  if (!config->single_pulse)
+  //if (!config->single_pulse)
   {
     //
     // Data extensions are added only when not in single pulse mode
@@ -1313,9 +1313,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   if (subints && config->single_archive)
   {
     cerr << "dspsr: Single archive with multiple sub-integrations" << endl;
-    Pulsar::Archive* arch;
-    arch = Pulsar::Archive::new_Archive (config->archive_class);
-    archiver->set_archive (arch);
+    archiver->set_use_single_archive(true);
   }
 
   if (config->single_pulse)
