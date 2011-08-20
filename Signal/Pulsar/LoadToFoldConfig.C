@@ -116,6 +116,9 @@ dsp::LoadToFold::Config::Config ()
   // in single_pulse mode, unload integrations to separate files by default
   single_archive = false;
 
+  // default to unlimited subints per file
+  subints_per_archive = 0;
+
   // integrate for specified interval length
   integration_length = 0;
   // by default, no minimum is specified

@@ -485,6 +485,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->single_archive, 'A');
   arg->set_help ("output single archive with multiple integrations");
 
+  arg = menu.add (config->subints_per_archive, "nsub", "N");
+  arg->set_help ("output archives with N integrations each");
+
   arg = menu.add (config->integration_length, 'L', "seconds");
   arg->set_help ("create integrations of specified duration");
 

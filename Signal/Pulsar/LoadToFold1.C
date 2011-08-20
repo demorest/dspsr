@@ -1313,7 +1313,15 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   if (subints && config->single_archive)
   {
     cerr << "dspsr: Single archive with multiple sub-integrations" << endl;
-    archiver->set_use_single_archive(true);
+    archiver->set_use_single_archive (true);
+  }
+
+  if (subints && config->subints_per_archive)
+  {
+    cerr << "dspsr: Archives with " << 
+        config->subints_per_archive << " sub-integrations" << endl;
+    archiver->set_use_single_archive (true);
+    archiver->set_subints_per_file (config->subints_per_archive); 
   }
 
   if (config->single_pulse)
@@ -1326,7 +1334,7 @@ void dsp::LoadToFold1::prepare_archiver( Archiver* archiver )
   else
     archiver->set_convention( epoch_convention = new FilenameEpoch );
 
-  if (subints && config->single_archive)
+  if (subints && (config->single_archive || config->subints_per_archive))
     epoch_convention->report_unload = false;
 
   unsigned integer_seconds = unsigned(config->integration_length);

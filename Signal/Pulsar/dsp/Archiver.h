@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.35 $
-   $Date: 2011/08/20 03:57:01 $
+   $Revision: 1.36 $
+   $Date: 2011/08/20 04:32:01 $
    $Author: demorest $ */
 
 
@@ -111,6 +111,9 @@ namespace dsp
 
     void set_use_single_archive (bool flag)
     { use_single_archive = flag; }
+
+    void set_subints_per_file (unsigned nsub)
+    { subints_per_file = nsub; }
 
   protected:
     
