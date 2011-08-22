@@ -6,6 +6,8 @@ nobase_include_HEADERS = dsp/BCPMExtension.h dsp/BCPMFile.h \
 
 libbcpm_la_SOURCES = BCPMExtension.C BCPMFile.C BCPMUnpacker.C indexx.f
 
+check_PROGRAMS = test_header
+
 #############################################################################
 #
 
