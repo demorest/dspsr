@@ -11,6 +11,7 @@
 #include "FilePtr.h"
 #include "tostring.h"
 #include "dirutil.h"
+#include "machine_endian.h"
 
 #include <fstream>
 #include <stdlib.h>
@@ -73,29 +74,28 @@ bool dsp::BCPMFile::is_valid (const char* filename) const
 }
 
 //! Switches the endianess of relevant variables, if need be
-void dsp::BCPMFile::switch_endianess(){
-#if MACHINE_LITTLE_ENDIAN
-  ChangeEndian(bpp_search.samp_rate);
-  ChangeEndian(bpp_search.bandwidth);
-  ChangeEndian(bpp_search.rf_lo);
-  ChangeEndian(bpp_search.bit_mode);
-  ChangeEndian(bpp_search.num_chans);
-  ChangeEndian(bpp_search.scan_file_number);
-  ChangeEndian(bpp_search.mb_start_address);
-  ChangeEndian(bpp_search.mb_end_address);
-  ChangeEndian(bpp_search.mb_start_board);
-  ChangeEndian(bpp_search.mb_end_board);
+void dsp::BCPMFile::switch_endianess()
+{
+  FromBigEndian(bpp_search.samp_rate);
+  FromBigEndian(bpp_search.bandwidth);
+  FromBigEndian(bpp_search.rf_lo);
+  FromBigEndian(bpp_search.bit_mode);
+  FromBigEndian(bpp_search.num_chans);
+  FromBigEndian(bpp_search.scan_file_number);
+  FromBigEndian(bpp_search.mb_start_address);
+  FromBigEndian(bpp_search.mb_end_address);
+  FromBigEndian(bpp_search.mb_start_board);
+  FromBigEndian(bpp_search.mb_end_board);
   for (unsigned i=0;i<MAXNUMCB;i++) 
-    ChangeEndian(bpp_search.cb_id[i]);
+    FromBigEndian(bpp_search.cb_id[i]);
   for (unsigned i=0;i<MAX_NUM_LO_BOARDS;i++) 
-    ChangeEndian(bpp_search.aib_los[i]);
+    FromBigEndian(bpp_search.aib_los[i]);
   for (unsigned i=0;i<FB_CHAN_PER_BRD;i++)
-    ChangeEndian(bpp_search.dfb_sram_freqs[i]);
-  ChangeEndian(bpp_search.ra_1950);
-  ChangeEndian(bpp_search.dec_1950);
-  ChangeEndian(bpp_search.cb_sum_polarizations);
-  ChangeEndian(bpp_search.BACKEND_TYPE);
-#endif
+    FromBigEndian(bpp_search.dfb_sram_freqs[i]);
+  FromBigEndian(bpp_search.ra_1950);
+  FromBigEndian(bpp_search.dec_1950);
+  FromBigEndian(bpp_search.cb_sum_polarizations);
+  FromBigEndian(bpp_search.BACKEND_TYPE);
 }
 
 //! Open the file
@@ -104,10 +104,11 @@ void dsp::BCPMFile::open_file (const char* filename){
     fprintf(stderr,"Entered dsp::BCPMFile::open_file(%s)\n",filename);
 
   FILE* fptr = fopen(filename,"r");
+
   fread(&bpp_search,sizeof(BPP_SEARCH_HEADER),1,fptr);
 
   fclose(fptr);
-  
+
   switch_endianess();
 
   if (bpp_search.BACKEND_TYPE != 0 && bpp_search.BACKEND_TYPE != 1 && bpp_search.BACKEND_TYPE != 4)
@@ -312,8 +313,8 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
 int64_t dsp::BCPMFile::pad_bytes(unsigned char* buffer, int64_t bytes){
   if( get_info()->get_nbit() < 8 && bytes*8 % int64_t(get_info()->get_nbit()) != 0 )
     throw Error(InvalidState,"dsp::BCPMFile::pad_bytes()",
-		"Can only pad if the number of input bits ("I64") divides nbit (%d)",
-		bytes*8, get_info()->get_nbit());
+		"number of input bits is not divisible by nbit=%d",
+		get_info()->get_nbit());
 
   register const unsigned char val = 0;
   for( int64_t i=0; i<bytes; ++i)
