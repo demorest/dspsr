@@ -8,6 +8,14 @@
 #define __bpphdr_h_
 
 // Pulled straight out of Duncan's sigproc-2-4 on 3 December 2004 by HSK
+/*
+  Modified by Willem van Straten on 20 August 2011
+  int -> int32_t
+  long -> int32_t
+  long long -> int64_t
+*/
+
+#include <inttypes.h>
 
 #ifndef BPP_HEADER_SIZE
 #define BPP_HEADER_SIZE	(1<<15)
@@ -23,14 +31,16 @@
 #define MAX_HARRIS_TAPS                 256
 #define MAXNUMCHAN (MAXNUMDFB*FB_CHAN_PER_BRD)
 
+#pragma pack(push,4)
+
 typedef struct {
 
     /*
      * Here are BPP header items
      */
     char head[16];		/* Holds "NBPPSEARCH\0" */
-    long header_version;	/* Version number which is different for each backend */
-    unsigned long scan_num;	/* Scan number e.g. 31096001 = Obs 1 on day 310 of 1996 */
+    int32_t header_version;	/* Version number which is different for each backend */
+    uint32_t scan_num;	/* Scan number e.g. 31096001 = Obs 1 on day 310 of 1996 */
 				/* Changed to DDDYYYYSSS in Jan 2000 */
 
     /* These doubles are all aligned on 8-byte boundaries */
@@ -55,71 +65,71 @@ typedef struct {
     double mf_atten[MAX_NUM_MF_BOARDS];
     double rf_lo;		/* LO frequency used in the receiver to generate the IF */
 
-    long bit_mode;		/* 4 = 4-bit power, -4 = 4-bit voltage in direct mode */
-    long num_chans;		/* Calculated number of 4-bit channels in each sample */
-    int lmst;			/* LMST time in seconds since 0h */
+    int32_t bit_mode;		/* 4 = 4-bit power, -4 = 4-bit voltage in direct mode */
+    int32_t num_chans;		/* Calculated number of 4-bit channels in each sample */
+    int32_t lmst;			/* LMST time in seconds since 0h */
     char target_name[32];	/* Space for pulsar name or map name for survey */
     char date[16];		/* UT date which will match the scan number */
     char start_time[16];	/* UT time of the 1pps tick which started the obs*/
-    long scan_file_number;	/* Which file number of the scan? */
-    long file_size;		/* Size of this file */
-    long tape_num;		/* Tape number */
-    long tape_file_number;	/* File number on this tape */
+    int32_t scan_file_number;	/* Which file number of the scan? */
+    int32_t file_size;		/* Size of this file */
+    int32_t tape_num;		/* Tape number */
+    int32_t tape_file_number;	/* File number on this tape */
     char obs_group[16];		/* Who did the observation (mainly for future) */
 
-    int enabled_CBs;		/* Bitmap of enabled CBs */
-    int mb_start_address;	/* Real base (8-bit) address of first CB reg read */
-    int mb_end_address;		/* Read end (8-bit) address of last CB reg read */
-    int mb_start_board;		/* First board ID read */
-    int mb_end_board;		/* last board ID read (MB can only read seq. boards) */
-    int mb_vme_mid_address;	/* Value stored in VME_MID register (usu. 00) */
-    int mb_ack_enabled;		/* Boolean, did we use ACK protocol? */
-    int start_from_ste;		/* Boolean, am I starting with the STE counter? */
+    int32_t enabled_CBs;		/* Bitmap of enabled CBs */
+    int32_t mb_start_address;	/* Real base (8-bit) address of first CB reg read */
+    int32_t mb_end_address;		/* Read end (8-bit) address of last CB reg read */
+    int32_t mb_start_board;		/* First board ID read */
+    int32_t mb_end_board;		/* last board ID read (MB can only read seq. boards) */
+    int32_t mb_vme_mid_address;	/* Value stored in VME_MID register (usu. 00) */
+    int32_t mb_ack_enabled;		/* Boolean, did we use ACK protocol? */
+    int32_t start_from_ste;		/* Boolean, am I starting with the STE counter? */
 
     /*
      * CB Registers
      */
-    int cb_sum_polarizations;	/* Boolean, did the CBs sum pols on-board? */
-    int cb_direct_mode;		/* Boolean, did we read the CBs in direct-mode? */
-    int cb_eprom_mode[MAXNUMCB]; /* Which EPROM table? (MAXNUMCB=6) */
-    int cb_accum_length;	/* Contents of CB accum len regs (all CBs IDENTICAL) */
+    int32_t cb_sum_polarizations;	/* Boolean, did the CBs sum pols on-board? */
+    int32_t cb_direct_mode;		/* Boolean, did we read the CBs in direct-mode? */
+    int32_t cb_eprom_mode[MAXNUMCB]; /* Which EPROM table? (MAXNUMCB=6) */
+    int32_t cb_accum_length;	/* Contents of CB accum len regs (all CBs IDENTICAL) */
 				/* cb_accum_length is TOTAL accum length, not accum_len-1 */
 
     /**
      * TB Registers
      */
-    int tb_outs_reg;	/* OUTS_REG, turns on/off analog supply and PLLs */
-    int tb_ste;		/* Value stored in STE counter */
-    int tb_stc;		/* This need to be read AFTER an integration!!! */
-    int  H_deci_factor;	/* Decimation factor */
-    int GenStat0, GenStat1, Ack_Reg; /* HW registers, for debugging */
+    int32_t tb_outs_reg;	/* OUTS_REG, turns on/off analog supply and PLLs */
+    int32_t tb_ste;		/* Value stored in STE counter */
+    int32_t tb_stc;		/* This need to be read AFTER an integration!!! */
+    int32_t  H_deci_factor;	/* Decimation factor */
+    int32_t GenStat0, GenStat1, Ack_Reg; /* HW registers, for debugging */
 
     /*
      * DFB Registers
      */
     /* These first three are the "logical" state of the DFBs */
-    int dfb_sram_length;	/* Same for every board??? */
-    int ASYMMETRIC;		/* Currently the same for all boards */
+    int32_t dfb_sram_length;	/* Same for every board??? */
+    int32_t ASYMMETRIC;		/* Currently the same for all boards */
     float dfb_sram_freqs[FB_CHAN_PER_BRD]; /* Filled in by setmixer_board (8) */
 
     /* These three are for HW debugging, not to be used by analysis software */
-    int dfb_mixer_reg[MAXNUMDFB]; /* Set by set_dfb_mixer (MAXNUMDFB=12) */
-    int dfb_conf_reg[MAXNUMDFB];  /* Set by set_dfb_conf */
-    int dfb_sram_addr_msb[MAXNUMDFB]; /* Set by set_dfb_conf */
+    int32_t dfb_mixer_reg[MAXNUMDFB]; /* Set by set_dfb_mixer (MAXNUMDFB=12) */
+    int32_t dfb_conf_reg[MAXNUMDFB];  /* Set by set_dfb_conf */
+    int32_t dfb_sram_addr_msb[MAXNUMDFB]; /* Set by set_dfb_conf */
 
     /* These are the ACTUAL Harris taps loaded into the DFBs */
-    int i_hcoef[MAX_HARRIS_TAPS]; /* MAX_HARRIS_TAPS=256 */
-    int q_hcoef[MAX_HARRIS_TAPS];
+    int32_t i_hcoef[MAX_HARRIS_TAPS]; /* MAX_HARRIS_TAPS=256 */
+    int32_t q_hcoef[MAX_HARRIS_TAPS];
 
 
     /*
      * Hardware configuration
      */
-    int tb_id;
-    int cb_id[MAXNUMCB];
-    int dfb_id[MAXNUMDFB];
+    int32_t tb_id;
+    int32_t cb_id[MAXNUMCB];
+    int32_t dfb_id[MAXNUMDFB];
 
-    int aib_if_switch;	/* Which IF input are we using? (Same for both Pols) */
+    int32_t aib_if_switch;	/* Which IF input are we using? (Same for both Pols) */
 
     /* matt add new stuff here */
     /* Additional Hardware information, 97apr25 MRD */
@@ -150,8 +160,8 @@ typedef struct {
      * pre 97oct29 was 28844
      * pre 98jan20 was 28836
      */
-    int aib_serial;
-    int aib_rev;
+    int32_t aib_serial;
+    int32_t aib_rev;
     /*
      * (long long) file_size and offset where added August 1999 to the
      * source tree. Prior to this time, or when the production binaries
@@ -159,18 +169,20 @@ typedef struct {
      * and you should use the (long) file_size above. Note, there was
      * no equivalent offset number prior to ll_file_offset.
      */
-    long long ll_file_offset;	/* Cummulative size of all of the previous  */
+    int64_t ll_file_offset;	/* Cummulative size of all of the previous  */
 				/* files in this scan (Bytes) which can,    */
 				/* e.g. be used to calculate the start time */
 				/* of this file.			    */
-    long long ll_file_size;	/* Size of this particular file (Bytes).    */
+    int64_t ll_file_size;	/* Size of this particular file (Bytes).    */
     char quad_word_boundary_filler[8];
+
     long double mjd_start;	/* Start time (MJD)			    */
+
     char filler[28788];
 
-    long BACKEND_TYPE;
-    long UPDATE_DONE;
-    long HEADER_TYPE;
+    int32_t BACKEND_TYPE;
+    int32_t UPDATE_DONE;
+    int32_t HEADER_TYPE;
 
 } BPP_SEARCH_HEADER;
 
@@ -185,9 +197,9 @@ typedef struct {
 
     char head[16]; /* Holds "NBPPTIME\0" */
 
-    long header_version;	/* Version number which is different for each backend */
+    int32_t header_version;	/* Version number which is different for each backend */
 
-    long scan_num;		/* Scan number e.g. 31096001 = Obs 1 on day 310 of 1996 */
+    int32_t scan_num;		/* Scan number e.g. 31096001 = Obs 1 on day 310 of 1996 */
     
 
     double psr_period;
@@ -202,12 +214,12 @@ typedef struct {
 				/* of the scan must be consulted.	     */
     char psr_name[16];
 
-    long scan_file_number;	/* Which file number of the scan?	     */
-    long stc;			/* Unused, use stctime instead.		     */
-    long num_phase_bins;
-    long num_periods;		/* exact number of pulse periods integrated  */
-    long sizeof_polyco;
-    long oversample;		/* How many hardware samples are integrated  */
+    int32_t scan_file_number;	/* Which file number of the scan?	     */
+    int32_t stc;			/* Unused, use stctime instead.		     */
+    int32_t num_phase_bins;
+    int32_t num_periods;		/* exact number of pulse periods integrated  */
+    int32_t sizeof_polyco;
+    int32_t oversample;		/* How many hardware samples are integrated  */
 				/* before accumulating in the pulse profile  */
 				/* (note, a 0 should be interpreted as a 1). */
 
@@ -232,97 +244,97 @@ typedef struct {
     double mf_atten[MAX_NUM_MF_BOARDS];
     double rf_lo;		/* LO frequency used in the receiver to generate the IF */
 
-    long bit_mode;		/* 4 = 4-bit power, -4 = 4-bit voltage in direct mode */
-    long num_chans;		/* Calculated number of 4-bit channels in each sample */
-    int lmst;			/* LMST time in seconds since 0h */
+    int32_t bit_mode;		/* 4 = 4-bit power, -4 = 4-bit voltage in direct mode */
+    int32_t num_chans;		/* Calculated number of 4-bit channels in each sample */
+    int32_t lmst;			/* LMST time in seconds since 0h */
     char target_name[32];	/* Space for pulsar name or map name for survey */
     char date[16];		/* UT date which will match the scan number */
     char start_time[16];	/* UT time of the 1pps tick which started the obs*/
-    long file_size;		/* Size of this file */
-    long tape_num;		/* Tape number */
-    long tape_file_number;	/* File number on this tape */
+    int32_t file_size;		/* Size of this file */
+    int32_t tape_num;		/* Tape number */
+    int32_t tape_file_number;	/* File number on this tape */
     char obs_group[16];		/* Who did the observation (mainly for future) */
 
-    int enabled_CBs;		/* Bitmap of enabled CBs */
-    int mb_start_address;	/* Real base (8-bit) address of first CB reg read */
-    int mb_end_address;		/* Read end (8-bit) address of last CB reg read */
-    int mb_start_board;		/* First board ID read */
-    int mb_end_board;		/* last board ID read (MB can only read seq. boards) */
-    int mb_vme_mid_address;	/* Value stored in VME_MID register (usu. 00) */
-    int mb_ack_enabled;		/* Boolean, did we use ACK protocol? */
-    int start_from_ste;		/* Boolean, am I starting with the STE counter? */
+    int32_t enabled_CBs;		/* Bitmap of enabled CBs */
+    int32_t mb_start_address;	/* Real base (8-bit) address of first CB reg read */
+    int32_t mb_end_address;		/* Read end (8-bit) address of last CB reg read */
+    int32_t mb_start_board;		/* First board ID read */
+    int32_t mb_end_board;		/* last board ID read (MB can only read seq. boards) */
+    int32_t mb_vme_mid_address;	/* Value stored in VME_MID register (usu. 00) */
+    int32_t mb_ack_enabled;		/* Boolean, did we use ACK protocol? */
+    int32_t start_from_ste;		/* Boolean, am I starting with the STE counter? */
 
     /*
      * CB Registers
      */
-    int cb_sum_polarizations;	/* Boolean, did the CBs sum pols on-board? */
-    int cb_direct_mode;		/* Boolean, did we read the CBs in direct-mode? */
-    int cb_eprom_mode[MAXNUMCB]; /* Which EPROM table? (MAXNUMCB=6) */
-    int cb_accum_length;	/* Contents of CB accum len regs (all CBs IDENTICAL) */
+    int32_t cb_sum_polarizations;	/* Boolean, did the CBs sum pols on-board? */
+    int32_t cb_direct_mode;		/* Boolean, did we read the CBs in direct-mode? */
+    int32_t cb_eprom_mode[MAXNUMCB]; /* Which EPROM table? (MAXNUMCB=6) */
+    int32_t cb_accum_length;	/* Contents of CB accum len regs (all CBs IDENTICAL) */
 				/* cb_accum_length is TOTAL accum length, not accum_len-1 */
 
     /**
      * TB Registers
      */
-    int tb_outs_reg;	/* OUTS_REG, turns on/off analog supply and PLLs */
-    int tb_ste;		/* Value stored in STE counter */
-    int tb_stc;		/* This need to be read AFTER an integration!!! */
-    int  H_deci_factor;	/* Decimation factor */
-    int GenStat0, GenStat1, Ack_Reg; /* HW registers, for debugging */
+    int32_t tb_outs_reg;	/* OUTS_REG, turns on/off analog supply and PLLs */
+    int32_t tb_ste;		/* Value stored in STE counter */
+    int32_t tb_stc;		/* This need to be read AFTER an integration!!! */
+    int32_t  H_deci_factor;	/* Decimation factor */
+    int32_t GenStat0, GenStat1, Ack_Reg; /* HW registers, for debugging */
 
     /*
      * DFB Registers
      */
     /* These first three are the "logical" state of the DFBs */
-    int dfb_sram_length;	/* Same for every board??? */
-    int ASYMMETRIC;		/* Currently the same for all boards */
+    int32_t dfb_sram_length;	/* Same for every board??? */
+    int32_t ASYMMETRIC;		/* Currently the same for all boards */
     float dfb_sram_freqs[FB_CHAN_PER_BRD]; /* Filled in by setmixer_board (8) */
 
     /* These three are for HW debugging, not to be used by analysis software */
-    int dfb_mixer_reg[MAXNUMDFB]; /* Set by set_dfb_mixer (MAXNUMDFB=12) */
-    int dfb_conf_reg[MAXNUMDFB];  /* Set by set_dfb_conf */
-    int dfb_sram_addr_msb[MAXNUMDFB]; /* Set by set_dfb_conf */
+    int32_t dfb_mixer_reg[MAXNUMDFB]; /* Set by set_dfb_mixer (MAXNUMDFB=12) */
+    int32_t dfb_conf_reg[MAXNUMDFB];  /* Set by set_dfb_conf */
+    int32_t dfb_sram_addr_msb[MAXNUMDFB]; /* Set by set_dfb_conf */
 
     /* These are the ACTUAL Harris taps loaded into the DFBs */
-    int i_hcoef[MAX_HARRIS_TAPS]; /* MAX_HARRIS_TAPS=256 */
-    int q_hcoef[MAX_HARRIS_TAPS];
+    int32_t i_hcoef[MAX_HARRIS_TAPS]; /* MAX_HARRIS_TAPS=256 */
+    int32_t q_hcoef[MAX_HARRIS_TAPS];
 
 
     /*
      * Hardware configuration
      */
-    int tb_id;
-    int cb_id[MAXNUMCB];
-    int dfb_id[MAXNUMDFB];
+    int32_t tb_id;
+    int32_t cb_id[MAXNUMCB];
+    int32_t dfb_id[MAXNUMDFB];
 
-    int aib_if_switch;	/* Which IF input are we using? (Same for both Pols) */
+    int32_t aib_if_switch;	/* Which IF input are we using? (Same for both Pols) */
 
     /* matt add new stuff here */
     /* Additional Hardware information, 97apr25 MRD */
-    int	mb_rev, mb_serial;
-    int	tb_rev, tb_serial;
-    int	cb_rev[MAXNUMCB], cb_serial[MAXNUMCB];
-    int	dfb_rev[MAXNUMDFB], dfb_serial[MAXNUMDFB];
-    int	mb_xtal_freq;
-    int	mf_serial[MAX_NUM_MF_BOARDS], mf_rev[MAX_NUM_MF_BOARDS];
-    int	lo_serial[MAX_NUM_LO_BOARDS], lo_rev[MAX_NUM_LO_BOARDS];
+    int32_t mb_rev, mb_serial;
+    int32_t tb_rev, tb_serial;
+    int32_t cb_rev[MAXNUMCB], cb_serial[MAXNUMCB];
+    int32_t dfb_rev[MAXNUMDFB], dfb_serial[MAXNUMDFB];
+    int32_t mb_xtal_freq;
+    int32_t mf_serial[MAX_NUM_MF_BOARDS], mf_rev[MAX_NUM_MF_BOARDS];
+    int32_t lo_serial[MAX_NUM_LO_BOARDS], lo_rev[MAX_NUM_LO_BOARDS];
 
-    int	mb_long_ds0;		/* lengthen DS0 on vme reads with ack enabled */
-    int	dfb_sun_program[MAXNUMDFB];	/* Set by set_dfb_mode */
-    int	dfb_eprom[MAXNUMDFB];		/* Set by set_dfb_mode */
-    int	dfb_sram_addr[MAXNUMDFB];       /* rev 4 Set by set_dfb_conf */
-    int	dfb_har_addr[MAXNUMDFB];        /* rev 4 Set by set_dfb_conf */
-    int	dfb_clip_adc_neg8[MAXNUMDFB];	/* for use in DFB mixer table */
-    int	dfb_shften_[MAXNUMDFB];		/* for low level Harris mode */
-    int	dfb_fwd_[MAXNUMDFB];		/* for low level Harris mode */
-    int	dfb_rvrs_[MAXNUMDFB];		/* for low level Harris mode */
-    int	dfb_asymmetric[MAXNUMDFB];	/* what kind of taps to load ? */
+    int32_t	mb_long_ds0;		/* lengthen DS0 on vme reads with ack enabled */
+    int32_t	dfb_sun_program[MAXNUMDFB];	/* Set by set_dfb_mode */
+    int32_t	dfb_eprom[MAXNUMDFB];		/* Set by set_dfb_mode */
+    int32_t	dfb_sram_addr[MAXNUMDFB];       /* rev 4 Set by set_dfb_conf */
+    int32_t	dfb_har_addr[MAXNUMDFB];        /* rev 4 Set by set_dfb_conf */
+    int32_t	dfb_clip_adc_neg8[MAXNUMDFB];	/* for use in DFB mixer table */
+    int32_t	dfb_shften_[MAXNUMDFB];		/* for low level Harris mode */
+    int32_t	dfb_fwd_[MAXNUMDFB];		/* for low level Harris mode */
+    int32_t	dfb_rvrs_[MAXNUMDFB];		/* for low level Harris mode */
+    int32_t	dfb_asymmetric[MAXNUMDFB];	/* what kind of taps to load ? */
     double dfb_i_dc[MAXNUMDFB];		/* set when programming the Mixer SRAM*/
     double dfb_q_dc[MAXNUMDFB];		/* set when programming the Mixer SRAM*/
     double max_dfb_freq;                /* used in picking decimations */
 
-    int aib_serial;
-    int aib_rev;
+    int32_t aib_serial;
+    int32_t aib_rev;
 
     double tick_offset;		        /* delay from 1sec tick to start time (usec) */
     double startup_latency;	        /* estimated (by Matt?) time delay through */
@@ -334,10 +346,12 @@ typedef struct {
     double stctime;			/* STC counter converted to sec.     */
 
     char filler[28746];
-    long BACKEND_TYPE;
-    long UPDATE_DONE;
-    long HEADER_TYPE;
+    int32_t BACKEND_TYPE;
+    int32_t UPDATE_DONE;
+    int32_t HEADER_TYPE;
 
 } BPP_TIMING_HEADER;
+
+#pragma pack(pop)
 
 #endif // #ifndef __bpphdr_h_
