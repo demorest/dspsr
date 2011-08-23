@@ -304,6 +304,9 @@ void dsp::Dedispersion::build ()
   for (unsigned ipt=0; ipt<npt; ipt++)
     phasors[ipt] = polar (float(1.0), phases[ipt]);
 
+  // always zap DC channel
+  phasors[0] = 0;
+
   whole_swapped = false;
   swap_divisions = 0;
 
