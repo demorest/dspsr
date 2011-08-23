@@ -8,10 +8,12 @@
 #include "dsp/BCPMFile.h"
 #include "dsp/BCPMExtension.h"
 
+#include "dsp/bpphdr.h"
+#include "machine_endian.h"
+
 #include "FilePtr.h"
 #include "tostring.h"
 #include "dirutil.h"
-#include "machine_endian.h"
 
 #include <fstream>
 #include <stdlib.h>
@@ -74,7 +76,7 @@ bool dsp::BCPMFile::is_valid (const char* filename) const
 }
 
 //! Switches the endianess of relevant variables, if need be
-void dsp::BCPMFile::switch_endianess()
+void from_big_endian (BPP_SEARCH_HEADER& bpp_search)
 {
   FromBigEndian(bpp_search.samp_rate);
   FromBigEndian(bpp_search.bandwidth);
@@ -99,17 +101,22 @@ void dsp::BCPMFile::switch_endianess()
 }
 
 //! Open the file
-void dsp::BCPMFile::open_file (const char* filename){
-  if( verbose )
-    fprintf(stderr,"Entered dsp::BCPMFile::open_file(%s)\n",filename);
+void dsp::BCPMFile::open_file (const char* filename)
+{
+  if (verbose)
+    cerr << "dsp::BCPMFile::open_file(" << filename << ")" << endl;
 
-  FILE* fptr = fopen(filename,"r");
+  FILE* fptr = fopen (filename,"r");
+  if (!fptr)
+    throw Error (FailedSys, "dsp::BCPMFile::open_file", "fopen(%s)", filename);
+
+  BPP_SEARCH_HEADER bpp_search;
 
   fread(&bpp_search,sizeof(BPP_SEARCH_HEADER),1,fptr);
 
   fclose(fptr);
 
-  switch_endianess();
+  from_big_endian (bpp_search);
 
   if (bpp_search.BACKEND_TYPE != 0 && bpp_search.BACKEND_TYPE != 1 && bpp_search.BACKEND_TYPE != 4)
     throw Error(InvalidParam,"dsp::BCPMFile::open_file()",
@@ -137,7 +144,7 @@ void dsp::BCPMFile::open_file (const char* filename){
   get_info()->set_rate( 1.0e6/bpp_search.samp_rate );
   get_info()->set_nbit( unsigned(bpp_search.bit_mode) ); 
   get_info()->set_source( bpp_search.target_name );
-  
+
   {
     // parse search date dayno:year
     char cdate[4096];
