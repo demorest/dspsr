@@ -18,7 +18,8 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/FScrunch.h dsp/FilterbankBench.h dsp/FilterbankConfig.h    \
 	dsp/GeometricDelay.h					       \
 	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
-	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h
+	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h \
+	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -33,7 +34,8 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	FilterbankBench.C OptimalFilterbank.C FilterbankConfig.C \
 	GeometricDelay.C mfilter.c \
 	TFPFilterbank.C RFIZapper.C SKFilterbank.C \
-	Resize.C SKDetector.C SKMasker.C
+	Resize.C SKDetector.C SKMasker.C \
+	SingleThread.C MultiThread.C
 
 if HAVE_CUFFT
 
