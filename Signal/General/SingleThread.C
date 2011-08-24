@@ -27,6 +27,7 @@
 #include "dsp/Dump.h"
 
 #include "Error.h"
+#include "stringtok.h"
 #include "pad.h"
 
 #include <sched.h>
@@ -57,6 +58,11 @@ dsp::SingleThread::SingleThread ()
 
 dsp::SingleThread::~SingleThread ()
 {
+}
+
+void dsp::SingleThread::set_configuration (Config* configuration)
+{
+  config = configuration;
 }
 
 void dsp::SingleThread::take_ostream (std::ostream* newlog)
@@ -98,6 +104,30 @@ void dsp::SingleThread::set_affinity (int core)
     throw Error (FailedSys, "dsp::SingleThread::set_affinity",
                  "sched_setaffinity (%d)", core);
 #endif
+}
+
+//! Share any necessary resources with the specified thread
+void dsp::SingleThread::share (SingleThread* other)
+{
+  colleague = other;
+}
+
+dsp::TimeSeries* dsp::SingleThread::new_time_series ()
+{
+  config->buffers ++;
+
+  if (config->weighted_time_series)
+  {
+    if (Operation::verbose)
+      cerr << "Creating WeightedTimeSeries instance" << endl;
+    return new WeightedTimeSeries;
+  }
+  else
+  {
+    if (Operation::verbose)
+      cerr << "Creating TimeSeries instance" << endl;
+    return  new TimeSeries;
+  }
 }
 
 template<typename T>
@@ -488,3 +518,64 @@ catch (Error& error)
   throw error += "dsp::SingleThread::finish";
 }
 
+void dsp::SingleThread::end_of_data ()
+{
+  // do nothing by default
+}
+
+dsp::SingleThread::Config::Config ()
+{
+  // be a little bit verbose by default
+  report_done = true;
+  report_vitals = true;
+
+  // process each file once
+  run_repeatedly = false;
+
+  // use weighted time series
+  weighted_time_series = true;
+
+  // use input buffering
+  input_buffering = true;
+
+  nthread = 0;
+  buffers = 0;
+  repeated = 0;
+}
+
+//! set the number of CPU threads to be used
+void dsp::SingleThread::Config::set_nthread (unsigned cpu_nthread)
+{
+  nthread = cpu_nthread;
+}
+
+//! get the total number of threads
+unsigned dsp::SingleThread::Config::get_total_nthread () const
+{
+  unsigned total_nthread = nthread + get_cuda_ndevice();
+
+  if (total_nthread)
+    return total_nthread;
+
+  return 1;
+}
+
+// set the cuda devices to be used
+void dsp::SingleThread::Config::set_cuda_device (string txt)
+{
+  while (txt != "")
+  {
+    string dev = stringtok (txt, ",");
+    cuda_device.push_back( fromstring<unsigned>(dev) );
+  }
+}
+
+// set the cpu on which threads will run
+void dsp::SingleThread::Config::set_affinity (string txt)
+{
+  while (txt != "")
+  {
+    string cpu = stringtok (txt, ",");
+    affinity.push_back( fromstring<unsigned>(cpu) );
+  }
+}

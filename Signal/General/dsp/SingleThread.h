@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/08/23 20:55:19 $
+   $Revision: 1.2 $
+   $Date: 2011/08/24 22:16:11 $
    $Author: straten $ */
 
 #ifndef __dspsr_SingleThread_h
@@ -64,10 +64,10 @@ namespace dsp {
     void run ();
 
     //! Share any necessary resources with the specified thread
-    void share (SingleThread*);
+    virtual void share (SingleThread*);
 
     //! Combine the results from another processing thread
-    void combine (const SingleThread*);
+    virtual void combine (const SingleThread*);
 
     //! Finish everything
     void finish ();
@@ -119,16 +119,14 @@ namespace dsp {
     //! Processing thread with whom sharing will occur
     SingleThread* colleague;
 
-  private:
-
-    //! Configuration information
-    Reference::To<Config> config;
-
     //! Manages loading and unpacking
     Reference::To<IOManager> manager;
 
     //! The TimeSeries into which the Input is unpacked
     Reference::To<TimeSeries> unpacked;
+
+    //! Configuration information
+    Reference::To<Config> config;
 
     //! Create a new TimeSeries instance
     TimeSeries* new_time_series ();
@@ -145,8 +143,6 @@ namespace dsp {
     //! The minimum number of samples required to process
     uint64_t minimum_samples;
 
-  private:
-
     Reference::To<Memory> device_memory;
     void* gpu_stream;
 
@@ -156,46 +152,59 @@ namespace dsp {
   {
   public:
 
-    // external function used to prepare the input each time it is opened
+    //! Default constructor
+    Config ();
+
+    //! external function used to prepare the input each time it is opened
     Functor< void(Input*) > input_prepare;
 
-    // report vital statistics
+    //! report vital statistics
     bool report_vitals;
 
-    // report the percentage finished
+    //! report the percentage finished
     bool report_done;
 
-    // run repeatedly on the same input
+    //! run repeatedly on the same input
     bool run_repeatedly;
 
-    // set the cuda devices to be used
+    //! set the cuda devices to be used
     void set_cuda_device (std::string);
     unsigned get_cuda_ndevice () const { return cuda_device.size(); }
 
-    // number of threads in operation
-    unsigned nthread;
-    // set the cpus on which each thread will run
+    //! set the number of CPU threads to be used
+    void set_nthread (unsigned);
+
+    //! get the total number of threads
+    unsigned get_total_nthread () const;
+
+    //! set the cpus on which each thread will run
     void set_affinity (std::string);
 
-    // use input-buffering to compensate for operation edge effects
+    //! use input-buffering to compensate for operation edge effects
     bool input_buffering;
 
-    // dump points
+    //! use weighted time series to flag bad data
+    bool weighted_time_series;
+
+    //! dump points
     std::vector<std::string> dump_before;
 
-    // get the number of buffers required to process the data
+    //! get the number of buffers required to process the data
     unsigned get_nbuffers () const { return buffers; }
 
   protected:
 
-    // These attributes are set only by the SingleThread class
+    //! These attributes are set only by the SingleThread class
     friend class SingleThread;
 
-    // CUDA devices on which computations will take place
+    //! CUDA devices on which computations will take place
     std::vector<unsigned> cuda_device;
 
-    // CPUs on which threads will run
+    //! CPUs on which threads will run
     std::vector<unsigned> affinity;
+
+    //! number of CPU threads
+    unsigned nthread;
 
     unsigned buffers;
 
