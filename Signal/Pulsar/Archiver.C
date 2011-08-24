@@ -763,6 +763,7 @@ try
       into[ibin] = 0.0;
     }
     else if (!finite(*from))
+    {
       not_finite ++;
       if (verbose > 2)
         cerr << "non-finite: hit=" << hits[ibin] << endl;
