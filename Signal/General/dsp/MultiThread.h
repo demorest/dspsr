@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/MultiThread.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/08/23 20:55:19 $
+   $Revision: 1.2 $
+   $Date: 2011/08/24 22:16:04 $
    $Author: straten $ */
 
 #ifndef __dspsr_MultiThread_h
@@ -34,6 +34,9 @@ namespace dsp {
     //! Set the number of thread to be used
     void set_nthread (unsigned);
 
+    //! Set the configuration to be used by each thread
+    void set_configuration (SingleThread::Config*);
+
     //! Set the Input from which data are read
     void set_input (Input*);
 
@@ -42,6 +45,9 @@ namespace dsp {
 
     //! Prepare to fold the input TimeSeries
     void prepare ();
+
+    //! Set up any resources that must be shared
+    virtual void share ();
 
     //! Run through the data
     void run ();
@@ -65,10 +71,13 @@ namespace dsp {
     ThreadContext* state_changes;
 
     //! The creator of new SingleThread threads
-    virtual SingleThread* new_thread ();
+    virtual SingleThread* new_thread () = 0;
 
-    //! The SingleThread threads
+    //! The pipeline threads
     std::vector< Reference::To<SingleThread> > threads;
+
+    //! The shared thread configuration
+    Reference::To<SingleThread::Config> configuration;
 
     //! The thread ids
     std::vector<pthread_t> ids;

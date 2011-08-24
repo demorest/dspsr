@@ -44,10 +44,22 @@ void dsp::MultiThread::set_nthread (unsigned nthread)
     if (!threads[i])
       threads[i] = new_thread();
 
+  if (configuration)
+    set_configuration (configuration);
+
   if (input)
     set_input (input);
 }
 
+
+//! Set the configuration to be used in prepare and run
+void dsp::MultiThread::set_configuration (SingleThread::Config* config)
+{
+  configuration = config;
+
+  for (unsigned i=0; i<threads.size(); i++)
+    threads[i]->set_configuration( config );
+}
 
 //! Set the Input from which data will be read
 void dsp::MultiThread::set_input (Input* _input)
@@ -71,18 +83,34 @@ dsp::Input* dsp::MultiThread::get_input ()
   return input;
 }
 
-void dsp::MultiThread::prepare (SingleThread* fold)
+void dsp::MultiThread::prepare (SingleThread* thread)
 {
-  dsp::MultiThread::signal (fold, SingleThread::Prepare);
-  dsp::MultiThread::wait (fold, SingleThread::Prepared);
+  dsp::MultiThread::signal (thread, SingleThread::Prepare);
+  dsp::MultiThread::wait (thread, SingleThread::Prepared);
 }
 
-//! Prepare to fold the input TimeSeries
 void dsp::MultiThread::prepare ()
 {
   launch_threads ();
 
   prepare( threads[0] );
+
+  share ();
+
+  for (unsigned i=1; i<threads.size(); i++)
+  {
+    threads[i]->thread_id = i;
+
+    threads[i]->share (threads[0]);
+
+    prepare( threads[i] );
+  }
+}
+
+void dsp::MultiThread::share ()
+{
+  if (Operation::verbose)
+    cerr << "dsp::MultiThread::share installing InputBuffering::Share" << endl;
 
   //
   // install InputBuffering::Share policy
@@ -107,17 +135,7 @@ void dsp::MultiThread::prepare ()
 
     xform->set_buffering_policy( new InputBuffering::Share (ibuf, xform) );
   }
-
-  for (unsigned i=1; i<threads.size(); i++)
-  {
-    threads[i]->thread_id = i;
-
-    threads[i]->share (threads[0]);
-
-    prepare( threads[i] );
-  }
 }
-
 
 uint64_t dsp::MultiThread::get_minimum_samples () const
 {
@@ -129,11 +147,11 @@ uint64_t dsp::MultiThread::get_minimum_samples () const
 //
 // share buffering policies
 //
-void dsp::MultiThread::share (SingleThread* fold, SingleThread* share)
+void dsp::MultiThread::share (SingleThread* thread, SingleThread* share)
 {
   typedef Transformation<TimeSeries,TimeSeries> Xform;
 
-  for (unsigned iop=0; iop < fold->operations.size(); iop++)
+  for (unsigned iop=0; iop < thread->operations.size(); iop++)
   {
     Xform* trans0 = dynamic_kast<Xform>( share->operations[iop] );
 
@@ -150,7 +168,7 @@ void dsp::MultiThread::share (SingleThread* fold, SingleThread* share)
     if (!ibuf0)
       continue;
 
-    Xform* trans = dynamic_kast<Xform>( fold->operations[iop] );
+    Xform* trans = dynamic_kast<Xform>( thread->operations[iop] );
     
     if (!trans)
       throw Error (InvalidState, "dsp::MultiThread::share",
@@ -166,62 +184,62 @@ void dsp::MultiThread::share (SingleThread* fold, SingleThread* share)
   }
 }
 
-void dsp::MultiThread::wait (SingleThread* fold, SingleThread::State state)
+void dsp::MultiThread::wait (SingleThread* thread, SingleThread::State state)
 {
-  ThreadContext::Lock lock (fold->state_change);
-  while ( fold->state != state )
-    fold->state_change->wait ();
+  ThreadContext::Lock lock (thread->state_change);
+  while ( thread->state != state )
+    thread->state_change->wait ();
 }
 
-void dsp::MultiThread::signal (SingleThread* fold, SingleThread::State state)
+void dsp::MultiThread::signal (SingleThread* thread, SingleThread::State state)
 {
-  ThreadContext::Lock lock (fold->state_change);
-  fold->state = state;
-  fold->state_change->broadcast();
+  ThreadContext::Lock lock (thread->state_change);
+  thread->state = state;
+  thread->state_change->broadcast();
 }
 
 void* dsp::MultiThread::thread (void* context) try
 {
-  dsp::SingleThread* fold = reinterpret_cast<dsp::SingleThread*>( context );
+  dsp::SingleThread* thread = reinterpret_cast<dsp::SingleThread*>( context );
 
-  wait (fold, SingleThread::Prepare);
+  wait (thread, SingleThread::Prepare);
 
-  fold->prepare ();
+  thread->prepare ();
 
-  if (fold->colleague)
-    share (fold, fold->colleague);
+  if (thread->colleague)
+    share (thread, thread->colleague);
 
-  signal (fold, SingleThread::Prepared);
+  signal (thread, SingleThread::Prepared);
 
-  wait (fold, SingleThread::Run);
+  wait (thread, SingleThread::Run);
 
   SingleThread::State state = SingleThread::Done;
 
   try
   {
-    if (fold->log) *(fold->log) << "THREAD STARTED" << endl;
+    if (thread->log) *(thread->log) << "THREAD STARTED" << endl;
 
-    fold->run();
+    thread->run();
 
-    if (fold->log) *(fold->log) << "THREAD run ENDED" << endl;
+    if (thread->log) *(thread->log) << "THREAD run ENDED" << endl;
   }
   catch (Error& error)
   {
-    if (fold->log) *(fold->log) << "THREAD ERROR: " << error << endl;
+    if (thread->log) *(thread->log) << "THREAD ERROR: " << error << endl;
 
     cerr << "THREAD ERROR: " << error << endl;
 
     state = SingleThread::Fail;
-    fold->error = error;
+    thread->error = error;
 
     exit (-1);
   }
 
-  if (fold->log) *(fold->log) << "SIGNAL end state" << endl;
+  if (thread->log) *(thread->log) << "SIGNAL end state" << endl;
 
-  signal (fold, state);
+  signal (thread, state);
 
-  if (fold->log) *(fold->log) << "THREAD EXIT" << endl;
+  if (thread->log) *(thread->log) << "THREAD EXIT" << endl;
 
   pthread_exit (0);
 }
@@ -248,22 +266,22 @@ void dsp::MultiThread::launch_threads ()
 
   for (unsigned i=0; i<threads.size(); i++)
   {
-    SingleThread* fold = threads[i];
+    SingleThread* a_thread = threads[i];
 
     if (Operation::verbose)
     {
       string logname = "dspsr.log." + tostring (i);
 
       cerr << "dsp::MultiThread::run spawning thread " << i 
-	   << " ptr=" << fold << " log=" << logname << endl;
+	   << " ptr=" << a_thread << " log=" << logname << endl;
 
-      fold->take_ostream( new std::ofstream (logname.c_str()) );
+      a_thread->take_ostream( new std::ofstream (logname.c_str()) );
     }
 
-    fold->state = SingleThread::Idle;
-    fold->state_change = state_changes;
+    a_thread->state = SingleThread::Idle;
+    a_thread->state_change = state_changes;
 
-    errno = pthread_create (&ids[i], 0, thread, fold);
+    errno = pthread_create (&ids[i], 0, thread, a_thread);
 
     if (errno != 0)
       throw Error (FailedSys, "psr::MultiThread::run", "pthread_create");
@@ -381,8 +399,6 @@ void dsp::MultiThread::finish ()
     error << errors << " threads aborted with an error";
     throw error += "dsp::MultiThread::finish";
   }
-
-  // add folded profiles together XXX
 }
 
 
