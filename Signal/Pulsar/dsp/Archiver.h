@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.36 $
-   $Date: 2011/08/20 04:32:01 $
-   $Author: demorest $ */
+   $Revision: 1.37 $
+   $Date: 2011/08/24 22:43:53 $
+   $Author: straten $ */
 
 
 #ifndef __Archiver_h
@@ -192,6 +192,9 @@ namespace dsp
 
     //! The Pulsar::Archive instance to which data will be unloaded
     Reference::To<Pulsar::Archive> archive;
+
+    //! Count of the corrupted profiles in a sub-integration
+    unsigned corrupted_profiles;
 
     //! Number of fourth moments contained in output PhaseSeries
     mutable unsigned fourth_moments;

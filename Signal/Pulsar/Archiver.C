@@ -610,6 +610,8 @@ try
     if (more)
       integration->get_Profile(0,chan)->add_extension(more);
 
+    corrupted_profiles = 0;
+
     for (unsigned ipol=0; ipol<npol; ipol++)
     {
       for (unsigned idim=0; idim<ndim; idim++)
@@ -635,7 +637,14 @@ try
       }
     }
 
-    if (fourth_moments)
+    if (corrupted_profiles)
+    {
+      cerr << "dsp::Archiver::set Pulsar::Integration ichan=" << ichan
+             << " contains corrupted data" << endl;
+
+      integration->set_weight (ichan, 0);
+    }
+    else if (fourth_moments)
     {
       cerr << "dsp::Archiver::set fourth_moments=true" << endl;
       const unsigned * hits = 0;
@@ -644,9 +653,7 @@ try
       else
         hits = phase->get_hits();
       raw_to_central (chan, more, integration, hits);
-      //raw_to_central (chan, more, integration, phase->get_hits());
     }
-
   }
 }
 
@@ -756,7 +763,6 @@ try
       into[ibin] = 0.0;
     }
     else if (!finite(*from))
-    {
       not_finite ++;
       if (verbose > 2)
         cerr << "non-finite: hit=" << hits[ibin] << endl;
@@ -769,10 +775,15 @@ try
 
   if (not_finite)
   {
-    Error error (InvalidParam, string(),
-        	 "%u/%u non-finite amplitudes in ichan=%d ipol=%d idim=%d",
-        	 not_finite, nbin, ichan, ipol, idim);
-    cerr << error << endl;
+		if (verbose > 2)
+      cerr << "dsp::Archiver::set Pulsar::Profile WARNING " << not_finite
+           << " out of " << nbin << " bins with non-finite amplitudes" << endl;
+
+    for (unsigned ibin = 0; ibin<nbin; ibin++)
+      into[ibin] = 0;
+
+    corrupted_profiles ++;
+
     profile->set_weight(0);
   }
 
