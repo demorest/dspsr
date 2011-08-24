@@ -87,14 +87,10 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
   DEBUG("CUDA::FilterbankEngine::setup real-to-complex");
 
-  unsigned n_half = nchan * bwd_nfft / 2 + 1;
+  unsigned nfft = nchan * bwd_nfft;
+  unsigned n_half = nfft / 2 + 1;
   unsigned n_half_size = n_half * sizeof(cufftReal);
 
-  // setup realtr coeffients and variables, copy to CUDA
-  double arg = 1.570796327 / (nchan * bwd_nfft); 
-  double CD = 2*sin(arg)*sin(arg);
-  double SD = sin(arg+arg);
-  
   // used by realtr SN and CN to be copied to kernel
   std::vector<float> SN (n_half);
   std::vector<float> CN (n_half);
@@ -104,8 +100,8 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
   for (int j=1; j<n_half; j++)
   {
-    CN[j]=CN[j-1]-(CD*CN[j-1]+SD*SN[j-1]);
-    SN[j]=(SD*CN[j-1]-CD*SN[j-1])+SN[j-1];
+    CN[j] = cos (j*M_PI/nfft);
+    SN[j] = sin (j*M_PI/nfft);
   }
 
   cudaMalloc((void**)&d_CN, n_half_size);
@@ -132,7 +128,7 @@ void check_error (const char* method)
 
 void CUDA::FilterbankEngine::finish ()
 {
-  check_error ("CUDA::FilterbankEngine::finish");
+  //check_error ("CUDA::FilterbankEngine::finish");
 }
 
 /* *************************************************************************
