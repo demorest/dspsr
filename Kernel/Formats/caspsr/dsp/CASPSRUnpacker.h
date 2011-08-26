@@ -14,7 +14,7 @@ namespace dsp {
   public:
 
     //! Constructor
-    CASPSRUnpacker (const char* name = "CASPSRUpacker");
+    CASPSRUnpacker (const char* name = "CASPSRUnpacker");
     ~CASPSRUnpacker ();
 
     //! Cloner (calls new)
