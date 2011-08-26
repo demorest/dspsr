@@ -79,6 +79,9 @@ void dsp::SingleThread::take_ostream (std::ostream* newlog)
 //! Set the Input from which data will be read
 void dsp::SingleThread::set_input (Input* input)
 {
+  if (Operation::verbose)
+    cerr << "dsp::SingleThread::set_input input=" << input << endl;
+
   manager->set_input (input);
 }
 
@@ -96,7 +99,7 @@ void dsp::SingleThread::set_affinity (int core)
 
   pid_t tpid = syscall (SYS_gettid);
 
-  //if (Operation::verbose)
+  if (Operation::verbose)
     cerr << "dsp::SingleThread::set_affinity thread=" << thread_id
          << " tpid=" << tpid << " core=" << core << endl;
 
@@ -172,7 +175,7 @@ void dsp::SingleThread::prepare () try
   if (run_on_gpu)
   {
     // disable input buffering when data must be copied between devices
-    if (config->nthread > 1)
+    if (config->get_total_nthread() > 1)
       config->input_buffering = false;
 
     int device = config->cuda_device[thread_id];
@@ -240,13 +243,6 @@ catch (Error& error)
   throw error += "dsp::SingleThread::prepare";
 }
 
-
-void dsp::SingleThread::reserve ()
-{
-  for (unsigned iop=0; iop < operations.size(); iop++)
-    operations[iop]->reserve ();
-}
-
 void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
 {
   typedef HasInput<TimeSeries> Xform;
@@ -262,8 +258,8 @@ void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
 
       string filename = "pre_" + transform_name;
 
-      if (config->nthread > 1)
-	filename += "." + tostring (thread_id);
+      if (config->get_total_nthread() > 1)
+        filename += "." + tostring (thread_id);
 
       filename += ".dump";
 
@@ -305,6 +301,8 @@ void dsp::SingleThread::run () try
     }
     if (!operations[iop] -> scratch_was_set ())
       operations[iop] -> set_scratch (scratch);
+
+    operations[iop] -> reserve ();
   }
 
   Input* input = manager->get_input();
@@ -402,7 +400,7 @@ void dsp::SingleThread::run () try
 	config->repeated ++;
 	finished = false;
 
-	if (config->repeated == config->nthread)
+	if (config->repeated == config->get_total_nthread())
 	  config->repeated = 0;
       }
     }
