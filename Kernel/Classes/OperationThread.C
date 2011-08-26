@@ -38,7 +38,7 @@ void* dsp::OperationThread::operation_thread (void* ptr)
   return 0;
 }
 
-void dsp::OperationThread::thread ()
+void dsp::OperationThread::thread () try
 {
   ThreadContext::Lock lock (context);
 
@@ -56,6 +56,11 @@ void dsp::OperationThread::thread ()
     state = Idle;
     context->broadcast ();
   }
+}
+catch (Error& error)
+{
+  cerr << "dsp::OperationThread error" << error << endl;
+  throw error += "dsp::OperationThread::thread";
 }
 
 void dsp::OperationThread::operation ()
