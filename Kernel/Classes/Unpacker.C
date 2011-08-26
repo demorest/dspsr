@@ -65,16 +65,17 @@ void dsp::Unpacker::set_output_order (TimeSeries::Order order)
 }
 
 //! Return true if the unpacker can operate on the specified device
-bool dsp::Unpacker::get_device_supported (Memory*) const
+bool dsp::Unpacker::get_device_supported (Memory* memory) const
 {
-  return false;
+  return memory == Memory::get_manager ();
 }
 
 //! Set the device on which the unpacker will operate
-void dsp::Unpacker::set_device (Memory*)
+void dsp::Unpacker::set_device (Memory* memory)
 {
-  throw Error (InvalidState, "dsp::Unpacker::set_device",
-	       "unsupported device");
+  if (memory != Memory::get_manager ())
+    throw Error (InvalidState, "dsp::Unpacker::set_device",
+	               "unsupported device memory");
 }
 
 //! Initialize and resize the output before calling unpack

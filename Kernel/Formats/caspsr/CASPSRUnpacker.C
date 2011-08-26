@@ -69,10 +69,11 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
     staging.set_memory( memory );
     gpu_stream = (void *) gpu->get_stream();
   }
+  else
+    gpu_stream = undefined_stream;
 
 #else
-  throw Error (InvalidState, "dsp::CASPSRUnpacker::set_device",
-               "unsupported device");
+  Unpacker::set_device (memory);
 #endif
 }
 
