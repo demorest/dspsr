@@ -49,7 +49,7 @@ endif
 
 if HAVE_CUFFT
 nobase_include_HEADERS += dsp/MemoryCUDA.h
-libClasses_la_SOURCES += MemoryCUDA.C
+libClasses_la_SOURCES += MemoryCUDA.C check_error.C
 endif
 
 check_PROGRAMS = test_BlockIterator test_environ
