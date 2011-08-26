@@ -229,7 +229,7 @@ void dsp::IOManager::reserve ()
   if (verbose)
     cerr << "dsp::IOManager::reserve" << endl;
 
-  input->reserve();
+  input->reserve( output );
   unpacker->reserve();
   if (post_load_operation)
     post_load_operation->reserve ();
