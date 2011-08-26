@@ -38,9 +38,9 @@ void parse_options (int argc, char** argv);
 
 static bool verbose = false;
 
-// sets up the LoadToFold engine using the following attributes
+// sets up the pipeline using the following attributes
 
-void prepare (dsp::LoadToFold* engine, dsp::Input* input);
+void prepare (dsp::Pipeline* engine, dsp::Input* input);
 
 // number of seconds to seek into data
 double seek_seconds = 0.0;
@@ -85,15 +85,12 @@ int main (int argc, char** argv) try
 
   parse_options (argc, argv);
 
-  Reference::To<dsp::LoadToFold> engine;
+  Reference::To<dsp::Pipeline> engine;
 
-  if (nthread > 1)
-    engine = new dsp::LoadToFoldN (nthread);
+  if (config->get_total_nthread() > 1)
+    engine = new dsp::LoadToFoldN (config);
   else
-    engine = new dsp::LoadToFold1;
-
-  // configure the processing engine
-  engine->set_configuration( config );
+    engine = new dsp::LoadToFold (config);
 
   bool time_prep = dsp::Operation::record_time || config->get_cuda_ndevice();
 
@@ -205,9 +202,11 @@ void input_prepare (dsp::Input* input)
     
   if (total_seconds)
     input->set_total_seconds (seek_seconds + total_seconds);
+
+  info->set_dispersion_measure (config->dispersion_measure);
 }
 
-void prepare (dsp::LoadToFold* engine, dsp::Input* input)
+void prepare (dsp::Pipeline* engine, dsp::Input* input)
 {
   config->input_prepare.set( input_prepare );
 
@@ -245,7 +244,8 @@ void parse_options (int argc, char** argv) try
 
   menu.add ("\n" "Processor options:");
 
-  arg = menu.add (nthread, 't', "threads");
+  arg = menu.add (config.get(), &dsp::SingleThread::Config::set_nthread, 
+		  't', "threads");
   arg->set_help ("number of processor threads");
 
 #if HAVE_SCHED_SETAFFINITY
@@ -560,6 +560,8 @@ void parse_options (int argc, char** argv) try
 
   menu.parse (argc, argv);
 
+  Error::verbose = vverbose;
+
   if (!metafile.empty())
     stringfload (&filenames, metafile);
   else
@@ -593,14 +595,6 @@ void parse_options (int argc, char** argv) try
     dsp::set_verbosity (3);
     verbose = true;
   }
-
-  if (nthread == 0)
-    nthread = config->get_cuda_ndevice();
-  else
-    nthread += config->get_cuda_ndevice();
-
-  if (nthread == 0)
-    nthread = 1;
 
   if (config->integration_length && config->minimum_integration_length < 0)
   {
@@ -794,8 +788,6 @@ void parse_options (int argc, char** argv) try
       cerr << "dspsr: FFT library set to " << fft_lib << endl;
     }
   }
-
-  FTransform::nthread = nthread;
 }
 catch (Error& error)
 {

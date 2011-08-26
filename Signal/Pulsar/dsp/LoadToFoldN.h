@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.12 $
-   $Date: 2011/03/23 01:57:18 $
-   $Author: demorest $ */
+   $Revision: 1.13 $
+   $Date: 2011/08/26 22:05:06 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
 #define __baseband_dsp_LoadToFoldN_h
 
 #include "dsp/LoadToFold1.h"
+#include "dsp/MultiThread.h"
 
 class ThreadContext;
 
@@ -23,78 +24,40 @@ namespace dsp {
   class UnloaderShare;
 
   //! Multiple LoadToFold threads
-  class LoadToFoldN : public LoadToFold {
+  class LoadToFoldN : public MultiThread
+  {
 
   public:
 
     //! Constructor
-    LoadToFoldN (unsigned nthread = 0);
+    LoadToFoldN (LoadToFold::Config*);
     
-    //! Destructor
-    ~LoadToFoldN ();
-
     //! Set the number of thread to be used
     void set_nthread (unsigned);
 
     //! Set the configuration to be used in prepare and run
-    void set_configuration (Config*);
+    void set_configuration (LoadToFold::Config*);
 
-    //! Set the Input from which data are read
-    void set_input (Input*);
-
-    //! Get the Input from which data are read
-    Input* get_input ();
-
-    //! Prepare to fold the input TimeSeries
-    void prepare ();
-
-    //! Run through the data
-    void run ();
-
-    //! Finish everything
-    void finish ();
-
-    //! Get the minimum number of samples required to process
-    uint64_t get_minimum_samples () const;
+    //! Setup sharing
+    void share ();
 
   protected:
 
     //! Configuration parameters
     /*! call to set_configuration may precede set_nthread */
-    Reference::To<Config> configuration;
-
-    //! Input
-    /*! call to set_input may precede set_nthread */
-    Reference::To<Input> input;
+    Reference::To<LoadToFold::Config> configuration;
 
     //! PhaseSeriesUnloader sharing
     std::vector< Reference::To<UnloaderShare> > unloader;
 
-    //! Thread lock for Input::load
-    ThreadContext* input_context;
+    //! The creator of new LoadToFold threads
+    virtual LoadToFold* new_thread ();
 
-    //! Condition for processing thread state changes
-    ThreadContext* state_changes;
-
-    //! The creator of new LoadToFold1 threads
-    virtual LoadToFold1* new_thread ();
-
-    //! The LoadToFold1 threads
-    std::vector< Reference::To<LoadToFold1> > threads;
-
-    //! The thread ids
-    std::vector<pthread_t> ids;
-
-    static void* thread (void*);
+    LoadToFold* at (unsigned index);
 
     template <class T>
     bool prepare_subint_archival ();
-    void launch_threads ();
 
-    static void share (LoadToFold1* fold, LoadToFold1* share);
-    static void prepare (LoadToFold1* fold);
-    static void wait (LoadToFold1* fold, LoadToFold1::State st);
-    static void signal (LoadToFold1* fold, LoadToFold1::State st);
 
   };
 

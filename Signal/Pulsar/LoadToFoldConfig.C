@@ -6,19 +6,11 @@
  ***************************************************************************/
 
 #include "dsp/LoadToFoldConfig.h"
-#include "stringtok.h"
 
 using namespace std;
 
 dsp::LoadToFold::Config::Config ()
 {
-  // be a little bit verbose by default
-  report_done = true;
-  report_vitals = true;
-
-  // process each file once
-  run_repeatedly = false;
-  repeated = 0;
 
   minimum_RAM = 0;
   maximum_RAM = 256 * 1024 * 1024;
@@ -33,17 +25,8 @@ dsp::LoadToFold::Config::Config ()
   // sampling threshold
   excision_threshold = -1.0;
 
-  // use weighted time series
-  weighted_time_series = true;
-
   // perform coherent dedispersion
   coherent_dedispersion = true;
-
-  // one thread by default
-  nthread = 1;
-
-  // use input buffering
-  input_buffering = true;
 
   // remove inter-channel dispersion delays
   interchan_dedispersion = false;
@@ -164,22 +147,3 @@ void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
   times_minimum_ndat = 1;
 }
 
-// set the cuda devices to be used
-void dsp::LoadToFold::Config::set_cuda_device (string txt)
-{
-  while (txt != "")
-  {
-    string dev = stringtok (txt, ",");
-    cuda_device.push_back( fromstring<unsigned>(dev) );
-  }
-}
-
-// set the cpu on which threads will run
-void dsp::LoadToFold::Config::set_affinity (string txt)
-{
-  while (txt != "")
-  {
-    string cpu = stringtok (txt, ",");
-    affinity.push_back( fromstring<unsigned>(cpu) );
-  }
-}

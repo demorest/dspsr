@@ -1,20 +1,20 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2007 by Willem van Straten
+ *   Copyright (C) 2007-2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.29 $
-   $Date: 2011/08/04 21:06:50 $
+   $Revision: 1.30 $
+   $Date: 2011/08/26 22:05:06 $
    $Author: straten $ */
 
-#ifndef __baseband_dsp_LoadToFold1_h
-#define __baseband_dsp_LoadToFold1_h
+#ifndef __dspsr_LoadToFold_h
+#define __dspsr_LoadToFold_h
 
-#include "dsp/LoadToFold.h"
+#include "dsp/SingleThread.h"
 #include "dsp/Filterbank.h"
 #include "dsp/SKFilterbank.h"
 #include "dsp/Resize.h"
@@ -50,58 +50,47 @@ namespace dsp {
   class LoadToFoldN;
 
   //! A single LoadToFold thread
-  class LoadToFold1 : public LoadToFold {
+  class LoadToFold : public SingleThread
+  {
 
   public:
 
-    //! Constructor
-    LoadToFold1 ();
-    
-    //! Destructor
-    ~LoadToFold1 ();
+    //! Configuration parameters
+    class Config;
 
     //! Set the configuration to be used in prepare and run
     void set_configuration (Config*);
 
-    //! Set the Input from which data are read
-    void set_input (Input*);
+    //! Constructor
+    LoadToFold (Config* config = 0);
+    
+    //! Destructor
+    ~LoadToFold ();
 
-    //! Get the Input from which data are read
-    Input* get_input ();
-
-    //! Prepare to fold the input TimeSeries
+    //! Create the pipeline
     void prepare ();
+
+    //! Share any necessary resources with the specified thread
+    void share (SingleThread*);
 
     //! Run through the data
     void run ();
 
-    //! Combine the results from another processing thread
-    void combine (const LoadToFold1*);
-
     //! Finish everything
     void finish ();
-
-    //! Get the minimum number of samples required to process
-    uint64_t get_minimum_samples () const;
-
-    //! The verbose output stream shared by all operations
-    std::ostream cerr;
-
-    //! Take and manage a new ostream instance
-    void take_ostream (std::ostream* newlog);
-
-    unsigned thread_id;
-    void set_affinity (int core);
 
   protected:
 
     friend class LoadToFoldN;
 
+    //! Any special operations that must be performed at the end of data
+    virtual void end_of_data ();
+
     //! Derived classes may want to do their own final preparations
     virtual void prepare_final ();
 
-    //! Manages loading and unpacking
-    Reference::To<IOManager> manager;
+    //! Return true if the output will be divided into sub-integrations
+    bool output_subints () const;
 
     //! The dedispersion kernel
     Reference::To<Dedispersion> kernel;
@@ -124,43 +113,10 @@ namespace dsp {
     //! The RFI filter
     Reference::To<RFIFilter> rfi_filter;
 
-    //! Pointer to the ostream
-    std::ostream* log;
-
-    //! Processing thread states
-    enum State
-      {
-	Fail,      //! an error has occurred
-	Idle,      //! nothing happening
-	Prepare,   //! request to prepare
-	Prepared,  //! preparations completed
-	Run,       //! processing started
-	Done,      //! processing completed
-	Joined     //! completion acknowledged 
-      };
-
-    //! Processing state
-    State state;
-
-    //! Error status
-    Error error;
-
-    //! State change communication
-    ThreadContext* state_change;
-
-    //! Mutex protecting input
-    ThreadContext* input_context;
-
-    //! Processing thread with whom sharing will occur
-    LoadToFold1* share;
-
   private:
 
     //! Configuration parameters
     Reference::To<Config> config;
-
-    //! The TimeSeries into which the Input is unpacked
-    Reference::To<TimeSeries> unpacked;
 
     //! Integrates the passband
     Reference::To<Response> passband;
@@ -194,12 +150,6 @@ namespace dsp {
     //! Detects the phase-coherent signal
     Reference::To<Detection> detect;
 
-    //! Create a new TimeSeries instance
-    TimeSeries* new_time_series ();
-
-    //! The operations to be performed
-    std::vector< Reference::To<Operation> > operations;
-
     //! Prepare to remove interchannel dispersion delays
     void prepare_interchan (TimeSeries*);
 
@@ -209,25 +159,11 @@ namespace dsp {
     //! Prepare the given Archiver
     void prepare_archiver (Archiver*);
 
-    //! Insert a dump point before the named operation
-    void insert_dump_point (const std::string& transformation_name);
-
-    //! The scratch space shared by all operations
-    Reference::To<Scratch> scratch;
-
-    //! The minimum number of samples required to process
-    uint64_t minimum_samples;
-
-  private:
-
-    Reference::To<Memory> device_memory;
-    void* gpu_stream;
-
   };
 
 }
 
-#endif // !defined(__LoadToFold1_h)
+#endif // !defined(__LoadToFold_h)
 
 
 

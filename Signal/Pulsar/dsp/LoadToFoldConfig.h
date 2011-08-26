@@ -7,16 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.37 $
-   $Date: 2011/08/20 04:32:01 $
-   $Author: demorest $ */
+   $Revision: 1.38 $
+   $Date: 2011/08/26 22:05:06 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
 
-#include "dsp/LoadToFold.h"
+#include "dsp/LoadToFold1.h"
 #include "dsp/FilterbankConfig.h"
-#include "Functor.h"
 
 namespace Pulsar
 {
@@ -27,7 +26,8 @@ namespace Pulsar
 namespace dsp {
 
   //! Load, unpack, process and fold data into phase-averaged profile(s)
-  class LoadToFold::Config : public Reference::Able {
+  class LoadToFold::Config : public SingleThread::Config
+  {
 
     // set block size to this factor times the minimum possible
     unsigned times_minimum_ndat;
@@ -43,17 +43,6 @@ namespace dsp {
     //! Default constructor
     Config ();
 
-    // external function used to prepare the input each time it is opened
-    Functor< void(Input*) > input_prepare;
-
-    // report vital statistics
-    bool report_vitals;
-
-    // report the percentage finished
-    bool report_done;
-
-    // run repeatedly on the same input
-    bool run_repeatedly;
 
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);
@@ -74,23 +63,8 @@ namespace dsp {
     // sampling threshold
     float excision_threshold;
 
-    // use weighted time series
-    bool weighted_time_series;
-
     // perform coherent dedispersion
     bool coherent_dedispersion;
-
-    // set the cuda devices to be used
-    void set_cuda_device (std::string);
-    unsigned get_cuda_ndevice () const { return cuda_device.size(); }
-
-    // number of threads in operation
-    unsigned nthread;
-    // set the cpus on which each thread will run
-    void set_affinity (std::string);
-
-    // use input-buffering to compensate for operation edge effects
-    bool input_buffering;
 
     // remove inter-channel dispersion delays
     bool interchan_dedispersion;
@@ -209,26 +183,7 @@ namespace dsp {
     // output archive post-processing jobs
     std::vector<std::string> jobs;
 
-    // dump points
-    std::vector<std::string> dump_before;
 
-    // get the number of buffers required to process the data
-    unsigned get_nbuffers () const { return buffers; }
-
-  protected:
-
-    // These attributes are set only by the LoadToFold classes, including
-    friend class LoadToFold1;
-
-    // CUDA devices on which computations will take place
-    std::vector<unsigned> cuda_device;
-
-    // CPUs on which threads will run
-    std::vector<unsigned> affinity;
-
-    unsigned buffers;
-
-    unsigned repeated;
   };
 
 }
