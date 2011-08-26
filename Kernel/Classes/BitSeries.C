@@ -78,7 +78,12 @@ void dsp::BitSeries::resize (int64_t nsamples)
   if (!require)
     return;
 
-  if (data_size == 0) {
+  if (data_size == 0)
+  {
+    if (verbose)
+      cerr << "dsp::BitSeries::resize this=" << this 
+           << " size=" << require << endl;
+
     data = (unsigned char*) memory->do_allocate (require);
     data_size = require;
   }
@@ -192,12 +197,29 @@ void dsp::BitSeries::append (const dsp::BitSeries* little)
 //! Match the internal memory layout of another BitSeries
 void dsp::BitSeries::internal_match (const BitSeries* other)
 {   
+  if (data_size < other->data_size)
+  {
+    if (verbose)
+      cerr << "dsp::BitSeries::internal_match Memory::free"
+              " size=" << data_size << " data=" << (void*)data << endl;
+
+    memory->do_free (data);
+
+    if (verbose)
+      cerr << "dsp::DataSeries::internal_match"
+              " Memory::allocate (" << other->data_size << ")" << endl;
+
+    data = (unsigned char*) memory->do_allocate (other->data_size);
+    if (!data)
+      throw Error (InvalidState,"dsp::DataSeries::internal_match",
+      "could not allocate "UI64" bytes", other->data_size);
+
+    data_size = other->data_size;
+  }
 
   request_offset = other->request_offset;
   request_ndat = other->request_ndat;
   input_sample = other->input_sample;
-  data_size = other->data_size;
-    
 }
 
 void dsp::BitSeries::copy_configuration (const Observation* copy)
