@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.45 $
-   $Date: 2010/09/27 06:50:44 $
+   $Revision: 1.46 $
+   $Date: 2011/08/26 22:02:26 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -51,6 +51,9 @@ namespace dsp {
 
     //! Reserve the maximum amount of output space required
     void reserve ();
+
+    //! Reserve the maximum amount of space required in the given container
+    void reserve (BitSeries*);
 
     //! End of data
     virtual bool eod() = 0;

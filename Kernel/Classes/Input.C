@@ -54,7 +54,7 @@ void dsp::Input::prepare ()
 	 << output->get_start_time() << endl;
 }
 
-void dsp::Input::reserve ()
+void dsp::Input::reserve (BitSeries* buffer)
 {
   uint64_t maximum_load_size = block_size;
   if (resolution > 1)
@@ -63,7 +63,12 @@ void dsp::Input::reserve ()
   if (verbose)
     cerr << "dsp::Input::reserve " << maximum_load_size << endl;
 
-  get_output()->resize (maximum_load_size);
+  buffer->resize (maximum_load_size);
+}
+
+void dsp::Input::reserve ()
+{
+  reserve (get_output());
 }
 
 //! Return the number nearest to and larger than big and divisible by small
