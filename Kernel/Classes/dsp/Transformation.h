@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.53 $
-   $Date: 2010/06/03 20:45:30 $
+   $Revision: 1.54 $
+   $Date: 2011/08/26 22:02:53 $
    $Author: straten $ */
 
 #ifndef __dsp_Transformation_h
@@ -28,13 +28,18 @@ namespace dsp {
 
   //! By default, the reserve method does nothing
   template <class In, class Out>
-  void reserve_trait (Reference::To<const In>&, Reference::To<Out>&)
+  void reserve_trait (Reference::To<const In>&, Reference::To<Out>&,
+                      std::ostream*)
   { /* do nothing */ }
 
   //! When input and output have the same type, make them equal in size
   template <class Same>
-  void reserve_trait (Reference::To<const Same>& in, Reference::To<Same>& out)
-  { out->resize( in->get_ndat() ); }
+  void reserve_trait (Reference::To<const Same>& in,
+                      Reference::To<Same>& out, std::ostream* os)
+  { if (os)
+     *os << "reserve_trait resize ndat=" << in->get_ndat() << std::endl;
+    out->resize( in->get_ndat() );
+  }
 
   //! All Transformations must define their behaviour
   typedef enum { inplace, outofplace, anyplace } Behaviour;
@@ -59,7 +64,11 @@ namespace dsp {
 
     //! Set the size of the output to that of the input by default
     void reserve () 
-    { reserve_trait (this->input, this->output); }
+    {
+      if (Operation::verbose) cerr << name("reserve") << std::endl;
+      reserve_trait ( this->input, this->output,
+                      (Operation::verbose) ? &(this->cerr) : 0 );
+    }
 
     //! Set the container from which input data will be read
     void set_input (const In* input);

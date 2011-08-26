@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2010 by Willem van Straten
+ *   Copyright (C) 2011 by Andrew Jameson & Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -9,12 +9,13 @@
 
 #include "Error.h"
 
+#include <assert.h>
 #include <iostream>
 using namespace std;
 
 //! Default constructor- always inplace
 dsp::TransferBitSeriesCUDA::TransferBitSeriesCUDA()
-  : Transformation<BitSeries,BitSeries> ("CUDA::Transfer", outofplace)
+  : Transformation<BitSeries,BitSeries> ("CUDA::TransferBitSeries", outofplace)
 {
   kind = cudaMemcpyHostToDevice;
 }
@@ -23,26 +24,27 @@ dsp::TransferBitSeriesCUDA::TransferBitSeriesCUDA()
 void dsp::TransferBitSeriesCUDA::transformation ()
 {
   prepare ();
-
   cudaThreadSynchronize();
 
   if (verbose)
-    cerr << "dsp::TransferBitSeriesCUDA::transformation input ndat="
-         << input->get_ndat() << " ndim=" << input->get_ndim()
-         << endl;
+    cerr << "dsp::TransferBitSeriesCUDA::transformation"
+         << " out=" << (void*)output->get_rawptr()
+         << " size=" << output->get_size()
+         << " in=" << (void*)input->get_rawptr()
+         << " size=" << input->get_size() << endl;
 
   cudaError error;
+
+  assert (output->get_rawptr() != 0);
+  assert (output->get_size() >= input->get_size());
+
   error = cudaMemcpy (output->get_rawptr(), 
                       input->get_rawptr(), 
                       input->get_size(), kind);
+
   if (error != cudaSuccess)
     throw Error (InvalidState, "dsp::TransferBitSeriesCUDA::transformation",
                  cudaGetErrorString (error));
-
-  if (verbose)
-    cerr << "dsp::TransferBitSeriesCUDA::transformation output ndat=" 
-       << output->get_ndat() << " ndim=" << output->get_ndim() 
-       << endl;
 }
 
 void dsp::TransferBitSeriesCUDA::prepare ()

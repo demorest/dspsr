@@ -64,6 +64,9 @@ void dsp::MultiThread::set_configuration (SingleThread::Config* config)
 //! Set the Input from which data will be read
 void dsp::MultiThread::set_input (Input* _input)
 {
+  if (Operation::verbose)
+    cerr << "dsp::MultiThread::set_input input=" << _input << endl;
+
   input = _input;
 
   if (!input)
