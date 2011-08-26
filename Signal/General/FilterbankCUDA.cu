@@ -7,6 +7,8 @@
  *
  ***************************************************************************/
 
+// #define _DEBUG 1
+
 #include "dsp/FilterbankCUDA.h"
 #include "debug.h"
 
@@ -111,14 +113,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   cudaMemcpy(d_SN,&(SN[0]),n_half_size,cudaMemcpyHostToDevice);
 }
 
-void check_error (const char* method)
-{
-  cudaThreadSynchronize ();
- 
-  cudaError error = cudaGetLastError();
-  if (error != cudaSuccess)
-    throw Error (InvalidState, method, cudaGetErrorString (error));
-}
+void check_error (const char*);
 
 #ifdef _DEBUG
 #define CHECK_ERROR(x) check_error(x)
@@ -312,15 +307,7 @@ void CUDA::FilterbankEngine::perform (const float* in)
 					input_p1, input_stride, to_copy);
 }
 
-  if (dsp::Operation::record_time)
-  {
-    cudaThreadSynchronize ();
-
-    cudaError error = cudaGetLastError();
-    if (error != cudaSuccess)
-      throw Error (InvalidState, "CUDA::FilterbankEngine::perform",
-       cudaGetErrorString (error));
-  }
-
-
+  if (dsp::Operation::record_time || dsp::Operation::verbose)
+    check_error ("CUDA::FilterbankEngine::perform");
 }
+

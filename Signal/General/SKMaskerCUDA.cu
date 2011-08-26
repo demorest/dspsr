@@ -13,6 +13,8 @@
 
 using namespace std;
 
+void check_error (const char*);
+
 CUDA::SKMaskerEngine::SKMaskerEngine (cudaStream_t _stream)
 {
   stream = _stream;
@@ -71,15 +73,7 @@ void CUDA::SKMaskerEngine::perform (dsp::BitSeries* mask, unsigned mask_offset,
  
   mask1chan<<<blocks,threads,0,stream>>> (mask_base, out_base, npol, end, span);
 
-  if (dsp::Operation::record_time)
-  {
-    cudaThreadSynchronize ();
-
-    cudaError error = cudaGetLastError();
-    if (error != cudaSuccess)
-      throw Error (InvalidState, "CUDA::SKMaskerEngine::perform",
-       cudaGetErrorString (error));
-  }
-
+  if (dsp::Operation::record_time || dsp::Operation::verbose)
+    check_error( "CUDA::SKMaskerEngine::perform" );
 }
 

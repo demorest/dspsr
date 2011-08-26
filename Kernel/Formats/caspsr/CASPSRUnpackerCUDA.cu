@@ -62,6 +62,7 @@ __global__ void unpack_real_ndim1 (uint64_t ndat, float scale,
   }
 }
 
+void check_error (const char*);
 
 void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale, 
                     unsigned char const* input, float* pol0, float* pol1)
@@ -79,13 +80,7 @@ void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale,
 
   unpack_real_ndim1<<<nblock,nthread,0,stream>>> (ndat, scale, input, pol0, pol1);
 
-  if (dsp::Operation::record_time)
-  {
-    cudaThreadSynchronize ();
- 
-    cudaError error = cudaGetLastError();
-    if (error != cudaSuccess)
-      throw Error (InvalidState, "caspsr_unpack", cudaGetErrorString (error));
-  }
+  if (dsp::Operation::record_time || dsp::Operation::verbose)
+    check_error ("caspsr_unpack");
 }
 

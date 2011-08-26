@@ -21,6 +21,8 @@
 
 using namespace std;
 
+void check_error (const char*);
+
 /*
   PP   = p^* p
   QQ   = q^* q
@@ -74,10 +76,8 @@ void polarimetry_ndim4 (float* data, uint64_t span,
 
   coherence4<<<blocks,threads>>> ((float4*)data, span/4); 
 
-  cudaThreadSynchronize();
-  cudaError error = cudaGetLastError();
-  if (error != cudaSuccess)
-    cerr << "FAIL coherence: " << cudaGetErrorString (error) << endl;
+  if (dsp::Operation::record_time || dsp::Operation::verbose)
+    check_error ("CUDA::DetectionEngine::polarimetry_ndim4");
 }
 
 /*
@@ -151,13 +151,7 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
   // pass span as number of complex values
   coherence2<<<blocks,threads,0,stream>>> ((float2*)base, span/2, ndat); 
 
-  if (dsp::Operation::record_time)
-  {
-    cudaThreadSynchronize ();
-    cudaError error = cudaGetLastError();
-    if (error != cudaSuccess)
-      throw Error (InvalidState, "CUDA::DetectionEngine::polarimetry", 
-                   cudaGetErrorString (error));
-  }
+  if (dsp::Operation::record_time || dsp::Operation::verbose)
+    check_error ("CUDA::DetectionEngine::polarimetry");
 }
 

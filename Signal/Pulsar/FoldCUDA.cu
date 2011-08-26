@@ -268,6 +268,8 @@ std::ostream& operator<< (std::ostream& ostr, const dim3& v)
   return ostr << "(" << v.x << "," << v.y << "," << v.z << ")";
 }
 
+void check_error (const char*);
+
 void CUDA::FoldEngine::fold ()
 {
   setup ();
@@ -316,14 +318,7 @@ void CUDA::FoldEngine::fold ()
   // profile on the device is no longer synchronized with the one on the host
   synchronized = false;
 
-  if (dsp::Operation::record_time)
-  {
-    cudaThreadSynchronize ();
-
-    cudaError error = cudaGetLastError();
-    if (error != cudaSuccess)
-      throw Error (InvalidState, "CUDA::FoldEngine::fold", 
-		   cudaGetErrorString (error));
-  }
+  if (dsp::Operation::record_time || dsp::Operation::verbose)
+    check_error ("CUDA::FoldEngine::fold");
 }
 
