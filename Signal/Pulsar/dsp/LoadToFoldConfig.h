@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.38 $
-   $Date: 2011/08/26 22:05:06 $
-   $Author: straten $ */
+   $Revision: 1.39 $
+   $Date: 2011/08/29 14:33:55 $
+   $Author: demorest $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
@@ -138,7 +138,10 @@ namespace dsp {
     bool single_pulse;
     bool single_archive;
 
-    bool single_pulse_archives () { return single_pulse && !single_archive; }
+    bool single_pulse_archives () 
+    { 
+      return single_pulse && !single_archive && (subints_per_archive==0); 
+    }
 
     unsigned subints_per_archive;
 
