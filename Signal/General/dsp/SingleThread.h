@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/08/24 22:16:11 $
-   $Author: straten $ */
+   $Revision: 1.3 $
+   $Date: 2011/08/29 16:57:44 $
+   $Author: demorest $ */
 
 #ifndef __dspsr_SingleThread_h
 #define __dspsr_SingleThread_h
@@ -148,6 +148,7 @@ namespace dsp {
 
   };
 
+  //! Per-thread configuration options
   class SingleThread::Config : public Reference::Able
   {
   public:
