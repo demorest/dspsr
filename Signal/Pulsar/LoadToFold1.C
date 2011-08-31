@@ -1102,6 +1102,8 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
 void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 {
   bool subints = config->single_pulse || config->integration_length;
+  bool multiple_outputs = subints 
+    && ( (config->subints_per_archive>0) || (config->single_archive==false) );
 
   archiver->set_archive_class (config->archive_class.c_str());
 
@@ -1123,24 +1125,46 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
     archiver->set_store_dynamic_extensions (false);
 
   FilenameEpoch* epoch_convention = 0;
+  FilenameSequential* index_convention = 0;
 
   if (config->single_pulse_archives())
     archiver->set_convention( new FilenamePulse );
   else
-    archiver->set_convention( epoch_convention = new FilenameEpoch );
+  {
+    // If there is only one output file, use epoch convention.
+    if (!multiple_outputs)
+      archiver->set_convention( epoch_convention = new FilenameEpoch );
 
-  if (subints && (config->single_archive || config->subints_per_archive))
+    // If archive_filename was specified, figure out whether
+    // it represents a date string or not by looking for '%' 
+    // characters.
+    else if (!config->archive_filename.empty())
+    {
+      if (config->archive_filename.find('%') == string::npos)
+        archiver->set_convention( index_convention = new FilenameSequential );
+      else
+        archiver->set_convention( epoch_convention = new FilenameEpoch );
+    }
+
+    // Default to epoch convention otherwise.
+    else
+      archiver->set_convention( epoch_convention = new FilenameEpoch );
+  }
+
+  if (epoch_convention && subints 
+      && (config->single_archive || config->subints_per_archive))
     epoch_convention->report_unload = false;
 
   unsigned integer_seconds = unsigned(config->integration_length);
 
-  if (config->integration_length &&
-      config->integration_length == integer_seconds)
-  {
-    if (!epoch_convention)
-      throw Error (InvalidState, "dsp::LoadToFold::prepare_archiver",
-                   "cannot set integration length in single pulse mode");
+  if (config->integration_length && config->single_pulse)
+    throw Error (InvalidState, "dsp::LoadToFold::prepare_archiver",
+        "cannot set integration length in single pulse mode");
 
+  if (config->integration_length &&
+      config->integration_length == integer_seconds &&
+      epoch_convention)
+  {
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::prepare_archiver integer_seconds="
            << integer_seconds << " in output filenames" << endl;
@@ -1150,10 +1174,13 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 
   if (!config->archive_filename.empty())
   {
-    if (!epoch_convention)
+    if (epoch_convention)
+      epoch_convention->set_datestr_pattern (config->archive_filename);
+    else if (index_convention)
+      index_convention->set_base_filename (config->archive_filename);
+    else
       throw Error (InvalidState, "dsp::LoadToFold::prepare_archiver",
                    "cannot set archive filename in single pulse mode");
-    epoch_convention->set_datestr_pattern (config->archive_filename);
   }
 
   archiver->set_archive_software( "dspsr" );
