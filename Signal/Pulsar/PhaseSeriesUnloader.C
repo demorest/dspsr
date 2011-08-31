@@ -139,7 +139,7 @@ void dsp::FilenameEpoch::set_integer_seconds (unsigned seconds)
   integer_seconds = seconds;
 }
 
-std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
+std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data)
 {
   MJD epoch = data->get_start_time();
 
@@ -177,7 +177,7 @@ std::string dsp::FilenameEpoch::get_filename (const PhaseSeries* data) const
   return filename;
 }
 
-std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data) const
+std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data)
 {
   const Pulsar::Predictor* poly = data->get_folding_predictor();
   if (!poly)
@@ -194,4 +194,17 @@ std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data) const
   phase = (phase + 0.5 - data->get_reference_phase()).Floor();
 
   return stringprintf ("pulse_"I64, phase.intturns());
+}
+
+dsp::FilenameSequential::FilenameSequential()
+{
+  filename_base = "dspsr_output";
+  current_index = 1;
+}
+
+std::string dsp::FilenameSequential::get_filename (const PhaseSeries* data)
+{
+  std::string out = filename_base + stringprintf("_%4.4d", current_index);
+  current_index++;
+  return out;
 }

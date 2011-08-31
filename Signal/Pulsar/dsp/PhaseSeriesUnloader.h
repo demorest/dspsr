@@ -8,9 +8,9 @@
 //-*-C++-*-
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.23 $
-   $Date: 2010/01/15 11:55:32 $
-   $Author: straten $ */
+   $Revision: 1.24 $
+   $Date: 2011/08/31 20:46:04 $
+   $Author: demorest $ */
 
 #ifndef __PhaseSeriesUnloader_h
 #define __PhaseSeriesUnloader_h
@@ -100,17 +100,17 @@ namespace dsp {
   class FilenameConvention : public Reference::Able
   {
   public:
-    virtual std::string get_filename (const PhaseSeries* data) const = 0;
+    virtual std::string get_filename (const PhaseSeries* data) = 0;
   };
 
-  //! Defines the output filename convention
+  //! Output filenames based on the date/time of the observation
   class FilenameEpoch : public FilenameConvention
   {
   public:
     FilenameEpoch ();
     void set_datestr_pattern (const std::string&);
     void set_integer_seconds (unsigned);
-    std::string get_filename (const PhaseSeries* data) const;
+    std::string get_filename (const PhaseSeries* data);
 
     bool report_unload;
 
@@ -119,12 +119,27 @@ namespace dsp {
     unsigned integer_seconds;
   };
 
-  //! Defines the output filename convention
+  //! Output filenames based on the pulse number (for single pulses)
   class FilenamePulse : public FilenameConvention
   {
   public:
-    std::string get_filename (const PhaseSeries* data) const;
+    std::string get_filename (const PhaseSeries* data);
   };
+
+  //! Output filenames with a sequentially increasing index appended
+  class FilenameSequential : public FilenameConvention
+  {
+  public:
+    FilenameSequential();
+    void set_base_filename (const std::string& s) { filename_base = s; }
+    void set_index (unsigned idx) { current_index = idx; }
+    unsigned get_index () const {  return current_index; }
+    std::string get_filename (const PhaseSeries* data);
+  protected:
+    std::string filename_base;
+    unsigned current_index;
+  };
+
 }
 
 #endif // !defined(__PhaseSeriesUnloader_h)
