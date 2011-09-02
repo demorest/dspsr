@@ -62,6 +62,10 @@ namespace dsp
 
       //! Number of bytes per row in the SUBINT table.
       unsigned bytes_per_row;
+
+      //! The value applied to the data to make sure they produce a
+      //  zero-centred mean.
+      unsigned zero_offset;
   };
 }
 

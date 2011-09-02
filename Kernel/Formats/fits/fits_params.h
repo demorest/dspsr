@@ -10,11 +10,15 @@ struct fits_params
   long day;
   long sec;
   double frac;
-
   int nsubint;
   int nrow;
-
   double tsamp;
+
+  // The offset applied to each value to form a zero-centred mean.
+  int zero_off;
+
+  // The signed-ness of the data.
+  bool is_unsigned;
 };
 
 #endif

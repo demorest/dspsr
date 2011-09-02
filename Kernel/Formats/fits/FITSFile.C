@@ -95,6 +95,12 @@ void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
     throw FITSError(status, "FITSFile - read_header",
         "fits_read_key (NAXIS2)");
   }
+
+  psrfits_read_key(fp, "ZERO_OFF", &(header->zero_off));
+  if (status) {
+    throw FITSError(status, "FITSFile - read_header",
+        "fits_read_key (ZERO_OFF)");
+  }
 }
 
 void dsp::FITSFile::add_extensions (Extensions* ext)
@@ -144,7 +150,6 @@ void dsp::FITSFile::open_file(const char* filename)
   info.set_machine("FITS");
   info.set_telescope(archive->get_telescope());
   info.set_ndat(header.nrow*samples_in_row);
-
 
   set_samples_in_row(samples_in_row);
   set_bytes_per_row((samples_in_row*npol*nchan*nbits) / 8);
