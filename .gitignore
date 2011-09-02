@@ -73,6 +73,8 @@ config/Makefile.bootstrap
 config/Makefile.include
 config/Makefile.local
 config/Makefile.root
+config/ac_pkg_swig.m4
+config/ac_python_devel.m4
 config/bootstrap.m4
 config/cfitsio.m4
 config/compile
