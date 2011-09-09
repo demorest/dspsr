@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldN.h,v $
-   $Revision: 1.13 $
-   $Date: 2011/08/26 22:05:06 $
+   $Revision: 1.14 $
+   $Date: 2011/09/09 02:38:14 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldN_h
@@ -40,6 +40,9 @@ namespace dsp {
 
     //! Setup sharing
     void share ();
+
+    //! Finish by ensuring that all buffered outputs are flushed
+    void finish ();
 
   protected:
 

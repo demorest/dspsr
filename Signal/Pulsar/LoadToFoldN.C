@@ -142,6 +142,19 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
   return true;
 }
 
+void dsp::LoadToFoldN::finish ()
+{
+  MultiThread::finish ();
+
+  for (unsigned i=0; i<unloader.size(); i++)
+  {
+    if (Operation::verbose)
+      cerr << "psr::LoadToFoldN::finish unloader[" << i << "]" << endl;
+
+    unloader[i]->finish();
+  }
+}
+
 //! The creator of new LoadToFold1 threadss
 dsp::LoadToFold* dsp::LoadToFoldN::new_thread ()
 {
