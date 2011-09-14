@@ -119,6 +119,9 @@ dsp::LoadToFold::Config::Config ()
   // do not fold asynchronously by default
   asynchronous_fold = false;
 
+  // By default process each file separately
+  continuous_obs = false;
+
   // produce BasebandArchive output by default
   archive_class = "Baseband";
 

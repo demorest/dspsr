@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.39 $
-   $Date: 2011/08/29 14:33:55 $
+   $Revision: 1.40 $
+   $Date: 2011/09/14 15:33:23 $
    $Author: demorest $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -153,6 +153,9 @@ namespace dsp {
     bool   fractional_pulses;
 
     bool asynchronous_fold;
+
+    // Files represent a single continuous observation
+    bool continuous_obs;
 
     /* There are three ways to fold multiple pulsars:
 
