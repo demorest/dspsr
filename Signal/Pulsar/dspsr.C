@@ -94,16 +94,39 @@ int main (int argc, char** argv) try
 
   bool time_prep = dsp::Operation::record_time || config->get_cuda_ndevice();
 
-  for (unsigned ifile=0; ifile < filenames.size(); ifile++) try
+  unsigned nfile = filenames.size();
+  if (config->continuous_obs) 
+    nfile = 1;
+
+  for (unsigned ifile=0; ifile < nfile; ifile++) try
   {
     if (verbose)
-      cerr << "opening data file " << filenames[ifile] << endl;
+    {
+      if (config->continuous_obs)
+      {
+        cerr << "opening data files: " << endl;
+        for (unsigned ii=0; ii < filenames.size(); ii++)
+          cerr << "  " << filenames[ii] << endl;
+      }
+      else
+        cerr << "opening data file " << filenames[ifile] << endl;
+    }
     
     RealTimer preptime;
     if (time_prep)
       preptime.start();
 
-    prepare (engine, dsp::File::create( filenames[ifile] ));
+    dsp::File *file;
+    if (config->continuous_obs) 
+    {
+      dsp::MultiFile *multi = new dsp::MultiFile;
+      multi->open (filenames);
+      file = multi;
+    }
+    else
+      file = dsp::File::create( filenames[ifile] );
+
+    prepare (engine, file);
 
     if (time_prep)
     {
@@ -112,7 +135,12 @@ int main (int argc, char** argv) try
     }
 
     if (verbose)
-      cerr << "data file " << filenames[ifile] << " opened" << endl;
+    {
+      if (config->continuous_obs)
+        cerr << "data files opened" << endl;
+      else
+        cerr << "data file " << filenames[ifile] << " opened" << endl;
+    }
 
     engine->run();
     engine->finish();
@@ -310,34 +338,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->run_repeatedly, "repeat");
   arg->set_help ("repeatedly read from input until an empty is encountered");
 
-  arg = menu.add (config->sk_zap, "skz");
-  arg->set_help ("apply spectral kurtoscis filterbank RFI zapping");
+  arg = menu.add (config->continuous_obs, "cont");
+  arg->set_help ("treat input files as a single continuous observation");
 
-  arg = menu.add (config->sk_m, "skzm", "samples");
-  arg->set_help ("samples to integrate for spectral kurtoscis statistics");
-
-  arg = menu.add (config->sk_std_devs, "skzs", "stddevs");
-  arg->set_help ("number of std deviations to use for spectral kurtosis excisions");
-
-  arg = menu.add (config->sk_chan_start, "skz_start", "chan");
-  arg->set_help ("first channel where signal is expected");
-
-  arg = menu.add (config->sk_chan_end, "skz_end", "chan");
-  arg->set_help ("last channel where signal is expected");
-
-  arg = menu.add (config->sk_no_fscr, "skz_no_fscr");
-  arg->set_help ("do not use SKDetector Fscrunch feature");
-
-  arg = menu.add (config->sk_no_tscr, "skz_no_tscr");
-  arg->set_help ("do not use SKDetector Tscrunch feature");
-
-  arg = menu.add (config->sk_no_ft, "skz_no_ft");
-  arg->set_help ("do not use SKDetector despeckeler");
-
-#ifdef HAVE_CUFFT
-  arg = menu.add (config->sk_nthreads, "skzn", "threads");
-  arg->set_help ("number of CPU threads for spectral kurtosis filterbank");
-#endif
 
   /* ***********************************************************************
 
@@ -372,6 +375,42 @@ void parse_options (int argc, char** argv) try
 
   arg = menu.add (mjd_string, 'm', "MJD");
   arg->set_help ("set the start MJD of the observation");
+
+  /* ***********************************************************************
+
+  RFI Removal (SK) Options
+  
+  *********************************************************************** */
+  menu.add ("\n" "RFI removal options:");
+
+  arg = menu.add (config->sk_zap, "skz");
+  arg->set_help ("apply spectral kurtosis filterbank RFI zapping");
+
+  arg = menu.add (config->sk_m, "skzm", "samples");
+  arg->set_help ("samples to integrate for spectral kurtosis statistics");
+
+  arg = menu.add (config->sk_std_devs, "skzs", "stddevs");
+  arg->set_help ("number of std deviations to use for spectral kurtosis excisions");
+
+  arg = menu.add (config->sk_chan_start, "skz_start", "chan");
+  arg->set_help ("first channel where signal is expected");
+
+  arg = menu.add (config->sk_chan_end, "skz_end", "chan");
+  arg->set_help ("last channel where signal is expected");
+
+  arg = menu.add (config->sk_no_fscr, "skz_no_fscr");
+  arg->set_help ("do not use SKDetector Fscrunch feature");
+
+  arg = menu.add (config->sk_no_tscr, "skz_no_tscr");
+  arg->set_help ("do not use SKDetector Tscrunch feature");
+
+  arg = menu.add (config->sk_no_ft, "skz_no_ft");
+  arg->set_help ("do not use SKDetector despeckeler");
+
+#ifdef HAVE_CUFFT
+  arg = menu.add (config->sk_nthreads, "skzn", "threads");
+  arg->set_help ("number of CPU threads for spectral kurtosis filterbank");
+#endif
 
   /* ***********************************************************************
 
