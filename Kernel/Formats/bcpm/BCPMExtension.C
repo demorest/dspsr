@@ -12,16 +12,14 @@ using namespace std;
 #include "dsp/BCPMExtension.h"
 
 //! Null constructor
-dsp::BCPMExtension::BCPMExtension() : dspExtension("BCPMExtension"){ }
-
-//! Virtual destructor
-dsp::BCPMExtension::~BCPMExtension(){ }
-
-//! Copy stuff
-void dsp::BCPMExtension::copy(const dsp::BCPMExtension& b){
-  if( &b==this )
-    return;
-
-  chtab = b.chtab;
+dsp::BCPMExtension::BCPMExtension ()
+  : dspExtension("BCPMExtension")
+{
 }
 
+//! Copy constructor
+dsp::BCPMExtension::BCPMExtension (const BCPMExtension& b) 
+  : dspExtension("BCPMExtension")
+{
+  chtab = b.chtab;
+}

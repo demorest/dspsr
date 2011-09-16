@@ -21,16 +21,10 @@ namespace dsp{
     BCPMExtension();
 
     //! Copy constructor
-    BCPMExtension(const BCPMExtension& b) : dspExtension("BCPMExtension") { copy(b); }
-
-    //! Virtual destructor
-    virtual ~BCPMExtension();
+    BCPMExtension (const BCPMExtension&);
 
     //! Return a new copy-constructed instance identical to this instance
     BCPMExtension* clone() const { return new BCPMExtension(*this); }
-
-    //! Copy stuff
-    virtual void copy(const BCPMExtension& b);
 
     //! This stores the ordering of the channels in a BCPM data file
     std::vector<int> chtab;

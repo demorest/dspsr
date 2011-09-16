@@ -13,6 +13,8 @@
 
 namespace dsp {
 
+  class BCPMExtension;
+
   class BCPMUnpacker : public Unpacker {
 
     typedef struct {
@@ -30,6 +32,9 @@ namespace dsp {
     //! Return true if BCPMUnpacker can convert the Observation
     bool matches (const Observation* observation);
 
+    //! Takes the BCPMExtension added by BCPMFile
+    void add_extensions (Extensions* ext);
+
   protected:
 
     //! Unpack the BCPM data into the output TimeSeries
@@ -38,6 +43,8 @@ namespace dsp {
     //! Generates the lookup table
     float512 get_lookup();
 
+    //! Extension used to pass information from BCPMFile to BCPMUnpacker
+    Reference::To<BCPMExtension> extension;
   };
   
 }

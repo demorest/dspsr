@@ -28,15 +28,18 @@ bool dsp::BCPMUnpacker::matches (const Observation* observation){
   return observation->get_machine() == "BCPM";
 }
 
+void dsp::BCPMUnpacker::add_extensions (Extensions* ext)
+{
+  extension = ext->get<BCPMExtension>();
+
+  if (!extension)
+    throw Error (InvalidState,"dsp::BCPMUnpacker::add_extensions",
+		 "BCPMExtension not available");
+}
+
 //! Does the work
-void dsp::BCPMUnpacker::unpack (){
-
-#if FIX_THIS
-  if( !get_input()->has<BCPMExtension>() )
-#endif
-    throw Error(InvalidState,"dsp::BCPMUnpacker::unpack ()",
-		"Input BitSeries does not have a BCPMExtension!");
-
+void dsp::BCPMUnpacker::unpack ()
+{
   if( get_input()->get_nbit() != 4 )
     throw Error(InvalidState,"dsp::BCPMUnpacker::unpack ()",
 		"Input nbit=%d.  Only a 4-bit unpacker is written",
@@ -46,9 +49,7 @@ void dsp::BCPMUnpacker::unpack (){
   get_output()->set_nbit( 32 );
   get_output()->resize( get_input()->get_ndat() );
 
-#if FIX_THIS
-  const vector<int>& chtab = get_input()->get<BCPMExtension>()->chtab;
-#endif
+  const vector<int>& chtab = extension->chtab;
 
   const unsigned nchan = get_input()->get_nchan();
   vector<float> tempblock(nchan);
@@ -67,13 +68,11 @@ void dsp::BCPMUnpacker::unpack (){
   vector<unsigned char> temp_buffer(nchan/2);
   unsigned char* in = &temp_buffer[0];
 
-  for( unsigned s=0; s<unsigned(get_input()->get_ndat()); s++){
+  for (unsigned s=0; s<unsigned(get_input()->get_ndat()); s++)
+  {
     memcpy(in, raw, nchan/2);
 
-#if MACHINE_LITTLE_ENDIAN
-    for( unsigned l=0; l<nchan/2; l++)
-      ChangeEndian(in[l]);
-#endif
+    for (unsigned l=0; l<nchan/2; l++) { FromBigEndian(in[l]) ; }
 
     unsigned j = 0;
     for( unsigned i=0; i<nchan/2; i++){
@@ -81,17 +80,16 @@ void dsp::BCPMUnpacker::unpack (){
       tempblock[j] = lookup.data[256+in[i]]; j++;
     }
 
-#if FIX_THIS
     for( unsigned k=0; k<nchan; k++)
       datptrs[k][s] = tempblock[chtab[k]];
-#endif
 
     raw += nchan/2;
   }
 }
 
 //! Generates the lookup table
-dsp::BCPMUnpacker::float512 dsp::BCPMUnpacker::get_lookup(){
+dsp::BCPMUnpacker::float512 dsp::BCPMUnpacker::get_lookup()
+{
   float512 lookup;
   
   float lower = 0.0;

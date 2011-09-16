@@ -40,6 +40,11 @@ dsp::BCPMFile::BCPMFile (const char* filename) : File ("BCPM")
 //! Destructor
 dsp::BCPMFile::~BCPMFile (){ }
 
+void dsp::BCPMFile::add_extensions (Extensions* ext)
+{
+  ext->add_extension (extension);
+}
+
 string read_line (const char* filename)
 {
   ifstream input (filename);
@@ -183,18 +188,15 @@ void dsp::BCPMFile::open_file (const char* filename)
 
   double centre_frequency = 0.0;
 
-  Reference::To<BCPMExtension> b(new BCPMExtension);
-  b->chtab = bpp_chans(
-    bpp_search.bandwidth,bpp_search.mb_start_address,
-    bpp_search.mb_end_address,bpp_search.mb_start_board,
-    bpp_search.mb_end_board,bpp_search.cb_id,
-    bpp_search.aib_los,bpp_search.dfb_sram_freqs,
-    bpp_search.rf_lo,
-    centre_frequency);  
+  extension = new BCPMExtension;
 
-#if FIX_THIS
-  get_info()->add_extension( b );
-#endif
+  bpp_chans( extension->chtab,
+	     bpp_search.bandwidth,bpp_search.mb_start_address,
+	     bpp_search.mb_end_address,bpp_search.mb_start_board,
+	     bpp_search.mb_end_board,bpp_search.cb_id,
+	     bpp_search.aib_los,bpp_search.dfb_sram_freqs,
+	     bpp_search.rf_lo,
+	     centre_frequency );  
 
   get_info()->set_centre_frequency( centre_frequency );
 
@@ -214,7 +216,7 @@ void dsp::BCPMFile::open_file (const char* filename)
 }
 
 //! Pulled out of sigproc
-vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_addr, int mb_start_brd, int mb_end_brd, int *cb_id, double *aib_los, float *dfb_sram_freqs, double rf_lo,double& centre_frequency)
+void dsp::BCPMFile::bpp_chans(vector<int>& table, double bw, int mb_start_addr, int mb_end_addr, int mb_start_brd, int mb_end_brd, int *cb_id, double *aib_los, float *dfb_sram_freqs, double rf_lo,double& centre_frequency)
 {
   static int dfb_chan_lookup[MAXREGS][NIBPERREG] = {
     {4, 0, 4, 0},
@@ -246,7 +248,7 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
   
   int nchans = (mb_end_addr/2-mb_start_addr/2+1)*(mb_end_brd-mb_start_brd+1)*4;
   float* fmhz   = (float *) malloc(nchans*sizeof(float));
-  vector<int> table(nchans);
+  table.resize(nchans);
   int* nridx  = (int*) malloc(nchans*sizeof(int));
 
   double rf_lo_mhz = rf_lo/1.e6;
@@ -312,8 +314,6 @@ vector<int> dsp::BCPMFile::bpp_chans(double bw, int mb_start_addr, int mb_end_ad
 
   free(fmhz);
   free(nridx);
-
-  return table;
 }
 
 //! Pads gaps in data
