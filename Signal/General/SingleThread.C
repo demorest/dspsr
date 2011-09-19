@@ -33,6 +33,7 @@
 #include <sched.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 
 using namespace std;
