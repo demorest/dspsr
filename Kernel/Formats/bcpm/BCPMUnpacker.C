@@ -6,7 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/BCPMUnpacker.h"
-#include "dsp/BCPMExtension.h"
+#include "dsp/BCPMFile.h"
 
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
@@ -21,25 +21,17 @@ using namespace std;
 //! Null constructor
 dsp::BCPMUnpacker::BCPMUnpacker (const char* _name) : Unpacker (_name){ }
 
-//! Destructor
-dsp::BCPMUnpacker::~BCPMUnpacker (){ }
-
-bool dsp::BCPMUnpacker::matches (const Observation* observation){
-  return observation->get_machine() == "BCPM";
-}
-
-void dsp::BCPMUnpacker::add_extensions (Extensions* ext)
+bool dsp::BCPMUnpacker::matches (const Observation* observation)
 {
-  extension = ext->get<BCPMExtension>();
-
-  if (!extension)
-    throw Error (InvalidState,"dsp::BCPMUnpacker::add_extensions",
-		 "BCPMExtension not available");
+  return observation->get_machine() == "BCPM";
 }
 
 //! Does the work
 void dsp::BCPMUnpacker::unpack ()
 {
+  if (!file)
+    file = get_Input<BCPMFile>();
+
   if( get_input()->get_nbit() != 4 )
     throw Error(InvalidState,"dsp::BCPMUnpacker::unpack ()",
 		"Input nbit=%d.  Only a 4-bit unpacker is written",
@@ -49,7 +41,7 @@ void dsp::BCPMUnpacker::unpack ()
   get_output()->set_nbit( 32 );
   get_output()->resize( get_input()->get_ndat() );
 
-  const vector<int>& chtab = extension->chtab;
+  const vector<int>& chtab = file->chtab;
 
   const unsigned nchan = get_input()->get_nchan();
   vector<float> tempblock(nchan);
