@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/BCPMFile.h"
-#include "dsp/BCPMExtension.h"
 
 #include "dsp/bpphdr.h"
 #include "machine_endian.h"
@@ -35,14 +34,6 @@ dsp::BCPMFile::BCPMFile (const char* filename) : File ("BCPM")
 {
   if (filename)
     open (filename);
-}
-
-//! Destructor
-dsp::BCPMFile::~BCPMFile (){ }
-
-void dsp::BCPMFile::add_extensions (Extensions* ext)
-{
-  ext->add_extension (extension);
 }
 
 string read_line (const char* filename)
@@ -135,8 +126,9 @@ void dsp::BCPMFile::open_file (const char* filename)
   get_info()->set_telescope( "Tidbinbilla" );
   get_info()->set_machine( "BCPM" );
   get_info()->set_nchan( unsigned(bpp_search.num_chans) );
-  get_info()->set_bandwidth( get_info()->get_nchan() * 0.000001*bpp_search.bandwidth );
+
   get_info()->set_ndim( 1 );
+  get_info()->set_npol( 1 );
   get_info()->set_scale( 1.0 );
   get_info()->set_swap( false );
   get_info()->set_mode("SEARCH");
@@ -144,7 +136,7 @@ void dsp::BCPMFile::open_file (const char* filename)
   get_info()->set_dc_centred( false );
   get_info()->set_type( Signal::Pulsar );
   get_info()->set_state( Signal::Intensity );
-  get_info()->set_npol( 1 );
+
   get_info()->set_basis( Signal::Circular );
   get_info()->set_rate( 1.0e6/bpp_search.samp_rate );
   get_info()->set_nbit( unsigned(bpp_search.bit_mode) ); 
@@ -187,18 +179,27 @@ void dsp::BCPMFile::open_file (const char* filename)
   }
 
   double centre_frequency = 0.0;
+  double ch_bw = 0.0;
 
-  extension = new BCPMExtension;
-
-  bpp_chans( extension->chtab,
+  bpp_chans( chtab,
 	     bpp_search.bandwidth,bpp_search.mb_start_address,
 	     bpp_search.mb_end_address,bpp_search.mb_start_board,
 	     bpp_search.mb_end_board,bpp_search.cb_id,
 	     bpp_search.aib_los,bpp_search.dfb_sram_freqs,
 	     bpp_search.rf_lo,
-	     centre_frequency );  
+	     centre_frequency, ch_bw );  
 
   get_info()->set_centre_frequency( centre_frequency );
+  get_info()->set_bandwidth( fabs(ch_bw) * get_info()->get_nchan() );
+
+  if (sizeof(BPP_SEARCH_HEADER) != BPP_HEADER_SIZE)
+  {
+    cerr << "dsp::BCPMFile::open_file WARNING "
+      "BPP_HEADER_SIZE=" << BPP_HEADER_SIZE << " != "
+      "sizeof(BPP_SEARCH_HEADER)=" << sizeof(BPP_SEARCH_HEADER) <<
+      " (using BPP_HEADER_SIZE)"
+	 << endl;
+  }
 
   // Note that BPP_HEADER_SIZE is 8 bytes bigger than sizeof(BPP_SEARCH_HEADER) so I'm not sure if this is right
   header_bytes = BPP_HEADER_SIZE;
@@ -210,13 +211,13 @@ void dsp::BCPMFile::open_file (const char* filename)
   resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
-
-  if( verbose )
-    fprintf(stderr,"Returning from dsp::BCPMFile::open_file(%s)\n",filename);
 }
 
 //! Pulled out of sigproc
-void dsp::BCPMFile::bpp_chans(vector<int>& table, double bw, int mb_start_addr, int mb_end_addr, int mb_start_brd, int mb_end_brd, int *cb_id, double *aib_los, float *dfb_sram_freqs, double rf_lo,double& centre_frequency)
+void dsp::BCPMFile::bpp_chans(vector<int>& table,
+			      double bw, int mb_start_addr, int mb_end_addr, int mb_start_brd, int mb_end_brd, int *cb_id, double *aib_los, float *dfb_sram_freqs, double rf_lo,
+			      double& centre_frequency,
+			      double& channel_bandwidth)
 {
   static int dfb_chan_lookup[MAXREGS][NIBPERREG] = {
     {4, 0, 4, 0},
@@ -241,8 +242,6 @@ void dsp::BCPMFile::bpp_chans(vector<int>& table, double bw, int mb_start_addr, 
     {+1.0, +1.0, -1.0, -1.0}
   };
   
-  int nifs;
-
   int i, n=0, dfb_chan, logical_brd, nibble;
   double  f_aib, u_or_l, f_sram;
   
@@ -296,18 +295,21 @@ void dsp::BCPMFile::bpp_chans(vector<int>& table, double bw, int mb_start_addr, 
   /* produce lookup table which gives channels in order of descending freq */
   int ninetysix = 96;
   F772C(indexx)(&ninetysix,fmhz,nridx);
-  if (nchans==192) {
-    nifs=2;
+  if (nchans==192)
+  {
     F772C(indexx)(&ninetysix,fmhz+96,nridx+96);
     for (i=96; i<192; i++) 
       nridx[i] += 96;
   }
+
   n=nchans;
   for (i=0;i<nchans;i++) 
     table[i]=nridx[--n]-1;    
-  nchans/=nifs;
 
   centre_frequency = 0.5*(fmhz[table[0]]+fmhz[table[95]]); 
+
+  channel_bandwidth = fmhz[table[1]] - fmhz[table[0]];
+
   //  for( unsigned i=0; i<96; i++)
   //fprintf(stderr, "bpp_chans: fmhz[%d]=%f fmhz[table[%d]]=fmhz[%d]=%f\n",
   //    i,fmhz[i],i,table[i],fmhz[table[i]]);
