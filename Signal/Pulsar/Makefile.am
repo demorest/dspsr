@@ -14,7 +14,7 @@ libdspsr_la_SOURCES = \
 Archiver.C                            \
 ArchiverExtensions.C    TimeDivide.C            \
 Fold.C                  UnloaderShare.C \
-LoadToFold1.C           PhaseLockedFilterbank.C dsp_verbosity.C \
+LoadToFold1.C           PhaseLockedFilterbank.C \
 LoadToFoldConfig.C      PhaseSeries.C  \
 LoadToFoldN.C           PhaseSeriesUnloader.C \
 CyclicFold.C

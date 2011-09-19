@@ -7,6 +7,9 @@
 
 #include "dsp/FilterbankConfig.h"
 
+#include <iostream>
+using namespace std;
+
 using dsp::Filterbank;
 
 Filterbank::Config::Config ()
@@ -39,8 +42,14 @@ std::istream& dsp::operator >> (std::istream& is, Filterbank::Config& config)
   config.set_nchan (value);
   config.set_convolve_when (Filterbank::Config::After);
 
-  if (!is || is.peek() != ':')
+  if (is.eof())
     return is;
+
+  if (is.peek() != ':')
+  {
+    is.fail();
+    return is;
+  }
 
   // throw away the colon
   is.get();

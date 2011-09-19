@@ -11,6 +11,8 @@ using namespace std;
 
 dsp::LoadToFold::Config::Config ()
 {
+  can_cuda = true;
+  can_thread = true;
 
   minimum_RAM = 0;
   maximum_RAM = 256 * 1024 * 1024;
@@ -150,3 +152,30 @@ void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
   times_minimum_ndat = 1;
 }
 
+/*
+  These headers are required only for setting verbosity.
+*/
+
+#include "dsp/Archiver.h"
+#include "Pulsar/Archive.h"
+
+void dsp::LoadToFold::Config::set_quiet ()
+{
+  SingleThread::Config::set_quiet();
+  Pulsar::Archive::set_verbosity (0);
+  dsp::Archiver::verbose = 0;
+}
+
+void dsp::LoadToFold::Config::set_verbose ()
+{
+  SingleThread::Config::set_verbose();
+  Pulsar::Archive::set_verbosity (2);
+  dsp::Archiver::verbose = 2;
+}
+
+void dsp::LoadToFold::Config::set_very_verbose ()
+{
+  SingleThread::Config::set_very_verbose();
+  Pulsar::Archive::set_verbosity (3);
+  dsp::Archiver::verbose = 3;
+}

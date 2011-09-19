@@ -155,9 +155,9 @@ void dsp::SingleThread::prepare () try
   if (thread_id < config->affinity.size())
     set_affinity (config->affinity[thread_id]);
 
-  // only the first thread should run input_prepare
-  if (thread_id == 0 && config->input_prepare)
-    config->input_prepare( manager->get_input() );
+  // only the first thread should prepare the input
+  if (thread_id == 0)
+    config->prepare( manager->get_input() );
 
   if (!unpacked)
     unpacked = new_time_series();
@@ -274,6 +274,15 @@ void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
       iop++;
     }
   }
+}
+
+void dsp::SingleThread::prepare_final ()
+{
+  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
+    insert_dump_point (config->dump_before[idump]);
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+    operations[iop]->prepare ();
 }
 
 uint64_t dsp::SingleThread::get_minimum_samples () const
@@ -523,6 +532,12 @@ void dsp::SingleThread::end_of_data ()
 
 dsp::SingleThread::Config::Config ()
 {
+  can_cuda = false;
+  can_thread = false;
+
+  seek_seconds = 0.0;
+  total_seconds = 0.0;
+
   // be a little bit verbose by default
   report_done = true;
   report_vitals = true;
@@ -539,6 +554,18 @@ dsp::SingleThread::Config::Config ()
   nthread = 0;
   buffers = 0;
   repeated = 0;
+}
+
+void dsp::SingleThread::Config::prepare (Input* input)
+{
+  if (input_prepare)
+    input_prepare( input );
+
+  if (seek_seconds)
+    input->set_start_seconds (seek_seconds);
+  
+  if (total_seconds)
+    input->set_total_seconds (seek_seconds + total_seconds);
 }
 
 //! set the number of CPU threads to be used
@@ -575,5 +602,120 @@ void dsp::SingleThread::Config::set_affinity (string txt)
   {
     string cpu = stringtok (txt, ",");
     affinity.push_back( fromstring<unsigned>(cpu) );
+  }
+}
+
+//! Add command line options
+void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
+{
+  CommandLine::Argument* arg;
+
+  arg = menu.add (this, &Config::set_quiet, 'q');
+  arg->set_help ("quiet mode");
+
+  arg = menu.add (this, &Config::set_verbose, 'v');
+  arg->set_help ("verbose mode");
+
+  arg = menu.add (this, &Config::set_very_verbose, 'V');
+  arg->set_help ("very verbose mode");
+
+  arg = menu.add (metafile, 'M', "metafile");
+  arg->set_help ("load filenames from metafile");
+
+  arg = menu.add (seek_seconds, 'S', "seek");
+  arg->set_help ("start processing at t=seek seconds");
+
+  arg = menu.add (total_seconds, 'T', "total");
+  arg->set_help ("process only t=total seconds");
+
+  if (can_thread)
+  {
+    arg = menu.add (this, &Config::set_nthread, 't', "threads");
+    arg->set_help ("number of processor threads");
+  }
+
+  arg = menu.add (this, &Config::set_fft_library, 'Z', "lib");
+  arg->set_help ("choose the FFT library ('-Z help' for availability)");
+
+#if HAVE_SCHED_SETAFFINITY
+  arg = menu.add (this, &Config::set_affinity, "cpu", "cores");
+  arg->set_help ("comma-separated list of CPU cores");
+#endif
+
+#if HAVE_CUFFT
+  if (can_cuda)
+  {
+    arg = menu.add (this, &Config::set_cuda_device, "cuda", "devices");
+    arg->set_help ("comma-separated list of CUDA devices");
+  }
+#endif
+
+  arg = menu.add (input_buffering, "overlap");
+  arg->set_help ("disable input buffering");
+
+  if (weighted_time_series)
+  {
+    arg = menu.add (weighted_time_series, 'W');
+    arg->set_help ("disable weights (allow bad data)");
+  }
+
+  arg = menu.add (run_repeatedly, "repeat");
+  arg->set_help ("repeatedly read from input until an empty is encountered");
+
+  dsp::Operation::report_time = false;
+
+  arg = menu.add (dsp::Operation::record_time, 'r');
+  arg->set_help ("report time spent performing each operation");
+
+  arg = menu.add (dump_before, "dump", "op");
+  arg->set_help ("dump time series before performing operation");
+
+}
+
+void dsp::SingleThread::Config::set_quiet ()
+{
+  dsp::set_verbosity (0);
+  report_vitals = false;
+  report_done = false;
+}
+
+void dsp::SingleThread::Config::set_verbose ()
+{
+  dsp::set_verbosity (2);
+}
+
+void dsp::SingleThread::Config::set_very_verbose ()
+{
+  dsp::set_verbosity (3);
+}
+
+#include "FTransform.h"
+
+void dsp::SingleThread::Config::set_fft_library (string fft_lib)
+{
+  if (fft_lib == "help")
+  {
+    unsigned nlib = FTransform::get_num_libraries ();
+
+    if (nlib == 1)
+      std::cerr << "There is 1 available FFT library: "
+		<< FTransform::get_library_name (0) << endl;
+    else
+    {
+      std::cerr << "There are " << nlib << " available FFT libraries:";
+      for (unsigned ilib=0; ilib < nlib; ilib++)
+	std::cerr << " " << FTransform::get_library_name (ilib);
+      
+      std::cerr << "\nThe default FFT library is " 
+		<< FTransform::get_library() << endl;
+    }
+    exit (0);
+  }
+  else if (fft_lib == "simd")
+    FTransform::simd = true;
+  else
+  {
+    FTransform::set_library (fft_lib);
+    std::cerr << "FFT library set to " << fft_lib << endl;
   }
 }

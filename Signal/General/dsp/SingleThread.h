@@ -7,14 +7,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.3 $
-   $Date: 2011/08/29 16:57:44 $
-   $Author: demorest $ */
+   $Revision: 1.4 $
+   $Date: 2011/09/19 01:56:42 $
+   $Author: straten $ */
 
 #ifndef __dspsr_SingleThread_h
 #define __dspsr_SingleThread_h
 
 #include "dsp/Pipeline.h"
+#include "CommandLine.h"
 #include "Functor.h"
 
 class ThreadContext;
@@ -54,7 +55,7 @@ namespace dsp {
     //! Get the Input from which data are read
     Input* get_input ();
 
-    //! Prepare to fold the input TimeSeries
+    //! Construct the signal processing pipeline
     void prepare ();
 
     //! Reserve the memory required for the pipeline
@@ -130,12 +131,16 @@ namespace dsp {
 
     //! Create a new TimeSeries instance
     TimeSeries* new_time_series ();
+    TimeSeries* new_TimeSeries () { return new_time_series(); }
 
     //! The operations to be performed
     std::vector< Reference::To<Operation> > operations;
 
     //! Insert a dump point before the named operation
     void insert_dump_point (const std::string& transformation_name);
+
+    //! Prepare the constructed pipeline
+    virtual void prepare_final ();
 
     //! The scratch space shared by all operations
     Reference::To<Scratch> scratch;
@@ -156,8 +161,23 @@ namespace dsp {
     //! Default constructor
     Config ();
 
+    //! Add command line options
+    virtual void add_options (CommandLine::Menu&);
+
+    //! Prepare the input according to the configuration
+    virtual void prepare (Input*);
+    
     //! external function used to prepare the input each time it is opened
     Functor< void(Input*) > input_prepare;
+
+    // load filenames from the ascii file named metafile
+    std::string metafile;
+
+    // number of seconds to seek into data
+    double seek_seconds;
+
+    // number of seconds to process from data
+    double total_seconds;
 
     //! report vital statistics
     bool report_vitals;
@@ -181,6 +201,9 @@ namespace dsp {
     //! set the cpus on which each thread will run
     void set_affinity (std::string);
 
+    //! set the FFT library
+    void set_fft_library (std::string);
+
     //! use input-buffering to compensate for operation edge effects
     bool input_buffering;
 
@@ -193,13 +216,28 @@ namespace dsp {
     //! get the number of buffers required to process the data
     unsigned get_nbuffers () const { return buffers; }
 
+    //! Operate in quiet mode
+    virtual void set_quiet ();
+
+    //! Operate in verbose mode
+    virtual void set_verbose ();
+
+    //! Operate in very verbose mode
+    virtual void set_very_verbose ();
+
   protected:
 
     //! These attributes are set only by the SingleThread class
     friend class SingleThread;
 
+    //! application can make use of CUDA
+    bool can_cuda;
+
     //! CUDA devices on which computations will take place
     std::vector<unsigned> cuda_device;
+
+    //! application can make use of multiple cores
+    bool can_thread;
 
     //! CPUs on which threads will run
     std::vector<unsigned> affinity;
@@ -207,8 +245,10 @@ namespace dsp {
     //! number of CPU threads
     unsigned nthread;
 
+    //! number of buffers that have been created by new_time_series
     unsigned buffers;
 
+    //! number of times that the input has been re-opened
     unsigned repeated;
   };
 

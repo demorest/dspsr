@@ -91,8 +91,9 @@ void dsp::CPSRFile::open_file (const char* filename)
   }
 
   header_bytes = sizeof(PSPM_SEARCH_HEADER);
-  fprintf(stderr,"header_bytes="UI64"\n",
-	  uint64_t(header_bytes));
+
+  if (verbose)
+    cerr << "dsp::CPSRFile::open_file header_bytes=" << header_bytes << endl;
 
   fd = ::open (filename, O_RDONLY);
   if (fd < 0)

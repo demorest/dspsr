@@ -31,6 +31,7 @@
 #include "dsp/SKDetector.h"
 #include "dsp/SKMasker.h"
 #include "dsp/OptimalFFT.h"
+#include "dsp/Resize.h"
 
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
@@ -65,12 +66,8 @@
 #include "Pulsar/SimplePredictor.h"
 
 #include "Error.h"
-#include "pad.h"
 
-#include <sched.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
+#include <assert.h>
 
 using namespace std;
 
@@ -721,11 +718,7 @@ void dsp::LoadToFold::prepare_final ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
-  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
-    insert_dump_point (config->dump_before[idump]);
-
-  for (unsigned iop=0; iop < operations.size(); iop++)
-    operations[iop]->prepare ();
+  SingleThread::prepare_final ();
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.30 $
-   $Date: 2011/08/26 22:05:06 $
+   $Revision: 1.31 $
+   $Date: 2011/09/19 01:56:42 $
    $Author: straten $ */
 
 #ifndef __dspsr_LoadToFold_h
@@ -16,34 +16,27 @@
 
 #include "dsp/SingleThread.h"
 #include "dsp/Filterbank.h"
-#include "dsp/SKFilterbank.h"
-#include "dsp/Resize.h"
-
-#include <assert.h>
-
-class ThreadContext;
 
 namespace dsp {
 
-  class IOManager;
   class TimeSeries;
-  class Scratch;
 
-  class Response;
-  class RFIFilter;
   class Dedispersion;
-  class ResponseProduct;
-
-  class Operation;
-  class OperationThread;
-  class SKFilterbank;
   class Convolution;
-  class SampleDelay;
-  class PhaseLockedFilterbank;
-
   class Detection;
   class Fold;
   class Archiver;
+
+  class Response;
+  class RFIFilter;
+  class ResponseProduct;
+
+  class OperationThread;
+  class SKFilterbank;
+  class Resize;
+  class SampleDelay;
+  class PhaseLockedFilterbank;
+
   class PhaseSeriesUnloader;
   class SignalPath;
 
@@ -121,10 +114,10 @@ namespace dsp {
     //! Integrates the passband
     Reference::To<Response> passband;
 
-    //! Optinal SK filterbank
+    //! Optional SK filterbank
     Reference::To<SKFilterbank> skfilterbank;
 
-    //! Optinal SK Resizer 
+    //! Optional SK Resizer 
     Reference::To<Resize> skresize;
 
     //! Creates the filterbank

@@ -229,6 +229,9 @@ void dsp::IOManager::reserve ()
   if (verbose)
     cerr << "dsp::IOManager::reserve" << endl;
 
+  if (!output)
+    set_output (new BitSeries);
+
   input->reserve( output );
   unpacker->reserve();
   if (post_load_operation)

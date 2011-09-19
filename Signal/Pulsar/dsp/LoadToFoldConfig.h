@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.40 $
-   $Date: 2011/09/14 15:33:23 $
-   $Author: demorest $ */
+   $Revision: 1.41 $
+   $Date: 2011/09/19 01:56:42 $
+   $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h
@@ -189,7 +189,14 @@ namespace dsp {
     // output archive post-processing jobs
     std::vector<std::string> jobs;
 
+    //! Operate in quiet mode
+    virtual void set_quiet ();
 
+    //! Operate in verbose mode
+    virtual void set_verbose ();
+
+    //! Operate in very verbose mode
+    virtual void set_very_verbose ();
   };
 
 }

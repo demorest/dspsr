@@ -42,12 +42,6 @@ static bool verbose = false;
 
 void prepare (dsp::Pipeline* engine, dsp::Input* input);
 
-// number of seconds to seek into data
-double seek_seconds = 0.0;
-
-// number of seconds to process from data
-double total_seconds = 0.0;
-
 // number of seconds to adjust clocks by
 double offset_clock = 0.0;
 
@@ -73,8 +67,7 @@ Reference::To<dsp::LoadToFold::Config> config;
 // Number of threads used to process the data
 unsigned nthread = 0;
 
-// load filenames from the ascii file named metafile
-string metafile;
+
 
 // names of data files to be processed
 vector<string> filenames;
@@ -225,12 +218,6 @@ void input_prepare (dsp::Input* input)
      info->set_start_time( old + offset_clock );
   }
 
-  if (seek_seconds)
-    input->set_start_seconds (seek_seconds);
-    
-  if (total_seconds)
-    input->set_total_seconds (seek_seconds + total_seconds);
-
   info->set_dispersion_measure (config->dispersion_measure);
 }
 
@@ -270,25 +257,7 @@ void parse_options (int argc, char** argv) try
   
   *********************************************************************** */
 
-  menu.add ("\n" "Processor options:");
-
-  arg = menu.add (config.get(), &dsp::SingleThread::Config::set_nthread, 
-		  't', "threads");
-  arg->set_help ("number of processor threads");
-
-#if HAVE_SCHED_SETAFFINITY
-  arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_affinity,
-		  "cpu", "cores");
-  arg->set_help ("comma-separated list of CPU cores");
-#endif
-
-  arg = menu.add (config->input_buffering, "overlap");
-  arg->set_help ("disable input buffering");
-
-#if 0
-  arg = menu.add (dsp::psrdisp_compatible, 'z');
-  arg->set_help ("emulate psrdisp");
-#endif
+  menu.add ("\n" "General processing options:");
 
   string ram_min;
   arg = menu.add (ram_min, "minram", "MB");
@@ -301,11 +270,7 @@ void parse_options (int argc, char** argv) try
     ("specify either the floating point number of megabytes; e.g. -U 256 \n"
      "or a multiple of the minimum possible block size; e.g. -U minX2 \n");
 
-#if HAVE_CUFFT
-  arg = menu.add (config.get(), &dsp::LoadToFold::Config::set_cuda_device,
-		  "cuda", "devices");
-  arg->set_help ("comma-separated list of CUDA devices");
-#endif
+  config->add_options (menu);
 
   /* ***********************************************************************
 
@@ -323,20 +288,6 @@ void parse_options (int argc, char** argv) try
      " -2n<sample>    number of samples used to estimate undigitized power \n"
      " -2t<threshold> two-bit sampling threshold at record time \n");
 
-  arg = menu.add (metafile, 'M', "metafile");
-  arg->set_help ("load filenames from metafile");
-
-  arg = menu.add (seek_seconds, 'S', "seek");
-  arg->set_help ("start processing at t=seek seconds");
-
-  arg = menu.add (total_seconds, 'T', "total");
-  arg->set_help ("process only t=total seconds");
-
-  arg = menu.add (config->weighted_time_series, 'W');
-  arg->set_help ("ignore weights (fold bad data)");
-
-  arg = menu.add (config->run_repeatedly, "repeat");
-  arg->set_help ("repeatedly read from input until an empty is encountered");
 
   arg = menu.add (config->continuous_obs, "cont");
   arg->set_help ("treat input files as a single continuous observation");
@@ -455,10 +406,6 @@ void parse_options (int argc, char** argv) try
     ("specify the name of a database created by pac from which to select\n"
      "the polarization calibrator to be used for matrix convolution");
 
-  string fft_lib;
-  arg = menu.add (fft_lib, 'Z', "lib");
-  arg->set_help ("choose the FFT library ('-Z help' for availability)");
-
   arg = menu.add (config->use_fft_bench, "fft-bench");
   arg->set_help ("use benchmark data to choose optimal FFT length");
 
@@ -573,36 +520,11 @@ void parse_options (int argc, char** argv) try
   
   *********************************************************************** */
 
-  menu.add ("\n" "Debugging options:");
-
-  dsp::Operation::report_time = false;
-
-  arg = menu.add (dsp::Operation::record_time, 'r');
-  arg->set_help ("report time spent performing each operation");
-
-  arg = menu.add (config->report_done, 'q');
-  arg->set_help ("quiet mode");
-
-  bool quiet = false;
-  arg = menu.add (quiet, 'Q');
-  arg->set_help ("very quiet mode");
-
-  arg = menu.add (verbose, 'v');
-  arg->set_help ("verbose mode");
-
-  bool vverbose = false;
-  arg = menu.add (vverbose, 'V');
-  arg->set_help ("very verbose mode");
-
-  arg = menu.add (config->dump_before, "dump", "op");
-  arg->set_help ("dump time series before performing operation");
 
   menu.parse (argc, argv);
 
-  Error::verbose = vverbose;
-
-  if (!metafile.empty())
-    stringfload (&filenames, metafile);
+  if (!config->metafile.empty())
+    stringfload (&filenames, config->metafile);
   else
     for (int ai=optind; ai<argc; ai++)
       dirglob (&filenames, argv[ai]);
@@ -611,28 +533,6 @@ void parse_options (int argc, char** argv) try
   {
     cerr << "dspsr: please specify filename[s]  (or -h for help)" << endl;
     exit (-1);
-  }
-
-  // default verbosity is 1
-
-  if (quiet)
-  {
-    config->report_vitals = false;
-    config->report_done = false;
-    Pulsar::Archive::set_verbosity (0);
-    dsp::set_verbosity (0);
-  }
-  else if (verbose)
-  {
-    Pulsar::Archive::set_verbosity (2);
-    dsp::set_verbosity (2);
-  }
-  else if (vverbose)
-  {
-    cerr << "dspsr: Entering very verbose mode" << endl;
-    Pulsar::Archive::set_verbosity (3);
-    dsp::set_verbosity (3);
-    verbose = true;
   }
 
   if (config->integration_length && config->minimum_integration_length < 0)
@@ -803,29 +703,6 @@ void parse_options (int argc, char** argv) try
       config->filterbank.set_freq_res( nfft );
     }
     delete [] carg;
-  }
-
-  if (!fft_lib.empty())
-  {
-    if (fft_lib == "help")
-    {
-      unsigned nlib = FTransform::get_num_libraries ();
-      cerr << "dspsr: " << nlib << " available FFT libraries:";
-      for (unsigned ilib=0; ilib < nlib; ilib++)
-	cerr << " " << FTransform::get_library_name (ilib);
-      
-      cerr << "\ndspsr: default FFT library " 
-	   << FTransform::get_library() << endl;
-      
-      exit (0);
-    }
-    else if (fft_lib == "simd")
-      FTransform::simd = true;
-    else
-    {
-      FTransform::set_library (fft_lib);
-      cerr << "dspsr: FFT library set to " << fft_lib << endl;
-    }
   }
 }
 catch (Error& error)
