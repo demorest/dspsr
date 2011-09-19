@@ -204,7 +204,7 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
     // Generate new archive if needed
     if (!single_archive)
     {
-      if (verbose)
+      if (verbose > 2)
 	cerr << "dsp::Archiver::unload creating new single Archive" << endl;
       single_archive = new_Archive();
     }
@@ -281,7 +281,7 @@ void dsp::Archiver::finish () try
 {
   if (!single_archive)
   {
-    if (verbose)
+    if (verbose > 2)
       cerr << "dsp::Archiver::finish no archive" << endl;
     return;
   }
@@ -784,7 +784,7 @@ try
 
   if (not_finite)
   {
-		if (verbose > 2)
+    if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::Profile WARNING " << not_finite
            << " out of " << nbin << " bins with non-finite amplitudes" << endl;
 
