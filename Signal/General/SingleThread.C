@@ -691,6 +691,7 @@ void dsp::SingleThread::Config::set_very_verbose ()
 }
 
 #include "FTransform.h"
+#include <stdlib.h>
 
 void dsp::SingleThread::Config::set_fft_library (string fft_lib)
 {
