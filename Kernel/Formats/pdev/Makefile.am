@@ -1,7 +1,7 @@
 
 noinst_LTLIBRARIES = libpdev.la
 
-nobase_include_HEADERS =  dsp/PdevFile.h
+nobase_include_HEADERS =  dsp/PdevFile.h pdev_aoHdr.h
 
 libpdev_la_SOURCES = PdevFile.C
 
