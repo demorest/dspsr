@@ -203,7 +203,11 @@ void dsp::Archiver::unload (const PhaseSeries* _profiles) try
   {
     // Generate new archive if needed
     if (!single_archive)
+    {
+      if (verbose)
+	cerr << "dsp::Archiver::unload creating new single Archive" << endl;
       single_archive = new_Archive();
+    }
 
     // refer to the single archive to which all sub-integration will be written
     archive = single_archive;
@@ -276,7 +280,11 @@ catch (Error& error)
 void dsp::Archiver::finish () try
 {
   if (!single_archive)
+  {
+    if (verbose)
+      cerr << "dsp::Archiver::finish no archive" << endl;
     return;
+  }
 
   cerr << "dsp::Archiver::finish archive '"
        << single_archive->get_filename() << "' with "

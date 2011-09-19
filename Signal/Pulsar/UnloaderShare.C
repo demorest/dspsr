@@ -236,10 +236,20 @@ void dsp::UnloaderShare::finish ()
     cerr << "dsp::UnloaderShare::finish size=" << storage.size() << endl;
 
   while( storage.size() )
+  {
     unload( storage[0] );
 
+    if (Operation::verbose)
+      cerr << "dsp::UnloaderShare::finish size=" << storage.size() << endl;
+  }
+
   if (unloader)
+  {
+    if (Operation::verbose)
+      cerr << "dsp::UnloaderShare::finish call Unloader::finish" << endl;
+    
     unloader->finish ();
+  }
 }
 
 void dsp::UnloaderShare::unload (Storage* store)
