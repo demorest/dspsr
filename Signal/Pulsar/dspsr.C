@@ -179,7 +179,7 @@ void input_prepare (dsp::Input* input)
     }
     else if (info->get_state () == Signal::Analytic)
     {
-      info->set_rate( bandwidth * 1e6 );
+      info->set_rate( fabs(bandwidth) * 1e6 );
       cerr << "dspsr: corrected Analytic (complex-valued) sampling rate="
            << info->get_rate() << " Hz" << endl;
     }
