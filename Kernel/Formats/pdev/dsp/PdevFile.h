@@ -69,10 +69,16 @@ namespace dsp {
     //! Seek to a certain spot in the file set
     int64_t seek_bytes (uint64_t bytes);
 
+    //! Parse the "aoHdr" part of the binary header
+    void parse_aoHdr ();
+
   private:
 
     //! Raw header
     unsigned int rawhdr[PDEV_HEADER_BYTES / 4];
+
+    //! True if we have an ASCII header file
+    bool have_ascii_header;
 
     //! Base file name
     char basename[256];

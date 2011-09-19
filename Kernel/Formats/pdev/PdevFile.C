@@ -8,6 +8,8 @@
 #include "dsp/ASCIIObservation.h"
 #include "ascii_header.h"
 
+#include "pdev_aoHdr.h"
+
 #include "Error.h"
 #include "FilePtr.h"
 
@@ -45,7 +47,18 @@ bool dsp::PdevFile::is_valid (const char* filename) const
   fread(header, sizeof(char), 4096, ptr);
   fclose(ptr);
 
-  // Check for INSTRUMENT = Mock in header
+  // Check to see if this is a raw pdev file
+  uint32_t *magic = (uint32_t *)header;
+  if (*magic == 0xfeffbeef)
+  {
+    // TODO see if we can parse the filename also?
+    return true;
+  }
+  if (verbose)
+    cerr << "dsp::PdevFile::is_valid no magic number, trying ASCII header" 
+      << endl;
+
+  // Check for INSTRUMENT = Mock in ASCII header
   char inst[64];
   if ( ascii_header_get (header, "INSTRUMENT", "%s", inst) < 0 )
   {
@@ -116,32 +129,64 @@ void dsp::PdevFile::open_file (const char* filename)
   fread(header, sizeof(char), 4096, ptr);
   fclose(ptr);
   
-  // Read obs info from ASCII file
-  // Start time info is in data file 0, so doesn't 
-  // need to be duplicated in header.  Maybe make this
-  // so that the header could override the data file value?
-  ASCIIObservation info_tmp;
-  info_tmp.set_required("UTC_START", false);
-  info_tmp.set_required("OBS_OFFSET", false);
-  info_tmp.load(header);
-  info = info_tmp;
-
   // Only true for file 0
   header_bytes = PDEV_HEADER_BYTES;
 
-  // Get the base file name
-  if (ascii_header_get (header, "DATAFILE", "%s", basename) < 0)
-    throw Error (InvalidParam, "dsp::PdevFile::open_file", 
-            "Missing DATAFILE keyword");
-
-  // Get the file with timestamp
-  // Assume it is number 0 if not given.
-  if (ascii_header_get (header, "STARTFILE", "%d", &startfile) < 0) 
+  // Check for magic number in first 4 bytes
+  uint32_t *magic = (uint32_t *)header;
+  if (*magic == 0xfeffbeef)
   {
-    cerr << "dsp::PdevFile::open_file no STARTFILE given, assuming 0" 
-      << endl;
-    startfile = 0;
+    have_ascii_header = false;
+
+    // Parse filename to get base / filenum.
+    // It should end in .NNNNN.pdev
+    char fnametmp[256];
+    strcpy(fnametmp, filename);
+    char *cptr = strrchr(fnametmp, '.');
+    if (cptr == NULL)
+      throw Error (InvalidState, "dsp::PdevFile::open_file",
+          "Error parsing filename (%s)", filename);
+    // TODO could check for .pdev here
+    *cptr = '\0';
+    cptr = strrchr(fnametmp,'.');
+    if (cptr == NULL)
+      throw Error (InvalidState, "dsp::PdevFile::open_file",
+          "Error parsing filename (%s)", filename);
+    *cptr = '\0';
+    cptr++;
+    startfile = atoi(cptr);
+    strcpy(basename, fnametmp);
   }
+
+  else 
+  {
+    have_ascii_header = true;
+
+    // Get the base file name from ASCII header
+    if (ascii_header_get (header, "DATAFILE", "%s", basename) < 0)
+      throw Error (InvalidParam, "dsp::PdevFile::open_file", 
+              "Missing DATAFILE keyword");
+
+    // Get the file with timestamp
+    // Assume it is number 0 if not given.
+    if (ascii_header_get (header, "STARTFILE", "%d", &startfile) < 0) 
+    {
+      cerr << "dsp::PdevFile::open_file no STARTFILE given, assuming 0" 
+        << endl;
+      startfile = 0;
+    }
+
+    // Parse standard ASCII header, minus obs start time
+    ASCIIObservation info_tmp;
+    info_tmp.set_required("UTC_START", false);
+    info_tmp.set_required("OBS_OFFSET", false);
+    info_tmp.load(header);
+    info = info_tmp;
+  }
+
+  if (verbose)
+    cerr << "dsp::PdevFile::open_file basename=" << basename
+      << " startfile=" << startfile << endl;
 
   // Open the initial file to get the header
   char datafile[256];
@@ -157,7 +202,21 @@ void dsp::PdevFile::open_file (const char* filename)
     throw Error (FailedSys, "dsp::PdevFile::open_file",
         "Error reading header bytes");
 
-  // TODO check that the header looks reasonable
+  // Check for valid header
+  // 1st int should be 0xfeffbeef
+  if (rawhdr[0] != 0xfeffbeef)
+    throw Error (InvalidState, "dsp::PdevFile::open_file",
+        "Magic number 0xfeffbeef is not present.");
+
+  // rawhdr[14] equal 0x12345678 if aoHdr is present
+  if (have_ascii_header == false)
+  {
+    if (rawhdr[14] == 0x12345678)
+      parse_aoHdr();
+    else
+      throw Error (InvalidState, "dsp::PdevFile::open_file",
+          "No aoHdr found -- use ASCII header file instead");
+  }
 
   MJD epoch ((time_t) rawhdr[12]);
   info.set_start_time(epoch);
@@ -167,6 +226,54 @@ void dsp::PdevFile::open_file (const char* filename)
   // Determine total number of files, and total size
   check_file_set();
   set_total_samples();
+
+}
+
+void dsp::PdevFile::parse_aoHdr ()
+{
+  if (verbose)
+    cerr << "dsp::PdevFile::parse_aoHdr" << endl;
+
+  char *aoHdr_raw = (char *)rawhdr + 240;
+  struct pdev_aoHdr *aohdr = (struct pdev_aoHdr *)aoHdr_raw;
+  char strtmp[32];
+
+  // TODO make sure endian is ok
+
+  // Check for expected hdrVer
+  strncpy(strtmp, aohdr->hdrVer, 4); strtmp[4] = '\0';
+  if (strncmp(aohdr->hdrVer,"1.00",4) != 0) 
+    throw Error (InvalidParam, "dsp::PdevFile::parse_aoHdr",
+        "Unrecognized hdrVer value (%s)", strtmp);
+
+  // This stuff should always be true..
+  info.set_telescope("Arecibo");
+  info.set_machine("Mock");
+  info.set_npol(2);
+  info.set_nbit(8);
+  info.set_ndim(2);
+  info.set_nchan(1);
+  info.set_state(Signal::Analytic);
+
+  if (verbose)
+    cerr << "dsp::PdevFile::parse_aoHdr bw=" << aohdr->bandWdHz
+      << " dir=" << aohdr->bandIncrFreq << endl;
+  double bw = aohdr->bandWdHz / 1e6;
+  if (aohdr->bandIncrFreq == 1) bw *= -1.0;
+  info.set_bandwidth(bw);
+  info.set_rate(aohdr->bandWdHz);
+
+  info.set_centre_frequency(aohdr->cfrHz / 1e6);
+
+  strncpy(strtmp, aohdr->object, 16); strtmp[16] = '\0';
+  info.set_source(strtmp);
+
+  strncpy(strtmp, aohdr->frontEnd, 8); strtmp[8] = '\0';
+  info.set_receiver(strtmp);
+
+  sky_coord coords;
+  coords.setDegrees(aohdr->raJDeg, aohdr->decJDeg);
+  info.set_coordinates(coords);
 
 }
 
