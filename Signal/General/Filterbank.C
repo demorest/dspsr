@@ -20,10 +20,12 @@ using namespace std;
 
 // #define _DEBUG 1
 
-dsp::Filterbank::Filterbank (const char* name, Behaviour behaviour) : Convolution (name, behaviour)
+dsp::Filterbank::Filterbank (const char* name, Behaviour behaviour)
+  : Convolution (name, behaviour)
 {
   nchan = 0;
   freq_res = 1;
+  // overlap_ratio = 0;
 
   set_buffering_policy (new InputBuffering (this));
 }
@@ -380,6 +382,10 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
   // number of big FFTs (not including, but still considering, extra FFTs
   // required to achieve desired time resolution) that can fit into data
   npart = 0;
+
+  if (nsamp_step == 0)
+    throw Error (InvalidState, "dsp::Filterbank::resize_output",
+		 "nsamp_step == 0 ... not properly prepared");
 
   if (ndat > nsamp_overlap)
     npart = (ndat-nsamp_overlap)/nsamp_step;
