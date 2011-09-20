@@ -87,69 +87,51 @@ int main (int argc, char** argv) try
 
   bool time_prep = dsp::Operation::record_time || config->get_cuda_ndevice();
 
-  unsigned nfile = filenames.size();
-  if (config->continuous_obs) 
-    nfile = 1;
-
-  for (unsigned ifile=0; ifile < nfile; ifile++) try
+  if (verbose)
   {
-    if (verbose)
+    if (filenames.size() > 1)
     {
-      if (config->continuous_obs)
-      {
-        cerr << "opening data files: " << endl;
-        for (unsigned ii=0; ii < filenames.size(); ii++)
-          cerr << "  " << filenames[ii] << endl;
-      }
-      else
-        cerr << "opening data file " << filenames[ifile] << endl;
-    }
-    
-    RealTimer preptime;
-    if (time_prep)
-      preptime.start();
-
-    dsp::File *file;
-    if (config->continuous_obs) 
-    {
-      dsp::MultiFile *multi = new dsp::MultiFile;
-      multi->open (filenames);
-      file = multi;
+      cerr << "opening contiguous data files: " << endl;
+      for (unsigned ii=0; ii < filenames.size(); ii++)
+        cerr << "  " << filenames[ii] << endl;
     }
     else
-      file = dsp::File::create( filenames[ifile] );
-
-    prepare (engine, file);
-
-    if (time_prep)
-    {
-      preptime.stop();
-      cerr << "dspsr: prepared in " << preptime << endl;
-    }
-
-    if (verbose)
-    {
-      if (config->continuous_obs)
-        cerr << "data files opened" << endl;
-      else
-        cerr << "data file " << filenames[ifile] << " opened" << endl;
-    }
-
-    engine->run();
-    engine->finish();
+      cerr << "opening data file " << filenames[0] << endl;
   }
-  catch (Error& error)
+
+  RealTimer preptime;
+  if (time_prep)
+    preptime.start();
+
+  dsp::File *file;
+  if (filenames.size() > 1)
   {
-    cerr << error << endl;
-    return -1;
+    dsp::MultiFile *multi = new dsp::MultiFile;
+    if (config->force_contiguity)
+      multi->force_contiguity();
+
+    multi->open (filenames);
+    file = multi;
   }
+  else
+    file = dsp::File::create( filenames[0] );
+
+  prepare (engine, file);
+
+  if (time_prep)
+  {
+    preptime.stop();
+    cerr << "dspsr: prepared in " << preptime << endl;
+  }
+
+  engine->run();
+  engine->finish();
 
   return 0;
-}
-
+} 
 catch (Error& error)
 {
-  cerr << "Error thrown: " << error << endl;
+  cerr << error << endl;
   return -1;
 }
 
@@ -289,7 +271,7 @@ void parse_options (int argc, char** argv) try
      " -2t<threshold> two-bit sampling threshold at record time \n");
 
 
-  arg = menu.add (config->continuous_obs, "cont");
+  arg = menu.add (config->force_contiguity, "cont");
   arg->set_help ("treat input files as a single continuous observation");
 
 

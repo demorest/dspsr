@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.41 $
-   $Date: 2011/09/19 01:56:42 $
+   $Revision: 1.42 $
+   $Date: 2011/09/20 20:20:41 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
@@ -154,8 +154,8 @@ namespace dsp {
 
     bool asynchronous_fold;
 
-    // Files represent a single continuous observation
-    bool continuous_obs;
+    // Input files represent a single continuous observation
+    bool force_contiguity;
 
     /* There are three ways to fold multiple pulsars:
 
