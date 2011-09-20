@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.5 $
-   $Date: 2011/09/20 20:49:14 $
+   $Revision: 1.6 $
+   $Date: 2011/09/20 21:25:28 $
    $Author: straten $ */
 
 #ifndef __dspsr_SingleThread_h
@@ -170,14 +170,17 @@ namespace dsp {
     //! Add command line options
     virtual void add_options (CommandLine::Menu&);
 
+    //! Create new Input based on command line options
+    Input* open (int argc, char** argv);
+
     //! Prepare the input according to the configuration
     virtual void prepare (Input*);
     
     //! external function used to prepare the input each time it is opened
     Functor< void(Input*) > input_prepare;
 
-    // load filenames from the ascii file named metafile
-    std::string metafile;
+    // Input files represent a single continuous observation
+    bool force_contiguity;
 
     // number of seconds to seek into data
     double seek_seconds;

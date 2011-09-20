@@ -36,8 +36,6 @@ using namespace std;
 
 void parse_options (int argc, char** argv);
 
-static bool verbose = false;
-
 // sets up the pipeline using the following attributes
 
 void prepare (dsp::Pipeline* engine, dsp::Input* input);
@@ -67,11 +65,6 @@ Reference::To<dsp::LoadToFold::Config> config;
 // Number of threads used to process the data
 unsigned nthread = 0;
 
-
-
-// names of data files to be processed
-vector<string> filenames;
-
 int main (int argc, char** argv) try
 {
   config = new dsp::LoadToFold::Config;
@@ -87,36 +80,11 @@ int main (int argc, char** argv) try
 
   bool time_prep = dsp::Operation::record_time || config->get_cuda_ndevice();
 
-  if (verbose)
-  {
-    if (filenames.size() > 1)
-    {
-      cerr << "opening contiguous data files: " << endl;
-      for (unsigned ii=0; ii < filenames.size(); ii++)
-        cerr << "  " << filenames[ii] << endl;
-    }
-    else
-      cerr << "opening data file " << filenames[0] << endl;
-  }
-
   RealTimer preptime;
   if (time_prep)
     preptime.start();
 
-  dsp::File *file;
-  if (filenames.size() > 1)
-  {
-    dsp::MultiFile *multi = new dsp::MultiFile;
-    if (config->force_contiguity)
-      multi->force_contiguity();
-
-    multi->open (filenames);
-    file = multi;
-  }
-  else
-    file = dsp::File::create( filenames[0] );
-
-  prepare (engine, file);
+  prepare (engine, config->open (argc, argv));
 
   if (time_prep)
   {
@@ -239,7 +207,7 @@ void parse_options (int argc, char** argv) try
   
   *********************************************************************** */
 
-  menu.add ("\n" "General processing options:");
+  config->add_options (menu);
 
   string ram_min;
   arg = menu.add (ram_min, "minram", "MB");
@@ -251,29 +219,6 @@ void parse_options (int argc, char** argv) try
   arg->set_long_help
     ("specify either the floating point number of megabytes; e.g. -U 256 \n"
      "or a multiple of the minimum possible block size; e.g. -U minX2 \n");
-
-  config->add_options (menu);
-
-  /* ***********************************************************************
-
-  File Handling Options
-  
-  *********************************************************************** */
-
-  menu.add ("\n" "File handling options:");
-
-  vector<string> unpack;
-  arg = menu.add (unpack, '2', "code");
-  arg->set_help ("unpacker options (\"2-bit\" excision)");
-  arg->set_long_help
-    (" -2c<cutoff>    threshold for impulsive interference excision \n"
-     " -2n<sample>    number of samples used to estimate undigitized power \n"
-     " -2t<threshold> two-bit sampling threshold at record time \n");
-
-
-  arg = menu.add (config->force_contiguity, "cont");
-  arg->set_help ("treat input files as a single continuous observation");
-
 
   /* ***********************************************************************
 
@@ -315,6 +260,15 @@ void parse_options (int argc, char** argv) try
   
   *********************************************************************** */
   menu.add ("\n" "RFI removal options:");
+
+  vector<string> unpack;
+  arg = menu.add (unpack, '2', "code");
+  arg->set_help ("unpacker options (\"2-bit\" excision)");
+  arg->set_long_help
+    (" -2c<cutoff>    threshold for impulsive interference excision \n"
+     " -2n<sample>    number of samples used to estimate undigitized power \n"
+     " -2t<threshold> two-bit sampling threshold at record time \n");
+
 
   arg = menu.add (config->sk_zap, "skz");
   arg->set_help ("apply spectral kurtosis filterbank RFI zapping");
@@ -504,18 +458,6 @@ void parse_options (int argc, char** argv) try
 
 
   menu.parse (argc, argv);
-
-  if (!config->metafile.empty())
-    stringfload (&filenames, config->metafile);
-  else
-    for (int ai=optind; ai<argc; ai++)
-      dirglob (&filenames, argv[ai]);
-
-  if (filenames.size() == 0)
-  {
-    cerr << "dspsr: please specify filename[s]  (or -h for help)" << endl;
-    exit (-1);
-  }
 
   if (config->integration_length && config->minimum_integration_length < 0)
   {

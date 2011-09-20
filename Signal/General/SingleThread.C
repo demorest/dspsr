@@ -13,7 +13,7 @@
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
 #include "dsp/Scratch.h"
-#include "dsp/File.h"
+#include "dsp/MultiFile.h"
 
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
@@ -544,6 +544,8 @@ dsp::SingleThread::Config::Config ()
   can_cuda = false;
   can_thread = false;
 
+  force_contiguity = false;
+
   seek_seconds = 0.0;
   total_seconds = 0.0;
 
@@ -563,6 +565,54 @@ dsp::SingleThread::Config::Config ()
   nthread = 0;
   buffers = 0;
   repeated = 0;
+}
+
+#include "dirutil.h"
+
+//! Create new Input based on command line options
+dsp::Input* dsp::SingleThread::Config::open (int argc, char** argv)
+{
+  vector<string> filenames;
+
+  for (int ai=optind; ai<argc; ai++)
+    dirglob (&filenames, argv[ai]);
+
+  unsigned nfile = filenames.size();
+
+  if (nfile == 0)
+  {
+    std::cerr << "please specify filename[s] (or -h for help)" << endl;
+    exit (-1);
+  }
+
+  if (Operation::verbose)
+  {
+    if (nfile > 1)
+    {
+      std::cerr << "opening contiguous data files: " << endl;
+      for (unsigned ii=0; ii < filenames.size(); ii++)
+        std::cerr << "  " << filenames[ii] << endl;
+    }
+    else
+      std::cerr << "opening data file " << filenames[0] << endl;
+  }
+
+  Reference::To<File> file;
+
+  if (nfile == 1)
+    file = dsp::File::create( filenames[0] );
+  else
+  {
+    dsp::MultiFile* multi = new dsp::MultiFile;
+    file = multi;
+
+    if (force_contiguity)
+      multi->force_contiguity();
+
+    multi->open (filenames);
+  }
+
+  return file.release();
 }
 
 void dsp::SingleThread::Config::prepare (Input* input)
@@ -628,8 +678,16 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   arg = menu.add (this, &Config::set_very_verbose, 'V');
   arg->set_help ("very verbose mode");
 
-  arg = menu.add (metafile, 'M', "metafile");
-  arg->set_help ("load filenames from metafile");
+  menu.add ("\n" "Input handling options:");
+
+  arg = menu.add (force_contiguity, "cont");
+  arg->set_help ("input files are contiguous (disable check)");
+
+  arg = menu.add (run_repeatedly, "repeat");
+  arg->set_help ("repeatedly read from input until an empty is encountered");
+
+  arg = menu.add (input_buffering, "overlap");
+  arg->set_help ("disable input buffering");
 
   arg = menu.add (seek_seconds, 'S', "seek");
   arg->set_help ("start processing at t=seek seconds");
@@ -637,14 +695,19 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   arg = menu.add (total_seconds, 'T', "total");
   arg->set_help ("process only t=total seconds");
 
+  if (weighted_time_series)
+  {
+    arg = menu.add (weighted_time_series, 'W');
+    arg->set_help ("disable weights (allow bad data)");
+  }
+
+  menu.add ("\n" "Processor options:");
+
   if (can_thread)
   {
     arg = menu.add (this, &Config::set_nthread, 't', "threads");
     arg->set_help ("number of processor threads");
   }
-
-  arg = menu.add (this, &Config::set_fft_library, 'Z', "lib");
-  arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
 #if HAVE_SCHED_SETAFFINITY
   arg = menu.add (this, &Config::set_affinity, "cpu", "cores");
@@ -659,17 +722,8 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   }
 #endif
 
-  arg = menu.add (input_buffering, "overlap");
-  arg->set_help ("disable input buffering");
-
-  if (weighted_time_series)
-  {
-    arg = menu.add (weighted_time_series, 'W');
-    arg->set_help ("disable weights (allow bad data)");
-  }
-
-  arg = menu.add (run_repeatedly, "repeat");
-  arg->set_help ("repeatedly read from input until an empty is encountered");
+  arg = menu.add (this, &Config::set_fft_library, 'Z', "lib");
+  arg->set_help ("choose the FFT library ('-Z help' for availability)");
 
   dsp::Operation::report_time = false;
 

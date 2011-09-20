@@ -16,14 +16,8 @@
 
 #include "dsp/LoadToFil.h"
 
-#include "dsp/File.h"
-#include "dsp/MultiFile.h"
-
 #include "CommandLine.h"
 #include "FTransform.h"
-
-#include "dirutil.h"
-#include "strutil.h"
 
 using namespace std;
 
@@ -43,19 +37,7 @@ int main (int argc, char** argv) try
 
   Reference::To<dsp::Pipeline> engine = new dsp::LoadToFil (config);
 
-  unsigned nfile = filenames.size();
-
-  Reference::To<dsp::File> file;
-  if (nfile > 1)
-  {
-    dsp::MultiFile *multi = new dsp::MultiFile;
-    multi->open (filenames);
-    file = multi;
-  }
-  else
-    file = dsp::File::create( filenames[0] );
-
-  engine->set_input( file );
+  engine->set_input( config->open (argc, argv) );
   engine->prepare ();   
   engine->run();
   engine->finish();
@@ -112,18 +94,6 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("revert to FPT order");
 
   menu.parse (argc, argv);
-
-  if (!config->metafile.empty())
-    stringfload (&filenames, config->metafile);
-  else
-    for (int ai=optind; ai<argc; ai++)
-      dirglob (&filenames, argv[ai]);
-
-  if (filenames.size() == 0)
-  {
-    cerr << "digifil: please specify filename[s]  (or -h for help)" << endl;
-    exit (-1);
-  }
 
   if (revert)
     config->order = dsp::TimeSeries::OrderFPT;
