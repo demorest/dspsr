@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.28 $
-   $Date: 2009/09/10 01:02:34 $
-   $Author: tcaotiaafoc $ */
+   $Revision: 1.29 $
+   $Date: 2011/09/20 20:20:31 $
+   $Author: straten $ */
 
 
 #ifndef __MultiFile_h
@@ -32,17 +32,24 @@ namespace dsp {
     //! Destructor
     virtual ~MultiFile ();
 
+    //! The origin is the current loader
+    const Input* get_origin () const { return get_loader(); }
+
     //! Returns true if filename is an ASCII file listing valid filenames
     bool is_valid (const char* filename) const;
     
     //! Open a number of files and treat them as one logical observation.
     virtual void open (const std::vector<std::string>& new_filenames);
 
+    //! Treat the files as contiguous
+    void force_contiguity ();
+
     //! Makes sure only these filenames are open
     virtual void have_open (const std::vector<std::string>& filenames);
 
     //! Retrieve a pointer to the loader File instance
     File* get_loader ();
+    const File* get_loader () const;
 
     //! Return true if the loader File instance is set
     bool has_loader ();
@@ -94,6 +101,9 @@ namespace dsp {
     void ensure_contiguity ();
 
   private:
+
+    //! Test for contiguity
+    bool test_contiguity;
 
     //! Index of the current File in use
     unsigned current_index;
