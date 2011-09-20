@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002 - 2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Input.h,v $
-   $Revision: 1.46 $
-   $Date: 2011/08/26 22:02:26 $
+   $Revision: 1.47 $
+   $Date: 2011/09/20 20:20:26 $
    $Author: straten $ */
 
 #ifndef __Input_h
@@ -42,7 +42,10 @@ namespace dsp {
     
     //! Destructor
     virtual ~Input ();
-    
+
+    //! The origin of the data may be re-implemented by wrappers like MultiFile
+    virtual const Input* get_origin () const { return this; }
+
     //! Copies the behaviour and information attributes (not data)
     virtual void copy (const Input* input);
 
