@@ -101,9 +101,8 @@ unsigned count (const std::vector<T>& data, T element)
   return c;
 }
 
-void dsp::LoadToFold::prepare () try
+void dsp::LoadToFold::construct () try
 {
-  SingleThread::prepare ();
 
 #if HAVE_CUDA
   bool run_on_gpu = thread_id < config->get_cuda_ndevice();
@@ -121,7 +120,6 @@ void dsp::LoadToFold::prepare () try
     config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
     prepare_fold (unpacked);
-    prepare_final ();
     return;
   }
 
@@ -477,8 +475,6 @@ void dsp::LoadToFold::prepare () try
     path.resize(1);
     path[0] = new SignalPath (operations);
 
-    prepare_final();
-
     return;
     // the phase-locked filterbank does its own detection and folding
     
@@ -537,7 +533,6 @@ void dsp::LoadToFold::prepare () try
   if (config->cyclic_nchan) 
   {
     prepare_fold(convolved);
-    prepare_final();
     return;
   }
 
@@ -580,7 +575,7 @@ void dsp::LoadToFold::prepare () try
     else if (config->npol == 1)
       detect->set_output_state (Signal::Intensity);
     else
-      throw Error( InvalidState, "LoadToFold::prepare",
+      throw Error( InvalidState, "LoadToFold::construct",
                    "invalid npol config=%d input=%d",
                    config->npol, manager->get_info()->get_npol() );
   }
@@ -595,7 +590,7 @@ void dsp::LoadToFold::prepare () try
   else if (config->fourth_moment)
   {
     if (Operation::verbose)
-      cerr << "LoadToFold::prepare fourth order moments" << endl;
+      cerr << "LoadToFold::construct fourth order moments" << endl;
               
     FourthMoment* fourth = new FourthMoment;
     operations.push_back (fourth);
@@ -606,12 +601,10 @@ void dsp::LoadToFold::prepare () try
   }
 
   prepare_fold (detected);
-  //prepare_fold (skoutput);
-  prepare_final ();
 }
 catch (Error& error)
 {
-  throw error += "dsp::LoadToFold::prepare";
+  throw error += "dsp::LoadToFold::construct";
 }
 
 void dsp::LoadToFold::prepare_interchan (TimeSeries* data)
@@ -650,7 +643,7 @@ double get_dispersion_measure (const Pulsar::Parameters* parameters)
                "unknown Parameters class");
 }
 
-void dsp::LoadToFold::prepare_final ()
+void dsp::LoadToFold::finalize ()
 {
   assert (fold.size() > 0);
 
@@ -671,19 +664,19 @@ void dsp::LoadToFold::prepare_final ()
   {
     dm = config->dispersion_measure;
     if (Operation::verbose)
-      cerr << "LoadToFold::prepare_final config DM=" << dm << endl;
+      cerr << "LoadToFold::finalize config DM=" << dm << endl;
   }
   else if (parameters)
   {
     dm = get_dispersion_measure (parameters);
     if (Operation::verbose)
-      cerr << "LoadToFold::prepare_final ephem DM=" << dm << endl;
+      cerr << "LoadToFold::finalize ephem DM=" << dm << endl;
   }
 
   if (config->coherent_dedispersion)
   {
     if (dm == 0.0)
-      throw Error (InvalidState, "LoadToFold::prepare_final",
+      throw Error (InvalidState, "LoadToFold::finalize",
                    "coherent dedispersion enabled, but DM unknown");
 
     if (kernel)
@@ -697,7 +690,7 @@ void dsp::LoadToFold::prepare_final ()
 
   /*
     In the case of unpacking two-bit data, set the corresponding
-    parameters.  This is done in prepare_final because we really ought
+    parameters.  This is done in finalize because we really ought
     to set nsample to the largest number of samples smaller than the
     dispersion smearing, and in general the DM is known only after the
     ephemeris is prepared by Fold.
@@ -718,7 +711,7 @@ void dsp::LoadToFold::prepare_final ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
-  SingleThread::prepare_final ();
+  SingleThread::finalize ();
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
@@ -778,7 +771,7 @@ void dsp::LoadToFold::prepare_final ()
 
 #if 0
   if (minimum_samples == 0)
-    throw Error (InvalidState, "dsp::LoadToFold::prepare_final",
+    throw Error (InvalidState, "dsp::LoadToFold::finalize",
                  "minimum samples == 0");
 #endif
 
@@ -811,7 +804,7 @@ void dsp::LoadToFold::prepare_final ()
     skresize->set_resize_samples (skfb_increment);
 
     if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare_final block_size will be adjusted by " 
+      cerr << "dsp::LoadToFold::finalize block_size will be adjusted by " 
           << skfb_increment << " samples for SKFB" << endl;
   }
 

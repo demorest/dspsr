@@ -40,10 +40,6 @@ dsp::LoadToFil::LoadToFil (Config* configuration)
   set_configuration (configuration);
 }
 
-dsp::LoadToFil::~LoadToFil ()
-{
-}
-
 //! Run through the data
 void dsp::LoadToFil::set_configuration (Config* configuration)
 {
@@ -75,10 +71,8 @@ dsp::LoadToFil::Config::Config()
   weighted_time_series = false;
 }
 
-void dsp::LoadToFil::prepare () try
+void dsp::LoadToFil::construct () try
 {
-  SingleThread::prepare ();
-
   /*
     The following lines "wire up" the signal path, using containers
     to communicate the data between operations.
@@ -247,22 +241,9 @@ void dsp::LoadToFil::prepare () try
   outputFile->set_input (bitseries);
 
   operations.push_back( outputFile );
-
-  prepare_final ();
 }
 catch (Error& error)
 {
-  throw error += "dsp::LoadToFil::prepare";
-}
-
-
-//! Run through the data
-void dsp::LoadToFil::finish () try
-{
-  SingleThread::finish();
-}
-catch (Error& error)
-{
-  throw error += "dsp::LoadToFil::finish";
+  throw error += "dsp::LoadToFil::construct";
 }
 

@@ -144,7 +144,14 @@ unsigned count (const std::vector<T>& data, T element)
   return c;
 }
 
-void dsp::SingleThread::prepare () try
+void dsp::SingleThread::prepare ()
+{
+  initialize ();
+  construct ();
+  finalize ();
+}
+
+void dsp::SingleThread::initialize () try
 {
   TimeSeries::auto_delete = false;
 
@@ -187,12 +194,12 @@ void dsp::SingleThread::prepare () try
     cudaGetDeviceCount(&ndevice);
 
     if (device >= ndevice)
-      throw Error (InvalidParam, "dsp::SingleThread::prepare",
+      throw Error (InvalidParam, "dsp::SingleThread::initialize",
                    "device=%d >= ndevice=%d", device, ndevice);
 
     cudaError err = cudaSetDevice (device);
     if (err != cudaSuccess)
-      throw Error (InvalidState, "dsp::SingleThread::prepare",
+      throw Error (InvalidState, "dsp::SingleThread::initialize",
                    "cudaMalloc failed: %s", cudaGetErrorString(err));
 
     unsigned nstream = count (config->cuda_device, (unsigned)device);
@@ -241,7 +248,16 @@ void dsp::SingleThread::prepare () try
 }
 catch (Error& error)
 {
-  throw error += "dsp::SingleThread::prepare";
+  throw error += "dsp::SingleThread::initialize";
+}
+
+void dsp::SingleThread::finalize ()
+{
+  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
+    insert_dump_point (config->dump_before[idump]);
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+    operations[iop]->prepare ();
 }
 
 void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
@@ -277,14 +293,6 @@ void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
   }
 }
 
-void dsp::SingleThread::prepare_final ()
-{
-  for (unsigned idump=0; idump < config->dump_before.size(); idump++)
-    insert_dump_point (config->dump_before[idump]);
-
-  for (unsigned iop=0; iop < operations.size(); iop++)
-    operations[iop]->prepare ();
-}
 
 uint64_t dsp::SingleThread::get_minimum_samples () const
 {

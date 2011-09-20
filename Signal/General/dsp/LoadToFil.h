@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LoadToFil.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/09/19 01:56:42 $
+   $Revision: 1.3 $
+   $Date: 2011/09/20 20:49:14 $
    $Author: straten $ */
 
 #ifndef __dspsr_LoadToFil_h
@@ -33,23 +33,11 @@ namespace dsp {
 
     //! Constructor
     LoadToFil (Config* config = 0);
-    
-    //! Destructor
-    ~LoadToFil ();
-
-    //! Create the pipeline
-    void prepare ();
-
-    //! Share any necessary resources with the specified thread
-    // void share (SingleThread*);
-
-    //! Run through the data
-    // void run ();
-
-    //! Finish everything
-    void finish ();
 
   private:
+
+    //! Create the pipeline
+    void construct ();
 
     //! Configuration parameters
     Reference::To<Config> config;

@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.31 $
-   $Date: 2011/09/19 01:56:42 $
+   $Revision: 1.32 $
+   $Date: 2011/09/20 20:49:14 $
    $Author: straten $ */
 
 #ifndef __dspsr_LoadToFold_h
@@ -60,9 +60,6 @@ namespace dsp {
     //! Destructor
     ~LoadToFold ();
 
-    //! Create the pipeline
-    void prepare ();
-
     //! Share any necessary resources with the specified thread
     void share (SingleThread*);
 
@@ -76,11 +73,14 @@ namespace dsp {
 
     friend class LoadToFoldN;
 
-    //! Any special operations that must be performed at the end of data
-    virtual void end_of_data ();
+    //! Create the pipeline
+    void construct ();
 
-    //! Derived classes may want to do their own final preparations
-    virtual void prepare_final ();
+    //! Finish preparing
+    void finalize ();
+
+    //! Wrap up tasks at end of data
+    void end_of_data ();
 
     //! Return true if the output will be divided into sub-integrations
     bool output_subints () const;

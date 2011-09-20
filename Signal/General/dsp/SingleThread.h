@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.4 $
-   $Date: 2011/09/19 01:56:42 $
+   $Revision: 1.5 $
+   $Date: 2011/09/20 20:49:14 $
    $Author: straten $ */
 
 #ifndef __dspsr_SingleThread_h
@@ -87,6 +87,15 @@ namespace dsp {
 
   protected:
 
+    //! Start preparing
+    virtual void initialize ();
+
+    //! Main preparation task
+    virtual void construct () = 0;
+
+    //! Finish preparing
+    virtual void finalize ();
+
     //! Any special operations that must be performed at the end of data
     virtual void end_of_data ();
 
@@ -138,9 +147,6 @@ namespace dsp {
 
     //! Insert a dump point before the named operation
     void insert_dump_point (const std::string& transformation_name);
-
-    //! Prepare the constructed pipeline
-    virtual void prepare_final ();
 
     //! The scratch space shared by all operations
     Reference::To<Scratch> scratch;
