@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002 -2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.30 $
-   $Date: 2011/08/04 21:12:32 $
+   $Revision: 1.31 $
+   $Date: 2011/09/20 20:20:35 $
    $Author: straten $ */
 
 
@@ -18,12 +18,11 @@
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/BitSeries.h"
+#include "dsp/Input.h"
 
 #include "Registry.h"
 
 namespace dsp {
-
-  class Input;
 
   //! Abstract base class of Transformations that convert n-bit to float
   /*! This class is used in conjunction with the File class in
@@ -113,7 +112,7 @@ namespace dsp {
     template<class T>
     const T* get_Input ()
     {
-      const Input* input = get_input()->get_loader();
+      const Input* input = get_input()->get_loader()->get_origin();
 
       const T* ptr = dynamic_cast<const T*>( input );
       if( ptr )
