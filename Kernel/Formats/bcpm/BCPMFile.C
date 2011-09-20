@@ -146,7 +146,7 @@ void dsp::BCPMFile::open_file (const char* filename)
   get_info()->set_rate( 1.0e6/bpp_search.samp_rate );
   get_info()->set_source( bpp_search.target_name );
 
-  {
+  try {
     // parse search date dayno:year
     char cdate[4096];
     sprintf(cdate,"%s",bpp_search.date);
@@ -183,14 +183,20 @@ void dsp::BCPMFile::open_file (const char* filename)
 
       Unfortunately, ll_file_offset == 0 in all of the files seen to date.
     */
-    uint64_t file_offset = bpp_search.file_size*(bpp_search.scan_file_number-1);
-    mjd += get_info()->get_nsamples(file_offset) / get_info()->get_rate();
+    uint64_t file_offset = bpp_search.scan_file_number - 1;
+    uint64_t byte_offset = bpp_search.file_size * file_offset;
 
+    mjd += get_info()->get_nsamples(byte_offset) / get_info()->get_rate();
     get_info()->set_start_time( mjd );
 
     char id[15];
     utc2str(id, my_utc, "yyyydddhhmmss");
     get_info()->set_identifier( id );
+  }
+  catch (Error& error)
+  {
+    error << "\n\t" "while parsing start time";
+    throw error += "dsp::BCPMFile::open_file";
   }
 
   {
