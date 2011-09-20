@@ -79,7 +79,11 @@ void from_big_endian (BPP_SEARCH_HEADER& bpp_search)
   FromBigEndian(bpp_search.rf_lo);
   FromBigEndian(bpp_search.bit_mode);
   FromBigEndian(bpp_search.num_chans);
+
   FromBigEndian(bpp_search.scan_file_number);
+  FromBigEndian(bpp_search.file_size);
+  FromBigEndian(bpp_search.ll_file_offset);
+
   FromBigEndian(bpp_search.mb_start_address);
   FromBigEndian(bpp_search.mb_end_address);
   FromBigEndian(bpp_search.mb_start_board);
@@ -125,10 +129,12 @@ void dsp::BCPMFile::open_file (const char* filename)
 
   get_info()->set_telescope( "Tidbinbilla" );
   get_info()->set_machine( "BCPM" );
-  get_info()->set_nchan( unsigned(bpp_search.num_chans) );
 
+  get_info()->set_nchan( unsigned(bpp_search.num_chans) );
   get_info()->set_ndim( 1 );
   get_info()->set_npol( 1 );
+  get_info()->set_nbit( unsigned(bpp_search.bit_mode) );
+
   get_info()->set_scale( 1.0 );
   get_info()->set_swap( false );
   get_info()->set_mode("SEARCH");
@@ -136,10 +142,8 @@ void dsp::BCPMFile::open_file (const char* filename)
   get_info()->set_dc_centred( false );
   get_info()->set_type( Signal::Pulsar );
   get_info()->set_state( Signal::Intensity );
-
   get_info()->set_basis( Signal::Circular );
   get_info()->set_rate( 1.0e6/bpp_search.samp_rate );
-  get_info()->set_nbit( unsigned(bpp_search.bit_mode) ); 
   get_info()->set_source( bpp_search.target_name );
 
   {
@@ -152,10 +156,37 @@ void dsp::BCPMFile::open_file (const char* filename)
     // parse UT start time hh:mm:ss
     string start_time = bpp_search.start_time;
     string utcstring = year + "-" + dayno + "-" + start_time;
-    
+
+    if (verbose)
+    {
+      cerr << "dayno=" << dayno << endl;    
+      cerr << "year=" << year << endl;
+      cerr << "start_time=" << start_time << endl;
+      cerr << "scan_file_number=" << bpp_search.scan_file_number << endl;
+      cerr << "file_size=" << bpp_search.file_size << endl;
+      cerr << "ll_file_offset=" << bpp_search.ll_file_offset << endl;
+    }
+
     utc_t my_utc;
     str2utc(&my_utc, utcstring.c_str());
-    get_info()->set_start_time( my_utc );
+
+    // utc_t.tm_yday starts counting at 1. dayno starts counting at 0.
+    MJD mjd = MJD(my_utc) + MJD(1.0);
+
+    /*
+      Willem van Straten - 21 September 2011
+
+      The following attempt to compute the time offset of the start of 
+      the current file from the start of the observation will typically
+      fail on the last file of the scan, which will typically have a
+      file_size that is less than all of the preceding files.
+
+      Unfortunately, ll_file_offset == 0 in all of the files seen to date.
+    */
+    uint64_t file_offset = bpp_search.file_size*(bpp_search.scan_file_number-1);
+    mjd += get_info()->get_nsamples(file_offset) / get_info()->get_rate();
+
+    get_info()->set_start_time( mjd );
 
     char id[15];
     utc2str(id, my_utc, "yyyydddhhmmss");
@@ -192,7 +223,7 @@ void dsp::BCPMFile::open_file (const char* filename)
   get_info()->set_centre_frequency( centre_frequency );
   get_info()->set_bandwidth( fabs(ch_bw) * get_info()->get_nchan() );
 
-  if (sizeof(BPP_SEARCH_HEADER) != BPP_HEADER_SIZE)
+  if (verbose && sizeof(BPP_SEARCH_HEADER) != BPP_HEADER_SIZE)
   {
     cerr << "dsp::BCPMFile::open_file WARNING "
       "BPP_HEADER_SIZE=" << BPP_HEADER_SIZE << " != "
@@ -302,9 +333,8 @@ void dsp::BCPMFile::bpp_chans(vector<int>& table,
       nridx[i] += 96;
   }
 
-  n=nchans;
   for (i=0;i<nchans;i++) 
-    table[i]=nridx[--n]-1;    
+    table[i]=nridx[i]-1;    
 
   centre_frequency = 0.5*(fmhz[table[0]]+fmhz[table[95]]); 
 
