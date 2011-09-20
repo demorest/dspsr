@@ -19,6 +19,8 @@
 #include "CommandLine.h"
 #include "FTransform.h"
 
+#include <stdlib.h>
+
 using namespace std;
 
 // The LoadToFil configuration parameters
