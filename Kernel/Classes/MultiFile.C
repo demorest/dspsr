@@ -19,11 +19,17 @@ using namespace std;
 
 dsp::MultiFile::MultiFile () : File ("MultiFile")
 {
+  test_contiguity = true;
   current_index = 0;
 }
 
 dsp::MultiFile::~MultiFile ()
 {
+}
+
+void dsp::MultiFile::force_contiguity ()
+{
+  test_contiguity = false;
 }
 
 //! Returns true if filename is an ASCII file listing valid filenames
@@ -128,7 +134,9 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
     }
   }
 
-  ensure_contiguity();
+  if (test_contiguity)
+    ensure_contiguity();
+
   setup();
 }
 
@@ -197,7 +205,9 @@ void dsp::MultiFile::erase_files(const vector<string>& erase_filenames)
     return;
   }
 
-  ensure_contiguity();
+  if (test_contiguity)
+    ensure_contiguity();
+
   setup();
 }
 
@@ -358,3 +368,9 @@ dsp::File* dsp::MultiFile::get_loader ()
 {
   return loader;
 }
+
+const dsp::File* dsp::MultiFile::get_loader () const
+{
+  return loader;
+}
+
