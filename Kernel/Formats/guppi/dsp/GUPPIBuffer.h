@@ -6,25 +6,25 @@
  *
  ***************************************************************************/
 
-#ifndef __GUPPIFile_h
-#define __GUPPIFile_h
+#ifndef __GUPPIBuffer_h
+#define __GUPPIBuffer_h
 
 #include "dsp/GUPPIBlockFile.h"
 
 namespace dsp {
 
-  //! Loads BitSeries data from a raw GUPPI file
-  class GUPPIFile : public GUPPIBlockFile
+  //! Loads BitSeries data from guppi_daq shared memory 
+  class GUPPIBuffer : public GUPPIBlockFile
   {
   public:
 	  
     //! Construct and open file	  
-    GUPPIFile (const char* filename=0);
+    GUPPIBuffer (const char* filename=0);
 	  
     //! Destructor
-    ~GUPPIFile ();
+    ~GUPPIBuffer ();
 	  
-    //! Returns true if filename is a valid GUPPI file
+    //! Returns true if filename is a valid GUPPI buffer description
     bool is_valid (const char* filename) const;
 
   protected:
@@ -39,4 +39,4 @@ namespace dsp {
 
 }
 
-#endif // !defined(__GUPPIFile_h)
+#endif // !defined(__GUPPIBuffer_h)
