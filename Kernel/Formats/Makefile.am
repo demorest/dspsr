@@ -10,5 +10,5 @@ include $(top_srcdir)/config/Makefile.bootstrap
 
 include $(top_srcdir)/config/Makefile.include
 
-AM_CPPFLAGS += @PSRDADA_CFLAGS@ @CFITSIO_CFLAGS@
+AM_CPPFLAGS += @PSRDADA_CFLAGS@ @CFITSIO_CFLAGS@ @GUPPI_DAQ_CFLAGS@
 

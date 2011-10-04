@@ -89,6 +89,10 @@ static Registry::List<dsp::File>::Enter<dsp::GMRTFilterbankFile> gmrt_fb;
 #if HAVE_guppi
 #include "dsp/GUPPIFile.h"
 static Registry::List<dsp::File>::Enter<dsp::GUPPIFile> register_guppi;
+#if HAVE_GUPPI_DAQ
+#include "dsp/GUPPIBuffer.h"
+static Registry::List<dsp::File>::Enter<dsp::GUPPIBuffer> guppi_buffer;
+#endif
 #endif
 
 #if HAVE_lbadr
