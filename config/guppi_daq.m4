@@ -17,7 +17,7 @@ AC_DEFUN([SWIN_LIB_GUPPI_DAQ],
 
   if test x"$GUPPI_DIR" != x; then
     GUPPI_DAQ_CFLAGS="-I$GUPPI_DIR/src"
-    GUPPI_DAQ_LIBS="-L$GUPPI_DIR/src -lguppi_daq"
+    GUPPI_DAQ_LIBS="-L$GUPPI_DIR/src -lguppi_daq -lsla -lvdifio -lm"
     have_guppi_daq="yes"
   fi
 
