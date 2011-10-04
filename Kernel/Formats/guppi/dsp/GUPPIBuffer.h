@@ -10,6 +10,7 @@
 #define __GUPPIBuffer_h
 
 #include "dsp/GUPPIBlockFile.h"
+#include "guppi_databuf.h"
 
 namespace dsp {
 
@@ -34,6 +35,15 @@ namespace dsp {
 
     //! Load the next hdr/data block
     int load_next_block ();
+
+    //! Databuf id number
+    int databuf_id;
+
+    //! Current data block
+    int curblock;
+
+    //! databuf struct
+    struct guppi_databuf *databuf;
 
   };
 
