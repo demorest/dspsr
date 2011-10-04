@@ -14,6 +14,7 @@ if HAVE_GUPPI_DAQ
 
 nobase_include_HEADERS += dsp/GUPPIBuffer.h
 libguppi_la_SOURCES += GUPPIBuffer.C
+libguppi_la_LIBADD = @GUPPI_DAQ_LIBS@
 
 endif
 
@@ -22,5 +23,4 @@ endif
 
 include $(top_srcdir)/config/Makefile.include
 
-LDADD = @GUPPI_DAQ_LIBS@
 AM_CPPFLAGS += @GUPPI_DAQ_CFLAGS@
