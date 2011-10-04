@@ -19,7 +19,8 @@ dsp::GUPPIUnpacker::GUPPIUnpacker (const char* name) : HistUnpacker (name)
 bool dsp::GUPPIUnpacker::matches (const Observation* observation)
 {
   // TODO make a better matching scheme here
-  return observation->get_machine() == "GUPPI" 
+  // Match any "xUPPI" instrument
+  return observation->get_machine().substr(1) == "UPPI" 
     && observation->get_nbit() == 8;
 }
 
