@@ -94,6 +94,12 @@ void dsp::GUPPIBuffer::open_file (const char* filename)
     throw Error (InvalidState, "dsp::GUPPIBuffer::open_file", 
         "Error connecting to databuf %d", databuf_id);
 
+  // Wait for first block
+  load_next_block();
+
+  // Once we have it, parse the header info.
+  parse_header();
+
   //set_total_samples(); // XXX how to do this?
 }
 
@@ -108,6 +114,9 @@ int dsp::GUPPIBuffer::load_next_block ()
   curblock = (curblock + 1) % databuf->n_block;
   bool waiting = true;
   while (waiting) {
+    if (verbose)
+      cerr << "dsp::GUPPIBuffer::load_next_block waiting(" 
+        << curblock << ")" << endl;
     int rv = guppi_databuf_wait_filled(databuf, curblock);
     if (rv==0) 
       waiting = false;
