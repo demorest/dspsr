@@ -52,7 +52,7 @@ void dsp::GUPPIBlockFile::parse_header()
   double ftmp;
   char ctmp[80], ctmp2[80];
 
-  header_get_check("NBIT", &itmp);
+  header_get_check("NBITS", &itmp);
   info.set_nbit(itmp);
 
   header_get_check("OBSBW", &ftmp);
@@ -112,6 +112,9 @@ void dsp::GUPPIBlockFile::parse_header()
   sky_coord coords;
   header_get_check("RA_STR", ctmp);
   header_get_check("DEC_STR", ctmp2);
+  if (verbose)
+    cerr << "dsp::GUPPIBlockFile::parse_header ra_str=" 
+      << ctmp << " dec_str=" << ctmp2 << endl;
   coords.setHMSDMS(ctmp, ctmp2);
   info.set_coordinates(coords);
 
@@ -126,7 +129,9 @@ void dsp::GUPPIBlockFile::parse_header()
 
 //! Send data bytes to unpacker
 // This "untransposes" the GUPPI block structure if necessary.
-// TODO: figure out how to not need untranspose?
+// NOTE: Could handle this by setting resolution to only
+// allow reads in multiples of the block size.  But this 
+// would constrain the allowed block sizes for processing.
 int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
 {
   if (verbose) 
@@ -135,15 +140,16 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
   const unsigned nchan = info.get_nchan();
   const unsigned npol = info.get_npol();
   const unsigned nbit = info.get_nbit();
-  const unsigned bytes_per_samp = (2 * nchan * npol * nbit) / 8;
-  const uint64_t overlap_bytes = overlap * bytes_per_samp;
+  const unsigned bytes_per_samp = (2 * npol * nbit) / 8;
+  const uint64_t overlap_bytes = overlap * bytes_per_samp * nchan;
+  const uint64_t blocsize_per_chan = blocsize / nchan;
   uint64_t to_load = nbytes;
   uint64_t bytes_read = 0;
 
   while (to_load) 
   {
     // Only read non-overlapping part of data
-    uint64_t to_read = (blocsize - overlap) - current_block_byte;
+    uint64_t to_read = (blocsize - overlap_bytes) - current_block_byte;
     if (to_read > to_load) 
       to_read = to_load;
 
@@ -158,19 +164,33 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
     // More complicated case where channel blocks are time-ordered
     else
     {
-      // TODO implement this.
-      throw Error (InvalidState, "dsp::GUPPIBlockFile::load_bytes",
-          "time-order read not implemented yet.");
+
+      uint64_t to_read_per_chan = to_read / nchan;
+      uint64_t nsamp_per_chan = to_read_per_chan / bytes_per_samp;
+      uint64_t cur_byte = current_block_byte / nchan;
+
+      for (unsigned isamp=0; isamp<nsamp_per_chan; isamp++) {
+        for (unsigned ichan=0; ichan<nchan; ichan++) 
+        {
+          memcpy(buffer + bytes_read, 
+              dat + cur_byte + ichan*blocsize_per_chan + isamp*bytes_per_samp,
+              bytes_per_samp);
+          bytes_read += bytes_per_samp;
+        }
+      }
+
+      current_block_byte += to_read;
+
     }
 
     // Get next block if necessary
-    if (current_block_byte == blocsize - overlap)
+    if (current_block_byte == blocsize - overlap_bytes)
     {
       // load_next_block will return 0 if no more data.
       int rv = load_next_block();
       if (rv==0) 
       {
-        //eof = true; // TODO need this?
+        end_of_data = true;
         break;
       }
       current_block_byte = 0;
@@ -181,22 +201,5 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
   }
 
   return nbytes - to_load;
-
-  // Example transpose code:
-#if 0 
-  // Transpose out of PTF into FPT(?) order
-  const int npol = 2;
-  const size_t bps = 2;
-  const int nsamp = to_load_per_chan/bps/npol;
-  for (unsigned ichan=0; ichan<nchan; ichan++) {
-    for (unsigned isamp=0; isamp<nsamp; isamp++) {
-      for (unsigned ipol=0; ipol<npol; ipol++) {
-        memcpy(buffer + isamp*nchan*npol*bps + ipol*nchan*bps + ichan*bps,
-            tmpbuf + ichan*nsamp*npol*bps + isamp*npol*bps + ipol*bps,
-            bps);
-      }
-    }
-  }
-#endif
 
 }
