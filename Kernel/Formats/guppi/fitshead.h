@@ -140,9 +140,9 @@ extern "C" {
     int gethlength(             /* Get length of current FITS header */
         char* header);          /* FITS header */
 
-    double str2ra(              /* Return RA in degrees from string */
+    double str2ra_hget(              /* Return RA in degrees from string */
         const char* in);        /* Character string (hh:mm:ss.sss or dd.dddd) */
-    double str2dec(             /* Return Dec in degrees from string */
+    double str2dec_hget(             /* Return Dec in degrees from string */
         const char* in);        /* Character string (dd:mm:ss.sss or dd.dddd) */
 
     int isnum(                  /* Return 1 if number, else 0 */
@@ -309,8 +309,8 @@ extern char *hgetc();   /* Return pointer to string */
 extern int hgetndec();  /* Number of decimal places in keyword value */
 
 /* Subroutines to convert strings to RA and Dec in degrees */
-extern double str2ra();
-extern double str2dec();
+extern double str2ra_hget();
+extern double str2dec_hget();
 
 /* Check to see whether a string is a number or not */
 extern int isnum();

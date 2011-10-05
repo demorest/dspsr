@@ -348,7 +348,7 @@ double *dval;   /* Right ascension in degrees (returned) */
 
     /* Translate value from ASCII colon-delimited string to binary */
     if (value != NULL) {
-        *dval = str2ra (value);
+        *dval = str2ra_hget (value);
         return (1);
         }
     else
@@ -377,7 +377,7 @@ double *dval;   /* Right ascension in degrees (returned) */
 
     /* Translate value from ASCII colon-delimited string to binary */
     if (value != NULL) {
-        *dval = str2dec (value);
+        *dval = str2dec_hget (value);
         return (1);
         }
     else
@@ -1302,14 +1302,14 @@ const char *keyword;    /* character string containing the name of the variable
 /* Return the right ascension in degrees from sexagesimal hours or decimal degrees */
 
 double
-str2ra (in)
+str2ra_hget (in)
 
 const char *in; /* Character string of sexigesimal hours or decimal degrees */
 
 {
     double ra;  /* Right ascension in degrees (returned) */
 
-    ra = str2dec (in);
+    ra = str2dec_hget (in);
     if (strsrch (in,":"))
         ra = ra * 15.0;
 
@@ -1320,7 +1320,7 @@ const char *in; /* Character string of sexigesimal hours or decimal degrees */
 /* Return the declination in degrees from sexagesimal or decimal degrees */
 
 double
-str2dec (in)
+str2dec_hget (in)
 
 const char *in; /* Character string of sexigesimal or decimal degrees */
 
