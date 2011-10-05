@@ -35,6 +35,9 @@ namespace dsp {
     //! Load the next hdr/data block
     int load_next_block ();
 
+    //! Seek to a spot in the file
+    int64_t seek_bytes (uint64_t bytes);
+
   };
 
 }

@@ -170,3 +170,15 @@ int dsp::GUPPIFile::load_next_block ()
 
   return 1;
 }
+
+int64_t dsp::GUPPIFile::seek_bytes (uint64_t bytes)
+{
+  if (bytes==0)
+  {
+    current_block_byte = 0;
+    return 0;
+  }
+  else
+    throw Error (InvalidState, "dsp::GUPPIBuffer::seek_bytes",
+        "seek(%lld) not implemented yet", bytes);
+}

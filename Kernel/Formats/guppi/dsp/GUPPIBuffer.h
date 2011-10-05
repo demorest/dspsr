@@ -33,6 +33,12 @@ namespace dsp {
     //! Open the file
     void open_file (const char* filename);
 
+    //! Override file-base size setting
+    void set_total_samples () { };
+
+    //! Seek to a location
+    int64_t seek_bytes (uint64_t bytes);
+
     //! Load the next hdr/data block
     int load_next_block ();
 

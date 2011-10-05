@@ -100,7 +100,6 @@ void dsp::GUPPIBuffer::open_file (const char* filename)
   // Once we have it, parse the header info.
   parse_header();
 
-  //set_total_samples(); // XXX how to do this?
 }
 
 int dsp::GUPPIBuffer::load_next_block ()
@@ -126,4 +125,18 @@ int dsp::GUPPIBuffer::load_next_block ()
   dat = (unsigned char *)guppi_databuf_data(databuf, curblock);
 
   return 1;
+}
+
+int64_t dsp::GUPPIBuffer::seek_bytes (uint64_t bytes)
+{
+  // TODO figure out how to do this.. seeking could be ok as
+  // long as it doesn't go too far backwards.
+  if (bytes==0)
+  {
+    current_block_byte = 0;
+    return 0;
+  }
+  else
+    throw Error (InvalidState, "dsp::GUPPIBuffer::seek_bytes",
+        "seek(%lld) not implemented yet", bytes);
 }
