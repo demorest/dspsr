@@ -63,11 +63,20 @@ void dsp::GUPPIBlockFile::parse_header()
  
   header_get_check("OBSNCHAN", &itmp);
   info.set_nchan(itmp);
- 
-  // Assume we have baseband data?
-  info.set_npol(2);
-  info.set_state(Signal::Analytic);
 
+  header_get_check("NPOL", &itmp);
+  if (itmp==1)
+    info.set_npol(1);
+  else 
+    info.set_npol(2);
+
+  // Use packet format flag for this for now...
+  header_get_check("PKTFMT", ctmp);
+  if (string(ctmp) == "VDIF")
+    info.set_state(Signal::Nyquist);
+  else
+    info.set_state(Signal::Analytic);
+ 
   header_get_check("TBIN", &ftmp);
   info.set_rate(1.0/ftmp);
 
