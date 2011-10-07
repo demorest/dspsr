@@ -1,11 +1,12 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002-2009 by Willem van Straten
+ *   Copyright (C) 2002-2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/Filterbank.h"
+#include "dsp/FilterbankEngine.h"
 
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Response.h"
@@ -467,8 +468,6 @@ void dsp::Filterbank::filterbank ()
 {
   // initialize scratch space for FFTs
   unsigned bigfftsize = nchan_subband * freq_res * 2;
-  if (engine && engine->dual_poln())
-    bigfftsize *= 2;
   if (input->get_state() == Signal::Nyquist)
     bigfftsize += 256;
 
@@ -544,22 +543,6 @@ void dsp::Filterbank::filterbank ()
       // PERFORM FILTERBANK VIA ENGINE (e.g. on GPU)
       //
       // /////////////////////////////////////////////////////////////////////
-
-      if (engine->dual_poln())
-      {
-	for (ipart=0; ipart<npart; ipart++)
-	{
-	  in_offset = ipart * in_step * 2;
-	  out_offset = ipart * out_step;
-	
-	  time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, 0)) + in_offset;
-	
-	  set_pointers (engine, output, out_offset);
-	  
-	  engine->perform (time_dom_ptr);
-	}
-	break;
-      }
 
       for (ipol=0; ipol < npol; ipol++)
       {
