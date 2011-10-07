@@ -1,14 +1,14 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002-2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Filterbank.h,v $
-   $Revision: 1.25 $
-   $Date: 2011/08/04 21:05:55 $
+   $Revision: 1.26 $
+   $Date: 2011/10/07 11:01:50 $
    $Author: straten $ */
 
 #ifndef __Filterbank_h
@@ -56,6 +56,10 @@ namespace dsp {
 
     //! Get the frequency resolution factor
     unsigned get_freq_res () const { return freq_res; } 
+    unsigned get_frequency_resolution () const { return freq_res; }
+
+    void set_frequency_overlap (unsigned over) { overlap_ratio = over; }
+    unsigned get_frequency_overlap () const { return overlap_ratio; }
 
     //! Engine used to perform discrete convolution step
     class Engine;
@@ -76,6 +80,9 @@ namespace dsp {
     //! Frequency resolution factor
     unsigned freq_res;
 
+    //! Frequency channel overlap ratio
+    double overlap_ratio;
+
     //! Interface to alternate processing engine (e.g. GPU)
     Reference::To<Engine> engine;
 
@@ -88,31 +95,6 @@ namespace dsp {
     unsigned nchan_subband;
   };
  
-  class Filterbank::Engine : public Reference::Able
-  {
-  public:
-
-    Engine () { scratch = output = 0; }
-
-    //! If kernel is not set, then the engine should set up for benchmark only
-    virtual void setup (Filterbank*) = 0;
-  
-    virtual void perform (const float* in) = 0;
-
-    virtual bool dual_poln () { return false; }
-
-    virtual void finish () { }
-
-    float* scratch;
-
-    float* output;
-    unsigned output_span;
-
-    unsigned nchan;
-    unsigned freq_res;
-    unsigned nfilt_pos;
-    unsigned nkeep;
-  }; 
 }
 
 #endif
