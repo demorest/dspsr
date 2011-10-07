@@ -56,6 +56,10 @@ foreach option ( $* )
     set nbwtrial="$optarg"
     breaksw
 
+  case nchan:
+    set nchan="$optarg"
+    breaksw
+
   case *:
     cat <<EOF
 
@@ -111,6 +115,7 @@ while ( $bwtrial < $nbwtrial )
   endif
 
   @ time = 1024 / $bw
+  if ($time == 0) set time=1
 
   @ bwtrial = $bwtrial + 1
 
