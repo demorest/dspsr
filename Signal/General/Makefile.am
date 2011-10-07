@@ -16,10 +16,12 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h	       \
 	dsp/OptimalFFT.h dsp/OptimalFilterbank.h dsp/on_host.h	       \
 	dsp/FScrunch.h dsp/FilterbankBench.h dsp/FilterbankConfig.h    \
+	dsp/FilterbankEngine.h dsp/filterbank_engine.h		       \
 	dsp/GeometricDelay.h					       \
 	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
-	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h \
-	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h 
+	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h		       \
+	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h	       \
+	dsp/LoadToFil.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -39,17 +41,18 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/TransferCUDA.h \
+nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
+	dsp/TransferCUDA.h \
 	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C \
+libdspdsp_la_SOURCES += FilterbankCUDA.C filterbank_cuda.cu TransferCUDA.C \
 	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
 
-libdspdsp_la_LIBADD = FilterbankCUDA.lo DetectionCUDA.lo SKMaskerCUDA.lo
+libdspdsp_la_LIBADD = filterbank_cuda.lo DetectionCUDA.lo SKMaskerCUDA.lo
 
-FilterbankCUDA.lo : FilterbankCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/FilterbankCUDA.cu
-	sed -e 's/Filterbank/FilterbankCUDA/' Filterbank.lo > FilterbankCUDA.lo
+filterbank_cuda.lo : filterbank_cuda.cu
+	@CUDA_NVCC@ -c $(srcdir)/filterbank_cuda.cu
+	sed -e 's/Filterbank/filterbank_cuda/' Filterbank.lo > filterbank_cuda.lo
 
 DetectionCUDA.lo : DetectionCUDA.cu
 	@CUDA_NVCC@ -c $(srcdir)/DetectionCUDA.cu

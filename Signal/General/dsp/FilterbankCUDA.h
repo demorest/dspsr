@@ -8,16 +8,15 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FilterbankCUDA.h,v $
-   $Revision: 1.16 $
-   $Date: 2010/06/01 10:46:29 $
+   $Revision: 1.17 $
+   $Date: 2011/10/07 11:10:14 $
    $Author: straten $ */
 
 #ifndef __FilterbankCUDA_h
 #define __FilterbankCUDA_h
 
-#include "dsp/Filterbank.h"
-
-#include <cufft.h>
+#include "dsp/FilterbankEngine.h"
+#include "dsp/filterbank_cuda.h"
 
 namespace CUDA
 {
@@ -32,7 +31,8 @@ namespace CUDA
   };
 
   //! Discrete convolution filterbank step implemented using CUDA streams
-  class FilterbankEngine : public dsp::Filterbank::Engine
+  class FilterbankEngine : public dsp::Filterbank::Engine,
+			   protected filterbank_cuda
   {
     unsigned nstream;
 
@@ -44,33 +44,7 @@ namespace CUDA
 
     void setup (dsp::Filterbank*);
     void perform (const float* in);
-    bool dual_poln () { return twofft; }
     void finish ();
-
-  protected:
-
-    //! forward fft plan 
-    cufftHandle plan_fwd;
-    //! backward fft plan
-    cufftHandle plan_bwd;
-
-    //! the backward fft length
-    unsigned bwd_nfft;
-
-    bool real_to_complex;
-
-    //! Use the twofft trick from NR
-    bool twofft;
-
-    //! inplace FFT in CUDA memory
-    float2* d_fft;
-    //! convolution kernel in CUDA memory
-    float2* d_kernel;
-
-    //! real-to-complex trick arrays in CUDA memory
-    float *d_SN, *d_CN;
-
-    cudaStream_t stream;
   };
 
 }
