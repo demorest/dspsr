@@ -129,29 +129,31 @@ void filterbank_cuda_perform (filterbank_engine* engine,
   float2* cscratch = (float2*) engine->scratch;
   float2* cin = (float2*) in;
 
-  cufftExecC2C (cuda->plan_fwd, cin, cscratch, CUFFT_FORWARD);
-
-  CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
-
-  if (engine->nchan == 1)
-    return;
-
   unsigned data_size = engine->nchan * cuda->bwd_nfft;
-
   int threads = 256;
 
   // note that each thread will set two complex numbers in each poln
   int blocks = data_size / (threads*2);
 
-  if (cuda->real_to_complex)
+  if (in)
   {
-    DEBUG("CUDA::FilterbankEngine::perform real-to-complex");
+    cufftExecC2C (cuda->plan_fwd, cin, cscratch, CUFFT_FORWARD);
 
-    realtr<<<blocks,threads,0,cuda->stream>>> (cscratch,data_size,
-					       cuda->d_SN,
-					       cuda->d_CN);
+    CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
 
-    CHECK_ERROR ("CUDA::FilterbankEngine::perform realtr");
+    if (engine->nchan == 1)
+      return;
+
+    if (cuda->real_to_complex)
+    {
+      DEBUG("CUDA::FilterbankEngine::perform real-to-complex");
+
+      realtr<<<blocks,threads,0,cuda->stream>>> (cscratch,data_size,
+					         cuda->d_SN,
+					         cuda->d_CN);
+
+      CHECK_ERROR ("CUDA::FilterbankEngine::perform realtr");
+    }
   }
 
   blocks = data_size / threads;
