@@ -47,6 +47,7 @@ protected:
   unsigned nchan;
   unsigned niter;
   bool real_to_complex;
+  bool do_fwd_fft;
 };
 
 
@@ -57,6 +58,7 @@ Speed::Speed ()
   nfft = 1024;
   nchan = 1;
   real_to_complex = false;
+  do_fwd_fft = true;
 }
 
 int main(int argc, char** argv) try
@@ -82,6 +84,9 @@ void Speed::parseOptions (int argc, char** argv)
 
   arg = menu.add (real_to_complex, 'r');
   arg->set_help ("real-to-complex FFT");
+
+  arg = menu.add (do_fwd_fft, 'b');
+  arg->set_help ("do (batched) backward FFTs only");
 
   arg = menu.add (nfft, 'n', "nfft");
   arg->set_help ("FFT length");
@@ -133,8 +138,13 @@ void Speed::runTest ()
     throw Error (InvalidState, "Speed::runTest",
 		 "engine not set");
 
-  float* in = (float*) memory->do_allocate (size);
-  memory->do_zero (in, size);
+  float* in = NULL;
+
+  if (do_fwd_fft)
+  {
+    in = (float*) memory->do_allocate (size);
+    memory->do_zero (in, size);
+  }
 
   engine->scratch = (float*) memory->do_allocate (size + 4*sizeof(float));
 
@@ -169,8 +179,9 @@ void Speed::runTest ()
   double time_us = total_time * 1e6 / (nloop*niter);
 
   // cerr << "time=" << time << endl;
+  if (in)
+    memory->do_free (in);
 
-  memory->do_free (in);
   memory->do_free (engine->scratch);
 
   double log2_nfft = log2(nfft);
