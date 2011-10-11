@@ -27,6 +27,7 @@
 #include "dsp/PolnCalibration.h"
 
 #include "dsp/Filterbank.h"
+#include "dsp/FilterbankEngine.h"
 #include "dsp/SKFilterbank.h"
 #include "dsp/SKDetector.h"
 #include "dsp/SKMasker.h"

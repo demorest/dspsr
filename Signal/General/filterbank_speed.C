@@ -14,6 +14,7 @@
 #include "malloc16.h"
 
 #include "dsp/Filterbank.h"
+#include "dsp/FilterbankEngine.h"
 #include "dsp/Memory.h"
 
 #if HAVE_CUFFT
