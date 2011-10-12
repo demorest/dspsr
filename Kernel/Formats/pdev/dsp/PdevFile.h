@@ -52,6 +52,12 @@ namespace dsp {
     //! Returns true if filename is a valid pdev file
     bool is_valid (const char* filename) const;
 
+    //! Polns need to be swapped
+    bool swap_poln () const { return rawhdr[3] & 0x02; }
+
+    //! I/Q need to be swapped
+    bool swap_dim () const { return rawhdr[3] & 0x01; }
+
   protected:
 
     //! Open the file

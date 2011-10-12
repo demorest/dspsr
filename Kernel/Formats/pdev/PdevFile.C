@@ -259,7 +259,7 @@ void dsp::PdevFile::parse_aoHdr ()
     cerr << "dsp::PdevFile::parse_aoHdr bw=" << aohdr->bandWdHz
       << " dir=" << aohdr->bandIncrFreq << endl;
   double bw = aohdr->bandWdHz / 1e6;
-  if (aohdr->bandIncrFreq == 1) bw *= -1.0;
+  if (aohdr->bandIncrFreq == 0) bw *= -1.0;
   info.set_bandwidth(bw);
   info.set_rate(aohdr->bandWdHz);
 

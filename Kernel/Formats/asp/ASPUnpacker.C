@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/ASPUnpacker.h"
+#include "dsp/PdevFile.h"
 #include "Error.h"
 
 //! Constructor
@@ -42,14 +43,42 @@ void dsp::ASPUnpacker::unpack ()
   const unsigned ndim = input->get_ndim();
   const unsigned nskip = npol * ndim;
 
-  //cerr << "npol=" << npol << " ndim=" << ndim << endl;
+  bool swap_pol=false, swap_dim=false;
+
+  const PdevFile *pd = NULL;
+  try
+  {
+    pd = get_Input<PdevFile>();
+    swap_pol = pd->swap_poln();
+    swap_dim = pd->swap_dim();
+  }
+  catch (Error &error)
+  {
+    swap_pol = false;
+    swap_dim = false;
+  }
+
+  //cerr << "npol=" << npol << " ndim=" << ndim << std::endl;
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
     for (unsigned idim=0; idim<ndim; idim++) {
 
-      unsigned off = ipol * ndim + idim;
+      unsigned off;
 
-      //cerr << "ipol=" << ipol << " idim=" << idim << " off=" << off << endl;
+      if (swap_pol) 
+        off = (npol - ipol - 1) * ndim;
+      else
+        off = ipol * ndim;
+
+      if (swap_dim) 
+        off += (ndim - idim - 1);
+      else
+        off += idim;
+
+      //unsigned off = ipol * ndim + idim;
+
+      //cerr << "ipol=" << ipol << " idim=" << idim << " off=" << off 
+      //  << std::endl;
 
       const char* from = reinterpret_cast<const char*>(input->get_rawptr()+off);
       float* into = output->get_datptr (0, ipol) + idim;
