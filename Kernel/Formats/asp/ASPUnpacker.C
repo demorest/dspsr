@@ -5,8 +5,16 @@
  *
  ***************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/ASPUnpacker.h"
+
+#if HAVE_pdev
 #include "dsp/PdevFile.h"
+#endif
+
 #include "Error.h"
 
 //! Constructor
@@ -45,6 +53,7 @@ void dsp::ASPUnpacker::unpack ()
 
   bool swap_pol=false, swap_dim=false;
 
+#if HAVE_pdev
   const PdevFile *pd = NULL;
   try
   {
@@ -57,6 +66,7 @@ void dsp::ASPUnpacker::unpack ()
     swap_pol = false;
     swap_dim = false;
   }
+#endif
 
   //cerr << "npol=" << npol << " ndim=" << ndim << std::endl;
 
