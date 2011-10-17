@@ -145,7 +145,12 @@ void dsp::GUPPIFile::open_file (const char* filename)
   // Alloc memory for data block
   dat = (unsigned char *)malloc(blocsize);
 
-  // rewind and call load_next_block here??
+  // Rewind and load full first block with header
+  int rv = lseek(fd, 0, SEEK_SET);
+  if (rv<0) 
+    throw Error (FailedSys, "dsp::GUPPIFile::open_file",
+        "lseek(0) on '%s' failed", filename);
+  load_next_block();
   
 }
 
