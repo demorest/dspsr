@@ -139,18 +139,22 @@ void dsp::GUPPIFile::open_file (const char* filename)
 
   // Parse header into info struct
   parse_header();
- 
-  //set_total_samples(); // XXX how to do this?
+
+  // Figure out total size
+  struct stat buf;
+  int rv = fstat(fd, &buf);
+  if (rv < 0)
+    throw Error (FailedSys, "dsp::GUPPIFile::open_file",
+        "fstat(%s) failed", filename);
+  uint64_t full_block_size = blocsize + 80*hdr_keys;
+  uint64_t nblocks = buf.st_size / full_block_size;
+  info.set_ndat( info.get_nsamples(nblocks*blocsize) - overlap*nblocks );
 
   // Alloc memory for data block
   dat = (unsigned char *)malloc(blocsize);
 
   // Rewind and load full first block with header
-  int rv = lseek(fd, 0, SEEK_SET);
-  if (rv<0) 
-    throw Error (FailedSys, "dsp::GUPPIFile::open_file",
-        "lseek(0) on '%s' failed", filename);
-  load_next_block();
+  seek_bytes(0);
   
 }
 
@@ -163,8 +167,9 @@ int dsp::GUPPIFile::load_next_block ()
   // This could also be 0 at EOF.
   int nkeys = get_header(fd, &hdr);
   if (nkeys==0) 
-    throw Error (InvalidState, "dsp::GUPPIFile::load_next_block",
-        "Error loading next header");
+    return 0;
+    //throw Error (InvalidState, "dsp::GUPPIFile::load_next_block",
+    //    "Error loading next header");
 
   // Read the data
   size_t nbytes = read(fd, dat, blocsize);
@@ -180,6 +185,12 @@ int64_t dsp::GUPPIFile::seek_bytes (uint64_t bytes)
 {
   if (bytes==0)
   {
+    int rv = lseek(fd, 0, SEEK_SET);
+    if (rv<0) 
+      throw Error (FailedSys, "dsp::GUPPIFile::seek_bytes",
+          "lseek(0) failed");
+    load_next_block();
+    
     current_block_byte = 0;
     return 0;
   }

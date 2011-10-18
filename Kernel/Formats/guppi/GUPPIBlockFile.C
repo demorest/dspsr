@@ -155,7 +155,7 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
   uint64_t to_load = nbytes;
   uint64_t bytes_read = 0;
 
-  while (to_load) 
+  while (to_load && !end_of_data) 
   {
     // Only read non-overlapping part of data
     uint64_t to_read = (blocsize - overlap_bytes) - current_block_byte;
@@ -192,6 +192,8 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
 
     }
 
+    to_load -= to_read;
+
     // Get next block if necessary
     if (current_block_byte == blocsize - overlap_bytes)
     {
@@ -204,8 +206,6 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
       }
       current_block_byte = 0;
     }
-
-    to_load -= to_read;
 
   }
 
