@@ -130,24 +130,46 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
 
   last_division[contributor] = division;
 
-  unsigned istore = 0;
+  /*
+    WvS - 5 Nov 2011
 
-  for (istore=0; istore < storage.size(); istore++)
+    The elements in the storage vector may not necessarily be sorted
+    in order of increasing division number.  Therefore, the following
+    loop should not necessarily break when a successful integration is
+    made because the Storage::integrate method will also call
+    Storage::set_finished if the division argument is greater than
+    Storage::division
+  */
+
+  bool integrated = false;
+
+  for (unsigned istore=0; istore < storage.size(); istore++)
     if (storage[istore]->integrate( contributor, division, data ))
-      break;
+      integrated = true;
 
-  if (istore < storage.size())
+
+  /*
+    WvS - 5 Nov 2011
+
+    Even if the data are not integrated into any existing Storage
+    element, it is possible that some Storage elements will now be
+    considered complete after any subsequent calls to
+    Storage::set_finished in the previous loop.
+  */
+
+  if (wait_all)
   {
     // wake up any threads waiting for completion
-    if (wait_all)
-      for (istore=0; istore < storage.size(); istore++)
-        if (storage[istore]->get_finished ())
-        {
-          context->broadcast ();
-          break;
-        }
+
+    for (unsigned istore=0; istore < storage.size(); istore++)
+      if (storage[istore]->get_finished ())
+      {
+	context->broadcast ();
+	break;
+      }
   }
-  else if (data->get_integration_length() > 0)
+
+  if (!integrated && data->get_integration_length() > 0)
   {
     if (verbose)
       cerr << "dsp::UnloaderShare::unload adding new Storage" << endl;
@@ -179,10 +201,14 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
   if (wait_all)
     return;
 
+  /*
+    Clear any Storage elements that have been finished
+  */
+
   if (storage.size() > max_storage_size)
     max_storage_size = storage.size();
 
-  istore=0;
+  unsigned istore=0;
   while( istore < storage.size() )
   {
     if( storage[istore]->get_finished() )
