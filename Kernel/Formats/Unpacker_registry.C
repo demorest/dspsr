@@ -177,6 +177,8 @@ static Registry::List<dsp::Unpacker>::Enter<dsp::FITSUnpacker> fits;
 #if HAVE_vdif
 #include "dsp/VDIFTwoBitCorrection.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::VDIFTwoBitCorrection> vdif;
+#include "dsp/VDIFTwoBitCorrectionMulti.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::VDIFTwoBitCorrectionMulti> vdif_multi;
 #endif
 
 #if HAVE_wapp
