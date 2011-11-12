@@ -10,7 +10,9 @@
 
 bool dsp::VDIFTwoBitCorrection::matches (const Observation* observation)
 {
-  return observation->get_machine() == "VDIF" && observation->get_nbit() == 2;
+  return observation->get_machine() == "VDIF" 
+      && observation->get_nbit() == 2
+      && observation->get_npol() == 1;
 }
 
 //! Null constructor

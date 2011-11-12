@@ -45,6 +45,8 @@ namespace dsp {
 
     uint64_t reopen_seek;
 
+    char datafile[256];
+
   };
 
 }
