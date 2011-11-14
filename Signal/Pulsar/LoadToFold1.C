@@ -732,7 +732,7 @@ void dsp::LoadToFold::finalize ()
 
   bool report_vitals = thread_id==0 && config->report_vitals;
 
-  if (kernel)
+  if (kernel && report_vitals)
     cerr << "dspsr: dedispersion filter length=" << kernel->get_ndat ()
          << " (minimum=" << kernel->get_minimum_ndat () << ")" 
          << " complex samples" << endl;
