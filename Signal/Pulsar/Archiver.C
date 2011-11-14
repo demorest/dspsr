@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002-2009 by Willem van Straten
+ *   Copyright (C) 2002-2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -53,14 +53,13 @@ dsp::Archiver::Archiver ()
   fourth_moments = 0;
   subints_per_file = 0;
   use_single_archive = false;
+
+  /* PLEASE DON'T FORGET TO ALSO UPDATE THE COPY CONSTRUCTOR */
 }
 
 dsp::Archiver::Archiver (const Archiver& copy)
   : PhaseSeriesUnloader (copy)
 {
-  minimum_integration_length = copy.minimum_integration_length;
-  archive_class_name = copy.archive_class_name;
-
   if (copy.single_archive)
     single_archive = copy.single_archive->clone();
 
@@ -70,10 +69,15 @@ dsp::Archiver::Archiver (const Archiver& copy)
   for (unsigned iext=0; iext < extensions.size(); iext++)
     extensions[iext] = copy.extensions[iext]->clone();
 
+  archive_class_name = copy.archive_class_name;
   store_dynamic_extensions = copy.store_dynamic_extensions;
-
   archive_software = copy.archive_software;
   archive_dedispersed = copy.archive_dedispersed;
+  minimum_integration_length = copy.minimum_integration_length;
+  fourth_moments = copy.fourth_moments;
+  subints_per_file = copy.subints_per_file;
+  use_single_archive = copy.use_single_archive;
+
   profiles = 0;
 }
 
