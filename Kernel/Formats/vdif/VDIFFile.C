@@ -133,12 +133,15 @@ void dsp::VDIFFile::open_file (const char* filename)
   // Parse the standard ASCII info.  Timestamps are in VDIF packets
   // so not required.  Also we'll assume VDIF's "nchan" really gives
   // the number of polns for now, and NCHAN is 1.  NBIT is in VDIF packets.
+  // We'll compute TSAMP from the bandwidth.  NDIM (real vs complex sampling)
+  // is in VDIF packets but there is no easy fn to parse it yet.
   ASCIIObservation info_tmp;
   info_tmp.set_required("UTC_START", false);
   info_tmp.set_required("OBS_OFFSET", false);
   info_tmp.set_required("NPOL", false);
   info_tmp.set_required("NBIT", false);
   info_tmp.set_required("NCHAN", false);
+  info_tmp.set_required("TSAMP", false);
   info_tmp.load(header);
   info = info_tmp;
 
@@ -162,14 +165,29 @@ void dsp::VDIFFile::open_file (const char* filename)
   info.set_nbit (nbit);
 
   int nbyte = getVDIFFrameBytes(rawhdr);
-  if (verbose) cerr << "FrameBytes = " << nbyte << endl;
+  if (verbose) cerr << "VDIFFile::open_file FrameBytes = " << nbyte << endl;
   header_bytes = 0;
   block_bytes = nbyte;
   block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
 
-  // TODO: figure frames per sec from bw, pkt size, etc
-  //double frames_per_sec = 8000.0; // XXX hack
-  double frames_per_sec = 64000.0;
+  // Each poln shows up as a different channel but this 
+  // could also be different freq channels...
+  int vdif_nchan = getVDIFNumChannels(rawhdr);
+  if (verbose) cerr << "VDIFFile::open_file NCHAN = " << vdif_nchan << endl;
+  if ((vdif_nchan<0) || (vdif_nchan>2))
+    throw Error (InvalidParam, "dsp::VDIFFile::open_file",
+        "Read vdif_nchan=%d, this is currently not supported", vdif_nchan);
+  info.set_npol( vdif_nchan );
+  info.set_nchan( 1 );
+  info.set_rate( (double) info.get_bandwidth() * 1e6 
+      / (double) info.get_nchan() 
+      * info.get_state() == Signal::Nyquist ? 2.0 : 1.0);
+
+  // Figure frames per sec from bw, pkt size, etc
+  //double frames_per_sec = 64000.0;
+  int frame_data_size = nbyte - VDIF_HEADER_BYTES;
+  double frames_per_sec = info.get_nbit() * info.get_nchan() * info.get_npol()
+    * info.get_rate() / 8.0 / (double) frame_data_size;
 
   int mjd = getVDIFFrameMJD(rawhdr);
   int sec = getVDIFFrameSecond(rawhdr);
@@ -177,13 +195,6 @@ void dsp::VDIFFile::open_file (const char* filename)
   if (verbose) cerr << "VDIFFile::open_file MJD = " << mjd << endl;
   if (verbose) cerr << "VDIFFile::open_file sec = " << sec << endl;
   info.set_start_time( MJD(mjd,sec,(double)fn/frames_per_sec) );
-
-  // Each poln shows up as a different channel but this 
-  // could also be different freq channels...
-  int nchan = getVDIFNumChannels(rawhdr);
-  if (verbose) cerr << "VDIFFile::open_file NCHAN = " << nchan << endl;
-  info.set_npol( nchan );
-  info.set_nchan( 1 );
 
   // XXX old code, should all be handled by ASCII header now
   //float mbps = 512 * info.get_npol();
@@ -199,9 +210,6 @@ void dsp::VDIFFile::open_file (const char* filename)
   // Figures out how much data is in file based on header sizes, etc.
   set_total_samples();
 
-  //string prefix="tmp";    // what prefix should we assign??
-  //info.set_mode(stringprintf ("%d-bit mode",info.get_nbit() ) );
-  //info.set_machine("VDIF");	
 }
 
 //int64_t dsp::VDIFFile::seek_bytes (uint64_t nbytes)
