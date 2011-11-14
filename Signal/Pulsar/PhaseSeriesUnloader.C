@@ -193,7 +193,7 @@ std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data)
 
   phase = (phase + 0.5 - data->get_reference_phase()).Floor();
 
-  return stringprintf ("pulse_"I64, phase.intturns());
+  return "pulse_" + tostring(phase.intturns());
 }
 
 dsp::FilenameSequential::FilenameSequential()
