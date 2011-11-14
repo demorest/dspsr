@@ -85,6 +85,9 @@ namespace dsp {
     void set_fractional_pulses (bool flag) 
       { divider.set_fractional_pulses (flag); }
 
+    void set_reference_phase (double phase)
+      { divider.set_reference_phase (phase); Op::set_reference_phase(phase); }
+
     /** @name deprecated methods 
      *  Use of these methods is deprecated in favour of attaching
      *  callback methods to the completed event. */
