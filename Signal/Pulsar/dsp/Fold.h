@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.69 $
-   $Date: 2011/08/04 21:06:43 $
+   $Revision: 1.70 $
+   $Date: 2011/11/14 19:43:34 $
    $Author: straten $ */
 
 #ifndef __baseband_dsp_Fold_h
@@ -131,7 +131,7 @@ namespace dsp {
     void set_pulsar_ephemeris (const Pulsar::Parameters*);
 
     //! Set the reference phase (phase of bin zero)
-    void set_reference_phase (double phase);
+    virtual void set_reference_phase (double phase);
     //! Get the reference phase (phase of bin zero)
     double get_reference_phase () const { return reference_phase; }
 
