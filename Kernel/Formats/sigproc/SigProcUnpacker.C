@@ -42,7 +42,7 @@ bool dsp::SigProcUnpacker::matches (const Observation* observation)
   return observation->get_machine() == "SigProc" 
     && observation->get_ndim() == 1
     && observation->get_npol() == 1
-    && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 );
+    && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 || nbit==16);
 }
 
 unsigned dsp::SigProcUnpacker::get_output_ipol (unsigned idig) const
@@ -104,12 +104,23 @@ void dsp::SigProcUnpacker::unpack ()
  
       float* into = output->get_datptr (ichan, 0);
       
-      if (nbit == 8)
+      if (nbit == 16)
+      {
+	const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base)+ichan;
+	for (unsigned bt = 0; bt < ndat; bt++)
+        {
+          into[bt] = float( *from16 );
+	  from16 += nchan;
+	}
+      }
+
+      else if (nbit == 8)
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
           into[bt] = float( *from );
 	  from += nchan;
 	}
+
       else
 	for (unsigned bt = 0; bt < ndat; bt++)
 	{
@@ -130,7 +141,14 @@ void dsp::SigProcUnpacker::unpack ()
     const uint64_t nbyte = nchan_bytes * ndat;
     const unsigned samples_per_byte = 8/nbit;
 
-    if (nbit == 8)
+    if (nbit == 16)
+    {
+      const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base);
+      const uint64_t nfloat = nchan * ndat;
+      for (uint64_t ifloat=0; ifloat < nfloat; ifloat ++)
+	into[ifloat] = float( from16[ifloat] );
+    }
+    else if (nbit == 8)
       for (uint64_t ibyte=0; ibyte < nbyte; ibyte ++)
 	into[ibyte] = float( from_base[ibyte] );
     else
