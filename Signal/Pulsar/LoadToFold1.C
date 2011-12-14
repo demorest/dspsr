@@ -43,6 +43,7 @@
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
 #include "dsp/SKMaskerCUDA.h"
+#include "dsp/CyclicFoldEngineCUDA.h"
 #endif
 
 #include "dsp/SampleDelay.h"
@@ -1077,7 +1078,10 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
     if (gpu_stream != undefined_stream)
     {
       cudaStream_t stream = (cudaStream_t) gpu_stream;
-      fold[ifold]->set_engine (new CUDA::FoldEngine(stream, config->sk_zap));
+      if (config->cyclic_nchan)
+        fold[ifold]->set_engine (new CUDA::CyclicFoldEngineCUDA(stream));
+      else
+        fold[ifold]->set_engine (new CUDA::FoldEngine(stream, config->sk_zap));
     }
 #endif
 
