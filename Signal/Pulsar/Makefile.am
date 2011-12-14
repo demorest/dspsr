@@ -21,15 +21,21 @@ CyclicFold.C
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FoldCUDA.h dsp/TransferPhaseSeriesCUDA.h
+nobase_include_HEADERS += dsp/FoldCUDA.h dsp/TransferPhaseSeriesCUDA.h \
+			  dsp/CyclicFoldEngineCUDA.h
 
-libdspsr_la_SOURCES += FoldCUDA.cu TransferPhaseSeriesCUDA.C
+libdspsr_la_SOURCES += FoldCUDA.cu TransferPhaseSeriesCUDA.C \
+		       CyclicFoldEngineCUDA.cu
 
-libdspsr_la_LIBADD = FoldCUDA.lo
+libdspsr_la_LIBADD = FoldCUDA.lo CyclicFoldEngineCUDA.lo
 
 FoldCUDA.lo : FoldCUDA.cu
 	@CUDA_NVCC@ -c $(srcdir)/FoldCUDA.cu
 	sed -e 's/Fold/FoldCUDA/' Fold.lo > FoldCUDA.lo
+
+CyclicFoldEngineCUDA.lo : CyclicFoldEngineCUDA.cu
+	@CUDA_NVCC@ -c $(srcdir)/CyclicFoldEngineCUDA.cu
+	sed -e 's/Fold/CyclicFoldEngineCUDA/' Fold.lo > CyclicFoldEngineCUDA.lo
 
 endif
 
