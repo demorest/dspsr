@@ -70,12 +70,15 @@ void dsp::GUPPIBlockFile::parse_header()
   else 
     info.set_npol(2);
 
-  // Use packet format flag for this for now...
+  // Default to complex data
+  info.set_state(Signal::Analytic);
+
+  // Any format-specific checks
   header_get_check("PKTFMT", ctmp);
   if (string(ctmp) == "VDIF")
     info.set_state(Signal::Nyquist);
-  else
-    info.set_state(Signal::Analytic);
+  else if (string(ctmp) == "SIMPLE")
+    time_ordered = false;
  
   header_get_check("TBIN", &ftmp);
   info.set_rate(1.0/ftmp);
