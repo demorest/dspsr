@@ -73,6 +73,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->filterbank_nchan, 'F', "nchan");
   arg->set_help ("create a filterbank (voltages only)");
 
+  arg = menu.add (config->frequency_resolution, 'x', "nfft");
+  arg->set_help ("backward FFT length in voltage filterbank");
+
   arg = menu.add (config->dedisperse, 'K');
   arg->set_help ("remove inter-channel dispersion delays");
 

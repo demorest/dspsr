@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LoadToFil.h,v $
-   $Revision: 1.3 $
-   $Date: 2011/09/20 20:49:14 $
+   $Revision: 1.4 $
+   $Date: 2011/12/21 06:02:20 $
    $Author: straten $ */
 
 #ifndef __dspsr_LoadToFil_h
@@ -60,6 +60,9 @@ namespace dsp {
 
     //! number of frequency channels in filterbank
     unsigned filterbank_nchan;
+
+    //! number of spectral bins in each filterbank channel
+    unsigned frequency_resolution;
 
     //! dispersion measure set in output file
     double dispersion_measure;

@@ -15,6 +15,7 @@
 #include "dsp/Unpacker.h"
 
 #include "dsp/TFPFilterbank.h"
+#include "dsp/Filterbank.h"
 #include "dsp/Detection.h"
 
 #include "dsp/SampleDelay.h"
@@ -55,7 +56,7 @@ dsp::LoadToFil::Config::Config()
   order = dsp::TimeSeries::OrderTFP;
  
   filterbank_nchan = 0;
-
+  frequency_resolution = 0;
   dispersion_measure = 0;
   dedisperse = false;
 
@@ -121,21 +122,42 @@ void dsp::LoadToFil::construct () try
 
   if (!obs->get_detected())
   {
+    bool do_detection = false;
+
     if ( config->filterbank_nchan )
     {
       if (verbose)
 	cerr << "digifil: creating " << config->filterbank_nchan 
 	     << " channel filterbank" << endl;
 
-      TFPFilterbank* filterbank = new TFPFilterbank;
+      if ( config->frequency_resolution )
+      {
+	cerr << "Using convolving filterbank" << endl;
 
-      filterbank->set_nchan( config->filterbank_nchan );
-      filterbank->set_input( timeseries );
-      filterbank->set_output( timeseries = new_TimeSeries() );
+	Filterbank* filterbank = new Filterbank;
 
-      operations.push_back( filterbank );
+	filterbank->set_nchan( config->filterbank_nchan );
+	filterbank->set_input( timeseries );
+	filterbank->set_output( timeseries = new_TimeSeries() );
+
+	filterbank->set_frequency_resolution ( config->frequency_resolution );
+
+	operations.push_back( filterbank );
+	do_detection = true;
+      }
+      else
+      {
+	TFPFilterbank* filterbank = new TFPFilterbank;
+
+	filterbank->set_nchan( config->filterbank_nchan );
+	filterbank->set_input( timeseries );
+	filterbank->set_output( timeseries = new_TimeSeries() );
+
+	operations.push_back( filterbank );
+      }
     }
-    else
+
+    if (do_detection)
     {
       if (verbose)
 	cerr << "digifil: creating detection operation" << endl;
