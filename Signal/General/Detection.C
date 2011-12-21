@@ -82,6 +82,13 @@ void dsp::Detection::transformation () try
 
   bool inplace = (input.get() == output.get());
 
+#if 0
+  // when debugging pointer offsets
+  cerr << "IN subsize=" << output->get_subsize() << endl;
+  for (unsigned i=0; i<2; i++)
+    cerr << "IN " << i << " " << output->get_datptr(i,0) << endl;
+#endif
+
   if (state==input->get_state())
   {
     if (!inplace)
@@ -131,6 +138,13 @@ void dsp::Detection::transformation () try
   if ( inplace )
     resize_output ();
 
+#if 0
+  // when debugging pointer offsets
+  cerr << "OUT subsize=" << output->get_subsize() << endl;
+  for (unsigned i=0; i<2; i++)
+    cerr << "OUT " << i << " " << output->get_datptr(i,0) << endl;
+#endif
+
   if (verbose)
     cerr << "dsp::Detection::transformation exit" << endl;
 }
@@ -145,6 +159,7 @@ void dsp::Detection::resize_output ()
     cerr << "dsp::Detection::resize_output" << endl;
 
   bool inplace = input.get() == output.get();
+  bool reshape = true;
 
   unsigned output_ndim = 1;
   unsigned output_npol = input->get_npol();
@@ -153,6 +168,7 @@ void dsp::Detection::resize_output ()
   {
     output_ndim = ndim;
     output_npol = 4/ndim;
+
     if (verbose)
       cerr << "dsp::Detection::resize_output state: "
 	   << Signal::state_string(state) << " ndim=" << ndim << endl;
@@ -165,8 +181,6 @@ void dsp::Detection::resize_output ()
   if (!inplace)
     get_output()->copy_configuration( get_input() );
 
-  get_output()->set_state( state );
-
   if (!inplace)
   {
     if (verbose)
@@ -176,15 +190,19 @@ void dsp::Detection::resize_output ()
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
   }
-  else
+  else if (reshape)
   {
     if (verbose)
-      cerr << "dsp::Detection::resize_output reshape npol=" << output_npol
-           << " ndim=" << output_ndim << " FROM npol=" << output->get_npol()
-           << " ndim=" << output->get_ndim() << endl;
+      cerr << "dsp::Detection::resize_output reshape FROM"
+	" npol=" << output->get_npol() <<
+	" ndim=" << output->get_ndim() << " TO"
+	" npol=" << output_npol <<
+	" ndim=" << output_ndim << endl;
 
     get_output()->reshape ( output_npol, output_ndim );
   }
+
+  get_output()->set_state( state );
 }
 
 void dsp::Detection::square_law ()
