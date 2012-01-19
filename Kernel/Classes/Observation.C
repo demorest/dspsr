@@ -1,11 +1,12 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002-2009 by Willem van Straten
+ *   Copyright (C) 2002-2011 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/Observation.h"
+#include "dsp/ObservationInterface.h"
 
 #include "Error.h"
 #include "dirutil.h"
@@ -470,3 +471,7 @@ MJD dsp::Observation::get_end_time () const
   return start_time + double(ndat) / rate;
 }
 
+TextInterface::Parser* dsp::Observation::get_interface ()
+{
+  return new Interface (this);
+}
