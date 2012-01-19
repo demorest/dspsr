@@ -250,6 +250,12 @@ namespace dsp
     //! Set all attributes to null default
     void init ();
 
+    //! Textual interface to Observation attributes
+    class Interface;
+
+    //! Return a text interface that can be used to access this instance
+    virtual TextInterface::Parser* get_interface ();
+
   protected:
 
     //! Telescope name
@@ -317,12 +323,6 @@ namespace dsp
 
     //! Flag set when centre channel is centred on centre frequency
     bool dc_centred;
-
-    //! Textual interface to Observation attributes
-    class Interface;
-
-    //! Return a text interface that can be used to access this instance
-    virtual TextInterface::Parser* get_interface ();
 
   private:
 
