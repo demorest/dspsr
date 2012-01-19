@@ -562,6 +562,8 @@ dsp::SingleThread::Config::Config ()
   // use input buffering
   input_buffering = true;
 
+  list_attributes = false;
+
   nthread = 0;
   buffers = 0;
   repeated = 0;
@@ -617,6 +619,9 @@ dsp::Input* dsp::SingleThread::Config::open (int argc, char** argv)
 
 void dsp::SingleThread::Config::prepare (Input* input)
 {
+  if (list_attributes || editor.will_modify())
+    cout << editor.process (input->get_info()) << endl;
+    
   if (input_prepare)
     input_prepare( input );
 
@@ -680,20 +685,27 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
 
   menu.add ("\n" "Input handling options:");
 
+  arg = menu.add (input_buffering, "overlap");
+  arg->set_help ("disable input buffering");
+
   arg = menu.add (force_contiguity, "cont");
   arg->set_help ("input files are contiguous (disable check)");
 
   arg = menu.add (run_repeatedly, "repeat");
   arg->set_help ("repeatedly read from input until an empty is encountered");
 
-  arg = menu.add (input_buffering, "overlap");
-  arg->set_help ("disable input buffering");
-
   arg = menu.add (seek_seconds, 'S', "seek");
   arg->set_help ("start processing at t=seek seconds");
 
   arg = menu.add (total_seconds, 'T', "total");
   arg->set_help ("process only t=total seconds");
+
+  arg = menu.add (&editor, &TextEditor<Observation>::add_commands, 
+		  "set", "key=value");
+  arg->set_help ("set observation attributes");
+
+  arg = menu.add (list_attributes, "list");
+  arg->set_help ("list observation attributes");
 
   if (weighted_time_series)
   {

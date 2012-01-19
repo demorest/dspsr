@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.6 $
-   $Date: 2011/09/20 21:25:28 $
+   $Revision: 1.7 $
+   $Date: 2012/01/19 21:46:17 $
    $Author: straten $ */
 
 #ifndef __dspsr_SingleThread_h
@@ -17,6 +17,7 @@
 #include "dsp/Pipeline.h"
 #include "CommandLine.h"
 #include "Functor.h"
+#include "TextEditor.h"
 
 class ThreadContext;
 
@@ -25,6 +26,7 @@ namespace dsp {
   class IOManager;
   class TimeSeries;
   class Operation;
+  class Observation;
   class Scratch;
   class Memory;
 
@@ -187,6 +189,12 @@ namespace dsp {
 
     // number of seconds to process from data
     double total_seconds;
+
+    //! List all editor-accessible attributes of the observation
+    bool list_attributes;
+
+    //! The editor used to set Observation attributes via the command line
+    TextEditor<Observation> editor;
 
     //! report vital statistics
     bool report_vitals;
