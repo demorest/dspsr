@@ -18,7 +18,6 @@ dsp::FrequencyVsTime::~FrequencyVsTime() {}
 void dsp::FrequencyVsTime::prepare()
 {
   ndat = get_ndat();
-
   nchan = voltages->get_nchan();
   npol = voltages->get_npol();
 
@@ -47,7 +46,7 @@ void dsp::FrequencyVsTime::prepare()
     }
   //}
 
-    if (dedisperse) {
+    if (dispersion_measure != 0.0) {
       makeDedispersedChannelSums();
     }
 }
@@ -55,11 +54,14 @@ void dsp::FrequencyVsTime::prepare()
 void dsp::FrequencyVsTime::plot()
 {
 
-  if (dedisperse) {
+  if (dispersion_measure != 0.0) {
     cpgsvp(0.1, 0.9, .25, 0.9);
   }
 
   preparePlotScale();
+
+  const double duration = (info->get_end_time() -
+      info->get_start_time()).in_seconds();
 
   // If x-axis has not being defined, plot whole file by default.
   if (x_range.first == 0 && x_range.second == 0) {
@@ -81,6 +83,8 @@ void dsp::FrequencyVsTime::plot()
   const float max_value = *max_element(values.begin(), values.end());
   const int minRange = int(floor(min_value));
   const int maxRange = int(ceil(max_value));
+  const double bandwidth = info->get_bandwidth();
+  const float centre_frequency = info->get_centre_frequency();
 
   if (y_range.first == 0 && y_range.second == 0) {
     y_range.first = centre_frequency - bandwidth/2.0;
@@ -117,7 +121,7 @@ void dsp::FrequencyVsTime::plot()
   const string title = get_plot_title();
   cpglab("", "Frequency (MHz)", title.c_str());
 
-  if (dedisperse) {
+  if (dispersion_measure != 0.0) {
   float max_sum = data_sums[0];
   float min_sum = data_sums[0];
 

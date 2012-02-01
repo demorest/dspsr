@@ -51,29 +51,25 @@ namespace dsp
 
       virtual float get_last_seconds();
 
-      uint64_t time_as_sample(const double time, const uint64_t ndat);
+      uint64_t time_as_sample(const double time, const uint64_t ndat, 
+          const double duration);
 
       // User-defined dispersion measure.
       float get_dispersion_measure();
       void set_dispersion_measure(const float _dispersion_measure);
 
-      void set_dedisperse(const bool _dedisperse);
-      bool get_dedisperse();
-
     protected:
-      double get_duration(const MJD& start, const MJD& end);
       void dedisperse_data(Observation* info);
 
       Reference::To<dsp::TimeSeries> voltages;
-       Reference::To<dsp::SampleDelay> sample_delay;
-      string filename;
-      unsigned nbit;
-      unsigned pol;
-      unsigned ndat;
-      double duration;
+      Reference::To<dsp::SampleDelay> sample_delay;
 
-      double bandwidth;
-      double centre_frequency;
+      Reference::To<Observation> info;
+
+      string filename;
+      unsigned pol;
+
+      unsigned ndat;
 
       rangeType x_range;
       rangeType y_range;

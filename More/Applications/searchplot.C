@@ -146,13 +146,8 @@ int main(int argc, char *argv[]) try
   plot->set_y_range(y_range);
   plot->set_last_seconds(last_seconds);
   plot->set_dispersion_measure(dispersion_measure);
-  plot->set_dedisperse(dedisperse);
 
-  //if (cpgopen(plot_device.c_str())) {
-  if (cpgbeg(0, plot_device.c_str(), 1, 1)) {
-    //throw Error(InvalidState, "searchplot - main",
-        //"Could not open plot device=" + plot_device);
-  }
+  cpgbeg(0, plot_device.c_str(), 1, 1);
 
   for (unsigned ifile = 0; ifile < filenames.size(); ++ifile) try {
     plot->set_filename(filenames[ifile]);

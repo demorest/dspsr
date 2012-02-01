@@ -23,16 +23,11 @@ bool dsp::Plot::verbose = false;
 dsp::Plot::Plot() :
   voltages(new dsp::TimeSeries),
   sample_delay(new dsp::SampleDelay),
-  nbit(0),
-  ndat(0),
-  duration(0.0),
   last_seconds(0.0),
-  bandwidth(0.0),
-  centre_frequency(0.0),
   x_range(std::make_pair<float, float>(0.0, 0.0)),
   y_range(std::make_pair<float, float>(0.0, 0.0)),
-  dedisperse(false),
   dispersion_measure(0.0),
+  ndat(0),
   buffer(0.0)
 {}
 
@@ -52,21 +47,15 @@ void dsp::Plot::transform()
 
   init(manager);
 
-  const Reference::To<Observation> info = manager->get_info();
+  // Retain the observation details for plot-specific processes.
+  info = new dsp::Observation;
+  info->copy(manager->get_info());
 
   //info->set_dispersion_measure(67);
 
   const unsigned npol = info->get_npol();
   const unsigned nchan = info->get_nchan();
   const uint64_t ndat = info->get_ndat();
-
-  nbit = info->get_nbit();
-
-
-  duration = get_duration(info->get_start_time(), info->get_end_time());
-
-  centre_frequency = manager->get_info()->get_centre_frequency();
-  bandwidth = manager->get_info()->get_bandwidth();
 
   // XXX: think - necessary???
   //data.resize(npol);
@@ -75,6 +64,9 @@ void dsp::Plot::transform()
   // XXX: handle pol selection and stokes I (poln0 + poln1)
 
   data[0].resize(nchan);
+
+  const double duration = (info->get_end_time() -
+      info->get_start_time()).in_seconds();
 
   // Skip to the last # seconds of file if last_seconds has been specified
   if (last_seconds > 0.0) {
@@ -88,8 +80,8 @@ void dsp::Plot::transform()
   }
 
   // Get start and stop samples.
-  const unsigned start_sample = time_as_sample(x_range.first, ndat);
-  const unsigned end_sample = time_as_sample(x_range.second, ndat);
+  const unsigned start_sample = time_as_sample(x_range.first, ndat, duration);
+  const unsigned end_sample = time_as_sample(x_range.second, ndat, duration);
 
   // Total number of samples to be read
   int samples_remaining = end_sample - start_sample;
@@ -100,23 +92,22 @@ void dsp::Plot::transform()
   // Skip to first sample
   manager->get_input()->seek(start_sample);
 
-  if (get_dedisperse()) {
-    dedisperse_data(info);
+  if (dispersion_measure != 0.0) {
+    manager->get_info()->set_dispersion_measure(dispersion_measure);
   }
 
   do {
     manager->operate();
 
-    if (get_dedisperse()) {
+    if (dispersion_measure != 0.0) {
       sample_delay->set_input (voltages);
       sample_delay->set_output (voltages);
       sample_delay->set_function (new dsp::Dedispersion::SampleDelay);
       sample_delay->prepare();
-
       sample_delay->operate();
     }
 
-    const unsigned ndat  = voltages->get_ndat();
+    const unsigned ndat = voltages->get_ndat();
 
     //for (unsigned ipol = 0; ipol < npol; ++ipol) {
     unsigned ipol = 0;
@@ -140,6 +131,9 @@ void dsp::Plot::transform()
 
   // Number of time samples read.
   set_ndat(data[0][0].size());
+
+  // Retain a copy of dsp::Observation to use for unpacking.
+  info->copy(manager->get_info());
 }
 
 void dsp::Plot::set_filename(const std::string& fname)
@@ -203,7 +197,8 @@ void dsp::Plot::set_y_range(const rangeType& range)
   }
 }
 
-uint64_t dsp::Plot::time_as_sample(const double time, const uint64_t ndat)
+uint64_t dsp::Plot::time_as_sample(const double time, const uint64_t ndat,
+    const double duration)
 {
   return static_cast<uint64_t>((time/duration) * ndat);
 }
@@ -211,22 +206,6 @@ uint64_t dsp::Plot::time_as_sample(const double time, const uint64_t ndat)
 void dsp::Plot::set_pol(const unsigned _pol)
 {
   pol = _pol;
-}
-
-double dsp::Plot::get_duration(const MJD& start, const MJD& end)
-{
-  return (end - start).in_seconds();
-}
-
-/**
- * Dedisperses the frequency channels.
- */
-void dsp::Plot::dedisperse_data(Observation* info)
-{
-  if (get_dispersion_measure() != 0.0) {
-    const float dispersion = get_dispersion_measure();
-    info->set_dispersion_measure(dispersion);
-  }
 }
 
 float dsp::Plot::get_dispersion_measure()
@@ -237,16 +216,6 @@ return dispersion_measure;
 void dsp::Plot::set_dispersion_measure(const float _dispersion_measure)
 {
   dispersion_measure = _dispersion_measure;
-}
-
-void dsp::Plot::set_dedisperse(const bool _dedisperse)
-{
-  dedisperse = _dedisperse;
-}
-
-bool dsp::Plot::get_dedisperse()
-{
-  return dedisperse;
 }
 
 /**

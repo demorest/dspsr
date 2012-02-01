@@ -22,7 +22,7 @@ dsp::HistoPlot::~HistoPlot() {}
 void dsp::HistoPlot::prepare()
 {
   // XXX: Input's ndat
-  const unsigned ndat = get_ndat();
+  const unsigned ndat = info->get_ndat();
   const unsigned nchan = voltages->get_nchan();
   const unsigned npol = voltages->get_npol();
 
@@ -81,6 +81,7 @@ void dsp::HistoPlot::plot()
     }
   }
 
+  const unsigned nbit = info->get_nbit();
   cerr << "nbit: " << nbit << endl;
 
   switch (nbit) {
@@ -208,5 +209,5 @@ float dsp::HistoPlot::getBinInterval()
 
 bool dsp::HistoPlot::allSamplesUsed()
 {
-  return hist.size() == (unsigned)pow(2, nbit);
+  return hist.size() == (unsigned)pow(2, info->get_nbit());
 }
