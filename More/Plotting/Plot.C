@@ -33,7 +33,9 @@ dsp::Plot::Plot() :
   y_range(std::make_pair<float, float>(0.0, 0.0)),
   dedisperse(false),
   dispersion_measure(0.0),
-  buffer(0.0)
+  buffer(0.0),
+  write_summed_channels(false),
+  info(new dsp::Observation)
 {}
 
 dsp::Plot::~Plot()
@@ -52,7 +54,7 @@ void dsp::Plot::transform()
 
   init(manager);
 
-  const Reference::To<Observation> info = manager->get_info();
+  info = manager->get_info();
 
   //info->set_dispersion_measure(67);
 
@@ -140,6 +142,7 @@ void dsp::Plot::transform()
 
   // Number of time samples read.
   set_ndat(data[0][0].size());
+  info->copy(manager->get_info());
 }
 
 void dsp::Plot::set_filename(const std::string& fname)
@@ -249,6 +252,16 @@ bool dsp::Plot::get_dedisperse()
   return dedisperse;
 }
 
+void dsp::Plot::set_write_summed_channels(const bool _write_summed_channels)
+{
+  write_summed_channels = _write_summed_channels;
+}
+
+bool dsp::Plot::get_write_summed_channels() const
+{
+  return write_summed_channels;
+}
+
 /**
  * Initialise plot-specific various before performing the transformation.
  */
@@ -256,4 +269,5 @@ void dsp::Plot::init(IOManager* manager)
 {
 }
 
-
+void dsp::Plot::finalise()
+{}

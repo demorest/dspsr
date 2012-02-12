@@ -19,7 +19,7 @@
 
 const char HISTOGRAM_KEY = 'H';
 const char FREQTIME_KEY = 'F';
-const char* args = "D:Fg:hHKl:p:x:y:";
+const char* args = "D:Fg:hHKl:p:sx:y:";
 enum plot_types {NO_PLOT, HISTOPLOT, FREQOPLOT};
 
 using std::cout;
@@ -48,6 +48,9 @@ void usage()
     " -D <DM>   Dedisperse frequencies using DM       \n"
     " -K        Display summed channel values         \n"
     " -l sec    Plot last sec seconds of file         \n"
+    "                                                 \n"
+    "Output options:                                  \n"
+    " -s        Write summed channels (searchplot.out)\n"
     "                                                 \n"
     "Utility options:                                 \n"
     " -h        Display this useful help page         \n";
@@ -81,12 +84,14 @@ int main(int argc, char *argv[]) try
   float last_seconds = 0.0;
   bool dedisperse = false;
   float dispersion_measure = 0.0;
+  bool write_summed_channels = false;
 
   int c;
   while ((c = getopt(argc, argv, args)) != -1) {
     switch (c) {
       case 'D':
         dispersion_measure = fromstring<float>(optarg);
+        dedisperse = true;
         break;
       case 'g':
         plot_device = optarg;
@@ -108,6 +113,9 @@ int main(int argc, char *argv[]) try
         break;
       case 'p':
         pol = fromstring<unsigned>(optarg);
+        break;
+      case 's':
+        write_summed_channels = true;
         break;
       case 'x':
         string_split(optarg, s1, s2, ",");
@@ -148,6 +156,10 @@ int main(int argc, char *argv[]) try
   plot->set_dispersion_measure(dispersion_measure);
   plot->set_dedisperse(dedisperse);
 
+  if (write_summed_channels) {
+    plot->set_write_summed_channels(true);
+  }
+
   //if (cpgopen(plot_device.c_str())) {
   if (cpgbeg(0, plot_device.c_str(), 1, 1)) {
     //throw Error(InvalidState, "searchplot - main",
@@ -159,6 +171,7 @@ int main(int argc, char *argv[]) try
     plot->transform();
     plot->prepare();
     plot->plot();
+    plot->finalise();
   } catch (string& error) {
     cerr << "searchplot error: " << error << std::endl;
   }

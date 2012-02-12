@@ -1,6 +1,7 @@
 #include "dsp/FrequencyVsTime.h"
 
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>
 #include <algorithm>
 
@@ -199,5 +200,40 @@ void dsp::FrequencyVsTime::makeDedispersedChannelSums()
     }
 
     data_sums[idat] = sum;
+  }
+}
+
+void dsp::FrequencyVsTime::write_summed_channels_to_file()
+{
+  if (data_sums.empty()) {
+    makeDedispersedChannelSums();
+  }
+
+  // Convert rate (from MHz to seconds).
+  const float sample_interval = 60.0 / info->get_rate();
+
+  std::ofstream outfile;
+  outfile.open("searchplot.out");
+
+  // Header format: # <source name> <start MJD> <centre frequency> <sample interval>
+  outfile << "#"                  << "\t" <<
+    info->get_source()            << "\t" <<
+    info->get_start_time()        << "\t" <<
+    info->get_centre_frequency()  << "\t" <<
+    sample_interval               << "\t" <<
+    endl;
+
+  // Write summed frequency channels to searchplot.out.
+  vector<float>::const_iterator it;
+  for (it = data_sums.begin(); it != data_sums.end(); ++it)
+    outfile << *it << endl;
+
+  outfile.close();
+}
+
+void dsp::FrequencyVsTime::finalise()
+{
+  if (write_summed_channels) {
+    write_summed_channels_to_file();
   }
 }

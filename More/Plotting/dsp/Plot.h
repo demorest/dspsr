@@ -50,6 +50,7 @@ namespace dsp
           float buffer = 0);
 
       virtual float get_last_seconds();
+      virtual void finalise();
 
       uint64_t time_as_sample(const double time, const uint64_t ndat);
 
@@ -59,6 +60,9 @@ namespace dsp
 
       void set_dedisperse(const bool _dedisperse);
       bool get_dedisperse();
+
+      void set_write_summed_channels(const bool _set_write_summed_channels);
+      bool get_write_summed_channels() const;
 
     protected:
       double get_duration(const MJD& start, const MJD& end);
@@ -87,6 +91,9 @@ namespace dsp
       bool dedisperse;
 
       float dispersion_measure;
+      bool write_summed_channels;
+
+      dsp::Observation* info;
 
     private:
       // Initialise plot-specific various before doing the transformation.

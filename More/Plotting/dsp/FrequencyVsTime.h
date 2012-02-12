@@ -9,10 +9,12 @@ namespace dsp
       ~FrequencyVsTime();
       virtual void prepare();
       virtual void plot();
+      virtual void finalise();
 
     protected:
       void preparePlotScale();
       void makeDedispersedChannelSums();
+      void write_summed_channels_to_file();
 
       std::vector<float> values;
 
