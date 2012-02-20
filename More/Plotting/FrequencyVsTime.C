@@ -216,7 +216,7 @@ void dsp::FrequencyVsTime::write_summed_channels_to_file()
     info->get_source()            << "\t" <<
     info->get_start_time()        << "\t" <<
     info->get_centre_frequency()  << "\t" <<
-    info->get_rate()              << "\t" <<
+    1.0/info->get_rate()          << "\t" <<
     endl;
 
   // Write summed frequency channels to searchplot.out.
