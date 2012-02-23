@@ -19,6 +19,7 @@
 
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
+#include "Pulsar/DigitiserCounts.h"
 #include "Pulsar/CoherentDedispersion.h"
 #include "Pulsar/Passband.h"
 
@@ -103,6 +104,18 @@ void dsp::Archiver::set (dspReduction* dspR) try
     if (excision)
       excision_unpacker = excision;
 
+    // ////////////////////////////////////////////////////////////////////
+    //
+    // IOManager class may also contain a HistUnpacker
+    //
+    const HistUnpacker* hist = 0;
+
+    hist = dynamic_cast<const HistUnpacker*> ( operation );
+
+    // save for DigitiserCounts extension
+    if (hist)
+      hist_unpacker = hist;
+    
     // ////////////////////////////////////////////////////////////////////
     //
     // Filterbank class parameters
@@ -271,6 +284,52 @@ void dsp::Archiver::set (TwoBitStats* tbc) try
 catch (Error& error)
 {
   throw error += "dsp::Archiver::set Pulsar::TwoBitStats";
+}
+
+void dsp::Archiver::set (DigitiserCounts* dcnt, unsigned isub) try
+{
+  if (verbose > 2)
+    cerr << "dsp::Archiver::set Pulsar::DigitiserCounts Extension" << endl;
+
+  if (!hist_unpacker)
+  {
+    if (verbose > 2)
+      cerr << "dsp::Archiver::set Pulsar::DigitiserCounts no HistUnpacker"
+        << endl;
+    return;
+  }
+
+  // Set up params
+  dcnt->set_dig_mode("DSPSR"); // Don't know what this means...
+  dcnt->set_nlev(hist_unpacker->get_nstate());
+  dcnt->set_npthist(hist_unpacker->get_nstate());
+  dcnt->set_diglev("FIX");
+  dcnt->set_dyn_levt(0.0);
+  dcnt->set_ndigr(hist_unpacker->get_ndig());
+
+  // See if we need more subints
+  if (isub >= dcnt->subints.size())
+    dcnt->resize(isub+1);
+
+  // Size data array
+  // TODO move some of this functionality into the DigitiserCounts class
+  // where it belongs
+  dcnt->subints[isub].data.resize(dcnt->get_ndigr() * dcnt->get_npthist());
+
+  // Fill in histograms
+  vector<unsigned long> histogram;
+  for (unsigned idig=0; idig<dcnt->get_ndigr(); idig++)
+  {
+    hist_unpacker->get_histogram(histogram, idig);
+    for (unsigned ipt=0; ipt<dcnt->get_npthist(); ipt++)
+      dcnt->subints[isub].data[ipt + idig*dcnt->get_npthist()]
+        = histogram[ipt];
+  }
+
+}
+catch (Error &error)
+{
+  throw error += "dsp::Archiver::set Pulsar::DigitiserCounts";
 }
 
 

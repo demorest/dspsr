@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.37 $
-   $Date: 2011/08/24 22:43:53 $
-   $Author: straten $ */
+   $Revision: 1.38 $
+   $Date: 2012/02/23 15:50:12 $
+   $Author: demorest $ */
 
 
 #ifndef __Archiver_h
@@ -27,6 +27,7 @@ namespace Pulsar
   class MoreProfiles;
   class dspReduction;
   class TwoBitStats;
+  class DigitiserCounts;
   class Passband;
 }
 
@@ -35,6 +36,7 @@ namespace dsp
   class Response;
   class Operation;
   class ExcisionUnpacker;
+  class HistUnpacker;
 
   //! Class to unload PhaseSeries data in a Pulsar::Archive
   /*! 
@@ -144,6 +146,9 @@ namespace dsp
     //! ExcisionUnpacker from which TwoBitStats Extension will be constructed
     Reference::To<const ExcisionUnpacker> excision_unpacker;
 
+    //! HistUnpacker from which DigitiserCounts Extension will be constructed
+    Reference::To<const HistUnpacker> hist_unpacker;
+
     //! The Pulsar::Archive::Extension classes to be added to the output
     std::vector< Reference::To<Pulsar::Archive::Extension> > extensions;
 
@@ -166,6 +171,9 @@ namespace dsp
 
     //! Set the Pulsar::TwoBitStats Extension with the dsp::TwoBitCorrection
     void set (Pulsar::TwoBitStats* twobit);
+
+    //! Set the Pulsar::DigitiserCounts Extension with the dsp::HistUnpacker
+    void set (Pulsar::DigitiserCounts* dig_cnts, unsigned isub=0);
 
     //! Set the Pulsar::Passband Extension with the dsp::Response
     void set (Pulsar::Passband* pband);

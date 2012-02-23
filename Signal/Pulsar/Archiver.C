@@ -15,6 +15,7 @@
 
 #include "Pulsar/Interpreter.h"
 #include "Pulsar/Integration.h"
+#include "Pulsar/IntegrationExpert.h"
 #include "Pulsar/Profile.h"
 #include "Pulsar/FourthMoments.h"
 
@@ -22,6 +23,7 @@
 
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
+#include "Pulsar/DigitiserCounts.h"
 #include "Pulsar/Passband.h"
 #include "Pulsar/Telescope.h"
 #include "Pulsar/Receiver.h"
@@ -361,7 +363,7 @@ try
         	 archive->get_nbin(), phase->get_nbin());
   
   archive-> resize (nsub + 1);
-  set (archive-> get_Integration(nsub), phase);
+  set (archive-> get_Integration(nsub), phase, nsub);
 }
 catch (Error& error)
 {
@@ -495,10 +497,10 @@ try
   archive-> set_dedispersed( archive_dedispersed );
   archive-> set_faraday_corrected (false);
 
-  for (unsigned isub=0; isub < nsub; isub++)
-    set (archive->get_Integration(isub), phase, isub, nsub);
-
   // set any available extensions
+  // Note, this is now called before the set(Integration,...) call below
+  // so that the DigitiserCounts extension gets set up correctly the
+  // first time.
   Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
   if (dspR)
   {
@@ -506,6 +508,9 @@ try
       cerr << "dsp::Archiver::set Pulsar::dspReduction extension" << endl;
     set (dspR);
   }
+
+  for (unsigned isub=0; isub < nsub; isub++)
+    set (archive->get_Integration(isub), phase, isub, nsub);
 
   if (store_dynamic_extensions)
   {
@@ -667,6 +672,18 @@ try
       raw_to_central (chan, more, integration, hits);
     }
   }
+
+  // Add DigitiserCounts histograms for this subint.
+  Pulsar::Archive *arch = const_cast<Pulsar::Archive *> (
+      integration -> expert() -> get_parent() );
+  Pulsar::DigitiserCounts *dcnt = arch -> getadd<Pulsar::DigitiserCounts>();
+  if (dcnt)
+  {
+    if (verbose > 2)
+      cerr << "dsp::Archiver::set Pulsar::DigitiserCounts extension" << endl;
+    set (dcnt, isub);
+  }
+
 }
 
 catch (Error& error)
