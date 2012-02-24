@@ -330,8 +330,12 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("remove inter-channel dispersion delays");
 
   string fft_length;
-  arg = menu.add (fft_length, 'x', "nfft");
+  arg = menu.add (fft_length, 'x', "nfft|minX");
   arg->set_help ("over-ride optimal transform length");
+  arg->set_long_help
+    ("either specify the desired transform length; e.g, -x 32768 \n"
+     "or request the minimum possible length be used via -x min\n"
+     "or a multiple of the minimum length; e.g. -x minX2");
 
   arg = menu.add (config->zap_rfi, 'R');
   arg->set_help ("apply time-variable narrow-band RFI filter");
