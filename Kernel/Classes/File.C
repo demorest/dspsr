@@ -66,8 +66,11 @@ dsp::File* dsp::File::create (const char* filename)
 			  "cannot open '%s'", filename);
   ::close (fd);
 
-  if (verbose) std::cerr << "dsp::File::create with " << registry.size() 
-			 << " registered sub-classes" << std::endl;
+  File::Register& registry = get_register();
+
+  if (verbose)
+    std::cerr << "dsp::File::create with " << registry.size() 
+	      << " registered sub-classes" << std::endl;
 
   for (unsigned ichild=0; ichild < registry.size(); ichild++) try
   {

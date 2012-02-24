@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.33 $
-   $Date: 2009/09/10 01:02:34 $
-   $Author: tcaotiaafoc $ */
+   $Revision: 1.34 $
+   $Date: 2012/02/24 20:47:06 $
+   $Author: straten $ */
 
 
 #ifndef __File_h
@@ -82,6 +82,9 @@ namespace dsp {
     //! Inquire how many bytes are in the header
     int get_header_bytes() const{ return header_bytes; }
 
+    //! typedef used to simplify template syntax in File_registry.C
+    typedef Registry::List<File> Register;
+
   protected:
     
     //! Open the file specified by filename for reading
@@ -134,11 +137,8 @@ namespace dsp {
     //! Utility opens the file descriptor
     virtual void open_fd (const std::string& filename);
 
-    //! List of registered sub-classes
-    static Registry::List<File> registry;
-
-    // Declare friends with Registry entries
-    friend class Registry::Entry<File>;
+    //! Return the list of registered sub-classes
+    static Register& get_register();
 
   private:
 

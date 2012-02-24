@@ -24,160 +24,155 @@
 #include <config.h>
 #endif
 
-#include "dsp/MultiFile.h"
-
-/*! The registry must always be constructed before the entries. */
-Registry::List<dsp::File> dsp::File::registry;
-
 /*! DummyFile is built in */
 #include "dsp/DummyFile.h"
-static Registry::List<dsp::File>::Enter<dsp::DummyFile> dummy_file;
+static dsp::File::Register::Enter<dsp::DummyFile> dummy_file;
 
 /*! DADAFile is built in */
 #include "dsp/DADAFile.h"
-static Registry::List<dsp::File>::Enter<dsp::DADAFile> dada_file;
+static dsp::File::Register::Enter<dsp::DADAFile> dada_file;
 
 #if HAVE_asp
 #include "dsp/ASPFile.h"
-static Registry::List<dsp::File>::Enter<dsp::ASPFile> register_asp;
+static dsp::File::Register::Enter<dsp::ASPFile> register_asp;
 #endif
 
 #if HAVE_bcpm
 #include "dsp/BCPMFile.h"
-static Registry::List<dsp::File>::Enter<dsp::BCPMFile> register_bcpm;
+static dsp::File::Register::Enter<dsp::BCPMFile> register_bcpm;
 #endif
 
 #if HAVE_cpsr
 #include "dsp/CPSRFile.h"
-static Registry::List<dsp::File>::Enter<dsp::CPSRFile> register_cpsr;
+static dsp::File::Register::Enter<dsp::CPSRFile> register_cpsr;
 #endif
 
 #if HAVE_cpsr2
 #include "dsp/CPSR2File.h"
-static Registry::List<dsp::File>::Enter<dsp::CPSR2File> register_cpsr2;
+static dsp::File::Register::Enter<dsp::CPSR2File> register_cpsr2;
 #endif
 
 #if HAVE_dada
 #include "dsp/DADABuffer.h"
-static Registry::List<dsp::File>::Enter<dsp::DADABuffer> dada_buffer;
+static dsp::File::Register::Enter<dsp::DADABuffer> dada_buffer;
 #endif
 
 #if HAVE_dummy
 #include "dsp/DummyFile.h"
-static Registry::List<dsp::File>::Enter<dsp::DummyFile> register_dummy;
+static dsp::File::Register::Enter<dsp::DummyFile> register_dummy;
 #endif
 
 #if HAVE_fadc
 #include "dsp/FadcFile.h"
-static Registry::List<dsp::File>::Enter<dsp::FadcFile> register_fadc;
+static dsp::File::Register::Enter<dsp::FadcFile> register_fadc;
 #endif
 
 #if HAVE_fits
 #include "dsp/FITSFile.h"
-static Registry::List<dsp::File>::Enter<dsp::FITSFile> register_fits;
+static dsp::File::Register::Enter<dsp::FITSFile> register_fits;
 #endif
 
 #if HAVE_gmrt
 #include "dsp/GMRTFile.h"
-static Registry::List<dsp::File>::Enter<dsp::GMRTFile> register_gmrt;
+static dsp::File::Register::Enter<dsp::GMRTFile> register_gmrt;
 #include "dsp/GMRTBinaryFile.h"
-static Registry::List<dsp::File>::Enter<dsp::GMRTBinaryFile> register_gmrt_b;
+static dsp::File::Register::Enter<dsp::GMRTBinaryFile> register_gmrt_b;
 #include "dsp/GMRTFilterbankFile.h"
-static Registry::List<dsp::File>::Enter<dsp::GMRTFilterbankFile> gmrt_fb;
+static dsp::File::Register::Enter<dsp::GMRTFilterbankFile> gmrt_fb;
 #endif
 
 #if HAVE_guppi
 #include "dsp/GUPPIFile.h"
-static Registry::List<dsp::File>::Enter<dsp::GUPPIFile> register_guppi;
+static dsp::File::Register::Enter<dsp::GUPPIFile> register_guppi;
 #if HAVE_GUPPI_DAQ
 #include "dsp/GUPPIBuffer.h"
-static Registry::List<dsp::File>::Enter<dsp::GUPPIBuffer> guppi_buffer;
+static dsp::File::Register::Enter<dsp::GUPPIBuffer> guppi_buffer;
 #endif
 #endif
 
 #if HAVE_lbadr
 #include "dsp/SMROFile.h"
-static Registry::List<dsp::File>::Enter<dsp::SMROFile> register_lbadr;
+static dsp::File::Register::Enter<dsp::SMROFile> register_lbadr;
 #endif
 
 #if HAVE_lbadr64
 #include "dsp/LBADR64_File.h"
-static Registry::List<dsp::File>::Enter<dsp::LBADR64_File> register_lbadr64;
+static dsp::File::Register::Enter<dsp::LBADR64_File> register_lbadr64;
 #endif
 
 #if HAVE_mark4
 #include "dsp/Mark4File.h"
-static Registry::List<dsp::File>::Enter<dsp::Mark4File> register_mark4;
+static dsp::File::Register::Enter<dsp::Mark4File> register_mark4;
 #endif
 
 #if HAVE_mark5
 #include "dsp/Mark5File.h"
-static Registry::List<dsp::File>::Enter<dsp::Mark5File> register_mark5;
+static dsp::File::Register::Enter<dsp::Mark5File> register_mark5;
 #endif
 
 #if HAVE_maxim
 #include "dsp/MaximFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MaximFile> register_maxim;
+static dsp::File::Register::Enter<dsp::MaximFile> register_maxim;
 #endif
 
 #if HAVE_spda1k
 #include "dsp/spda1k_File.h"
-static Registry::List<dsp::File>::Enter<dsp::SPDA1K_File> register_spda1k;
+static dsp::File::Register::Enter<dsp::SPDA1K_File> register_spda1k;
 #endif
 
 #if HAVE_mini
 #include "dsp/MiniFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MiniFile> register_minifile;
+static dsp::File::Register::Enter<dsp::MiniFile> register_minifile;
 #endif
 
 #if HAVE_mwa
 #include "dsp/MWAFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MWAFile> file_register_mwa;
+static dsp::File::Register::Enter<dsp::MWAFile> file_register_mwa;
 #endif
 
 #if HAVE_pdev
 #include "dsp/PdevFile.h"
-static Registry::List<dsp::File>::Enter<dsp::PdevFile> register_pdev;
+static dsp::File::Register::Enter<dsp::PdevFile> register_pdev;
 #endif
 
 #if HAVE_pmdaq
 #include "dsp/PMDAQFile.h"
-static Registry::List<dsp::File>::Enter<dsp::PMDAQFile> register_pmdaq;
+static dsp::File::Register::Enter<dsp::PMDAQFile> register_pmdaq;
 #endif
 
 #if HAVE_puma
 #include "dsp/PuMaFile.h"
-static Registry::List<dsp::File>::Enter<dsp::PuMaFile> register_puma;
+static dsp::File::Register::Enter<dsp::PuMaFile> register_puma;
 #endif
 
 #if HAVE_puma2
 #include "dsp/PuMa2File.h"
-static Registry::List<dsp::File>::Enter<dsp::PuMa2File> register_puma2;
+static dsp::File::Register::Enter<dsp::PuMa2File> register_puma2;
 #endif
 
 #if HAVE_s2
 #include "dsp/S2File.h"
-static Registry::List<dsp::File>::Enter<dsp::S2File> register_s2;
+static dsp::File::Register::Enter<dsp::S2File> register_s2;
 #endif
 
 #if HAVE_sigproc
 #include "dsp/SigProcFile.h"
-static Registry::List<dsp::File>::Enter<dsp::SigProcFile> register_sigproc;
+static dsp::File::Register::Enter<dsp::SigProcFile> register_sigproc;
 #endif
 
 #if HAVE_spigot
 #include "dsp/SpigotFile.h"
-static Registry::List<dsp::File>::Enter<dsp::SpigotFile> register_spigot;
+static dsp::File::Register::Enter<dsp::SpigotFile> register_spigot;
 #endif
 
 #if HAVE_vdif
 #include "dsp/VDIFFile.h"
-static Registry::List<dsp::File>::Enter<dsp::VDIFFile> register_vdif;
+static dsp::File::Register::Enter<dsp::VDIFFile> register_vdif;
 #endif
 
 #if HAVE_wapp
 #include "dsp/WAPPFile.h"
-static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
+static dsp::File::Register::Enter<dsp::WAPPFile> register_wapp;
 #endif
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -189,27 +184,38 @@ static Registry::List<dsp::File>::Enter<dsp::WAPPFile> register_wapp;
 //Tej's new CPSR2 8 bit File Format:
 #if HAVE_CPSR2_8bit
 #include "dsp/EightBitFile.h"
-static Registry::List<dsp::File>::Enter<dsp::EightBitFile> register_eightbitcpsr2;
+static dsp::File::Register::Enter<dsp::EightBitFile> register_eightbitcpsr2;
 #endif
 
 #if HAVE_vsib
 #include "dsp/VSIBFile.h"
-static Registry::List<dsp::File>::Enter<dsp::VSIBFile> register_vsib;
+static dsp::File::Register::Enter<dsp::VSIBFile> register_vsib;
 #endif
 
 #if HAVE_DUMBLBA
 #include "dsp/DumbLBAFile.h"
-static Registry::List<dsp::File>::Enter<dsp::Dumb_LBAFile> file_register_dumblba;
+static dsp::File::Register::Enter<dsp::Dumb_LBAFile> file_register_dumblba;
 #endif
 
 #if HAVE_k5
 #include "dsp/K5File.h"
-static Registry::List<dsp::File>::Enter<dsp::K5File> register_k5;
+static dsp::File::Register::Enter<dsp::K5File> register_k5;
 #endif
 
 /*! MultFile is built in and slow - it tries to parse entire binary files */
 #include "dsp/MultiFile.h"
-static Registry::List<dsp::File>::Enter<dsp::MultiFile> multifile;
+static dsp::File::Register::Enter<dsp::MultiFile> multifile;
 
 #include "dsp/Multiplex.h"
-static Registry::List<dsp::File>::Enter<dsp::Multiplex> multiplex;
+static dsp::File::Register::Enter<dsp::Multiplex> multiplex;
+
+
+
+/*
+  get_register is defined here to ensure that this file is linked
+*/
+dsp::File::Register& dsp::File::get_register ()
+{
+  return Register::get_registry();
+}
+

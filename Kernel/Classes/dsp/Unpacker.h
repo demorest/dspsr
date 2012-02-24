@@ -7,8 +7,8 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Unpacker.h,v $
-   $Revision: 1.31 $
-   $Date: 2011/09/20 20:20:35 $
+   $Revision: 1.32 $
+   $Date: 2012/02/24 20:47:06 $
    $Author: straten $ */
 
 
@@ -80,14 +80,14 @@ namespace dsp {
     //! Reserve the maximum amount of space required in the output
     void reserve ();
 
-    // Declare friends with Registry entries
-    friend class Registry::Entry<Unpacker>;
-
     //! Iterator through the input BitSeries
     class Iterator;
 
     //! Return the iterator for the specified digitizer
     Iterator get_iterator (unsigned idig);
+
+    //! typedef used to simplify template syntax in Unpacker_registry.C
+    typedef Registry::List<Unpacker> Register;
 
    protected:
 
@@ -105,8 +105,8 @@ namespace dsp {
     //! Specialize the Unpacker for the Observation
     virtual void match (const Observation* observation);
 
-    //! List of registered sub-classes
-    static Registry::List<Unpacker> registry;
+    //! Return the list of registered sub-classes
+    static Register& get_register();
 
     //! Provide BitSeries::input attribute access to derived classes
     template<class T>
