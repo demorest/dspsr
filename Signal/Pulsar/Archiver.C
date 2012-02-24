@@ -27,6 +27,7 @@
 #include "Pulsar/Passband.h"
 #include "Pulsar/Telescope.h"
 #include "Pulsar/Receiver.h"
+#include "Pulsar/Backend.h"
 
 #include "Pulsar/FITSHdrExtension.h"
 
@@ -498,9 +499,20 @@ try
   archive-> set_faraday_corrected (false);
 
   // set any available extensions
+
+  Pulsar::Backend* backend = archive -> getadd<Pulsar::Backend>();
+  if (backend)
+  {
+    if (verbose > 2)
+      cerr << "dsp::Archiver::set Pulsar::Backend extension" << endl;
+    set (backend);
+  }
+
+
   // Note, this is now called before the set(Integration,...) call below
   // so that the DigitiserCounts extension gets set up correctly the
   // first time.
+
   Pulsar::dspReduction* dspR = archive -> getadd<Pulsar::dspReduction>();
   if (dspR)
   {

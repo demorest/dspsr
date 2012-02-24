@@ -7,9 +7,9 @@
  ***************************************************************************/
 
 /* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.38 $
-   $Date: 2012/02/23 15:50:12 $
-   $Author: demorest $ */
+   $Revision: 1.39 $
+   $Date: 2012/02/24 20:05:54 $
+   $Author: straten $ */
 
 
 #ifndef __Archiver_h
@@ -29,6 +29,7 @@ namespace Pulsar
   class TwoBitStats;
   class DigitiserCounts;
   class Passband;
+  class Backend;
 }
 
 namespace dsp
@@ -163,20 +164,23 @@ namespace dsp
     void set (Pulsar::Profile* profile, const PhaseSeries* phase,
 	      unsigned ichan, unsigned ipol, unsigned idim);
 
-    //! Set the Pulsar::dspReduction Extension with the dsp::Operation
-    void set (Pulsar::dspReduction* dspR);
+    //! Set the Pulsar::Backend Extension
+    void set (Pulsar::Backend*);
+
+    //! Set the Pulsar::dspReduction Extension
+    void set (Pulsar::dspReduction*);
 
     void set_coherent_dedispersion (Signal::State state,
 				    const Response* response);
 
     //! Set the Pulsar::TwoBitStats Extension with the dsp::TwoBitCorrection
-    void set (Pulsar::TwoBitStats* twobit);
+    void set (Pulsar::TwoBitStats*);
 
     //! Set the Pulsar::DigitiserCounts Extension with the dsp::HistUnpacker
     void set (Pulsar::DigitiserCounts* dig_cnts, unsigned isub=0);
 
     //! Set the Pulsar::Passband Extension with the dsp::Response
-    void set (Pulsar::Passband* pband);
+    void set (Pulsar::Passband*);
 
     //! Convert raw moments to central moments of means
     void raw_to_central (unsigned ichan,

@@ -22,11 +22,28 @@
 #include "Pulsar/DigitiserCounts.h"
 #include "Pulsar/CoherentDedispersion.h"
 #include "Pulsar/Passband.h"
+#include "Pulsar/Backend.h"
 
 #include "Error.h"
 
 using namespace std;
 using namespace Pulsar;
+
+void dsp::Archiver::set (Backend* backend)
+{
+  const char* method = "dsp::Archiver::set Pulsar::Backend";
+
+  if (!profiles)
+    throw Error (InvalidState, method, "Profile data not provided");
+
+  backend->set_name( profiles->get_machine() );
+
+  // dspsr does not correct Stokes V for lower sideband down conversion
+  backend->set_downconversion_corrected( false );
+
+  // dspsr uses the conventional sign for complex phase
+  backend->set_argument( Signal::Conventional );
+}
 
 void dsp::Archiver::set (dspReduction* dspR) try
 {
@@ -39,7 +56,6 @@ void dsp::Archiver::set (dspReduction* dspR) try
     cerr << method << " start" << endl;
 
   dspR->set_software( archive_software );
-  dspR->set_name( profiles->get_machine() );
   dspR->set_scale( profiles->get_scale() );
 
   if (!profiles->has_extensions())
