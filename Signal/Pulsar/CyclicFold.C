@@ -257,7 +257,7 @@ dsp::PhaseSeries* dsp::CyclicFoldEngine::get_profiles ()
 static inline void complex_conj_mult_acc(float *d_out, const float *in0,
     const float *in1) 
 {
-  d_out[0] += in0[0]*in1[0] + in0[0]*in1[0];
+  d_out[0] += in0[0]*in1[0] + in0[1]*in1[1];
   d_out[1] += in0[1]*in1[0] - in0[0]*in1[1];
 }
 
