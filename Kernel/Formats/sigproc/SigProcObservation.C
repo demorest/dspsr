@@ -19,6 +19,14 @@ extern "C" {
 #include "filterbank.h"
 }
 
+// This is probably not really the best practice, but I want
+// to avoid having this require obsys.dat to function.
+//#include "tempo_impl.h" // PSRCHIVE does not install this file
+namespace Tempo
+{
+  extern std::string itoa_code (const std::string& telescope_name);
+}
+
 using namespace std;
 
 dsp::SigProcObservation::SigProcObservation (const char* filename)
@@ -56,6 +64,71 @@ void dsp::SigProcObservation::load (FILE* header)
   load_global ();
 }
 
+static std::string get_sigproc_telescope_name (int _id)
+{
+  // Info from sigproc's aliases.c
+  switch (_id) {
+    case 0:
+      return "Fake";
+    case 1:
+      return "Arecibo";
+    case 2:
+      return "Ooty";
+    case 3:
+      return "Nancay";
+    case 4:
+      return "Parkes";
+    case 5:
+      return "Jodrell";
+    case 6:
+      return "GBT";
+    case 7:
+      return "GMRT";
+    case 8:
+      return "Effelsberg";
+    default:
+      return "unknown";
+      break;
+  }
+
+  return "unknown";
+}
+
+static int get_sigproc_telescope_id (string name)
+{
+  // Use psrchive's routine to convert various aliases into an ITOA
+  // 2-char code, then convert those to sigproc codes using the info
+  // found in sigproc's aliases.c
+  try 
+  {
+    string itoa = Tempo::itoa_code(name);
+
+    // If it's 2-char it might be an ITOA code already
+    if ( itoa.empty() && name.length()==2 ) 
+    {
+      itoa = name;
+    }
+
+    // TODO if it's 1-char it might be a Tempo code..
+
+    // Convert ITOA to sigproc code
+    if      (itoa == "AO") return 1;
+    else if (itoa == "NC") return 3;
+    else if (itoa == "PK") return 4;
+    else if (itoa == "JB") return 5;
+    else if (itoa == "GB") return 6;
+    else if (itoa == "GM") return 7;
+    else if (itoa == "EF") return 8;
+    else return 0;
+  }
+  catch (Error &error)
+  {
+    cerr << "SigProcObservation: Error looking up telescope code" << endl;
+  }
+
+  return 0;
+}
+
 void dsp::SigProcObservation::load_global ()
 {
   // set_receiver (buffer);
@@ -87,7 +160,7 @@ void dsp::SigProcObservation::load_global ()
   set_coordinates (coord);
 
   set_machine ("SigProc");
-  set_telescope ("parkes");
+  set_telescope ( get_sigproc_telescope_name(telescope_id) );
 }
 
 void dsp::SigProcObservation::unload (FILE* header)
@@ -106,14 +179,15 @@ void dsp::SigProcObservation::unload_global ()
   machine_id = 0;
   telescope_id = 0;
 
+  telescope_id = get_sigproc_telescope_id(get_telescope());
+
  /*
   * We need to get all the codes in here, but I am not sure
   * what the DSPSR 'names' for all the hardware is.
   *
   * M.Keith 2008-07-14
   */
-  if(get_telescope().compare("PKS")==0)telescope_id=4;
-  else if(get_machine().compare("BPSR")==0)machine_id=10;
+  if(get_machine().compare("BPSR")==0)machine_id=10;
   else if(get_machine().compare("SCAMP")==0)machine_id=6;
 
   strcpy( source_name, get_source().c_str() );
