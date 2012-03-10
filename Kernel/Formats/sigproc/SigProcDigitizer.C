@@ -38,6 +38,7 @@ class ChannelSort
   const bool swap_band;
   const unsigned nchan;
   const unsigned half_chan;
+  const dsp::Observation* input;
 
 public:
 
@@ -45,7 +46,8 @@ public:
     flip_band ( input->get_bandwidth() > 0 ),
     swap_band ( input->get_swap() ),
     nchan ( input->get_nchan() ),
-    half_chan ( nchan / 2 ) { }
+    half_chan ( nchan / 2 ),
+    input ( input ) { }
 
   //! Return the mapping from output channel to input channel
   inline unsigned operator () (unsigned out_chan)
@@ -53,7 +55,9 @@ public:
     unsigned in_chan = out_chan;
     if (flip_band)
       in_chan = (nchan-in_chan-1);
-    if (swap_band)
+    if (input->get_nsub_swap() > 1) 
+      in_chan = input->get_unswapped_ichan(out_chan);
+    else if (swap_band)
       in_chan = (in_chan+half_chan)%nchan;
     return in_chan;
   }
@@ -78,7 +82,10 @@ void dsp::SigProcDigitizer::pack ()
   output->set_swap( false );
 
   if (nbit == -32)
+  {
     pack_float ();
+    return;
+  }
 
   // the number of frequency channels
   const unsigned nchan = input->get_nchan();
@@ -277,6 +284,7 @@ void dsp::SigProcDigitizer::pack_float () try
       for (uint64_t idat=0; idat < ndat; idat++)
 	outptr[idat*nchan + ichan] = inptr[idat];
     }
+    return;
   }
 
   default:
