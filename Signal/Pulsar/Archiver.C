@@ -685,17 +685,19 @@ try
     }
   }
 
-  // Add DigitiserCounts histograms for this subint.
-  Pulsar::Archive *arch = const_cast<Pulsar::Archive *> (
-      integration -> expert() -> get_parent() );
-  Pulsar::DigitiserCounts *dcnt = arch -> getadd<Pulsar::DigitiserCounts>();
-  if (dcnt)
+  if (hist_unpacker)
   {
-    if (verbose > 2)
-      cerr << "dsp::Archiver::set Pulsar::DigitiserCounts extension" << endl;
-    set (dcnt, isub);
+    // Add DigitiserCounts histograms for this subint.
+    Pulsar::Archive *arch = const_cast<Pulsar::Archive *> 
+      ( integration -> expert() -> get_parent() );
+    Pulsar::DigitiserCounts *dcnt = arch -> getadd<Pulsar::DigitiserCounts>();
+    if (dcnt)
+    {
+      if (verbose > 2)
+	cerr << "dsp::Archiver::set Pulsar::DigitiserCounts extension" << endl;
+      set (dcnt, isub);
+    }
   }
-
 }
 
 catch (Error& error)
