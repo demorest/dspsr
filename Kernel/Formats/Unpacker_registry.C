@@ -213,9 +213,12 @@ static dsp::Unpacker::Register::Enter<dsp::Dumb_LBAUnpacker> unpacker_register_d
 static dsp::Unpacker::Register::Enter<dsp::K5TwoBitCorrection>  k5;
 #endif
 
+/*
+  Generic eight-bit unpacker is used if no other eight-bit unpacker steps up
+*/
 
-
-
+#include "dsp/GenericEightBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::GenericEightBitUnpacker> gen8bit;
 
 /*
   get_registry is defined here to ensure that this file is linked
