@@ -50,6 +50,9 @@ string dsp::DADAFile::get_header (const char* filename)
       throw Error (FailedSys, "dsp::DADAFile::get_header",
 		   "fread (nbyte=%u)", hdr_size);
 
+    // ensure that text is null-terminated before calling ascii_header_get
+    header[ hdr_size-1 ] = '\0';
+
     /* Get the header size */
     if (ascii_header_get (header, "HDR_SIZE", "%u", &hdr_size) != 1)
       throw Error (InvalidState, "dsp::DADAFile::get_header",
