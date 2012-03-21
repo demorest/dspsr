@@ -166,6 +166,15 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
   {
     if (verbose)
       cerr << "dsp::DataSeries::resize Memory::allocate (" << require << ")" << endl;
+
+    if (size_t(require) != require)
+    {
+      Error error (InvalidState, "dsp::DataSeries::resize");
+      error << "required bytes=" << require << " (64-bit unsigned) != "
+            << size_t(require) << " (" << sizeof(size_t)*8 << "-bit size_t)";
+      throw error;
+    }
+
     buffer = (unsigned char*) memory->do_allocate (require);
 
     if (verbose)
