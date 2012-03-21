@@ -19,7 +19,7 @@ using namespace std;
  *
  ***************************************************************************/
 
-void* CUDA::PinnedMemory::do_allocate (unsigned nbytes)
+void* CUDA::PinnedMemory::do_allocate (size_t nbytes)
 {
   DEBUG("CUDA::PinnedMemory::allocate cudaMallocHost (" << nbytes << ")");
   void* ptr = 0;
@@ -44,7 +44,7 @@ void CUDA::PinnedMemory::do_free (void* ptr)
  *
  ***************************************************************************/
 
-void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
+void* CUDA::DeviceMemory::do_allocate (size_t nbytes)
 {
   DEBUG("CUDA::DeviceMemory::allocate cudaMalloc (" << nbytes << ")");
   void* ptr = 0;
@@ -61,7 +61,7 @@ void* CUDA::DeviceMemory::do_allocate (unsigned nbytes)
 }
 
 
-void CUDA::DeviceMemory::do_zero (void* ptr, unsigned nbytes)
+void CUDA::DeviceMemory::do_zero (void* ptr, size_t nbytes)
 {
   DEBUG("CUDA::DeviceMemory::do_zero ptr=" << ptr << " nbytes=" << nbytes);
 
@@ -101,7 +101,7 @@ void CUDA::DeviceMemory::do_copy (void* to, const void* from, size_t bytes)
 
 
 
-void* CUDA::SharedPinnedMemory::do_allocate (unsigned nbytes)
+void* CUDA::SharedPinnedMemory::do_allocate (size_t nbytes)
 {
   DEBUG("CUDA::SharedPinnedMemory::allocate cudaMallocHost (" << nbytes << ")");
   void* ptr = 0;

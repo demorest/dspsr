@@ -19,7 +19,7 @@ namespace CUDA
   class PinnedMemory : public dsp::Memory
   {
   public:
-    void* do_allocate (unsigned nbytes);
+    void* do_allocate (size_t nbytes);
     void do_free (void*);
   };
 
@@ -29,10 +29,10 @@ namespace CUDA
   public:
     DeviceMemory (cudaStream_t _stream = 0) { stream = _stream; }
 
-    void* do_allocate (unsigned nbytes);
+    void* do_allocate (size_t nbytes);
     void do_free (void*);
     void do_copy (void* to, const void* from, size_t bytes);
-    void do_zero (void*, unsigned);
+    void do_zero (void*, size_t);
     bool on_host () const { return false; }
 
     cudaStream_t get_stream () { return stream; }
@@ -44,7 +44,7 @@ namespace CUDA
   class SharedPinnedMemory : public dsp::Memory
   {
   public:
-    void * do_allocate (unsigned nbytes);
+    void * do_allocate (size_t nbytes);
     void do_free (void*);
   };
 }

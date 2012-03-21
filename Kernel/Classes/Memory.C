@@ -14,7 +14,7 @@
 
 dsp::Memory* dsp::Memory::manager = 0;
 
-void* dsp::Memory::do_allocate (unsigned nbytes)
+void* dsp::Memory::do_allocate (size_t nbytes)
 {
   DEBUG("dsp::Memory::allocate (" << nbytes << ")");
   return malloc16 (nbytes);
@@ -26,7 +26,7 @@ void dsp::Memory::do_free (void* ptr)
   free16 (ptr);
 }
 
-void dsp::Memory::do_zero (void* ptr, unsigned nbytes)
+void dsp::Memory::do_zero (void* ptr, size_t nbytes)
 {
   memset (ptr, 0, nbytes);
 }
@@ -37,7 +37,7 @@ void dsp::Memory::do_copy (void* to, const void* from, size_t bytes)
   memcpy (to, from, bytes);
 }
 
-void* dsp::Memory::allocate (unsigned nbytes)
+void* dsp::Memory::allocate (size_t nbytes)
 {
   return get_manager()->do_allocate (nbytes);
 }

@@ -10,6 +10,7 @@
 #define __dsp_Memory_h_
 
 #include "Reference.h"
+#include <inttypes.h>
 
 namespace dsp {
 
@@ -20,14 +21,14 @@ namespace dsp {
     static Memory* manager;
 
   public:
-    static void* allocate (unsigned nbytes);
+    static void* allocate (size_t nbytes);
     static void free (void*);
     static void set_manager (Memory*);
     static Memory* get_manager ();
 
-    virtual void* do_allocate (unsigned nbytes);
+    virtual void* do_allocate (size_t nbytes);
     virtual void  do_free (void*);
-    virtual void  do_zero (void* ptr, unsigned nbytes);
+    virtual void  do_zero (void* ptr, size_t nbytes);
     virtual void  do_copy (void* to, const void* from, size_t bytes);
     virtual bool  on_host () const { return true; }
   };
