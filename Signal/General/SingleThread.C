@@ -287,7 +287,7 @@ void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
       dump->set_input( xform->get_input() ) ;
       dump->set_output_binary (true);
 
-      operations.push_back (dump);
+      operations.insert (operations.begin()+iop, dump);
       iop++;
     }
   }
