@@ -294,6 +294,17 @@ void dsp::CyclicFoldEngine::fold ()
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::fold entering fold loop" << endl;
 
+  // Ignore blocks which don't contain enough data (avoids
+  // triggering the ibin<nbin assertion below).
+  if (ndat_fold <= nlag)
+  {
+    if (parent->verbose)
+      cerr << "dsp::CyclicFoldEngine::fold ignoring a short data block "
+        << "(ndat_fold=" << ndat_fold << " <= nlag=" << nlag << ")"
+        << endl;
+    return;
+  }
+
   if (in->get_npol() == 2) 
   {
 
@@ -390,7 +401,7 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       {
         float *lags2 = get_lagdata_ptr(ichan, 2, ibin);
         float *lags3 = get_lagdata_ptr(ichan, 3, ibin);
-        for (unsigned ilag=0; ilag<nlag; ilag+=2) 
+        for (unsigned ilag=0; ilag<2*nlag; ilag+=2) 
         {
           float pos_r = lags2[ilag];
           float pos_i = lags2[ilag+1];
@@ -398,8 +409,8 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
           float neg_i = lags3[ilag+1];
           lags2[ilag]   = 0.5*(pos_r + neg_r);
           lags2[ilag+1] = 0.5*(pos_i - neg_i);
-          lags3[ilag]   = 0.5*(pos_r - neg_r);
-          lags3[ilag+1] = 0.5*(pos_i + neg_i);
+          lags3[ilag]   = 0.5*(pos_i + neg_i);
+          lags3[ilag+1] = -0.5*(pos_r - neg_r);
         }
       }
     }
