@@ -1,6 +1,14 @@
 #! /bin/sh
 
-psrchive=`which psrchive 2> /dev/null`
+if test x"$1" != x ; then
+	psrchive_cmd=$1
+else
+	psrchive_cmd=psrchive
+fi
+
+psrchive=`which $psrchive_cmd 2> /dev/null`
+
+echo "Using $psrchive"
 
 if test -z $psrchive; then
 
