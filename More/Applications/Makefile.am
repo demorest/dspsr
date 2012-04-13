@@ -8,6 +8,7 @@ searchplot_LDADD = $(LDADD) @PGPLOT_LIBS@
 LDADD = $(top_builddir)/More/Plotting/libPlotting.la \
 				$(top_builddir)/Kernel/libdspbase.la \
 				$(top_builddir)/Signal/General/libdspdsp.la \
+				$(top_builddir)/Signal/Statistics/libdspstats.la \
 				$(top_builddir)/Kernel/Classes/libClasses.la
 
 include $(top_srcdir)/config/Makefile.include
