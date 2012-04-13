@@ -1,5 +1,5 @@
 
-SUBDIRS	= config Kernel Signal Management
+SUBDIRS	= config Kernel Signal Management More
 
 if HAVE_PYTHON
 SUBDIRS += python

@@ -187,6 +187,9 @@ AC_CONFIG_FILES([Makefile
 		Management/dspsr_ldflags
 		Management/dspsr_cflags
 		Management/release.csh
+    More/Makefile
+    More/Plotting/Makefile
+    More/Applications/Makefile
 		python/Makefile])
 
 AC_OUTPUT
