@@ -1,6 +1,7 @@
 #! /bin/csh -f
 
-echo "Running CVS update ..."
+echo "Running update ..."
 
-cvs -z3 update -APd |& tee update.log | grep -v '^?'
+git pull origin master |& tee update.log
 
+date >> update.log
