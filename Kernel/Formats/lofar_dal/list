@@ -1,0 +1,118 @@
+
+    uint64_t ndat
+
+stokes->nofSamples
+
+    //! Dimension of each datum
+    /*! This is private so that classes that inherit from Observation
+      that have nbit%8 != 0 can enforce set_ndim's so that ndat*ndim
+      is always an integer number of bytes */
+
+    unsigned ndim;
+
+complexVoltages();
+
+    //! Number of frequency channels across bandwidth
+    unsigned nchan;
+
+stokes->dims()[1]  ... check that coord.coordinateTypes()[1] == "Spectral"
+
+    //! Number of polarizations
+    unsigned npol;
+
+nofStokes();
+AND
+complexVoltages();
+
+    //! Number of bits per value
+    unsigned nbit;
+
+32
+
+    //! The calfrequency
+    double calfreq;
+
+0
+
+    //! Lower sideband
+    char dual_sideband;
+
+TBD (most likely false)
+
+    //! Telescope name
+    std::string telescope;
+
+	telescope
+
+    //! Receiver name
+    std::string receiver;
+
+	antennaSet
+
+    //! Source name.  If a pulsar, should be J2000
+    std::string source;
+
+	target
+
+    //! Centre frequency of band-limited signal in MHz
+    double centre_frequency;
+
+observationFrequencyCenter
+OR
+beamFrequencyCenter
+
+    //! Bandwidth of signal in MHz (-ve = lsb; +ve = usb)
+    double bandwidth;
+
+bandwidth
+OR
+subbandWidth
+
+    //! Type of signal source (Pulsar, CAL, etc.)
+    Signal::Source type;
+
+TBD
+
+    //! State of the signal (Full Stokes, Total Intensity, etc.)
+    Signal::State state;
+
+nofStokes();
+AND
+complexVoltages();
+
+    //! Type of receiver feeds (Linear or Circular)
+    Signal::Basis basis;
+
+Linear
+
+    //! Time samples per second in Hz
+    double rate;
+
+clockRate
+OR
+samplingRate
+
+    //! Start time of the leading edge of the first time sample
+    MJD start_time;
+    
+expTimeStartUTC
+observationStartUTC
+
+    //! Observation identifier
+    std::string identifier;
+
+observationID
+
+    //! Observation mode
+    std::string mode;
+
+    //! Instrument used to record signal
+    std::string machine;
+
+LOFAR-BF
+
+    //! Coordinates of the source
+    sky_coord coordinates;
+
+beam.pointRA
+beam.pointDEC
