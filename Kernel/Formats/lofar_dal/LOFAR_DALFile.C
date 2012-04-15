@@ -29,13 +29,22 @@ dsp::LOFAR_DALFile::~LOFAR_DALFile ( )
   close ();
 }
 
-bool dsp::LOFAR_DALFile::is_valid (const char* filename) const
+bool dsp::LOFAR_DALFile::is_valid (const char* filename) const try
 {
+  DAL::BF_File* bf_file = new DAL::BF_File (filename);
 
-	
+  // memory leak
+  // for some reason, deleting the file causes a segfault
+  // delete bf_file;
+
   return true;
 }
-
+catch (HDF5Exception& error)
+{
+  if (verbose)
+    cerr << "dsp::LOFAR_DALFile::is_valid exception " << error.what() << endl;
+  return false;
+}
 
 void dsp::LOFAR_DALFile::open_file (const char* filename)
 {
