@@ -2,7 +2,7 @@
 
 if ( "$1" == "-h" || "$1" == "--help" ) then
   echo
-  echo "developer: updates CVS administration files with developer name"
+  echo "developer: updates Git administration files with developer name"
   echo
   echo "usage:"
   echo "  Management/developer USER"
@@ -13,11 +13,13 @@ if ( "$1" == "-h" || "$1" == "--help" ) then
   exit
 endif
 
-set developer = :pserver:anonymous
+set root = "dspsr.git.sourceforge.net/gitroot/dspsr/dspsr"
 
-if ( "$1" != "" ) set developer = $1
-
-echo "Changing developer name to $developer"
-
-find . -name Root | awk -v name=$developer '{print "echo "name"@dspsr.cvs.sourceforge.net:/cvsroot/dspsr > "$1}' | csh -f
+if ( "$1" == "" ) then
+  echo "Git repository access changed to anonymous"
+  git config remote.origin.url git://$root
+else
+  echo "Git repository developer name changed to $1"
+  git config remote.origin.url ssh://$1@$root
+endif
 
