@@ -165,6 +165,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/guppi/Makefile
 		Kernel/Formats/lbadr/Makefile
 		Kernel/Formats/lbadr64/Makefile
+		Kernel/Formats/lofar_dal/Makefile
 		Kernel/Formats/spda1k/Makefile
 		Kernel/Formats/mark4/Makefile
 		Kernel/Formats/mark5/Makefile
