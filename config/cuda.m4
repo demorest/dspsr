@@ -33,7 +33,7 @@ AC_DEFUN([SWIN_LIB_CUDA],
 
     if test -x $cuda_nvcc; then
 
-      CUDA_NVCC="$cuda_nvcc \$(DEFAULT_INCLUDES) \$(INCLUDES) \$(AM_CPPFLAGS) \$(CPPFLAGS)"
+      CUDA_NVCC="$cuda_nvcc \$(CUDA_NVCC_FLAGS) \$(DEFAULT_INCLUDES) \$(INCLUDES) \$(AM_CPPFLAGS) \$(CPPFLAGS)"
 
       SWIN_PACKAGE_FIND([cuda],[cuda_runtime.h])
       SWIN_PACKAGE_TRY_COMPILE([cuda],[#include <cuda_runtime.h>])
@@ -54,7 +54,7 @@ AC_DEFUN([SWIN_LIB_CUDA],
 
     AC_MSG_CHECKING([for CUDA FFT installation])
 
-    SWIN_PACKAGE_FIND([cufft],[cuda_runtime.h])
+    SWIN_PACKAGE_FIND([cufft],[cufft.h])
     SWIN_PACKAGE_TRY_COMPILE([cufft],[#include <cufft.h>])
 
     SWIN_PACKAGE_FIND([cufft],[libcufft.*])
