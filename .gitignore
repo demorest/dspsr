@@ -105,5 +105,7 @@ config/x11.m4
 configure
 libtool
 local_include/
+python/dspsr.py
+python/dspsr_wrap.cxx
 stamp-h1
 update.log
