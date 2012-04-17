@@ -7,7 +7,6 @@
 *.libs
 Makefile.in
 Makefile *.o
-
 Kernel/Applications/Makefile
 Kernel/Applications/load_bits
 Kernel/Classes/Makefile
@@ -109,3 +108,8 @@ python/dspsr.py
 python/dspsr_wrap.cxx
 stamp-h1
 update.log
+/.project
+/*.log
+/*.fits
+/*.dat
+/*.tim

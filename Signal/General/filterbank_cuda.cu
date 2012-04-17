@@ -7,11 +7,13 @@
  *
  ***************************************************************************/
 
-// #define _DEBUG 1
+ #define _DEBUG 1
 
 #include "dsp/filterbank_engine.h"
 #include "dsp/filterbank_cuda.h"
 #include "debug.h"
+#include <iostream>
+using namespace std;
 
 void check_error (const char*);
 
@@ -113,7 +115,7 @@ __global__ void ncopy (float2* output_data, unsigned output_stride,
 		       const float2* input_data, unsigned input_stride,
 		       unsigned to_copy)
 {
-  output_data += blockIdx.y * output_stride;
+  output_data += blockIdx.y * output_stride; //blockIdx.y = nchan these will both be zero for inchan=outchan
   input_data += blockIdx.y * input_stride;
 
   unsigned index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -141,8 +143,8 @@ void filterbank_cuda_perform (filterbank_engine* engine,
 
     CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
 
-    if (engine->nchan == 1)
-      return;
+//    if (engine->nchan == 1) // this is wrong
+//      return;
 
     if (cuda->real_to_complex)
     {
@@ -154,6 +156,8 @@ void filterbank_cuda_perform (filterbank_engine* engine,
 
       CHECK_ERROR ("CUDA::FilterbankEngine::perform realtr");
     }
+  } else {
+	  cerr << "CUDA::FilterbankEngine::perform: NO INPUT!" << endl;
   }
 
   blocks = data_size / threads;
@@ -163,13 +167,14 @@ void filterbank_cuda_perform (filterbank_engine* engine,
     multiply<<<blocks,threads,0,cuda->stream>>> (cscratch, cuda->d_kernel);
     CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply");
   }
-
-  cufftExecC2C (cuda->plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
+  cufftExecC2C (cuda->plan_fwd, cscratch, cscratch, CUFFT_INVERSE); // changed tthis to fwd... we're really recrating convolution..
 
   CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD");
 
-  if (!engine->output)
+  if (!engine->output){
+	  cerr << "CUDA::FilterbankEngine::perform NO OUTPUT!" << endl;
     return;
+  }
 
   const float2* input = cscratch + engine->nfilt_pos;
   unsigned input_stride = cuda->bwd_nfft;
@@ -184,16 +189,18 @@ void filterbank_cuda_perform (filterbank_engine* engine,
     if (engine->nkeep % threads.x)
       blocks.x ++;
 
-    blocks.y = engine->nchan;
+    blocks.y = engine->nchan; // this will be 1 for input chan == output chan
     
     // divide by two for complex data
     float2* output_base = (float2*) engine->output;
     unsigned output_stride = engine->output_span / 2;
+    cerr << "blocks.x=" << blocks.x << " blocks.y=" << blocks.y << endl;
+    cerr << "output_base=" << output_base << " output stride=" << output_stride << " input=" << input << " input stride=" << input_stride << " tocopy=" << to_copy << endl;
     
     ncopy<<<blocks,threads,0,cuda->stream>>> (output_base, output_stride,
 					      input, input_stride, to_copy);
   }
   
-  if (cuda->verbose)
-    check_error ("CUDA::FilterbankEngine::perform");
+//  if (cuda->verbose)
+    check_error ("CUDA::FilterbankEngine::perform at the end");
 }

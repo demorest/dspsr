@@ -45,6 +45,7 @@ namespace CUDA
     void setup (dsp::Filterbank*);
     void perform (const float* in);
     void finish ();
+    void sendKernel(dsp::Filterbank* filterbank, unsigned _ichan);
   };
 
 }

@@ -7,7 +7,7 @@
  *
  ***************************************************************************/
 
-// #define _DEBUG 1
+ #define _DEBUG 1
 
 #include "dsp/FilterbankCUDA.h"
 #include "debug.h"
@@ -35,12 +35,25 @@ CUDA::FilterbankEngine::FilterbankEngine (cudaStream_t _stream)
 
 CUDA::FilterbankEngine::~FilterbankEngine ()
 {
+	cerr << "CUDA::FilterbankEngine::~FilterbankEngine" <<endl;
+	if (d_CN) {
+		cudaFree(d_CN);
+		cerr << "CUDA::FilterbankEngine::~FilterbankEngine freed CN" << endl;
+	}
+	if (d_SN) {
+		cudaFree(d_SN);
+		cerr << "CUDA::FilterbankEngine::~FilterbankEngine freed SN" << endl;
+	}
+	if (d_kernel) {
+		cudaFree(d_kernel);
+		cerr << "CUDA::FilterbankEngine::~FilterbankEngine freed kernel" << endl;
+	}
 }
 
 void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 {
   bwd_nfft = filterbank->get_freq_res ();
-  nchan = filterbank->get_nchan ();
+  nchan = filterbank->get_nchan () / filterbank->get_input()->get_nchan(); // GJ added input.nchan
 
   real_to_complex = (filterbank->get_input()->get_state() == Signal::Nyquist);
 
@@ -67,13 +80,17 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   cufftSetStream (plan_fwd, stream);
 
   DEBUG("CUDA::FilterbankEngine::setup fwd FFT plan set");
-  if (nchan > 1)
+
+  if (nchan >= 1)
   {
-    cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol);
+    if(cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan*npol)) {
+    		      throw Error (InvalidState, "dsp::FilterbankEngine:setup bad bwd_fft plan"
+    		                   );
+    		  }
     cufftSetStream (plan_bwd, stream);
   }
 
-  DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set");
+  DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set=" << plan_bwd);
 
   if (filterbank->has_response())
   {
@@ -81,7 +98,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     cudaMalloc ((void**)&d_kernel, mem_size);
  
     // copy the kernel accross
-    const float* kernel = filterbank->get_response()->get_datptr(0,0);
+    const float* kernel = filterbank->get_response()->get_datptr(0,0); // how do we deal with this, we need to get the right kernel
 
     cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
   }
@@ -116,10 +133,25 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 }
 
 
+void CUDA::FilterbankEngine::sendKernel(dsp::Filterbank* filterbank, unsigned _ichan)
+{
+	unsigned data_size = nchan * bwd_nfft * 2;
+	unsigned mem_size = data_size * sizeof(cufftReal);
 
+	if (filterbank->has_response())
+	{
+		cerr << "have response, sending kernel" << endl;
+	// copy the kernel accross
+	const float* kernel = filterbank->get_response()->get_datptr(_ichan,0);
+
+	cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
+	}
+
+}
 void CUDA::FilterbankEngine::finish ()
 {
   //check_error ("CUDA::FilterbankEngine::finish");
+	cerr << "CUDA::FilterbankEngine::finish" << endl;
 }
 
 
@@ -137,6 +169,7 @@ void CUDA::FilterbankEngine::perform (const float* in)
     The implicit casts performed on the following line will work.
     The relative offsets with respect to this are applied.
   */
+  cerr << "perform: engine nchan=" << nchan << endl;
 
   filterbank_cuda_perform (this, this, in);
 }

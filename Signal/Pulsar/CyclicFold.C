@@ -11,7 +11,7 @@
 #include "FTransform.h"
 
 #include <assert.h>
-
+#include <fstream>
 using namespace std;
 
 dsp::CyclicFold::CyclicFold()
@@ -169,9 +169,18 @@ dsp::CyclicFoldEngine::CyclicFoldEngine()
 
 dsp::CyclicFoldEngine::~CyclicFoldEngine()
 {
+	if (parent->verbose) {
+		cerr << "dsp::CyclicFoldEngine::~CyclicFoldEngine freeing binplan" <<endl;
+	}
   if (binplan[0]) delete [] binplan[0];
   if (binplan[1]) delete [] binplan[1];
+  if (parent->verbose) {
+	  cerr << "dsp::CyclicFoldEngine::~CyclicFoldEngine freeing lagdata" <<endl;
+  }
   if (lagdata) delete [] lagdata;
+  if (parent->verbose) {
+	  cerr << "dsp::CyclicFoldEngine::~CyclicFoldEngine done" <<endl;
+  }
 }
 
 void dsp::CyclicFoldEngine::set_nlag(unsigned _nlag) 
@@ -234,6 +243,9 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
 
 void dsp::CyclicFoldEngine::zero ()
 {
+	if (parent->verbose) {
+		cerr << "dsp::CyclicFoldEngine::zero: zeroing profiles " << endl;
+	}
   get_profiles()->zero();
   if (lagdata && lagdata_size>0) 
     memset(lagdata, 0, sizeof(float)*lagdata_size);
@@ -291,8 +303,10 @@ void dsp::CyclicFoldEngine::fold ()
 
   setup();
 
-  if (parent->verbose)
-    cerr << "dsp::CyclicFoldEngine::fold entering fold loop" << endl;
+  if (parent->verbose) {
+	  cerr << "dsp::CyclicFoldEngine::fold entering fold loop" << endl;
+	  cerr << "idat_start=" << idat_start << " ndat_fold=" << ndat_fold << endl;
+  }
 
   // Ignore blocks which don't contain enough data (avoids
   // triggering the ibin<nbin assertion below).
@@ -312,6 +326,20 @@ void dsp::CyclicFoldEngine::fold ()
     {
       const float *pol0_in = in->get_datptr(ichan,0) + ndim*idat_start;
       const float *pol1_in = in->get_datptr(ichan,1) + ndim*idat_start;
+
+#if 0
+      ofstream fbin;
+      fbin.open("cpuprefold.dat", ios::binary | ios::app);
+      for (int nn=0; nn < ndat_fold*ndim; nn++){
+    	  fbin.write((char *)(&(pol0_in[nn])),sizeof(float));
+      }
+      for (int nn=0; nn < ndat_fold*ndim; nn++){
+    	  fbin.write((char *)(&(pol1_in[nn])),sizeof(float));
+      }
+      cerr << "done, dumping precyclic cpu, closing files" << endl;
+      fbin.close();
+#endif
+
       for (uint64_t idat=0; idat<ndat_fold-nlag; idat++) 
       {
         for (unsigned ilag=0; ilag<nlag; ilag++) 
@@ -401,7 +429,7 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       {
         float *lags2 = get_lagdata_ptr(ichan, 2, ibin);
         float *lags3 = get_lagdata_ptr(ichan, 3, ibin);
-        for (unsigned ilag=0; ilag<2*nlag; ilag+=2) 
+        for (unsigned ilag=0; ilag<nlag; ilag+=2) 
         {
           float pos_r = lags2[ilag];
           float pos_i = lags2[ilag+1];
@@ -409,12 +437,23 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
           float neg_i = lags3[ilag+1];
           lags2[ilag]   = 0.5*(pos_r + neg_r);
           lags2[ilag+1] = 0.5*(pos_i - neg_i);
-          lags3[ilag]   = 0.5*(pos_i + neg_i);
-          lags3[ilag+1] = -0.5*(pos_r - neg_r);
+          lags3[ilag]   = 0.5*(pos_r - neg_r);
+          lags3[ilag+1] = 0.5*(pos_i + neg_i);
         }
       }
     }
   }
+#endif
+
+#if 0
+  ofstream fbin;
+  fbin.open("cyclic.dat", ios::binary | ios::app);
+  for (int nn=0; nn < lagdata_size; nn++){
+	  fbin.write((char *)(&(lagdata[nn])),sizeof(float));
+
+  }
+  cerr << "done, dumping cyclic, closing files" << endl;
+  fbin.close();
 #endif
 
   for (unsigned ibin=0; ibin<nbin; ibin++) 

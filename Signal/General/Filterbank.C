@@ -17,6 +17,10 @@
 
 #include "FTransform.h"
 
+#include <fstream>
+#include <cuda_runtime.h>
+
+
 using namespace std;
 
 // #define _DEBUG 1
@@ -49,7 +53,7 @@ void dsp::Filterbank::prepare ()
 */
 void dsp::Filterbank::make_preparations ()
 {
-  if (nchan <= input->get_nchan() )
+  if (nchan < input->get_nchan() )
     throw Error (InvalidState, "dsp::Filterbank::make_preparations",
 		 "output nchan=%d <= input nchan=%d",
 		 nchan, input->get_nchan());
@@ -112,7 +116,8 @@ void dsp::Filterbank::make_preparations ()
       norm = "normalized";
 	
     cerr << "dsp::Filterbank::make_preparations n_fft=" << n_fft 
-         << " freq_res=" << freq_res << " fft::norm=" << norm << endl;
+         << " freq_res=" << freq_res << " fft::norm=" << norm
+         << " nchan_subband=" << nchan_subband << endl;
   }
 
   if (FTransform::get_norm() == FTransform::unnormalized)
@@ -411,10 +416,10 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
 }
 
 void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output, 
-                   uint64_t out_offset, unsigned ipol = 0)
+                   uint64_t out_offset, unsigned ichan, unsigned ipol = 0)
 {
-  engine->nchan = output->get_nchan();
-  engine->output = output->get_datptr (0, ipol) + out_offset;
+//  engine->nchan = output->get_nchan(); // this is causing problems because it conflicts with what's really needed (output nchan/ input nchan)
+  engine->output = output->get_datptr (ichan, ipol) + out_offset; //adding ichan here, was 0 before
   engine->output_span = 
     output->get_datptr (1, ipol) - output->get_datptr (0, ipol);
 }
@@ -496,7 +501,11 @@ void dsp::Filterbank::filterbank ()
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation enter main loop" <<
-      " cpol=" << cross_pol << " npol=" << input->get_npol() << endl;
+      " cpol=" << cross_pol << " npol=" << input->get_npol() <<
+      " npart=" << npart  << endl;
+  if (engine) {
+	  cerr << "have engine"<<endl;
+  }
 
   // number of floats to step between input to filterbank
   const unsigned long in_step = nsamp_step * input->get_ndim();
@@ -524,48 +533,131 @@ void dsp::Filterbank::filterbank ()
   uint64_t* data_into = NULL;
   uint64_t* data_from = NULL;
 
+  /*
+  cerr << "dumping time domain data" << endl;
+  cudaError error;
+
+  error = cudaThreadSynchronize();
+  if (error != cudaSuccess) {
+    throw Error (InvalidState, "dsp::Filterbank threadsync1",
+                 cudaGetErrorString (error));
+  } else {
+	  cerr << "sync1 successful!" << endl;
+  }
+  for (int ichan=0;ichan<input->get_nchan();ichan++) {
+	  cerr << "chan: " << ichan << " pol 0: " << input->get_datptr(ichan,0)
+			  << " pol 1: " << input->get_datptr(ichan,1) << endl;
+  }
+  size_t tempsize = npart*in_step*2*sizeof(float)*nchan*2;
+  cerr << "copying " << tempsize << " bytes" << endl;
+  float *temp = (float*)malloc(tempsize);
+
+  error = cudaMemcpy(temp,input->internal_get_buffer (),tempsize,cudaMemcpyDeviceToHost);
+
+  if (error != cudaSuccess) {
+    throw Error (InvalidState, "dsp::Filterbank debug copy",
+                 cudaGetErrorString (error));
+  } else {
+	  cerr << "copy was successful!" << endl;
+  }
+  error = cudaThreadSynchronize();
+  if (error != cudaSuccess) {
+    throw Error (InvalidState, "dsp::Filterbank threadsync2",
+                 cudaGetErrorString (error));
+  } else {
+	  cerr << "sync2 successful!" << endl;
+  }
+  //ofstream fout;
+  //fout.open("cudafb.txt");
+  ofstream fbin;
+  fbin.open("cudainput.dat", ios::binary);
+
+  for (int nn=0; nn < tempsize/(2*sizeof(float)); nn++){
+	  if (nn < 100) {
+		  cerr << temp[nn*2] << " " <<temp[nn*2+1] <<endl;
+	  }
+//			  fout << temp[2*nn] << " , " << temp[2*nn+1] << "\n";
+	  fbin.write((char *)(&(temp[2*nn])),2*sizeof(float));
+
+  }
+  cerr << "done, closing files" << endl;
+  //fout.close();
+  fbin.close();
+  free(temp);
+  */
+
   if (engine)
   {
     engine->scratch = c_spectrum[0];
-    engine->nchan = nchan;
+//    engine->nchan = nchan;
     engine->nfilt_pos = nfilt_pos;
     engine->freq_res = freq_res;
     engine->nkeep = nkeep;
   }
+  cerr << "output ndat=" <<output->get_ndat() << " output ptr=" << output->get_datptr(0,0) << endl;
 
   for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
   {
     if (engine)
     {
-
+    	cerr << "have engine for channel " << input_ichan << endl;
       // /////////////////////////////////////////////////////////////////////
       //
       // PERFORM FILTERBANK VIA ENGINE (e.g. on GPU)
       //
       // /////////////////////////////////////////////////////////////////////
 
+    	cerr << "sending kernel" <<endl;
+    	engine->sendKernel(this, input_ichan);
       for (ipol=0; ipol < npol; ipol++)
       {
 	for (ipart=0; ipart<npart; ipart++)
 	{
-#ifdef _DEBUG
-	  cerr << "ipart=" << ipart << endl;
-#endif
+//#ifdef _DEBUG
+	  cerr << "ichan=" << input_ichan << " ipol="<< ipol << " ipart=" << ipart << endl;
+//#endif
 	  in_offset = ipart * in_step;
 	  out_offset = ipart * out_step;
       
 	  time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, ipol)) + in_offset;
 
-	  set_pointers (engine, output, out_offset, ipol);
+
+	  set_pointers (engine, output, out_offset, input_ichan, ipol); // added input_ichan here
 	  
 	  engine->perform (time_dom_ptr);
+#if 0
+	  if ((ipart == (npart-1)) && (ipol == 0) && (input_ichan == 1)){
+		  cerr << "got to part=" << ipart <<endl;
+		  size_t tempsize = npart*nkeep*2*sizeof(float);
+		  float *temp = (float*)malloc(tempsize);
+		  cudaError error;
+		  error = cudaMemcpy(temp,output->get_datptr (input_ichan, ipol),tempsize,cudaMemcpyDeviceToHost);
+		  if (error != cudaSuccess) {
+		      throw Error (InvalidState, "dsp::Filterbank debugcopy",
+		                   cudaGetErrorString (error));
+		  }
+		  //ofstream fout;
+		  //fout.open("cudafb.txt");
+		  ofstream fbin;
+		  fbin.open("cudafb.dat", ios::binary | ios::app);
+		  for (int nn=0; nn < tempsize/(2*sizeof(float)); nn++){
+//			  fout << temp[2*nn] << " , " << temp[2*nn+1] << "\n";
+			  fbin.write((char *)(&(temp[2*nn])),2*sizeof(float));
 
+		  }
+		  cerr << "done, closing files" << endl;
+		  //fout.close();
+		  fbin.close();
+		  free(temp);
+	  }
+#endif
 	} // for each part
 
       } // for each polarization
 
-      break;
+      //break; //This break keeps the program from doing more than one chan
     }
+    else { // if not engine (added  GJ)
 
     // /////////////////////////////////////////////////////////////////////
     //
@@ -666,11 +758,33 @@ void dsp::Filterbank::filterbank ()
 	    } // for each output channel
 	    
 	  } // for each cross poln
-	
+#if 0
+	  if ((ipart == (npart-1)) && (ipol == 0) && (input_ichan == 1)){
+		  cerr << "cpu fb got to part=" << ipart <<endl;
+		  size_t tempsize = npart*nkeep*2*sizeof(float);
+		  //ofstream fout;
+		  //fout.open("cudafb.txt");
+		  ofstream fbin;
+		  fbin.open("cpufb.dat", ios::binary | ios::app);
+		  float *temp = (float*) (output->get_datptr(input_ichan,ipol));
+		  for (int nn=0; nn < tempsize/(2*sizeof(float)); nn++){
+  //			  fout << temp[2*nn] << " , " << temp[2*nn+1] << "\n";
+			  fbin.write((char *)(&(temp[2*nn])),2*sizeof(float));
+
+		  }
+		  cerr << "done, closing files" << endl;
+		  //fout.close();
+		  fbin.close();
+		//  free(temp);
+	  }
+#endif
 	} // for each polarization
       
+
+
       } // for each big fft (ipart)
-    
+    }
+
   } // for each input channel
 
   if (Operation::record_time && engine)
