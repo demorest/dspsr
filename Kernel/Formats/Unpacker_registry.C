@@ -94,6 +94,11 @@ static dsp::Unpacker::Register::Enter<dsp::GMRTFilterbank16> gmrt16;
 static dsp::Unpacker::Register::Enter<dsp::GUPPIUnpacker> guppi;
 #endif
 
+#if HAVE_lofar_dal
+#include "dsp/LOFAR_DALUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::LOFAR_DALUnpacker> lofar_dal;
+#endif
+
 #if HAVE_lbadr
 #include "dsp/SMROTwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::SMROTwoBitCorrection> lbadr;
