@@ -675,6 +675,7 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   CommandLine::Argument* arg;
 
   arg = menu.add (this, &Config::set_quiet, 'q');
+  arg->set_long_name ("Q");
   arg->set_help ("quiet mode");
 
   arg = menu.add (this, &Config::set_verbose, 'v');
