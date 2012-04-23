@@ -48,7 +48,7 @@ char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 
 using namespace std;
 
-static char* args = "b:B:cI:o:prt:f:hxk:vV";
+static char* args = "b:B:cI:o:prt:f:hxk:vVD:";
 
 void usage ()
 {
@@ -114,6 +114,7 @@ int main (int argc, char** argv) try
 
   unsigned int tscrunch_factor=0;
   unsigned int fscrunch_factor=0;
+  float decay_timescale=-1;
 
   FILE* outfile = stdout;
   char* outfile_basename = 0;
@@ -160,6 +161,9 @@ int main (int argc, char** argv) try
       tscrunch_factor=atoi(optarg);
       break;
 
+    case 'D':
+      decay_timescale=atof(optarg);
+      break;
 
     case 'k':
       if (sscanf (optarg, "%x", &hdu_key) != 1)
@@ -330,6 +334,7 @@ int main (int argc, char** argv) try
     unsigned nchan = obs->get_nchan();
     uint64_t nsample = uint64_t( block_size * obs->get_rate() );
 
+
     if (verbose)
       cerr << "the_decimator: block_size=" << block_size << " sec "
 	"(" << nsample << " samp)" << endl;
@@ -373,6 +378,9 @@ int main (int argc, char** argv) try
     }
 
 #endif
+
+    // once we know the sample rate, we can set the decay constant
+    rescale->set_decay (decay_timescale*0.35/obs->get_rate());
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
     uint64_t lost_samps = 0;
