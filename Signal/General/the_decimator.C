@@ -380,7 +380,8 @@ int main (int argc, char** argv) try
 #endif
 
     // once we know the sample rate, we can set the decay constant
-    rescale->set_decay (decay_timescale*0.35/obs->get_rate());
+    // This is set empirically, so might be wrong. Should be close enough though
+    rescale->set_decay (decay_timescale*0.35*obs->get_rate());
 
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
     uint64_t lost_samps = 0;

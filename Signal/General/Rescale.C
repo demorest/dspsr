@@ -298,7 +298,6 @@ void dsp::Rescale::transformation ()
 	      for (unsigned ipol=0; ipol < input_npol; ipol++){
 		if (do_decay){
 			tmp= ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
-			if(idat>1000)tmp-=1;
 			decay_offset[ipol][ichan] = (tmp + decay_offset[ipol][ichan]*decay_constant) / (1.0+ decay_constant);
 			(*out_data) = tmp - decay_offset[ipol][ichan];
 		} else {
