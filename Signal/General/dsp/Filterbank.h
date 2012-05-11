@@ -50,6 +50,8 @@ namespace dsp {
     //! Get the number of channels into which the input will be divided
     unsigned get_nchan () const { return nchan; }
 
+    unsigned get_nchan_subband () const {return nchan_subband; }
+
     //! Set the frequency resolution factor
     void set_freq_res (unsigned _freq_res) { freq_res = _freq_res; }
     void set_frequency_resolution (unsigned fres) { freq_res = fres; }

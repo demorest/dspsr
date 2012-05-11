@@ -113,3 +113,5 @@ update.log
 /*.fits
 /*.dat
 /*.tim
+/SdkMasterLog.csv
+/deviceQuery.txt

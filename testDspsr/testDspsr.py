@@ -41,7 +41,7 @@ def findClosestDict(d,dictList,ignoreKeys=[]):
         score = 0
         if d == dcomp:
             print "found exact match"
-            return n,dcomp
+            return n,len(d.keys()), dcomp
         for k in d.keys():
             if k not in ignoreKeys:
                 try:
@@ -254,3 +254,40 @@ def testFilterbankCUDA(nchanList=[16], nbinList=[256], outpolsList=[2], redoRef=
                 print "updating info"
                 info['stats'] = res
                 updateInfo(testOutputFile, outdir, info)
+                
+                
+def testCyclicCUDA(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[2], redoRef=False,
+                       refArgs = dict(V=''), cudaArgs = dict(V='',cuda=0), outdir = '/data/cyclo/testCyclicCuda'):
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    for cyclic in cyclicList:
+        for outpols in outpolsList:
+            for nbin in nbinList:
+                for nchan in nchanList:
+                    print "nchan=%d, nbin=%d, npol=%d, cyclic=%d" % (nchan,nbin,outpols,cyclic)
+                    localArgs = dict(b=nbin,F=('%d:D'%nchan),d=outpols,cyclic=cyclic)
+                    args = baseArgs.copy()
+                    args.update(refArgs)
+                    args.update(localArgs)
+                    
+                    refFileData = findGoldStandard(args)
+                    if refFileData is None:
+                        print "Did not find reference file, creating"
+                        refFilename, refInfo = runDspsr(args, goldDir, 'goldCyclic')
+                    else:
+                        refFilename, refInfo = refFileData
+                    print "Reference file: ",refFilename
+                    timestr = time.strftime("%Y%m%d_%H%M%S")
+    
+                    prefix = 'cudaCyclic_nchan%d_nbin%d_npol%d_cyclic%d' % (nchan,nbin,outpols,cyclic)
+                    print "running test"
+                    args = baseArgs.copy()
+                    args.update(cudaArgs)
+                    args.update(localArgs)
+                    testOutputFile,info = runDspsr(args,outdir,prefix)
+                    print "comparing output"
+                    res = compareOutputs(refFilename, testOutputFile)
+                    print res
+                    print "updating info"
+                    info['stats'] = res
+                    updateInfo(testOutputFile, outdir, info)                

@@ -33,6 +33,7 @@ typedef struct
   unsigned output_span;
 
   unsigned nchan;
+  unsigned nchan_subband;
   unsigned freq_res;
   unsigned nfilt_pos;
   unsigned nkeep;
