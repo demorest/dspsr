@@ -46,6 +46,9 @@ namespace dsp
     //! After setting offset and scale, keep them constant
     void set_constant (bool);
 
+    //! Subtract an exponential smooth with specified decay constant
+    void set_decay (float);
+
     //! Do not output any data before the first integration interval has passed
     void set_output_after_interval (bool);
 
@@ -85,11 +88,16 @@ namespace dsp
     std::vector< std::vector<float> > scale;
     std::vector< std::vector<float> > offset;
 
+    std::vector< std::vector<float> > decay_offset;
+
     bool output_time_total;
     bool output_after_interval;
 
     double interval_seconds;
     uint64_t interval_samples;
+
+    float decay_constant;
+    bool do_decay;
 
     uint64_t nsample;
     uint64_t isample;
