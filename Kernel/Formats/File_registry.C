@@ -105,6 +105,11 @@ static dsp::File::Register::Enter<dsp::LBADR64_File> register_lbadr64;
 static dsp::File::Register::Enter<dsp::LOFAR_DALFile> register_lofar_dal;
 #endif
 
+#if HAVE_lump
+#include "dsp/LuMPFile.h"
+static Registry::List<dsp::File>::Enter<dsp::LuMPFile> register_lump;
+#endif
+
 #if HAVE_mark4
 #include "dsp/Mark4File.h"
 static dsp::File::Register::Enter<dsp::Mark4File> register_mark4;
