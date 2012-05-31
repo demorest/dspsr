@@ -32,6 +32,7 @@ CUDA::FilterbankEngine::FilterbankEngine (cudaStream_t _stream)
 
   plan_fwd = 0;
   plan_bwd = 0;
+  verbose = false;
 }
 
 CUDA::FilterbankEngine::~FilterbankEngine ()
@@ -151,9 +152,11 @@ void CUDA::FilterbankEngine::sendKernel(dsp::Filterbank* filterbank, unsigned _i
 
 	if (filterbank->has_response())
 	{
-		cerr << "have response, sending kernel for input channel=" <<_ichan <<
-				"response channel starting at=" << _ichan*nchan_subband << endl;
-		cerr << "response has nchan=" << filterbank->get_response()->get_nchan() << endl;
+		if (verbose) {
+			cerr << "have response, sending kernel for input channel=" <<_ichan <<
+					"response channel starting at=" << _ichan*nchan_subband << endl;
+			cerr << "response has nchan=" << filterbank->get_response()->get_nchan() << endl;
+		}
 	// copy the kernel accross
 	const float* kernel = filterbank->get_response()->get_datptr(_ichan*nchan_subband,0); //send kernels for input channel _ichan
 
@@ -163,14 +166,16 @@ void CUDA::FilterbankEngine::sendKernel(dsp::Filterbank* filterbank, unsigned _i
 }
 void CUDA::FilterbankEngine::finish ()
 {
-  //check_error ("CUDA::FilterbankEngine::finish");
-	cerr << "CUDA::FilterbankEngine::finish" << endl;
+//  check_error ("CUDA::FilterbankEngine::finish");
+	if (verbose) {
+		cerr << "CUDA::FilterbankEngine::finish" << endl;
+	}
 }
 
 
 void CUDA::FilterbankEngine::perform (const float* in)
 {
-  verbose = dsp::Operation::record_time || dsp::Operation::verbose;
+//  verbose = dsp::Operation::record_time || dsp::Operation::verbose;
 
   /*
     CUDA::FilterbankEngine multiply inherits from
@@ -182,8 +187,9 @@ void CUDA::FilterbankEngine::perform (const float* in)
     The implicit casts performed on the following line will work.
     The relative offsets with respect to this are applied.
   */
-  cerr << "perform: engine nchan=" << nchan
-		  << " nchan_subband=" << nchan_subband << endl;
-
+  if (verbose) {
+	  cerr << "perform: engine nchan=" << nchan
+			  << " nchan_subband=" << nchan_subband << endl;
+  }
   filterbank_cuda_perform (this, this, in);
 }

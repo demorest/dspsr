@@ -732,65 +732,76 @@ void dsp::Fold::fold (uint64_t nweights,
   double phase_per_sample = sampling_interval / pfold;
   unsigned* hits = get_output()->get_hits();
    
+  bool use_set_bins = false;
   if (engine)
   {
     if (verbose)
       cerr << "dsp::Fold::fold using engine ptr=" << engine.ptr() << endl;
     engine->set_nbin (folding_nbin);
     engine->set_ndat (idat_end - idat_start, idat_start);
+    if (engine->use_set_bins) {
+    	ndat_folded = engine->set_bins (phi, phase_per_sample,idat_end - idat_start,idat_start);
+    	for (int ibin = 0; ibin < folding_nbin; ibin++)
+    	{
+    		hits[ibin] = engine->get_bin_hits(ibin);
+    	}
+    	use_set_bins = true;
+    }
   }
-
-  for (uint64_t idat=idat_start; idat < idat_end; idat++)
+  if (!use_set_bins)
   {
-    if (ndatperweight && idat >= idat_nextweight)
-    {
-      iweight ++;
-      tot_weights ++;
+	  for (uint64_t idat=idat_start; idat < idat_end; idat++)
+	  {
+		if (ndatperweight && idat >= idat_nextweight)
+		{
+		  iweight ++;
+		  tot_weights ++;
 
-      assert (iweight < nweights);
+		  assert (iweight < nweights);
 
-      if (!zeroed_samples && (weights[iweight] == 0))
-      {
-        bad_data = true;
-        discarded_weights ++;
-        bad_weights ++;
-      }
-      else
-        bad_data = false;
+		  if (!zeroed_samples && (weights[iweight] == 0))
+		  {
+			bad_data = true;
+			discarded_weights ++;
+			bad_weights ++;
+		  }
+		  else
+			bad_data = false;
 
-      idat_nextweight += ndatperweight;
-    }
+		  idat_nextweight += ndatperweight;
+		}
 
-    phi -= floor(phi);
-    double double_ibin = phi * double_nbin;
-    unsigned ibin = unsigned (double_ibin);
-    phi += phase_per_sample;
+		phi -= floor(phi);
+		double double_ibin = phi * double_nbin;
+		unsigned ibin = unsigned (double_ibin);
+		phi += phase_per_sample;
 
-    assert (ibin < folding_nbin);
+		assert (ibin < folding_nbin);
 
-    if (engine)
-      engine->set_bin( idat, double_ibin, phase_per_sample*double_nbin );
-    else
-      binplan[idat-idat_start] = ibin;
+		if (engine)
+		  engine->set_bin( idat, double_ibin, phase_per_sample*double_nbin );
+		else
+		  binplan[idat-idat_start] = ibin;
 
-    if (bad_data)
-      binplan[idat-idat_start] = folding_nbin;
-    else
-    {
-      if (!zeroed_samples)
-      {
-        hits[ibin]++;
-        ndat_folded ++;
-      }
-    }
+		if (bad_data)
+		  binplan[idat-idat_start] = folding_nbin;
+		else
+		{
+		  if (!zeroed_samples)
+		  {
+			hits[ibin]++;
+			ndat_folded ++;
+		  }
+		}
+	  }
   }
-
-  double time_folded = double(ndat_folded) / get_input()->get_rate();
+	  double time_folded = double(ndat_folded) / get_input()->get_rate();
 
   if (verbose)
-    cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded 
+    cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded << " ndat_fold=" << ndat_fold
          << " time=" << time_folded*1e3 << " ms"
-         << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
+         << " (bad=" << bad_weights << "/" << tot_weights << ")"
+         << " ndatperweight=" << ndatperweight << endl;
 
   PhaseSeries* result = get_output();
 
@@ -812,7 +823,7 @@ void dsp::Fold::fold (uint64_t nweights,
   if (engine)
   {
     engine->fold ();
-    if (zeroed_samples)
+//    if (zeroed_samples) // why is this only done if zeroed_samples was true (if rfi was flagged?) shouldn't it always happen?
       result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
     return;
   }

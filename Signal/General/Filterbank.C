@@ -594,27 +594,27 @@ void dsp::Filterbank::filterbank ()
     engine->freq_res = freq_res;
     engine->nkeep = nkeep;
   }
-  cerr << "output ndat=" <<output->get_ndat() << " output ptr=" << output->get_datptr(0,0) << endl;
+//  cerr << "output ndat=" <<output->get_ndat() << " output ptr=" << output->get_datptr(0,0) << endl;
 
   for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
   {
     if (engine)
     {
-    	cerr << "have engine for channel " << input_ichan << endl;
+//    	cerr << "have engine for channel " << input_ichan << endl;
       // /////////////////////////////////////////////////////////////////////
       //
       // PERFORM FILTERBANK VIA ENGINE (e.g. on GPU)
       //
       // /////////////////////////////////////////////////////////////////////
 
-    	cerr << "sending kernel" <<endl;
+//    	cerr << "sending kernel" <<endl;
     	engine->sendKernel(this, input_ichan);
       for (ipol=0; ipol < npol; ipol++)
       {
 	for (ipart=0; ipart<npart; ipart++)
 	{
 //#ifdef _DEBUG
-	  cerr << "ichan=" << input_ichan << " ipol="<< ipol << " ipart=" << ipart << endl;
+//	  cerr << "ichan=" << input_ichan << " ipol="<< ipol << " ipart=" << ipart << endl;
 //#endif
 	  in_offset = ipart * in_step;
 	  out_offset = ipart * out_step;

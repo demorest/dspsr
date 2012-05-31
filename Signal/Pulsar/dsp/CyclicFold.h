@@ -103,6 +103,10 @@ namespace dsp {
     //! Set the phase bin into which the idat'th sample will be integrated
     virtual void set_bin (uint64_t idat, double ibin, double bins_per_samp);
 
+    uint64_t set_bins (double phi, double phase_per_sample, uint64_t ndat, uint64_t idat_start);
+
+    uint64_t get_bin_hits (int ibin);
+
     //! Return the PhaseSeries into which data will be folded
     virtual PhaseSeries* get_profiles ();
 

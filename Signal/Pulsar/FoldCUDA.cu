@@ -21,6 +21,7 @@ using namespace std;
 
 CUDA::FoldEngine::FoldEngine (cudaStream_t _stream, bool _hits_on_gpu)
 {
+	use_set_bins = false;
   d_bin = 0;
   d_bin_size = 0;
 
@@ -101,6 +102,13 @@ void CUDA::FoldEngine::set_bin (uint64_t idat, double d_ibin,
   current_hits ++;
 }
 
+uint64_t CUDA::FoldEngine::get_bin_hits (int ibin){
+	return 0; // Fix this
+}
+uint64_t CUDA::FoldEngine::set_bins (double phi, double phase_per_sample, uint64_t _ndat, uint64_t idat_start)
+{
+	return 0;
+}
 dsp::PhaseSeries* CUDA::FoldEngine::get_profiles ()
 {
   return d_profiles;

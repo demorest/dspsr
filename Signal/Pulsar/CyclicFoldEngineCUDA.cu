@@ -26,6 +26,7 @@ CUDA::CyclicFoldEngineCUDA::CyclicFoldEngineCUDA (cudaStream_t _stream)
   d_binplan = NULL;
   d_lagdata = NULL;
   current_turn = 0;
+  use_set_bins = true;
 
 
   // no data on either the host or device
@@ -64,6 +65,9 @@ void CUDA::CyclicFoldEngineCUDA::synch (dsp::PhaseSeries *out) try
   if (dsp::Operation::verbose)
     cerr << "CUDA::CyclicFoldEngineCUDA::synch output=" << output << endl;
 
+  cerr << "CUDA::CyclicFoldEngineCUDA::synch out=" << out <<" out.ndat_folded=" << out->get_ndat_folded()
+		 <<endl; // << " output.ndatfolded" << output->get_ndat_folded() << endl;
+
   // transfer lag data from GPU
 
   cudaError error;
@@ -94,7 +98,7 @@ void CUDA::CyclicFoldEngineCUDA::set_ndat (uint64_t _ndat, uint64_t _idat_start)
 
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::set_ndat ndat=" << _ndat << endl;
-
+/*// FOllowing moved to set_bins
   if (_ndat > binplan_size) {
 
     if (parent->verbose)
@@ -109,6 +113,7 @@ void CUDA::CyclicFoldEngineCUDA::set_ndat (uint64_t _ndat, uint64_t _idat_start)
     binplan_size = _ndat;
   }
   memset(lagbinplan, 0 , sizeof(bin)*_ndat*nlag);
+  */
   current_turn = 0;
   last_ibin = 0;
   ndat_fold = _ndat;
@@ -132,7 +137,7 @@ void CUDA::CyclicFoldEngineCUDA::set_ndat (uint64_t _ndat, uint64_t _idat_start)
     if (lagdata) delete [] lagdata;
     lagdata = new float [_lagdata_size];
     lagdata_size = _lagdata_size;
-    memset(lagdata, 0, sizeof(float)*lagdata_size);
+    memset(lagdata, 0, sizeof(float)*lagdata_size); // this could be removed once we're convinced thigs are working since the cuda memory is zeroed as well
     
     if (d_lagdata) cudaFree(d_lagdata);
     cudaMalloc((void**)&d_lagdata, lagdata_size * sizeof(float));
@@ -146,6 +151,7 @@ void CUDA::CyclicFoldEngineCUDA::set_ndat (uint64_t _ndat, uint64_t _idat_start)
 void CUDA::CyclicFoldEngineCUDA::set_bin (uint64_t idat, double d_ibin, 
         double bins_per_sample)
 {
+	return;
 	// idat ranges from idat_start to idat_start + binplansize
   unsigned ibin;
   int ilag;
@@ -172,7 +178,97 @@ void CUDA::CyclicFoldEngineCUDA::set_bin (uint64_t idat, double d_ibin,
   ndat_fold ++;
   last_ibin = int(d_ibin);
 }
+
+uint64_t CUDA::CyclicFoldEngineCUDA::get_bin_hits (int ibin)
+{
+	int iturn = 0;
+	int idx = 0;
+	idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
+	uint64_t hits;
+	while (idx < binplan_size) {
+		hits += lagbinplan[idx].hits;
+		iturn += 1;
+		idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
+	}
+	return hits;
+}
   
+uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_sample, uint64_t _ndat, uint64_t idat_start)
+{
+	cerr << "Got to CUDA::CyclicFoldEngineCUDA::set_bins" << endl;
+
+
+
+	phi = phi - floor(phi);
+	double samples_per_bin = (1.0 / nbin) * (1 / phase_per_sample); // (1 turn / nbin bins) * (turns (phase) / sample) ^ -1
+	double nturns = _ndat * phase_per_sample;
+	double minph,maxph;
+	double startph = phi;
+	int startdat = 0;
+	int intnturns = ceil(nturns) + 1;
+	int iturn,ibin,ilag;
+	int planidx;
+
+	int _binplan_size = intnturns*nbin*nlag;
+
+	cerr << "Start ph:" << startph << " intnturns:" <<intnturns << " _ndat:" << _ndat << " nlag:" << nlag
+			<< " phase per sample:" << phase_per_sample<< " nturns:" << nturns << endl ;
+	cerr << "binplansize:" << binplan_size << "  _binplansize:" << _binplan_size << endl;
+
+	  if (_binplan_size > binplan_size) {
+
+//		    if (parent->verbose)
+		      cerr << "dsp::CyclicFoldEngine::set_ndat alloc binplan" << endl;
+
+		    if (lagbinplan) {
+		      delete [] lagbinplan;
+		    }
+		    lagbinplan = new bin [_binplan_size];
+
+
+		    binplan_size = _binplan_size;
+		  }
+	  memset(lagbinplan, 0 , sizeof(bin)*_binplan_size);
+	  ndat_fold = _ndat;
+
+	for (iturn=0;iturn < intnturns; iturn++){
+		for (ibin = 0; ibin < nbin; ibin++) {
+			for (ilag=0; ilag < nlag; ilag++) {
+				minph = (ibin*1.0)/nbin + iturn + (ilag*phase_per_sample)/2.0;
+				maxph = (ibin+1.0)/nbin + iturn + (ilag*phase_per_sample)/2.0;
+				planidx = iturn*nbin*nlag + ibin*nlag + ilag;
+
+				if (minph > startph){
+					lagbinplan[planidx].offset = round((minph-startph)/phase_per_sample);
+					lagbinplan[planidx].ibin = ibin;
+					lagbinplan[planidx].hits = round((maxph-minph)/phase_per_sample);
+				}
+				else if (maxph > startph){
+//					cerr << "minph < startph " << minph << " < " << startph << endl;
+					lagbinplan[planidx].offset = 0;
+					lagbinplan[planidx].ibin = ibin;
+					lagbinplan[planidx].hits = round((maxph-startph)/phase_per_sample);
+				}
+				else {
+//					cerr << "maxph < startph " << minph << " < " << startph << endl;
+					lagbinplan[planidx].offset = 0;
+					lagbinplan[planidx].ibin = 0;
+					lagbinplan[planidx].hits = 0;
+				}
+				/*
+				cerr << "iturn,ibin,ilag: " << iturn << "," << ibin << "," << ilag << ","
+						<< " offset=" << lagbinplan[planidx].offset
+						<< " hits=" << lagbinplan[planidx].hits
+						<< " minph=" << minph
+						<< " maxph=" << maxph
+
+						<< endl;
+				*/
+			}
+		}
+	}
+	return ndat_fold;
+}
 
 
 void CUDA::CyclicFoldEngineCUDA::zero ()
@@ -192,18 +288,18 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
 	 * so the total size of the binplan should be current_turn turns of nbin bins and nlag lags
 	 * so we will update binplan_size accordingly
 	 */
-	uint64_t orig_size = binplan_size;
-	binplan_size = (current_turn + 1) * nbin; // add one turn just for good measure. There should be zero hits in it
-  uint64_t mem_size = binplan_size * nlag * sizeof(bin);
+//	uint64_t orig_size = binplan_size;
+//	binplan_size = (current_turn + 1) * nbin; // add one turn just for good measure. There should be zero hits in it
+  uint64_t mem_size = binplan_size * sizeof(bin);
 
-  if (dsp::Operation::verbose)
+ // if (dsp::Operation::verbose)
     cerr << "CUDA::CyclicFoldEngineCUDA::send_binplan ndat=" << ndat_fold 
          << "  Allocating on device mem_size " << mem_size
          << " binplan_size=" << binplan_size
          << " nlag=" << nlag
          << " sizeof(bin)=" << sizeof(bin)
          << " current_turn=" << current_turn
-         << " orig_size=" << orig_size
+//         << " orig_size=" << orig_size
          << endl;
 
   cudaError error;
@@ -218,7 +314,7 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
   } else {
 	  // original plan was to check if binplan_size < orig_size so as to avoid extraneous free/malloc, but it
 	  // seems that binplan_size gets reset each time before this funciton is called.
-	  cerr << "orig_size=" << orig_size << "< binplansize=" << binplan_size << "so freeing.." << endl;
+	  //cerr << "orig_size=" << orig_size << "< binplansize=" << binplan_size << "so freeing.." << endl;
 	  error =cudaFree(d_binplan);
 	  if (error != cudaSuccess)
 		  throw Error (InvalidState, "CUDA::CyclicFoldEngineCUDA::send_binplan",
@@ -374,7 +470,7 @@ void CUDA::CyclicFoldEngineCUDA::fold ()
   cerr << "blockDim=" << blockDim.x << "," << blockDim.y << "," << blockDim.z << "," << endl;
   cerr << "gridDim="  << gridDim.x << "," << gridDim.y << "," << gridDim.z << "," << endl;
   
-  unsigned lagbinplan_size = binplan_size * nlag;
+  unsigned lagbinplan_size = binplan_size;
   
   cycFoldIndPol <<<gridDim,blockDim,0,stream>>>(input,
                 input_span,

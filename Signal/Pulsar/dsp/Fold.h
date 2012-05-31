@@ -258,6 +258,13 @@ namespace dsp {
     //! Set the phase bin into which the idat'th sample will be integrated
     virtual void set_bin (uint64_t idat, double ibin, double bins_per_samp) = 0;
 
+    // Alternative fucntion to setup binplan all at once, rather than point by point
+    virtual uint64_t set_bins (double phi, double phase_per_sample, uint64_t _ndat, uint64_t idat_start)=0;
+    // Set this property true to use set_bins instead of set_bin
+    bool use_set_bins;
+    // fuction used when set_bins is used to update the number of hits in each bin
+    virtual uint64_t get_bin_hits (int ibin)=0;
+
     //! Return the number of time samples folded
     virtual uint64_t get_ndat_folded () const = 0;
 

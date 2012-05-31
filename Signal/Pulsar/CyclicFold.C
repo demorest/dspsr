@@ -165,6 +165,7 @@ dsp::CyclicFoldEngine::CyclicFoldEngine()
   lagdata = NULL;
   idat_start = 0;
   lag2chan = NULL;
+  use_set_bins = false;
 }
 
 dsp::CyclicFoldEngine::~CyclicFoldEngine()
@@ -259,6 +260,14 @@ void dsp::CyclicFoldEngine::set_bin (uint64_t idat, double ibin,
   binplan[0][idat-idat_start] = unsigned(ibin);
   unsigned ibin1 = unsigned (ibin + 0.5*bins_per_sample);
   binplan[1][idat-idat_start] = ibin1 % nbin;
+}
+uint64_t dsp::CyclicFoldEngine::get_bin_hits (int ibin)
+{
+	return 0; // Fix this
+}
+uint64_t dsp::CyclicFoldEngine::set_bins (double phi, double phase_per_sample,uint64_t _ndat, uint64_t idat_start)
+{
+	return 0;
 }
 
 dsp::PhaseSeries* dsp::CyclicFoldEngine::get_profiles ()

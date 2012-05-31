@@ -85,7 +85,7 @@ void filterbank_cuda_perform (filterbank_engine* engine,
 
   blocks = data_size / threads;
 
-  cerr << "CUDA::FilterbankEngine::perform datasize=" << data_size << " blocks=" << blocks << endl;
+//  cerr << "CUDA::FilterbankEngine::perform datasize=" << data_size << " blocks=" << blocks << endl;
 
   if (cuda->d_kernel)
   {
@@ -120,13 +120,14 @@ void filterbank_cuda_perform (filterbank_engine* engine,
     // divide by two for complex data
     float2* output_base = (float2*) engine->output;
     unsigned output_stride = engine->output_span / 2;
-    cerr << "copy: blocks.x=" << blocks.x << " blocks.y=" << blocks.y;
-    cerr << " output_base=" << output_base << " output stride=" << output_stride << " input=" << input << " input stride=" << input_stride << " tocopy=" << to_copy << endl;
-    
+    if (cuda->verbose) {
+    	cerr << "copy: blocks.x=" << blocks.x << " blocks.y=" << blocks.y;
+    	cerr << " output_base=" << output_base << " output stride=" << output_stride << " input=" << input << " input stride=" << input_stride << " tocopy=" << to_copy << endl;
+    }
     ncopy<<<blocks,threads,0,cuda->stream>>> (output_base, output_stride,
 					      input, input_stride, to_copy);
   }
   
-//  if (cuda->verbose)
+  if (cuda->verbose)
     check_error ("CUDA::FilterbankEngine::perform at the end");
 }
