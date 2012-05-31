@@ -42,7 +42,7 @@ bool dsp::SigProcUnpacker::matches (const Observation* observation)
   return observation->get_machine() == "SigProc" 
     && observation->get_ndim() == 1
     && observation->get_npol() == 1
-    && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 || nbit==16);
+    && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 || nbit==16 || nbit==32);
 }
 
 unsigned dsp::SigProcUnpacker::get_output_ipol (unsigned idig) const
@@ -103,8 +103,20 @@ void dsp::SigProcUnpacker::unpack ()
       const unsigned shift = (ichan & mod_mask) * nbit; // MKeith: Need to move by nbits each channel!
  
       float* into = output->get_datptr (ichan, 0);
+
+      // Note, 32-bit is assumed to be floating point (eg not 32-bit ints).
+      if (nbit == 32)
+      {
+        const float* from32 = reinterpret_cast<const float *>(from_base)+ichan;
+
+	for (unsigned bt = 0; bt < ndat; bt++)
+        {
+          into[bt] =  *from32;
+	  from32 += nchan;
+	}
+      }
       
-      if (nbit == 16)
+      else if (nbit == 16)
       {
 	const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base)+ichan;
 	for (unsigned bt = 0; bt < ndat; bt++)
@@ -141,7 +153,15 @@ void dsp::SigProcUnpacker::unpack ()
     const uint64_t nbyte = nchan_bytes * ndat;
     const unsigned samples_per_byte = 8/nbit;
 
-    if (nbit == 16)
+    if (nbit == 32)
+    {
+      const float* from32 = reinterpret_cast<const float*>(from_base);
+      const uint64_t nfloat = nchan * ndat;
+      for (uint64_t ifloat=0; ifloat < nfloat; ifloat ++)
+	into[ifloat] = from32[ifloat];
+    }
+
+    else if (nbit == 16)
     {
       const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base);
       const uint64_t nfloat = nchan * ndat;
