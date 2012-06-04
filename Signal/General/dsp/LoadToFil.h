@@ -16,6 +16,8 @@
 
 #include "dsp/SingleThread.h"
 #include "dsp/TimeSeries.h"
+#include "dsp/Filterbank.h"
+#include "dsp/FilterbankConfig.h"
 
 namespace dsp {
 
@@ -39,8 +41,14 @@ namespace dsp {
     //! Create the pipeline
     void construct ();
 
+    //! Final preparations before running
+    void finalize ();
+
     //! Configuration parameters
     Reference::To<Config> config;
+
+    //! The filterbank in use
+    Reference::To<Filterbank> filterbank;
 
   };
 
@@ -58,17 +66,17 @@ namespace dsp {
     // order in which the unpacker will output time samples
     dsp::TimeSeries::Order order;
 
-    //! number of frequency channels in filterbank
-    unsigned filterbank_nchan;
-
-    //! number of spectral bins in each filterbank channel
-    unsigned frequency_resolution;
+    //! Filterbank config options
+    Filterbank::Config filterbank;
 
     //! dispersion measure set in output file
     double dispersion_measure;
 
     //! removed inter-channel dispersion delays
     bool dedisperse;
+
+    //! coherently dedisperse along with filterbank
+    bool coherent_dedisp;
 
     //! integrate in time before digitization
     unsigned tscrunch_factor;

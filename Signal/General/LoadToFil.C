@@ -55,10 +55,13 @@ dsp::LoadToFil::Config::Config()
 
   order = dsp::TimeSeries::OrderTFP;
  
-  filterbank_nchan = 0;
-  frequency_resolution = 0;
+  filterbank.set_nchan(0);
+  filterbank.set_freq_res(0);
+  filterbank.set_convolve_when(Filterbank::Config::Never);
+
   dispersion_measure = 0;
   dedisperse = false;
+  coherent_dedisp = false;
 
   tscrunch_factor = 0;
   fscrunch_factor = 0;
@@ -124,36 +127,60 @@ void dsp::LoadToFil::construct () try
   {
     bool do_detection = false;
 
-    if ( config->filterbank_nchan )
+    config->coherent_dedisp = 
+      (config->filterbank.get_convolve_when() == Filterbank::Config::During)
+      && (config->dispersion_measure != 0.0);
+
+    if ( config->filterbank.get_nchan() )
     {
       if (verbose)
-	cerr << "digifil: creating " << config->filterbank_nchan 
+	cerr << "digifil: creating " << config->filterbank.get_nchan()
 	     << " channel filterbank" << endl;
 
-      if ( config->frequency_resolution )
+      Dedispersion *kernel = 0;
+      if ( config->coherent_dedisp )
       {
-	cerr << "Using convolving filterbank" << endl;
+	cerr << "digifil: using coherent dedispersion" << endl;
 
-	Filterbank* filterbank = new Filterbank;
+        kernel = new Dedispersion;
 
-	filterbank->set_nchan( config->filterbank_nchan );
+        if (config->filterbank.get_freq_res())
+          kernel->set_frequency_resolution (config->filterbank.get_freq_res());
+
+        kernel->set_dispersion_measure( config->dispersion_measure );
+
+        // TODO other FFT length/etc options as implemented in LoadToFold1?
+
+      }
+
+      if ( config->filterbank.get_freq_res() || config->coherent_dedisp )
+      {
+	cerr << "digifil: using convolving filterbank" << endl;
+
+	filterbank = new Filterbank;
+
+	filterbank->set_nchan( config->filterbank.get_nchan() );
 	filterbank->set_input( timeseries );
-	filterbank->set_output( timeseries = new_TimeSeries() );
+        filterbank->set_output( timeseries = new_TimeSeries() );
 
-	filterbank->set_frequency_resolution ( config->frequency_resolution );
+        if (kernel)
+          filterbank->set_response( kernel );
 
-	operations.push_back( filterbank );
+	filterbank->set_frequency_resolution ( 
+            config->filterbank.get_freq_res() );
+
+	operations.push_back( filterbank.get() );
 	do_detection = true;
       }
       else
       {
-	TFPFilterbank* filterbank = new TFPFilterbank;
+	filterbank = new TFPFilterbank;
 
-	filterbank->set_nchan( config->filterbank_nchan );
+	filterbank->set_nchan( config->filterbank.get_nchan() );
 	filterbank->set_input( timeseries );
 	filterbank->set_output( timeseries = new_TimeSeries() );
 
-	operations.push_back( filterbank );
+	operations.push_back( filterbank.get() );
       }
     }
 
@@ -269,3 +296,29 @@ catch (Error& error)
   throw error += "dsp::LoadToFil::construct";
 }
 
+void dsp::LoadToFil::finalize () try
+{
+  SingleThread::finalize();
+
+  // Check that block size is sufficient for the filterbanks,
+  // increase it if not.
+  if (verbose)
+    cerr << "digifil: filterbank minimum samples = " 
+      << filterbank->get_minimum_samples() 
+      << endl;
+
+  if (filterbank->get_minimum_samples() > 
+      manager->get_input()->get_block_size())
+  {
+    cerr << "digifil: increasing data block size from " 
+      << manager->get_input()->get_block_size()
+      << " to " << filterbank->get_minimum_samples() 
+      << " samples" << endl;
+    manager->set_block_size( filterbank->get_minimum_samples() );
+  }
+
+}
+catch (Error& error)
+{
+  throw error += "dsp::LoadToFil::finalize";
+}
