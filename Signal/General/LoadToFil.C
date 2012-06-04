@@ -32,7 +32,7 @@
 
 using namespace std;
 
-static bool verbose = false;
+bool dsp::LoadToFil::verbose = false;
 
 static void* const undefined_stream = (void *) -1;
 
@@ -73,6 +73,24 @@ dsp::LoadToFil::Config::Config()
 
   // by default, time series weights are not used
   weighted_time_series = false;
+}
+
+void dsp::LoadToFil::Config::set_quiet ()
+{
+  SingleThread::Config::set_quiet();
+  LoadToFil::verbose = false;
+}
+
+void dsp::LoadToFil::Config::set_verbose ()
+{
+  SingleThread::Config::set_verbose();
+  LoadToFil::verbose = true;
+}
+
+void dsp::LoadToFil::Config::set_very_verbose ()
+{
+  SingleThread::Config::set_very_verbose();
+  LoadToFil::verbose = true;
 }
 
 void dsp::LoadToFil::construct () try

@@ -50,6 +50,9 @@ namespace dsp {
     //! The filterbank in use
     Reference::To<Filterbank> filterbank;
 
+    //! Verbose output
+    static bool verbose;
+
   };
 
   //! Load, unpack, process and fold data into phase-averaged profile(s)
@@ -95,6 +98,15 @@ namespace dsp {
 
     //! Name of the output file
     std::string output_filename;
+
+    //! Set quiet mode
+    virtual void set_quiet ();
+
+    //! Set verbose
+    virtual void set_verbose();
+
+    //! Set very verbose
+    virtual void set_very_verbose();
 
   };
 }
