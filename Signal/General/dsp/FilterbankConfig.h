@@ -27,7 +27,8 @@ namespace dsp
     {
       Before,
       During,
-      After
+      After,
+      Never
     };
 
     Config ();
