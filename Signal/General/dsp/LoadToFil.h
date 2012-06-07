@@ -87,6 +87,9 @@ namespace dsp {
     //! integrate in frequency before digitization
     unsigned fscrunch_factor;
 
+    //! process only a single polarization
+    int poln_select;
+
     //! time interval (in seconds) between offset and scale updates
     double rescale_seconds;
 

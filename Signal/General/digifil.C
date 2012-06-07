@@ -95,6 +95,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->fscrunch_factor, 'f', "nchan");
   arg->set_help ("decimate in frequency");
 
+  arg = menu.add (config->poln_select, 'P', "ipol");
+  arg->set_help ("process only a single polarization of input");
+
   arg = menu.add (config->rescale_seconds, 'I', "secs");
   arg->set_help ("rescale interval in seconds");
 

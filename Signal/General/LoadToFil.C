@@ -24,6 +24,7 @@
 #include "dsp/FScrunch.h"
 #include "dsp/TScrunch.h"
 #include "dsp/PScrunch.h"
+#include "dsp/PolnSelect.h"
 
 #include "dsp/Rescale.h"
 
@@ -65,6 +66,8 @@ dsp::LoadToFil::Config::Config()
 
   tscrunch_factor = 0;
   fscrunch_factor = 0;
+
+  poln_select = -1;
 
   rescale_seconds = 10.0;
   rescale_constant = false;
@@ -137,9 +140,20 @@ void dsp::LoadToFil::construct () try
 
   manager->set_block_size( nsample );
   
-  bool do_pscrunch = obs->get_npol() > 1;
+  bool do_pscrunch = (obs->get_npol() > 1) && (config->poln_select < 0);
 
   TimeSeries* timeseries = unpacked;
+
+  if ( config->poln_select >= 0 )
+  {
+    PolnSelect *pselect = new PolnSelect;
+
+    pselect->set_ipol (config->poln_select);
+    pselect->set_input (timeseries);
+    pselect->set_output (timeseries);
+
+    operations.push_back( pselect );
+  }
 
   if (!obs->get_detected())
   {
