@@ -743,7 +743,7 @@ void dsp::Fold::fold (uint64_t nweights,
     	ndat_folded = engine->set_bins (phi, phase_per_sample,idat_end - idat_start,idat_start);
     	for (int ibin = 0; ibin < folding_nbin; ibin++)
     	{
-    		hits[ibin] = engine->get_bin_hits(ibin);
+    		hits[ibin] += engine->get_bin_hits(ibin);
     	}
     	use_set_bins = true;
     }
@@ -794,6 +794,9 @@ void dsp::Fold::fold (uint64_t nweights,
 		  }
 		}
 	  }
+  }
+  for (int ibin = 0; ibin < folding_nbin; ibin++) {
+	  cerr << ibin << ": " << hits[ibin] << endl;
   }
 	  double time_folded = double(ndat_folded) / get_input()->get_rate();
 

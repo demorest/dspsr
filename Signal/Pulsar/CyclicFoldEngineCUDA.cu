@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *   Copyright (C) 2011 by Paul Demorest
+ *   Copyright (C) 2012 by Glenn Jones and Paul Demorest
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -184,12 +184,15 @@ uint64_t CUDA::CyclicFoldEngineCUDA::get_bin_hits (int ibin)
 	int iturn = 0;
 	int idx = 0;
 	idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
-	uint64_t hits;
+	uint64_t hits = 0;
+	cerr << "ibin: " << ibin << " ";
 	while (idx < binplan_size) {
 		hits += lagbinplan[idx].hits;
+		cerr << lagbinplan[idx].hits << " ";
 		iturn += 1;
 		idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
 	}
+	cerr << "total: " << hits << endl;
 	return hits;
 }
   
@@ -204,6 +207,7 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 	double nturns = _ndat * phase_per_sample;
 	double minph,maxph;
 	double startph = phi;
+	double endph = startph + nturns;
 	int startdat = 0;
 	int intnturns = ceil(nturns) + 1;
 	int iturn,ibin,ilag;
@@ -236,7 +240,16 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 			for (ilag=0; ilag < nlag; ilag++) {
 				minph = (ibin*1.0)/nbin + iturn + (ilag*phase_per_sample)/2.0;
 				maxph = (ibin+1.0)/nbin + iturn + (ilag*phase_per_sample)/2.0;
+				if ( maxph > endph ) {
+					maxph = endph;
+				}
 				planidx = iturn*nbin*nlag + ibin*nlag + ilag;
+				if ((minph > endph) || (maxph < minph)) {
+					lagbinplan[planidx].offset = 0;
+					lagbinplan[planidx].ibin = 0;
+					lagbinplan[planidx].hits = 0;
+					continue;
+				}
 
 				if (minph > startph){
 					lagbinplan[planidx].offset = round((minph-startph)/phase_per_sample);

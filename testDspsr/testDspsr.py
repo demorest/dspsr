@@ -16,10 +16,13 @@ def pickle(obj,fname,protocol=2):
     cPickle.dump(obj,fh,protocol=protocol)
     fh.close()
 
-inputFile = '/data/cyclo/guppi_55965_unknown_0001.0000.raw'
-goldDir = '/data/cyclo/gold'
+homedir = '/home/gej'
+#homedir = '' # if using /data on extrnal mount
+inputFile = homedir + '/data/cyclo/guppi_55965_unknown_0001.0000.raw'
+goldDir = homedir + '/data/cyclo/gold'
 #commonArgs = "-r -D 1000 -E /home/gej/pulsar/parfiles/crab_t1.par -A -L 1 -T 10 -a PSRFITS -overlap"
 dspsr = 'dspsr'
+golddspsr = '/home/gej/devel/dspsr.ref/bin/dspsr'
 
 baseArgs = dict(r='', # Report timing
                 D=1000, # dispersion measure
@@ -63,7 +66,7 @@ def findClosestDict(d,dictList,ignoreKeys=[]):
         print "warning! found multiple with same score"
     return rank[-1], scores[rank[-1]], dictList[rank[-1]]
     
-def findGoldStandard(args,ignoreKeys=[]):
+def findGoldStandard(args,ignoreKeys=['t']):
     try:
         fdata = unpickle(os.path.join(goldDir,'index.pkl'))
     except:
@@ -80,11 +83,11 @@ def findGoldStandard(args,ignoreKeys=[]):
     else:
         return files[idx], fdata[files[idx]]
                     
-def runDspsr(args,outdir,outpre):
+def runDspsr(args,outdir,outpre,program=dspsr):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     argList = [('-%s %s' % (k,v)) for (k,v) in args.items()]
-    argList.insert(0,dspsr)
+    argList.insert(0,program)
     outfile = outpre + '_' + time.strftime("%Y%m%d_%H%M%S")
     outfile = os.path.join(outdir,outfile)
     argList.append('-O %s' % outfile)
@@ -171,6 +174,8 @@ def extractTiming(logfile):
         except:
             break
         ln += 1
+        if ln >= len(lines):
+            break
     return results
 
 def compareOutputs(refFile,testFile):
@@ -236,7 +241,8 @@ def testFilterbankCUDA(nchanList=[16], nbinList=[256], outpolsList=[2], redoRef=
                 refFileData = findGoldStandard(args)
                 if refFileData is None:
                     print "Did not find reference file, creating"
-                    refFilename, refInfo = runDspsr(args, goldDir, 'goldFB')
+                    prefix = 'goldFB_nchan%d_nbin%d_npol%d' % (nchan,nbin,outpols)
+                    refFilename, refInfo = runDspsr(args, goldDir, prefix)
                 else:
                     refFilename, refInfo = refFileData
                 print "Reference file: ",refFilename
@@ -255,9 +261,48 @@ def testFilterbankCUDA(nchanList=[16], nbinList=[256], outpolsList=[2], redoRef=
                 info['stats'] = res
                 updateInfo(testOutputFile, outdir, info)
                 
-                
-def testCyclicCUDA(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[2], redoRef=False,
-                       refArgs = dict(V=''), cudaArgs = dict(V='',cuda=0), outdir = '/data/cyclo/testCyclicCuda'):
+
+def testCyclicCPU(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[2], threadList=[2],
+                  refArgs = dict(V=''), outdir = '/home/gej/data/cyclo/cpuCyclic'):
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    for cyclic in cyclicList:
+        for outpols in outpolsList:
+            for nbin in nbinList:
+                for nchan in nchanList:
+                    for nthread in threadList:
+                        print "nchan=%d, nbin=%d, npol=%d, cyclic=%d, threads=%d" % (nchan,nbin,outpols,cyclic,nthread)
+                        localArgs = dict(b=nbin,d=outpols,cyclic=cyclic) #F=('%d:D'%nchan),
+                        args = baseArgs.copy()
+                        args.update(refArgs)
+                        args.update(localArgs)
+                        
+                        refFileData = findGoldStandard(args)
+                        if refFileData is None:
+                            print "Did not find reference file, creating"
+                            prefix = 'goldCyclic_nchan%d_nbin%d_npol%d_cyclic%d' % (nchan,nbin,outpols,cyclic)
+
+                            refFilename, refInfo = runDspsr(args, goldDir, prefix,program=golddspsr)
+                        else:
+                            refFilename, refInfo = refFileData
+                        print "Reference file: ",refFilename
+                        timestr = time.strftime("%Y%m%d_%H%M%S")
+        
+                        prefix = 'cpuCyclic_nchan%d_nbin%d_npol%d_cyclic%d_nthread%d' % (nchan,nbin,outpols,cyclic,nthread)
+                        print "running test"
+                        args = baseArgs.copy()
+                        args.update(refArgs)
+                        args.update(localArgs)
+                        args['t'] = nthread
+                        testOutputFile,info = runDspsr(args,outdir,prefix,program=golddspsr)
+                        print "comparing output"
+                        res = compareOutputs(refFilename, testOutputFile)
+                        print res
+                        print "updating info"
+                        info['stats'] = res
+                        updateInfo(testOutputFile, outdir, info)                                    
+def testCyclicCUDA(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[2], redoRef=False,goldprog = golddspsr,
+                       refArgs = dict(V=''), cudaArgs = dict(V='',cuda=0), outdir = '/home/gej/data/cyclo/testCyclicCuda'):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     for cyclic in cyclicList:
@@ -273,7 +318,8 @@ def testCyclicCUDA(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=
                     refFileData = findGoldStandard(args)
                     if refFileData is None:
                         print "Did not find reference file, creating"
-                        refFilename, refInfo = runDspsr(args, goldDir, 'goldCyclic')
+                        prefix = 'goldCyclic_nchan%d_nbin%d_npol%d_cyclic%d' % (nchan,nbin,outpols,cyclic)
+                        refFilename, refInfo = runDspsr(args, goldDir, prefix,program=goldprog)
                     else:
                         refFilename, refInfo = refFileData
                     print "Reference file: ",refFilename
