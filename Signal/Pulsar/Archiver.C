@@ -498,14 +498,31 @@ try
   archive-> set_dedispersed( archive_dedispersed );
   archive-> set_faraday_corrected (false);
 
-  // set any available extensions
+  /* *********************************************************************
+     *********************************************************************
 
-  Pulsar::Backend* backend = archive -> getadd<Pulsar::Backend>();
-  if (backend)
+     Set any available extensions
+
+     *********************************************************************
+     ********************************************************************* */
+
+  /*
+    A valid Backend extension may have already been created; e.g. by
+    the OutputArchive extension class.  Therefore, if the Backend extension
+    already exists, do not modifiy it.
+  */
+
+  Pulsar::Backend* backend = archive -> get<Pulsar::Backend>();
+  if (!backend)
   {
+    backend = new Pulsar::Backend;
+
     if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::Backend extension" << endl;
+
     set (backend);
+
+    archive->add_extension( backend );
   }
 
 
