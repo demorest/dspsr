@@ -1112,7 +1112,7 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
     archiver->set_subints_per_file (config->subints_per_archive); 
   }
 
-  if (config->single_pulse)
+  if (config->single_pulse || config->no_dynamic_extensions)
     archiver->set_store_dynamic_extensions (false);
 
   FilenameEpoch* epoch_convention = 0;
