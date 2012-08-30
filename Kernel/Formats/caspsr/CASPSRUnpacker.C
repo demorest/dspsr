@@ -21,7 +21,7 @@
 #include <cuda_runtime.h>
 #endif
 
-#define FAST_UNPACK
+#include <errno.h>
 
 using namespace std;
 
@@ -36,10 +36,24 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
   gpu_stream = undefined_stream;
 
   table = new BitTable (8, BitTable::TwosComplement);
+
+  n_threads = 0;
+  context = 0;
+  state = Idle;
+  thread_count = 0;
+
+  device_prepared = false;
 }
 
 dsp::CASPSRUnpacker::~CASPSRUnpacker ()
 {
+#if HAVE_CUDA
+  if (n_threads)
+  {
+    stop_threads ();
+    join_threads ();
+  }
+#endif
 }
 
 dsp::CASPSRUnpacker * dsp::CASPSRUnpacker::clone () const
@@ -63,18 +77,49 @@ bool dsp::CASPSRUnpacker::get_device_supported (Memory* memory) const
 void dsp::CASPSRUnpacker::set_device (Memory* memory)
 {
 #if HAVE_CUDA
-  CUDA::DeviceMemory* gpu = dynamic_cast< CUDA::DeviceMemory*>( memory );
-  if (gpu)
+  CUDA::DeviceMemory * gpu_mem = dynamic_cast< CUDA::DeviceMemory*>( memory );
+  if (gpu_mem)
   {
+    gpu_stream = (void *) gpu_mem->get_stream();
+#ifdef USE_TEXTURE_MEMORY
+    if (verbose)
+      cerr << "dsp::CASPSRUnpacker::set_device: using texture memory" << endl;
+    CUDA::TextureMemory * texture_mem = new CUDA::TextureMemory (gpu_mem->get_stream());
+    texture_mem->set_format_signed(8, 0, 0, 0);
+    texture_mem->set_symbol("caspsr_unpack_tex");
+    staging.set_memory( texture_mem );
+#else
+    if (verbose)
+      cerr << "dsp::CASPSRUnpacker::set_device: using gpu memory" << endl;
     staging.set_memory( memory );
-    gpu_stream = (void *) gpu->get_stream();
+#endif
   }
   else
+  {
+    if (verbose)
+      cerr << "dsp::CASPSRUnpacker::set_device: using cpu memory" << endl;
     gpu_stream = undefined_stream;
+    n_threads = 2;
+    context = new ThreadContext;
+    state = Idle;
 
+    thread_count = 0;
+    ids.resize(n_threads);
+    states.resize(n_threads);
+    for (unsigned i=0; i<n_threads; i++)
+    {
+      if (verbose)
+        cerr << "dsp::CASPSRUnpacker::set_device: starting cpu_unpacker_thread " << i << endl;
+      states[i] = Idle;
+      errno = pthread_create (&(ids[i]), 0, cpu_unpacker_thread, this);
+      if (errno != 0)
+        throw Error (FailedSys, "dsp::CASPSRUnpacker", "pthread_create");
+    }
+  }
 #else
   Unpacker::set_device (memory);
 #endif
+  device_prepared = true;
 }
 
 
@@ -86,15 +131,12 @@ bool dsp::CASPSRUnpacker::matches (const Observation* observation)
 
 void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
                                   const unsigned char* from,
-                                  const unsigned nskip,
                                   float* into,
                                   const unsigned fskip,
                                   unsigned long* hist)
 {
+  cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
   const float* lookup = table->get_values ();
-
-#ifdef FAST_UNPACK
-
   const unsigned into_stride = fskip * 4;
   const unsigned from_stride = 8;
 
@@ -108,35 +150,6 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
     from += from_stride;
     into += into_stride;
   }
-#else
-  int counter_four = 0;
-
-  if (verbose)
-    cerr << "dsp::CASPSRUnpacker::unpack ndat=" << ndat << endl;
-
-  for (uint64_t idat = 0; idat < ndat; idat++)
-  {
-    hist[ *from ] ++;
-    *into = lookup[ *from ];
-    n_unpacked ++;
-    
-#ifdef _DEBUG
-      cerr << idat << " " << int(*from) << " -> " << *into << endl;
-#endif
-    counter_four++;
-    if (counter_four == 4)
-      {
-        counter_four = 0;
-        from += 5; //(nskip+4);
-      }
-    else
-      {
-        from ++; //=nskip;
-      }
-    into += fskip;
-  }
-#endif
-
 }
 
 void dsp::CASPSRUnpacker::unpack ()
@@ -149,39 +162,141 @@ void dsp::CASPSRUnpacker::unpack ()
   }
 #endif
 
-  const uint64_t   ndat  = input->get_ndat();
-  
-  const unsigned nchan = input->get_nchan();
-  const unsigned npol  = input->get_npol();
-  const unsigned ndim  = input->get_ndim();
-  
-  const unsigned nskip = npol * nchan * ndim;
-  const unsigned fskip = ndim;
-  
-  unsigned offset = 0;
-  
-  for (unsigned ichan=0; ichan<nchan; ichan++)
+  // some programs (digifil) do not call set_device
+  if ( ! device_prepared )
+    set_device ( Memory::get_manager ());
+
+  start_threads();
+  wait_threads();
+}
+
+void* dsp::CASPSRUnpacker::cpu_unpacker_thread (void* ptr)
+{
+  reinterpret_cast<CASPSRUnpacker*>( ptr )->thread ();
+  return 0;
+}
+
+void dsp::CASPSRUnpacker::thread ()
+{
+  context->lock();
+
+  unsigned thread_num = thread_count;
+  thread_count++;
+
+  // each thread unpacks 4 samples
+  const unsigned ipol = thread_num % 2;
+  const unsigned npol = 2;
+
+  const unsigned into_stride = 4 * (int) (n_threads / npol);  // unpacked jump per thread iter
+  const unsigned into_offset = 4 * (int) (thread_num / npol); // unpacked thread start offset
+
+  const unsigned from_stride = 4 * n_threads;                 // raw jump per thread iter
+  const unsigned from_offset = 4 * thread_num;                // raw thread start offset
+
+  const float* lookup = table->get_values ();
+  float * into = 0;
+
+  while (state != Quit)
   {
-    for (unsigned ipol=0; ipol<npol; ipol++)
+    // wait for Active state
+    while (states[thread_num] == Idle)
     {
-      if (ipol==1)
-        offset = 4;
-      for (unsigned idim=0; idim<ndim; idim++)
-      {
-        const unsigned char* from = input->get_rawptr() + offset;
-        float* into = output->get_datptr (ichan, ipol) + idim;
-        unsigned long* hist = get_histogram (ipol);
-              
-#ifdef _DEBUG
-        cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
-#endif
-              
-        unpack (ndat, from, nskip, into, fskip, hist);
-        offset ++;
-      }
+      context->wait ();
     }
+
+    if (states[thread_num] == Quit)
+    {
+      context->unlock();
+      return;
+    }
+    context->unlock();
+
+
+    // unpack ndat worth of data
+    const uint64_t ndat  = input->get_ndat();
+    const unsigned char* from = input->get_rawptr() + from_offset;
+    into = output->get_datptr (0, ipol) + into_offset;
+
+    for (uint64_t idat=into_offset; idat < ndat; idat+=into_stride)
+    {
+      into[0] = lookup[ from[0] ];
+      into[1] = lookup[ from[1] ];
+      into[2] = lookup[ from[2] ];
+      into[3] = lookup[ from[3] ];
+
+      from += from_stride;
+      into += into_stride;
+    }
+
+    context->lock();
+    states[thread_num] = Idle;
+
+#ifdef _DEBUG 
+      cerr << "thread[" << thread_num << "] done" << endl;
+#endif
+    context->broadcast();
+  }
+  context->unlock();
+}
+
+void dsp::CASPSRUnpacker::start_threads ()
+{ 
+  ThreadContext::Lock lock (context);
+  
+  while (state != Idle)
+    context->wait ();
+    
+  for (unsigned i=0; i<n_threads; i++)
+    states[i] = Active;
+  state = Active;
+  
+  context->broadcast();
+} 
+
+void dsp::CASPSRUnpacker::wait_threads()
+{ 
+  ThreadContext::Lock lock (context);
+  
+  while (state == Active)
+  { 
+    bool all_idle = true;
+    for (unsigned i=0; i<n_threads; i++)
+    {
+      if (states[i] != Idle)
+        all_idle = false;
+    }
+    
+    if (all_idle)
+    {
+      state = Idle;
+    }
+    else
+      context->wait ();
   }
 }
+
+void dsp::CASPSRUnpacker::stop_threads ()
+{
+  ThreadContext::Lock lock (context);
+
+  while (state != Idle)
+    context->wait ();
+
+  for (unsigned i=0; i<n_threads; i++)
+    states[i] = Quit;
+  state = Quit;
+
+  context->broadcast();
+}
+
+void dsp::CASPSRUnpacker::join_threads ()
+{
+  void * result = 0;
+  for (unsigned i=0; i<n_threads; i++)
+    pthread_join (ids[i], &result);
+}
+
+
 
 unsigned dsp::CASPSRUnpacker::get_resolution () const { return 1024; }
 
@@ -196,6 +311,14 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
 
   // staging buffer on the GPU for packed data
   unsigned char* d_staging = staging.get_rawptr();
+#ifdef USE_TEXTURE_MEMORY
+  if (verbose)
+    cerr << "dsp::CASPSRUnpacker::unpack_on_gpu: creating TextureMemory" << endl;
+
+  CUDA::TextureMemory * gpu_mem = dynamic_cast< CUDA::TextureMemory*>( staging.get_memory() );
+  if (ndat > 0)
+    gpu_mem->activate ( d_staging );
+#endif
  
   const unsigned char* from= input->get_rawptr();
 
@@ -218,7 +341,7 @@ void dsp::CASPSRUnpacker::unpack_on_gpu ()
                  cudaGetErrorString (error));
 
   caspsr_unpack (stream, ndat, table->get_scale(), 
-                 d_staging, into_pola, into_polb); 
+                 d_staging, into_pola, into_polb);
 }
 
 #endif

@@ -6,6 +6,7 @@
 #define __dsp_CASPSRUnpacker_h
 
 #include "dsp/EightBitUnpacker.h"
+#include "ThreadContext.h"
 
 namespace dsp {
   
@@ -35,16 +36,55 @@ namespace dsp {
 
     void unpack ();
 
-    void unpack (uint64_t ndat,
-		 const unsigned char* from, const unsigned nskip,
-		 float* into, const unsigned fskip,
-		 unsigned long* hist);
+    void unpack (uint64_t ndat, const unsigned char* from, 
+		             float* into, const unsigned fskip,
+		             unsigned long* hist);
 
     BitSeries staging;
     void * gpu_stream;
     void unpack_on_gpu ();
 
     unsigned get_resolution ()const ;
+
+  private:
+
+    ThreadContext * context;
+
+    unsigned n_threads;
+
+    unsigned thread_count;
+
+    bool device_prepared;
+
+    //! cpu_unpacker_thread ids
+    std::vector <pthread_t> ids;
+
+    //! Signals the CPU threads to start
+    void start_threads ();
+
+    //! Waits for the CPU threads to complete 
+    void wait_threads ();
+
+    //! Stops the CPU threads
+    void stop_threads ();
+
+    //! Joins the CPU threads
+    void join_threads ();
+
+    //! sk_thread calls thread method
+    static void* cpu_unpacker_thread (void*);
+
+    //! The CPU CASPSR Unpacker thread
+    void thread ();
+
+    enum State { Idle, Active, Quit };
+
+    //! overall state
+    State state;
+
+    //! sk_thread states
+    std::vector <State> states;
+
   };
 }
 
