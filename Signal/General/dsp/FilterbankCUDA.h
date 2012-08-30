@@ -45,6 +45,8 @@ namespace CUDA
     void setup (dsp::Filterbank*);
     void perform (const float* in);
     void finish ();
+
+    int max_threads_per_block; 
   };
 
 }
