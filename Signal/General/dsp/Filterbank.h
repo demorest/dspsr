@@ -59,7 +59,7 @@ namespace dsp {
     unsigned get_frequency_resolution () const { return freq_res; }
 
     void set_frequency_overlap (unsigned over) { overlap_ratio = over; }
-    unsigned get_frequency_overlap () const { return overlap_ratio; }
+    unsigned get_frequency_overlap () const { return (unsigned) overlap_ratio; }
 
     //! Engine used to perform discrete convolution step
     class Engine;
