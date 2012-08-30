@@ -62,44 +62,6 @@ __global__ void separate (float2* d_fft, int nfft)
   sep_Y( p1[k], p0k, p1i );
 }
 
-/* *************************************************************************
- *
- *
- * The realtr trick
- *
- *
- ************************************************************************* */
-
-__global__ void realtr (float2* d_fft, unsigned bwd_nfft,
-			float* k_SN, float* k_CN)
-{
-  int i = blockIdx.x*blockDim.x + threadIdx.x;
-  int k = bwd_nfft - i;
- 
-  float real_aa=d_fft[i].x+d_fft[k].x;
-  float real_ab=d_fft[k].x-d_fft[i].x;
-  
-  float imag_ba=d_fft[i].y+d_fft[k].y;
-  float imag_bb=d_fft[k].y-d_fft[i].y;
-
-  float temp_real=k_CN[i]*imag_ba+k_SN[i]*real_ab;
-  float temp_imag=k_SN[i]*imag_ba-k_CN[i]*real_ab;
-
-  d_fft[k].y = -0.5*(temp_imag-imag_bb);
-  d_fft[i].y = -0.5*(temp_imag+imag_bb);
-
-  d_fft[k].x = 0.5*(real_aa-temp_real);
-  d_fft[i].x = 0.5*(real_aa+temp_real);
-}
-
-/* *************************************************************************
- *
- *
- * end of tricks
- *
- *
- ************************************************************************* */
-
 __global__ void multiply (float2* d_fft, float2* kernel)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -124,43 +86,38 @@ __global__ void ncopy (float2* output_data, unsigned output_stride,
 
 void filterbank_cuda_perform (filterbank_engine* engine, 
 			      filterbank_cuda* cuda,
-			      const float* in)
+			      const float* in, 
+            const int max_threads_per_block)
 {
   float2* cscratch = (float2*) engine->scratch;
-  float2* cin = (float2*) in;
 
   unsigned data_size = engine->nchan * cuda->bwd_nfft;
-  int threads = 256;
+  int threads_per_block = max_threads_per_block / 2;
 
   // note that each thread will set two complex numbers in each poln
-  int blocks = data_size / (threads*2);
+  int blocks = data_size / (threads_per_block * 2);
 
   if (in)
   {
-    cufftExecC2C (cuda->plan_fwd, cin, cscratch, CUFFT_FORWARD);
-
-    CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
-
-    if (engine->nchan == 1)
-      return;
-
     if (cuda->real_to_complex)
     {
-      DEBUG("CUDA::FilterbankEngine::perform real-to-complex");
-
-      realtr<<<blocks,threads,0,cuda->stream>>> (cscratch,data_size,
-					         cuda->d_SN,
-					         cuda->d_CN);
-
-      CHECK_ERROR ("CUDA::FilterbankEngine::perform realtr");
+      float * cin = (float *) in;
+      cufftExecR2C(cuda->plan_fwd, cin, cscratch);
+      CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecR2C FORWARD");
+    }
+    else
+    {
+      float2* cin = (float2*) in;
+      cufftExecC2C(cuda->plan_fwd, cin, cscratch, CUFFT_FORWARD);
+      CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecR2C FORWARD");
     }
   }
 
-  blocks = data_size / threads;
+  blocks = data_size / threads_per_block;
 
   if (cuda->d_kernel)
   {
-    multiply<<<blocks,threads,0,cuda->stream>>> (cscratch, cuda->d_kernel);
+    multiply<<<blocks,threads_per_block,0,cuda->stream>>> (cscratch, cuda->d_kernel);
     CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply");
   }
 
@@ -177,7 +134,7 @@ void filterbank_cuda_perform (filterbank_engine* engine,
 
   {
     dim3 threads;
-    threads.x = 128;
+    threads.x = threads_per_block;
 
     dim3 blocks;
     blocks.x = engine->nkeep / threads.x;

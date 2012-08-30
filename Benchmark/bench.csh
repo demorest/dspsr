@@ -9,6 +9,7 @@ set bw=""
 
 @ nbwtrial = 4
 @ nchan = 0
+@ nc = 0
 
 foreach option ( $* )
 
@@ -108,10 +109,12 @@ while ( $bwtrial < $nbwtrial )
 
   if ( $nchan == 0 ) then
     # ensure that nchan is a power of two
-    @ nchan = 2
-    while ( $nchan <= $bw )
-      @ nchan = $nchan * 2
+    @ nc = 2
+    while ( $nc <= $bw )
+      @ nc = $nc * 2
     end
+  else
+    @ nc = $nchan
   endif
 
   @ time = 1024 / $bw
@@ -129,12 +132,12 @@ while ( $bwtrial < $nbwtrial )
     rm -f $file
 
     set psr="-E pulsar.par -P polyco.dat -D $DM -B $bw -f $freq"
-    set args="--fft-bench -r -F ${nchan}:D -T $time $psr header.dada"
+    set args="--fft-bench -r -F ${nc}:D -T $time $psr header.dada"
 
     foreach trial ( a b c d e f )
 
       if ( "$gpu" != "" ) then
-        set cmd="dspsr --cuda=$gpu --minram=256 $args"
+        set cmd="dspsr --cuda=$gpu --minram=512 $args"
       else
         set cmd="dspsr -t $nthread --minram=$cache $args"
       endif
