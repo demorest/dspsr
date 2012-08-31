@@ -785,15 +785,15 @@ void dsp::LoadToFold::finalize ()
   manager->set_minimum_RAM( config->get_minimum_RAM() );
   manager->set_copies( config->get_nbuffers() );
 
-  if (block_overlap)
-    manager->set_overlap( block_overlap );
+  manager->set_overlap( block_overlap );
 
   uint64_t ram = manager->set_block_size( block_size );
 
   // add the increased block size if the SKFB is being used
   if (skfilterbank)
   {
-    int64_t skfb_increment = (int64_t) skfilterbank->get_skfb_inc (manager->get_input()->get_block_size());
+    block_size = manager->get_input()->get_block_size();
+    int64_t skfb_increment = (int64_t) skfilterbank->get_skfb_inc (block_size);
 
     block_size += skfb_increment;
     block_overlap += skfb_increment;
