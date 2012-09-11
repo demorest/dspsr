@@ -448,6 +448,20 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof) try
   if (!prof || prof->get_nbin() == 0)
     return;
 
+  if (verbose)
+    cerr << "dsp::PhaseSeries::combine length add=" 
+         << prof->integration_length 
+         << " current=" << integration_length << endl;
+
+  if (!integration_length)
+  {
+    if (verbose)
+      cerr << "dsp::PhaseSeries::combine this is empty" << endl;
+
+    *this = *prof;
+    return;
+  }
+
   if (!mixable (*prof, prof->get_nbin()))
     throw Error (InvalidParam, "PhaseSeries::combine",
 		 "PhaseSeries !mixable");
@@ -458,11 +472,6 @@ void dsp::PhaseSeries::combine (const PhaseSeries* prof) try
   for (unsigned ihit=0; ihit<nhits; ihit++)
     hits[ihit] += prof->hits[ihit];
   
-  if (verbose)
-    cerr << "dsp::PhaseSeries::combine length add=" 
-         << prof->integration_length 
-         << " cur=" << integration_length << endl;
-
   integration_length += prof->integration_length;
   ndat_total += prof->ndat_total;
 
