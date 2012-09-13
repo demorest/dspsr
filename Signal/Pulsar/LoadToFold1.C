@@ -319,7 +319,7 @@ void dsp::LoadToFold::construct () try
 
   }
 
-  if (config->filterbank.get_nchan() > 1)
+  if (1) // (config->filterbank.get_nchan() > 1)
   {
     // new storage for filterbank output (must be out-of-place)
     convolved = new_time_series ();

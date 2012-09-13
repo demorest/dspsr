@@ -185,14 +185,14 @@ uint64_t CUDA::CyclicFoldEngineCUDA::get_bin_hits (int ibin)
 	int idx = 0;
 	idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
 	uint64_t hits = 0;
-	cerr << "ibin: " << ibin << " ";
+//	cerr << "ibin: " << ibin << " ";
 	while (idx < binplan_size) {
 		hits += lagbinplan[idx].hits;
-		cerr << lagbinplan[idx].hits << " ";
+		//cerr << lagbinplan[idx].hits << " ";
 		iturn += 1;
 		idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
 	}
-	cerr << "total: " << hits << endl;
+//	cerr << "total: " << hits << endl;
 	return hits;
 }
   
@@ -215,13 +215,13 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 
 	int _binplan_size = intnturns*nbin*nlag;
 
-	cerr << "Start ph:" << startph << " intnturns:" <<intnturns << " _ndat:" << _ndat << " nlag:" << nlag
-			<< " phase per sample:" << phase_per_sample<< " nturns:" << nturns << endl ;
-	cerr << "binplansize:" << binplan_size << "  _binplansize:" << _binplan_size << endl;
+//	cerr << "Start ph:" << startph << " intnturns:" <<intnturns << " _ndat:" << _ndat << " nlag:" << nlag
+//			<< " phase per sample:" << phase_per_sample<< " nturns:" << nturns << endl ;
+//	cerr << "binplansize:" << binplan_size << "  _binplansize:" << _binplan_size << endl;
 
 	  if (_binplan_size > binplan_size) {
 
-//		    if (parent->verbose)
+		    if (parent->verbose)
 		      cerr << "dsp::CyclicFoldEngine::set_ndat alloc binplan" << endl;
 
 		    if (lagbinplan) {
@@ -305,7 +305,7 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
 //	binplan_size = (current_turn + 1) * nbin; // add one turn just for good measure. There should be zero hits in it
   uint64_t mem_size = binplan_size * sizeof(bin);
 
- // if (dsp::Operation::verbose)
+  if (dsp::Operation::verbose)
     cerr << "CUDA::CyclicFoldEngineCUDA::send_binplan ndat=" << ndat_fold 
          << "  Allocating on device mem_size " << mem_size
          << " binplan_size=" << binplan_size
@@ -356,8 +356,8 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
   cerr << "done, dumping cudabinplan, closing files" << endl;
   fbin.close();
 */
-  cerr << "copying: stream=" << stream << " d_binplan=" << d_binplan << " mem_size=" << mem_size <<
-		  " lagbinplan=" << lagbinplan << endl;
+//  cerr << "copying: stream=" << stream << " d_binplan=" << d_binplan << " mem_size=" << mem_size <<
+//		  " lagbinplan=" << lagbinplan << endl;
   if (stream)
     error = cudaMemcpyAsync (d_binplan,lagbinplan,mem_size,cudaMemcpyHostToDevice,stream);
   else

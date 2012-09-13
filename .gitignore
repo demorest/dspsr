@@ -115,3 +115,4 @@ update.log
 /*.tim
 /SdkMasterLog.csv
 /deviceQuery.txt
+/callgrind*

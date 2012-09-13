@@ -18,8 +18,9 @@ def pickle(obj,fname,protocol=2):
 
 homedir = '/home/gej'
 #homedir = '' # if using /data on extrnal mount
-inputFile = homedir + '/data/cyclo/guppi_55965_unknown_0001.0000.raw'
-goldDir = homedir + '/data/cyclo/gold'
+#inputFile = homedir + '/data/cyclo/guppi_55965_unknown_0001.0000.raw'
+inputFile = homedir + '/data/p2627.20110911.b2s1g0.00000.pdev'
+goldDir = homedir + '/data/cyclo/goldpdev'
 #commonArgs = "-r -D 1000 -E /home/gej/pulsar/parfiles/crab_t1.par -A -L 1 -T 10 -a PSRFITS -overlap"
 dspsr = 'dspsr'
 golddspsr = '/home/gej/devel/dspsr.ref/bin/dspsr'
@@ -37,6 +38,18 @@ baseArgs = dict(r='', # Report timing
                 e='fits', # no output extension
                 
             )
+
+baseArgs = dict(r='', # Report timing
+                E='/home/gej/data/1713+0747.nanograv.par', # parfile
+                A='', # all subints in one file
+                L=1, # 1 second subints
+                a='PSRFITS', #outptu format
+                overlap='', # needed for guppi/cyclic
+                d=2, # ouput pols
+                b=256, # number of bins
+                e='fits', # no output extension                
+            )
+
 
 def findClosestDict(d,dictList,ignoreKeys=[]):
     scores = []
@@ -263,7 +276,7 @@ def testFilterbankCUDA(nchanList=[16], nbinList=[256], outpolsList=[2], redoRef=
                 
 
 def testCyclicCPU(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[2], threadList=[2],
-                  refArgs = dict(V=''), outdir = '/home/gej/data/cyclo/cpuCyclic'):
+                  refArgs = dict(V=''), outdir = '/home/gej/data/cyclo/cpuPdevCyclic'):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     for cyclic in cyclicList:
@@ -272,7 +285,7 @@ def testCyclicCPU(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[
                 for nchan in nchanList:
                     for nthread in threadList:
                         print "nchan=%d, nbin=%d, npol=%d, cyclic=%d, threads=%d" % (nchan,nbin,outpols,cyclic,nthread)
-                        localArgs = dict(b=nbin,d=outpols,cyclic=cyclic) #F=('%d:D'%nchan),
+                        localArgs = dict(b=nbin,d=outpols,cyclic=cyclic,F=('%d:D'%nchan))
                         args = baseArgs.copy()
                         args.update(refArgs)
                         args.update(localArgs)
@@ -282,7 +295,7 @@ def testCyclicCPU(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[
                             print "Did not find reference file, creating"
                             prefix = 'goldCyclic_nchan%d_nbin%d_npol%d_cyclic%d' % (nchan,nbin,outpols,cyclic)
 
-                            refFilename, refInfo = runDspsr(args, goldDir, prefix,program=golddspsr)
+                            refFilename, refInfo = runDspsr(args, goldDir, prefix,program=dspsr)
                         else:
                             refFilename, refInfo = refFileData
                         print "Reference file: ",refFilename
@@ -294,7 +307,7 @@ def testCyclicCPU(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[
                         args.update(refArgs)
                         args.update(localArgs)
                         args['t'] = nthread
-                        testOutputFile,info = runDspsr(args,outdir,prefix,program=golddspsr)
+                        testOutputFile,info = runDspsr(args,outdir,prefix,program=dspsr)
                         print "comparing output"
                         res = compareOutputs(refFilename, testOutputFile)
                         print res
@@ -302,7 +315,7 @@ def testCyclicCPU(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[
                         info['stats'] = res
                         updateInfo(testOutputFile, outdir, info)                                    
 def testCyclicCUDA(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=[2], redoRef=False,goldprog = golddspsr,
-                       refArgs = dict(V=''), cudaArgs = dict(V='',cuda=0), outdir = '/home/gej/data/cyclo/testCyclicCuda'):
+                       refArgs = dict(V=''), cudaArgs = dict(V='',cuda=0), outdir = '/home/gej/data/cyclo/testPdevCyclicCuda'):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     for cyclic in cyclicList:
@@ -319,7 +332,7 @@ def testCyclicCUDA(nchanList=[16], cyclicList=[64], nbinList=[256], outpolsList=
                     if refFileData is None:
                         print "Did not find reference file, creating"
                         prefix = 'goldCyclic_nchan%d_nbin%d_npol%d_cyclic%d' % (nchan,nbin,outpols,cyclic)
-                        refFilename, refInfo = runDspsr(args, goldDir, prefix,program=goldprog)
+                        refFilename, refInfo = runDspsr(args, goldDir, prefix,program=dspsr)
                     else:
                         refFilename, refInfo = refFileData
                     print "Reference file: ",refFilename

@@ -55,7 +55,7 @@ void dsp::Filterbank::make_preparations ()
 {
   if (nchan < input->get_nchan() )
     throw Error (InvalidState, "dsp::Filterbank::make_preparations",
-		 "output nchan=%d <= input nchan=%d",
+		 "output nchan=%d < input nchan=%d",
 		 nchan, input->get_nchan());
 
   if (nchan % input->get_nchan() != 0)
@@ -420,8 +420,13 @@ void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output,
 {
 //  engine->nchan = output->get_nchan(); // this is causing problems because it conflicts with what's really needed (output nchan/ input nchan)
   engine->output = output->get_datptr (ichan, ipol) + out_offset; //adding ichan here, was 0 before
-  engine->output_span = 
-    output->get_datptr (1, ipol) - output->get_datptr (0, ipol);
+  if (output->get_nchan() == 1) {
+	  engine->output_span = 0;
+  }
+  else {
+	  engine->output_span =
+		output->get_datptr (1, ipol) - output->get_datptr (0, ipol);
+  }
 }
 
 void dsp::Filterbank::transformation ()

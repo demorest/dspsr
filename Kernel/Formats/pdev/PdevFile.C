@@ -260,6 +260,9 @@ void dsp::PdevFile::parse_aoHdr ()
       << " dir=" << aohdr->bandIncrFreq << endl;
   double bw = aohdr->bandWdHz / 1e6;
   if (aohdr->bandIncrFreq == 0) bw *= -1.0;
+  cerr << "pdev: forcing bw inversion! bw was:" << bw;
+  bw = bw * -1.0;
+  cerr << "Now bw=" << bw << endl;
   info.set_bandwidth(bw);
   info.set_rate(aohdr->bandWdHz);
 
