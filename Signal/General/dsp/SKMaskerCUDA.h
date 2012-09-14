@@ -35,6 +35,8 @@ namespace CUDA
     //! DDFB span, i.e. n floats between channels from raw base ptr
     unsigned span;
 
+    int max_threads_per_block;
+
   };
 }
 

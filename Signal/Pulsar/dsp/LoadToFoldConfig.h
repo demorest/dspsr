@@ -174,6 +174,9 @@ namespace dsp {
     // the predictors of multiple pulsars to be folded
     std::vector< Reference::To<Pulsar::Predictor> > predictors;
 
+    // don't output dynamic extensions in the file
+    bool no_dynamic_extensions;
+
     // name of the output archive class
     std::string archive_class;
 

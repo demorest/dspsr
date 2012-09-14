@@ -22,7 +22,7 @@ AC_DEFUN([SWIN_LIB_CUDA],
     fi
 
     if test x"$with_cuda_dir" != x; then
-      cuda_nvcc=$with_cuda_dir/bin/cuda
+      cuda_nvcc=$with_cuda_dir/bin/nvcc
     else
       AC_PATH_PROG(cuda_nvcc, nvcc, no)
     fi

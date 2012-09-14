@@ -174,6 +174,8 @@ void dsp::SingleThread::initialize () try
 
   operations.push_back (manager.get());
 
+  Unpacker* unpacker = manager->get_unpacker ();
+
 #if HAVE_CUDA
 
   bool run_on_gpu = thread_id < config->get_cuda_ndevice();
@@ -191,13 +193,13 @@ void dsp::SingleThread::initialize () try
          << " using CUDA device " << device << endl;
 
     int ndevice = 0;
-    cudaGetDeviceCount(&ndevice);
+    cudaError err = cudaGetDeviceCount(&ndevice);
 
-    if (device >= ndevice)
+    if (err != cudaSuccess || device >= ndevice)
       throw Error (InvalidParam, "dsp::SingleThread::initialize",
-                   "device=%d >= ndevice=%d", device, ndevice);
+                   "device=%d >= ndevice=%d cudaError=%s", device, ndevice, cudaGetErrorString(err));
 
-    cudaError err = cudaSetDevice (device);
+    err = cudaSetDevice (device);
     if (err != cudaSuccess)
       throw Error (InvalidState, "dsp::SingleThread::initialize",
                    "cudaMalloc failed: %s", cudaGetErrorString(err));
@@ -214,7 +216,6 @@ void dsp::SingleThread::initialize () try
 
     device_memory = new CUDA::DeviceMemory (stream);
 
-    Unpacker* unpacker = manager->get_unpacker ();
     if (unpacker->get_device_supported( device_memory ))
     {
       if (Operation::verbose)
@@ -242,6 +243,12 @@ void dsp::SingleThread::initialize () try
       operations.push_back (transfer);
     }    
   }
+  else
+    unpacker->set_device( Memory::get_manager () );
+
+#else  // !HAVE_CUFFT
+
+  unpacker->set_device( Memory::get_manager () );
 
 #endif // HAVE_CUFFT
 

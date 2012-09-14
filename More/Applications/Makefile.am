@@ -3,7 +3,7 @@ if HAVE_PGPLOT
 bin_PROGRAMS = searchplot
 
 searchplot_SOURCES = searchplot.C
-searchplot_LDADD = $(LDADD) @PGPLOT_LIBS@
+searchplot_LDADD = $(LDADD) @PGPLOT_LIBS@ @CUFFT_LIBS@
 
 LDADD = $(top_builddir)/More/Plotting/libPlotting.la \
 				$(top_builddir)/Kernel/libdspbase.la \
