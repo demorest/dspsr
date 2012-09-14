@@ -102,10 +102,11 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     return;
 }
 
+extern void check_error (const char*);
 
 void CUDA::FilterbankEngine::finish ()
 {
-  //check_error ("CUDA::FilterbankEngine::finish");
+  check_error ("CUDA::FilterbankEngine::finish");
 }
 
 
