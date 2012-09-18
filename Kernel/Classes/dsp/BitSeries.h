@@ -89,6 +89,8 @@ namespace dsp {
 
     void set_memory (Memory*);
 
+    Memory* get_memory () { return memory; }
+
     //! Match the internal memory layout of another BitSeries
     void internal_match (const BitSeries*);
 

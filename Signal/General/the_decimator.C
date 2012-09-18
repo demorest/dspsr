@@ -18,6 +18,8 @@
 
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
+#include "dsp/FScrunch.h"
+#include "dsp/TScrunch.h"
 
 #include "dirutil.h"
 #include "Error.h"
@@ -42,9 +44,11 @@ char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 #include <psrxml.h>
 #endif
 
+
+
 using namespace std;
 
-static char* args = "b:B:cI:o:prhxk:vV";
+static char* args = "b:B:cI:o:prt:f:hxk:vVD:";
 
 void usage ()
 {
@@ -59,6 +63,8 @@ void usage ()
     "  -o file   file stamp for filterbank file  \n" 
     "  -r        report total Operation times \n"
     "  -p        revert to FPT order \n"
+    "  -t factor tscrunch by factor  \n"
+    "  -f factor fscrunch by factor  \n"
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
     "  -k key    shared memory key to output DADA ring buffer \n"
 #endif
@@ -106,6 +112,10 @@ int main (int argc, char** argv) try
   // update interval in seconds;
   double update_interval = 0.0;
 
+  unsigned int tscrunch_factor=0;
+  unsigned int fscrunch_factor=0;
+  float decay_timescale=-1;
+
   FILE* outfile = stdout;
   char* outfile_basename = 0;
 
@@ -141,6 +151,18 @@ int main (int argc, char** argv) try
 
     case 'r':
       dsp::Operation::record_time = true;
+      break;
+
+    case 'f':
+      fscrunch_factor=atoi(optarg);
+      break;
+
+    case 't':
+      tscrunch_factor=atoi(optarg);
+      break;
+
+    case 'D':
+      decay_timescale=atof(optarg);
       break;
 
     case 'k':
@@ -230,6 +252,30 @@ int main (int argc, char** argv) try
   pscrunch->set_input (timeseries);
   pscrunch->set_output (timeseries);
 
+
+
+  Reference::To<dsp::FScrunch> fscrunch = new dsp::FScrunch;
+  Reference::To<dsp::TScrunch> tscrunch = new dsp::TScrunch;
+  if ( fscrunch_factor )
+  {
+
+	  fscrunch->set_factor( fscrunch_factor );
+	  fscrunch->set_input( timeseries );
+	  fscrunch->set_output( timeseries );
+  }
+
+  if ( tscrunch_factor )
+  {
+
+	  tscrunch->set_factor( tscrunch_factor );
+	  tscrunch->set_input( timeseries );
+	  tscrunch->set_output( timeseries );
+  }
+
+
+
+
+
   if (verbose)
     cerr << "the_decimator: creating output bitseries container" << endl;
   Reference::To<dsp::BitSeries> bitseries = new dsp::BitSeries;
@@ -288,6 +334,7 @@ int main (int argc, char** argv) try
     unsigned nchan = obs->get_nchan();
     uint64_t nsample = uint64_t( block_size * obs->get_rate() );
 
+
     if (verbose)
       cerr << "the_decimator: block_size=" << block_size << " sec "
 	"(" << nsample << " samp)" << endl;
@@ -332,6 +379,10 @@ int main (int argc, char** argv) try
 
 #endif
 
+    // once we know the sample rate, we can set the decay constant
+    // This is set empirically, so might be wrong. Should be close enough though
+    rescale->set_decay (decay_timescale*0.35*obs->get_rate());
+
     bool do_pscrunch = manager->get_info()->get_npol() > 1;
     uint64_t lost_samps = 0;
     while (!manager->get_input()->eod())
@@ -341,7 +392,11 @@ int main (int argc, char** argv) try
       rescale->operate ();
 
       if (do_pscrunch)
-	pscrunch->operate ();
+	      pscrunch->operate ();
+      if ( fscrunch_factor )
+	      fscrunch->operate();
+      if ( tscrunch_factor )
+	      tscrunch->operate();
 
 #ifdef SIGPROC_FILTERBANK_RINGBUFFER
 	

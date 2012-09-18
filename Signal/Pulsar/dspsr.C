@@ -446,6 +446,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->pdmp_output, 'Y');
   arg->set_help ("output pdmp extras");
 
+  arg = menu.add (config->no_dynamic_extensions, "no_dyn");
+  arg->set_help ("disable dynamic extensions");
+
   vector<string> jobs;
   arg = menu.add (jobs, 'j', "job");
   arg->set_help ("psrsh command run before output");

@@ -47,6 +47,7 @@ namespace CUDA
     void finish ();
     void sendKernel(dsp::Filterbank* filterbank, unsigned _ichan);
 
+    int max_threads_per_block; 
   };
 
 }

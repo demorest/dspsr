@@ -16,6 +16,8 @@
 
 #include "dsp/SingleThread.h"
 #include "dsp/TimeSeries.h"
+#include "dsp/Filterbank.h"
+#include "dsp/FilterbankConfig.h"
 
 namespace dsp {
 
@@ -39,8 +41,17 @@ namespace dsp {
     //! Create the pipeline
     void construct ();
 
+    //! Final preparations before running
+    void finalize ();
+
     //! Configuration parameters
     Reference::To<Config> config;
+
+    //! The filterbank in use
+    Reference::To<Filterbank> filterbank;
+
+    //! Verbose output
+    static bool verbose;
 
   };
 
@@ -58,11 +69,8 @@ namespace dsp {
     // order in which the unpacker will output time samples
     dsp::TimeSeries::Order order;
 
-    //! number of frequency channels in filterbank
-    unsigned filterbank_nchan;
-
-    //! number of spectral bins in each filterbank channel
-    unsigned frequency_resolution;
+    //! Filterbank config options
+    Filterbank::Config filterbank;
 
     //! dispersion measure set in output file
     double dispersion_measure;
@@ -70,11 +78,17 @@ namespace dsp {
     //! removed inter-channel dispersion delays
     bool dedisperse;
 
+    //! coherently dedisperse along with filterbank
+    bool coherent_dedisp;
+
     //! integrate in time before digitization
     unsigned tscrunch_factor;
 
     //! integrate in frequency before digitization
     unsigned fscrunch_factor;
+
+    //! process only a single polarization
+    int poln_select;
 
     //! time interval (in seconds) between offset and scale updates
     double rescale_seconds;
@@ -87,6 +101,15 @@ namespace dsp {
 
     //! Name of the output file
     std::string output_filename;
+
+    //! Set quiet mode
+    virtual void set_quiet ();
+
+    //! Set verbose
+    virtual void set_verbose();
+
+    //! Set very verbose
+    virtual void set_very_verbose();
 
   };
 }

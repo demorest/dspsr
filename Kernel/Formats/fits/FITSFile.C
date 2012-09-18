@@ -159,7 +159,7 @@ void dsp::FITSFile::open_file(const char* filename)
 
   set_data_colnum(colnum);
 
-  fd = ::open(filename, O_RDONLY);
+  fd = ::open64(filename, O_RDONLY);
   if (fd < 0) {
     throw Error(FailedSys, "dsp::FITSFile::open",
         "failed open(%s)", filename);

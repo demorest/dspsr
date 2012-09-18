@@ -124,6 +124,9 @@ dsp::LoadToFold::Config::Config ()
   // produce BasebandArchive output by default
   archive_class = "Baseband";
 
+  // Output dynamic extensions by default
+  no_dynamic_extensions = false;
+
 }
 
 // set block size to this factor times the minimum possible

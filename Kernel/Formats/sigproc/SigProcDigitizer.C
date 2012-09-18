@@ -80,6 +80,7 @@ void dsp::SigProcDigitizer::pack ()
   // ChannelSort will re-organize the frequency channels in the output
   output->set_bandwidth( -fabs(input->get_bandwidth()) );
   output->set_swap( false );
+  output->set_nsub_swap( 0 );
 
   if (nbit == -32)
   {

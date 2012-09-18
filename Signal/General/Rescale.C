@@ -20,6 +20,8 @@ dsp::Rescale::Rescale ()
   constant_offset_scale = false;
   output_time_total = false;
   output_after_interval = false;
+  do_decay=false;
+  decay_constant=1e4;
 }
 
 dsp::Rescale::~Rescale ()
@@ -46,6 +48,13 @@ void dsp::Rescale::set_output_time_total (bool flag)
 void dsp::Rescale::set_constant (bool value)
 {
   constant_offset_scale = value;
+}
+
+
+void dsp::Rescale::set_decay (float _decay_constant){
+	if (_decay_constant > 0)
+		do_decay=true;
+	decay_constant=_decay_constant;
 }
 
 //! Set the rescaling interval in seconds
@@ -106,6 +115,9 @@ void dsp::Rescale::init ()
   scale.resize (input_npol);
   offset.resize (input_npol);
 
+  if(do_decay)
+	  decay_offset.resize (input_npol);
+
   for (unsigned ipol=0; ipol < input_npol; ipol++)
   {
     if (output_time_total)
@@ -122,6 +134,11 @@ void dsp::Rescale::init ()
 
     scale[ipol].resize (input_nchan);
     offset[ipol].resize (input_nchan);
+
+    if (do_decay){
+	    decay_offset[ipol].resize(input_nchan);
+	    zero (decay_offset[ipol]);
+    }
   }
 }
 
@@ -271,6 +288,7 @@ void dsp::Rescale::transformation ()
       {
       case TimeSeries::OrderTFP:
 	{
+	  float tmp;
 	  const float* in_data = input->get_dattfp();
 	  float* out_data = output->get_dattfp();
 	  in_data += start_dat * input_nchan*input_npol;
@@ -278,7 +296,13 @@ void dsp::Rescale::transformation ()
 	  for (unsigned idat=start_dat; idat < end_dat; idat++){
 	    for (unsigned ichan=0; ichan < input_nchan; ichan++){
 	      for (unsigned ipol=0; ipol < input_npol; ipol++){
-		(*out_data) = ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
+		if (do_decay){
+			tmp= ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
+			decay_offset[ipol][ichan] = (tmp + decay_offset[ipol][ichan]*decay_constant) / (1.0+ decay_constant);
+			(*out_data) = tmp - decay_offset[ipol][ichan];
+		} else {
+			(*out_data) = ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
+		}
 		in_data++;
 		out_data++;
 	      }

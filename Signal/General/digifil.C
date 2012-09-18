@@ -15,6 +15,7 @@
 #endif
 
 #include "dsp/LoadToFil.h"
+#include "dsp/FilterbankConfig.h"
 
 #include "CommandLine.h"
 #include "FTransform.h"
@@ -70,10 +71,16 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->rescale_constant, 'c');
   arg->set_help ("keep offset and scale constant");
 
-  arg = menu.add (config->filterbank_nchan, 'F', "nchan");
+  arg = menu.add (config->filterbank, 'F', "nchan[:D]");
   arg->set_help ("create a filterbank (voltages only)");
+  arg->set_long_help
+    ("Specify number of filterbank channels; e.g. -F 256\n"
+     "Select coherently dedispersing filterbank with -F 256:D\n"
+     "Set leakage reduction factor with -F 256:<N>\n");
 
-  arg = menu.add (config->frequency_resolution, 'x', "nfft");
+  arg = menu.add (&config->filterbank, 
+      &dsp::Filterbank::Config::set_freq_res, 
+      'x', "nfft");
   arg->set_help ("backward FFT length in voltage filterbank");
 
   arg = menu.add (config->dedisperse, 'K');
@@ -87,6 +94,9 @@ void parse_options (int argc, char** argv) try
 
   arg = menu.add (config->fscrunch_factor, 'f', "nchan");
   arg->set_help ("decimate in frequency");
+
+  arg = menu.add (config->poln_select, 'P', "ipol");
+  arg->set_help ("process only a single polarization of input");
 
   arg = menu.add (config->rescale_seconds, 'I', "secs");
   arg->set_help ("rescale interval in seconds");

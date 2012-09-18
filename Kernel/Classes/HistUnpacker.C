@@ -55,6 +55,8 @@ void dsp::HistUnpacker::set_default_ndig ()
             / get_ndim_per_digitizer() );
   if (verbose)
     cerr << "dsp::HistUnpacker::set_default_ndig ndig=" << ndig << endl;
+
+  resize();
 }
 
 

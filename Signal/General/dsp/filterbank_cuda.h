@@ -66,6 +66,6 @@ typedef struct
 
 void filterbank_cuda_perform (filterbank_engine* engine, 
 			      filterbank_cuda* cuda,
-			      const float* in);
+			      const float* in, const int max_tpb);
 #endif
 

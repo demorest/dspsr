@@ -311,7 +311,15 @@ void dsp::Archiver::set (DigitiserCounts* dcnt, unsigned isub) try
   {
     if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::DigitiserCounts no HistUnpacker"
-        << endl;
+           << endl;
+    return;
+  }
+
+  if (!hist_unpacker->get_ndig())
+  {
+    if (verbose > 2)
+      cerr << "dsp::Archiver::set Pulsar::DigitiserCounts empty HistUnpacker"
+           << endl;
     return;
   }
 
