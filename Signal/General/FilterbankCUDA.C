@@ -136,6 +136,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
 }
 
+extern void check_error (const char*);
 
 void CUDA::FilterbankEngine::sendKernel(dsp::Filterbank* filterbank, unsigned _ichan)
 {
