@@ -88,12 +88,12 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
   if (real_to_complex)
   {
-    DEBUG("CUDA::FilterbankEngine::setup plan size=" << bwd_nfft*nchan*2);
+    DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan*2);
     cufftPlan1d (&plan_fwd, freq_res*nchan*2, CUFFT_R2C, 1);
   }
   else
   {
-    DEBUG("CUDA::FilterbankEngine::setup plan size=" << bwd_nfft*nchan);
+    DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan);
     cufftPlan1d (&plan_fwd, freq_res*nchan, CUFFT_C2C, 1);
   }
 

@@ -93,7 +93,7 @@ void filterbank_cuda_perform (filterbank_engine* engine,
 {
   float2* cscratch = (float2*) engine->scratch;
 
-  unsigned data_size = engine->nchan * cuda->bwd_nfft;
+  unsigned data_size = engine->nchan * engine->freq_res; //cuda->bwd_nfft;
   int threads_per_block = max_threads_per_block / 2;
 
   // note that each thread will set two complex numbers in each poln
