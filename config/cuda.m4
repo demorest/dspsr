@@ -54,6 +54,9 @@ AC_DEFUN([SWIN_LIB_CUDA],
 
     AC_MSG_CHECKING([for CUDA FFT installation])
 
+    with_cufft_include_dir=$with_cuda_include_dir
+    with_cufft_lib_dir=$with_cuda_lib_dir
+
     SWIN_PACKAGE_FIND([cufft],[cufft.h])
     SWIN_PACKAGE_TRY_COMPILE([cufft],[#include <cufft.h>],[],[$swin_cuda_include_dir])
 
