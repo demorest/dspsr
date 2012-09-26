@@ -18,13 +18,14 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 
-namespace Pulsar {
+namespace Pulsar
+{
   class Predictor;
   class Parameters;
 }
 
-namespace dsp {
-
+namespace dsp
+{
   class WeightedTimeSeries;
   class ObservationChange;
 
@@ -33,10 +34,9 @@ namespace dsp {
     This Operation does not modify the TimeSeries.  Rather, it accumulates
     the (folded) average pulse profile data within its data structures.
   */
-  class Fold : public Transformation <TimeSeries, PhaseSeries> {
-
+  class Fold : public Transformation <TimeSeries, PhaseSeries>
+  {
     friend class MultiFold;
-    friend class rawprofile;
 
   public:
     
@@ -103,10 +103,10 @@ namespace dsp {
     /*! \param folding_period in seconds, negative to disable */
     void set_folding_period (double folding_period);
 
-    //! Set the period at which to fold data for the specified source
-    void set_folding_period (double folding_period, std::string source);
+    //! Set the reference epoch that defines phase = 0 when folding_period > 0
+    void set_reference_epoch (const MJD&);
 
-    //! Get the period at which data is being folded (in seconds)
+    //! Get the period at which data are being folded (in seconds)
     double get_folding_period () const;
 
     //! Returns true if data will be folded at a constant period
@@ -200,6 +200,9 @@ namespace dsp {
 
     //! Reference phase (phase of bin zero)
     double reference_phase;
+
+    //! Reference epoch that defines phase = 0 when folding_period > 0
+    MJD reference_epoch;
 
     //! Number of polynomial coefficients in model
     unsigned ncoef;
