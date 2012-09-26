@@ -22,47 +22,6 @@ void check_error (const char*);
 #else
 #define CHECK_ERROR(x)
 #endif
-/* *************************************************************************
- *
- *
- * The twofft trick
- *
- * Where:
- *   Z = X + i Y
- *   X, Y, and Z are complex
- *   X(-w) = X*(w)
- *   Y(-w) = X*(w)
- *   Z^*(-w) = X(w) - i Y(w)
- *
- *
- ************************************************************************* */
-
-// compute 2X(w) = Z(w) + Z^*(-w) 
-#define sep_X(X,z,zh) X.x = 0.5*(z.x + zh.x); X.y = 0.5*(z.y - zh.y);
-
-// compute 2Y(w) = iZ^*(-w) - iZ(w)
-#define sep_Y(Y,z,zh) Y.x = 0.5*(zh.y + z.y); Y.y = 0.5*(zh.x - z.x);
-
-__global__ void separate (float2* d_fft, int nfft)
-{
-  int i = blockIdx.x*blockDim.x + threadIdx.x + 1;
-  int k = nfft - i;
-
-  float2* p0 = d_fft;
-  float2* p1 = d_fft + nfft;
-
-  float2 p0i = p0[i];
-  float2 p0k = p0[k];
-
-  float2 p1i = p1[i];
-  float2 p1k = p1[k];
-
-  sep_X( p0[i], p0i, p1k );
-  sep_X( p0[k], p0k, p1i );
-
-  sep_Y( p1[i], p0i, p1k );
-  sep_Y( p1[k], p0k, p1i );
-}
 
 __global__ void multiply (float2* d_fft, float2* kernel)
 {
