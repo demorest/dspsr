@@ -148,6 +148,7 @@ namespace dsp {
     double integration_length;
     double minimum_integration_length;
 
+    std::string reference_epoch;
     double reference_phase;
     double folding_period;
     bool   fractional_pulses;

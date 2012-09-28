@@ -6,6 +6,10 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <fcntl.h>
 
 #include "Pulsar/Archive.h"
@@ -159,7 +163,7 @@ void dsp::FITSFile::open_file(const char* filename)
 
   set_data_colnum(colnum);
 
-  fd = ::open64(filename, O_RDONLY);
+  fd = ::open(filename, O_RDONLY);
   if (fd < 0) {
     throw Error(FailedSys, "dsp::FITSFile::open",
         "failed open(%s)", filename);

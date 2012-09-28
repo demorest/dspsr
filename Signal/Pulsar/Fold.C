@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2002-2010 by Willem van Straten
+ *   Copyright (C) 2002-2012 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -61,9 +61,11 @@ void dsp::Fold::initialise()
   if( ncoef==0 )
     ncoef = 15;
 
-  if( nspan==0 ){
+  if( nspan==0 )
+  {
     nspan = 120;   
-    if (psrdisp_compatible) {
+    if (psrdisp_compatible)
+    {
       cerr << "dsp::Fold psrdisp compatibility\n"
         "   using nspan of 960 instead of 120" << endl;
       nspan = 960;
@@ -289,11 +291,9 @@ unsigned dsp::Fold::choose_nbin ()
          << the_folding_period << endl;
 
   if (the_folding_period <= 0.0)
-  {
     throw Error (InvalidState, "dsp::Fold::choose_nbin",
-                 "no folding period or Pulsar::Predictor set. eph=%p",
-                 pulsar_ephemeris.ptr());
-  }
+                 "invalid folding period=%lf", the_folding_period);
+
   double sampling_period = 1.0 / input->get_rate();
 
   if (verbose)
@@ -370,6 +370,11 @@ unsigned dsp::Fold::choose_nbin ()
   }
 
   return folding_nbin;
+}
+
+void dsp::Fold::set_reference_epoch (const MJD& epoch)
+{
+  reference_epoch = epoch;
 }
 
 //! Set the reference phase (phase of bin zero)
@@ -946,8 +951,8 @@ void dsp::Fold::fold (uint64_t nweights,
 double dsp::Fold::get_phi (const MJD& start_time)
 {
   if ( folding_period > 0.0 )
-    return fmod (start_time.in_seconds(), folding_period) / folding_period 
-      - reference_phase;
+    return fmod ((start_time-reference_epoch).in_seconds(), folding_period)
+      / folding_period - reference_phase;
 
   return folding_predictor->phase(start_time).fracturns()  - reference_phase;
 }

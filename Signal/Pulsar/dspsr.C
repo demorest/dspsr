@@ -381,6 +381,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->folding_period, 'c', "period");
   arg->set_help ("folding period (in seconds)");
 
+  arg = menu.add (config->reference_epoch, "cepoch", "MJD");
+  arg->set_help ("reference epoch for phase=0 (when -c is used)");
+
   arg = menu.add (config->reference_phase, 'p', "phase");
   arg->set_help ("reference phase of rising edge of bin zero");
 
