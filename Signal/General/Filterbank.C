@@ -415,11 +415,15 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
   prepare_output (output_ndat, true);
 }
 
+// ichan is input channel number being processed
 void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output, 
                    uint64_t out_offset, unsigned ichan, unsigned ipol = 0)
 {
 //  engine->nchan = output->get_nchan(); // this is causing problems because it conflicts with what's really needed (output nchan/ input nchan)
-  engine->output = output->get_datptr (ichan, ipol) + out_offset; //adding ichan here, was 0 before
+
+	//since ichan refers to the input channel number, we want the output to be stored in the corresponding output channel block
+	// which starts at ichan * nchan_subband
+  engine->output = output->get_datptr (ichan * engine->nchan_subband, ipol) + out_offset; //adding ichan here, was 0 before
   if (output->get_nchan() == 1) {
 	  engine->output_span = 0;
   }
