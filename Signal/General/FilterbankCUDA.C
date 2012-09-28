@@ -66,7 +66,10 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 	 */
   freq_res = filterbank->get_freq_res ();
   nchan_subband = filterbank->get_nchan_subband();
-  nchan = filterbank->get_nchan () / filterbank->get_input()->get_nchan(); // GJ added input.nchan
+  int nchan_in = filterbank->get_input()->get_nchan();
+  nchan = filterbank->get_nchan () / nchan_in; // GJ added input.nchan
+
+  // GJ I think nchan and nchan_subband are identically defined here...
 
   real_to_complex = (filterbank->get_input()->get_state() == Signal::Nyquist);
 
@@ -74,8 +77,6 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   DEBUG("CUDA::FilterbankEngine::setup nchan=" << nchan << " nchan_subband=" << nchan_subband\
 	<< " freq_res=" << freq_res);
 
-  unsigned data_size = nchan_subband * freq_res * 2;
-  unsigned mem_size = data_size * sizeof(cufftReal);
 
   // determine GPU capabilities 
   int device = 0;
@@ -84,8 +85,15 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   cudaGetDeviceProperties (&device_properties, device);
   max_threads_per_block = device_properties.maxThreadsPerBlock;
 
-  DEBUG("CUDA::FilterbankEngine::setup data_size=" << data_size);
 
+  // The size of the forward ffts will be:
+  //	freq_res (number of samples in dispersion kernel in a single subchannel)
+  //	* nchan (number of channels in one subband)
+  // The size of the backward ffts will be:
+  //	freq_res (so we'll go back to a total of nchan, the final frequency resolution of the filterbank
+  // and there will be nchan of them done in a batch because the data is already in an appropriately sized block.
+  // The result will leave an array with nchan sets of freq_res consecutive time samples
+  // Note that all of this needs to be done once per nchan_in
   if (real_to_complex)
   {
     DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan*2);
@@ -120,15 +128,16 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
   if (filterbank->has_response())
   {
+	unsigned data_size = nchan_subband * freq_res * 2; // 2 for complex
+	unsigned mem_size = data_size * sizeof(cufftReal);
+	  DEBUG("CUDA::FilterbankEngine::setup data_size=" << data_size);
+
+
     // allocate space for the convolution kernel
 	  // This size (mem_size) is correct because each kernel contains nchan_subband kernels each of length freq_res
     cudaMalloc ((void**)&d_kernel, mem_size);
  
-    // copy the kernel accross
-    //This now happens later
-//    const float* kernel = filterbank->get_response()->get_datptr(0,0); // how do we deal with this, we need to get the right kernel
-
-//    cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
+    // we no longer copy the kernel accross, we do that per input channel later.
   }
 
   if (!real_to_complex)
@@ -138,6 +147,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
 extern void check_error (const char*);
 
+// Send the kernel for the _ichan input channel to the GPU.
 void CUDA::FilterbankEngine::sendKernel(dsp::Filterbank* filterbank, unsigned _ichan)
 {
 	unsigned data_size = nchan_subband * freq_res * 2;
