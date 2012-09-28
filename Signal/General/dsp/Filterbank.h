@@ -77,10 +77,14 @@ namespace dsp {
     virtual void custom_prepare () {}
 
     //! Number of channels into which the input will be divided
+    //! This is the final number of channels in the output
     unsigned nchan;
 
     //! Frequency resolution factor
     unsigned freq_res;
+
+    // This is the number of channels each input channel will be divided into
+    unsigned nchan_subband;
 
     //! Frequency channel overlap ratio
     double overlap_ratio;
@@ -94,7 +98,6 @@ namespace dsp {
     void prepare_output (uint64_t ndat = 0, bool set_ndat = false);
     void resize_output (bool reserve_extra = false);
 
-    unsigned nchan_subband;
   };
  
 }
