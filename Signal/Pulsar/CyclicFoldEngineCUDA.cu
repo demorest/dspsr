@@ -196,29 +196,35 @@ uint64_t CUDA::CyclicFoldEngineCUDA::get_bin_hits (int ibin)
 	return hits;
 }
   
+// set_bins was added as a more efficient way of setting up the bin plan all in one go, rather than through repeated redundant calculations
+// as was previously done using set_bin
+// The bin plan is indexed as iturn*nbin*nlag + ibin*nlag + ilag
+// each entry indicates the starting data sample (offset), the number of data samples to include in this lag/bin (hits), and the bin index (ibin)
+// there is one entry for every lag, every bin, and for all turns in this data block.
 uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_sample, uint64_t _ndat, uint64_t idat_start)
 {
 	cerr << "Got to CUDA::CyclicFoldEngineCUDA::set_bins" << endl;
 
 
 
-	phi = phi - floor(phi);
-	double samples_per_bin = (1.0 / nbin) * (1 / phase_per_sample); // (1 turn / nbin bins) * (turns (phase) / sample) ^ -1
-	double nturns = _ndat * phase_per_sample;
+	phi = phi - floor(phi); // fractional phase at start
+	double samples_per_bin = (1.0 / nbin) * (1.0 / phase_per_sample); // (1 turn / nbin bins) * (turns (phase) / sample) ^ -1
+	double nturns = _ndat * phase_per_sample; // total number of turns represented by this block of data
 	double minph,maxph;
-	double startph = phi;
-	double endph = startph + nturns;
+	double startph = phi;  //starting fractional phase, the smallest valid phase
+	double endph = startph + nturns; // final phase, the largest valid phase of any data point
 	int startdat = 0;
-	int intnturns = ceil(nturns) + 1;
+	int intnturns = ceil(nturns) + 1;  // total number of turns in the binplan. This could probably be safely just ceil(nturns) but add 1 to be sure.
 	int iturn,ibin,ilag;
 	int planidx;
 
-	int _binplan_size = intnturns*nbin*nlag;
+	int _binplan_size = intnturns*nbin*nlag; // total number of entries in the bin plan.
 
 //	cerr << "Start ph:" << startph << " intnturns:" <<intnturns << " _ndat:" << _ndat << " nlag:" << nlag
 //			<< " phase per sample:" << phase_per_sample<< " nturns:" << nturns << endl ;
 //	cerr << "binplansize:" << binplan_size << "  _binplansize:" << _binplan_size << endl;
 
+	// allocate memory for the binplan
 	  if (_binplan_size > binplan_size) {
 
 		    if (parent->verbose)
@@ -232,19 +238,27 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 
 		    binplan_size = _binplan_size;
 		  }
-	  memset(lagbinplan, 0 , sizeof(bin)*_binplan_size);
+	  memset(lagbinplan, 0 , sizeof(bin)*_binplan_size);  // all entries start out with zero hits, so any uninitialized portions will be ignored by the folding threads
 	  ndat_fold = _ndat;
 
 	for (iturn=0;iturn < intnturns; iturn++){
 		for (ibin = 0; ibin < nbin; ibin++) {
 			for (ilag=0; ilag < nlag; ilag++) {
+				// minph is the starting phase of valid data for this lag/bin
+				// maxph is the ending phase
+				// thus we want to include all data points with phases in between minph and maxph
 				minph = (ibin*1.0)/nbin + iturn + (ilag*phase_per_sample)/2.0;
 				maxph = (ibin+1.0)/nbin + iturn + (ilag*phase_per_sample)/2.0;
-				if ( maxph > endph ) {
-					maxph = endph;
-				}
+				// index of this binplan entry
 				planidx = iturn*nbin*nlag + ibin*nlag + ilag;
+
+				if ( maxph > endph ) {
+					maxph = endph; // keep maxph from going off the end of the data block. In theory we should really pull more data from the next block, but for now
+									// we just ignore correlations that span more than one data block
+				}
 				if ((minph > endph) || (maxph < minph)) {
+					// if the start of this lag/bin data is past the end of the data block (minph > endph), there is no valid data for this lag/bin
+					// if maxph < minph, then it must be that minph > endph because the only way for this to happen would be if maxph were reassigned to endph in the previous clause.
 					lagbinplan[planidx].offset = 0;
 					lagbinplan[planidx].ibin = 0;
 					lagbinplan[planidx].hits = 0;
@@ -252,17 +266,20 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 				}
 
 				if (minph > startph){
+					// The basic case, the lag/bin data is fully within the data block, or goes right up to the end of the block (in which case maxph=endph)
 					lagbinplan[planidx].offset = round((minph-startph)/phase_per_sample);
 					lagbinplan[planidx].ibin = ibin;
 					lagbinplan[planidx].hits = round((maxph-minph)/phase_per_sample);
 				}
 				else if (maxph > startph){
+					// In this case, the start of the lag/bin data precedes the first available data point, but there is still valid data from startph to maxph
 //					cerr << "minph < startph " << minph << " < " << startph << endl;
 					lagbinplan[planidx].offset = 0;
 					lagbinplan[planidx].ibin = ibin;
 					lagbinplan[planidx].hits = round((maxph-startph)/phase_per_sample);
 				}
 				else {
+					// Finally, here minph <= startph and maxph <= startph, so the data needed fully precedes this data block.
 //					cerr << "maxph < startph " << minph << " < " << startph << endl;
 					lagbinplan[planidx].offset = 0;
 					lagbinplan[planidx].ibin = 0;
@@ -389,6 +406,9 @@ void CUDA::CyclicFoldEngineCUDA::get_lagdata ()
  *  CUDA Kernels
  *
  */
+// Since there is a maximum number of threads per block which may be less than the number of lags times number of pols,
+// the ilag index is split into ilag = ilagb*nlaga + ilaga, where nlaga will be such that nlaga*npol = max_threads_per_block
+// Each thread calculates the cyclic correlation for one lag for one bin for one input channel for one pol
 // threadIdx.x -> ilaga    blockDim.x
 // threadIdx.y -> pol
 // threadIdx.z -> not used
@@ -397,7 +417,7 @@ void CUDA::CyclicFoldEngineCUDA::get_lagdata ()
 // blockIdx.z = ichan
 
 // data is in FPT order, so chunks of time for a given pol and frequency
-// in_span gives size of one time chunk for a given freq and pol
+// in_span gives size of one time chunk for a given freq and pol in floats
 __global__ void cycFoldIndPol (const float* in_base,
                 unsigned in_span,
                 float* out_base,
@@ -425,14 +445,14 @@ __global__ void cycFoldIndPol (const float* in_base,
     return;
   }
   
-  in_base  += in_span  * (ichan*npol + ipol);
+  in_base  += in_span  * (ichan*npol + ipol);	//in_span is in units of float, so no need to mult by ndim
 //  out_base += out_span * (ichan*npol + ipol);
   out_base += ndim*(ibin*npol*nchan*nlag
     + ipol*nchan*nlag
     + ichan*nlag 
     + ilag);
   
-  unsigned bpstep = nlag*nbin; // step size to get to the next rotation for a given lag and bin
+  unsigned bpstep = nlag*nbin; // step size to get to the next rotation for a given lag and bin in the binplan
 
   float2 total = make_float2(0.0,0.0);
 
