@@ -831,7 +831,7 @@ void dsp::Fold::fold (uint64_t nweights,
   if (engine)
   {
     engine->fold ();
-//    if (zeroed_samples) // why is this only done if zeroed_samples was true (if rfi was flagged?) shouldn't it always happen?
+    if (zeroed_samples) // why is this only done if zeroed_samples was true (if rfi was flagged?) shouldn't it always happen?
       result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
     return;
   }
