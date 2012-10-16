@@ -313,13 +313,6 @@ void CUDA::CyclicFoldEngineCUDA::zero ()
 void CUDA::CyclicFoldEngineCUDA::send_binplan ()
 {
 
-	/*
-	 * current_turn is the highest number of turns that we needed in the set_bin stage
-	 * so the total size of the binplan should be current_turn turns of nbin bins and nlag lags
-	 * so we will update binplan_size accordingly
-	 */
-//	uint64_t orig_size = binplan_size;
-//	binplan_size = (current_turn + 1) * nbin; // add one turn just for good measure. There should be zero hits in it
   uint64_t mem_size = binplan_size * sizeof(bin);
 
   if (dsp::Operation::verbose)
@@ -358,14 +351,6 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
 					   stream?"Async":"", cudaGetErrorString (error));
   }
 
-/*  for (int k=binplan_size*nlag-nlag*16; k > 0; k -= nlag*nbin)
-  {
-	  if (lagbinplan[k].hits > 0){
-		  cerr << "Found some hits at k = " << k << " = " << (k/(nlag*nbin)) << endl;
-		  cerr << "current turn=" << current_turn << endl;
-		  break;
-	  }
-  }*/
 
 /*  ofstream fbin;
   fbin.open("cudabinplan.dat", ios::binary | ios::app);
@@ -385,8 +370,10 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
                  stream?"Async":"", cudaGetErrorString (error));
 }
 
+// This function is never used. Lagdata is trasfered by the synch call
 void CUDA::CyclicFoldEngineCUDA::get_lagdata ()
 {
+	cerr << "getting lagdata" << endl;
   size_t lagdata_bytes = lagdata_size * sizeof(float);
   cudaError error;
   if (stream) 
