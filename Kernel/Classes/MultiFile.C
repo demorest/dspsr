@@ -358,6 +358,11 @@ catch (Error& err)
   throw err += "dsp::MultiFile::set_loader";
 }
 
+void dsp::MultiFile::add_extensions (Extensions *ext)
+{
+  if (loader)
+    loader->add_extensions(ext);
+}
 
 bool dsp::MultiFile::has_loader ()
 {
