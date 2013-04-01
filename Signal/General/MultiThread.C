@@ -181,7 +181,9 @@ void dsp::MultiThread::share (SingleThread* thread, SingleThread* share)
       throw Error (InvalidState, "dsp::MultiThread::share",
 		   "mismatched buffering policy");
     
-    // cerr << "Sharing buffering policy of " << trans->get_name() << endl;
+    if (Operation::verbose)
+      cerr << "dsp::MultiThread::share sharing buffering policy of " 
+        << trans->get_name() << endl;
 
     trans->set_buffering_policy( ibuf0->clone(trans) );
   }
