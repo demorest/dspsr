@@ -141,6 +141,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
   parse_header();
 
   // Figure out total size
+  // dfac thing accounts for some weirdness in definition of 
+  // OVERLAP for real-sampled TDOM data..
   struct stat buf;
   int rv = fstat(fd, &buf);
   if (rv < 0)
@@ -148,7 +150,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
         "fstat(%s) failed", filename);
   uint64_t full_block_size = blocsize + 80*hdr_keys;
   uint64_t nblocks = buf.st_size / full_block_size;
-  info.set_ndat( info.get_nsamples(nblocks*blocsize) - overlap*nblocks );
+  unsigned int dfac = info.get_ndim()==1 ? 2 : 1;
+  info.set_ndat( info.get_nsamples(nblocks*blocsize) - dfac*overlap*nblocks );
 
   // Alloc memory for data block
   dat = (unsigned char *)malloc(blocsize);
