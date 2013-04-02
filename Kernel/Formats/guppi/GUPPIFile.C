@@ -141,6 +141,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
   parse_header();
 
   // Figure out total size
+  // dfac thing accounts for some weirdness in definition of 
+  // OVERLAP for real-sampled TDOM data..
   struct stat buf;
   int rv = fstat(fd, &buf);
   if (rv < 0)
@@ -148,10 +150,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
         "fstat(%s) failed", filename);
   uint64_t full_block_size = blocsize + 80*hdr_keys;
   uint64_t nblocks = buf.st_size / full_block_size;
-  info.set_ndat( info.get_nsamples(nblocks*blocsize) - overlap*nblocks );
-
-  // Alloc memory for data block
-  dat = (unsigned char *)malloc(blocsize);
+  unsigned int dfac = info.get_ndim()==1 ? 2 : 1;
+  info.set_ndat( info.get_nsamples(nblocks*blocsize) - dfac*overlap*nblocks );
 
   // Rewind and load full first block with header
   seek_bytes(0);
@@ -170,6 +170,10 @@ int dsp::GUPPIFile::load_next_block ()
     return 0;
     //throw Error (InvalidState, "dsp::GUPPIFile::load_next_block",
     //    "Error loading next header");
+
+  // Make sure memory is allocated
+  if (dat==NULL)
+    dat = (unsigned char *)malloc(blocsize);
 
   // Read the data
   size_t nbytes = read(fd, dat, blocsize);
@@ -195,6 +199,18 @@ int64_t dsp::GUPPIFile::seek_bytes (uint64_t bytes)
     return 0;
   }
   else
-    throw Error (InvalidState, "dsp::GUPPIBuffer::seek_bytes",
+    throw Error (InvalidState, "dsp::GUPPIFile::seek_bytes",
         "seek(%lld) not implemented yet", bytes);
+}
+
+void dsp::GUPPIFile::close ()
+{
+  // Free up the memory buffer if file has been closed
+  if (dat != NULL) 
+  {
+    free(dat);
+    dat = NULL;
+  }
+  // Call the standard close routine
+  File::close();
 }
