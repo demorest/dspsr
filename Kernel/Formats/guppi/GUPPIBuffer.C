@@ -30,6 +30,7 @@ dsp::GUPPIBuffer::GUPPIBuffer (const char* filename)
   databuf_id = 0;
   databuf = NULL;
   curblock = -1;
+  got_stt_valid = false;
 }
 
 dsp::GUPPIBuffer::~GUPPIBuffer ( )
@@ -105,24 +106,32 @@ void dsp::GUPPIBuffer::open_file (const char* filename)
 int dsp::GUPPIBuffer::load_next_block ()
 {
 
-  // Done with current block
-  if (curblock >= 0) 
-    guppi_databuf_set_free(databuf, curblock);
+  do {
 
-  // Wait for next block to be filled
-  curblock = (curblock + 1) % databuf->n_block;
-  bool waiting = true;
-  while (waiting) {
-    if (verbose)
-      cerr << "dsp::GUPPIBuffer::load_next_block waiting(" 
-        << curblock << ")" << endl;
-    int rv = guppi_databuf_wait_filled(databuf, curblock);
-    if (rv==0) 
-      waiting = false;
-  }
+    // Done with current block
+    if (curblock >= 0) 
+      guppi_databuf_set_free(databuf, curblock);
 
-  hdr = guppi_databuf_header(databuf, curblock);
-  dat = (unsigned char *)guppi_databuf_data(databuf, curblock);
+    // Wait for next block to be filled
+    curblock = (curblock + 1) % databuf->n_block;
+    bool waiting = true;
+    while (waiting) {
+      if (verbose)
+        cerr << "dsp::GUPPIBuffer::load_next_block waiting(" 
+          << curblock << ")" << endl;
+      int rv = guppi_databuf_wait_filled(databuf, curblock);
+      if (rv==0) 
+        waiting = false;
+    }
+
+    hdr = guppi_databuf_header(databuf, curblock);
+    dat = (unsigned char *)guppi_databuf_data(databuf, curblock);
+
+    int stt_valid=0;
+    hget(hdr, "STTVALID", &stt_valid);
+    if (stt_valid) got_stt_valid = true;
+
+  } while (!got_stt_valid);
 
   return 1;
 }
