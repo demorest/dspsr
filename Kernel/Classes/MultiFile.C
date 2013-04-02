@@ -344,6 +344,9 @@ void dsp::MultiFile::set_loader (unsigned index) try
   if (index == current_index)
     return;
 
+  // Close previously open file
+  if (loader)
+    loader->close();
 
   loader = files[index];
 
