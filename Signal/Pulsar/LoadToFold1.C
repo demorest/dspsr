@@ -124,6 +124,9 @@ void dsp::LoadToFold::construct () try
     return;
   }
 
+  // record the number of operations in signal path
+  unsigned noperations = operations.size();
+
   bool report_vitals = thread_id==0 && config->report_vitals;
 
   if (manager->get_info()->get_type() != Signal::Pulsar)
@@ -579,6 +582,19 @@ void dsp::LoadToFold::construct () try
       throw Error( InvalidState, "LoadToFold::construct",
                    "invalid npol config=%d input=%d",
                    config->npol, manager->get_info()->get_npol() );
+  }
+
+
+  if (detect->get_order_supported (TimeSeries::OrderTFP)
+      && noperations == operations.size())      // no operations yet added
+  {
+    Unpacker* unpacker = manager->get_unpacker();
+
+    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
+    {
+      cerr << "unpack more efficiently in TFP order" << endl;
+      unpacker->set_output_order (TimeSeries::OrderTFP);
+    }
   }
 
   operations.push_back (detect.get());
