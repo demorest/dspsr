@@ -207,7 +207,7 @@ void dsp::Detection::resize_output ()
 
 void dsp::Detection::square_law ()
 {
-//  if (verbose)
+  if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
  
   const unsigned nchan = input->get_nchan();
@@ -269,12 +269,12 @@ void dsp::Detection::square_law ()
 
 void dsp::Detection::polarimetry () try
 {
-//  if (verbose)
+  if (verbose)
     cerr << "dsp::Detection::polarimetry ndim=" << ndim << endl;
 
   if (engine)
   {
-//    if (verbose)
+    if (verbose)
       cerr << "dsp::Detection::polarimetry using Engine" << endl;
 
     engine->polarimetry (ndim, input, output);

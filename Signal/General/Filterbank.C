@@ -513,7 +513,8 @@ void dsp::Filterbank::filterbank ()
       " cpol=" << cross_pol << " npol=" << input->get_npol() <<
       " npart=" << npart  << endl;
   if (engine) {
-	  cerr << "have engine"<<endl;
+	  if (verbose)
+		  cerr << "have engine"<<endl;
   }
 
   // number of floats to step between input to filterbank

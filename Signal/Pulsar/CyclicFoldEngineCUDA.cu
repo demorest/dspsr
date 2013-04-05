@@ -203,8 +203,9 @@ uint64_t CUDA::CyclicFoldEngineCUDA::get_bin_hits (int ibin)
 // there is one entry for every lag, every bin, and for all turns in this data block.
 uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_sample, uint64_t _ndat, uint64_t idat_start)
 {
-	cerr << "Got to CUDA::CyclicFoldEngineCUDA::set_bins" << endl;
-
+	if(parent->verbose){
+		cerr << "Got to CUDA::CyclicFoldEngineCUDA::set_bins" << endl;
+	}
 
 
 	phi = phi - floor(phi); // fractional phase at start
@@ -305,7 +306,8 @@ void CUDA::CyclicFoldEngineCUDA::zero ()
 {
   dsp::CyclicFoldEngine::zero();
   if (d_lagdata && lagdata_size>0) {
-	  cerr << "CUDA::CyclicFoldEngineCUDA::zero: zeroing lagdata on gpu" << endl;
+	  if(parent->verbose)
+		  cerr << "CUDA::CyclicFoldEngineCUDA::zero: zeroing lagdata on gpu" << endl;
     cudaMemset(d_lagdata, 0, lagdata_size * sizeof(float));
   }
 }
@@ -343,7 +345,8 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
 		  throw Error (InvalidState, "CUDA::CyclicFoldEngineCUDA::send_binplan",
 					   "cudaFree %s %s",
 					   stream?"Async":"", cudaGetErrorString (error));
-	  cerr << "realocating..." << endl;
+	  if(parent->verbose)
+		  cerr << "realocating..." << endl;
 	  error = cudaMalloc ((void **)&(d_binplan),mem_size);
 	  if (error != cudaSuccess)
 		  throw Error (InvalidState, "CUDA::CyclicFoldEngineCUDA::send_binplan",
@@ -373,7 +376,8 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
 // This function is never used. Lagdata is trasfered by the synch call
 void CUDA::CyclicFoldEngineCUDA::get_lagdata ()
 {
-	cerr << "getting lagdata" << endl;
+	if(parent->verbose)
+		cerr << "getting lagdata" << endl;
   size_t lagdata_bytes = lagdata_size * sizeof(float);
   cudaError error;
   if (stream) 
@@ -467,8 +471,8 @@ void CUDA::CyclicFoldEngineCUDA::fold ()
 {
 
   // TODO state/etc checks
-
-  cerr << "In CyclicFoldEngineCUDA::fold" << endl;
+	if(parent->verbose)
+		cerr << "In CyclicFoldEngineCUDA::fold" << endl;
   setup ();
   send_binplan ();
   const unsigned THREADS_PER_BLOCK = 1024;
@@ -486,10 +490,11 @@ void CUDA::CyclicFoldEngineCUDA::fold ()
 
   dim3 blockDim (nlaga, npol, 1);
   dim3 gridDim (nlagb, nbin, nchan);
-  cerr << "nlag=" << nlag;
-  cerr << "blockDim=" << blockDim.x << "," << blockDim.y << "," << blockDim.z << "," << endl;
-  cerr << "gridDim="  << gridDim.x << "," << gridDim.y << "," << gridDim.z << "," << endl;
-  
+  if(parent->verbose){
+	  cerr << "nlag=" << nlag;
+	  cerr << "blockDim=" << blockDim.x << "," << blockDim.y << "," << blockDim.z << "," << endl;
+	  cerr << "gridDim="  << gridDim.x << "," << gridDim.y << "," << gridDim.z << "," << endl;
+  }
   unsigned lagbinplan_size = binplan_size;
   
   cycFoldIndPol <<<gridDim,blockDim,0,stream>>>(input,
