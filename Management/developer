@@ -13,7 +13,7 @@ if ( "$1" == "-h" || "$1" == "--help" ) then
   exit
 endif
 
-set root = "dspsr.git.sourceforge.net/gitroot/dspsr/dspsr"
+set root = "git.code.sf.net/p/dspsr/code"
 
 if ( "$1" == "" ) then
   echo "Git repository access changed to anonymous"
