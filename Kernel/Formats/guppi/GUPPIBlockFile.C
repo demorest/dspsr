@@ -5,6 +5,7 @@
  *
  ***************************************************************************/
 #include "dsp/GUPPIBlockFile.h"
+#include "dsp/BitSeries.h"
 
 #include "Error.h"
 
@@ -29,6 +30,7 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   current_block_byte = 0;
   overlap = 0;
   blocsize = 0;
+  set_overlap_buffer(new BitSeries);
 }
 
 dsp::GUPPIBlockFile::~GUPPIBlockFile ( )
