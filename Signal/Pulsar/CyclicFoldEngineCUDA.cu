@@ -57,17 +57,18 @@ void CUDA::CyclicFoldEngineCUDA::synch (dsp::PhaseSeries *out) try
 {
 
   if (dsp::Operation::verbose)
-    cerr << "CUDA::CyclicFoldEngineCUDA::synch this=" << this << endl;
+    cerr << "CUDA::CyclicFoldEngineCUDA::synch this=" << this << " synchronised=" << synchronized <<  endl;
 
   if (synchronized)
     return;
 
-  if (dsp::Operation::verbose)
-    cerr << "CUDA::CyclicFoldEngineCUDA::synch output=" << output << endl;
+  if (dsp::Operation::verbose) {
+	  cerr << "CUDA::CyclicFoldEngineCUDA::synch output=" << output << endl;
 
-  cerr << "CUDA::CyclicFoldEngineCUDA::synch out=" << out <<" out.ndat_folded=" << out->get_ndat_folded()
+	  cerr << "CUDA::CyclicFoldEngineCUDA:: transferring lag data synch out=" << out <<" out.ndat_folded=" << out->get_ndat_folded()
+			  << " lagdata_size=" << lagdata_size
 		 <<endl; // << " output.ndatfolded" << output->get_ndat_folded() << endl;
-
+  }
   // transfer lag data from GPU
 
   cudaError error;
@@ -80,8 +81,33 @@ void CUDA::CyclicFoldEngineCUDA::synch (dsp::PhaseSeries *out) try
                  "cudaMemcpy%s %s", 
                  stream?"Async":"", cudaGetErrorString (error));
 
+  cudaThreadSynchronize();
+  /*
+  cerr << "synch stream=" <<stream <<endl;
+  for (int i = 0; i < nlag*nchan*2*2*8; i++){
+	  cerr << lagdata[i] << " ";
+  }
+  cerr << endl << endl;
+  for(int ibin = 0; ibin < nbin; ibin++){
+	  for(int ipol = 0; ipol < npol; ipol++){
+		  cerr << "\nibin=" << ibin << " ipol=" << ipol;
+		  for(int ichan = 0; ichan < nchan; ichan++){
+			  for(int ilag = 0; ilag < nlag; ilag++){
+				  float x = lagdata[2*(ibin*npol*nchan*nlag + ipol*nchan*nlag + ichan*nlag + ilag)];
+				  float y = lagdata[2*(ibin*npol*nchan*nlag + ipol*nchan*nlag + ichan*nlag + ilag) + 1];
+				  cerr <<  " " << x << "," << y;
+
+			  }
+			  cerr << "\n|" << ichan << "\n";
+		  }
+	  }
+  }
+  */
   // Call usual synch() to do transform
   dsp::CyclicFoldEngine::synch(out);
+
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::CyclicFoldEngineCUDA::synch now synch'ed" << endl;
 
   synchronized = true;
 }
@@ -192,7 +218,9 @@ uint64_t CUDA::CyclicFoldEngineCUDA::get_bin_hits (int ibin)
 		iturn += 1;
 		idx = iturn*nbin*nlag + ibin*nlag; // we want the zero lag hits
 	}
-//	cerr << "total: " << hits << endl;
+	if(parent->verbose){
+		cerr << "CyclicFoldEngineCUDA::get_bin_hits ibin=" << ibin << " hits=" << hits << endl;
+	}
 	return hits;
 }
   
@@ -221,15 +249,16 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 
 	int _binplan_size = intnturns*nbin*nlag; // total number of entries in the bin plan.
 
-//	cerr << "Start ph:" << startph << " intnturns:" <<intnturns << " _ndat:" << _ndat << " nlag:" << nlag
-//			<< " phase per sample:" << phase_per_sample<< " nturns:" << nturns << endl ;
-//	cerr << "binplansize:" << binplan_size << "  _binplansize:" << _binplan_size << endl;
-
+	if(parent->verbose) {
+		cerr << "Start ph:" << startph << " intnturns:" <<intnturns << " _ndat:" << _ndat << " nlag:" << nlag
+				<< " phase per sample:" << phase_per_sample<< " nturns:" << nturns << endl ;
+		cerr << "binplansize:" << binplan_size << "  _binplansize:" << _binplan_size << endl;
+	}
 	// allocate memory for the binplan
 	  if (_binplan_size > binplan_size) {
 
 		    if (parent->verbose)
-		      cerr << "dsp::CyclicFoldEngine::set_ndat alloc binplan" << endl;
+		      cerr << "dsp::CyclicFoldEngine::set_bins alloc binplan" << endl;
 
 		    if (lagbinplan) {
 		      delete [] lagbinplan;
@@ -286,7 +315,7 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 					lagbinplan[planidx].ibin = 0;
 					lagbinplan[planidx].hits = 0;
 				}
-				/*
+/*				if (ilag == 4) {
 				cerr << "iturn,ibin,ilag: " << iturn << "," << ibin << "," << ilag << ","
 						<< " offset=" << lagbinplan[planidx].offset
 						<< " hits=" << lagbinplan[planidx].hits
@@ -294,7 +323,7 @@ uint64_t CUDA::CyclicFoldEngineCUDA::set_bins (double phi, double phase_per_samp
 						<< " maxph=" << maxph
 
 						<< endl;
-				*/
+				} */
 			}
 		}
 	}
@@ -310,6 +339,10 @@ void CUDA::CyclicFoldEngineCUDA::zero ()
 		  cerr << "CUDA::CyclicFoldEngineCUDA::zero: zeroing lagdata on gpu" << endl;
     cudaMemset(d_lagdata, 0, lagdata_size * sizeof(float));
   }
+  else {
+	  if(parent->verbose)
+		  cerr << "CUDA::CyclicFoldEngineCUDA::zero: not doing anything because d_lagdata=" <<d_lagdata << " and lagdata_size=" << lagdata_size << endl;
+  }
 }
 
 void CUDA::CyclicFoldEngineCUDA::send_binplan ()
@@ -318,7 +351,7 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
   uint64_t mem_size = binplan_size * sizeof(bin);
 
   if (dsp::Operation::verbose)
-    cerr << "CUDA::CyclicFoldEngineCUDA::send_binplan ndat=" << ndat_fold 
+    cerr << "CUDA::CyclicFoldEngineCUDA::send_binplan ndat=" << ndat_fold
          << "  Allocating on device mem_size " << mem_size
          << " binplan_size=" << binplan_size
          << " nlag=" << nlag
@@ -328,7 +361,7 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
          << endl;
 
   cudaError error;
-  
+
   if (d_binplan == NULL) {
 	  cerr << "no binplan yet allocated" << endl;
     error = cudaMalloc ((void **)&(d_binplan),mem_size); // TODO: is this the right way to do this cudaMalloc call? taken from example online: http://stackoverflow.com/questions/6515303/cuda-cudamalloc
@@ -361,15 +394,17 @@ void CUDA::CyclicFoldEngineCUDA::send_binplan ()
   cerr << "done, dumping cudabinplan, closing files" << endl;
   fbin.close();
 */
-//  cerr << "copying: stream=" << stream << " d_binplan=" << d_binplan << " mem_size=" << mem_size <<
-//		  " lagbinplan=" << lagbinplan << endl;
+  if(parent->verbose){
+  cerr << "CUDA::CyclicFoldEngineCUDA::send_binplan copying: stream=" << stream << " d_binplan=" << d_binplan << " mem_size=" << mem_size <<
+		  " lagbinplan=" << lagbinplan << endl;
+  }
   if (stream)
     error = cudaMemcpyAsync (d_binplan,lagbinplan,mem_size,cudaMemcpyHostToDevice,stream);
   else
     error = cudaMemcpy (d_binplan,lagbinplan,mem_size,cudaMemcpyHostToDevice);
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::CyclicFoldEngineCUDA::send_binplan",
-                 "cudaMemcpy%s %s", 
+                 "cudaMemcpy%s %s",
                  stream?"Async":"", cudaGetErrorString (error));
 }
 
@@ -380,7 +415,7 @@ void CUDA::CyclicFoldEngineCUDA::get_lagdata ()
 		cerr << "getting lagdata" << endl;
   size_t lagdata_bytes = lagdata_size * sizeof(float);
   cudaError error;
-  if (stream) 
+  if (stream)
     error = cudaMemcpyAsync (lagdata, d_lagdata, lagdata_bytes,
         cudaMemcpyDeviceToHost, stream);
   else
@@ -389,11 +424,11 @@ void CUDA::CyclicFoldEngineCUDA::get_lagdata ()
 
   if (error != cudaSuccess)
     throw Error (InvalidState, "CUDA::CyclicFoldEngineCUDA::get_lagdata",
-                 "cudaMemcpy%s %s", 
+                 "cudaMemcpy%s %s",
                  stream?"Async":"", cudaGetErrorString (error));
 }
 
-/* 
+/*
  *  CUDA Kernels
  *
  */
@@ -435,16 +470,38 @@ __global__ void cycFoldIndPol (const float* in_base,
   if (planidx >= binplan_size) {
     return;
   }
-  
+
   in_base  += in_span  * (ichan*npol + ipol);	//in_span is in units of float, so no need to mult by ndim
 //  out_base += out_span * (ichan*npol + ipol);
   out_base += ndim*(ibin*npol*nchan*nlag
     + ipol*nchan*nlag
-    + ichan*nlag 
+    + ichan*nlag
     + ilag);
-  
+
   unsigned bpstep = nlag*nbin; // step size to get to the next rotation for a given lag and bin in the binplan
 
+/*  for(int a=20; a < 256*64*33*2; a++){
+	  out_base[2*a] = float(a);
+  }
+  out_base[0] = float(nchan);
+  out_base[2] = float(npol);
+  out_base[4] = float(nbin);
+  out_base[6] = float(nlag);
+  out_base[8] = float(ndim);
+  out_base[10] = float(npol*nchan*nlag*ndim);
+  out_base[12] = float(nchan*nlag*ndim);
+  out_base[14] = float(nlag*ndim);
+  out_base[16] = float((nchan*nlag + nlag + npol*nchan*nlag)*ndim);
+  out_base[18] = float(nchan);
+  out_base[20] = float(nchan*nlag*ndim);
+  out_base[22] = 9.87612;
+
+
+  out_base[ndim*(ibin*npol*nchan*nlag
+			+ ipol*nchan*nlag
+			+ ichan*nlag
+			+ ilag) + 1] = (ipol<<8) + ilag;
+*/
   float2 total = make_float2(0.0,0.0);
 
   for (; planidx < binplan_size; planidx += bpstep)
@@ -452,7 +509,7 @@ __global__ void cycFoldIndPol (const float* in_base,
     const float* input = in_base + binplan[planidx].offset * ndim;
     const float* input2 = in_base + (binplan[planidx].offset + ilag) * ndim;
     const float2* a = (const float2*)(input);
-    const float2* b = (const float2*)(input2);    
+    const float2* b = (const float2*)(input2);
 
     for (unsigned i=0; i < binplan[planidx].hits; i++){
       total.x += a[i].x*b[i].x + a[i].y*b[i].y;
@@ -462,7 +519,72 @@ __global__ void cycFoldIndPol (const float* in_base,
 
   out_base[0] += total.x;
   out_base[1] += total.y;
-} 
+}
+
+// Since there is a maximum number of threads per block which may be less than the number of lags times number of pols,
+// the ilag index is split into ilag = ilagb*nlaga + ilaga, where nlaga will be such that nlaga*npol = max_threads_per_block
+// Each thread calculates the cyclic correlation for one lag for one bin for one input channel for one pol
+// threadIdx.x -> ilaga    blockDim.x
+// threadIdx.y -> pol
+// blockIdx.x -> ilagb
+// blockIdx.y -> ibin
+// This version gets passed ichan and nchan directly (it operates just on one channel) because early cuda could not handle 3dim thread grids
+// data is in FPT order, so chunks of time for a given pol and frequency
+// in_span gives size of one time chunk for a given freq and pol in floats
+__global__ void cycFoldIndPolOneChan (const float* in_base,
+                unsigned in_span,
+                float* out_base,
+                unsigned binplan_size,
+                unsigned nlag,
+                CUDA::bin* binplan,
+                unsigned nchan,
+                unsigned ichan)
+{
+  unsigned ilaga = threadIdx.x;
+  unsigned nlaga = blockDim.x;
+  unsigned ilagb = blockIdx.x;
+  unsigned ibin = blockIdx.y;
+  unsigned ipol = threadIdx.y;
+  unsigned npol = blockDim.y;
+  unsigned nbin = gridDim.y;
+  unsigned ilag = ilagb*nlaga + ilaga;
+  if (ilag >= nlag){
+	  return;
+  }
+  unsigned planidx = nlag*ibin+ilag;
+  const unsigned ndim = 2; // always complex data assumed
+
+  if (planidx >= binplan_size) {
+    return;
+  }
+
+  in_base  += in_span  * (ichan*npol + ipol);	//in_span is in units of float, so no need to mult by ndim
+//  out_base += out_span * (ichan*npol + ipol);
+  out_base += ndim*(ibin*npol*nchan*nlag
+    + ipol*nchan*nlag
+    + ichan*nlag
+    + ilag);
+
+  unsigned bpstep = nlag*nbin; // step size to get to the next rotation for a given lag and bin in the binplan
+
+  float2 total = make_float2(0.0,0.0);
+
+  for (; planidx < binplan_size; planidx += bpstep)
+  {
+    const float* input = in_base + binplan[planidx].offset * ndim;
+    const float* input2 = in_base + (binplan[planidx].offset + ilag) * ndim;
+    const float2* a = (const float2*)(input);
+    const float2* b = (const float2*)(input2);
+
+    for (unsigned i=0; i < binplan[planidx].hits; i++){
+      total.x += a[i].x*b[i].x + a[i].y*b[i].y;
+      total.y += a[i].y*b[i].x - a[i].x*b[i].y;
+    }
+  }
+
+  out_base[0] += total.x;
+  out_base[1] += total.y;
+}
 
 void check_error (const char*);
 
@@ -489,25 +611,33 @@ void CUDA::CyclicFoldEngineCUDA::fold ()
   }
 
   dim3 blockDim (nlaga, npol, 1);
-  dim3 gridDim (nlagb, nbin, nchan);
+//  dim3 gridDim (nlagb, nbin, nchan);
+  dim3 gridDim (nlagb, nbin, 1);
   if(parent->verbose){
-	  cerr << "nlag=" << nlag;
+	  cerr << "nlag=" << nlag << " binplan_size=" << binplan_size << " input_span=" << input_span  << " d_lagdata=" << d_lagdata << endl;
 	  cerr << "blockDim=" << blockDim.x << "," << blockDim.y << "," << blockDim.z << "," << endl;
 	  cerr << "gridDim="  << gridDim.x << "," << gridDim.y << "," << gridDim.z << "," << endl;
   }
   unsigned lagbinplan_size = binplan_size;
-  
-  cycFoldIndPol <<<gridDim,blockDim,0,stream>>>(input,
-                input_span,
-                d_lagdata,
-                lagbinplan_size,
-                nlag,
-                d_binplan);
 
+  for(unsigned ichan=0;ichan < nchan; ichan++){
+	  cycFoldIndPolOneChan <<<gridDim,blockDim,0,stream>>>(input,
+					input_span,
+					d_lagdata,
+					lagbinplan_size,
+					nlag,
+					d_binplan,
+					nchan,
+					ichan);
+  }
   // profile on the device is no longer synchronized with the one on the host
   synchronized = false;
+  cudaThreadSynchronize();
 
-  if (dsp::Operation::record_time || dsp::Operation::verbose)
+  if(parent->verbose)
+	  cerr << "CyclicFoldEngineCUDA::fold finished, syncronized=false" << endl;
+
+  //if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error ("CUDA::CyclicFoldEngineCUDA::fold cuda error: ");
 }
 
