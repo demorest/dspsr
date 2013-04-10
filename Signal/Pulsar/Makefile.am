@@ -27,16 +27,6 @@ nobase_include_HEADERS += dsp/FoldCUDA.h dsp/TransferPhaseSeriesCUDA.h \
 libdspsr_la_SOURCES += FoldCUDA.cu TransferPhaseSeriesCUDA.C \
 		       CyclicFoldEngineCUDA.cu
 
-libdspsr_la_LIBADD = FoldCUDA.lo CyclicFoldEngineCUDA.lo
-
-FoldCUDA.lo : FoldCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/FoldCUDA.cu
-	sed -e 's/Fold/FoldCUDA/' Fold.lo > FoldCUDA.lo
-
-CyclicFoldEngineCUDA.lo : CyclicFoldEngineCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/CyclicFoldEngineCUDA.cu
-	sed -e 's/Fold/CyclicFoldEngineCUDA/' Fold.lo > CyclicFoldEngineCUDA.lo
-
 endif
 
 bin_PROGRAMS = dspsr
