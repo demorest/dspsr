@@ -31,11 +31,19 @@ try:
 except OSError:
    pass
 
+def quote_arg(arg):
+   # quote any arguments that have whitespace
+   if arg.find(' ')>0:
+      return '"' + arg + '"'
+   else:
+      return arg
+
 # generate the command to compile the .cu for shared library
 args = sys.argv[2:]
 args.extend(["-Xcompiler","-fPIC"]) # position indep code
 args.append("-o")
 args.append(pic_filepath)
+args = map(quote_arg,args)
 command = " ".join(args)
 print command
 
@@ -48,6 +56,7 @@ if rv != 0:
 args = sys.argv[2:]
 args.append("-o")
 args.append(npic_filepath)
+args = map(quote_arg,args)
 command = " ".join(args)
 print command
 
