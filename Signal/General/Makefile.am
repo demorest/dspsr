@@ -49,21 +49,6 @@ nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 libdspdsp_la_SOURCES += FilterbankCUDA.C filterbank_cuda.cu TransferCUDA.C \
 	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
 
-libdspdsp_la_LIBADD = filterbank_cuda.lo DetectionCUDA.lo SKMaskerCUDA.lo
-
-filterbank_cuda.lo : filterbank_cuda.cu
-	@CUDA_NVCC@ -c $(srcdir)/filterbank_cuda.cu
-	sed -e 's/Filterbank/filterbank_cuda/' Filterbank.lo > filterbank_cuda.lo
-
-DetectionCUDA.lo : DetectionCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/DetectionCUDA.cu
-	sed -e 's/Detection/DetectionCUDA/' Detection.lo > DetectionCUDA.lo
-
-SKMaskerCUDA.lo : SKMaskerCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/SKMaskerCUDA.cu
-	sed -e 's/SKMasker/SKMaskerCUDA/' SKMasker.lo > SKMaskerCUDA.lo
-
-
 endif
 
 bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed

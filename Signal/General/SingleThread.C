@@ -741,7 +741,7 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   if (can_thread)
   {
     arg = menu.add (this, &Config::set_nthread, 't', "threads");
-    arg->set_help ("number of processor threads");
+    arg->set_help ("number of CPU processor threads");
   }
 
 #if HAVE_SCHED_SETAFFINITY

@@ -25,6 +25,8 @@ echo "Copying autoconf and automake tools from PSRCHIVE ..."
 
 cp `$psrchive --aclocal`/* config/
 
+cat config/Makefile.cuda >> config/Makefile.include
+
 sh config/formats.sh
 
 echo "Running the GNU autotools.  Please be patient ..."
