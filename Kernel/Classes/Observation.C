@@ -35,6 +35,8 @@ void dsp::Observation::init ()
   npol = 1;
   ndim = 1;
   nbit = 0;
+  nant = 1;
+  nbeam = 1;
 
   type = Signal::Pulsar;
   state = Signal::Intensity;
@@ -209,6 +211,20 @@ bool dsp::Observation::combinable (const Observation & obs) const
     can_combine = false;
   }
 
+  if (nant != obs.nant)
+  {
+    reason += separator +
+  "different nants:" + tostring(nant) + " != " + tostring(obs.nant);
+    can_combine = false;
+  }
+
+  if (nbeam != obs.nbeam)
+  {
+    reason += separator +
+  "different nbeams:" + tostring(nbeam) + " != " + tostring(obs.nbeam);
+    can_combine = false;
+  }
+
   if (type != obs.type)
   {
     reason += separator +
@@ -360,6 +376,8 @@ void dsp::Observation::copy_dimensions (const Observation* other)
   set_nchan( other->get_nchan() );
   set_npol ( other->get_npol() );
   set_nbit ( other->get_nbit() );
+  set_nant ( other->get_nant() );
+  set_nbeam ( other->get_nbeam() );
   set_ndat ( other->get_ndat() );
 }
 
@@ -376,6 +394,8 @@ const dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
   set_nchan       ( in_obs.get_nchan() );
   set_npol        ( in_obs.get_npol() );
   set_nbit        ( in_obs.get_nbit() );
+  set_nant        ( in_obs.get_nant() );
+  set_nbeam       ( in_obs.get_nbeam() );
   set_ndat        ( in_obs.get_ndat() );
 
   set_telescope   ( in_obs.get_telescope() );

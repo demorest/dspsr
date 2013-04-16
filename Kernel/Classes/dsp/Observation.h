@@ -90,6 +90,16 @@ namespace dsp
     //! Return the number of time samples in container
     uint64_t get_ndat () const { return ndat; }
 
+    //! Set the number of antenna
+    virtual void set_nant (unsigned _nant) { nant = _nant; }
+    //! Return the number of antenna
+    unsigned get_nant () const { return nant; }
+
+    //! Set the number of beams
+    virtual void set_nbeam (unsigned _nbeam) { nbeam = _nbeam; }
+    //! Return the number of beams
+    unsigned get_nbeam () const { return nbeam; }
+
     //! Set the telescope name
     virtual void set_telescope (const std::string& name) { telescope = name; }
     //! Return the telescope name
@@ -351,6 +361,12 @@ namespace dsp
 
     //! Number of bits per value
     unsigned nbit;
+
+    // Number of antenna 
+    unsigned nant;
+
+    // Number of beams
+    unsigned nbeam;
 
     //! The calfrequency
     double calfreq;

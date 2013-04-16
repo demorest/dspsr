@@ -382,6 +382,20 @@ void dsp::ASCIIObservation::load (const char* header)
     ra = dec = 0.0;
 
   coordinates.setRadians (ra, dec);
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // NANT - number of antennas in input stream
+  //
+  uint64_t scan_nant = 0;
+  if (ascii_header_check (header, "NANT", "%"PRIu64, &scan_nant) >= 0)
+    set_nant( scan_nant );
+  else
+    set_nant( 0 );
+
+  if (verbose)
+    cerr << "dsp::ASCIIObservation::load nant=" << scan_ndat << endl;
+
 }
 
 /* ***********************************************************************
