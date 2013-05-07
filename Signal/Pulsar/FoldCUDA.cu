@@ -7,7 +7,7 @@
  *
  ***************************************************************************/
 
-//#define _DEBUG 1
+#define _DEBUG 1
 
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
@@ -158,7 +158,8 @@ void CUDA::FoldEngine::send_binplan ()
   if (dsp::Operation::verbose)
     cerr << "CUDA::FoldEngine::send_binplan"
             " first=" << binplan[0].ibin << 
-            " last=" << binplan[binplan_nbin-1].ibin << endl;
+            " last=" << binplan[binplan_nbin-1].ibin <<
+            " stream=" << stream << endl;
 
   uint64_t mem_size = binplan_nbin * sizeof(bin);
 
@@ -184,6 +185,8 @@ void CUDA::FoldEngine::send_binplan ()
     throw Error (InvalidState, "CUDA::FoldEngine::set_binplan",
                  "cudaMemcpy%s %s", 
                  stream?"Async":"", cudaGetErrorString (error));
+
+//  cudaThreadSynchronize();
 }
 
 
@@ -305,6 +308,8 @@ void CUDA::FoldEngine::fold ()
 
   DEBUG("input span=" << input_span << " output span=" << output_span);
   DEBUG("ndim=" << ndim << " nbin=" << folding_nbin << " binplan_nbin=" << binplan_nbin);
+
+  //cudaThreadSynchronize();
 
   if (hits_on_gpu && zeroed_samples && hits_nchan == nchan)
   {
