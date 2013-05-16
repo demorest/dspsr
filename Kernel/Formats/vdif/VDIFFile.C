@@ -181,19 +181,25 @@ void dsp::VDIFFile::open_file (const char* filename)
   info.set_nchan( 1 );
   info.set_rate( (double) info.get_bandwidth() * 1e6 
       / (double) info.get_nchan() 
-      * info.get_state() == Signal::Nyquist ? 2.0 : 1.0);
+      * (info.get_state() == Signal::Nyquist ? 2.0 : 1.0));
+  if (verbose) cerr << "VDIFFile::open_file rate = " << info.get_rate() << endl;
 
   // Figure frames per sec from bw, pkt size, etc
   //double frames_per_sec = 64000.0;
   int frame_data_size = nbyte - VDIF_HEADER_BYTES;
   double frames_per_sec = info.get_nbit() * info.get_nchan() * info.get_npol()
     * info.get_rate() / 8.0 / (double) frame_data_size;
+  if (verbose) cerr << "VDIFFile::open_file frame_data_size = " 
+    << frame_data_size << endl;
+  if (verbose) cerr << "VDIFFile::open_file frames_per_sec = " 
+    << frames_per_sec << endl;
 
   int mjd = getVDIFFrameMJD(rawhdr);
   int sec = getVDIFFrameSecond(rawhdr);
   int fn = getVDIFFrameNumber(rawhdr);
   if (verbose) cerr << "VDIFFile::open_file MJD = " << mjd << endl;
   if (verbose) cerr << "VDIFFile::open_file sec = " << sec << endl;
+  if (verbose) cerr << "VDIFFile::open_file fn  = " << fn << endl;
   info.set_start_time( MJD(mjd,sec,(double)fn/frames_per_sec) );
 
   // XXX old code, should all be handled by ASCII header now
