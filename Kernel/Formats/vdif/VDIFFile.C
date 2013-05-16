@@ -134,12 +134,13 @@ void dsp::VDIFFile::open_file (const char* filename)
   // so not required.  Also we'll assume VDIF's "nchan" really gives
   // the number of polns for now, and NCHAN is 1.  NBIT is in VDIF packets.
   // We'll compute TSAMP from the bandwidth.  NDIM (real vs complex sampling)
-  // is in VDIF packets but there is no easy fn to parse it yet.
+  // is in VDIF packets via the iscomplex param.
   ASCIIObservation info_tmp;
   info_tmp.set_required("UTC_START", false);
   info_tmp.set_required("OBS_OFFSET", false);
   info_tmp.set_required("NPOL", false);
   info_tmp.set_required("NBIT", false);
+  info_tmp.set_required("NDIM", false);
   info_tmp.set_required("NCHAN", false);
   info_tmp.set_required("TSAMP", false);
   info_tmp.load(header);
@@ -151,8 +152,9 @@ void dsp::VDIFFile::open_file (const char* filename)
               "open(%s) failed", datafile);
 	
   // Read first header
-  char rawhdr[VDIF_HEADER_BYTES];
-  size_t rv = read(fd, rawhdr, VDIF_HEADER_BYTES);
+  char rawhdr_bytes[VDIF_HEADER_BYTES];
+  vdif_header *rawhdr = (vdif_header *)rawhdr_bytes;
+  size_t rv = read(fd, rawhdr_bytes, VDIF_HEADER_BYTES);
   if (rv != VDIF_HEADER_BYTES) 
       throw Error (FailedSys, "VDIFFile::open_file",
               "Error reading first header");
@@ -169,6 +171,19 @@ void dsp::VDIFFile::open_file (const char* filename)
   header_bytes = 0;
   block_bytes = nbyte;
   block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
+
+  bool iscomplex = rawhdr->iscomplex;
+  if (iscomplex) 
+  {
+    info.set_ndim(2);
+    info.set_state(Signal::Analytic);
+  }
+  else
+  {
+    info.set_ndim(1);
+    info.set_state(Signal::Nyquist);
+  }
+  if (verbose) cerr << "VDIFFile::open_file iscomplex = " << iscomplex << endl;
 
   // Each poln shows up as a different channel but this 
   // could also be different freq channels...
