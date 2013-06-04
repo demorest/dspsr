@@ -324,6 +324,7 @@ void dsp::TimeSeries::internal_match (const TimeSeries* other)
   reserve_ndat = other->reserve_ndat;
   reserve_nfloat = other->reserve_nfloat;
   input_sample = other->input_sample;
+  zeroed_data = other->zeroed_data;
 
   unsigned offset = other->data - (float*)other->buffer;
 
