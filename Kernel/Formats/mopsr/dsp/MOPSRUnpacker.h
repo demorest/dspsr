@@ -8,13 +8,7 @@
 #ifndef __dsp_MOPSRUnpacker_h
 #define __dsp_MOPSRUnpacker_h
 
-// #defined USE_UNPACK_THREADS
-
 #include "dsp/EightBitUnpacker.h"
-
-#ifdef USE_UNPACK_THREADS
-#include "ThreadContext.h"
-#endif
 
 namespace dsp {
   
@@ -61,43 +55,6 @@ namespace dsp {
   private:
 
     bool device_prepared;
-
-#ifdef USE_UNPACK_THREADS
-    ThreadContext * context;
-
-    unsigned n_threads;
-
-    unsigned thread_count;
-
-    //! cpu_unpacker_thread ids
-    std::vector <pthread_t> ids;
-
-    //! Signals the CPU threads to start
-    void start_threads ();
-
-    //! Waits for the CPU threads to complete 
-    void wait_threads ();
-
-    //! Stops the CPU threads
-    void stop_threads ();
-
-    //! Joins the CPU threads
-    void join_threads ();
-
-    //! sk_thread calls thread method
-    static void* cpu_unpacker_thread (void*);
-
-    //! The CPU MOPSR Unpacker thread
-    void thread ();
-
-    enum State { Idle, Active, Quit };
-
-    //! overall state
-    State state;
-
-    //! sk_thread states
-    std::vector <State> states;
-#endif
 
   };
 }

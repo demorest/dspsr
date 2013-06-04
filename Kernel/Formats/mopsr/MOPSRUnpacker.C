@@ -49,39 +49,29 @@ dsp::MOPSRUnpacker::MOPSRUnpacker (const char* _name) : HistUnpacker (_name)
   gpu_stream = undefined_stream;
 
   table = new BitTable (8, BitTable::TwosComplement);
-
-#ifdef USE_UNPACK_THREADS
-  n_threads = 0;
-  context = 0;
-  state = Idle;
-  thread_count = 0;
-#endif
-
   device_prepared = false;
 }
 
 dsp::MOPSRUnpacker::~MOPSRUnpacker ()
 {
-#if HAVE_CUDA
-#ifdef USE_UNPACK_THREADS
-  if (n_threads)
-  {
-    stop_threads ();
-    join_threads ();
-  }
-#endif
-#endif
 }
 
 //! Return true if the unpacker support the specified output order
 bool dsp::MOPSRUnpacker::get_order_supported (TimeSeries::Order order) const
 {
-  return true;
+  return ((order == TimeSeries::OrderFPT) || (order == TimeSeries::OrderTFP));
 }
 
 //! Set the order of the dimensions in the output TimeSeries
 void dsp::MOPSRUnpacker::set_output_order (TimeSeries::Order order)
 {
+  //if (verbose)
+  {
+    if (order == TimeSeries::OrderFPT)
+      cerr << "dsp::MOPSRUnpacker::set_output_order (TimeSeries::OrderFPT)" << endl;
+    if (order == TimeSeries::OrderTFP)
+      cerr << "dsp::MOPSRUnpacker::set_output_order (TimeSeries::OrderTFP)" << endl;
+    }
   output_order = order;
 }
 
@@ -105,11 +95,11 @@ bool dsp::MOPSRUnpacker::get_device_supported (Memory* memory) const
 //! Set the device on which the unpacker will operate
 void dsp::MOPSRUnpacker::set_device (Memory* memory)
 {
-  cerr << "dsp::MOPSRUnpacker::set_device memory=" << memory << endl;
 #if HAVE_CUDA
   CUDA::DeviceMemory * gpu_mem = dynamic_cast< CUDA::DeviceMemory*>( memory );
   if (gpu_mem)
   {
+    mopsr_unpack_prepare (table->get_scale());
     gpu_stream = (void *) gpu_mem->get_stream();
     if (verbose)
       cerr << "dsp::MOPSRUnpacker::set_device gpu_stream=" << gpu_stream << endl;
@@ -132,24 +122,6 @@ void dsp::MOPSRUnpacker::set_device (Memory* memory)
     if (verbose)
       cerr << "dsp::MOPSRUnpacker::set_device: using cpu memory" << endl;
     gpu_stream = undefined_stream;
-#ifdef USE_UNPACK_THREADS
-    n_threads = 2;
-    context = new ThreadContext;
-    state = Idle;
-
-    thread_count = 0;
-    ids.resize(n_threads);
-    states.resize(n_threads);
-    for (unsigned i=0; i<n_threads; i++)
-    {
-      if (verbose)
-        cerr << "dsp::MOPSRUnpacker::set_device: starting cpu_unpacker_thread " << i << endl;
-      states[i] = Idle;
-      errno = pthread_create (&(ids[i]), 0, cpu_unpacker_thread, this);
-      if (errno != 0)
-        throw Error (FailedSys, "dsp::MOPSRUnpacker", "pthread_create");
-    }
-#endif
   }
 #else
   Unpacker::set_device (memory);
@@ -167,31 +139,6 @@ bool dsp::MOPSRUnpacker::matches (const Observation* observation)
     && observation->get_npol() == 1;
 }
 
-/*
-void dsp::MOPSRUnpacker::unpack (uint64_t ndat,
-                                  const unsigned char* from,
-                                  float* into,
-                                  const unsigned fskip)
-{
-  cerr << "dsp::MOPSRUnpacker::unpack(...)" << endl;
-  cerr << "dsp::MOPSRUnpacker::unpack ndat=" << ndat << " fskip=" << fskip << endl;;
-
-  // * 2 for complex input/output
-  const unsigned into_stride = fskip * 2;
-  const unsigned from_stride = 2;
-  const float* lookup = table->get_values ();
-
-  for (uint64_t idat=0; idat < ndat; idat++)
-  {
-    into[0] = lookup[ from[0] ];
-    into[1] = lookup[ from[1] ];
-
-    from += from_stride;
-    into += into_stride;
-  }
-}
-*/
-
 void dsp::MOPSRUnpacker::unpack ()
 {
 #if HAVE_CUDA
@@ -201,15 +148,6 @@ void dsp::MOPSRUnpacker::unpack ()
     return;
   }
 #endif
-
-#ifdef USE_UNPACK_THREADS
-  // some programs (digifil) do not call set_device
-  if ( ! device_prepared )
-    set_device ( Memory::get_manager ());
-
-  start_threads();
-  wait_threads();
-#else
 
   const unsigned int nchan = input->get_nchan();
   const unsigned int nant = input->get_nant();
@@ -270,138 +208,7 @@ void dsp::MOPSRUnpacker::unpack ()
 
     break;
   }
-
-#endif
 }
-
-#ifdef USE_UNPACK_THREADS
-void* dsp::MOPSRUnpacker::cpu_unpacker_thread (void* ptr)
-{
-  reinterpret_cast<MOPSRUnpacker*>( ptr )->thread ();
-  return 0;
-}
-
-void dsp::MOPSRUnpacker::thread ()
-{
-  context->lock();
-
-  unsigned thread_num = thread_count;
-  thread_count++;
-
-  // each thread unpacks 4 samples
-  const unsigned ipol = thread_num % 2;
-  const unsigned npol = 2;
-
-  const unsigned into_stride = 4 * (int) (n_threads / npol);  // unpacked jump per thread iter
-  const unsigned into_offset = 4 * (int) (thread_num / npol); // unpacked thread start offset
-
-  const unsigned from_stride = 4 * n_threads;                 // raw jump per thread iter
-  const unsigned from_offset = 4 * thread_num;                // raw thread start offset
-
-  const float* lookup = table->get_values ();
-  float * into = 0;
-
-  while (state != Quit)
-  {
-    // wait for Active state
-    while (states[thread_num] == Idle)
-    {
-      context->wait ();
-    }
-
-    if (states[thread_num] == Quit)
-    {
-      context->unlock();
-      return;
-    }
-    context->unlock();
-
-
-    // unpack ndat worth of data
-    const uint64_t ndat  = input->get_ndat();
-    const unsigned char* from = input->get_rawptr() + from_offset;
-    into = output->get_datptr (0, ipol) + into_offset;
-
-    for (uint64_t idat=into_offset; idat < ndat; idat+=into_stride)
-    {
-      into[0] = lookup[ from[0] ];
-      into[1] = lookup[ from[1] ];
-      into[2] = lookup[ from[2] ];
-      into[3] = lookup[ from[3] ];
-
-      from += from_stride;
-      into += into_stride;
-    }
-
-    context->lock();
-    states[thread_num] = Idle;
-
-#ifdef _DEBUG 
-      cerr << "thread[" << thread_num << "] done" << endl;
-#endif
-    context->broadcast();
-  }
-  context->unlock();
-}
-
-void dsp::MOPSRUnpacker::start_threads ()
-{ 
-  ThreadContext::Lock lock (context);
-  
-  while (state != Idle)
-    context->wait ();
-    
-  for (unsigned i=0; i<n_threads; i++)
-    states[i] = Active;
-  state = Active;
-  
-  context->broadcast();
-} 
-
-void dsp::MOPSRUnpacker::wait_threads()
-{ 
-  ThreadContext::Lock lock (context);
-  
-  while (state == Active)
-  { 
-    bool all_idle = true;
-    for (unsigned i=0; i<n_threads; i++)
-    {
-      if (states[i] != Idle)
-        all_idle = false;
-    }
-    
-    if (all_idle)
-    {
-      state = Idle;
-    }
-    else
-      context->wait ();
-  }
-}
-
-void dsp::MOPSRUnpacker::stop_threads ()
-{
-  ThreadContext::Lock lock (context);
-
-  while (state != Idle)
-    context->wait ();
-
-  for (unsigned i=0; i<n_threads; i++)
-    states[i] = Quit;
-  state = Quit;
-
-  context->broadcast();
-}
-
-void dsp::MOPSRUnpacker::join_threads ()
-{
-  void * result = 0;
-  for (unsigned i=0; i<n_threads; i++)
-    pthread_join (ids[i], &result);
-}
-
-#endif
 
 unsigned dsp::MOPSRUnpacker::get_resolution () const { return 1024; }
 
@@ -409,21 +216,44 @@ unsigned dsp::MOPSRUnpacker::get_resolution () const { return 1024; }
 
 void dsp::MOPSRUnpacker::unpack_on_gpu ()
 {
-  const uint64_t ndat = input->get_ndat();
-  const uint64_t ndim = input->get_ndim();
-  const uint64_t npol = input->get_npol();
+  const uint64_t ndat  = input->get_ndat();
+  const unsigned nchan = input->get_nchan();
+  const unsigned ndim  = input->get_ndim();
+  const unsigned npol  = input->get_npol();
 
-  const uint64_t to_copy = ndat * ndim * npol;
+  const uint64_t to_copy = ndat * nchan * ndim * npol;
 
   staging.Observation::operator=( *input );
   staging.resize(ndat);
 
   // staging buffer on the GPU for packed data
-  unsigned char* d_staging = staging.get_rawptr();
+  int8_t * d_staging = (int8_t *) staging.get_rawptr();
 
-  const unsigned char* from= input->get_rawptr();
+  const unsigned char * from = input->get_rawptr();
 
-  float* into = output->get_datptr(0,0);
+  float * into;
+
+  switch ( output->get_order() )
+  {
+    case TimeSeries::OrderFPT:
+    {
+      into = output->get_datptr(0,0);
+      break;
+    }
+
+    case TimeSeries::OrderTFP:
+    {
+      into = output->get_dattfp();
+      break;
+    }
+
+    default:
+    {
+      throw Error (InvalidState, "dsp::MOPSRUnpacker::unpack_on_gpu", "unrecognized order");
+    }
+    break;
+  }
+
 
   cudaStream_t stream = (cudaStream_t) gpu_stream;
   if (verbose)
@@ -433,12 +263,12 @@ void dsp::MOPSRUnpacker::unpack_on_gpu ()
   if (stream)
   {
     error = cudaMemcpyAsync (d_staging, from, to_copy, cudaMemcpyHostToDevice, stream);
-    CHECK_ERROR_STREAM ("dsp::MOPSRUnpacker::unpack_on_gpu cudaMemcpyAsync", stream);
+    //CHECK_ERROR_STREAM ("dsp::MOPSRUnpacker::unpack_on_gpu cudaMemcpyAsync", stream);
   }
   else
   {
     error = cudaMemcpy (d_staging, from, to_copy, cudaMemcpyHostToDevice);
-    CHECK_ERROR ("dsp::MOPSRUnpacker::unpack_on_gpu cudaMemcpy");
+    //CHECK_ERROR ("dsp::MOPSRUnpacker::unpack_on_gpu cudaMemcpy");
   }
   
 
@@ -454,18 +284,35 @@ void dsp::MOPSRUnpacker::unpack_on_gpu ()
                  "cudaMemcpy%s %s", stream?"Async":"", 
                  cudaGetErrorString (error));
 
-  if (verbose)
-    cerr << "dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack ndat=" << ndat << endl;
 #ifdef USE_TEXTURE_MEMORY
   mopsr_unpack (stream, ndat, d_staging, into, gpu_mem->get_tex());
 #else
-  mopsr_unpack (stream, ndat, table->get_scale(), d_staging, into);
-#endif
-
-  if (stream)
-    CHECK_ERROR_STREAM ("dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack", stream);
+  if (output->get_order() == TimeSeries::OrderFPT)
+  {
+    if (verbose)
+      cerr << "dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack_fpt ndat=" << ndat 
+           << " d_staging=" << (void *) d_staging << " into=" << (void *) into << endl;
+    mopsr_unpack_fpt (stream, ndat, nchan, table->get_scale(), d_staging, into);
+    if (dsp::Operation::record_time || dsp::Operation::verbose)
+      if (stream)
+        CHECK_ERROR_STREAM ("dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack_fpt", stream);
+      else
+        CHECK_ERROR ("dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack_fpt");
+  }
+  else if (output->get_order() == TimeSeries::OrderTFP)
+  {
+    if (verbose)
+      cerr << "dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack_tfp ndat=" << ndat << endl;
+    mopsr_unpack_tfp (stream, ndat, nchan, table->get_scale(), d_staging, into);
+    if (dsp::Operation::record_time || dsp::Operation::verbose)
+      if (stream)
+        CHECK_ERROR_STREAM ("dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack_tfp", stream);
+      else
+        CHECK_ERROR ("dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack_tfp");
+  }
   else
-    CHECK_ERROR ("dsp::MOPSRUnpacker::unpack_on_gpu mopsr_unpack");
+    throw Error (InvalidState, "dsp::MOPSRUnpacker::unpack_on_gpu", "unrecognized order");
+#endif
 }
 
 #endif
