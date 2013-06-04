@@ -43,18 +43,18 @@ void dsp::Detection::set_output_state (Signal::State _state)
 {
   switch (_state)
   {
-  case Signal::Intensity:  // Square-law detected total power (1 pol)
-  case Signal::PPQQ:       // Square-law detected, two polarizations
-  case Signal::NthPower:   // Square-law total power to the nth power
-  case Signal::PP_State:   // Just PP
-  case Signal::QQ_State:   // Just QQ
-    ndim = 1;
-  case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
-  case Signal::Stokes:     // Stokes I,Q,U,V
-    break;
-  default:
-    throw Error (InvalidParam, "dsp::Detection::set_output_state",
-		 "invalid state=%s", Signal::state_string (_state));
+    case Signal::Intensity:  // Square-law detected total power (1 pol)
+    case Signal::PPQQ:       // Square-law detected, two polarizations
+    case Signal::NthPower:   // Square-law total power to the nth power
+    case Signal::PP_State:   // Just PP
+    case Signal::QQ_State:   // Just QQ
+      ndim = 1;
+    case Signal::Coherence:  // PP, QQ, Re[PQ], Im[PQ]
+    case Signal::Stokes:     // Stokes I,Q,U,V
+      break;
+    default:
+      throw Error (InvalidParam, "dsp::Detection::set_output_state",
+		  "invalid state=%s", Signal::state_string (_state));
   }
 
   state = _state;
@@ -179,15 +179,16 @@ void dsp::Detection::resize_output ()
     output_npol = 1;
 
   if (!inplace)
-    get_output()->copy_configuration( get_input() );
-
-  if (!inplace)
   {
+    get_output()->copy_configuration( get_input() );
+    get_output()->internal_match ( get_input() ); 
+
     if (verbose)
       cerr << "dsp::Detection::resize_output resize npol=" << output_npol
            << " ndim=" << output_ndim << endl;
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
+
     get_output()->resize( get_input()->get_ndat() );
   }
   else if (reshape)
@@ -208,7 +209,7 @@ void dsp::Detection::resize_output ()
 
 bool dsp::Detection::get_order_supported (TimeSeries::Order order) const
 {
-  if (order == TimeSeries::OrderFPT)
+  if (order == TimeSeries::OrderFPT || order == TimeSeries::OrderTFP)
     return true;
 
   return state == Signal::PP_State
@@ -220,7 +221,15 @@ void dsp::Detection::square_law ()
 {
   if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
- 
+
+  if (engine)
+  {
+    if (verbose)
+      cerr << "dsp::Detection::square_law using Engine engine=" << (void *) engine << endl;
+    engine->square_law (input, output);
+    return;
+  }
+
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
   
