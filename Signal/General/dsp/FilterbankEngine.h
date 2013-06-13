@@ -28,6 +28,8 @@ public:
   //! Finish up
   virtual void finish () { }
 
+  virtual void sendKernel(dsp::Filterbank* filterbank, unsigned _ichan) {}
+
 }; 
 
 #endif
