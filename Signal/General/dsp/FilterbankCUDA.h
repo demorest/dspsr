@@ -16,7 +16,7 @@
 #define __FilterbankCUDA_h
 
 #include "dsp/FilterbankEngine.h"
-#include "dsp/filterbank_cuda.h"
+#include <cufft.h>
 
 namespace CUDA
 {
@@ -31,8 +31,7 @@ namespace CUDA
   };
 
   //! Discrete convolution filterbank step implemented using CUDA streams
-  class FilterbankEngine : public dsp::Filterbank::Engine,
-			   protected filterbank_cuda
+  class FilterbankEngine : public dsp::Filterbank::Engine
   {
     unsigned nstream;
 
@@ -40,14 +39,48 @@ namespace CUDA
 
     //! Default Constructor
     FilterbankEngine (cudaStream_t stream);
+
     ~FilterbankEngine ();
 
     void setup (dsp::Filterbank*);
-    void perform (const float* in);
+    void set_scratch (float *);
+
+    void perform (const dsp::TimeSeries* in, dsp::TimeSeries* out,
+                  uint64_t npart, uint64_t in_step, uint64_t out_step);
+
     void finish ();
-    void sendKernel(dsp::Filterbank* filterbank, unsigned _ichan);
 
     int max_threads_per_block; 
+
+  protected:
+
+    //! forward fft plan 
+    cufftHandle plan_fwd;
+
+    //! backward fft plan
+    cufftHandle plan_bwd;
+
+    //! Complex-valued data
+    bool real_to_complex;
+
+    //! inplace FFT in CUDA memory
+    float2* d_fft;
+
+    //! convolution kernel in CUDA memory
+    float2* d_kernel;
+
+    //! device scratch sapce
+    float* scratch;
+
+    unsigned nchan_subband;
+    unsigned freq_res;
+    unsigned nfilt_pos;
+    unsigned nkeep;
+
+    cudaStream_t stream;
+
+    bool verbose;
+
   };
 
 }

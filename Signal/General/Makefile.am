@@ -46,7 +46,7 @@ nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h \
 	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.C filterbank_cuda.cu TransferCUDA.C \
+libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C \
 	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
 
 endif

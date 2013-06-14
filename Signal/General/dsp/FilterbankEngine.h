@@ -10,10 +10,9 @@
 #define __FilterbankEngine_h
 
 #include "dsp/Filterbank.h"
-#include "dsp/filterbank_engine.h"
+//#include "dsp/filterbank_engine.h"
 
-class dsp::Filterbank::Engine : public Reference::Able,
-				public filterbank_engine
+class dsp::Filterbank::Engine : public Reference::Able
 {
 public:
 
@@ -22,13 +21,25 @@ public:
   //! If kernel is not set, then the engine should set up for benchmark only
   virtual void setup (Filterbank*) = 0;
 
+  //! provide some scratch space for the engine
+  virtual void set_scratch (float *) = 0;
+
   //! Perform the filterbank operation on the input data
-  virtual void perform (const float* in) = 0;
+  virtual void perform (const dsp::TimeSeries * in, 
+                        dsp::TimeSeries * out,
+                        uint64_t npart, 
+                        const uint64_t in_step, 
+                        const uint64_t out_step) = 0;
 
   //! Finish up
   virtual void finish () { }
 
-  virtual void sendKernel(dsp::Filterbank* filterbank, unsigned _ichan) {}
+protected:
+
+  float* scratch;
+
+  float* output;
+  unsigned output_span;
 
 }; 
 
