@@ -257,8 +257,10 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
 
         if (d_kernel)
         {
+          // complex numbers offset (d_kernel is float2*)
+          unsigned offset = ichan * nchan_subband * freq_res; 
           DEBUG("CUDA::FilterbankEngine::perform multiply dedipersion kernel");
-          multiply<<<blocks,threads_per_block,0,stream>>> (cscratch, d_kernel);
+          multiply<<<blocks,threads_per_block,0,stream>>> (cscratch, d_kernel+offset);
           check_error ("CUDA::FilterbankEngine::perform multiply");
         }
 
