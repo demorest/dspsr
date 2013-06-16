@@ -314,46 +314,12 @@ dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
   return *this;
 }
 
-//! Returns the number of samples that have been seeked over
-int64_t dsp::DataSeries::get_samps_offset() const {
-  uint64_t bytes_offset = get_data() - buffer; 
-  uint64_t samps_offset = (bytes_offset * 8)/(get_nbit()*get_ndim());
-  //  fprintf(stderr,"\ndsp::DataSeries::get_samps_offset() got bytes_offset="UI64" nbit=%d ndim=%d so samp offset="UI64"\n",
-  //  bytes_offset,get_nbit(),get_ndim(),samps_offset);
-  return int64_t(samps_offset);
-}
-
-//! Returns the maximum ndat possible with current offset of data from base pointer
-uint64_t dsp::DataSeries::maximum_ndat() const {
-  uint64_t bytes_offset = get_data() - buffer; 
-  uint64_t bits_avail = (subsize-bytes_offset) * 8;
-  //  fprintf(stderr,"dsp::DataSeries::maximum_ndat() got bytes_offset="UI64" subsize="UI64" bits_avail="UI64" returning "UI64"/(%d*%d)="UI64"\n",
-  //  bytes_offset,subsize,bits_avail,bits_avail,get_ndim(),get_nbit(),bits_avail/(get_ndim()*get_nbit()));
-  return bits_avail/(get_ndim()*get_nbit());
-}
-
-//! Checks that ndat is not too big for size and subsize
-void dsp::DataSeries::check_sanity() const {
-  if( get_nbytes(get_ndat()+get_samps_offset()) > size )
-    throw Error(InvalidState,"dsp::DataSeries::check_sanity()",
-		"ndat="UI64" samps_offset="I64" nbytes used="UI64" is greater than bytes allocated ("UI64")",
-		get_ndat(), get_samps_offset(),
-		get_nbytes(get_ndat()+get_samps_offset()),
-		size);
-
-  if( (get_nbit()*get_ndim()*(get_ndat()+get_samps_offset()))/8 > subsize )
-    throw Error(InvalidState,"dsp::DataSeries::check_sanity()",
-		"ndat="UI64" samps_offset="I64" bytes used in a block="UI64" is greater than subsize="UI64,
-		get_ndat(), get_samps_offset(),
-		(get_nbit()*get_ndim()*(get_ndat()+get_samps_offset()))/8,
-		subsize);
-}
-
-
 //! Match the internal memory layout of another DataSeries
 void dsp::DataSeries::internal_match (const DataSeries* other)
 {
-  if (size < other->size)
+  uint64_t required = other->size;
+
+  if (size < required)
   {
     if (verbose)
       cerr << "dsp::DataSeries::internal_match Memory::free"
@@ -363,14 +329,14 @@ void dsp::DataSeries::internal_match (const DataSeries* other)
 
     if (verbose)
       cerr << "dsp::DataSeries::internal_match"
-	" Memory::allocate (" << other->size << ")" << endl;
+	" Memory::allocate (" << required << ")" << endl;
 
-    buffer = (unsigned char*) memory->do_allocate (other->size);
+    buffer = (unsigned char*) memory->do_allocate (required);
     if (!buffer)
       throw Error (InvalidState,"dsp::DataSeries::internal_match",
-		  "could not allocate "UI64" bytes", other->size);
+		  "could not allocate "UI64" bytes", required);
 
-    size = other->size;
+    size = required;
     memory_used += size;
   }
 
