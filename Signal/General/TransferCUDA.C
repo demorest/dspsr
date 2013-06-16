@@ -51,6 +51,7 @@ void dsp::TransferCUDA::transformation ()
 
 void dsp::TransferCUDA::prepare ()
 {
+  output->set_match( const_cast<TimeSeries*>(input.get()) );
   output->internal_match( input );
   output->copy_configuration( input );
 }
