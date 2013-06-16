@@ -135,12 +135,8 @@ void dsp::TimeSeries::resize (uint64_t nsamples)
 	 << " buffer=" << (void*)buffer << " ndat=" << get_ndat() << endl;
 
     if (data && buffer) 
-    {
       cerr << "dsp::TimeSeries::resize (" << nsamples << ") offset="
-	   << int64_t((data-(float*)buffer)) << endl
-           << "dsp::TimeSeries::resize get_samps_offset=" 
-	   << get_samps_offset()  << endl;
-    }
+	   << int64_t((data-(float*)buffer)) << endl;
   }  
 
   uint64_t fake_ndat = reserve_nfloat / get_ndim();
@@ -325,7 +321,7 @@ void dsp::TimeSeries::internal_match (const TimeSeries* other)
   reserve_nfloat = other->reserve_nfloat;
   input_sample = other->input_sample;
 
-  unsigned offset = other->data - (float*)other->buffer;
+  uint64_t offset = other->data - (float*)other->buffer;
 
   data = (float*)buffer + offset;
 }
@@ -495,6 +491,7 @@ catch (Error& error)
   throw error += "dsp::TimeSeries::copy_data";
 }
 
+#if 0
 /*! 
   \retval number of timesamples actually appended.  
   If zero, then none were and we assume 'this' is full.
@@ -559,6 +556,8 @@ void dsp::TimeSeries::append_checks(uint64_t& ncontain,uint64_t& ncopy,
 	      get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
   }
 }
+
+#endif
 
 dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts)
 {
@@ -667,6 +666,16 @@ void dsp::TimeSeries::change_reserve (int64_t change) const
     thiz->reserve_nfloat += change * reserve_step;
   }
 
+  if (match)
+  {
+    match->reserve_ndat = reserve_ndat;
+    match->reserve_nfloat = reserve_nfloat;
+  }
+}
+
+void dsp::TimeSeries::set_match (TimeSeries* other)
+{
+  match = other;
 }
 
 void dsp::TimeSeries::finite_check () const

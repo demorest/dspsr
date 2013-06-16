@@ -118,8 +118,6 @@ namespace dsp {
     virtual void seek (int64_t offset);
 
     //! Append the given TimeSeries to the end of 'this'
-    virtual uint64_t append (const TimeSeries*);
-
     //! Copy data from given TimeSeries in front of the current position
     void prepend (const dsp::TimeSeries*, uint64_t pre_ndat = 0);
 
@@ -152,16 +150,14 @@ namespace dsp {
 
     void finite_check () const;
 
+    void set_match (TimeSeries*);
+
   protected:
 
     //! Returns a uchar pointer to the first piece of data
     virtual unsigned char* get_data();
     //! Returns a uchar pointer to the first piece of data
     virtual const unsigned char* get_data() const;
-
-    //! Called by append()
-    void append_checks(uint64_t& ncontain,uint64_t& ncopy,
-		       const TimeSeries* little);
 
     virtual void prepend_checks (const TimeSeries*, uint64_t pre_ndat);
 
@@ -193,6 +189,9 @@ namespace dsp {
 
     //! Number of floats reserved
     uint64_t reserve_nfloat;
+
+    //! TimeSeries that should match this one internally
+    Reference::To<TimeSeries, false> match;
 
     //! Sample offset from start of source
     /*! Set by Unpacker class and used by multithreaded InputBuffering */
