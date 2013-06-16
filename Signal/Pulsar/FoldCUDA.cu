@@ -7,7 +7,7 @@
  *
  ***************************************************************************/
 
-#define _DEBUG 1
+// #define _DEBUG 1
 
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
