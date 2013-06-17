@@ -18,7 +18,10 @@
 #include "FTransform.h"
 
 #include <fstream>
+
+#if HAVE_CUDA
 #include <cuda_runtime.h>
+#endif
 
 
 using namespace std;
