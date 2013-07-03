@@ -17,6 +17,13 @@
 
 #include "FTransform.h"
 
+#include <fstream>
+
+#if HAVE_CUDA
+#include <cuda_runtime.h>
+#endif
+
+
 using namespace std;
 
 // #define _DEBUG 1
@@ -49,10 +56,10 @@ void dsp::Filterbank::prepare ()
 */
 void dsp::Filterbank::make_preparations ()
 {
-  if (nchan <= input->get_nchan() )
+  if (nchan < input->get_nchan() )
     throw Error (InvalidState, "dsp::Filterbank::make_preparations",
-                 "output nchan=%d <= input nchan=%d",
-                 nchan, input->get_nchan());
+		 "output nchan=%d < input nchan=%d",
+		 nchan, input->get_nchan());
 
   if (nchan % input->get_nchan() != 0)
     throw Error (InvalidState, "dsp::Filterbank::make_preparations",
@@ -112,7 +119,8 @@ void dsp::Filterbank::make_preparations ()
       norm = "normalized";
         
     cerr << "dsp::Filterbank::make_preparations n_fft=" << n_fft 
-         << " freq_res=" << freq_res << " fft::norm=" << norm << endl;
+         << " freq_res=" << freq_res << " fft::norm=" << norm
+         << " nchan_subband=" << nchan_subband << endl;
   }
 
   if (FTransform::get_norm() == FTransform::unnormalized)
@@ -410,6 +418,30 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
   prepare_output (output_ndat, true);
 }
 
+#if GLENN
+<<<<<<< HEAD
+// ichan is input channel number being processed
+void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output, 
+                   uint64_t out_offset, unsigned ichan, unsigned ipol = 0)
+{
+//  engine->nchan = output->get_nchan(); // this is causing problems because it conflicts with what's really needed (output nchan/ input nchan)
+
+	//since ichan refers to the input channel number, we want the output to be stored in the corresponding output channel block
+	// which starts at ichan * nchan_subband
+  engine->output = output->get_datptr (ichan * engine->nchan_subband, ipol) + out_offset; //adding ichan here, was 0 before
+  if (output->get_nchan() == 1) {
+	  engine->output_span = 0;
+  }
+  else {
+	  engine->output_span =
+		output->get_datptr (1, ipol) - output->get_datptr (0, ipol);
+  }
+}
+
+=======
+>>>>>>> mopsr
+#endif
+
 void dsp::Filterbank::transformation ()
 {
   if (verbose)
@@ -487,7 +519,12 @@ void dsp::Filterbank::filterbank ()
 
   if (verbose)
     cerr << "dsp::Filterbank::transformation enter main loop" <<
-      " cpol=" << cross_pol << " npol=" << input->get_npol() << endl;
+      " cpol=" << cross_pol << " npol=" << input->get_npol() <<
+      " npart=" << npart  << endl;
+  if (engine) {
+	  if (verbose)
+		  cerr << "have engine"<<endl;
+  }
 
   // number of floats to step between input to filterbank
   const unsigned long in_step = nsamp_step * input->get_ndim();
@@ -515,6 +552,19 @@ void dsp::Filterbank::filterbank ()
   uint64_t* data_into = NULL;
   uint64_t* data_from = NULL;
 
+#if GLENN
+<<<<<<< HEAD
+
+  if (engine)
+  {
+    engine->scratch = c_spectrum[0];
+//    engine->nchan = nchan;
+    engine->nfilt_pos = nfilt_pos;
+    engine->freq_res = freq_res;
+    engine->nkeep = nkeep;
+=======
+#endif
+
   // /////////////////////////////////////////////////////////////////////
   //
   // PERFORM FILTERBANK VIA ENGINE (e.g. on GPU)
@@ -523,11 +573,11 @@ void dsp::Filterbank::filterbank ()
   if (engine)
   {
     engine->set_scratch(c_spectrum[0]);
-    engine->configure (nchan, nfilt_pos, freq_res, nkeep);
     engine->perform (input, output, npart, in_step, out_step);
     if (Operation::record_time)
       engine->finish ();
   }
+//  cerr << "output ndat=" <<output->get_ndat() << " output ptr=" << output->get_datptr(0,0) << endl;
 
   // /////////////////////////////////////////////////////////////////////
   //
@@ -538,6 +588,33 @@ void dsp::Filterbank::filterbank ()
   {
     for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
     {
+
+#if GLENN
+<<<<<<< HEAD
+
+    	engine->sendKernel(this, input_ichan);
+
+      for (ipol=0; ipol < npol; ipol++)
+      {
+	for (ipart=0; ipart<npart; ipart++)
+	{
+//#ifdef _DEBUG
+//	  cerr << "ichan=" << input_ichan << " ipol="<< ipol << " ipart=" << ipart << endl;
+//#endif
+	  in_offset = ipart * in_step;
+	  out_offset = ipart * out_step;
+      
+	  time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, ipol)) + in_offset;
+
+
+	  set_pointers (engine, output, out_offset, input_ichan, ipol); // added input_ichan here
+	  
+	  engine->perform (time_dom_ptr);
+
+	} // for each part
+=======
+#endif
+
       for (ipart=0; ipart<npart; ipart++)
       {
 #ifdef _DEBUG
@@ -572,13 +649,11 @@ void dsp::Filterbank::filterbank ()
           
           if (matrix_convolution)
           {
-
             if (passband)
               passband->integrate (c_spectrum[0], c_spectrum[1], input_ichan);
 
             // cross filt can be set only if there is a response
             response->operate (c_spectrum[0], c_spectrum[1]);
-
           }
           else
           {
@@ -616,7 +691,6 @@ void dsp::Filterbank::filterbank ()
 
             for (ichan=0; ichan < nchan_subband; ichan++)
             {
-
               backward->bcc1d (freq_res, c_time, freq_dom_ptr);
 
               freq_dom_ptr += freq_res*2;
@@ -632,7 +706,7 @@ void dsp::Filterbank::filterbank ()
           } // for each cross poln
         
         } // for each polarization
-      
+
       } // for each big fft (ipart)
     
     } // for each input channel

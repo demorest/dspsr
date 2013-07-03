@@ -15,6 +15,7 @@
 #include <cuda_runtime.h>
 
 #include <iostream>
+#include <assert.h>
 
 void check_error (const char*);
 
@@ -80,17 +81,14 @@ using namespace std;
 CUDA::FilterbankEngine::FilterbankEngine (cudaStream_t _stream)
 {
   real_to_complex = false;
-  nchan = 0;
-  bwd_nfft = 0;
 
   d_fft = d_kernel = 0;
-
-  scratch = 0;
 
   stream = _stream;
 
   plan_fwd = 0;
   plan_bwd = 0;
+  verbose = false;
 }
 
 CUDA::FilterbankEngine::~FilterbankEngine ()
@@ -99,16 +97,13 @@ CUDA::FilterbankEngine::~FilterbankEngine ()
 
 void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 {
-  bwd_nfft = filterbank->get_freq_res ();
-  nchan = filterbank->get_nchan ();
+  freq_res = filterbank->get_freq_res ();
+  nchan_subband = filterbank->get_nchan_subband();
 
   real_to_complex = (filterbank->get_input()->get_state() == Signal::Nyquist);
 
-  DEBUG("CUDA::FilterbankEngine::setup nchan=" << nchan \
-        << " bwd_nfft=" << bwd_nfft);
-
-  unsigned data_size = nchan * bwd_nfft * 2;
-  unsigned mem_size = data_size * sizeof(cufftReal);
+  DEBUG("CUDA::FilterbankEngine::setup nchan_subband=" << nchan_subband \
+        << " freq_res=" << freq_res);
 
   DEBUG("CUDA::FilterbankEngine::setup scratch=" << scratch);
 
@@ -119,17 +114,15 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   cudaGetDeviceProperties (&device_properties, device);
   max_threads_per_block = device_properties.maxThreadsPerBlock;
 
-  DEBUG("CUDA::FilterbankEngine::setup data_size=" << data_size);
-
   if (real_to_complex)
   {
-    DEBUG("CUDA::FilterbankEngine::setup plan size=" << bwd_nfft*nchan*2);
-    cufftPlan1d (&plan_fwd, bwd_nfft*nchan*2, CUFFT_R2C, 1);
+    DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan_subband*2);
+    cufftPlan1d (&plan_fwd, freq_res*nchan_subband*2, CUFFT_R2C, 1);
   }
   else
   {
-    DEBUG("CUDA::FilterbankEngine::setup plan size=" << bwd_nfft*nchan);
-    cufftPlan1d (&plan_fwd, bwd_nfft*nchan, CUFFT_C2C, 1);
+    DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan_subband);
+    cufftPlan1d (&plan_fwd, freq_res*nchan_subband, CUFFT_C2C, 1);
   }
 
   DEBUG("CUDA::FilterbankEngine::setup setting stream " << stream);
@@ -139,20 +132,38 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
 
   DEBUG("CUDA::FilterbankEngine::setup fwd FFT plan set");
-  if (nchan > 1)
+  if (freq_res > 1)
   {
-    cufftPlan1d (&plan_bwd, bwd_nfft, CUFFT_C2C, nchan);
+    cufftPlan1d (&plan_bwd, freq_res, CUFFT_C2C, nchan_subband);
     cufftSetStream (plan_bwd, stream);
-  }
 
-  // optimal performance for CUFFT regarding data layout
-  cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
-  DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set");
+    // optimal performance for CUFFT regarding data layout
+    cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
+    DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set");
+  }
 
   if (filterbank->has_response())
   {
+    const dsp::Response* response = filterbank->get_response();
+
+    unsigned nchan = response->get_nchan();
+    unsigned ndat = response->get_ndat();
+    unsigned ndim = response->get_ndim();
+
+    assert( nchan == filterbank->get_nchan() );
+    assert( ndat == freq_res );
+    assert( ndim == 2 ); // complex
+
+    unsigned mem_size = nchan * ndat * ndim * sizeof(cufftReal);
+
     // allocate space for the convolution kernel
     cudaMalloc ((void**)&d_kernel, mem_size);
+
+    nfilt_pos = response->get_impulse_pos();
+    unsigned nfilt_tot = nfilt_pos + response->get_impulse_neg();
+
+    // points kept from each small fft
+    nkeep = freq_res - nfilt_tot;
  
     // copy the kernel accross
     const float* kernel = filterbank->get_response()->get_datptr(0,0);
@@ -197,7 +208,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
   DEBUG("CUDA::FilterbankEngine::perform scratch=" << scratch);
   float2* cscratch = (float2*) scratch;
 
-  unsigned data_size = nchan * bwd_nfft;
+  unsigned data_size = nchan_subband * freq_res;
   int threads_per_block = max_threads_per_block / 2;
 
   // note that each thread will set two complex numbers in each poln
@@ -246,8 +257,10 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
 
         if (d_kernel)
         {
+          // complex numbers offset (d_kernel is float2*)
+          unsigned offset = ichan * nchan_subband * freq_res; 
           DEBUG("CUDA::FilterbankEngine::perform multiply dedipersion kernel");
-          multiply<<<blocks,threads_per_block,0,stream>>> (cscratch, d_kernel);
+          multiply<<<blocks,threads_per_block,0,stream>>> (cscratch, d_kernel+offset);
           check_error ("CUDA::FilterbankEngine::perform multiply");
         }
 
@@ -262,7 +275,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
           output_span = out->get_datptr (1, ipol) - out->get_datptr (0, ipol);
 
           const float2* input = cscratch + nfilt_pos;
-          unsigned input_stride = bwd_nfft;
+          unsigned input_stride = freq_res;
           unsigned to_copy = nkeep;
 
           {
@@ -274,7 +287,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
             if (nkeep % threads.x)
               blocks.x ++;
 
-            blocks.y = nchan;
+            blocks.y = nchan_subband;
 
             // divide by two for complex data
             float2* output_base = (float2*) output_ptr;

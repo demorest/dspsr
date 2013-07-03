@@ -354,8 +354,6 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
   unsigned ndim  = info->get_ndim();
   unsigned npol  = info->get_npol();
   unsigned nchan = info->get_nchan();
-  unsigned nant  = info->get_nant();
-  unsigned nbeam = info->get_nbeam();
 
   // each nbit number will be unpacked into a float
   double nbyte = double(nbit)/8 + copies * sizeof(float);
@@ -364,7 +362,7 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
     cerr << "dsp::IOManager::set_block_size copies=" << copies
          << " nbit=" << nbit << " nbyte=" << nbyte << endl;
 
-  double nbyte_dat = nbyte * ndim * npol * nchan * nant * nbeam;
+  double nbyte_dat = nbyte * ndim * npol * nchan;
 
   uint64_t block_size = multiple_greater (minimum_samples, resolution);
 

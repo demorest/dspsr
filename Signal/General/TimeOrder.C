@@ -21,9 +21,6 @@ dsp::TimeOrder::TimeOrder()
 dsp::TimeOrder::~TimeOrder(){ }
 
 void dsp::TimeOrder::transformation(){
-  if( verbose )
-    fprintf(stderr,"Hi from dsp::TimeOrder::transformation() with input: nchan=%d npol=%d samps_offset="I64" ndim=%d\n",
-	    input->get_nchan(),input->get_npol(),input->get_samps_offset(),input->get_ndim());
 	  
   if(input->get_nbit()!=32)
     throw Error(InvalidState,"dsp::ChannelOrder::transformation()",

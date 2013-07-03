@@ -99,7 +99,7 @@ void dsp::InputBuffering::set_next_start (uint64_t next)
 }
 
 /*! Prepend buffered data to target Transformation's input TimeSeries */
-void dsp::InputBuffering::pre_transformation ()
+void dsp::InputBuffering::pre_transformation () try
 {
   if (!requested_reserve || !buffer || !buffer->get_ndat())
     return;
@@ -134,7 +134,10 @@ void dsp::InputBuffering::pre_transformation ()
 
   const_cast<TimeSeries*>( container )->prepend (buffer);
 }
-
+catch (Error& error)
+{
+  throw error += "dsp::InputBuffering::pre_transformation";
+}
 /*! No action required after transformation */
 void dsp::InputBuffering::post_transformation ()
 {

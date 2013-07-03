@@ -134,12 +134,13 @@ void dsp::VDIFFile::open_file (const char* filename)
   // so not required.  Also we'll assume VDIF's "nchan" really gives
   // the number of polns for now, and NCHAN is 1.  NBIT is in VDIF packets.
   // We'll compute TSAMP from the bandwidth.  NDIM (real vs complex sampling)
-  // is in VDIF packets but there is no easy fn to parse it yet.
+  // is in VDIF packets via the iscomplex param.
   ASCIIObservation info_tmp;
   info_tmp.set_required("UTC_START", false);
   info_tmp.set_required("OBS_OFFSET", false);
   info_tmp.set_required("NPOL", false);
   info_tmp.set_required("NBIT", false);
+  info_tmp.set_required("NDIM", false);
   info_tmp.set_required("NCHAN", false);
   info_tmp.set_required("TSAMP", false);
   info_tmp.load(header);
@@ -151,8 +152,9 @@ void dsp::VDIFFile::open_file (const char* filename)
               "open(%s) failed", datafile);
 	
   // Read first header
-  char rawhdr[VDIF_HEADER_BYTES];
-  size_t rv = read(fd, rawhdr, VDIF_HEADER_BYTES);
+  char rawhdr_bytes[VDIF_HEADER_BYTES];
+  vdif_header *rawhdr = (vdif_header *)rawhdr_bytes;
+  size_t rv = read(fd, rawhdr_bytes, VDIF_HEADER_BYTES);
   if (rv != VDIF_HEADER_BYTES) 
       throw Error (FailedSys, "VDIFFile::open_file",
               "Error reading first header");
@@ -170,6 +172,19 @@ void dsp::VDIFFile::open_file (const char* filename)
   block_bytes = nbyte;
   block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
 
+  bool iscomplex = rawhdr->iscomplex;
+  if (iscomplex) 
+  {
+    info.set_ndim(2);
+    info.set_state(Signal::Analytic);
+  }
+  else
+  {
+    info.set_ndim(1);
+    info.set_state(Signal::Nyquist);
+  }
+  if (verbose) cerr << "VDIFFile::open_file iscomplex = " << iscomplex << endl;
+
   // Each poln shows up as a different channel but this 
   // could also be different freq channels...
   int vdif_nchan = getVDIFNumChannels(rawhdr);
@@ -181,19 +196,25 @@ void dsp::VDIFFile::open_file (const char* filename)
   info.set_nchan( 1 );
   info.set_rate( (double) info.get_bandwidth() * 1e6 
       / (double) info.get_nchan() 
-      * info.get_state() == Signal::Nyquist ? 2.0 : 1.0);
+      * (info.get_state() == Signal::Nyquist ? 2.0 : 1.0));
+  if (verbose) cerr << "VDIFFile::open_file rate = " << info.get_rate() << endl;
 
   // Figure frames per sec from bw, pkt size, etc
   //double frames_per_sec = 64000.0;
   int frame_data_size = nbyte - VDIF_HEADER_BYTES;
   double frames_per_sec = info.get_nbit() * info.get_nchan() * info.get_npol()
     * info.get_rate() / 8.0 / (double) frame_data_size;
+  if (verbose) cerr << "VDIFFile::open_file frame_data_size = " 
+    << frame_data_size << endl;
+  if (verbose) cerr << "VDIFFile::open_file frames_per_sec = " 
+    << frames_per_sec << endl;
 
   int mjd = getVDIFFrameMJD(rawhdr);
   int sec = getVDIFFrameSecond(rawhdr);
   int fn = getVDIFFrameNumber(rawhdr);
   if (verbose) cerr << "VDIFFile::open_file MJD = " << mjd << endl;
   if (verbose) cerr << "VDIFFile::open_file sec = " << sec << endl;
+  if (verbose) cerr << "VDIFFile::open_file fn  = " << fn << endl;
   info.set_start_time( MJD(mjd,sec,(double)fn/frames_per_sec) );
 
   // XXX old code, should all be handled by ASCII header now

@@ -229,7 +229,7 @@ void dsp::ASCIIObservation::load (const char* header)
   else
     set_ndim (scan_ndim);
 
-  switch (scan_ndim)
+  switch (get_ndim())
   {
   case 1:
     set_state (Signal::Nyquist); break;
@@ -239,7 +239,7 @@ void dsp::ASCIIObservation::load (const char* header)
     set_state (Signal::Coherence); break;
   default:
     throw Error (InvalidState, "ASCIIObservation",
-		 "invalid NDIM=%d\n", scan_ndim);
+		 "invalid NDIM=%d\n", get_ndim());
   }
 
   // //////////////////////////////////////////////////////////////////////
@@ -382,20 +382,6 @@ void dsp::ASCIIObservation::load (const char* header)
     ra = dec = 0.0;
 
   coordinates.setRadians (ra, dec);
-
-  // //////////////////////////////////////////////////////////////////////
-  //
-  // NANT - number of antennas in input stream
-  //
-  uint64_t scan_nant = 0;
-  if (ascii_header_check (header, "NANT", "%"PRIu64, &scan_nant) >= 0)
-    set_nant( scan_nant );
-  else
-    set_nant( 0 );
-
-  if (verbose)
-    cerr << "dsp::ASCIIObservation::load nant=" << scan_ndat << endl;
-
 }
 
 /* ***********************************************************************

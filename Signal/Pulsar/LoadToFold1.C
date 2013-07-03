@@ -27,7 +27,6 @@
 
 #include "dsp/Filterbank.h"
 #include "dsp/FilterbankEngine.h"
-#include "dsp/SpectralKurtosis.h"
 #include "dsp/SKFilterbank.h"
 #include "dsp/SKDetector.h"
 #include "dsp/SKMasker.h"
@@ -238,72 +237,51 @@ void dsp::LoadToFold::construct () try
 
   TimeSeries* skoutput = 0;
   BitSeries * skzapmask = 0;
-  TimeSeries* skoutput_tscr = 0;
-
   Reference::To<OperationThread> skthread;
 
   if (config->sk_zap)
   {
-    TimeSeries* skinput = unpacked;
-    skoutput = new_time_series ();
-    skoutput_tscr = new_time_series();
-
     // put the SK signal path into a separate thread
     skthread = new OperationThread();
 
-    // if we already have channelised input, no need for 
-    // SK Filterbank, just use SK Estimator
-    cerr << "dsp::LoadToFold1::construct filterbank.get_nchan()=" << config->filterbank.get_nchan() << endl;
-    if (config->filterbank.get_nchan() == 1)
-    {
-      if (!skestimator)
-        skestimator = new SpectralKurtosis();
-
-      if (!config->input_buffering)
-        skestimator->set_buffering_policy (NULL);
-
-      skestimator->set_input ( skinput );
-      skestimator->set_output ( skoutput );
-
-      skestimator->set_M ( config->sk_m );
-      skestimator->set_output_tscr (skoutput_tscr);
-      
-      skthread->append_operation (skestimator.get());
-    }
-    else
-    {
+    TimeSeries* skfilterbank_input = unpacked;
 
 #if HAVE_CUDA
-      if (run_on_gpu) 
-      {
-        Unpacker* unpack_on_cpu = 0;
-        unpack_on_cpu = manager->get_unpacker()->clone();
-        unpack_on_cpu->set_device (Memory::get_manager());
+    if (run_on_gpu) 
+    {
+      Unpacker* unpack_on_cpu = 0;
+      unpack_on_cpu = manager->get_unpacker()->clone();
+      unpack_on_cpu->set_device (Memory::get_manager());
 
-        unpack_on_cpu->set_input( manager->get_unpacker()->get_input() );
-        unpack_on_cpu->set_output( skinput = new_time_series() );
+      unpack_on_cpu->set_input( manager->get_unpacker()->get_input() );
+      unpack_on_cpu->set_output( skfilterbank_input = new_time_series() );
 
-        skthread->append_operation( unpack_on_cpu );
-        manager->set_post_load_operation( skthread.get() );
-      }
-#endif
-      // Spectral Kurtosis filterbank constructor
-      if (!skfilterbank)
-        skfilterbank = new SKFilterbank (config->sk_nthreads);
-
-      if (!config->input_buffering)
-        skfilterbank->set_buffering_policy (NULL);
-
-      skfilterbank->set_input ( skinput );
-
-      skfilterbank->set_output ( skoutput );
-      skfilterbank->set_nchan ( config->filterbank.get_nchan() );
-      skfilterbank->set_M ( config->sk_m );
-
-      skfilterbank->set_output_tscr (skoutput_tscr);
-
-      skthread->append_operation (skfilterbank.get());
+      skthread->append_operation( unpack_on_cpu );
+      manager->set_post_load_operation( skthread.get() );
     }
+#endif
+
+    skoutput = new_time_series ();
+
+    // Spectral Kurtosis filterbank constructor
+    if (!skfilterbank)
+      skfilterbank = new SKFilterbank (config->sk_nthreads);
+
+    if (!config->input_buffering)
+      skfilterbank->set_buffering_policy (NULL);
+
+    skfilterbank->set_input ( skfilterbank_input );
+
+    skfilterbank->set_output ( skoutput );
+    skfilterbank->set_nchan ( config->filterbank.get_nchan() );
+    skfilterbank->set_M ( config->sk_m );
+
+    // SKFB also maintains trscunched SK stats
+    TimeSeries* skoutput_tscr = new_time_series();
+
+    skfilterbank->set_output_tscr (skoutput_tscr);
+
+    skthread->append_operation (skfilterbank.get());
 
     // SK Mask Generator
     skzapmask = new BitSeries;
@@ -343,7 +321,7 @@ void dsp::LoadToFold::construct () try
 
   }
 
-  if (config->filterbank.get_nchan() > 1)
+  if (1) // (config->filterbank.get_nchan() > 1)
   {
     // new storage for filterbank output (must be out-of-place)
     convolved = new_time_series ();
@@ -579,7 +557,7 @@ void dsp::LoadToFold::construct () try
 
   if (manager->get_info()->get_npol() == 1) 
   {
-    //cerr << "Only single polarization detection available" << endl;
+    cerr << "Only single polarization detection available" << endl;
     detect->set_output_state( Signal::PP_State );
   }
   else
@@ -846,28 +824,24 @@ void dsp::LoadToFold::finalize ()
   uint64_t ram = manager->set_block_size( block_size );
 
   // add the increased block size if the SKFB is being used
-  if (skfilterbank || skestimator)
+  if (skfilterbank)
   {
     block_size = manager->get_input()->get_block_size();
-    int64_t sk_increment;
-    if (skfilterbank)
-      sk_increment = (int64_t) skfilterbank->get_skfb_inc (block_size);
-    if (skestimator)
-      sk_increment = (int64_t) skestimator->get_skfb_inc (block_size);
+    int64_t skfb_increment = (int64_t) skfilterbank->get_skfb_inc (block_size);
 
-    block_size += sk_increment;
-    block_overlap += sk_increment;
+    block_size += skfb_increment;
+    block_overlap += skfb_increment;
 
     if (block_overlap)
       manager->set_overlap( block_overlap );
     ram = manager->set_block_size( block_size );
 
-    sk_increment *= -1;
-    skresize->set_resize_samples (sk_increment);
+    skfb_increment *= -1;
+    skresize->set_resize_samples (skfb_increment);
 
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::finalize block_size will be adjusted by " 
-          << sk_increment << " samples for SKFB" << endl;
+          << skfb_increment << " samples for SKFB" << endl;
   }
 
   if (report_vitals)

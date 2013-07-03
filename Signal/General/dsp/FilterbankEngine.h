@@ -34,26 +34,12 @@ public:
   //! Finish up
   virtual void finish () { }
 
-  //! configure the engine
-  void configure (unsigned _nchan, unsigned _nfilt_pos, unsigned _freq_res, unsigned _nkeep) {
-    nchan = _nchan;
-    nfilt_pos = _nfilt_pos;
-    freq_res = _freq_res;
-    nkeep = _nkeep;
-  }
-
-
 protected:
 
   float* scratch;
 
   float* output;
   unsigned output_span;
-
-  unsigned nchan;
-  unsigned freq_res;
-  unsigned nfilt_pos;
-  unsigned nkeep;
 
 }; 
 
