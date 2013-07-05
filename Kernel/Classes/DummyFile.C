@@ -55,7 +55,7 @@ void dsp::DummyFile::open_file (const char* filename)
   fclose(ptr);
   
   // Read obs info from ASCII file
-  info = ASCIIObservation(header);
+  info = new ASCIIObservation(header);
 }
 
 void dsp::DummyFile::close ()
@@ -80,5 +80,5 @@ int64_t dsp::DummyFile::seek_bytes (uint64_t bytes)
 void dsp::DummyFile::set_total_samples()
 {
   if (verbose)
-    cerr << "dsp::DummyFile::set_total_samples ndat=" << info.get_ndat() << endl;
+    cerr << "dsp::DummyFile::set_total_samples ndat=" << get_info()->get_ndat() << endl;
 }

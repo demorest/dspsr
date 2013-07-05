@@ -9,8 +9,8 @@ using namespace std;
 
 #include "dsp/LOFAR_DALFile.h"
 
-#include "lofar/BF_File.h"
-using namespace DAL;
+#include "dal/lofar/BF_File.h"
+using namespace dal;
 
 class dsp::LOFAR_DALFile::Handle
 {
@@ -31,7 +31,7 @@ dsp::LOFAR_DALFile::~LOFAR_DALFile ( )
 
 bool dsp::LOFAR_DALFile::is_valid (const char* filename) const try
 {
-  DAL::BF_File* bf_file = new DAL::BF_File (filename);
+  BF_File* bf_file = new BF_File (filename);
 
   // memory leak
   // for some reason, deleting the file causes a segfault
@@ -49,7 +49,7 @@ catch (HDF5Exception& error)
 void dsp::LOFAR_DALFile::open_file (const char* filename)
 {
 
-  DAL::BF_File* bf_file = new DAL::BF_File (filename);
+  BF_File* bf_file = new BF_File (filename);
 
   Attribute<std::string> telescope = bf_file->telescope();
 
@@ -179,13 +179,13 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 
   Attribute<unsigned> nsamp = stokes->nofSamples();
   if (nsamp.exists())
-    info.set_ndat( nsamp.get() );
+    get_info()->set_ndat( nsamp.get() );
 
   Attribute<bool> volts = beam.complexVoltages();
   if (volts.exists() && volts.get() == 1)
-    info.set_ndim (2);
+    get_info()->set_ndim (2);
   else
-    info.set_ndim (1);
+    get_info()->set_ndim (1);
   
   // check for which coordinate is Spectral
 
@@ -210,7 +210,7 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
   }
 
   std::vector<ssize_t> dims = stokes->dims();
-  info.set_nchan( dims[spectral_dim] );
+  get_info()->set_nchan( dims[spectral_dim] );
   
 
   Attribute<unsigned> npol = beam.nofStokes();
@@ -221,24 +221,24 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 
   if (stokes_npol == 1)
   {
-    info.set_npol (1);
-    info.set_state( Signal::Intensity );
+    get_info()->set_npol (1);
+    get_info()->set_state( Signal::Intensity );
   }
   else
   {
-    if (info.get_ndim() == 2)  // complexVoltages == true
+    if (get_info()->get_ndim() == 2)  // complexVoltages == true
     {
-      info.set_npol (2);
-      info.set_state( Signal::Analytic );
+      get_info()->set_npol (2);
+      get_info()->set_state( Signal::Analytic );
     }
     else
     {
-      info.set_npol (4);
-      info.set_state( Signal::Stokes );
+      get_info()->set_npol (4);
+      get_info()->set_state( Signal::Stokes );
     }
   }
 
-  info.set_nbit (32);
+  get_info()->set_nbit (32);
 
 
   Attribute<double> cfreq = beam.beamFrequencyCenter();
@@ -247,7 +247,7 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 		 "beamFrequencyCenter not defined");
 
   // assuming cfreq is in Hz
-  info.set_centre_frequency( cfreq.get() * 1e-6 );
+  get_info()->set_centre_frequency( cfreq.get() * 1e-6 );
 
 
 
@@ -258,15 +258,15 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 		 "bandwidth not defined");
   
   // assuming bandwidth is in MHz
-  info.set_bandwidth( bw.get() );
+  get_info()->set_bandwidth( bw.get() );
 
-  info.set_dc_centred( true );
+  get_info()->set_dc_centred( true );
 
   Attribute<double> mjd = bf_file->observationStartMJD();
   if (mjd.exists())
-    info.set_start_time( MJD(mjd.get()) );
+    get_info()->set_start_time( MJD(mjd.get()) );
 
-  cerr << "MJD=" << info.get_start_time() << endl;
+  cerr << "MJD=" << get_info()->get_start_time() << endl;
 
   Attribute<double> cRate = sap.clockRate();
   if (cRate.exists())
@@ -289,7 +289,7 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 
   Attribute<double> rate = sap.channelWidth();
   if (rate.exists())
-    info.set_rate (rate.get());
+    get_info()->set_rate (rate.get());
 
   
   if (coord.exists())
@@ -305,14 +305,14 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 	cerr << "SANITY CHECK" << endl;
 	std::vector<double> w = world.get();
 	for (unsigned i=0; i<w.size(); i++)
-	  if (w[i] != info.get_centre_frequency(i)*1e6)
-	    cerr << "NOT EQUAL: " << w[i] << " != " << info.get_centre_frequency(i)
+	  if (w[i] != get_info()->get_centre_frequency(i)*1e6)
+	    cerr << "NOT EQUAL: " << w[i] << " != " << get_info()->get_centre_frequency(i)
 		 << endl;
       }
     }
   }
 
-  info.set_machine( "LOFAR" );
+  get_info()->set_machine( "LOFAR" );
 
   // OPEN ALL FILES
 
@@ -385,7 +385,7 @@ int64_t dsp::LOFAR_DALFile::load_bytes (unsigned char* buffer, uint64_t bytes)
   unsigned nstokes = handle->bf_file.size();
 
   uint64_t nfloat = bytes / sizeof(float);
-  uint64_t nsamp = nfloat / (info.get_nchan() * nstokes);
+  uint64_t nsamp = nfloat / (get_info()->get_nchan() * nstokes);
 
   vector<size_t> pos (2);
   pos[0] = current_sample;
@@ -395,8 +395,8 @@ int64_t dsp::LOFAR_DALFile::load_bytes (unsigned char* buffer, uint64_t bytes)
   {
     // cerr << "load_bytes " << istokes << endl;
     float* outbuf = reinterpret_cast<float*> (buffer);
-    handle->bf_stokes[istokes]->get2D (pos, nsamp, info.get_nchan(), outbuf);
-    buffer += nsamp * info.get_nchan() * sizeof(float);
+    handle->bf_stokes[istokes]->get2D (pos, nsamp, get_info()->get_nchan(), outbuf);
+    buffer += nsamp * get_info()->get_nchan() * sizeof(float);
   }
   
   return bytes;

@@ -142,11 +142,11 @@ void dsp::PuMaFile::parse (const void* header)
     cerr << "dsp::PuMaFile::parse Cluster " << iband << " in this file" << endl;
 
   /* Until further notice */
-  info.set_basis (Signal::Linear);
+  get_info()->set_basis (Signal::Linear);
 
   /* char ObsType[TXTLEN]; Research/test/calibration */
   // cerr << "dsp::PuMaFile::parse type = " << hdr->obs.ObsType << endl;
-  info.set_type (Signal::Pulsar);
+  get_info()->set_type (Signal::Pulsar);
 
   unsigned npol_observed = 0;
   bool invalid = false;
@@ -154,7 +154,7 @@ void dsp::PuMaFile::parse (const void* header)
   /* int Nr; Mode of PuMa observation -1,0,1,2,4 */
   if (hdr->mode.Nr == 0) {
     
-    info.set_state (Signal::Nyquist);
+    get_info()->set_state (Signal::Nyquist);
     
     /* Boolean Xout;  Mode -1,0; X pol output    Mode 1,2,4  : FALSE */
     if (hdr->mode.Xout)
@@ -175,11 +175,11 @@ void dsp::PuMaFile::parse (const void* header)
     bool pol_some = hdr->mode.Qout || hdr->mode.Uout || hdr->mode.Vout;
     
     if (hdr->mode.Iout && pol_vect) {
-      info.set_state (Signal::Stokes);
+      get_info()->set_state (Signal::Stokes);
       npol_observed = 4;
     }
     else if (hdr->mode.Iout && !pol_some) {
-      info.set_state (Signal::Intensity);
+      get_info()->set_state (Signal::Intensity);
       npol_observed = 1;
     }
     else
@@ -192,25 +192,25 @@ void dsp::PuMaFile::parse (const void* header)
   if (invalid)
     throw Error (InvalidState, "dsp::PuMaFile::parse", "unknown Mode");
 
-  if (info.get_state() == Signal::Nyquist)
-    info.set_mode( string("Mode 0") );
+  if (get_info()->get_state() == Signal::Nyquist)
+    get_info()->set_mode( string("Mode 0") );
   else
-    info.set_mode( string("Mode 1") );
+    get_info()->set_mode( string("Mode 1") );
 
-  info.set_npol (npol_observed);
+  get_info()->set_npol (npol_observed);
 
   /* int NFreqInFile; Mode 0-4 ; 1,2,4,8,16,..FreqChans in this file.
      Normally one cluster per file is written. */
-  info.set_nchan (hdr->mode.NFreqInFile);
+  get_info()->set_nchan (hdr->mode.NFreqInFile);
   
   /* for now data is always real-valued */
-  info.set_ndim (1);
+  get_info()->set_ndim (1);
 
   /* int BitsPerSamp; Number of output bits ; 1,2,4,8 */
-  info.set_nbit (hdr->mode.BitsPerSamp);
+  get_info()->set_nbit (hdr->mode.BitsPerSamp);
 
   if (verbose)
-    cerr << "dsp::PuMaFile::parse " << info.get_nbyte() << " bytes/sample" 
+    cerr << "dsp::PuMaFile::parse " << get_info()->get_nbyte() << " bytes/sample" 
          << endl;
 
 #if 0
@@ -224,7 +224,7 @@ void dsp::PuMaFile::parse (const void* header)
 #endif
 
   // Always Westerbork for now
-  info.set_telescope_code ('i');
+  get_info()->set_telescope_code ('i');
 
   /* char Pulsar[NAMELEN]; Using the Taylor (1993) convention.
      e.g. "PSR J0218+4232" */
@@ -239,7 +239,7 @@ void dsp::PuMaFile::parse (const void* header)
   if (verbose)
     cerr << "dsp::PuMaFile::parse source='" << pulsar << "'" << endl;
   
-  info.set_source (pulsar);
+  get_info()->set_source (pulsar);
 
   sky_coord position;
   
@@ -248,7 +248,7 @@ void dsp::PuMaFile::parse (const void* header)
   /* double Dec; Dec of the target (in radians) */
   position.dec().setRadians( hdr->src.Dec );
   
-  info.set_coordinates( position );
+  get_info()->set_coordinates( position );
   
   double sign = 1.0;
   /* Boolean NonFlip; Is band flipped (reverse freq order within band)? */
@@ -259,26 +259,26 @@ void dsp::PuMaFile::parse (const void* header)
   cerr << "fir factor=" << FIR_factor << endl;
 
   /* double Width; Width of the band (in MHz): 2.5, 5.0 or 10.0 */
-  info.set_bandwidth( sign * hdr->WSRT.Band[iband].Width / FIR_factor );
+  get_info()->set_bandwidth( sign * hdr->WSRT.Band[iband].Width / FIR_factor );
 
   /* double SkyMidFreq; Mid sky frequency of band (in MHz) */
-  info.set_centre_frequency( hdr->WSRT.Band[iband].SkyMidFreq 
-                             - 0.5 * (FIR_factor-1) * info.get_bandwidth() );
+  get_info()->set_centre_frequency( hdr->WSRT.Band[iband].SkyMidFreq 
+                             - 0.5 * (FIR_factor-1) * get_info()->get_bandwidth() );
 
   /* int StMJD;       MJD at start of observation */
   /* int StTime;      Starttime (s after midnight, multiple of 10 s) */
-  info.set_start_time( MJD( hdr->obs.StMJD, int(hdr->obs.StTime), 0.0 ) );
+  get_info()->set_start_time( MJD( hdr->obs.StMJD, int(hdr->obs.StTime), 0.0 ) );
 
   if (verbose)
     cerr << "dsp::PuMaFile::parse start MJD=" << hdr->obs.StMJD
-         << "d+" << hdr->obs.StTime << "s=" << info.get_start_time() << endl;
+         << "d+" << hdr->obs.StTime << "s=" << get_info()->get_start_time() << endl;
 
   /* int Tsamp; Mode 0-4 ; output sample interval in nano sec */
   double sampling_interval = 1e-9 * double(hdr->mode.Tsamp);
-  info.set_rate (1.0/sampling_interval);
+  get_info()->set_rate (1.0/sampling_interval);
 
   /* int DataBlkSize; Number of bytes in data block */
-  info.set_ndat( info.get_nsamples (hdr->gen.DataBlkSize) );
+  get_info()->set_ndat( get_info()->get_nsamples (hdr->gen.DataBlkSize) );
 
   /* The start time of the observation must be offset by the file number */
   /* int FileNum;     Which file out of NFiles is this - not reliable
@@ -300,34 +300,34 @@ void dsp::PuMaFile::parse (const void* header)
     throw Error (InvalidState, "dsp::PuMaFile::parse",
                  "refusing to process last file in set - offset unknown");
     
-  uint64_t offset_samples = filenum * info.get_ndat();
+  uint64_t offset_samples = filenum * get_info()->get_ndat();
 
   if (verbose)
-    cerr << "dsp::PuMaFile::parse sampling rate=" << info.get_rate()
-         << " ndat=" << info.get_ndat() << "\n\tfile=" << filenum
+    cerr << "dsp::PuMaFile::parse sampling rate=" << get_info()->get_rate()
+         << " ndat=" << get_info()->get_ndat() << "\n\tfile=" << filenum
          << " offset=" << offset_samples << "samples = " 
-         << offset_samples/info.get_rate() << "seconds" << endl;
+         << offset_samples/get_info()->get_rate() << "seconds" << endl;
 
-  info.change_start_time (offset_samples);
+  get_info()->change_start_time (offset_samples);
 
-  info.set_scale (1.0);
+  get_info()->set_scale (1.0);
   
-  info.set_swap (false);
+  get_info()->set_swap (false);
   
-  info.set_dc_centred (false);
+  get_info()->set_dc_centred (false);
 
   /* char ScanNum[NAMELEN]; FileSeriesNumber(FF)+Cluster(C). */
-  info.set_identifier (hdr->gen.ScanNum);
+  get_info()->set_identifier (hdr->gen.ScanNum);
   
   /* char Platform[NAMELEN]; Name of machine: "PuMa" or "FFB" */
-  info.set_machine ("PuMa"); // (hdr->gen.Platform);
+  get_info()->set_machine ("PuMa"); // (hdr->gen.Platform);
   
-  info.set_dispersion_measure (0);
-  info.set_between_channel_dm (0);
+  get_info()->set_dispersion_measure (0);
+  get_info()->set_between_channel_dm (0);
 
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
 

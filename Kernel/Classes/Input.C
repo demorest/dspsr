@@ -25,6 +25,8 @@ dsp::Input::Input (const char* name) : Operation (name)
 
   last_load_ndat = 0;
 
+  info = new Observation;
+
   context = 0;
 }
 
@@ -46,7 +48,7 @@ void dsp::Input::prepare ()
     cerr << "dsp::Input::prepare" << endl;
 
   // set the Observation information
-  get_output()->Observation::operator=(info);
+  get_output()->copy_configuration(get_info());
   get_output()->set_ndat (0);
 
   if (verbose)
@@ -100,7 +102,7 @@ void dsp::Input::operation ()
 		 "end of data for class '%s'",get_name().c_str());
 
   string reason;
-  if (!info.state_is_valid (reason))
+  if (!get_info()->state_is_valid (reason))
     throw Error (InvalidState, "dsp::Input::operation",
 		 "invalid state: " + reason);
 
@@ -109,7 +111,7 @@ void dsp::Input::operation ()
 	 << " next_sample=" << load_sample+resolution_offset << endl;
 
   // set the Observation information
-  output->Observation::operator=(info);
+  output->copy_configuration(get_info());
 
   // set the time as expected will result from the next call to load_data
   // note that output->start_time was set in the above call to operator=
@@ -282,13 +284,13 @@ void dsp::Input::seek (int64_t offset, int whence)
     break;
 
   case SEEK_END:
-    if (!info.get_ndat())
+    if (!get_info()->get_ndat())
       throw Error (InvalidState, "dsp::Input::seek", "SEEK_END unknown eod");
 
-    if (offset < -int64_t(info.get_ndat()))
+    if (offset < -int64_t(get_info()->get_ndat()))
       throw Error (InvalidRange, "dsp::Input::seek", "SEEK_END -ve offset");
 
-    next_sample = info.get_ndat() + offset;
+    next_sample = get_info()->get_ndat() + offset;
     break;
 
   default:
@@ -313,13 +315,13 @@ void dsp::Input::seek(MJD mjd)
 {
   int misplacement = 0;
 
-  if (mjd+1.0/info.get_rate() < info.get_start_time())
+  if (mjd+1.0/get_info()->get_rate() < get_info()->get_start_time())
     misplacement = -1;
 
-  if (mjd-1.0/info.get_rate() > info.get_end_time())
+  if (mjd-1.0/get_info()->get_rate() > get_info()->get_end_time())
     misplacement = 1;
 
-  double seek_seconds = (mjd-info.get_start_time()).in_seconds();
+  double seek_seconds = (mjd-get_info()->get_start_time()).in_seconds();
 
   if (misplacement)
   {
@@ -329,19 +331,19 @@ void dsp::Input::seek(MJD mjd)
     else
       msg += "after the end time";
     msg += "of the input data "
-           "(" + info.get_start_time().printall() + "); "
+           "(" + get_info()->get_start_time().printall() + "); "
            "difference is %lf seconds";
 
     throw Error (InvalidParam, "dsp::Input::seek", msg.c_str(), seek_seconds);
   }
  
-  double seek_samples = seek_seconds*info.get_rate();
+  double seek_samples = seek_seconds*get_info()->get_rate();
   uint64_t actual_seek = 0;
 
   if( seek_samples<0.0 )
     actual_seek = 0;
-  else if( uint64_t(seek_samples) > info.get_ndat() )
-    actual_seek = info.get_ndat();
+  else if( uint64_t(seek_samples) > get_info()->get_ndat() )
+    actual_seek = get_info()->get_ndat();
   else
     actual_seek = uint64_t(seek_samples);
 
@@ -354,20 +356,20 @@ void dsp::Input::seek(MJD mjd)
 
 void dsp::Input::seek_seconds (double seconds, int whence)
 {
-  if (info.get_rate() == 0)
+  if (get_info()->get_rate() == 0)
     throw Error (InvalidState, "dsp::Input::seek_seconds",
 		 "data rate unknown");
 
-  seek( int64_t(seconds * info.get_rate()), whence );
+  seek( int64_t(seconds * get_info()->get_rate()), whence );
 }
 
 double dsp::Input::tell_seconds () const
 {
-  if (info.get_rate() == 0)
+  if (get_info()->get_rate() == 0)
     throw Error (InvalidState, "dsp::Input::tell_seconds",
 		 "data rate unknown");
 
-  return load_sample / info.get_rate();
+  return load_sample / get_info()->get_rate();
 }
 
 void dsp::Input::set_start_seconds (double seconds)
@@ -389,11 +391,11 @@ void dsp::Input::set_total_seconds (double seconds)
     throw Error (InvalidParam, "dsp::Input::set_total_seconds",
 		 "seconds = %lf < 0", seconds);
 
-  if (info.get_rate() == 0)
+  if (get_info()->get_rate() == 0)
     throw Error (InvalidState, "dsp::Input::set_total_seconds",
 		 "data rate unknown");
 
-  uint64_t total_samples = uint64_t( seconds * info.get_rate() );
+  uint64_t total_samples = uint64_t( seconds * get_info()->get_rate() );
 
   if ((total_samples > get_total_samples()) && (get_total_samples() > 0) )
     throw Error (InvalidParam, "dsp::Input::set_total_seconds",
@@ -429,12 +431,12 @@ void dsp::Input::set_load_size ()
   if (remainder)
     load_size += resolution - remainder;
 
-  if (info.get_ndat() && load_sample + load_size > info.get_ndat())
+  if (get_info()->get_ndat() && load_sample + load_size > get_info()->get_ndat())
   {
     if (verbose)
       cerr << "dsp::Input::set_load_size near end of data" << endl;
 
-    load_size = info.get_ndat() - load_sample;
+    load_size = get_info()->get_ndat() - load_sample;
   }
 
   if (verbose)

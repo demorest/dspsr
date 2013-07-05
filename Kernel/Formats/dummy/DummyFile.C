@@ -65,7 +65,7 @@ void dsp::DummyFile::open_file (const char* filename)
   
   // Read obs info from ASCII file
   info = ASCIIObservation(header);
-  info.set_machine("Dummy");	
+  get_info()->set_machine("Dummy");	
 
   // Read total amount of data from ascii file
   int max_data_mb = 0;
@@ -106,5 +106,5 @@ int64_t dsp::DummyFile::seek_bytes(uint64_t bytes)
 void dsp::DummyFile::set_total_samples()
 {
   if (max_bytes)
-    info.set_ndat( info.get_nsamples(max_bytes) );
+    get_info()->set_ndat( get_info()->get_nsamples(max_bytes) );
 }

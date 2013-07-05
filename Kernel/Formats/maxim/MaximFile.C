@@ -96,20 +96,20 @@ void dsp::MaximFile::open_file (const char* filename)
   tm2utc(&utc, date);
 
 
-  info.set_start_time(utc);
-  info.set_nbit(4);
-  info.set_npol(2);
-  info.set_nchan(1);
+  get_info()->set_start_time(utc);
+  get_info()->set_nbit(4);
+  get_info()->set_npol(2);
+  get_info()->set_nchan(1);
   
-  info.set_state(Signal::Nyquist);
+  get_info()->set_state(Signal::Nyquist);
 
-  info.set_rate(80000000);
-  info.set_machine("Maxim");
-  info.set_bandwidth(40.0);
+  get_info()->set_rate(80000000);
+  get_info()->set_machine("Maxim");
+  get_info()->set_bandwidth(40.0);
 
-  info.set_centre_frequency(635.0);
+  get_info()->set_centre_frequency(635.0);
 
-  info.set_telescope("Hobart"); // Check this... Make sure it IS the 14m
+  get_info()->set_telescope("Hobart"); // Check this... Make sure it IS the 14m
 
   struct stat file_info;
   
@@ -118,10 +118,10 @@ void dsp::MaximFile::open_file (const char* filename)
   // file_info.st_size contains number of bytes in file, 
   // subtract header_bytes (16bytes).
 
-  info.set_ndat( int64_t(file_info.st_size - header_bytes) );
+  get_info()->set_ndat( int64_t(file_info.st_size - header_bytes) );
   
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
       resolution = 1;
 

@@ -142,13 +142,13 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
 
 void dsp::MultiFile::setup ()
 {
-  info = *(files[0]->get_info());
+  info = files[0]->get_info();
 
   uint64_t total_ndat = 0;
   for( unsigned i=0; i<files.size(); i++)
     total_ndat += files[i]->get_info()->get_ndat();
 
-  info.set_ndat (total_ndat);
+  get_info()->set_ndat (total_ndat);
 
   // MultiFile must reflect the time sample resolution of the underlying device
   resolution = loader->resolution;
@@ -183,7 +183,7 @@ void dsp::MultiFile::erase_files()
 {
   files.erase( files.begin(), files.end());
   loader = 0;
-  info = Observation();
+  info = 0;
   rewind ();
 }
 

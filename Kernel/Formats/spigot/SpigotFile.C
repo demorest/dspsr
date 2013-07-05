@@ -114,8 +114,8 @@ void dsp::SpigotFile::parse (void* header)
   fitsfile* fptr = reinterpret_cast<fitsfile*> (header);
 
   /* Until further notice */
-  info.set_basis (Signal::Linear);
-  info.set_type  (Signal::Pulsar);
+  get_info()->set_basis (Signal::Linear);
+  get_info()->set_type  (Signal::Pulsar);
 
   // do not return comments in fits_read_key
   char* comment = 0;
@@ -131,7 +131,7 @@ void dsp::SpigotFile::parse (void* header)
     throw FITSError (status, "dsp::SpigotFile::parse", 
 		     "fits_read_key (MODE)");
 
-  info.set_mode( tempstr.get() );
+  get_info()->set_mode( tempstr.get() );
 
   //
   // state and npol
@@ -142,8 +142,8 @@ void dsp::SpigotFile::parse (void* header)
   string sumpol = tempstr.get();
 
   if (sumpol == "T") {
-    info.set_state (Signal::Intensity);
-    info.set_npol (1);
+    get_info()->set_state (Signal::Intensity);
+    get_info()->set_npol (1);
   }
   else {
     cerr << "dsp::SpigotFile::parse not sure if SUMPOL==" << sumpol
@@ -158,10 +158,10 @@ void dsp::SpigotFile::parse (void* header)
 
   int nchan;
   fits_read_key (fptr, TINT, "NLAGS", &nchan, comment, &status);
-  info.set_nchan (nchan);
+  get_info()->set_nchan (nchan);
   
   /* for now data is always real-valued */
-  info.set_ndim (1);
+  get_info()->set_ndim (1);
 
   //
   // nbit
@@ -169,14 +169,14 @@ void dsp::SpigotFile::parse (void* header)
 
   int nbit;
   fits_read_key (fptr, TINT, "BITS", &nbit, comment, &status);
-  info.set_nbit (nbit);
+  get_info()->set_nbit (nbit);
 
   if (verbose)
-    cerr << "dsp::SpigotFile::parse " << info.get_nbyte() << " bytes/sample" 
+    cerr << "dsp::SpigotFile::parse " << get_info()->get_nbyte() << " bytes/sample" 
          << endl;
 
   // Always Greenbank for now
-  info.set_telescope ( "Greenbank" );
+  get_info()->set_telescope ( "Greenbank" );
 
   //
   // source
@@ -188,10 +188,10 @@ void dsp::SpigotFile::parse (void* header)
     throw FITSError (status, "dsp::SpigotFile::parse", 
 		     "fits_read_key (MODE)");
 
-  info.set_source (tempstr.get());
+  get_info()->set_source (tempstr.get());
 
   if (verbose)
-    cerr << "dsp::SpigotFile::parse source=" << info.get_source() << endl;
+    cerr << "dsp::SpigotFile::parse source=" << get_info()->get_source() << endl;
 
   //
   // coordinates
@@ -208,7 +208,7 @@ void dsp::SpigotFile::parse (void* header)
   position.ra().setDegrees( ra );
   position.dec().setDegrees( dec );
   
-  info.set_coordinates( position );
+  get_info()->set_coordinates( position );
   
   //
   // centre_frequency
@@ -216,7 +216,7 @@ void dsp::SpigotFile::parse (void* header)
   
   double cfreq;
   fits_read_key (fptr, TDOUBLE, "CENTFREQ", &cfreq, comment, &status);
-  info.set_centre_frequency( cfreq );
+  get_info()->set_centre_frequency( cfreq );
   
   //
   // bandwidth
@@ -241,7 +241,7 @@ void dsp::SpigotFile::parse (void* header)
 
   double bw;
   fits_read_key (fptr, TDOUBLE, "SAMP-BW", &bw, comment, &status);
-  info.set_bandwidth( sign * bw );
+  get_info()->set_bandwidth( sign * bw );
 
   //
   // start_time
@@ -254,7 +254,7 @@ void dsp::SpigotFile::parse (void* header)
   if (verbose)
     cerr << "dsp::SpigotFile::parse start = " << mjd_obs << endl;
 
-  info.set_start_time( mjd_obs );
+  get_info()->set_start_time( mjd_obs );
 
   //
   // sampling rate
@@ -262,26 +262,26 @@ void dsp::SpigotFile::parse (void* header)
 
   double tsamp;
   fits_read_key (fptr, TDOUBLE, "TSAMP", &tsamp, comment, &status);
-  info.set_rate (1e6/tsamp);  // tsamp in microseconds
+  get_info()->set_rate (1e6/tsamp);  // tsamp in microseconds
 
   //
   // ndat
   //
   long spectra;
   fits_read_key (fptr, TLONG, "SPECTRA", &spectra, comment, &status);
-  info.set_ndat( spectra );
+  get_info()->set_ndat( spectra );
 
-  info.set_scale (1.0);
+  get_info()->set_scale (1.0);
   
-  info.set_swap (false);
+  get_info()->set_swap (false);
   
-  info.set_dc_centred (false);
+  get_info()->set_dc_centred (false);
 
   fits_read_key (fptr, TSTRING, "BASENAME", tempstr.get(), comment, &status);
-  info.set_identifier (tempstr.get());
+  get_info()->set_identifier (tempstr.get());
   
-  info.set_machine ("Spigot");
+  get_info()->set_machine ("Spigot");
   
-  info.set_dispersion_measure (0);
+  get_info()->set_dispersion_measure (0);
 }
 

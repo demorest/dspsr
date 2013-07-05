@@ -506,7 +506,7 @@ cerr<<"Datafile open\n";
   // resolution = smallest number of time samples that can be loaded at once
   // here: 2bit data, so 4samples per byte, so resolution == 4*4
   //! this may have to be larger (n7dis unpacker works with 16 samples at once)
-  resolution = 32 / info.get_nbit();   
+  resolution = 32 / get_info()->get_nbit();   
   if (resolution == 0)  // should never happen
     resolution = 1;
 
@@ -1541,8 +1541,8 @@ cerr<<"Decoding file: "<<dataFileName<<"\n";
   fclose(outfile);
   
   ofstream outinfo;
-  outinfo.open("swindata.info");
-  if (outinfo.is_open())
+  outget_info()->open("swindata.info");
+  if (outget_info()->is_open())
   {
      outinfo<<firstFile<<' '<<lastFile
             <<"\n"<<*offset_tsmps_file0<<' '<<*offset_tsmps
@@ -1556,7 +1556,7 @@ cerr<<"Decoding file: "<<dataFileName<<"\n";
   }
   else cerr<<"FadcFile: Error (over-) writing swindata.info - cannot open file\n";
   
-  outinfo.close();
+  outget_info()->close();
   
 cerr<<"FadcFile: finished writing swindata \n\n";
 

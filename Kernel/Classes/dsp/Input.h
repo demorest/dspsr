@@ -98,20 +98,20 @@ namespace dsp {
     { return get_block_size()-get_overlap(); }
 
     //! Return the total number of time samples available
-    virtual uint64_t get_total_samples () const { return info.get_ndat(); }
+    virtual uint64_t get_total_samples () const { return get_info()->get_ndat(); }
 
     //! Set the total number of time samples available
     /*! Generally useful for debugging */
-    void set_total_samples (uint64_t s) { info.set_ndat(s); }
+    void set_total_samples (uint64_t s) { get_info()->set_ndat(s); }
 
     //! Get the information about the data source
     operator const Observation* () const { return get_info(); }
 
     //! Get the information about the data source
-    virtual Observation* get_info () { return &info; }
+    virtual Observation* get_info () { return info; }
 
     //! Get the information about the data source
-    virtual const Observation* get_info () const { return &info; }
+    virtual const Observation* get_info () const { return info; }
 
     //! Get the next time sample to be loaded
     uint64_t get_load_sample () const { return load_sample; }
@@ -160,7 +160,7 @@ namespace dsp {
     virtual void mark_output ();
 
     //! Information about the data source (passed on to BitSeries in load)
-    Observation info;
+    Reference::To<Observation> info;
 
     //! Time sample resolution of the data source
     /*! Derived classes must define the smallest number of time

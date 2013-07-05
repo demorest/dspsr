@@ -179,9 +179,9 @@ void dsp::CPSRFile::open_file (const char* filename)
     
   char modestr[30];
   sprintf (modestr, "%d", hdr.nbit);
-  info.set_mode (modestr);
+  get_info()->set_mode (modestr);
   
-  info.set_start_time (hdr.start);
+  get_info()->set_start_time (hdr.start);
 
   /* redwards --- set "position" from the header.. should replace cal_ra/dec*/
   double ra_deg, dec_deg;
@@ -196,41 +196,41 @@ void dsp::CPSRFile::open_file (const char* filename)
 	  +1.0/60.0*floor(fmod(fabs(header->user_dec),10000.0)/100.0)
 	  +1.0/3600.0*fmod(fabs(header->user_dec),100.0));
     
-  info.set_coordinates (sky_coord(ra_deg, dec_deg));
+  get_info()->set_coordinates (sky_coord(ra_deg, dec_deg));
     
-  info.set_source (hdr.name);
+  get_info()->set_source (hdr.name);
     
   /* IMPORTANT: tsamp is the sampling period in microseconds */
-  info.set_rate (1e6/hdr.tsamp);
-  info.set_bandwidth (hdr.bandwidth);
+  get_info()->set_rate (1e6/hdr.tsamp);
+  get_info()->set_bandwidth (hdr.bandwidth);
     
   // CBR linefeed data has incorrect bandwidth of 8 MHz
-  if( fabs(info.get_bandwidth()) < 9.9 ){
-    info.set_bandwidth( 10.0 );
-    info.set_rate( 10.0e6 );
+  if( fabs(get_info()->get_bandwidth()) < 9.9 ){
+    get_info()->set_bandwidth( 10.0 );
+    get_info()->set_rate( 10.0e6 );
     fprintf(stderr,"Detected CBR file with incorrect bandwidth of file '%s' of '%f'- set rate to %f and bw to %f\n",
-	    filename, hdr.bandwidth, info.get_rate(), info.get_bandwidth());
+	    filename, hdr.bandwidth, get_info()->get_rate(), get_info()->get_bandwidth());
   }
 
   // IMPORTANT: both telescope and centre_freq should be set before calling
   // default_basis
-  info.set_telescope( "parkes" ); // string(1, hdr.ttelid) );
-  info.set_centre_frequency (hdr.frequency);
+  get_info()->set_telescope( "parkes" ); // string(1, hdr.ttelid) );
+  get_info()->set_centre_frequency (hdr.frequency);
     
   // CPSR samples the analytic representation of the voltages
-  info.set_state (Signal::Analytic);
+  get_info()->set_state (Signal::Analytic);
   // number of channels = number of polarizations * ((I and Q)=2);
-  info.set_npol (hdr.ndigchan / 2);
-  info.set_nbit (hdr.nbit);
+  get_info()->set_npol (hdr.ndigchan / 2);
+  get_info()->set_nbit (hdr.nbit);
    
-  info.set_ndat (hdr.ndat);
+  get_info()->set_ndat (hdr.ndat);
 
   uint64_t fsize = filesize(filename);
 
-  if( fsize-header_bytes != info.get_nbytes() ){
-    info.set_ndat( info.get_nsamples(fsize-header_bytes) );
+  if( fsize-header_bytes != get_info()->get_nbytes() ){
+    get_info()->set_ndat( get_info()->get_nsamples(fsize-header_bytes) );
     fprintf(stderr,"WARNING: dsp::CPSRFile::open_file(): Your ndat in header ("UI64") doesn't match file size ("UI64" bytes) (The number of samples has been reduced to "UI64" because the header size is "UI64")\n",
-	    uint64_t(hdr.ndat),uint64_t(fsize),info.get_ndat(),
+	    uint64_t(hdr.ndat),uint64_t(fsize),get_info()->get_ndat(),
 	    uint64_t(header_bytes));
   }
 
@@ -246,7 +246,7 @@ void dsp::CPSRFile::open_file (const char* filename)
 		   "Total data: %d\n", hdr.ndat);
   }
 
-  info.set_machine ("CPSR");
+  get_info()->set_machine ("CPSR");
 
   if (verbose)
     cerr << "dsp::CPSRFile::open exit" << endl;

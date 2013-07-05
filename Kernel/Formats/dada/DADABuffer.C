@@ -215,13 +215,13 @@ void dsp::DADABuffer::open_file (const char* filename)
     cerr << "dsp::DADABuffer::open_file HEADER: size=" 
          << hdu->header_size << " content=\n" << hdu->header << endl;
 
-  info = ASCIIObservation (hdu->header);
+  info = new ASCIIObservation (hdu->header);
 
   if (ascii_header_get (hdu->header, "RESOLUTION", "%u", &byte_resolution) < 0)
     byte_resolution = 1;
 
   // the resolution is the _byte_ resolution; convert to _sample_ resolution
-  resolution = info.get_nsamples (byte_resolution);
+  resolution = get_info()->get_nsamples (byte_resolution);
   if (resolution == 0)
     resolution = 1;
 

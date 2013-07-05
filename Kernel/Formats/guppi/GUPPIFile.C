@@ -150,8 +150,8 @@ void dsp::GUPPIFile::open_file (const char* filename)
         "fstat(%s) failed", filename);
   uint64_t full_block_size = blocsize + 80*hdr_keys;
   uint64_t nblocks = buf.st_size / full_block_size;
-  unsigned int dfac = info.get_ndim()==1 ? 2 : 1;
-  info.set_ndat( info.get_nsamples(nblocks*blocsize) - dfac*overlap*nblocks );
+  unsigned int dfac = get_info()->get_ndim()==1 ? 2 : 1;
+  get_info()->set_ndat( get_info()->get_nsamples(nblocks*blocsize) - dfac*overlap*nblocks );
 
   // Rewind and load full first block with header
   seek_bytes(0);

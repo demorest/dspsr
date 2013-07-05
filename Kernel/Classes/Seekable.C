@@ -71,20 +71,20 @@ void dsp::Seekable::load_data (BitSeries* data)
       "\n   read_sample=" << read_sample << endl;
 
   // check that the amount to read does not surpass the end of data
-  if (info.get_ndat())
+  if (get_info()->get_ndat())
   {
     if (verbose)
-      cerr << "dsp::Seekable::load_data total ndat=" << info.get_ndat() 
+      cerr << "dsp::Seekable::load_data total ndat=" << get_info()->get_ndat() 
 	   << " read_sample=" << read_sample << endl;
 
-    if (read_sample > info.get_ndat())
+    if (read_sample > get_info()->get_ndat())
       throw Error (InvalidState, "dsp::Seekable::load_data",
 		   "read_sample="UI64" > ndat="UI64 "\n\t"
 		   "recycled="UI64" load_sample="UI64,
-		   read_sample, info.get_ndat(),
+		   read_sample, get_info()->get_ndat(),
 		   recycled, get_load_sample());
 
-    uint64_t samples_left = info.get_ndat() - read_sample;
+    uint64_t samples_left = get_info()->get_ndat() - read_sample;
 
     if (verbose)
       cerr << "dsp::Seekable::load_data " << samples_left 

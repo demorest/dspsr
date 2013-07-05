@@ -50,25 +50,25 @@ void dsp::SPDA1K_File::open_file (const char* filename)
     throw Error (FailedSys, "dsp::SPDA1K_File::open",
 		 "failed fopen(%s)", filename);
 
-  info.set_start_time(55100.02180556);
+  get_info()->set_start_time(55100.02180556);
 
-  info.set_nbit(8);
-  info.set_npol(1);
-  info.set_nchan(1);
+  get_info()->set_nbit(8);
+  get_info()->set_npol(1);
+  get_info()->set_nchan(1);
   
-  info.set_state(Signal::Nyquist);
-  info.set_machine("SPDA1K");
+  get_info()->set_state(Signal::Nyquist);
+  get_info()->set_machine("SPDA1K");
 
-  info.set_rate(250000000);
-  info.set_bandwidth(-125.0);
+  get_info()->set_rate(250000000);
+  get_info()->set_bandwidth(-125.0);
 
   // ////////////////////////////////////////////////////////////////
   // Change this as required. The defaults probably won't be correct!
   // ////////////////////////////////////////////////////////////////
 
-  info.set_centre_frequency(1062.5);
+  get_info()->set_centre_frequency(1062.5);
 
-  info.set_telescope( "Hobart" );
+  get_info()->set_telescope( "Hobart" );
 
   struct stat file_info;
   
@@ -80,8 +80,8 @@ void dsp::SPDA1K_File::open_file (const char* filename)
   // samples, then divide by the number of channels used to get the total
   // number of unique time samples.
 
-  info.set_ndat( (int64_t(file_info.st_size) * 8) / 
-		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
+  get_info()->set_ndat( (int64_t(file_info.st_size) * 8) / 
+		 (get_info()->get_nbit()*get_info()->get_npol()*get_info()->get_nchan()) );
 
   // Set the minimum time unit to be the number of samples per byte
   // (because we work in numbers of whole bytes)

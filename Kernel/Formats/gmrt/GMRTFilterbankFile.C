@@ -97,14 +97,14 @@ void dsp::GMRTFilterbankFile::open_file (const char* filename)
   if (verbose)
     cerr << "dsp::GMRTFilterbankFile::open PRESTO finished" << endl;
 
-  info = PrestoObservation (&data);
-  info.set_basis (Signal::Circular);
+  info = new PrestoObservation (&data);
+  get_info()->set_basis (Signal::Circular);
 
   header_bytes = 0;
   
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
 
