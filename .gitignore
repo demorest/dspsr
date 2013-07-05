@@ -1,6 +1,7 @@
 *.swp
 *~
 build
+web
 *.o
 *.lo
 *.la
