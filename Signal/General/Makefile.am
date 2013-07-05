@@ -74,7 +74,10 @@ if HAVE_PGPLOT
   bin_PROGRAMS += digistat passband
 
   digistat_SOURCES = digistat.C
+  digistat_LDADD = @PSRPLOT_LIBS@ $(LDADD)
+
   passband_SOURCES = passband.C
+  passband_LDADD = @PSRPLOT_LIBS@ $(LDADD)
 
   #
   # end PGPLOT-specific code
