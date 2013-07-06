@@ -16,6 +16,7 @@
 #include "dsp/Convolution.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/TScrunch.h"
+#include "dsp/SKDetector.h"
 
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
@@ -23,6 +24,7 @@
 #include "Pulsar/CoherentDedispersion.h"
 #include "Pulsar/Passband.h"
 #include "Pulsar/Backend.h"
+#include "Pulsar/SpectralKurtosis.h"
 
 #include "Error.h"
 
@@ -193,6 +195,49 @@ void dsp::Archiver::set (dspReduction* dspR) try
 
     if (tscrunch)
       dspR->set_ScrunchFactor ( tscrunch->get_factor() );
+
+    // ////////////////////////////////////////////////////////////////////
+    //
+    // Spectral Kurtosis RFI mitigation extension
+    //
+    SKDetector* skdetect = dynamic_cast<SKDetector*>( operation );
+
+    if (skdetect)
+    {
+      unsigned nsubint = archive->get_nsubint();
+      Integration* subint = archive->get_Integration(nsubint - 1);
+
+      SpectralKurtosis* ext = subint -> getadd<SpectralKurtosis>();
+
+      unsigned nchan = skdetect->get_input()->get_nchan();
+      ext->set_nchan( nchan );
+
+      unsigned npol = skdetect->get_input()->get_npol();
+      ext->set_npol( npol );
+
+      ext->set_M( skdetect->get_M() );
+      ext->set_excision_threshold( skdetect->get_excision_threshold() );
+
+      vector<float> data;
+      skdetect->get_filtered_sum (data);
+      for (unsigned ichan = 0; ichan < nchan; ichan++)
+	for (unsigned ipol = 0; ipol < npol; ipol++)
+	  ext->set_filtered_sum (ichan, ipol, data[ichan*npol + ipol]);
+
+      vector<uint64_t> hits;
+      skdetect->get_filtered_hits (hits);
+      for (unsigned ichan = 0; ichan < nchan; ichan++)
+	ext->set_filtered_hits (ichan, hits[ichan]);
+
+      skdetect->get_unfiltered_sum (data);
+      for (unsigned ichan = 0; ichan < nchan; ichan++)
+	for (unsigned ipol = 0; ipol < npol; ipol++)
+	  ext->set_unfiltered_sum (ichan, ipol, data[ichan*npol + ipol]);
+
+      ext->set_unfiltered_hits( skdetect->get_unfiltered_hits() );
+
+      skdetect->reset_count();
+    }
   }
 
 }
@@ -342,10 +387,10 @@ void dsp::Archiver::set (DigitiserCounts* dcnt, unsigned isub) try
 
   // Fill in histograms
   vector<unsigned long> histogram;
-  for (unsigned idig=0; idig<dcnt->get_ndigr(); idig++)
+  for (int idig=0; idig<dcnt->get_ndigr(); idig++)
   {
     hist_unpacker->get_histogram(histogram, idig);
-    for (unsigned ipt=0; ipt<dcnt->get_npthist(); ipt++)
+    for (int ipt=0; ipt<dcnt->get_npthist(); ipt++)
       dcnt->subints[isub].data[ipt + idig*dcnt->get_npthist()]
         = histogram[ipt];
   }
