@@ -48,6 +48,8 @@ dsp::SKDetector::SKDetector ()
   tscr_M = 0;
   tscr_upper = 0;
   tscr_lower = 0;
+
+  unfiltered_hits = 0;
 }
 
 dsp::SKDetector::~SKDetector ()
@@ -132,12 +134,9 @@ void dsp::SKDetector::transformation ()
   // ensure containers are large enough
   reserve();
 
-  const float * indat  = input->get_dattfp();
   const unsigned nchan = input->get_nchan();
   const unsigned npol  = input->get_npol();
   int64_t ndat         = input->get_ndat();
-
-  unsigned char * outdat = output->get_datptr();
 
   if (e_chan == 0)
     e_chan = nchan;
@@ -186,10 +185,12 @@ void dsp::SKDetector::detect_tscr ()
     cerr << "dsp::SKDetector::detect_tscr()" << endl;
 
   const unsigned nchan   = input->get_nchan();
-  const unsigned npol    = input->get_npol();
   int64_t ndat           = input->get_ndat();
   const float * indat    = input_tscr->get_dattfp();
   unsigned char * outdat = 0;
+
+  const unsigned npol    = input->get_npol();
+  assert(npol == 2);
 
   float V_p0 = 0;
   float V_p1 = 0;
@@ -246,7 +247,7 @@ void dsp::SKDetector::detect_skfb ()
 
   const unsigned nchan   = input->get_nchan();
   const unsigned npol    = input->get_npol();
-  int64_t ndat           = input->get_ndat();
+  uint64_t ndat          = input->get_ndat();
   const float * indat    = input->get_dattfp();
   unsigned char * outdat = output->get_datptr();
 #ifdef USE_MEGA_THRESHOLDS
@@ -312,7 +313,7 @@ void dsp::SKDetector::detect_skfb ()
 void dsp::SKDetector::reset_mask()
 {
   unsigned nchan         = output->get_nchan();
-  int64_t ndat           = output->get_ndat();
+  uint64_t ndat          = output->get_ndat();
   unsigned char * outdat = output->get_datptr();
 
   for (unsigned ichan=0; ichan < nchan; ichan++)
@@ -328,16 +329,48 @@ void dsp::SKDetector::reset_mask()
 
 void dsp::SKDetector::count_zapped ()
 {
+  unsigned npol          = input->get_npol();
+  const float * indat    = input->get_dattfp();
+
   unsigned nchan         = output->get_nchan();
-  int64_t ndat           = output->get_ndat();
+  uint64_t ndat          = output->get_ndat();
   unsigned char * outdat = output->get_datptr();
 
-  for (unsigned ichan=s_chan; ichan < e_chan; ichan++)
-  {
-    for (uint64_t idat=0; idat < ndat; idat++)
+  if (unfiltered_hits == 0)
     {
+      filtered_sum.resize (npol * nchan);
+      std::fill (filtered_sum.begin(), filtered_sum.end(), 0);
+
+      filtered_hits.resize (nchan);
+      std::fill (filtered_hits.begin(), filtered_hits.end(), 0);
+
+      unfiltered_sum.resize (npol * nchan);
+      std::fill (unfiltered_sum.begin(), unfiltered_sum.end(), 0);
+    }
+
+  for (uint64_t idat=0; idat < ndat; idat++)
+  {
+    unfiltered_hits ++;
+
+    for (unsigned ichan=s_chan; ichan < e_chan; ichan++)
+    {
+      unsigned index = (idat*nchan + ichan) * npol;
+
+      unfiltered_sum[index] += indat[index];
+      if (npol == 2)
+	unfiltered_sum[index+1] += indat[index+1];
+	
       if (outdat[(idat*nchan) + ichan] == 1)
+      {
         ndat_zapped ++;
+	continue;
+      }
+
+      filtered_sum[index] += indat[index];
+      if (npol == 2)
+	filtered_sum[index+1] += indat[index+1];
+
+      filtered_hits[ichan] ++;
     }
   }
 }
@@ -349,7 +382,7 @@ void dsp::SKDetector::detect_fscr ()
 
   unsigned nchan       = input->get_nchan();
   const unsigned npol  = input->get_npol();
-  const int64_t ndat   = input->get_ndat();
+  const uint64_t ndat  = input->get_ndat();
 
   const float * indat  = input->get_dattfp();
   unsigned char * outdat = output->get_datptr();

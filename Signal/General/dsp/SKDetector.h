@@ -43,6 +43,30 @@ namespace dsp {
     //! Set the tsrunched SKFilterbank input
     void set_input_tscr (TimeSeries * _input_tscr);
 
+    //! The number of time samples used to calculate the SK statistic
+    unsigned get_M () const { return M; }
+
+    //! The excision threshold in number of standard deviations
+    unsigned get_excision_threshold () const { return n_std_devs; }
+
+    //! Total SK statistic for each poln/channel, post filtering
+    void get_filtered_sum (std::vector<float>& sum) const
+    {  sum = filtered_sum; }
+
+    //! Hits on filtered average for each channel
+    void get_filtered_hits (std::vector<uint64_t>& hits) const
+    { hits = filtered_hits; }
+
+    //! Total SK statistic for each poln/channel, before filtering
+    void get_unfiltered_sum (std::vector<float>& sum) const
+    { sum = unfiltered_sum; }
+
+    //! Hits on unfiltered SK statistic, same for each channel
+    uint64_t get_unfiltered_hits () const { return unfiltered_hits; }
+
+    //! The arrays will be reset when count_zapped is next called
+    void reset_count () { unfiltered_hits = 0; }
+
   protected:
 
     //! Reserve the required amount of output space required
@@ -60,6 +84,18 @@ namespace dsp {
     void detect_fscr();
 
     void count_zapped ();
+
+    //! Total SK statistic for each poln/channel, post filtering
+    std::vector<float> filtered_sum;
+
+    //! Hits on filtered average for each channel
+    std::vector<uint64_t> filtered_hits;
+
+    //! Total SK statistic for each poln/channel, before filtering
+    std::vector<float> unfiltered_sum;
+
+    //! Hits on unfiltered SK statistic, same for each channel
+    uint64_t unfiltered_hits;
 
     //! Tsrunched SK statistic timeseries for the current block
     Reference::To<TimeSeries> input_tscr;
