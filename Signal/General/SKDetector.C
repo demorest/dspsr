@@ -329,12 +329,17 @@ void dsp::SKDetector::reset_mask()
 
 void dsp::SKDetector::count_zapped ()
 {
+  if (verbose)
+    cerr << "dsp::SKDetector::count_zapped hits=" << unfiltered_hits << endl;
+
   unsigned npol          = input->get_npol();
   const float * indat    = input->get_dattfp();
 
   unsigned nchan         = output->get_nchan();
   uint64_t ndat          = output->get_ndat();
   unsigned char * outdat = output->get_datptr();
+
+  assert (ndat == input->get_ndat());
 
   if (unfiltered_hits == 0)
     {
@@ -354,11 +359,12 @@ void dsp::SKDetector::count_zapped ()
 
     for (unsigned ichan=s_chan; ichan < e_chan; ichan++)
     {
-      unsigned index = (idat*nchan + ichan) * npol;
+      uint64_t index = (idat*nchan + ichan) * npol;
+      unsigned outdex = ichan * npol;
 
-      unfiltered_sum[index] += indat[index];
+      unfiltered_sum[outdex] += indat[index];
       if (npol == 2)
-	unfiltered_sum[index+1] += indat[index+1];
+	unfiltered_sum[outdex+1] += indat[index+1];
 	
       if (outdat[(idat*nchan) + ichan] == 1)
       {
@@ -366,9 +372,9 @@ void dsp::SKDetector::count_zapped ()
 	continue;
       }
 
-      filtered_sum[index] += indat[index];
+      filtered_sum[outdex] += indat[index];
       if (npol == 2)
-	filtered_sum[index+1] += indat[index+1];
+	filtered_sum[outdex+1] += indat[index+1];
 
       filtered_hits[ichan] ++;
     }
