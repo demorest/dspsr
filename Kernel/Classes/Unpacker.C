@@ -20,7 +20,7 @@ dsp::Unpacker::Unpacker (const char* name)
 dsp::Unpacker * dsp::Unpacker::clone() const
 {
   throw Error (InvalidState, "dsp::Unpacker::clone",
-     "Not implemented in derived class");
+     "Not implemented in " + get_name());
 
   return 0;
 }
