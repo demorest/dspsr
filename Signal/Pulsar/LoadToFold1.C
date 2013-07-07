@@ -743,7 +743,7 @@ void dsp::LoadToFold::finalize ()
   {
     reference_epoch = MJD( config->reference_epoch );
     if (Operation::verbose)
-      cerr << "dsp::LoadToFold::finalizebreference epoch="
+      cerr << "dsp::LoadToFold::finalize reference epoch="
 	   << reference_epoch.printdays(13) << endl;
   }
 
