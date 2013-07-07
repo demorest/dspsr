@@ -170,6 +170,9 @@ namespace dsp
     //! Set the Pulsar::dspReduction Extension
     void set (Pulsar::dspReduction*);
 
+    //! Set the Pulsar::dspReduction Extension
+    void pack (Pulsar::dspReduction*, Operation*);
+
     void set_coherent_dedispersion (Signal::State state,
 				    const Response* response);
 
