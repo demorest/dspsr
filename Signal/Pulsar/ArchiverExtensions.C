@@ -17,6 +17,7 @@
 #include "dsp/Dedispersion.h"
 #include "dsp/TScrunch.h"
 #include "dsp/SKDetector.h"
+#include "dsp/OperationThread.h"
 
 #include "Pulsar/dspReduction.h"
 #include "Pulsar/TwoBitStats.h"
@@ -89,34 +90,57 @@ void dsp::Archiver::set (dspReduction* dspR) try
   {
     Operation* operation = (*list)[i];
 
-    // ////////////////////////////////////////////////////////////////////
-    //
-    // Input class parameters
-    //
-    Input* input = dynamic_cast<Input*>( operation );
+    pack (dspR, operation);
+  }
+}
+catch (Error& error)
+{
+  throw error += "dsp::Archiver::set Pulsar::dspReduction";
+}
 
-    if (input)
-    {
-      dspR->set_total_samples ( input->get_total_samples() );
-      dspR->set_block_size ( input->get_block_size() );
-      dspR->set_overlap ( input->get_overlap() );
-    }
+void dsp::Archiver::pack (dspReduction* dspR, Operation* operation)
+{
+  const char* method = "dsp::Archiver::pack dspReduction";
 
-    // ////////////////////////////////////////////////////////////////////
-    //
-    // TwoBitCorrection class parameters
-    //
-    const ExcisionUnpacker* excision = 0;
+  OperationThread::Wait* wait;
+  wait = dynamic_cast<OperationThread::Wait*> (operation);
 
-    // ////////////////////////////////////////////////////////////////////
-    //
-    // IOManager class may contain an ExcisionUnpacker
-    //
-    IOManager* manager = dynamic_cast<IOManager*>( operation );
-    if (manager)
-      operation = manager->get_unpacker();
+  if (wait)
+  {
+    OperationThread* thread = wait->get_parent();
+    for (unsigned i=0; i<thread->get_nop(); i++)
+      pack (dspR, thread->get_op(i));
+    return;
+  }
 
-    excision = dynamic_cast<const ExcisionUnpacker*> ( operation );
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // Input class parameters
+  //
+  Input* input = dynamic_cast<Input*>( operation );
+
+  if (input)
+  {
+    dspR->set_total_samples ( input->get_total_samples() );
+    dspR->set_block_size ( input->get_block_size() );
+    dspR->set_overlap ( input->get_overlap() );
+  }
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // TwoBitCorrection class parameters
+  //
+  const ExcisionUnpacker* excision = 0;
+
+  // ////////////////////////////////////////////////////////////////////
+  //
+  // IOManager class may contain an ExcisionUnpacker
+  //
+  IOManager* manager = dynamic_cast<IOManager*>( operation );
+  if (manager)
+    operation = manager->get_unpacker();
+
+  excision = dynamic_cast<const ExcisionUnpacker*> ( operation );
 
     // save it for the TwoBitStats Extension
     if (excision)
@@ -204,6 +228,9 @@ void dsp::Archiver::set (dspReduction* dspR) try
 
     if (skdetect)
     {
+      if (verbose)
+        cerr << "dsp::Archiver::set SKDetector in use" << endl;
+
       unsigned nsubint = archive->get_nsubint();
       Integration* subint = archive->get_Integration(nsubint - 1);
 
@@ -240,11 +267,6 @@ void dsp::Archiver::set (dspReduction* dspR) try
     }
   }
 
-}
-catch (Error& error)
-{
-  throw error += "dsp::Archiver::set Pulsar::dspReduction";
-}
 
 void dsp::Archiver::set_coherent_dedispersion (Signal::State state,
 					       const Response* response)
