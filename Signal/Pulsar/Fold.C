@@ -123,7 +123,13 @@ void dsp::Fold::combine (const Operation* other)
 dsp::PhaseSeries* dsp::Fold::get_result () const
 {
   if (engine)
+  {
     engine->synch (output);
+
+    PhaseSeries* engine_out = engine->get_profiles();
+    if (engine_out->has_extensions())
+      output->set_extensions( engine_out->get_extensions() );
+  }
 
   return output;
 }
