@@ -228,7 +228,7 @@ void dsp::Archiver::pack (dspReduction* dspR, Operation* operation)
 
     if (skdetect)
     {
-      if (verbose)
+      if (verbose > 2)
         cerr << "dsp::Archiver::set SKDetector in use" << endl;
 
       unsigned nsubint = archive->get_nsubint();
