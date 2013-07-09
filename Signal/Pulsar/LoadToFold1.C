@@ -977,7 +977,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloade
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::build_fold prepare Archiver" << endl;
 
-    Archiver* archiver = new Archiver;
+    archiver = new Archiver;
     unloader.push_back( archiver );
     prepare_archiver( archiver );
   }
