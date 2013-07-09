@@ -58,10 +58,13 @@ namespace dsp {
     //! Get the dimension of the output data
     bool get_output_ndim () const { return ndim; }
 
+    //! Return true if the specified input data order can be supported
+    bool get_order_supported (TimeSeries::Order) const;
+
     //! Engine used to perform discrete convolution step
     class Engine;
     void set_engine (Engine*);
-
+    
   protected:
 
     //! Detect the input data

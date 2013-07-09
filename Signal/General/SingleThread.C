@@ -14,6 +14,7 @@
 #include "dsp/Input.h"
 #include "dsp/Scratch.h"
 #include "dsp/MultiFile.h"
+#include "dsp/CommandLineHeader.h"
 
 #include "dsp/ExcisionUnpacker.h"
 #include "dsp/WeightedTimeSeries.h"
@@ -551,6 +552,8 @@ dsp::SingleThread::Config::Config ()
   can_cuda = false;
   can_thread = false;
 
+  command_line_header = false;
+
   force_contiguity = false;
 
   seek_seconds = 0.0;
@@ -583,8 +586,17 @@ dsp::Input* dsp::SingleThread::Config::open (int argc, char** argv)
 {
   vector<string> filenames;
 
-  for (int ai=optind; ai<argc; ai++)
-    dirglob (&filenames, argv[ai]);
+  if (command_line_header)
+  {
+    CommandLineHeader clh;
+    filenames.push_back ( clh.convert(argc,argv) );
+  }
+
+  else 
+  {
+    for (int ai=optind; ai<argc; ai++)
+      dirglob (&filenames, argv[ai]);
+  }
 
   unsigned nfile = filenames.size();
 
@@ -695,6 +707,9 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
 
   arg = menu.add (input_buffering, "overlap");
   arg->set_help ("disable input buffering");
+
+  arg = menu.add (command_line_header, "header");
+  arg->set_help ("command line arguments are header values (not filenames)");
 
   arg = menu.add (force_contiguity, "cont");
   arg->set_help ("input files are contiguous (disable check)");

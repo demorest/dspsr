@@ -74,6 +74,9 @@ namespace dsp {
     //! Inquire the next sample to load for the current file
     uint64_t get_next_sample();
 
+    //! Add any relevant extensions (calls loader's add_extensions())
+    void add_extensions (Extensions *ext);
+
   protected:
     
     //! Open the ASCII file of filenames

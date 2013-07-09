@@ -184,6 +184,9 @@ namespace dsp {
     // Input files represent a single continuous observation
     bool force_contiguity;
 
+    // Command line values are header params, not file names
+    bool command_line_header;
+
     // number of seconds to seek into data
     double seek_seconds;
 

@@ -12,6 +12,7 @@ _dspsr_la_LDFLAGS = -module -avoid-version -no-undefined
 _dspsr_la_LIBADD = \
 		   $(top_builddir)/Signal/Pulsar/libdspsr.la \
 		   $(top_builddir)/Signal/General/libdspdsp.la \
+		   $(top_builddir)/Signal/Statistics/libdspstats.la \
 		   $(top_builddir)/Kernel/libdspbase.la 
 
 SWIG_FLAGS = -Wall -python -I$(top_builddir)/local_include @PSRCHIVE_INCLUDE@

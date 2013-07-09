@@ -73,6 +73,9 @@ void dsp::GUPPIBlockFile::parse_header()
   // Default to complex data
   info.set_state(Signal::Analytic);
 
+  if (info.get_nchan() == 1) 
+    info.set_state(Signal::Nyquist);
+
   // Any format-specific checks
   header_get_check("PKTFMT", ctmp);
   if (string(ctmp) == "VDIF")
@@ -91,7 +94,7 @@ void dsp::GUPPIBlockFile::parse_header()
   header_get_check("PKTIDX",   &ltmp);
   header_get_check("PKTSIZE",  &itmp);
   t_offset += ltmp * itmp * 8.0 / info.get_rate() / 
-      (info.get_nbit() * info.get_nchan() * info.get_npol() * 2.0);
+      (info.get_nbit() * info.get_nchan() * info.get_npol() * info.get_ndim());
   //cerr << "t_offset=" << t_offset << "s" << endl;
   MJD epoch (imjd, (double)smjd/86400.0 + t_offset/86400.0);
   info.set_start_time(epoch);

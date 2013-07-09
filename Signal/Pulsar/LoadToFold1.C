@@ -14,7 +14,6 @@
 
 #include "dsp/SignalPath.h"
 #include "dsp/IOManager.h"
-#include "dsp/Input.h"
 #include "dsp/Scratch.h"
 #include "dsp/File.h"
 
@@ -124,6 +123,9 @@ void dsp::LoadToFold::construct () try
     prepare_fold (unpacked);
     return;
   }
+
+  // record the number of operations in signal path
+  unsigned noperations = operations.size();
 
   bool report_vitals = thread_id==0 && config->report_vitals;
 
@@ -582,6 +584,19 @@ void dsp::LoadToFold::construct () try
                    config->npol, manager->get_info()->get_npol() );
   }
 
+
+  if (detect->get_order_supported (TimeSeries::OrderTFP)
+      && noperations == operations.size())      // no operations yet added
+  {
+    Unpacker* unpacker = manager->get_unpacker();
+
+    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
+    {
+      cerr << "unpack more efficiently in TFP order" << endl;
+      unpacker->set_output_order (TimeSeries::OrderTFP);
+    }
+  }
+
   operations.push_back (detect.get());
 
   if (config->npol == 3)
@@ -715,6 +730,23 @@ void dsp::LoadToFold::finalize ()
 
   SingleThread::finalize ();
 
+  MJD reference_epoch;
+
+  if (config->reference_epoch == "start")
+  {
+    reference_epoch = manager->get_info()->get_start_time();
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::finalize reference epoch=start_time=" 
+	   << reference_epoch.printdays(13) << endl;
+  }
+  else if (!config->reference_epoch.empty())
+  {
+    reference_epoch = MJD( config->reference_epoch );
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::finalizebreference epoch="
+	   << reference_epoch.printdays(13) << endl;
+  }
+
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
     Reference::To<Extensions> extensions = new Extensions;
@@ -724,6 +756,8 @@ void dsp::LoadToFold::finalize ()
       operations[iop]->add_extensions (extensions);
     
     fold[ifold]->get_output()->set_extensions (extensions);
+
+    fold[ifold]->set_reference_epoch (reference_epoch);
   }
 
   // for now ...
