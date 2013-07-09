@@ -130,6 +130,10 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
       if (configuration->single_pulse_archives())
         submit->set_unloader( primary_unloader->clone() );
 
+      if (Operation::verbose)
+	cerr << "dsp::LoadToFoldN::prepare_subint_archival submit ptr="
+	     << submit << endl;
+
       at(i)->unloader[ifold] = submit;
     }
 
