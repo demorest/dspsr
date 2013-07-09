@@ -56,7 +56,7 @@ namespace dsp
     ~Fold ();
 
     //! Create a clonse
-    Fold* clone () const;
+    virtual Fold* clone () const;
 
     PhaseSeries* get_output () const;
 
