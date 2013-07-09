@@ -47,6 +47,7 @@ protected:
   unsigned nfft;
   unsigned nchan;
   unsigned niter;
+  unsigned gpu_id;
   bool real_to_complex;
   bool do_fwd_fft;
 };
@@ -54,6 +55,7 @@ protected:
 
 Speed::Speed ()
 {
+  gpu_id = 0;
   niter = 10;
   nloop = 0;
   nfft = 1024;
@@ -82,6 +84,11 @@ void Speed::parseOptions (int argc, char** argv)
 
   menu.set_help_header ("filterbank_speed - measure Filterbank speed");
   menu.set_version ("filterbank_speed version 1.0");
+
+#if HAVE_CUFFT
+  arg = menu.add (gpu_id, 'g');
+  arg->set_help ("GPU device ID");
+#endif
 
   arg = menu.add (real_to_complex, 'r');
   arg->set_help ("real-to-complex FFT");
@@ -126,8 +133,11 @@ void Speed::runTest ()
   dsp::Memory* memory = 0;
 
 #if HAVE_CUFFT
+  cerr << "using GPU " << gpu_id << endl;
+  cudaSetDevice(gpu_id); 
+
   cudaStream_t stream = 0;
-  // cudaStreamCreate( &stream );
+  cudaStreamCreate( &stream );
   engine = new CUDA::FilterbankEngine (stream);
   memory = new CUDA::DeviceMemory;
 #endif
@@ -179,7 +189,7 @@ void Speed::runTest ()
 
   double time_us = total_time * 1e6 / (nloop*niter);
 
-  // cerr << "time=" << time << endl;
+  cerr << "total_time=" << total_time << endl;
   if (in)
     memory->do_free (in);
 
