@@ -299,6 +299,9 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("number of CPU threads for spectral kurtosis filterbank");
 #endif
 
+  arg = menu.add (config->sk_fold, "sk_fold");
+  arg->set_help ("fold the SKFilterbank output");
+
   /* ***********************************************************************
 
   Dispersion removal Options

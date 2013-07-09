@@ -126,6 +126,9 @@ namespace dsp {
     // number of CPU threads for spectral kurtosis filterbank
     unsigned sk_nthreads;
 
+    // fold the spectral kurtosis filterbank output
+    bool sk_fold;
+
     unsigned npol;
     unsigned nbin;
     unsigned ndim;

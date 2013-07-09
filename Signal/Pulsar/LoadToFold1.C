@@ -410,9 +410,6 @@ void dsp::LoadToFold::construct () try
 
   if (config->plfb_nbin)
   {
-
-    bool subints = config->single_pulse || config->integration_length;
-
     // Set up output
     Archiver* archiver = new Archiver;
     unloader.resize(1);
@@ -421,7 +418,7 @@ void dsp::LoadToFold::construct () try
 
     if (!phased_filterbank)
     {
-      if (subints) 
+      if (output_subints()) 
       {
 
         Subint<PhaseLockedFilterbank> *sub_plfb = 
@@ -618,6 +615,22 @@ void dsp::LoadToFold::construct () try
   }
 
   prepare_fold (detected);
+
+  if (config->sk_fold)
+  {
+    Reference::To<Fold> skfold;
+    build_fold (skfold, true);
+
+    skfold->set_input( skoutput );
+    skfold->prepare( manager->get_info() );
+    skfold->reset();
+
+    unloader.back()->set_extension( ".sk" );
+
+    fold.push_back( skfold );
+    operations.push_back( skfold.get() );
+  }
+
 }
 catch (Error& error)
 {
@@ -749,13 +762,16 @@ void dsp::LoadToFold::finalize ()
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
-    Reference::To<Extensions> extensions = new Extensions;
-    extensions->add_extension( path[ifold] );
+    if (ifold < path.size())
+    {
+      Reference::To<Extensions> extensions = new Extensions;
+      extensions->add_extension( path[ifold] );
     
-    for (unsigned iop=0; iop < operations.size(); iop++)
-      operations[iop]->add_extensions (extensions);
+      for (unsigned iop=0; iop < operations.size(); iop++)
+	operations[iop]->add_extensions (extensions);
     
-    fold[ifold]->get_output()->set_extensions (extensions);
+      fold[ifold]->get_output()->set_extensions (extensions);
+    }
 
     fold[ifold]->set_reference_epoch (reference_epoch);
   }
@@ -938,207 +954,208 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
   if (config->asynchronous_fold)
     asynch_fold.resize( nfold );
 
-  bool subints = config->single_pulse || config->integration_length;
-
-  if (manage_archiver)
-  {
-    if (subints)
-      unloader.resize (nfold);
-    else
-      unloader.resize (1);
-  }
+  unloader.resize (0);
 
   for (unsigned ifold=0; ifold < nfold; ifold++)
   {
-    if (manage_archiver && ( ifold == 0 || subints ))
-    {
-      if (Operation::verbose)
-        cerr << "dsp::LoadToFold::prepare_fold prepare Archiver" << endl;
-
-      Archiver* archiver = new Archiver;
-      unloader[ifold] = archiver;
-
-      prepare_archiver( archiver );
-    }
-
-    if (subints)
-    {
-      if (Operation::verbose)
-        cerr << "dsp::LoadToFold::prepare_fold prepare Subint" << endl;
-
-      if (config->cyclic_nchan) 
-      {
-
-        Subint<CyclicFold>* subfold = 
-          setup< Subint<CyclicFold> > (fold[ifold].ptr());
-
-        subfold -> set_nchan(config->cyclic_nchan);
-        subfold -> set_npol(config->npol);
-
-        if (config->integration_length)
-        {
-          subfold -> set_subint_seconds (config->integration_length);
-
-          if (config->minimum_integration_length > 0)
-            unloader[ifold]->set_minimum_integration_length (config->minimum_integration_length);
-        }
-        else
-          throw Error (InvalidState, "dsp::LoadToFold::prepare_fold", 
-              "Single-pulse cyclic spectra not supported");
-
-        subfold -> set_unloader (unloader[ifold]);
-
-        fold[ifold] = subfold;
-
-      }
-
-      else 
-      {
-        Subint<Fold>* subfold = setup< Subint<Fold> > (fold[ifold].ptr());
-
-        if (config->integration_length)
-        {
-          subfold -> set_subint_seconds (config->integration_length);
-
-          if (config->minimum_integration_length > 0)
-            unloader[ifold]->set_minimum_integration_length (config->minimum_integration_length);
-        }
-        else
-        {
-          subfold -> set_subint_turns (1);
-          subfold -> set_fractional_pulses (config->fractional_pulses);
-        }
-
-        subfold -> set_unloader (unloader[ifold]);
-
-        fold[ifold] = subfold;
-
-      }
-
-    }
-    else
-    {
-      if (Operation::verbose)
-        cerr << "dsp::LoadToFold::prepare_fold prepare Fold" << endl;
-
-      fold[ifold] = setup_not< Subint<Fold> > (fold[ifold].ptr());
-    }
-
-    if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare_fold configuring" << endl;
-
-    if (config->nbin)
-    {
-      fold[ifold]->set_nbin (config->nbin);
-      fold[ifold]->set_force_sensible_nbin(config->force_sensible_nbin);
-    }
-
-    if (config->reference_phase)
-      fold[ifold]->set_reference_phase (config->reference_phase);
-
-    if (config->folding_period)
-      fold[ifold]->set_folding_period (config->folding_period);
-
-    Reference::To<ObservationChange> change;
-
-    if (ifold && ifold <= config->additional_pulsars.size())
-    {
-      change = new ObservationChange;
-      change->set_source( config->additional_pulsars[ifold-1] );
-    }
-
-    if (ifold < config->ephemerides.size())
-    {
-      if (!change)
-        change = new ObservationChange;
-
-      Pulsar::Parameters* ephem = config->ephemerides[ifold];
-      change->set_source( ephem->get_name() );
-      change->set_dispersion_measure( get_dispersion_measure(ephem) );
-
-      fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
-    }
-
-    if (ifold < config->predictors.size())
-    {
-      fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
-
-      Pulsar::SimplePredictor* simple
-        = dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
-
-      if (simple)
-      {
-        config->dispersion_measure = simple->get_dispersion_measure();
-
-        if (!change)
-          change = new ObservationChange;
-
-        change->set_source( simple->get_name() );
-        change->set_dispersion_measure( simple->get_dispersion_measure() );
-      }
-    }    
-
-    fold[ifold]->set_input (to_fold);
-
-    if (change)
-      fold[ifold]->set_change (change);
-
-    fold[ifold]->prepare ( manager->get_info() );
-
-    if (ifold && ifold <= config->additional_pulsars.size())
-    {
-      if (!change)
-        change = new ObservationChange;
-
-      /*
-        If additional pulsar names have been specified, then Fold::prepare
-        will have retrieved an ephemeris, and the DM from this ephemeris 
-        should make its way into the folded profile.
-      */
-      const Pulsar::Parameters* ephem = fold[ifold]->get_pulsar_ephemeris ();
-      change->set_dispersion_measure( get_dispersion_measure(ephem) );
-    }
-
-    fold[ifold]->reset();
+    build_fold (fold[ifold]);
+    prepare_fold (ifold, to_fold);
 
     path[ifold] = new SignalPath (operations);
-
-    if (config->asynchronous_fold)
-      asynch_fold[ifold] = new OperationThread (fold[ifold]);
-    else
-      operations.push_back( fold[ifold].get() );
-
-#if HAVE_CUDA
-    if (gpu_stream != undefined_stream)
-    {
-      cudaStream_t stream = (cudaStream_t) gpu_stream;
-      if (config->cyclic_nchan)
-        fold[ifold]->set_engine (new CUDA::CyclicFoldEngineCUDA(stream));
-      else
-        fold[ifold]->set_engine (new CUDA::FoldEngine(stream, config->sk_zap));
-    }
-#endif
-
     path[ifold]->add( fold[ifold] );
   }
-
+  
 }
+
+void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloader)
+{
+  Reference::To<Archiver> archiver;
+
+  if ( unique_unloader || 
+       (manage_archiver && ( !unloader.size() || output_subints() )) )
+  {
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::build_fold prepare Archiver" << endl;
+
+    Archiver* archiver = new Archiver;
+    unloader.push_back( archiver );
+    prepare_archiver( archiver );
+  }
+
+  if (!output_subints())
+  {
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::build_fold prepare Fold" << endl;
+
+    fold = setup_not< Subint<Fold> > (fold.ptr());
+  }
+  else
+  {
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::build_fold prepare Subint" << endl;
+
+    if (config->cyclic_nchan) 
+    {
+      Subint<CyclicFold>* subfold = 
+	setup< Subint<CyclicFold> > (fold.ptr());
+
+      subfold -> set_nchan(config->cyclic_nchan);
+      subfold -> set_npol(config->npol);
+
+      if (config->integration_length)
+      {
+	subfold -> set_subint_seconds (config->integration_length);
+	
+	if (config->minimum_integration_length > 0)
+	  archiver->set_minimum_integration_length (config->minimum_integration_length);
+      }
+      else
+	throw Error (InvalidState, "dsp::LoadToFold::build_fold", 
+		     "Single-pulse cyclic spectra not supported");
+
+      subfold -> set_unloader (archiver);
+      
+      fold = subfold;
+      
+    }
+
+    else 
+    {
+      Subint<Fold>* subfold = setup< Subint<Fold> > (fold.ptr());
+      
+      if (config->integration_length)
+      {
+	subfold -> set_subint_seconds (config->integration_length);
+	
+	if (config->minimum_integration_length > 0)
+	  archiver->set_minimum_integration_length (config->minimum_integration_length);
+      }
+      else
+      {
+	subfold -> set_subint_turns (1);
+	subfold -> set_fractional_pulses (config->fractional_pulses);
+      }
+
+      subfold -> set_unloader (archiver);
+      
+      fold = subfold;
+      
+    }
+    
+  }
+
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFold::build_fold configuring" << endl;
+
+  if (config->nbin)
+  {
+    fold->set_nbin (config->nbin);
+    fold->set_force_sensible_nbin(config->force_sensible_nbin);
+  }
+
+  if (config->reference_phase)
+    fold->set_reference_phase (config->reference_phase);
+
+  if (config->folding_period)
+    fold->set_folding_period (config->folding_period);
+}
+
+void dsp::LoadToFold::prepare_fold (unsigned ifold, TimeSeries* to_fold)
+{
+  Reference::To<ObservationChange> change;
+  
+  if (ifold && ifold <= config->additional_pulsars.size())
+  {
+    change = new ObservationChange;
+    change->set_source( config->additional_pulsars[ifold-1] );
+  }
+
+  if (ifold < config->ephemerides.size())
+  {
+    if (!change)
+      change = new ObservationChange;
+    
+    Pulsar::Parameters* ephem = config->ephemerides[ifold];
+    change->set_source( ephem->get_name() );
+    change->set_dispersion_measure( get_dispersion_measure(ephem) );
+    
+    fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
+  }
+
+  if (ifold < config->predictors.size())
+  {
+    fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
+    
+    Pulsar::SimplePredictor* simple
+      = dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
+    
+    if (simple)
+    {
+      config->dispersion_measure = simple->get_dispersion_measure();
+      
+      if (!change)
+	change = new ObservationChange;
+      
+      change->set_source( simple->get_name() );
+      change->set_dispersion_measure( simple->get_dispersion_measure() );
+    }
+  }    
+  
+  fold[ifold]->set_input (to_fold);
+  
+  if (change)
+    fold[ifold]->set_change (change);
+  
+  fold[ifold]->prepare ( manager->get_info() );
+  
+  if (ifold && ifold <= config->additional_pulsars.size())
+  {
+    if (!change)
+      change = new ObservationChange;
+    
+    /*
+      If additional pulsar names have been specified, then Fold::prepare
+      will have retrieved an ephemeris, and the DM from this ephemeris 
+      should make its way into the folded profile.
+    */
+    const Pulsar::Parameters* ephem = fold[ifold]->get_pulsar_ephemeris ();
+    change->set_dispersion_measure( get_dispersion_measure(ephem) );
+  }
+  
+  fold[ifold]->reset();
+    
+  if (config->asynchronous_fold)
+    asynch_fold[ifold] = new OperationThread( fold[ifold].get() );
+  else
+    operations.push_back( fold[ifold].get() );
+  
+#if HAVE_CUDA
+  if (gpu_stream != undefined_stream)
+  {
+    cudaStream_t stream = (cudaStream_t) gpu_stream;
+    if (config->cyclic_nchan)
+      fold[ifold]->set_engine (new CUDA::CyclicFoldEngineCUDA(stream));
+    else
+      fold[ifold]->set_engine (new CUDA::FoldEngine(stream, config->sk_zap));
+  }
+#endif
+}
+
 
 void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 {
-  bool subints = config->single_pulse || config->integration_length;
-  bool multiple_outputs = subints 
+  bool multiple_outputs = output_subints()
     && ( (config->subints_per_archive>0) || (config->single_archive==false) );
 
   archiver->set_archive_class (config->archive_class.c_str());
 
-  if (subints && config->single_archive)
+  if (output_subints() && config->single_archive)
   {
     cerr << "dspsr: Single archive with multiple sub-integrations" << endl;
     archiver->set_use_single_archive (true);
   }
 
-  if (subints && config->subints_per_archive)
+  if (output_subints() && config->subints_per_archive)
   {
     cerr << "dspsr: Archives with " << 
         config->subints_per_archive << " sub-integrations" << endl;
@@ -1176,7 +1193,7 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
       archiver->set_convention( epoch_convention = new FilenameEpoch );
   }
 
-  if (epoch_convention && subints 
+  if (epoch_convention && output_subints() 
       && (config->single_archive || config->subints_per_archive))
     epoch_convention->report_unload = false;
 
@@ -1302,9 +1319,7 @@ void dsp::LoadToFold::finish () try
 
   SingleThread::finish();
 
-  bool subints = config->single_pulse || config->integration_length;
-
-  if (!subints)
+  if (!output_subints())
   {
     if (!unloader.size())
       throw Error (InvalidState, "dsp::LoadToFold::finish", "no unloader");

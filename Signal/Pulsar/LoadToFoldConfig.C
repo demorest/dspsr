@@ -83,6 +83,9 @@ dsp::LoadToFold::Config::Config ()
   // by default onl 1 SK thread [per CPU thread]
   sk_nthreads = 1;
 
+  // by default, do not fold the SK filterbank output
+  sk_fold = false;
+
   // full polarization by default
   npol = 4;
 

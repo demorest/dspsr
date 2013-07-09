@@ -148,6 +148,8 @@ namespace dsp {
 
     //! Prepare to fold the given TimeSeries
     void prepare_fold (TimeSeries*);
+    void build_fold (Reference::To<Fold>& fold, bool unique_unloader = false);
+    void prepare_fold (unsigned ifold, TimeSeries* to_fold);
 
     //! Prepare the given Archiver
     void prepare_archiver (Archiver*);
