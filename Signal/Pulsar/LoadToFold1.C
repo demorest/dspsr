@@ -618,14 +618,15 @@ void dsp::LoadToFold::construct () try
 
   if (config->sk_fold)
   {
+    PhaseSeriesUnloader* unload = get_unloader( get_nfold() );
+    unload->set_extension( ".sk" );
+
     Reference::To<Fold> skfold;
-    build_fold (skfold, true);
+    build_fold (skfold, unload);
 
     skfold->set_input( skoutput );
     skfold->prepare( manager->get_info() );
     skfold->reset();
-
-    unloader.back()->set_extension( ".sk" );
 
     fold.push_back( skfold );
     operations.push_back( skfold.get() );
@@ -924,6 +925,16 @@ const char* multifold_error =
   "\t%s\n"
   "The multiple output archives would over-write each other.\n";
 
+size_t dsp::LoadToFold::get_nfold ()
+{
+  size_t nfold = 1 + config->additional_pulsars.size();
+
+  nfold = std::max( nfold, config->predictors.size() );
+  nfold = std::max( nfold, config->ephemerides.size() );
+
+  return nfold;
+}
+
 void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
 {
   if (Operation::verbose)
@@ -936,10 +947,7 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
     operations.push_back (stats);
   }
 
-  size_t nfold = 1 + config->additional_pulsars.size();
-
-  nfold = std::max( nfold, config->predictors.size() );
-  nfold = std::max( nfold, config->ephemerides.size() );
+  size_t nfold = get_nfold ();
 
   if (nfold > 1 && !config->archive_filename.empty())
     throw Error (InvalidState, "dsp::LoadToFold::prepare_fold",
@@ -950,15 +958,14 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
 
   fold.resize (nfold);
   path.resize (nfold);
+  unloader.resize (nfold);
 
   if (config->asynchronous_fold)
     asynch_fold.resize( nfold );
 
-  unloader.resize (0);
-
   for (unsigned ifold=0; ifold < nfold; ifold++)
   {
-    build_fold (fold[ifold]);
+    build_fold (fold[ifold], get_unloader(ifold));
     prepare_fold (ifold, to_fold);
 
     path[ifold] = new SignalPath (operations);
@@ -967,21 +974,28 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
   
 }
 
-void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloader)
+dsp::PhaseSeriesUnloader* 
+dsp::LoadToFold::get_unloader (unsigned ifold)
 {
-  Reference::To<Archiver> archiver;
+  if (ifold == unloader.size())
+    unloader.push_back( NULL );
 
-  if ( unique_unloader || 
-       (manage_archiver && ( !unloader.size() || output_subints() )) )
+  if (!unloader.at(ifold))
   {
     if (Operation::verbose)
-      cerr << "dsp::LoadToFold::build_fold prepare Archiver" << endl;
+      cerr << "dsp::LoadToFold::get_unloader prepare Archiver" << endl;
 
-    archiver = new Archiver;
-    unloader.push_back( archiver.get() );
+    Archiver* archiver = new Archiver;
+    unloader[ifold] = archiver;
     prepare_archiver( archiver );
   }
 
+  return unloader.at(ifold);
+}
+
+void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
+                                  PhaseSeriesUnloader* unloader) try
+{
   if (!output_subints())
   {
     if (Operation::verbose)
@@ -1007,13 +1021,13 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloade
 	subfold -> set_subint_seconds (config->integration_length);
 	
 	if (config->minimum_integration_length > 0)
-	  archiver->set_minimum_integration_length (config->minimum_integration_length);
+	  unloader->set_minimum_integration_length (config->minimum_integration_length);
       }
       else
 	throw Error (InvalidState, "dsp::LoadToFold::build_fold", 
 		     "Single-pulse cyclic spectra not supported");
 
-      subfold -> set_unloader (archiver);
+      subfold -> set_unloader (unloader);
       
       fold = subfold;
       
@@ -1028,7 +1042,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloade
 	subfold -> set_subint_seconds (config->integration_length);
 	
 	if (config->minimum_integration_length > 0)
-	  archiver->set_minimum_integration_length (config->minimum_integration_length);
+	  unloader->set_minimum_integration_length (config->minimum_integration_length);
       }
       else
       {
@@ -1036,7 +1050,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloade
 	subfold -> set_fractional_pulses (config->fractional_pulses);
       }
 
-      subfold -> set_unloader (archiver);
+      subfold -> set_unloader (unloader);
       
       fold = subfold;
       
@@ -1058,6 +1072,10 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold, bool unique_unloade
 
   if (config->folding_period)
     fold->set_folding_period (config->folding_period);
+}
+catch (Error& error)
+{
+  throw error += "dsp::LoadToFold::build_fold";
 }
 
 void dsp::LoadToFold::prepare_fold (unsigned ifold, TimeSeries* to_fold)
