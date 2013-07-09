@@ -67,6 +67,7 @@
 #include "Pulsar/SimplePredictor.h"
 
 #include "Error.h"
+#include "debug.h"
 
 #include <assert.h>
 
@@ -876,48 +877,27 @@ void dsp::LoadToFold::end_of_data ()
     fold[ifold]->finish();
 }
 
-void setup (const dsp::Fold* from, dsp::Fold* to)
+void setup (dsp::Fold* fold)
 {
-  // copy over the output if there is one
-  if (from && from->has_output())
-    to->set_output( from->get_output() );
-
-  if (from && from->has_folding_predictor())
-    to->set_folding_predictor( from->get_folding_predictor() );
-
-  if (from && from->has_pulsar_ephemeris())
-    to->set_pulsar_ephemeris( from->get_pulsar_ephemeris() );
-
-  if (!to->has_output())
-    to->set_output( new dsp::PhaseSeries );
+  if (!fold->has_output())
+    fold->set_output( new dsp::PhaseSeries );
 }
 
 template<class T>
-T* setup (dsp::Fold* ptr)
+T* setup (Reference::To<dsp::Fold>& ptr)
 {
+  if (!ptr)
+    ptr = new T;
+
   // ensure that the current folder is of type T
-  T* derived = dynamic_cast<T*> (ptr);
+  T* derived = dynamic_cast<T*> (ptr.ptr());
 
   if (!derived)
-    derived = new T;
+    throw Error (InvalidState, "setup", "Fold not of expected type");
 
-  setup (ptr, derived);
+  setup (derived);
 
   return derived;
-}
-
-template<class T>
-dsp::Fold* setup_not (dsp::Fold* ptr)
-{
-  // ensure that the current folder is not of type T
-  T* derived = dynamic_cast<T*> (ptr);
-
-  if (derived || !ptr)
-    ptr = new dsp::Fold;
-
-  setup (derived, ptr);
-
-  return ptr;
 }
 
 const char* multifold_error =
@@ -966,12 +946,17 @@ void dsp::LoadToFold::prepare_fold (TimeSeries* to_fold)
   for (unsigned ifold=0; ifold < nfold; ifold++)
   {
     build_fold (fold[ifold], get_unloader(ifold));
-    prepare_fold (ifold, to_fold);
+
+    /*
+      path must be built before fold[ifold] is added to operations vector
+      so that each path will contain only one Fold instance.
+    */
 
     path[ifold] = new SignalPath (operations);
     path[ifold]->add( fold[ifold] );
+
+    prepare_fold (ifold, to_fold);
   }
-  
 }
 
 dsp::PhaseSeriesUnloader* 
@@ -983,7 +968,7 @@ dsp::LoadToFold::get_unloader (unsigned ifold)
   if (!unloader.at(ifold))
   {
     if (Operation::verbose)
-      cerr << "dsp::LoadToFold::get_unloader prepare Archiver" << endl;
+      cerr << "dsp::LoadToFold::get_unloader prepare new Archiver" << endl;
 
     Archiver* archiver = new Archiver;
     unloader[ifold] = archiver;
@@ -996,66 +981,64 @@ dsp::LoadToFold::get_unloader (unsigned ifold)
 void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
                                   PhaseSeriesUnloader* unloader) try
 {
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFold::build_fold input ptr=" << fold.ptr()
+	 << " unloader ptr=" << unloader << endl;
+
   if (!output_subints())
   {
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::build_fold prepare Fold" << endl;
 
-    fold = setup_not< Subint<Fold> > (fold.ptr());
+    if (!fold)
+      fold = new Fold;
+
+    setup (fold);
   }
-  else
+  else if (config->cyclic_nchan) 
   {
     if (Operation::verbose)
-      cerr << "dsp::LoadToFold::build_fold prepare Subint" << endl;
+      cerr << "dsp::LoadToFold::build_fold prepare Subint<CyclicFold>" << endl;
 
-    if (config->cyclic_nchan) 
+    Subint<CyclicFold>* subfold = setup< Subint<CyclicFold> > (fold);
+
+    subfold -> set_nchan(config->cyclic_nchan);
+    subfold -> set_npol(config->npol);
+
+    if (config->integration_length)
     {
-      Subint<CyclicFold>* subfold = 
-	setup< Subint<CyclicFold> > (fold.ptr());
-
-      subfold -> set_nchan(config->cyclic_nchan);
-      subfold -> set_npol(config->npol);
-
-      if (config->integration_length)
-      {
-	subfold -> set_subint_seconds (config->integration_length);
+      subfold -> set_subint_seconds (config->integration_length);
 	
-	if (config->minimum_integration_length > 0)
-	  unloader->set_minimum_integration_length (config->minimum_integration_length);
-      }
-      else
-	throw Error (InvalidState, "dsp::LoadToFold::build_fold", 
-		     "Single-pulse cyclic spectra not supported");
-
-      subfold -> set_unloader (unloader);
-      
-      fold = subfold;
-      
+      if (config->minimum_integration_length > 0)
+	unloader->set_minimum_integration_length (config->minimum_integration_length);
     }
-
-    else 
-    {
-      Subint<Fold>* subfold = setup< Subint<Fold> > (fold.ptr());
-      
-      if (config->integration_length)
-      {
-	subfold -> set_subint_seconds (config->integration_length);
-	
-	if (config->minimum_integration_length > 0)
-	  unloader->set_minimum_integration_length (config->minimum_integration_length);
-      }
-      else
-      {
-	subfold -> set_subint_turns (1);
-	subfold -> set_fractional_pulses (config->fractional_pulses);
-      }
-
-      subfold -> set_unloader (unloader);
-      
-      fold = subfold;
-      
-    }
+    else
+      throw Error (InvalidState, "dsp::LoadToFold::build_fold", 
+		   "Single-pulse cyclic spectra not supported");
     
+    subfold -> set_unloader (unloader);
+  }
+  else 
+  {
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::build_fold prepare Subint<Fold>" << endl;
+
+    Subint<Fold>* subfold = setup< Subint<Fold> > (fold);
+    
+    if (config->integration_length)
+    {
+      subfold -> set_subint_seconds (config->integration_length);
+	
+      if (config->minimum_integration_length > 0)
+	unloader->set_minimum_integration_length (config->minimum_integration_length);
+    }
+    else
+    {
+      subfold -> set_subint_turns (1);
+      subfold -> set_fractional_pulses (config->fractional_pulses);
+    }
+
+    subfold -> set_unloader (unloader);
   }
 
   if (Operation::verbose)
@@ -1072,6 +1055,9 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
 
   if (config->folding_period)
     fold->set_folding_period (config->folding_period);
+
+  if (Operation::verbose)
+    cerr << "dsp::LoadToFold::build_fold output ptr=" << fold.ptr() << endl;
 }
 catch (Error& error)
 {
@@ -1292,6 +1278,8 @@ void dsp::LoadToFold::share (SingleThread* other)
     // the clone automatically copies the pointers to predictors ...
     fold[ifold] = thread->fold[ifold]->clone();
     
+    DEBUG( "dsp::LoadToFold::share cloned ptr=" << fold[ifold].ptr() );
+
     // ... but each thread should have its own
     if (fold[ifold]->has_folding_predictor())
       fold[ifold]->set_folding_predictor
