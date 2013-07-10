@@ -71,6 +71,7 @@ if HAVE_PGPLOT
   #
 
   libdspdsp_la_SOURCES += ExcisionStatsPlotter.C BitStatsPlotter.C
+  libdspdsp_la_LIBADD = @PGPLOT_LIBS@
   bin_PROGRAMS += digistat passband
 
   digistat_SOURCES = digistat.C
