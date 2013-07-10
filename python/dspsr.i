@@ -8,6 +8,7 @@
 #include "dsp/Observation.h"
 #include "dsp/DataSeries.h"
 #include "dsp/IOManager.h"
+#include "dsp/Input.h"
 #include "dsp/BitSeries.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Detection.h"
@@ -117,6 +118,7 @@ void pointer_tracker_remove(Reference::Able *ptr) {
 %include "dsp/Observation.h"
 %include "dsp/DataSeries.h"
 %include "dsp/IOManager.h"
+%include "dsp/Input.h"
 %include "dsp/BitSeries.h"
 %include "dsp/TimeSeries.h"
 // Detection::Engine is screwing this up...
