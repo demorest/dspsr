@@ -68,6 +68,8 @@ void dsp::LoadToFoldN::share ()
   if (at(0)->kernel && !at(0)->kernel->context)
     at(0)->kernel->context = new ThreadContext;
 
+  at(0)->prepare_fold ();
+
   if (at(0)->output_subints()) 
   {
     bool subints_ok = prepare_subint_archival <Fold> ();
@@ -134,9 +136,14 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
 	     << submit << endl;
 
       at(i)->unloader[ifold] = submit;
-    }
 
-    subfold->set_unloader( at(0)->unloader[ifold] );
+      subfold = dynamic_cast< Subint<T>* >( at(i)->fold[ifold].get() );
+
+      if (!subfold)
+	return false;
+
+      subfold->set_unloader( submit );
+    }
   }
 
   if (Operation::verbose)
