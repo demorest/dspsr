@@ -154,6 +154,10 @@ namespace dsp {
     PhaseSeriesUnloader* get_unloader (unsigned ifold);
     size_t get_nfold ();
 
+    //! Prepare all fold instances
+    void prepare_fold ();
+    bool fold_prepared;
+
     //! Prepare the given Archiver
     void prepare_archiver (Archiver*);
 

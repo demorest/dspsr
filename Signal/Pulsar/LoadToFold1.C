@@ -78,6 +78,8 @@ static void* const undefined_stream = (void *) -1;
 dsp::LoadToFold::LoadToFold (Config* configuration)
 {
   manage_archiver = true;
+  fold_prepared = false;
+
   set_configuration (configuration);
 }
 
@@ -676,9 +678,22 @@ double get_dispersion_measure (const Pulsar::Parameters* parameters)
                "unknown Parameters class");
 }
 
+void dsp::LoadToFold::prepare_fold ()
+{
+  if (fold_prepared)
+    return;
+
+  for (unsigned ifold=0; ifold < fold.size(); ifold++)
+    fold[ifold]->prepare ( manager->get_info() );
+
+  fold_prepared = true;
+}
+
 void dsp::LoadToFold::prepare ()
 {
   assert (fold.size() > 0);
+
+  prepare_fold ();
 
   const Pulsar::Predictor* predictor = 0;
   if (fold[0]->has_folding_predictor())
@@ -744,8 +759,6 @@ void dsp::LoadToFold::prepare ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
-  SingleThread::prepare ();
-
   MJD reference_epoch;
 
   if (config->reference_epoch == "start")
@@ -778,6 +791,8 @@ void dsp::LoadToFold::prepare ()
 
     fold[ifold]->set_reference_epoch (reference_epoch);
   }
+
+  SingleThread::prepare ();
 
   // for now ...
 
@@ -1127,8 +1142,6 @@ void dsp::LoadToFold::configure_fold (unsigned ifold, TimeSeries* to_fold)
   
   if (change)
     fold[ifold]->set_change (change);
-  
-  // fold[ifold]->prepare ( manager->get_info() );
   
   if (ifold && ifold <= config->additional_pulsars.size())
   {
