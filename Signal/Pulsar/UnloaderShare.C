@@ -106,10 +106,10 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
 
   // postponed copy
   if (divider_copy)
-    {
-      divider = *divider_copy;
-      divider_copy = 0;
-    }
+  {
+    divider = *divider_copy;
+    divider_copy = 0;
+  }
 
   unsigned contributor = submit->contributor;
 
