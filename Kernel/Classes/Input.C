@@ -15,6 +15,9 @@ using namespace std;
 
 dsp::Input::Input (const char* name) : Operation (name)
 {
+  if (verbose)
+    cerr << "dsp::Input ctor this=" << this << endl;
+
   load_size = block_size = overlap = 0;
   load_sample = 0;
 

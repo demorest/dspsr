@@ -45,6 +45,9 @@ void dsp::Filterbank::set_engine (Engine* _engine)
 
 void dsp::Filterbank::prepare ()
 {
+  if (verbose)
+    cerr << "dsp::Filterbank::prepare" << endl;
+
   make_preparations ();
   prepared = true;
 }
@@ -381,6 +384,9 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
 
 void dsp::Filterbank::reserve ()
 {
+  if (verbose)
+    cerr << "dsp::Filterbank::reserve" << endl;
+
   resize_output (true);
 }
 
@@ -417,30 +423,6 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
   // prepare the output TimeSeries
   prepare_output (output_ndat, true);
 }
-
-#if GLENN
-<<<<<<< HEAD
-// ichan is input channel number being processed
-void set_pointers (dsp::Filterbank::Engine* engine, dsp::TimeSeries* output, 
-                   uint64_t out_offset, unsigned ichan, unsigned ipol = 0)
-{
-//  engine->nchan = output->get_nchan(); // this is causing problems because it conflicts with what's really needed (output nchan/ input nchan)
-
-	//since ichan refers to the input channel number, we want the output to be stored in the corresponding output channel block
-	// which starts at ichan * nchan_subband
-  engine->output = output->get_datptr (ichan * engine->nchan_subband, ipol) + out_offset; //adding ichan here, was 0 before
-  if (output->get_nchan() == 1) {
-	  engine->output_span = 0;
-  }
-  else {
-	  engine->output_span =
-		output->get_datptr (1, ipol) - output->get_datptr (0, ipol);
-  }
-}
-
-=======
->>>>>>> mopsr
-#endif
 
 void dsp::Filterbank::transformation ()
 {
@@ -552,19 +534,6 @@ void dsp::Filterbank::filterbank ()
   uint64_t* data_into = NULL;
   uint64_t* data_from = NULL;
 
-#if GLENN
-<<<<<<< HEAD
-
-  if (engine)
-  {
-    engine->scratch = c_spectrum[0];
-//    engine->nchan = nchan;
-    engine->nfilt_pos = nfilt_pos;
-    engine->freq_res = freq_res;
-    engine->nkeep = nkeep;
-=======
-#endif
-
   // /////////////////////////////////////////////////////////////////////
   //
   // PERFORM FILTERBANK VIA ENGINE (e.g. on GPU)
@@ -588,32 +557,6 @@ void dsp::Filterbank::filterbank ()
   {
     for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
     {
-
-#if GLENN
-<<<<<<< HEAD
-
-    	engine->sendKernel(this, input_ichan);
-
-      for (ipol=0; ipol < npol; ipol++)
-      {
-	for (ipart=0; ipart<npart; ipart++)
-	{
-//#ifdef _DEBUG
-//	  cerr << "ichan=" << input_ichan << " ipol="<< ipol << " ipart=" << ipart << endl;
-//#endif
-	  in_offset = ipart * in_step;
-	  out_offset = ipart * out_step;
-      
-	  time_dom_ptr = const_cast<float*>(input->get_datptr (input_ichan, ipol)) + in_offset;
-
-
-	  set_pointers (engine, output, out_offset, input_ichan, ipol); // added input_ichan here
-	  
-	  engine->perform (time_dom_ptr);
-
-	} // for each part
-=======
-#endif
 
       for (ipart=0; ipart<npart; ipart++)
       {
