@@ -195,6 +195,7 @@ void dsp::Fold::prepare (const Observation* observation)
     pulsar_ephemeris = 0;
     folding_predictor = 0;
     built = true;
+    reset ();
     return;
   }
 
@@ -203,6 +204,7 @@ void dsp::Fold::prepare (const Observation* observation)
     if (verbose)
       cerr << "dsp::Fold::prepare using given predictor" << endl;
     built = true;
+    reset ();
     return;
   }
 
@@ -220,6 +222,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
   folding_predictor = get_folding_predictor (pulsar_ephemeris, observation);
 
+  reset ();
   built = true;
 } 
 
@@ -405,32 +408,6 @@ void dsp::Fold::set_change (const ObservationChange* c)
   change = c;
   built = false;
 }
-
-#if 0
-//! Get the name of the source
-std::string dsp::Fold::get_source_name () const
-{
-  if (input)
-  {
-    const Observation* observation = input;
-
-    Reference::To<Observation> copy;
-    if (change)
-    {
-      copy = new Observation (&observation);
-      change->change(copy);
-      observation = copy;
-    }
-
-    return observation->get_source();
-  }
-
-  if (pulsar_ephemeris)
-    return pulsar_ephemeris->get_name();
-
-  return "";
-}
-#endif
 
 //! Get the average folding period
 double dsp::Fold::get_folding_period () const
