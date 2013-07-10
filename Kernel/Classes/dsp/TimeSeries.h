@@ -173,7 +173,7 @@ namespace dsp {
     //! Flag for whether the data contains zero values. See ZapWeight
     bool zeroed_data;
 
-    friend class InputBuffering;
+    friend class Reserve;
     friend class Unpacker;
 
     // do the work of the null_clone: copy necessary attributes from the given TimeSeries
