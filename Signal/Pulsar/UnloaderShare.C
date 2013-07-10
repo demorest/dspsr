@@ -57,7 +57,7 @@ dsp::PhaseSeriesUnloader* dsp::UnloaderShare::get_unloader () const
 
 void dsp::UnloaderShare::copy (const TimeDivide* other)
 {
-  divider = *other;
+  divider_copy = other;
 }
 
 //! Set the start time from which to begin counting sub-integrations
@@ -103,6 +103,13 @@ void dsp::UnloaderShare::unload (const PhaseSeries* data, Submit* submit) try
   std::ostream* verbose = 0;
   if (Operation::verbose)
     verbose = &(submit->cerr);
+
+  // postponed copy
+  if (divider_copy)
+    {
+      divider = *divider_copy;
+      divider_copy = 0;
+    }
 
   unsigned contributor = submit->contributor;
 

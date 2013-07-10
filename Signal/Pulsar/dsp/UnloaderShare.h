@@ -113,6 +113,9 @@ namespace dsp {
     //! The time divider
     TimeDivide divider;
 
+    //! Pointer to TimeDivide to be copied when needed
+    const TimeDivide* divider_copy;
+
     //! The number of contributors
     unsigned contributors;
 
