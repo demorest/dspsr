@@ -60,8 +60,11 @@ namespace dsp {
     //! Destructor
     ~LoadToFold ();
 
-    //! Share any necessary resources with the specified thread
-    void share (SingleThread*);
+    //! Create the pipeline
+    void construct ();
+
+    //! Finish preparing
+    void prepare ();
 
     //! Run through the data
     void run ();
@@ -73,11 +76,8 @@ namespace dsp {
 
     friend class LoadToFoldN;
 
-    //! Create the pipeline
-    void construct ();
-
-    //! Finish preparing
-    void finalize ();
+    //! Share any necessary resources with the specified thread
+    void share (SingleThread*);
 
     //! Wrap up tasks at end of data
     void end_of_data ();
@@ -146,10 +146,10 @@ namespace dsp {
     //! Prepare to remove interchannel dispersion delays
     void prepare_interchan (TimeSeries*);
 
-    //! Prepare to fold the given TimeSeries
-    void prepare_fold (TimeSeries*);
+    //! Build to fold the given TimeSeries
+    void build_fold (TimeSeries*);
     void build_fold (Reference::To<Fold>&, PhaseSeriesUnloader*);
-    void prepare_fold (unsigned ifold, TimeSeries* to_fold);
+    void configure_fold (unsigned ifold, TimeSeries* to_fold);
 
     PhaseSeriesUnloader* get_unloader (unsigned ifold);
     size_t get_nfold ();

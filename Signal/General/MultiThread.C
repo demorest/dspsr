@@ -86,27 +86,36 @@ dsp::Input* dsp::MultiThread::get_input ()
   return input;
 }
 
-void dsp::MultiThread::prepare (SingleThread* thread)
+
+void dsp::MultiThread::construct ()
 {
-  dsp::MultiThread::signal (thread, SingleThread::Prepare);
-  dsp::MultiThread::wait (thread, SingleThread::Prepared);
+  launch_threads ();
+
+  for (unsigned i=0; i<threads.size(); i++)
+  {
+    dsp::MultiThread::signal (threads[i], SingleThread::Construct);
+    dsp::MultiThread::wait (threads[i], SingleThread::Constructed);
+  }
+
+  share ();
+
+  for (unsigned i=0; i<threads.size(); i++)
+  {
+    threads[i]->thread_id = i;
+    if (i > 0)
+      threads[i]->colleague = threads[0];
+  }
 }
 
 void dsp::MultiThread::prepare ()
 {
-  launch_threads ();
+  // thread 0 will prepare as normal
+  // the rest will call SingleThread::share and then prepare
 
-  prepare( threads[0] );
-
-  share ();
-
-  for (unsigned i=1; i<threads.size(); i++)
+  for (unsigned i=0; i<threads.size(); i++)
   {
-    threads[i]->thread_id = i;
-
-    threads[i]->share (threads[0]);
-
-    prepare( threads[i] );
+    dsp::MultiThread::signal (threads[i], SingleThread::Prepare);
+    dsp::MultiThread::wait (threads[i], SingleThread::Prepared);
   }
 }
 
@@ -147,48 +156,6 @@ uint64_t dsp::MultiThread::get_minimum_samples () const
   return threads[0]->get_minimum_samples();
 }
 
-//
-// share buffering policies
-//
-void dsp::MultiThread::share (SingleThread* thread, SingleThread* share)
-{
-  typedef Transformation<TimeSeries,TimeSeries> Xform;
-
-  for (unsigned iop=0; iop < thread->operations.size(); iop++)
-  {
-    Xform* trans0 = dynamic_kast<Xform>( share->operations[iop] );
-
-    if (!trans0)
-      continue;
-
-    if (!trans0->has_buffering_policy())
-      continue;
-
-    InputBuffering::Share* ibuf0;
-    ibuf0 = dynamic_cast<InputBuffering::Share*>
-      ( trans0->get_buffering_policy() );
-
-    if (!ibuf0)
-      continue;
-
-    Xform* trans = dynamic_kast<Xform>( thread->operations[iop] );
-    
-    if (!trans)
-      throw Error (InvalidState, "dsp::MultiThread::share",
-		   "mismatched operation type");
-
-    if (!trans->has_buffering_policy())
-      throw Error (InvalidState, "dsp::MultiThread::share",
-		   "mismatched buffering policy");
-    
-    if (Operation::verbose)
-      cerr << "dsp::MultiThread::share sharing buffering policy of " 
-        << trans->get_name() << endl;
-
-    trans->set_buffering_policy( ibuf0->clone(trans) );
-  }
-}
-
 void dsp::MultiThread::wait (SingleThread* thread, SingleThread::State state)
 {
   ThreadContext::Lock lock (thread->state_change);
@@ -207,14 +174,21 @@ void* dsp::MultiThread::thread (void* context) try
 {
   dsp::SingleThread* thread = reinterpret_cast<dsp::SingleThread*>( context );
 
+  // Construct
+
+  wait (thread, SingleThread::Construct);
+  thread->construct ();
+  signal (thread, SingleThread::Constructed);
+
+  // Prepare
+
   wait (thread, SingleThread::Prepare);
-
-  thread->prepare ();
-
   if (thread->colleague)
-    share (thread, thread->colleague);
-
+    thread->share (thread->colleague);
+  thread->prepare ();
   signal (thread, SingleThread::Prepared);
+
+  // Run
 
   wait (thread, SingleThread::Run);
 

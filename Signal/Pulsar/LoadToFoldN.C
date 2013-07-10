@@ -74,7 +74,7 @@ void dsp::LoadToFoldN::share ()
     if (!subints_ok)
       subints_ok = prepare_subint_archival <CyclicFold> ();
     if (!subints_ok)
-      throw Error (InvalidState, "dsp::LoadToFoldN::prepare",
+      throw Error (InvalidState, "dsp::LoadToFoldN::share",
           "folder is not a recognized Subint<> type.");
   }
 }
@@ -107,10 +107,9 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
   {
     Subint<T>* subfold = 
       dynamic_cast< Subint<T>* >( at(0)->fold[ifold].get() );
+
     if (!subfold)
       return false;
-      //throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
-//		   "folder is not a Subint<Fold>" );
 
     unloader[ifold] = new UnloaderShare( threads.size() );
     unloader[ifold]->copy( subfold->get_divider() );

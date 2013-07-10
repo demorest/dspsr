@@ -57,11 +57,11 @@ namespace dsp {
     //! Get the Input from which data are read
     Input* get_input ();
 
-    //! Construct the signal processing pipeline
-    void prepare ();
+    //! Build the signal processing pipeline
+    void construct ();
 
-    //! Reserve the memory required for the pipeline
-    void reserve ();
+    //! Prepare the signal processing pipeline
+    void prepare ();
 
     //! Run through the data
     void run ();
@@ -89,15 +89,6 @@ namespace dsp {
 
   protected:
 
-    //! Start preparing
-    virtual void initialize ();
-
-    //! Main preparation task
-    virtual void construct () = 0;
-
-    //! Finish preparing
-    virtual void finalize ();
-
     //! Any special operations that must be performed at the end of data
     virtual void end_of_data ();
 
@@ -107,13 +98,15 @@ namespace dsp {
     //! Processing thread states
     enum State
       {
-	Fail,      //! an error has occurred
-	Idle,      //! nothing happening
-	Prepare,   //! request to prepare
-	Prepared,  //! preparations completed
-	Run,       //! processing started
-	Done,      //! processing completed
-	Joined     //! completion acknowledged 
+	Fail,        //! an error has occurred
+	Idle,        //! nothing happening
+	Construct,   //! request to construct
+	Constructed, //! construction completed
+	Prepare,     //! request to prepare
+	Prepared,    //! preparations completed
+	Run,         //! processing started
+	Done,        //! processing completed
+	Joined       //! completion acknowledged 
       };
 
     //! Processing state

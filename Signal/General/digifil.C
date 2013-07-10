@@ -41,6 +41,7 @@ int main (int argc, char** argv) try
   Reference::To<dsp::Pipeline> engine = new dsp::LoadToFil (config);
 
   engine->set_input( config->open (argc, argv) );
+  engine->construct ();   
   engine->prepare ();   
   engine->run();
   engine->finish();

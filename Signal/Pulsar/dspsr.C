@@ -186,6 +186,7 @@ void prepare (dsp::Pipeline* engine, dsp::Input* input)
 		 "\n\n" + baseband_options + "\n\n"
 		 " are specific to baseband (undetected) data.");
 
+  engine->construct ();
   engine->prepare ();    
 }
 
