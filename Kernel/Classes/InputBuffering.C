@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/InputBuffering.h"
+#include "dsp/Reserve.h"
 
 using namespace std;
 
@@ -13,9 +14,9 @@ dsp::InputBuffering::InputBuffering (HasInput<TimeSeries>* _target)
 {
   target = _target;
   next_start_sample = 0;
-  requested_reserve = 0;
-  minimum_samples = 0;
+
   name = "InputBuffering";
+  reserve = new Reserve;
 }
 
 //! Set the target with input TimeSeries to be buffered
@@ -27,17 +28,7 @@ void dsp::InputBuffering::set_target (HasInput<TimeSeries>* _target)
 //! Set the minimum number of samples that can be processed
 void dsp::InputBuffering::set_minimum_samples (uint64_t samples)
 {
-  minimum_samples = samples;
-
-  if (requested_reserve < minimum_samples)
-  {
-    if (Operation::verbose)
-      cerr << "dsp::InputBuffering::set_minimum_samples"
-              " increasing reserve to " << minimum_samples << endl;
-
-    get_input()->change_reserve (minimum_samples-requested_reserve);
-    requested_reserve = minimum_samples;
-  }
+  reserve->reserve( get_input(), samples );
 }
 
 /*! Copy remaining data from the target Transformation's input to buffer */
@@ -68,8 +59,7 @@ void dsp::InputBuffering::set_next_start (uint64_t next)
     cerr << "dsp::InputBuffering::set_next_start saving "
          << buffer_ndat << " samples" << endl;
 
-  if (minimum_samples < buffer_ndat)
-    set_minimum_samples (buffer_ndat);
+  reserve->reserve( input, buffer_ndat );
 
   if (!buffer)
   {
@@ -91,9 +81,9 @@ void dsp::InputBuffering::set_next_start (uint64_t next)
 
   if (Operation::verbose)
     cerr << "dsp::InputBuffering::set_next_start resize buffer"
-            " minimum_samples=" << minimum_samples << endl;
+      " minimum_samples=" << reserve->get_reserved() << endl;
 
-  buffer->resize( minimum_samples );
+  buffer->resize( reserve->get_reserved() );
   buffer->copy_data( input, next_start_sample, buffer_ndat );
   buffer->set_ndat( buffer_ndat );
 }
@@ -101,7 +91,7 @@ void dsp::InputBuffering::set_next_start (uint64_t next)
 /*! Prepend buffered data to target Transformation's input TimeSeries */
 void dsp::InputBuffering::pre_transformation () try
 {
-  if (!requested_reserve || !buffer || !buffer->get_ndat())
+  if (!reserve->get_reserved() || !buffer || !buffer->get_ndat())
     return;
 
   const TimeSeries* container = get_input();
