@@ -93,18 +93,16 @@ void dsp::MultiThread::construct ()
 
   for (unsigned i=0; i<threads.size(); i++)
   {
+    threads[i]->thread_id = i;
     dsp::MultiThread::signal (threads[i], SingleThread::Construct);
     dsp::MultiThread::wait (threads[i], SingleThread::Constructed);
   }
 
   share ();
 
-  for (unsigned i=0; i<threads.size(); i++)
-  {
-    threads[i]->thread_id = i;
-    if (i > 0)
-      threads[i]->colleague = threads[0];
-  }
+  for (unsigned i=1; i<threads.size(); i++)
+    threads[i]->colleague = threads[0];
+
 }
 
 void dsp::MultiThread::prepare ()
