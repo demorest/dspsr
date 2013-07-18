@@ -169,7 +169,7 @@ dsp::TimeSeries* dsp::SingleThread::new_time_series ()
   {
     if (Operation::verbose)
       cerr << "Creating TimeSeries instance" << endl;
-    return  new TimeSeries;
+    return new TimeSeries;
   }
 }
 
@@ -678,10 +678,22 @@ void dsp::SingleThread::Config::prepare (Input* input)
     input_prepare( input );
 
   if (seek_seconds)
+  {
+    if (Operation::verbose)
+      std::cerr << "dsp::SingleThread::Config::prepare seek_seconds="
+                << seek_seconds << endl;
+
     input->set_start_seconds (seek_seconds);
-  
+  }
+
   if (total_seconds)
+  {
+    if (Operation::verbose)
+      std::cerr << "dsp::SingleThread::Config::prepare total_seconds="
+                << total_seconds << endl;
+
     input->set_total_seconds (seek_seconds + total_seconds);
+  }
 }
 
 //! set the number of CPU threads to be used
