@@ -367,14 +367,6 @@ void dsp::LoadToFold::construct () try
     }
 #endif
 
-#define DUMP_FILTERBANK 0
-#if DUMP_FILTERBANK
-    Dump* dump = new Dump;
-    dump->set_output( fopen("post_filterbank.dat", "w") );
-    dump->set_input (convolved);
-    operations.push_back (dump);
-#endif
-
   }
 
   bool filterbank_after_dedisp
@@ -764,6 +756,8 @@ void dsp::LoadToFold::prepare ()
   if (config->reference_epoch == "start")
   {
     reference_epoch = manager->get_info()->get_start_time();
+    reference_epoch += manager->get_input()->tell_seconds();
+
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::prepare reference epoch=start_time=" 
 	   << reference_epoch.printdays(13) << endl;
