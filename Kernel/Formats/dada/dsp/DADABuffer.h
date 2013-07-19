@@ -41,7 +41,7 @@ namespace dsp {
     virtual bool eod();
 
     //! Get the information about the data source
-    virtual void set_info (const Observation& obs) { info = obs; }
+    virtual void set_info (Observation* obs) { info = obs; }
 
     //! Reset DADAbuffer
     void rewind ();

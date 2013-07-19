@@ -165,6 +165,8 @@ dsp::Subint<Op>::~Subint ()
 template <class Op>
 Op* dsp::Subint<Op>::clone () const
 {
+  if (Op::verbose)
+    std::cerr << "dsp::Subint<Op>::clone" << std::endl;
   return new Subint<Op>(*this);
 }
 

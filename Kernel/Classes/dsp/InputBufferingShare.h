@@ -52,6 +52,9 @@ namespace dsp {
     //! The shared input buffering policy
     Reference::To<InputBuffering> buffer;
     
+    //! The reserve manager
+    Reference::To<Reserve> reserve;
+
     //! Multi-threaded context information
     ThreadContext* context;
 

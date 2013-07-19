@@ -107,8 +107,9 @@ void dsp::LuMPUnpacker::unpack ()
   const uint_fast32_t nbit = input->get_nbit();
   const Signal::State state = input->get_state();
 
-  const LuMPFile* lump_file = get_Input<LuMPFile>();
-  const LuMPObservation* lump = lump_file->lump_info;
+  const Observation* obs = input->get_loader()->get_info();
+  const LuMPObservation* lump = dynamic_cast<const LuMPObservation*>(obs);
+  assert (lump != NULL);
 
   const dsp::BinaryFormat binary_format = lump->get_binary_format();
   const dsp::DataEndianness data_endianness = lump->get_data_endianness();

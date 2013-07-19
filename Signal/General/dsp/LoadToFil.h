@@ -36,13 +36,13 @@ namespace dsp {
     //! Constructor
     LoadToFil (Config* config = 0);
 
-  private:
-
     //! Create the pipeline
     void construct ();
 
     //! Final preparations before running
-    void finalize ();
+    void prepare ();
+
+  private:
 
     //! Configuration parameters
     Reference::To<Config> config;

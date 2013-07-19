@@ -58,6 +58,9 @@ namespace dsp
     //! Return a new Wait operation for this thread
     Wait * get_wait();
 
+    unsigned get_nop() const { return operations.size(); }
+    Operation* get_op (unsigned i) { return operations.at(i); }
+
   protected:
 
     //! Operation thread calls thread method
@@ -85,6 +88,7 @@ namespace dsp
 
     Wait (OperationThread* parent);
     void operation ();
+    OperationThread* get_parent() const { return parent; }
 
   protected:
 

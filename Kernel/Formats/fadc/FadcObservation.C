@@ -73,12 +73,12 @@ dsp::FadcObservation::FadcObservation (const char* header, long firstFile, long 
   
   string tel = hdrstr;
   if ( tel == "Arecibo" || tel == "AO" || tel=="ARECIBO" || tel=="arecibo" || tel=="Ao" || tel=="ao") 
-    set_telescope_code (3);
+    get_info()->set_telescope ("3");
   else if ( tel == "Greenbank" || tel == "GBT" || tel=="GreenBank" || tel=="greenbank" || tel=="Gbt" || tel=="gbt" || tel=="GREENBANK" ) 
-    set_telescope_code (1);
+    get_info()->set_telescope ("1");
   else {
-    cerr << "FadcObservation:: Warning using code" << hdrstr[0] << endl;
-    set_telescope_code (hdrstr[0]);
+    cerr << "FadcObservation:: Warning using telescope code " << hdrstr << endl;
+    get_info()->set_telescope (hdrstr);
   }
 cerr<<"FadcObservation: Telescope = "<<tel<<"\n";
   // //////////////////////////////////////////////////////////////////////

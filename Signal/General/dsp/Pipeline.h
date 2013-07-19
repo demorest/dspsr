@@ -34,7 +34,10 @@ namespace dsp {
     //! Get the Input from which data are read
     virtual Input* get_input () = 0;
 
-    //! Prepare to fold the input TimeSeries
+    //! Build the data reduction pipeline
+    virtual void construct () = 0;
+
+    //! Prepare to process the input TimeSeries
     virtual void prepare () = 0;
 
     //! Run through the data

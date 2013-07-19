@@ -98,6 +98,8 @@ void dsp::LoadToFil::Config::set_very_verbose ()
 
 void dsp::LoadToFil::construct () try
 {
+  SingleThread::construct ();
+
   /*
     The following lines "wire up" the signal path, using containers
     to communicate the data between operations.
@@ -328,9 +330,9 @@ catch (Error& error)
   throw error += "dsp::LoadToFil::construct";
 }
 
-void dsp::LoadToFil::finalize () try
+void dsp::LoadToFil::prepare () try
 {
-  SingleThread::finalize();
+  SingleThread::prepare();
 
   // Check that block size is sufficient for the filterbanks,
   // increase it if not.
@@ -352,5 +354,5 @@ void dsp::LoadToFil::finalize () try
 }
 catch (Error& error)
 {
-  throw error += "dsp::LoadToFil::finalize";
+  throw error += "dsp::LoadToFil::prepare";
 }

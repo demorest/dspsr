@@ -156,5 +156,5 @@ int64_t dsp::BlockFile::fstat_file_ndat (uint64_t tailer_bytes)
     data_bytes += extra;
   }
 
-  return info.get_nsamples (data_bytes);
+  return get_info()->get_nsamples (data_bytes);
 }

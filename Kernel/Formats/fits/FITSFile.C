@@ -131,23 +131,23 @@ void dsp::FITSFile::open_file(const char* filename)
   fits_params header;
   read_header(fp, filename, &header);
 
-  info.set_source(archive->get_source());
-  info.set_type(Signal::Pulsar);
-  info.set_centre_frequency(archive->get_centre_frequency());
-  info.set_bandwidth(archive->get_bandwidth());
-  info.set_nchan(nchan);
-  info.set_npol(npol);
+  get_info()->set_source(archive->get_source());
+  get_info()->set_type(Signal::Pulsar);
+  get_info()->set_centre_frequency(archive->get_centre_frequency());
+  get_info()->set_bandwidth(archive->get_bandwidth());
+  get_info()->set_nchan(nchan);
+  get_info()->set_npol(npol);
 
-  info.set_nbit(nbits);
-  info.set_state(archive->get_state());
-  info.set_rate(1.0/header.tsamp);
-  info.set_coordinates(archive->get_coordinates());
-  info.set_receiver(archive->get<Pulsar::Receiver>()->get_name());
-  info.set_basis(archive->get_basis());
-  info.set_start_time(header.start_time);
-  info.set_machine("FITS");
-  info.set_telescope(archive->get_telescope());
-  info.set_ndat(header.nrow*samples_in_row);
+  get_info()->set_nbit(nbits);
+  get_info()->set_state(archive->get_state());
+  get_info()->set_rate(1.0/header.tsamp);
+  get_info()->set_coordinates(archive->get_coordinates());
+  get_info()->set_receiver(archive->get<Pulsar::Receiver>()->get_name());
+  get_info()->set_basis(archive->get_basis());
+  get_info()->set_start_time(header.start_time);
+  get_info()->set_machine("FITS");
+  get_info()->set_telescope(archive->get_telescope());
+  get_info()->set_ndat(header.nrow*samples_in_row);
 
 
   set_samples_in_row(samples_in_row);
@@ -180,7 +180,7 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
   const unsigned bytes_per_row = get_bytes_per_row();
 
   // Number of rows in the SUBINT table.
-  const unsigned nrow          = info.get_ndat()/nsamp;
+  const unsigned nrow          = get_info()->get_ndat()/nsamp;
 
   // Adjust current_row and byte_offset depending on next sample to read.
   const uint64_t sample = get_load_sample();
@@ -188,9 +188,9 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
   // Calculate the row within the SUBINT table of the target sample to be read.
   unsigned current_row = (int)(sample/(nsamp)) + 1;
 
-  const unsigned nchan = info.get_nchan();
-  const unsigned npol  = info.get_npol();
-  const unsigned nbit  = info.get_nbit();
+  const unsigned nchan = get_info()->get_nchan();
+  const unsigned npol  = get_info()->get_npol();
+  const unsigned nbit  = get_info()->get_nbit();
   const unsigned bytes_per_sample = (nchan*npol*nbit) / 8;
 
   unsigned char nval = '0';

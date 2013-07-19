@@ -75,8 +75,7 @@ void dsp::LuMPFile::open_file (const char* filename)
     throw Error (FailedCall, "dsp::LuMPFile::open_file",
 		 "get_header(%s) failed", filename);
   
-  lump_info = new LuMPObservation (header.c_str());
-  info = *lump_info;
+  info = new LuMPObservation (header.c_str());
 
   unsigned hdr_size;
   if (ascii_header_get (header.c_str(), "HDR_SIZE", "%u", &hdr_size) < 0)
@@ -94,7 +93,7 @@ void dsp::LuMPFile::open_file (const char* filename)
   
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
 

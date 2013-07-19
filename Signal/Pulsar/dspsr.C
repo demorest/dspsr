@@ -186,6 +186,7 @@ void prepare (dsp::Pipeline* engine, dsp::Input* input)
 		 "\n\n" + baseband_options + "\n\n"
 		 " are specific to baseband (undetected) data.");
 
+  engine->construct ();
   engine->prepare ();    
 }
 
@@ -298,6 +299,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->sk_nthreads, "skzn", "threads");
   arg->set_help ("number of CPU threads for spectral kurtosis filterbank");
 #endif
+
+  arg = menu.add (config->sk_fold, "sk_fold");
+  arg->set_help ("fold the SKFilterbank output");
 
   /* ***********************************************************************
 

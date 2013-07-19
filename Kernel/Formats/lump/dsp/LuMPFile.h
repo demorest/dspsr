@@ -28,12 +28,6 @@ namespace dsp {
     //! Returns true if filename appears to name a valid LuMP file
     bool is_valid (const char* filename) const;
 
-    //! Get the information about the data source
-    virtual Observation* get_info () { return lump_info; }
-
-    //! Get the information about the data source
-    virtual const Observation* get_info () const { return lump_info; }
-
   protected:
 
     friend class LuMPUnpacker;
@@ -43,9 +37,6 @@ namespace dsp {
 
     //! Read the LuMP ascii header from filename
     static std::string get_header (const char* filename);
-
-    //! Observation with extra attributes required by LuMP format
-    Reference::To<LuMPObservation> lump_info;
   };
 
 }

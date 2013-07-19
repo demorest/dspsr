@@ -5,6 +5,7 @@
  *
  ***************************************************************************/
 #include "dsp/GUPPIBlockFile.h"
+#include "dsp/BitSeries.h"
 
 #include "Error.h"
 
@@ -29,6 +30,7 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   current_block_byte = 0;
   overlap = 0;
   blocsize = 0;
+  set_overlap_buffer(new BitSeries);
 }
 
 dsp::GUPPIBlockFile::~GUPPIBlockFile ( )
@@ -53,38 +55,38 @@ void dsp::GUPPIBlockFile::parse_header()
   char ctmp[80], ctmp2[80];
 
   header_get_check("NBITS", &itmp);
-  info.set_nbit(itmp);
+  get_info()->set_nbit(itmp);
 
   header_get_check("OBSBW", &ftmp);
-  info.set_bandwidth(ftmp);
+  get_info()->set_bandwidth(ftmp);
 
   header_get_check("OBSFREQ", &ftmp);
-  info.set_centre_frequency(ftmp);
+  get_info()->set_centre_frequency(ftmp);
  
   header_get_check("OBSNCHAN", &itmp);
-  info.set_nchan(itmp);
+  get_info()->set_nchan(itmp);
 
   header_get_check("NPOL", &itmp);
   if (itmp==1)
-    info.set_npol(1);
+    get_info()->set_npol(1);
   else 
-    info.set_npol(2);
+    get_info()->set_npol(2);
 
   // Default to complex data
-  info.set_state(Signal::Analytic);
+  get_info()->set_state(Signal::Analytic);
 
-  if (info.get_nchan() == 1) 
-    info.set_state(Signal::Nyquist);
+  if (get_info()->get_nchan() == 1) 
+    get_info()->set_state(Signal::Nyquist);
 
   // Any format-specific checks
   header_get_check("PKTFMT", ctmp);
   if (string(ctmp) == "VDIF")
-    info.set_state(Signal::Nyquist);
+    get_info()->set_state(Signal::Nyquist);
   else if (string(ctmp) == "SIMPLE")
     time_ordered = false;
  
   header_get_check("TBIN", &ftmp);
-  info.set_rate(1.0/ftmp);
+  get_info()->set_rate(1.0/ftmp);
 
   int imjd, smjd;
   double t_offset;
@@ -93,17 +95,17 @@ void dsp::GUPPIBlockFile::parse_header()
   header_get_check("STT_OFFS", &t_offset);
   header_get_check("PKTIDX",   &ltmp);
   header_get_check("PKTSIZE",  &itmp);
-  t_offset += ltmp * itmp * 8.0 / info.get_rate() / 
-      (info.get_nbit() * info.get_nchan() * info.get_npol() * info.get_ndim());
+  t_offset += ltmp * itmp * 8.0 / get_info()->get_rate() / 
+      (get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol() * get_info()->get_ndim());
   //cerr << "t_offset=" << t_offset << "s" << endl;
   MJD epoch (imjd, (double)smjd/86400.0 + t_offset/86400.0);
-  info.set_start_time(epoch);
+  get_info()->set_start_time(epoch);
 
   header_get_check("TELESCOP", ctmp);
-  info.set_telescope(ctmp);
+  get_info()->set_telescope(ctmp);
 
   header_get_check("SRC_NAME", ctmp);
-  info.set_source(ctmp);
+  get_info()->set_source(ctmp);
 
   // Data block size params
   header_get_check("OVERLAP", &itmp);
@@ -112,16 +114,16 @@ void dsp::GUPPIBlockFile::parse_header()
   blocsize = itmp;
 
   header_get_check("BACKEND", ctmp);
-  info.set_machine(ctmp);
+  get_info()->set_machine(ctmp);
 
   // Maybe the following aren't strictly required ...
 
   // Poln type
   header_get_check("FD_POLN", ctmp);
   if (strncasecmp(ctmp, "CIR", 3)==0) 
-    info.set_basis(Signal::Circular);
+    get_info()->set_basis(Signal::Circular);
   else
-    info.set_basis(Signal::Linear);
+    get_info()->set_basis(Signal::Linear);
 
   // Coordinates
   sky_coord coords;
@@ -131,11 +133,11 @@ void dsp::GUPPIBlockFile::parse_header()
     cerr << "dsp::GUPPIBlockFile::parse_header ra_str=" 
       << ctmp << " dec_str=" << ctmp2 << endl;
   coords.setHMSDMS(ctmp, ctmp2);
-  info.set_coordinates(coords);
+  get_info()->set_coordinates(coords);
 
   // Receiver
   header_get_check("FRONTEND", ctmp);
-  info.set_receiver(ctmp);
+  get_info()->set_receiver(ctmp);
   // How to set feed hand, symm angle, etc?
   // Note: GBT recvrs have fd_hand=-1, PF has fd_sang=+45deg, 
   //       otherwise fd_sang=-45deg.
@@ -152,9 +154,9 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
   if (verbose) 
     cerr << "dsp::GUPPIBlockFile::load_bytes() nbytes=" << nbytes << endl;
 
-  const unsigned nchan = info.get_nchan();
-  const unsigned npol = info.get_npol();
-  const unsigned nbit = info.get_nbit();
+  const unsigned nchan = get_info()->get_nchan();
+  const unsigned npol = get_info()->get_npol();
+  const unsigned nbit = get_info()->get_nbit();
   const unsigned bytes_per_samp = (2 * npol * nbit) / 8;
   const uint64_t overlap_bytes = overlap * bytes_per_samp * nchan;
   const uint64_t blocsize_per_chan = blocsize / nchan;

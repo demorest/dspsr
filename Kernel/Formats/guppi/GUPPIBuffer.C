@@ -98,7 +98,7 @@ void dsp::GUPPIBuffer::open_file (const char* filename)
   // Wait for first block
   load_next_block();
 
-  // Once we have it, parse the header info.
+  // Once we have it, parse the header get_info()->
   parse_header();
 
 }

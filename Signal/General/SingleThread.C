@@ -12,6 +12,8 @@
 #include "dsp/SingleThread.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
+#include "dsp/InputBufferingShare.h"
+
 #include "dsp/Scratch.h"
 #include "dsp/MultiFile.h"
 #include "dsp/CommandLineHeader.h"
@@ -115,6 +117,42 @@ void dsp::SingleThread::set_affinity (int core)
 void dsp::SingleThread::share (SingleThread* other)
 {
   colleague = other;
+
+  typedef Transformation<TimeSeries,TimeSeries> Xform;
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
+    Xform* trans0 = dynamic_kast<Xform>( other->operations[iop] );
+
+    if (!trans0)
+      continue;
+
+    if (!trans0->has_buffering_policy())
+      continue;
+
+    InputBuffering::Share* ibuf0;
+    ibuf0 = dynamic_cast<InputBuffering::Share*>
+      ( trans0->get_buffering_policy() );
+
+    if (!ibuf0)
+      continue;
+
+    Xform* trans = dynamic_kast<Xform>( operations[iop] );
+    
+    if (!trans)
+      throw Error (InvalidState, "dsp::SingleThread::share",
+		   "mismatched operation type");
+
+    if (!trans->has_buffering_policy())
+      throw Error (InvalidState, "dsp::SingleThread::share",
+		   "mismatched buffering policy");
+    
+    if (Operation::verbose)
+      cerr << "dsp::SingleThread::share sharing buffering policy of " 
+        << trans->get_name() << endl;
+
+    trans->set_buffering_policy( ibuf0->clone(trans) );
+  }
 }
 
 dsp::TimeSeries* dsp::SingleThread::new_time_series ()
@@ -131,7 +169,7 @@ dsp::TimeSeries* dsp::SingleThread::new_time_series ()
   {
     if (Operation::verbose)
       cerr << "Creating TimeSeries instance" << endl;
-    return  new TimeSeries;
+    return new TimeSeries;
   }
 }
 
@@ -145,14 +183,7 @@ unsigned count (const std::vector<T>& data, T element)
   return c;
 }
 
-void dsp::SingleThread::prepare ()
-{
-  initialize ();
-  construct ();
-  finalize ();
-}
-
-void dsp::SingleThread::initialize () try
+void dsp::SingleThread::construct () try
 {
   TimeSeries::auto_delete = false;
 
@@ -256,10 +287,10 @@ void dsp::SingleThread::initialize () try
 }
 catch (Error& error)
 {
-  throw error += "dsp::SingleThread::initialize";
+  throw error += "dsp::SingleThread::construct";
 }
 
-void dsp::SingleThread::finalize ()
+void dsp::SingleThread::prepare ()
 {
   for (unsigned idump=0; idump < config->dump_before.size(); idump++)
     insert_dump_point (config->dump_before[idump]);
@@ -322,9 +353,11 @@ void dsp::SingleThread::run () try
   {
     if (log)
     {
-      cerr << "dsp::SingleThread::run " << operations[iop]->get_name() << endl;
+      cerr << "dsp::SingleThread::run setup "
+	   << operations[iop]->get_name() << endl;
       operations[iop] -> set_cerr (*log);
     }
+
     if (!operations[iop] -> scratch_was_set ())
       operations[iop] -> set_scratch (scratch);
 
@@ -645,10 +678,22 @@ void dsp::SingleThread::Config::prepare (Input* input)
     input_prepare( input );
 
   if (seek_seconds)
+  {
+    if (Operation::verbose)
+      std::cerr << "dsp::SingleThread::Config::prepare seek_seconds="
+                << seek_seconds << endl;
+
     input->set_start_seconds (seek_seconds);
-  
+  }
+
   if (total_seconds)
+  {
+    if (Operation::verbose)
+      std::cerr << "dsp::SingleThread::Config::prepare total_seconds="
+                << total_seconds << endl;
+
     input->set_total_seconds (seek_seconds + total_seconds);
+  }
 }
 
 //! set the number of CPU threads to be used
@@ -741,7 +786,7 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   if (can_thread)
   {
     arg = menu.add (this, &Config::set_nthread, 't', "threads");
-    arg->set_help ("number of processor threads");
+    arg->set_help ("number of CPU processor threads");
   }
 
 #if HAVE_SCHED_SETAFFINITY

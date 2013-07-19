@@ -92,48 +92,48 @@ void dsp::Mark4File::open_file (const char* filename)
   
   //  cerr << endl << endl;
   
-  info.set_start_time(decode_date());
+  get_info()->set_start_time(decode_date());
   
-  //  cout << "Decoded date: " << info.get_start_time().printall() << endl;
+  //  cout << "Decoded date: " << get_info()->get_start_time().printall() << endl;
   
   // Need to rewind time to start of file, which is NOT the start of the header.
   
   
   // These need to be auto set.
-  info.set_bandwidth(16.0);
-  info.set_rate(32000000);
-  info.set_state(Signal::Nyquist);
+  get_info()->set_bandwidth(16.0);
+  get_info()->set_rate(32000000);
+  get_info()->set_state(Signal::Nyquist);
 
-  info.set_machine("Mark4");
+  get_info()->set_machine("Mark4");
   
-  info.set_npol(2);
-  info.set_nbit(2);
+  get_info()->set_npol(2);
+  get_info()->set_nbit(2);
 
-  info.set_nchan(1);
+  get_info()->set_nchan(1);
   
   //ASSUMES THE DATA IS 16MHz channels
-  //  info.set_nchan(int(channels/16));
+  //  get_info()->set_nchan(int(channels/16));
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   
   struct stat file_info;
   
   stat (filename, &file_info);
   
   // This needs to include information about the headers in Mark4-VLBA modes
-  info.set_ndat( int64_t((file_info.st_size)/info.get_npol() )*16/(info.get_nbit()*info.get_npol()*info.get_nchan()));
+  get_info()->set_ndat( int64_t((file_info.st_size)/get_info()->get_npol() )*16/(get_info()->get_nbit()*get_info()->get_npol()*get_info()->get_nchan()));
   
   uint64_t last_sync = find_sync(fd,file_info.st_size-2500*channels);
   //  cout << last_sync << "\t" << decode_date(last_sync).printall() << endl;
   
-  double initial_offset_time = ((first_sync-8*channels)/(info.get_npol()))
-                                *(8/info.get_nbit())/info.get_rate();
+  double initial_offset_time = ((first_sync-8*channels)/(get_info()->get_npol()))
+                                *(8/get_info()->get_nbit())/get_info()->get_rate();
 
-  //  cout << info.get_start_time().printall() << "\t" << first_sync << "\t" << initial_offset_time << endl;
+  //  cout << get_info()->get_start_time().printall() << "\t" << first_sync << "\t" << initial_offset_time << endl;
 
-  info.set_start_time(info.get_start_time() - initial_offset_time);
+  get_info()->set_start_time(get_info()->get_start_time() - initial_offset_time);
   
-  //  cout << "FS: " << ((first_sync-8*channels)/(info.get_npol()))*(8/info.get_nbit())/info.get_rate() << endl;
+  //  cout << "FS: " << ((first_sync-8*channels)/(get_info()->get_npol()))*(8/get_info()->get_nbit())/get_info()->get_rate() << endl;
 }
 
 

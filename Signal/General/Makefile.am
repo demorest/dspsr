@@ -25,7 +25,7 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
-	stokes_detect.ic ACFilterbank.C TScrunch.C Accumulator.C     \
+	stokes_detect.ic ACFilterbank.C TScrunch.C      \
 	TimeOrder.C Apodization.C AutoCorrelation.C Filterbank.C     \
 	IncoherentFilterbank.C Bandpass.C LevelMonitor.C RFIFilter.C \
 	Chomper.C Response.C ResponseProduct.C Convolution.C	     \
@@ -46,33 +46,17 @@ nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h \
 	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.C filterbank_cuda.cu TransferCUDA.C \
+libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C \
 	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
-
-libdspdsp_la_LIBADD = filterbank_cuda.lo DetectionCUDA.lo SKMaskerCUDA.lo
-
-filterbank_cuda.lo : filterbank_cuda.cu
-	@CUDA_NVCC@ -c $(srcdir)/filterbank_cuda.cu
-	sed -e 's/Filterbank/filterbank_cuda/' Filterbank.lo > filterbank_cuda.lo
-
-DetectionCUDA.lo : DetectionCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/DetectionCUDA.cu
-	sed -e 's/Detection/DetectionCUDA/' Detection.lo > DetectionCUDA.lo
-
-SKMaskerCUDA.lo : SKMaskerCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/SKMaskerCUDA.cu
-	sed -e 's/SKMasker/SKMaskerCUDA/' SKMasker.lo > SKMaskerCUDA.lo
-
 
 endif
 
-bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
+bin_PROGRAMS = dmsmear digitxt digimon digihist
 
 dmsmear_SOURCES = dmsmear.C 
 digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
 digihist_SOURCES = digihist.C
-filterbank_speed_SOURCES = filterbank_speed.C
 
 check_PROGRAMS = test_PolnCalibration test_OptimalFFT
 
@@ -87,10 +71,14 @@ if HAVE_PGPLOT
   #
 
   libdspdsp_la_SOURCES += ExcisionStatsPlotter.C BitStatsPlotter.C
+  libdspdsp_la_LIBADD = @PGPLOT_LIBS@
   bin_PROGRAMS += digistat passband
 
   digistat_SOURCES = digistat.C
+  digistat_LDADD = @PSRPLOT_LIBS@ $(LDADD)
+
   passband_SOURCES = passband.C
+  passband_LDADD = @PSRPLOT_LIBS@ $(LDADD)
 
   #
   # end PGPLOT-specific code

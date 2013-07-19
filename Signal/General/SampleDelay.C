@@ -153,8 +153,6 @@ void dsp::SampleDelay::transformation ()
   // zero_delay
   output->change_start_time (zero_delay);
 
-  output->check_sanity ();
-
   if (!output_ndat)
     return;
 

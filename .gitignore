@@ -1,5 +1,7 @@
 *.swp
-
+*~
+build
+web
 *.o
 *.lo
 *.la
@@ -7,7 +9,6 @@
 *.libs
 Makefile.in
 Makefile *.o
-
 Kernel/Applications/Makefile
 Kernel/Applications/load_bits
 Kernel/Classes/Makefile
@@ -109,7 +110,6 @@ python/dspsr.py
 python/dspsr_wrap.cxx
 stamp-h1
 update.log
-
 Documentation/doxygen.err
 Documentation/doxygen.out
 Documentation/html/
@@ -118,4 +118,12 @@ config/ltoptions.m4
 config/ltsugar.m4
 config/ltversion.m4
 config/lt~obsolete.m4
-
+/.project
+/*.log
+/*.fits
+/*.dat
+/*.tim
+/SdkMasterLog.csv
+/deviceQuery.txt
+/callgrind*
+/.cproject

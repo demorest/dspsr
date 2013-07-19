@@ -190,23 +190,23 @@ void dsp::SMROFile::open_file (const char* filename)
   
   tm2utc(&utc, date);
 
-  info.set_start_time(utc);
-  info.set_nbit(2);
+  get_info()->set_start_time(utc);
+  get_info()->set_nbit(2);
 
 #ifdef CHAN8
-  info.set_npol(8);
+  get_info()->set_npol(8);
 #endif
 #ifdef CHAN4
-  info.set_npol(4);
+  get_info()->set_npol(4);
 #endif
 #ifdef CHAN2
-  info.set_npol(2);
+  get_info()->set_npol(2);
 #endif
 
-  info.set_nchan(1);
+  get_info()->set_nchan(1);
   
-  info.set_state(Signal::Nyquist);
-  info.set_machine("SMRO");
+  get_info()->set_state(Signal::Nyquist);
+  get_info()->set_machine("SMRO");
 
   // Natively, the LBA DAS outputs 4 channels, which represent orthogonal
   // polarisations from two different frequency bands. In 16 MHz mode, only
@@ -216,27 +216,27 @@ void dsp::SMROFile::open_file (const char* filename)
   // bit masking and shifting to extract the samples in the correct order).
 
 #ifdef MHZ4
-  info.set_rate(8000000);
-  info.set_bandwidth(4.0);
+  get_info()->set_rate(8000000);
+  get_info()->set_bandwidth(4.0);
 #endif
 
 #ifdef MHZ16
-  info.set_rate(32000000);
-  info.set_bandwidth(-16.0);
+  get_info()->set_rate(32000000);
+  get_info()->set_bandwidth(-16.0);
 #endif
 
 #ifdef MHZ32
-  info.set_rate(64000000);
-  info.set_bandwidth(32.0);
+  get_info()->set_rate(64000000);
+  get_info()->set_bandwidth(32.0);
 #endif
 
-  info.set_centre_frequency(1420.0);
+  get_info()->set_centre_frequency(1420.0);
 
   // ///////////////////////////////////////////////////////////////
   // Change this as required. The default probably won't be correct!
   // ///////////////////////////////////////////////////////////////
 
-  info.set_telescope( "Hobart" );   // 4 = Hobart, 7 = Parkes, 6 = Tid
+  get_info()->set_telescope( "Hobart" );   // 4 = Hobart, 7 = Parkes, 6 = Tid
 
   struct stat file_info;
   
@@ -250,8 +250,8 @@ void dsp::SMROFile::open_file (const char* filename)
 
   // This needs to be checked and fixed?
   
-  info.set_ndat( int64_t((file_info.st_size - header_bytes))* 8 / 
-		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
+  get_info()->set_ndat( int64_t((file_info.st_size - header_bytes))* 8 / 
+		 (get_info()->get_nbit()*get_info()->get_npol()*get_info()->get_nchan()) );
   
 #ifdef CHAN8
   unsigned bits_per_byte = 16;
@@ -263,7 +263,7 @@ void dsp::SMROFile::open_file (const char* filename)
   unsigned bits_per_byte = 4;
 #endif
 
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
       resolution = 1;
 

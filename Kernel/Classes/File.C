@@ -51,7 +51,7 @@ void dsp::File::init()
 
   current_filename = "";
 
-  info.init();
+  get_info()->init();
 }
 
 //! Return a pointer to a new instance of the appropriate sub-class
@@ -120,10 +120,10 @@ void dsp::File::open (const char* filename)
 
   open_file (filename);
       
-  if (info.get_ndat() == 0)
+  if (get_info()->get_ndat() == 0)
     set_total_samples ();
   else if (verbose)
-    cerr << "dsp::File::open ndat=" << info.get_ndat() << endl;
+    cerr << "dsp::File::open ndat=" << get_info()->get_ndat() << endl;
  
   current_filename = filename;
 
@@ -165,7 +165,7 @@ void dsp::File::open_fd (const std::string& filename)
 
 void dsp::File::set_total_samples ()
 {
-  info.set_ndat (fstat_file_ndat());
+  get_info()->set_ndat (fstat_file_ndat());
 }
 
 //! Load bytes from file
@@ -248,7 +248,7 @@ int64_t dsp::File::fstat_file_ndat (uint64_t tailer_bytes)
 	 << " tailer_bytes=" << tailer_bytes
 	 << " total_bytes=" << total_bytes << endl;
 
-  return info.get_nsamples (total_bytes);
+  return get_info()->get_nsamples (total_bytes);
 }
 
 //! Over-ride this function to pad data via HoleyFile

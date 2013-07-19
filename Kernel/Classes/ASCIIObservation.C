@@ -229,7 +229,7 @@ void dsp::ASCIIObservation::load (const char* header)
   else
     set_ndim (scan_ndim);
 
-  switch (scan_ndim)
+  switch (get_ndim())
   {
   case 1:
     set_state (Signal::Nyquist); break;
@@ -239,7 +239,7 @@ void dsp::ASCIIObservation::load (const char* header)
     set_state (Signal::Coherence); break;
   default:
     throw Error (InvalidState, "ASCIIObservation",
-		 "invalid NDIM=%d\n", scan_ndim);
+		 "invalid NDIM=%d\n", get_ndim());
   }
 
   // //////////////////////////////////////////////////////////////////////

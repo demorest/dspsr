@@ -246,7 +246,7 @@ void dsp::MPIRoot::size_pack_buffer ()
   pack_size = min_header_size;
 
   // the extra bytes enable time sample resolution features
-  data_size = info.get_nbytes( get_block_size() ) + resolution;
+  data_size = get_info()->get_nbytes( get_block_size() ) + resolution;
 
   int temp_size = 0;
   MPI_Pack_size (data_size, MPI_CHAR, comm, &temp_size);
@@ -308,7 +308,7 @@ void dsp::MPIRoot::check_status (MPI_Status& mpi_status, const char* method)
 
 void dsp::MPIRoot::check_block_size (const char* method)
 {
-  uint64_t bytes = info.get_nbytes(get_block_size()) + 2 + min_header_size;
+  uint64_t bytes = get_info()->get_nbytes(get_block_size()) + 2 + min_header_size;
 
   if (bytes > MAXINT)
     throw Error (InvalidState, method, "block_size="UI64" -> buffer_size="UI64
@@ -549,7 +549,7 @@ void dsp::MPIRoot::load_data (BitSeries* data)
 		 "BitSeries::nbytes=%d != received=%d",
 		 data->get_nbytes(), received);
 
-  data->set_start_time( info.get_start_time() );
+  data->set_start_time( get_info()->get_start_time() );
   data->change_start_time( start_sample );
 
   // request the next block of data

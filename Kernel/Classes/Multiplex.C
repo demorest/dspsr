@@ -139,7 +139,7 @@ void dsp::Multiplex::open (const vector<string>& new_filenames)
 
   //  ensure_contiguity();
   setup();
-  cerr << "Multiplex::open total_ndat=" << info.get_ndat() << endl;
+  cerr << "Multiplex::open total_ndat=" << get_info()->get_ndat() << endl;
 }
 
 int64_t dsp::Multiplex::load_bytes (unsigned char* buffer, uint64_t bytes)
