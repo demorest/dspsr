@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- *   Copyright (C) 2011 by James M Anderson  (MPIfR)
+ *   Copyright (C) 2011, 2013 by James M Anderson  (MPIfR)
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -100,13 +100,33 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
   else {
       T0 = time_t(strtoull(buffer,NULL,0));
   }
-  if (ascii_header_get (header, "UTC_OFFSET_START_LEADING", "%s", &T1) < 0) {
+  if (ascii_header_get (header, "UTC_OFFSET_START_LEADING", "%lf", &T1) < 0) {
       cerr << "Error: No UTC_OFFSET_START_LEADING in LuMP file" << endl;
   }
   set_start_time(MJD(T0) + T1);
 
 
+  // ///////////////////////////////////////////////////////////////////
+  // READ_DATA_FROM_PIPE
+  if (ascii_header_get (header, "READ_DATA_FROM_PIPE", "%s", buffer) < 0) {
+      set_read_from_LuMP_file(true);
+  }
+  else {
+      if( (buffer[0] == 'T') || (buffer[0] == 't') || (buffer[0] == '1') ) {
+          set_read_from_LuMP_file(false);
+      }
+      else {
+          set_read_from_LuMP_file(true);
+      }
+  }
 
+  if (ascii_header_get (header, "LUMP_VERSION", "%s", buffer) < 0) {
+      cerr << "Warning: Unknown LuMP version" << endl;
+  }
+  else {
+      if (verbose)
+          cerr << "dsp::LuMPObservation::LuMPObservation LUMP_VERSION=" << buffer << endl;
+  }
 
   if (ascii_header_get (header, "LUMP_MODE", "%s", buffer) < 0) {
       set_mode("Unknown LuMP mode");
@@ -115,6 +135,61 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
   else {
       set_mode(buffer);
   }
+
+
+  // ///////////////////////////////////////////////////////////////////
+  // Get the physical number of channels
+  unsigned nchan_recorded;
+  if (ascii_header_get (header, "NCHAN_RECORDED", "%u", &nchan_recorded) < 0) {
+      cerr << "Warning: No NCHAN_RECORDED in LuMP file" << endl;
+       nchan_recorded = get_info()->get_nchan();
+  }
+  else {
+      if((nchan_recorded != get_nchan()) && (get_read_from_LuMP_file())) {
+          cerr << "Error: NCHAN_RECORDED(" << nchan_recorded << ") != NCHAN(" << get_nchan() << ") in LuMP file, but READ_DATA_FROM_PIPE is False" << endl;
+      }
+  }
+          
+
+
+  // ///////////////////////////////////////////////////////////////////
+  // Total file size and number of samples
+  unsigned hdr_size = 0;
+  if (ascii_header_get (header, "HDR_SIZE", "%u", &hdr_size) < 0)
+    cerr << "Error: No HDR_SIZE in LuMP file" << endl;
+  uint64_t file_size_bytes = 0;
+  if (ascii_header_get (header, "FILE_SIZE", "%"PRIu64, &file_size_bytes) < 0) {
+      cerr << "Error: No FILE_SIZE in LuMP file" << endl;
+  }
+  else
+  {
+  if (verbose)
+      cerr << "dsp::LuMPObservation::LuMPObservation " << "file_size_bytes=" << file_size_bytes << endl;
+    if(file_size_bytes > 0)
+    {
+        uint64_t bits = (file_size_bytes - hdr_size) * 8;
+        if(nchan_recorded != get_nchan()) {
+            uint64_t virtual_bits = bits / nchan_recorded * get_nchan()
+                                    + (bits % nchan_recorded) * get_nchan() / nchan_recorded;
+            bits = virtual_bits;
+        }
+        uint64_t samples =
+            bits
+            / uint64_t(get_nbit()*get_npol()*get_nchan()*get_ndim());
+        set_ndat(samples);
+    }
+    else
+    {
+      set_ndat(0);
+    }
+  }
+  if (verbose)
+      cerr << "dsp::LuMPObservation::LuMPObservation done2.5" << endl;
+  set_LuMP_file_size(file_size_bytes);
+  if (verbose)
+      cerr << "dsp::LuMPObservation::LuMPObservation done3" << endl;
+  
+
   set_machine ("LuMP");
 }
 

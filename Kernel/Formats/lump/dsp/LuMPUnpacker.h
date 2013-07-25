@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2011 by James M Anderson  (MPIfR)
+ *   Copyright (C) 2011, 2013 by James M Anderson  (MPIfR)
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -15,7 +15,7 @@
 namespace dsp
 {
 
-  //! Unpack LUMP data (8, 16, -16, -32, -64 bits per sample)
+  //! Unpack LUMP data (4, 8, 16, -16, -32, -64 bits per sample)
   // Use the basic Unpacker mother class, as
   // HistUnpacker has too many complications with conversion from float, etc.
   class LuMPUnpacker : public Unpacker 

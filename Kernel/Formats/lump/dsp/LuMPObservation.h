@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2011 by James M Anderson  (MPIfR)
+ *   Copyright (C) 2011, 2013 by James M Anderson  (MPIfR)
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -18,7 +18,7 @@ namespace dsp {
   {
     // Unknown format
     UnknownBinForm,
-    // Integer
+    // Integer, signed two's compliment
     IntegerBinForm,
     // IEEE floating point
     IEEE_FloatBinForm
@@ -63,14 +63,26 @@ namespace dsp {
     //! Set the data endianness
     virtual void set_data_endianness (DataEndianness _data_endianness)
     { data_endianness = _data_endianness; }
-    //! Return the binary format
+    //! Return the data endianness
     DataEndianness get_data_endianness() const { return data_endianness; }
 
-    //! Set the data endianness
+    //! Set the polarization ordering
     virtual void set_pol_ordering (PolOrdering _pol_ordering)
     { pol_ordering = _pol_ordering; }
-    //! Return the binary format
+    //! Return the polarization ordering
     PolOrdering get_pol_ordering() const { return pol_ordering; }
+
+    //! Set the data read mode
+    virtual void set_read_from_LuMP_file (bool _read_from_LuMP_file)
+    { read_from_LuMP_file = _read_from_LuMP_file; }
+    //! Return the data read mode
+    bool get_read_from_LuMP_file() const { return read_from_LuMP_file; }
+
+    //! Set the LuMP file size
+    virtual void set_LuMP_file_size (uint64_t _LuMP_file_size)
+    { LuMP_file_size = _LuMP_file_size; }
+    //! Return the data read mode
+    uint64_t get_LuMP_file_size() const { return LuMP_file_size; }
 
   private:
 
@@ -84,6 +96,11 @@ namespace dsp {
     //! Ordering of polarization arrays
     PolOrdering pol_ordering;
 
+    //! Data read mode flag:  true means use file, false means use STDIN
+    bool read_from_LuMP_file;
+
+    //! Size of full data file, including header, in bytes
+    uint64_t LuMP_file_size;
   };
   
 }
