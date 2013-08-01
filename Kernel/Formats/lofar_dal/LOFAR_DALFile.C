@@ -1,7 +1,11 @@
 /***************************************************************************
  *
- *   Copyright (C) 2005-2008 by Willem van Straten
+ *   Copyright (C) 2005-2008, 2013 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
+ *
+ *   Change Log:
+ *   2013 Jul 26  James M Anderson  changes to get lofar_dal to work with the
+ *                current LOFAR DAL version 2.5.0
  *
  ***************************************************************************/
 
@@ -56,15 +60,27 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
   if (telescope.exists())
     cerr << "LOFAR_DALFile::open_file telescope=" << telescope.get() << endl;
 
-  Attribute<std::string> observer = bf_file->observer();
+  Attribute<std::string> PI = bf_file->projectPI();
 
-  if (observer.exists())
-    cerr << "LOFAR_DALFile::open_file OBSERVER=" << observer.get() << endl;
+  if (PI.exists())
+    cerr << "LOFAR_DALFile::open_file PI=" << PI.get() << endl;
 
-  Attribute<std::string> target = bf_file->target();
+  Attribute<std::string> projectContact = bf_file->projectContact();
 
-  if (target.exists())
-    cerr << "LOFAR_DALFile::open_file TARGET=" << target.get() << endl;
+  if (projectContact.exists())
+    cerr << "LOFAR_DALFile::open_file PROJECT_CONTACT=" << projectContact.get() << endl;
+
+  Attribute< std::vector<std::string> > BFtargets = bf_file->targets();
+  if (BFtargets.exists())
+    {
+      std::vector<std::string> t = BFtargets.get();
+      std::vector<std::string>::size_type i=0;
+      for(std::vector<std::string>::iterator it = t.begin();
+          it != t.end(); ++it, i++)
+      {
+        cerr << "LOFAR_DALFile::open_file TARGET" << i << "=" << *it << endl;
+      }
+    }
   else
     cerr << "TARGET does not exist" << endl;
 
@@ -87,22 +103,11 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 
   BF_SubArrayPointing sap = bf_file->subArrayPointing (0);
 
-  Attribute<double> bw2 = sap.subbandWidth();
-
-  if (bw2.exists())
-    cerr << "LOFAR_DALFile::open_file sap subbandwidth=" << bw2.get() << endl;
-
   Attribute<unsigned> nbeam = sap.nofBeams();
   if (nbeam.exists())
     cerr << "LOFAR_DALFile::open_file number of beams=" << nbeam.get() << endl;
   else
     cerr << "sap nbeams does not exist" << endl;
-
-  Attribute<unsigned> nchan = sap.channelsPerSubband();
-  if (nchan.exists())
-    cerr << "LOFAR_DALFile::open_file number of channels=" << nchan.get() << endl;
-  else
-    cerr << "sap channelsPerSubband does not exist" << endl;
 
 
   cerr << endl << "*****************" << endl << endl;
@@ -110,12 +115,23 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 
   BF_BeamGroup beam = sap.beam (0);
 
+  Attribute<double> bw2 = beam.subbandWidth();
+
+  if (bw2.exists())
+    cerr << "LOFAR_DALFile::open_file beam subbandwidth=" << bw2.get() << endl;
+
+  Attribute<unsigned> nchan = beam.channelsPerSubband();
+  if (nchan.exists())
+    cerr << "LOFAR_DALFile::open_file number of channels=" << nchan.get() << endl;
+  else
+    cerr << "beam channelsPerSubband does not exist" << endl;
+
   Attribute<double> freq2 = beam.beamFrequencyCenter();
 
   if (freq2.exists())
     cerr << "LOFAR_DALFile::open_file beam frequency=" << freq2.get() << endl;
 
-  Attribute< std::vector<std::string> > targets = beam.target();
+  Attribute< std::vector<std::string> > targets = beam.targets();
   if (targets.exists())
     {
       std::vector<std::string> t = targets.get();
@@ -181,7 +197,7 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
   if (nsamp.exists())
     get_info()->set_ndat( nsamp.get() );
 
-  Attribute<bool> volts = beam.complexVoltages();
+  Attribute<bool> volts = beam.complexVoltage();
   if (volts.exists() && volts.get() == 1)
     get_info()->set_ndim (2);
   else
@@ -268,26 +284,26 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
 
   cerr << "MJD=" << get_info()->get_start_time() << endl;
 
-  Attribute<double> cRate = sap.clockRate();
+  Attribute<double> cRate = bf_file->clockFrequency();
   if (cRate.exists())
     cerr << "clockRate=" << cRate.get() << endl;
   else
     cerr << "clockRate undefined" << endl;
 
-  Attribute<double> sRate = sap.samplingRate();
+  Attribute<double> sRate = beam.samplingRate();
   if (sRate.exists())
     cerr << "samplingRate=" << sRate.get() << endl;
   else
     cerr << "samplingRate undefined" << endl;
 
-  Attribute<double> sTime = sap.samplingTime();
+  Attribute<double> sTime = beam.samplingTime();
   if (sTime.exists())
     cerr << "samplingTime=" << sTime.get() << endl;
   else
     cerr << "samplingTime undefined" << endl;
 
 
-  Attribute<double> rate = sap.channelWidth();
+  Attribute<double> rate = beam.channelWidth();
   if (rate.exists())
     get_info()->set_rate (rate.get());
 
@@ -342,7 +358,7 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
       {
 	fname[ found+2 ] = '0' + i;
 	cerr << "opening " << fname << endl;
-	BF_File* the_file = new DAL::BF_File (fname);
+	BF_File* the_file = new dal::BF_File (fname);
 	BF_SubArrayPointing sap = the_file->subArrayPointing (0);
 	BF_BeamGroup beam = sap.beam (0);
 	
@@ -395,7 +411,7 @@ int64_t dsp::LOFAR_DALFile::load_bytes (unsigned char* buffer, uint64_t bytes)
   {
     // cerr << "load_bytes " << istokes << endl;
     float* outbuf = reinterpret_cast<float*> (buffer);
-    handle->bf_stokes[istokes]->get2D (pos, nsamp, get_info()->get_nchan(), outbuf);
+    handle->bf_stokes[istokes]->get2D (pos, outbuf, nsamp, get_info()->get_nchan());
     buffer += nsamp * get_info()->get_nchan() * sizeof(float);
   }
   
