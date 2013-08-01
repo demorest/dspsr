@@ -142,7 +142,7 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
   unsigned nchan_recorded;
   if (ascii_header_get (header, "NCHAN_RECORDED", "%u", &nchan_recorded) < 0) {
       cerr << "Warning: No NCHAN_RECORDED in LuMP file" << endl;
-       nchan_recorded = get_info()->get_nchan();
+       nchan_recorded = get_nchan();
   }
   else {
       if((nchan_recorded != get_nchan()) && (get_read_from_LuMP_file())) {
@@ -183,11 +183,7 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
       set_ndat(0);
     }
   }
-  if (verbose)
-      cerr << "dsp::LuMPObservation::LuMPObservation done2.5" << endl;
   set_LuMP_file_size(file_size_bytes);
-  if (verbose)
-      cerr << "dsp::LuMPObservation::LuMPObservation done3" << endl;
   
 
   set_machine ("LuMP");
