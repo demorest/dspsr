@@ -259,7 +259,10 @@ int64_t dsp::LuMPFile::load_bytes (unsigned char* buffer, uint64_t bytes)
   {
     if( uint64_t(new_pos) >= end_pos ){
       bytes_read = ssize_t(end_pos - old_pos);
-      lseek(fd,end_pos,SEEK_SET);
+      if(get_lump_info()->get_read_from_LuMP_file())
+      {
+        lseek(fd,end_pos,SEEK_SET);
+      }
       end_of_data = true;
     }
   }
