@@ -276,6 +276,17 @@ void dsp::ASCIIObservation::load (const char* header)
 
   // //////////////////////////////////////////////////////////////////////
   //
+  // BASIS
+  //
+  if (ascii_header_check (header, "BASIS", "%s", buffer) >= 0)
+  {
+    if (verbose)
+      cerr << "dsp::ASCIIObservation::load BASIS=" << buffer << endl;
+    set_basis( Signal::string2Basis(buffer) );
+  }
+
+  // //////////////////////////////////////////////////////////////////////
+  //
   // DSB = dual-sideband
   //
   int scan_dsb;
