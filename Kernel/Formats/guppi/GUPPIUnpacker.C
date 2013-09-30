@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/GUPPIUnpacker.h"
+#include "dsp/GUPPIBlockFile.h"
 #include "Error.h"
 
 using namespace std;
@@ -50,6 +51,7 @@ void dsp::GUPPIUnpacker::unpack ()
   const unsigned nchan = input->get_nchan();
   //const unsigned nskip = npol * ndim;
   const unsigned nskip = npol * ndim * nchan;
+  const bool signed_8bit = get_Input<GUPPIBlockFile>()->get_signed();
 
   //cerr << "npol=" << npol << " ndim=" << ndim << endl;
   //cerr << "ndat=" << ndat << endl;
@@ -66,12 +68,22 @@ void dsp::GUPPIUnpacker::unpack ()
         float* into = output->get_datptr(ichan,ipol) + idim;
         unsigned long* hist = get_histogram(idig);
   
-        for (unsigned bt = 0; bt < ndat; bt++) {
-          hist[ (unsigned char) *from ] ++;
-          *into = float(int( (signed char) *from ));
-          from += nskip;
-          into += ndim;
+        if (signed_8bit) {
+          for (unsigned bt = 0; bt < ndat; bt++) {
+            hist[ (unsigned char) *from ] ++;
+            *into = float(int( (signed char) *from ));
+            from += nskip;
+            into += ndim;
+          } 
+        } else {
+          for (unsigned bt = 0; bt < ndat; bt++) {
+            hist[ (unsigned char) *from ] ++;
+            *into = float(int( (unsigned char) *from ));
+            from += nskip;
+            into += ndim;
+          }
         }
+
       }
     }
   }

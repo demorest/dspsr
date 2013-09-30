@@ -32,6 +32,9 @@ namespace dsp {
     //! Returns true if filename is a valid GUPPI file
     virtual bool is_valid (const char* filename) const = 0;
 
+    //! Return true if data are signed
+    bool get_signed() const { return signed_8bit; }
+
   protected:
 
     //! Open the file
@@ -57,6 +60,9 @@ namespace dsp {
 
     //! Have the data been transposed already
     bool time_ordered;
+
+    //! Are 8-bit data signed or unsigned
+    bool signed_8bit;
 
     //! Size of current data block in bytes
     uint64_t blocsize;
