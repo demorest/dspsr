@@ -118,8 +118,8 @@ void dsp::LuMPFile::open_file (const char* filename)
 //! Load bytes from file
 int64_t dsp::LuMPFile::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
-  if (verbose)
-    cerr << "dsp::LuMPFile::load_bytes nbytes=" << bytes << endl;
+    // if (verbose)
+    //     cerr << "dsp::LuMPFile::load_bytes nbytes=" << bytes << endl;
 
   ssize_t bytes_read(0);
   size_t bytes_request(bytes);
@@ -250,16 +250,19 @@ int64_t dsp::LuMPFile::load_bytes (unsigned char* buffer, uint64_t bytes)
     end_pos = get_info()->get_nbytes() + uint64_t(header_bytes);
   }
 
-  if (verbose)
-    cerr << "dsp::LuMPFile::load_bytes bytes_read=" << bytes_read
-         << " old_pos=" << old_pos << " new_pos=" << new_pos 
-         << " end_pos=" << end_pos << endl;
+  // if (verbose)
+  //   cerr << "dsp::LuMPFile::load_bytes bytes_read=" << bytes_read
+  //        << " old_pos=" << old_pos << " new_pos=" << new_pos 
+  //        << " end_pos=" << end_pos << endl;
 
   if(bytes_read > 0)
   {
     if( uint64_t(new_pos) >= end_pos ){
       bytes_read = ssize_t(end_pos - old_pos);
-      lseek(fd,end_pos,SEEK_SET);
+      if(get_lump_info()->get_read_from_LuMP_file())
+      {
+        lseek(fd,end_pos,SEEK_SET);
+      }
       end_of_data = true;
     }
   }
@@ -270,9 +273,9 @@ int64_t dsp::LuMPFile::load_bytes (unsigned char* buffer, uint64_t bytes)
 //! Adjust the file pointer
 int64_t dsp::LuMPFile::seek_bytes (uint64_t bytes)
 {
-  if (verbose)
-    cerr << "dsp::LuMPFile::seek_bytes nbytes=" << bytes 
-         << " header_bytes=" << header_bytes << endl;
+  // if (verbose)
+  //   cerr << "dsp::LuMPFile::seek_bytes nbytes=" << bytes 
+  //        << " header_bytes=" << header_bytes << endl;
   
   if (fd < 0)
     throw Error (InvalidState, "dsp::LuMPFile::seek_bytes", "invalid fd");
@@ -385,11 +388,11 @@ int64_t dsp::LuMPFile::fstat_file_ndat(uint64_t tailer_bytes)
     data_bytes = 0;
   }
   
-  if( verbose )
-    cerr << "dsp::LuMPFile::fstat_file_ndat(): buf=" << get_lump_info()->get_LuMP_file_size()
-	 << " header_bytes=" << header_bytes 
-	 << " tailer_bytes=" << tailer_bytes
-	 << " data_bytes=" << data_bytes << endl;
+  // if( verbose )
+  //   cerr << "dsp::LuMPFile::fstat_file_ndat(): buf=" << get_lump_info()->get_LuMP_file_size()
+  //        << " header_bytes=" << header_bytes 
+  //        << " tailer_bytes=" << tailer_bytes
+  //        << " data_bytes=" << data_bytes << endl;
 
   return get_info()->get_nsamples (data_bytes);
 }

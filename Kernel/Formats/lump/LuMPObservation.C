@@ -141,8 +141,10 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
   // Get the physical number of channels
   unsigned nchan_recorded;
   if (ascii_header_get (header, "NCHAN_RECORDED", "%u", &nchan_recorded) < 0) {
-      cerr << "Warning: No NCHAN_RECORDED in LuMP file" << endl;
-       nchan_recorded = get_nchan();
+      if (verbose) {
+          cerr << "Warning: No NCHAN_RECORDED in LuMP file" << endl;
+      }
+      nchan_recorded = get_nchan();
   }
   else {
       if((nchan_recorded != get_nchan()) && (get_read_from_LuMP_file())) {
@@ -163,7 +165,7 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
   }
   else
   {
-  if (verbose)
+    if (verbose)
       cerr << "dsp::LuMPObservation::LuMPObservation " << "file_size_bytes=" << file_size_bytes << endl;
     if(file_size_bytes > 0)
     {
@@ -172,6 +174,7 @@ dsp::LuMPObservation::LuMPObservation (const char* header)
             uint64_t virtual_bits = bits / nchan_recorded * get_nchan()
                                     + (bits % nchan_recorded) * get_nchan() / nchan_recorded;
             bits = virtual_bits;
+            file_size_bytes = bits / 8 + hdr_size;
         }
         uint64_t samples =
             bits

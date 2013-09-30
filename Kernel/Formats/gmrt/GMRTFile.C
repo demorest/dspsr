@@ -17,6 +17,7 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "machine_endian.h"
 
