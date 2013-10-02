@@ -188,7 +188,7 @@ void dsp::LoadToFold::construct () try
     kernel = 0;
 
 
-  if (!config->single_pulse && !passband)
+  if (!config->integration_turns && !passband)
     passband = new Response;
 
   Response* response = kernel.ptr();
@@ -344,7 +344,7 @@ void dsp::LoadToFold::construct () try
     if (config->filterbank.get_convolve_when() == Filterbank::Config::During)
     {
       filterbank->set_response (response);
-      if (!config->single_pulse)
+      if (!config->integration_turns)
         filterbank->set_passband (passband);
     }
 
@@ -379,7 +379,7 @@ void dsp::LoadToFold::construct () try
       convolution = new Convolution;
     
     convolution->set_response (response);
-    if (!config->single_pulse)
+    if (!config->integration_turns)
       convolution->set_passband (passband);
     
     if (filterbank_after_dedisp)
@@ -425,9 +425,9 @@ void dsp::LoadToFold::construct () try
           sub_plfb->set_subint_seconds (config->integration_length);
         }
 
-        else if (config->single_pulse) 
+        else if (config->integration_turns) 
         {
-          sub_plfb->set_subint_turns (1);
+          sub_plfb->set_subint_turns (config->integration_turns);
           sub_plfb->set_fractional_pulses (config->fractional_pulses);
         }
 
@@ -1202,13 +1202,13 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
     archiver->set_subints_per_file (config->subints_per_archive); 
   }
 
-  if (config->single_pulse || config->no_dynamic_extensions)
+  if (config->integration_turns || config->no_dynamic_extensions)
     archiver->set_store_dynamic_extensions (false);
 
   FilenameEpoch* epoch_convention = 0;
   FilenameSequential* index_convention = 0;
 
-  if (config->single_pulse_archives())
+  if (config->concurrent_archives())
     archiver->set_convention( new FilenamePulse );
   else
   {
@@ -1238,7 +1238,7 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 
   unsigned integer_seconds = unsigned(config->integration_length);
 
-  if (config->integration_length && config->single_pulse)
+  if (config->integration_length && config->integration_turns)
     throw Error (InvalidState, "dsp::LoadToFold::prepare_archiver",
         "cannot set integration length in single pulse mode");
 
@@ -1283,7 +1283,7 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 
 bool dsp::LoadToFold::output_subints () const
 {
-  return config && (config->single_pulse || config->integration_length);
+  return config && (config->integration_turns || config->integration_length);
 }
 
 void dsp::LoadToFold::share (SingleThread* other)
