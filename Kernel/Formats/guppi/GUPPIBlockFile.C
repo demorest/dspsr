@@ -27,6 +27,7 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   hdr = NULL;
   dat = NULL;
   time_ordered = true;
+  signed_8bit = true;
   current_block_byte = 0;
   overlap = 0;
   blocsize = 0;
@@ -80,8 +81,11 @@ void dsp::GUPPIBlockFile::parse_header()
 
   // Any format-specific checks
   header_get_check("PKTFMT", ctmp);
-  if (string(ctmp) == "VDIF")
+  if (string(ctmp) == "VDIF") 
+  {
     get_info()->set_state(Signal::Nyquist);
+    signed_8bit = false;
+  } 
   else if (string(ctmp) == "SIMPLE")
     time_ordered = false;
  

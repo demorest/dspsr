@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/OptimalFFT.h"
+#include <unistd.h>
 
 using namespace std;
 

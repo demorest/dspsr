@@ -137,9 +137,26 @@ namespace dsp {
 
     bool force_sensible_nbin;
 
-    bool single_pulse;
+    // length of sub-integrations in pulse periods
+    unsigned integration_turns;
+
+    // length of sub-integrations in seconds
+    double integration_length;
+
+    // minimum sub-integration length written to disk
+    double minimum_integration_length;
+
+    // all sub-integrations written to a single file
     bool single_archive;
+
+    // number of sub-integrations written to a single file
     unsigned subints_per_archive;
+
+    void single_pulse()
+    {
+      integration_turns = 1;
+      integration_length = 0;
+    }
 
     /*
       If multiple sub-integrations will be combined in a single archive,
@@ -150,13 +167,11 @@ namespace dsp {
       return single_archive || subints_per_archive > 0;
     }
 
-    bool single_pulse_archives () 
+    // multiple threads can (and should) write to disk at once
+    bool concurrent_archives () 
     { 
-      return single_pulse && !single_archiver_required();
+      return integration_turns && !single_archiver_required()
     }
-
-    double integration_length;
-    double minimum_integration_length;
 
     std::string reference_epoch;
     double reference_phase;
