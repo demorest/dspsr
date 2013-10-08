@@ -43,7 +43,6 @@ namespace dsp {
     //! Default constructor
     Config ();
 
-
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);
     unsigned get_times_minimum_ndat () const { return times_minimum_ndat; }
@@ -140,13 +139,21 @@ namespace dsp {
 
     bool single_pulse;
     bool single_archive;
+    unsigned subints_per_archive;
+
+    /*
+      If multiple sub-integrations will be combined in a single archive,
+      then a single archiver will be required to manage the integration
+    */
+    bool single_archiver_required ()
+    {
+      return single_archive || subints_per_archive > 0;
+    }
 
     bool single_pulse_archives () 
     { 
-      return single_pulse && !single_archive && (subints_per_archive==0); 
+      return single_pulse && !single_archiver_required();
     }
-
-    unsigned subints_per_archive;
 
     double integration_length;
     double minimum_integration_length;
