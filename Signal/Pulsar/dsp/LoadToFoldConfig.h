@@ -170,7 +170,7 @@ namespace dsp {
     // multiple threads can (and should) write to disk at once
     bool concurrent_archives () 
     { 
-      return integration_turns && !single_archiver_required()
+      return integration_turns && !single_archiver_required();
     }
 
     std::string reference_epoch;
