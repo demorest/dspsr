@@ -149,7 +149,11 @@ void dsp::SigProcObservation::load_global ()
 
   // set_ndat (nsamples);
 
-  set_state( Signal::Intensity );
+  if (nifs ==1)
+    set_state( Signal::Intensity );
+
+  if (nifs == 4)
+    set_state( Signal::Stokes );
 
   set_rate( 1.0/tsamp );
   set_start_time( tstart );
