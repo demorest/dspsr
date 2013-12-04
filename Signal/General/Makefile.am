@@ -42,11 +42,12 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
+nobase_include_HEADERS += dsp/LaunchConfig.h \
+	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h \
 	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C \
+libdspdsp_la_SOURCES += LaunchConfig.C FilterbankCUDA.cu TransferCUDA.C \
 	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
 
 endif
