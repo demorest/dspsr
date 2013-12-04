@@ -26,34 +26,7 @@ void check_error (const char*);
 #endif
 
 
-// compute 2X(w) = Z(w) + Z^*(-w) 
-#define sep_X(X,z,zh) X.x = 0.5*(z.x + zh.x); X.y = 0.5*(z.y - zh.y);
-
-// compute 2Y(w) = iZ^*(-w) - iZ(w)
-#define sep_Y(Y,z,zh) Y.x = 0.5*(zh.y + z.y); Y.y = 0.5*(zh.x - z.x);
-
-__global__ void separate (float2* d_fft, int nfft)
-{
-  int i = blockIdx.x*blockDim.x + threadIdx.x + 1;
-  int k = nfft - i;
-
-  float2* p0 = d_fft;
-  float2* p1 = d_fft + nfft;
-
-  float2 p0i = p0[i];
-  float2 p0k = p0[k];
-
-  float2 p1i = p1[i];
-  float2 p1k = p1[k];
-
-  sep_X( p0[i], p0i, p1k );
-  sep_X( p0[k], p0k, p1i );
-
-  sep_Y( p1[i], p0i, p1k );
-  sep_Y( p1[k], p0k, p1i );
-}
-
-__global__ void multiply (float2* d_fft, float2* kernel)
+__global__ void k_multiply (float2* d_fft, float2* kernel)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -62,7 +35,7 @@ __global__ void multiply (float2* d_fft, float2* kernel)
   d_fft[i].x = x;
 }
 
-__global__ void ncopy (float2* output_data, unsigned output_stride,
+__global__ void k_ncopy (float2* output_data, unsigned output_stride,
            const float2* input_data, unsigned input_stride,
            unsigned to_copy)
 {
@@ -106,13 +79,6 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
         << " freq_res=" << freq_res);
 
   DEBUG("CUDA::FilterbankEngine::setup scratch=" << scratch);
-
-  // determine GPU capabilities 
-  int device = 0;
-  cudaGetDevice(&device);
-  struct cudaDeviceProp device_properties;
-  cudaGetDeviceProperties (&device_properties, device);
-  max_threads_per_block = device_properties.maxThreadsPerBlock;
 
   if (real_to_complex)
   {
@@ -169,6 +135,9 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     const float* kernel = filterbank->get_response()->get_datptr(0,0);
 
     cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
+
+    multiply.init ();
+    multiply.set_nelement(nchan_subband * freq_res);
   }
 
   if (!real_to_complex)
@@ -207,12 +176,6 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
   // GPU scratch space
   DEBUG("CUDA::FilterbankEngine::perform scratch=" << scratch);
   float2* cscratch = (float2*) scratch;
-
-  unsigned data_size = nchan_subband * freq_res;
-  int threads_per_block = max_threads_per_block / 2;
-
-  // note that each thread will set two complex numbers in each poln
-  int blocks = data_size / (threads_per_block * 2);
 
   float * output_ptr;
   float * input_ptr;
@@ -253,14 +216,12 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
           check_error ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
         }
 
-        blocks = data_size / threads_per_block;
-
         if (d_kernel)
         {
           // complex numbers offset (d_kernel is float2*)
           unsigned offset = ichan * nchan_subband * freq_res; 
           DEBUG("CUDA::FilterbankEngine::perform multiply dedipersion kernel");
-          multiply<<<blocks,threads_per_block,0,stream>>> (cscratch, d_kernel+offset);
+          k_multiply<<<multiply.get_nblock(),multiply.get_nthread(),0,stream>>> (cscratch, d_kernel+offset);
           check_error ("CUDA::FilterbankEngine::perform multiply");
         }
 
@@ -280,7 +241,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
 
           {
             dim3 threads;
-            threads.x = threads_per_block;
+            threads.x = multiply.get_nthread();
 
             dim3 blocks;
             blocks.x = nkeep / threads.x;
@@ -297,7 +258,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
             DEBUG("CUDA::FilterbankEngine::perform input base=" << input << " stride=" << input_stride);
             DEBUG("CUDA::FilterbankEngine::perform to_copy=" << to_copy);
 
-            ncopy<<<blocks,threads,0,stream>>> (output_base, output_stride,
+            k_ncopy<<<blocks,threads,0,stream>>> (output_base, output_stride,
                         input, input_stride, to_copy);
             check_error ("CUDA::FilterbankEngine::perform ncopy");
           }
