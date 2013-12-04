@@ -37,6 +37,7 @@ dspsr_SOURCES = dspsr.C
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libdspsr.la \
 	$(top_builddir)/Signal/General/libdspdsp.la \

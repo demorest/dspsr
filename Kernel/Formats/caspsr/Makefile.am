@@ -16,5 +16,6 @@ endif
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 AM_CPPFLAGS += @CUDA_CFLAGS@

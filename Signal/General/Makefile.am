@@ -120,6 +120,7 @@ endif
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la \
