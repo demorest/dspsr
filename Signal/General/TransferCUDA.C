@@ -27,11 +27,13 @@ void dsp::TransferCUDA::transformation ()
   cudaThreadSynchronize();
 
   if (verbose)
+  {
     cerr << "dsp::TransferCUDA::transformation input ndat="
-         << input->get_ndat() << " ndim=" << input->get_ndim()
-         << " span=" << input->get_datptr (0, 1) - input->get_datptr(0,0)
-         << " offset=" << input->get_datptr(0,0) - (float*)input->internal_get_buffer()
-         << endl;
+         << input->get_ndat() << " ndim=" << input->get_ndim();
+    if (input->get_npol() > 1)
+      cerr << " span=" << input->get_datptr (0,1) - input->get_datptr(0,0);
+    cerr << " offset=" << input->get_datptr(0,0) - (float*)input->internal_get_buffer() << endl;
+  }
 
   cudaError error;
   error = cudaMemcpy (output->internal_get_buffer(), 
@@ -42,11 +44,14 @@ void dsp::TransferCUDA::transformation ()
                  cudaGetErrorString (error));
 
   if (verbose)
+  {
     cerr << "dsp::TransferCUDA::transformation output ndat=" 
-       << output->get_ndat() << " ndim=" << output->get_ndim() 
-       << " span=" << output->get_datptr (0, 1) - output->get_datptr(0,0)
-       << " offset=" << output->get_datptr(0,0) - (float*)output->internal_get_buffer()
-       << endl;
+       << output->get_ndat() << " ndim=" << output->get_ndim();
+    if (output->get_npol() > 1)
+      cerr << " span=" << output->get_datptr (0, 1) - output->get_datptr(0,0);
+
+    cerr << " offset=" << output->get_datptr(0,0) - (float*)output->internal_get_buffer() << endl;
+  }
 }
 
 void dsp::TransferCUDA::prepare ()
