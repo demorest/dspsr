@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 extern "C" double wappcorrect (double mjd);
 
