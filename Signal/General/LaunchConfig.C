@@ -23,7 +23,7 @@ void CUDA::LaunchConfig1D::set_nelement (unsigned N)
   unsigned min_nthread = device_properties.warpSize;
 
   nthread = max_nthread;
-  if (nthread < N)
+  if (nthread > N)
     nthread = N;
   if (nthread < min_nthread)
     nthread = min_nthread;
