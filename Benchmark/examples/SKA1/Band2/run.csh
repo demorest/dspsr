@@ -5,5 +5,5 @@
 
 cd $HOME/dspsr/Benchmark/examples/SKA1/Band2
 
-../../../bench.csh --gpu=0,1 --freq=950 --bw=10 --nchan=16 --nbw=1
+../../../bench.csh --gpu=0,1 --hdr=header.dada --nchan=1296 --nbw=1
 
