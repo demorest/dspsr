@@ -1,0 +1,32 @@
+DUMMY # must be the first five characters in this text file
+
+#
+# This fake data header is used for the dspsr benchmark presented in
+# van Straten & Bailes (2010)
+#
+
+HDR_VERSION 1.0
+
+BW    810		# bandwidth in MHz
+FREQ  1355		# centre frequency in MHz
+NCHAN 81		# 10 MHz sub-bands
+ 
+TELESCOPE  PKS
+RECEIVER   MULTI
+INSTRUMENT CASPSR	# determines the unpacker used in the benchmark
+
+SOURCE J0437-4715
+MODE PSR
+
+NBIT 8
+NDIM 2
+NPOL 2
+
+NDAT 1024000000000      # many fake samples
+
+OBS_OFFSET 0
+
+UTC_START 2010-04-13-02:05:45
+TSAMP 0.1		# 100 nanoseconds (1/10 MHz)
+RESOLUTION 4		# not mandatory
+

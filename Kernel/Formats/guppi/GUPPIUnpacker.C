@@ -51,6 +51,9 @@ void dsp::GUPPIUnpacker::unpack ()
   const unsigned nchan = input->get_nchan();
   //const unsigned nskip = npol * ndim;
   const unsigned nskip = npol * ndim * nchan;
+
+  if (ndat==0) return;
+
   const bool signed_8bit = get_Input<GUPPIBlockFile>()->get_signed();
 
   //cerr << "npol=" << npol << " ndim=" << ndim << endl;

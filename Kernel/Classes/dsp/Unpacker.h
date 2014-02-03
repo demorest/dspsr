@@ -112,7 +112,15 @@ namespace dsp {
     template<class T>
     const T* get_Input ()
     {
-      const Input* input = get_input()->get_loader()->get_origin();
+      const Input* input = NULL;
+
+      if (get_input()) 
+        if (get_input()->get_loader()) 
+          input = get_input()->get_loader()->get_origin();
+
+      if (!input)
+        throw Error (InvalidState, "Unpacker::get_Input",
+            "Input object does not exist");
 
       const T* ptr = dynamic_cast<const T*>( input );
       if( ptr )
