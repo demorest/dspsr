@@ -45,12 +45,16 @@ namespace dsp
     //! Set the device on which the unpacker will operate
     void set_device (Memory*);
 
+    //! Set the stream information for the device
+    void set_stream (void*);
+
     //! Return a new Filterbank instance and configure it
     Filterbank* create ();
 
   protected:
 
     Memory* memory;
+    void* stream;
     unsigned nchan;
     unsigned freq_res;
     When when;
