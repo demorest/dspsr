@@ -92,7 +92,8 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   }
 
   DEBUG("CUDA::FilterbankEngine::setup setting stream " << stream);
-  cufftSetStream (plan_fwd, stream);
+  if (cufftSetStream (plan_fwd, stream) != CUFFT_SUCCESS)
+    throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftSetStream");
 
   // optimal performance for CUFFT regarding data layout
   cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
@@ -107,6 +108,11 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
     DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set");
   }
+
+  nkeep = freq_res;
+
+  multiply.init ();
+  multiply.set_nelement(nchan_subband * freq_res);
 
   if (filterbank->has_response())
   {
@@ -135,9 +141,6 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     const float* kernel = filterbank->get_response()->get_datptr(0,0);
 
     cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
-
-    multiply.init ();
-    multiply.set_nelement(nchan_subband * freq_res);
   }
 
   if (!real_to_complex)
@@ -148,8 +151,6 @@ void CUDA::FilterbankEngine::set_scratch (float * _scratch)
 {
   scratch = _scratch;
 }
-
-extern void check_error (const char*);
 
 void CUDA::FilterbankEngine::finish ()
 {
@@ -199,21 +200,21 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
         in_offset = ipart * in_step;
         out_offset = ipart * out_step;
 
-        //DEBUG("CUDA::FilterbankEngine::perform offsets in=" << in_offset << " out=" << out_offset);
+        DEBUG("CUDA::FilterbankEngine::perform offsets in=" << in_offset << " out=" << out_offset);
 
         input_ptr = const_cast<float*>(in->get_datptr (ichan, ipol)) + in_offset;
 
-        //DEBUG("CUDA::FilterbankEngine::perform FORWARD FFT");
+        DEBUG("CUDA::FilterbankEngine::perform FORWARD FFT inptr=" << input_ptr << " outptr=" << cscratch);
         if (real_to_complex)
         {
           cufftExecR2C(plan_fwd, input_ptr, cscratch);
-          check_error ("CUDA::FilterbankEngine::perform cufftExecR2C FORWARD");
+          CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecR2C FORWARD");
         }
         else
         {
           float2* cin = (float2*) input_ptr;
           cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
-          check_error ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
+          CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD");
         }
 
         if (d_kernel)
@@ -222,13 +223,13 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
           unsigned offset = ichan * nchan_subband * freq_res; 
           DEBUG("CUDA::FilterbankEngine::perform multiply dedipersion kernel");
           k_multiply<<<multiply.get_nblock(),multiply.get_nthread(),0,stream>>> (cscratch, d_kernel+offset);
-          check_error ("CUDA::FilterbankEngine::perform multiply");
+          CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply");
         }
 
-        //DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
+        DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
         cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
 
-        check_error ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD");
+        CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD");
 
         if (out)
         {
@@ -260,7 +261,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
 
             k_ncopy<<<blocks,threads,0,stream>>> (output_base, output_stride,
                         input, input_stride, to_copy);
-            check_error ("CUDA::FilterbankEngine::perform ncopy");
+            CHECK_ERROR ("CUDA::FilterbankEngine::perform ncopy");
           }
         } // if not benchmarking
       } // for each part
