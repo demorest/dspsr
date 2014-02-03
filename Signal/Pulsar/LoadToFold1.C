@@ -336,6 +336,7 @@ void dsp::LoadToFold::construct () try
 #endif
 
     config->filterbank.set_device( device_memory.ptr() );
+    config->filterbank.set_stream( gpu_stream );
 
     // software filterbank constructor
     if (!filterbank)
