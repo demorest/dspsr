@@ -42,8 +42,15 @@ namespace dsp
     void set_convolve_when (When w) { when = w; }
     When get_convolve_when () const { return when; }
 
+    //! Set the device on which the unpacker will operate
+    void set_device (Memory*);
+
+    //! Return a new Filterbank instance and configure it
+    Filterbank* create ();
+
   protected:
 
+    Memory* memory;
     unsigned nchan;
     unsigned freq_res;
     When when;

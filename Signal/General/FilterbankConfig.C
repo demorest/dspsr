@@ -14,6 +14,8 @@ using dsp::Filterbank;
 
 Filterbank::Config::Config ()
 {
+  memory = 0;
+
   nchan = 1;
   freq_res = 0;  // unspecified
   when = After;  // not good, but the original default
@@ -74,3 +76,35 @@ std::istream& dsp::operator >> (std::istream& is, Filterbank::Config& config)
   return is;
 }
 
+//! Set the device on which the unpacker will operate
+void dsp::Filterbank::Config::set_device (Memory* mem)
+{
+  memory = mem;
+}
+
+//! Return a new Filterbank instance and configure it
+dsp::Filterbank* dsp::Filterbank::Config::create ()
+{
+  Reference::To<Filterbank> filterbank = new Filterbank;
+
+  filterbank->set_nchan( get_nchan() );
+  filterbank->set_frequency_resolution ( get_freq_res() );
+
+#if HAVE_CUDA
+
+  CUDA::DeviceMemory* device_memory = 
+    dynamic_cast< CUDA::DeviceMemory*> ( memory );
+
+  if ( device_memory )
+  {
+    filterbank->set_engine (new CUDA::FilterbankEngine (stream));
+
+    Scratch* gpu_scratch = new Scratch;
+    gpu_scratch->set_memory (device_memory);
+    filterbank->set_scratch (gpu_scratch);
+  }
+
+#endif
+
+  return filterbank.release();
+}
