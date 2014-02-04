@@ -325,21 +325,28 @@ void dsp::LoadToFold::construct () try
 
   }
 
-  if (1) // (config->filterbank.get_nchan() > 1)
+  if (config->filterbank.get_nchan() > 1)
   {
     // new storage for filterbank output (must be out-of-place)
     convolved = new_time_series ();
 
+#if HAVE_CUDA
+    if (run_on_gpu)
+      convolved->set_memory (device_memory);
+#endif
+
+    config->filterbank.set_device( device_memory.ptr() );
+    config->filterbank.set_stream( gpu_stream );
+
     // software filterbank constructor
     if (!filterbank)
-      filterbank = new Filterbank;
+      filterbank = config->filterbank.create();
 
     if (!config->input_buffering)
       filterbank->set_buffering_policy (NULL);
 
     filterbank->set_input (unpacked);
     filterbank->set_output (convolved);
-    filterbank->set_nchan (config->filterbank.get_nchan ());
     
     if (config->filterbank.get_convolve_when() == Filterbank::Config::During)
     {
@@ -348,25 +355,9 @@ void dsp::LoadToFold::construct () try
         filterbank->set_passband (passband);
     }
 
-    if (frequency_resolution)
-      filterbank->set_frequency_resolution (frequency_resolution);
-
     // Get order of operations correct
     if (!config->filterbank.get_convolve_when() == Filterbank::Config::Before)
       operations.push_back (filterbank.get());
-
-#if HAVE_CUDA
-    if (run_on_gpu)
-    {
-      filterbank->set_engine (new CUDA::FilterbankEngine (stream));
-      convolved->set_memory (device_memory);
-
-      Scratch* gpu_scratch = new Scratch;
-      gpu_scratch->set_memory (device_memory);
-      filterbank->set_scratch (gpu_scratch);
-    }
-#endif
-
   }
 
   bool filterbank_after_dedisp

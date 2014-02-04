@@ -9,18 +9,15 @@
 #include <config.h>
 #endif
 
+#include "dsp/FilterbankConfig.h"
+
+#if HAVE_CUDA
+#include "dsp/MemoryCUDA.h"
+#include <cuda_runtime.h>
+#endif
+
 #include "CommandLine.h"
 #include "RealTimer.h"
-#include "malloc16.h"
-
-#include "dsp/Filterbank.h"
-#include "dsp/FilterbankEngine.h"
-#include "dsp/Memory.h"
-
-#if HAVE_CUFFT
-#include "dsp/FilterbankCUDA.h"
-#include "dsp/MemoryCUDA.h"
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +25,7 @@
 #include <math.h>
 
 using namespace std;
+using namespace dsp;
 
 class Speed : public Reference::Able
 {
@@ -43,12 +41,12 @@ public:
 
 protected:
 
+  Filterbank::Config config;
   unsigned nloop;
-  unsigned nfft;
-  unsigned nchan;
   unsigned niter;
   bool real_to_complex;
   bool do_fwd_fft;
+  bool cuda;
 };
 
 
@@ -56,10 +54,11 @@ Speed::Speed ()
 {
   niter = 10;
   nloop = 0;
-  nfft = 1024;
-  nchan = 1;
   real_to_complex = false;
   do_fwd_fft = true;
+  cuda = false;
+
+  config.set_freq_res( 1024 );
 }
 
 int main(int argc, char** argv) try
@@ -89,26 +88,30 @@ void Speed::parseOptions (int argc, char** argv)
   arg = menu.add (do_fwd_fft, 'b');
   arg->set_help ("do (batched) backward FFTs only");
 
-  arg = menu.add (nfft, 'n', "nfft");
+  arg = menu.add (&config, &Filterbank::Config::set_freq_res, 'n', "nfft");
   arg->set_help ("FFT length");
 
-  arg = menu.add (nchan, 'c', "nchan");
+  arg = menu.add (&config, &Filterbank::Config::set_nchan, 'c', "nchan");
   arg->set_help ("number of channels");
 
   arg = menu.add (niter, 'N', "niter");
   arg->set_help ("number of iterations");
 
+#if HAVE_CUFFT
+  arg = menu.add (cuda, "cuda");
+  arg->set_help ("benchmark CUDA");
+#endif
+
   menu.parse (argc, argv);
 }
 
-double order (unsigned nfft)
-{
-  return nfft * log2 (nfft);
-}
+void check_error (const char*);
 
 void Speed::runTest ()
 {
-  unsigned nfloat = nchan * nfft;
+  // dsp::Operation::verbose = true;
+
+  unsigned nfloat = config.get_nchan() * config.get_freq_res();
   if (!real_to_complex)
     nfloat *= 2;
 
@@ -119,71 +122,61 @@ void Speed::runTest ()
     nloop = (1024*1024*256) / size;
     if (nloop > 2000)
       nloop = 2000;
-    cerr << "Speed::runTest nloop=" << nloop << endl;
   }
-
-  dsp::Filterbank::Engine* engine = 0;
-  dsp::Memory* memory = 0;
 
 #if HAVE_CUFFT
-  cudaStream_t stream = 0;
-  // cudaStreamCreate( &stream );
-  engine = new CUDA::FilterbankEngine (stream);
-  memory = new CUDA::DeviceMemory;
+  if (cuda)
+  {
+    cudaError_t err = cudaSetDevice (0);
+    if (err != cudaSuccess)
+      throw Error (InvalidState, "dsp::SingleThread::initialize",
+                   "cudaMalloc failed: %s", cudaGetErrorString(err));
+
+    cudaStream_t stream = 0;
+    cudaStreamCreate( &stream );
+
+    cerr << "run on GPU" << endl;
+    config.set_device( new CUDA::DeviceMemory );
+    config.set_stream( stream );
+  }
 #endif
 
-  if (!memory)
-    memory = new dsp::Memory;
+  dsp::Filterbank* filterbank = config.create();
 
-  if (!engine)
-    throw Error (InvalidState, "Speed::runTest",
-		 "engine not set");
+  dsp::TimeSeries input;
+  filterbank->set_input( &input );
 
-  float* in = NULL;
+  input.set_rate( 1e6 );
+  input.set_state( Signal::Analytic );
+  input.set_ndim( 2 );
+  input.set_input_sample( 0 );
 
-  if (do_fwd_fft)
-  {
-    in = (float*) memory->do_allocate (size);
-    memory->do_zero (in, size);
-  }
+  input.resize( size );
+  input.zero();
 
-  engine->scratch = (float*) memory->do_allocate (size + 4*sizeof(float));
+  dsp::TimeSeries output;
+  filterbank->set_output( &output );
 
-  dsp::TimeSeries ts;
-  ts.set_state( Signal::Analytic );
+  filterbank->prepare();
 
-  dsp::Filterbank temp;
-  temp.set_nchan (nchan);
-  temp.set_frequency_resolution (nfft);
-  temp.set_input (&ts);
-  engine->setup (&temp);
+  RealTimer timer;
+  timer.start ();
 
-  cerr << "entering loop" << endl;
+  for (unsigned i=0; i<nloop; i++)
+    filterbank->operate();
+    
+#if HAVE_CUFFT
+  check_error ("CUDA::FilterbankEngine::finish");
+#endif
 
-  double total_time = 0;
-
-  for (unsigned j=0; j<niter; j++)
-  {
-    RealTimer timer;
-    timer.start ();
-
-    for (unsigned i=0; i<nloop; i++)
-      engine->perform (in);
-
-    engine->finish ();
-
-    timer.stop ();
-
-    total_time += timer.get_elapsed();
-  }
+  timer.stop ();
+  
+  double total_time = timer.get_elapsed();
 
   double time_us = total_time * 1e6 / (nloop*niter);
 
-  // cerr << "time=" << time << endl;
-  if (in)
-    memory->do_free (in);
-
-  memory->do_free (engine->scratch);
+  unsigned nfft = config.get_freq_res();
+  unsigned nchan = config.get_nchan();
 
   double log2_nfft = log2(nfft);
   double log2_nchan = log2(nchan);
