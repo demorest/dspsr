@@ -12,6 +12,7 @@
 
 #include <fcntl.h>
 
+#include "Pulsar/Pulsar.h"
 #include "Pulsar/Archive.h"
 #include "Pulsar/Receiver.h"
 #include "Pulsar/FITSSUBHdrExtension.h"
@@ -26,6 +27,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
+using Pulsar::warning;
 
 dsp::FITSFile::FITSFile (const char* filename)
   : File("FITSFile")
@@ -84,21 +86,9 @@ void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
   psrfits_read_key(fp, "STT_OFFS", &frac);
   header->start_time = MJD((int)day, (int)sec, frac);
 
-  int status = 0;
-  fits_movnam_hdu(fp, BINARY_TBL, "SUBINT", 0, &status);
+  psrfits_move_hdu(fp, "SUBINT");
   psrfits_read_key(fp, "TBIN", &(header->tsamp));
-
-  if (status) {
-    throw FITSError(status, "FITSFile - read_header",
-        "fits_read_key (TBIN)");
-  }
-
   psrfits_read_key(fp, "NAXIS2", &(header->nrow));
-
-  if (status) {
-    throw FITSError(status, "FITSFile - read_header",
-        "fits_read_key (NAXIS2)");
-  }
 }
 
 void dsp::FITSFile::add_extensions (Extensions* ext)
@@ -149,12 +139,18 @@ void dsp::FITSFile::open_file(const char* filename)
   get_info()->set_telescope(archive->get_telescope());
   get_info()->set_ndat(header.nrow*samples_in_row);
 
+  if (npol == 1 && archive->get_state() != Signal::Intensity)
+  {
+    warning << "dsp::FITSFile::open_file npol==1 and data state="
+            << archive->get_state() << " (reset to Intensity)" << endl;
+    archive->set_state( Signal::Intensity );
+  }
 
   set_samples_in_row(samples_in_row);
   set_bytes_per_row((samples_in_row*npol*nchan*nbits) / 8);
 
   int colnum;
-  fits_get_colnum(fp, CASEINSEN, "DATA", &colnum, &status);
+  fits_get_colnum(fp, CASEINSEN, (char*)"DATA", &colnum, &status);
 
   if (status) {
     throw FITSError(status, "FITSFile::open_file",
