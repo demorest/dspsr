@@ -11,8 +11,9 @@
 
 #include "dsp/FilterbankConfig.h"
 
-#if HAVE_CUFFT
+#if HAVE_CUDA
 #include "dsp/MemoryCUDA.h"
+#include <cuda_runtime.h>
 #endif
 
 #include "CommandLine.h"
@@ -108,6 +109,8 @@ void check_error (const char*);
 
 void Speed::runTest ()
 {
+  // dsp::Operation::verbose = true;
+
   unsigned nfloat = config.get_nchan() * config.get_freq_res();
   if (!real_to_complex)
     nfloat *= 2;
@@ -123,7 +126,19 @@ void Speed::runTest ()
 
 #if HAVE_CUFFT
   if (cuda)
+  {
+    cudaError_t err = cudaSetDevice (0);
+    if (err != cudaSuccess)
+      throw Error (InvalidState, "dsp::SingleThread::initialize",
+                   "cudaMalloc failed: %s", cudaGetErrorString(err));
+
+    cudaStream_t stream = 0;
+    cudaStreamCreate( &stream );
+
+    cerr << "run on GPU" << endl;
     config.set_device( new CUDA::DeviceMemory );
+    config.set_stream( stream );
+  }
 #endif
 
   dsp::Filterbank* filterbank = config.create();
@@ -137,9 +152,12 @@ void Speed::runTest ()
   input.set_input_sample( 0 );
 
   input.resize( size );
+  input.zero();
 
   dsp::TimeSeries output;
   filterbank->set_output( &output );
+
+  filterbank->prepare();
 
   RealTimer timer;
   timer.start ();
