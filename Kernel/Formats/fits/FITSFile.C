@@ -128,8 +128,16 @@ void dsp::FITSFile::open_file(const char* filename)
   get_info()->set_nchan(nchan);
   get_info()->set_npol(npol);
 
+  if (npol == 1 && archive->get_state() != Signal::Intensity)
+  {
+    warning << "dsp::FITSFile::open_file npol==1 and data state="
+            << archive->get_state() << " (reset to Intensity)" << endl;
+    get_info()->set_state( Signal::Intensity );
+  }
+  else
+    get_info()->set_state(archive->get_state());
+
   get_info()->set_nbit(nbits);
-  get_info()->set_state(archive->get_state());
   get_info()->set_rate(1.0/header.tsamp);
   get_info()->set_coordinates(archive->get_coordinates());
   get_info()->set_receiver(archive->get<Pulsar::Receiver>()->get_name());
@@ -138,13 +146,6 @@ void dsp::FITSFile::open_file(const char* filename)
   get_info()->set_machine("FITS");
   get_info()->set_telescope(archive->get_telescope());
   get_info()->set_ndat(header.nrow*samples_in_row);
-
-  if (npol == 1 && archive->get_state() != Signal::Intensity)
-  {
-    warning << "dsp::FITSFile::open_file npol==1 and data state="
-            << archive->get_state() << " (reset to Intensity)" << endl;
-    archive->set_state( Signal::Intensity );
-  }
 
   set_samples_in_row(samples_in_row);
   set_bytes_per_row((samples_in_row*npol*nchan*nbits) / 8);
