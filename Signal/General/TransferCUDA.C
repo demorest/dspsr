@@ -13,9 +13,10 @@
 using namespace std;
 
 //! Default constructor- always inplace
-dsp::TransferCUDA::TransferCUDA()
+dsp::TransferCUDA::TransferCUDA(cudaStream_t _stream)
   : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer", outofplace)
 {
+  stream = _stream;
   kind = cudaMemcpyHostToDevice;
 }
 
@@ -24,7 +25,10 @@ void dsp::TransferCUDA::transformation ()
 {
   prepare ();
 
-  cudaThreadSynchronize();
+  if (stream)
+    cudaStreamSynchronize(stream);
+  else
+    cudaThreadSynchronize();
 
   if (verbose)
   {
@@ -36,9 +40,16 @@ void dsp::TransferCUDA::transformation ()
   }
 
   cudaError error;
-  error = cudaMemcpy (output->internal_get_buffer(), 
-                      input->internal_get_buffer(), 
-	                    input->internal_get_size(), kind);
+  if (stream)
+    error = cudaMemcpyAsync (output->internal_get_buffer(),
+                             input->internal_get_buffer(),
+                             input->internal_get_size(),
+                             kind,
+                             stream);
+  else
+    error = cudaMemcpy (output->internal_get_buffer(), 
+                             input->internal_get_buffer(), 
+                             input->internal_get_size(), kind);
   if (error != cudaSuccess)
     throw Error (InvalidState, "dsp::TransferCUDA::transformation",
                  cudaGetErrorString (error));

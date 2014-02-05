@@ -238,11 +238,9 @@ void dsp::SingleThread::construct () try
 
     unsigned nstream = count (config->cuda_device, (unsigned)device);
 
-    if (nstream > 1)
-    {
-      cudaStreamCreate( &stream );
-      cerr << "dspsr: thread " << thread_id << " on stream " << stream << endl;
-    }
+    // always create a stream, even for 1 thread
+    cudaStreamCreate( &stream );
+    cerr << "dspsr: thread " << thread_id << " on stream " << stream << endl;
 
     gpu_stream = stream;
 
@@ -265,7 +263,7 @@ void dsp::SingleThread::construct () try
       if (Operation::verbose)
         cerr << "SingleThread: unpack on CPU" << endl;
 
-      TransferCUDA* transfer = new TransferCUDA;
+      TransferCUDA* transfer = new TransferCUDA (stream);
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
         

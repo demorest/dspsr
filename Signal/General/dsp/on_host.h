@@ -46,9 +46,11 @@ void on_host (const Container* input, Reference::To<const Container>& output,
   }
 
 #if HAVE_CUDA
-  if ( dynamic_cast<const CUDA::DeviceMemory*>( input->get_memory() ) )
+  CUDA::DeviceMemory * device_memory = dynamic_cast<CUDA::DeviceMemory*>( 
+                          const_cast<dsp::Memory *>(input->get_memory()) );
+  if (device_memory)
   {
-    dsp::TransferCUDA transfer;
+    dsp::TransferCUDA transfer ( device_memory->get_stream() );
     transfer.set_kind( cudaMemcpyDeviceToHost );
     transfer.set_input( input );
 

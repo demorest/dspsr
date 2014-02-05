@@ -83,21 +83,21 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
     gpu_stream = (void *) gpu_mem->get_stream();
 #ifdef USE_TEXTURE_MEMORY
     if (verbose)
-      cerr << "dsp::CASPSRUnpacker::set_device: using texture memory" << endl;
+      cerr << "dsp::CASPSRUnpacker::set_device using texture memory" << endl;
     CUDA::TextureMemory * texture_mem = new CUDA::TextureMemory (gpu_mem->get_stream());
     texture_mem->set_format_signed(8, 0, 0, 0);
     texture_mem->set_symbol("caspsr_unpack_tex");
     staging.set_memory( texture_mem );
 #else
     if (verbose)
-      cerr << "dsp::CASPSRUnpacker::set_device: using gpu memory" << endl;
+      cerr << "dsp::CASPSRUnpacker::set_device using gpu memory" << endl;
     staging.set_memory( memory );
 #endif
   }
   else
   {
     if (verbose)
-      cerr << "dsp::CASPSRUnpacker::set_device: using cpu memory" << endl;
+      cerr << "dsp::CASPSRUnpacker::set_device using cpu memory" << endl;
     gpu_stream = undefined_stream;
     n_threads = 2;
     context = new ThreadContext;

@@ -21,7 +21,7 @@ namespace dsp {
   public:
 
     //! Default constructor - always out of place
-    TransferPhaseSeriesCUDA();
+    TransferPhaseSeriesCUDA(cudaStream_t _stream);
 
     void set_kind (cudaMemcpyKind k) { kind = k; }
     void prepare ();
@@ -37,6 +37,8 @@ namespace dsp {
     cudaMemcpyKind kind;
 
     bool transfer_hits;
+
+    cudaStream_t stream;
   };
 
 }
