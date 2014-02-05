@@ -5,7 +5,7 @@
 #ifndef __dsp_CASPSRUnpackerCUDA_h
 #define __dsp_CASPSRUnpackerCUDA_h
 
-#define USE_TEXTURE_MEMORY 1
+// #define USE_TEXTURE_MEMORY 1
 
 #include<stdint.h>
 #include<cuda_runtime.h>
