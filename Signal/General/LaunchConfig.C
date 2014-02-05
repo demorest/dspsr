@@ -28,7 +28,7 @@ void CUDA::LaunchConfig1D::set_nelement (unsigned N)
   if (nthread < min_nthread)
     nthread = min_nthread;
 
-  unsigned max_nblock = device_properties.maxThreadsDim[block_dim];
+  unsigned max_nblock = device_properties.maxGridSize[block_dim];
 
   nblock = N / nthread;
   if (N % nthread)
