@@ -494,7 +494,7 @@ void dsp::LoadToFold::construct () try
       skzapmask_on_gpu->set_nchan (config->filterbank.get_nchan());
       skzapmask_on_gpu->set_memory (device_memory);
 
-      TransferBitSeriesCUDA* transfer = new TransferBitSeriesCUDA;
+      TransferBitSeriesCUDA* transfer = new TransferBitSeriesCUDA(stream);
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( skzapmask );
       transfer->set_output( skzapmask_on_gpu );
