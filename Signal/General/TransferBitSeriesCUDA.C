@@ -14,17 +14,22 @@
 using namespace std;
 
 //! Default constructor- always inplace
-dsp::TransferBitSeriesCUDA::TransferBitSeriesCUDA()
+dsp::TransferBitSeriesCUDA::TransferBitSeriesCUDA(cudaStream_t _stream)
   : Transformation<BitSeries,BitSeries> ("CUDA::TransferBitSeries", outofplace)
 {
   kind = cudaMemcpyHostToDevice;
+  stream = _stream;
 }
 
 //! Do stuff
 void dsp::TransferBitSeriesCUDA::transformation ()
 {
   prepare ();
-  cudaThreadSynchronize();
+
+  if (stream)
+    cudaStreamSynchronize(stream);
+  else
+    cudaThreadSynchronize();
 
   if (verbose)
     cerr << "dsp::TransferBitSeriesCUDA::transformation"
@@ -38,9 +43,14 @@ void dsp::TransferBitSeriesCUDA::transformation ()
   assert (output->get_rawptr() != 0);
   assert (output->get_size() >= input->get_size());
 
-  error = cudaMemcpy (output->get_rawptr(), 
-                      input->get_rawptr(), 
-                      input->get_size(), kind);
+  if (stream)
+    error = cudaMemcpyAsync (output->get_rawptr(), 
+                             input->get_rawptr(), 
+                             input->get_size(), kind, stream);
+  else
+    error = cudaMemcpy (output->get_rawptr(), 
+                        input->get_rawptr(), 
+                        input->get_size(), kind);
 
   if (error != cudaSuccess)
     throw Error (InvalidState, "dsp::TransferBitSeriesCUDA::transformation",

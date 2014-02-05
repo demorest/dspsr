@@ -337,6 +337,9 @@ void CUDA::CyclicFoldEngineCUDA::zero ()
   if (d_lagdata && lagdata_size>0) {
 	  if(parent->verbose)
 		  cerr << "CUDA::CyclicFoldEngineCUDA::zero: zeroing lagdata on gpu" << endl;
+    if (stream)
+      cudaMemsetAsync(d_lagdata, 0, lagdata_size * sizeof(float), stream);
+    else
     cudaMemset(d_lagdata, 0, lagdata_size * sizeof(float));
   }
   else {
