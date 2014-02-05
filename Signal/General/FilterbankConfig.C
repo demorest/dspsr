@@ -104,7 +104,9 @@ dsp::Filterbank* dsp::Filterbank::Config::create ()
   Reference::To<Filterbank> filterbank = new Filterbank;
 
   filterbank->set_nchan( get_nchan() );
-  filterbank->set_frequency_resolution ( get_freq_res() );
+
+  if (freq_res)
+    filterbank->set_frequency_resolution ( freq_res );
 
 #if HAVE_CUDA
 

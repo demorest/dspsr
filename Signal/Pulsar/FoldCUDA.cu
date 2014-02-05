@@ -29,12 +29,14 @@ CUDA::FoldEngine::FoldEngine (cudaStream_t _stream, bool _hits_on_gpu)
   binplan_size = 0;
   binplan_nbin = 0;
 
+  stream = _stream;
+
   d_profiles = new dsp::PhaseSeries;
-  d_profiles->set_memory( new CUDA::DeviceMemory );
+  d_profiles->set_memory( new CUDA::DeviceMemory(stream) );
   
   hits_on_gpu = _hits_on_gpu;
   if (hits_on_gpu)
-    d_profiles->set_hits_memory (new CUDA::DeviceMemory);
+    d_profiles->set_hits_memory (new CUDA::DeviceMemory(stream) );
 
   if (dsp::Operation::verbose)
     cerr << "CUDA::FoldEngine::FoldEngine hits_on_gpu=" << hits_on_gpu << endl;
@@ -42,7 +44,6 @@ CUDA::FoldEngine::FoldEngine (cudaStream_t _stream, bool _hits_on_gpu)
   // no data on either the host or device
   synchronized = true;
 
-  stream = _stream;
 }
 
 CUDA::FoldEngine::~FoldEngine ()
@@ -126,7 +127,7 @@ void CUDA::FoldEngine::synch (dsp::PhaseSeries* output) try
     cerr << "CUDA::FoldEngine::synch output=" << output << endl;
 
   if (!transfer)
-    transfer = new dsp::TransferPhaseSeriesCUDA;
+    transfer = new dsp::TransferPhaseSeriesCUDA(stream);
 
   transfer->set_kind( cudaMemcpyDeviceToHost );
   transfer->set_input( d_profiles );
@@ -280,6 +281,7 @@ std::ostream& operator<< (std::ostream& ostr, const dim3& v)
 }
 
 void check_error (const char*);
+void check_error_stream (const char*, cudaStream_t);
 
 void CUDA::FoldEngine::fold ()
 {
@@ -332,6 +334,9 @@ void CUDA::FoldEngine::fold ()
   synchronized = false;
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::FoldEngine::fold");
+    if (stream)
+      check_error_stream ("CUDA::FoldEngine::fold", stream);
+    else
+      check_error ("CUDA::FoldEngine::fold");
 }
 

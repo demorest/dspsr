@@ -124,6 +124,8 @@ void Speed::runTest ()
       nloop = 2000;
   }
 
+  dsp::Memory* memory = 0;
+
 #if HAVE_CUFFT
   if (cuda)
   {
@@ -135,10 +137,16 @@ void Speed::runTest ()
     cudaStream_t stream = 0;
     cudaStreamCreate( &stream );
 
+    memory = new CUDA::DeviceMemory(stream);
+
     cerr << "run on GPU" << endl;
-    config.set_device( new CUDA::DeviceMemory );
+    config.set_device( memory );
     config.set_stream( stream );
   }
+  else
+    memory = new dsp::Memory;
+#else
+  memory = new dsp::Memory;
 #endif
 
   dsp::Filterbank* filterbank = config.create();
@@ -150,11 +158,14 @@ void Speed::runTest ()
   input.set_state( Signal::Analytic );
   input.set_ndim( 2 );
   input.set_input_sample( 0 );
+  input.set_memory ( memory );
 
   input.resize( size );
   input.zero();
 
   dsp::TimeSeries output;
+  output.set_memory ( memory );
+
   filterbank->set_output( &output );
 
   filterbank->prepare();

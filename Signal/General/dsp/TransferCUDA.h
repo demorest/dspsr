@@ -21,7 +21,7 @@ namespace dsp {
   public:
 
     //! Default constructor - always out of place
-    TransferCUDA();
+    TransferCUDA(cudaStream_t _stream);
 
     void set_kind (cudaMemcpyKind k) { kind = k; }
     void prepare ();
@@ -34,6 +34,8 @@ namespace dsp {
     void transformation();
 
     cudaMemcpyKind kind;
+
+    cudaStream_t stream;
 
   };
 

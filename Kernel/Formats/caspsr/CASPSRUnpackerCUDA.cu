@@ -152,6 +152,16 @@ void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale,
   unpack_real_ndim1<<<nblock,nthread,0,stream>>> (ndat, scale, input, pol0, pol1);
 #endif
 
+  // AJ's theory... 
+  // If there are no stream synchronises on the input then the CPU pinned memory load from the
+  // input class might be able to get ahead of a whole sequence of GPU operations, and even exceed
+  // one I/O loop. Therefore this should be a reuqirement to have a stream synchronize some time
+  // after the data are loaded from pinned memory to GPU ram and the next Input copy to pinned memory
+
+  // put it here for now
+  cudaStreamSynchronize(stream);
+
+
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error ("caspsr_unpack");
 }

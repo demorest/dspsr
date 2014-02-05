@@ -818,11 +818,13 @@ void dsp::Fold::fold (uint64_t nweights,
   {
     engine->fold ();
     if (zeroed_samples) // why is this only done if zeroed_samples was true (if rfi was flagged?) shouldn't it always happen?
+    {
     	if (verbose) {
     		cerr << "Fold::fold finishing fold w/ engine. zeroed_samples was true so correcting integration length from:" << result->integration_length
     				<< " by:" << (engine->get_ndat_folded() / get_input()->get_rate()) <<endl;
     	}
       result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
+    }
     return;
   }
 
