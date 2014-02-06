@@ -36,6 +36,6 @@ void CUDA::LaunchConfig1D::set_nelement (unsigned N)
 
   if (nblock > max_nblock)
     throw Error (InvalidState, "CUDA::LaunchConfig1D::set_nelement",
-		 "nblock=%u > maxThreadsDim[%u]=%u",
+		 "nblock=%u > maxGridSize[%u]=%u",
 		 nblock, block_dim, max_nblock);
 }
