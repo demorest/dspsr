@@ -7,9 +7,10 @@
  *
  ***************************************************************************/
 
-// #define _DEBUG 1
+//#define _DEBUG 1
 
 #include "dsp/FilterbankCUDA.h"
+#include "CUFFTError.h"
 #include "debug.h"
 
 #include <cuda_runtime.h>
@@ -86,24 +87,28 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan_subband*2);
     result = cufftPlan1d (&plan_fwd, freq_res*nchan_subband*2, CUFFT_R2C, 1);
     if (result != CUFFT_SUCCESS)
-      throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftPlan1d(plan_fwd)");
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+			"cufftPlan1d(plan_fwd, CUFFT_R2C)");
   }
   else
   {
     DEBUG("CUDA::FilterbankEngine::setup plan size=" << freq_res*nchan_subband);
     result = cufftPlan1d (&plan_fwd, freq_res*nchan_subband, CUFFT_C2C, 1);
-    if (result != CUFFT_SUCCESS);
-      throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftPlan1d(plan_fwd)");
+    if (result != CUFFT_SUCCESS)
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+			"cufftPlan1d(plan_fwd, CUFFT_C2C)");
   }
 
   result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
   if (result != CUFFT_SUCCESS)
-    throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftSetCompatibilityMode(plan_fwd)");
+    throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+		      "cufftSetCompatibilityMode(plan_fwd)");
 
   DEBUG("CUDA::FilterbankEngine::setup setting stream=" << stream);
   result = cufftSetStream (plan_fwd, stream);
   if (result != CUFFT_SUCCESS)
-    throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftSetStream(plan_fwd)");
+    throw CUFFTError (result, "CUDA::FilterbankEngine::setup", 
+		      "cufftSetStream(plan_fwd)");
 
   DEBUG("CUDA::FilterbankEngine::setup fwd FFT plan set");
 
@@ -111,16 +116,19 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   {
     result = cufftPlan1d (&plan_bwd, freq_res, CUFFT_C2C, nchan_subband);
     if (result != CUFFT_SUCCESS)
-      throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftPlan1d(plan_bwd)");
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup", 
+			"cufftPlan1d(plan_bwd)");
 
     // optimal performance for CUFFT regarding data layout
     result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
     if (result != CUFFT_SUCCESS)
-      throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftSetCompatibilityMode(plan_bwd)");
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+			"cufftSetCompatibilityMode(plan_bwd)");
 
     result = cufftSetStream (plan_bwd, stream);
     if (result != CUFFT_SUCCESS)
-      throw Error (InvalidParam, "CUDA::FilterbankEngine::setup", "cufftSetStream(plan_bwd)");
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+			"cufftSetStream(plan_bwd)");
 
     DEBUG("CUDA::FilterbankEngine::setup bwd FFT plan set");
   }
