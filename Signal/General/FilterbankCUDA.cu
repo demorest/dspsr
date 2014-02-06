@@ -60,6 +60,7 @@ CUDA::FilterbankEngine::FilterbankEngine (cudaStream_t _stream)
 
   stream = _stream;
 
+  nfilt_pos = 0;
   plan_fwd = 0;
   plan_bwd = 0;
   verbose = false;
@@ -206,6 +207,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
   DEBUG("CUDA::FilterbankEngine::perform scratch=" << scratch);
   float2* cscratch = (float2*) scratch;
 
+  cufftResult result;
   float * output_ptr;
   float * input_ptr;
   uint64_t output_span;
@@ -235,13 +237,17 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
         DEBUG("CUDA::FilterbankEngine::perform FORWARD FFT inptr=" << input_ptr << " outptr=" << cscratch);
         if (real_to_complex)
         {
-          cufftExecR2C(plan_fwd, input_ptr, cscratch);
+          result = cufftExecR2C(plan_fwd, input_ptr, cscratch);
+          if (result != CUFFT_SUCCESS)
+            throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecR2C");
           CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecR2C FORWARD", stream);
         }
         else
         {
           float2* cin = (float2*) input_ptr;
-          cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
+          result = cufftExecC2C(plan_fwd, cin, cscratch, CUFFT_FORWARD);
+          if (result != CUFFT_SUCCESS)
+            throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecC2C");
           CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C FORWARD", stream);
         }
 
@@ -255,7 +261,9 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
         }
 
         DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
-        cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
+        result = cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
+        if (result != CUFFT_SUCCESS)
+          throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecC2C (inverse)");
 
         CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD", stream);
 
