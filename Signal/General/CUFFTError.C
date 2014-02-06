@@ -37,6 +37,7 @@ const char* cufftResult_to_string (cufftResult result)
       return "User specified an invalid transform size";
     case CUFFT_UNALIGNED_DATA :
       return "No longer used";
+#if CUDA_VERSION >= 5050
     case CUFFT_INCOMPLETE_PARAMETER_LIST :
       return "Missing parameters in call";
     case CUFFT_INVALID_DEVICE :
@@ -45,6 +46,7 @@ const char* cufftResult_to_string (cufftResult result)
       return "Internal plan database error";
     case CUFFT_NO_WORKSPACE :
       return "No workspace has been provided prior to plan execution";
+#endif
     }
   return "unrecognized cufftResult";
 }
