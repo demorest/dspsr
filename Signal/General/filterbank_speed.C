@@ -105,7 +105,7 @@ void Speed::parseOptions (int argc, char** argv)
   menu.parse (argc, argv);
 }
 
-void check_error (const char*);
+void check_error_stream (const char*, cudaStream_t);
 
 void Speed::runTest ()
 {
@@ -127,15 +127,18 @@ void Speed::runTest ()
   dsp::Memory* memory = 0;
 
 #if HAVE_CUFFT
+  cudaStream_t stream = 0;
   if (cuda)
   {
     cudaError_t err = cudaSetDevice (0);
     if (err != cudaSuccess)
-      throw Error (InvalidState, "dsp::SingleThread::initialize",
-                   "cudaMalloc failed: %s", cudaGetErrorString(err));
+      throw Error (InvalidState, "filterbank_speed",
+                   "cudaSetDevice failed: %s", cudaGetErrorString(err));
 
-    cudaStream_t stream = 0;
-    cudaStreamCreate( &stream );
+    err = cudaStreamCreate( &stream );
+    if (err != cudaSuccess)
+      throw Error (InvalidState, "filterbank_speed",
+                   "cudaStreamCreate failed: %s", cudaGetErrorString(err));
 
     memory = new CUDA::DeviceMemory(stream);
 
@@ -175,9 +178,9 @@ void Speed::runTest ()
 
   for (unsigned i=0; i<nloop; i++)
     filterbank->operate();
-    
+
 #if HAVE_CUFFT
-  check_error ("CUDA::FilterbankEngine::finish");
+  check_error_stream ("CUDA::FilterbankEngine::finish", stream);
 #endif
 
   timer.stop ();
