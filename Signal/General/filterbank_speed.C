@@ -105,7 +105,9 @@ void Speed::parseOptions (int argc, char** argv)
   menu.parse (argc, argv);
 }
 
+#if HAVE_CUFFT
 void check_error_stream (const char*, cudaStream_t);
+#endif
 
 void Speed::runTest ()
 {
