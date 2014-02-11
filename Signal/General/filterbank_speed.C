@@ -10,6 +10,7 @@
 #endif
 
 #include "dsp/FilterbankConfig.h"
+#include "dsp/Memory.h"
 
 #if HAVE_CUDA
 #include "dsp/MemoryCUDA.h"
