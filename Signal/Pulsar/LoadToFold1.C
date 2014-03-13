@@ -1048,7 +1048,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
     }
     else
     {
-      subfold -> set_subint_turns (1);
+      subfold -> set_subint_turns (config->integration_turns);
       subfold -> set_fractional_pulses (config->fractional_pulses);
     }
 
