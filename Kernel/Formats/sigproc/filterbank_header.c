@@ -60,8 +60,11 @@ void filterbank_header(FILE *outptr) /* includefile */
     fprintf (stderr, "sigproc::filterbank_header HEADER_START");
 
   send_string("HEADER_START");
-  send_string("rawdatafile");
-  send_string(inpfile);
+  if (!strings_equal(inpfile,""))
+  {
+    send_string("rawdatafile");
+    send_string(inpfile);
+  }
   if (!strings_equal(source_name,""))
   {
     send_string("source_name");

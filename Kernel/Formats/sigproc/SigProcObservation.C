@@ -194,6 +194,12 @@ void dsp::SigProcObservation::unload_global ()
   if(get_machine().compare("BPSR")==0)machine_id=10;
   else if(get_machine().compare("SCAMP")==0)machine_id=6;
 
+  // This is the 'rawfilename' parameter in the header.
+  // inpfile is possibly uninitialized here so avoid setting
+  // either a blank string or a unterminated one
+  inpfile[79] = '\0';
+  if (inpfile[0]=='\0') strcpy(inpfile, "unknown");
+
   strcpy( source_name, get_source().c_str() );
 
   fch1 = get_centre_frequency (0);
