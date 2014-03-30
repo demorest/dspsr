@@ -994,6 +994,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
 	cerr << "dsp::LoadToFold::build_fold prepare CyclicFold" << endl;
       
       CyclicFold* cs = new CyclicFold;
+      cs -> set_mover (config->cyclic_mover);
       cs -> set_nchan (config->cyclic_nchan);
       cs -> set_npol (config->npol);
 
@@ -1014,6 +1015,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
 
     Subint<CyclicFold>* subfold = new Subint<CyclicFold>;
 
+    subfold -> set_mover(config->cyclic_mover);
     subfold -> set_nchan(config->cyclic_nchan);
     subfold -> set_npol(config->npol);
 

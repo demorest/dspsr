@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "dsp/Apodization.h"
 #include "dsp/CyclicFold.h"
 #include "FTransform.h"
 
@@ -17,6 +18,7 @@ using namespace std;
 dsp::CyclicFold::CyclicFold()
 {
   nlag = 0;
+  mover = 1;
   npol = 0;
   set_name("CyclicFold");
 }
@@ -43,6 +45,7 @@ void dsp::CyclicFold::prepare ()
 
   // Set params in fold engine
   cfe->set_nlag (nlag);
+  cfe->set_mover (mover);
   cfe->set_npol (npol);
   cfe->set_profiles (output);
 
@@ -91,7 +94,7 @@ void dsp::CyclicFold::prepare_output() try
     out->Observation::operator = (*in);
 
     // Assumes complex lags in 'c2r' format
-    unsigned nchan_out = 2*get_nlag() - 2;
+    unsigned nchan_out = (2*get_nlag() - 2)/get_mover();
     const unsigned nchan_in = in->get_nchan();
     out->set_nchan(nchan_out*nchan_in);
 
@@ -158,6 +161,7 @@ dsp::CyclicFoldEngine::CyclicFoldEngine()
   nbin=npol=ndim=0;
   npol_out = 0;
   nlag = 0;
+  mover = 1;
   binplan_size = 0;
   binplan[0] = NULL;
   binplan[1] = NULL;
@@ -188,10 +192,23 @@ void dsp::CyclicFoldEngine::set_nlag(unsigned _nlag)
 {
   if (nlag != _nlag)
   {
+    // FIXME: it's inefficient to FFT the whole thing and downsample
+    // better to FFT 1/mover at a time and add them, or just add them
+    // and then FFT a small hunk
+    // this will work, though, and be easier to implement
     unsigned nchan_spec = 2*_nlag - 2;
     lag2chan = FTransform::Agent::current->get_plan (nchan_spec,
         FTransform::bcr);
     nlag = _nlag;
+  }
+}
+
+void dsp::CyclicFoldEngine::set_mover(unsigned _mover) 
+{
+  if (mover != _mover)
+  {
+    // FIXME: should recompute nlag from nchan
+    mover = _mover;
   }
 }
 
@@ -222,6 +239,7 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::set_ndat "
       << "nlag=" << nlag << " "
+      << "mover=" << mover << " "
       << "nbin=" << nbin << " "
       << "npol=" << npol_out << " "
       << "nchan=" << nchan << endl;
@@ -423,8 +441,11 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::synch calling bcr FFT" << endl;
 
+  // NOTE: this spectrum is oversampled by a factor mover
   unsigned nchan_spec = 2*nlag - 2;
   float *spec = new float[nchan_spec];
+
+  unsigned nchan_spec_real = nchan_spec/mover;
 
 #if 0 
   // In the 4-pol case, we need to sum/diff the lag functions to get
@@ -465,6 +486,12 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   fbin.close();
 #endif
 
+  if (parent->verbose)
+    cerr << "dsp::CyclicFoldEngine::synch building Parzen window" << endl;
+  dsp::Apodization window = dsp::Apodization();
+  window.Parzen(2*nlag, false);
+  window.rotate(nlag);
+
   for (unsigned ibin=0; ibin<nbin; ibin++) 
   {
     for (unsigned ipol=0; ipol<npol_out; ipol++) 
@@ -472,15 +499,30 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
         float *lags = get_lagdata_ptr(ichan, ipol, ibin);
+
+	if (mover) {
+	  const float*window_values = window.get_datptr(0,0);
+	  // FIXME: double-check sinc inputs
+	  lags[0] *= window_values[0];
+	  for (unsigned ilag=1; ilag<nlag; ilag++) {
+	    float x = (M_PI/3)*mover*ilag/((float)(2*nlag-2));
+	    lags[ilag] *= window_values[ilag]*sin(x)/x;
+	  }
+	  
+	}
+
         lag2chan->bcr1d(nchan_spec, spec, lags);
-        for (unsigned schan=0; schan<nchan_spec; schan++) 
+        for (unsigned schan=0; schan<nchan_spec_real; schan++) 
         {
-          float* phasep = out->get_datptr(ichan*nchan_spec+schan,ipol);
-          phasep[ibin] = spec[schan];
+          float* phasep = out->get_datptr(ichan*nchan_spec_real+schan,ipol);
+	  // downsample by mover
+          phasep[ibin] = spec[schan*mover];
         }
       }
     }
   }
+  if (parent->verbose)
+    cerr << "dsp::CyclicFoldEngine::synch finished computing spectra" << endl;
 
   delete [] spec;
 

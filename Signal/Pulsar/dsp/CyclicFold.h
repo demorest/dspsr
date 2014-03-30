@@ -56,8 +56,13 @@ namespace dsp {
     //! Get the number of lags to fold
     unsigned get_nlag() const { return nlag; }
 
+    //! Set the amount of oversampling to improve channel isolation
+    void set_mover(unsigned _mover) { mover = _mover; }
+    //! Get the amount of oversampling
+    unsigned get_mover() const { return mover; }
+
     //! Set number of channels to make
-    void set_nchan(unsigned nchan) { set_nlag(nchan/2 + 1); }
+    void set_nchan(unsigned nchan) { set_nlag(mover*nchan/2 + 1); }
 
     //! Set the number of polarizations to compute
     void set_npol(unsigned _npol) { npol = _npol; }
@@ -74,6 +79,9 @@ namespace dsp {
 
     //! Number of lags to compute when folding
     unsigned nlag;
+
+    //! Oversampling factor
+    unsigned mover;
 
     //! Number of output polns to compute
     unsigned npol;
@@ -93,6 +101,9 @@ namespace dsp {
 
     //! Set the number of lags to fold
     virtual void set_nlag (unsigned _nlag);
+
+    //! Set the amount of oversampling
+    virtual void set_mover (unsigned _mover);
 
     //! Set the number of phase bins and initialize any other data structures
     virtual void set_nbin (unsigned _nbin) { nbin = _nbin; }
@@ -133,6 +144,7 @@ namespace dsp {
     PhaseSeries* out;
 
     unsigned nlag;
+    unsigned mover;
     unsigned nbin;
     unsigned npol_out;
 

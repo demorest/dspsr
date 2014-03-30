@@ -326,6 +326,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->cyclic_nchan, "cyclic", "N");
   arg->set_help ("form cyclic spectra with N channels (per input channel)");
 
+  arg = menu.add (config->cyclic_mover, "cyclicoversample", "M");
+  arg->set_help ("use M times as many lags to improve cyclic channel isolation (4 is recommended)");
+
   double dm = -1.0;
   arg = menu.add (dm, 'D', "dm");
   arg->set_help ("over-ride dispersion measure");
