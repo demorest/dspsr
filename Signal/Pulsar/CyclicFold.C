@@ -242,6 +242,7 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
       << "mover=" << mover << " "
       << "nbin=" << nbin << " "
       << "npol=" << npol_out << " "
+      << "ndim=" << ndim << " "
       << "nchan=" << nchan << endl;
 
   uint64_t _lagdata_size = nlag * nbin * npol_out * ndim * nchan;
@@ -489,9 +490,11 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::synch building Parzen window" << endl;
   dsp::Apodization window = dsp::Apodization();
-  window.Parzen(2*nlag, false);
-  window.rotate(nlag);
+  window.Parzen(2*nlag-1, false);
 
+
+  if (parent->verbose)
+    cerr << "dsp::CyclicFoldEngine::synch folding and saving spectra" << endl;
   for (unsigned ibin=0; ibin<nbin; ibin++) 
   {
     for (unsigned ipol=0; ipol<npol_out; ipol++) 
@@ -500,13 +503,17 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       {
         float *lags = get_lagdata_ptr(ichan, ipol, ibin);
 
-	if (mover) {
+	if (mover>1) {
+	  assert(ndim==2);
 	  const float*window_values = window.get_datptr(0,0);
 	  // FIXME: double-check sinc inputs
-	  lags[0] *= window_values[0];
+	  lags[0] *= window_values[nlag+1];
+	  lags[1] *= window_values[nlag+1];
 	  for (unsigned ilag=1; ilag<nlag; ilag++) {
 	    float x = (M_PI/3)*mover*ilag/((float)(2*nlag-2));
-	    lags[ilag] *= window_values[ilag]*sin(x)/x;
+	    float f = window_values[nlag+ilag+1]*sin(x)/x;
+	    lags[2*ilag] *= f;
+	    lags[2*ilag+1] *= f;
 	  }
 	  
 	}
