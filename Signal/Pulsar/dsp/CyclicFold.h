@@ -14,6 +14,7 @@
 #include "dsp/PhaseSeries.h"
 #include "dsp/Fold.h"
 #include "FTransformAgent.h"
+#include "dsp/Apodization.h"
 
 namespace dsp {
 
@@ -159,7 +160,6 @@ namespace dsp {
 
     // FFT plan for going from lags to channels
     FTransform::Plan* lag2chan;
-
   }; 
 
 }

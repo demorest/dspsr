@@ -84,6 +84,7 @@ void dsp::Apodization::Parzen (int npts, bool analytic)
   float denominator = 0.5 * (npts + 1);
 
   for (unsigned idat=0; idat<ndat; idat++) {
+    // Note that this formula does not in fact define a Parzen window
     value = 1.0 - fabs ((float(idat)-numerator)/denominator);
     *datptr = value; datptr++;
     if (analytic) {

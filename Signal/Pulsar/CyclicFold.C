@@ -192,6 +192,8 @@ void dsp::CyclicFoldEngine::set_nlag(unsigned _nlag)
 {
   if (nlag != _nlag)
   {
+    if (parent->verbose)
+      cerr << "dsp::CyclicFoldEngine::set_nlag nlag=" << _nlag << endl;
     // FIXME: it's inefficient to FFT the whole thing and downsample
     // better to FFT 1/mover at a time and add them, or just add them
     // and then FFT a small hunk
@@ -207,8 +209,11 @@ void dsp::CyclicFoldEngine::set_mover(unsigned _mover)
 {
   if (mover != _mover)
   {
+    if (parent->verbose)
+      cerr << "dsp::CyclicFoldEngine::set_mover mover=" << _mover << endl;
     // FIXME: should recompute nlag from nchan
     mover = _mover;
+
   }
 }
 
@@ -488,12 +493,6 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
 #endif
 
   if (parent->verbose)
-    cerr << "dsp::CyclicFoldEngine::synch building Parzen window" << endl;
-  dsp::Apodization window = dsp::Apodization();
-  window.Parzen(2*nlag-1, false);
-
-
-  if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::synch folding and saving spectra" << endl;
   for (unsigned ibin=0; ibin<nbin; ibin++) 
   {
@@ -505,13 +504,18 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
 
 	if (mover>1) {
 	  assert(ndim==2);
-	  const float*window_values = window.get_datptr(0,0);
-	  // FIXME: double-check sinc inputs
-	  lags[0] *= window_values[nlag+1];
-	  lags[1] *= window_values[nlag+1];
+	  lags[0] *= 1;
+	  lags[1] *= 1;
 	  for (unsigned ilag=1; ilag<nlag; ilag++) {
 	    float x = (M_PI/3)*mover*ilag/((float)(2*nlag-2));
-	    float f = window_values[nlag+ilag+1]*sin(x)/x;
+	    // FIXME: this is horrible.
+	    // This is a manual implementation of a Hanning window.
+	    // Using the built-in window functions led to mysterious
+	    // failures to write the second file.
+	    // In any case dsp::Apodization::Parzen is not actually 
+	    // a Parzen window.
+	    float y = 0.5*(1+cos(2*M_PI*float(ilag)/float(2*nlag)));
+	    float f = y*sin(x)/x;
 	    lags[2*ilag] *= f;
 	    lags[2*ilag+1] *= f;
 	  }
