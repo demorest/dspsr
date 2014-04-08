@@ -36,6 +36,9 @@ namespace dsp
       //! Load nbyte bytes of sampled data from the device into buffer.
       virtual int64_t load_bytes(unsigned char* buffer, uint64_t bytes);
 
+      //! Disable File::seek_bytes
+      int64_t seek_bytes (uint64_t bytes) { return bytes; }
+
       void set_samples_in_row(const unsigned _samples_in_row) { samples_in_row =
         _samples_in_row; }
 
@@ -62,6 +65,12 @@ namespace dsp
 
       //! Number of bytes per row in the SUBINT table.
       unsigned bytes_per_row;
+
+      //! Number of rows in the SUBINT table
+      unsigned number_of_rows;
+      void set_number_of_rows (unsigned N) { number_of_rows = N; }
+      unsigned get_number_of_rows () const { return number_of_rows; }
+
   };
 }
 

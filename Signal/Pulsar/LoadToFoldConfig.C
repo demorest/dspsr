@@ -98,17 +98,18 @@ dsp::LoadToFold::Config::Config ()
   // Don't allow more bins than is sensible
   force_sensible_nbin = false;
 
-  // full integrated profile by default
-  single_pulse = false;
-
-  // in single_pulse mode, unload integrations to separate files by default
+  // unload sub-integrations to separate files by default
   single_archive = false;
 
-  // default to unlimited subints per file
+  // if specified, the number of sub-integrations to write to each file
   subints_per_archive = 0;
+
+  // integrate for specified number of pulses
+  integration_turns = 0;
 
   // integrate for specified interval length
   integration_length = 0;
+
   // by default, no minimum is specified
   minimum_integration_length = -1;
 

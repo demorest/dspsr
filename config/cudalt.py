@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+
 # libtoolish hack: compile a .cu file like libtool does
+
 import sys
 import os
 
-lo_filepath = sys.argv[1]
+libtool = sys.argv[1]
+lo_filepath = sys.argv[2]
 o_filepath = lo_filepath.replace(".lo", ".o")
 
 try:
@@ -39,7 +42,7 @@ def quote_arg(arg):
       return arg
 
 # generate the command to compile the .cu for shared library
-args = sys.argv[2:]
+args = sys.argv[3:]
 args.extend(["-Xcompiler","-fPIC"]) # position indep code
 args.append("-o")
 args.append(pic_filepath)
@@ -53,7 +56,7 @@ if rv != 0:
     sys.exit(1)
 
 # generate the command to compile the .cu for static library
-args = sys.argv[2:]
+args = sys.argv[3:]
 args.append("-o")
 args.append(npic_filepath)
 args = map(quote_arg,args)
@@ -66,7 +69,7 @@ if rv != 0:
     sys.exit(1)
 
 # get libtool version
-fd = os.popen("libtool --version")
+fd = os.popen(libtool + " --version")
 libtool_version = fd.readline()
 # this loop supresses the broken pipe errors
 # you get by not reading all the data

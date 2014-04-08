@@ -114,7 +114,6 @@ __global__ void coherence2 (float2* base, unsigned span, unsigned ndat)
 
 CUDA::DetectionEngine::DetectionEngine (cudaStream_t _stream)
 {
-	cerr << "got cuda detection engeine" << endl;
   stream = _stream;
 }
 

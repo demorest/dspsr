@@ -59,6 +59,7 @@ Signal/General/digitxt
 Signal/General/dmsmear
 Signal/General/filterbank_speed
 Signal/General/passband
+Signal/General/the_decimator
 Signal/Makefile
 Signal/Pulsar/Makefile
 Signal/Pulsar/dspsr

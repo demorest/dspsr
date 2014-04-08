@@ -16,7 +16,7 @@ set output "fft_bench.eps"
 
 set label 1 "CUFFT" at graph 0.95,0.95 right
 
-plot [1:23][0:165] '< grep "^4 " filterbank_bench.out' using 5:($6/1000) ls 1, '< grep "^32 " filterbank_bench.out' using 5:($6/1000) ls 2, '< grep "^256 " filterbank_bench.out' using 5:($6/1000) ls 3, '< grep "^2048 " filterbank_bench.out' using 5:($6/1000) ls 4
+plot [1:23] '< grep "^4 " filterbank_bench.out' using 5:($6/1000) ls 1, '< grep "^32 " filterbank_bench.out' using 5:($6/1000) ls 2, '< grep "^256 " filterbank_bench.out' using 5:($6/1000) ls 3, '< grep "^2048 " filterbank_bench.out' using 5:($6/1000) ls 4
 
 unset output
 

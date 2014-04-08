@@ -43,7 +43,6 @@ namespace dsp {
     //! Default constructor
     Config ();
 
-
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);
     unsigned get_times_minimum_ndat () const { return times_minimum_ndat; }
@@ -138,18 +137,41 @@ namespace dsp {
 
     bool force_sensible_nbin;
 
-    bool single_pulse;
+    // length of sub-integrations in pulse periods
+    unsigned integration_turns;
+
+    // length of sub-integrations in seconds
+    double integration_length;
+
+    // minimum sub-integration length written to disk
+    double minimum_integration_length;
+
+    // all sub-integrations written to a single file
     bool single_archive;
 
-    bool single_pulse_archives () 
-    { 
-      return single_pulse && !single_archive && (subints_per_archive==0); 
-    }
-
+    // number of sub-integrations written to a single file
     unsigned subints_per_archive;
 
-    double integration_length;
-    double minimum_integration_length;
+    void single_pulse()
+    {
+      integration_turns = 1;
+      integration_length = 0;
+    }
+
+    /*
+      If multiple sub-integrations will be combined in a single archive,
+      then a single archiver will be required to manage the integration
+    */
+    bool single_archiver_required ()
+    {
+      return single_archive || subints_per_archive > 0;
+    }
+
+    // multiple threads can (and should) write to disk at once
+    bool concurrent_archives () 
+    { 
+      return integration_turns && !single_archiver_required();
+    }
 
     std::string reference_epoch;
     double reference_phase;

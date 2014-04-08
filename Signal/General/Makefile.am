@@ -42,21 +42,23 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 
 if HAVE_CUFFT
 
-nobase_include_HEADERS += dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
+nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
+	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h \
 	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
 
-libdspdsp_la_SOURCES += FilterbankCUDA.cu TransferCUDA.C \
+libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu TransferCUDA.C \
 	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
 
 endif
 
-bin_PROGRAMS = dmsmear digitxt digimon digihist
+bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
 
 dmsmear_SOURCES = dmsmear.C 
 digitxt_SOURCES = digitxt.C
 digimon_SOURCES = digimon.C
 digihist_SOURCES = digihist.C
+filterbank_speed_SOURCES = filterbank_speed.C
 
 check_PROGRAMS = test_PolnCalibration test_OptimalFFT
 
@@ -119,6 +121,7 @@ endif
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la \

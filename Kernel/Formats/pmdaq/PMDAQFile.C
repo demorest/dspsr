@@ -14,6 +14,7 @@
 #include "dirutil.h"
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>

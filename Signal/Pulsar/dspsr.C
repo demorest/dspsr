@@ -421,17 +421,20 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->subints_per_archive, "nsub", "N");
   arg->set_help ("output archives with N integrations each");
 
+  arg = menu.add (config.get(), &dsp::LoadToFold::Config::single_pulse, 's');
+  arg->set_help ("create single pulse sub-integrations");
+
+  arg = menu.add (config->integration_turns, "turns", "N");
+  arg->set_help ("create integrations of specified number of spin periods");
+
   arg = menu.add (config->integration_length, 'L', "seconds");
   arg->set_help ("create integrations of specified duration");
 
-  arg = menu.add (config->single_pulse, 's');
-  arg->set_help ("create single pulse integrations");
+  arg = menu.add (config->minimum_integration_length, "Lmin", "seconds");
+  arg->set_help ("minimum integration length output");
 
   arg = menu.add (config->fractional_pulses, 'y');
   arg->set_help ("output partially completed integrations");
-
-  arg = menu.add (config->minimum_integration_length, "Lmin", "seconds");
-  arg->set_help ("minimum integration length output");
 
   /* ***********************************************************************
 

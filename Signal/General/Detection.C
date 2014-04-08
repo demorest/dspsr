@@ -220,7 +220,11 @@ void dsp::Detection::square_law ()
 {
   if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
- 
+
+  if (engine)
+    throw Error (InvalidState, "dsp::Detection::square_law",
+                 "square law detection not yet implemented for the GPU");
+
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
   

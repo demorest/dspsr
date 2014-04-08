@@ -41,13 +41,14 @@ bool dsp::SigProcUnpacker::matches (const Observation* observation)
 
   return observation->get_machine() == "SigProc" 
     && observation->get_ndim() == 1
-    && observation->get_npol() == 1
+    //    && observation->get_npol() == 1
     && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 || nbit==16 || nbit==32);
 }
 
 unsigned dsp::SigProcUnpacker::get_output_ipol (unsigned idig) const
 {
-  return 0;
+  //AK  return 0;
+  return idig;
 }
 
 unsigned dsp::SigProcUnpacker::get_output_ichan (unsigned idig) const
@@ -60,7 +61,7 @@ void dsp::SigProcUnpacker::unpack ()
   const uint64_t ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
   const unsigned nbit = input->get_nbit();
-
+  const unsigned npol = input->get_npol();
   // these tricks do quick division and modulus
   unsigned div_shift = 0;
   unsigned mod_mask = 0;
@@ -94,6 +95,7 @@ void dsp::SigProcUnpacker::unpack ()
   {
   case TimeSeries::OrderFPT:
   {
+    for (unsigned ipol=0; ipol<npol; ipol++){
     for (unsigned ichan=0; ichan<nchan; ichan++) 
     {
       // from = from_base + ichan * nbit / 8
@@ -102,17 +104,20 @@ void dsp::SigProcUnpacker::unpack ()
       // shift = ichan % (8/nbit)
       const unsigned shift = (ichan & mod_mask) * nbit; // MKeith: Need to move by nbits each channel!
  
-      float* into = output->get_datptr (ichan, 0);
+      float* into = output->get_datptr (ichan, ipol);
 
       // Note, 32-bit is assumed to be floating point (eg not 32-bit ints).
       if (nbit == 32)
       {
-        const float* from32 = reinterpret_cast<const float *>(from_base)+ichan;
+	//        const float* from32 = reinterpret_cast<const float *>(from_base)+ichan;
+        const float* from32 = reinterpret_cast<const float *>(from_base)+
+	  nchan*ipol+ichan;
 
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
           into[bt] =  *from32;
-	  from32 += nchan;
+	  //	  from32 += nchan;
+	  from32 += nchan*npol;
 	}
       }
       
@@ -141,7 +146,7 @@ void dsp::SigProcUnpacker::unpack ()
 	  // skip to next byte in which this channel occurs
 	  from += nchan_bytes;
 	}
-    }
+    }}
 
     break;
   }

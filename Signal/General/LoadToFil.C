@@ -336,19 +336,21 @@ void dsp::LoadToFil::prepare () try
 
   // Check that block size is sufficient for the filterbanks,
   // increase it if not.
-  if (verbose)
+  if (filterbank && verbose)
     cerr << "digifil: filterbank minimum samples = " 
       << filterbank->get_minimum_samples() 
       << endl;
 
-  if (filterbank->get_minimum_samples() > 
-      manager->get_input()->get_block_size())
-  {
-    cerr << "digifil: increasing data block size from " 
-      << manager->get_input()->get_block_size()
-      << " to " << filterbank->get_minimum_samples() 
-      << " samples" << endl;
-    manager->set_block_size( filterbank->get_minimum_samples() );
+  if (filterbank) {
+    if (filterbank->get_minimum_samples() > 
+        manager->get_input()->get_block_size())
+    {
+      cerr << "digifil: increasing data block size from " 
+        << manager->get_input()->get_block_size()
+        << " to " << filterbank->get_minimum_samples() 
+        << " samples" << endl;
+      manager->set_block_size( filterbank->get_minimum_samples() );
+    }
   }
 
 }

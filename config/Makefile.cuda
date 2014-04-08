@@ -8,5 +8,5 @@
 	$(CUDA_NVCC) -o $@ -c $<
 
 .cu.lo:
-	$(top_srcdir)/config/cudalt.py $@ $(CUDA_NVCC) -c $<
+	$(top_srcdir)/config/cudalt.py $(top_builddir)/libtool $@ $(CUDA_NVCC) -c $<
 

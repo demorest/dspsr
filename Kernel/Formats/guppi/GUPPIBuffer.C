@@ -21,6 +21,7 @@
 #include "ascii_header.h"
 
 #include "guppi_databuf.h"
+#include "guppi_error.h"
 
 using namespace std;
 
@@ -122,6 +123,11 @@ int dsp::GUPPIBuffer::load_next_block ()
       int rv = guppi_databuf_wait_filled(databuf, curblock);
       if (rv==0) 
         waiting = false;
+      else if (rv==GUPPI_TIMEOUT)
+        waiting = true;
+      else
+        throw Error (InvalidState, "dsp::GUPPIBuffer::load_next_block",
+            "guppi_databuf_wait_filled returned %d", rv);
     }
 
     hdr = guppi_databuf_header(databuf, curblock);

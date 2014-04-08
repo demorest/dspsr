@@ -66,12 +66,15 @@ void* CUDA::DeviceMemory::do_allocate (size_t nbytes)
 void CUDA::DeviceMemory::do_zero (void* ptr, size_t nbytes)
 {
   DEBUG("CUDA::DeviceMemory::do_zero ptr=" << ptr << " nbytes=" << nbytes);
-
-  cudaError error = cudaMemset (ptr, 0, nbytes);
+  cudaError error;
+  if (stream)
+    error = cudaMemsetAsync (ptr, 0, nbytes, stream);
+  else
+    error = cudaMemset (ptr, 0, nbytes);
   if (error != cudaSuccess)
     throw Error (FailedCall, "CUDA::DeviceMemory::do_zero",
-                 "cudaMemset (%x, 0, %u): %s", ptr, nbytes,
-                 cudaGetErrorString (error));
+                 "cudaMemset%s (%x, 0, %u): %s",  stream?"Async":"",
+                 ptr, nbytes, cudaGetErrorString (error));
 }
 
 void CUDA::DeviceMemory::do_free (void* ptr)
@@ -83,14 +86,18 @@ void CUDA::DeviceMemory::do_free (void* ptr)
 void CUDA::DeviceMemory::do_copy (void* to, const void* from, size_t bytes)
 {
   DEBUG("CUDA::DeviceMemory::copy (" << to <<","<< from <<","<< bytes << ")");
-  cudaError err = cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
-  if (err != cudaSuccess)
+  cudaError_t error;
+  if (stream)
+    error = cudaMemcpyAsync (to, from, bytes, cudaMemcpyDeviceToDevice, stream);
+  else
+    error = cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
+  if (error != cudaSuccess)
   {
     int device;
     cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::DeviceMemory::do_copy",
-                 "cudaMemcpy failed on device %d: %s", device,
-		 cudaGetErrorString(err));
+                 "cudaMemcpy%s failed on device %d: %s", stream?"Async":"",  
+                 device, cudaGetErrorString(error));
   }
 }
 
@@ -146,11 +153,15 @@ void* CUDA::TextureMemory::do_allocate (size_t nbytes)
 void CUDA::TextureMemory::do_zero (void* ptr, size_t nbytes)
 {
   DEBUG("CUDA::TextureMemory::do_zero ptr=" << ptr << " nbytes=" << nbytes);
-  cudaError error = cudaMemset (ptr, 0, nbytes);
+  cudaError_t error;
+  if (stream)
+    error = cudaMemsetAsync (ptr, 0, nbytes, stream);
+  else
+    error = cudaMemset (ptr, 0, nbytes);
   if (error != cudaSuccess)
     throw Error (FailedCall, "CUDA::TextureMemory::do_zero",
-                 "cudaMemset (%x, 0, %u): %s", ptr, nbytes,
-                 cudaGetErrorString (error));
+                 "cudaMemset%s (%x, 0, %u): %s", stream?"Async":"", 
+                 ptr, nbytes, cudaGetErrorString (error));
 }
 
 void CUDA::TextureMemory::do_free (void* ptr)
@@ -168,14 +179,18 @@ void CUDA::TextureMemory::do_free (void* ptr)
 void CUDA::TextureMemory::do_copy (void* to, const void* from, size_t bytes)
 {
   DEBUG("CUDA::TextureMemory::copy (" << to <<","<< from <<","<< bytes << ")");
-  cudaError err = cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
-  if (err != cudaSuccess)
+  cudaError_t error;
+  if (stream)
+    error = cudaMemcpyAsync (to, from, bytes, cudaMemcpyDeviceToDevice, stream);
+  else
+    error = cudaMemcpy (to, from, bytes, cudaMemcpyDeviceToDevice);
+  if (error != cudaSuccess)
   {
     int device;
     cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::TextureMemory::do_copy",
-                 "cudaMemcpy failed on device %d: %s", device,
-     cudaGetErrorString(err));
+                 "cudaMemcpy%s failed on device %d: %s", stream?"Async":"", 
+                 device, cudaGetErrorString(error));
   }
 }
 
@@ -197,26 +212,28 @@ void CUDA::TextureMemory::set_format_float (int x, int y, int z, int w)
 void CUDA::TextureMemory::activate (const void * ptr)
 {
   DEBUG("CUDA::TextureMemory::activate (" << ptr << ")");
-  cudaError_t err = cudaBindTexture(0, texture_ref, ptr, &channel_desc, texture_size);
-  if (err != cudaSuccess)
+  cudaError_t error = cudaBindTexture(0, texture_ref, ptr, &channel_desc, texture_size);
+  if (error != cudaSuccess)
   {
     int device;
     cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::TextureMemory::activate",
-                 "cudaBindTexture ref=%p, ptr=%p failed on device %d: %s", texture_ref, ptr, device, cudaGetErrorString(err));
+                 "cudaBindTexture ref=%p, ptr=%p failed on device %d: %s", 
+                 texture_ref, ptr, device, cudaGetErrorString(error));
   }
 }
 
 void CUDA::TextureMemory::set_symbol ( const char * symbol)
 {
   DEBUG("CUDA::TextureMemory::set_symbol" << symbol << ")");
-  cudaError_t err = cudaGetTextureReference (&texture_ref, symbol);
-  if (err != cudaSuccess)
+  cudaError_t error = cudaGetTextureReference (&texture_ref, symbol);
+  if (error != cudaSuccess)
   {
     int device;
     cudaGetDevice (&device);
     throw Error (InvalidState, "CUDA::TextureMemory::set_symbol",
-                 "cudaGetTextureReference failed on device %d: %s", device, cudaGetErrorString(err));
+                 "cudaGetTextureReference failed on device %d: %s", 
+                 device, cudaGetErrorString(error));
   }
   DEBUG("CUDA::TextureMemory::set_symbol texture_ref=" << texture_ref);
 }

@@ -16,6 +16,8 @@
 #define __FilterbankCUDA_h
 
 #include "dsp/FilterbankEngine.h"
+#include "dsp/LaunchConfig.h"
+
 #include <cufft.h>
 
 namespace CUDA
@@ -50,8 +52,6 @@ namespace CUDA
 
     void finish ();
 
-    int max_threads_per_block; 
-
   protected:
 
     //! forward fft plan 
@@ -76,6 +76,8 @@ namespace CUDA
     unsigned freq_res;
     unsigned nfilt_pos;
     unsigned nkeep;
+
+    LaunchConfig1D multiply;
 
     cudaStream_t stream;
 
