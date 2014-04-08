@@ -181,6 +181,7 @@ void dsp::Bandpass::detected_input ()
   uint64_t ndat = input->get_ndat();
 
   output->resize (npol, 1, nchan, 1);
+  reset_output();
 
   for (unsigned ipol=0; ipol < npol; ipol++)
   {
@@ -203,6 +204,8 @@ void dsp::Bandpass::detected_input ()
 //! Set the integration length and bandpass to zero
 void dsp::Bandpass::reset_output()
 {
+  if (verbose)
+    cerr << "dsp::Bandpass::reset_output()" << endl;
   integration_length = 0;
   if (output)
     output -> zero();
