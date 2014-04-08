@@ -51,6 +51,8 @@ static dsp::Unpacker::Register::Enter<dsp::BCPMUnpacker> registry_bcpm;
 #if HAVE_bpsr
 #include "dsp/BPSRUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::BPSRUnpacker> bpsr;
+#include "dsp/BPSRCrossUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::BPSRCrossUnpacker> bpsrcross;
 #endif
 
 #if HAVE_caspsr

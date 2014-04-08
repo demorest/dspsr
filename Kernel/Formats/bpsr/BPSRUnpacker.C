@@ -38,7 +38,7 @@ bool dsp::BPSRUnpacker::matches (const Observation* observation)
       " npol=" << observation->get_npol() << " should be 2 \n"
       " nbit=" << observation->get_nbit() << " should be 8 \n"
       " ndim=" << observation->get_ndim() << " should be 1 \n"
-	 << endl;
+         << endl;
 
   return observation->get_machine() == "BPSR" 
     && observation->get_state() == Signal::PPQQ
@@ -75,24 +75,24 @@ void dsp::BPSRUnpacker::unpack ()
 
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
-	unsigned chan_off = (ichan/2) * 4 + ichan%2;
+        unsigned chan_off = (ichan/2) * 4 + ichan%2;
 
-	for (unsigned ipol=0; ipol<npol; ipol++)
-	{
-	  unsigned pol_off = ipol * 2;
+        for (unsigned ipol=0; ipol<npol; ipol++)
+        {
+          unsigned pol_off = ipol * 2;
 
-	  const unsigned char* from = input->get_rawptr() + chan_off + pol_off;
-	  float* into = output->get_datptr (ichan, ipol);
+          const unsigned char* from = input->get_rawptr() + chan_off + pol_off;
+          float* into = output->get_datptr (ichan, ipol);
 
-	  // unsigned long* hist = get_histogram (off);
+          // unsigned long* hist = get_histogram (off);
 
-	  for (unsigned bt = 0; bt < ndat; bt++)
-	  {
-	    // hist[ *from ] ++;
-	    into[bt] = float( *from );
-	    from += step;
-	  }
-	}
+          for (unsigned bt = 0; bt < ndat; bt++)
+          {
+            // hist[ *from ] ++;
+            into[bt] = float( *from );
+            from += step;
+          }
+        }
       }
     }
 break;
@@ -104,19 +104,19 @@ break;
       const uint64_t nfloat = npol * nchan * ndat;
       for (uint64_t ifloat=0; ifloat < nfloat; ifloat += 4)
       {
-	into[0] = float( from[0] );
-	into[1] = float( from[2] );
-	into[2] = float( from[1] );
-	into[3] = float( from[3] );
-	
-	into += 4;
-	from += 4;
+        into[0] = float( from[0] );
+        into[1] = float( from[2] );
+        into[2] = float( from[1] );
+        into[3] = float( from[3] );
+        
+        into += 4;
+        from += 4;
       }
     }
 break;
   default:
     throw Error (InvalidState, "dsp::BPSRUnpacker::unpack",
-		 "unrecognized order");
+                 "unrecognized order");
 break;
   }
 }

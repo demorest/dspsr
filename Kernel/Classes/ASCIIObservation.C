@@ -21,6 +21,7 @@ using namespace std;
 dsp::ASCIIObservation::ASCIIObservation (const char* header)
 {
   hdr_version = "HDR_VERSION";
+  loaded_header = "";
 
   // The default-required keywords
   required_keys.clear();
@@ -382,6 +383,12 @@ void dsp::ASCIIObservation::load (const char* header)
     ra = dec = 0.0;
 
   coordinates.setRadians (ra, dec);
+
+  // /////////////////////////////////////////////////////////////////////
+  //
+  // save the header to the local buffer
+  //
+  loaded_header = string (header);
 }
 
 /* ***********************************************************************

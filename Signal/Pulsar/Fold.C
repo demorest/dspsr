@@ -830,7 +830,7 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (verbose)
     cerr << "dsp::Fold::fold ndim=" << ndim << " folding_nbin=" << folding_nbin 
-         << " nbin=" << result->get_nbin() << endl;
+         << " nbin=" << result->get_nbin() << " npol=" << npol << endl;
 
   if (in->get_order() == TimeSeries::OrderFPT)
   {
