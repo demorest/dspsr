@@ -572,7 +572,8 @@ int main (int argc, char** argv) try
     if (hdu_key)
     {
       ipcio_close(hdu->data_block);
-      fprintf(stderr,"Downwind processes lost %lld samps due to buffer overrun\n",lost_samps);
+      if (lost_samps > 0)
+        fprintf(stderr,"Downwind processes lost %lld samps due to buffer overrun\n",lost_samps);
     }
 
 #endif
