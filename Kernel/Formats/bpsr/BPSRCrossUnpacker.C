@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/BPSRCrossUnpacker.h"
-#include "dsp/BPSRFile.h"
 #include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
 #include "Error.h"
