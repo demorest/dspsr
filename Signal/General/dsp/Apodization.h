@@ -32,6 +32,7 @@ namespace dsp {
     void Welch   (int npts, bool analytic);
 
     //! Create a Parzen window function
+    // Note that this is not actually a Parzen window
     void Parzen  (int npts, bool analytic);
 
     //! Create a window with the specified shape

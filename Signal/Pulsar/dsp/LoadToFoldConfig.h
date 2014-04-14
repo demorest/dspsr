@@ -91,6 +91,7 @@ namespace dsp {
 
     // cyclic spectrum options
     unsigned cyclic_nchan;
+    unsigned cyclic_mover;
 
     // compute and fold the fourth moments of the electric field
     bool fourth_moment;

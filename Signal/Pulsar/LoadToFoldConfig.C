@@ -49,6 +49,8 @@ dsp::LoadToFold::Config::Config ()
 
   // default cyclic spectrum off
   cyclic_nchan = 0;
+  // default to no oversampling
+  cyclic_mover = 1;
 
   // do not compute the fourth order moments by default
   fourth_moment = false;
