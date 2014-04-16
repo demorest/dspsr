@@ -130,11 +130,25 @@ void dsp::CyclicFold::prepare_output() try
 
     out->ndat_total = backup_ndat_total;
 
-    if (in->get_nchan() == 1) 
-      out->set_swap(true);
+    if (verbose)
+      cerr << "dsp::CyclicFold::prepare_output in->get_nchan()=" << in->get_nchan() << endl;
 
-    if (in->get_nchan() > 1 && in->get_swap() == false)
-      out->set_nsub_swap (in->get_nchan());
+    if (in->get_nchan() == 1) {
+      if (verbose)
+	cerr << "dsp::CyclicFold::prepare_output setting swap because only one input channel" << endl;
+      out->set_swap(true);
+    }
+
+    if (in->get_nchan() > 1 && in->get_swap() == false) {
+      if (verbose)
+	cerr << "dsp::CyclicFold::prepare_output setting nsub swap to " << out->get_nchan() << endl;
+      out->set_nsub_swap (out->get_nchan());
+    }
+
+    if (in->get_dual_sideband()) {
+      if (verbose)
+	cerr << "dsp::CyclicFold::prepare_output input appears to be dual sideband" << endl;    
+    }
 
     return;
   }
