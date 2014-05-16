@@ -13,6 +13,7 @@ struct fits_params
 
   int nsubint;
   int nrow;
+  int nsuboffs;
 
   double tsamp;
 };

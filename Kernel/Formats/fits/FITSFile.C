@@ -92,6 +92,7 @@ void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
   psrfits_move_hdu(fp, "SUBINT");
   psrfits_read_key(fp, "TBIN", &(header->tsamp));
   psrfits_read_key(fp, "NAXIS2", &(header->nrow));
+  psrfits_read_key(fp, "NSUBOFFS", &(header->nsuboffs), 0);
 }
 
 void dsp::FITSFile::add_extensions (Extensions* ext)
@@ -145,7 +146,8 @@ void dsp::FITSFile::open_file(const char* filename)
   get_info()->set_coordinates(archive->get_coordinates());
   get_info()->set_receiver(archive->get<Pulsar::Receiver>()->get_name());
   get_info()->set_basis(archive->get_basis());
-  get_info()->set_start_time(header.start_time);
+  get_info()->set_start_time(header.start_time
+      + (uint64_t)header.nsuboffs*(uint64_t)samples_in_row*header.tsamp);
   get_info()->set_machine("FITS");
   get_info()->set_telescope(archive->get_telescope());
   get_info()->set_ndat(header.nrow*samples_in_row);
@@ -238,7 +240,7 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
     byte_offset += this_read;
 
     // Toggle the 'end of data' flag after the last byte has been read.
-    if (current_row == nrow & byte_offset >= bytes_per_row)
+    if (current_row == nrow && byte_offset >= bytes_per_row)
       set_eod(true);
 
     // Adjust byte offset when entire row is read.
