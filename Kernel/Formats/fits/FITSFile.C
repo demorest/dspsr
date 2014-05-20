@@ -15,6 +15,7 @@
 #include "Pulsar/Pulsar.h"
 #include "Pulsar/Archive.h"
 #include "Pulsar/Receiver.h"
+#include "Pulsar/Backend.h"
 #include "Pulsar/FITSSUBHdrExtension.h"
 
 #include "psrfitsio.h"
@@ -148,7 +149,11 @@ void dsp::FITSFile::open_file(const char* filename)
   get_info()->set_basis(archive->get_basis());
   get_info()->set_start_time(header.start_time
       + (uint64_t)header.nsuboffs*(uint64_t)samples_in_row*header.tsamp);
-  get_info()->set_machine("FITS");
+  std::string backend_name = archive->get<Pulsar::Backend>()->get_name();
+  if (backend_name == "GUPPI" || backend_name == "PUPPI")
+    get_info()->set_machine("GUPPIFITS");
+  else
+    get_info()->set_machine("FITS");
   get_info()->set_telescope(archive->get_telescope());
   get_info()->set_ndat(header.nrow*samples_in_row);
 

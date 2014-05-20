@@ -178,6 +178,8 @@ static dsp::Unpacker::Register::Enter<dsp::ACFUnpack> spigot;
 #endif
 
 #if HAVE_fits
+#include "dsp/GUPPIFITSUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPIFITSUnpacker> guppifits;
 #include "dsp/FITSUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 #endif
