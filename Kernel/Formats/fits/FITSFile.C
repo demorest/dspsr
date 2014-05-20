@@ -32,7 +32,9 @@ using Pulsar::warning;
 
 dsp::FITSFile::FITSFile (const char* filename)
   : File("FITSFile")
-{}
+{
+  current_byte = 0;
+}
 
 bool dsp::FITSFile::is_valid (const char* filename) const
 {
@@ -190,8 +192,13 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
   // Number of rows in the SUBINT table.
   const unsigned nrow          = get_number_of_rows();
 
+  const unsigned nchan = get_info()->get_nchan();
+  const unsigned npol  = get_info()->get_npol();
+  const unsigned nbit  = get_info()->get_nbit();
+  const unsigned bytes_per_sample = (nchan*npol*nbit) / 8;
+
   // Adjust current_row and byte_offset depending on next sample to read.
-  const uint64_t sample = get_load_sample();
+  const uint64_t sample = current_byte / bytes_per_sample;
 
   if (verbose)
     cerr << "dsp::FITSFile::load_bytes load_sample=" << sample
@@ -199,11 +206,6 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 
   // Calculate the row within the SUBINT table of the target sample to be read.
   unsigned current_row = (int)(sample/nsamp) + 1;
-
-  const unsigned nchan = get_info()->get_nchan();
-  const unsigned npol  = get_info()->get_npol();
-  const unsigned nbit  = get_info()->get_nbit();
-  const unsigned bytes_per_sample = (nchan*npol*nbit) / 8;
 
   unsigned char nval = '0';
   int initflag       = 0;
@@ -213,8 +215,9 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 
   unsigned byte_offset = (sample % nsamp) * bytes_per_sample;
   unsigned bytes_remaining = bytes;
+  unsigned bytes_read = 0;
 
-  while (bytes_remaining > 0)
+  while (bytes_remaining > 0 && current_row <= nrow)
   {
     // current_row = [1:nrow]
     if (current_row > nrow)
@@ -256,8 +259,10 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
     }
 
     bytes_remaining -= this_read;
+    bytes_read += this_read;
+    current_byte += this_read;
   }
 
-  return bytes;
+  return bytes_read;
 }
 

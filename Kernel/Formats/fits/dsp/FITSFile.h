@@ -66,6 +66,9 @@ namespace dsp
       //! Number of bytes per row in the SUBINT table.
       unsigned bytes_per_row;
 
+      //! Current byte offset in the file
+      uint64_t current_byte;
+
       //! Number of rows in the SUBINT table
       unsigned number_of_rows;
       void set_number_of_rows (unsigned N) { number_of_rows = N; }
