@@ -46,6 +46,9 @@ void dsp::FourthMoment::prepare ()
 //! Detect the input data
 void dsp::FourthMoment::transformation () try
 {
+  if (input->get_ndat() == 0)
+    return;
+
   prepare ();
 
   const unsigned nchan = output->get_nchan();
