@@ -116,6 +116,11 @@ static dsp::Unpacker::Register::Enter<dsp::LBADR64_TwoBitCorrection> lbadr64;
 static Registry::List<dsp::Unpacker>::Enter<dsp::LuMPUnpacker> lump;
 #endif
 
+#if HAVE_lwa
+#include "dsp/LWAUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::LWAUnpacker> lwa;
+#endif
+
 #if HAVE_spda1k
 #include "dsp/spda1k_Unpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::SPDA1K_Unpacker> spda1k;
