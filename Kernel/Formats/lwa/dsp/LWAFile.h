@@ -18,7 +18,9 @@
 namespace dsp {
 
   //! Loads BitSeries data from a LWA DRX file
-  /*! Loads data from a file containing LWA DRX data format */
+  /*! Loads data from a file containing LWA DRX data format 
+   * Reference: http://fornax.phys.unm.edu/lwa/trac/wiki/DP_Formats
+   */
   class LWAFile : public BlockFile
   {
   public:
