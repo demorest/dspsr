@@ -17,19 +17,16 @@
 //! Constructor
 dsp::LWAUnpacker::LWAUnpacker (const char* name) : HistUnpacker (name)
 {
-  //BitTable* table = new BitTable (4, BitTable::TwosComplement);
   table = new BitTable (4, BitTable::TwosComplement);
   table->set_order( BitTable::MostToLeast );
-  //set_table( table );
   set_ndig(2);
   set_nstate(16);
 }
 
 bool dsp::LWAUnpacker::matches (const Observation* observation)
 {
-  // Mock spectrometer data happens to be in the same format...
   return observation->get_machine() == "LWA" 
-    && observation->get_nbit() == 4 && observation->get_npol() == 1;
+    && observation->get_nbit() == 4;
 }
 
 /*! The quadrature components must be offset by one */
@@ -38,10 +35,10 @@ unsigned dsp::LWAUnpacker::get_output_offset (unsigned idig) const
   return idig % 2;
 }
 
-/*! This only works for 1 pol */
+/*! Then the two polns */
 unsigned dsp::LWAUnpacker::get_output_ipol (unsigned idig) const
 {
-  return 0;
+  return idig / 2;
 }
 
 void dsp::LWAUnpacker::unpack ()
@@ -53,14 +50,14 @@ void dsp::LWAUnpacker::unpack ()
 
   for (unsigned ipol=0; ipol<npol; ipol++) {
     const unsigned char *from = 
-      reinterpret_cast<const unsigned char*>(input->get_rawptr());
+      reinterpret_cast<const unsigned char*>(input->get_rawptr()) + ipol;
     float *into = output->get_datptr(0,ipol);
-    // TODO histogram
+    // TODO histogram?
     for (unsigned bt=0; bt<ndat; bt++) {
       into[0] = lookup[*from * 2];
       into[1] = lookup[*from * 2 + 1];
       into+=2;
-      from++;
+      from+=npol; // If polns are interleaved, or single-pol
     }
   }
 }

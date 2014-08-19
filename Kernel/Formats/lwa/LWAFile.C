@@ -101,7 +101,7 @@ void dsp::LWAFile::open_file (const char* filename)
 
   info_tmp->set_required("UTC_START", false);
   info_tmp->set_required("OBS_OFFSET", false);
-  info_tmp->set_required("NPOL", false); // Only 1 for now
+  info_tmp->set_required("NPOL", true); 
   info_tmp->set_required("NBIT", false); //XXX always 4-bit?
   info_tmp->set_required("NDIM", false);
   info_tmp->set_required("NCHAN", false); //XXX always 1
@@ -127,15 +127,15 @@ void dsp::LWAFile::open_file (const char* filename)
   // Get basic params
 
   get_info()->set_nbit(4);
-
-  header_bytes = 0;
-  block_bytes = LWA_FRAME_BYTES;
-  block_header_bytes = LWA_HEADER_BYTES;
-
   get_info()->set_ndim(2);
   get_info()->set_state(Signal::Analytic);
-  get_info()->set_npol(1); // XXX temp for testing
+  //get_info()->set_npol(1); // XXX temp for testing
   get_info()->set_nchan(1); // Always 1
+
+  header_bytes = 0;
+  block_header_bytes = LWA_HEADER_BYTES;
+  block_bytes = LWA_HEADER_BYTES 
+                   + get_info()->get_npol() * LWA_DATA_BYTES;
 
   // Decimation rate
   const double lwa_base_bw = 196.0;
