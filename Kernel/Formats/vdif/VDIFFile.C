@@ -152,13 +152,38 @@ void dsp::VDIFFile::open_file (const char* filename)
       throw Error (FailedSys, "dsp::VDIFFile::open_file",
               "open(%s) failed", datafile);
 	
-  // Read first header
+  // Read until we get a valid frame
+  bool got_valid_frame = false;
   char rawhdr_bytes[VDIF_HEADER_BYTES];
   vdif_header *rawhdr = (vdif_header *)rawhdr_bytes;
-  size_t rv = read(fd, rawhdr_bytes, VDIF_HEADER_BYTES);
-  if (rv != VDIF_HEADER_BYTES) 
-      throw Error (FailedSys, "VDIFFile::open_file",
-              "Error reading first header");
+  int nbyte;
+  while (!got_valid_frame) 
+  {
+    size_t rv = read(fd, rawhdr_bytes, VDIF_HEADER_BYTES);
+    if (rv != VDIF_HEADER_BYTES) 
+        throw Error (FailedSys, "VDIFFile::open_file",
+                "Error reading first header");
+
+    // Get frame size
+    nbyte = getVDIFFrameBytes(rawhdr);
+    if (verbose) cerr << "VDIFFile::open_file FrameBytes = " << nbyte << endl;
+    header_bytes = 0;
+    block_bytes = nbyte;
+    block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
+
+    // If this first frame is invalid, go to the next one
+    if (getVDIFFrameInvalid(rawhdr)==0)
+      got_valid_frame = true;
+    else
+    {
+      rv = lseek(fd, nbyte-VDIF_HEADER_BYTES, SEEK_CUR);
+      if (rv<0) 
+        throw Error (FailedSys, "VDIFFile::lseek",
+            "Error seeking to next VDIF frame");
+    }
+  }
+
+  // Rewind file
   lseek(fd, 0, SEEK_SET);
 
   // Get basic params
@@ -166,12 +191,6 @@ void dsp::VDIFFile::open_file (const char* filename)
   int nbit = getVDIFBitsPerSample(rawhdr);
   if (verbose) cerr << "VDIFFile::open_file NBIT = " << nbit << endl;
   get_info()->set_nbit (nbit);
-
-  int nbyte = getVDIFFrameBytes(rawhdr);
-  if (verbose) cerr << "VDIFFile::open_file FrameBytes = " << nbyte << endl;
-  header_bytes = 0;
-  block_bytes = nbyte;
-  block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
 
   bool iscomplex = rawhdr->iscomplex;
   if (iscomplex) 
@@ -209,6 +228,10 @@ void dsp::VDIFFile::open_file (const char* filename)
     << frame_data_size << endl;
   if (verbose) cerr << "VDIFFile::open_file frames_per_sec = " 
     << frames_per_sec << endl;
+
+  // Set load resolution equal to one frame? XXX
+  // This broke file unloading somehow ... wtf..
+  //resolution = info.get_nsamples(frame_data_size);
 
   int mjd = getVDIFFrameMJD(rawhdr);
   int sec = getVDIFFrameSecond(rawhdr);
