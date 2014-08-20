@@ -15,6 +15,7 @@
 #endif
 
 #include "dsp/LoadToFil.h"
+#include "dsp/LoadToFilN.h"
 #include "dsp/FilterbankConfig.h"
 
 #include "CommandLine.h"
@@ -38,7 +39,11 @@ int main (int argc, char** argv) try
 
   parse_options (argc, argv);
 
-  Reference::To<dsp::Pipeline> engine = new dsp::LoadToFil (config);
+  Reference::To<dsp::Pipeline> engine;
+  if (config->get_total_nthread() > 1)
+    engine = new dsp::LoadToFilN (config);
+  else
+    engine = new dsp::LoadToFil (config);
 
   engine->set_input( config->open (argc, argv) );
   engine->construct ();   
@@ -62,6 +67,13 @@ void parse_options (int argc, char** argv) try
 		    " <" + FTransform::get_library() + ">");
 
   config->add_options (menu);
+
+  // Need to rename default threading option due to conflict
+  // with original digifil -t (time average) setting.
+  arg = menu.find("t");
+  arg->set_short_name('\0'); 
+  arg->set_long_name("threads");
+  arg->set_type("nthread");
 
   arg = menu.add (config->nbits, 'b', "bits");
   arg->set_help ("number of bits per sample output to file");

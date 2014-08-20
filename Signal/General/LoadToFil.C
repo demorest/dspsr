@@ -39,6 +39,7 @@ static void* const undefined_stream = (void *) -1;
 
 dsp::LoadToFil::LoadToFil (Config* configuration)
 {
+  kernel = NULL;
   set_configuration (configuration);
 }
 
@@ -51,6 +52,8 @@ void dsp::LoadToFil::set_configuration (Config* configuration)
 
 dsp::LoadToFil::Config::Config()
 {
+  can_thread = true;
+
   // block size in MB
   block_size = 2.0;
 
@@ -171,7 +174,6 @@ void dsp::LoadToFil::construct () try
 	cerr << "digifil: creating " << config->filterbank.get_nchan()
 	     << " channel filterbank" << endl;
 
-      Dedispersion *kernel = 0;
       if ( config->coherent_dedisp )
       {
 	cerr << "digifil: using coherent dedispersion" << endl;
@@ -320,10 +322,10 @@ void dsp::LoadToFil::construct () try
   if (!config->output_filename.empty())
     output_filename = config->output_filename.c_str();
 
-  SigProcOutputFile* outputFile = new SigProcOutputFile (output_filename);
+  outputFile = new SigProcOutputFile (output_filename);
   outputFile->set_input (bitseries);
 
-  operations.push_back( outputFile );
+  operations.push_back( outputFile.get() );
 }
 catch (Error& error)
 {

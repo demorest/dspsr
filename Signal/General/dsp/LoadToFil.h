@@ -18,6 +18,8 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/Filterbank.h"
 #include "dsp/FilterbankConfig.h"
+#include "dsp/Dedispersion.h"
+#include "dsp/OutputFile.h"
 
 namespace dsp {
 
@@ -44,11 +46,19 @@ namespace dsp {
 
   private:
 
+    friend class LoadToFilN;
+
     //! Configuration parameters
     Reference::To<Config> config;
 
     //! The filterbank in use
     Reference::To<Filterbank> filterbank;
+
+    //! The dedispersion kernel
+    Reference::To<Dedispersion> kernel;
+
+    //! The output file
+    Reference::To<OutputFile> outputFile;
 
     //! Verbose output
     static bool verbose;
