@@ -32,6 +32,17 @@ dsp::LoadToFilN::LoadToFilN (LoadToFil::Config* config)
 //! Set the number of thread to be used
 void dsp::LoadToFilN::set_nthread (unsigned nthread)
 {
+
+  if (configuration) 
+  {
+    if (nthread>1 && configuration->rescale_seconds>0.0) 
+    {
+      cerr << "dsp::LoadToFilN::set_nthread WARNING disabling rescaling"
+        << endl;
+      configuration->rescale_seconds = 0.0;
+    }
+  }
+
   MultiThread::set_nthread (nthread);
 
   FTransform::nthread = nthread;
