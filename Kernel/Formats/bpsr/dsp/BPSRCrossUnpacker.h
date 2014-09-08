@@ -23,6 +23,9 @@ namespace dsp
     //! Constructor
     BPSRCrossUnpacker (const char* name = "BPSRCrossUnpacker");
 
+    //! only unpack PP & QQ inputs
+    bool set_output_ppqq ();
+  
    protected:
     
     //! The unpacking routine
@@ -39,8 +42,13 @@ namespace dsp
 
     unsigned get_output_ichan (unsigned idig) const;
     unsigned get_output_ipol (unsigned idig) const;
-  
+
     float gain_polx;
+
+  private:
+
+    bool unpack_ppqq_only;
+
   };
 
 }
