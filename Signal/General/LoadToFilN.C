@@ -74,6 +74,8 @@ void dsp::LoadToFilN::share ()
   if (at(0)->kernel && !at(0)->kernel->context)
     at(0)->kernel->context = new ThreadContext;
 
+  // Share rescaling info
+
   // Output file sharing
   output_file = new OutputFileShare(threads.size());
   output_file->set_context(new ThreadContext);

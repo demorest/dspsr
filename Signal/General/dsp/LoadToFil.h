@@ -20,6 +20,7 @@
 #include "dsp/FilterbankConfig.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/OutputFile.h"
+#include "dsp/ConstantRescale.h"
 
 namespace dsp {
 
@@ -56,6 +57,9 @@ namespace dsp {
 
     //! The dedispersion kernel
     Reference::To<Dedispersion> kernel;
+
+    //! The rescaling method
+    Reference::To<ConstantRescale> shared_rescale;
 
     //! The output file
     Reference::To<OutputFile> outputFile;

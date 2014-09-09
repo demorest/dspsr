@@ -40,6 +40,7 @@ static void* const undefined_stream = (void *) -1;
 dsp::LoadToFil::LoadToFil (Config* configuration)
 {
   kernel = NULL;
+  shared_rescale = NULL;
   set_configuration (configuration);
 }
 
@@ -278,14 +279,22 @@ void dsp::LoadToFil::construct () try
     if (verbose)
       cerr << "digifil: creating rescale transformation" << endl;
 
-    Rescale* rescale = new Rescale;
+    if (config->get_total_nthread()>1)
+    {
+      // Only ConstantRescale supported in multithread mode now.
+    }
 
-    rescale->set_input (timeseries);
-    rescale->set_output (timeseries);
-    rescale->set_constant (config->rescale_constant);
-    rescale->set_interval_seconds (config->rescale_seconds);
+    else
+    {
+      Rescale* rescale = new Rescale;
 
-    operations.push_back( rescale );
+      rescale->set_input (timeseries);
+      rescale->set_output (timeseries);
+      rescale->set_constant (config->rescale_constant);
+      rescale->set_interval_seconds (config->rescale_seconds);
+
+      operations.push_back( rescale );
+    }
   }
 
   if (do_pscrunch)

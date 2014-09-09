@@ -21,7 +21,7 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
 	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h		       \
 	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h            \
-	dsp/PolnSelect.h
+	dsp/PolnSelect.h dsp/ConstantRescale.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -38,7 +38,7 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	TFPFilterbank.C RFIZapper.C SKFilterbank.C \
 	Resize.C SKDetector.C SKMasker.C \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
-	PolnSelect.C
+	PolnSelect.C ConstantRescale.C
 
 if HAVE_CUFFT
 
