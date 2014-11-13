@@ -1,7 +1,7 @@
 SUBDIRS =
 
 lib_LTLIBRARIES = libdspsrmore.la
-libdspsrmore_la_SOURCES = $(top_srcdir)/Signal/General/
+libdspsrmore_la_SOURCES = 
 libdspsrmore_la_LIBADD =
 
 if HAVE_PGPLOT
