@@ -16,6 +16,10 @@
 #include "dsp/Input.h"
 #include "dsp/Unpacker.h"
 
+#if HAVE_bpsr
+#include "dsp/BPSRCrossUnpacker.h"
+#endif
+
 #include "dsp/Rescale.h"
 #include "dsp/PScrunch.h"
 #include "dsp/FScrunch.h"
@@ -48,7 +52,7 @@ char get_SHA_hash(unsigned char* buffer,int size, char* hashStr);
 
 using namespace std;
 
-static char* args = "b:B:cI:no:prt:f:hxk:vVD:";
+static char* args = "b:B:cI:mno:prt:f:hxk:vVD:";
 
 void usage ()
 {
@@ -60,6 +64,7 @@ void usage ()
     "  -B secs   number of seconds per block \n"
     "  -c        keep offset and scale constant \n"
     "  -I secs   number of seconds between level updates \n"
+    "  -m        do not create monitoring statistics\n"
     "  -n        do not create filterbank output file\n"
     "  -o file   file stamp for filterbank file  \n" 
     "  -r        report total Operation times \n"
@@ -121,6 +126,7 @@ int main (int argc, char** argv) try
   char* outfile_basename = 0;
 
   bool write_sigproc_file = true;
+  bool write_monitoring_stats = true;
 
   dsp::TimeSeries::Order order = dsp::TimeSeries::OrderTFP;
 
@@ -142,6 +148,10 @@ int main (int argc, char** argv) try
 
     case 'I':
       update_interval = atof (optarg);
+      break;
+
+    case 'm':
+      write_monitoring_stats = false;
       break;
 
     case 'n':
@@ -241,9 +251,13 @@ int main (int argc, char** argv) try
   Reference::To<dsp::IOManager> manager = new dsp::IOManager;
   manager->set_output (timeseries);
 
-  if (verbose)
-    cerr << "the_decimator: creating BandpassMonitor" << endl;
-  Reference::To<dsp::BandpassMonitor> monitor = new dsp::BandpassMonitor;
+  Reference::To<dsp::BandpassMonitor> monitor = 0;
+  if (write_monitoring_stats)
+  {
+    if (verbose)
+      cerr << "the_decimator: creating BandpassMonitor" << endl;
+    monitor = new dsp::BandpassMonitor;
+  }
 
   if (verbose)
     cerr << "the_decimator: creating rescale transformation" << endl;
@@ -253,7 +267,9 @@ int main (int argc, char** argv) try
   rescale->set_interval_seconds (update_interval);
   rescale->set_output_time_total (true);
   rescale->set_constant (constant_offset_scale);
-  rescale->update.connect (monitor, &dsp::BandpassMonitor::output_state);
+
+  if (write_monitoring_stats)
+    rescale->update.connect (monitor, &dsp::BandpassMonitor::output_state);
 
   if (verbose)
     cerr << "the_decimator: creating pscrunch transformation" << endl;
@@ -350,6 +366,17 @@ int main (int argc, char** argv) try
 
     if (unpacker->get_order_supported (order))
       unpacker->set_output_order (order);
+
+#if HAVE_bpsr
+    // poor implementation, but...
+    dsp::BPSRCrossUnpacker * bpsr_cross_unpacker = dynamic_cast<dsp::BPSRCrossUnpacker *>(unpacker);
+    if (bpsr_cross_unpacker)
+    {
+      if (verbose)
+        cerr << "the_decimator: setting unpacker to unpack only PPQQ" << endl;
+      bpsr_cross_unpacker->set_output_ppqq();
+    }
+#endif
 
     if (verbose)
     {
@@ -493,7 +520,7 @@ int main (int argc, char** argv) try
           psrxml_header->receiver.hasCircularFeeds = timeseries->get_basis() == Signal::Circular;
           psrxml_header->receiver.feedRightHanded = 0; // @todo
           psrxml_header->receiver.numberOfPolarisations = 2;
-          psrxml_header->receiver.feedSymetry = 0; // @todo
+          psrxml_header->receiver.feedSymmetry = 0; // @todo
           psrxml_header->receiver.calXYPhase = 0; //@todo
  
           psrxml_header->receiverBeamNumber = 0;//@todo
@@ -511,7 +538,7 @@ int main (int argc, char** argv) try
 
           strcpy(psrxml_header->telescope.name,timeseries->get_telescope().c_str());
           psrxml_header->telescope.longitude = 0;//@todo
-          psrxml_header->telescope.lattitude=0;//@todo
+          psrxml_header->telescope.latitude=0;//@todo
           psrxml_header->telescope.zenithLimit=0;//@todo
           psrxml_header->telescope.x=0;//@todo
           psrxml_header->telescope.y=0;//@todo

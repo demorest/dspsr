@@ -94,6 +94,8 @@ static dsp::Unpacker::Register::Enter<dsp::GMRTFilterbank16> gmrt16;
 #if HAVE_guppi
 #include "dsp/GUPPIUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::GUPPIUnpacker> guppi;
+#include "dsp/GUPPITwoBitCorrection.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
 #endif
 
 #if HAVE_lofar_dal
@@ -114,6 +116,11 @@ static dsp::Unpacker::Register::Enter<dsp::LBADR64_TwoBitCorrection> lbadr64;
 #if HAVE_lump
 #include "dsp/LuMPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::LuMPUnpacker> lump;
+#endif
+
+#if HAVE_lwa
+#include "dsp/LWAUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::LWAUnpacker> lwa;
 #endif
 
 #if HAVE_spda1k

@@ -161,7 +161,7 @@ namespace dsp
 	      unsigned isub=0, unsigned nsub=1);
 
     //! Set the Pulsar::Profile with the specified subset of PhaseSeries data
-    void set (Pulsar::Profile* profile, const PhaseSeries* phase,
+    void set (Pulsar::Profile* profile, const PhaseSeries* phase, double scale,
 	      unsigned ichan, unsigned ipol, unsigned idim);
 
     //! Set the Pulsar::Backend Extension

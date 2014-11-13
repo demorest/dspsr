@@ -97,8 +97,8 @@ if HAVE_sigproc
   # start sigproc-specific code
   #
 
-  nobase_include_HEADERS += dsp/LoadToFil.h
-  libdspdsp_la_SOURCES += LoadToFil.C
+  nobase_include_HEADERS += dsp/LoadToFil.h dsp/LoadToFilN.h
+  libdspdsp_la_SOURCES += LoadToFil.C LoadToFilN.C
 
   bin_PROGRAMS += digifil
   digifil_SOURCES = digifil.C

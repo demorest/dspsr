@@ -39,6 +39,8 @@ namespace dsp {
 
   protected:
 
+    friend class OutputFileShare;
+
     //! Unload data into the BitSeries specified with set_output
     virtual void operation ();
 

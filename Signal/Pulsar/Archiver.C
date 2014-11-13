@@ -669,8 +669,13 @@ try
 
         Pulsar::Profile* profile = 0;
 
+        double scale = phase->get_scale ();
+
         if (more && poln >= effective_npol)
+        {
           profile = more->get_Profile (poln - effective_npol);
+          scale *= scale; // FourthMoments start with Stokes squared
+        }
         else
           profile = integration->get_Profile (poln, chan);
 
@@ -678,7 +683,7 @@ try
           cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
                << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
-        set (profile, phase, ichan, ipol, idim);
+        set (profile, phase, scale, ichan, ipol, idim);
 
       }
     }
@@ -759,7 +764,7 @@ void dsp::Archiver::raw_to_central (unsigned ichan,
 }
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
-        		 const PhaseSeries* phase,
+        		 const PhaseSeries* phase, double scale,
         		 unsigned ichan, unsigned ipol, unsigned idim)
 try
 {
@@ -801,8 +806,6 @@ try
   }
   
   unsigned zeroes = 0;
-
-  double scale = phase->get_scale ();
 
   if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Profile scale=" << scale << endl;

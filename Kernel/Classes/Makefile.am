@@ -30,7 +30,7 @@ nobase_include_HEADERS = environ.h ascii_header.h \
 	dsp/Memory.h debug.h dsp/OperationThread.h dsp/FloatUnpacker.h \
 	dsp/UniversalInputBuffering.h dsp/OutputFile.h \
 	dsp/ObservationInterface.h dsp/GenericEightBitUnpacker.h     \
-	dsp/CommandLineHeader.h
+	dsp/CommandLineHeader.h dsp/OutputFileShare.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	InputBufferingShare.C Reserve.C \
@@ -49,7 +49,7 @@ libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	CloneArchive.C SignalPath.C Multiplex.C Memory.C \
 	OperationThread.C FloatUnpacker.C OutputFile.C \
 	ObservationInterface.C GenericEightBitUnpacker.C            \
-	CommandLineHeader.C
+	CommandLineHeader.C OutputFileShare.C
 
 if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
