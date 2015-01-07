@@ -216,6 +216,9 @@ namespace dsp {
     // output archive post-processing jobs
     std::vector<std::string> jobs;
 
+    // zoom-mode invocations
+    std::vector<std::string> zooms;
+
     //! Operate in quiet mode
     virtual void set_quiet ();
 

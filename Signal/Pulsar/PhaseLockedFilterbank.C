@@ -9,6 +9,7 @@
 #include "dsp/Scratch.h"
 
 #include "FTransform.h"
+#include "Error.h"
 
 using namespace std;
 
@@ -20,8 +21,11 @@ dsp::PhaseLockedFilterbank::PhaseLockedFilterbank () :
   nchan = 0;
   nbin = 0;
   npol = 1;
+  goal_chan_bw = 0;
 
   idat_start = ndat_fold = 0;
+
+  overlap = true;
 
   built = false;
 
@@ -39,6 +43,11 @@ void dsp::PhaseLockedFilterbank::set_nbin (unsigned _nbin)
   bin_divider.set_turns (1.0/double(nbin));
 }
 
+void dsp::PhaseLockedFilterbank::set_overlap (bool _overlap)
+{
+  overlap = _overlap;
+}
+
 void dsp::PhaseLockedFilterbank::set_npol (unsigned _npol)
 {
   if (_npol!=1 && _npol!=2 && _npol!=4)
@@ -54,6 +63,10 @@ void dsp::PhaseLockedFilterbank::set_limits (const Observation* input)
   ndat_fold = input->get_ndat();
 }
 
+void dsp::PhaseLockedFilterbank::set_goal_chan_bw(double chanbw_mhz) {
+  goal_chan_bw = chanbw_mhz;
+}
+
 template<class T> T sqr (T x) { return x*x; }
 
 void dsp::PhaseLockedFilterbank::prepare ()
@@ -65,19 +78,50 @@ void dsp::PhaseLockedFilterbank::prepare ()
   MJD epoch = input->get_start_time();
   double period = 1.0/bin_divider.get_predictor()->frequency(epoch);
 
+  if (goal_chan_bw > 0) {
+    double input_chan_bw = fabs(input->get_bandwidth()/input->get_nchan());
+    nchan = unsigned(input_chan_bw/goal_chan_bw + 0.5);
+    cerr << " input chan bw= " << input_chan_bw << " nchan= " << nchan << endl;
+
+    // Now, pick the maximum number of phase bins with which we can achive
+    // this bandwidth
+
+    double block_length = 1e-6/goal_chan_bw; // s
+    unsigned n_block = period / block_length;
+
+    if (n_block < 2) {
+      throw Error( InvalidState, "dsp::PhaseLockedFilterbank::prepare",
+          "specified channel bw too fine for pulsar period (nblock < 2)" );
+    }
+
+    // if nbin has been set, use the smaller value which gives resolution
+    set_nbin(nbin==0? n_block: min(n_block,nbin));
+    if (verbose) {
+      double chan_bw = input_chan_bw / nchan;
+      cerr << "dsp::PhaseLockedFilterbank::prepare" << endl <<
+        " channel bandwidth=" << chan_bw << endl <<
+        " bins="<< nbin << endl;
+    }
+
+  }
+
   double samples_per_bin = period * input->get_rate() / nbin;
 
   unsigned max = (unsigned) pow (2.0, floor( log(samples_per_bin)/log(2.0) ));
 
-  if (nchan < 2)
+  //if (nchan < 2)
+  if (nchan < 1) // allow single channel "identity" option
     nchan = max;
-  else if (nchan > max)
-    cerr << "dsp::PhaseLockedFilterbank::prepare warning selected nchan="
-	 << nchan << " > suggested max=" << max << endl;
+  // MTK -- filterbank no longer uses power-of-two FFT so this warning
+  // is not necessary
+  //else if (nchan > max)
+  //  cerr << "dsp::PhaseLockedFilterbank::prepare warning selected nchan="
+	// << nchan << " > suggested max=" << max << endl;
 
-  cerr << "dsp::PhaseLockedFilterbank::prepare period=" << period 
-       << " nbin=" << nbin << " samples=" << samples_per_bin 
-       << " nchan=" << nchan << endl;
+  //if (verbose)
+    cerr << "dsp::PhaseLockedFilterbank::prepare period=" << period 
+         << " nbin=" << nbin << " samples=" << samples_per_bin 
+         << " nchan=" << nchan << endl;
 
   built = true;
 }
@@ -90,8 +134,10 @@ void dsp::PhaseLockedFilterbank::transformation ()
   const unsigned input_ndim = input->get_ndim();
 
   if (verbose)
-    cerr << "dsp::PhaseLockedFilterbank::transformation input ndat="
-	 << input_ndat << " output ndat=" << output->get_ndat() << endl;
+    cerr << "dsp::PhaseLockedFilterbank::transformation"
+   << " input ndat=" << input_ndat << " nchan=" << nchan
+   << " input_npol=" << input_npol << " input_ndim=" << input_ndim
+   << " input_sample " << input->get_input_sample() << endl;
 
   if (!built)
     prepare ();
@@ -163,15 +209,14 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
   bool first = false;
 
-  // set_limits sets idat_start and ndat_fold
+  // set_limits sets idat_start==0 and ndat_fold==get_input->get_ndat()
   set_limits (input);
   uint64_t idat_end = ndat_fold==0 ? input_ndat : idat_start + ndat_fold;
   if (idat_end > input_ndat) idat_end = input_ndat;
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::transformation"
       << " idat_start=" << idat_start
-      << " idat_end=" << idat_end
-      << endl;
+      << " idat_end=" << idat_end << endl;
 
   // if unspecified, the first TimeSeries to be folded will define the
   // start time from which to begin cutting up the observation
@@ -204,6 +249,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
   double total_integrated = 0.0;
 
   unsigned last_used = 0;
+  bool first_entry = true;
 
   while (more_data) {
 
@@ -224,15 +270,23 @@ void dsp::PhaseLockedFilterbank::transformation ()
     if (idat_start + ndat_fft > idat_end) 
     {
       bin_divider.discard_bounds( get_input() );
+      //if (total_integrated == 0) {
+      //  cerr << "Left without integrating anything!" << endl;
+      //  cerr << ndat_fft << " " << idat_start << " " << idat_end << endl;
+      //}
+      //else {
+      //  cerr << "Left after integrating something!" << endl;
+      //  cerr << ndat_fft << " " << idat_start << " " << idat_end << endl;
+      //}
       break;
     }
 
     phase_bin = bin_divider.get_phase_bin ();
 
     // Update totals
-    get_output()->get_hits()[phase_bin] ++;
-    get_output()->ndat_total ++;
-    total_integrated += time_per_fft; 
+    //get_output()->get_hits()[phase_bin] ++;
+    //get_output()->ndat_total ++;
+    //total_integrated += time_per_fft; 
 
     // Set times as necessary
     MJD time0 = input->get_start_time() + (double)idat_start/input->get_rate();
@@ -251,22 +305,40 @@ void dsp::PhaseLockedFilterbank::transformation ()
     }
     get_output()->set_end_time(std::max(output->get_end_time(), time1));
 
+    // overlap stuff
+    unsigned total_ndat = last_used - idat_start;
+    double nchunk = double(total_ndat)/ndat_fft;
+    // it occasionally happens on first entry that the phase alignment is
+    // off and we don't have enough samples to do the FFT
+    if ((nchunk < 1) && !first_entry) {
+      cerr << "you shouldn't see this message, and if you do, investigate!";
+      cerr << nchunk << " " << nchan << " " << ndat_fft << " " << total_ndat << " " << nbin << " " << endl;
+    }
+    unsigned remainder = total_ndat - int(nchunk)*ndat_fft;
+    //cerr << "total_ndat " << total_ndat << " nchunk " << nchunk << " remainder " << remainder << endl;
+
+    // for now, just use chunks that fit completely
+    for (unsigned ichunk=0; ichunk < unsigned(nchunk); ++ichunk) {
+
+    // Update totals
+    get_output()->get_hits()[phase_bin] ++;
+    get_output()->ndat_total ++;
+    total_integrated += time_per_fft; 
     for (unsigned inchan=0; inchan < input_nchan; inchan++) 
     {
 
       for (unsigned ipol=0; ipol < input_npol; ipol++) 
       {
+        const float* dat_ptr = input->get_datptr (inchan, ipol);
+	      dat_ptr += idat_start * input_ndim;
 
-	const float* dat_ptr = input->get_datptr (inchan, ipol);
-	dat_ptr += idat_start * input_ndim;
-	  
-	if (input_ndim == 1)
-	  FTransform::frc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
-	else
-	  FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
+        if (input_ndim == 1)
+          FTransform::frc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
+        else
+          FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
 
 
-	// square-law detect
+	      // square-law detect
         for (unsigned ichan=0; ichan < nchan; ichan++) 
         {
           unsigned out_ipol = ipol;
@@ -296,7 +368,14 @@ void dsp::PhaseLockedFilterbank::transformation ()
     
     } // for each frequency channel
 
+  if (!overlap) { break; }
+  idat_start += ndat_fft;
+
+  }
+
+    first_entry = false;
   } // for each big fft (ipart)
+
 
   // cerr << "main loop finished" << endl;
 

@@ -47,6 +47,7 @@
 
 #include "dsp/SampleDelay.h"
 #include "dsp/PhaseLockedFilterbank.h"
+#include "dsp/FZoom.h"
 #include "dsp/Detection.h"
 #include "dsp/FourthMoment.h"
 #include "dsp/Stats.h"
@@ -444,7 +445,8 @@ void dsp::LoadToFold::construct () try
     if (!phased_filterbank->has_output())
       phased_filterbank->set_output (new PhaseSeries);
 
-    phased_filterbank->bin_divider.set_reference_phase(config->reference_phase);
+    phased_filterbank->bin_divider.set_reference_phase(
+        config->reference_phase);
 
     // Make dummy fold instance so that polycos get created
     fold.resize(1);
@@ -466,6 +468,97 @@ void dsp::LoadToFold::construct () try
     return;
     // the phase-locked filterbank does its own detection and folding
     
+  }
+
+  // Set up zooms
+  if (config->zooms.size()) {
+
+    // Set up zooms
+    fzoom.resize(config->zooms.size());
+    zoom_filterbank.resize(config->zooms.size());
+
+    for (unsigned i=0; i < fzoom.size(); ++i) {
+
+      double zoom_bw = 1; // default 1 MHz bandwidth
+      double chan_bw = 0.002; // default 2 kHz channels
+      double centre_freq = 0;
+
+      string zoom_conf = config->zooms[i];
+      string::size_type n = zoom_conf.find(",");
+      centre_freq = strtod(zoom_conf.substr(0,n).c_str(),NULL);
+      zoom_conf = zoom_conf.substr(n+1);
+      if (n!=string::npos && zoom_conf.length()) {
+        n = zoom_conf.find(",");
+        zoom_bw = strtod(zoom_conf.substr(0,n).c_str(),NULL);
+        zoom_conf = zoom_conf.substr(n+1);
+        if (n!=string::npos && zoom_conf.length()) {
+          chan_bw = strtod(zoom_conf.c_str(),NULL); 
+        }
+      }
+
+      //if (Operation::verbose)
+        cerr << "Setting up zoom " << i+1 << " with zoom_bw=" << zoom_bw << " chan_bw=" << chan_bw << " about centre frequency=" << centre_freq << endl;
+
+      fzoom[i] = new FZoom;
+      fzoom[i]->set_input(convolved);
+      fzoom[i]->set_output(new TimeSeries);
+      fzoom[i]->set_centre_frequency(centre_freq);
+      fzoom[i]->set_bandwidth(zoom_bw);
+      operations.push_back(fzoom[i].get());
+
+      // Set up output
+      PhaseSeriesUnloader* archiver = get_unloader(i,true);
+      char label[7+1];
+      sprintf(label,".zoom%02d",i);
+      archiver->set_extension(label);
+
+
+      if (output_subints()) 
+      {
+
+        Subint<PhaseLockedFilterbank> *sub_plfb = 
+          new Subint<PhaseLockedFilterbank>;
+
+        if (config->integration_length)
+        {
+          sub_plfb->set_subint_seconds (config->integration_length);
+        }
+
+        else if (config->integration_turns) 
+        {
+          sub_plfb->set_subint_turns (config->integration_turns);
+          sub_plfb->set_fractional_pulses (config->fractional_pulses);
+        }
+
+        sub_plfb->set_unloader (zoom_unloader[i]);
+
+        zoom_filterbank[i] = sub_plfb;
+
+      }
+      else
+      {
+        zoom_filterbank[i] = new PhaseLockedFilterbank;
+      }
+
+      zoom_filterbank[i]->set_nbin (128); // maximum phase bins
+      zoom_filterbank[i]->set_npol (config->npol);
+      zoom_filterbank[i]->set_goal_chan_bw(chan_bw);
+
+      zoom_filterbank[i]->set_input (fzoom[i]->get_output());
+
+      if (!zoom_filterbank[i]->has_output())
+        zoom_filterbank[i]->set_output (new PhaseSeries);
+
+      zoom_filterbank[i]->bin_divider.set_reference_phase(
+          config->reference_phase);
+
+      operations.push_back (zoom_filterbank[i].get());
+
+    }
+    // NB -- there is still work, wild work to be done
+    // After the Fold(s) are set up below, use the predictors to
+    // set the bin divider and to choose the number of channels to
+    // satisfy the requested zoom configuration
   }
 
   // peform zapping based on the results of the SKFilterbank
@@ -684,6 +777,24 @@ void dsp::LoadToFold::prepare ()
 
   if (phased_filterbank)
     phased_filterbank->bin_divider.set_predictor( predictor );
+
+  if (zoom_filterbank.size()) {
+    for (unsigned i=0; i < zoom_filterbank.size(); ++i) {
+      if (predictor) {
+        zoom_filterbank[i]->bin_divider.set_predictor( predictor );
+      }
+      else if (fold[0]->has_folding_period()) {
+        cerr << "setting folding period" << endl;
+        cerr << "setting epoch" << endl << fold[0]->get_reference_epoch().printall() <<endl;
+        zoom_filterbank[i]->bin_divider.set_folding_period(
+            fold[0]->get_folding_period(),fold[0]->get_reference_epoch());
+      }
+      else {
+        int tantrum = 10;
+        throw tantrum;
+      }
+    }
+  }
 
   const Pulsar::Parameters* parameters = 0;
   if (fold[0]->has_pulsar_ephemeris())
@@ -939,7 +1050,7 @@ void dsp::LoadToFold::build_fold (TimeSeries* to_fold)
 
   fold.resize (nfold);
   path.resize (nfold);
-  unloader.resize (nfold);
+  //unloader.resize (nfold);
 
   if (config->asynchronous_fold)
     asynch_fold.resize( nfold );
@@ -961,22 +1072,26 @@ void dsp::LoadToFold::build_fold (TimeSeries* to_fold)
 }
 
 dsp::PhaseSeriesUnloader* 
-dsp::LoadToFold::get_unloader (unsigned ifold)
+dsp::LoadToFold::get_unloader (unsigned ifold, bool zoom)
 {
-  if (ifold == unloader.size())
-    unloader.push_back( NULL );
 
-  if (!unloader.at(ifold))
+  std::vector<Reference::To<PhaseSeriesUnloader> >& m_unloader = 
+    zoom ? zoom_unloader : unloader;
+
+  if (ifold == m_unloader.size())
+    m_unloader.push_back( NULL );
+
+  if (!m_unloader.at(ifold))
   {
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::get_unloader prepare new Archiver" << endl;
 
     Archiver* archiver = new Archiver;
-    unloader[ifold] = archiver;
+    m_unloader[ifold] = archiver;
     prepare_archiver( archiver );
   }
 
-  return unloader.at(ifold);
+  return m_unloader.at(ifold);
 }
 
 void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
@@ -991,7 +1106,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
     if (config->cyclic_nchan)
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold::build_fold prepare CyclicFold" << endl;
+	      cerr << "dsp::LoadToFold::build_fold prepare CyclicFold" << endl;
       
       CyclicFold* cs = new CyclicFold;
       cs -> set_mover (config->cyclic_mover);
@@ -1003,7 +1118,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
     else
     {
       if (Operation::verbose)
-	cerr << "dsp::LoadToFold::build_fold prepare Fold" << endl;
+	      cerr << "dsp::LoadToFold::build_fold prepare Fold" << endl;
 
       fold = new Fold;
     }
@@ -1337,8 +1452,15 @@ void dsp::LoadToFold::finish () try
 {
   if (phased_filterbank)
   {
-    cerr << "Calling PhaseLockedFilterbank::normalize_output" << endl;
+    if (Operation::verbose)
+      cerr << "Calling PhaseLockedFilterbank::normalize_output" << endl;
     phased_filterbank -> normalize_output ();
+  }
+
+  for (unsigned i=0; i < zoom_filterbank.size(); ++i) {
+    //if (Operation::verbose)
+      cerr << "Calling PhaseLockedFilterbank::normalize_output for zoom filterbank " << i+1 << endl;
+    zoom_filterbank[i]->normalize_output();
   }
 
   SingleThread::finish();
@@ -1348,9 +1470,25 @@ void dsp::LoadToFold::finish () try
     if (!unloader.size())
       throw Error (InvalidState, "dsp::LoadToFold::finish", "no unloader");
 
+    // short circuit unloading if single phase filterbank
+    if (phased_filterbank) {
+      Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
+      archiver->unload( phased_filterbank->get_output() );
+      return;
+    }
+
+    // unload zoom filterbanks, whose unloaders precede fold unloaders
+    for (unsigned i=0; i < zoom_filterbank.size(); ++i) {
+      //if (Operation::verbose)
+        cerr << "Creating zoom archive " << i+1 << endl;
+      Archiver* archiver = dynamic_cast<Archiver*>(
+          zoom_unloader[i].get() );
+      archiver->unload( zoom_filterbank[i]->get_output() );
+    }
+
     for (unsigned i=0; i<fold.size(); i++)
     {
-      Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
+      Archiver* archiver = dynamic_cast<Archiver*>( unloader[i].get() );
       if (!archiver)
         throw Error (InvalidState, "dsp::LoadToFold::finish",
                      "unloader is not an archiver (single integration)");
@@ -1361,13 +1499,10 @@ void dsp::LoadToFold::finish () try
         method.
       */
 
-      if (Operation::verbose)
-        cerr << "Creating archive " << i+1 << endl;
+      //if (Operation::verbose)
+        cerr << "Creating fold archive " << i+1 << endl;
 
-      if (phased_filterbank)
-        archiver->unload( phased_filterbank->get_output() );
-      else
-        archiver->unload( fold[i]->get_result() );
+      archiver->unload( fold[i]->get_result() );
 
     }
   }

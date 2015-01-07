@@ -39,10 +39,13 @@ dsp::TimeDivide::TimeDivide ()
 
   observation = 0;
   division_ndat = 0;
+
+  ff_pred = NULL;
 }
 
 dsp::TimeDivide::~TimeDivide ()
 {
+  delete ff_pred; ff_pred = NULL;
 }
 
 void dsp::TimeDivide::set_start_time (MJD _start_time)
@@ -99,6 +102,17 @@ void dsp::TimeDivide::set_predictor (const Pulsar::Predictor* _poly)
 
   poly = _poly;
   division_seconds = 0;
+}
+
+void dsp::TimeDivide::set_folding_period (long double folding_period, const MJD& epoch)
+{
+  delete ff_pred;
+  ff_pred = new Pulsar::FixedFrequencyPredictor (1./folding_period);
+  set_predictor (ff_pred);
+  if (&epoch) {
+    ff_pred->set_epoch (epoch);
+  }
+  ff_pred->set_epoch(MJD(55000.));
 }
 
 //! Set the reference phase (phase of bin zero)

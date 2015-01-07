@@ -56,6 +56,10 @@ namespace dsp {
 
     bool device_prepared;
 
+    bool single_thread;
+
+    void unpack_single_thread ();
+
     //! cpu_unpacker_thread ids
     std::vector <pthread_t> ids;
 

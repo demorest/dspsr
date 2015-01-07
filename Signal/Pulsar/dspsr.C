@@ -323,6 +323,15 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->plfb_nbin, 'G', "nbin");
   arg->set_help ("create phase-locked filterbank");
 
+  arg = menu.add (config->plfb_nchan, "plfb_nchan", "nchan");
+  arg->set_help ("set channel fanout for phase-locked filterbank");
+
+  arg = menu.add (config->plfb_nchan, "plfb_nchan", "nchan");
+  arg->set_help ("set channel fanout for phase-locked filterbank");
+
+  arg = menu.add (config->zooms, 'z', "freq[,bw=1 MHz,chan_bw=0.002 MHz]");
+  arg->set_help ("output spectra zoomed ");
+
   arg = menu.add (config->cyclic_nchan, "cyclic", "N");
   arg->set_help ("form cyclic spectra with N channels (per input channel)");
 

@@ -42,6 +42,9 @@ namespace dsp {
     //! Get the number of channels into which the input will be divided
     unsigned get_nchan () const { return nchan; }
 
+    //! Choose phase bins and period to obtain desired channel bandwidth
+    void set_goal_chan_bw (double chanbw_mhz);
+
     //! Set the number of pulse phase windows in which to compute spectra
     void set_nbin (unsigned nbin);
 
@@ -53,6 +56,8 @@ namespace dsp {
 
     //! Get the number of polarizations
     unsigned get_npol () const { return npol; }
+
+    void set_overlap (bool overlap);
 
     //! Has a folding predictor been set?
     bool has_folding_predictor() const { return bin_divider.get_predictor(); }
@@ -90,6 +95,9 @@ namespace dsp {
     //! Number of polarization products to compute
     unsigned npol;
 
+    //! Goal channel bandwidth
+    double goal_chan_bw;
+
     //! Flag set when built
     bool built;
 
@@ -104,6 +112,9 @@ namespace dsp {
 
     //! Internal:  number of samples to process
     uint64_t ndat_fold;
+
+    //! Repeat and average FFTs within phase window if sufficient samples
+    bool overlap;
 
   };
   

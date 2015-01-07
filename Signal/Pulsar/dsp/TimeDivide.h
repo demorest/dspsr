@@ -16,6 +16,7 @@
 
 #include "environ.h"
 #include "Pulsar/Predictor.h"
+#include "Pulsar/FixedFrequencyPredictor.h"
 #include "OwnStream.h"
 
 namespace dsp {
@@ -57,6 +58,9 @@ namespace dsp {
 
     //! Set the Pulsar::Predictor used to determine pulse phase
     void set_predictor (const Pulsar::Predictor*);
+
+    //! Use folding period to generate a predictor
+    void set_folding_period (long double folding_period, const MJD& epoch=0);
 
     //! Get the Pulsar::Predictor used to determine pulse phase
     const Pulsar::Predictor* get_predictor () const { return poly; }
@@ -187,6 +191,9 @@ namespace dsp {
 
     //! The phase bin of the current division (division_turns < 1)
     unsigned phase_bin;
+
+    //! For use with folding period
+    Pulsar::FixedFrequencyPredictor* ff_pred;
 
   };
 
