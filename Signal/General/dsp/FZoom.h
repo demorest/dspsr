@@ -11,6 +11,7 @@
 
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
+#include "dsp/PhaseSeries.h"
 
 namespace dsp {
 
@@ -43,12 +44,25 @@ namespace dsp {
     double centre_frequency;
     double bandwidth;
 
-  private:
     unsigned chan_lo,chan_hi;
     void fpt_copy();
     void tfp_copy();
 
   };
+
+#ifdef D0
+  class PhFZoom : public Transformation <PhaseSeries, PhaseSeries>, public FZoom
+  {
+
+  public:
+
+    PhFZoom ();
+
+  protected:
+
+    void transformation ();
+  };
+#endif
 
 }
 

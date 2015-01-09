@@ -168,3 +168,29 @@ void dsp::FZoom::tfp_copy ()
   }
 
 }
+
+#ifdef D0
+dsp::PhFZoom::PhFZoom () 
+  : Transformation <PhaseSeries, PhaseSeries> ("PhFZoom", outofplace)
+{
+}
+
+// perform TimeSeries transformation, then take care of hits
+void dsp::PhFZoom::transformation () {
+  dsp::FZoom::transformation ();
+  // at this point, the _data_ have been zoomed, need only to update hits
+  // NB hits array is [nchan , nbin]
+  PhaseSeries* input = input;
+  PhaseSeries* output = output;
+  unsigned nbin = output->get_nbin();
+  unsigned nchan = output->get_nchan();
+  output->resize_hits(nbin);
+  dsp::FZoom::cerr << "nchan= " << nchan << " chanlo=" << chan_lo << " chanhi=" << chan_hi << endl;
+  unsigned* in = input->get_hits(chan_lo);
+  unsigned* out = output->get_hits(0);
+  for (unsigned i=0; i< nbin*nchan; ++i) {
+    *out++ = *in++;
+  }
+}
+#endif
+

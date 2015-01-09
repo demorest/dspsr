@@ -1458,7 +1458,7 @@ void dsp::LoadToFold::finish () try
   }
 
   for (unsigned i=0; i < zoom_filterbank.size(); ++i) {
-    //if (Operation::verbose)
+    if (Operation::verbose)
       cerr << "Calling PhaseLockedFilterbank::normalize_output for zoom filterbank " << i+1 << endl;
     zoom_filterbank[i]->normalize_output();
   }
