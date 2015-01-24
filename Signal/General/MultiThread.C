@@ -145,6 +145,26 @@ void dsp::MultiThread::share ()
 
     xform->set_buffering_policy( new InputBuffering::Share (ibuf, xform) );
   }
+
+  typedef Transformation<TimeSeries,PhaseSeries> Xform_ph;
+  for (unsigned iop=0; iop < threads[0]->operations.size(); iop++)
+  {
+    Xform_ph* xform = dynamic_kast<Xform_ph>( threads[0]->operations[iop] );
+
+    if (!xform)
+      continue;
+
+    if (!xform->has_buffering_policy())
+      continue;
+
+    InputBuffering* ibuf;
+    ibuf = dynamic_cast<InputBuffering*>( xform->get_buffering_policy() );
+
+    if (!ibuf)
+      continue;
+
+    xform->set_buffering_policy( new InputBuffering::Share (ibuf, xform) );
+  }
 }
 
 uint64_t dsp::MultiThread::get_minimum_samples () const

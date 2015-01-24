@@ -81,7 +81,6 @@ void dsp::PhaseLockedFilterbank::prepare ()
   if (goal_chan_bw > 0) {
     double input_chan_bw = fabs(input->get_bandwidth()/input->get_nchan());
     nchan = unsigned(input_chan_bw/goal_chan_bw + 0.5);
-    cerr << " input chan bw= " << input_chan_bw << " nchan= " << nchan << endl;
 
     // Now, pick the maximum number of phase bins with which we can achive
     // this bandwidth
@@ -118,10 +117,16 @@ void dsp::PhaseLockedFilterbank::prepare ()
   //  cerr << "dsp::PhaseLockedFilterbank::prepare warning selected nchan="
 	// << nchan << " > suggested max=" << max << endl;
 
-  //if (verbose)
+  if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::prepare period=" << period 
          << " nbin=" << nbin << " samples=" << samples_per_bin 
          << " nchan=" << nchan << endl;
+
+  // set minimum samples ahead of transformation to support multi-threading
+  unsigned reserve = nchan;
+  if (input && input->get_state() == Signal::Nyquist)
+    reserve *= 2;
+  get_buffering_policy() -> set_minimum_samples(reserve);
 
   built = true;
 }
@@ -245,12 +250,25 @@ void dsp::PhaseLockedFilterbank::transformation ()
   // flag that the input TimeSeries contains data for another sub-integration
   bool more_data = true;
 
-  double time_per_fft = double(ndat_fft) / get_input()->get_rate();
   double total_integrated = 0.0;
 
   unsigned last_used = 0;
   bool first_entry = true;
 
+  // NB -- as implemented, "more_data" is never updated; instead, the loop
+  // breaks when the are insufficient samples remaining to produce another
+  // spectrum.  This is independent of the number of samples in a phase bin
+  // so to avoid losing data, the unused samples need to be buffered, which
+  // happens after the loop below terminates.
+
+  // Each trip through the loop updates idat_start to the current sample, so
+  // that's the correct value to use for buffering.
+  
+  // This poses a problem for multi-threaded applications, as threads
+  // operating concurrently won't know how much to rewind their
+  // buffers.
+
+  // This loop is over all of the phase windows within the input TimeSeries.
   while (more_data) {
 
     bin_divider.set_bounds( get_input() );
@@ -267,26 +285,14 @@ void dsp::PhaseLockedFilterbank::transformation ()
     first = false;
     last_used = idat_start + bin_divider.get_ndat ();
 
+    // if input TimeSeries ends before phase window
     if (idat_start + ndat_fft > idat_end) 
     {
       bin_divider.discard_bounds( get_input() );
-      //if (total_integrated == 0) {
-      //  cerr << "Left without integrating anything!" << endl;
-      //  cerr << ndat_fft << " " << idat_start << " " << idat_end << endl;
-      //}
-      //else {
-      //  cerr << "Left after integrating something!" << endl;
-      //  cerr << ndat_fft << " " << idat_start << " " << idat_end << endl;
-      //}
       break;
     }
 
     phase_bin = bin_divider.get_phase_bin ();
-
-    // Update totals
-    //get_output()->get_hits()[phase_bin] ++;
-    //get_output()->ndat_total ++;
-    //total_integrated += time_per_fft; 
 
     // Set times as necessary
     MJD time0 = input->get_start_time() + (double)idat_start/input->get_rate();
@@ -305,38 +311,74 @@ void dsp::PhaseLockedFilterbank::transformation ()
     }
     get_output()->set_end_time(std::max(output->get_end_time(), time1));
 
-    // overlap stuff
-    unsigned total_ndat = last_used - idat_start;
-    double nchunk = double(total_ndat)/ndat_fft;
-    // it occasionally happens on first entry that the phase alignment is
-    // off and we don't have enough samples to do the FFT
-    if ((nchunk < 1) && !first_entry) {
-      cerr << "you shouldn't see this message, and if you do, investigate!";
-      cerr << nchunk << " " << nchan << " " << ndat_fft << " " << total_ndat << " " << nbin << " " << endl;
-    }
-    unsigned remainder = total_ndat - int(nchunk)*ndat_fft;
-    //cerr << "total_ndat " << total_ndat << " nchunk " << nchunk << " remainder " << remainder << endl;
+    // Scheme: split the total_ndat samples of the time series up into 
+    // nblock overlapping blocks with ndat_fft samples.
 
-    // for now, just use chunks that fit completely
-    for (unsigned ichunk=0; ichunk < unsigned(nchunk); ++ichunk) {
+    // nblock will be given by int(total_ndat/ndat_fft)+1 unless ndat_fft 
+    //evenly divides total_ndat.
+
+    // To form the spectra, the block start position is advanced by
+    // (total_ndat - ndat_fft) / (nblock - 1) samples each iteration.
+
+    // To compute total integration time, the first spectrum receives its
+    // full weight, while subsequent spectra receive only the weight of the
+    // new samples, viz. the number of samples the block advances.
+
+    unsigned total_ndat = last_used - idat_start;
+    unsigned nblock = total_ndat / ndat_fft;
+    unsigned block_advance = ndat_fft;
+
+    unsigned remainder = total_ndat - nblock*ndat_fft;
+    // add an extra block for the samples beyond last integral block
+    // and set the block advance to span the time series 
+    if (nblock && remainder) {
+      nblock ++;
+      block_advance = remainder / (nblock -1);
+    }
+
+    // set number of blocks to 1 if not doing overlapping
+    if (nblock && !overlap) {
+      nblock = 1;
+    }
+
+    double time_per_sample = 1. / get_input()->get_rate();
+
+    // It occasionally happens on first entry that the phase alignment is
+    // off and we don't have enough samples to do the FFT,
+    // but if it happens in the middle of the execution, something is wrong
+    if ( !(nblock || first_entry) ) {
+      throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transform",
+          "No integration blocks found.");
+    }
+    // keep track of current block position
+    unsigned sample_offset = 0;
+
+    //cerr << "idat_start= " << idat_start << " nblock= " << nblock << " phase_bin=" << phase_bin << endl;
+    for (unsigned iblock = 0; iblock < nblock; iblock++) {
+
+    // make the somewhat arbitrary choice of how to assign integration time
+    // to blocks -- by letting the first block contribute all its samples,
+    // works for the case of single FFT
+    unsigned unique_samples = iblock ? block_advance : ndat_fft;
+    //cerr << iblock << " " << total_ndat << " " << ndat_fft<< " " << nblock << " " << block_advance << " " << remainder << " " << unique_samples << idat_start << endl;
 
     // Update totals
     get_output()->get_hits()[phase_bin] ++;
     get_output()->ndat_total ++;
-    total_integrated += time_per_fft; 
+    total_integrated += time_per_sample * unique_samples;
+
     for (unsigned inchan=0; inchan < input_nchan; inchan++) 
     {
 
       for (unsigned ipol=0; ipol < input_npol; ipol++) 
       {
         const float* dat_ptr = input->get_datptr (inchan, ipol);
-	      dat_ptr += idat_start * input_ndim;
+	      dat_ptr += (idat_start + sample_offset) * input_ndim;
 
         if (input_ndim == 1)
           FTransform::frc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
         else
           FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
-
 
 	      // square-law detect
         for (unsigned ichan=0; ichan < nchan; ichan++) 
@@ -368,10 +410,9 @@ void dsp::PhaseLockedFilterbank::transformation ()
     
     } // for each frequency channel
 
-  if (!overlap) { break; }
-  idat_start += ndat_fft;
+  sample_offset += block_advance;
 
-  }
+  } // for each block in time series
 
     first_entry = false;
   } // for each big fft (ipart)
@@ -449,4 +490,21 @@ void dsp::PhaseLockedFilterbank::finish ()
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::finish" << endl;
 
+}
+
+void dsp::PhaseLockedFilterbank::combine (const Operation* other)
+{
+  Operation::combine (other);
+
+  const PhaseLockedFilterbank* plfb = dynamic_cast<const PhaseLockedFilterbank*>( other );
+  if (!plfb)
+    return;
+
+  if (verbose)
+    cerr << "dsp::PhaseLockedFilterbank::combine another PhaseLockedFilterbank" << endl;
+
+  get_output()->combine( plfb->get_output() );
+
+  if (verbose)
+    cerr << "dsp::PhaseLockedFilterbank::combine another PhaseLockedFilterbank exit" << endl;
 }

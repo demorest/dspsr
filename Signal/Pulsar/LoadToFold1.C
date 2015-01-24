@@ -475,6 +475,7 @@ void dsp::LoadToFold::construct () try
 
     // Set up zooms
     fzoom.resize(config->zooms.size());
+    zoom_delay.resize(config->zooms.size());
     zoom_filterbank.resize(config->zooms.size());
 
     for (unsigned i=0; i < fzoom.size(); ++i) {
@@ -500,11 +501,20 @@ void dsp::LoadToFold::construct () try
         cerr << "Setting up zoom " << i+1 << " with zoom_bw=" << zoom_bw << " chan_bw=" << chan_bw << " about centre frequency=" << centre_freq << endl;
 
       fzoom[i] = new FZoom;
-      fzoom[i]->set_input(convolved);
-      fzoom[i]->set_output(new TimeSeries);
-      fzoom[i]->set_centre_frequency(centre_freq);
-      fzoom[i]->set_bandwidth(zoom_bw);
+      fzoom[i]->set_input (convolved);
+      //fzoom[i]->set_output(new TimeSeries);
+      fzoom[i]->set_output (new_time_series());
+      fzoom[i]->set_centre_frequency (centre_freq);
+      fzoom[i]->set_bandwidth (zoom_bw);
       operations.push_back(fzoom[i].get());
+
+      //zoom_delay[i] = new SampleDelay;
+      ////zoom_delay[i]->set_input (fzoom[i]->get_output());
+      //zoom_delay[i]->set_output (new_time_series());
+      //zoom_delay[i]->set_function (new Dedispersion::SampleDelay);
+      //if (kernel)
+      //  kernel->set_fractional_delay (true);
+      //operations.push_back (zoom_delay[i].get());
 
       // Set up output
       PhaseSeriesUnloader* archiver = get_unloader(i,true);
@@ -545,6 +555,7 @@ void dsp::LoadToFold::construct () try
       zoom_filterbank[i]->set_goal_chan_bw(chan_bw);
 
       zoom_filterbank[i]->set_input (fzoom[i]->get_output());
+      //zoom_filterbank[i]->set_input (zoom_delay[i]->get_output());
 
       if (!zoom_filterbank[i]->has_output())
         zoom_filterbank[i]->set_output (new PhaseSeries);

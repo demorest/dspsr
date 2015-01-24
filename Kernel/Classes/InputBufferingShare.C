@@ -77,7 +77,7 @@ void dsp::InputBuffering::Share::set_next_start (uint64_t next) try
 
   if (Operation::verbose)
   {
-    cerr << "dsp::InputBuffering::Share::set_next_start next=" << next << endl;
+    cerr << "dsp::InputBuffering::Share::set_next_start next=" << next <<  " input_sample= " << target->get_input()->get_input_sample() << endl;
     buffer->set_cerr (cerr);
   }
 
@@ -113,7 +113,8 @@ void dsp::InputBuffering::Share::pre_transformation () try
     return;
 
   if (Operation::verbose)
-    cerr << "dsp::InputBuffering::Share::pre_transformation want=" << want << endl;
+    cerr << "dsp::InputBuffering::Share::pre_transformation want=" << want
+         << " have=" << buffer->get_next_contiguous() << endl;
 
   while ( buffer->get_next_contiguous() != want )
   {
@@ -124,7 +125,7 @@ void dsp::InputBuffering::Share::pre_transformation () try
                    buffer->get_next_contiguous(), want);
 
     if (Operation::verbose)
-      cerr << "dsp::InputBuffering::Share::pre_transformation want=" << want 
+      cerr << "dsp::InputBuffering::Share::pre_transformation blocking want=" << want 
 	   << "; have=" << buffer->get_next_contiguous() << endl;
 
     context->wait();
@@ -133,6 +134,7 @@ void dsp::InputBuffering::Share::pre_transformation () try
   if (Operation::verbose)
   {
     cerr << "dsp::InputBuffering::Share::pre_transformation working" << endl;
+    cerr << "want=" << want << " have=" << buffer->get_next_contiguous() << endl;
     buffer->set_cerr (cerr);
   }
 

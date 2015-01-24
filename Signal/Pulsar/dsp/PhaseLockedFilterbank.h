@@ -81,6 +81,8 @@ namespace dsp {
     //! Finalize anything
     void finish ();
 
+    void combine (const Operation*);
+
   protected:
 
     //! Perform the convolution transformation on the input TimeSeries

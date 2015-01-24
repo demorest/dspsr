@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/FZoom.h"
+//#include "dsp/InputBuffering.h"
 #include "Error.h"
 #include <assert.h>
 
@@ -87,6 +88,9 @@ void dsp::FZoom::prepare ()
 
 void dsp::FZoom::transformation ()
 {
+  if (Operation::verbose)
+    cerr << "dsp::FZoom:transformation input_sample= " << input->get_input_sample()
+         << " ndat=" << input->get_ndat() << endl;
   get_output()->copy_configuration (get_input()) ;
   set_bounds();
   get_output()->set_nchan(chan_hi-chan_lo+1);
@@ -108,6 +112,7 @@ void dsp::FZoom::transformation ()
   }
 
   get_output()->set_input_sample(get_input()->get_input_sample());
+  //get_buffering_policy()->set_next_start(get_input()->get_input_sample() + get_input()->get_ndat());
 
 }
 

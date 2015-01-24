@@ -153,6 +153,42 @@ void dsp::SingleThread::share (SingleThread* other)
 
     trans->set_buffering_policy( ibuf0->clone(trans) );
   }
+
+  typedef Transformation<TimeSeries,PhaseSeries> Xform_ph;
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
+    Xform_ph* trans0 = dynamic_kast<Xform_ph>( other->operations[iop] );
+
+    if (!trans0)
+      continue;
+
+    if (!trans0->has_buffering_policy())
+      continue;
+
+    InputBuffering::Share* ibuf0;
+    ibuf0 = dynamic_cast<InputBuffering::Share*>
+      ( trans0->get_buffering_policy() );
+
+    if (!ibuf0)
+      continue;
+
+    Xform_ph* trans = dynamic_kast<Xform_ph>( operations[iop] );
+    
+    if (!trans)
+      throw Error (InvalidState, "dsp::SingleThread::share",
+		   "mismatched operation type");
+
+    if (!trans->has_buffering_policy())
+      throw Error (InvalidState, "dsp::SingleThread::share",
+		   "mismatched buffering policy");
+    
+    if (Operation::verbose)
+      cerr << "dsp::SingleThread::share sharing buffering policy of " 
+        << trans->get_name() << endl;
+
+    trans->set_buffering_policy( ibuf0->clone(trans) );
+  }
 }
 
 dsp::TimeSeries* dsp::SingleThread::new_time_series ()

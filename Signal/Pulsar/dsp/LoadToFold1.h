@@ -144,6 +144,9 @@ namespace dsp {
     //! Coarse channel zoom
     std::vector<Reference::To<FZoom> > fzoom;
 
+    //! Remove inter-channel dispersion delay for zoomed filterbanks
+    std::vector<Reference::To<SampleDelay> > zoom_delay;
+
     //! Phase-locked filterbanks for zooms
     std::vector<Reference::To<PhaseLockedFilterbank> > zoom_filterbank;
 

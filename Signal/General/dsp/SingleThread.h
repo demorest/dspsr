@@ -25,6 +25,7 @@ namespace dsp {
 
   class IOManager;
   class TimeSeries;
+  class PhaseSeries; // tmp?
   class Operation;
   class Observation;
   class Scratch;
