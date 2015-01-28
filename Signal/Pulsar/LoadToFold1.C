@@ -470,10 +470,10 @@ void dsp::LoadToFold::construct () try
     
   }
 
-  // Set up zooms
+  // Set up zoom mode filterbanks
   if (config->zooms.size()) {
 
-    // Set up zooms
+    // Set up zoom transformations, delays, etc.
     fzoom.resize(config->zooms.size());
     zoom_delay.resize(config->zooms.size());
     zoom_filterbank.resize(config->zooms.size());
@@ -482,10 +482,17 @@ void dsp::LoadToFold::construct () try
 
       double zoom_bw = 1; // default 1 MHz bandwidth
       double chan_bw = 0.002; // default 2 kHz channels
-      double centre_freq = 0;
+      double centre_freq = manager->get_info()->get_centre_frequency();
+      unsigned max_nbin = 128; // TODO -- make this an option
 
+      // parse out configuration, format: freq[,bw[,chan_bw]]
+      // e.g. 1420.4    1420.4,5    1420.4,5,0.002
       string zoom_conf = config->zooms[i];
       string::size_type n = zoom_conf.find(",");
+      if ( n == string::npos ) {
+        throw Error (InvalidParam, "LoadToFold::construct",
+            "must specify at least centre frequency for zoom mode");
+      }
       centre_freq = strtod(zoom_conf.substr(0,n).c_str(),NULL);
       zoom_conf = zoom_conf.substr(n+1);
       if (n!=string::npos && zoom_conf.length()) {
@@ -497,24 +504,33 @@ void dsp::LoadToFold::construct () try
         }
       }
 
+      // sanity check that zoom band lies within primary band
+      double df = centre_freq-manager->get_info()->get_centre_frequency();
+      double bw = manager->get_info()->get_bandwidth();
+      if ( (abs(df) + 0.5*zoom_bw) > 0.5*abs(bw) ) {
+        throw Error( InvalidParam, "LoadToFold::construct", 
+            "requested zoom lies outside of primary band" );
+      }
+
       //if (Operation::verbose)
         cerr << "Setting up zoom " << i+1 << " with zoom_bw=" << zoom_bw << " chan_bw=" << chan_bw << " about centre frequency=" << centre_freq << endl;
 
+      // transformation to coarse zoom
       fzoom[i] = new FZoom;
       fzoom[i]->set_input (convolved);
-      //fzoom[i]->set_output(new TimeSeries);
       fzoom[i]->set_output (new_time_series());
       fzoom[i]->set_centre_frequency (centre_freq);
       fzoom[i]->set_bandwidth (zoom_bw);
       operations.push_back(fzoom[i].get());
 
-      //zoom_delay[i] = new SampleDelay;
-      ////zoom_delay[i]->set_input (fzoom[i]->get_output());
-      //zoom_delay[i]->set_output (new_time_series());
-      //zoom_delay[i]->set_function (new Dedispersion::SampleDelay);
-      //if (kernel)
-      //  kernel->set_fractional_delay (true);
-      //operations.push_back (zoom_delay[i].get());
+      // in-place removal of channel delays
+      zoom_delay[i] = new SampleDelay;
+      zoom_delay[i]->set_input (fzoom[i]->get_output());
+      zoom_delay[i]->set_output (fzoom[i]->get_output());
+      zoom_delay[i]->set_function (new Dedispersion::SampleDelay);
+      if (kernel)
+        kernel->set_fractional_delay (true);
+      operations.push_back (zoom_delay[i].get());
 
       // Set up output
       PhaseSeriesUnloader* archiver = get_unloader(i,true);
@@ -550,12 +566,10 @@ void dsp::LoadToFold::construct () try
         zoom_filterbank[i] = new PhaseLockedFilterbank;
       }
 
-      zoom_filterbank[i]->set_nbin (128); // maximum phase bins
+      zoom_filterbank[i]->set_nbin (max_nbin); // maximum phase bins
       zoom_filterbank[i]->set_npol (config->npol);
       zoom_filterbank[i]->set_goal_chan_bw(chan_bw);
-
-      zoom_filterbank[i]->set_input (fzoom[i]->get_output());
-      //zoom_filterbank[i]->set_input (zoom_delay[i]->get_output());
+      zoom_filterbank[i]->set_input (zoom_delay[i]->get_output());
 
       if (!zoom_filterbank[i]->has_output())
         zoom_filterbank[i]->set_output (new PhaseSeries);
@@ -801,8 +815,8 @@ void dsp::LoadToFold::prepare ()
             fold[0]->get_folding_period(),fold[0]->get_reference_epoch());
       }
       else {
-        int tantrum = 10;
-        throw tantrum;
+        throw Error (InvalidState, "LoadToFold::prepare",
+            "no predictor / period found for zoom mode");
       }
     }
   }

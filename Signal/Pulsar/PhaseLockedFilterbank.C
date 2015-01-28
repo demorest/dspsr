@@ -117,7 +117,7 @@ void dsp::PhaseLockedFilterbank::prepare ()
   //  cerr << "dsp::PhaseLockedFilterbank::prepare warning selected nchan="
 	// << nchan << " > suggested max=" << max << endl;
 
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::prepare period=" << period 
          << " nbin=" << nbin << " samples=" << samples_per_bin 
          << " nchan=" << nchan << endl;
@@ -356,63 +356,63 @@ void dsp::PhaseLockedFilterbank::transformation ()
     //cerr << "idat_start= " << idat_start << " nblock= " << nblock << " phase_bin=" << phase_bin << endl;
     for (unsigned iblock = 0; iblock < nblock; iblock++) {
 
-    // make the somewhat arbitrary choice of how to assign integration time
-    // to blocks -- by letting the first block contribute all its samples,
-    // works for the case of single FFT
-    unsigned unique_samples = iblock ? block_advance : ndat_fft;
-    //cerr << iblock << " " << total_ndat << " " << ndat_fft<< " " << nblock << " " << block_advance << " " << remainder << " " << unique_samples << idat_start << endl;
+      // make somewhat arbitrary choice of how to assign integration time
+      // to blocks -- by letting the first block contribute all its samples,
+      // works for the case of single FFT
+      unsigned unique_samples = iblock ? block_advance : ndat_fft;
+      //cerr << iblock << " " << total_ndat << " " << ndat_fft<< " " << nblock << " " << block_advance << " " << remainder << " " << unique_samples << " " << idat_start << endl;
 
-    // Update totals
-    get_output()->get_hits()[phase_bin] ++;
-    get_output()->ndat_total ++;
-    total_integrated += time_per_sample * unique_samples;
+      // Update totals
+      get_output()->get_hits()[phase_bin] ++;
+      get_output()->ndat_total ++;
+      total_integrated += time_per_sample * unique_samples;
 
-    for (unsigned inchan=0; inchan < input_nchan; inchan++) 
-    {
-
-      for (unsigned ipol=0; ipol < input_npol; ipol++) 
+      for (unsigned inchan=0; inchan < input_nchan; inchan++) 
       {
-        const float* dat_ptr = input->get_datptr (inchan, ipol);
-	      dat_ptr += (idat_start + sample_offset) * input_ndim;
 
-        if (input_ndim == 1)
-          FTransform::frc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
-        else
-          FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
-
-	      // square-law detect
-        for (unsigned ichan=0; ichan < nchan; ichan++) 
+        for (unsigned ipol=0; ipol < input_npol; ipol++) 
         {
-          unsigned out_ipol = ipol;
-          if (npol==1) out_ipol = 0;
-          float *amps = output->get_datptr(inchan*nchan + ichan, out_ipol);
-          amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2]);
-          amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2+1]);
-        }
+          const float* dat_ptr = input->get_datptr (inchan, ipol);
+          dat_ptr += (idat_start + sample_offset) * input_ndim;
 
-      } // for each polarization
+          if (input_ndim == 1)
+            FTransform::frc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
+          else
+            FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
 
-      // Compute poln cross terms
-      if (npol>2) 
-      {
-        for (unsigned ichan=0; ichan < nchan; ichan++)
+          // square-law detect
+          for (unsigned ichan=0; ichan < nchan; ichan++) 
+          {
+            unsigned out_ipol = ipol;
+            if (npol==1) out_ipol = 0;
+            float *amps = output->get_datptr(inchan*nchan + ichan, out_ipol);
+            amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2]);
+            amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2+1]);
+          }
+
+        } // for each polarization
+
+        // Compute poln cross terms
+        if (npol>2) 
         {
-          float *amps_re = output->get_datptr(inchan*nchan + ichan, 2);
-          float *amps_im = output->get_datptr(inchan*nchan + ichan, 3);
-          amps_re[phase_bin] += 
-            complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2]
-            + complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2+1];
-          amps_im[phase_bin] += 
-            complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2+1]
-            - complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2];
+          for (unsigned ichan=0; ichan < nchan; ichan++)
+          {
+            float *amps_re = output->get_datptr(inchan*nchan + ichan, 2);
+            float *amps_im = output->get_datptr(inchan*nchan + ichan, 3);
+            amps_re[phase_bin] += 
+              complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2]
+              + complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2+1];
+            amps_im[phase_bin] += 
+              complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2+1]
+              - complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2];
+          }
         }
-      }
-    
-    } // for each frequency channel
+      
+      } // for each frequency channel
 
-  sample_offset += block_advance;
+      sample_offset += block_advance;
 
-  } // for each block in time series
+    } // for each block in time series
 
     first_entry = false;
   } // for each big fft (ipart)
