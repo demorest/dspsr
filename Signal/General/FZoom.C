@@ -120,7 +120,7 @@ void dsp::FZoom::fpt_copy ()
 {
   unsigned npol = input->get_npol();
   unsigned nchan = chan_hi - chan_lo + 1;
-  uint64_t nfloat = input->get_ndat()*input->get_ndim();
+  uint64_t nfloat = input->get_ndat()*input->get_ndim(); // floats per chan
 
   if (verbose)
     cerr << "dsp::FZoom::fpt_copy"

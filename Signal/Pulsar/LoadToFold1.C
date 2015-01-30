@@ -521,6 +521,18 @@ void dsp::LoadToFold::construct () try
       fzoom[i]->set_output (new_time_series());
       fzoom[i]->set_centre_frequency (centre_freq);
       fzoom[i]->set_bandwidth (zoom_bw);
+
+#if HAVE_CUDA
+      // if running on GPU, insert a copy operation from device
+      if (run_on_gpu) {
+        TransferCUDA* zoom_xfer= new TransferCUDA (stream) ;
+        zoom_xfer->set_input (convolved) ;
+        zoom_xfer->set_output (new_time_series());
+        fzoom[i]->set_input( zoom_xfer->get_output() );
+        operations.push_back( zoom_xfer );
+      }
+#endif
+
       operations.push_back(fzoom[i].get());
 
       // in-place removal of channel delays
