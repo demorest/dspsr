@@ -9,6 +9,7 @@
 
 #include <stdarg.h>
 #include <iostream>
+#include <stdio.h>
 using namespace std;
 
 const char* cufftResult_to_string (cufftResult result)
