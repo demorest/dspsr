@@ -236,10 +236,13 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
   // set up the scratch space
   unsigned polfac = npol==4 ? 2 : 1;
-  float* complex_spectrum_dat = scratch->space<float> (nchan * 2 * polfac);
+  unsigned space_needed = nchan * 2;
+  // this preserves 16-byte alignment
+  space_needed += ((space_needed * sizeof(float)) & 15)/sizeof(float);
+  float* complex_spectrum_dat = scratch->space<float> (space_needed * polfac);
   float* complex_spectrum[2];
   complex_spectrum[0] = complex_spectrum_dat;
-  complex_spectrum[1] = complex_spectrum_dat + (polfac-1)*nchan*2;
+  complex_spectrum[1] = complex_spectrum_dat + (polfac-1) * space_needed;
 
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 
