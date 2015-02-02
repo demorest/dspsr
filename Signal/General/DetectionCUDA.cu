@@ -93,10 +93,13 @@ void polarimetry_ndim4 (float* data, uint64_t span,
 
 #define COHERENCE2(s0,s1,p,q) COHERENCE(s0.x,s0.y,s1.x,s1.y,p,q)
 
-__global__ void coherence2 (float2* base, unsigned span, unsigned ndat)
+__global__ void coherence2 (const float2* input_base, unsigned input_span, 
+                            float2* output_base, unsigned output_span,
+                            unsigned ndat)
 {
-  float2* p0 = base + blockIdx.y * span * 2;
-  float2* p1 = p0 + span;
+#define COHERENCE_NPOL 2
+  const float2* p0 = input_base + blockIdx.y * input_span * COHERENCE_NPOL;
+  const float2* p1 = p0 + input_span;
 
   unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -107,8 +110,11 @@ __global__ void coherence2 (float2* base, unsigned span, unsigned ndat)
 
   COHERENCE2(s0,s1,p0[i],p1[i]);
 
-  p0[i] = s0;
-  p1[i] = s1;
+  float2* op0 = output_base + blockIdx.y * output_span * COHERENCE_NPOL;
+  float2* op1 = op0 + output_span;
+
+  op0[i] = s0;
+  op1[i] = s1;
 }
 
 
@@ -125,22 +131,29 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
     throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry",
 		 "cannot handle ndim=%u != 2", ndim);
 
-  if (input != output)
-    throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry"
-		 "cannot handle out-of-place data");
+  uint64_t ndat = input->get_ndat ();
+  unsigned nchan = input->get_nchan ();
 
-  uint64_t ndat = output->get_ndat ();
-  unsigned nchan = output->get_nchan ();
+  if (ndat != output->get_ndat ())
+    throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry",
+                 "input ndat=%u != output ndat=%u",
+                 ndat, output->get_ndat());
 
   unsigned ichan=0, ipol=0;
 
-  float* base = output->get_datptr (ichan=0, ipol=0);
+  const float* input_base = input->get_datptr (ichan=0, ipol=0);
+  uint64_t input_span = input->get_datptr (ichan=0, ipol=1) - input_base;
 
-  uint64_t span = output->get_datptr (ichan=0, ipol=1) - base;
+  float* output_base = output->get_datptr (ichan=0, ipol=0);
+  uint64_t output_span = output->get_datptr (ichan=0, ipol=1) - output_base;
 
   if (dsp::Operation::verbose)
     cerr << "CUDA::DetectionEngine::polarimetry ndim=" << output->get_ndim () 
-         << " ndat=" << ndat << " span=" << span << endl;
+         << " ndat=" << ndat 
+         << " input.base=" << input_base
+         << " output.base=" << output_base
+         << " input.span=" << input_span 
+         << " output.span=" << output_span << endl;
 
   dim3 threads (128);
   dim3 blocks (ndat/threads.x, nchan);
@@ -149,7 +162,11 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
     blocks.x ++;
 
   // pass span as number of complex values
-  coherence2<<<blocks,threads,0,stream>>> ((float2*)base, span/2, ndat); 
+  coherence2<<<blocks,threads,0,stream>>> ((const float2*)input_base, 
+                                           input_span/2,
+                                           (float2*)output_base,
+                                           output_span/2,
+                                           ndat); 
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error ("CUDA::DetectionEngine::polarimetry");
