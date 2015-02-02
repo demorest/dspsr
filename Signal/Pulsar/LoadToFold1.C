@@ -468,9 +468,35 @@ void dsp::LoadToFold::construct () try
     
   }
 
+  Reference::To<Fold> presk_fold;
+  Reference::To<Archiver> presk_unload;
+
   // peform zapping based on the results of the SKFilterbank
   if (config->sk_zap)
   { 
+    if (config->nosk_too)
+    {
+      Detection* presk_detect = new Detection;
+
+      // set up an out-of-place detection to effect a fork in the signal path
+      TimeSeries* presk_detected = new_time_series();
+      presk_detect->set_input (convolved);
+      presk_detect->set_output (presk_detected);
+
+      operations.push_back (presk_detect);
+
+      presk_unload = new Archiver;
+      presk_unload->set_extension( ".nosk" );
+      prepare_archiver( presk_unload );
+
+      build_fold (presk_fold, presk_unload);
+
+      presk_fold->set_input( presk_detected );
+      presk_fold->prepare( manager->get_info() );
+      presk_fold->reset();
+
+      operations.push_back (presk_fold.get());
+    }
 
 #if HAVE_CUDA
     if (run_on_gpu)
@@ -603,6 +629,13 @@ void dsp::LoadToFold::construct () try
 
   build_fold (detected);
 
+  if (presk_fold)
+  {
+    // presk fold and unload are pushed back after the primary ones are built
+    fold.push_back( presk_fold );
+    unloader.push_back( presk_unload.get() );
+  }
+
   if (config->sk_fold)
   {
     PhaseSeriesUnloader* unload = get_unloader( get_nfold() );
@@ -618,7 +651,6 @@ void dsp::LoadToFold::construct () try
     fold.push_back( skfold );
     operations.push_back( skfold.get() );
   }
-
 }
 catch (Error& error)
 {
