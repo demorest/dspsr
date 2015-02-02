@@ -150,6 +150,7 @@ namespace dsp {
     void build_fold (TimeSeries*);
     void build_fold (Reference::To<Fold>&, PhaseSeriesUnloader*);
     void configure_fold (unsigned ifold, TimeSeries* to_fold);
+    void configure_detection (Detection*, int);
 
     PhaseSeriesUnloader* get_unloader (unsigned ifold);
     size_t get_nfold ();
