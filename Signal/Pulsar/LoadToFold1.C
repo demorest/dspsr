@@ -508,33 +508,31 @@ void dsp::LoadToFold::construct () try
              << " with zoom_bw=" << zoom_bw << " chan_bw=" << chan_bw
              << " about centre frequency=" << centre_freq << endl;
 
+      TimeSeries* fzoom_input = convolved;
+#if HAVE_CUDA
+      // if running on GPU, insert a copy operation from device
+      if (run_on_gpu)
+      {
+        TransferCUDA* transfer= new TransferCUDA (stream) ;
+        transfer->set_kind (cudaMemcpyDeviceToHost);
+        transfer->set_input (convolved) ;
+        transfer->set_output ( new_time_series() );
+        operations.push_back (transfer);
+        fzoom_input = transfer->get_output ();
+      }
+#endif
+
       // transformation to coarse zoom
       Reference::To<FZoom> fzoom = new FZoom;
-      fzoom->set_input (convolved);
+      fzoom->set_input (fzoom_input);
       fzoom->set_output (new_time_series());
       fzoom->set_centre_frequency (centre_freq);
       fzoom->set_bandwidth (zoom_bw);
       operations.push_back ( fzoom.get() );
 
-      TimeSeries* sample_delay_input = fzoom->get_output ();
-
-#if HAVE_CUDA
-      // if running on GPU, insert a copy operation from device
-      if (run_on_gpu)
-      {
-        fzoom->get_output()->set_memory (device);
-        TransferCUDA* transfer= new TransferCUDA (stream) ;
-        transfer->set_kind (cudaMemcpyDeviceToHost);
-        transfer->set_input (fzoom->get_output()) ;
-        transfer->set_output (new_time_series());
-        sample_delay_input = transfer->get_output();
-        operations.push_back (transfer);
-      }
-      else
-#endif
-
       // in-place removal of channel delays
       SampleDelay* zoom_delay = new SampleDelay;
+      TimeSeries* sample_delay_input = fzoom->get_output ();
       zoom_delay->set_input (sample_delay_input);
       zoom_delay->set_output (sample_delay_input);
       zoom_delay->set_function (new Dedispersion::SampleDelay);
