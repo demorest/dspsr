@@ -514,26 +514,29 @@ void dsp::LoadToFold::construct () try
       fzoom->set_output (new_time_series());
       fzoom->set_centre_frequency (centre_freq);
       fzoom->set_bandwidth (zoom_bw);
+      operations.push_back ( fzoom.get() );
+
+      TimeSeries* sample_delay_input = fzoom->get_output ();
 
 #if HAVE_CUDA
       // if running on GPU, insert a copy operation from device
       if (run_on_gpu)
       {
+        fzoom->get_output()->set_memory (device);
         TransferCUDA* transfer= new TransferCUDA (stream) ;
         transfer->set_kind (cudaMemcpyDeviceToHost);
-        transfer->set_input (convolved) ;
+        transfer->set_input (fzoom->get_output()) ;
         transfer->set_output (new_time_series());
-        fzoom->set_input (transfer->get_output());
+        sample_delay_input = transfer->get_output();
         operations.push_back (transfer);
       }
+      else
 #endif
-
-      operations.push_back ( fzoom.get() );
 
       // in-place removal of channel delays
       SampleDelay* zoom_delay = new SampleDelay;
-      zoom_delay->set_input (fzoom->get_output());
-      zoom_delay->set_output (fzoom->get_output());
+      zoom_delay->set_input (sample_delay_input);
+      zoom_delay->set_output (sample_delay_input);
       zoom_delay->set_function (new Dedispersion::SampleDelay);
       if (kernel)
         kernel->set_fractional_delay (true);
