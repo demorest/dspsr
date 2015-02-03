@@ -7,9 +7,12 @@
 #include "dsp/PhaseLockedFilterbank.h"
 #include "dsp/InputBuffering.h"
 #include "dsp/Scratch.h"
+#include "dsp/FZoom.h"
 
 #include "FTransform.h"
 #include "Error.h"
+
+#include <iomanip>
 
 using namespace std;
 
@@ -26,6 +29,7 @@ dsp::PhaseLockedFilterbank::PhaseLockedFilterbank () :
   idat_start = ndat_fold = 0;
 
   overlap = true;
+  fzoom = NULL;
 
   built = false;
 
@@ -137,12 +141,16 @@ void dsp::PhaseLockedFilterbank::transformation ()
   const unsigned input_nchan = input->get_nchan();
   const unsigned input_npol = input->get_npol();
   const unsigned input_ndim = input->get_ndim();
+  // TMP?
+  const double input_bandwidth = input->get_bandwidth();
+
+  cerr << "here with integration= "<<setprecision(4)<<get_output()->get_integration_length() << endl;
 
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::transformation"
-   << " input ndat=" << input_ndat << " nchan=" << nchan
-   << " input_npol=" << input_npol << " input_ndim=" << input_ndim
-   << " input_sample " << input->get_input_sample() << endl;
+         << " input ndat=" << input_ndat << " nchan=" << nchan
+         << " input_npol=" << input_npol << " input_ndim=" << input_ndim
+         << " input_sample " << input->get_input_sample() << endl;
 
   if (!built)
     prepare ();
@@ -164,7 +172,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
   if (get_output()->get_integration_length() == 0.0) 
   {
 
-    if (verbose)
+    //if (verbose)
       cerr << "dsp::PhaseLockedFilterbank::transformation"
         << " starting new integration" << endl;
 
@@ -176,6 +184,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     get_output()->set_nchan (nchan * input_nchan);
     get_output()->set_npol (npol);
     get_output()->set_ndim (1);
+    get_output()->resize (nbin);
     if (npol==1)
       get_output()->set_state (Signal::Intensity);
     else if (npol==2)
@@ -185,6 +194,11 @@ void dsp::PhaseLockedFilterbank::transformation ()
     else
       throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation", 
           "Invalid npol setting (%d)", npol);
+    output->set_rate (input->get_rate() / ndat_fft);
+
+    // centre frequency is shifted within original channels by this amt.
+    get_output()->set_centre_frequency (
+        get_input()->get_centre_frequency() + 0.5*input_bandwidth/input_nchan*(1./nchan-1) );
 
     if (input_npol < 2 && npol > 1)
       throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transformation",
@@ -194,20 +208,12 @@ void dsp::PhaseLockedFilterbank::transformation ()
     if (FTransform::get_norm() == FTransform::unnormalized)
       output->rescale (nchan);
 
-    output->set_rate (input->get_rate() / ndat_fft);
-
-    // complex to complex FFT produces a band swapped result
-    output->set_nsub_swap (input_nchan);
-
-    get_output()->resize (nbin);
     get_output()->zero ();
 
   }
 
+  // does this need to be repeated?
   output->set_rate (input->get_rate() / ndat_fft);
-
-  // complex to complex FFT produces a band swapped result
-  output->set_nsub_swap (input_nchan);
 
   // Does it matter when this is done?
   get_output()->set_folding_predictor( bin_divider.get_predictor() );
@@ -245,14 +251,14 @@ void dsp::PhaseLockedFilterbank::transformation ()
   complex_spectrum[1] = complex_spectrum_dat + (polfac-1) * space_needed;
 
   if (verbose)
-    cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " 
-	 << endl;
+    cerr << "dsp::PhaseLockedFilterbank::transformation enter main loop " << endl;
 
   unsigned phase_bin = 0;
 
   // flag that the input TimeSeries contains data for another sub-integration
   bool more_data = true;
 
+  double time_per_sample = 1. / get_input()->get_rate();
   double total_integrated = 0.0;
 
   unsigned last_used = 0;
@@ -266,10 +272,6 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
   // Each trip through the loop updates idat_start to the current sample, so
   // that's the correct value to use for buffering.
-  
-  // This poses a problem for multi-threaded applications, as threads
-  // operating concurrently won't know how much to rewind their
-  // buffers.
 
   // This loop is over all of the phase windows within the input TimeSeries.
   while (more_data) {
@@ -288,9 +290,10 @@ void dsp::PhaseLockedFilterbank::transformation ()
     first = false;
     last_used = idat_start + bin_divider.get_ndat ();
 
-    // if input TimeSeries ends before phase window
+    // if input TimeSeries ends before the current phase window
     if (idat_start + ndat_fft > idat_end) 
     {
+      cerr << "breaking phase window" << endl;
       bin_divider.discard_bounds( get_input() );
       break;
     }
@@ -327,6 +330,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
     // full weight, while subsequent spectra receive only the weight of the
     // new samples, viz. the number of samples the block advances.
 
+    // Each block is equally weighted for the purpose of computing the spectrum.
+
     unsigned total_ndat = last_used - idat_start;
     unsigned nblock = total_ndat / ndat_fft;
     unsigned block_advance = ndat_fft;
@@ -334,17 +339,15 @@ void dsp::PhaseLockedFilterbank::transformation ()
     unsigned remainder = total_ndat - nblock*ndat_fft;
     // add an extra block for the samples beyond last integral block
     // and set the block advance to span the time series 
-    if (nblock && remainder) {
+    if (nblock && remainder)
+    {
       nblock ++;
       block_advance = remainder / (nblock -1);
     }
 
-    // set number of blocks to 1 if not doing overlapping
-    if (nblock && !overlap) {
+    // if overlapping disabled, set nblock to 0 or 1
+    if (nblock && !overlap)
       nblock = 1;
-    }
-
-    double time_per_sample = 1. / get_input()->get_rate();
 
     // It occasionally happens on first entry that the phase alignment is
     // off and we don't have enough samples to do the FFT,
@@ -353,6 +356,10 @@ void dsp::PhaseLockedFilterbank::transformation ()
       throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transform",
           "No integration blocks found.");
     }
+    if (nblock==0 && first_entry)
+      cerr << "first entry thingy" << endl;
+    if (new_integration)
+      cerr << "new integration nblock="<<nblock << endl;
     // keep track of current block position
     unsigned sample_offset = 0;
 
@@ -361,9 +368,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
       // make somewhat arbitrary choice of how to assign integration time
       // to blocks -- by letting the first block contribute all its samples,
-      // works for the case of single FFT
+      // works for the case of overlap==false
       unsigned unique_samples = iblock ? block_advance : ndat_fft;
-      //cerr << iblock << " " << total_ndat << " " << ndat_fft<< " " << nblock << " " << block_advance << " " << remainder << " " << unique_samples << " " << idat_start << endl;
 
       // Update totals
       get_output()->get_hits()[phase_bin] ++;
@@ -372,9 +378,9 @@ void dsp::PhaseLockedFilterbank::transformation ()
 
       for (unsigned inchan=0; inchan < input_nchan; inchan++) 
       {
-
         for (unsigned ipol=0; ipol < input_npol; ipol++) 
         {
+          unsigned out_ipol = npol==1 ? 0 : ipol;
           const float* dat_ptr = input->get_datptr (inchan, ipol);
           dat_ptr += (idat_start + sample_offset) * input_ndim;
 
@@ -383,14 +389,17 @@ void dsp::PhaseLockedFilterbank::transformation ()
           else
             FTransform::fcc1d (ndat_fft, complex_spectrum[ipol], dat_ptr);
 
+          // NB FTransform swaps channels, so in detect loops below reverse
+          // channels as we add to profile
+
           // square-law detect
-          for (unsigned ichan=0; ichan < nchan; ichan++) 
+          for (unsigned out_ichan=inchan*nchan,fft_chan=2*(nchan-1); fft_chan; 
+              out_ichan++,fft_chan-=2)
           {
-            unsigned out_ipol = ipol;
-            if (npol==1) out_ipol = 0;
-            float *amps = output->get_datptr(inchan*nchan + ichan, out_ipol);
-            amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2]);
-            amps[phase_bin] += sqr(complex_spectrum[ipol][ichan*2+1]);
+            //unsigned fft_chan = 2*(nchan-ichan-1);
+            float *amps = output->get_datptr(out_ichan, out_ipol);
+            amps[phase_bin] += sqr(complex_spectrum[ipol][fft_chan]);
+            amps[phase_bin] += sqr(complex_spectrum[ipol][fft_chan+1]);
           }
 
         } // for each polarization
@@ -398,16 +407,17 @@ void dsp::PhaseLockedFilterbank::transformation ()
         // Compute poln cross terms
         if (npol>2) 
         {
-          for (unsigned ichan=0; ichan < nchan; ichan++)
+          for (unsigned out_ichan=inchan*nchan,fft_chan=2*(nchan-1); fft_chan; 
+              out_ichan++,fft_chan-=2)
           {
-            float *amps_re = output->get_datptr(inchan*nchan + ichan, 2);
-            float *amps_im = output->get_datptr(inchan*nchan + ichan, 3);
+            float *amps_re = output->get_datptr(out_ichan, 2);
+            float *amps_im = output->get_datptr(out_ichan, 3);
             amps_re[phase_bin] += 
-              complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2]
-              + complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2+1];
+              complex_spectrum[0][fft_chan]*complex_spectrum[1][fft_chan]
+              + complex_spectrum[0][fft_chan+1]*complex_spectrum[1][fft_chan+1];
             amps_im[phase_bin] += 
-              complex_spectrum[0][ichan*2]*complex_spectrum[1][ichan*2+1]
-              - complex_spectrum[0][ichan*2+1]*complex_spectrum[1][ichan*2];
+              complex_spectrum[0][fft_chan]*complex_spectrum[1][fft_chan+1]
+              - complex_spectrum[0][fft_chan+1]*complex_spectrum[1][fft_chan];
           }
         }
       
@@ -473,7 +483,7 @@ void dsp::PhaseLockedFilterbank::normalize_output ()
 
 void dsp::PhaseLockedFilterbank::reset () 
 {
-  if (verbose)
+  //if (verbose)
   {
     cerr << "dsp::PhaseLockedFilterbank::reset" << endl;
     cerr << "dsp::PhaseLockedFilterbank::reset start_time=" 
@@ -490,7 +500,7 @@ void dsp::PhaseLockedFilterbank::reset ()
 
 void dsp::PhaseLockedFilterbank::finish ()
 {
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::finish" << endl;
 
 }

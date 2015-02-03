@@ -18,13 +18,14 @@
 #include "dsp/TimeSeries.h"
 #include "dsp/PhaseSeries.h"
 #include "dsp/TimeDivide.h"
+#include "dsp/FZoom.h"
 
 namespace Pulsar {
   class Predictor;
 }
 
 namespace dsp {
-  
+
   //! Performs FFT at specific pulse phase windows
   /*! This class is particularly useful when maximum frequency resolution
     is required in dynamic spectra. */
@@ -57,6 +58,7 @@ namespace dsp {
     //! Get the number of polarizations
     unsigned get_npol () const { return npol; }
 
+    //! Overlap windows to consume all time samples in a phase window
     void set_overlap (bool overlap);
 
     //! Has a folding predictor been set?
@@ -79,9 +81,14 @@ namespace dsp {
     void reset ();
 
     //! Finalize anything
-    void finish ();
+    virtual void finish ();
 
     void combine (const Operation*);
+
+    void set_zoom(Reference::To<FZoom> zoom) { fzoom = zoom; }
+
+    //! Return cached FZoom; use smart pointer in case it's 
+    Reference::To<FZoom> get_zoom() { return fzoom; }
 
   protected:
 
@@ -117,6 +124,8 @@ namespace dsp {
 
     //! Repeat and average FFTs within phase window if sufficient samples
     bool overlap;
+
+    Reference::To<FZoom> fzoom;
 
   };
   
