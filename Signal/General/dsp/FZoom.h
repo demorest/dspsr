@@ -21,7 +21,6 @@ namespace dsp {
 
   public:
 
-    //! Always out of place
     FZoom ();
     
     void set_centre_frequency ( double freq );
@@ -29,6 +28,11 @@ namespace dsp {
 
     double get_centre_frequency ( ) const;
     double get_bandwidth (  ) const;
+
+    //! Given an input and a goal freq / bandwidth, select channel bounds
+    static void set_channel_bounds(const Observation* input,
+        double centre_frequency, double bandwidth,
+        unsigned* chan_lo, unsigned* chan_hi);
 
   protected:
 
@@ -45,24 +49,10 @@ namespace dsp {
     double bandwidth;
 
     unsigned chan_lo,chan_hi;
-    void fpt_copy();
-    void tfp_copy();
+    void fpt_copy(TimeSeries* dest);
+    void tfp_copy(TimeSeries* dest);
 
   };
-
-#ifdef D0
-  class PhFZoom : public Transformation <PhaseSeries, PhaseSeries>, public FZoom
-  {
-
-  public:
-
-    PhFZoom ();
-
-  protected:
-
-    void transformation ();
-  };
-#endif
 
 }
 

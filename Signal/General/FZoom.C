@@ -6,14 +6,13 @@
  ***************************************************************************/
 
 #include "dsp/FZoom.h"
-//#include "dsp/InputBuffering.h"
 #include "Error.h"
 #include <assert.h>
 
 using namespace std;
 
 dsp::FZoom::FZoom () 
-  : Transformation <TimeSeries, TimeSeries> ("FZoom", outofplace)
+  : Transformation <TimeSeries, TimeSeries> ("FZoom", anyplace)
   , centre_frequency(0)
   , bandwidth(0)
 {
@@ -26,7 +25,6 @@ void dsp::FZoom::set_centre_frequency( double freq )
 
 void dsp::FZoom::set_bandwidth( double bw )
 {
-  // Set bandwidth
   bandwidth = bw;
 
 }
@@ -43,36 +41,8 @@ double dsp::FZoom::get_bandwidth() const
 
 void dsp::FZoom::set_bounds()
 {
-  // Determine which channels lie within  bounds and set internal members
-  double bw = input->get_bandwidth();
-  if (bw < 0) { bw = -bw; }
-  double in_freq = input->get_centre_frequency();
-  if ( (centre_frequency > (in_freq+0.5*bw)) || 
-       (centre_frequency < (in_freq-0.5*bw)) ) {
-    throw Error (InvalidRange,"dsp::FZoom::set_bounds",
-	    "requested centre frequency %.4f lies outside of data bounds", centre_frequency);
-  }
-
-  chan_lo=input->get_nchan();
-  chan_hi=0;
-  double freq_lo = centre_frequency - 0.5*bandwidth;
-  double freq_hi = centre_frequency + 0.5*bandwidth;
-  double half_chan_bw = 0.5*bw/input->get_nchan();
-  for (unsigned ichan=0; ichan < input->get_nchan(); ++ichan) {
-    double chan_freq = input->get_centre_frequency(ichan);
-    double chan_freq_lo = chan_freq - half_chan_bw;
-    double chan_freq_hi = chan_freq + half_chan_bw;
-    if (chan_freq_hi < freq_lo) {
-      continue;
-    }
-    if (chan_freq_lo > freq_hi) {
-      continue;
-    }
-    if ( (chan_freq_lo > freq_lo) || (chan_freq_hi < freq_hi) ) {
-      chan_lo = min(ichan,chan_lo);
-      chan_hi = max(ichan,chan_hi);
-    }
-  }
+  set_channel_bounds (
+      input.get(),centre_frequency,bandwidth,&chan_lo,&chan_hi);
   if (verbose) {
     cerr<<"dsp::Fzoom::set_bounds selected channels / frequencies: "<<endl<<
     "lo: " << chan_lo<< " / "<< input->get_centre_frequency(chan_lo)<<endl<<
@@ -83,40 +53,64 @@ void dsp::FZoom::set_bounds()
 void dsp::FZoom::prepare ()
 {
   // Set up output ahead of time -- necessary?
-  get_output()->copy_configuration (get_input()) ;
+  if ( get_input() != get_output() )
+    get_output()->copy_configuration (get_input()) ;
 }
 
 void dsp::FZoom::transformation ()
 {
-  if (Operation::verbose)
-    cerr << "dsp::FZoom:transformation input_sample= " << input->get_input_sample()
-         << " ndat=" << input->get_ndat() << endl;
-  get_output()->copy_configuration (get_input()) ;
-  set_bounds();
-  get_output()->set_nchan(chan_hi-chan_lo+1);
-  get_output()->set_centre_frequency(
-      0.5*(input->get_centre_frequency(chan_lo) + 
-           input->get_centre_frequency(chan_hi)));
-  get_output()->set_bandwidth(get_input()->get_bandwidth()/get_input()->get_nchan()*get_output()->get_nchan());
-  get_output()->resize(input->get_ndat());
+  if (verbose)
+    cerr << "dsp::FZoom:transformation input_sample= " << 
+      input->get_input_sample () << " ndat=" << input->get_ndat() << endl;
 
-  switch (input->get_order())
+  // TODO -- support out-of-order Observations, but not yet
+  if (get_input()->get_nsub_swap())
+    throw Error (InvalidState,"dsp::FZoom::transformation",
+        "does not support sub-band swapped data (yet)");
+
+  bool inplace = get_output() == get_input();
+
+  // set chan_lo and chan_hi
+  set_bounds ();
+
+  // if in place, do really inefficiently :(
+  TimeSeries* dest = inplace? get_input()->clone() : get_output();
+
+  // adjust centre frequency for output 
+  dest->copy_configuration (get_input()) ;
+  unsigned input_nchan = input->get_nchan ();
+  double input_chanbw = input->get_bandwidth() / input_nchan;
+  double df = 0.5*input_chanbw*(int(chan_lo)-int(input_nchan-chan_hi-1));
+  dest->set_nchan (chan_hi-chan_lo+1);
+  dest->set_centre_frequency (input->get_centre_frequency() + df);
+  dest->set_bandwidth( input_chanbw * dest->get_nchan() );
+  dest->resize (input->get_ndat());
+  assert (input->get_centre_frequency(chan_lo) == dest->get_centre_frequency(0));
+  assert (input->get_centre_frequency(chan_hi) == dest->get_centre_frequency(dest->get_nchan()-1));
+
+  switch (input->get_order ())
   {
     case TimeSeries::OrderFPT:
-      fpt_copy ();
+      fpt_copy (dest);
       break;
 
     case TimeSeries::OrderTFP:
-      tfp_copy ();
+      tfp_copy (dest);
       break;
+
+    default:
+      throw Error (InvalidState, "dsp::FZoom::transformation",
+          "unsupported data order");
   }
 
-  get_output()->set_input_sample(get_input()->get_input_sample());
-  //get_buffering_policy()->set_next_start(get_input()->get_input_sample() + get_input()->get_ndat());
+  if (inplace)
+    get_output()->operator= (*dest);
+
+  get_output()->set_input_sample (get_input()->get_input_sample());
 
 }
 
-void dsp::FZoom::fpt_copy ()
+void dsp::FZoom::fpt_copy (TimeSeries* dest)
 {
   unsigned npol = input->get_npol();
   unsigned nchan = chan_hi - chan_lo + 1;
@@ -130,8 +124,8 @@ void dsp::FZoom::fpt_copy ()
 
   for (unsigned ichan=0; ichan < nchan; ++ichan) {
     for (unsigned ipol=0; ipol < npol; ++ipol) {
-      const float* in = input->get_datptr(ichan+chan_lo,ipol);
-      float* out = output->get_datptr(ichan,ipol);
+      const float* in = input->get_datptr (ichan+chan_lo,ipol);
+      float* out = dest->get_datptr (ichan,ipol);
       for (unsigned idat=0; idat < nfloat; ++idat) {
         out[idat] = in[idat];
       }
@@ -139,12 +133,12 @@ void dsp::FZoom::fpt_copy ()
   }
 }
 
-void dsp::FZoom::tfp_copy ()
+void dsp::FZoom::tfp_copy (TimeSeries* dest)
 {
   const unsigned npol = input->get_npol();
   const unsigned ndim = input->get_ndim();
   const unsigned nchan_in = input->get_nchan();
-  const unsigned nchan_out = output->get_nchan();
+  const unsigned nchan_out = dest->get_nchan();
   const uint64_t ndat = input->get_ndat();
 
   // floats per time sample
@@ -165,7 +159,7 @@ void dsp::FZoom::tfp_copy ()
   for (unsigned idat=0; idat < ndat; ++idat) {
 
     const float* in = input->get_dattfp() + idat*nfloat_in + offset;
-    float* out = output->get_dattfp() + idat*nfloat_out;
+    float* out = dest->get_dattfp() + idat*nfloat_out;
 
     for (unsigned ifloat=0; ifloat < nfloat_out; ++ifloat) {
       out[ifloat] = in[ifloat];
@@ -174,28 +168,35 @@ void dsp::FZoom::tfp_copy ()
 
 }
 
-#ifdef D0
-dsp::PhFZoom::PhFZoom () 
-  : Transformation <PhaseSeries, PhaseSeries> ("PhFZoom", outofplace)
+void dsp::FZoom::set_channel_bounds(const Observation* input,
+    double centre_frequency, double bandwidth,
+    unsigned* chan_lo, unsigned* chan_hi)
 {
-}
+  // Determine which channels lie within  bounds and set internal members
+  double bw = input->get_bandwidth();
+  if (bw < 0) { bw = -bw; }
+  double in_freq = input->get_centre_frequency();
+  if ( ( (centre_frequency + 0.5*bandwidth) > (in_freq+0.5*bw) ) || 
+       ( (centre_frequency - 0.5*bandwidth) < (in_freq-0.5*bw) ) ) {
+    throw Error (InvalidRange,"dsp::FZoom::set_bounds",
+	    "requested zoom band %.4f not a subset of data band", 
+      centre_frequency);
+  }
 
-// perform TimeSeries transformation, then take care of hits
-void dsp::PhFZoom::transformation () {
-  dsp::FZoom::transformation ();
-  // at this point, the _data_ have been zoomed, need only to update hits
-  // NB hits array is [nchan , nbin]
-  PhaseSeries* input = input;
-  PhaseSeries* output = output;
-  unsigned nbin = output->get_nbin();
-  unsigned nchan = output->get_nchan();
-  output->resize_hits(nbin);
-  dsp::FZoom::cerr << "nchan= " << nchan << " chanlo=" << chan_lo << " chanhi=" << chan_hi << endl;
-  unsigned* in = input->get_hits(chan_lo);
-  unsigned* out = output->get_hits(0);
-  for (unsigned i=0; i< nbin*nchan; ++i) {
-    *out++ = *in++;
+  *chan_lo=input->get_nchan();
+  *chan_hi=0;
+  double freq_lo = centre_frequency - 0.5*bandwidth,
+         freq_hi = centre_frequency + 0.5*bandwidth,
+         half_chan_bw = 0.5*bw/input->get_nchan();
+  for (unsigned ichan=0; ichan < input->get_nchan(); ++ichan) {
+    double chan_freq = input->get_centre_frequency(ichan),
+           chan_freq_lo = chan_freq - half_chan_bw,
+           chan_freq_hi = chan_freq + half_chan_bw;
+    if ( (chan_freq_hi < freq_lo) || (chan_freq_lo > freq_hi) )
+      continue;
+    if ( (chan_freq_lo > freq_lo) || (chan_freq_hi < freq_hi) ) {
+      *chan_lo = min(ichan,*chan_lo);
+      *chan_hi = max(ichan,*chan_hi);
+    }
   }
 }
-#endif
-
