@@ -141,17 +141,11 @@ namespace dsp {
       period pulsar for the purposes of scintillation measurments */
     Reference::To<PhaseLockedFilterbank> phased_filterbank;
 
-    //! Coarse channel zoom
-    std::vector<Reference::To<FZoom> > fzoom;
-
-    //! Remove inter-channel dispersion delay for zoomed filterbanks
-    std::vector<Reference::To<SampleDelay> > zoom_delay;
-
     //! Phase-locked filterbanks for zooms
-    std::vector<Reference::To<PhaseLockedFilterbank> > zoom_filterbank;
+    std::vector< Reference::To<PhaseLockedFilterbank> > zoom_filterbank;
 
     //! Unloaders for phase-locked filterbanks for zooms
-    std::vector<Reference::To<PhaseSeriesUnloader> > zoom_unloader;
+    std::vector< Reference::To<PhaseSeriesUnloader> > zoom_unloader;
 
     //! Detects the phase-coherent signal
     Reference::To<Detection> detect;

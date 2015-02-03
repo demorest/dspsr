@@ -106,6 +106,25 @@ unsigned count (const std::vector<T>& data, T element)
   return c;
 }
 
+void parse_zoom_conf (string zoom_conf,double* centre_frequency,
+      double* bandwidth, double* chan_bw) {
+  // parse out configuration, format: freq[,bw[,chan_bw]]
+  // e.g. 1420.4    1420.4,5    1420.4,5,0.002
+  string::size_type n = zoom_conf.find(",");
+  if ( n == string::npos ) {
+    throw Error (InvalidParam, "LoadToFold::parse_zoom_conf",
+        "must specify at least centre frequency for zoom mode");
+  }
+  *centre_frequency = strtod(zoom_conf.substr(0,n).c_str(),NULL);
+  zoom_conf = zoom_conf.substr(n+1);
+  if (n==string::npos || !zoom_conf.length()) return;
+  n = zoom_conf.find(",");
+  *bandwidth = strtod(zoom_conf.substr(0,n).c_str(),NULL);
+  zoom_conf = zoom_conf.substr(n+1);
+  if (n==string::npos || !zoom_conf.length()) return;
+  *chan_bw = strtod(zoom_conf.c_str(),NULL); 
+}
+
 void dsp::LoadToFold::construct () try
 {
   SingleThread::construct ();
@@ -471,78 +490,54 @@ void dsp::LoadToFold::construct () try
   }
 
   // Set up zoom mode filterbanks
-  if (config->zooms.size()) {
-
+  if (config -> zooms.size())
+  {
     // Set up zoom transformations, delays, etc.
-    fzoom.resize(config->zooms.size());
-    zoom_delay.resize(config->zooms.size());
-    zoom_filterbank.resize(config->zooms.size());
+    zoom_filterbank.resize (config -> zooms.size());
 
-    for (unsigned i=0; i < fzoom.size(); ++i) {
+    for (unsigned i=0; i < config -> zooms.size(); ++i) {
 
       double zoom_bw = 1; // default 1 MHz bandwidth
       double chan_bw = 0.002; // default 2 kHz channels
       double centre_freq = manager->get_info()->get_centre_frequency();
       unsigned max_nbin = 128; // TODO -- make this an option
-
-      // parse out configuration, format: freq[,bw[,chan_bw]]
-      // e.g. 1420.4    1420.4,5    1420.4,5,0.002
-      string zoom_conf = config->zooms[i];
-      string::size_type n = zoom_conf.find(",");
-      if ( n == string::npos ) {
-        throw Error (InvalidParam, "LoadToFold::construct",
-            "must specify at least centre frequency for zoom mode");
-      }
-      centre_freq = strtod(zoom_conf.substr(0,n).c_str(),NULL);
-      zoom_conf = zoom_conf.substr(n+1);
-      if (n!=string::npos && zoom_conf.length()) {
-        n = zoom_conf.find(",");
-        zoom_bw = strtod(zoom_conf.substr(0,n).c_str(),NULL);
-        zoom_conf = zoom_conf.substr(n+1);
-        if (n!=string::npos && zoom_conf.length()) {
-          chan_bw = strtod(zoom_conf.c_str(),NULL); 
-        }
-      }
-
-      // sanity check that zoom band lies within primary band
-      double df = centre_freq-manager->get_info()->get_centre_frequency();
-      double bw = manager->get_info()->get_bandwidth();
-      if ( (abs(df) + 0.5*zoom_bw) > 0.5*abs(bw) ) {
-        throw Error( InvalidParam, "LoadToFold::construct", 
-            "requested zoom lies outside of primary band" );
-      }
+      parse_zoom_conf(config->zooms[i],&centre_freq,&zoom_bw,&chan_bw);
 
       //if (Operation::verbose)
-        cerr << "Setting up zoom " << i+1 << " with zoom_bw=" << zoom_bw << " chan_bw=" << chan_bw << " about centre frequency=" << centre_freq << endl;
+        cerr << "Setting up zoom " << i+1 
+             << " with zoom_bw=" << zoom_bw << " chan_bw=" << chan_bw
+             << " about centre frequency=" << centre_freq << endl;
 
       // transformation to coarse zoom
-      fzoom[i] = new FZoom;
-      fzoom[i]->set_input (convolved);
-      fzoom[i]->set_output (new_time_series());
-      fzoom[i]->set_centre_frequency (centre_freq);
-      fzoom[i]->set_bandwidth (zoom_bw);
+      Reference::To<FZoom> fzoom = new FZoom;
+      fzoom->set_input (convolved);
+      fzoom->set_output (new_time_series());
+      fzoom->set_centre_frequency (centre_freq);
+      fzoom->set_bandwidth (zoom_bw);
 
 #if HAVE_CUDA
       // if running on GPU, insert a copy operation from device
-      if (run_on_gpu) {
-        TransferCUDA* zoom_xfer= new TransferCUDA (stream) ;
-        zoom_xfer->set_input (convolved) ;
-        zoom_xfer->set_output (new_time_series());
-        fzoom[i]->set_input( zoom_xfer->get_output() );
-        operations.push_back( zoom_xfer );
+      if (run_on_gpu)
+      {
+        TransferCUDA* transfer= new TransferCUDA (stream) ;
+        transfer->set_kind (cudaMemcpyDeviceToHost);
+        transfer->set_input (convolved) ;
+        transfer->set_output (new_time_series());
+        fzoom->set_input (transfer->get_output());
+        operations.push_back (transfer);
       }
 #endif
 
-      operations.push_back(fzoom[i].get());
+      operations.push_back ( fzoom.get() );
 
       // in-place removal of channel delays
-      zoom_delay[i] = new SampleDelay;
-      zoom_delay[i]->set_input (fzoom[i]->get_output());
-      zoom_delay[i]->set_output (fzoom[i]->get_output());
-      zoom_delay[i]->set_function (new Dedispersion::SampleDelay);
+      SampleDelay* zoom_delay = new SampleDelay;
+      zoom_delay->set_input (fzoom->get_output());
+      zoom_delay->set_output (fzoom->get_output());
+      zoom_delay->set_function (new Dedispersion::SampleDelay);
       if (kernel)
         kernel->set_fractional_delay (true);
-      operations.push_back (zoom_delay[i].get());
+      operations.push_back (zoom_delay);
 
       // Set up output
       PhaseSeriesUnloader* archiver = get_unloader(i,true);
@@ -553,7 +548,7 @@ void dsp::LoadToFold::construct () try
 
       if (output_subints()) 
       {
-
+        cerr << "setting up zoom subints" << endl;
         Subint<PhaseLockedFilterbank> *sub_plfb = 
           new Subint<PhaseLockedFilterbank>;
 
@@ -571,6 +566,7 @@ void dsp::LoadToFold::construct () try
         sub_plfb->set_unloader (zoom_unloader[i]);
 
         zoom_filterbank[i] = sub_plfb;
+        cerr << "here is the subint address="<<zoom_filterbank[i].get() << endl;
 
       }
       else
@@ -581,7 +577,10 @@ void dsp::LoadToFold::construct () try
       zoom_filterbank[i]->set_nbin (max_nbin); // maximum phase bins
       zoom_filterbank[i]->set_npol (config->npol);
       zoom_filterbank[i]->set_goal_chan_bw(chan_bw);
-      zoom_filterbank[i]->set_input (zoom_delay[i]->get_output());
+      zoom_filterbank[i]->set_input (zoom_delay->get_output());
+
+      // store a reference to zoom for later fine tuning
+      zoom_filterbank[i]->set_zoom( fzoom.get() );
 
       if (!zoom_filterbank[i]->has_output())
         zoom_filterbank[i]->set_output (new PhaseSeries);
@@ -917,7 +916,7 @@ void dsp::LoadToFold::prepare ()
       extensions->add_extension( path[ifold] );
     
       for (unsigned iop=0; iop < operations.size(); iop++)
-	operations[iop]->add_extensions (extensions);
+	      operations[iop]->add_extensions (extensions);
     
       fold[ifold]->get_output()->set_extensions (extensions);
     }
@@ -948,7 +947,7 @@ void dsp::LoadToFold::prepare ()
 
       if (config->coherent_dedispersion &&
 	  config->filterbank.get_convolve_when() == Filterbank::Config::During)
-	cerr << "dedispersing ";
+	      cerr << "dedispersing ";
       else if (filterbank->get_freq_res() > 1)
         cerr << "by " << filterbank->get_freq_res() << " back ";
 
@@ -1023,7 +1022,7 @@ void dsp::LoadToFold::end_of_data ()
 {
   // ensure that remaining threads are not left waiting
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
-    fold[ifold]->finish();
+    fold[ifold]->finish ();
 }
 
 void setup (dsp::Fold* fold)
@@ -1126,6 +1125,9 @@ dsp::LoadToFold::get_unloader (unsigned ifold, bool zoom)
     Archiver* archiver = new Archiver;
     m_unloader[ifold] = archiver;
     prepare_archiver( archiver );
+    // zoom mode always removes sample delays
+    if (zoom)
+      archiver->set_archive_dedispersed (true);
   }
 
   return m_unloader.at(ifold);
@@ -1325,7 +1327,6 @@ void dsp::LoadToFold::configure_fold (unsigned ifold, TimeSeries* to_fold)
 #endif
 }
 
-
 void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 {
   bool multiple_outputs = output_subints()
@@ -1496,8 +1497,22 @@ void dsp::LoadToFold::finish () try
 
   for (unsigned i=0; i < zoom_filterbank.size(); ++i) {
     if (Operation::verbose)
-      cerr << "Calling PhaseLockedFilterbank::normalize_output for zoom filterbank " << i+1 << endl;
+      cerr << "Fine-tuning PhaseLockedFilterbank channels " << i+1 << endl;
+    // apply additional zoom by trimming channels outside of band
+    Reference::To<FZoom> fzoom = zoom_filterbank[i]->get_zoom ();
+    //if ( fzoom ) {
+    if ( false ) {
+      fzoom->set_input(zoom_filterbank[i]->get_output());
+      fzoom->set_output(zoom_filterbank[i]->get_output());
+      fzoom->operate();
+    }
+    if (Operation::verbose)
+      cerr << "Calling PhaseLockedFilterbank::normalize_output "<< i+1<< endl;
     zoom_filterbank[i]->normalize_output();
+    // write out archives -- does nothing if not doing subints
+    if (Operation::verbose)
+      cerr << "Writing out zoom-mode filterbank "<<i+1 << endl;
+    zoom_filterbank[i]->finish();
   }
 
   SingleThread::finish();
@@ -1510,17 +1525,16 @@ void dsp::LoadToFold::finish () try
     // short circuit unloading if single phase filterbank
     if (phased_filterbank) {
       Archiver* archiver = dynamic_cast<Archiver*>( unloader[0].get() );
-      archiver->unload( phased_filterbank->get_output() );
+      archiver->unload( phased_filterbank->get_result() );
       return;
     }
 
     // unload zoom filterbanks, whose unloaders precede fold unloaders
     for (unsigned i=0; i < zoom_filterbank.size(); ++i) {
-      //if (Operation::verbose)
+      if (Operation::verbose)
         cerr << "Creating zoom archive " << i+1 << endl;
-      Archiver* archiver = dynamic_cast<Archiver*>(
-          zoom_unloader[i].get() );
-      archiver->unload( zoom_filterbank[i]->get_output() );
+      Archiver* archiver = dynamic_cast<Archiver*>(zoom_unloader[i].get());
+      archiver->unload ( zoom_filterbank[i]->get_result() );
     }
 
     for (unsigned i=0; i<fold.size(); i++)
@@ -1536,7 +1550,7 @@ void dsp::LoadToFold::finish () try
         method.
       */
 
-      //if (Operation::verbose)
+      if (Operation::verbose)
         cerr << "Creating fold archive " << i+1 << endl;
 
       archiver->unload( fold[i]->get_result() );
