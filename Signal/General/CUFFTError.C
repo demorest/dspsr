@@ -7,6 +7,7 @@
 
 #include "CUFFTError.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <iostream>
 using namespace std;

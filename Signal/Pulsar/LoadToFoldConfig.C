@@ -61,6 +61,9 @@ dsp::LoadToFold::Config::Config ()
   // do not use spectral kurtosis filterbank by default
   sk_zap = false;
 
+  // when applying spectral kurtosis, also produce non-zapped version of output
+  nosk_too = false;
+
   // samples to integrate to form spectral kurtosis statistic
   sk_m = 128;
 
