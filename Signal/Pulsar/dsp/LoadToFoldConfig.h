@@ -102,6 +102,9 @@ namespace dsp {
     // apply spectral kurtosis filterbank
     bool sk_zap;
 
+    // also produce the non-zapped version of the output
+    bool nosk_too;
+
     // spectral kurtoscis integration factor
     unsigned sk_m;
 

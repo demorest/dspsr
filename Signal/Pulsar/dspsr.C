@@ -274,6 +274,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->sk_zap, "skz");
   arg->set_help ("apply spectral kurtosis filterbank RFI zapping");
 
+  arg = menu.add (config->nosk_too, "noskz_too");
+  arg->set_help ("also produce un-zapped version of output");
+
   arg = menu.add (config->sk_m, "skzm", "samples");
   arg->set_help ("samples to integrate for spectral kurtosis statistics");
 
