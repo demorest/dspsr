@@ -67,7 +67,8 @@ void dsp::PhaseLockedFilterbank::set_limits (const Observation* input)
   ndat_fold = input->get_ndat();
 }
 
-void dsp::PhaseLockedFilterbank::set_goal_chan_bw(double chanbw_mhz) {
+void dsp::PhaseLockedFilterbank::set_goal_chan_bw(double chanbw_mhz)
+{
   goal_chan_bw = chanbw_mhz;
 }
 
@@ -144,7 +145,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
   // TMP?
   const double input_bandwidth = input->get_bandwidth();
 
-  cerr << "here with integration= "<<setprecision(4)<<get_output()->get_integration_length() << endl;
+  //cerr << "here with integration= "<<setprecision(4)<<get_output()->get_integration_length() << endl;
 
   if (verbose)
     cerr << "dsp::PhaseLockedFilterbank::transformation"
@@ -274,8 +275,8 @@ void dsp::PhaseLockedFilterbank::transformation ()
   // that's the correct value to use for buffering.
 
   // This loop is over all of the phase windows within the input TimeSeries.
-  while (more_data) {
-
+  while (more_data)
+  {
     bin_divider.set_bounds( get_input() );
 
     idat_start = bin_divider.get_idat_start ();
@@ -293,7 +294,7 @@ void dsp::PhaseLockedFilterbank::transformation ()
     // if input TimeSeries ends before the current phase window
     if (idat_start + ndat_fft > idat_end) 
     {
-      cerr << "breaking phase window" << endl;
+      //cerr << "breaking phase window" << endl;
       bin_divider.discard_bounds( get_input() );
       break;
     }
@@ -352,20 +353,19 @@ void dsp::PhaseLockedFilterbank::transformation ()
     // It occasionally happens on first entry that the phase alignment is
     // off and we don't have enough samples to do the FFT,
     // but if it happens in the middle of the execution, something is wrong
-    if ( !(nblock || first_entry) ) {
+    if ( !(nblock || first_entry) )
       throw Error (InvalidState, "dsp::PhaseLockedFilterbank::transform",
           "No integration blocks found.");
-    }
-    if (nblock==0 && first_entry)
-      cerr << "first entry thingy" << endl;
-    if (new_integration)
-      cerr << "new integration nblock="<<nblock << endl;
+    //if (nblock==0 && first_entry)
+    //  cerr << "first entry thingy" << endl;
+    //if (new_integration)
+    //  cerr << "new integration nblock="<<nblock << endl;
     // keep track of current block position
     unsigned sample_offset = 0;
 
     //cerr << "idat_start= " << idat_start << " nblock= " << nblock << " phase_bin=" << phase_bin << endl;
-    for (unsigned iblock = 0; iblock < nblock; iblock++) {
-
+    for (unsigned iblock = 0; iblock < nblock; iblock++)
+    {
       // make somewhat arbitrary choice of how to assign integration time
       // to blocks -- by letting the first block contribute all its samples,
       // works for the case of overlap==false

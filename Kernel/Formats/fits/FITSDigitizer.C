@@ -10,9 +10,10 @@
 #include "dsp/FITSDigitizer.h"
 
 //! Default constructor
-dsp::FITSDigitizer::FITSDigitizer () : Digitizer ("FITSDigitizer")
+dsp::FITSDigitizer::FITSDigitizer (unsigned _nbit)
+: Digitizer ("FITSDigitizer")
 {
-  nbit = 8;
+  set_nbit(_nbit);
 }
 
 //! Set the number of bits per sample
@@ -75,10 +76,13 @@ void dsp::FITSDigitizer::pack ()
     throw Error (InvalidState, "dsp::FITSDigitizer::pack",
   		 "cannot handle ndim=%d", input->get_ndim());
 
+  cerr << "dsp::FITSDigitizer::pack" << " start_time="<<input->get_start_time().printall()<<" end_time="<<input->get_end_time().printall() << " input_sample="<<input->get_input_sample()<<std::endl;
+
   // ChannelSort will re-organize the frequency channels in the output
-  output->set_bandwidth( -fabs(input->get_bandwidth()) );
-  output->set_swap( false );
-  output->set_nsub_swap( 0 );
+  output->set_bandwidth ( -fabs(input->get_bandwidth()) );
+  output->set_swap ( false );
+  output->set_nsub_swap ( 0 );
+  output->set_input_sample ( input->get_input_sample() );
 
   const unsigned npol = input->get_npol();
 
@@ -151,7 +155,7 @@ void dsp::FITSDigitizer::pack ()
       // the pointer at the start of each byte. MJK2008.
       outptr--;
 
-      int bit_counter = 0;
+      int bit_counter = 0, bit_shift = 0;
       for (unsigned ipol=0; ipol < npol; ipol++)
       {
         for (unsigned ichan=0; ichan < nchan; ichan++)
@@ -170,12 +174,18 @@ void dsp::FITSDigitizer::pack ()
             case 2:
             case 4:
               bit_counter = ichan % (samp_per_byte);
+
+              // NB -- this original "sigproc" implementation is such that
+              // later samples are shifted to the more significant bits, 
+              // backwards to the PSRFITS convention; so reverse it in the
+              // bit shift below
+              bit_shift = (samp_per_byte-bit_counter-1)*nbit;
             
               if (bit_counter == 0 ) {
                 outptr++;
                 (*outptr) = (unsigned char)0;
               }
-              (*outptr) |= ((unsigned char) (result)) << (bit_counter*nbit);
+              (*outptr) |= ((unsigned char) (result)) << bit_shift;
 
               break;
             case 8:
@@ -196,7 +206,7 @@ void dsp::FITSDigitizer::pack ()
 
     int bit_counter=0;
     unsigned inner_stride = nchan * npol;
-    unsigned idx = 0; // make gcc happy
+    unsigned idx = 0, bit_shift = 0; // make gcc happy
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
       const float* inptr = input->get_datptr( channel (ichan) );
@@ -217,15 +227,20 @@ void dsp::FITSDigitizer::pack ()
           case 1:
           case 2:
           case 4:
-            //bit_counter = ichan % (samp_per_byte);
-            //unsigned idx = idat*(int)(nchan/samp_per_byte) + int(ichan/samp_per_byte);
+
             bit_counter = isamp % (samp_per_byte);
             idx = unsigned(isamp / samp_per_byte);
+
+            // NB -- this original "sigproc" implementation is such that
+            // later samples are shifted to the more significant bits, 
+            // backwards to the PSRFITS convention; so reverse it in the
+            // bit shift below
+            bit_shift = (samp_per_byte-bit_counter-1)*nbit;
 
             if (bit_counter==0) 
               outptr[idx]=(unsigned char)0;
 
-            outptr[idx] += ((unsigned char) (result)) << (bit_counter*nbit);
+            outptr[idx] += ((unsigned char) (result)) << bit_shift;
             
             break;
           case 8:

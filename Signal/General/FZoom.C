@@ -39,6 +39,11 @@ double dsp::FZoom::get_bandwidth() const
   return bandwidth;
 }
 
+void dsp::FZoom::set_engine( Engine* _engine )
+{
+  engine = _engine;
+}
+
 void dsp::FZoom::set_bounds()
 {
   set_channel_bounds (
@@ -70,6 +75,10 @@ void dsp::FZoom::transformation ()
 
   bool inplace = get_output() == get_input();
 
+  if (inplace && engine)
+    throw Error (InvalidState,"dsp::FZoom::transformation",
+        "does not support in-place transformations on GPU");
+
   // set chan_lo and chan_hi
   set_bounds ();
 
@@ -78,6 +87,7 @@ void dsp::FZoom::transformation ()
 
   // adjust centre frequency for output 
   dest->copy_configuration (get_input()) ;
+  assert(dest->get_order () == input->get_order () );
   unsigned input_nchan = input->get_nchan ();
   double input_chanbw = input->get_bandwidth() / input_nchan;
   double df = 0.5*input_chanbw*(int(chan_lo)-int(input_nchan-chan_hi-1));
@@ -85,18 +95,33 @@ void dsp::FZoom::transformation ()
   dest->set_centre_frequency (input->get_centre_frequency() + df);
   dest->set_bandwidth( input_chanbw * dest->get_nchan() );
   dest->resize (input->get_ndat());
-  assert (input->get_centre_frequency(chan_lo) == dest->get_centre_frequency(0));
-  assert (input->get_centre_frequency(chan_hi) == dest->get_centre_frequency(dest->get_nchan()-1));
+
+  assert (input->get_centre_frequency(chan_lo) == 
+           dest->get_centre_frequency(0));
+
+  assert (input->get_centre_frequency(chan_hi) == 
+           dest->get_centre_frequency(dest->get_nchan()-1));
 
   switch (input->get_order ())
   {
     case TimeSeries::OrderFPT:
-      fpt_copy (dest);
+    {
+      if (engine)
+        engine->fpt_copy(get_input(),dest,chan_lo,chan_hi);
+      else
+        fpt_copy (dest);
       break;
+    }
 
     case TimeSeries::OrderTFP:
-      tfp_copy (dest);
+    {
+      if (engine)
+        throw Error (InvalidState,"dsp::FZoom::transformation",
+            "does not support in-place transformations on GPU");
+      else
+        tfp_copy (dest);
       break;
+    }
 
     default:
       throw Error (InvalidState, "dsp::FZoom::transformation",
@@ -200,3 +225,10 @@ void dsp::FZoom::set_channel_bounds(const Observation* input,
     }
   }
 }
+
+void dsp::FZoom::Engine::set_direction(
+    dsp::FZoom::Engine::Direction _direction)
+{
+  direction = _direction;
+}
+

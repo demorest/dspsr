@@ -185,160 +185,171 @@ void dsp::Rescale::transformation ()
   uint64_t end_dat = input_ndat;
 
   do
+  {
+    end_dat = input_ndat;
+
+    uint64_t interval_end_dat = start_dat + nsample - isample;
+    if (interval_end_dat < end_dat)
+      end_dat = interval_end_dat;
+
+    uint64_t samp_dat = isample;
+
+    if (verbose)
+      cerr << "dsp::Rescale::transformation end_dat=" << end_dat
+           << " interval_end_dat=" << interval_end_dat
+           << " isample=" << isample << endl;
+
+    switch(input->get_order())
     {
-      end_dat = input_ndat;
-
-      uint64_t interval_end_dat = start_dat + nsample - isample;
-      if (interval_end_dat < end_dat)
-        end_dat = interval_end_dat;
-
-      uint64_t samp_dat = isample;
-
-      if (verbose)
-        cerr << "dsp::Rescale::transformation end_dat=" << end_dat
-             << " interval_end_dat=" << interval_end_dat
-             << " isample=" << isample << endl;
-
-      switch(input->get_order()){
       case TimeSeries::OrderTFP:
-	{
-	  const float* in_data = input->get_dattfp();
-	  in_data += start_dat * input_nchan*input_npol;
-	  for (unsigned idat=start_dat; idat < end_dat; idat++){
-	    for (unsigned ichan=0; ichan < input_nchan; ichan++){
-	      for (unsigned ipol=0; ipol < input_npol; ipol++){
-		freq_total[ipol][ichan]  += (*in_data);
-		freq_totalsq[ipol][ichan]  += (*in_data)*(*in_data);
-
-		if (output_time_total)
-		  time_total[ipol][samp_dat] += (*in_data);
-		in_data++;
-
-	      }
-	    }
-	    samp_dat++;
-	  }
-	  break;
-	}
-      case TimeSeries::OrderFPT:
-	{
-	  for (unsigned ipol=0; ipol < input_npol; ipol++) 
-	    {
-	      for (unsigned ichan=0; ichan < input_nchan; ichan++)
-		{
-		  const float* in_data = input->get_datptr (ichan, ipol);
-
-		  samp_dat = isample;
-
-		  double sum = 0.0;
-		  double sumsq = 0.0;
-
-		  for (unsigned idat=start_dat; idat < end_dat; idat++)
-		    {
-		      sum += in_data[idat];
-		      sumsq += in_data[idat] * in_data[idat];
-
-		      if (output_time_total)
-			time_total[ipol][samp_dat] += in_data[idat];
-
-		      samp_dat++;
-		    }
-
-		  freq_total[ipol][ichan] += sum;
-		  freq_totalsq[ipol][ichan] += sumsq;
-		}
-	    }
-	  break;
-	}
-      default:
-	throw Error (InvalidState, "dsp::Rescale::operate",
-		     "Requires data in TFP or FPT order");
-
-      }
-      isample = samp_dat;
-
-      if (samp_dat == nsample || first_call)
       {
-	if (verbose)
-	  cerr << "dsp::Rescale::transformation rescale"
-	       << " nsample=" << nsample
-	       << " isample=" << isample 
-	       << " first_call=" << first_call << endl;
+        const float* in_data = input->get_dattfp();
+        in_data += start_dat * input_nchan*input_npol;
+        for (unsigned idat=start_dat; idat < end_dat; idat++)
+        {
+          for (unsigned ichan=0; ichan < input_nchan; ichan++)
+          {
+            for (unsigned ipol=0; ipol < input_npol; ipol++)
+            {
+              freq_total[ipol][ichan]  += (*in_data);
+              freq_totalsq[ipol][ichan]  += (*in_data)*(*in_data);
 
-	if (first_call)
-	  update_epoch = input->get_start_time();
-
-	compute_various (first_call);
-	update (this);
-
-	update_epoch += isample / input->get_rate();
-	isample = 0;
-	first_call = false;
-
-	for (unsigned ipol=0; ipol < input_npol; ipol++)
-	{
-	  zero (freq_total[ipol]);
-	  zero (freq_totalsq[ipol]);
-	  if (output_time_total)
-	    zero (time_total[ipol]);
-	}
+              if (output_time_total)
+                time_total[ipol][samp_dat] += (*in_data);
+              in_data++;
+            }
+          }
+          samp_dat++;
+        }
+        break;
       }
-
-      switch(input->get_order())
-      {
-      case TimeSeries::OrderTFP:
-	{
-	  float tmp;
-	  const float* in_data = input->get_dattfp();
-	  float* out_data = output->get_dattfp();
-	  in_data += start_dat * input_nchan*input_npol;
-	  out_data += start_dat * input_nchan*input_npol;
-	  for (unsigned idat=start_dat; idat < end_dat; idat++){
-	    for (unsigned ichan=0; ichan < input_nchan; ichan++){
-	      for (unsigned ipol=0; ipol < input_npol; ipol++){
-		if (do_decay){
-			tmp= ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
-			decay_offset[ipol][ichan] = (tmp + decay_offset[ipol][ichan]*decay_constant) / (1.0+ decay_constant);
-			(*out_data) = tmp - decay_offset[ipol][ichan];
-		} else {
-			(*out_data) = ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
-		}
-		in_data++;
-		out_data++;
-	      }
-	    }
-	  }
-	  break;
-	}
-
       case TimeSeries::OrderFPT:
-	{
-	  for (unsigned ipol=0; ipol < input_npol; ipol++) 
-	    {
-	      for (unsigned ichan=0; ichan < input_nchan; ichan++)
-		{
-		  const float* in_data = input->get_datptr (ichan, ipol);
-		  float* out_data = output->get_datptr (ichan, ipol);
+      {
+        for (unsigned ipol=0; ipol < input_npol; ipol++) 
+        {
+          for (unsigned ichan=0; ichan < input_nchan; ichan++)
+          {
+            const float* in_data = input->get_datptr (ichan, ipol);
 
-		  float the_offset = offset[ipol][ichan];
-		  float the_scale = scale[ipol][ichan];
-		  for (uint64_t idat=start_dat; idat < end_dat; idat++)
-		    out_data[idat] = (in_data[idat] + the_offset) * the_scale;
-		}
-	    }
-	  break;
-	}
-      default:
-	throw Error (InvalidState, "dsp::Rescale::operate",
-		     "Requires data in TFP or FPT order");
+            samp_dat = isample;
+
+            double sum = 0.0;
+            double sumsq = 0.0;
+
+            for (unsigned idat=start_dat; idat < end_dat; idat++)
+            {
+              sum += in_data[idat];
+              sumsq += in_data[idat] * in_data[idat];
+
+              if (output_time_total)
+                time_total[ipol][samp_dat] += in_data[idat];
+
+              samp_dat++;
+            }
+
+            freq_total[ipol][ichan] += sum;
+            freq_totalsq[ipol][ichan] += sumsq;
+          }
+        }
+        break;
       }
-
-      start_dat = end_dat;
-
-      if (verbose)
-	cerr << "end_dat=" << end_dat << " input_ndat=" << input_ndat << endl;
+      default:
+        throw Error (InvalidState, "dsp::Rescale::operate",
+            "Requires data in TFP or FPT order");
 
     }
+    isample = samp_dat;
+
+    if (samp_dat == nsample || first_call)
+    {
+      if (verbose)
+        cerr << "dsp::Rescale::transformation rescale"
+             << " nsample=" << nsample
+             << " isample=" << isample 
+             << " first_call=" << first_call << endl;
+
+      if (first_call)
+        update_epoch = input->get_start_time();
+
+      compute_various (first_call);
+      update (this);
+
+      update_epoch += isample / input->get_rate();
+      isample = 0;
+      first_call = false;
+
+      for (unsigned ipol=0; ipol < input_npol; ipol++)
+      {
+        zero (freq_total[ipol]);
+        zero (freq_totalsq[ipol]);
+        if (output_time_total)
+          zero (time_total[ipol]);
+      }
+    }
+
+    switch(input->get_order())
+    {
+
+      case TimeSeries::OrderTFP:
+      {
+        float tmp;
+        const float* in_data = input->get_dattfp();
+        float* out_data = output->get_dattfp();
+        in_data += start_dat * input_nchan*input_npol;
+        out_data += start_dat * input_nchan*input_npol;
+        for (unsigned idat=start_dat; idat < end_dat; idat++)
+        {
+          for (unsigned ichan=0; ichan < input_nchan; ichan++)
+          {
+            for (unsigned ipol=0; ipol < input_npol; ipol++)
+            {
+              if (do_decay)
+              {
+                tmp= ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
+                decay_offset[ipol][ichan] = (tmp + decay_offset[ipol][ichan]*decay_constant) / (1.0+ decay_constant);
+                *out_data = tmp - decay_offset[ipol][ichan];
+              } 
+              else 
+              {
+                *out_data = ((*in_data) + offset[ipol][ichan]) * scale[ipol][ichan];
+              }
+              in_data++;
+              out_data++;
+            }
+          }
+        }
+        break;
+      }
+
+      case TimeSeries::OrderFPT:
+      {
+        for (unsigned ipol=0; ipol < input_npol; ipol++) 
+        {
+          for (unsigned ichan=0; ichan < input_nchan; ichan++)
+          {
+            const float* in_data = input->get_datptr (ichan, ipol);
+            float* out_data = output->get_datptr (ichan, ipol);
+
+            float the_offset = offset[ipol][ichan];
+            float the_scale = scale[ipol][ichan];
+            for (uint64_t idat=start_dat; idat < end_dat; idat++)
+              out_data[idat] = (in_data[idat] + the_offset) * the_scale;
+          }
+        }
+        break;
+      }
+      default:
+        throw Error (InvalidState, "dsp::Rescale::operate",
+            "Requires data in TFP or FPT order");
+    }
+
+    start_dat = end_dat;
+
+    if (verbose)
+	    cerr << "end_dat=" << end_dat << " input_ndat=" 
+           << input_ndat << endl;
+
+  }
   while (end_dat < input_ndat);
 
   if (verbose)

@@ -22,17 +22,21 @@ namespace dsp
   public:
 
     //! Default constructor
-    FITSDigitizer ();
+    FITSDigitizer (unsigned _nbit);
 
-    void set_nbit (unsigned);
-
-    unsigned get_nbit () {return nbit;}
+    unsigned get_nbit () const {return nbit;}
 
     //! Pack the data
     void pack ();
 
     //! Return minimum samples
+    // TODO -- is this needed?
     uint64_t get_minimum_samples () { return 4096; }
+
+
+  protected:
+
+    void set_nbit (unsigned);
 
   };
 }

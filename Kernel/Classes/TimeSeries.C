@@ -640,8 +640,9 @@ bool from_range(unsigned char* fr,const dsp::TimeSeries* tseries)
 /*! This method is used by the InputBuffering policy */
 void dsp::TimeSeries::change_reserve (int64_t change) const
 {
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::TimeSeries::change_reserve (" << change << ")" << endl;
+    cerr << this << endl;
 
   TimeSeries* thiz = const_cast<TimeSeries*>(this);
 

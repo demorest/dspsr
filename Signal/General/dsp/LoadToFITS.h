@@ -16,11 +16,11 @@
 #include "dsp/Filterbank.h"
 #include "dsp/FilterbankConfig.h"
 #include "dsp/Dedispersion.h"
-#include "dsp/OutputFile.h"
+#include "dsp/FITSOutputFile.h"
 
 namespace dsp {
 
-  //! A single LoadToFil thread
+  //! A single LoadToFITS thread
   class LoadToFITS : public SingleThread
   {
 
@@ -43,7 +43,7 @@ namespace dsp {
 
   private:
 
-    //friend class LoadToFITSN;
+    friend class LoadToFITSN;
 
     //! Configuration parameters
     Reference::To<Config> config;
@@ -109,6 +109,9 @@ namespace dsp {
     //! integration time per output sample
     double tsamp;
 
+    //! number of samples per output data block
+    unsigned nsblk;
+
     //! Name of the output file
     std::string output_filename;
 
@@ -124,7 +127,7 @@ namespace dsp {
   };
 }
 
-#endif // !defined(__LoadToFil_h)
+#endif // !defined(__LoadToFITS_h)
 
 
 

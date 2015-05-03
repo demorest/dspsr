@@ -44,11 +44,12 @@ if HAVE_CUFFT
 
 nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
-	dsp/TransferCUDA.h \
-	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
+	dsp/TransferCUDA.h dsp/TransferBitSeriesCUDA.h \
+    dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h dsp/FZoomCUDA.h
 
-libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu TransferCUDA.C \
-	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
+libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
+    TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu           \
+    SKMaskerCUDA.cu FZoomCUDA.C
 
 endif
 
@@ -89,6 +90,25 @@ if HAVE_PGPLOT
 
 endif
 
+if HAVE_fits
+
+  ##########################################################################
+  #
+  # start PSRFITS-specific code
+  #
+
+  nobase_include_HEADERS += dsp/LoadToFITS.h dsp/LoadToFITSN.h
+  libdspdsp_la_SOURCES += LoadToFITS.C LoadToFITSN.C
+
+  bin_PROGRAMS += digifits
+  digifits_SOURCES = digifits.C
+
+  #
+  # end PSRFITS-specific code
+  #
+  ##########################################################################
+
+endif
 
 if HAVE_sigproc
 

@@ -20,43 +20,110 @@
 #include "Pulsar/Telescope.h"
 #include "Pulsar/Receiver.h"
 #include "Pulsar/Backend.h"
+#include "FITSError.h"
+#include "psrfitsio.h"
 
 #include <fcntl.h>
 
 using namespace std;
 
-dsp::FITSOutputFile::FITSOutputFile (unsigned bits, const char* filename) 
+int get_colnum(fitsfile* fptr, const char* label)
+{
+  int colnum(0),status(0);
+  fits_get_colnum(fptr, CASEINSEN, (char*)label, &colnum, &status);
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::get_colnum");
+  return colnum;
+}
+
+void write_col(fitsfile* fptr, const char* label, int irow, int start, 
+    int stop, int* data)
+{
+  int colnum = get_colnum (fptr, label);
+  int status = 0;
+  fits_write_col(fptr,TINT,colnum,irow,start,stop,data,&status);
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::write_int_col");
+}
+
+void write_col(fitsfile* fptr, const char* label, int irow, int start, 
+    int stop, unsigned* data)
+{
+  int colnum = get_colnum (fptr, label);
+  int status = 0;
+  fits_write_col(fptr,TINT,colnum,irow,start,stop,data,&status);
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::write_uint_col");
+}
+
+void write_col(fitsfile* fptr, const char* label, int irow, int start, 
+    int stop, float* data)
+{
+  int colnum = get_colnum (fptr, label);
+  int status = 0;
+  fits_write_col(fptr,TFLOAT,colnum,irow,start,stop,data,&status);
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::write_dbl_col");
+}
+
+void write_col(fitsfile* fptr, const char* label, int irow, int start, 
+    int stop, double* data)
+{
+  int colnum = get_colnum (fptr, label);
+  int status = 0;
+  fits_write_col(fptr,TDOUBLE,colnum,irow,start,stop,data,&status);
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::write_dbl_col");
+}
+
+
+void modify_vector_len(fitsfile* fptr, const char* label, int len)
+{
+  int colnum = get_colnum (fptr, label);
+  int status = 0;
+  fits_modify_vector_len (fptr, colnum, len, &status); 
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::modify_vector_len");
+}
+
+dsp::FITSOutputFile::FITSOutputFile (const char* filename) 
   : OutputFile ("FITSOutputFile")
 {
   if (filename) 
     output_filename = filename;
-  cerr << "dsp::FITSOutputFile constructor " << output_filename << endl;
-  nchan = 0;
-  npol = 0;
-  nsblk = 4096;
-  nbblk = 0;
-  nbit = bits;
+
   offset = 0;
   written = 0;
   isub = 0;
   fptr = NULL;
-  dat_wts = NULL;
-  dat_offs = NULL;
-  dat_scl = NULL;
-  dat_freq = NULL;
+
+  // NB these variables should all be set from input
+  nchan = 0;
+  npol = 0;
+  nsblk = 2048;
+  nbblk = 0;
+  nbit = 2;
 }
 
 dsp::FITSOutputFile::~FITSOutputFile ()
 {
-  // close the FITS file
-  int status = 0;
-  fits_close_file(fptr, &status);
+  finalize_fits ();
+}
 
-  // delete various buffers
-  delete dat_wts;
-  delete dat_scl;
-  delete dat_offs;
-  delete dat_freq;
+void dsp::FITSOutputFile::set_nsblk (unsigned nblk)
+{
+  if ( fptr && (nblk != nsblk) )
+    throw Error (InvalidState, "dsp::FITSOutputFile::set_nsblk",
+        "cannot change block size after initialization!");
+  nsblk = nblk;
+}
+
+void dsp::FITSOutputFile::set_nbit (unsigned _nbit)
+{
+  if ( fptr && (_nbit != nbit) )
+    throw Error (InvalidState, "dsp::FITSOutputFile::set_nbit",
+        "cannot change nbit after initialization!");
+  nbit= _nbit;
 }
 
 //! Get the extension to be added to the end of new filenames
@@ -67,7 +134,6 @@ std::string dsp::FITSOutputFile::get_extension () const
 
 void dsp::FITSOutputFile::write_header ()
 {
-
   // a dummy archive to handle all of the extensions
   Reference::To<Pulsar::Archive> archive = new Pulsar::FITSArchive;
 
@@ -80,12 +146,13 @@ void dsp::FITSOutputFile::write_header ()
     throw Error (InvalidState, "dsp::FITSOutputFile::write_header",
         "nbit was not set");
   nbblk = (nsblk * npol * nchan * nbit)/8;
-  cerr << "nbblk="<<nbblk<<endl;
   tblk = double(nsblk) / input -> get_rate();
 
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::FITSOutputFile::write_header" << endl
-         << "nchan="<<nchan<<" npol="<<npol<<" nsblk="<<nsblk<<" tblk="<<tblk<<" rate="<<input->get_rate()<<" nbit="<<nbit<< endl;
+         << "nchan=" << nchan << " npol=" << npol << " nsblk=" << nsblk
+         <<" tblk=" << tblk << " rate=" <<input->get_rate() 
+         <<" nbit=" <<nbit << " nbblk=" << nbblk << endl;
 
   archive-> resize (nsub, npol, nchan, nbin);
 
@@ -94,7 +161,7 @@ void dsp::FITSOutputFile::write_header ()
   
   if (ext)
   {
-    if (verbose)
+    //if (verbose)
       cerr << "dsp::FITSOutputFile::write_header Pulsar::Archive FITSHdrExtension" << endl;
 
     // Make sure the start time is aligned with pulse phase zero
@@ -113,6 +180,10 @@ void dsp::FITSOutputFile::write_header ()
     // Cut off the line feed character
     time_str = time_str.substr(0,time_str.length() - 1);
     ext->set_date_str(time_str);
+
+    ext->set_obsbw ( abs(get_input()->get_bandwidth()) );
+    ext->set_obsnchan ( get_input()->get_nchan() );
+    ext->set_obsfreq ( get_input()->get_centre_frequency() );
   }
 
   archive-> set_telescope ( get_input()->get_telescope() );
@@ -208,32 +279,16 @@ void dsp::FITSOutputFile::write_header ()
 
 void dsp::FITSOutputFile::write_row ()
 {
-  if (verbose)
+  //if (verbose)
       cerr << "dsp::FITSOutputFile::write_row writing row "<<isub<<endl;
-  int status = 0, colnum = 0;
-  // write the INDEXVAL
-  fits_get_colnum(fptr, CASEINSEN, "INDEXVAL", &colnum, &status);
-  fits_write_col(fptr,TINT,colnum,isub,1,1,&isub,&status);
-  // write the subint time
-  fits_get_colnum(fptr, CASEINSEN, "TSUBINT", &colnum, &status);
-  fits_write_col(fptr,TDOUBLE,colnum,isub,1,1, &tblk, &status);
-  // write the offset time 
+  write_col(fptr,"INDEXVAL",isub,1,1,&isub);
+  write_col(fptr,"TSUBINT",isub,1,1,&tblk);
   double offs_sub = tblk/2.0 + isub*tblk;
-  fits_get_colnum(fptr, CASEINSEN, "OFFS_SUB", &colnum, &status);
-  fits_write_col(fptr,TDOUBLE,colnum,isub,1,1,&offs_sub,&status);
-  // write out the data scales, weights, offset
-  fits_get_colnum(fptr, CASEINSEN, "DAT_WTS", &colnum, &status);
-  fits_write_col(fptr, TFLOAT, colnum, isub, 1, nchan, dat_wts, &status);
-  fits_get_colnum(fptr, CASEINSEN, "DAT_SCL", &colnum, &status);
-  fits_write_col(fptr, TFLOAT, colnum, isub, 1, nchan*npol, dat_scl, &status);
-  cout << status << endl;
-  fits_get_colnum(fptr, CASEINSEN, "DAT_OFFS", &colnum, &status);
-  fits_write_col(fptr, TFLOAT, colnum, isub, 1, nchan*npol, dat_offs, &status);
-  //fits_write_col(fptr,TDOUBLE,colnum_ra_sub,sub,1,1,&rad,&status);
-  //fits_write_col(fptr,TDOUBLE,colnum_dec_sub,sub,1,1,&decd,&status);
-  // write the channel frequencies
-  fits_get_colnum(fptr, CASEINSEN, "DAT_FREQ", &colnum, &status);
-  fits_write_col(fptr,TDOUBLE,colnum,isub,1,nchan,dat_freq,&status);
+  write_col(fptr,"OFFS_SUB",isub,1,1,&offs_sub);
+  write_col(fptr,"DAT_WTS",isub,1,nchan,&dat_wts[0]);
+  write_col(fptr,"DAT_SCL",isub,1,nchan*npol,&dat_scl[0]);
+  write_col(fptr,"DAT_OFFS",isub,1,nchan*npol,&dat_offs[0]);
+  write_col(fptr,"DAT_FREQ",isub,1,nchan,&dat_freq[0]);
 }
 
 void dsp::FITSOutputFile::initialize ()
@@ -241,76 +296,75 @@ void dsp::FITSOutputFile::initialize ()
   if (verbose)
     cerr << "dsp::FITSOutputFile::initialize" << endl;
 
-  if (!dat_wts)
-    dat_wts = new float[nchan];
-  if (!dat_scl)
-    dat_scl = new float[nchan*npol];
-  if (!dat_offs)
-    dat_offs = new float[nchan*npol];
-  if (!dat_freq)
-    dat_freq = new double[nchan];
-  for (unsigned i; i < nchan; ++i)
+  dat_wts.resize(nchan);
+  dat_freq.resize(nchan);
+  for (unsigned i = 0; i < nchan; ++i)
   {
-    dat_offs[i] = dat_scl[i] = 0;
-    dat_wts[i] = 1;
-    // TODO -- set dat freqs
-    dat_freq[i] = i;
+    dat_wts[i] = 1.;
+    dat_freq[i] = get_input()->get_centre_frequency (i);
   }
-  int status = 0;
 
+  // do not re-initialize if already initialized by Rescale callback
+  if (!dat_scl.size()) {
+    dat_scl.resize (nchan*npol);
+    dat_offs.resize (nchan*npol);
+    for (unsigned i = 0; i < nchan*npol; ++i)
+    {
+      dat_scl[i] = 1.;
+      dat_offs[i] = 0.;
+    }
+  }
+
+  int status = 0;
   fits_open_file (&fptr,output_filename.c_str(), READWRITE, &status);
   if (status)
-    throw Error (FileNotFound, "dsp::FITSOutputFile::initialize",
+    throw FITSError (status, "dsp::FITSOutputFile::initialize",
         "unable to open FITS file for writing");
 
-  fits_movnam_hdu(fptr,BINARY_TBL,"SUBINT",0,&status);
-  if (status)
-    throw Error (Undefined, "dsp::FITSOutputFIle::initialize",
-        "FITS file is missing valid SUBINT table");
+  psrfits_move_hdu(fptr,"SUBINT");
+
+  // psrchive bungs in a "PERIOD" column -- delete it
+  try { psrfits_delete_col (fptr, "PERIOD"); }
+  catch (FITSError& e) {;}
 
   // set up channel-dependent entries with correct size
-  int colnum = 0;
-  fits_get_colnum(fptr, CASEINSEN, "DAT_FREQ", &colnum, &status);   
-  fits_modify_vector_len (fptr, colnum, nchan, &status); 
-  fits_get_colnum(fptr, CASEINSEN, "DAT_WTS", &colnum, &status);   
-  fits_modify_vector_len (fptr, colnum, nchan, &status); 
-  fits_get_colnum(fptr, CASEINSEN, "DAT_OFFS", &colnum, &status);   
-  fits_modify_vector_len (fptr, colnum, nchan*npol, &status); 
-  fits_get_colnum(fptr, CASEINSEN, "DAT_SCL", &colnum, &status);   
-  fits_modify_vector_len (fptr, colnum, nchan*npol, &status); 
+  modify_vector_len(fptr,"DAT_FREQ",nchan);
+  modify_vector_len(fptr,"DAT_WTS",nchan);
+  modify_vector_len(fptr,"DAT_SCL",nchan*npol);
+  modify_vector_len(fptr,"DAT_OFFS",nchan*npol);
 
   // set the block (DATA) dim entries
+  // NB that the total number of bytes (TFORM) can't be set consistently
+  // with the dimension size for 2- and 4-bit data if one takes time 
+  // samples as a dimension; the standard is for 
+  // TDIM = (nchan,npol,nsblk*nbit/8)
 
-  long naxes[4];
-  int naxis=3;
-  char tstr[128];
-  int ival;
+  modify_vector_len(fptr,"DATA",nbblk);
+  int colnum = get_colnum(fptr,"DATA");
+  psrfits_update_tdim (fptr, colnum, nchan, npol, (nsblk*nbit)/8 );
 
-  fits_get_colnum(fptr, CASEINSEN, "DATA", &colnum, &status);  
-  fits_modify_vector_len (fptr, colnum, nbblk, &status); 
-  naxes[0] = nchan*nbit; 
-  naxes[1] = npol;
-  naxes[2] = nsblk;
 
-  sprintf(tstr,"TDIM%d",colnum);
-  fits_delete_key(fptr, tstr, &status);
-  fits_write_tdim(fptr, colnum, naxis, naxes, &status);
-  //ival=nsub; fits_update_key(fptr, TINT, "NAXIS2", &ival, NULL, &status );
-  fits_update_key(fptr, TINT, "NSBLK", &nsblk, NULL, &status );  
-  //fits_report_error(stdout,status);  
+  psrfits_update_key<int> (fptr, "NSBLK", nsblk);
+  psrfits_update_key<double> (fptr, "TBIN", 1./get_input()->get_rate());
+  psrfits_update_key<int> (fptr, "NBITS", nbit);
+  psrfits_update_key<double> (fptr, "ZERO_OFF", pow(2,nbit-1)-0.5 );
+  psrfits_update_key<int> (fptr, "SIGNINT", 0);
+
+  // TODO -- will need to fix this later on
+  psrfits_update_key<int> (fptr, "NSUBOFFS", 0);
 }
 
 void dsp::FITSOutputFile::operation ()
 {
-  if (verbose)
-    cerr << "dsp::FITSOutputFile::operation" << endl;
 
-  if (!fptr)
-  {
+  if (!fptr) {
     write_header ();
     initialize ();
   }
+  if (verbose)
+    cerr << "dsp::FITSOutputFile::operation" << endl;
 
+  cerr << "dsp::FITSOutputFile::operation" << " start_time="<<input->get_start_time().printall()<<" end_time="<<input->get_end_time().printall() << " input_sample="<<input->get_input_sample()<<std::endl;
   unload_bytes (get_input()->get_rawptr(), get_input()->get_nbytes());
 
 }
@@ -318,15 +372,16 @@ void dsp::FITSOutputFile::operation ()
 int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t bytes)
 {
 
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::FITSOutputFile::unload_bytes" << endl
-         << "    bytes="<<bytes<<" nbblk="<<nbblk<<" offset="<<offset<<" isub="<<isub<<endl;
+         << "    bytes=" << bytes << " nbblk=" << nbblk
+         <<" offset=" << offset << " isub=" << isub << endl;
   // cast to char buffer for profit
   unsigned char* buffer = (unsigned char*) void_buffer;
 
-  int colnum = 0, status = 0;
   unsigned to_write = bytes;
-  fits_get_colnum (fptr, CASEINSEN, "DATA", &colnum, &status);
+  int status = 0;
+  int colnum = get_colnum (fptr, "DATA");
   
   // write to incomplete block first
   if (offset)
@@ -385,10 +440,47 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
 
 }
 
+void dsp::FITSOutputFile::finalize_fits ()
+{
+  if (verbose)
+    cerr << "dsp::FITSOutputFile::finalize_fits" << endl;
+  if (fptr) {
+    psrfits_update_key<int> (fptr, "NAXIS2", isub);
+    psrfits_update_key<int> (fptr, "NSTOT", written * (8/nbit) );
+    int status = 0;
+    fits_close_file(fptr, &status);
+    if (status)
+      throw FITSError(status, "dsp::FITSOutputFile");
+    fptr = NULL;
+  }
+}
+
 void dsp::FITSOutputFile::set_reference_spectrum (Rescale* rescale)
 {
+  // Because this is implemeneted via callback, the first call happens
+  // before initialization of the arrays, etc.  So we take it on faith that
+  // we can initialize based on rescale's input/output.
   // Reference spectrum packed in PF order
-  cerr << "dsp::FITSOutputFile::set_reference_spectrum" << endl;
+  if (verbose)
+    cerr << "dsp::FITSOutputFile::set_reference_spectrum" << endl;
+  if (nchan == 0)
+  {
+    nchan = rescale->get_input()->get_nchan();
+    npol = rescale->get_input()->get_npol();
+    //if (verbose)
+      cerr << "    initializing from Rescale" 
+           << " nchan=" << nchan << " npol=" << npol << endl;
+    // need to initialize
+    dat_scl.resize(nchan*npol);
+    dat_offs.resize(nchan*npol);
+  }
+
+  bool pol_bad = npol != rescale->get_input()->get_npol();
+  bool chan_bad = nchan != rescale->get_input()->get_nchan();
+  if (pol_bad || chan_bad)
+    throw Error(InvalidState, "dsp::FITSOutputFile::set_reference_spectrum",
+        "channels/polarizations did not match Rescale");
+
   for (unsigned ipol = 0; ipol < npol; ++ipol) 
   {
     unsigned offset = ipol * nchan;
@@ -396,8 +488,9 @@ void dsp::FITSOutputFile::set_reference_spectrum (Rescale* rescale)
     const float* offs = rescale->get_offset (ipol);
     for (unsigned jchan = 0; jchan < nchan; ++jchan)
     {
-      dat_scl[jchan+offset] = scl[jchan];
-      dat_offs[jchan+offset] = offs[jchan];
+      // Rescale uses opposite convention to PSRFITS DAT_SCL/DAT_OFFS
+      dat_scl[jchan+offset] = 1./scl[jchan];
+      dat_offs[jchan+offset] = -offs[jchan];
     }
   }
 }

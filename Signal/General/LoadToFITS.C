@@ -70,13 +70,14 @@ dsp::LoadToFITS::Config::Config()
   tscrunch_factor = 0;
   fscrunch_factor = 0;
 
-  rescale_seconds = 10.0;
+  rescale_seconds = -1;
   rescale_constant = false;
 
   nbits = 2;
 
   npol = 4;
 
+  nsblk = 2048;
   tsamp = 64e-6;
 
   // by default, time series weights are not used
@@ -105,6 +106,11 @@ void dsp::LoadToFITS::Config::set_very_verbose ()
 void dsp::LoadToFITS::construct () try
 {
   SingleThread::construct ();
+
+#if HAVE_CUDA
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
+#endif
 
   /*
     The following lines "wire up" the signal path, using containers
@@ -207,6 +213,10 @@ void dsp::LoadToFITS::construct () try
 	      filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
 	      filterbank->set_input( timeseries );
         filterbank->set_output( timeseries = new_TimeSeries() );
+# if HAVE_CUDA
+        if (run_on_gpu)
+          timeseries->set_memory_device (device_memory);
+#endif
 
         if (kernel)
           filterbank->set_response( kernel );
@@ -299,23 +309,24 @@ void dsp::LoadToFITS::construct () try
     operations.push_back( tscrunch );
   }
   
-  Rescale* rescale;
-  if ( config->rescale_seconds )
-  {
-    if (verbose)
-      cerr << "digifits: creating rescale transformation" << endl;
+  // PSRFITS allows us to save the reference spectrum in each output block
+  // "subint", so we can take advantage of this to store the exect
+  // reference spectrum for later use if we select a rescale time cons.
+  // exactly equal to nsblk; do this by default unless the user manually
+  // specifies a time constant
+  if (verbose)
+    cerr << "digifits: creating rescale transformation" << endl;
 
-    //Rescale* rescale = new Rescale;
-    rescale = new Rescale;
+  Rescale* rescale = new Rescale;
+  rescale->set_input (timeseries);
+  rescale->set_output (timeseries);
+  if (config->rescale_seconds) 
+    rescale->set_interval_seconds (config->rescale_seconds);
+  else
+    rescale->set_interval_samples (config->nsblk);
+  rescale->set_constant (config->rescale_constant);
 
-    rescale->set_input (timeseries);
-    rescale->set_output (timeseries);
-    rescale->set_constant (config->rescale_constant);
-    //rescale->set_interval_seconds (config->rescale_seconds);
-    rescale->set_interval_samples (2048);
-
-    operations.push_back( rescale );
-  }
+  operations.push_back( rescale );
 
   if (do_pscrunch)
   {
@@ -337,8 +348,7 @@ void dsp::LoadToFITS::construct () try
   if (verbose)
     cerr << "digifits: creating PSRFITS digitizer with nbit="<<config->nbits << endl;
 
-  FITSDigitizer* digitizer = new FITSDigitizer;
-  digitizer->set_nbit (config->nbits);
+  FITSDigitizer* digitizer = new FITSDigitizer (config->nbits);
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
 
@@ -355,7 +365,10 @@ void dsp::LoadToFITS::construct () try
   std::string fname = "/tmp/test.sf";
   output_filename = fname.c_str();
 
-  outputFile = new FITSOutputFile (config->nbits,output_filename);
+  FITSOutputFile* outputfile = new FITSOutputFile (output_filename);
+  outputfile->set_nsblk (config->nsblk);
+  outputfile->set_nbit (config->nbits);
+  outputFile = outputfile;
   outputFile->set_input (bitseries);
 
   operations.push_back( outputFile.get() );

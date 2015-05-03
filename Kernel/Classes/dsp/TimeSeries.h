@@ -152,6 +152,8 @@ namespace dsp {
 
     void set_match (TimeSeries*);
 
+    uint64_t public_get_reserve () const { return reserve_ndat; }
+
   protected:
 
     //! Returns a uchar pointer to the first piece of data

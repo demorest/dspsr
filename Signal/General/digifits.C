@@ -17,7 +17,7 @@
 #endif
 
 #include "dsp/LoadToFITS.h"
-//#include "dsp/LoadToFilN.h"
+#include "dsp/LoadToFITSN.h"
 #include "dsp/FilterbankConfig.h"
 
 #include "CommandLine.h"
@@ -42,9 +42,9 @@ int main (int argc, char** argv) try
   parse_options (argc, argv);
 
   Reference::To<dsp::Pipeline> engine;
-  //if (config->get_total_nthread() > 1)
-  //  engine = new dsp::LoadToFilN (config);
-  //else
+  if (config->get_total_nthread() > 1)
+    engine = new dsp::LoadToFITSN (config);
+  else
     engine = new dsp::LoadToFITS (config);
 
   engine->set_input( config->open (argc, argv) );

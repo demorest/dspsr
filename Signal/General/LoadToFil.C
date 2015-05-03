@@ -171,12 +171,12 @@ void dsp::LoadToFil::construct () try
     if ( config->filterbank.get_nchan() )
     {
       if (verbose)
-	cerr << "digifil: creating " << config->filterbank.get_nchan()
-	     << " channel filterbank" << endl;
+	      cerr << "digifil: creating " << config->filterbank.get_nchan()
+	           << " channel filterbank" << endl;
 
       if ( config->coherent_dedisp )
       {
-	cerr << "digifil: using coherent dedispersion" << endl;
+	      cerr << "digifil: using coherent dedispersion" << endl;
 
         kernel = new Dedispersion;
 
@@ -191,39 +191,39 @@ void dsp::LoadToFil::construct () try
 
       if ( config->filterbank.get_freq_res() || config->coherent_dedisp )
       {
-	cerr << "digifil: using convolving filterbank" << endl;
+	      cerr << "digifil: using convolving filterbank" << endl;
 
-	filterbank = new Filterbank;
+	      filterbank = new Filterbank;
 
-	filterbank->set_nchan( config->filterbank.get_nchan() );
-	filterbank->set_input( timeseries );
+	      filterbank->set_nchan( config->filterbank.get_nchan() );
+	      filterbank->set_input( timeseries );
         filterbank->set_output( timeseries = new_TimeSeries() );
 
         if (kernel)
           filterbank->set_response( kernel );
 
-	filterbank->set_frequency_resolution ( 
+	      filterbank->set_frequency_resolution ( 
             config->filterbank.get_freq_res() );
 
-	operations.push_back( filterbank.get() );
-	do_detection = true;
+	      operations.push_back( filterbank.get() );
+	      do_detection = true;
       }
       else
       {
-	filterbank = new TFPFilterbank;
+	      filterbank = new TFPFilterbank;
 
-	filterbank->set_nchan( config->filterbank.get_nchan() );
-	filterbank->set_input( timeseries );
-	filterbank->set_output( timeseries = new_TimeSeries() );
+	      filterbank->set_nchan( config->filterbank.get_nchan() );
+        filterbank->set_input( timeseries );
+        filterbank->set_output( timeseries = new_TimeSeries() );
 
-	operations.push_back( filterbank.get() );
+	      operations.push_back( filterbank.get() );
       }
     }
 
     if (do_detection)
     {
       if (verbose)
-	cerr << "digifil: creating detection operation" << endl;
+	      cerr << "digifil: creating detection operation" << endl;
       
       Detection* detection = new Detection;
 

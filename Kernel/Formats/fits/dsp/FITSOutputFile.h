@@ -17,6 +17,9 @@
 
 // Recall the PSRFITS output is in TPF order.
 
+// TODO -- since the user can set nbit/nsblk, the instance can be made
+// inconsistent if these methods are called after initialize
+
 #ifndef __FITSOutputFile_h
 #define __FITSOutputFile_h
 
@@ -33,11 +36,18 @@ namespace dsp {
   public:
    
     //! Construct and open file
-    FITSOutputFile (unsigned nbit, const char* filename=0);
+    FITSOutputFile (const char* filename=0);
 
     ~FITSOutputFile ();
 
+    //! Use Rescale callback to set reference spectrum
     void set_reference_spectrum (Rescale*);
+
+    //! Set the number of samples per output block
+    void set_nsblk ( unsigned nblk );
+
+    //! Set the number of bits per output sample
+    void set_nbit ( unsigned _nbit );
 
   protected:
 
@@ -46,6 +56,9 @@ namespace dsp {
 
     //! Write out all of the FITS extensions.
     void write_header ();
+
+    //! Write metadata after data output and close fits file
+    void finalize_fits ();
 
     //! Get the extension to be added to the end of new filenames
     std::string get_extension () const;
@@ -72,16 +85,16 @@ namespace dsp {
     unsigned nchan;
 
     //! buffer for channels weights
-    float* dat_wts;
-
-    //! buffer for channel offsets
-    float* dat_offs;
+    std::vector<float> dat_wts;
 
     //! buffer for channel scales
-    float* dat_scl;
+    std::vector<float> dat_scl;
+
+    //! buffer for channel offsets
+    std::vector<float> dat_offs;
 
     //! buffer for channel frequencies
-    double* dat_freq;
+    std::vector<double> dat_freq;
 
     //! FITS file handle
     fitsfile* fptr;
