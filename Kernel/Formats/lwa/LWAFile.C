@@ -155,9 +155,18 @@ void dsp::LWAFile::open_file (const char* filename)
   uint64_t timetag = *((uint64_t *)(&rawhdr_bytes[16]));
   FromBigEndian(timetag);
   if (verbose) cerr << "LWAFile::timetag = " << timetag << endl;
+  MJD mjd;
+  mjd = MJD((time_t)((double)timetag / (lwa_base_bw*1e6)));
+  int imjd = mjd.intday();
+  int smjd = mjd.get_secs();
+  if (verbose) cerr << "LWAFile::imjd = " << imjd << endl;
+  if (verbose) cerr << "LWAFile::smjd = " << smjd << endl;
+  double t_offset = ((long double)timetag / (lwa_base_bw*1e6)) - (int)((long double)timetag / (lwa_base_bw*1e6));
+  if (verbose) cerr << "LWAFile::t_offset = " << setprecision(20) << t_offset << endl;
   get_info()->set_start_time( MJD(
         (time_t)((double)timetag / (lwa_base_bw*1e6))) );
-  if (verbose) cerr << "LWAFile::start_time = " << 
+  get_info()->set_start_time( MJD(imjd,smjd,t_offset));
+  if (verbose) cerr << "LWAFile::start_time = " << setprecision(20) <<
     get_info()->get_start_time().in_days() << endl;
 
   // Figures out how much data is in file based on header sizes, etc.

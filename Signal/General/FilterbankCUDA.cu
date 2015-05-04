@@ -269,8 +269,8 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
 
         if (out)
         {
-          output_ptr = out->get_datptr (0, ipol) + out_offset;
-          output_span = out->get_datptr (1, ipol) - out->get_datptr (0, ipol);
+          output_ptr = out->get_datptr (ichan*nchan_subband, ipol) + out_offset;
+          output_span = out->get_datptr (ichan*nchan_subband+1, ipol) - out->get_datptr (ichan*nchan_subband, ipol);
 
           const float2* input = cscratch + nfilt_pos;
           unsigned input_stride = freq_res;
