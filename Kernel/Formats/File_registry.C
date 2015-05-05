@@ -67,7 +67,7 @@ static dsp::File::Register::Enter<dsp::DummyFile> register_dummy;
 static dsp::File::Register::Enter<dsp::FadcFile> register_fadc;
 #endif
 
-#if HAVE_CFITSIO
+#if HAVE_fits
 #include "dsp/FITSFile.h"
 static dsp::File::Register::Enter<dsp::FITSFile> register_fits;
 #endif
