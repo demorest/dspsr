@@ -31,6 +31,8 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   current_block_byte = 0;
   overlap = 0;
   blocsize = 0;
+  packets_per_block = 0;
+  current_pktidx = -1;
   set_overlap_buffer(new BitSeries);
 }
 
@@ -80,17 +82,27 @@ void dsp::GUPPIBlockFile::parse_header()
     get_info()->set_state(Signal::Nyquist);
 
   // Any format-specific checks
+  int packet_factor = 1;
   header_get_check("PKTFMT", ctmp);
   if (string(ctmp) == "VDIF") 
   {
     get_info()->set_state(Signal::Nyquist);
     signed_8bit = false;
+    // Assume 2-pol VDIF used two streams, this will correct
+    // packets per block later.
+    if (get_info()->get_npol()==2) { packet_factor = 2; }
   } 
   else if (string(ctmp) == "SIMPLE")
     time_ordered = false;
  
   header_get_check("TBIN", &ftmp);
   get_info()->set_rate(1.0/ftmp);
+
+  // Data block size params
+  header_get_check("OVERLAP", &itmp);
+  overlap = itmp;
+  header_get_check("BLOCSIZE", &itmp);
+  blocsize = itmp;
 
   int imjd, smjd;
   double t_offset;
@@ -99,6 +111,8 @@ void dsp::GUPPIBlockFile::parse_header()
   header_get_check("STT_OFFS", &t_offset);
   header_get_check("PKTIDX",   &ltmp);
   header_get_check("PKTSIZE",  &itmp);
+  current_pktidx = ltmp;
+  packets_per_block = blocsize / itmp / packet_factor;
   t_offset += ltmp * itmp * 8.0 / get_info()->get_rate() / 
       (get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol() * get_info()->get_ndim());
   //cerr << "t_offset=" << t_offset << "s" << endl;
@@ -110,12 +124,6 @@ void dsp::GUPPIBlockFile::parse_header()
 
   header_get_check("SRC_NAME", ctmp);
   get_info()->set_source(ctmp);
-
-  // Data block size params
-  header_get_check("OVERLAP", &itmp);
-  overlap = itmp;
-  header_get_check("BLOCSIZE", &itmp);
-  blocsize = itmp;
 
   header_get_check("BACKEND", ctmp);
   get_info()->set_machine(ctmp);
@@ -217,6 +225,21 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
         break;
       }
       current_block_byte = 0;
+
+      // Check for skipped blocks
+      long long new_pktidx;
+      header_get_check("PKTIDX", &new_pktidx);
+      if ((new_pktidx-current_pktidx) != packets_per_block)
+      {
+        // For now, just print a warning.  Work on filling in zeros.
+        cerr << "dsp::GUPPIBlockFile::load_bytes() pktidx=" 
+          << new_pktidx << " last=" << current_pktidx
+          << " diff=" << (new_pktidx-current_pktidx)
+          << " inc=" << packets_per_block
+          << endl;
+      }
+
+      current_pktidx = new_pktidx;
     }
 
   }
