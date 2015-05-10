@@ -16,7 +16,7 @@
 #include "dsp/Filterbank.h"
 #include "dsp/FilterbankConfig.h"
 #include "dsp/Dedispersion.h"
-#include "dsp/FITSOutputFile.h"
+#include "dsp/OutputFile.h"
 
 namespace dsp {
 

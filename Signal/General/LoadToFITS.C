@@ -31,6 +31,14 @@
 #include "dsp/FITSDigitizer.h"
 #include "dsp/FITSOutputFile.h"
 
+#if HAVE_CUDA
+#include "dsp/FilterbankCUDA.h"
+#include "dsp/OptimalFilterbank.h"
+#include "dsp/TransferCUDA.h"
+#include "dsp/MemoryCUDA.h"
+#endif
+
+
 using namespace std;
 
 bool dsp::LoadToFITS::verbose = false;
@@ -52,6 +60,7 @@ void dsp::LoadToFITS::set_configuration (Config* configuration)
 
 dsp::LoadToFITS::Config::Config()
 {
+  can_cuda = true;
   can_thread = true;
 
   // block size in MB
@@ -207,15 +216,21 @@ void dsp::LoadToFITS::construct () try
       if (true)
       {
 	      cerr << "digifits: using convolving filterbank" << endl;
+# if HAVE_CUDA
+        if (run_on_gpu)
+          timeseries->set_memory (device_memory);
+#endif
+        config->filterbank.set_device ( device_memory.ptr() );
+        config->filterbank.set_stream ( gpu_stream );
 
-	      filterbank = new Filterbank;
+	      filterbank = config->filterbank.create ();
 
 	      filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
 	      filterbank->set_input( timeseries );
         filterbank->set_output( timeseries = new_TimeSeries() );
 # if HAVE_CUDA
         if (run_on_gpu)
-          timeseries->set_memory_device (device_memory);
+          timeseries->set_memory (device_memory);
 #endif
 
         if (kernel)
@@ -226,6 +241,18 @@ void dsp::LoadToFITS::construct () try
 
 	      operations.push_back( filterbank.get() );
 	      do_detection = true;
+
+        // transfer from GPU to CPU here, for now
+# if HAVE_CUDA
+        if (run_on_gpu)
+        {
+          TransferCUDA* transfer = new TransferCUDA (stream);
+          transfer->set_kind (cudaMemcpyDeviceToHost);
+          transfer->set_input( timeseries );
+          transfer->set_output( timeseries = new_TimeSeries() );
+          operations.push_back (transfer);
+        }
+#endif
       }
       else
       {

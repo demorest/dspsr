@@ -6,8 +6,8 @@
  ***************************************************************************/
 
 /*
-  difits converts any file format recognized by dspsr into PSRFITS
-  search mode (.sf) format.
+  digifits converts any file format recognized by dspsr into PSRFITS
+  search mode (".sf") format.
 
   Liberally cribbed from digifil.
  */
@@ -27,7 +27,7 @@
 
 using namespace std;
 
-// The LoadToFil configuration parameters
+// The LoadToFITS configuration parameters
 Reference::To<dsp::LoadToFITS::Config> config;
 
 // names of data files to be processed

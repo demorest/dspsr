@@ -98,10 +98,12 @@ if HAVE_fits
   #
 
   nobase_include_HEADERS += dsp/LoadToFITS.h dsp/LoadToFITSN.h
+  libdspdsp_la_LIBADD = @CFITSIO_LIBS@
   libdspdsp_la_SOURCES += LoadToFITS.C LoadToFITSN.C
 
   bin_PROGRAMS += digifits
   digifits_SOURCES = digifits.C
+  digifits_LDADD = @CFITSIO_LIBS@ $(LDADD)
 
   #
   # end PSRFITS-specific code
@@ -148,7 +150,7 @@ LDADD = libdspdsp.la \
 	$(top_builddir)/Signal/Statistics/libdspstats.la \
 	@PGPLOT_LIBS@ @CUFFT_LIBS@ @CUDA_LIBS@
 
-AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@
+AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@ @CFITSIO_CFLAGS@
 AM_CXXFLAGS = @OPENMP_CFLAGS@
 
 

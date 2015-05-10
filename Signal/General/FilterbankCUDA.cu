@@ -260,12 +260,15 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
           CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply", stream);
         }
 
-        DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
-        result = cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
-        if (result != CUFFT_SUCCESS)
-          throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecC2C (inverse)");
+        if (plan_bwd)
+        {
+          DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
+          result = cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
+          if (result != CUFFT_SUCCESS)
+            throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecC2C (inverse)");
 
-        CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD", stream);
+          CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD", stream);
+        }
 
         if (out)
         {
