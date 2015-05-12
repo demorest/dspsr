@@ -21,7 +21,7 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
 	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h		       \
 	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h            \
-	dsp/PolnSelect.h
+	dsp/PolnSelect.h dsp/PolnReshape.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -38,18 +38,19 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	TFPFilterbank.C RFIZapper.C SKFilterbank.C \
 	Resize.C SKDetector.C SKMasker.C \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
-	PolnSelect.C
+	PolnSelect.C PolnReshape.C
 
 if HAVE_CUFFT
 
 nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h dsp/TransferBitSeriesCUDA.h \
-    dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h dsp/FZoomCUDA.h
+    dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h dsp/FZoomCUDA.h \
+    dsp/FScrunchCUDA.h
 
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
     TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu           \
-    SKMaskerCUDA.cu FZoomCUDA.C
+    SKMaskerCUDA.cu FZoomCUDA.C FScrunchCUDA.cu
 
 endif
 

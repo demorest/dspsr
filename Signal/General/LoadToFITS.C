@@ -25,6 +25,7 @@
 #include "dsp/TScrunch.h"
 #include "dsp/PScrunch.h"
 #include "dsp/PolnSelect.h"
+#include "dsp/PolnReshape.h"
 
 #include "dsp/Rescale.h"
 
@@ -35,6 +36,8 @@
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/DetectionCUDA.h"
+#include "dsp/FScrunchCUDA.h"
 #include "dsp/MemoryCUDA.h"
 #endif
 
@@ -157,7 +160,7 @@ void dsp::LoadToFITS::construct () try
   if (obs->get_state()==Signal::Nyquist)
     samp_per_fb *= 0.5;
   unsigned res_factor = round(samp_per_fb/config->filterbank.get_nchan());
-  if (verbose)
+  //if (verbose)
     cerr << "dsp::LoadToFITS::construct " <<"tsamp="<<config->tsamp<<" rate="<<obs->get_rate() << " so increasing spectral resolution by "<<res_factor << endl;
 
   uint64_t nsample = round(samp_per_fb * 4096);
@@ -182,6 +185,18 @@ void dsp::LoadToFITS::construct () try
 
   //cerr << "tsamp="<<config->tsamp<<" rate="<<obs->get_rate()<<endl;
   TimeSeries* timeseries = unpacked;
+
+# if HAVE_CUDA
+  if (run_on_gpu)
+  {
+    TransferCUDA* transfer = new TransferCUDA (stream);
+    transfer->set_kind (cudaMemcpyDeviceToHost);
+    transfer->set_input( timeseries );
+    transfer->set_output( timeseries = new_TimeSeries() );
+    operations.push_back (transfer);
+    run_on_gpu = false;
+  }
+#endif
 
   if (!obs->get_detected())
   {
@@ -218,16 +233,19 @@ void dsp::LoadToFITS::construct () try
 	      cerr << "digifits: using convolving filterbank" << endl;
 # if HAVE_CUDA
         if (run_on_gpu)
+        {
           timeseries->set_memory (device_memory);
+          config->filterbank.set_device ( device_memory.ptr() );
+          config->filterbank.set_stream ( gpu_stream );
+        }
 #endif
-        config->filterbank.set_device ( device_memory.ptr() );
-        config->filterbank.set_stream ( gpu_stream );
 
 	      filterbank = config->filterbank.create ();
 
 	      filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
 	      filterbank->set_input( timeseries );
         filterbank->set_output( timeseries = new_TimeSeries() );
+        //filterbank->set_frequency_resolution (40);
 # if HAVE_CUDA
         if (run_on_gpu)
           timeseries->set_memory (device_memory);
@@ -242,17 +260,6 @@ void dsp::LoadToFITS::construct () try
 	      operations.push_back( filterbank.get() );
 	      do_detection = true;
 
-        // transfer from GPU to CPU here, for now
-# if HAVE_CUDA
-        if (run_on_gpu)
-        {
-          TransferCUDA* transfer = new TransferCUDA (stream);
-          transfer->set_kind (cudaMemcpyDeviceToHost);
-          transfer->set_input( timeseries );
-          transfer->set_output( timeseries = new_TimeSeries() );
-          operations.push_back (transfer);
-        }
-#endif
       }
       else
       {
@@ -266,6 +273,8 @@ void dsp::LoadToFITS::construct () try
         do_detection = true;
       }
     }
+
+
 
     if (do_detection)
     {
@@ -284,6 +293,15 @@ void dsp::LoadToFITS::construct () try
           break;
         case 4:
           detection->set_output_state (Signal::Coherence);
+          detection->set_output_ndim(2);
+# if HAVE_CUDA
+          //if (run_on_gpu)
+          if (false)
+          {
+            detection->set_engine (new CUDA::DetectionEngine(stream) );
+            detection->set_output_ndim (2);
+          }
+#endif
           break;
         default:
           throw Error(InvalidParam,"dsp::LoadToFITS::construct",
@@ -300,7 +318,8 @@ void dsp::LoadToFITS::construct () try
     }
   }
 
-  if ( config->dedisperse )
+  //if ( config->dedisperse )
+  if (false)
   {
     if (verbose)
       cerr << "digifits: removing dispserion delays" << endl;
@@ -314,16 +333,45 @@ void dsp::LoadToFITS::construct () try
     operations.push_back( delay );
   }
 
-  //if ( config->fscrunch_factor )
-  //{
   FScrunch* fscrunch = new FScrunch;
   
   fscrunch->set_factor( res_factor );
   fscrunch->set_input( timeseries );
+//# if HAVE_CUDA
+//  if (run_on_gpu)
+//  {
+//    fscrunch->set_engine ( new CUDA::FScrunchEngine(stream) );
+//    timeseries = new_TimeSeries();
+//    timeseries->set_memory (device_memory);
+//  }
+//#endif
   fscrunch->set_output( timeseries );
 
   operations.push_back( fscrunch );
-  //}
+
+  /*
+# if HAVE_CUDA
+  if (run_on_gpu)
+  {
+    TransferCUDA* transfer = new TransferCUDA (stream);
+    transfer->set_kind (cudaMemcpyDeviceToHost);
+    transfer->set_input( timeseries );
+    transfer->set_output( timeseries = new_TimeSeries() );
+    operations.push_back (transfer);
+
+    PolnReshape* reshape = new PolnReshape;
+    reshape->set_state ( Signal::Coherence );
+    reshape->set_input (timeseries );
+    reshape->set_output ( timeseries = new_TimeSeries() );
+    operations.push_back(reshape);
+  }
+#endif
+*/
+    PolnReshape* reshape = new PolnReshape;
+    reshape->set_state ( Signal::Coherence );
+    reshape->set_input (timeseries );
+    reshape->set_output ( timeseries = new_TimeSeries() );
+    operations.push_back(reshape);
 
   if ( config->tscrunch_factor )
   {
