@@ -16,12 +16,12 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/FourthMoment.h dsp/PolnCalibration.h dsp/Dump.h	       \
 	dsp/OptimalFFT.h dsp/OptimalFilterbank.h dsp/on_host.h	       \
 	dsp/FScrunch.h dsp/FilterbankBench.h dsp/FilterbankConfig.h    \
-	dsp/FilterbankEngine.h dsp/filterbank_engine.h		       \
+	dsp/FilterbankEngine.h dsp/filterbank_engine.h dsp/FZoom.h  \
 	dsp/GeometricDelay.h					       \
 	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
 	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h		       \
 	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h            \
-	dsp/PolnSelect.h
+	dsp/PolnSelect.h dsp/PolnReshape.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -34,21 +34,23 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	PScrunch.C BandpassMonitor.C FourthMoment.C Stats.C	     \
 	PolnCalibration.C Dump.C OptimalFFT.C FScrunch.C	     \
 	FilterbankBench.C OptimalFilterbank.C FilterbankConfig.C \
-	GeometricDelay.C mfilter.c \
+	FZoom.C GeometricDelay.C mfilter.c \
 	TFPFilterbank.C RFIZapper.C SKFilterbank.C \
 	Resize.C SKDetector.C SKMasker.C \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
-	PolnSelect.C
+	PolnSelect.C PolnReshape.C
 
 if HAVE_CUFFT
 
 nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
-	dsp/TransferCUDA.h \
-	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
+	dsp/TransferCUDA.h dsp/TransferBitSeriesCUDA.h \
+    dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h dsp/FZoomCUDA.h \
+    dsp/FScrunchCUDA.h
 
-libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu TransferCUDA.C \
-	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
+libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
+    TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu           \
+    SKMaskerCUDA.cu FZoomCUDA.C FScrunchCUDA.cu
 
 endif
 
@@ -89,6 +91,27 @@ if HAVE_PGPLOT
 
 endif
 
+if HAVE_fits
+
+  ##########################################################################
+  #
+  # start PSRFITS-specific code
+  #
+
+  nobase_include_HEADERS += dsp/LoadToFITS.h dsp/LoadToFITSN.h
+  libdspdsp_la_LIBADD = @CFITSIO_LIBS@
+  libdspdsp_la_SOURCES += LoadToFITS.C LoadToFITSN.C
+
+  bin_PROGRAMS += digifits
+  digifits_SOURCES = digifits.C
+  digifits_LDADD = @CFITSIO_LIBS@ $(LDADD)
+
+  #
+  # end PSRFITS-specific code
+  #
+  ##########################################################################
+
+endif
 
 if HAVE_sigproc
 
@@ -128,7 +151,7 @@ LDADD = libdspdsp.la \
 	$(top_builddir)/Signal/Statistics/libdspstats.la \
 	@PGPLOT_LIBS@ @CUFFT_LIBS@ @CUDA_LIBS@
 
-AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@
+AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@ @CFITSIO_CFLAGS@
 AM_CXXFLAGS = @OPENMP_CFLAGS@
 
 
