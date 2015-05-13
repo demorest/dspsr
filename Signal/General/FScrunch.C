@@ -60,6 +60,11 @@ double dsp::FScrunch::get_frequency_resolution() const
   return frequency_resolution;
 }
 
+void dsp::FScrunch::set_engine( Engine* _engine )
+{
+  engine = _engine;
+}
+
 void dsp::FScrunch::transformation ()
 {
   sfactor = get_factor();
@@ -97,7 +102,10 @@ void dsp::FScrunch::transformation ()
   switch (input->get_order())
   {
     case TimeSeries::OrderFPT:
-      fpt_fscrunch ();
+      if (engine)
+        engine->fpt_fscrunch (get_input(), get_output(), sfactor);
+      else
+        fpt_fscrunch ();
       break;
 
     case TimeSeries::OrderTFP:
@@ -125,14 +133,14 @@ void dsp::FScrunch::fpt_fscrunch ()
       const float* in = input->get_datptr (input_chan, ipol); input_chan ++;
 
       for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
-	out[ifloat] = in[ifloat];
+	      out[ifloat] = in[ifloat];
 
       for (unsigned ifactor=1; ifactor<sfactor; ifactor++)
       {
-	assert( input_chan < input_nchan );
-	in = input->get_datptr (input_chan, ipol); input_chan ++;
-	for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
-	  out[ifloat] += in[ifloat];
+        assert( input_chan < input_nchan );
+        in = input->get_datptr (input_chan, ipol); input_chan ++;
+        for (unsigned ifloat=0; ifloat<nfloat; ifloat++)
+          out[ifloat] += in[ifloat];
       }
     }
   } // for each ipol
