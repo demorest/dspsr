@@ -43,6 +43,7 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
   thread_count = 0;
 
   device_prepared = false;
+  single_thread = true;
 }
 
 dsp::CASPSRUnpacker::~CASPSRUnpacker ()
@@ -117,6 +118,7 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
     }
   }
 #else
+  n_threads = 0;
   Unpacker::set_device (memory);
 #endif
   device_prepared = true;
@@ -135,20 +137,54 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
                                   const unsigned fskip,
                                   unsigned long* hist)
 {
-  cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
+  if (verbose)
+    cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
   const float* lookup = table->get_values ();
   const unsigned into_stride = fskip * 4;
   const unsigned from_stride = 8;
 
+  //std::cout << ndat << std::endl;
   for (uint64_t idat=0; idat < ndat; idat+=4)
   {
-    into[0] = lookup[ from[0] ];
-    into[1] = lookup[ from[1] ];
-    into[2] = lookup[ from[2] ];
-    into[3] = lookup[ from[3] ];
+    into[0] = lookup[ from[0] ]; //hist[from[0]]++;
+    into[1] = lookup[ from[1] ]; //hist[from[1]]++;
+    into[2] = lookup[ from[2] ]; //hist[from[2]]++;
+    into[3] = lookup[ from[3] ]; //hist[from[3]]++;
 
     from += from_stride;
     into += into_stride;
+  }
+}
+
+void dsp::CASPSRUnpacker::unpack_single_thread() {
+  if (verbose)
+    cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
+  const uint64_t ndat  = input->get_ndat();
+  
+  const unsigned nchan = input->get_nchan();
+  const unsigned npol  = input->get_npol();
+  const unsigned ndim  = input->get_ndim();
+  
+  const unsigned fskip = ndim;
+  
+  unsigned offset = 0;
+
+  for (unsigned ichan=0; ichan<nchan; ichan++)
+  {
+    for (unsigned ipol=0; ipol<npol; ipol++)
+    {
+      if (ipol==1)
+       offset = 4;
+      for (unsigned idim=0; idim<ndim; idim++)
+      {
+       const unsigned char* from = input->get_rawptr() + offset;
+       float* into = output->get_datptr (ichan, ipol) + idim;
+       unsigned long* hist = get_histogram (ipol);
+                          
+       unpack (ndat, from, into, fskip, hist);
+       offset ++;
+      }
+    }
   }
 }
 
@@ -166,8 +202,13 @@ void dsp::CASPSRUnpacker::unpack ()
   if ( ! device_prepared )
     set_device ( Memory::get_manager ());
 
-  start_threads();
-  wait_threads();
+  if (n_threads) {
+    start_threads();
+    wait_threads();
+  }
+  else {
+    unpack_single_thread();
+  }
 }
 
 void* dsp::CASPSRUnpacker::cpu_unpacker_thread (void* ptr)
