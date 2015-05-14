@@ -43,7 +43,7 @@ void dsp::PolnReshape::npol4_ndim1()
           for (uint64_t idat=0; idat < ndat; idat++)
           {
             out_data[idat] = in_data[2*idat];
-            cerr << in_data[2*idat] << endl;
+            //cerr << in_data[2*idat] << endl;
             copied ++;
           }
         }
@@ -64,8 +64,33 @@ void dsp::PolnReshape::npol2_ndim1()
 
 void dsp::PolnReshape::npol1_ndim1()
 {
-    throw Error (InvalidParam, "dsp::PolnReshape::npol1_ndim1",
-		 "not implemented");
+  if (verbose)
+    cerr << "dsp::PolnReshape::npol1_ndim1" << endl;
+  const uint64_t ndat  = input->get_ndat();
+  const unsigned nchan = input->get_nchan();
+
+  output->set_npol(1);
+  output->set_ndim(1);
+  output->resize(ndat);
+
+  switch (input->get_order())
+  {
+  case TimeSeries::OrderFPT:
+  {
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+    {
+      float* out_data = output->get_datptr (ichan, 0);
+      const float* in_data = input->get_datptr (ichan, 0);
+      // PP and QQ are stored in first input pol
+      for (uint64_t idat=0; idat < ndat; idat++)
+      {
+        out_data[idat] = in_data[2*idat] + in_data[2*idat+1];
+      }
+    }
+            
+    }
+    break;
+  }
 }
 
 /*!
