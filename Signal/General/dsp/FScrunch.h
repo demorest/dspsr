@@ -27,6 +27,10 @@ namespace dsp {
 
     void set_frequency_resolution ( double Megahertz );
     double get_frequency_resolution () const;
+
+    class Engine;
+
+    void set_engine (Engine*);
     
   protected:
 
@@ -44,6 +48,18 @@ namespace dsp {
 
     unsigned sfactor;
     uint64_t output_nchan;
+
+    Reference::To<Engine> engine;
+  };
+
+  class FScrunch::Engine : public OwnStream
+  {
+  public:
+
+    virtual void fpt_fscrunch (const dsp::TimeSeries * in, 
+                         dsp::TimeSeries * out,
+                         unsigned sfactor) = 0;
+
   };
 
 }
