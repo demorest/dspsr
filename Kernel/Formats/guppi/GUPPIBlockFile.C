@@ -29,6 +29,7 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   time_ordered = true;
   signed_8bit = true;
   current_block_byte = 0;
+  current_nzero_byte = 0;
   overlap = 0;
   blocsize = 0;
   packets_per_block = 0;
@@ -177,6 +178,22 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
 
   while (to_load && !end_of_data) 
   {
+
+    // If there are zeros, send them
+    if (current_nzero_byte)
+    {
+      uint64_t to_zero = current_nzero_byte;;
+      if (to_zero > to_load)
+        to_zero = to_load;
+
+      memset(buffer + bytes_read, 0, to_zero);
+      bytes_read += to_zero;
+      to_load -= to_zero;
+      current_nzero_byte -= to_zero;
+
+      continue;
+    }
+
     // Only read non-overlapping part of data
     uint64_t to_read = (blocsize - overlap_bytes) - current_block_byte;
     if (to_read > to_load) 
@@ -217,26 +234,56 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
     // Get next block if necessary
     if (current_block_byte == blocsize - overlap_bytes)
     {
-      // load_next_block will return 0 if no more data.
-      int rv = load_next_block();
-      if (rv==0) 
+
+      // Read blocks, skipping any that are out of order
+      long long new_pktidx = 0;
+      long long pkt_diff = 0;
+      while (pkt_diff <= 0)
       {
-        end_of_data = true;
-        break;
+        // Print warning on out of order block
+        if (pkt_diff < 0)
+          cerr << "dsp::GUPPIBlockFile::load_bytes() unordered pktidx=" 
+            << new_pktidx << " last=" << current_pktidx
+            << " diff=" << pkt_diff
+            << " inc=" << packets_per_block
+            << endl;
+        
+        // load_next_block will return 0 if no more data.
+        int rv = load_next_block();
+        if (rv==0) 
+        {
+          end_of_data = true;
+          break;
+        }
+        current_block_byte = 0;
+
+        header_get_check("PKTIDX", &new_pktidx);
+        pkt_diff = new_pktidx - current_pktidx;
       }
-      current_block_byte = 0;
 
       // Check for skipped blocks
-      long long new_pktidx;
-      header_get_check("PKTIDX", &new_pktidx);
-      if ((new_pktidx-current_pktidx) != packets_per_block)
+      if (pkt_diff != packets_per_block)
       {
-        // For now, just print a warning.  Work on filling in zeros.
-        cerr << "dsp::GUPPIBlockFile::load_bytes() pktidx=" 
+        // Print a warning
+        cerr << "dsp::GUPPIBlockFile::load_bytes() skipped pktidx=" 
           << new_pktidx << " last=" << current_pktidx
-          << " diff=" << (new_pktidx-current_pktidx)
+          << " diff=" << pkt_diff
           << " inc=" << packets_per_block
           << endl;
+
+        // Only can handle an integer number of missed blocks
+        if (pkt_diff % packets_per_block) 
+        {
+          cerr << "dsp::GUPPIBlockFile::load_bytes() "
+            << "WARNING fraction skipped block" 
+            << endl;
+        }
+	else
+	{
+	  int nblock_miss = pkt_diff / packets_per_block;
+	  current_nzero_byte = (blocsize - overlap_bytes) * nblock_miss;
+	}
+
       }
 
       current_pktidx = new_pktidx;
