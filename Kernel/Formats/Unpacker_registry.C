@@ -94,6 +94,8 @@ static dsp::Unpacker::Register::Enter<dsp::GMRTFilterbank16> gmrt16;
 #if HAVE_guppi
 #include "dsp/GUPPIUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::GUPPIUnpacker> guppi;
+#include "dsp/GUPPIFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPIFourBit> guppi4;
 #include "dsp/GUPPITwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
 #endif
