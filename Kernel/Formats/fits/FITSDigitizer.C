@@ -8,6 +8,7 @@
 // Cribbed from Willem's SigProcDigitizer
 
 #include "dsp/FITSDigitizer.h"
+#include <assert.h>
 
 //! Default constructor
 dsp::FITSDigitizer::FITSDigitizer (unsigned _nbit)
@@ -75,8 +76,6 @@ void dsp::FITSDigitizer::pack ()
   if (input->get_ndim() != 1)
     throw Error (InvalidState, "dsp::FITSDigitizer::pack",
   		 "cannot handle ndim=%d", input->get_ndim());
-
-  cerr << "dsp::FITSDigitizer::pack" << " start_time="<<input->get_start_time().printall()<<" end_time="<<input->get_end_time().printall() << " input_sample="<<input->get_input_sample()<<std::endl;
 
   // ChannelSort will re-organize the frequency channels in the output
   output->set_bandwidth ( -fabs(input->get_bandwidth()) );
@@ -149,6 +148,7 @@ void dsp::FITSDigitizer::pack ()
     for (uint64_t idat=0; idat < ndat; idat++)
     {
       unsigned char* outptr = output->get_rawptr() + (idat*nchan*npol)/samp_per_byte;
+      // TODO -- this needs to account for reserve
       const float* inptr = input->get_dattfp() + idat*nchan*npol;
 
       // The following line is important: this function increments
@@ -209,21 +209,20 @@ void dsp::FITSDigitizer::pack ()
     unsigned idx = 0, bit_shift = 0; // make gcc happy
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
-      const float* inptr = input->get_datptr( channel (ichan) );
-
       for (unsigned ipol=0; ipol < npol; ipol++)
       {
         uint64_t isamp = ipol*nchan + ichan;
+        const float* inptr = input->get_datptr( channel (ichan) , ipol );
+
         for (uint64_t idat=0; idat < ndat; idat++,isamp+=inner_stride)
         {
           int result = int( ((*inptr) * digi_scale) + digi_mean +0.5 );
           inptr++;
 
           // clip the result at the limits
-          result = std::max(result,digi_min);
-          result = std::min(result,digi_max);
+          result = std::max (std::min (result, digi_max), digi_min);
 
-          switch (nbit){
+          switch (nbit) {
           case 1:
           case 2:
           case 4:
