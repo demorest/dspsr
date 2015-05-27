@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/Rescale.h"
+#include "dsp/InputBuffering.h"
 
 #include <assert.h>
 
@@ -17,6 +18,7 @@ dsp::Rescale::Rescale ()
   nsample = isample = 0;
   interval_seconds = 0.0;
   interval_samples = 0;
+  exact = false;
   constant_offset_scale = false;
   output_time_total = false;
   output_after_interval = false;
@@ -67,6 +69,18 @@ void dsp::Rescale::set_interval_seconds (double seconds)
 void dsp::Rescale::set_interval_samples (uint64_t samples)
 {
   interval_samples = samples;
+}
+
+//! Set the rescaling interval in samples
+void dsp::Rescale::set_exact (bool value)
+{
+  exact = value;
+  if (!has_buffering_policy())
+    set_buffering_policy( new InputBuffering (this) );
+  if (exact && !interval_samples)
+      throw Error(InvalidState, "dsp::Rescale::set_exact", 
+          "interval_sample == 0 (must be set)");
+  get_buffering_policy()->set_minimum_samples (interval_samples);
 }
 
 template<typename T>
@@ -142,6 +156,10 @@ void dsp::Rescale::init ()
   }
 }
 
+void dsp::Rescale::prepare ()
+{
+}
+
 /*!
   \pre input TimeSeries must contain detected data
 */
@@ -149,6 +167,14 @@ void dsp::Rescale::transformation ()
 {
   if (verbose)
     cerr << "dsp::Rescale::transformation" << endl;
+
+  // if requested a minimum number of samples, let input buffering handle it
+  if (exact && (input->get_ndat() != interval_samples))
+  {
+    get_buffering_policy()->set_next_start ( 0 );
+    output->set_ndat (0);
+    return;
+  }
 
   bool first_call = nsample == 0;
 
@@ -342,8 +368,14 @@ void dsp::Rescale::transformation ()
       if (verbose)
 	cerr << "end_dat=" << end_dat << " input_ndat=" << input_ndat << endl;
 
+    if (exact) break;
     }
   while (end_dat < input_ndat);
+
+  if (exact)
+  {
+    get_buffering_policy()->set_next_start ( interval_samples );
+  }
 
   if (verbose)
     cerr << "dsp::Rescale::transformation exit" << endl;
