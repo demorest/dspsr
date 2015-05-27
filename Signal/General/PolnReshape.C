@@ -27,7 +27,6 @@ void dsp::PolnReshape::npol4_ndim1()
   output->set_ndim(1);
   output->resize(ndat);
 
-  uint64_t copied = 0;
   switch (input->get_order())
   {
   case TimeSeries::OrderFPT:
@@ -43,8 +42,6 @@ void dsp::PolnReshape::npol4_ndim1()
           for (uint64_t idat=0; idat < ndat; idat++)
           {
             out_data[idat] = in_data[2*idat];
-            //cerr << in_data[2*idat] << endl;
-            copied ++;
           }
         }
       }
@@ -53,7 +50,6 @@ void dsp::PolnReshape::npol4_ndim1()
     }
     break;
   }
-  cerr << "expected=" << nchan*4*ndat << " copied=" << copied << endl;
 }
 
 void dsp::PolnReshape::npol2_ndim1()
@@ -127,5 +123,7 @@ void dsp::PolnReshape::transformation ()
   else
     throw Error (InvalidParam, "dsp::PolnReshape::transformation",
 		 "did not recognize input state");
+
+  output->set_input_sample ( input->get_input_sample() );
 }
 

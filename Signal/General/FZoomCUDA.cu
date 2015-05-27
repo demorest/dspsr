@@ -88,13 +88,11 @@ void CUDA::FZoomEngine::fpt_copy (
          << " input_ndat=" << input->get_ndat()
          << " input_ndim=" << input->get_ndim()
          << " input_npol=" << input->get_npol()
-         << " input reserve_ndat=" << input->public_get_reserve()
          << " istride=" << istride << endl
          << " output=" << output->get_datptr(0,0)
          << " output_ndat=" << output->get_ndat()
          << " output_ndim=" << output->get_ndim()
          << " output_npol=" << output->get_npol()
-         << " output reserve_ndat=" << output->public_get_reserve()
          << " ostride=" << ostride 
          << " aligned copy=" << aligned
          << " output on host="<<output->get_memory()->on_host()
