@@ -95,6 +95,7 @@ void dsp::FScrunch::transformation ()
     get_output()->copy_configuration (get_input());
     get_output()->set_nchan (output_nchan);
     get_output()->resize (input->get_ndat());
+    get_output()->set_input_sample (input->get_input_sample());
   }
 
   output->rescale( sfactor );

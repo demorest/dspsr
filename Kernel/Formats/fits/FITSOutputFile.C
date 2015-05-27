@@ -148,7 +148,7 @@ void dsp::FITSOutputFile::write_header ()
   nbblk = (nsblk * npol * nchan * nbit)/8;
   tblk = double(nsblk) / input -> get_rate();
 
-  //if (verbose)
+  if (verbose)
     cerr << "dsp::FITSOutputFile::write_header" << endl
          << "nchan=" << nchan << " npol=" << npol << " nsblk=" << nsblk
          <<" tblk=" << tblk << " rate=" <<input->get_rate() 
@@ -161,7 +161,7 @@ void dsp::FITSOutputFile::write_header ()
   
   if (ext)
   {
-    //if (verbose)
+    if (verbose)
       cerr << "dsp::FITSOutputFile::write_header Pulsar::Archive FITSHdrExtension" << endl;
 
     // Make sure the start time is aligned with pulse phase zero
@@ -279,7 +279,7 @@ void dsp::FITSOutputFile::write_header ()
 
 void dsp::FITSOutputFile::write_row ()
 {
-  //if (verbose)
+  if (verbose)
       cerr << "dsp::FITSOutputFile::write_row writing row "<<isub<<endl;
   write_col(fptr,"INDEXVAL",isub,1,1,&isub);
   write_col(fptr,"TSUBINT",isub,1,1,&tblk);
@@ -289,6 +289,7 @@ void dsp::FITSOutputFile::write_row ()
   write_col(fptr,"DAT_SCL",isub,1,nchan*npol,&dat_scl[0]);
   write_col(fptr,"DAT_OFFS",isub,1,nchan*npol,&dat_offs[0]);
   write_col(fptr,"DAT_FREQ",isub,1,nchan,&dat_freq[0]);
+  
 }
 
 void dsp::FITSOutputFile::initialize ()
@@ -364,7 +365,6 @@ void dsp::FITSOutputFile::operation ()
   if (verbose)
     cerr << "dsp::FITSOutputFile::operation" << endl;
 
-  cerr << "dsp::FITSOutputFile::operation" << " start_time="<<input->get_start_time().printall()<<" end_time="<<input->get_end_time().printall() << " input_sample="<<input->get_input_sample()<<std::endl;
   unload_bytes (get_input()->get_rawptr(), get_input()->get_nbytes());
 
 }
@@ -372,12 +372,17 @@ void dsp::FITSOutputFile::operation ()
 int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t bytes)
 {
 
-  //if (verbose)
-    cerr << "dsp::FITSOutputFile::unload_bytes" << endl
-         << "    bytes=" << bytes << " nbblk=" << nbblk
-         <<" offset=" << offset << " isub=" << isub << endl;
+  if (!bytes) return 0;
+
   // cast to char buffer for profit
   unsigned char* buffer = (unsigned char*) void_buffer;
+
+  if (verbose)
+    cerr << "dsp::FITSOutputFile::unload_bytes" << endl
+         << "    bytes=" << bytes << " nbblk=" << nbblk
+         << " offset=" << offset << " isub=" << isub
+         << " input_sample=" << input->get_input_sample() << endl
+         << " buffer=" << void_buffer << endl;
 
   unsigned to_write = bytes;
   int status = 0;
@@ -391,7 +396,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     unsigned remainder = nbblk - offset;
 
     // finish remainder of subint
-    if (bytes > remainder)
+    if (bytes >= remainder)
     {
       fits_write_col_byt (fptr, colnum, isub, offset, remainder, 
           buffer, &status);
@@ -411,6 +416,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     }
   }
 
+  // this loop is for writing out complete blocks
   while (to_write >= nbblk)
   {
     if (verbose)
@@ -467,7 +473,7 @@ void dsp::FITSOutputFile::set_reference_spectrum (Rescale* rescale)
   {
     nchan = rescale->get_input()->get_nchan();
     npol = rescale->get_input()->get_npol();
-    //if (verbose)
+    if (verbose)
       cerr << "    initializing from Rescale" 
            << " nchan=" << nchan << " npol=" << npol << endl;
     // need to initialize

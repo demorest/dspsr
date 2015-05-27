@@ -50,7 +50,7 @@ nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
     TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu           \
-    SKMaskerCUDA.cu FZoomCUDA.C FScrunchCUDA.cu
+    SKMaskerCUDA.cu FZoomCUDA.cu FScrunchCUDA.cu
 
 endif
 
