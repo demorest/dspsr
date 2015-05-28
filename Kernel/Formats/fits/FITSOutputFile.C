@@ -279,11 +279,12 @@ void dsp::FITSOutputFile::write_header ()
 
 void dsp::FITSOutputFile::write_row ()
 {
+  // NB that isub >= 1 as per FITS convention
   if (verbose)
-      cerr << "dsp::FITSOutputFile::write_row writing row "<<isub<<endl;
+      cerr << "dsp::FITSOutputFile::write_row writing row " << isub << endl;
   write_col(fptr,"INDEXVAL",isub,1,1,&isub);
   write_col(fptr,"TSUBINT",isub,1,1,&tblk);
-  double offs_sub = tblk/2.0 + isub*tblk;
+  double offs_sub = tblk/2.0 + (isub-1)*tblk;
   write_col(fptr,"OFFS_SUB",isub,1,1,&offs_sub);
   write_col(fptr,"DAT_WTS",isub,1,nchan,&dat_wts[0]);
   write_col(fptr,"DAT_SCL",isub,1,nchan*npol,&dat_scl[0]);
@@ -334,14 +335,22 @@ void dsp::FITSOutputFile::initialize ()
   modify_vector_len(fptr,"DAT_SCL",nchan*npol);
   modify_vector_len(fptr,"DAT_OFFS",nchan*npol);
 
+  // change the DATA data type from the psrchive default (I = signed short)
+  // to that correct for search mode data (B = unsigned char)
+  int colnum = get_colnum(fptr,"DATA");
+  fits_delete_col (fptr, colnum, &status);
+  char tform[64];
+  sprintf(tform,"%dB",nbblk);
+  fits_insert_col (fptr, colnum, "DATA", tform, &status);
+  if (status)
+    throw FITSError (status, "dsp::FITSOutputFile::initialize",
+        "unable to create DATA with correct data type");
+
   // set the block (DATA) dim entries
   // NB that the total number of bytes (TFORM) can't be set consistently
   // with the dimension size for 2- and 4-bit data if one takes time 
   // samples as a dimension; the standard is for 
   // TDIM = (nchan,npol,nsblk*nbit/8)
-
-  modify_vector_len(fptr,"DATA",nbblk);
-  int colnum = get_colnum(fptr,"DATA");
   psrfits_update_tdim (fptr, colnum, nchan, npol, (nsblk*nbit)/8 );
 
 
