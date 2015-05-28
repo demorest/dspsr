@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2010 by Paul Demorest
+ *   Copyright (C) 2015 by Erik Madsen (based on GMRTUnpacker)
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -9,12 +9,12 @@
 #ifndef __DummyUnpacker_h
 #define __DummyUnpacker_h
 
-#include "dsp/HistUnpacker.h"
+#include "dsp/EightBitUnpacker.h"
 
 namespace dsp {
 
-  //! Fake 8-bit unpacker
-  class DummyUnpacker : public Unpacker {
+  //! Simple 8-bit to float unpacker
+  class DummyUnpacker : public EightBitUnpacker {
 
   public:
     
@@ -23,14 +23,8 @@ namespace dsp {
 
    protected:
     
-    //! The unpacking routine
-    virtual void unpack ();
-
     //! Return true if we can convert the Observation
     virtual bool matches (const Observation* observation);
-
-    unsigned get_output_offset (unsigned idig) const;
-    unsigned get_output_ipol (unsigned idig) const;
 
   };
 
