@@ -73,6 +73,8 @@ static dsp::Unpacker::Register::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #if HAVE_dummy
 #include "dsp/DummyUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::DummyUnpacker> dummy;
+#include "dsp/DummyFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::DummyFourBit> dummy4;
 #endif
 
 #if HAVE_fadc
