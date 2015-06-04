@@ -127,6 +127,9 @@ void dsp::OutputFileShare::Submit::operation ()
   {
     // Wait
     //cerr << "OFS " << contributor << " waiting" << endl;
+    // if input has no data, don't block
+    if (!get_input()->get_ndat())
+      break;
     parent->get_context()->wait();
   }
 
