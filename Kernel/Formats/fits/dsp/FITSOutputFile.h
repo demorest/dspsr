@@ -49,6 +49,9 @@ namespace dsp {
     //! Set the number of bits per output sample
     void set_nbit ( unsigned _nbit );
 
+    //! Set the output filename convention
+    void set_atnf ( bool );
+
   protected:
 
     //! Need a custom implementation of operation to handle FITS I/O
@@ -116,7 +119,8 @@ namespace dsp {
     //! helper method for FITS output
     void write_row ();
 
-
+    //! Use ATNF datestr convention
+    bool use_atnf;
 
   };
 

@@ -103,11 +103,18 @@ dsp::FITSOutputFile::FITSOutputFile (const char* filename)
   nsblk = 2048;
   nbblk = 0;
   nbit = 2;
+
+  use_atnf = true;
 }
 
 dsp::FITSOutputFile::~FITSOutputFile ()
 {
   finalize_fits ();
+}
+
+void dsp::FITSOutputFile::set_atnf (bool _use_atnf)
+{
+  use_atnf = _use_atnf;
 }
 
 void dsp::FITSOutputFile::set_nsblk (unsigned nblk)
@@ -274,6 +281,29 @@ void dsp::FITSOutputFile::write_header ()
   // set_model must be called after the Integration::MJD has been set
 
   //archive-> set_filename (get_filename (phase));
+  if (output_filename.empty())
+  {
+    MJD epoch = get_input()->get_start_time();
+    vector<char> buffer (FILENAME_MAX);
+    char* filename = &buffer[0];
+    if (use_atnf)
+    {
+      std::string patt = "%Y%m%d_%H%M%S";
+      if (!epoch.datestr (filename, FILENAME_MAX, patt.c_str()))
+	      throw Error (FailedCall, "dsp::FITSOutputFile::write_header",
+		     "error MJD::datestr("+datestr_pattern+")");
+      // discard first two digits of year
+      filename = filename + 2;
+    }
+    else
+    {
+      std::string patt = "%Y-%m-%d-%H:%M:%S";
+      if (!epoch.datestr (filename, FILENAME_MAX, patt.c_str()))
+	      throw Error (FailedCall, "dsp::FITSOutputFile::write_header",
+		     "error MJD::datestr("+datestr_pattern+")");
+    }
+    output_filename = filename + get_extension();
+  }
   archive -> unload (output_filename);
 }
 
