@@ -79,6 +79,9 @@ namespace dsp {
     //! Filterbank config options
     Filterbank::Config filterbank;
 
+    //! Maximum RAM to use (per thread)
+    double maximum_RAM;
+
     //! dispersion measure set in output file
     double dispersion_measure;
 
