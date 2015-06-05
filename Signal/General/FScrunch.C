@@ -80,6 +80,9 @@ void dsp::FScrunch::transformation ()
     return;
   }
 
+  if (input->get_ndat() == 0)
+    return;
+
   if( !input->get_detected() )
     throw Error(InvalidState,"dsp::FScrunch::transformation()",
 		"invalid input state: " + tostring(input->get_state()));
