@@ -74,6 +74,8 @@ dsp::LoadToFITS::Config::Config()
   filterbank.set_nchan(0);
   filterbank.set_freq_res(0);
   filterbank.set_convolve_when(Filterbank::Config::Never);
+ 
+  maximum_RAM = 256 * 1024 * 1024;
 
   dispersion_measure = 0;
   dedisperse = false;
@@ -117,10 +119,12 @@ void dsp::LoadToFITS::Config::set_very_verbose ()
 
 void dsp::LoadToFITS::construct () try
 {
+  // sets operations to zero length then adds IOManger/unpack
   SingleThread::construct ();
 
+  bool run_on_gpu = false;
 #if HAVE_CUDA
-  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  run_on_gpu = thread_id < config->get_cuda_ndevice();
   cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
 #endif
 
@@ -150,206 +154,157 @@ void dsp::LoadToFITS::construct () try
     cerr << "Frequency = " << obs->get_centre_frequency() << endl;
     cerr << "Bandwidth = " << obs->get_bandwidth() << endl;
     cerr << "Sampling rate = " << obs->get_rate() << endl;
+    cerr << "State = " << tostring(obs->get_state()) <<endl;
   }
 
   obs->set_dispersion_measure( config->dispersion_measure );
 
   // for now, handle spectral leakage AND integrating up a filterbank sample
   // by using the frequency resolution aspect of Filterbank
+
+  // voltage samples per filterbank sample
   double samp_per_fb = config->tsamp*obs->get_rate();
-  if (obs->get_state()==Signal::Nyquist)
-    samp_per_fb *= 0.5;
-  unsigned res_factor = round(samp_per_fb/config->filterbank.get_nchan());
-  //if (verbose)
-    cerr << "dsp::LoadToFITS::construct " <<"tsamp="<<config->tsamp<<" rate="<<obs->get_rate() << " so increasing spectral resolution by "<<res_factor << endl;
+  if (verbose)
+    cerr << "voltage samples per filterbank sample="<<samp_per_fb << endl;
+  // correction for number of samples per filterbank channel
+  double factor = obs->get_state()==Signal::Nyquist? 0.5 : 1.0;
+  unsigned res_factor = round(factor*samp_per_fb/config->filterbank.get_nchan());
 
-  uint64_t nsample = round(samp_per_fb * 4096);
+  cerr << "digifits: " 
+       << "tsamp=" << config->tsamp << " rate=" << obs->get_rate() 
+       << " so increasing spectral resolution by "<< res_factor << endl;
 
+  // voltage samples per output block
+  uint64_t nsample = round(samp_per_fb * config->nsblk);
 
   // the unpacked input will occupy nbytes_per_sample
   double nbytes_per_sample = sizeof(float) * nchan * npol * ndim;
-
   double MB = 1024.0 * 1024.0;
-  //uint64_t nsample = uint64_t( config->block_size*MB / nbytes_per_sample );
+
+  // ideally, block size would be a full output block, but this is too large
+  // pick a nice fraction that will divide evently into maximum RAM
+  // NB this doesn't account for copies (yet)
+  while (nsample * nbytes_per_sample > config->maximum_RAM) nsample /= 2;
 
   if (verbose)
-    //cerr << "digifits: block_size=" << config->block_size << " MB "
-    //  "(" << nsample << " samp)" << endl;
-    cerr << "digifits: block_size=" << (nbytes_per_sample*nsample)/MB << " MB " << "(" << nsample << " samp)" << endl;
+    cerr << "digifits: block_size=" << (nbytes_per_sample*nsample)/MB 
+         << " MB " << "(" << nsample << " samp)" << endl;
 
-  // TODO -- set block size more adequately
-  manager->set_block_size( nsample );
+  manager->set_block_size ( nsample );
 
-  bool do_pscrunch = false;
-  //bool do_pscrunch = (obs->get_npol() > 1) && (config->poln_select < 0);
-
-  //cerr << "tsamp="<<config->tsamp<<" rate="<<obs->get_rate()<<endl;
   TimeSeries* timeseries = unpacked;
-
-# if HAVE_CUDA
-  if (run_on_gpu)
-  {
-    TransferCUDA* transfer = new TransferCUDA (stream);
-    transfer->set_kind (cudaMemcpyDeviceToHost);
-    transfer->set_input( timeseries );
-    transfer->set_output( timeseries = new_TimeSeries() );
-    operations.push_back (transfer);
-    run_on_gpu = false;
-  }
-#endif
 
   if (!obs->get_detected())
   {
-    bool do_detection = false;
 
     config->coherent_dedisp = 
       (config->filterbank.get_convolve_when() == Filterbank::Config::During)
       && (config->dispersion_measure != 0.0);
 
-    if ( config->filterbank.get_nchan() )
+    if ( !config->filterbank.get_nchan() )
+      throw Error(InvalidParam,"dsp::LoadToFITS::construct",
+          "must specify filterbank scheme if data are not detected");
+
+    if ( config->coherent_dedisp )
     {
-      if (verbose)
-	      cerr << "digifits: creating " << config->filterbank.get_nchan()
-	           << " channel filterbank" << endl;
+      cerr << "digifits: using coherent dedispersion" << endl;
 
-      if ( config->coherent_dedisp )
-      {
-	      cerr << "digifits: using coherent dedispersion" << endl;
+      kernel = new Dedispersion;
 
-        kernel = new Dedispersion;
+      if (config->filterbank.get_freq_res())
+        kernel->set_frequency_resolution (config->filterbank.get_freq_res());
 
-        if (config->filterbank.get_freq_res())
-          kernel->set_frequency_resolution (config->filterbank.get_freq_res());
-
-        kernel->set_dispersion_measure( config->dispersion_measure );
-
-        // TODO other FFT length/etc options as implemented in LoadToFold1?
-
-      }
-
-      //if ( config->filterbank.get_freq_res() || config->coherent_dedisp )
-      if (true)
-      {
-	      cerr << "digifits: using convolving filterbank" << endl;
-# if HAVE_CUDA
-        if (run_on_gpu)
-        {
-          timeseries->set_memory (device_memory);
-          config->filterbank.set_device ( device_memory.ptr() );
-          config->filterbank.set_stream ( gpu_stream );
-        }
-#endif
-
-	      filterbank = config->filterbank.create ();
-
-	      filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
-	      filterbank->set_input( timeseries );
-        filterbank->set_output( timeseries = new_TimeSeries() );
-        //filterbank->set_frequency_resolution (40);
-# if HAVE_CUDA
-        if (run_on_gpu)
-          timeseries->set_memory (device_memory);
-#endif
-
-        if (kernel)
-          filterbank->set_response( kernel );
-
-	      //filterbank->set_frequency_resolution ( 
-        //    config->filterbank.get_freq_res() );
-
-	      operations.push_back( filterbank.get() );
-	      do_detection = true;
-
-      }
-      else
-      {
-	      filterbank = new TFPFilterbank;
-
-	      filterbank->set_nchan( config->filterbank.get_nchan() );
-        filterbank->set_input( timeseries );
-        filterbank->set_output( timeseries = new_TimeSeries() );
-
-	      operations.push_back( filterbank.get() );
-        do_detection = true;
-      }
+      kernel->set_dispersion_measure( config->dispersion_measure );
     }
 
-
-
-    if (do_detection)
+# if HAVE_CUDA
+    if (run_on_gpu)
     {
+      timeseries->set_memory (device_memory);
+      config->filterbank.set_device ( device_memory.ptr() );
+      config->filterbank.set_stream ( gpu_stream );
+    }
+#endif
+
+    filterbank = config->filterbank.create ();
+
+    filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
+    filterbank->set_input( timeseries );
+    filterbank->set_output( timeseries = new_TimeSeries() );
+# if HAVE_CUDA
+    if (run_on_gpu)
+      timeseries->set_memory (device_memory);
+#endif
+
+    if (kernel)
+      filterbank->set_response( kernel );
+
+    unsigned freq_res = config->filterbank.get_freq_res();
+    if (freq_res > 1)
+      filterbank->set_frequency_resolution ( freq_res );
+
+    if (verbose)
+      cerr << "digifits: creating " << config->filterbank.get_nchan()
+           << " by " << freq_res << " back channel filterbank" << endl;
+
+    operations.push_back( filterbank.get() );
+
       if (verbose)
 	      cerr << "digifits: creating detection operation" << endl;
       
-      Detection* detection = new Detection;
+    Detection* detection = new Detection;
 
-      switch (config->npol)
-      {
-        case 1:
-          detection->set_output_state (Signal::Intensity);
-          break;
-        case 2:
-          detection->set_output_state (Signal::PPQQ);
-          break;
-        case 4:
-          detection->set_output_state (Signal::Coherence);
-          detection->set_output_ndim(2);
-# if HAVE_CUDA
-          //if (run_on_gpu)
-          if (false)
-          {
-            detection->set_engine (new CUDA::DetectionEngine(stream) );
-            detection->set_output_ndim (2);
-          }
+    // always use coherence for GPU, pscrunch later if needed
+    if (run_on_gpu)
+    {
+#ifdef HAVE_CUDA
+      detection->set_output_state (Signal::Coherence);
+      detection->set_engine (new CUDA::DetectionEngine(stream) );
+      detection->set_output_ndim (2);
 #endif
-          break;
-        default:
-          throw Error(InvalidParam,"dsp::LoadToFITS::construct",
-              "invalid polarization specified");
-      }
-
-      detection->set_input( timeseries );
-      detection->set_output( timeseries );
-
-      // detection will do pscrunch
-      do_pscrunch = false;
-
-      operations.push_back( detection );
     }
-  }
+    else
+    {
+      switch (config->npol) {
+      case 1:
+        detection->set_output_state (Signal::Intensity);
+        break;
+      case 2:
+        detection->set_output_state (Signal::PPQQ);
+        break;
+      case 4:
+        detection->set_output_state (Signal::Coherence);
+        // use this to avoid copies -- seem to segfault in multi-threaded
+        detection->set_output_ndim (2);
+        break;
+      default:
+        throw Error(InvalidParam,"dsp::LoadToFITS::construct",
+            "invalid polarization specified");
+      }
+    }
 
-  //if ( config->dedisperse )
-  if (false)
-  {
-    if (verbose)
-      cerr << "digifits: removing dispserion delays" << endl;
+    detection->set_input ( timeseries );
+    detection->set_output ( timeseries );
 
-    SampleDelay* delay = new SampleDelay;
-
-    delay->set_input (timeseries);
-    delay->set_output (timeseries);
-    delay->set_function (new Dedispersion::SampleDelay);
-
-    operations.push_back( delay );
+    operations.push_back ( detection );
   }
 
   FScrunch* fscrunch = new FScrunch;
   
-  fscrunch->set_factor( res_factor );
-  fscrunch->set_input( timeseries );
-//# if HAVE_CUDA
-//  if (run_on_gpu)
-//  {
-//    fscrunch->set_engine ( new CUDA::FScrunchEngine(stream) );
-//    timeseries = new_TimeSeries();
-//    timeseries->set_memory (device_memory);
-//  }
-//#endif
-  fscrunch->set_output( timeseries );
+  fscrunch->set_factor ( res_factor );
+  fscrunch->set_input ( timeseries );
+# if HAVE_CUDA
+  if (run_on_gpu)
+  {
+    fscrunch->set_engine ( new CUDA::FScrunchEngine(stream) );
+    timeseries = new_TimeSeries();
+    timeseries->set_memory (device_memory);
+  }
+#endif
+  fscrunch->set_output ( timeseries );
 
-  operations.push_back( fscrunch );
+  operations.push_back ( fscrunch );
 
-  /*
 # if HAVE_CUDA
   if (run_on_gpu)
   {
@@ -358,20 +313,43 @@ void dsp::LoadToFITS::construct () try
     transfer->set_input( timeseries );
     transfer->set_output( timeseries = new_TimeSeries() );
     operations.push_back (transfer);
+  }
+#endif
 
+
+  if (run_on_gpu)
+  {
+# if HAVE_CUDA
+    PolnReshape* reshape = new PolnReshape;
+    switch (config->npol)
+    {
+      case 4:
+        reshape->set_state ( Signal::Coherence );
+        break;
+      case 2:
+        reshape->set_state ( Signal::PPQQ );
+        break;
+      case 1:
+        reshape->set_state ( Signal::Intensity );
+        break;
+      default: 
+        throw Error(InvalidParam,"dsp::LoadToFITS::construct",
+            "invalid polarization specified");
+    }
+    reshape->set_input (timeseries );
+    reshape->set_output ( timeseries = new_TimeSeries() );
+    operations.push_back(reshape);
+#endif
+  }
+  else if (config->npol == 4)
+  {
     PolnReshape* reshape = new PolnReshape;
     reshape->set_state ( Signal::Coherence );
     reshape->set_input (timeseries );
     reshape->set_output ( timeseries = new_TimeSeries() );
     operations.push_back(reshape);
   }
-#endif
-*/
-    PolnReshape* reshape = new PolnReshape;
-    reshape->set_state ( Signal::Coherence );
-    reshape->set_input (timeseries );
-    reshape->set_output ( timeseries = new_TimeSeries() );
-    operations.push_back(reshape);
+
 
   if ( config->tscrunch_factor )
   {
@@ -383,6 +361,23 @@ void dsp::LoadToFITS::construct () try
 
     operations.push_back( tscrunch );
   }
+
+  // TODO -- ideally this would happen before initial fscrunch, but will
+  // await a GPU implementation of SampleDelay
+  if ( config->dedisperse )
+  {
+    if (verbose)
+      cerr << "digifits: removing dispersion delays" << endl;
+
+    SampleDelay* delay = new SampleDelay;
+
+    delay->set_input (timeseries);
+    delay->set_output (timeseries);
+    delay->set_function (new Dedispersion::SampleDelay);
+
+    operations.push_back( delay );
+  }
+
   
   // PSRFITS allows us to save the reference spectrum in each output block
   // "subint", so we can take advantage of this to store the exect
@@ -395,14 +390,25 @@ void dsp::LoadToFITS::construct () try
   Rescale* rescale = new Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
-  if (config->rescale_seconds) 
+  if (config->rescale_seconds >= 0) 
+  {
+    cerr << "warning, Rescale using seconds, not recommended for PSRFITS" 
+         << endl;
     rescale->set_interval_seconds (config->rescale_seconds);
+  }
   else
+  {
     rescale->set_interval_samples (config->nsblk);
+    rescale->set_exact(true);
+  }
   rescale->set_constant (config->rescale_constant);
 
   operations.push_back( rescale );
 
+
+  // only do pscrunch for detected data -- NB always goes to Intensity
+  bool do_pscrunch = (obs->get_npol() > 1) && (config->npol==1) 
+    && (obs->get_detected());
   if (do_pscrunch)
   {
     if (verbose)
@@ -421,7 +427,8 @@ void dsp::LoadToFITS::construct () try
   BitSeries* bitseries = new BitSeries;
 
   if (verbose)
-    cerr << "digifits: creating PSRFITS digitizer with nbit="<<config->nbits << endl;
+    cerr << "digifits: creating PSRFITS digitizer with nbit="
+         << config->nbits << endl;
 
   FITSDigitizer* digitizer = new FITSDigitizer (config->nbits);
   digitizer->set_input (timeseries);
@@ -435,10 +442,6 @@ void dsp::LoadToFITS::construct () try
   const char* output_filename = 0;
   if (!config->output_filename.empty())
     output_filename = config->output_filename.c_str();
-
-  // temporary
-  std::string fname = "/tmp/test.sf";
-  output_filename = fname.c_str();
 
   FITSOutputFile* outputfile = new FITSOutputFile (output_filename);
   outputfile->set_nsblk (config->nsblk);
