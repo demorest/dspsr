@@ -73,6 +73,9 @@ public:
 
 void dsp::FITSDigitizer::pack ()
 {
+  if (input->get_ndat() == 0)
+    return;
+
   if (input->get_ndim() != 1)
     throw Error (InvalidState, "dsp::FITSDigitizer::pack",
   		 "cannot handle ndim=%d", input->get_ndim());
