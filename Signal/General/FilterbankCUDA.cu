@@ -100,7 +100,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 			"cufftPlan1d(plan_fwd, CUFFT_C2C)");
   }
 
-  result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
+  result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_FFTW_PADDING);
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
 		      "cufftSetCompatibilityMode(plan_fwd)");
@@ -121,7 +121,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 			"cufftPlan1d(plan_bwd)");
 
     // optimal performance for CUFFT regarding data layout
-    result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
+    result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_FFTW_PADDING);
     if (result != CUFFT_SUCCESS)
       throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
 			"cufftSetCompatibilityMode(plan_bwd)");
