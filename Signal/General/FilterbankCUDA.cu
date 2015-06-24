@@ -113,12 +113,15 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
   DEBUG("CUDA::FilterbankEngine::setup fwd FFT plan set");
 
+  // if inverse FFT is necessary
   if (freq_res > 1)
   {
-    result = cufftPlan1d (&plan_bwd, freq_res, CUFFT_C2C, nchan_subband);
+    int n[1] = { freq_res };
+    result = cufftPlanMany (&plan_bwd, 1, n, NULL, NULL, NULL, NULL, NULL,
+                            NULL, CUFFT_C2C, nchan_subband);
     if (result != CUFFT_SUCCESS)
-      throw CUFFTError (result, "CUDA::FilterbankEngine::setup", 
-			"cufftPlan1d(plan_bwd)");
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+            "cufftPlanMany(plan_bwd)");
 
     // optimal performance for CUFFT regarding data layout
     result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_FFTW_PADDING);
