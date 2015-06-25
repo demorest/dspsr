@@ -33,7 +33,7 @@ dsp::ASCIIObservation::ASCIIObservation (const char* header)
   required_keys.push_back("NPOL");
   required_keys.push_back("NBIT");
   // NDIM and NCHAN have a default value of 1
-  required_keys.push_back("TSAMP");
+  // TSAMP has a default value of NCHAN/BW  
   required_keys.push_back("UTC_START");
   required_keys.push_back("OBS_OFFSET");
 
@@ -298,8 +298,24 @@ void dsp::ASCIIObservation::load (const char* header)
   // TSAMP
   //
   double sampling_interval=0.0;
-  ascii_header_check (header, "TSAMP", "%lf", &sampling_interval);
-
+  if (ascii_header_check (header, "TSAMP", "%lf", &sampling_interval) < 0)
+  {
+    if (bw > 0)
+    {
+      sampling_interval = scan_nchan / bw;
+      if (verbose)
+        cerr << "dsp::ASCIIObservation::load Setting TSAMP to "
+             << "NCHAN/BW=" << sampling_interval << " us" << endl;
+    }
+    else
+    {
+      sampling_interval = 1.0;
+      if (verbose)
+        cerr << "dsp::ASCIIObservation::load No TSAMP or BW provided, "
+             << "setting TSAMP to 1 us" << endl;
+    }
+  }
+    
   /* IMPORTANT: TSAMP is the sampling period in microseconds */
   sampling_interval *= 1e-6;
 
