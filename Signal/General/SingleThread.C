@@ -263,6 +263,8 @@ void dsp::SingleThread::construct () try
       if (Operation::verbose)
         cerr << "SingleThread: unpack on CPU" << endl;
 
+      unpacked->set_memory (new CUDA::PinnedMemory);
+
       TransferCUDA* transfer = new TransferCUDA (stream);
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
