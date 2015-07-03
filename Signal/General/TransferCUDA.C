@@ -17,7 +17,19 @@ dsp::TransferCUDA::TransferCUDA(cudaStream_t _stream)
   : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer", outofplace)
 {
   stream = _stream;
+  input_stream = _stream;
   kind = cudaMemcpyHostToDevice;
+}
+
+//! Associate cudaEvent with the transfer
+dsp::TransferCUDA::TransferCUDA(cudaStream_t _stream,
+                                cudaStream_t _input_stream, cudaEvent_t _event)
+  : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer", outofplace)
+{
+  stream = _stream;
+  input_stream = _input_stream;
+  kind = cudaMemcpyHostToDevice;
+  event = _event;
 }
 
 //! Do stuff
@@ -26,7 +38,10 @@ void dsp::TransferCUDA::transformation ()
   prepare ();
 
   if (stream)
+  {
     cudaStreamSynchronize(stream);
+    cudaStreamSynchronize(input_stream);
+  }
   else
     cudaThreadSynchronize();
 
@@ -40,15 +55,18 @@ void dsp::TransferCUDA::transformation ()
   }
 
   cudaError error;
-  if (stream)
+  if (input_stream)
+  {
     error = cudaMemcpyAsync (output->internal_get_buffer(),
                              input->internal_get_buffer(),
                              input->internal_get_size(),
                              kind,
-                             stream);
+                             input_stream);
+    cudaEventRecord(event, input_stream);
+  }
   else
-    error = cudaMemcpy (output->internal_get_buffer(), 
-                             input->internal_get_buffer(), 
+    error = cudaMemcpy (output->internal_get_buffer(),
+                             input->internal_get_buffer(),
                              input->internal_get_size(), kind);
   if (error != cudaSuccess)
     throw Error (InvalidState, "dsp::TransferCUDA::transformation",
@@ -56,7 +74,7 @@ void dsp::TransferCUDA::transformation ()
 
   if (verbose)
   {
-    cerr << "dsp::TransferCUDA::transformation output ndat=" 
+    cerr << "dsp::TransferCUDA::transformation output ndat="
        << output->get_ndat() << " ndim=" << output->get_ndim();
     if (output->get_npol() > 1)
       cerr << " span=" << output->get_datptr (0, 1) - output->get_datptr(0,0);
@@ -71,4 +89,3 @@ void dsp::TransferCUDA::prepare ()
   output->internal_match( input );
   output->copy_configuration( input );
 }
-

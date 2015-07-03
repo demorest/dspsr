@@ -43,6 +43,9 @@ namespace dsp {
     //! Default constructor
     Config ();
 
+    // useful for gpu filterbank
+    void* input_stream;
+
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);
     unsigned get_times_minimum_ndat () const { return times_minimum_ndat; }
