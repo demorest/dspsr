@@ -121,7 +121,8 @@ void dsp::LoadToFold::construct () try
   SingleThread::construct ();
 
   #if HAVE_CUDA
-  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice()
+                                * config->get_cuda_nstream();
   cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
   #endif
 
@@ -1096,7 +1097,8 @@ catch (Error& error)
 void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
 {
 #if HAVE_CUDA
-  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice()
+                                * config->get_cuda_nstream();
   cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
 
   if (run_on_gpu)

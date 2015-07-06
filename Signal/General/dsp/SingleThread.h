@@ -214,6 +214,10 @@ namespace dsp {
     void set_cuda_device (std::string);
     unsigned get_cuda_ndevice () const { return cuda_device.size(); }
 
+    //! set the number of kernel streams per cuda device
+    void set_cuda_nstream (unsigned);
+    unsigned get_cuda_nstream () const { return nstream; }
+
     //! set the number of CPU threads to be used
     void set_nthread (unsigned);
 
@@ -257,6 +261,9 @@ namespace dsp {
 
     //! CUDA devices on which computations will take place
     std::vector<unsigned> cuda_device;
+
+    //! number of kernel streams per cuda device
+    unsigned nstream;
 
     //! application can make use of multiple cores
     bool can_thread;

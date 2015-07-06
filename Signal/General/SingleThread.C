@@ -230,7 +230,8 @@ void dsp::SingleThread::construct () try
 
 #if HAVE_CUDA
 
-  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice()
+                                * config->get_cuda_nstream();
 
   cudaStream_t stream = 0;
 
@@ -240,7 +241,7 @@ void dsp::SingleThread::construct () try
     if (config->get_total_nthread() > 1)
       config->input_buffering = false;
 
-    int device = config->cuda_device[thread_id];
+    int device = config->cuda_device[thread_id / config->get_cuda_nstream()];
     cerr << "dspsr: thread " << thread_id
          << " using CUDA device " << device << endl;
 
@@ -255,8 +256,6 @@ void dsp::SingleThread::construct () try
     if (err != cudaSuccess)
       throw Error (InvalidState, "dsp::SingleThread::initialize",
                    "cudaMalloc failed: %s", cudaGetErrorString(err));
-
-    unsigned nstream = count (config->cuda_device, (unsigned)device);
 
     // always create a stream, even for 1 thread
     cudaStreamCreate( &stream );
@@ -645,6 +644,8 @@ dsp::SingleThread::Config::Config ()
   nthread = 0;
   buffers = 0;
   repeated = 0;
+  
+  nstream = 1;
 }
 
 #include "dirutil.h"
@@ -740,7 +741,7 @@ void dsp::SingleThread::Config::set_nthread (unsigned cpu_nthread)
 //! get the total number of threads
 unsigned dsp::SingleThread::Config::get_total_nthread () const
 {
-  unsigned total_nthread = nthread + get_cuda_ndevice();
+  unsigned total_nthread = nthread + get_cuda_ndevice() * get_cuda_nstream();
 
   if (total_nthread)
     return total_nthread;
@@ -756,6 +757,12 @@ void dsp::SingleThread::Config::set_cuda_device (string txt)
     string dev = stringtok (txt, ",");
     cuda_device.push_back( fromstring<unsigned>(dev) );
   }
+}
+
+// set the number of kernel streams per cuda device
+void dsp::SingleThread::Config::set_cuda_nstream (unsigned _nstream)
+{
+  nstream = _nstream;
 }
 
 // set the cpu on which threads will run
@@ -834,6 +841,9 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   {
     arg = menu.add (this, &Config::set_cuda_device, "cuda", "devices");
     arg->set_help ("comma-separated list of CUDA devices");
+    
+    arg = menu.add (this, &Config::set_cuda_nstream, "nstream", "streams");
+    arg->set_help ("number of kernel streams per CUDA device");
   }
 #endif
 
