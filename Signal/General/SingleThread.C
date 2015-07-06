@@ -240,9 +240,6 @@ void dsp::SingleThread::construct () try
     if (config->get_total_nthread() > 1)
       config->input_buffering = false;
 
-    //if (thread_id == 0)
-    //  cudaStreamCreate(manager->get_input_stream_ptr());
-
     int device = config->cuda_device[thread_id];
     cerr << "dspsr: thread " << thread_id
          << " using CUDA device " << device << endl;
