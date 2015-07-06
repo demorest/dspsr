@@ -285,7 +285,7 @@ void dsp::SingleThread::construct () try
       unpacked->set_memory (new CUDA::PinnedMemory);
 
       TransferCUDA* transfer;
-      if (input_stream)
+      if (config->use_input_stream)
       {
         // Create an event that signals the completion of the CUDA transfer
         cudaEventCreate( reinterpret_cast<cudaEvent_t*>(&input_event) );
@@ -421,8 +421,9 @@ void dsp::SingleThread::run () try
 
   // If the CUDA transfers are in their own stream, the Filterbank step will
   // begin too soon unless told to wait for an event
-  if (operations[iop]->get_name() == "Filterbank")
-    cudaStreamWaitEvent(static_cast<cudaStream_t>(gpu_stream), static_cast<cudaEvent_t>(input_event), 0);
+  if (config->use_input_stream && operations[iop]->get_name() == "Filterbank")
+    cudaStreamWaitEvent(static_cast<cudaStream_t>(gpu_stream),
+                        static_cast<cudaEvent_t>(input_event), 0);
 
 	operations[iop]->operate ();
 
@@ -646,6 +647,7 @@ dsp::SingleThread::Config::Config ()
   repeated = 0;
   
   nstream = 1;
+  use_input_stream = false;
 }
 
 #include "dirutil.h"
@@ -844,6 +846,9 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
     
     arg = menu.add (this, &Config::set_cuda_nstream, "nstream", "streams");
     arg->set_help ("number of kernel streams per CUDA device");
+    
+    arg = menu.add (use_input_stream, "input-stream");
+    arg->set_help ("copy input to CUDA memory in a separate stream");
   }
 #endif
 

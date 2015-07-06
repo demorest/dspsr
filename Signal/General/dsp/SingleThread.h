@@ -233,6 +233,11 @@ namespace dsp {
     //! use input-buffering to compensate for operation edge effects
     bool input_buffering;
 
+    // keep input copies onto cuda device in their own stream so they
+    // don't overlap (allows them to be faster and encourages staggered
+    // kernel operations in other streams)
+    bool use_input_stream;
+
     //! use weighted time series to flag bad data
     bool weighted_time_series;
 
