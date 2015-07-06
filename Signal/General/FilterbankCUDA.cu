@@ -117,8 +117,8 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   if (freq_res > 1)
   {
     int n[1] = { freq_res };
-    result = cufftPlanMany (&plan_bwd, 1, n, NULL, NULL, NULL, NULL, NULL,
-                            NULL, CUFFT_C2C, nchan_subband);
+    result = cufftPlanMany (&plan_bwd, 1, n, NULL, 0, 0, NULL, 0, 0,
+                            CUFFT_C2C, nchan_subband);
     if (result != CUFFT_SUCCESS)
       throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
             "cufftPlanMany(plan_bwd)");
