@@ -45,6 +45,7 @@ namespace dsp {
 
     // useful for gpu filterbank
     void* input_stream;
+    void* d_kernel_gpu;
 
     // set block size to this factor times the minimum possible
     void set_times_minimum_ndat (unsigned);

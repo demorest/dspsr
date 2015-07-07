@@ -72,6 +72,11 @@ CUDA::FilterbankEngine::~FilterbankEngine ()
 
 void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 {
+  // A reference to the location of the dedispersion kernel on the GPU is
+  // kept separate so that it only has to be loaded once
+  float2** d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
+  d_kernel = *d_kernel_ptr;
+  
   freq_res = filterbank->get_freq_res ();
   nchan_subband = filterbank->get_nchan_subband();
 
@@ -142,7 +147,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   multiply.init ();
   multiply.set_nelement(nchan_subband * freq_res);
 
-  if (filterbank->has_response())
+  if (!d_kernel && filterbank->has_response())
   {
     const dsp::Response* response = filterbank->get_response();
 
@@ -157,7 +162,9 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     unsigned mem_size = nchan * ndat * ndim * sizeof(cufftReal);
 
     // allocate space for the convolution kernel
-    cudaMalloc ((void**)&d_kernel, mem_size);
+    cudaMalloc (filterbank->get_d_kernel_gpu_ptr(), mem_size);
+    d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
+    d_kernel = *d_kernel_ptr;
 
     nfilt_pos = response->get_impulse_pos();
     unsigned nfilt_tot = nfilt_pos + response->get_impulse_neg();

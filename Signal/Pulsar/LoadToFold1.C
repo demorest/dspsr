@@ -353,6 +353,13 @@ void dsp::LoadToFold::construct () try
     // software filterbank constructor
     if (!filterbank)
       filterbank = config->filterbank.create();
+      
+#if HAVE_CUDA
+    // This allows multiple streams on GPU to share one copy of the dedispersion
+    // kernel.  NOTE: Like with the input stream, this should be updated to
+    // check for multiple devices and copy once for each.
+    filterbank->set_d_kernel_gpu_ptr(&(config->d_kernel_gpu));
+#endif
 
     if (!config->input_buffering)
       filterbank->set_buffering_policy (NULL);
