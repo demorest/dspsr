@@ -35,6 +35,8 @@ namespace CUDA
   //! Discrete convolution filterbank step implemented using CUDA streams
   class FilterbankEngine : public dsp::Filterbank::Engine
   {
+    unsigned nstream;
+    
   public:
 
     //! Default Constructor
