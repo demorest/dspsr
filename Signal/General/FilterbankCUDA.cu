@@ -147,38 +147,41 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   multiply.init ();
   multiply.set_nelement(nchan_subband * freq_res);
 
-  if (!d_kernel && filterbank->has_response())
+  if (filterbank->has_response())
   {
     const dsp::Response* response = filterbank->get_response();
+    
+    if (!d_kernel)
+    {
+      unsigned nchan = response->get_nchan();
+      unsigned ndat = response->get_ndat();
+      unsigned ndim = response->get_ndim();
 
-    unsigned nchan = response->get_nchan();
-    unsigned ndat = response->get_ndat();
-    unsigned ndim = response->get_ndim();
+      assert( nchan == filterbank->get_nchan() );
+      assert( ndat == freq_res );
+      assert( ndim == 2 ); // complex
 
-    assert( nchan == filterbank->get_nchan() );
-    assert( ndat == freq_res );
-    assert( ndim == 2 ); // complex
-
-    unsigned mem_size = nchan * ndat * ndim * sizeof(cufftReal);
-
-    // allocate space for the convolution kernel
-    cudaMalloc (filterbank->get_d_kernel_gpu_ptr(), mem_size);
-    d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
-    d_kernel = *d_kernel_ptr;
-
+      unsigned mem_size = nchan * ndat * ndim * sizeof(cufftReal);
+        
+      // allocate space for the convolution kernel
+      cudaMalloc (filterbank->get_d_kernel_gpu_ptr(), mem_size);
+      d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
+      d_kernel = *d_kernel_ptr;
+       
+      // copy the kernel accross
+      const float* kernel = filterbank->get_response()->get_datptr(0,0);
+      
+      if (stream)
+        cudaMemcpyAsync(d_kernel, kernel, mem_size, cudaMemcpyHostToDevice, stream);
+      else
+        cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);  
+    }
+    
     nfilt_pos = response->get_impulse_pos();
     unsigned nfilt_tot = nfilt_pos + response->get_impulse_neg();
 
     // points kept from each small fft
     nkeep = freq_res - nfilt_tot;
- 
-    // copy the kernel accross
-    const float* kernel = filterbank->get_response()->get_datptr(0,0);
-    
-    if (stream)
-      cudaMemcpyAsync(d_kernel, kernel, mem_size, cudaMemcpyHostToDevice, stream);
-    else
-      cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
   }
 
   if (!real_to_complex)
