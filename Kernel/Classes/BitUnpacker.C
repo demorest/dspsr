@@ -47,33 +47,47 @@ const dsp::BitTable* dsp::BitUnpacker::get_table () const
 
 void dsp::BitUnpacker::unpack ()
 {
-  const uint64_t   ndat  = input->get_ndat();
+  const uint64_t ndat  = input->get_ndat();
 
   const unsigned nchan = input->get_nchan();
   const unsigned npol  = input->get_npol();
   const unsigned ndim  = input->get_ndim();
+  const unsigned nbit  = input->get_nbit();
 
   const unsigned nskip = npol * nchan * ndim;
   const unsigned fskip = ndim;
 
-  unsigned offset = 0;
+  // Step through the array in small block sizes so that the matrix
+  // transpose (for nchan>1 case) remains cache-friendly.
+  const unsigned blockdat = npol*nchan*ndim > 32 ? npol*nchan*ndim : 32;
+  const unsigned blockbytes = blockdat*nbit/8;
 
-  for (unsigned ichan=0; ichan<nchan; ichan++)
+  const unsigned char* iptr = input->get_rawptr();
+
+  for (uint64_t idat=0; idat<ndat; idat+=blockdat, iptr+=blockbytes)
   {
-    for (unsigned ipol=0; ipol<npol; ipol++)
+    unsigned offset = 0;
+    const unsigned ndatblock = (blockdat>(ndat-idat)) ? ndat-idat : blockdat;
+    for (unsigned ichan=0; ichan<nchan; ichan++)
     {
-      for (unsigned idim=0; idim<ndim; idim++)
+      for (unsigned ipol=0; ipol<npol; ipol++)
       {
-	const unsigned char* from = input->get_rawptr() + offset;
-	float* into = output->get_datptr (ichan, ipol) + idim;
-	unsigned long* hist = get_histogram (offset);
- 
+        for (unsigned idim=0; idim<ndim; idim++)
+        {
+          //offset = idim + ipol*ndim + ichan*npol*ndim;
+          //const unsigned char* from = input->get_rawptr() + offset;
+          const unsigned char* from = iptr + offset;
+          float* into = output->get_datptr (ichan, ipol) + ndim*idat + idim;
+          unsigned long* hist = get_histogram (offset);
+   
 #ifdef _DEBUG
-        cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
+          cerr << "c=" << ichan << " p=" << ipol << " d=" << idim << endl;
 #endif
  
-	unpack (ndat, from, nskip, into, fskip, hist);
-	offset ++;
+          unpack (ndatblock, from, nskip, into, fskip, hist);
+          //unpack (ndat, from, nskip, into, fskip, hist);
+          offset ++;
+        }
       }
     }
   }

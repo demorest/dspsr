@@ -107,12 +107,24 @@ unsigned count (const std::vector<T>& data, T element)
 
 void dsp::LoadToFold::construct () try
 {
+  #if HAVE_CUDA
+  // NOTE: probably want to set this on a device-by-device basis (since multiple
+  // gpu streams are presently set by setting the same device multiple times,
+  // this is written assuming all listed devices are the same)
+  if ( !config->input_stream )
+    cudaStreamCreate( reinterpret_cast<cudaStream_t*>(&config->input_stream) );
+  #endif
+
+  // Separate stream for input memcpy (gpu) allows better copy/execution
+  // parallelization.  This does nothing important if gpus are not being used.
+  SingleThread::set_input_stream(config->input_stream);
   SingleThread::construct ();
 
-#if HAVE_CUDA
-  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  #if HAVE_CUDA
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice()
+                                * config->get_cuda_nstream();
   cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
-#endif
+  #endif
 
   if (manager->get_info()->get_detected())
   {
@@ -159,7 +171,7 @@ void dsp::LoadToFold::construct () try
     if (config->times_minimum_nfft)
     {
       if (report_vitals)
-        cerr << "dspsr: setting filter length to minimum times " 
+        cerr << "dspsr: setting filter length to minimum times "
              << config->times_minimum_nfft << endl;
       kernel->set_times_minimum_nfft (config->times_minimum_nfft);
     }
@@ -218,20 +230,20 @@ void dsp::LoadToFold::construct () try
   if (!config->calibrator_database_filename.empty())
   {
     dsp::PolnCalibration* polcal = new PolnCalibration;
-   
+
     polcal-> set_database_filename (config->calibrator_database_filename);
 
     if (kernel)
     {
       if (!response_product)
         response_product = new ResponseProduct;
-    
+
       response_product->add_response (polcal);
       response_product->add_response (kernel);
-      
+
       response_product->set_copy_index (0);
       response_product->set_match_index (1);
-      
+
       response = response_product;
     }
   }
@@ -251,7 +263,7 @@ void dsp::LoadToFold::construct () try
     TimeSeries* skfilterbank_input = unpacked;
 
 #if HAVE_CUDA
-    if (run_on_gpu) 
+    if (run_on_gpu)
     {
       Unpacker* unpack_on_cpu = 0;
       unpack_on_cpu = manager->get_unpacker()->clone();
@@ -301,7 +313,7 @@ void dsp::LoadToFold::construct () try
     skdetector->set_thresholds (config->sk_m, config->sk_std_devs);
     if (config->sk_chan_start > 0 && config->sk_chan_end < config->filterbank.get_nchan())
       skdetector->set_channel_range (config->sk_chan_start, config->sk_chan_end);
-    skdetector->set_options (config->sk_no_fscr, config->sk_no_tscr, config->sk_no_ft); 
+    skdetector->set_options (config->sk_no_fscr, config->sk_no_tscr, config->sk_no_ft);
 
     skthread->append_operation (skdetector);
 
@@ -318,7 +330,7 @@ void dsp::LoadToFold::construct () try
     // we must return it to the required size for the SKFB
     if (!skresize)
       skresize = new Resize;
-    
+
     skresize->set_input(unpacked);
     skresize->set_output(unpacked);
     operations.push_back (skresize.get());
@@ -341,13 +353,20 @@ void dsp::LoadToFold::construct () try
     // software filterbank constructor
     if (!filterbank)
       filterbank = config->filterbank.create();
+      
+#if HAVE_CUDA
+    // This allows multiple streams on GPU to share one copy of the dedispersion
+    // kernel.  NOTE: Like with the input stream, this should be updated to
+    // check for multiple devices and copy once for each.
+    filterbank->set_d_kernel_gpu_ptr(&(config->d_kernel_gpu));
+#endif
 
     if (!config->input_buffering)
       filterbank->set_buffering_policy (NULL);
 
     filterbank->set_input (unpacked);
     filterbank->set_output (convolved);
-    
+
     if (config->filterbank.get_convolve_when() == Filterbank::Config::During)
     {
       filterbank->set_response (response);
@@ -368,22 +387,22 @@ void dsp::LoadToFold::construct () try
   {
     if (!convolution)
       convolution = new Convolution;
-    
+
     convolution->set_response (response);
     if (!config->integration_turns)
       convolution->set_passband (passband);
-    
+
     if (filterbank_after_dedisp)
     {
-      convolution->set_input  (unpacked);  
+      convolution->set_input  (unpacked);
       convolution->set_output (unpacked);  // inplace
     }
     else
     {
-      convolution->set_input  (convolved);  
+      convolution->set_input  (convolved);
       convolution->set_output (convolved);  // inplace
     }
-    
+
     operations.push_back (convolution.get());
   }
 
@@ -405,10 +424,10 @@ void dsp::LoadToFold::construct () try
 
     if (!phased_filterbank)
     {
-      if (output_subints()) 
+      if (output_subints())
       {
 
-        Subint<PhaseLockedFilterbank> *sub_plfb = 
+        Subint<PhaseLockedFilterbank> *sub_plfb =
           new Subint<PhaseLockedFilterbank>;
 
         if (config->integration_length)
@@ -416,7 +435,7 @@ void dsp::LoadToFold::construct () try
           sub_plfb->set_subint_seconds (config->integration_length);
         }
 
-        else if (config->integration_turns) 
+        else if (config->integration_turns)
         {
           sub_plfb->set_subint_turns (config->integration_turns);
           sub_plfb->set_fractional_pulses (config->fractional_pulses);
@@ -465,7 +484,7 @@ void dsp::LoadToFold::construct () try
 
     return;
     // the phase-locked filterbank does its own detection and folding
-    
+
   }
 
   Reference::To<Fold> presk_fold;
@@ -473,7 +492,7 @@ void dsp::LoadToFold::construct () try
 
   // peform zapping based on the results of the SKFilterbank
   if (config->sk_zap)
-  { 
+  {
     if (config->nosk_too)
     {
       Detection* presk_detect = new Detection;
@@ -584,7 +603,7 @@ void dsp::LoadToFold::construct () try
   {
     if (Operation::verbose)
       cerr << "LoadToFold::construct fourth order moments" << endl;
-              
+
     FourthMoment* fourth = new FourthMoment;
     operations.push_back (fourth);
 
@@ -732,10 +751,10 @@ void dsp::LoadToFold::prepare ()
   {
     if ( config->excision_nsample )
       excision -> set_ndat_per_weight ( config->excision_nsample );
-  
+
     if ( config->excision_threshold > 0 )
       excision -> set_threshold ( config->excision_threshold );
-    
+
     if ( config->excision_cutoff >= 0 )
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
@@ -811,10 +830,10 @@ void dsp::LoadToFold::prepare ()
 
   if (convolution)
   {
-    minimum_samples = convolution->get_minimum_samples () * 
+    minimum_samples = convolution->get_minimum_samples () *
       convolution->get_input()->get_nchan();
     if (report_vitals)
-      cerr << "dspsr: convolution requires at least " 
+      cerr << "dspsr: convolution requires at least "
            << minimum_samples << " samples" << endl;
 
     if (!config->input_buffering)
@@ -857,7 +876,7 @@ void dsp::LoadToFold::prepare ()
     skresize->set_resize_samples (skfb_increment);
 
     if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare block_size will be adjusted by " 
+      cerr << "dsp::LoadToFold::prepare block_size will be adjusted by "
           << skfb_increment << " samples for SKFB" << endl;
   }
 
@@ -958,7 +977,7 @@ void dsp::LoadToFold::build_fold (TimeSeries* to_fold)
   }
 }
 
-dsp::PhaseSeriesUnloader* 
+dsp::PhaseSeriesUnloader*
 dsp::LoadToFold::get_unloader (unsigned ifold)
 {
   if (ifold == unloader.size())
@@ -990,7 +1009,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
     {
       if (Operation::verbose)
 	cerr << "dsp::LoadToFold::build_fold prepare CyclicFold" << endl;
-      
+
       CyclicFold* cs = new CyclicFold;
       cs -> set_mover (config->cyclic_mover);
       cs -> set_nchan (config->cyclic_nchan);
@@ -1006,7 +1025,7 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
       fold = new Fold;
     }
   }
-  else if (config->cyclic_nchan) 
+  else if (config->cyclic_nchan)
   {
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::build_fold prepare Subint<CyclicFold>" << endl;
@@ -1020,29 +1039,29 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
     if (config->integration_length)
     {
       subfold -> set_subint_seconds (config->integration_length);
-	
+
       if (config->minimum_integration_length > 0)
 	unloader->set_minimum_integration_length (config->minimum_integration_length);
     }
     else
-      throw Error (InvalidState, "dsp::LoadToFold::build_fold", 
+      throw Error (InvalidState, "dsp::LoadToFold::build_fold",
 		   "Single-pulse cyclic spectra not supported");
-    
+
     subfold -> set_unloader (unloader);
 
     fold = subfold;
   }
-  else 
+  else
   {
     if (Operation::verbose)
       cerr << "dsp::LoadToFold::build_fold prepare Subint<Fold>" << endl;
 
     Subint<Fold>* subfold = new Subint<Fold>;
-    
+
     if (config->integration_length)
     {
       subfold -> set_subint_seconds (config->integration_length);
-	
+
       if (config->minimum_integration_length > 0)
 	unloader->set_minimum_integration_length (config->minimum_integration_length);
     }
@@ -1085,7 +1104,8 @@ catch (Error& error)
 void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
 {
 #if HAVE_CUDA
-  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice()
+                                * config->get_cuda_nstream();
   cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
 
   if (run_on_gpu)
@@ -1095,7 +1115,7 @@ void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
   }
 #endif
 
-  if (manager->get_info()->get_npol() == 1) 
+  if (manager->get_info()->get_npol() == 1)
   {
     cerr << "Only single polarization detection available" << endl;
     detect->set_output_state( Signal::PP_State );
@@ -1141,7 +1161,7 @@ void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
 void dsp::LoadToFold::configure_fold (unsigned ifold, TimeSeries* to_fold)
 {
   Reference::To<ObservationChange> change;
-  
+
   if (ifold && ifold <= config->additional_pulsars.size())
   {
     change = new ObservationChange;
@@ -1152,21 +1172,21 @@ void dsp::LoadToFold::configure_fold (unsigned ifold, TimeSeries* to_fold)
   {
     if (!change)
       change = new ObservationChange;
-    
+
     Pulsar::Parameters* ephem = config->ephemerides[ifold];
     change->set_source( ephem->get_name() );
     change->set_dispersion_measure( get_dispersion_measure(ephem) );
-    
+
     fold[ifold]->set_pulsar_ephemeris ( config->ephemerides[ifold] );
   }
 
   if (ifold < config->predictors.size())
   {
     fold[ifold]->set_folding_predictor ( config->predictors[ifold] );
-    
+
     Pulsar::SimplePredictor* simple
       = dynamic_kast<Pulsar::SimplePredictor>( config->predictors[ifold] );
-    
+
     if (simple)
     {
       config->dispersion_measure = simple->get_dispersion_measure();
@@ -1183,38 +1203,38 @@ void dsp::LoadToFold::configure_fold (unsigned ifold, TimeSeries* to_fold)
 
       if (!change)
 	change = new ObservationChange;
-      
+
       change->set_source( simple->get_name() );
       change->set_dispersion_measure( simple->get_dispersion_measure() );
     }
-  }    
-  
+  }
+
   fold[ifold]->set_input (to_fold);
-  
+
   if (change)
     fold[ifold]->set_change (change);
-  
+
   if (ifold && ifold <= config->additional_pulsars.size())
   {
     if (!change)
       change = new ObservationChange;
-    
+
     /*
       If additional pulsar names have been specified, then Fold::prepare
-      will have retrieved an ephemeris, and the DM from this ephemeris 
+      will have retrieved an ephemeris, and the DM from this ephemeris
       should make its way into the folded profile.
     */
     const Pulsar::Parameters* ephem = fold[ifold]->get_pulsar_ephemeris ();
     change->set_dispersion_measure( get_dispersion_measure(ephem) );
   }
-  
+
   // fold[ifold]->reset();
-    
+
   if (config->asynchronous_fold)
     asynch_fold[ifold] = new OperationThread( fold[ifold].get() );
   else
     operations.push_back( fold[ifold].get() );
-  
+
 #if HAVE_CUDA
   if (gpu_stream != undefined_stream)
   {
@@ -1243,10 +1263,10 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 
   if (output_subints() && config->subints_per_archive)
   {
-    cerr << "dspsr: Archives with " << 
+    cerr << "dspsr: Archives with " <<
         config->subints_per_archive << " sub-integrations" << endl;
     archiver->set_use_single_archive (true);
-    archiver->set_subints_per_file (config->subints_per_archive); 
+    archiver->set_subints_per_file (config->subints_per_archive);
   }
 
   if (config->integration_turns || config->no_dynamic_extensions)
@@ -1264,7 +1284,7 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
       archiver->set_convention( epoch_convention = new FilenameEpoch );
 
     // If archive_filename was specified, figure out whether
-    // it represents a date string or not by looking for '%' 
+    // it represents a date string or not by looking for '%'
     // characters.
     else if (!config->archive_filename.empty())
     {
@@ -1279,7 +1299,7 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
       archiver->set_convention( epoch_convention = new FilenameEpoch );
   }
 
-  if (epoch_convention && output_subints() 
+  if (epoch_convention && output_subints()
       && (config->single_archive || config->subints_per_archive))
     epoch_convention->report_unload = false;
 
@@ -1315,13 +1335,13 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
 
   if (sample_delay)
     archiver->set_archive_dedispersed (true);
-  
+
   if (config->jobs.size())
     archiver->set_script (config->jobs);
-  
+
   if (fold.size() > 1)
     archiver->set_path_add_source (true);
-  
+
   if (!config->archive_extension.empty())
     archiver->set_extension (config->archive_extension);
 
@@ -1382,7 +1402,7 @@ void dsp::LoadToFold::run ()
   if (log)
     for (unsigned iul=0; iul < unloader.size(); iul++)
       unloader[iul]->set_cerr (*log);
-  
+
   SingleThread::run ();
 }
 
@@ -1430,4 +1450,3 @@ catch (Error& error)
 {
   throw error += "dsp::LoadToFold::finish";
 }
-
