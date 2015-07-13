@@ -44,7 +44,7 @@ namespace dsp {
 
     //! Constructor
     SingleThread ();
-    
+
     //! Destructor
     ~SingleThread ();
 
@@ -87,6 +87,11 @@ namespace dsp {
     unsigned thread_id;
     void set_affinity (int core);
 
+    void set_input_stream (void* _input_stream) { input_stream = _input_stream; }
+
+    // Placeholder for CUDA event signaling a completed input memory transfer
+    void* input_event;
+
   protected:
 
     //! Any special operations that must be performed at the end of data
@@ -106,7 +111,7 @@ namespace dsp {
 	Prepared,    //! preparations completed
 	Run,         //! processing started
 	Done,        //! processing completed
-	Joined       //! completion acknowledged 
+	Joined       //! completion acknowledged
       };
 
     //! Processing state
@@ -135,6 +140,7 @@ namespace dsp {
 
     //! Create a new TimeSeries instance
     TimeSeries* new_time_series ();
+    TimeSeries* new_time_series (bool increase_buffers);
     TimeSeries* new_TimeSeries () { return new_time_series(); }
 
     //! The operations to be performed
@@ -151,6 +157,9 @@ namespace dsp {
 
     Reference::To<Memory> device_memory;
     void* gpu_stream;
+    
+    // Placeholder for CUDA stream in which input memory transfers occur
+    void* input_stream;
 
   };
 
@@ -170,7 +179,7 @@ namespace dsp {
 
     //! Prepare the input according to the configuration
     virtual void prepare (Input*);
-    
+
     //! external function used to prepare the input each time it is opened
     Functor< void(Input*) > input_prepare;
 
@@ -205,6 +214,10 @@ namespace dsp {
     void set_cuda_device (std::string);
     unsigned get_cuda_ndevice () const { return cuda_device.size(); }
 
+    //! set the number of kernel streams per cuda device
+    void set_cuda_nstream (unsigned);
+    unsigned get_cuda_nstream () const { return nstream; }
+
     //! set the number of CPU threads to be used
     void set_nthread (unsigned);
 
@@ -219,6 +232,11 @@ namespace dsp {
 
     //! use input-buffering to compensate for operation edge effects
     bool input_buffering;
+
+    // keep input copies onto cuda device in their own stream so they
+    // don't overlap (allows them to be faster and encourages staggered
+    // kernel operations in other streams)
+    bool use_input_stream;
 
     //! use weighted time series to flag bad data
     bool weighted_time_series;
@@ -249,6 +267,9 @@ namespace dsp {
     //! CUDA devices on which computations will take place
     std::vector<unsigned> cuda_device;
 
+    //! number of kernel streams per cuda device
+    unsigned nstream;
+
     //! application can make use of multiple cores
     bool can_thread;
 
@@ -268,8 +289,3 @@ namespace dsp {
 }
 
 #endif // !defined(__SingleThread_h)
-
-
-
-
-

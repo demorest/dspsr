@@ -67,6 +67,9 @@ namespace dsp {
     class Engine;
     void set_engine (Engine*);
 
+    void set_d_kernel_gpu_ptr (void** dk_ptr) { d_kernel_gpu_ptr = dk_ptr; }
+    void** get_d_kernel_gpu_ptr () { return d_kernel_gpu_ptr; }
+
   protected:
 
     //! Perform the convolution transformation on the input TimeSeries
@@ -91,6 +94,9 @@ namespace dsp {
 
     //! Interface to alternate processing engine (e.g. GPU)
     Reference::To<Engine> engine;
+    
+    // Points to d_kernel_gpu defined in LoadToFoldConfig
+    void** d_kernel_gpu_ptr;
 
   private:
 

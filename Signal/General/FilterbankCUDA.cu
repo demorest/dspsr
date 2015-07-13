@@ -72,6 +72,11 @@ CUDA::FilterbankEngine::~FilterbankEngine ()
 
 void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 {
+  // A reference to the location of the dedispersion kernel on the GPU is
+  // kept separate so that it only has to be loaded once
+  float2** d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
+  d_kernel = *d_kernel_ptr;
+  
   freq_res = filterbank->get_freq_res ();
   nchan_subband = filterbank->get_nchan_subband();
 
@@ -100,7 +105,7 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 			"cufftPlan1d(plan_fwd, CUFFT_C2C)");
   }
 
-  result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
+  result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_FFTW_PADDING);
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
 		      "cufftSetCompatibilityMode(plan_fwd)");
@@ -113,15 +118,18 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 
   DEBUG("CUDA::FilterbankEngine::setup fwd FFT plan set");
 
+  // if inverse FFT is necessary
   if (freq_res > 1)
   {
-    result = cufftPlan1d (&plan_bwd, freq_res, CUFFT_C2C, nchan_subband);
+    int n[1] = { freq_res };
+    result = cufftPlanMany (&plan_bwd, 1, n, NULL, 0, 0, NULL, 0, 0,
+                            CUFFT_C2C, nchan_subband);
     if (result != CUFFT_SUCCESS)
-      throw CUFFTError (result, "CUDA::FilterbankEngine::setup", 
-			"cufftPlan1d(plan_bwd)");
+      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
+            "cufftPlanMany(plan_bwd)");
 
     // optimal performance for CUFFT regarding data layout
-    result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
+    result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_FFTW_PADDING);
     if (result != CUFFT_SUCCESS)
       throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
 			"cufftSetCompatibilityMode(plan_bwd)");
@@ -142,33 +150,38 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   if (filterbank->has_response())
   {
     const dsp::Response* response = filterbank->get_response();
+    
+    if (!d_kernel)
+    {
+      unsigned nchan = response->get_nchan();
+      unsigned ndat = response->get_ndat();
+      unsigned ndim = response->get_ndim();
 
-    unsigned nchan = response->get_nchan();
-    unsigned ndat = response->get_ndat();
-    unsigned ndim = response->get_ndim();
+      assert( nchan == filterbank->get_nchan() );
+      assert( ndat == freq_res );
+      assert( ndim == 2 ); // complex
 
-    assert( nchan == filterbank->get_nchan() );
-    assert( ndat == freq_res );
-    assert( ndim == 2 ); // complex
-
-    unsigned mem_size = nchan * ndat * ndim * sizeof(cufftReal);
-
-    // allocate space for the convolution kernel
-    cudaMalloc ((void**)&d_kernel, mem_size);
-
+      unsigned mem_size = nchan * ndat * ndim * sizeof(cufftReal);
+        
+      // allocate space for the convolution kernel
+      cudaMalloc (filterbank->get_d_kernel_gpu_ptr(), mem_size);
+      d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
+      d_kernel = *d_kernel_ptr;
+       
+      // copy the kernel accross
+      const float* kernel = filterbank->get_response()->get_datptr(0,0);
+      
+      if (stream)
+        cudaMemcpyAsync(d_kernel, kernel, mem_size, cudaMemcpyHostToDevice, stream);
+      else
+        cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);  
+    }
+    
     nfilt_pos = response->get_impulse_pos();
     unsigned nfilt_tot = nfilt_pos + response->get_impulse_neg();
 
     // points kept from each small fft
     nkeep = freq_res - nfilt_tot;
- 
-    // copy the kernel accross
-    const float* kernel = filterbank->get_response()->get_datptr(0,0);
-    
-    if (stream)
-      cudaMemcpyAsync(d_kernel, kernel, mem_size, cudaMemcpyHostToDevice, stream);
-    else
-      cudaMemcpy (d_kernel, kernel, mem_size, cudaMemcpyHostToDevice);
   }
 
   if (!real_to_complex)
@@ -273,7 +286,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
         if (out)
         {
           output_ptr = out->get_datptr (ichan*nchan_subband, ipol) + out_offset;
-          output_span = out->get_datptr (ichan*nchan_subband+1, ipol) - out->get_datptr (ichan*nchan_subband, ipol);
+          output_span = out->get_datptr (1, ipol) - out->get_datptr (0, ipol);
 
           const float2* input = cscratch + nfilt_pos;
           unsigned input_stride = freq_res;

@@ -14,6 +14,9 @@ dsp::LoadToFold::Config::Config ()
   can_cuda = true;
   can_thread = true;
 
+  // useful for gpu filterbank
+  input_stream = (void*) 0;
+
   minimum_RAM = 0;
   maximum_RAM = 256 * 1024 * 1024;
   times_minimum_ndat = 1;
