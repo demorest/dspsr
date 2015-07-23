@@ -71,5 +71,5 @@ include $(top_srcdir)/config/Makefile.include
 
 LDADD = libClasses.la
 
-AM_CPPFLAGS += @CUFFT_CFLAGS@
+AM_CPPFLAGS += @CUFFT_CFLAGS@ @CUDA_CFLAGS@
 

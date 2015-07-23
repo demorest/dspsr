@@ -20,3 +20,5 @@ LDADD = $(top_builddir)/Kernel/libdspbase.la
 
 include $(top_srcdir)/config/Makefile.include
 
+AM_CPPFLAGS += @CUDA_CFLAGS@
+
