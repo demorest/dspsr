@@ -260,17 +260,20 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
           CHECK_ERROR ("CUDA::FilterbankEngine::perform multiply", stream);
         }
 
-        DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
-        result = cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
-        if (result != CUFFT_SUCCESS)
-          throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecC2C (inverse)");
+        if (plan_bwd)
+        {
+          DEBUG("CUDA::FilterbankEngine::perform BACKWARD FFT");
+          result = cufftExecC2C (plan_bwd, cscratch, cscratch, CUFFT_INVERSE);
+          if (result != CUFFT_SUCCESS)
+            throw CUFFTError (result, "CUDA::FilterbankEngine::perform", "cufftExecC2C (inverse)");
 
-        CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD", stream);
+          CHECK_ERROR ("CUDA::FilterbankEngine::perform cufftExecC2C BACKWARD", stream);
+        }
 
         if (out)
         {
-          output_ptr = out->get_datptr (0, ipol) + out_offset;
-          output_span = out->get_datptr (1, ipol) - out->get_datptr (0, ipol);
+          output_ptr = out->get_datptr (ichan*nchan_subband, ipol) + out_offset;
+          output_span = out->get_datptr (ichan*nchan_subband+1, ipol) - out->get_datptr (ichan*nchan_subband, ipol);
 
           const float2* input = cscratch + nfilt_pos;
           unsigned input_stride = freq_res;

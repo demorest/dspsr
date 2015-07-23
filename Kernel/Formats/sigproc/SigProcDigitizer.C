@@ -273,6 +273,7 @@ void dsp::SigProcDigitizer::pack_float () try
 	outptr[ichan] = inptr[ channel(ichan) ];
 
       inptr += nchan;
+      outptr += nchan;
     }
     return;
   }

@@ -468,9 +468,49 @@ void dsp::LoadToFold::construct () try
     
   }
 
+  Reference::To<Fold> presk_fold;
+  Reference::To<Archiver> presk_unload;
+
   // peform zapping based on the results of the SKFilterbank
   if (config->sk_zap)
   { 
+    if (config->nosk_too)
+    {
+      Detection* presk_detect = new Detection;
+
+      // set up an out-of-place detection to effect a fork in the signal path
+      TimeSeries* presk_detected = new_time_series();
+
+#if HAVE_CUDA
+    if (run_on_gpu)
+      presk_detected->set_memory (device_memory);
+#endif
+
+      presk_detect->set_input (convolved);
+      presk_detect->set_output (presk_detected);
+
+      configure_detection (presk_detect, 0);
+
+      operations.push_back (presk_detect);
+
+      presk_unload = new Archiver;
+      presk_unload->set_extension( ".nosk" );
+      prepare_archiver( presk_unload );
+
+      build_fold (presk_fold, presk_unload);
+
+      presk_fold->set_input( presk_detected );
+
+#if HAVE_CUDA
+    if (run_on_gpu)
+      presk_fold->set_engine (new CUDA::FoldEngine(stream, false));
+#endif
+
+      presk_fold->prepare( manager->get_info() );
+      presk_fold->reset();
+
+      operations.push_back (presk_fold.get());
+    }
 
 #if HAVE_CUDA
     if (run_on_gpu)
@@ -531,55 +571,7 @@ void dsp::LoadToFold::construct () try
   detect->set_input (convolved);
   detect->set_output (convolved);
 
-#if HAVE_CUDA
-  if (run_on_gpu)
-  {
-    config->ndim = 2;
-    detect->set_engine (new CUDA::DetectionEngine(stream));
-  }
-#endif
-
-  if (manager->get_info()->get_npol() == 1) 
-  {
-    cerr << "Only single polarization detection available" << endl;
-    detect->set_output_state( Signal::PP_State );
-  }
-  else
-  {
-    if (config->fourth_moment)
-    {
-      detect->set_output_state (Signal::Stokes);
-      detect->set_output_ndim (4);
-    }
-    else if (config->npol == 4)
-    {
-      detect->set_output_state (Signal::Coherence);
-      detect->set_output_ndim (config->ndim);
-    }
-    else if (config->npol == 3)
-      detect->set_output_state (Signal::NthPower);
-    else if (config->npol == 2)
-      detect->set_output_state (Signal::PPQQ);
-    else if (config->npol == 1)
-      detect->set_output_state (Signal::Intensity);
-    else
-      throw Error( InvalidState, "LoadToFold::construct",
-                   "invalid npol config=%d input=%d",
-                   config->npol, manager->get_info()->get_npol() );
-  }
-
-
-  if (detect->get_order_supported (TimeSeries::OrderTFP)
-      && noperations == operations.size())      // no operations yet added
-  {
-    Unpacker* unpacker = manager->get_unpacker();
-
-    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
-    {
-      cerr << "unpack more efficiently in TFP order" << endl;
-      unpacker->set_output_order (TimeSeries::OrderTFP);
-    }
-  }
+  configure_detection (detect, noperations);
 
   operations.push_back (detect.get());
 
@@ -603,6 +595,13 @@ void dsp::LoadToFold::construct () try
 
   build_fold (detected);
 
+  if (presk_fold)
+  {
+    // presk fold and unload are pushed back after the primary ones are built
+    fold.push_back( presk_fold );
+    unloader.push_back( presk_unload.get() );
+  }
+
   if (config->sk_fold)
   {
     PhaseSeriesUnloader* unload = get_unloader( get_nfold() );
@@ -618,7 +617,6 @@ void dsp::LoadToFold::construct () try
     fold.push_back( skfold );
     operations.push_back( skfold.get() );
   }
-
 }
 catch (Error& error)
 {
@@ -1082,6 +1080,62 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
 catch (Error& error)
 {
   throw error += "dsp::LoadToFold::build_fold";
+}
+
+void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
+{
+#if HAVE_CUDA
+  bool run_on_gpu = thread_id < config->get_cuda_ndevice();
+  cudaStream_t stream = reinterpret_cast<cudaStream_t>( gpu_stream );
+
+  if (run_on_gpu)
+  {
+    config->ndim = 2;
+    detect->set_engine (new CUDA::DetectionEngine(stream));
+  }
+#endif
+
+  if (manager->get_info()->get_npol() == 1) 
+  {
+    cerr << "Only single polarization detection available" << endl;
+    detect->set_output_state( Signal::PP_State );
+  }
+  else
+  {
+    if (config->fourth_moment)
+    {
+      detect->set_output_state (Signal::Stokes);
+      detect->set_output_ndim (4);
+    }
+    else if (config->npol == 4)
+    {
+      detect->set_output_state (Signal::Coherence);
+      detect->set_output_ndim (config->ndim);
+    }
+    else if (config->npol == 3)
+      detect->set_output_state (Signal::NthPower);
+    else if (config->npol == 2)
+      detect->set_output_state (Signal::PPQQ);
+    else if (config->npol == 1)
+      detect->set_output_state (Signal::Intensity);
+    else
+      throw Error( InvalidState, "LoadToFold::construct",
+                   "invalid npol config=%d input=%d",
+                   config->npol, manager->get_info()->get_npol() );
+  }
+
+
+  if (detect->get_order_supported (TimeSeries::OrderTFP)
+      && noperations == operations.size())      // no operations yet added
+  {
+    Unpacker* unpacker = manager->get_unpacker();
+
+    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
+    {
+      cerr << "unpack more efficiently in TFP order" << endl;
+      unpacker->set_output_order (TimeSeries::OrderTFP);
+    }
+  }
 }
 
 void dsp::LoadToFold::configure_fold (unsigned ifold, TimeSeries* to_fold)

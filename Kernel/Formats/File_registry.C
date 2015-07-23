@@ -110,6 +110,11 @@ static dsp::File::Register::Enter<dsp::LOFAR_DALFile> register_lofar_dal;
 static Registry::List<dsp::File>::Enter<dsp::LuMPFile> register_lump;
 #endif
 
+#if HAVE_lwa
+#include "dsp/LWAFile.h"
+static Registry::List<dsp::File>::Enter<dsp::LWAFile> register_lwa;
+#endif
+
 #if HAVE_mark4
 #include "dsp/Mark4File.h"
 static dsp::File::Register::Enter<dsp::Mark4File> register_mark4;

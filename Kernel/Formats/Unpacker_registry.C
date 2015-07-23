@@ -78,6 +78,8 @@ static dsp::Unpacker::Register::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #if HAVE_dummy
 #include "dsp/DummyUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::DummyUnpacker> dummy;
+#include "dsp/DummyFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::DummyFourBit> dummy4;
 #endif
 
 #if HAVE_fadc
@@ -99,6 +101,15 @@ static dsp::Unpacker::Register::Enter<dsp::GMRTFilterbank16> gmrt16;
 #if HAVE_guppi
 #include "dsp/GUPPIUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::GUPPIUnpacker> guppi;
+#include "dsp/GUPPIFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPIFourBit> guppi4;
+#include "dsp/GUPPITwoBitCorrection.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
+#endif
+
+#if HAVE_kat
+#include "dsp/KAT7Unpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::KAT7Unpacker> kat7;
 #endif
 
 #if HAVE_lofar_dal
@@ -119,6 +130,11 @@ static dsp::Unpacker::Register::Enter<dsp::LBADR64_TwoBitCorrection> lbadr64;
 #if HAVE_lump
 #include "dsp/LuMPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::LuMPUnpacker> lump;
+#endif
+
+#if HAVE_lwa
+#include "dsp/LWAUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::LWAUnpacker> lwa;
 #endif
 
 #if HAVE_spda1k

@@ -189,6 +189,7 @@ void dsp::Detection::resize_output ()
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
+    get_output()->set_zeroed_data (input->get_zeroed_data());
   }
   else if (reshape)
   {
@@ -222,9 +223,12 @@ void dsp::Detection::square_law ()
     cerr << "dsp::Detection::square_law" << endl;
 
   if (engine)
-    throw Error (InvalidState, "dsp::Detection::square_law",
-                 "square law detection not yet implemented for the GPU");
-
+  {
+    if (verbose)
+      cerr << "dsp::Detection::square_law using Engine engine=" << (void *) engine << endl;
+    engine->square_law (input, output);
+    return;
+  }
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
   
@@ -388,16 +392,16 @@ void dsp::Detection::polarimetry () try
     if (inplace && ndim != 2)
     {
       if (verbose && ichan == 0)
-	cerr << "dsp::Detection::polarimetry copy_bytes="
-	     << copy_bytes << endl;
+	      cerr << "dsp::Detection::polarimetry copy_bytes=" 
+             << copy_bytes << endl;
 	      
       memcpy (copyp, p, size_t(copy_bytes));
       p = copyp;
       
       if (ndim == 1)
       {
-	memcpy (copyq, q, size_t(copy_bytes));
-	q = copyq;
+        memcpy (copyq, q, size_t(copy_bytes));
+        q = copyq;
       }
     }
     
@@ -432,7 +436,7 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
     if( inplace )
     {
       r[0] = get_output()->get_datptr (ichan,0);
-      r[2] = get_output()->get_datptr (ichan,0);
+      r[2] = get_output()->get_datptr (ichan,1);
       uint64_t diff = uint64_t(r[2] - r[0])/2;
       r[1] = r[0] + diff;
       r[3] = r[2] + diff;

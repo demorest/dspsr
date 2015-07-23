@@ -6,7 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/BPSRCrossUnpacker.h"
-#include "dsp/DADABuffer.h"
+//#include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
 #include "Error.h"
 
@@ -18,6 +18,7 @@ using namespace std;
 dsp::BPSRCrossUnpacker::BPSRCrossUnpacker (const char* name) : HistUnpacker (name)
 {
   gain_polx = -1;
+  unpack_ppqq_only = false;
 }
 
 //! Return true if the unpacker support the specified output order
@@ -30,6 +31,14 @@ bool dsp::BPSRCrossUnpacker::get_order_supported (TimeSeries::Order order) const
 void dsp::BPSRCrossUnpacker::set_output_order (TimeSeries::Order order)
 {
   output_order = order;
+}
+
+bool dsp::BPSRCrossUnpacker::set_output_ppqq ()
+{
+  //cerr << "dsp::BPSRCrossUnpacker::set_output_ppqq" << endl;
+  unpack_ppqq_only = true;
+  output->set_npol(2);
+  output->set_state(Signal::PPQQ);
 }
 
 bool dsp::BPSRCrossUnpacker::matches (const Observation* observation)
@@ -71,6 +80,14 @@ void dsp::BPSRCrossUnpacker::unpack ()
   const unsigned pol_offset_even[4] = {0, 2, 4, 5};
   const unsigned pol_offset_odd[4]  = {1, 3, 6, 7};
 
+  if (unpack_ppqq_only)
+  {
+    //cerr << "dsp::BPSRCrossUnpacker::unpack: npol=2 state=PPQQ" << endl;
+    output->set_npol(2);
+    output->set_state(Signal::PPQQ);
+    output->resize(ndat);
+  }
+
   if (gain_polx < 0)
   {
     const Input * in = input->get_loader();
@@ -80,10 +97,35 @@ void dsp::BPSRCrossUnpacker::unpack ()
     {
       if (info)
       {
-        unsigned polx;
-        if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
+        // attempt to get the FACTOR_POLX from the header. This completely describes
+        // the factor necessary to correct the AB* values
+        try
         {
-          gain_polx = (2 * 256 * 256) / (polx * polx);
+          if (info->custom_header_get ("FACTOR_POLX", "%f", &gain_polx) == 1)
+          {
+            if (verbose)
+              cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX=" << gain_polx << endl;
+          }
+        }
+        catch (Error& error)
+        {
+          // older method that makes the assumption that the AA and BB are in
+          // bit window 1. AB* is in bit window 3. The correct calculation is
+          //    gain_polx = polx * 2^11 / (2^8 * (bwx - bw))
+          unsigned polx;
+          if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
+          {
+            if (polx == 0)
+            {
+              gain_polx = 1;
+            }
+            else
+            {
+              gain_polx = ((float) polx) / 32;
+            }
+          }
+          if (verbose)
+            cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX=" << polx << " FACTOR_POLX=" << gain_polx << endl;
         }
       }
     }
@@ -131,7 +173,8 @@ void dsp::BPSRCrossUnpacker::unpack ()
           {
             for (unsigned bt = 0; bt < ndat; bt++)
             {
-              into[bt] = float( ((char) *from) ) / gain_polx;
+              if (!unpack_ppqq_only)
+                into[bt] = float( ((char) *from) ) / gain_polx;
               from += step;
             }
           }
@@ -148,24 +191,41 @@ break;
       float* into = output->get_dattfp();
 
       const uint64_t nfloat = npol * nchan * ndat;
-      for (uint64_t ifloat=0; ifloat < nfloat; ifloat += 8)
-      {
-        into[0] = float( from[0] ) + 0.5;
-        into[1] = float( from[2] ) + 0.5;
-        into[2] = float( ((char) from[4]) ) + 0.5;
-        into[3] = float( ((char) from[5]) ) + 0.5;
-        into[4] = float( from[1] ) + 0.5;
-        into[5] = float( from[3] ) + 0.5;
-        into[6] = float( ((char) from[6]) ) + 0.5;
-        into[7] = float( ((char) from[7]) ) + 0.5;
 
-        into[2] /= gain_polx;
-        into[3] /= gain_polx;
-        into[6] /= gain_polx;
-        into[7] /= gain_polx;
-        
-        into += 8;
-        from += 8;
+      if (unpack_ppqq_only)
+      {
+        for (uint64_t ifloat=0; ifloat < nfloat; ifloat += 8)
+        {
+          into[0] = float( from[0] ) + 0.5;
+          into[1] = float( from[2] ) + 0.5;
+          into[2] = float( from[1] ) + 0.5;
+          into[3] = float( from[3] ) + 0.5;
+
+          into += 4;
+          from += 8;
+        }
+      }
+      else
+      {
+        for (uint64_t ifloat=0; ifloat < nfloat; ifloat += 8)
+        {
+          into[0] = float( from[0] ) + 0.5;
+          into[1] = float( from[2] ) + 0.5;
+          into[2] = float( ((char) from[4]) ) + 0.5;
+          into[3] = float( ((char) from[5]) ) + 0.5;
+          into[4] = float( from[1] ) + 0.5;
+          into[5] = float( from[3] ) + 0.5;
+          into[6] = float( ((char) from[6]) ) + 0.5;
+          into[7] = float( ((char) from[7]) ) + 0.5;
+
+          into[2] /= gain_polx;
+          into[3] /= gain_polx;
+          into[6] /= gain_polx;
+          into[7] /= gain_polx;
+          
+          into += 8;
+          from += 8;
+        }
       }
     }
 break;

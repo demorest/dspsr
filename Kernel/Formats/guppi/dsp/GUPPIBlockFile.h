@@ -73,6 +73,15 @@ namespace dsp {
     //! Location in current data block
     uint64_t current_block_byte;
 
+    //! Current block packet index
+    int64_t current_pktidx;
+
+    //! Number of bytes of zeros to emit
+    int64_t current_nzero_byte;
+
+    //! Expected packet index incrememnt
+    uint64_t packets_per_block;
+
   };
 
 }
