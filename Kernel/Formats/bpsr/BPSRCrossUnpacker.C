@@ -97,10 +97,35 @@ void dsp::BPSRCrossUnpacker::unpack ()
     {
       if (info)
       {
-        unsigned polx;
-        if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
+        // attempt to get the FACTOR_POLX from the header. This completely describes
+        // the factor necessary to correct the AB* values
+        try
         {
-          gain_polx = (2 * 256 * 256) / (polx * polx);
+          if (info->custom_header_get ("FACTOR_POLX", "%f", &gain_polx) == 1)
+          {
+            if (verbose)
+              cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX=" << gain_polx << endl;
+          }
+        }
+        catch (Error& error)
+        {
+          // older method that makes the assumption that the AA and BB are in
+          // bit window 1. AB* is in bit window 3. The correct calculation is
+          //    gain_polx = polx * 2^11 / (2^8 * (bwx - bw))
+          unsigned polx;
+          if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
+          {
+            if (polx == 0)
+            {
+              gain_polx = 1;
+            }
+            else
+            {
+              gain_polx = ((float) polx) / 32;
+            }
+          }
+          if (verbose)
+            cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX=" << polx << " FACTOR_POLX=" << gain_polx << endl;
         }
       }
     }
