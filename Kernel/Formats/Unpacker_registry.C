@@ -60,6 +60,11 @@ static dsp::Unpacker::Register::Enter<dsp::BPSRCrossUnpacker> bpsrcross;
 static dsp::Unpacker::Register::Enter<dsp::CASPSRUnpacker> caspsr;
 #endif
 
+#if HAVE_ska1
+#include "dsp/SKA1Unpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::SKA1Unpacker> ska1;
+#endif
+
 #if HAVE_cpsr
 #include "dsp/CPSRTwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::CPSRTwoBitCorrection> cpsr;
