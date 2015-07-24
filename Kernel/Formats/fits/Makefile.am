@@ -1,12 +1,12 @@
 noinst_LTLIBRARIES = libfits.la
 
 nobase_include_HEADERS = dsp/FITSUnpacker.h dsp/FITSFile.h \
-			 dsp/GUPPIFITSUnpacker.h dsp/FITSDigitizer.h \
-             dsp/FITSOutputFile.h
+			 dsp/GUPPIFITSUnpacker.h dsp/FITSDigitizer.h 
+             #dsp/FITSOutputFile.h
 
 libfits_la_SOURCES = FITSUnpacker.C GUPPIFITSUnpacker.C \
-		     FITSFile.C fits_params.h FITSDigitizer.C\
-             FITSOutputFile.C
+		     FITSFile.C fits_params.h FITSDigitizer.C
+             #FITSOutputFile.C
 
 #############################################################################
 #

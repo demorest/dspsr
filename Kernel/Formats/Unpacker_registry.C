@@ -102,6 +102,11 @@ static dsp::Unpacker::Register::Enter<dsp::GUPPIFourBit> guppi4;
 static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
 #endif
 
+#if HAVE_kat
+#include "dsp/KAT7Unpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::KAT7Unpacker> kat7;
+#endif
+
 #if HAVE_lofar_dal
 #include "dsp/LOFAR_DALUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::LOFAR_DALUnpacker> lofar_dal;
