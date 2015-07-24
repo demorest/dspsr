@@ -189,6 +189,7 @@ void dsp::Detection::resize_output ()
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
+    get_output()->set_zeroed_data (input->get_zeroed_data());
   }
   else if (reshape)
   {
@@ -222,9 +223,12 @@ void dsp::Detection::square_law ()
     cerr << "dsp::Detection::square_law" << endl;
 
   if (engine)
-    throw Error (InvalidState, "dsp::Detection::square_law",
-                 "square law detection not yet implemented for the GPU");
-
+  {
+    if (verbose)
+      cerr << "dsp::Detection::square_law using Engine engine=" << (void *) engine << endl;
+    engine->square_law (input, output);
+    return;
+  }
   const unsigned nchan = input->get_nchan();
   const unsigned ichan_start = input->get_ichan_start();
   const unsigned nchan_bundle = input->get_nchan_bundle();
