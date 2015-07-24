@@ -63,6 +63,11 @@ void dsp::Filterbank::make_preparations ()
     throw Error (InvalidState, "dsp::Filterbank::make_preparations",
                  "output nchan=%d not a multiple of input nchan=%d",
                  nchan, input->get_nchan());
+                 
+  if (input->get_nchan() % nbundle != 0)
+    throw Error (InvalidState, "dsp::Filterbank::make_preparations",
+                 "input nchan=%d not a multiple of nbundle=%d",
+                 input->get_nchan(), nbundle);
 
   //! Number of channels outputted per input channel
   nchan_subband = nchan / input->get_nchan();
@@ -266,10 +271,14 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
   if (set_ndat)
   {
     if (verbose)
-      cerr << "dsp::Filterbank::prepare_output set ndat=" << ndat << endl;
+      cerr << "dsp::Filterbank::prepare_output set ndat=" << ndat
+           << " nbundle=" << nbundle
+           << " input_bundle=" << input_bundle << endl;
 
     output->set_npol( input->get_npol() );
     output->set_nchan( nchan );
+    output->set_total_nbundle( nbundle );
+    output->set_input_bundle( input_bundle );
     output->set_ndim( 2 );
     output->set_state( Signal::Analytic);
     output->resize( ndat );
@@ -293,6 +302,8 @@ void dsp::Filterbank::prepare_output (uint64_t ndat, bool set_ndat)
   output->copy_configuration ( get_input() );
 
   output->set_nchan( nchan );
+  output->set_total_nbundle( nbundle );
+  output->set_input_bundle( input_bundle );
   output->set_ndim( 2 );
   output->set_state( Signal::Analytic );
 
@@ -449,10 +460,14 @@ void dsp::Filterbank::transformation ()
   else if (input_sample >= 0)
     output->set_input_sample ((input_sample / nsamp_step) * nkeep);
 
+  // set the input bundle
+  output->set_input_bundle (input_bundle);
+
   if (verbose)
     cerr << "dsp::Filterbank::transformation after prepare output"
             " ndat=" << output->get_ndat() << 
-            " input_sample=" << output->get_input_sample() << endl;
+            " input_sample=" << output->get_input_sample() <<
+            " input_bundle=" << output->get_input_bundle() << endl;
 
   if (!npart)
   {
@@ -550,7 +565,9 @@ void dsp::Filterbank::filterbank ()
   // /////////////////////////////////////////////////////////////////////
   else
   {
-    for (unsigned input_ichan=0; input_ichan<input->get_nchan(); input_ichan++)
+    unsigned const ichan_start = input_bundle * input->get_nchan()/nbundle;
+    unsigned const ichan_end = ichan_start + input->get_nchan()/nbundle;
+    for (unsigned input_ichan=ichan_start; input_ichan<ichan_end; input_ichan++)
     {
 
       for (ipart=0; ipart<npart; ipart++)

@@ -25,6 +25,10 @@ namespace dsp {
 
     void set_kind (cudaMemcpyKind k) { kind = k; }
     void prepare ();
+    
+    // If transferring all input in its own stream, need the stream and an event
+    // signaling transfer completion
+    void set_input_stream (cudaStream_t _input_stream, cudaEvent_t _event);
 
     Operation::Function get_function () const { return Operation::Structural; }
 
@@ -36,6 +40,10 @@ namespace dsp {
     cudaMemcpyKind kind;
 
     cudaStream_t stream;
+
+    cudaStream_t input_stream;
+
+    cudaEvent_t event;
 
   };
 

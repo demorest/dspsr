@@ -207,6 +207,8 @@ void dsp::Convolution::prepare_output ()
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
+  output->set_total_nbundle(input->get_total_nbundle());
+  output->set_input_bundle(input->get_input_bundle());
 
   output->set_state( Signal::Analytic );
   output->set_ndim( 2 );

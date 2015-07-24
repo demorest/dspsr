@@ -44,7 +44,7 @@ namespace dsp {
 
     //! Constructor
     SingleThread ();
-    
+
     //! Destructor
     ~SingleThread ();
 
@@ -87,6 +87,14 @@ namespace dsp {
     unsigned thread_id;
     void set_affinity (int core);
 
+    void set_input_stream (void* _input_stream) { input_stream = _input_stream; }
+
+    // Placeholder for CUDA event signaling a completed input memory transfer
+    void* input_event;
+
+    // Increases input_bundle by 1 or sets it back to 0   
+    void increment_input_bundle();
+
   protected:
 
     //! Any special operations that must be performed at the end of data
@@ -98,15 +106,15 @@ namespace dsp {
     //! Processing thread states
     enum State
       {
-	Fail,        //! an error has occurred
-	Idle,        //! nothing happening
-	Construct,   //! request to construct
-	Constructed, //! construction completed
-	Prepare,     //! request to prepare
-	Prepared,    //! preparations completed
-	Run,         //! processing started
-	Done,        //! processing completed
-	Joined       //! completion acknowledged 
+        Fail,        //! an error has occurred
+        Idle,        //! nothing happening
+        Construct,   //! request to construct
+        Constructed, //! construction completed
+        Prepare,     //! request to prepare
+        Prepared,    //! preparations completed
+        Run,         //! processing started
+        Done,        //! processing completed
+        Joined       //! completion acknowledged
       };
 
     //! Processing state
@@ -135,6 +143,7 @@ namespace dsp {
 
     //! Create a new TimeSeries instance
     TimeSeries* new_time_series ();
+    TimeSeries* new_time_series (bool increase_buffers);
     TimeSeries* new_TimeSeries () { return new_time_series(); }
 
     //! The operations to be performed
@@ -151,6 +160,12 @@ namespace dsp {
 
     Reference::To<Memory> device_memory;
     void* gpu_stream;
+    
+    // Placeholder for CUDA stream in which input memory transfers occur
+    void* input_stream;
+
+    // Current input bundle
+    unsigned input_bundle;
 
   };
 
@@ -170,7 +185,7 @@ namespace dsp {
 
     //! Prepare the input according to the configuration
     virtual void prepare (Input*);
-    
+
     //! external function used to prepare the input each time it is opened
     Functor< void(Input*) > input_prepare;
 
@@ -201,9 +216,17 @@ namespace dsp {
     //! run repeatedly on the same input
     bool run_repeatedly;
 
+    //! set number of bundles into which input channels are divided
+    void set_nbundle (unsigned);
+    unsigned get_nbundle () const { return nbundle; }
+
     //! set the cuda devices to be used
     void set_cuda_device (std::string);
     unsigned get_cuda_ndevice () const { return cuda_device.size(); }
+
+    //! set the number of kernel streams per cuda device
+    void set_cuda_nstream (unsigned);
+    unsigned get_cuda_nstream () const { return nstream; }
 
     //! set the number of CPU threads to be used
     void set_nthread (unsigned);
@@ -219,6 +242,11 @@ namespace dsp {
 
     //! use input-buffering to compensate for operation edge effects
     bool input_buffering;
+
+    // keep input copies onto cuda device in their own stream so they
+    // don't overlap (allows them to be faster and encourages staggered
+    // kernel operations in other streams)
+    bool use_input_stream;
 
     //! use weighted time series to flag bad data
     bool weighted_time_series;
@@ -249,11 +277,17 @@ namespace dsp {
     //! CUDA devices on which computations will take place
     std::vector<unsigned> cuda_device;
 
+    //! number of kernel streams per cuda device
+    unsigned nstream;
+
     //! application can make use of multiple cores
     bool can_thread;
 
     //! CPUs on which threads will run
     std::vector<unsigned> affinity;
+
+    //! Number of bundles into which input channels are divided
+    unsigned nbundle;
 
     //! number of CPU threads
     unsigned nthread;
@@ -268,8 +302,3 @@ namespace dsp {
 }
 
 #endif // !defined(__SingleThread_h)
-
-
-
-
-

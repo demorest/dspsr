@@ -36,7 +36,7 @@ namespace CUDA
   class FilterbankEngine : public dsp::Filterbank::Engine
   {
     unsigned nstream;
-
+    
   public:
 
     //! Default Constructor

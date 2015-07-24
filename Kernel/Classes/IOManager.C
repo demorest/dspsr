@@ -356,13 +356,16 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
   unsigned nchan = info->get_nchan();
 
   // each nbit number will be unpacked into a float
-  double nbyte = double(nbit)/8 + copies * sizeof(float);
+  double nbyte_packed = double(nbit)/8;
+  double nbyte_unpacked = copies * sizeof(float);
 
   if (verbose)
     cerr << "dsp::IOManager::set_block_size copies=" << copies
-         << " nbit=" << nbit << " nbyte=" << nbyte << endl;
+         << " nbit=" << nbit << " nbyte_packed=" << nbyte_packed
+         << " nbyte_unpacked=" << nbyte_unpacked 
+         << " nbyte_unpacked/nbundle=" << nbyte_unpacked/nbundle << endl;
 
-  double nbyte_dat = nbyte * ndim * npol * nchan;
+  double nbyte_dat = (nbyte_packed+nbyte_unpacked)*nchan*ndim*npol;
 
   uint64_t block_size = multiple_greater (minimum_samples, resolution);
 
