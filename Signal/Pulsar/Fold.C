@@ -789,7 +789,7 @@ void dsp::Fold::fold (uint64_t nweights,
 //  for (int ibin = 0; ibin < folding_nbin; ibin++) {
 //	  cerr << ibin << ": " << hits[ibin] << endl;
 //  }
-	  double time_folded = double(ndat_folded) / get_input()->get_rate();
+	  double time_folded = double(ndat_folded) / get_input()->get_rate() / nbundle;
 
   if (verbose)
     cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded << " ndat_fold=" << ndat_fold
@@ -813,6 +813,11 @@ void dsp::Fold::fold (uint64_t nweights,
   const unsigned ndim = in->get_ndim();
   const unsigned npol = in->get_npol();
   const unsigned nchan = in->get_nchan();
+  const unsigned ichan_start = in->get_ichan_start();
+  const unsigned nchan_bundle = in->get_nchan_bundle();
+
+  //result->set_total_nbundle(in->get_total_nbundle());
+  //result->set_input_bundle(in->get_input_bundle());
 
   if (engine)
   {
@@ -821,9 +826,9 @@ void dsp::Fold::fold (uint64_t nweights,
     {
     	if (verbose) {
     		cerr << "Fold::fold finishing fold w/ engine. zeroed_samples was true so correcting integration length from:" << result->integration_length
-    				<< " by:" << (engine->get_ndat_folded() / get_input()->get_rate()) <<endl;
+             << " by:" << (engine->get_ndat_folded() / get_input()->get_rate() / nbundle) <<endl;
     	}
-      result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
+      result->integration_length += engine->get_ndat_folded() / get_input()->get_rate() / nbundle;
     }
     return;
   }
@@ -834,7 +839,7 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (in->get_order() == TimeSeries::OrderFPT)
   {
-    for (unsigned ichan=0; ichan<nchan; ichan++)
+    for (unsigned ichan=ichan_start; ichan<(ichan_start+nchan_bundle); ichan++)
     {
       for (unsigned ipol=0; ipol<npol; ipol++)
       {
@@ -867,13 +872,13 @@ void dsp::Fold::fold (uint64_t nweights,
         } // for each idat
       } // for each pol
 
-      if (zeroed_samples && ichan < nchan-1)
+      if (zeroed_samples && ichan < ichan_start+nchan_bundle-1)
         hits += folding_nbin;
     } // for each chan 
   }
   else
   {
-    uint64_t nfloat = nchan * npol * ndim;
+    uint64_t nfloat = nchan_bundle * npol * ndim;
 
     const float* timep = in->get_dattfp() + idat_start * nfloat;
     float* phasep = result->get_dattfp();
@@ -892,7 +897,7 @@ void dsp::Fold::fold (uint64_t nweights,
 
   if (zeroed_samples)
   {
-    time_folded = double (ndat_folded) / (get_input()->get_rate() * nchan);
+    time_folded = double (ndat_folded) / (get_input()->get_rate() * nchan_bundle);
     result->integration_length += time_folded;
     if (verbose)
     {
@@ -982,16 +987,17 @@ void dsp::Fold::Engine::setup () try
 
   const TimeSeries* in = parent->get_input();
 
-  nchan = in->get_nchan();
+  unsigned ichan_start = in->get_ichan_start();
+  nchan = in->get_nchan_bundle();
   npol = in->get_npol();
   ndim = in->get_ndim();
 
-  input = in->get_datptr(0,0);
+  input = in->get_datptr(ichan_start,0);
   input_span = in->get_nfloat_span();
 
   PhaseSeries* out = get_profiles();
 
-  output = out->get_datptr(0,0);
+  output = out->get_datptr(ichan_start,0);
   output_span = out->get_nfloat_span();
 
   hits = out->get_hits();

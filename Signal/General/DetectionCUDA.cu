@@ -132,7 +132,8 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
 		 "cannot handle ndim=%u != 2", ndim);
 
   uint64_t ndat = input->get_ndat ();
-  unsigned nchan = input->get_nchan ();
+  unsigned ichan_start = input->get_ichan_start();
+  unsigned nchan_bundle = input->get_nchan_bundle();
 
   if (ndat != output->get_ndat ())
     throw Error (InvalidParam, "CUDA::DetectionEngine::polarimetry",
@@ -141,11 +142,11 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
 
   unsigned ichan=0, ipol=0;
 
-  const float* input_base = input->get_datptr (ichan=0, ipol=0);
-  uint64_t input_span = input->get_datptr (ichan=0, ipol=1) - input_base;
+  const float* input_base = input->get_datptr (ichan=ichan_start, ipol=0);
+  uint64_t input_span = input->get_datptr (ichan=ichan_start, ipol=1) - input_base;
 
-  float* output_base = output->get_datptr (ichan=0, ipol=0);
-  uint64_t output_span = output->get_datptr (ichan=0, ipol=1) - output_base;
+  float* output_base = output->get_datptr (ichan=ichan_start, ipol=0);
+  uint64_t output_span = output->get_datptr (ichan=ichan_start, ipol=1) - output_base;
 
   if (dsp::Operation::verbose)
     cerr << "CUDA::DetectionEngine::polarimetry ndim=" << output->get_ndim () 
@@ -156,7 +157,7 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
          << " output.span=" << output_span << endl;
 
   dim3 threads (128);
-  dim3 blocks (ndat/threads.x, nchan);
+  dim3 blocks (ndat/threads.x, nchan_bundle);
 
   if (ndat % threads.x)
     blocks.x ++;

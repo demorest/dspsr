@@ -177,9 +177,12 @@ void CUDA::FoldEngine::send_binplan ()
   cudaError error;
 
   if (stream)
+	{
+		cudaStreamSynchronize(stream);
     error = cudaMemcpyAsync (d_bin, binplan, mem_size,
 			     cudaMemcpyHostToDevice, stream);
-  else
+  }
+	else
     error = cudaMemcpy (d_bin, binplan, mem_size, cudaMemcpyHostToDevice);
 
   if (error != cudaSuccess)

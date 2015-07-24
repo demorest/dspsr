@@ -40,6 +40,9 @@ dsp::Operation::Operation (const Operation& op)
 
   discarded_weights = op.discarded_weights;
   total_weights = op.total_weights;
+  
+  input_bundle = 0;
+  nbundle = 1;
 }
 
 //! All sub-classes must specify name and capacity for inplace operation
@@ -60,6 +63,9 @@ dsp::Operation::Operation (const char* _name)
   set_scratch_called = false;
 
   prepared = false;
+  
+  input_bundle = 0;
+  nbundle = 1;
 }
 
 
@@ -143,6 +149,12 @@ void dsp::Operation::set_scratch (Scratch* s)
 bool dsp::Operation::scratch_was_set () const
 {
   return set_scratch_called;
+}
+
+void dsp::Operation::set_input_bundle (unsigned _input_bundle, unsigned _nbundle)
+{
+  input_bundle = _input_bundle;
+  nbundle = _nbundle;
 }
 
 //! Combine accumulated results with another operation
