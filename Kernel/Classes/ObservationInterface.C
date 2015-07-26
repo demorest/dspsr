@@ -13,6 +13,7 @@ dsp::Observation::Interface::Interface( Observation *c )
   add( &Observation::get_nchan, "nchan", "Number of frequency channels" );
   add( &Observation::get_npol,  "npol",  "Number of polarizations" );
   add( &Observation::get_ndim,  "ndim",  "Number of data dimensions" );
+  add( &Observation::get_nbit,  "nbit",  "Number of bits per datum" );
 
   add( &Observation::get_type,
        &Observation::set_type,
