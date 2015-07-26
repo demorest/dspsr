@@ -72,15 +72,19 @@ void dsp::OutputFileShare::signal_ready (unsigned contributor, MJD start_time)
   // data.
   if (nready==contributors)
   {
-    next_time = *min_element(start_times.begin(),start_times.end());
+    MJD min_time = *min_element(start_times.begin(),start_times.end());
 
     if (Operation::verbose)
       cerr << "dsp::OutputFileShare::signal_ready all threads ready"
         << " start_time=" << next_time
         << endl;
 
-    if (!first) 
-      cerr << "dsp::OutputFileShare::signal_ready missing data!" << endl;
+    if (first==false && (min_time!=next_time)) 
+      cerr << "dsp::OutputFileShare::signal_ready missing data! (diff=" 
+        << (min_time-next_time).in_seconds() << "s)"
+        << endl;
+
+    next_time = min_time;
 
     first = false;
 
