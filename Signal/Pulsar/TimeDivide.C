@@ -58,8 +58,15 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
   start_phase = Phase::zero;
   is_valid = false;
 
-  if( division_seconds && division_seconds == unsigned(division_seconds) &&
-      integer_division_seconds_boundaries)
+  if( reference_epoch != MJD::zero )
+  {
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::set_start_time set to reference_epoch=" 
+           << reference_epoch.printall() << endl;
+
+    start_time = reference_epoch;
+  }
+  else if( division_seconds && division_seconds == unsigned(division_seconds) )
   {
     unsigned integer_seconds = unsigned(division_seconds);
     unsigned seconds = start_time.get_secs();
@@ -98,8 +105,10 @@ void dsp::TimeDivide::set_predictor (const Pulsar::Predictor* _poly)
     return;
 
   poly = _poly;
+  period = 0.0;
   division_seconds = 0;
 }
+
 
 //! Set the reference phase (phase of bin zero)
 void dsp::TimeDivide::set_reference_phase (double phase)
@@ -455,10 +464,10 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 
   // division length specified in turns
 
-  if (!poly)
+  if (!poly && period == 0.0)
     throw Error (InvalidState, "dsp::TimeDivide::set_boundaries",
 		 "division length specified in turns "
-		 "but no folding Pulsar::Predictor");
+		 "but no folding predictor or period");
 
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::set_boundaries using polynomial:\n"

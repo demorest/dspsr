@@ -49,6 +49,12 @@ namespace dsp {
     //! Get the number of seconds in each division
     double get_seconds () const { return division_seconds; }
 
+    //! Set the reference epoch (start time of first division)
+    void set_reference_epoch (const MJD& epoch) { reference_epoch = epoch; }
+
+    //! Set the reference epoch (start time of first division)
+    MJD get_reference_epoch () const { return reference_epoch; }
+
     //! Set the number of turns in each division
     void set_turns (double division_turns);
 
@@ -60,6 +66,12 @@ namespace dsp {
 
     //! Get the Pulsar::Predictor used to determine pulse phase
     const Pulsar::Predictor* get_predictor () const { return poly; }
+
+    //! Set the folding period used to determine pulse phase
+    void set_period (double);
+
+    //! Set the folding period used to determine pulse phase
+    double get_period () const { return period; }
 
     //! Set the reference phase (phase of bin zero)
     void set_reference_phase (double phase);
@@ -126,6 +138,9 @@ namespace dsp {
     //! Number of seconds in each division
     double division_seconds;
 
+    //! Reference epoch at start of the first division
+    MJD reference_epoch;
+
     //! Number of turns in each division
     double division_turns;
 
@@ -137,6 +152,9 @@ namespace dsp {
 
     //! Round division boundaries to integer numbers of division_seconds
     bool integer_division_seconds_boundaries;
+
+    //! The period used to determine pulse phase
+    double period;
 
     //! The Pulsar::Predictor used to determine pulse phase
     Reference::To<const Pulsar::Predictor> poly;
