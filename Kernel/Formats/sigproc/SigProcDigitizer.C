@@ -59,7 +59,7 @@ public:
       in_chan = input->get_unswapped_ichan(out_chan);
     else if (swap_band)
       in_chan = (in_chan+half_chan)%nchan;
-    // moved from the start of the block
+    // moved from the start of the block 
     if (flip_band)
       in_chan = (nchan-in_chan-1);
     return in_chan;
