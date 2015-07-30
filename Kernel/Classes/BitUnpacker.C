@@ -59,7 +59,7 @@ void dsp::BitUnpacker::unpack ()
 
   // Step through the array in small block sizes so that the matrix
   // transpose (for nchan>1 case) remains cache-friendly.
-  const unsigned blockdat = npol*nchan*ndim*8/nbit > 512 ? npol*nchan*ndim*8/nbit : 512;
+  const unsigned blockdat = npol*nchan*ndim*8/nbit > 32 ? npol*nchan*ndim*8/nbit : 32;
   const unsigned blockbytes = blockdat*nbit/8;
 
   const unsigned char* iptr = input->get_rawptr();
@@ -67,7 +67,7 @@ void dsp::BitUnpacker::unpack ()
   for (uint64_t idat=0; idat<ndat; idat+=blockdat, iptr+=blockbytes)
   {
     unsigned offset = 0;
-    const unsigned ndatblock = (blockdat>(ndat-idat)) ? (ndat-idat) : blockdat/nskip;
+    const unsigned ndatblock = (blockdat>(ndat-idat)) ? ndat-idat : blockdat/nskip;
     for (unsigned ichan=0; ichan<nchan; ichan++)
     {
       for (unsigned ipol=0; ipol<npol; ipol++)
