@@ -220,6 +220,18 @@ void dsp::SingleThread::construct () try
     if (config->get_total_nthread() > 1)
       config->input_buffering = false;
 
+    if ((thread_id == 0) && (!config->input_buffering)) 
+    {
+      dsp::Seekable * seekable = dynamic_cast<dsp::Seekable*>( manager->get_input() );
+      if (seekable)
+      {
+        cerr << "dspsr: disabling input buffering, using overlap memory instead" << endl;
+        // overlap device memory should be in the default stream
+        CUDA::DeviceMemory * overlap_memory = new CUDA::DeviceMemory ();
+        seekable->set_overlap_buffer_memory (overlap_memory);
+      }
+    }
+
     int device = config->cuda_device[thread_id];
     cerr << "dspsr: thread " << thread_id 
          << " using CUDA device " << device << endl;
@@ -253,9 +265,9 @@ void dsp::SingleThread::construct () try
 
       unpacker->set_device( device_memory );
       unpacked->set_memory( device_memory );
-        
+
       BitSeries* bits = new BitSeries;
-      bits->set_memory (new CUDA::PinnedMemory);
+      bits->set_memory (device_memory);
       manager->set_output (bits);
     }
     else
