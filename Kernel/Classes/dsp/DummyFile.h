@@ -36,7 +36,7 @@ namespace dsp {
     void close();
 
     //! load bytes
-    int64_t load_bytes(unsigned char *buffer, uint64_t bytes);
+    int64_t load_bytes (unsigned char *buffer, uint64_t bytes);
 
     //! seek bytes
     int64_t seek_bytes(uint64_t bytes);

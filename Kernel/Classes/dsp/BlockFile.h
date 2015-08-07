@@ -59,7 +59,11 @@ namespace dsp {
       than the sampled data, this method should be overloaded and the
       additional information should be filtered out. */
     virtual int64_t load_bytes (unsigned char* buffer, uint64_t nbytes);
-    
+
+#if HAVE_CUDA
+     virtual int64_t load_bytes_device (unsigned char* buffer, uint64_t bytes, void * device_handle);
+#endif
+
     //! Set the file pointer to the absolute number of sampled data bytes
     /*! If the header_bytes attribute is set, this number of bytes
       will be subtracted by File::seek_bytes before seeking.  If the
