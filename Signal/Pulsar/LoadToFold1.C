@@ -34,6 +34,7 @@
 #include "dsp/Resize.h"
 
 #if HAVE_CUDA
+#include "dsp/ConvolutionCUDA.h"
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
@@ -369,6 +370,9 @@ void dsp::LoadToFold::construct () try
     if (!convolution)
       convolution = new Convolution;
     
+    if (!config->input_buffering)
+      convolution->set_buffering_policy (NULL);
+
     convolution->set_response (response);
     if (!config->integration_turns)
       convolution->set_passband (passband);
@@ -383,6 +387,14 @@ void dsp::LoadToFold::construct () try
       convolution->set_input  (convolved);  
       convolution->set_output (convolved);  // inplace
     }
+
+#if HAVE_CUDA
+    if (run_on_gpu)
+    {
+      convolution->set_device (device_memory.ptr());
+      convolution->set_engine (new CUDA::ConvolutionEngine (stream));
+    }
+#endif
     
     operations.push_back (convolution.get());
   }
@@ -811,8 +823,12 @@ void dsp::LoadToFold::prepare ()
 
   if (convolution)
   {
-    minimum_samples = convolution->get_minimum_samples () * 
-      convolution->get_input()->get_nchan();
+    if (filterbank->get_input()->get_nchan() < convolution->get_input()->get_nchan())
+      minimum_samples = convolution->get_minimum_samples () * 
+                        convolution->get_input()->get_nchan();
+    else
+      minimum_samples = convolution->get_minimum_samples ();
+
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
            << minimum_samples << " samples" << endl;
