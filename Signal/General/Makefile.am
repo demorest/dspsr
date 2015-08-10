@@ -40,19 +40,42 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
 	PolnSelect.C
 
+bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
+
 if HAVE_CUFFT
 
 nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h \
-	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h
+	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h \
+	dsp/ConvolutionCUDA.h
 
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu TransferCUDA.C \
-	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu
+	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu ConvolutionCUDA.cu
+
+if HAVE_CUFFT_CALLBACKS
+bin_PROGRAMS += cufft_callback_bench
+
+# device relocated object file linked to device code
+ConvolutionCUDA_DC.o: ConvolutionCUDA.o
+	$(CUDA_NVCC) -o ConvolutionCUDA_DC.o -dlink ConvolutionCUDA.o -lcufft_static
+
+cufft_callback_bench_DC.o: cufft_callback_bench.o
+	$(CUDA_NVCC) -o cufft_callback_bench_DC.o -dlink cufft_callback_bench.o -lcufft_static
+
+ConvolutionCUDA.lo: ConvolutionCUDA.cu
+	$(top_srcdir)/config/cudalt.py $(top_builddir)/libtool $@ $(CUDA_NVCC) -dc -c $<
+	$(CUDA_NVCC) -o ConvolutionCUDA_DC.o -dlink ConvolutionCUDA.o -lcufft_static
+
+cufft_callback_bench.lo: cufft_callback_bench.cu
+	$(top_srcdir)/config/cudalt.py $(top_builddir)/libtool $@ $(CUDA_NVCC) -dc -c $<
+	$(CUDA_NVCC) -o cufft_callback_bench_DC.o -dlink cufft_callback_bench.o -lcufft_static
+
+cufft_callback_bench_LDADD = $(LDADD) cufft_callback_bench_DC.o -lcudart -lcufft_static -lculibos
 
 endif
+endif
 
-bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
 
 dmsmear_SOURCES = dmsmear.C 
 digitxt_SOURCES = digitxt.C
@@ -82,6 +105,10 @@ if HAVE_PGPLOT
   passband_SOURCES = passband.C
   passband_LDADD = @PSRPLOT_LIBS@ $(LDADD)
 
+if HAVE_CUFFT_CALLBACKS
+  digistat_LDADD += ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+  passband_LDADD += ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+endif
   #
   # end PGPLOT-specific code
   #
@@ -103,11 +130,17 @@ if HAVE_sigproc
   bin_PROGRAMS += digifil
   digifil_SOURCES = digifil.C
 
+
 if HAVE_dada
   bin_PROGRAMS += the_decimator
   the_decimator_SOURCES = the_decimator.C
   the_decimator_LDADD = $(LDADD) @OPENSSL_LIBS@ @PSRXML_LIBS@ @PSRDADA_LIBS@
   the_decimator_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) @PSRXML_CFLAGS@ @PSRDADA_CFLAGS@
+
+if HAVE_CUFFT_CALLBACKS
+  the_decimator_LDADD += ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+endif
+
 endif
 
   #
@@ -116,6 +149,12 @@ endif
   ###########################################################################
 
 endif
+
+#if HAVE_CUFFT_CALLBACKS
+#  digimon_LDADD = $(LDADD) ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+#  digifil_LDADD = $(LDADD) ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+#  digihist_LDADD = $(LDADD) ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+#endif
 
 #############################################################################
 #
@@ -126,9 +165,8 @@ include $(top_srcdir)/config/Makefile.cuda
 LDADD = libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la \
 	$(top_builddir)/Signal/Statistics/libdspstats.la \
-	@PGPLOT_LIBS@ @CUFFT_LIBS@ @CUDA_LIBS@
+	@PGPLOT_LIBS@ @CUDA_LIBS@ @CUFFT_LIBS@
 
-AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@
+AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@ 
 AM_CXXFLAGS = @OPENMP_CFLAGS@
-
 

@@ -51,12 +51,14 @@ Management/dspsr_ldflags
 Management/release.csh
 More/Applications/searchplot
 Signal/General/Makefile
+Signal/General/cufft_callback_bench
 Signal/General/digifil
 Signal/General/digihist
 Signal/General/digimon
 Signal/General/digistat
 Signal/General/digitxt
 Signal/General/dmsmear
+Signal/General/fftbatch_speed
 Signal/General/filterbank_speed
 Signal/General/passband
 Signal/General/the_decimator
