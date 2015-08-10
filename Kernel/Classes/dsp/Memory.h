@@ -10,7 +10,7 @@
 #define __dsp_Memory_h_
 
 #include "Reference.h"
-#include <inttypes.h>
+#include "environ.h"
 
 namespace dsp {
 
