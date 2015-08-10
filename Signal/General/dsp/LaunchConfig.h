@@ -7,6 +7,9 @@
  *
  ***************************************************************************/
 
+#ifndef __LaunchConfig_h
+#define __LaunchConfig_h
+
 #include <cuda_runtime.h>
 
 namespace CUDA
@@ -54,3 +57,5 @@ namespace CUDA
     unsigned get_nthread() { return nthread; }
   };
 }
+
+#endif
