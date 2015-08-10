@@ -40,7 +40,8 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
 	PolnSelect.C
 
-bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
+bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed \
+	fftbatch_speed
 
 if HAVE_CUFFT
 
