@@ -72,6 +72,9 @@ CUDA::FilterbankEngine::~FilterbankEngine ()
 
 void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 {
+  // the CUDA engine does not maintain/compute the passband
+  filterbank->passband = 0;
+  
   freq_res = filterbank->get_freq_res ();
   nchan_subband = filterbank->get_nchan_subband();
 
