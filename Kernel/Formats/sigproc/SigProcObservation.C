@@ -139,36 +139,36 @@ static std::string get_sigproc_machine_name (int _id, int _telescope)
   // Info from sigproc's aliases.c
   switch (_id) {
     case 0:
-      return "SigProc-FAKE";
+      return "FAKE";
     case 1:
-      return "SigProc-PSPM";
+      return "PSPM";
     case 2:
-      return "SigProc-WAPP";
+      return "WAPP";
     case 3:
-      return "SigProc-AOFTM";
+      return "AOFTM";
     case 4:
-      return "SigProc-BPP";
+      return "BPP";
     case 5:
-      return "SigProc-OOTY";
+      return "OOTY";
     case 6:
-      return "SigProc-SCAMP";
+      return "SCAMP";
     case 7:
-      return "SigProc-GMRTFB";
+      return "GMRTFB";
     case 8:
-      return "SigProc-PULSAR2000";
+      return "PULSAR2000";
     case 10:
       if (_telescope == SIGPROC_PARKES)
-        return "SigProc-BPSR";
+        return "BPSR";
       else
-        return "SigProc-ARTEMIS";
+        return "ARTEMIS";
     case 11:
-      return "SigProc-COBALT";
+      return "COBALT";
     default:
-      return "SigProc-?????";
+      return "?????";
       break;
   }
 
-  return "SigProc-?????";
+  return "?????";
 }
 
 
@@ -206,7 +206,7 @@ void dsp::SigProcObservation::load_global ()
   coord.dec().setDegMS (src_dej);
   set_coordinates (coord);
 
-  // set_machine ("SigProc");
+  set_format ("SigProc");
   set_machine ( get_sigproc_machine_name(machine_id, telescope_id) );
   set_telescope ( get_sigproc_telescope_name(telescope_id) );
 }
