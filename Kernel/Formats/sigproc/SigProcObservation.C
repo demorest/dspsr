@@ -64,6 +64,8 @@ void dsp::SigProcObservation::load (FILE* header)
   load_global ();
 }
 
+#define SIGPROC_PARKES 4
+
 static std::string get_sigproc_telescope_name (int _id)
 {
   // Info from sigproc's aliases.c
@@ -76,7 +78,7 @@ static std::string get_sigproc_telescope_name (int _id)
       return "Ooty";
     case 3:
       return "Nancay";
-    case 4:
+    case SIGPROC_PARKES:
       return "Parkes";
     case 5:
       return "Jodrell";
@@ -116,7 +118,7 @@ static int get_sigproc_telescope_id (string name)
     // Convert ITOA to sigproc code
     if      (itoa == "AO") return 1;
     else if (itoa == "NC") return 3;
-    else if (itoa == "PK") return 4;
+    else if (itoa == "PK") return SIGPROC_PARKES;
     else if (itoa == "JB") return 5;
     else if (itoa == "GB") return 6;
     else if (itoa == "GM") return 7;
@@ -132,7 +134,7 @@ static int get_sigproc_telescope_id (string name)
   return 0;
 }
 
-static std::string get_sigproc_machine_name (int _id)
+static std::string get_sigproc_machine_name (int _id, int _telescope)
 {
   // Info from sigproc's aliases.c
   switch (_id) {
@@ -155,7 +157,10 @@ static std::string get_sigproc_machine_name (int _id)
     case 8:
       return "PULSAR2000";
     case 10:
-      return "ARTEMIS";
+      if (_telescope == SIGPROC_PARKES)
+        return "BPSR";
+      else
+        return "ARTEMIS";
     case 11:
       return "COBALT";
     default:
@@ -201,8 +206,8 @@ void dsp::SigProcObservation::load_global ()
   coord.dec().setDegMS (src_dej);
   set_coordinates (coord);
 
-  // set_machine ("SigProc");
-  set_machine ( get_sigproc_machine_name(machine_id) );
+  set_format ("SigProc");
+  set_machine ( get_sigproc_machine_name(machine_id, telescope_id) );
   set_telescope ( get_sigproc_telescope_name(telescope_id) );
 }
 

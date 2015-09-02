@@ -39,7 +39,7 @@ bool dsp::SigProcUnpacker::matches (const Observation* observation)
 
   unsigned nbit = observation->get_nbit();
 
-  return observation->get_machine() == "SigProc" 
+  return observation->get_format() == "SigProc"
     && observation->get_ndim() == 1
     //    && observation->get_npol() == 1
     && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 || nbit==16 || nbit==32);
