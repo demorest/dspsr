@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include <iostream>
+#include <unistd.h>
 
 #include "dsp/File.h"
 #include "TextInterface.h"

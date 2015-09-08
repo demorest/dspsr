@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2009
+ *   Copyright (C) 2009 by Jonathon Kocz
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -18,7 +18,7 @@
 
 using namespace std;
 
-dsp::Multiplex::Multiplex () : MultiFile ()
+dsp::Multiplex::Multiplex () : MultiFile ( "Multiplex" )
 {
   //current_index = 0;
 }

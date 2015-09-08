@@ -75,6 +75,14 @@ namespace dsp {
     //! Get the number of seconds to fold into each sub-integration
     double get_subint_seconds () const { return divider.get_seconds(); }
 
+    //! Set the start time of the first sub-integration
+    void set_subint_reference_epoch (const MJD& epoch)
+    { divider.set_reference_epoch (epoch); }
+
+    //! Get the start time of the first sub-integration
+    MJD get_subint_reference_epoch () const
+    { return divider.get_reference_epoch (); }
+
     //! Set the number of turns to fold into each sub-integration
     void set_subint_turns (unsigned subint_turns)
       { divider.set_turns (subint_turns); }
