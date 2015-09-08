@@ -17,7 +17,7 @@
 
 using namespace std;
 
-dsp::MultiFile::MultiFile () : File ("MultiFile")
+dsp::MultiFile::MultiFile (const char* name) : File (name)
 {
   test_contiguity = true;
   current_index = 0;

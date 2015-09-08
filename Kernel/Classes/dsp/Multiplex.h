@@ -1,16 +1,12 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2002 by Willem van Straten
+ *   Copyright (C) 2002 by Jonathon Kocz
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Multiplex.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/09/10 01:02:34 $
-   $Author: tcaotiaafoc $ */
-
+// dspsr/Kernel/Classes/dsp/Multiplex.h
 
 #ifndef __Multiplex_h
 #define __Multiplex_h
