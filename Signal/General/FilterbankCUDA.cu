@@ -77,6 +77,9 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
   float2** d_kernel_ptr = reinterpret_cast<float2**>(filterbank->get_d_kernel_gpu_ptr());
   d_kernel = *d_kernel_ptr;
   
+  // the CUDA engine does not maintain/compute the passband
+  filterbank->set_passband (NULL);
+  
   freq_res = filterbank->get_freq_res ();
   nchan_subband = filterbank->get_nchan_subband();
 

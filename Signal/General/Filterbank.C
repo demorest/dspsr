@@ -205,21 +205,6 @@ void dsp::Filterbank::make_preparations ()
                      "matrix convolution and input.npol != 2");
   }
 
-  if (passband)
-  {
-    if (response)
-      passband -> match (response);
-
-    unsigned passband_npol = input->get_npol();
-    if (matrix_convolution)
-      passband_npol = 4;
-
-    passband->resize (passband_npol, input->get_nchan(), n_fft, 1);
-
-    if (!response)
-      passband->match (input);
-  }
-
   if (has_buffering_policy())
   {
     if (verbose)
@@ -237,6 +222,22 @@ void dsp::Filterbank::make_preparations ()
       cerr << "dsp::Filterbank::make_preparations setup engine" << endl;
     engine->setup (this);
     return;
+  }
+
+  // the engine should delete the passband if it doesn't support this feature
+  if (passband)
+  {
+    if (response)
+      passband -> match (response);
+
+    unsigned passband_npol = input->get_npol();
+    if (matrix_convolution)
+      passband_npol = 4;
+
+    passband->resize (passband_npol, input->get_nchan(), n_fft, 1);
+
+    if (!response)
+      passband->match (input);
   }
 
   using namespace FTransform;
