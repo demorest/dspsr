@@ -670,6 +670,30 @@ void dsp::LoadToFold::prepare_fold ()
   fold_prepared = true;
 }
 
+MJD dsp::LoadToFold::parse_epoch (const std::string& epoch_string)
+{
+  MJD epoch;
+
+  if (epoch_string == "start")
+  {
+    epoch = manager->get_info()->get_start_time();
+    epoch += manager->get_input()->tell_seconds();
+
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::parse reference epoch=start_time=" 
+	   << epoch.printdays(13) << endl;
+  }
+  else if (!epoch_string.empty())
+  {
+    epoch = MJD( epoch_string );
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::parse reference epoch="
+	   << epoch.printdays(13) << endl;
+  }
+
+  return epoch;
+}
+
 void dsp::LoadToFold::prepare ()
 {
   assert (fold.size() > 0);
@@ -740,24 +764,7 @@ void dsp::LoadToFold::prepare ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
-  MJD reference_epoch;
-
-  if (config->reference_epoch == "start")
-  {
-    reference_epoch = manager->get_info()->get_start_time();
-    reference_epoch += manager->get_input()->tell_seconds();
-
-    if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare reference epoch=start_time=" 
-	   << reference_epoch.printdays(13) << endl;
-  }
-  else if (!config->reference_epoch.empty())
-  {
-    reference_epoch = MJD( config->reference_epoch );
-    if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare reference epoch="
-	   << reference_epoch.printdays(13) << endl;
-  }
+  MJD fold_reference_epoch = parse_epoch (config->reference_epoch);
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
@@ -772,7 +779,7 @@ void dsp::LoadToFold::prepare ()
       fold[ifold]->get_output()->set_extensions (extensions);
     }
 
-    fold[ifold]->set_reference_epoch (reference_epoch);
+    fold[ifold]->set_reference_epoch (fold_reference_epoch);
   }
 
   SingleThread::prepare ();
@@ -1045,6 +1052,9 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
 	
       if (config->minimum_integration_length > 0)
 	unloader->set_minimum_integration_length (config->minimum_integration_length);
+
+      MJD reference_epoch = parse_epoch (config->integration_reference_epoch);
+      subfold -> set_subint_reference_epoch( reference_epoch );
     }
     else
     {
@@ -1082,7 +1092,8 @@ catch (Error& error)
   throw error += "dsp::LoadToFold::build_fold";
 }
 
-void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
+void dsp::LoadToFold::configure_detection (Detection* detect,
+					   unsigned noperations)
 {
 #if HAVE_CUDA
   bool run_on_gpu = thread_id < config->get_cuda_ndevice();

@@ -27,7 +27,7 @@ bool dsp::LOFAR_DALUnpacker::matches (const Observation* observation)
 {
   return
     observation->get_nbit() == 32 && 
-    observation->get_machine() == "LOFAR";
+    observation->get_machine() == "COBALT";
 }
 
 //! Return true if the unpacker support the specified output order

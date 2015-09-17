@@ -147,6 +147,9 @@ namespace dsp {
     // length of sub-integrations in seconds
     double integration_length;
 
+    // reference epoch = start of first sub-integration
+    std::string integration_reference_epoch;
+
     // minimum sub-integration length written to disk
     double minimum_integration_length;
 
