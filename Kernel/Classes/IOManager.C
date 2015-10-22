@@ -24,6 +24,7 @@ dsp::IOManager::IOManager () : Operation ("IOManager")
   maximum_RAM = 0;
   minimum_RAM = 0;
   copies = 1;
+  filterbank_resolution = 0;
 }
 
 dsp::IOManager::~IOManager()
@@ -313,6 +314,11 @@ void dsp::IOManager::set_post_load_operation (Operation * op)
   post_load_operation = op;
 }
 
+void dsp::IOManager::set_filterbank_resolution (unsigned resolution)
+{
+  filterbank_resolution = resolution;
+}
+
 uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
 {
   if (verbose)
@@ -408,14 +414,38 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
   if (input->get_overlap())
   {
     unsigned overlap = input->get_overlap();
+    double stride = minimum_samples - overlap;
 
-    double parts = (block_size - overlap) / (minimum_samples - overlap);
+    double parts = (block_size - overlap) / stride;
 
     if (verbose)
       cerr << "dsp::IOManager::set_block_size input"
               " overlap=" << overlap << " parts=" << parts << endl;
 
     uint64_t block_resize = unsigned(parts)*(minimum_samples-overlap) + overlap;
+
+    if (filterbank_resolution)
+    {
+      // search for a block size that suits both Filterbank and Convolution
+      unsigned trial_block_size = filterbank_resolution;
+      unsigned best_npart = 0;
+      while (trial_block_size < block_size)
+      {
+	double trial_parts = (trial_block_size-overlap) / stride;
+	if (trial_parts == unsigned(trial_parts))
+	  best_npart = trial_block_size / filterbank_resolution;
+
+	trial_block_size += filterbank_resolution;
+      }
+
+      if (best_npart == 0)
+	throw Error (InvalidState, "dsp::IOManager::set_block_size",
+		     "could not find an overlapping block size "
+		     "for both Filterbank and Convolution");
+
+      // WvS to-do: if filterbank also loses samples, then add nlost here
+      block_resize = best_npart * filterbank_resolution;
+    }
 
     if (verbose)
       cerr << "dsp::IOManager::set_block_size old=" << block_size
