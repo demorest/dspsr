@@ -117,7 +117,7 @@ void dsp::GenericEightBitUnpacker::unpack_on_gpu ()
   dim.npol = input->get_npol ();
   dim.ndim = input->get_ndim ();
 
-  generic_8bit_unpack (stream, dim, table->get_scale(), 
+  generic_8bit_unpack (stream, dim, table,
 		       d_staging, output_base, output_stride);
 }
 

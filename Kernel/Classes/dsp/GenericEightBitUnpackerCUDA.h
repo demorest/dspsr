@@ -8,6 +8,8 @@
 #include<stdint.h>
 #include<cuda_runtime.h>
 
+#include "dsp/BitTable.h"
+
 struct unpack_dimensions
 {
   uint64_t ndat;
@@ -18,7 +20,7 @@ struct unpack_dimensions
 
 void generic_8bit_unpack (cudaStream_t stream, 
 			  const unpack_dimensions& dim,
-			  float scale,
+			  const dsp::BitTable*,
 			  const unsigned char* input,
 			  float* output, uint64_t stride);
 
