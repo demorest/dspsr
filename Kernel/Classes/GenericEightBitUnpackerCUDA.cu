@@ -16,7 +16,8 @@ using namespace std;
 void check_error (const char*);
 
 /*
- * CUDA 8-bit unpack kernel
+ * Simple CUDA 8-bit unpack kernel
+ * This kernel is not optimized; in particular, data access is not coalesced.
  */
 
 __global__ void unpack (unpack_dimensions dim,
@@ -34,9 +35,9 @@ __global__ void unpack (unpack_dimensions dim,
   if (idat >= dim.ndat)
     return;
 
-  input += input_stride*idat + dim.npol*dim.ndim*ichan + dim.ndim*ipol + idim;
+  input += input_stride*idat + dim.ndim * (dim.npol*ichan + ipol) + idim;
 
-  output += output_stride * ichan * ipol + dim.ndim * idat + idim;
+  output += output_stride * (dim.npol*ichan + ipol) + dim.ndim*idat + idim;
 
   *output = (float(*input) + 0.5) * scale;
 }
