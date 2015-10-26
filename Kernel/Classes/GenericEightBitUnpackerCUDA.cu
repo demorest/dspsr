@@ -26,7 +26,8 @@ __global__ void unpack (unpack_dimensions dim,
 			const T* input,
 			float* output, uint64_t output_stride)
 {
-  uint64_t idat  = blockIdx.x * blockDim.x + threadIdx.x;
+  uint64_t idat  = blockIdx.x * blockDim.x + threadIdx.x
+                 + blockIdx.z * blockDim.x * gridDim.x;
   unsigned ichan = blockIdx.y;
   unsigned ipol  = threadIdx.y;
   unsigned idim  = threadIdx.z;
@@ -43,6 +44,11 @@ __global__ void unpack (unpack_dimensions dim,
   *output = (float(*input) + offset) * scale;
 }
 
+// defined in FoldCUDA.C
+static ostream& operator << (ostream& os, const dim3& c)
+{
+  return os << "[" << c.x << "," << c.y << "," << c.z << "]";
+}
 
 void generic_8bit_unpack (cudaStream_t stream, 
 			  const unpack_dimensions& dim,
@@ -50,16 +56,33 @@ void generic_8bit_unpack (cudaStream_t stream,
 			  const unsigned char* input,
 			  float* output, uint64_t stride)
 {
-  unsigned datum_threads = 256;
-  if (datum_threads > dim.ndat)
-    datum_threads = 32;
+  unsigned max_threads_per_block = 256;
+  unsigned min_threads_per_block = 32;
+  unsigned max_blocks_per_dim = 65535;
 
-  unsigned datum_blocks = dim.ndat / datum_threads;
-  if (dim.ndat % datum_threads)
-    datum_blocks ++;
+  unsigned datum_threads = max_threads_per_block / (dim.npol * dim.ndim);
+  if (datum_threads > dim.ndat)
+    datum_threads = min_threads_per_block;
+
+  unsigned datum_blocks_x = dim.ndat / datum_threads;
+  unsigned datum_blocks_z = 1;
+
+  if (datum_blocks_x > max_blocks_per_dim)
+  {
+    datum_blocks_z = datum_blocks_x / max_blocks_per_dim;
+    if (datum_blocks_x % max_blocks_per_dim)
+      datum_blocks_z ++;
+
+    datum_blocks_x /= datum_blocks_z;
+  }
+
+  while (dim.ndat > datum_threads * datum_blocks_z * datum_blocks_x)
+    datum_blocks_x ++;
 
   dim3 blockDim (datum_threads, dim.npol, dim.ndim);
-  dim3 gridDim (datum_blocks, dim.nchan, 1);
+  dim3 gridDim (datum_blocks_x, dim.nchan, datum_blocks_z);
+
+  // cerr << "blockDim=" << blockDim << " gridDim=" << gridDim << endl;
 
   if (table->get_type() == dsp::BitTable::TwosComplement)
   {
