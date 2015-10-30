@@ -69,6 +69,7 @@ void dsp::Input::reserve (BitSeries* buffer)
     cerr << "dsp::Input::reserve " << maximum_load_size << endl;
 
   buffer->resize (maximum_load_size);
+  buffer->resize (block_size);
 }
 
 void dsp::Input::reserve ()

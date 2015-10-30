@@ -56,8 +56,9 @@ libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
 if HAVE_CUFFT
-nobase_include_HEADERS += dsp/MemoryCUDA.h
-libClasses_la_SOURCES += MemoryCUDA.C check_error.C
+nobase_include_HEADERS += dsp/MemoryCUDA.h dsp/GenericEightBitUnpackerCUDA.h
+libClasses_la_SOURCES += MemoryCUDA.C GenericEightBitUnpackerCUDA.cu \
+	check_error.C
 libClasses_la_LIBADD = @CUFFT_LIBS@ @CUDA_LIBS@
 endif
 
@@ -68,6 +69,7 @@ test_BlockIterator_SOURCES = test_BlockIterator.C
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libClasses.la
 
