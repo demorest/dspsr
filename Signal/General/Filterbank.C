@@ -402,7 +402,7 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
     npart = (ndat-nsamp_overlap)/nsamp_step;
 
   // on some iterations, ndat could be large enough to fit an extra part
-  if (reserve_extra && has_buffering_policy())
+  if (reserve_extra)
     npart ++;
 
   // points kept from each small fft
@@ -415,17 +415,6 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
          << " overlap=" << nsamp_overlap << " step=" << nsamp_step
          << " reserve=" << reserve_extra << " nkeep=" << nkeep
          << " npart=" << npart << " output ndat=" << output_ndat << endl;
-
-
-  if (has_buffering_policy())
-    get_buffering_policy()->set_next_start (nsamp_step * npart);
-#if DEBUGGING_OVERLAP
-  // this exception is useful when debugging, but not at the end-of-file
-  else if (ndat > 0 && (nsamp_step*npart + nsamp_overlap != ndat))
-    throw Error (InvalidState, "dsp::Filterbank::reserve",
-                 "npart=%u * step=%u + overlap=%u != ndat=%u",
-		 npart, nsamp_step, nsamp_overlap, ndat);
-#endif
 
   // prepare the output TimeSeries
   prepare_output (output_ndat, true);
@@ -441,6 +430,9 @@ void dsp::Filterbank::transformation ()
     prepare ();
 
   resize_output ();
+
+  if (has_buffering_policy())
+    get_buffering_policy()->set_next_start (nsamp_step * npart);
 
   uint64_t output_ndat = output->get_ndat();
 
