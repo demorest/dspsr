@@ -204,13 +204,6 @@ void dsp::Convolution::prepare_output ()
   */
   if (has_buffering_policy() && input->get_input_sample() >= 0)
     get_buffering_policy()->set_next_start (nsamp_step * npart);
-#if DEBUGGING_OVERLAP
-  // this exception is useful when debugging, but not at the end-of-file
-  else if (ndat > 0 && (nsamp_step * npart + nsamp_overlap != ndat))
-    throw Error (InvalidState, "dsp::Convolution::prepare_output",
-                 "npart=%u * step=%u + overlap=%u != ndat=%u",
-		 npart, nsamp_step, nsamp_overlap, ndat);
-#endif
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
