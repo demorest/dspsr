@@ -222,8 +222,16 @@ void dsp::VDIFFile::open_file (const char* filename)
   // Figure frames per sec from bw, pkt size, etc
   //double frames_per_sec = 64000.0;
   int frame_data_size = nbyte - VDIF_HEADER_BYTES;
+  
+  double size_of_sample = get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol()
+    * (iscomplex+1) / 8.0;
+
+  if (verbose) cerr << "VDIFFile::open_file size_of_sample = " << size_of_sample << endl;
+  double samples_per_frame = frame_data_size/size_of_sample;
+  if (verbose) cerr << "VDIFFile::open_file samples_per_frame = " << samples_per_frame << endl;
+
   double frames_per_sec = get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol()
-    * get_info()->get_rate() / 8.0 / (double) frame_data_size;
+    * get_info()->get_rate() * (iscomplex+1)  / 8.0 / (double) frame_data_size;
   if (verbose) cerr << "VDIFFile::open_file frame_data_size = " 
     << frame_data_size << endl;
   if (verbose) cerr << "VDIFFile::open_file frames_per_sec = " 
