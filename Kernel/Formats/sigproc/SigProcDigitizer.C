@@ -76,9 +76,6 @@ public:
 */
 void dsp::SigProcDigitizer::pack ()
 {
-  if (input->get_npol() != 1)
-    throw Error (InvalidState, "dsp::SigProcDigitizer::pack",
-		 "cannot handle npol=%d", input->get_npol());
 
   // ChannelSort will re-organize the frequency channels in the output
   output->set_bandwidth( -fabs(input->get_bandwidth()) );
@@ -90,6 +87,12 @@ void dsp::SigProcDigitizer::pack ()
     pack_float ();
     return;
   }
+
+  // Note, multi-pol output currently only handled in 32-bit case
+  // so moved this check down here.
+  if (input->get_npol() != 1)
+    throw Error (InvalidState, "dsp::SigProcDigitizer::pack",
+		 "cannot handle npol=%d unless nbit=32", input->get_npol());
 
   // the number of frequency channels
   const unsigned nchan = input->get_nchan();
@@ -260,6 +263,9 @@ void dsp::SigProcDigitizer::pack_float () try
   // the number of time samples
   const uint64_t ndat = input->get_ndat();
 
+  // number of polarizations
+  const unsigned npol = input->get_npol();
+
   ChannelSort channel (input);
 
   float* outptr = reinterpret_cast<float*>( output->get_rawptr() );
@@ -273,10 +279,14 @@ void dsp::SigProcDigitizer::pack_float () try
     for (uint64_t idat=0; idat < ndat; idat++)
     {
       for (unsigned ichan=0; ichan < nchan; ichan++)
-	outptr[ichan] = inptr[ channel(ichan) ];
+      {
+        const unsigned inchan = channel(ichan);
+        for (unsigned ipol=0; ipol<npol; ipol++)
+          outptr[nchan*ipol+ichan] = inptr[inchan*npol+ipol];
+      }
 
-      inptr += nchan;
-      outptr += nchan;
+      inptr += nchan*npol;
+      outptr += nchan*npol;
     }
     return;
   }
@@ -284,10 +294,13 @@ void dsp::SigProcDigitizer::pack_float () try
   {
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
-      const float* inptr = input->get_datptr( channel(ichan) );
+      for (unsigned ipol=0; ipol < npol; ipol++)
+      {
+        const float* inptr = input->get_datptr( channel(ichan), ipol );
 
-      for (uint64_t idat=0; idat < ndat; idat++)
-	outptr[idat*nchan + ichan] = inptr[idat];
+        for (uint64_t idat=0; idat < ndat; idat++)
+          outptr[idat*nchan*npol + ipol*nchan + ichan] = inptr[idat];
+      }
     }
     return;
   }

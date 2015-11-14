@@ -97,6 +97,9 @@ namespace dsp {
     //! integrate in frequency before digitization
     unsigned fscrunch_factor;
 
+    //! Number of polarizations to output
+    unsigned npol;
+
     //! process only a single polarization
     int poln_select;
 

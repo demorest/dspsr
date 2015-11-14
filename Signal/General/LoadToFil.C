@@ -145,7 +145,11 @@ void dsp::LoadToFil::construct () try
 
   manager->set_block_size( nsample );
   
-  bool do_pscrunch = (obs->get_npol() > 1) && (config->poln_select < 0);
+  bool do_pscrunch = (config->npol==1) && (obs->get_npol() > 1) 
+    && (config->poln_select < 0);
+
+  // TODO need to check that npol option is compatible with filterbank
+  // method selected.
 
   TimeSeries* timeseries = unpacked;
 
@@ -223,14 +227,27 @@ void dsp::LoadToFil::construct () try
     if (do_detection)
     {
       if (verbose)
-	cerr << "digifil: creating detection operation" << endl;
+	cerr << "digifil: creating detection operation (npol=" <<
+          config->npol << ")" << endl;
       
       Detection* detection = new Detection;
 
       detection->set_input( timeseries );
       detection->set_output( timeseries );
 
-      // detection will do pscrunch
+      if (config->npol==1) 
+        detection->set_output_state(Signal::Intensity);
+      else if (config->npol==2)
+        detection->set_output_state(Signal::PPQQ);
+      else if (config->npol==3)
+        detection->set_output_state(Signal::NthPower);
+      else if (config->npol==4)
+      {
+        detection->set_output_state(Signal::Coherence);
+        //detection->set_output_ndim(4);
+      }
+
+      // detection will do pscrunch if necessary
       do_pscrunch = false;
 
       operations.push_back( detection );
