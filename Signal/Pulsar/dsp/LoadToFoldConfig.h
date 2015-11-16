@@ -77,6 +77,9 @@ namespace dsp {
     // use FFT benchmarks to choose an optimal FFT length
     bool use_fft_bench;
 
+    // optimize the order in which data are stored (e.g. FPT vs TFP)
+    bool optimal_order;
+
     // perform phase-coherent matrix convolution (calibration)
     std::string calibrator_database_filename;
 

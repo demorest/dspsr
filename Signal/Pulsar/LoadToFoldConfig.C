@@ -39,6 +39,9 @@ dsp::LoadToFold::Config::Config ()
   zap_rfi = false;
   use_fft_bench = false;
 
+  // by default, dspsr will switch to TFP ordering to optimize folding
+  optimal_order = true;
+
   times_minimum_nfft = 0;
   nsmear = 0;
 
