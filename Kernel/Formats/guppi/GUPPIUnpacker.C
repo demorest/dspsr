@@ -81,7 +81,9 @@ void dsp::GUPPIUnpacker::unpack ()
         } else {
           for (unsigned bt = 0; bt < ndat; bt++) {
             hist[ (unsigned char) *from ] ++;
-            *into = float(int( (unsigned char) *from ));
+            // Note: interpret 0 as 0.0 otherwise subtract off 128
+            *into = float( (*from)==0 ? 0.0 : 
+                int( (signed char) (*from ^ 0x80) ));
             from += nskip;
             into += ndim;
           }
