@@ -173,6 +173,10 @@ void dsp::Rescale::transformation ()
   // prepare the output TimeSeries
   output->copy_configuration (input);
 
+  // Since we will be rescaling data, remove any pre-set scale
+  // factors (for example Filterbank/FFT normalizations).
+  output->set_scale(1.0);
+
   if (output != input)
     output->resize (output_ndat);
   else
