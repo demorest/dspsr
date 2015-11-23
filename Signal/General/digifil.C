@@ -100,7 +100,7 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("remove inter-channel dispersion delays");
 
   arg = menu.add (config->dispersion_measure, 'D', "dm");
-  arg->set_help (" set the dispersion measure");
+  arg->set_help ("set the dispersion measure");
 
   arg = menu.add (config->tscrunch_factor, 't', "nsamp");
   arg->set_help ("decimate in time");
@@ -116,6 +116,9 @@ void parse_options (int argc, char** argv) try
 
   arg = menu.add (config->rescale_seconds, 'I', "secs");
   arg->set_help ("rescale interval in seconds");
+
+  arg = menu.add (config->scale_fac, 's', "fac");
+  arg->set_help ("data scale factor to apply");
 
   arg = menu.add (config->output_filename, 'o', "file");
   arg->set_help ("output filename");

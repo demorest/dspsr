@@ -75,6 +75,8 @@ dsp::LoadToFil::Config::Config()
   rescale_seconds = 10.0;
   rescale_constant = false;
 
+  scale_fac = 1.0;
+
   nbits = 2;
 
   // by default, time series weights are not used
@@ -329,6 +331,7 @@ void dsp::LoadToFil::construct () try
   digitizer->set_nbit (config->nbits);
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
+  digitizer->set_scale (config->scale_fac);
 
   operations.push_back( digitizer );
 
