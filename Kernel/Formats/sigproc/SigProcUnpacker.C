@@ -99,7 +99,7 @@ void dsp::SigProcUnpacker::unpack ()
     for (unsigned ichan=0; ichan<nchan; ichan++) 
     {
       // from = from_base + ichan * nbit / 8
-      const unsigned char* from = from_base + (ichan >> div_shift);
+      const unsigned char* from = from_base + ((ipol*nchan+ichan) >> div_shift);
 
       // shift = ichan % (8/nbit)
       const unsigned shift = (ichan & mod_mask) * nbit; // MKeith: Need to move by nbits each channel!
@@ -109,25 +109,24 @@ void dsp::SigProcUnpacker::unpack ()
       // Note, 32-bit is assumed to be floating point (eg not 32-bit ints).
       if (nbit == 32)
       {
-	//        const float* from32 = reinterpret_cast<const float *>(from_base)+ichan;
         const float* from32 = reinterpret_cast<const float *>(from_base)+
 	  nchan*ipol+ichan;
 
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
           into[bt] =  *from32;
-	  //	  from32 += nchan;
 	  from32 += nchan*npol;
 	}
       }
       
       else if (nbit == 16)
       {
-	const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base)+ichan;
+	const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base)
+          + (ipol*nchan + ichan);
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
           into[bt] = float( *from16 );
-	  from16 += nchan;
+	  from16 += nchan*npol;
 	}
       }
 
@@ -135,7 +134,7 @@ void dsp::SigProcUnpacker::unpack ()
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
           into[bt] = float( *from );
-	  from += nchan;
+	  from += nchan*npol;
 	}
 
       else
@@ -144,7 +143,7 @@ void dsp::SigProcUnpacker::unpack ()
 	  // shift and mask one channel
 	  into[bt] = float( ((*from) >> shift) & keep_mask );
 	  // skip to next byte in which this channel occurs
-	  from += nchan_bytes;
+	  from += nchan_bytes*npol;
 	}
     }}
 
