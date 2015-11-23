@@ -34,6 +34,14 @@ namespace dsp
     //! Special case for floating point data
     void pack_float ();
 
+    //! Set the scale factor
+    void set_scale(float _scale) { scale_fac = _scale; }
+
+  protected:
+
+    //! Additional scale factor to apply to data
+    float scale_fac;
+
   };
 }
 
