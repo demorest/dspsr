@@ -12,6 +12,7 @@ dsp::SigProcDigitizer::SigProcDigitizer () : Digitizer ("SigProcDigitizer")
 {
   nbit = 8;
   scale_fac = 1.0;
+  rescale = true;
 }
 
 //! Set the number of bits per sample
@@ -134,6 +135,17 @@ void dsp::SigProcDigitizer::pack ()
     break;
   }
 
+  // If rescale is false we do not apply the nbit-dependent scaling above.
+  // Note that for 4-pol data we still need to offset the (signed) poln
+  // cross-terms so that they can be packed into an unsigned value.
+  float xpol_offset = 0.0;
+  if (rescale==false)
+  {
+    xpol_offset = digi_mean;
+    digi_mean = 0.0;
+    digi_scale = 1.0;
+  }
+
   // Also apply any existing scale factors (note, Rescale will set the
   // input scale to 1.0 if it has been applied to the data).
   digi_scale /= input->get_scale() * scale_fac;
@@ -154,6 +166,9 @@ void dsp::SigProcDigitizer::pack ()
       for (unsigned ipol=0; ipol < npol; ipol++)
       {
 
+        float mean = digi_mean;
+        if (ipol>1) { mean += xpol_offset; }
+
         unsigned char* outptr = output->get_rawptr() 
           + (idat*nchan*npol + ipol*nchan)/samp_per_byte;
         const float* inptr = input->get_dattfp() + idat*nchan*npol + ipol;
@@ -168,7 +183,7 @@ void dsp::SigProcDigitizer::pack ()
           unsigned inChan = channel (ichan);
 
           //printf("%f\t",(*inptr));
-          int result = (int)(((*(inptr+inChan*npol))*digi_scale)+digi_mean+0.5);
+          int result = (int)(((*(inptr+inChan*npol))*digi_scale)+mean+0.5);
           //printf("%d\n",result);
 
           // clip the result at the limits
@@ -221,11 +236,14 @@ void dsp::SigProcDigitizer::pack ()
       for (unsigned ipol=0; ipol < npol; ipol++) 
       {
 
+        float mean = digi_mean;
+        if (ipol>1) { mean += xpol_offset; }
+
         const float* inptr = input->get_datptr( channel (ichan), ipol );
 
         for (uint64_t idat=0; idat < ndat; idat++)
         {
-          int result = int( (inptr[idat] * digi_scale) + digi_mean +0.5 );
+          int result = int( (inptr[idat] * digi_scale) + mean +0.5 );
 
           // clip the result at the limits
           if (result < digi_min)

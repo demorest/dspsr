@@ -332,6 +332,9 @@ void dsp::LoadToFil::construct () try
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
   digitizer->set_scale (config->scale_fac);
+  // If Rescale is not in use, the scale/offset settings in the digitizer do
+  // not make sense, so this disables them:
+  if (config->rescale_seconds == 0.0) digitizer->use_digi_scales(false);
 
   operations.push_back( digitizer );
 
