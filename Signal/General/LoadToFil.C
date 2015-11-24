@@ -70,6 +70,8 @@ dsp::LoadToFil::Config::Config()
   tscrunch_factor = 0;
   fscrunch_factor = 0;
 
+  npol = 1;
+
   poln_select = -1;
 
   rescale_seconds = 10.0;
@@ -150,9 +152,6 @@ void dsp::LoadToFil::construct () try
   bool do_pscrunch = (config->npol==1) && (obs->get_npol() > 1) 
     && (config->poln_select < 0);
 
-  // TODO need to check that npol option is compatible with filterbank
-  // method selected.
-
   TimeSeries* timeseries = unpacked;
 
   if ( config->poln_select >= 0 )
@@ -195,7 +194,9 @@ void dsp::LoadToFil::construct () try
 
       }
 
-      if ( config->filterbank.get_freq_res() || config->coherent_dedisp )
+      if ( config->filterbank.get_freq_res() 
+          || config->coherent_dedisp 
+          || (config->npol>2) )
       {
 	cerr << "digifil: using convolving filterbank" << endl;
 
@@ -208,8 +209,9 @@ void dsp::LoadToFil::construct () try
         if (kernel)
           filterbank->set_response( kernel );
 
-	filterbank->set_frequency_resolution ( 
-            config->filterbank.get_freq_res() );
+	if ( config->filterbank.get_freq_res() ) 
+          filterbank->set_frequency_resolution ( 
+              config->filterbank.get_freq_res() );
 
 	operations.push_back( filterbank.get() );
 	do_detection = true;
