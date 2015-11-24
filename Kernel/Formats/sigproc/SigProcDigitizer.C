@@ -24,6 +24,7 @@ void dsp::SigProcDigitizer::set_nbit (int _nbit)
   case 2:
   case 4:
   case 8:
+  case 16:
   case -32:
     nbit=_nbit;
     break;
@@ -133,6 +134,12 @@ void dsp::SigProcDigitizer::pack ()
     digi_min = 0;
     digi_max = 255;
     break;
+  case 16:
+    digi_mean=32768.0;
+    digi_scale= digi_mean / digi_sigma;
+    digi_min = 0;
+    digi_max = 65535;
+    break;
   }
 
   // If rescale is false we do not apply the nbit-dependent scaling above.
@@ -169,8 +176,13 @@ void dsp::SigProcDigitizer::pack ()
         float mean = digi_mean;
         if (ipol>1) { mean += xpol_offset; }
 
-        unsigned char* outptr = output->get_rawptr() 
-          + (idat*nchan*npol + ipol*nchan)/samp_per_byte;
+        unsigned char* outptr;
+        if (nbit==16)
+          outptr = output->get_rawptr() + 2*(idat*nchan*npol + ipol*nchan);
+        else
+          outptr = output->get_rawptr() 
+            + (idat*nchan*npol + ipol*nchan)/samp_per_byte;
+
         const float* inptr = input->get_dattfp() + idat*nchan*npol + ipol;
 
         // The following line is important: this function increments
@@ -217,6 +229,11 @@ void dsp::SigProcDigitizer::pack ()
           case 8:
             outptr++;
             (*outptr) = (unsigned char) result;
+            break;
+          case 16:
+            outptr++;
+            *((uint16_t*)outptr) = (uint16_t) result;
+            outptr++;
             break;
           }
         } // chan
@@ -269,6 +286,9 @@ void dsp::SigProcDigitizer::pack ()
             break;
           case 8:
             outptr[outidx] = (unsigned char) result;
+            break;
+          case 16:
+            ((uint16_t*)outptr)[outidx] = (uint16_t) result;
             break;
           }
 
