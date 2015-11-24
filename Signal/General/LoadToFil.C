@@ -70,10 +70,14 @@ dsp::LoadToFil::Config::Config()
   tscrunch_factor = 0;
   fscrunch_factor = 0;
 
+  npol = 1;
+
   poln_select = -1;
 
   rescale_seconds = 10.0;
   rescale_constant = false;
+
+  scale_fac = 1.0;
 
   nbits = 2;
 
@@ -145,7 +149,8 @@ void dsp::LoadToFil::construct () try
 
   manager->set_block_size( nsample );
   
-  bool do_pscrunch = (obs->get_npol() > 1) && (config->poln_select < 0);
+  bool do_pscrunch = (config->npol==1) && (obs->get_npol() > 1) 
+    && (config->poln_select < 0);
 
   TimeSeries* timeseries = unpacked;
 
@@ -189,7 +194,9 @@ void dsp::LoadToFil::construct () try
 
       }
 
-      if ( config->filterbank.get_freq_res() || config->coherent_dedisp )
+      if ( config->filterbank.get_freq_res() 
+          || config->coherent_dedisp 
+          || (config->npol>2) )
       {
 	cerr << "digifil: using convolving filterbank" << endl;
 
@@ -202,8 +209,9 @@ void dsp::LoadToFil::construct () try
         if (kernel)
           filterbank->set_response( kernel );
 
-	filterbank->set_frequency_resolution ( 
-            config->filterbank.get_freq_res() );
+	if ( config->filterbank.get_freq_res() ) 
+          filterbank->set_frequency_resolution ( 
+              config->filterbank.get_freq_res() );
 
 	operations.push_back( filterbank.get() );
 	do_detection = true;
@@ -223,14 +231,27 @@ void dsp::LoadToFil::construct () try
     if (do_detection)
     {
       if (verbose)
-	cerr << "digifil: creating detection operation" << endl;
+	cerr << "digifil: creating detection operation (npol=" <<
+          config->npol << ")" << endl;
       
       Detection* detection = new Detection;
 
       detection->set_input( timeseries );
       detection->set_output( timeseries );
 
-      // detection will do pscrunch
+      if (config->npol==1) 
+        detection->set_output_state(Signal::Intensity);
+      else if (config->npol==2)
+        detection->set_output_state(Signal::PPQQ);
+      else if (config->npol==3)
+        detection->set_output_state(Signal::NthPower);
+      else if (config->npol==4)
+      {
+        detection->set_output_state(Signal::Coherence);
+        //detection->set_output_ndim(4);
+      }
+
+      // detection will do pscrunch if necessary
       do_pscrunch = false;
 
       operations.push_back( detection );
@@ -312,6 +333,10 @@ void dsp::LoadToFil::construct () try
   digitizer->set_nbit (config->nbits);
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
+  digitizer->set_scale (config->scale_fac);
+  // If Rescale is not in use, the scale/offset settings in the digitizer do
+  // not make sense, so this disables them:
+  if (config->rescale_seconds == 0.0) digitizer->use_digi_scales(false);
 
   operations.push_back( digitizer );
 

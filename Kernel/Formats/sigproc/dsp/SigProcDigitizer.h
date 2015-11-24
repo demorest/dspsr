@@ -34,6 +34,20 @@ namespace dsp
     //! Special case for floating point data
     void pack_float ();
 
+    //! Set the manual scale factor
+    void set_scale(float _scale) { scale_fac = _scale; }
+
+    //! Set whether or not to apply the nbit-depedent scalings
+    void use_digi_scales (bool _rescale) { rescale = _rescale; }
+
+  protected:
+
+    //! Additional scale factor to apply to data
+    float scale_fac;
+
+    //! Should the data be rescaled using the nbit-dependent values?
+    bool rescale;
+
   };
 }
 
