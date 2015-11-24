@@ -96,6 +96,11 @@ void dsp::SigProcUnpacker::unpack ()
   case TimeSeries::OrderFPT:
   {
     for (unsigned ipol=0; ipol<npol; ipol++){
+    // These are relevant for dspsr-produced files, but I'm not sure how best
+    // to handle this generally:
+    float offset=0.0;
+    if (nbit==16 && ipol>1) { offset = 32768.0; }
+    if (nbit==8 && ipol>1) { offset = 127.5; }
     for (unsigned ichan=0; ichan<nchan; ichan++) 
     {
       // from = from_base + ichan * nbit / 8
@@ -125,7 +130,7 @@ void dsp::SigProcUnpacker::unpack ()
           + (ipol*nchan + ichan);
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
-          into[bt] = float( *from16 );
+          into[bt] = float( *from16 ) - offset;
 	  from16 += nchan*npol;
 	}
       }
@@ -133,7 +138,7 @@ void dsp::SigProcUnpacker::unpack ()
       else if (nbit == 8)
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
-          into[bt] = float( *from );
+          into[bt] = float( *from ) - offset;
 	  from += nchan*npol;
 	}
 
