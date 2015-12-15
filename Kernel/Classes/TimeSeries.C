@@ -44,8 +44,6 @@ void dsp::TimeSeries::init ()
   reserve_ndat = 0;
   reserve_nfloat = 0;
   input_sample = -1;
-  input_bundle = 0;
-  nbundle = 1;
   zeroed_data = false;
 }
 
@@ -97,12 +95,12 @@ dsp::TimeSeries::use_data(float* _buffer, uint64_t _ndat)
 {
   if( get_nchan() != 1 || get_npol() != 1 )
     throw Error(InvalidState,"dsp::TimeSeries::use_data()",
-    "This function is only for nchan=1 npol=1 TimeSeries --- you had %d %d",
-    get_nchan(), get_npol());
+		"This function is only for nchan=1 npol=1 TimeSeries --- you had %d %d",
+		get_nchan(), get_npol());
 
   if( !_buffer )
     throw Error(InvalidState,"dsp::TimeSeries::use_data()",
-                "Input data was null!");
+		"Input data was null!");
 
   resize( 0 );
   buffer = (unsigned char*)_buffer;
@@ -258,14 +256,7 @@ float* dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol)
     throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
 		 "Not in Frequency, Polarization, Time Order");
 
-  if (ichan < get_ichan_start() || ichan >= get_ichan_start()+get_nchan_bundle())
-    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
-     "ichan %d not in bundle range %d to %d",
-     ichan, get_ichan_start(), get_ichan_start()+get_nchan_bundle()-1);
-
-  // Offset ichan to account for channel bundling
-  unsigned offset_ichan = ichan - get_ichan_start();
-  return reinterpret_cast<float*>( get_udatptr(offset_ichan,ipol) );
+  return reinterpret_cast<float*>( get_udatptr(ichan,ipol) );
 }
 
 //! Return pointer to the specified data block
@@ -276,14 +267,7 @@ dsp::TimeSeries::get_datptr (unsigned ichan, unsigned ipol) const
     throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
 		 "Not in Frequency, Polarization, Time Order");
 
-  if (ichan < get_ichan_start() || ichan >= get_ichan_start()+get_nchan_bundle())
-    throw Error (InvalidState, "dsp::TimeSeries::get_datptr",
-     "ichan %d not in bundle range %d to %d",
-    ichan, get_ichan_start(), get_ichan_start()+get_nchan_bundle()-1);
-
-  // Offset ichan to account for channel bundling
-  unsigned offset_ichan = ichan - get_ichan_start();
-  return reinterpret_cast<const float*>( get_udatptr(offset_ichan,ipol) );
+  return reinterpret_cast<const float*>( get_udatptr(ichan,ipol) );
 }
 
 //! Return pointer to the specified data block
@@ -311,16 +295,6 @@ uint64_t dsp::TimeSeries::get_nfloat_span () const
   return internal_get_subsize() / sizeof(float);
 }
 
-unsigned dsp::TimeSeries::get_ichan_start() const
-{
-  return input_bundle * get_nchan_bundle();
-}
-
-unsigned dsp::TimeSeries::get_nchan_bundle () const
-{
-  return get_nchan() / nbundle;
-}
-
 double dsp::TimeSeries::mean (unsigned ichan, unsigned ipol)
 {
   if (get_ndim() != 1)
@@ -346,8 +320,6 @@ void dsp::TimeSeries::internal_match (const TimeSeries* other)
   reserve_ndat = other->reserve_ndat;
   reserve_nfloat = other->reserve_nfloat;
   input_sample = other->input_sample;
-  if (other->nbundle == nbundle)
-    input_bundle = other->input_bundle;
 
   uint64_t offset = other->data - (float*)other->buffer;
 
@@ -392,8 +364,8 @@ dsp::TimeSeries& dsp::TimeSeries::operator += (const TimeSeries& add)
 
     return *this;
   }
-  
-  for (unsigned ichan=get_ichan_start(); ichan<(get_ichan_start()+get_nchan_bundle()); ichan++)
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
   {
     for (unsigned ipol=0; ipol<get_npol(); ipol++)
     {
@@ -414,8 +386,8 @@ dsp::TimeSeries& dsp::TimeSeries::operator *= (float mult){
 
   if( fabs(mult-1.0) < 1.0e-9 )
     return *this;
-    
-  for (unsigned ichan=get_ichan_start(); ichan<(get_ichan_start()+get_nchan_bundle()); ichan++){
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++){
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
       float* dat = get_datptr(ichan,ipol);
       unsigned npts = unsigned(get_ndat()*get_ndim());
@@ -438,12 +410,6 @@ void dsp::TimeSeries::prepend_checks (const dsp::TimeSeries* pre,
                  "data to be prepended end sample="I64"; "
                  "not contiguous with start sample="I64,
                  pre->input_sample + pre_ndat, input_sample);
-                 
-  if (pre->input_bundle != uint64_t(input_bundle))
-    throw Error (InvalidState, "dsp::TimeSeries::prepend_checks",
-                 "data to be prepended input bundle="I64"; "
-                 "not the same as input bundle="I64,
-                 pre->input_bundle, input_bundle);
 }
 
 void dsp::TimeSeries::prepend (const dsp::TimeSeries* pre, uint64_t pre_ndat)
@@ -493,7 +459,7 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
     switch (order)
     {
     case OrderFPT:
-      for (unsigned ichan=get_ichan_start(); ichan<(get_ichan_start()+get_nchan_bundle()); ichan++)
+      for (unsigned ichan=0; ichan<get_nchan(); ichan++)
       {
         for (unsigned ipol=0; ipol<get_npol(); ipol++)
         {
@@ -519,8 +485,6 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
   }
 
   input_sample = copy->input_sample + idat_start;
-  input_bundle = copy->input_bundle;
-  nbundle = copy->nbundle;
 }
 catch (Error& error)
 {
@@ -614,8 +578,8 @@ void dsp::TimeSeries::check (float min, float max)
   max *= scale;
 
   uint64_t _ndat = get_ndat();
-  
-  for (unsigned ichan=get_ichan_start(); ichan<(get_ichan_start()+get_nchan_bundle()); ichan++)
+
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++)
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
 
       float* dat = get_datptr (ichan, ipol);
@@ -722,29 +686,27 @@ void dsp::TimeSeries::finite_check () const
   unsigned non_finite = 0;
 
   if (verbose)
-    cerr << "dsp::TimeSeries::finite_check nchan=" << nchan <<
-            " nchan_bundle=" << get_nchan_bundle() <<
-            " ichan_start=" << get_ichan_start() << " npol=" << npol <<
-            " ndim=" << get_ndim() << " ndat=" << get_ndat() << endl;
-   
-  for (unsigned ichan=get_ichan_start(); ichan<(get_ichan_start()+get_nchan_bundle()); ichan++)
+    cerr << "dsp::TimeSeries::finite_check nchan=" << nchan << " npol=" << npol
+	 << " ndim=" << get_ndim() << " ndat=" << get_ndat() << endl;
+
+  for (unsigned ichan=0; ichan < nchan; ichan++)
     for (unsigned ipol=0; ipol < npol; ipol++)
     {
       const float* from = get_datptr (ichan, ipol);
       for (unsigned ibin=0; ibin < nfloat; ibin++)
-        if (!finite(from[ibin]))
-        {
+	if (!finite(from[ibin]))
+	{
 #ifdef _DEBUG
-          cerr << "not finite ichan=" << ichan << " ipol=" << ipol
-               << " ptr=" << from << " ibin=" << ibin << endl;
+	  cerr << "not finite ichan=" << ichan << " ipol=" << ipol
+	       << " ptr=" << from << " ibin=" << ibin << endl;
 #endif
-          non_finite ++;
-        }
+	  non_finite ++;
+	}
     }
 
   if (non_finite)
     throw Error (InvalidParam, "dsp::TimeSeries::finite_check",
-                 "%u/%u non-finite values",
-                 non_finite, nfloat * get_nchan_bundle() * npol);
+		 "%u/%u non-finite values",
+		 non_finite, nfloat * nchan * npol);
 }
 

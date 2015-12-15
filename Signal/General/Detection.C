@@ -230,18 +230,16 @@ void dsp::Detection::square_law ()
     return;
   }
   const unsigned nchan = input->get_nchan();
-  const unsigned ichan_start = input->get_ichan_start();
-  const unsigned nchan_bundle = input->get_nchan_bundle();
   const unsigned npol = input->get_npol();
   
   bool order_fpt = input->get_order() == TimeSeries::OrderFPT;
 
-  const unsigned loop_nchan = (order_fpt) ? nchan_bundle : 1;
+  const unsigned loop_nchan = (order_fpt) ? nchan : 1;
   const unsigned loop_npol = (order_fpt) ? npol : 1;
   const unsigned factor = (order_fpt) ? 1 : (nchan * npol);
   const uint64_t nfloat = input->get_ndim() * input->get_ndat() * factor;
 
-  for (unsigned ichan=ichan_start; ichan<(ichan_start+loop_nchan); ichan++)
+  for (unsigned ichan=0; ichan<loop_nchan; ichan++)
   {
     for (unsigned ipol=0; ipol<loop_npol; ipol++)
     {
@@ -250,15 +248,15 @@ void dsp::Detection::square_law ()
       register const float* dend = NULL;
       
       if (order_fpt)
-	    {
-	      out_ptr = output->get_datptr (ichan,ipol);
-	      in_ptr = input->get_datptr (ichan,ipol);
-	    }
+	{
+	  out_ptr = output->get_datptr (ichan,ipol);
+	  in_ptr = input->get_datptr (ichan,ipol);
+	}
       else
-	    {
-	      out_ptr = output->get_dattfp ();
-	      in_ptr = input->get_dattfp ();
-	    }
+	{
+	  out_ptr = output->get_dattfp ();
+	  in_ptr = input->get_dattfp ();
+	}
 
       dend = in_ptr + nfloat;
 
@@ -292,16 +290,16 @@ void dsp::Detection::square_law ()
     {
       for (unsigned ichan=0; ichan<loop_nchan; ichan++)
       {
-      	register float* p0 = output->get_datptr (ichan, 0);
-	      register float* p1 = output->get_datptr (ichan, 1);
-	      const register float* pend = p0 + output->get_ndat();
+	register float* p0 = output->get_datptr (ichan, 0);
+	register float* p1 = output->get_datptr (ichan, 1);
+	const register float* pend = p0 + output->get_ndat();
 	
-	      while (p0!=pend)
-	      {
-	        *p0 += *p1;
-	        p0 ++;
-	        p1 ++;
-	      }
+	while (p0!=pend)
+	  {
+	    *p0 += *p1;
+	    p0 ++;
+	    p1 ++;
+	  }
       }
     }
     else
@@ -313,12 +311,12 @@ void dsp::Detection::square_law ()
       const register float* pend = pout + output->get_ndat() * nchan;
 	
       while (pout!=pend)
-	    {
-	      *pout = *p0 + *p1;
-	      *pout ++;
-	      p0 += 2;
-	      p1 += 2;
-	    }
+	{
+	  *pout = *p0 + *p1;
+	  *pout ++;
+	  p0 += 2;
+	  p1 += 2;
+	}
     }
   } 
 }
@@ -352,8 +350,6 @@ void dsp::Detection::polarimetry () try
 
   uint64_t ndat = input->get_ndat();
   unsigned nchan = input->get_nchan();
-  unsigned ichan_start = input->get_ichan_start();
-  unsigned nchan_bundle = input->get_nchan_bundle();
 
   uint64_t required_space = 0;
   uint64_t copy_bytes = 0;
@@ -388,7 +384,7 @@ void dsp::Detection::polarimetry () try
 
   float* r[4];
 
-  for (unsigned ichan=ichan_start; ichan<(ichan_start+nchan_bundle); ichan++)
+  for (unsigned ichan=0; ichan<nchan; ichan++)
   {
     const float* p = input->get_datptr (ichan, 0);
     const float* q = input->get_datptr (ichan, 1);

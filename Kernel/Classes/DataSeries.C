@@ -33,7 +33,6 @@ void dsp::DataSeries::initi()
   buffer = NULL;
   size = 0;
   subsize = 0;
-  nbundle = 1;
   set_nbit( 8 * sizeof(float) );
 }
   
@@ -130,10 +129,10 @@ void dsp::DataSeries::resize (uint64_t nsamples, unsigned char*& old_buffer)
   if (verbose)
     cerr << "dsp::DataSeries::resize"
             " npol=" << get_npol() << 
-            " nchan=" << get_nchan()/nbundle << endl;
+            " nchan=" << get_nchan() << endl;
 
   // Number of bytes needed to be allocated
-  uint64_t require = (nbits_required*get_npol()*get_nchan()/nbundle)/8;
+  uint64_t require = (nbits_required*get_npol()*get_nchan())/8;
 
   if (verbose)
     cerr << "dsp::DataSeries::resize nbytes=nbits/8*npol*nchan=" << require 
@@ -204,10 +203,10 @@ void dsp::DataSeries::reshape ()
 {
   subsize = (get_ndim() * get_ndat() * get_nbit()) / 8;
   
-  if (subsize*get_npol()*get_nchan()/nbundle > size)
+  if (subsize*get_npol()*get_nchan() > size)
     throw Error (InvalidState, "dsp::DataSeries::reshape",
 		 "subsize="UI64" * npol=%d * nchan=%d > size="UI64,
-		 subsize, get_npol(), get_nchan()/nbundle, size);
+		 subsize, get_npol(), get_nchan(), size);
 
   if (verbose)
     cerr << "dsp::DataSeries::reshape size=" << size << " bytes"
@@ -229,11 +228,6 @@ void dsp::DataSeries::reshape (unsigned new_npol, unsigned new_ndim)
 
   set_npol (new_npol);
   set_ndim (new_ndim);
-}
-
-void dsp::DataSeries::set_total_nbundle (unsigned _nbundle)
-{
-  nbundle = _nbundle;
 }
 
 //! Returns a uchar pointer to the first piece of data
@@ -292,7 +286,7 @@ dsp::DataSeries& dsp::DataSeries::operator = (const DataSeries& copy)
 
   uint64_t npt = (get_ndat() * get_ndim() * get_nbit())/8;
 
-  for (unsigned ichan=0; ichan<(get_nchan()/nbundle); ichan++){
+  for (unsigned ichan=0; ichan<get_nchan(); ichan++){
     for (unsigned ipol=0; ipol<get_npol(); ipol++) {
       unsigned char* dest = get_udatptr (ichan, ipol);
       const unsigned char* src = copy.get_udatptr (ichan, ipol);
@@ -312,10 +306,10 @@ dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
   uint64_t tmp2 = size; size = ts.size; ts.size = tmp2;
   uint64_t tmp3 = subsize; subsize = ts.subsize; ts.subsize = tmp3;
 
-  if( subsize*get_npol()*get_nchan()/nbundle > size )
+  if( subsize*get_npol()*get_nchan() > size )
     throw Error(InvalidState,"dsp::DataSeries::swap_data()",
 		"BUG! subsize*get_npol()*get_nchan() > size ("UI64" * %d * %d > "UI64")\n",
-		subsize,get_npol(),get_nchan()/nbundle,size);
+		subsize,get_npol(),get_nchan(),size);
 
   return *this;
 }
@@ -324,14 +318,6 @@ dsp::DataSeries& dsp::DataSeries::swap_data(dsp::DataSeries& ts)
 void dsp::DataSeries::internal_match (const DataSeries* other)
 {
   uint64_t required = other->size;
-  unsigned other_nbundle = other->get_total_nbundle();
-  // Handle case where everything is the same except nbundle
-  if (other_nbundle > nbundle)
-    required *= other_nbundle/nbundle;
-  else
-    required /= nbundle/other_nbundle;
-    
-  //cerr << "ERIK: internal_match: required = " << required << endl;
 
   if (size < required)
   {

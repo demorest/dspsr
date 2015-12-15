@@ -96,12 +96,6 @@ namespace dsp {
     //! Stride (in bytes) between the same time sample in different chan/pol
     virtual uint64_t get_subsize(){ return subsize; }
 
-    //! Get the total number of bundles being used
-    unsigned get_total_nbundle () const { return nbundle; }
-    
-    //! Set the total number of bundles being used
-    void set_total_nbundle (unsigned _nbundle); // { nbundle = _nbundle; }
-
     //! Match the internal memory layout of another DataSeries
     virtual void internal_match (const DataSeries*);
 
@@ -134,9 +128,6 @@ namespace dsp {
 
     //! The number of BYTES in a data sub-division
     uint64_t subsize;
-    
-    //! The number of bundles input channels have been divided into
-    unsigned nbundle;
 
     //! The memory manager
     Reference::To<Memory> memory;

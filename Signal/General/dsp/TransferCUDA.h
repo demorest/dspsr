@@ -23,12 +23,12 @@ namespace dsp {
     //! Default constructor - always out of place
     TransferCUDA(cudaStream_t _stream);
 
+    //! Constructor with input stream and completion event
+    TransferCUDA(cudaStream_t _stream, cudaStream_t _input_stream,
+                 cudaEvent_t _event);
+
     void set_kind (cudaMemcpyKind k) { kind = k; }
     void prepare ();
-    
-    // If transferring all input in its own stream, need the stream and an event
-    // signaling transfer completion
-    void set_input_stream (cudaStream_t _input_stream, cudaEvent_t _event);
 
     Operation::Function get_function () const { return Operation::Structural; }
 

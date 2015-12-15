@@ -92,9 +92,6 @@ namespace dsp {
     // Placeholder for CUDA event signaling a completed input memory transfer
     void* input_event;
 
-    // Increases input_bundle by 1 or sets it back to 0   
-    void increment_input_bundle();
-
   protected:
 
     //! Any special operations that must be performed at the end of data
@@ -106,15 +103,15 @@ namespace dsp {
     //! Processing thread states
     enum State
       {
-        Fail,        //! an error has occurred
-        Idle,        //! nothing happening
-        Construct,   //! request to construct
-        Constructed, //! construction completed
-        Prepare,     //! request to prepare
-        Prepared,    //! preparations completed
-        Run,         //! processing started
-        Done,        //! processing completed
-        Joined       //! completion acknowledged
+	Fail,        //! an error has occurred
+	Idle,        //! nothing happening
+	Construct,   //! request to construct
+	Constructed, //! construction completed
+	Prepare,     //! request to prepare
+	Prepared,    //! preparations completed
+	Run,         //! processing started
+	Done,        //! processing completed
+	Joined       //! completion acknowledged
       };
 
     //! Processing state
@@ -164,9 +161,6 @@ namespace dsp {
     // Placeholder for CUDA stream in which input memory transfers occur
     void* input_stream;
 
-    // Current input bundle
-    unsigned input_bundle;
-
   };
 
   //! Per-thread configuration options
@@ -215,10 +209,6 @@ namespace dsp {
 
     //! run repeatedly on the same input
     bool run_repeatedly;
-
-    //! set number of bundles into which input channels are divided
-    void set_nbundle (unsigned);
-    unsigned get_nbundle () const { return nbundle; }
 
     //! set the cuda devices to be used
     void set_cuda_device (std::string);
@@ -285,9 +275,6 @@ namespace dsp {
 
     //! CPUs on which threads will run
     std::vector<unsigned> affinity;
-
-    //! Number of bundles into which input channels are divided
-    unsigned nbundle;
 
     //! number of CPU threads
     unsigned nthread;

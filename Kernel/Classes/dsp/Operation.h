@@ -119,10 +119,6 @@ namespace dsp {
     //! Set the scratch space
     virtual void set_scratch (Scratch*);
     bool scratch_was_set () const;
-    
-    //! Set the bundle of frequency channels currently being operated on
-    // along with the total number of bundles
-    void set_input_bundle (unsigned _input_bundle, unsigned _nbundle);
 
   protected:
 
@@ -159,9 +155,6 @@ namespace dsp {
 
     //! Set true when preparation optimizations are completed
     bool prepared;
-
-    //! The input bundle and total number of bundles
-    unsigned input_bundle, nbundle;
 
   };
   

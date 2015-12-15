@@ -208,9 +208,8 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
   verbose = dsp::Operation::record_time || dsp::Operation::verbose;
 
   const unsigned npol = in->get_npol();
-  const unsigned input_nchan_bundle = in->get_nchan_bundle();
-  const unsigned input_ichan_start = in->get_ichan_start();
-  const unsigned output_ichan_start = out->get_ichan_start();
+  const unsigned input_nchan = in->get_nchan();
+  const unsigned output_nchan = out->get_nchan();
  
   // counters
   unsigned ipol, ichan;
@@ -229,15 +228,14 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
   float * input_ptr;
   uint64_t output_span;
 
-  DEBUG("CUDA::FilterbankEngine::perform input_nchan_bundle=" << input_nchan_bundle);
-  DEBUG("CUDA::FilterbankEngine::perform input_ichan_start=" << input_ichan_start);
+  DEBUG("CUDA::FilterbankEngine::perform input_nchan=" << input_nchan);
   DEBUG("CUDA::FilterbankEngine::perform npol=" << npol);
   DEBUG("CUDA::FilterbankEngine::perform npart=" << npart);
   DEBUG("CUDA::FilterbankEngine::perform nkeep=" << nkeep);
   DEBUG("CUDA::FilterbankEngine::perform in_step=" << in_step);
   DEBUG("CUDA::FilterbankEngine::perform out_step=" << out_step);
 
-  for (ichan=input_ichan_start; ichan<(input_ichan_start+input_nchan_bundle); ichan++)
+  for (ichan=0; ichan<input_nchan; ichan++)
   {
     for (ipol=0; ipol < npol; ipol++)
     {
@@ -291,8 +289,7 @@ void CUDA::FilterbankEngine::perform (const dsp::TimeSeries * in, dsp::TimeSerie
         if (out)
         {
           output_ptr = out->get_datptr (ichan*nchan_subband, ipol) + out_offset;
-          output_span = out->get_datptr (output_ichan_start+1, ipol) -
-                        out->get_datptr (output_ichan_start, ipol);
+          output_span = out->get_datptr (1, ipol) - out->get_datptr (0, ipol);
 
           const float2* input = cscratch + nfilt_pos;
           unsigned input_stride = freq_res;

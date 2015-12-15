@@ -59,7 +59,6 @@ dsp::SingleThread::SingleThread ()
   input_context = 0;
   gpu_stream = undefined_stream;
   input_event = (void*) 0;
-  input_bundle = 0;
 }
 
 dsp::SingleThread::~SingleThread ()
@@ -143,11 +142,11 @@ void dsp::SingleThread::share (SingleThread* other)
 
     if (!trans)
       throw Error (InvalidState, "dsp::SingleThread::share",
-                   "mismatched operation type");
+		   "mismatched operation type");
 
     if (!trans->has_buffering_policy())
       throw Error (InvalidState, "dsp::SingleThread::share",
-                   "mismatched buffering policy");
+		   "mismatched buffering policy");
 
     if (Operation::verbose)
       cerr << "dsp::SingleThread::share sharing buffering policy of "
@@ -285,23 +284,20 @@ void dsp::SingleThread::construct () try
 
       unpacked->set_memory (new CUDA::PinnedMemory);
 
-      TransferCUDA* transfer = new TransferCUDA (stream);
+      TransferCUDA* transfer;
       if (config->use_input_stream)
       {
-        if (Operation::verbose)
-          cerr << "SingleThread: setting input stream" << endl;
         // Create an event that signals the completion of the CUDA transfer
         cudaEventCreate( reinterpret_cast<cudaEvent_t*>(&input_event) );
-        transfer->set_input_stream(static_cast<cudaStream_t>(input_stream),
-                                   static_cast<cudaEvent_t>(input_event));
+        transfer = new TransferCUDA (stream,
+          static_cast<cudaStream_t>(input_stream), static_cast<cudaEvent_t>(input_event));
       }
+      else
+        transfer = new TransferCUDA (stream);
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
 
-      // reusing input variable for output now that input is set
       unpacked = new_time_series (false);
-      // input has 1 bundle, output has whatever number user set
-      unpacked->set_total_nbundle(config->nbundle);
       unpacked->set_memory (device_memory);
       transfer->set_output( unpacked );
 
@@ -329,10 +325,7 @@ void dsp::SingleThread::prepare ()
     insert_dump_point (config->dump_before[idump]);
 
   for (unsigned iop=0; iop < operations.size(); iop++)
-  {
-    operations[iop]->set_input_bundle(0, config->nbundle);
     operations[iop]->prepare ();
-  }
 }
 
 void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
@@ -345,8 +338,8 @@ void dsp::SingleThread::insert_dump_point (const std::string& transform_name)
     {
       Xform* xform = dynamic_cast<Xform*>( operations[iop].get() );
       if (!xform)
-        throw Error (InvalidParam, "dsp::SingleThread::insert_dump_point",
-                     transform_name + " does not have TimeSeries input");
+	throw Error (InvalidParam, "dsp::SingleThread::insert_dump_point",
+		     transform_name + " does not have TimeSeries input");
 
       string filename = "pre_" + transform_name;
 
@@ -390,12 +383,9 @@ void dsp::SingleThread::run () try
     if (log)
     {
       cerr << "dsp::SingleThread::run setup "
-           << operations[iop]->get_name() << endl;
+	   << operations[iop]->get_name() << endl;
       operations[iop] -> set_cerr (*log);
     }
-    
-    // All threads start at input bundle 0
-    operations[iop]->set_input_bundle(0, config->nbundle);
 
     if (!operations[iop] -> scratch_was_set ())
       operations[iop] -> set_scratch (scratch);
@@ -421,69 +411,56 @@ void dsp::SingleThread::run () try
 
   while (!finished)
   {
-    while (!(input->eod() && input_bundle==0))
+    while (!input->eod())
     {
-      unsigned current_input_bundle = input_bundle;
-      increment_input_bundle();
-      if (Operation::verbose)
-        cerr << "dsp::SingleThread::run"
-             << " thread_id=" << thread_id
-             << " current input_bundle=" << current_input_bundle
-             << " next input_bundle=" << input_bundle << endl;
       for (unsigned iop=0; iop < operations.size(); iop++) try
       {
-        operations[iop]->set_input_bundle(current_input_bundle, config->nbundle);
-        // Ensure that operations[0], loading from input and unpacking, only
-        // happens when input_bundle is 0
-        if (!(iop == 0 && current_input_bundle != 0))
-        {
-          if (Operation::verbose)
-            cerr << "dsp::SingleThread::run calling "
-                 << operations[iop]->get_name()
-                 << " (bundle " << current_input_bundle << ")" << endl;
+	if (Operation::verbose)
+	  cerr << "dsp::SingleThread::run calling "
+	       << operations[iop]->get_name() << endl;
 
-          // If the CUDA transfers are in their own stream, the Filterbank step
-          // will begin too soon unless told to wait for an event
-          if (config->use_input_stream && operations[iop]->get_name() == "Filterbank")
-            cudaStreamWaitEvent(static_cast<cudaStream_t>(gpu_stream),
-                                static_cast<cudaEvent_t>(input_event), 0);
+  // If the CUDA transfers are in their own stream, the Filterbank step will
+  // begin too soon unless told to wait for an event
+  if (config->use_input_stream && operations[iop]->get_name() == "Filterbank")
+    cudaStreamWaitEvent(static_cast<cudaStream_t>(gpu_stream),
+                        static_cast<cudaEvent_t>(input_event), 0);
 
-          operations[iop]->operate ();
+	operations[iop]->operate ();
 
-          if (Operation::verbose)
-            cerr << "dsp::SingleThread::run "
-                 << operations[iop]->get_name() << " done" << endl;
-        }
+	if (Operation::verbose)
+	  cerr << "dsp::SingleThread::run "
+	       << operations[iop]->get_name() << " done" << endl;
+
       }
       catch (Error& error)
       {
-        if (error.get_code() == EndOfFile)
-          break;
+	if (error.get_code() == EndOfFile)
+	  break;
 
-        end_of_data ();
+	end_of_data ();
 
-        throw error += "dsp::SingleThread::run";
+	throw error += "dsp::SingleThread::run";
       }
 
       block++;
 
       if (thread_id==0 && config->report_done)
       {
-        double seconds = input->tell_seconds();
-        int64_t decisecond = int64_t( seconds * 10 );
+	double seconds = input->tell_seconds();
+	int64_t decisecond = int64_t( seconds * 10 );
 
-        if (decisecond > last_decisecond)
-        {
-          last_decisecond = decisecond;
-          cerr << "Finished " << decisecond/10.0 << " s";
+	if (decisecond > last_decisecond)
+	{
+	  last_decisecond = decisecond;
+	  cerr << "Finished " << decisecond/10.0 << " s";
 
-          if (nblocks_tot)
-            cerr << " ("
-                 << int (100.0*input->tell()/float(input->get_total_samples()))
-                 << "%)";
+	  if (nblocks_tot)
+	    cerr << " ("
+		 << int (100.0*input->tell()/float(input->get_total_samples()))
+		 << "%)";
 
-          cerr << "   \r";
-        }
+	  cerr << "   \r";
+	}
       }
     }
 
@@ -495,30 +472,30 @@ void dsp::SingleThread::run () try
 
       if (config->repeated == 0 && input->tell() != 0)
       {
-        // cerr << "dspsr: do it again" << endl;
-        File* file = dynamic_cast<File*> (input);
-        if (file)
-        {
-          finished = false;
-          string filename = file->get_filename();
-          file->close();
-          // cerr << "file closed" << endl;
-          file->open(filename);
-          // cerr << "file opened" << endl;
-          config->repeated = 1;
+	// cerr << "dspsr: do it again" << endl;
+	File* file = dynamic_cast<File*> (input);
+	if (file)
+	{
+	  finished = false;
+	  string filename = file->get_filename();
+	  file->close();
+	  // cerr << "file closed" << endl;
+	  file->open(filename);
+	  // cerr << "file opened" << endl;
+	  config->repeated = 1;
 
-          if (config->input_prepare)
-            config->input_prepare (file);
+	  if (config->input_prepare)
+	    config->input_prepare (file);
 
-        }
+	}
       }
       else if (config->repeated)
       {
-        config->repeated ++;
-        finished = false;
+	config->repeated ++;
+	finished = false;
 
-        if (config->repeated == config->get_total_nthread())
-          config->repeated = 0;
+	if (config->repeated == config->get_total_nthread())
+	  config->repeated = 0;
       }
     }
   }
@@ -633,14 +610,6 @@ catch (Error& error)
   throw error += "dsp::SingleThread::finish";
 }
 
-void dsp::SingleThread::increment_input_bundle ()
-{
-  if (input_bundle < config->nbundle-1)
-    input_bundle += 1;
-  else
-    input_bundle = 0;
-}
-
 void dsp::SingleThread::end_of_data ()
 {
   // do nothing by default
@@ -670,9 +639,6 @@ dsp::SingleThread::Config::Config ()
 
   // use input buffering
   input_buffering = true;
-
-  // by default, use full blocks of input channels
-  nbundle = 1;
 
   list_attributes = false;
 
@@ -830,9 +796,6 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
 
   arg = menu.add (input_buffering, "overlap");
   arg->set_help ("disable input buffering");
-  
-  arg = menu.add (this, &Config::set_nbundle, "nbundle", "bundles");
-  arg->set_help ("process blocks of input channels in nbundle bundles");
 
   arg = menu.add (command_line_header, "header");
   arg->set_help ("command line arguments are header values (not filenames)");
@@ -850,7 +813,7 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   arg->set_help ("process only t=total seconds");
 
   arg = menu.add (&editor, &TextEditor<Observation>::add_commands,
-                  "set", "key=value");
+		  "set", "key=value");
   arg->set_help ("set observation attributes");
 
   arg = menu.add (list_attributes, "list");
@@ -902,11 +865,6 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
 
 }
 
-void dsp::SingleThread::Config::set_nbundle (unsigned _nbundle)
-{
-  nbundle = _nbundle;
-}
-
 void dsp::SingleThread::Config::set_quiet ()
 {
   dsp::set_verbosity (0);
@@ -935,15 +893,15 @@ void dsp::SingleThread::Config::set_fft_library (string fft_lib)
 
     if (nlib == 1)
       std::cerr << "There is 1 available FFT library: "
-                << FTransform::get_library_name (0) << endl;
+		<< FTransform::get_library_name (0) << endl;
     else
     {
       std::cerr << "There are " << nlib << " available FFT libraries:";
       for (unsigned ilib=0; ilib < nlib; ilib++)
-        std::cerr << " " << FTransform::get_library_name (ilib);
+	std::cerr << " " << FTransform::get_library_name (ilib);
 
       std::cerr << "\nThe default FFT library is "
-                << FTransform::get_library() << endl;
+		<< FTransform::get_library() << endl;
     }
     exit (0);
   }

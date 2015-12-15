@@ -127,18 +127,6 @@ namespace dsp {
     //! Used to arrange pieces in order during input buffering
     void set_input_sample (uint64_t sample) { input_sample = sample; }
 
-    //! Return the channel bundle number
-    unsigned get_input_bundle () const { return input_bundle; }
-    
-    //! Set the channel bundle number
-    void set_input_bundle (unsigned bundle) { input_bundle = bundle; }
-
-    //! Convenience function to calculate the number of channels per bundle
-    unsigned get_nchan_bundle() const;
-    
-    //! Convenience function to calculate the lowest ichan in this bundle
-    unsigned get_ichan_start() const;
-
     //! Get the span (number of floats)
     uint64_t get_nfloat_span () const;
 
@@ -208,15 +196,6 @@ namespace dsp {
     //! Sample offset from start of source
     /*! Set by Unpacker class and used by multithreaded InputBuffering */
     int64_t input_sample;
-    
-    // Bundles are groups of input channels processed together, which can be
-    // useful as an alternative to loading all channels when nchan >> 1.
-    // This variable keeps track of which bundle is being worked on.
-    unsigned input_bundle;
-    
-    // The total number of bundles being used, of which this TimeSeries
-    // represents one
-    //unsigned nbundle; <-- MOVED TO DATASERIES
 
     //! Called by constructor to initialise variables
     void init ();
