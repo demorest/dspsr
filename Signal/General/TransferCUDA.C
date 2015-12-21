@@ -19,17 +19,7 @@ dsp::TransferCUDA::TransferCUDA(cudaStream_t _stream)
   stream = _stream;
   input_stream = _stream;
   kind = cudaMemcpyHostToDevice;
-}
-
-//! Associate cudaEvent with the transfer
-dsp::TransferCUDA::TransferCUDA(cudaStream_t _stream,
-                                cudaStream_t _input_stream, cudaEvent_t _event)
-  : Transformation<TimeSeries,TimeSeries> ("CUDA::Transfer", outofplace)
-{
-  stream = _stream;
-  input_stream = _input_stream;
-  kind = cudaMemcpyHostToDevice;
-  event = _event;
+  event = 0;
 }
 
 //! Do stuff
@@ -62,7 +52,8 @@ void dsp::TransferCUDA::transformation ()
                              input->internal_get_size(),
                              kind,
                              input_stream);
-    cudaEventRecord(event, input_stream);
+    if (event)
+      cudaEventRecord(event, input_stream);
   }
   else
     error = cudaMemcpy (output->internal_get_buffer(),
@@ -88,4 +79,10 @@ void dsp::TransferCUDA::prepare ()
   output->set_match( const_cast<TimeSeries*>(input.get()) );
   output->internal_match( input );
   output->copy_configuration( input );
+}
+
+void dsp::TransferCUDA::set_input_stream (cudaStream_t _input_stream, cudaEvent_t _event)
+{
+  input_stream = _input_stream;
+  event = _event;
 }
