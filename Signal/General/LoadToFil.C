@@ -228,6 +228,20 @@ void dsp::LoadToFil::construct () try
       }
     }
 
+    if ( config->dedisperse )
+    {
+      if (verbose)
+        cerr << "digifil: removing dispersion delays" << endl;
+
+      SampleDelay* delay = new SampleDelay;
+
+      delay->set_input (timeseries);
+      delay->set_output (timeseries);
+      delay->set_function (new Dedispersion::SampleDelay);
+
+      operations.push_back( delay );
+    }
+
     if (do_detection)
     {
       if (verbose)
@@ -258,18 +272,20 @@ void dsp::LoadToFil::construct () try
     }
   }
 
-  if ( config->dedisperse )
-  {
-    if (verbose)
-      cerr << "digifil: removing dispserion delays" << endl;
+  else { // Data already detected
+    if ( config->dedisperse )
+    {
+      if (verbose)
+        cerr << "digifil: removing dispersion delays (post-detection)" << endl;
 
-    SampleDelay* delay = new SampleDelay;
+      SampleDelay* delay = new SampleDelay;
 
-    delay->set_input (timeseries);
-    delay->set_output (timeseries);
-    delay->set_function (new Dedispersion::SampleDelay);
+      delay->set_input (timeseries);
+      delay->set_output (timeseries);
+      delay->set_function (new Dedispersion::SampleDelay);
 
-    operations.push_back( delay );
+      operations.push_back( delay );
+    }
   }
 
   if ( config->fscrunch_factor )
