@@ -438,7 +438,7 @@ try
 
     if (phase->has_folding_predictor())
     {
-      Phase inphs = phase->get_folding_predictor()->phase(initial);
+      Pulsar::Phase inphs = phase->get_folding_predictor()->phase(initial);
       double dtime = inphs.fracturns() * phase->get_folding_period();
       initial -= dtime;
     }

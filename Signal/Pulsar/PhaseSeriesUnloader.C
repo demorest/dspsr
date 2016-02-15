@@ -15,6 +15,7 @@
 #include "debug.h"
 
 using namespace std;
+using namespace Pulsar;
 
 //! Constructor
 dsp::PhaseSeriesUnloader::PhaseSeriesUnloader ()

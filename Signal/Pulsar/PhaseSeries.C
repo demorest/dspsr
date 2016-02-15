@@ -221,7 +221,7 @@ MJD dsp::PhaseSeries::get_mid_time (bool phased) const
   if (folding_predictor)
   {
     // truncate midtime to the nearest pulse phase = reference_phase
-    Phase phase = folding_predictor->phase(midtime).Floor() + reference_phase;
+    Pulsar::Phase phase = folding_predictor->phase(midtime).Floor() + reference_phase;
     midtime = folding_predictor->iphase (phase, &midtime);
   }
 

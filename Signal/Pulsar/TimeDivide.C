@@ -14,6 +14,7 @@
 #include <assert.h>
 
 using namespace std;
+using namespace Pulsar;
 
 // #define _DEBUG 1
 
