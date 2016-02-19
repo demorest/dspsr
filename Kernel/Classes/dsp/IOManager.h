@@ -95,6 +95,8 @@ namespace dsp {
     //! Set custom post load operation
     void set_post_load_operation (Operation * op);
 
+    //! Set the resolution of the filterbank
+    virtual void set_filterbank_resolution (unsigned res);
 
     //! Set the block size according to above constraints
     virtual uint64_t set_block_size (uint64_t minimum_samples);
@@ -134,7 +136,7 @@ namespace dsp {
     uint64_t maximum_RAM;
     uint64_t minimum_RAM;
     unsigned copies;
-
+    unsigned filterbank_resolution;
   };
 
 }

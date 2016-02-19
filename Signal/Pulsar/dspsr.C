@@ -210,6 +210,9 @@ void parse_options (int argc, char** argv) try
 
   config->add_options (menu);
 
+  arg = menu.add (config->optimal_order, "order");
+  arg->set_help ("order data optimally when possible [default:true]");
+
   string ram_min;
   arg = menu.add (ram_min, "minram", "MB");
   arg->set_help ("minimum RAM usage in MB");

@@ -119,8 +119,11 @@ void dsp::LoadToFold::construct () try
     Unpacker* unpacker = manager->get_unpacker();
 
     // detected data is handled much more efficiently in TFP order
-    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
+    if ( config->optimal_order
+	&& unpacker->get_order_supported (TimeSeries::OrderTFP) )
+    {
       unpacker->set_output_order (TimeSeries::OrderTFP);
+    }
 
     config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
@@ -383,7 +386,10 @@ void dsp::LoadToFold::construct () try
       convolution->set_input  (convolved);  
       convolution->set_output (convolved);  // inplace
     }
-    
+
+    if (!config->input_buffering)
+      convolution->set_buffering_policy (NULL);
+
     operations.push_back (convolution.get());
   }
 
@@ -813,27 +819,35 @@ void dsp::LoadToFold::prepare ()
     }
 
     if (!config->input_buffering)
+    {
       block_overlap = filterbank->get_minimum_samples_lost ();
+      if (Operation::verbose)
+        cerr << "filterbank loses " << block_overlap << " samples" << endl;
+    }
   }
+
+  unsigned filterbank_resolution = minimum_samples - block_overlap;
 
   if (convolution)
   {
-    minimum_samples = convolution->get_minimum_samples () * 
-      convolution->get_input()->get_nchan();
+    const Observation* info = manager->get_info();
+    unsigned fb_factor = convolution->get_input()->get_nchan() * 2;
+    fb_factor /= info->get_nchan() * info->get_ndim();
+
+    minimum_samples = convolution->get_minimum_samples () * fb_factor;
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
            << minimum_samples << " samples" << endl;
 
     if (!config->input_buffering)
-      block_overlap = convolution->get_minimum_samples_lost () *
-        convolution->get_input()->get_nchan();
-  }
+    {
+      block_overlap = convolution->get_minimum_samples_lost () * fb_factor;
+      if (Operation::verbose)
+        cerr << "convolution loses " << block_overlap << " samples" << endl;
 
-#if 0
-  if (minimum_samples == 0)
-    throw Error (InvalidState, "dsp::LoadToFold::prepare",
-                 "minimum samples == 0");
-#endif
+      manager->set_filterbank_resolution (filterbank_resolution);
+    }
+  }
 
   uint64_t block_size = ( minimum_samples - block_overlap )
     * config->get_times_minimum_ndat() + block_overlap;

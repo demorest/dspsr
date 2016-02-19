@@ -129,7 +129,6 @@ void dsp::LWAFile::open_file (const char* filename)
   get_info()->set_nbit(4);
   get_info()->set_ndim(2);
   get_info()->set_state(Signal::Analytic);
-  //get_info()->set_npol(1); // XXX temp for testing
   get_info()->set_nchan(1); // Always 1
 
   header_bytes = 0;
@@ -151,21 +150,24 @@ void dsp::LWAFile::open_file (const char* filename)
       * (get_info()->get_state() == Signal::Nyquist ? 2.0 : 1.0));
   if (verbose) cerr << "LWAFile::open_file rate = " << get_info()->get_rate() << endl;
 
-  // TODO fix this up..
+  uint16_t timeoff = *((uint16_t *)(&rawhdr_bytes[14]));
+  FromBigEndian(timeoff);
   uint64_t timetag = *((uint64_t *)(&rawhdr_bytes[16]));
   FromBigEndian(timetag);
   if (verbose) cerr << "LWAFile::timetag = " << timetag << endl;
+  long double timetag_sec = (long double)timetag / (lwa_base_bw*1e6);
+
+  if (verbose) cerr << "LWAFile::timetag_sec = " << setprecision(20) 
+    << timetag_sec << endl;
   MJD mjd;
-  mjd = MJD((time_t)((double)timetag / (lwa_base_bw*1e6)));
+  mjd = MJD((time_t)timetag_sec);
   int imjd = mjd.intday();
   int smjd = mjd.get_secs();
   if (verbose) cerr << "LWAFile::imjd = " << imjd << endl;
   if (verbose) cerr << "LWAFile::smjd = " << smjd << endl;
-  double t_offset = ((long double)timetag / (lwa_base_bw*1e6)) - (int)((long double)timetag / (lwa_base_bw*1e6));
+  double t_offset = timetag_sec - floorl(timetag_sec);
   if (verbose) cerr << "LWAFile::t_offset = " << setprecision(20) << t_offset << endl;
-  get_info()->set_start_time( MJD(
-        (time_t)((double)timetag / (lwa_base_bw*1e6))) );
-  get_info()->set_start_time( MJD(imjd,smjd,t_offset));
+  get_info()->set_start_time( MJD(imjd,smjd,t_offset) );
   if (verbose) cerr << "LWAFile::start_time = " << setprecision(20) <<
     get_info()->get_start_time().in_days() << endl;
 

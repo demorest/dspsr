@@ -97,6 +97,9 @@ namespace dsp {
     //! integrate in frequency before digitization
     unsigned fscrunch_factor;
 
+    //! Number of polarizations to output
+    unsigned npol;
+
     //! process only a single polarization
     int poln_select;
 
@@ -105,6 +108,9 @@ namespace dsp {
 
     //! hold offset and scale constant after first update
     bool rescale_constant;
+
+    //! manually-specified scale factor
+    float scale_fac;
     
     //! number of bits used to re-digitize the floating point time series
     int nbits;
