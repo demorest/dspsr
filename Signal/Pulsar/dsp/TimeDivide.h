@@ -133,7 +133,7 @@ namespace dsp {
     MJD start_time;
 
     //! The corresponding phase at which to begin dividing time
-    Phase start_phase;
+    Pulsar::Phase start_phase;
 
     //! Number of seconds in each division
     double division_seconds;

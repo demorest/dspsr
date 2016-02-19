@@ -185,7 +185,7 @@ std::string dsp::FilenamePulse::get_filename (const PhaseSeries* data)
 		 "PhaseSeries does not contain a polyco");
 
   // add pulse number to the output archive
-  Phase phase = poly->phase ( data->get_start_time() );
+  Pulsar::Phase phase = poly->phase ( data->get_start_time() );
 
   if (Observation::verbose)
     cerr << "dsp::FilenamePulse::get_filename phase=" << phase 
