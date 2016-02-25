@@ -5,8 +5,18 @@
  *
  ***************************************************************************/
 
+#include <config.h>
+
 #include "ascii_header.h"
+
+#define STRLEN 4096
+
+#if HAVE_PSRDADA
 #include "dada_def.h"
+#define DEFAULT_HEADER_SIZE DADA_DEFAULT_HEADER_SIZE
+#else
+#define DEFAULT_HEADER_SIZE STRLEN
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,8 +25,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#define STRLEN 4096
 
 static char* whitespace = " \t\n";
 
@@ -171,10 +179,10 @@ size_t ascii_header_get_size (char * filename)
 size_t ascii_header_get_size_fd (int fd)
 {
   size_t hdr_size = -1;
-  char * header = (char *) malloc (DADA_DEFAULT_HEADER_SIZE+1);
+  char * header = (char *) malloc (DEFAULT_HEADER_SIZE+1);
   if (!header)
   {
-    fprintf (stderr, "ascii_header_get_size: failed to allocate %d bytes\n", DADA_DEFAULT_HEADER_SIZE+1);
+    fprintf (stderr, "ascii_header_get_size: failed to allocate %d bytes\n", DEFAULT_HEADER_SIZE+1);
   }
   else
   {
@@ -182,10 +190,10 @@ size_t ascii_header_get_size_fd (int fd)
     lseek (fd, 0, SEEK_SET);
 
     // read the header 
-    ssize_t ret = read (fd, header, DADA_DEFAULT_HEADER_SIZE);
-    if (ret != DADA_DEFAULT_HEADER_SIZE)
+    ssize_t ret = read (fd, header, DEFAULT_HEADER_SIZE);
+    if (ret != DEFAULT_HEADER_SIZE)
     {
-      fprintf (stderr, "ascii_header_get_size: failed to read %d bytes from file\n", DADA_DEFAULT_HEADER_SIZE);
+      fprintf (stderr, "ascii_header_get_size: failed to read %d bytes from file\n", DEFAULT_HEADER_SIZE);
     }
     else
     {
