@@ -436,6 +436,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->integration_length, 'L', "seconds");
   arg->set_help ("create integrations of specified duration");
 
+  arg = menu.add (config->integration_reference_epoch, "Lepoch", "MJD");
+  arg->set_help ("start time of first sub-integration (when -L is used)");
+
   arg = menu.add (config->minimum_integration_length, "Lmin", "seconds");
   arg->set_help ("minimum integration length output");
 

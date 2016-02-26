@@ -284,16 +284,16 @@ void dsp::SingleThread::construct () try
 
       unpacked->set_memory (new CUDA::PinnedMemory);
 
-      TransferCUDA* transfer;
+      TransferCUDA* transfer = new TransferCUDA (stream);
       if (config->use_input_stream)
       {
+        if (Operation::verbose)
+          cerr << "SingleThread: setting input stream" << endl;
         // Create an event that signals the completion of the CUDA transfer
         cudaEventCreate( reinterpret_cast<cudaEvent_t*>(&input_event) );
-        transfer = new TransferCUDA (stream,
-          static_cast<cudaStream_t>(input_stream), static_cast<cudaEvent_t>(input_event));
+        transfer->set_input_stream(static_cast<cudaStream_t>(input_stream),
+                                   static_cast<cudaEvent_t>(input_event));
       }
-      else
-        transfer = new TransferCUDA (stream);
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
 

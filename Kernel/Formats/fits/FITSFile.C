@@ -154,6 +154,8 @@ void dsp::FITSFile::open_file(const char* filename)
   std::string backend_name = archive->get<Pulsar::Backend>()->get_name();
   if (backend_name == "GUPPI" || backend_name == "PUPPI")
     get_info()->set_machine("GUPPIFITS");
+  else if (backend_name == "COBALT")
+    get_info()->set_machine("COBALT");
   else
     get_info()->set_machine("FITS");
   get_info()->set_telescope(archive->get_telescope());

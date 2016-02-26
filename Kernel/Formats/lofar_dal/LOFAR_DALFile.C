@@ -411,8 +411,6 @@ void dsp::LOFAR_DALFile::open_file (const char* filename)
     }
   }
 
-  get_info()->set_machine( "LOFAR" );
-
   // OPEN ALL FILES
 
   handle = new Handle;

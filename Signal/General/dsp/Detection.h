@@ -103,6 +103,9 @@ namespace dsp {
   public:
     virtual void polarimetry (unsigned ndim,
 			      const TimeSeries* in, TimeSeries* out) = 0;
+
+    virtual void square_law (const dsp::TimeSeries* input,
+            dsp::TimeSeries* output) = 0;
   }; 
 }
 

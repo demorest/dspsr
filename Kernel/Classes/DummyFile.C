@@ -56,6 +56,12 @@ void dsp::DummyFile::open_file (const char* filename)
   
   // Read obs info from ASCII file
   info = new ASCIIObservation(header);
+  
+  // cannot load less than a byte. set the time sample resolution accordingly
+  unsigned bits_per_byte = 8;
+  resolution = bits_per_byte / get_info()->get_nbit();
+  if (resolution == 0)
+    resolution = 1;
 }
 
 void dsp::DummyFile::close ()
