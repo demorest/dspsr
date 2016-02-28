@@ -37,6 +37,7 @@ void dsp::PolnReshape::npol4_ndim1()
       {
         for (unsigned opol=0; opol < 2; opol++)
         {
+          // offset by opol to get correct "dimension" member 
           const float* in_data = input->get_datptr (ichan, ipol) + opol;
           float* out_data = output->get_datptr (ichan, ipol*2 + opol);
           for (uint64_t idat=0; idat < ndat; idat++)
@@ -46,9 +47,11 @@ void dsp::PolnReshape::npol4_ndim1()
         }
       }
     }
-            
-    }
     break;
+  }
+  default :
+    throw Error (InvalidState, "dsp::PolnReshape::npol4_ndim1",
+     "Only FPT order implemented.");
   }
 }
 
@@ -84,8 +87,11 @@ void dsp::PolnReshape::npol1_ndim1()
       }
     }
             
-    }
     break;
+  }
+  default :
+    throw Error (InvalidState, "dsp::PolnReshape::npol1_ndim1",
+     "Only FPT order implemented.");
   }
 }
 

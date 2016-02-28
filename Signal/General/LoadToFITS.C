@@ -27,7 +27,7 @@
 #include "dsp/PolnSelect.h"
 #include "dsp/PolnReshape.h"
 
-#include "dsp/Rescale.h"
+//#include "dsp/Rescale.h"
 
 #include "dsp/FITSDigitizer.h"
 #include "dsp/FITSOutputFile.h"
@@ -37,7 +37,8 @@
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
 #include "dsp/DetectionCUDA.h"
-#include "dsp/FScrunchCUDA.h"
+//#include "dsp/FScrunchCUDA.h"
+#include "dsp/TScrunchCUDA.h"
 #include "dsp/MemoryCUDA.h"
 #endif
 
@@ -169,10 +170,12 @@ void dsp::LoadToFITS::construct () try
   // correction for number of samples per filterbank channel
   double factor = obs->get_state()==Signal::Nyquist? 0.5 : 1.0;
   unsigned res_factor = round(factor*samp_per_fb/config->filterbank.get_nchan());
+  unsigned tres_factor = round(factor*config->tsamp*obs->get_rate()/config->filterbank.get_nchan());
+  double tsamp = tres_factor/factor*config->filterbank.get_nchan()/obs->get_rate();
 
   cerr << "digifits: " 
-       << "tsamp=" << config->tsamp << " rate=" << obs->get_rate() 
-       << " so increasing spectral resolution by "<< res_factor << endl;
+       << "requested tsamp=" << config->tsamp << " rate=" << obs->get_rate() << endl
+       << "actual tsamp=" << tsamp << " (tscrunch=)" << tres_factor << endl;
 
   // voltage samples per output block
   uint64_t nsample = round(samp_per_fb * config->nsblk);
@@ -228,7 +231,8 @@ void dsp::LoadToFITS::construct () try
 
     filterbank = config->filterbank.create ();
 
-    filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
+    //filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
+    filterbank->set_nchan( config->filterbank.get_nchan() );
     filterbank->set_input( timeseries );
     filterbank->set_output( timeseries = new_TimeSeries() );
 # if HAVE_CUDA
@@ -243,7 +247,7 @@ void dsp::LoadToFITS::construct () try
     if (freq_res > 1)
       filterbank->set_frequency_resolution ( freq_res );
 
-    if (verbose)
+    //if (verbose)
       cerr << "digifits: creating " << config->filterbank.get_nchan()
            << " by " << freq_res << " back channel filterbank" << endl;
 
@@ -275,7 +279,7 @@ void dsp::LoadToFITS::construct () try
       case 4:
         detection->set_output_state (Signal::Coherence);
         // use this to avoid copies -- seem to segfault in multi-threaded
-        detection->set_output_ndim (2);
+        //detection->set_output_ndim (2);
         break;
       default:
         throw Error(InvalidParam,"dsp::LoadToFITS::construct",
@@ -289,21 +293,33 @@ void dsp::LoadToFITS::construct () try
     operations.push_back ( detection );
   }
 
-  FScrunch* fscrunch = new FScrunch;
+  //FScrunch* fscrunch = new FScrunch;
+  TScrunch* tscrunch = new TScrunch;
   
-  fscrunch->set_factor ( res_factor );
-  fscrunch->set_input ( timeseries );
+  //fscrunch->set_factor ( res_factor );
+  //fscrunch->set_input ( timeseries );
+  tscrunch->set_factor ( tres_factor );
+  tscrunch->set_input ( timeseries );
+  tscrunch->set_output ( timeseries = new_TimeSeries() );
+
 # if HAVE_CUDA
-  if (run_on_gpu)
+  //if (run_on_gpu)
+  //{
+  //  fscrunch->set_engine ( new CUDA::FScrunchEngine(stream) );
+  //  timeseries = new_TimeSeries();
+  //  timeseries->set_memory (device_memory);
+  //}
+  if ( run_on_gpu )
   {
-    fscrunch->set_engine ( new CUDA::FScrunchEngine(stream) );
-    timeseries = new_TimeSeries();
+    tscrunch->set_engine ( new CUDA::TScrunchEngine(stream) );
     timeseries->set_memory (device_memory);
+
   }
 #endif
-  fscrunch->set_output ( timeseries );
+  //fscrunch->set_output ( timeseries );
 
-  operations.push_back ( fscrunch );
+  //operations.push_back ( fscrunch );
+  operations.push_back( tscrunch );
 
 # if HAVE_CUDA
   if (run_on_gpu)
@@ -316,10 +332,10 @@ void dsp::LoadToFITS::construct () try
   }
 #endif
 
-
+  // need to do PolnReshape if have done on GPU (because uses the
+  // hybrid npol=2, ndim=2 for the Stokes parameters)
   if (run_on_gpu)
   {
-# if HAVE_CUDA
     PolnReshape* reshape = new PolnReshape;
     switch (config->npol)
     {
@@ -339,28 +355,30 @@ void dsp::LoadToFITS::construct () try
     reshape->set_input (timeseries );
     reshape->set_output ( timeseries = new_TimeSeries() );
     operations.push_back(reshape);
-#endif
   }
-  else if (config->npol == 4)
+  //else if (config->npol == 4)
+  else if (false)
   {
     PolnReshape* reshape = new PolnReshape;
     reshape->set_state ( Signal::Coherence );
     reshape->set_input (timeseries );
     reshape->set_output ( timeseries = new_TimeSeries() );
-    operations.push_back(reshape);
+    operations.push_back (reshape);
   }
 
 
+  /*
   if ( config->tscrunch_factor )
   {
     TScrunch* tscrunch = new TScrunch;
     
     tscrunch->set_factor( config->tscrunch_factor );
-    tscrunch->set_input( timeseries );
-    tscrunch->set_output( timeseries );
+    tscrunch->set_input ( timeseries );
+    tscrunch->set_output ( timeseries );
 
     operations.push_back( tscrunch );
   }
+  */
 
   // TODO -- ideally this would happen before initial fscrunch, but will
   // await a GPU implementation of SampleDelay
@@ -379,14 +397,15 @@ void dsp::LoadToFITS::construct () try
   }
 
   
+  /*
+  if (verbose)
+    cerr << "digifits: creating rescale transformation" << endl;
+
   // PSRFITS allows us to save the reference spectrum in each output block
   // "subint", so we can take advantage of this to store the exect
   // reference spectrum for later use if we select a rescale time cons.
   // exactly equal to nsblk; do this by default unless the user manually
   // specifies a time constant
-  if (verbose)
-    cerr << "digifits: creating rescale transformation" << endl;
-
   Rescale* rescale = new Rescale;
   rescale->set_input (timeseries);
   rescale->set_output (timeseries);
@@ -404,6 +423,7 @@ void dsp::LoadToFITS::construct () try
   rescale->set_constant (config->rescale_constant);
 
   operations.push_back( rescale );
+  */
 
 
   // only do pscrunch for detected data -- NB always goes to Intensity
@@ -411,7 +431,7 @@ void dsp::LoadToFITS::construct () try
     && (obs->get_detected());
   if (do_pscrunch)
   {
-    if (verbose)
+    //if (verbose)
       cerr << "digifits: creating pscrunch transformation" << endl;
 
     PScrunch* pscrunch = new PScrunch;
@@ -434,6 +454,14 @@ void dsp::LoadToFITS::construct () try
   digitizer->set_input (timeseries);
   digitizer->set_output (bitseries);
 
+  // PSRFITS allows us to save the reference spectrum in each output block
+  // "subint", so we can take advantage of this to store the exect
+  // reference spectrum for later use if we select a rescale time cons.
+  // exactly equal to nsblk; do this by default unless the user manually
+  // specifies a time constant
+  // TODO -- time constant not implemented
+  digitizer->set_rescale_samples (config->nsblk);
+
   operations.push_back( digitizer );
 
   if (verbose)
@@ -452,7 +480,7 @@ void dsp::LoadToFITS::construct () try
   operations.push_back( outputFile.get() );
 
   // add a callback for the PSRFITS reference spectrum
-  rescale->update.connect (
+  digitizer->update.connect (
       dynamic_cast<FITSOutputFile*> (outputFile.get()), 
       &FITSOutputFile::set_reference_spectrum);
 }

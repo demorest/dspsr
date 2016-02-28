@@ -8,13 +8,59 @@
 // Cribbed from Willem's SigProcDigitizer
 
 #include "dsp/FITSDigitizer.h"
+#include "dsp/InputBuffering.h"
 #include <assert.h>
+
+void dsp::FITSDigitizer::set_digi_scales()
+{
+  float digi_sigma = 6;
+  switch (nbit){
+    case 1:
+      digi_mean=0.5;
+      digi_scale=1;
+      digi_min = 0;
+      digi_max = 1;
+      return;
+    case 2:
+      digi_mean=1.5;
+      digi_scale=1;
+      digi_min = 0;
+      digi_max = 3;
+      return;
+    case 4:
+      digi_mean=7.5;
+      digi_scale= digi_mean / digi_sigma;
+      digi_min = 0;
+      digi_max = 15;
+      return;
+    case 8:
+      digi_mean=127.5;
+      digi_scale= digi_mean / digi_sigma;
+      digi_min = 0;
+      digi_max = 255;
+      return;
+  }
+}
 
 //! Default constructor
 dsp::FITSDigitizer::FITSDigitizer (unsigned _nbit)
 : Digitizer ("FITSDigitizer")
 {
   set_nbit(_nbit);
+  rescale_nsamp = 0;
+  freq_totalsq = scale = offset = NULL;
+  digi_scale = 1;
+  digi_mean = 0;
+  digi_min = 0;
+  digi_max = 0;
+}
+
+//! Default destructor
+dsp::FITSDigitizer::~FITSDigitizer ()
+{
+  delete freq_totalsq;
+  delete scale;
+  delete offset;
 }
 
 //! Set the number of bits per sample
@@ -33,6 +79,15 @@ void dsp::FITSDigitizer::set_nbit (unsigned _nbit)
 		 "nbit=%i not understood", _nbit);
     break;
   }
+}
+
+//! Set the rescaling interval in samples
+void dsp::FITSDigitizer::set_rescale_samples (unsigned nsamp)
+{
+  rescale_nsamp = nsamp;
+  if (!has_buffering_policy())
+    set_buffering_policy( new InputBuffering (this) );
+  get_buffering_policy()->set_minimum_samples (rescale_nsamp);
 }
 
 class ChannelSort
@@ -66,6 +121,110 @@ public:
   }
 };
 
+void dsp::FITSDigitizer::init ()
+{
+  unsigned nchan = input->get_nchan();
+  unsigned npol = input->get_npol();
+  freq_totalsq = new double[npol*nchan];
+  scale = new double[npol*nchan];
+  offset = new double[npol*nchan];
+}
+
+/*
+//! Override parent implementation if doing rescaling
+void dsp::FITSDigitizer::transformation ()
+{
+  if (rescale_nsamp > 0)
+  {
+    if (!scale)
+      init ();
+    if (input->get_ndat() < rescale_nsamp)
+    {
+      if (verbose)
+        cerr << "dsp::FITSDigitizer::transformation waiting for additional samples" << std::endl;
+      get_buffering_policy()->set_next_start ( 0 );
+      output->set_ndat (0);
+      return;
+    }
+  }
+  Digitizer::transformation ();
+}
+*/
+
+void dsp::FITSDigitizer::measure_scale ()
+{
+  unsigned input_nchan = input->get_nchan ();
+  unsigned input_npol = input->get_npol ();
+
+  for (unsigned i = 0; i < input_nchan*input_npol; ++i)
+  {
+    offset[i] = 0;
+    freq_totalsq[i] = 0;
+  }
+
+  switch (input->get_order()) {
+  case TimeSeries::OrderTFP:
+  {
+    const float* in_data = input->get_dattfp();
+    //in_data += start_dat * input_nchan*input_npol;
+    for (unsigned idat=0; idat < rescale_nsamp; idat++)
+    {
+      for (unsigned ichan=0; ichan < input_nchan; ichan++)
+      {
+        for (unsigned ipol=0; ipol < input_npol; ipol++)
+        {
+          unsigned idx = ipol*input_nchan + ichan;
+          offset[idx] += (*in_data);
+          freq_totalsq[idx]  += (*in_data)*(*in_data);
+
+          in_data++;
+
+        }
+      }
+    }
+    break;
+  }
+  case TimeSeries::OrderFPT:
+  {
+    unsigned idx = 0;
+    for (unsigned ipol=0; ipol < input_npol; ipol++) 
+    {
+      for (unsigned ichan=0; ichan < input_nchan; ichan++)
+      {
+        const float* in_data = input->get_datptr (ichan, ipol);
+
+        double sum = 0.0;
+        double sumsq = 0.0;
+
+        for (unsigned idat=0; idat < rescale_nsamp; idat++)
+        {
+          sum += in_data[idat];
+          sumsq += in_data[idat] * in_data[idat];
+        }
+
+        offset[idx] += sum;
+        freq_totalsq[idx] += sumsq;
+        idx++;
+      }
+    }
+    break;
+  }
+  default:
+    throw Error (InvalidState, "dsp::Rescale::operate",
+        "Requires data in TFP or FPT order");
+  }
+
+  // convert to mean and std dev
+  double recip = 1./rescale_nsamp;
+  for (unsigned i = 0; i < input_nchan*input_npol; ++i)
+  {
+    offset[i] *= recip;
+    scale[i] = sqrt( freq_totalsq[i]*recip - offset[i]*offset[i] );
+    if (i==256)
+      cerr << "offset_256=" << offset[i]<<" scale_256="<<scale[i]<<std::endl;
+  }
+}
+
 /*! 
   PSRFITS search mode data are in TPF order, whereas the native
   buffer class (DataSeries) is in FPT(d).
@@ -80,6 +239,12 @@ void dsp::FITSDigitizer::pack ()
     throw Error (InvalidState, "dsp::FITSDigitizer::pack",
   		 "cannot handle ndim=%d", input->get_ndim());
 
+  if (rescale_nsamp > 0)
+  {
+    rescale_pack ();
+    return;
+  }
+
   // ChannelSort will re-organize the frequency channels in the output
   output->set_bandwidth ( -fabs(input->get_bandwidth()) );
   output->set_swap ( false );
@@ -92,7 +257,7 @@ void dsp::FITSDigitizer::pack ()
   const unsigned nchan = input->get_nchan();
 
   // the number of time samples
-  const uint64_t ndat = input->get_ndat();
+  uint64_t ndat = input->get_ndat();
 
   if (verbose)
     cerr << "dsp::FITSDigitizer::pack ndat="<<ndat << std::endl;
@@ -101,40 +266,8 @@ void dsp::FITSDigitizer::pack ()
   // I reckon that's OK
   ChannelSort channel (input);
 
-  float digi_mean=0;
-  float digi_sigma=6;
-  float digi_scale=0;
-  int digi_max=0;
-  int digi_min=0;
   int samp_per_byte = 8/nbit;
-
-  switch (nbit){
-  case 1:
-    digi_mean=0.5;
-    digi_scale=1;
-    digi_min = 0;
-    digi_max = 1;
-    break;
-  case 2:
-    digi_mean=1.5;
-    digi_scale=1;
-    digi_min = 0;
-    digi_max = 3;
-    break;
-  case 4:
-    digi_mean=7.5;
-    digi_scale= digi_mean / digi_sigma;
-    digi_min = 0;
-    digi_max = 15;
-    break;
-  case 8:
-    digi_mean=127.5;
-    digi_scale= digi_mean / digi_sigma;
-    digi_min = 0;
-    digi_max = 255;
-    break;
-  }
-
+  set_digi_scales();
 
   /*
     TFP mode
@@ -259,6 +392,204 @@ void dsp::FITSDigitizer::pack ()
     throw Error (InvalidState, "dsp::FITSDigitizer::operate",
      "Can only operate on data ordered FTP or PFT.");
   }
+
 }
 
+void dsp::FITSDigitizer::rescale_pack ()
+{
+  if (!scale)
+    init ();
 
+  if (input->get_ndat() < rescale_nsamp)
+  {
+    if (verbose)
+      cerr << "dsp::FITSDigitizer::transformation waiting for additional samples" << std::endl;
+    get_buffering_policy()->set_next_start ( 0 );
+    output->set_ndat (0);
+    return;
+  }
+
+  measure_scale ();
+
+  // ChannelSort will re-organize the frequency channels in the output
+  output->set_bandwidth ( -fabs(input->get_bandwidth()) );
+  output->set_swap ( false );
+  output->set_nsub_swap ( 0 );
+  output->set_input_sample ( input->get_input_sample() );
+
+  const unsigned npol = input->get_npol();
+
+  // the number of frequency channels
+  const unsigned nchan = input->get_nchan();
+
+  // the number of time samples
+  const uint64_t ndat = rescale_nsamp;
+  output->set_ndat (ndat);
+
+  if (verbose)
+    cerr << "dsp::FITSDigitizer::rescale_pack ndat="<<ndat << std::endl;
+
+  // this always puts channels in "lower sideband" order
+  // I reckon that's OK
+  ChannelSort channel (input);
+
+  int samp_per_byte = 8/nbit;
+  set_digi_scales();
+
+  /*
+    TFP mode
+  */
+
+  switch (input->get_order())
+  {
+
+  // due to bit packing, the only sane way to do these loops is 
+  // with F in inner loop
+  case TimeSeries::OrderTFP:
+  {
+//#pragma omp parallel for
+    for (uint64_t idat=0; idat < ndat; idat++)
+    {
+      unsigned char* outptr = output->get_rawptr() + (idat*nchan*npol)/samp_per_byte;
+      // TODO -- this needs to account for reserve
+      const float* inptr = input->get_dattfp() + idat*nchan*npol;
+
+      // The following line is important: this function increments
+      // the pointer at the start of each byte. MJK2008.
+      outptr--;
+
+      int bit_counter = 0, bit_shift = 0;
+      for (unsigned ipol=0; ipol < npol; ipol++)
+      {
+        for (unsigned ichan=0; ichan < nchan; ichan++)
+        {
+          unsigned inChan = channel (ichan);
+          unsigned scale_idx = inChan + ipol*nchan;
+          const float* indat = inptr + inChan*npol + ipol;
+          double dat = (*indat-offset[scale_idx])/scale[scale_idx];
+
+          //int result = (int)(((*indat) * digi_scale) + digi_mean + 0.5 );
+          int result = (int)((dat * digi_scale) + digi_mean + 0.5 );
+
+          // clip the result at the limits
+          result = std::max(result,digi_min);
+          result = std::min(result,digi_max);
+
+          switch (nbit){
+            case 1:
+            case 2:
+            case 4:
+              bit_counter = ichan % (samp_per_byte);
+
+              // NB -- this original "sigproc" implementation is such that
+              // later samples are shifted to the more significant bits, 
+              // backwards to the PSRFITS convention; so reverse it in the
+              // bit shift below
+              bit_shift = (samp_per_byte-bit_counter-1)*nbit;
+            
+              if (bit_counter == 0 ) {
+                outptr++;
+                (*outptr) = (unsigned char)0;
+              }
+              (*outptr) |= ((unsigned char) (result)) << bit_shift;
+
+              break;
+            case 8:
+              outptr++;
+              (*outptr) = (unsigned char) result;
+              break;
+          }
+	
+        }	
+      }
+    }
+    break;
+  }
+  case TimeSeries::OrderFPT:
+  {
+    unsigned char* outptr = output->get_rawptr();
+
+    int bit_counter=0;
+    unsigned inner_stride = nchan * npol;
+    unsigned idx = 0, bit_shift = 0; // make gcc happy
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+    {
+      unsigned mapped_chan = channel (ichan);
+      for (unsigned ipol=0; ipol < npol; ipol++)
+      {
+        uint64_t isamp = ipol*nchan + ichan;
+        const float* inptr = input->get_datptr( mapped_chan , ipol );
+        float m_scale = digi_scale/scale[ipol*nchan + mapped_chan];
+        float m_offset = digi_mean - offset[ipol*nchan + mapped_chan]*m_scale;
+
+        for (uint64_t idat=0; idat < ndat; idat++,isamp+=inner_stride)
+        {
+          //if (ichan==300 && ipol==0)
+            //cerr << idat << "  " << *inptr << "  " << ((*inptr) - offset[ipol*nchan + mapped_chan])/scale[ipol*nchan+mapped_chan] << "  " << offset[ipol*nchan+mapped_chan] << "  " << scale[ipol*nchan+mapped_chan] << std::endl;
+          int result = int( ((*inptr)*m_scale + m_offset) + 0.5 );
+          //int result = int( ((*inptr) * digi_scale) + digi_mean +0.5 );
+          inptr++;
+
+          // clip the result at the limits
+          result = std::max (std::min (result, digi_max), digi_min);
+
+          switch (nbit) {
+          case 1:
+          case 2:
+          case 4:
+
+            bit_counter = isamp % (samp_per_byte);
+            idx = unsigned(isamp / samp_per_byte);
+
+            // NB -- this original "sigproc" implementation is such that
+            // later samples are shifted to the more significant bits, 
+            // backwards to the PSRFITS convention; so reverse it in the
+            // bit shift below
+            bit_shift = (samp_per_byte-bit_counter-1)*nbit;
+
+            if (bit_counter==0) 
+              outptr[idx]=(unsigned char)0;
+
+            outptr[idx] += ((unsigned char) (result)) << bit_shift;
+            
+            break;
+          case 8:
+            outptr[isamp] = (unsigned char) result;
+            break;
+          }
+        }
+      }
+    }
+    break;
+  }
+
+  default:
+    throw Error (InvalidState, "dsp::FITSDigitizer::operate",
+     "Can only operate on data ordered FTP or PFT.");
+  }
+
+  get_buffering_policy () -> set_next_start (rescale_nsamp);
+
+  update (this);
+
+}
+
+void dsp::FITSDigitizer::get_scales(std::vector<float>* dat_scl, std::vector<float>* dat_offs)
+{
+  unsigned nchan = input->get_nchan ();
+  unsigned npol = input->get_npol ();
+  dat_scl->resize(nchan*npol);
+  dat_offs->resize(nchan*npol);
+  ChannelSort channel (input);
+
+  for (unsigned ichan=0; ichan < nchan; ++ichan)
+  {
+    unsigned chan_idx = channel (ichan) ;
+    for (unsigned ipol=0; ipol < npol; ++ipol)
+    {
+      unsigned offs = ipol*nchan;
+      (*dat_scl)[offs + ichan] = scale[offs + chan_idx]*digi_scale;
+      (*dat_offs)[offs + ichan] = offset[offs + chan_idx];
+    }
+  }
+}

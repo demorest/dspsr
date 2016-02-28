@@ -33,6 +33,9 @@
 #include "dsp/OptimalFFT.h"
 #include "dsp/Resize.h"
 
+#include "dsp/FITSFile.h"
+#include "dsp/FITSUnpacker.h"
+
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
@@ -123,6 +126,16 @@ void dsp::LoadToFold::construct () try
 	&& unpacker->get_order_supported (TimeSeries::OrderTFP) )
     {
       unpacker->set_output_order (TimeSeries::OrderTFP);
+    }
+
+    // Temporary kluge for testing FITS code
+    if (manager->get_info()->get_machine() == "FITS")
+    {
+      // connect a callback
+      FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
+      tmp->update.connect (
+          dynamic_cast<FITSUnpacker*> ( manager->get_unpacker() ),
+          &FITSUnpacker::set_parameters);
     }
 
     config->coherent_dedispersion = false;
@@ -860,6 +873,19 @@ void dsp::LoadToFold::prepare ()
   manager->set_overlap( block_overlap );
 
   uint64_t ram = manager->set_block_size( block_size );
+
+  // if PSRFITS input, set block to exact size of FITS row
+  if (manager->get_info()->get_machine() == "FITS")
+  {
+    FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
+    unsigned samples_per_row = tmp->get_samples_in_row();
+    uint64_t current_bytes = manager->set_block_size (samples_per_row);
+    uint64_t new_max_ram = current_bytes / tmp->get_block_size() * samples_per_row;
+    if (new_max_ram > config->get_maximum_RAM ())
+      throw Error (InvalidState, "prepare", "Maximum RAM smaller than PSRFITS row.");
+    manager->set_maximum_RAM (new_max_ram);
+    manager->set_block_size (samples_per_row);
+  }
 
   // add the increased block size if the SKFB is being used
   if (skfilterbank)

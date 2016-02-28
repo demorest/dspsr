@@ -32,6 +32,10 @@ namespace dsp {
 
     void set_time_resolution ( double microseconds );
     double get_time_resolution () const;
+
+    class Engine;
+
+    void set_engine (Engine*);
     
   protected:
 
@@ -51,8 +55,19 @@ namespace dsp {
 
     unsigned sfactor;
     uint64_t output_ndat;
+
+    Reference::To<Engine> engine;
   };
 
+  class TScrunch::Engine : public OwnStream
+  {
+  public:
+
+    virtual void fpt_tscrunch (const dsp::TimeSeries * in, 
+                         dsp::TimeSeries * out,
+                         unsigned sfactor) = 0;
+
+  };
 }
 
 #endif // !defined(__TScrunch_h)

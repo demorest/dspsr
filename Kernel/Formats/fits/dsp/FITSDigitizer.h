@@ -24,7 +24,16 @@ namespace dsp
     //! Default constructor
     FITSDigitizer (unsigned _nbit);
 
+    //! Default destructor
+    ~FITSDigitizer ();
+
     unsigned get_nbit () const {return nbit;}
+
+    //! Set the number of samples to rescale before digitization.
+    //! The default is 0, i.e. rescaling must be done elsewhere.
+    void set_rescale_samples(unsigned nsamp);
+
+    //virtual void transformation ();
 
     //! Pack the data
     void pack ();
@@ -33,10 +42,30 @@ namespace dsp
     // TODO -- is this needed?
     uint64_t get_minimum_samples () { return 4096; }
 
+    void get_scales (std::vector<float>* dat_scl, std::vector<float>* dat_offs);
+
+    Callback<FITSDigitizer*> update;
 
   protected:
 
     void set_nbit (unsigned);
+
+    //! rescale input based on mean / variance
+    void rescale_pack ();
+
+    void init ();
+    void measure_scale ();
+
+    void set_digi_scales();
+
+    unsigned rescale_nsamp;
+
+
+    float digi_mean,digi_scale;
+    int digi_min,digi_max;
+
+    //! arrays for accumulating and storing scales
+    double *freq_totalsq, *scale, *offset;
 
   };
 }

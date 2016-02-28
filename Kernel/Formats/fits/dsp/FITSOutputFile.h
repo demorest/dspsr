@@ -28,7 +28,9 @@
 
 namespace dsp {
 
-  class Rescale;
+  class FITSDigitizer;
+
+  int get_colnum (fitsfile* fptr, const char* label);
 
   //! writes BitSeries data to a PSRFITS "search mode" file
   class FITSOutputFile : public OutputFile 
@@ -41,7 +43,7 @@ namespace dsp {
     ~FITSOutputFile ();
 
     //! Use Rescale callback to set reference spectrum
-    void set_reference_spectrum (Rescale*);
+    void set_reference_spectrum (FITSDigitizer*);
 
     //! Set the number of samples per output block
     void set_nsblk ( unsigned nblk );

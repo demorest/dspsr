@@ -10,8 +10,8 @@
 #endif
 
 #include "dsp/FITSOutputFile.h"
+#include "dsp/FITSDigitizer.h"
 #include "dsp/Observation.h"
-#include "dsp/Rescale.h"
 #include "FilePtr.h"
 
 #include "FITSArchive.h"
@@ -27,7 +27,7 @@
 
 using namespace std;
 
-int get_colnum(fitsfile* fptr, const char* label)
+int dsp::get_colnum (fitsfile* fptr, const char* label)
 {
   int colnum(0),status(0);
   fits_get_colnum(fptr, CASEINSEN, (char*)label, &colnum, &status);
@@ -39,7 +39,7 @@ int get_colnum(fitsfile* fptr, const char* label)
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, int* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TINT,colnum,irow,start,stop,data,&status);
   if (status)
@@ -49,7 +49,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, unsigned* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TINT,colnum,irow,start,stop,data,&status);
   if (status)
@@ -59,7 +59,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, float* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TFLOAT,colnum,irow,start,stop,data,&status);
   if (status)
@@ -69,7 +69,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, double* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TDOUBLE,colnum,irow,start,stop,data,&status);
   if (status)
@@ -79,7 +79,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 
 void modify_vector_len(fitsfile* fptr, const char* label, int len)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_modify_vector_len (fptr, colnum, len, &status); 
   if (status)
@@ -367,7 +367,7 @@ void dsp::FITSOutputFile::initialize ()
 
   // change the DATA data type from the psrchive default (I = signed short)
   // to that correct for search mode data (B = unsigned char)
-  int colnum = get_colnum(fptr,"DATA");
+  int colnum = dsp::get_colnum(fptr,"DATA");
   fits_delete_col (fptr, colnum, &status);
   char tform[64];
   sprintf(tform,"%dB",nbblk);
@@ -425,7 +425,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
 
   unsigned to_write = bytes;
   int status = 0;
-  int colnum = get_colnum (fptr, "DATA");
+  int colnum = dsp::get_colnum (fptr, "DATA");
   
   // write to incomplete block first
   if (offset)
@@ -500,43 +500,9 @@ void dsp::FITSOutputFile::finalize_fits ()
   }
 }
 
-void dsp::FITSOutputFile::set_reference_spectrum (Rescale* rescale)
+void dsp::FITSOutputFile::set_reference_spectrum (FITSDigitizer* digi)
 {
-  // Because this is implemeneted via callback, the first call happens
-  // before initialization of the arrays, etc.  So we take it on faith that
-  // we can initialize based on rescale's input/output.
-  // Reference spectrum packed in PF order
   if (verbose)
     cerr << "dsp::FITSOutputFile::set_reference_spectrum" << endl;
-  if (nchan == 0)
-  {
-    nchan = rescale->get_input()->get_nchan();
-    npol = rescale->get_input()->get_npol();
-    if (verbose)
-      cerr << "    initializing from Rescale" 
-           << " nchan=" << nchan << " npol=" << npol << endl;
-    // need to initialize
-    dat_scl.resize(nchan*npol);
-    dat_offs.resize(nchan*npol);
-  }
-
-  bool pol_bad = npol != rescale->get_input()->get_npol();
-  bool chan_bad = nchan != rescale->get_input()->get_nchan();
-  if (pol_bad || chan_bad)
-    throw Error(InvalidState, "dsp::FITSOutputFile::set_reference_spectrum",
-        "channels/polarizations did not match Rescale");
-
-  for (unsigned ipol = 0; ipol < npol; ++ipol) 
-  {
-    unsigned offset = ipol * nchan;
-    const float* scl = rescale->get_scale (ipol);
-    const float* offs = rescale->get_offset (ipol);
-    for (unsigned jchan = 0; jchan < nchan; ++jchan)
-    {
-      // Rescale uses opposite convention to PSRFITS DAT_SCL/DAT_OFFS
-      dat_scl[jchan+offset] = 1./scl[jchan];
-      dat_offs[jchan+offset] = -offs[jchan];
-    }
-  }
+  digi->get_scales (&dat_scl, &dat_offs);
 }
-
