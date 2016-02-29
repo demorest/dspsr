@@ -22,6 +22,7 @@
 #include "fits_params.h"
 
 #include "dsp/FITSFile.h"
+#include "dsp/FITSOutputFile.h"
 #include "dsp/CloneArchive.h"
 
 using std::cout;

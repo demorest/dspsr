@@ -21,8 +21,6 @@ namespace dsp
 
   class FITSUnpacker;
 
-  int get_colnum (fitsfile* fptr, const char* label);
-
   //! Loads BitSeries data from a PSRFITS data file
   class FITSFile : public File
   {
