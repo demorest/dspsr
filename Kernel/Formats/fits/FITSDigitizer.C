@@ -13,7 +13,9 @@
 
 void dsp::FITSDigitizer::set_digi_scales()
 {
-  float digi_sigma = 6;
+  // NB -- the scale here is defined s.t. roughly digi_sigma fit within
+  // the re-digitized values, so a smaller value compresses less
+  float digi_sigma = 8;
   switch (nbit){
     case 1:
       digi_mean=0.5;
@@ -48,7 +50,10 @@ dsp::FITSDigitizer::FITSDigitizer (unsigned _nbit)
 {
   set_nbit(_nbit);
   rescale_nsamp = 0;
-  freq_totalsq = scale = offset = NULL;
+  rescale_nblock = 1;
+  rescale_idx = 0;
+  rescale_counter = 0;
+  freq_total = freq_totalsq = scale = offset = NULL;
   digi_scale = 1;
   digi_mean = 0;
   digi_min = 0;
@@ -58,6 +63,7 @@ dsp::FITSDigitizer::FITSDigitizer (unsigned _nbit)
 //! Default destructor
 dsp::FITSDigitizer::~FITSDigitizer ()
 {
+  delete freq_total;
   delete freq_totalsq;
   delete scale;
   delete offset;
@@ -88,6 +94,18 @@ void dsp::FITSDigitizer::set_rescale_samples (unsigned nsamp)
   if (!has_buffering_policy())
     set_buffering_policy( new InputBuffering (this) );
   get_buffering_policy()->set_minimum_samples (rescale_nsamp);
+}
+
+//! Set the memory for rescaling (number of blocks)
+void dsp::FITSDigitizer::set_rescale_nblock (unsigned nblock)
+{
+  rescale_nblock = nblock;
+  unsigned nchan = input->get_nchan();
+  unsigned npol = input->get_npol();
+  delete freq_totalsq;
+  delete freq_total;
+  freq_totalsq = new double[npol*nchan*nblock];
+  freq_total = new double[npol*nchan*nblock];
 }
 
 class ChannelSort
@@ -125,7 +143,8 @@ void dsp::FITSDigitizer::init ()
 {
   unsigned nchan = input->get_nchan();
   unsigned npol = input->get_npol();
-  freq_totalsq = new double[npol*nchan];
+  freq_totalsq = new double[npol*nchan*rescale_nblock];
+  freq_total = new double[npol*nchan*rescale_nblock];
   scale = new double[npol*nchan];
   offset = new double[npol*nchan];
 }
@@ -153,20 +172,29 @@ void dsp::FITSDigitizer::transformation ()
 
 void dsp::FITSDigitizer::measure_scale ()
 {
+
   unsigned input_nchan = input->get_nchan ();
   unsigned input_npol = input->get_npol ();
+  unsigned stride = input_nchan * input_npol;
 
-  for (unsigned i = 0; i < input_nchan*input_npol; ++i)
+  // index into current row of storage
+  if (rescale_idx == rescale_nblock) rescale_idx = 0;
+
+  double* ft = freq_total + rescale_idx*stride;
+  double* fts = freq_totalsq + rescale_idx*stride;
+
+  // zero storage
+  for (unsigned i = 0; i < stride; ++i)
   {
-    offset[i] = 0;
-    freq_totalsq[i] = 0;
+    ft[i] = 0;
+    fts[i] = 0;
   }
 
+  // accumulate values from data
   switch (input->get_order()) {
   case TimeSeries::OrderTFP:
   {
     const float* in_data = input->get_dattfp();
-    //in_data += start_dat * input_nchan*input_npol;
     for (unsigned idat=0; idat < rescale_nsamp; idat++)
     {
       for (unsigned ichan=0; ichan < input_nchan; ichan++)
@@ -174,8 +202,8 @@ void dsp::FITSDigitizer::measure_scale ()
         for (unsigned ipol=0; ipol < input_npol; ipol++)
         {
           unsigned idx = ipol*input_nchan + ichan;
-          offset[idx] += (*in_data);
-          freq_totalsq[idx]  += (*in_data)*(*in_data);
+          ft[idx] += *in_data;
+          fts[idx] += (*in_data) * (*in_data);
 
           in_data++;
 
@@ -202,8 +230,8 @@ void dsp::FITSDigitizer::measure_scale ()
           sumsq += in_data[idat] * in_data[idat];
         }
 
-        offset[idx] += sum;
-        freq_totalsq[idx] += sumsq;
+        ft[idx] += sum;
+        fts[idx] += sumsq;
         idx++;
       }
     }
@@ -214,15 +242,74 @@ void dsp::FITSDigitizer::measure_scale ()
         "Requires data in TFP or FPT order");
   }
 
-  // convert to mean and std dev
-  double recip = 1./rescale_nsamp;
-  for (unsigned i = 0; i < input_nchan*input_npol; ++i)
+  // if no memory, set scales directly
+  if (rescale_nblock==1)
   {
-    offset[i] *= recip;
-    scale[i] = sqrt( freq_totalsq[i]*recip - offset[i]*offset[i] );
-    if (i==256)
-      cerr << "offset_256=" << offset[i]<<" scale_256="<<scale[i]<<std::endl;
+    double recip = 1./rescale_nsamp;
+    for (unsigned i = 0; i < stride; ++i)
+    {
+      offset[i] = ft[i]*recip;
+      scale[i] = sqrt (fts[i]*recip - offset[i]*offset[i]);
+    }
+    return;
   }
+
+  // if we haven't fully populated the memory yet, it's easiest just to
+  // average the stored values directly; we can use the last rows as cache
+  if (rescale_counter < rescale_nblock)
+  {
+    // increment here -- should be one on first iteration
+    rescale_counter += 1;
+
+    // zero out the scale/offset
+    for (unsigned i = 0; i < stride; ++i)
+    {
+      offset[i] = 0;
+      scale[i] = 0;
+    }
+
+    // now add up the rows so far
+    double *ft_copy = freq_total;
+    double *fts_copy = freq_totalsq;
+    for (unsigned i = 0; i < rescale_counter; ++i)
+    {
+      for (unsigned j = 0; j < stride; ++j)
+      {
+        offset[j] += ft_copy[j];
+        scale[j] += fts_copy[j];
+      }
+      ft_copy += stride;
+      fts_copy += stride;
+    }
+
+    // finally, convert moments to mean/standard deviation
+    double recip = (1./rescale_nsamp)*(1./rescale_counter);
+    for (unsigned i = 0; i < stride; ++i)
+    {
+      offset[i] = offset[i]*recip;
+      scale[i] = sqrt(scale[i]*recip - offset[i]*offset[i]);
+    }
+
+    rescale_idx += 1;
+    return;
+  }
+
+  // finally, if the memory is fully populated, we can update the values
+  // more efficiently by adding/subtracting the contributions from the
+  // newest/oldest values, respectively
+  unsigned old_idx = rescale_idx + 1;
+  if (old_idx == rescale_nblock) old_idx = 0;
+  double recip = (1./rescale_nsamp)*(1./rescale_nblock);
+  double* old_ft = freq_total + old_idx*stride;
+  double* old_fts = freq_totalsq + old_idx*stride;
+  for (unsigned i = 0; i < stride; ++i)
+  {
+    double old_offset = offset[i];
+    offset[i] = offset[i] + (ft[i]-old_ft[i])*recip;
+    scale[i] = sqrt( scale[i]*scale[i] - offset[i]*offset[i] + old_offset*old_offset + (fts[i]-old_fts[i])*recip );
+  }
+  rescale_idx += 1;
+  
 }
 
 /*! 
@@ -519,15 +606,16 @@ void dsp::FITSDigitizer::rescale_pack ()
       {
         uint64_t isamp = ipol*nchan + ichan;
         const float* inptr = input->get_datptr( mapped_chan , ipol );
-        float m_scale = digi_scale/scale[ipol*nchan + mapped_chan];
-        float m_offset = digi_mean - offset[ipol*nchan + mapped_chan]*m_scale;
+        //float m_scale = digi_scale/scale[ipol*nchan + mapped_chan];
+        //float m_offset = digi_mean - offset[ipol*nchan + mapped_chan]*m_scale;
+        float m_scale = 1./scale[ipol*nchan + mapped_chan];
+        float m_offset = offset[ipol*nchan + mapped_chan];
 
         for (uint64_t idat=0; idat < ndat; idat++,isamp+=inner_stride)
         {
-          //if (ichan==300 && ipol==0)
-            //cerr << idat << "  " << *inptr << "  " << ((*inptr) - offset[ipol*nchan + mapped_chan])/scale[ipol*nchan+mapped_chan] << "  " << offset[ipol*nchan+mapped_chan] << "  " << scale[ipol*nchan+mapped_chan] << std::endl;
-          int result = int( ((*inptr)*m_scale + m_offset) + 0.5 );
-          //int result = int( ((*inptr) * digi_scale) + digi_mean +0.5 );
+          //int result = int( ((*inptr)*m_scale + m_offset) + 0.5 );
+          float tmp = ((*inptr) - m_offset)*m_scale;
+          int result = int( tmp*digi_scale + digi_mean + 0.5 );
           inptr++;
 
           // clip the result at the limits
@@ -574,7 +662,8 @@ void dsp::FITSDigitizer::rescale_pack ()
 
 }
 
-void dsp::FITSDigitizer::get_scales(std::vector<float>* dat_scl, std::vector<float>* dat_offs)
+void dsp::FITSDigitizer::get_scales(
+  std::vector<float>* dat_scl, std::vector<float>* dat_offs)
 {
   unsigned nchan = input->get_nchan ();
   unsigned npol = input->get_npol ();
@@ -588,7 +677,12 @@ void dsp::FITSDigitizer::get_scales(std::vector<float>* dat_scl, std::vector<flo
     for (unsigned ipol=0; ipol < npol; ++ipol)
     {
       unsigned offs = ipol*nchan;
-      (*dat_scl)[offs + ichan] = scale[offs + chan_idx]*digi_scale;
+      // NB -- it is critical to remove the digitizer scale here, in order
+      // to preserve the correct mean/variance relationship when the data
+      // are decoded.
+      (*dat_scl)[offs + ichan] = scale[offs + chan_idx]/digi_scale;
+      // On the other hand, the digitizer offset can be corrected
+      // based on the ZERO_OFFS encoded in the FITS file.
       (*dat_offs)[offs + ichan] = offset[offs + chan_idx];
     }
   }

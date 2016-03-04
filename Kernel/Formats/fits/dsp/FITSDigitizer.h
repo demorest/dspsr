@@ -33,6 +33,10 @@ namespace dsp
     //! The default is 0, i.e. rescaling must be done elsewhere.
     void set_rescale_samples(unsigned nsamp);
 
+    //! Set the number of blocks to remember when computing scales.
+    //! The default is 1, corresponding to no memory.
+    void set_rescale_nblock(unsigned nsamp);
+
     //virtual void transformation ();
 
     //! Pack the data
@@ -58,14 +62,17 @@ namespace dsp
 
     void set_digi_scales();
 
+    //! keep track of first time through scale-measuring procedure
     unsigned rescale_nsamp;
-
+    unsigned rescale_idx;
+    unsigned rescale_nblock;
+    unsigned rescale_counter;
 
     float digi_mean,digi_scale;
     int digi_min,digi_max;
 
     //! arrays for accumulating and storing scales
-    double *freq_totalsq, *scale, *offset;
+    double *freq_totalsq, *freq_total, *scale, *offset;
 
   };
 }

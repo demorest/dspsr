@@ -254,24 +254,29 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
       cerr << "FITSFile::load_bytes row=" << current_row
            << " offset=" << byte_offset << " read=" << this_read << endl;
 
+    // Read the samples
     fits_read_col_byt(fp, data_colnum, current_row, byte_offset+1, 
         this_read, nval, buffer, &initflag, &status);
-
-    if (status) {
+    if (status) 
+    {
       fits_report_error(stderr, status);
       throw FITSError(status, "FITSFile::load_bytes", "fits_read_col_byt");
     }
 
+    // Read the scales
     fits_read_col(fp,TFLOAT,scl_colnum,current_row,1,nchan*npol,
         NULL,&dat_scl[0],NULL,&status);
-    if (status) {
+    if (status) 
+    {
       fits_report_error(stderr, status);
       throw FITSError(status, "FITSFile::load_bytes", "fits_read_col");
     }
 
+    // Read the offsets
     fits_read_col(fp,TFLOAT,offs_colnum,current_row,1,nchan*npol,
         NULL,&dat_offs[0],NULL,&status);
-    if (status) {
+    if (status) 
+    {
       fits_report_error(stderr, status);
       throw FITSError(status, "FITSFile::load_bytes", "fits_read_col");
     }
@@ -295,6 +300,10 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
     current_byte += this_read;
   }
 
+  // NB below should technically be inside the above loop, but only the last
+  // call has any effect further down the signal path.  We rely on the block
+  // size being set such that this method (and update) are called exactly
+  // once for each row in the input FITS file.
   update(this);
 
   return bytes_read;
