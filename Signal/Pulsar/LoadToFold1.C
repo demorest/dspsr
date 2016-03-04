@@ -33,8 +33,10 @@
 #include "dsp/OptimalFFT.h"
 #include "dsp/Resize.h"
 
+#if HAVE_CFITSIO
 #include "dsp/FITSFile.h"
 #include "dsp/FITSUnpacker.h"
+#endif
 
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
@@ -128,15 +130,18 @@ void dsp::LoadToFold::construct () try
       unpacker->set_output_order (TimeSeries::OrderTFP);
     }
 
+#if HAVE_CFITSIO
     // Temporary kluge for testing FITS code
     if (manager->get_info()->get_machine() == "FITS")
     {
+      std::cout << "Using callback..." << std::endl;
       // connect a callback
       FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
       tmp->update.connect (
           dynamic_cast<FITSUnpacker*> ( manager->get_unpacker() ),
           &FITSUnpacker::set_parameters);
     }
+#endif
 
     config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
@@ -877,6 +882,7 @@ void dsp::LoadToFold::prepare ()
   // if PSRFITS input, set block to exact size of FITS row
   if (manager->get_info()->get_machine() == "FITS")
   {
+#if HAVE_CFITSIO
     FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
     unsigned samples_per_row = tmp->get_samples_in_row();
     uint64_t current_bytes = manager->set_block_size (samples_per_row);
@@ -885,6 +891,7 @@ void dsp::LoadToFold::prepare ()
       throw Error (InvalidState, "prepare", "Maximum RAM smaller than PSRFITS row.");
     manager->set_maximum_RAM (new_max_ram);
     manager->set_block_size (samples_per_row);
+#endif
   }
 
   // add the increased block size if the SKFB is being used
