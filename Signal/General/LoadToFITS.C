@@ -175,7 +175,8 @@ void dsp::LoadToFITS::construct () try
 
   cerr << "digifits: " 
        << "requested tsamp=" << config->tsamp << " rate=" << obs->get_rate() << endl
-       << "actual tsamp=" << tsamp << " (tscrunch=)" << tres_factor << endl;
+       << "actual tsamp=" << tsamp << " (tscrunch=)" << tres_factor << endl
+       << "nsblk="<<config->nsblk << endl;
 
   // voltage samples per output block
   uint64_t nsample = round(samp_per_fb * config->nsblk);
@@ -461,6 +462,7 @@ void dsp::LoadToFITS::construct () try
   // specifies a time constant
   // TODO -- time constant not implemented
   digitizer->set_rescale_samples (config->nsblk);
+  //digitizer->set_rescale_nblock (8);
 
   operations.push_back( digitizer );
 

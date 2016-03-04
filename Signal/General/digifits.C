@@ -83,6 +83,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->block_size, 'B', "MB");
   arg->set_help ("block size in megabytes");
 
+  arg = menu.add (config->nsblk, "nsblk", "MB");
+  arg->set_help ("output block size in samples (default=2048)");
+
   arg = menu.add (config->rescale_constant, 'c');
   arg->set_help ("keep offset and scale constant");
 
@@ -105,7 +108,7 @@ void parse_options (int argc, char** argv) try
   arg->set_help (" set the dispersion measure");
 
   arg = menu.add (config->tsamp, 't', "tsamp");
-  arg->set_help ("integration time per output sample (default=64mus)");
+  arg->set_help ("integration time (s) per output sample (default=64mus)");
 
   arg = menu.add (config->fscrunch_factor, 'f', "nchan");
   arg->set_help ("decimate in frequency");
