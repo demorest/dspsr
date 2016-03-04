@@ -157,23 +157,12 @@ void dsp::TScrunch::fpt_tscrunch ()
         float* out = output->get_datptr(ichan, ipol) + idim;
         
         unsigned input_idat=0;
-        double tmp_mean = 0.;
-        unsigned tmp_counter = 0;
 
         for (unsigned output_idat=0; 
             output_idat<output_ndat*ndim; output_idat+=ndim)
         {
           unsigned stop = (input_idat + sfactor*ndim);
     
-          if (ichan==256&&ipol<2) {
-            unsigned tmp_input_idat = input_idat;
-            for( ; tmp_input_idat<stop; tmp_input_idat += ndim)
-            {
-              tmp_mean += in[tmp_input_idat];
-              tmp_counter += 1;
-            }
-          }
-
           out[output_idat] = in[input_idat];
           input_idat += ndim;
         
@@ -181,8 +170,6 @@ void dsp::TScrunch::fpt_tscrunch ()
             out[output_idat] += in[input_idat];
 
         }
-        if (ichan==256&&ipol<2)
-          cerr << "ipol="<<ipol<<" mean="<<tmp_mean/tmp_counter<<" counter="<<tmp_counter << std::endl;
       } // for each ipol
     } // for each ichan
   if (idim > 0)
