@@ -31,11 +31,14 @@ namespace dsp
 
     //! Set the number of samples to rescale before digitization.
     //! The default is 0, i.e. rescaling must be done elsewhere.
-    void set_rescale_samples(unsigned nsamp);
+    void set_rescale_samples (unsigned nsamp);
 
     //! Set the number of blocks to remember when computing scales.
     //! The default is 1, corresponding to no memory.
-    void set_rescale_nblock(unsigned nsamp);
+    void set_rescale_nblock (unsigned nsamp);
+
+    //! If true, leave scales/offsets constant after first measurement.
+    void set_rescale_constant (bool rconst);
 
     //virtual void transformation ();
 
@@ -44,7 +47,7 @@ namespace dsp
 
     //! Return minimum samples
     // TODO -- is this needed?
-    uint64_t get_minimum_samples () { return 4096; }
+    uint64_t get_minimum_samples () { return 2048; }
 
     void get_scales (std::vector<float>* dat_scl, std::vector<float>* dat_offs);
 
@@ -67,6 +70,9 @@ namespace dsp
     unsigned rescale_idx;
     unsigned rescale_nblock;
     unsigned rescale_counter;
+
+    //! Keep scaling/offset constant after first estimate.
+    bool rescale_constant;
 
     float digi_mean,digi_scale;
     int digi_min,digi_max;

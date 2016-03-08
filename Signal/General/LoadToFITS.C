@@ -82,8 +82,8 @@ dsp::LoadToFITS::Config::Config()
   dedisperse = false;
   coherent_dedisp = false;
 
-  tscrunch_factor = 0;
-  fscrunch_factor = 0;
+  //tscrunch_factor = 0;
+  //fscrunch_factor = 0;
 
   rescale_seconds = -1;
   rescale_constant = false;
@@ -148,35 +148,34 @@ void dsp::LoadToFITS::construct () try
   const unsigned nchan = obs->get_nchan ();
   const unsigned npol = obs->get_npol ();
   const unsigned ndim = obs->get_ndim ();
+  const double rate = obs->get_rate () ;
 
   if (verbose)
   {
     cerr << "Source = " << obs->get_source() << endl;
     cerr << "Frequency = " << obs->get_centre_frequency() << endl;
     cerr << "Bandwidth = " << obs->get_bandwidth() << endl;
-    cerr << "Sampling rate = " << obs->get_rate() << endl;
+    cerr << "Sampling rate = " << rate << endl;
     cerr << "State = " << tostring(obs->get_state()) <<endl;
   }
 
   obs->set_dispersion_measure( config->dispersion_measure );
 
-  // for now, handle spectral leakage AND integrating up a filterbank sample
-  // by using the frequency resolution aspect of Filterbank
+  // Strategy will be to tscrunch from Nyquist resolution to desired reso.
 
   // voltage samples per filterbank sample
-  double samp_per_fb = config->tsamp*obs->get_rate();
+  double samp_per_fb = config->tsamp * rate;
   if (verbose)
     cerr << "voltage samples per filterbank sample="<<samp_per_fb << endl;
   // correction for number of samples per filterbank channel
-  double factor = obs->get_state()==Signal::Nyquist? 0.5 : 1.0;
-  unsigned res_factor = round(factor*samp_per_fb/config->filterbank.get_nchan());
-  unsigned tres_factor = round(factor*config->tsamp*obs->get_rate()/config->filterbank.get_nchan());
-  double tsamp = tres_factor/factor*config->filterbank.get_nchan()/obs->get_rate();
+  double factor = obs->get_state() == Signal::Nyquist? 0.5 : 1.0;
+  unsigned fb_nchan = config->filterbank.get_nchan();
+  unsigned tres_factor = round(factor*samp_per_fb/fb_nchan);
+  double tsamp = tres_factor/factor*fb_nchan/rate;
 
-  cerr << "digifits: " 
-       << "requested tsamp=" << config->tsamp << " rate=" << obs->get_rate() << endl
-       << "actual tsamp=" << tsamp << " (tscrunch=)" << tres_factor << endl
-       << "nsblk="<<config->nsblk << endl;
+  cerr << "digifits: requested tsamp=" << config->tsamp << " rate=" << rate << endl << "             actual tsamp=" << tsamp << " (tscrunch=" << tres_factor << ")" << endl;
+  if (verbose)
+    cerr << "digifits: nsblk=" << config->nsblk << endl;
 
   // voltage samples per output block
   uint64_t nsample = round(samp_per_fb * config->nsblk);
@@ -232,7 +231,6 @@ void dsp::LoadToFITS::construct () try
 
     filterbank = config->filterbank.create ();
 
-    //filterbank->set_nchan( config->filterbank.get_nchan()*res_factor );
     filterbank->set_nchan( config->filterbank.get_nchan() );
     filterbank->set_input( timeseries );
     filterbank->set_output( timeseries = new_TimeSeries() );
@@ -294,22 +292,13 @@ void dsp::LoadToFITS::construct () try
     operations.push_back ( detection );
   }
 
-  //FScrunch* fscrunch = new FScrunch;
   TScrunch* tscrunch = new TScrunch;
   
-  //fscrunch->set_factor ( res_factor );
-  //fscrunch->set_input ( timeseries );
   tscrunch->set_factor ( tres_factor );
   tscrunch->set_input ( timeseries );
   tscrunch->set_output ( timeseries = new_TimeSeries() );
 
 # if HAVE_CUDA
-  //if (run_on_gpu)
-  //{
-  //  fscrunch->set_engine ( new CUDA::FScrunchEngine(stream) );
-  //  timeseries = new_TimeSeries();
-  //  timeseries->set_memory (device_memory);
-  //}
   if ( run_on_gpu )
   {
     tscrunch->set_engine ( new CUDA::TScrunchEngine(stream) );
@@ -317,9 +306,6 @@ void dsp::LoadToFITS::construct () try
 
   }
 #endif
-  //fscrunch->set_output ( timeseries );
-
-  //operations.push_back ( fscrunch );
   operations.push_back( tscrunch );
 
 # if HAVE_CUDA
@@ -367,22 +353,6 @@ void dsp::LoadToFITS::construct () try
     operations.push_back (reshape);
   }
 
-
-  /*
-  if ( config->tscrunch_factor )
-  {
-    TScrunch* tscrunch = new TScrunch;
-    
-    tscrunch->set_factor( config->tscrunch_factor );
-    tscrunch->set_input ( timeseries );
-    tscrunch->set_output ( timeseries );
-
-    operations.push_back( tscrunch );
-  }
-  */
-
-  // TODO -- ideally this would happen before initial fscrunch, but will
-  // await a GPU implementation of SampleDelay
   if ( config->dedisperse )
   {
     if (verbose)
@@ -396,35 +366,6 @@ void dsp::LoadToFITS::construct () try
 
     operations.push_back( delay );
   }
-
-  
-  /*
-  if (verbose)
-    cerr << "digifits: creating rescale transformation" << endl;
-
-  // PSRFITS allows us to save the reference spectrum in each output block
-  // "subint", so we can take advantage of this to store the exect
-  // reference spectrum for later use if we select a rescale time cons.
-  // exactly equal to nsblk; do this by default unless the user manually
-  // specifies a time constant
-  Rescale* rescale = new Rescale;
-  rescale->set_input (timeseries);
-  rescale->set_output (timeseries);
-  if (config->rescale_seconds >= 0) 
-  {
-    cerr << "warning, Rescale using seconds, not recommended for PSRFITS" 
-         << endl;
-    rescale->set_interval_seconds (config->rescale_seconds);
-  }
-  else
-  {
-    rescale->set_interval_samples (config->nsblk);
-    rescale->set_exact(true);
-  }
-  rescale->set_constant (config->rescale_constant);
-
-  operations.push_back( rescale );
-  */
 
 
   // only do pscrunch for detected data -- NB always goes to Intensity
@@ -457,12 +398,27 @@ void dsp::LoadToFITS::construct () try
 
   // PSRFITS allows us to save the reference spectrum in each output block
   // "subint", so we can take advantage of this to store the exect
-  // reference spectrum for later use if we select a rescale time cons.
-  // exactly equal to nsblk; do this by default unless the user manually
-  // specifies a time constant
-  // TODO -- time constant not implemented
+  // reference spectrum for later use.  By default, we will rescale the 
+  // spectrum using values for exactly one block (nsblk samples).  This
+  // potentially improves the dynamic range, but makes the observaiton more
+  // subject to transiennts.  By calling set_rescale_nblock(N), the path
+  // will keep a running mean/scale for N sample blocks.  This is presented
+  // to the user through rescale_seconds, which will choose the appropriate
+  // block length to approximate the requested time interval.
   digitizer->set_rescale_samples (config->nsblk);
-  //digitizer->set_rescale_nblock (8);
+  if (config->rescale_constant)
+  {
+    cerr << "digifits: holding scales and offsets constant" << endl;
+    digitizer->set_rescale_constant (true);
+  }
+  else if (config->rescale_seconds > 0)
+  {
+    double tblock = config->tsamp * config->nsblk;
+    unsigned nblock = unsigned ( config->rescale_seconds/tblock + 0.5 );
+    if (nblock < 1) nblock = 1;
+    digitizer->set_rescale_nblock (nblock);
+    cerr << "digifits: using "<<nblock<<" blocks running mean for scales and constant ("<<tblock*nblock<<") seconds"<<endl;
+  }
 
   operations.push_back( digitizer );
 

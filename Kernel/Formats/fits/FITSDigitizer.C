@@ -53,6 +53,7 @@ dsp::FITSDigitizer::FITSDigitizer (unsigned _nbit)
   rescale_nblock = 1;
   rescale_idx = 0;
   rescale_counter = 0;
+  rescale_constant = false;
   freq_total = freq_totalsq = scale = offset = NULL;
   digi_scale = 1;
   digi_mean = 0;
@@ -96,7 +97,6 @@ void dsp::FITSDigitizer::set_rescale_samples (unsigned nsamp)
   get_buffering_policy()->set_minimum_samples (rescale_nsamp);
 }
 
-//! Set the memory for rescaling (number of blocks)
 void dsp::FITSDigitizer::set_rescale_nblock (unsigned nblock)
 {
   rescale_nblock = nblock;
@@ -106,6 +106,11 @@ void dsp::FITSDigitizer::set_rescale_nblock (unsigned nblock)
   delete freq_total;
   freq_totalsq = new double[npol*nchan*nblock];
   freq_total = new double[npol*nchan*nblock];
+}
+
+void dsp::FITSDigitizer::set_rescale_constant (bool rconst)
+{
+  rescale_constant = rconst;
 }
 
 class ChannelSort
@@ -172,6 +177,8 @@ void dsp::FITSDigitizer::transformation ()
 
 void dsp::FITSDigitizer::measure_scale ()
 {
+
+  if (rescale_constant && (rescale_counter > 0)) return;
 
   unsigned input_nchan = input->get_nchan ();
   unsigned input_npol = input->get_npol ();
@@ -245,6 +252,7 @@ void dsp::FITSDigitizer::measure_scale ()
   // if no memory, set scales directly
   if (rescale_nblock==1)
   {
+    rescale_counter = 1; // use this to keep track of first entry
     double recip = 1./rescale_nsamp;
     for (unsigned i = 0; i < stride; ++i)
     {

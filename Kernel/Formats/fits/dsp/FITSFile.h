@@ -41,7 +41,7 @@ namespace dsp
 
 
     protected:
-      friend FITSUnpacker;
+      friend class FITSUnpacker;
 
       //! Open the file
       virtual void open_file(const char* filename);

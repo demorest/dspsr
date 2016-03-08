@@ -77,17 +77,38 @@ void parse_options (int argc, char** argv) try
   arg->set_long_name("threads");
   arg->set_type("nthread");
 
-  arg = menu.add (config->nbits, 'b', "bits");
-  arg->set_help ("number of bits per sample output to file");
+  menu.add ("\n" "Source options:");
+
+  arg = menu.add (config->dispersion_measure, 'D', "dm");
+  arg->set_help (" set the dispersion measure");
+
+  menu.add ("\n" "Processing options:");
 
   arg = menu.add (config->block_size, 'B', "MB");
   arg->set_help ("block size in megabytes");
 
-  arg = menu.add (config->nsblk, "nsblk", "MB");
-  arg->set_help ("output block size in samples (default=2048)");
+  arg = menu.add (&config->filterbank, 
+      &dsp::Filterbank::Config::set_freq_res, 
+      'x', "nfft");
+  arg->set_help ("backward FFT length in voltage filterbank");
 
   arg = menu.add (config->rescale_constant, 'c');
   arg->set_help ("keep offset and scale constant");
+
+  arg = menu.add (config->rescale_seconds, 'I', "secs");
+  arg->set_help ("rescale interval in seconds");
+
+
+  menu.add ("\n" "Output options:");
+
+  arg = menu.add (config->tsamp, 't', "tsamp");
+  arg->set_help ("integration time (s) per output sample (default=64mus)");
+
+  arg = menu.add (config->npol, 'p', "npol");
+  arg->set_help ("output 1 (Intensity), 2 (AABB), or 4 (Coherence) products");
+
+  arg = menu.add (config->nbits, 'b', "bits");
+  arg->set_help ("number of bits per sample output to file");
 
   arg = menu.add (config->filterbank, 'F', "nchan[:D]");
   arg->set_help ("create a filterbank (voltages only)");
@@ -96,28 +117,14 @@ void parse_options (int argc, char** argv) try
      "Select coherently dedispersing filterbank with -F 256:D\n"
      "Set leakage reduction factor with -F 256:<N>\n");
 
-  arg = menu.add (&config->filterbank, 
-      &dsp::Filterbank::Config::set_freq_res, 
-      'x', "nfft");
-  arg->set_help ("backward FFT length in voltage filterbank");
+  arg = menu.add (config->nsblk, "nsblk", "MB");
+  arg->set_help ("output block size in samples (default=2048)");
 
   arg = menu.add (config->dedisperse, 'K');
   arg->set_help ("remove inter-channel dispersion delays");
 
-  arg = menu.add (config->dispersion_measure, 'D', "dm");
-  arg->set_help (" set the dispersion measure");
-
-  arg = menu.add (config->tsamp, 't', "tsamp");
-  arg->set_help ("integration time (s) per output sample (default=64mus)");
-
-  arg = menu.add (config->fscrunch_factor, 'f', "nchan");
-  arg->set_help ("decimate in frequency");
-
-  arg = menu.add (config->npol, 'p', "npol");
-  arg->set_help ("output 1 (Intensity), 2 (AABB), or 4 (Coherence) products");
-
-  arg = menu.add (config->rescale_seconds, 'I', "secs");
-  arg->set_help ("rescale interval in seconds");
+  //arg = menu.add (config->fscrunch_factor, 'f', "nchan");
+  //arg->set_help ("decimate in frequency");
 
   arg = menu.add (config->output_filename, 'o', "file");
   arg->set_help ("output filename");

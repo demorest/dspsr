@@ -387,7 +387,7 @@ void dsp::FITSOutputFile::initialize ()
   psrfits_update_key<int> (fptr, "NSBLK", nsblk);
   psrfits_update_key<double> (fptr, "TBIN", 1./get_input()->get_rate());
   psrfits_update_key<int> (fptr, "NBITS", nbit);
-  psrfits_update_key<double> (fptr, "ZERO_OFF", pow(2,nbit-1)-0.5 );
+  psrfits_update_key<double> (fptr, "ZERO_OFF", pow(double(2),int(nbit)-1)-0.5 );
   psrfits_update_key<int> (fptr, "SIGNINT", 0);
 
   // TODO -- will need to fix this later on
