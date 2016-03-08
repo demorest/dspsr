@@ -51,6 +51,9 @@ namespace dsp
     //! Return a new Filterbank instance and configure it
     Filterbank* create ();
 
+    bool do_coherent_dedispersion ();
+    bool coherent_dedispersion;
+
   protected:
 
     Memory* memory;

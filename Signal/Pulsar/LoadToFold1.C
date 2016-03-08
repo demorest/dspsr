@@ -163,7 +163,10 @@ void dsp::LoadToFold::construct () try
   }
 
   // the data are not detected, so set up phase coherent reduction path
+  // NB that this does not necessarily mean coherent dedispersion.
   unsigned frequency_resolution = config->filterbank.get_freq_res ();
+
+  config->coherent_dedispersion = config->filterbank.do_coherent_dedispersion ();
 
   if (config->coherent_dedispersion)
   {

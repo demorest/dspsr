@@ -30,6 +30,7 @@ Filterbank::Config::Config ()
   nchan = 1;
   freq_res = 0;  // unspecified
   when = After;  // not good, but the original default
+  coherent_dedispersion = false;
 }
 
 std::ostream& dsp::operator << (std::ostream& os,
@@ -64,6 +65,9 @@ std::istream& dsp::operator >> (std::istream& is, Filterbank::Config& config)
     return is;
   }
 
+  // I'm not sure we should make this assumption, but carry on for now
+  config.coherent_dedispersion = true;
+
   // throw away the colon
   is.get();
 
@@ -97,6 +101,13 @@ void dsp::Filterbank::Config::set_stream (void* ptr)
 {
   stream = ptr;
 }
+
+//! Set the device on which the unpacker will operate
+bool dsp::Filterbank::Config::do_coherent_dedispersion ()
+{
+  return coherent_dedispersion;
+}
+
 
 //! Return a new Filterbank instance and configure it
 dsp::Filterbank* dsp::Filterbank::Config::create ()
