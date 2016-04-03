@@ -36,9 +36,9 @@ __global__ void fpt_ndim2_ndim2 (float2* in_base, float2* out_base,
     return;
 
   // blockIdx.y == channel index
-  // blockIdx.z == polarization index
+  // threadIdx.y == polarization index
   // offset into buffer = the index of the output datum (i) * the scrunch factor
-  in_base += blockIdx.y * in_Fstride + blockIdx.z * in_Pstride + sfactor * i;
+  in_base += blockIdx.y * in_Fstride + threadIdx.y * in_Pstride + sfactor * i;
   float2 result = *in_base;
   for (int j=1; j < sfactor; ++j,++in_base)
   {
@@ -46,7 +46,7 @@ __global__ void fpt_ndim2_ndim2 (float2* in_base, float2* out_base,
     result.y += (*in_base).y;
   }
 
-  out_base += blockIdx.y * out_Fstride + blockIdx.z * out_Pstride + i;
+  out_base += blockIdx.y * out_Fstride +threadIdx.y * out_Pstride + i;
   *out_base = result;
 }
 
@@ -59,8 +59,15 @@ void CUDA::TScrunchEngine::fpt_tscrunch(const dsp::TimeSeries *in,
   // scrunch factor will be something of order 10-100, a reasonable
   // amount of work for a thread to do
 
-  // the kernel is launched on a 3d block, with the dimensions
-  // corresponding to output T, input/output F, input/output P
+  // this is not at all optimal in terms of cache access, and at some point
+  // this should be re-written with each thread accessing adjacent samples
+
+  // to manage restrictions on grid size in earlier compute capability,
+  // use a 2d thread block with one dimension corresponding to P,
+  // the other to the output T
+  // then launch on a 2d grid with one block handling the full output size, the
+  // other handling the channels
+
   // each thread is assigned to a specific input F & input P
   // and loops over input T to add sfactor data together 
 
@@ -82,8 +89,9 @@ void CUDA::TScrunchEngine::fpt_tscrunch(const dsp::TimeSeries *in,
   uint64_t in_Pstride = (in->get_datptr(0,1)-in->get_datptr(0,0)) / 2;
   uint64_t out_Fstride = (out->get_datptr(1)-out->get_datptr(0)) / 2;
   uint64_t out_Pstride = (out->get_datptr(0,1)-out->get_datptr(0,0)) / 2;
-  dim3 threads (128);
-  dim3 blocks (out->get_ndat()/threads.x, in->get_nchan(), in->get_npol());
+  // use a 2-dimensional thread block to eliminate 3rd grid dimension
+  dim3 threads (128, in->get_npol());
+  dim3 blocks (out->get_ndat()/threads.x, in->get_nchan() );
 
   if (out->get_ndat() % threads.x)
     blocks.x ++;
