@@ -27,8 +27,6 @@
 #include "dsp/PolnSelect.h"
 #include "dsp/PolnReshape.h"
 
-//#include "dsp/Rescale.h"
-
 #include "dsp/FITSDigitizer.h"
 #include "dsp/FITSOutputFile.h"
 
@@ -37,7 +35,6 @@
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
 #include "dsp/DetectionCUDA.h"
-//#include "dsp/FScrunchCUDA.h"
 #include "dsp/TScrunchCUDA.h"
 #include "dsp/MemoryCUDA.h"
 #endif
@@ -194,6 +191,15 @@ void dsp::LoadToFITS::construct () try
          << " MB " << "(" << nsample << " samp)" << endl;
 
   manager->set_block_size ( nsample );
+
+  // if running on multiple GPUs, make nsblk such that no buffering is
+  // required
+  if ((run_on_gpu) and (config->get_total_nthread() > 1))
+  {
+    config->nsblk = nsample / samp_per_fb;
+    if (verbose)
+      cerr << "digifits: due to GPU multi-threading, setting nsblk="<<config->nsblk << endl;
+  }
 
   TimeSeries* timeseries = unpacked;
 

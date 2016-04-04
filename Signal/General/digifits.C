@@ -108,7 +108,7 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("output 1 (Intensity), 2 (AABB), or 4 (Coherence) products");
 
   arg = menu.add (config->nbits, 'b', "bits");
-  arg->set_help ("number of bits per sample output to file");
+  arg->set_help ("number of bits per sample output to file [1,2,4,8]");
 
   arg = menu.add (config->filterbank, 'F', "nchan[:D]");
   arg->set_help ("create a filterbank (voltages only)");
@@ -117,7 +117,7 @@ void parse_options (int argc, char** argv) try
      "Select coherently dedispersing filterbank with -F 256:D\n"
      "Set leakage reduction factor with -F 256:<N>\n");
 
-  arg = menu.add (config->nsblk, "nsblk", "MB");
+  arg = menu.add (config->nsblk, "nsblk", "N");
   arg->set_help ("output block size in samples (default=2048)");
 
   arg = menu.add (config->dedisperse, 'K');
@@ -129,9 +129,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->output_filename, 'o', "file");
   arg->set_help ("output filename");
 
-  bool revert = false;
-  arg = menu.add (revert, 'p');
-  arg->set_help ("revert to FPT order");
+  //bool revert = false;
+  //arg = menu.add (revert, 'p');
+  //arg->set_help ("revert to FPT order");
 
   menu.parse (argc, argv);
 

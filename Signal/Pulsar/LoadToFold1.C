@@ -131,10 +131,11 @@ void dsp::LoadToFold::construct () try
     }
 
 #if HAVE_CFITSIO
-    // Temporary kluge for testing FITS code
+    // Use callback to handle scales/offsets for read-in
     if (manager->get_info()->get_machine() == "FITS")
     {
-      std::cout << "Using callback..." << std::endl;
+      if (Operation::verbose)
+        std::cout << "Using callback to read PSRFITS file." << std::endl;
       // connect a callback
       FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
       tmp->update.connect (
@@ -882,10 +883,11 @@ void dsp::LoadToFold::prepare ()
 
   uint64_t ram = manager->set_block_size( block_size );
 
+#if HAVE_CFITSIO
   // if PSRFITS input, set block to exact size of FITS row
+  // this is needed to keep in sync with the callback
   if (manager->get_info()->get_machine() == "FITS")
   {
-#if HAVE_CFITSIO
     FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
     unsigned samples_per_row = tmp->get_samples_in_row();
     uint64_t current_bytes = manager->set_block_size (samples_per_row);
@@ -894,8 +896,8 @@ void dsp::LoadToFold::prepare ()
       throw Error (InvalidState, "prepare", "Maximum RAM smaller than PSRFITS row.");
     manager->set_maximum_RAM (new_max_ram);
     manager->set_block_size (samples_per_row);
-#endif
   }
+#endif
 
   // add the increased block size if the SKFB is being used
   if (skfilterbank)
