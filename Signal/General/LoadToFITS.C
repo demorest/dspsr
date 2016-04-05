@@ -79,9 +79,6 @@ dsp::LoadToFITS::Config::Config()
   dedisperse = false;
   coherent_dedisp = false;
 
-  //tscrunch_factor = 0;
-  //fscrunch_factor = 0;
-
   rescale_seconds = -1;
   rescale_constant = false;
 
@@ -206,25 +203,32 @@ void dsp::LoadToFITS::construct () try
   if (!obs->get_detected())
   {
 
-    config->coherent_dedisp = 
-      (config->filterbank.get_convolve_when() == Filterbank::Config::During)
-      && (config->dispersion_measure != 0.0);
-
     if ( !config->filterbank.get_nchan() )
       throw Error(InvalidParam,"dsp::LoadToFITS::construct",
           "must specify filterbank scheme if data are not detected");
 
-    if ( config->coherent_dedisp )
+    // If user specifies -FN:D, enable coherent dedispersion
+    if ( config->filterbank.get_convolve_when() == 
+        Filterbank::Config::During )
+      config->coherent_dedisp = true;
+
+    if ( (config->coherent_dedisp) && (config->dispersion_measure != 0.0) )
     {
       cerr << "digifits: using coherent dedispersion" << endl;
 
+      // "During" is the only option, my friends
+      config->filterbank.set_convolve_when( Filterbank::Config::During );
+
       kernel = new Dedispersion;
+      kernel->set_dispersion_measure( config->dispersion_measure );
 
       if (config->filterbank.get_freq_res())
-        kernel->set_frequency_resolution (config->filterbank.get_freq_res());
+        kernel -> set_times_minimum_nfft (config->filterbank.get_freq_res () );
+        //kernel->set_frequency_resolution (
+        //    config->filterbank.get_freq_res());
 
-      kernel->set_dispersion_measure( config->dispersion_measure );
     }
+    else config->coherent_dedisp = false;
 
 # if HAVE_CUDA
     if (run_on_gpu)
@@ -248,13 +252,12 @@ void dsp::LoadToFITS::construct () try
     if (kernel)
       filterbank->set_response( kernel );
 
-    unsigned freq_res = config->filterbank.get_freq_res();
-    if (freq_res > 1)
-      filterbank->set_frequency_resolution ( freq_res );
-
-    //if (verbose)
-      cerr << "digifits: creating " << config->filterbank.get_nchan()
-           << " by " << freq_res << " back channel filterbank" << endl;
+    if ( !config->coherent_dedisp )
+    {
+      unsigned freq_res = config->filterbank.get_freq_res();
+      if (freq_res > 1)
+        filterbank->set_frequency_resolution ( freq_res );
+    }
 
     operations.push_back( filterbank.get() );
 
@@ -361,7 +364,7 @@ void dsp::LoadToFITS::construct () try
 
   if ( config->dedisperse )
   {
-    if (verbose)
+    //if (verbose)
       cerr << "digifits: removing dispersion delays" << endl;
 
     SampleDelay* delay = new SampleDelay;
@@ -456,6 +459,11 @@ catch (Error& error)
 void dsp::LoadToFITS::prepare () try
 {
   SingleThread::prepare();
+
+  unsigned freq_res = config->coherent_dedisp? kernel->get_frequency_resolution() : config->filterbank.get_freq_res();
+  if (freq_res == 0) freq_res = 1;
+  cerr << "digifits: creating " << config->filterbank.get_nchan()
+       << " by " << freq_res << " back channel filterbank" << endl;
   
   // TODO -- set an optimal block size for search mode
 

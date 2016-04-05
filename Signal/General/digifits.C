@@ -87,10 +87,13 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->block_size, 'B', "MB");
   arg->set_help ("block size in megabytes");
 
-  arg = menu.add (&config->filterbank, 
-      &dsp::Filterbank::Config::set_freq_res, 
-      'x', "nfft");
-  arg->set_help ("backward FFT length in voltage filterbank");
+  //arg = menu.add (&config->filterbank, 
+  //    &dsp::Filterbank::Config::set_freq_res, 
+  //    'x', "nfft");
+  //arg->set_help ("set backward FFT length in voltage filterbank");
+
+  arg = menu.add (config->coherent_dedisp, "do_dedisp", "bool");
+  arg->set_help ("enable coherent dedispersion (default: false)");
 
   arg = menu.add (config->rescale_constant, 'c');
   arg->set_help ("keep offset and scale constant");
@@ -135,8 +138,8 @@ void parse_options (int argc, char** argv) try
 
   menu.parse (argc, argv);
 
-  if (revert)
-    config->order = dsp::TimeSeries::OrderFPT;
+  //if (revert)
+  //  config->order = dsp::TimeSeries::OrderFPT;
 }
 catch (Error& error)
 {
