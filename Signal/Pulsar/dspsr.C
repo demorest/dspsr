@@ -460,7 +460,8 @@ void parse_options (int argc, char** argv) try
 
   menu.add ("\n" "Output archive options:");
 
-  arg = menu.add (config->archive_class, 'a', "archive");
+  arg = menu.add (config.get(),
+		  &dsp::LoadToFold::Config::set_archive_class, 'a', "archive");
   arg->set_help ("output archive class name");
 
   arg = menu.add (config->archive_extension, 'e', "ext");

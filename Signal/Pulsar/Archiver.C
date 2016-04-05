@@ -56,6 +56,7 @@ dsp::Archiver::Archiver ()
   fourth_moments = 0;
   subints_per_file = 0;
   use_single_archive = false;
+  force_archive_class = false;
 
   /* PLEASE DON'T FORGET TO ALSO UPDATE THE COPY CONSTRUCTOR */
 }
@@ -73,6 +74,7 @@ dsp::Archiver::Archiver (const Archiver& copy)
     extensions[iext] = copy.extensions[iext]->clone();
 
   archive_class_name = copy.archive_class_name;
+  force_archive_class = copy.force_archive_class;
   store_dynamic_extensions = copy.store_dynamic_extensions;
   archive_software = copy.archive_software;
   archive_dedispersed = copy.archive_dedispersed;
@@ -104,6 +106,11 @@ void dsp::Archiver::set_archive_class (const string& class_name)
   archive_class_name = class_name;
 }
 
+void dsp::Archiver::set_force_archive_class (bool force)
+{
+  force_archive_class = force;
+}
+
 void dsp::Archiver::set_archive (Pulsar::Archive* archive)
 {
   single_archive = archive;
@@ -130,7 +137,7 @@ void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
 //! Return a new Archive instance
 Pulsar::Archive* dsp::Archiver::new_Archive() const
 {
-  try
+  if (!force_archive_class) try
   {
     const OutputArchive* out = profiles->get_extensions()->get<OutputArchive>();
     if (out)

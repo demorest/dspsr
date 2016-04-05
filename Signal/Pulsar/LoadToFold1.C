@@ -1259,6 +1259,8 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
     && ( (config->subints_per_archive>0) || (config->single_archive==false) );
 
   archiver->set_archive_class (config->archive_class.c_str());
+  if (config->archive_class_specified_by_user)
+    archiver->set_force_archive_class (true);
 
   if (output_subints() && config->single_archive)
   {

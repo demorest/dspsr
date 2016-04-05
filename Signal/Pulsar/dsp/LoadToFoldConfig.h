@@ -55,6 +55,9 @@ namespace dsp {
     void set_minimum_RAM (uint64_t);
     uint64_t get_minimum_RAM () const { return minimum_RAM; }
 
+    // set the name of the archive class to be used for output
+    void set_archive_class (const std::string&);
+
     // number of time samples used to estimate undigitized power
     unsigned excision_nsample;
     // cutoff power used for impulsive interference rejection
@@ -215,6 +218,7 @@ namespace dsp {
 
     // name of the output archive class
     std::string archive_class;
+    bool archive_class_specified_by_user;
 
     // name of the output archive file
     std::string archive_filename;
