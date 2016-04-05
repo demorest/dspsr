@@ -317,14 +317,18 @@ void parse_options (int argc, char** argv) try
 
   menu.add ("\n" "Dispersion removal options:");
 
-  arg = menu.add (config->filterbank, 'F', "N[:D]");
+  arg = menu.add (config->filterbank, 'F', "<N>[:D]");
   arg->set_help ("create an N-channel filterbank");
   arg->set_long_help
-    ("either simply specify the number of channels; e.g. -F 256 \n"
-     "or perform coherent dedispersion during the filterbank with -F 256:D \n"
-     "or perform coherent dedispersion before the filterbank with -F 256:B \n"
-     "or reduce the spectral leakage function bandwidth with -F 256:<N> \n"
-     "where <N> is the reduction factor");
+    ("<N> is the number of channels output by the filterank; e.g. -F 256 \n"
+     "\n"
+     "Reduce the spectral leakage function bandwidth with -F 256:<M> \n"
+     "where <M> is the reduction factor."
+     "\n"
+     "If DM != 0, coherent dedispersion will be performed \n"
+     " - after the filterbank with -F 256 or -F 256:<M>\n"
+     " - during the filterbank with -F 256:D \n"
+     " - before the filterbank with -F 256:B \n" );
 
   arg = menu.add (config->plfb_nbin, 'G', "nbin");
   arg->set_help ("create phase-locked filterbank");
