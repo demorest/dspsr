@@ -16,6 +16,9 @@ struct fits_params
   int nsuboffs;
 
   double tsamp;
+
+  int signint;
+  float zero_off;
 };
 
 #endif

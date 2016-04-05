@@ -33,6 +33,11 @@
 #include "dsp/OptimalFFT.h"
 #include "dsp/Resize.h"
 
+#if HAVE_CFITSIO
+#include "dsp/FITSFile.h"
+#include "dsp/FITSUnpacker.h"
+#endif
+
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
@@ -125,6 +130,20 @@ void dsp::LoadToFold::construct () try
       unpacker->set_output_order (TimeSeries::OrderTFP);
     }
 
+#if HAVE_CFITSIO
+    // Use callback to handle scales/offsets for read-in
+    if (manager->get_info()->get_machine() == "FITS")
+    {
+      if (Operation::verbose)
+        std::cout << "Using callback to read PSRFITS file." << std::endl;
+      // connect a callback
+      FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
+      tmp->update.connect (
+          dynamic_cast<FITSUnpacker*> ( manager->get_unpacker() ),
+          &FITSUnpacker::set_parameters);
+    }
+#endif
+
     config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
     build_fold (unpacked);
@@ -145,6 +164,7 @@ void dsp::LoadToFold::construct () try
   }
 
   // the data are not detected, so set up phase coherent reduction path
+  // NB that this does not necessarily mean coherent dedispersion.
   unsigned frequency_resolution = config->filterbank.get_freq_res ();
 
   if (config->coherent_dedispersion)
@@ -860,6 +880,22 @@ void dsp::LoadToFold::prepare ()
   manager->set_overlap( block_overlap );
 
   uint64_t ram = manager->set_block_size( block_size );
+
+#if HAVE_CFITSIO
+  // if PSRFITS input, set block to exact size of FITS row
+  // this is needed to keep in sync with the callback
+  if (manager->get_info()->get_machine() == "FITS")
+  {
+    FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
+    unsigned samples_per_row = tmp->get_samples_in_row();
+    uint64_t current_bytes = manager->set_block_size (samples_per_row);
+    uint64_t new_max_ram = current_bytes / tmp->get_block_size() * samples_per_row;
+    if (new_max_ram > config->get_maximum_RAM ())
+      throw Error (InvalidState, "prepare", "Maximum RAM smaller than PSRFITS row.");
+    manager->set_maximum_RAM (new_max_ram);
+    manager->set_block_size (samples_per_row);
+  }
+#endif
 
   // add the increased block size if the SKFB is being used
   if (skfilterbank)

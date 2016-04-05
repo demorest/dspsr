@@ -14,9 +14,13 @@
 #include "Pulsar/Archive.h"
 
 #include "dsp/File.h"
+#include "Callback.h"
 
 namespace dsp
 {
+
+  class FITSUnpacker;
+
   //! Loads BitSeries data from a PSRFITS data file
   class FITSFile : public File
   {
@@ -28,8 +32,17 @@ namespace dsp
       bool is_valid(const char* filename) const;
 
       void add_extensions (Extensions*);
+      
+      Callback<FITSFile*> update;
+
+      unsigned get_samples_in_row() const { return samples_in_row; }
+
+      unsigned get_bytes_per_row() { return bytes_per_row; }
+
 
     protected:
+      friend class FITSUnpacker;
+
       //! Open the file
       virtual void open_file(const char* filename);
 
@@ -42,11 +55,7 @@ namespace dsp
       void set_samples_in_row(const unsigned _samples_in_row) { samples_in_row =
         _samples_in_row; }
 
-      unsigned get_samples_in_row() const { return samples_in_row; }
-
       void set_bytes_per_row(const unsigned bytes) { bytes_per_row = bytes; }
-
-      unsigned get_bytes_per_row() { return bytes_per_row; }
 
       void set_data_colnum(const int colnum) { data_colnum = colnum; }
 
@@ -56,6 +65,12 @@ namespace dsp
 
       //! Column number of the DATA column in the SUBINT table.
       int data_colnum;
+
+      //! Column number of the DAT_SCL column in the SUBINT table.
+      int scl_colnum;
+
+      //! Column number of the DAT_OFFS column in the SUBINT table.
+      int offs_colnum;
 
       //! Store the instance of fitsfile, so it is only opened once.
       fitsfile* fp;
@@ -73,6 +88,18 @@ namespace dsp
       unsigned number_of_rows;
       void set_number_of_rows (unsigned N) { number_of_rows = N; }
       unsigned get_number_of_rows () const { return number_of_rows; }
+
+      //! Using signed ingegers?
+      int signint;
+
+      //! Offset to conver unsigned integers to signed integers
+      float zero_off;
+
+      //! Store reference spectrum
+      std::vector<float> dat_scl;
+
+      //! Store reference offset
+      std::vector<float> dat_offs;
 
   };
 }

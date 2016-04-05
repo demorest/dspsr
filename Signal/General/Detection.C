@@ -344,7 +344,7 @@ void dsp::Detection::polarimetry () try
 
   bool inplace = input.get() == output.get();
 
-  if (verbose)
+ if (verbose)
     cerr << "dsp::Detection::polarimetry "
 	 << ((inplace) ? "in" : "outof") << "place" << endl;
 
@@ -426,7 +426,7 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
 					  float* r[4])
 {
   if (verbose && ichan == 0)
-    cerr << "dsp::Detection::get_result_pointers ndim=4" << endl;
+    cerr << "dsp::Detection::get_result_pointers ndim=" << ndim << endl;
 
   switch (ndim)
   {

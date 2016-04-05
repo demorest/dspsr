@@ -34,6 +34,8 @@ namespace dsp
     //! Desctructor
     ~Rescale ();
 
+    void prepare ();
+
     //! Rescale to zero mean and unit variance
     void transformation ();
 
@@ -42,6 +44,9 @@ namespace dsp
 
     //! Set the rescaling interval in samples
     void set_interval_samples (uint64_t samples);
+
+    //! If exact, only allow set_interval_samples through each iteration
+    void set_exact (bool);
 
     //! After setting offset and scale, keep them constant
     void set_constant (bool);
@@ -90,6 +95,7 @@ namespace dsp
 
     std::vector< std::vector<float> > decay_offset;
 
+    bool exact;
     bool output_time_total;
     bool output_after_interval;
 
