@@ -80,6 +80,9 @@ void dsp::FScrunch::transformation ()
     return;
   }
 
+  if (input->get_ndat() == 0)
+    return;
+
   if( !input->get_detected() )
     throw Error(InvalidState,"dsp::FScrunch::transformation()",
 		"invalid input state: " + tostring(input->get_state()));
@@ -95,6 +98,7 @@ void dsp::FScrunch::transformation ()
     get_output()->copy_configuration (get_input());
     get_output()->set_nchan (output_nchan);
     get_output()->resize (input->get_ndat());
+    get_output()->set_input_sample (input->get_input_sample());
   }
 
   output->rescale( sfactor );

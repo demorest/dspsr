@@ -10,8 +10,8 @@
 #endif
 
 #include "dsp/FITSOutputFile.h"
+#include "dsp/FITSDigitizer.h"
 #include "dsp/Observation.h"
-#include "dsp/Rescale.h"
 #include "FilePtr.h"
 
 #include "FITSArchive.h"
@@ -27,7 +27,7 @@
 
 using namespace std;
 
-int get_colnum(fitsfile* fptr, const char* label)
+int dsp::get_colnum (fitsfile* fptr, const char* label)
 {
   int colnum(0),status(0);
   fits_get_colnum(fptr, CASEINSEN, (char*)label, &colnum, &status);
@@ -39,7 +39,7 @@ int get_colnum(fitsfile* fptr, const char* label)
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, int* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TINT,colnum,irow,start,stop,data,&status);
   if (status)
@@ -49,7 +49,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, unsigned* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TINT,colnum,irow,start,stop,data,&status);
   if (status)
@@ -59,7 +59,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, float* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TFLOAT,colnum,irow,start,stop,data,&status);
   if (status)
@@ -69,7 +69,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 void write_col(fitsfile* fptr, const char* label, int irow, int start, 
     int stop, double* data)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_write_col(fptr,TDOUBLE,colnum,irow,start,stop,data,&status);
   if (status)
@@ -79,7 +79,7 @@ void write_col(fitsfile* fptr, const char* label, int irow, int start,
 
 void modify_vector_len(fitsfile* fptr, const char* label, int len)
 {
-  int colnum = get_colnum (fptr, label);
+  int colnum = dsp::get_colnum (fptr, label);
   int status = 0;
   fits_modify_vector_len (fptr, colnum, len, &status); 
   if (status)
@@ -103,11 +103,18 @@ dsp::FITSOutputFile::FITSOutputFile (const char* filename)
   nsblk = 2048;
   nbblk = 0;
   nbit = 2;
+
+  use_atnf = true;
 }
 
 dsp::FITSOutputFile::~FITSOutputFile ()
 {
   finalize_fits ();
+}
+
+void dsp::FITSOutputFile::set_atnf (bool _use_atnf)
+{
+  use_atnf = _use_atnf;
 }
 
 void dsp::FITSOutputFile::set_nsblk (unsigned nblk)
@@ -148,7 +155,7 @@ void dsp::FITSOutputFile::write_header ()
   nbblk = (nsblk * npol * nchan * nbit)/8;
   tblk = double(nsblk) / input -> get_rate();
 
-  //if (verbose)
+  if (verbose)
     cerr << "dsp::FITSOutputFile::write_header" << endl
          << "nchan=" << nchan << " npol=" << npol << " nsblk=" << nsblk
          <<" tblk=" << tblk << " rate=" <<input->get_rate() 
@@ -161,7 +168,7 @@ void dsp::FITSOutputFile::write_header ()
   
   if (ext)
   {
-    //if (verbose)
+    if (verbose)
       cerr << "dsp::FITSOutputFile::write_header Pulsar::Archive FITSHdrExtension" << endl;
 
     // Make sure the start time is aligned with pulse phase zero
@@ -274,21 +281,46 @@ void dsp::FITSOutputFile::write_header ()
   // set_model must be called after the Integration::MJD has been set
 
   //archive-> set_filename (get_filename (phase));
+  if (output_filename.empty())
+  {
+    MJD epoch = get_input()->get_start_time();
+    vector<char> buffer (FILENAME_MAX);
+    char* filename = &buffer[0];
+    if (use_atnf)
+    {
+      std::string patt = "%Y%m%d_%H%M%S";
+      if (!epoch.datestr (filename, FILENAME_MAX, patt.c_str()))
+	      throw Error (FailedCall, "dsp::FITSOutputFile::write_header",
+		     "error MJD::datestr("+datestr_pattern+")");
+      // discard first two digits of year
+      filename = filename + 2;
+    }
+    else
+    {
+      std::string patt = "%Y-%m-%d-%H:%M:%S";
+      if (!epoch.datestr (filename, FILENAME_MAX, patt.c_str()))
+	      throw Error (FailedCall, "dsp::FITSOutputFile::write_header",
+		     "error MJD::datestr("+datestr_pattern+")");
+    }
+    output_filename = filename + get_extension();
+  }
   archive -> unload (output_filename);
 }
 
 void dsp::FITSOutputFile::write_row ()
 {
-  //if (verbose)
-      cerr << "dsp::FITSOutputFile::write_row writing row "<<isub<<endl;
+  // NB that isub >= 1 as per FITS convention
+  if (verbose)
+      cerr << "dsp::FITSOutputFile::write_row writing row " << isub << endl;
   write_col(fptr,"INDEXVAL",isub,1,1,&isub);
   write_col(fptr,"TSUBINT",isub,1,1,&tblk);
-  double offs_sub = tblk/2.0 + isub*tblk;
+  double offs_sub = tblk/2.0 + (isub-1)*tblk;
   write_col(fptr,"OFFS_SUB",isub,1,1,&offs_sub);
   write_col(fptr,"DAT_WTS",isub,1,nchan,&dat_wts[0]);
   write_col(fptr,"DAT_SCL",isub,1,nchan*npol,&dat_scl[0]);
   write_col(fptr,"DAT_OFFS",isub,1,nchan*npol,&dat_offs[0]);
   write_col(fptr,"DAT_FREQ",isub,1,nchan,&dat_freq[0]);
+  
 }
 
 void dsp::FITSOutputFile::initialize ()
@@ -333,21 +365,29 @@ void dsp::FITSOutputFile::initialize ()
   modify_vector_len(fptr,"DAT_SCL",nchan*npol);
   modify_vector_len(fptr,"DAT_OFFS",nchan*npol);
 
+  // change the DATA data type from the psrchive default (I = signed short)
+  // to that correct for search mode data (B = unsigned char)
+  int colnum = dsp::get_colnum(fptr,"DATA");
+  fits_delete_col (fptr, colnum, &status);
+  char tform[64];
+  sprintf(tform,"%dB",nbblk);
+  fits_insert_col (fptr, colnum, "DATA", tform, &status);
+  if (status)
+    throw FITSError (status, "dsp::FITSOutputFile::initialize",
+        "unable to create DATA with correct data type");
+
   // set the block (DATA) dim entries
   // NB that the total number of bytes (TFORM) can't be set consistently
   // with the dimension size for 2- and 4-bit data if one takes time 
   // samples as a dimension; the standard is for 
   // TDIM = (nchan,npol,nsblk*nbit/8)
-
-  modify_vector_len(fptr,"DATA",nbblk);
-  int colnum = get_colnum(fptr,"DATA");
   psrfits_update_tdim (fptr, colnum, nchan, npol, (nsblk*nbit)/8 );
 
 
   psrfits_update_key<int> (fptr, "NSBLK", nsblk);
   psrfits_update_key<double> (fptr, "TBIN", 1./get_input()->get_rate());
   psrfits_update_key<int> (fptr, "NBITS", nbit);
-  psrfits_update_key<double> (fptr, "ZERO_OFF", pow(2,nbit-1)-0.5 );
+  psrfits_update_key<double> (fptr, "ZERO_OFF", pow(double(2),int(nbit)-1)-0.5 );
   psrfits_update_key<int> (fptr, "SIGNINT", 0);
 
   // TODO -- will need to fix this later on
@@ -364,7 +404,6 @@ void dsp::FITSOutputFile::operation ()
   if (verbose)
     cerr << "dsp::FITSOutputFile::operation" << endl;
 
-  cerr << "dsp::FITSOutputFile::operation" << " start_time="<<input->get_start_time().printall()<<" end_time="<<input->get_end_time().printall() << " input_sample="<<input->get_input_sample()<<std::endl;
   unload_bytes (get_input()->get_rawptr(), get_input()->get_nbytes());
 
 }
@@ -372,16 +411,21 @@ void dsp::FITSOutputFile::operation ()
 int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t bytes)
 {
 
-  //if (verbose)
-    cerr << "dsp::FITSOutputFile::unload_bytes" << endl
-         << "    bytes=" << bytes << " nbblk=" << nbblk
-         <<" offset=" << offset << " isub=" << isub << endl;
+  if (!bytes) return 0;
+
   // cast to char buffer for profit
   unsigned char* buffer = (unsigned char*) void_buffer;
 
+  if (verbose)
+    cerr << "dsp::FITSOutputFile::unload_bytes" << endl
+         << "    bytes=" << bytes << " nbblk=" << nbblk
+         << " offset=" << offset << " isub=" << isub
+         << " input_sample=" << input->get_input_sample() << endl
+         << " buffer=" << void_buffer << endl;
+
   unsigned to_write = bytes;
   int status = 0;
-  int colnum = get_colnum (fptr, "DATA");
+  int colnum = dsp::get_colnum (fptr, "DATA");
   
   // write to incomplete block first
   if (offset)
@@ -391,7 +435,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     unsigned remainder = nbblk - offset;
 
     // finish remainder of subint
-    if (bytes > remainder)
+    if (bytes >= remainder)
     {
       fits_write_col_byt (fptr, colnum, isub, offset, remainder, 
           buffer, &status);
@@ -411,6 +455,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     }
   }
 
+  // this loop is for writing out complete blocks
   while (to_write >= nbblk)
   {
     if (verbose)
@@ -455,43 +500,9 @@ void dsp::FITSOutputFile::finalize_fits ()
   }
 }
 
-void dsp::FITSOutputFile::set_reference_spectrum (Rescale* rescale)
+void dsp::FITSOutputFile::set_reference_spectrum (FITSDigitizer* digi)
 {
-  // Because this is implemeneted via callback, the first call happens
-  // before initialization of the arrays, etc.  So we take it on faith that
-  // we can initialize based on rescale's input/output.
-  // Reference spectrum packed in PF order
   if (verbose)
     cerr << "dsp::FITSOutputFile::set_reference_spectrum" << endl;
-  if (nchan == 0)
-  {
-    nchan = rescale->get_input()->get_nchan();
-    npol = rescale->get_input()->get_npol();
-    //if (verbose)
-      cerr << "    initializing from Rescale" 
-           << " nchan=" << nchan << " npol=" << npol << endl;
-    // need to initialize
-    dat_scl.resize(nchan*npol);
-    dat_offs.resize(nchan*npol);
-  }
-
-  bool pol_bad = npol != rescale->get_input()->get_npol();
-  bool chan_bad = nchan != rescale->get_input()->get_nchan();
-  if (pol_bad || chan_bad)
-    throw Error(InvalidState, "dsp::FITSOutputFile::set_reference_spectrum",
-        "channels/polarizations did not match Rescale");
-
-  for (unsigned ipol = 0; ipol < npol; ++ipol) 
-  {
-    unsigned offset = ipol * nchan;
-    const float* scl = rescale->get_scale (ipol);
-    const float* offs = rescale->get_offset (ipol);
-    for (unsigned jchan = 0; jchan < nchan; ++jchan)
-    {
-      // Rescale uses opposite convention to PSRFITS DAT_SCL/DAT_OFFS
-      dat_scl[jchan+offset] = 1./scl[jchan];
-      dat_offs[jchan+offset] = -offs[jchan];
-    }
-  }
+  digi->get_scales (&dat_scl, &dat_offs);
 }
-

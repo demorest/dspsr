@@ -22,6 +22,7 @@
 #include "fits_params.h"
 
 #include "dsp/FITSFile.h"
+#include "dsp/FITSOutputFile.h"
 #include "dsp/CloneArchive.h"
 
 using std::cout;
@@ -29,6 +30,7 @@ using std::cerr;
 using std::endl;
 using std::string;
 using Pulsar::warning;
+
 
 dsp::FITSFile::FITSFile (const char* filename)
   : File("FITSFile")
@@ -96,6 +98,20 @@ void read_header(fitsfile* fp, const char* filename, struct fits_params* header)
   psrfits_read_key(fp, "TBIN", &(header->tsamp));
   psrfits_read_key(fp, "NAXIS2", &(header->nrow));
   psrfits_read_key(fp, "NSUBOFFS", &(header->nsuboffs), 0);
+
+  // default is unsigned integers
+  psrfits_read_key(fp, "SIGNINT", &(header->signint), 0);
+  psrfits_read_key(fp, "ZERO_OFF", &(header->zero_off), 0.0f);
+  if (header->zero_off < 0)
+    header->zero_off = -header->zero_off;
+
+  /*
+  // if unsigned integers used, must have valid zero offset
+  if ( (header->signint==0) && (header->zero_off == 0.))
+    throw Error(InvalidState, "FITSFile::read_header",
+        "Invalid zero offset specified for unsigned data.");
+  */
+
 }
 
 void dsp::FITSFile::add_extensions (Extensions* ext)
@@ -128,6 +144,9 @@ void dsp::FITSFile::open_file(const char* filename)
   fits_params header;
   read_header(fp, filename, &header);
 
+  signint = header.signint;
+  zero_off = header.zero_off;
+
   get_info()->set_source(archive->get_source());
   get_info()->set_type(Signal::Pulsar);
   get_info()->set_centre_frequency(archive->get_centre_frequency());
@@ -154,6 +173,8 @@ void dsp::FITSFile::open_file(const char* filename)
   std::string backend_name = archive->get<Pulsar::Backend>()->get_name();
   if (backend_name == "GUPPI" || backend_name == "PUPPI")
     get_info()->set_machine("GUPPIFITS");
+  else if (backend_name == "COBALT")
+    get_info()->set_machine("COBALT");
   else
     get_info()->set_machine("FITS");
   get_info()->set_telescope(archive->get_telescope());
@@ -163,15 +184,13 @@ void dsp::FITSFile::open_file(const char* filename)
   set_bytes_per_row((samples_in_row*npol*nchan*nbits) / 8);
   set_number_of_rows(header.nrow);
 
-  int colnum;
-  fits_get_colnum(fp, CASEINSEN, (char*)"DATA", &colnum, &status);
+  data_colnum = dsp::get_colnum(fp, "DATA");
+  scl_colnum = dsp::get_colnum(fp, "DAT_SCL");
+  offs_colnum = dsp::get_colnum(fp, "DAT_OFFS");
 
-  if (status) {
-    throw FITSError(status, "FITSFile::open_file",
-        "fits_get_colnum (DATA)");
-  }
-
-  set_data_colnum(colnum);
+  // Make sure buffer big enough for DAT_SCL/DAT_OFFS
+  dat_scl.resize(npol*nchan,1);
+  dat_offs.resize(npol*nchan,0);
 
   fd = ::open(filename, O_RDONLY);
   if (fd < 0) {
@@ -183,7 +202,6 @@ void dsp::FITSFile::open_file(const char* filename)
 int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
 {
   // Column number of the DATA column in the SUBINT table.
-  const int colnum             = get_data_colnum();
   const unsigned nsamp         = get_samples_in_row();
 
   // Bytes in a row, within the SUBINT table.
@@ -236,12 +254,31 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
       cerr << "FITSFile::load_bytes row=" << current_row
            << " offset=" << byte_offset << " read=" << this_read << endl;
 
-    fits_read_col_byt(fp, colnum, current_row, byte_offset+1, this_read, nval,
-        buffer, &initflag, &status);
-
-    if (status) {
+    // Read the samples
+    fits_read_col_byt(fp, data_colnum, current_row, byte_offset+1, 
+        this_read, nval, buffer, &initflag, &status);
+    if (status) 
+    {
       fits_report_error(stderr, status);
       throw FITSError(status, "FITSFile::load_bytes", "fits_read_col_byt");
+    }
+
+    // Read the scales
+    fits_read_col(fp,TFLOAT,scl_colnum,current_row,1,nchan*npol,
+        NULL,&dat_scl[0],NULL,&status);
+    if (status) 
+    {
+      fits_report_error(stderr, status);
+      throw FITSError(status, "FITSFile::load_bytes", "fits_read_col");
+    }
+
+    // Read the offsets
+    fits_read_col(fp,TFLOAT,offs_colnum,current_row,1,nchan*npol,
+        NULL,&dat_offs[0],NULL,&status);
+    if (status) 
+    {
+      fits_report_error(stderr, status);
+      throw FITSError(status, "FITSFile::load_bytes", "fits_read_col");
     }
 
     buffer      += this_read;
@@ -262,6 +299,12 @@ int64_t dsp::FITSFile::load_bytes(unsigned char* buffer, uint64_t bytes)
     bytes_read += this_read;
     current_byte += this_read;
   }
+
+  // NB below should technically be inside the above loop, but only the last
+  // call has any effect further down the signal path.  We rely on the block
+  // size being set such that this method (and update) are called exactly
+  // once for each row in the input FITS file.
+  update(this);
 
   return bytes_read;
 }

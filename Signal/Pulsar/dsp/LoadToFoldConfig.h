@@ -55,6 +55,9 @@ namespace dsp {
     void set_minimum_RAM (uint64_t);
     uint64_t get_minimum_RAM () const { return minimum_RAM; }
 
+    // set the name of the archive class to be used for output
+    void set_archive_class (const std::string&);
+
     // number of time samples used to estimate undigitized power
     unsigned excision_nsample;
     // cutoff power used for impulsive interference rejection
@@ -76,6 +79,9 @@ namespace dsp {
 
     // use FFT benchmarks to choose an optimal FFT length
     bool use_fft_bench;
+
+    // optimize the order in which data are stored (e.g. FPT vs TFP)
+    bool optimal_order;
 
     // perform phase-coherent matrix convolution (calibration)
     std::string calibrator_database_filename;
@@ -147,6 +153,9 @@ namespace dsp {
     // length of sub-integrations in seconds
     double integration_length;
 
+    // reference epoch = start of first sub-integration
+    std::string integration_reference_epoch;
+
     // minimum sub-integration length written to disk
     double minimum_integration_length;
 
@@ -209,6 +218,7 @@ namespace dsp {
 
     // name of the output archive class
     std::string archive_class;
+    bool archive_class_specified_by_user;
 
     // name of the output archive file
     std::string archive_filename;

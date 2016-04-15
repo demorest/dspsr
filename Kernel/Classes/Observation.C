@@ -55,7 +55,7 @@ void dsp::Observation::init ()
   swap = dc_centred = false;
   nsub_swap = 0;
 
-  identifier = mode = machine = "";
+  identifier = mode = format = machine = "";
   coordinates = sky_coord();
   dispersion_measure = 0.0;
   rotation_measure = 0.0;
@@ -285,7 +285,14 @@ bool dsp::Observation::combinable (const Observation & obs) const
 	"different machines:" + tostring(machine) + " != " + tostring(obs.machine);
     can_combine = false;
   }
-  
+
+  if (format != obs.format)
+  {
+    reason += separator +
+        "different formats:" + tostring(format) + " != " + tostring(obs.format);
+    can_combine = false;
+  }
+
   if( fabs(dispersion_measure - obs.dispersion_measure) > eps)
   {
     reason += separator +
@@ -400,6 +407,8 @@ const dsp::Observation& dsp::Observation::operator = (const Observation& in_obs)
 
   set_identifier  ( in_obs.get_identifier() );
   set_machine     ( in_obs.get_machine() );
+  set_format      ( in_obs.get_format() );
+
   set_mode        ( in_obs.get_mode() );
   set_calfreq     ( in_obs.get_calfreq());
 

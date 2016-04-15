@@ -33,6 +33,11 @@
 #include "dsp/OptimalFFT.h"
 #include "dsp/Resize.h"
 
+#if HAVE_CFITSIO
+#include "dsp/FITSFile.h"
+#include "dsp/FITSUnpacker.h"
+#endif
+
 #if HAVE_CUDA
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
@@ -119,8 +124,25 @@ void dsp::LoadToFold::construct () try
     Unpacker* unpacker = manager->get_unpacker();
 
     // detected data is handled much more efficiently in TFP order
-    if (unpacker->get_order_supported (TimeSeries::OrderTFP))
+    if ( config->optimal_order
+	&& unpacker->get_order_supported (TimeSeries::OrderTFP) )
+    {
       unpacker->set_output_order (TimeSeries::OrderTFP);
+    }
+
+#if HAVE_CFITSIO
+    // Use callback to handle scales/offsets for read-in
+    if (manager->get_info()->get_machine() == "FITS")
+    {
+      if (Operation::verbose)
+        std::cout << "Using callback to read PSRFITS file." << std::endl;
+      // connect a callback
+      FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
+      tmp->update.connect (
+          dynamic_cast<FITSUnpacker*> ( manager->get_unpacker() ),
+          &FITSUnpacker::set_parameters);
+    }
+#endif
 
     config->coherent_dedispersion = false;
     prepare_interchan (unpacked);
@@ -142,6 +164,7 @@ void dsp::LoadToFold::construct () try
   }
 
   // the data are not detected, so set up phase coherent reduction path
+  // NB that this does not necessarily mean coherent dedispersion.
   unsigned frequency_resolution = config->filterbank.get_freq_res ();
 
   if (config->coherent_dedispersion)
@@ -383,7 +406,10 @@ void dsp::LoadToFold::construct () try
       convolution->set_input  (convolved);  
       convolution->set_output (convolved);  // inplace
     }
-    
+
+    if (!config->input_buffering)
+      convolution->set_buffering_policy (NULL);
+
     operations.push_back (convolution.get());
   }
 
@@ -670,6 +696,30 @@ void dsp::LoadToFold::prepare_fold ()
   fold_prepared = true;
 }
 
+MJD dsp::LoadToFold::parse_epoch (const std::string& epoch_string)
+{
+  MJD epoch;
+
+  if (epoch_string == "start")
+  {
+    epoch = manager->get_info()->get_start_time();
+    epoch += manager->get_input()->tell_seconds();
+
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::parse reference epoch=start_time=" 
+	   << epoch.printdays(13) << endl;
+  }
+  else if (!epoch_string.empty())
+  {
+    epoch = MJD( epoch_string );
+    if (Operation::verbose)
+      cerr << "dsp::LoadToFold::parse reference epoch="
+	   << epoch.printdays(13) << endl;
+  }
+
+  return epoch;
+}
+
 void dsp::LoadToFold::prepare ()
 {
   assert (fold.size() > 0);
@@ -740,24 +790,7 @@ void dsp::LoadToFold::prepare ()
       excision -> set_cutoff_sigma ( config->excision_cutoff );
   }
 
-  MJD reference_epoch;
-
-  if (config->reference_epoch == "start")
-  {
-    reference_epoch = manager->get_info()->get_start_time();
-    reference_epoch += manager->get_input()->tell_seconds();
-
-    if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare reference epoch=start_time=" 
-	   << reference_epoch.printdays(13) << endl;
-  }
-  else if (!config->reference_epoch.empty())
-  {
-    reference_epoch = MJD( config->reference_epoch );
-    if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare reference epoch="
-	   << reference_epoch.printdays(13) << endl;
-  }
+  MJD fold_reference_epoch = parse_epoch (config->reference_epoch);
 
   for (unsigned ifold=0; ifold < fold.size(); ifold++)
   {
@@ -772,7 +805,7 @@ void dsp::LoadToFold::prepare ()
       fold[ifold]->get_output()->set_extensions (extensions);
     }
 
-    fold[ifold]->set_reference_epoch (reference_epoch);
+    fold[ifold]->set_reference_epoch (fold_reference_epoch);
   }
 
   SingleThread::prepare ();
@@ -806,27 +839,35 @@ void dsp::LoadToFold::prepare ()
     }
 
     if (!config->input_buffering)
+    {
       block_overlap = filterbank->get_minimum_samples_lost ();
+      if (Operation::verbose)
+        cerr << "filterbank loses " << block_overlap << " samples" << endl;
+    }
   }
+
+  unsigned filterbank_resolution = minimum_samples - block_overlap;
 
   if (convolution)
   {
-    minimum_samples = convolution->get_minimum_samples () * 
-      convolution->get_input()->get_nchan();
+    const Observation* info = manager->get_info();
+    unsigned fb_factor = convolution->get_input()->get_nchan() * 2;
+    fb_factor /= info->get_nchan() * info->get_ndim();
+
+    minimum_samples = convolution->get_minimum_samples () * fb_factor;
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
            << minimum_samples << " samples" << endl;
 
     if (!config->input_buffering)
-      block_overlap = convolution->get_minimum_samples_lost () *
-        convolution->get_input()->get_nchan();
-  }
+    {
+      block_overlap = convolution->get_minimum_samples_lost () * fb_factor;
+      if (Operation::verbose)
+        cerr << "convolution loses " << block_overlap << " samples" << endl;
 
-#if 0
-  if (minimum_samples == 0)
-    throw Error (InvalidState, "dsp::LoadToFold::prepare",
-                 "minimum samples == 0");
-#endif
+      manager->set_filterbank_resolution (filterbank_resolution);
+    }
+  }
 
   uint64_t block_size = ( minimum_samples - block_overlap )
     * config->get_times_minimum_ndat() + block_overlap;
@@ -839,6 +880,22 @@ void dsp::LoadToFold::prepare ()
   manager->set_overlap( block_overlap );
 
   uint64_t ram = manager->set_block_size( block_size );
+
+#if HAVE_CFITSIO
+  // if PSRFITS input, set block to exact size of FITS row
+  // this is needed to keep in sync with the callback
+  if (manager->get_info()->get_machine() == "FITS")
+  {
+    FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
+    unsigned samples_per_row = tmp->get_samples_in_row();
+    uint64_t current_bytes = manager->set_block_size (samples_per_row);
+    uint64_t new_max_ram = current_bytes / tmp->get_block_size() * samples_per_row;
+    if (new_max_ram > config->get_maximum_RAM ())
+      throw Error (InvalidState, "prepare", "Maximum RAM smaller than PSRFITS row.");
+    manager->set_maximum_RAM (new_max_ram);
+    manager->set_block_size (samples_per_row);
+  }
+#endif
 
   // add the increased block size if the SKFB is being used
   if (skfilterbank)
@@ -1045,6 +1102,9 @@ void dsp::LoadToFold::build_fold (Reference::To<Fold>& fold,
 	
       if (config->minimum_integration_length > 0)
 	unloader->set_minimum_integration_length (config->minimum_integration_length);
+
+      MJD reference_epoch = parse_epoch (config->integration_reference_epoch);
+      subfold -> set_subint_reference_epoch( reference_epoch );
     }
     else
     {
@@ -1082,7 +1142,8 @@ catch (Error& error)
   throw error += "dsp::LoadToFold::build_fold";
 }
 
-void dsp::LoadToFold::configure_detection (Detection* detect, int noperations)
+void dsp::LoadToFold::configure_detection (Detection* detect,
+					   unsigned noperations)
 {
 #if HAVE_CUDA
   bool run_on_gpu = thread_id < config->get_cuda_ndevice();
@@ -1234,6 +1295,8 @@ void dsp::LoadToFold::prepare_archiver( Archiver* archiver )
     && ( (config->subints_per_archive>0) || (config->single_archive==false) );
 
   archiver->set_archive_class (config->archive_class.c_str());
+  if (config->archive_class_specified_by_user)
+    archiver->set_force_archive_class (true);
 
   if (output_subints() && config->single_archive)
   {

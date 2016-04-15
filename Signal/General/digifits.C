@@ -1,21 +1,23 @@
 /***************************************************************************
  *
- *   Copyright (C) 2008 by Willem van Straten
+ *   Copyright (C) 2015 by Matthew Kerr
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 /*
-  digifil converts any file format recognized by dspsr into sigproc
-  filterbank (.fil) format.
+  digifits converts any file format recognized by dspsr into PSRFITS
+  search mode (".sf") format.
+
+  Liberally cribbed from digifil.
  */
 
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "dsp/LoadToFil.h"
-#include "dsp/LoadToFilN.h"
+#include "dsp/LoadToFITS.h"
+#include "dsp/LoadToFITSN.h"
 #include "dsp/FilterbankConfig.h"
 
 #include "CommandLine.h"
@@ -25,8 +27,8 @@
 
 using namespace std;
 
-// The LoadToFil configuration parameters
-Reference::To<dsp::LoadToFil::Config> config;
+// The LoadToFITS configuration parameters
+Reference::To<dsp::LoadToFITS::Config> config;
 
 // names of data files to be processed
 vector<string> filenames;
@@ -35,15 +37,15 @@ void parse_options (int argc, char** argv);
 
 int main (int argc, char** argv) try
 {
-  config = new dsp::LoadToFil::Config;
+  config = new dsp::LoadToFITS::Config;
 
   parse_options (argc, argv);
 
   Reference::To<dsp::Pipeline> engine;
   if (config->get_total_nthread() > 1)
-    engine = new dsp::LoadToFilN (config);
+    engine = new dsp::LoadToFITSN (config);
   else
-    engine = new dsp::LoadToFil (config);
+    engine = new dsp::LoadToFITS (config);
 
   engine->set_input( config->open (argc, argv) );
   engine->construct ();   
@@ -62,8 +64,8 @@ void parse_options (int argc, char** argv) try
   CommandLine::Menu menu;
   CommandLine::Argument* arg;
   
-  menu.set_help_header ("digifil - convert dspsr input to search mode output");
-  menu.set_version ("digifil " + tostring(dsp::version) +
+  menu.set_help_header ("digifits - convert dspsr input to PSRFITS search mode output");
+  menu.set_version ("digifits " + tostring(dsp::version) +
 		    " <" + FTransform::get_library() + ">");
 
   config->add_options (menu);
@@ -75,14 +77,41 @@ void parse_options (int argc, char** argv) try
   arg->set_long_name("threads");
   arg->set_type("nthread");
 
-  arg = menu.add (config->nbits, 'b', "bits");
-  arg->set_help ("number of bits per sample output to file");
+  menu.add ("\n" "Source options:");
+
+  arg = menu.add (config->dispersion_measure, 'D', "dm");
+  arg->set_help (" set the dispersion measure");
+
+  menu.add ("\n" "Processing options:");
 
   arg = menu.add (config->block_size, 'B', "MB");
   arg->set_help ("block size in megabytes");
 
+  //arg = menu.add (&config->filterbank, 
+  //    &dsp::Filterbank::Config::set_freq_res, 
+  //    'x', "nfft");
+  //arg->set_help ("set backward FFT length in voltage filterbank");
+
+  arg = menu.add (config->coherent_dedisp, "do_dedisp", "bool");
+  arg->set_help ("enable coherent dedispersion (default: false)");
+
   arg = menu.add (config->rescale_constant, 'c');
   arg->set_help ("keep offset and scale constant");
+
+  arg = menu.add (config->rescale_seconds, 'I', "secs");
+  arg->set_help ("rescale interval in seconds");
+
+
+  menu.add ("\n" "Output options:");
+
+  arg = menu.add (config->tsamp, 't', "tsamp");
+  arg->set_help ("integration time (s) per output sample (default=64mus)");
+
+  arg = menu.add (config->npol, 'p', "npol");
+  arg->set_help ("output 1 (Intensity), 2 (AABB), or 4 (Coherence) products");
+
+  arg = menu.add (config->nbits, 'b', "bits");
+  arg->set_help ("number of bits per sample output to file [1,2,4,8]");
 
   arg = menu.add (config->filterbank, 'F', "nchan[:D]");
   arg->set_help ("create a filterbank (voltages only)");
@@ -91,46 +120,26 @@ void parse_options (int argc, char** argv) try
      "Select coherently dedispersing filterbank with -F 256:D\n"
      "Set leakage reduction factor with -F 256:<N>\n");
 
-  arg = menu.add (&config->filterbank, 
-      &dsp::Filterbank::Config::set_freq_res, 
-      'x', "nfft");
-  arg->set_help ("backward FFT length in voltage filterbank");
+  arg = menu.add (config->nsblk, "nsblk", "N");
+  arg->set_help ("output block size in samples (default=2048)");
 
   arg = menu.add (config->dedisperse, 'K');
   arg->set_help ("remove inter-channel dispersion delays");
 
-  arg = menu.add (config->dispersion_measure, 'D', "dm");
-  arg->set_help ("set the dispersion measure");
-
-  arg = menu.add (config->tscrunch_factor, 't', "nsamp");
-  arg->set_help ("decimate in time");
-
-  arg = menu.add (config->fscrunch_factor, 'f', "nchan");
-  arg->set_help ("decimate in frequency");
-
-  arg = menu.add (config->npol, 'd', "npol");
-  arg->set_help ("1=PP+QQ, 2=PP,QQ, 3=(PP+QQ)^2 4=PP,QQ,PQ,QP");
-
-  arg = menu.add (config->poln_select, 'P', "ipol");
-  arg->set_help ("process only a single polarization of input");
-
-  arg = menu.add (config->rescale_seconds, 'I', "secs");
-  arg->set_help ("rescale interval in seconds");
-
-  arg = menu.add (config->scale_fac, 's', "fac");
-  arg->set_help ("data scale factor to apply");
+  //arg = menu.add (config->fscrunch_factor, 'f', "nchan");
+  //arg->set_help ("decimate in frequency");
 
   arg = menu.add (config->output_filename, 'o', "file");
   arg->set_help ("output filename");
 
-  bool revert = false;
-  arg = menu.add (revert, 'p');
-  arg->set_help ("revert to FPT order");
+  //bool revert = false;
+  //arg = menu.add (revert, 'p');
+  //arg->set_help ("revert to FPT order");
 
   menu.parse (argc, argv);
 
-  if (revert)
-    config->order = dsp::TimeSeries::OrderFPT;
+  //if (revert)
+  //  config->order = dsp::TimeSeries::OrderFPT;
 }
 catch (Error& error)
 {

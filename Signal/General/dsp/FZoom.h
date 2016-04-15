@@ -11,7 +11,6 @@
 
 #include "dsp/Transformation.h"
 #include "dsp/TimeSeries.h"
-#include "dsp/PhaseSeries.h"
 
 namespace dsp {
 

@@ -205,21 +205,6 @@ void dsp::Filterbank::make_preparations ()
                      "matrix convolution and input.npol != 2");
   }
 
-  if (passband)
-  {
-    if (response)
-      passband -> match (response);
-
-    unsigned passband_npol = input->get_npol();
-    if (matrix_convolution)
-      passband_npol = 4;
-
-    passband->resize (passband_npol, input->get_nchan(), n_fft, 1);
-
-    if (!response)
-      passband->match (input);
-  }
-
   if (has_buffering_policy())
   {
     if (verbose)
@@ -237,6 +222,22 @@ void dsp::Filterbank::make_preparations ()
       cerr << "dsp::Filterbank::make_preparations setup engine" << endl;
     engine->setup (this);
     return;
+  }
+
+  // the engine should delete the passband if it doesn't support this feature
+  if (passband)
+  {
+    if (response)
+      passband -> match (response);
+
+    unsigned passband_npol = input->get_npol();
+    if (matrix_convolution)
+      passband_npol = 4;
+
+    passband->resize (passband_npol, input->get_nchan(), n_fft, 1);
+
+    if (!response)
+      passband->match (input);
   }
 
   using namespace FTransform;
@@ -401,8 +402,8 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
     npart = (ndat-nsamp_overlap)/nsamp_step;
 
   // on some iterations, ndat could be large enough to fit an extra part
-  if (reserve_extra)
-    npart ++;
+  if (reserve_extra && has_buffering_policy())
+    npart += 2;
 
   // points kept from each small fft
   unsigned nkeep = freq_res - nfilt_tot;
@@ -414,6 +415,15 @@ void dsp::Filterbank::resize_output (bool reserve_extra)
          << " overlap=" << nsamp_overlap << " step=" << nsamp_step
          << " reserve=" << reserve_extra << " nkeep=" << nkeep
          << " npart=" << npart << " output ndat=" << output_ndat << endl;
+
+#if DEBUGGING_OVERLAP
+  // this exception is useful when debugging, but not at the end-of-file
+  if ( !has_buffering_policy() && ndat > 0
+       && (nsamp_step*npart + nsamp_overlap != ndat) )
+    throw Error (InvalidState, "dsp::Filterbank::reserve",
+                 "npart=%u * step=%u + overlap=%u != ndat=%u",
+		 npart, nsamp_step, nsamp_overlap, ndat);
+#endif
 
   // prepare the output TimeSeries
   prepare_output (output_ndat, true);

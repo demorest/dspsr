@@ -1,18 +1,15 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2011 by Willem van Straten
+ *   Copyright (C) 2015 by Matthew Kerr
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LoadToFil.h,v $
-   $Revision: 1.4 $
-   $Date: 2011/12/21 06:02:20 $
-   $Author: straten $ */
+// cribbed from LoadToFil
 
-#ifndef __dspsr_LoadToFil_h
-#define __dspsr_LoadToFil_h
+#ifndef __dspsr_LoadToFITS_h
+#define __dspsr_LoadToFITS_h
 
 #include "dsp/SingleThread.h"
 #include "dsp/TimeSeries.h"
@@ -23,8 +20,8 @@
 
 namespace dsp {
 
-  //! A single LoadToFil thread
-  class LoadToFil : public SingleThread
+  //! A single LoadToFITS thread
+  class LoadToFITS : public SingleThread
   {
 
   public:
@@ -36,7 +33,7 @@ namespace dsp {
     void set_configuration (Config*);
 
     //! Constructor
-    LoadToFil (Config* config = 0);
+    LoadToFITS (Config* config = 0);
 
     //! Create the pipeline
     void construct ();
@@ -46,7 +43,7 @@ namespace dsp {
 
   private:
 
-    friend class LoadToFilN;
+    friend class LoadToFITSN;
 
     //! Configuration parameters
     Reference::To<Config> config;
@@ -65,8 +62,8 @@ namespace dsp {
 
   };
 
-  //! Load, unpack, process and fold data into phase-averaged profile(s)
-  class LoadToFil::Config : public SingleThread::Config
+  //! Load, unpack, filterbank, re-digitize, and write to FITS
+  class LoadToFITS::Config : public SingleThread::Config
   {
   public:
 
@@ -81,6 +78,9 @@ namespace dsp {
 
     //! Filterbank config options
     Filterbank::Config filterbank;
+
+    //! Maximum RAM to use (per thread)
+    double maximum_RAM;
 
     //! dispersion measure set in output file
     double dispersion_measure;
@@ -97,23 +97,23 @@ namespace dsp {
     //! integrate in frequency before digitization
     unsigned fscrunch_factor;
 
-    //! Number of polarizations to output
-    unsigned npol;
-
-    //! process only a single polarization
-    int poln_select;
+    //! polarizations (Intensity, AABB, or Coherency)
+    int npol;
 
     //! time interval (in seconds) between offset and scale updates
     double rescale_seconds;
 
     //! hold offset and scale constant after first update
     bool rescale_constant;
-
-    //! manually-specified scale factor
-    float scale_fac;
     
     //! number of bits used to re-digitize the floating point time series
     int nbits;
+
+    //! integration time per output sample
+    double tsamp;
+
+    //! number of samples per output data block
+    unsigned nsblk;
 
     //! Name of the output file
     std::string output_filename;
@@ -130,7 +130,7 @@ namespace dsp {
   };
 }
 
-#endif // !defined(__LoadToFil_h)
+#endif // !defined(__LoadToFITS_h)
 
 
 

@@ -280,7 +280,7 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
         }
 	else
 	{
-	  int nblock_miss = pkt_diff / packets_per_block;
+	  int nblock_miss = (pkt_diff / packets_per_block) - 1;
 	  current_nzero_byte = (blocsize - overlap_bytes) * nblock_miss;
 	}
 

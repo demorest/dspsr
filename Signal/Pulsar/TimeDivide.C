@@ -14,6 +14,7 @@
 #include <assert.h>
 
 using namespace std;
+using namespace Pulsar;
 
 // #define _DEBUG 1
 
@@ -55,11 +56,18 @@ void dsp::TimeDivide::set_start_time (MJD _start_time)
          << _start_time.printall() << endl;
 
   start_time = _start_time;
-  start_phase = Phase::zero;
+  start_phase = Pulsar::Phase::zero;
   is_valid = false;
 
-  if( division_seconds && division_seconds == unsigned(division_seconds) &&
-      integer_division_seconds_boundaries)
+  if( reference_epoch != MJD::zero )
+  {
+    if (Operation::verbose)
+      cerr << "dsp::TimeDivide::set_start_time set to reference_epoch=" 
+           << reference_epoch.printall() << endl;
+
+    start_time = reference_epoch;
+  }
+  else if( division_seconds && division_seconds == unsigned(division_seconds) )
   {
     unsigned integer_seconds = unsigned(division_seconds);
     unsigned seconds = start_time.get_secs();
@@ -98,8 +106,10 @@ void dsp::TimeDivide::set_predictor (const Pulsar::Predictor* _poly)
     return;
 
   poly = _poly;
+  period = 0.0;
   division_seconds = 0;
 }
+
 
 //! Set the reference phase (phase of bin zero)
 void dsp::TimeDivide::set_reference_phase (double phase)
@@ -347,7 +357,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
     throw Error (InvalidState, "dsp::TimeDivide::set_boundaries",
 		 "Observation start time not set");
  
-  if (division_turns && poly && start_phase == Phase::zero)
+  if (division_turns && poly && start_phase == Pulsar::Phase::zero)
   {
     /* On the first call to set_boundaries, initialize to start at
        reference_phase */
@@ -404,7 +414,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
       cerr << "START PHASE OF NEXT PHASE BIN=" << X << endl;
 #endif
 
-      start_phase = Phase (start_phase.intturns(), X);
+      start_phase = Pulsar::Phase (start_phase.intturns(), X);
 
 #ifdef _DEBUG
       cerr << "START PHASE=" << start_phase << endl;
@@ -416,7 +426,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
       if (!fractional_pulses && start_phase.fracturns() > reference_phase)
 	++ start_phase;
 
-      start_phase = Phase (start_phase.intturns(), reference_phase);
+      start_phase = Pulsar::Phase (start_phase.intturns(), reference_phase);
     }
 
     start_time = poly->iphase (start_phase);
@@ -455,16 +465,16 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
 
   // division length specified in turns
 
-  if (!poly)
+  if (!poly && period == 0.0)
     throw Error (InvalidState, "dsp::TimeDivide::set_boundaries",
 		 "division length specified in turns "
-		 "but no folding Pulsar::Predictor");
+		 "but no folding predictor or period");
 
   if (Operation::verbose)
     cerr << "dsp::TimeDivide::set_boundaries using polynomial:\n"
       "  avg. period=" << 1.0/poly->frequency(divide_start) << endl;
 
-  Phase input_phase = poly->phase (divide_start);
+  Pulsar::Phase input_phase = poly->phase (divide_start);
 
   double turns = (input_phase - start_phase).in_turns();
 
@@ -475,7 +485,7 @@ void dsp::TimeDivide::set_boundaries (const MJD& input_start)
   
   if (division_turns < 1.0)
   {
-    Phase profile_phase = input_phase - reference_phase + 0.5 * division_turns;
+    Pulsar::Phase profile_phase = input_phase - reference_phase + 0.5 * division_turns;
     double ft = profile_phase.fracturns();
     if (ft<0.0) ft += 1.0;
     phase_bin = unsigned( ft / division_turns );

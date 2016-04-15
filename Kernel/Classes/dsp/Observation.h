@@ -175,6 +175,11 @@ namespace dsp
     //! Return the instrument used to record signal
     std::string get_machine () const { return machine; }
 
+    //! Set the format used to record signal
+    virtual void set_format (const std::string& _f) { format = _f; }
+    //! Return the format used to record signal
+    std::string get_format () const { return format; }
+
     //! Set the pulsar dispersion mesure
     virtual void set_dispersion_measure (double dm)
     { dispersion_measure = dm; }
@@ -296,6 +301,9 @@ namespace dsp
 
     //! Instrument used to record signal
     std::string machine;
+
+    //! Data format used to record signal
+    std::string format;
 
     //! Coordinates of the source
     sky_coord coordinates;

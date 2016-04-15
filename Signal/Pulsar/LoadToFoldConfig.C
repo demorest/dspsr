@@ -39,6 +39,9 @@ dsp::LoadToFold::Config::Config ()
   zap_rfi = false;
   use_fft_bench = false;
 
+  // by default, dspsr will switch to TFP ordering to optimize folding
+  optimal_order = true;
+
   times_minimum_nfft = 0;
   nsmear = 0;
 
@@ -132,6 +135,7 @@ dsp::LoadToFold::Config::Config ()
 
   // produce BasebandArchive output by default
   archive_class = "Baseband";
+  archive_class_specified_by_user = false;
 
   // Output dynamic extensions by default
   no_dynamic_extensions = false;
@@ -159,6 +163,12 @@ void dsp::LoadToFold::Config::set_minimum_RAM (uint64_t ram)
   minimum_RAM = ram;
   maximum_RAM = 0;
   times_minimum_ndat = 1;
+}
+
+void dsp::LoadToFold::Config::set_archive_class (const std::string& name)
+{
+  archive_class = name;
+  archive_class_specified_by_user = true;
 }
 
 /*

@@ -210,6 +210,8 @@ static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrection> vdif;
 #include "dsp/VDIFTwoBitCorrectionMulti.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrectionMulti> vdif_multi;
+#include "dsp/VDIFEightBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::VDIFEightBitUnpacker> vdif8;
 #endif
 
 #if HAVE_wapp

@@ -27,7 +27,7 @@ namespace dsp {
   public:
   
     //! Constructor
-    MultiFile ();
+    MultiFile (const char* name = "MultiFile");
     
     //! Destructor
     virtual ~MultiFile ();

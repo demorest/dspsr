@@ -133,9 +133,11 @@ void dsp::GMRTFile::open_file (const char* filename)
   
   fd = open_read_header (filename, &header, &block);
  
-  cerr << "n_ds = " << header.n_ds << endl;
-  cerr << "n_chan = " << header.n_chan << endl;
-  cerr << "i_chan = " << block.FreqChanNo << endl;
+  if (verbose) {
+   cerr << "n_ds = " << header.n_ds << endl;
+   cerr << "n_chan = " << header.n_chan << endl;
+   cerr << "i_chan = " << block.FreqChanNo << endl;
+  }
 
   get_info()->set_nbit (8);
 
@@ -143,8 +145,10 @@ void dsp::GMRTFile::open_file (const char* filename)
   get_info()->set_bandwidth (bw);
   get_info()->set_centre_frequency (header.rf + (block.FreqChanNo + 0.5) * bw);
  
-  cerr << "cf = " << get_info()->get_centre_frequency() << endl;
-  cerr << "bw = " << bw << endl;
+  if (verbose) {
+   cerr << "cf = " << get_info()->get_centre_frequency() << endl;
+   cerr << "bw = " << bw << endl;
+  }
 
   get_info()->set_npol(2);
   get_info()->set_state (Signal::Analytic);
@@ -154,18 +158,22 @@ void dsp::GMRTFile::open_file (const char* filename)
   epoch += block.ipts1 / get_info()->get_rate();
 
   get_info()->set_start_time( epoch );
-  cerr << "MJD = " << get_info()->get_start_time() << endl;
-  cerr << "telescope = " << header.telescope << endl;
+  if (verbose) {
+   cerr << "MJD = " << get_info()->get_start_time() << endl;
+   cerr << "telescope = " << header.telescope << endl;
+  }
   get_info()->set_telescope (header.telescope);
 
   get_info()->set_source (header.psr_name);
 
   header_bytes = sizeof(struct gmrt_params);
 
-  cerr << "totalsize=" << block.totalsize << endl;
-  cerr << "NPtsSend=" << block.NPtsSend << endl;
-  cerr << "overlap=" << header.overlap << endl;
-  cerr << "n_samp_dump=" << header.n_samp_dump << endl;
+  if (verbose) {
+   cerr << "totalsize=" << block.totalsize << endl;
+   cerr << "NPtsSend=" << block.NPtsSend << endl;
+   cerr << "overlap=" << header.overlap << endl;
+   cerr << "n_samp_dump=" << header.n_samp_dump << endl;
+  }
 
   block_header_bytes = sizeof(struct data2rcv);
   //block_tailer_bytes = header.overlap * 4;

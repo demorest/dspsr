@@ -6,6 +6,7 @@
  ***************************************************************************/
 
 #include "dsp/FITSUnpacker.h"
+#include "dsp/FITSFile.h"
 #include "Error.h"
 
 #define ONEBIT_MASK 0x1
@@ -31,7 +32,17 @@ const float EIGHTBIT_SCALE = 31.5;
 // Number of bits per byte.
 const int BYTE_SIZE = 8;
 
-dsp::FITSUnpacker::FITSUnpacker(const char* name) : Unpacker(name) {}
+dsp::FITSUnpacker::FITSUnpacker(const char* name) : Unpacker(name)
+{
+  zero_off = 0;
+}
+
+void dsp::FITSUnpacker::set_parameters (FITSFile* ff)
+{
+  zero_off = ff->zero_off;
+  dat_scl = ff->dat_scl;
+  dat_offs = ff->dat_offs;
+}
 
 /**
  * @brief Iterate each row (subint) and sample extracting the values
@@ -42,13 +53,13 @@ dsp::FITSUnpacker::FITSUnpacker(const char* name) : Unpacker(name) {}
 
 void dsp::FITSUnpacker::unpack()
 {
-  if (verbose) {
-    cerr << "dsp::FITSUnpacker::unpack" << endl;
-  }
 
   // Allocate mapping method to use depending on how many bits per value.
   BitNumberFn p;
   const unsigned nbit = input->get_nbit();
+
+  if (verbose)
+    cerr << "dsp::FITSUnpacker::unpack with nbit=" << nbit << endl;
 
   switch (nbit) {
     case 1:
@@ -72,6 +83,13 @@ void dsp::FITSUnpacker::unpack()
   const unsigned nchan = input->get_nchan();
   const unsigned ndat  = input->get_ndat();
 
+  // Make sure scales and offsets exist
+  if (dat_scl.size() == 0)
+  {
+    dat_scl.assign(nchan,1);
+    dat_offs.assign(nchan,0);
+  }
+
   // Number of samples in one byte.
   const int samples_per_byte = BYTE_SIZE / nbit;
   const int mod_offset = samples_per_byte - 1;
@@ -84,6 +102,8 @@ void dsp::FITSUnpacker::unpack()
   //
   // TODO: Use a lookup table???
   for (unsigned idat = 0; idat < ndat; ++idat) {
+    float* scl = &dat_scl[0];
+    float* off = &dat_offs[0];
     for (unsigned ipol = 0; ipol < npol; ++ipol) {
       for (unsigned ichan = 0; ichan < nchan;) {
 
@@ -91,7 +111,8 @@ void dsp::FITSUnpacker::unpack()
         const int shifted_number = *from >> (mod * nbit);
 
         float* into = output->get_datptr(ichan, ipol) + idat;
-        *into = (*this.*p)(shifted_number);
+        *into = (*this.*p)(shifted_number) * (*scl) + (*off);
+        ++scl; ++off;
 
         // Move to next byte when the entire byte has been split.
         if ((++ichan) % (samples_per_byte) == 0) {
@@ -117,7 +138,8 @@ bool dsp::FITSUnpacker::matches(const Observation* observation)
 float dsp::FITSUnpacker::oneBitNumber(const int num)
 {
   const int masked_number = num & ONEBIT_MASK;
-  return masked_number - ONEBIT_SCALE;
+  //return masked_number - ONEBIT_SCALE;
+  return masked_number - zero_off;
 }
 
 
@@ -129,7 +151,8 @@ float dsp::FITSUnpacker::oneBitNumber(const int num)
 
 float dsp::FITSUnpacker::eightBitNumber(const int num)
 {
-  return num - EIGHTBIT_SCALE;
+  //return num - EIGHTBIT_SCALE;
+  return num - zero_off;
 }
 
 
@@ -142,7 +165,8 @@ float dsp::FITSUnpacker::eightBitNumber(const int num)
 float dsp::FITSUnpacker::fourBitNumber(const int num)
 {
   const int masked_number = num & FOURBIT_MASK;
-  return masked_number - FOURBIT_SCALE;
+  //return masked_number - FOURBIT_SCALE;
+  return masked_number - zero_off;
 }
 
 

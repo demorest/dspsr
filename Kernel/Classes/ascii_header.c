@@ -5,14 +5,26 @@
  *
  ***************************************************************************/
 
+#include <config.h>
+
 #include "ascii_header.h"
+
+#define STRLEN 4096
+
+#if HAVE_PSRDADA
+#include "dada_def.h"
+#define DEFAULT_HEADER_SIZE DADA_DEFAULT_HEADER_SIZE
+#else
+#define DEFAULT_HEADER_SIZE STRLEN
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-
-#define STRLEN 128
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 static char* whitespace = " \t\n";
 
@@ -26,8 +38,9 @@ char* ascii_header_find (const char* header, const char* keyword)
   {
     // fprintf (stderr, "found=%s", key);
 
-    // if preceded by whitespace, return the found key
-    if (strchr (whitespace, *(key-1)))
+    // if preceded by a new line, return the found key
+    if ( ((*(key-1) == '\n') || (*(key-1) == '\\')) && 
+         ((*(key+strlen(keyword)) == '\t') || (*(key+strlen(keyword)) == ' ')))
       break;
 
     // otherwise, search again, starting one byte later
@@ -118,5 +131,83 @@ int ascii_header_get (const char* header, const char* keyword,
   va_end (arguments);
 
   return ret;
+}
+
+int ascii_header_del (char * header, const char * keyword)
+{
+  /* find the keyword (also the delete from point) */
+  char * key = ascii_header_find (header, keyword);
+
+  /* if the keyword is present, find the first '#' or '\n' to follow it */
+  if (key) 
+  {
+    char * eol = key + strcspn (key, "\n") + 1;
+
+    // make a copy of everything after the end of the key we are deleting
+    char * dup = strdup (eol);
+
+    if (dup) 
+    {
+      key[0] = '\0';
+      strcat (header, dup);
+      free (dup);
+      return 0;
+    }
+    else
+      return -1;
+  }
+  else
+    return -1;
+}
+
+size_t ascii_header_get_size (char * filename)
+{
+  size_t hdr_size = -1;
+  int fd = open (filename, O_RDONLY);
+  if (!fd)
+  {
+    fprintf (stderr, "ascii_header_get_size: failed to open %s for reading\n", filename);
+  }
+  else
+  {
+    hdr_size = ascii_header_get_size_fd (fd);
+    close (fd);
+  }
+  return hdr_size;
+}
+
+size_t ascii_header_get_size_fd (int fd)
+{
+  size_t hdr_size = -1;
+  char * header = (char *) malloc (DEFAULT_HEADER_SIZE+1);
+  if (!header)
+  {
+    fprintf (stderr, "ascii_header_get_size: failed to allocate %d bytes\n", DEFAULT_HEADER_SIZE+1);
+  }
+  else
+  {
+    // seek to start of file
+    lseek (fd, 0, SEEK_SET);
+
+    // read the header 
+    ssize_t ret = read (fd, header, DEFAULT_HEADER_SIZE);
+    if (ret != DEFAULT_HEADER_SIZE)
+    {
+      fprintf (stderr, "ascii_header_get_size: failed to read %d bytes from file\n", DEFAULT_HEADER_SIZE);
+    }
+    else
+    {
+      // check the actual HDR_SIZE in the header
+      if (ascii_header_get (header, "HDR_SIZE", "%ld", &hdr_size) != 1)
+      {
+        fprintf (stderr, "ascii_header_get_size: failed to read HDR_SIZE from header\n");
+        hdr_size = -1;
+      }
+    }
+    // seek back to start of file
+    lseek (fd, 0, SEEK_SET);
+    free (header);
+  }
+  return hdr_size;
 }
 

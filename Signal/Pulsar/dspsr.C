@@ -210,6 +210,9 @@ void parse_options (int argc, char** argv) try
 
   config->add_options (menu);
 
+  arg = menu.add (config->optimal_order, "order");
+  arg->set_help ("order data optimally when possible [default:true]");
+
   string ram_min;
   arg = menu.add (ram_min, "minram", "MB");
   arg->set_help ("minimum RAM usage in MB");
@@ -314,14 +317,18 @@ void parse_options (int argc, char** argv) try
 
   menu.add ("\n" "Dispersion removal options:");
 
-  arg = menu.add (config->filterbank, 'F', "N[:D]");
+  arg = menu.add (config->filterbank, 'F', "<N>[:D]");
   arg->set_help ("create an N-channel filterbank");
   arg->set_long_help
-    ("either simply specify the number of channels; e.g. -F 256 \n"
-     "or perform coherent dedispersion during the filterbank with -F 256:D \n"
-     "or perform coherent dedispersion before the filterbank with -F 256:B \n"
-     "or reduce the spectral leakage function bandwidth with -F 256:<N> \n"
-     "where <N> is the reduction factor");
+    ("<N> is the number of channels output by the filterank; e.g. -F 256 \n"
+     "\n"
+     "Reduce the spectral leakage function bandwidth with -F 256:<M> \n"
+     "where <M> is the reduction factor."
+     "\n"
+     "If DM != 0, coherent dedispersion will be performed \n"
+     " - after the filterbank with -F 256 or -F 256:<M>\n"
+     " - during the filterbank with -F 256:D \n"
+     " - before the filterbank with -F 256:B \n" );
 
   arg = menu.add (config->plfb_nbin, 'G', "nbin");
   arg->set_help ("create phase-locked filterbank");
@@ -436,6 +443,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->integration_length, 'L', "seconds");
   arg->set_help ("create integrations of specified duration");
 
+  arg = menu.add (config->integration_reference_epoch, "Lepoch", "MJD");
+  arg->set_help ("start time of first sub-integration (when -L is used)");
+
   arg = menu.add (config->minimum_integration_length, "Lmin", "seconds");
   arg->set_help ("minimum integration length output");
 
@@ -450,7 +460,8 @@ void parse_options (int argc, char** argv) try
 
   menu.add ("\n" "Output archive options:");
 
-  arg = menu.add (config->archive_class, 'a', "archive");
+  arg = menu.add (config.get(),
+		  &dsp::LoadToFold::Config::set_archive_class, 'a', "archive");
   arg->set_help ("output archive class name");
 
   arg = menu.add (config->archive_extension, 'e', "ext");

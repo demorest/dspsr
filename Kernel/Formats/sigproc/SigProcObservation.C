@@ -64,6 +64,8 @@ void dsp::SigProcObservation::load (FILE* header)
   load_global ();
 }
 
+#define SIGPROC_PARKES 4
+
 static std::string get_sigproc_telescope_name (int _id)
 {
   // Info from sigproc's aliases.c
@@ -76,7 +78,7 @@ static std::string get_sigproc_telescope_name (int _id)
       return "Ooty";
     case 3:
       return "Nancay";
-    case 4:
+    case SIGPROC_PARKES:
       return "Parkes";
     case 5:
       return "Jodrell";
@@ -86,6 +88,8 @@ static std::string get_sigproc_telescope_name (int _id)
       return "GMRT";
     case 8:
       return "Effelsberg";
+    case 11:
+      return "LOFAR";
     default:
       return "unknown";
       break;
@@ -114,11 +118,12 @@ static int get_sigproc_telescope_id (string name)
     // Convert ITOA to sigproc code
     if      (itoa == "AO") return 1;
     else if (itoa == "NC") return 3;
-    else if (itoa == "PK") return 4;
+    else if (itoa == "PK") return SIGPROC_PARKES;
     else if (itoa == "JB") return 5;
     else if (itoa == "GB") return 6;
     else if (itoa == "GM") return 7;
     else if (itoa == "EF") return 8;
+    else if (itoa == "LF") return 11;
     else return 0;
   }
   catch (Error &error)
@@ -128,6 +133,44 @@ static int get_sigproc_telescope_id (string name)
 
   return 0;
 }
+
+static std::string get_sigproc_machine_name (int _id, int _telescope)
+{
+  // Info from sigproc's aliases.c
+  switch (_id) {
+    case 0:
+      return "FAKE";
+    case 1:
+      return "PSPM";
+    case 2:
+      return "WAPP";
+    case 3:
+      return "AOFTM";
+    case 4:
+      return "BPP";
+    case 5:
+      return "OOTY";
+    case 6:
+      return "SCAMP";
+    case 7:
+      return "GMRTFB";
+    case 8:
+      return "PULSAR2000";
+    case 10:
+      if (_telescope == SIGPROC_PARKES)
+        return "BPSR";
+      else
+        return "ARTEMIS";
+    case 11:
+      return "COBALT";
+    default:
+      return "?????";
+      break;
+  }
+
+  return "?????";
+}
+
 
 void dsp::SigProcObservation::load_global ()
 {
@@ -149,11 +192,14 @@ void dsp::SigProcObservation::load_global ()
 
   // set_ndat (nsamples);
 
-  if (nifs ==1)
+  if (nifs == 1)
     set_state( Signal::Intensity );
 
+  if (nifs == 2)
+    set_state( Signal::PPQQ );
+
   if (nifs == 4)
-    set_state( Signal::Stokes );
+    set_state( Signal::Coherence );
 
   set_rate( 1.0/tsamp );
   set_start_time( tstart );
@@ -163,7 +209,8 @@ void dsp::SigProcObservation::load_global ()
   coord.dec().setDegMS (src_dej);
   set_coordinates (coord);
 
-  set_machine ("SigProc");
+  set_format ("SigProc");
+  set_machine ( get_sigproc_machine_name(machine_id, telescope_id) );
   set_telescope ( get_sigproc_telescope_name(telescope_id) );
 }
 
@@ -193,6 +240,7 @@ void dsp::SigProcObservation::unload_global ()
   */
   if(get_machine().compare("BPSR")==0)machine_id=10;
   else if(get_machine().compare("SCAMP")==0)machine_id=6;
+  else if(get_machine().compare("COBALT")==0)machine_id=11;
 
   // This is the 'rawfilename' parameter in the header.
   // inpfile is possibly uninitialized here so avoid setting

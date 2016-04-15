@@ -5,7 +5,7 @@ nobase_include_HEADERS = dsp/FITSUnpacker.h dsp/FITSFile.h \
              dsp/FITSOutputFile.h
 
 libfits_la_SOURCES = FITSUnpacker.C GUPPIFITSUnpacker.C \
-		     FITSFile.C fits_params.h FITSDigitizer.C\
+		     FITSFile.C fits_params.h FITSDigitizer.C \
              FITSOutputFile.C
 
 #############################################################################

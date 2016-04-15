@@ -18,6 +18,10 @@
 // Transformation allows post-detection conversion from 2pol,2dim data to
 // a variety of formats:
 
+// In the 2pol, 2dim case the coherency parameters are packed such that
+// AA and BB are the 2 dimensions of a sample in the pol=0 stream, and
+// AB and BA* are the 2 dimensions of a sample in the pol=1 stream.
+
 // npol=4, ndim = 1: Coherence / Stokes
 // npol=2, ndim = 1: PPQQ
 // npol=1, ndim = 1: Intensity
