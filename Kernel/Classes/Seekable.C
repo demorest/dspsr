@@ -298,7 +298,7 @@ uint64_t dsp::Seekable::recycle_data (BitSeries* data)
       if (offset_bytes > recycle_bytes)
         offset_bytes = recycle_bytes;
 
-      overlap_buffer->get_memory()->do_copy( into, rbuf, size_t(offset_bytes));
+      from->get_memory()->do_copy (into, rbuf, size_t(offset_bytes));
       
       recycle_bytes -= offset_bytes;
       into += offset_bytes;
