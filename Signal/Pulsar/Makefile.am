@@ -46,7 +46,7 @@ LDADD = libdspsr.la \
 	@CUDA_LIBS@ 
 
 if HAVE_CUFFT_CALLBACKS
-LDADD += $(top_builddir)/Signal/General/ConvolutionCUDA_DC.o -lcufft_static -lculibos
+LDADD += $(top_builddir)/Signal/General/ConvolutionCUDACallbacks_DC.o -lcufft_static -lculibos
 else
 LDADD += @CUFFT_LIBS@
 endif
