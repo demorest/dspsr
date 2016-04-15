@@ -35,6 +35,7 @@
 
 #if HAVE_CUDA
 #include "dsp/ConvolutionCUDA.h"
+#include "dsp/ConvolutionCUDASpectral.h"
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
@@ -392,7 +393,11 @@ void dsp::LoadToFold::construct () try
     if (run_on_gpu)
     {
       convolution->set_device (device_memory.ptr());
-      convolution->set_engine (new CUDA::ConvolutionEngine (stream));
+      unsigned nchan = manager->get_info()->get_nchan() * config->filterbank.get_nchan();
+      if (nchan >= 16)
+        convolution->set_engine (new CUDA::ConvolutionEngineSpectral (stream));
+      else
+        convolution->set_engine (new CUDA::ConvolutionEngine (stream));
     }
 #endif
     
@@ -818,24 +823,60 @@ void dsp::LoadToFold::prepare ()
     }
 
     if (!config->input_buffering)
+    {
       block_overlap = filterbank->get_minimum_samples_lost ();
+      cerr << "filterbank requires " << block_overlap << " overlapping samples" << endl;
+    }
   }
 
   if (convolution)
   {
-    if (filterbank->get_input()->get_nchan() < convolution->get_input()->get_nchan())
-      minimum_samples = convolution->get_minimum_samples () * 
-                        convolution->get_input()->get_nchan();
-    else
-      minimum_samples = convolution->get_minimum_samples ();
+    unsigned convolution_block_overlap = convolution->get_minimum_samples_lost();
+    unsigned convolution_minimum_samples = convolution->get_minimum_samples ();
+
+    if (filterbank) 
+    {
+      // check if filterbank input is nyquist (real sampled)
+      if (filterbank->get_input()->get_state() == Signal::Nyquist)
+      {
+        cerr << "convolution block overlap was " << convolution_block_overlap << endl;
+        convolution_block_overlap *= 2;
+        convolution_minimum_samples *= 2;
+        cerr << "convolution block overlap is now " << convolution_block_overlap << endl;
+      }
+
+      unsigned upstream_channelisation = convolution->get_input()->get_nchan() /
+                                         filterbank->get_input()->get_nchan();
+
+      convolution_minimum_samples *= upstream_channelisation;
+      convolution_block_overlap   *= upstream_channelisation;
+      cerr << "convolution overlap increased by " << upstream_channelisation << endl;
+    }
 
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
-           << minimum_samples << " samples" << endl;
+           << convolution_minimum_samples << " samples" << endl;
 
+    //if (convolution_minimum_samples > minimum_samples)
+    //  minimum_samples = convolution_minimum_samples;
+    //if (convolution_block_overlap > block_overlap)
+    //  block_overlap = convolution_block_overlap;
+
+    //minimum_samples = convolution->get_minimum_samples() * convolution->get_input()->get_nchan();
+
+    //block_overlap = convolution->get_minimum_samples_lost ();
+    if (!config->input_buffering)
+    {
+      // block_overlap = convolution->get_minimum_samples_lost () *
+      //  convolution->get_input()->get_nchan();
+      cerr << "convolution requires " << convolution_block_overlap << " overlapping samples" << endl;
+      block_overlap = convolution_block_overlap;
+    }
+/*
     if (!config->input_buffering)
       block_overlap = convolution->get_minimum_samples_lost () *
         convolution->get_input()->get_nchan();
+*/
   }
 
 #if 0
