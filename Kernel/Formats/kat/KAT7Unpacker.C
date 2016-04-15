@@ -127,7 +127,7 @@ void dsp::KAT7Unpacker::unpack ()
       for (unsigned ipol=0; ipol<npol; ipol++)
       {
         into = output->get_datptr (ichan, ipol) + (iblock*256);
-	for (unsigned isamp=0; isamp<256; isamp++)
+        for (unsigned isamp=0; isamp<256; isamp++)
         {
           into[isamp] = (float) from[isamp];
         }
