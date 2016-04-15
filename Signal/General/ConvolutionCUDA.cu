@@ -12,6 +12,7 @@
 #include "debug.h"
 
 #if HAVE_CUFFT_CALLBACKS
+#include "dsp/ConvolutionCUDACallbacks.h"
 #include <cufftXt.h>
 #endif
 
@@ -55,6 +56,7 @@ __global__ void k_ncopy_conv (float2* output_data, unsigned output_stride,
 
 
 #if HAVE_CUFFT_CALLBACKS
+/*
 // [0] channel offset ( ichan * npt)
 // [1] npt
 // [2] first_ipt ( nfilt_pos )
@@ -122,6 +124,7 @@ __device__ void CB_filtered_store_batch (void * dataOut, size_t offset, cufftCom
 
 __device__ cufftCallbackStoreC d_store_bwd       = CB_filtered_store;
 __device__ cufftCallbackStoreC d_store_bwd_batch = CB_filtered_store_batch;
+*/
 #endif
 
 CUDA::ConvolutionEngine::ConvolutionEngine (cudaStream_t _stream)
@@ -235,7 +238,7 @@ void CUDA::ConvolutionEngine::prepare (dsp::Convolution * convolution)
     nbatch = 0;
 
 #if HAVE_CUFFT_CALLBACKS
-  setup_callbacks ();
+  setup_callbacks_ConvolutionCUDA (plan_fwd, plan_bwd, plan_fwd_batched, plan_bwd_batched, d_kernels, nbatch, stream);
 #endif
 
   // initialize the kernel size configuration
@@ -265,6 +268,7 @@ void CUDA::ConvolutionEngine::setup_kernel (const dsp::Response * response)
   // copy all kernels from host to device
   const float* kernel = response->get_datptr (0,0);
 
+  cerr << "CUDA::ConvolutionEngine::setup_kernel cudaMemcpy stream=" << stream << " size=" << kernels_size << endl;
   if (stream)
     error = cudaMemcpyAsync (d_kernels, kernel, kernels_size, cudaMemcpyHostToDevice, stream);
   else
@@ -287,14 +291,8 @@ void CUDA::ConvolutionEngine::setup_kernel (const dsp::Response * response)
   h_conv_params[3] = npt_bwd - nfilt_neg;
   h_conv_params[4] = nfilt_pos + nfilt_neg;
 
-  error = cudaMemcpyToSymbolAsync (conv_params, (void *) &h_conv_params, 
-                                   sizeof(h_conv_params), 0, 
-                                   cudaMemcpyHostToDevice, stream);
-  if (error != cudaSuccess)
-  {
-    throw Error (InvalidState, "CUDA::ConvolutionEngine::setup_kernel",
-     "could not initialize convolution params in device memory");
-  }
+  setup_callbacks_conv_params (h_conv_params, sizeof(h_conv_params), stream);
+
 #endif
 }
 
@@ -498,6 +496,7 @@ void CUDA::ConvolutionEngine::setup_batched (unsigned _nbatch)
 }
 
 #if HAVE_CUFFT_CALLBACKS
+/*
 void CUDA::ConvolutionEngine::setup_callbacks ()
 {
   cudaError_t error;
@@ -563,6 +562,7 @@ void CUDA::ConvolutionEngine::setup_callbacks ()
         "cufftXtSetCallback (plan_bwd_batched, h_store_bwd_batch)");
   }
 }
+*/
 #endif
 
 
@@ -575,11 +575,6 @@ void CUDA::ConvolutionEngine::perform (const dsp::TimeSeries* input, dsp::TimeSe
 
   if (npart == 0)
     return;
-
-  //if (npart == nbatch)
-  //  perform_batched (input, output, npart);
-  //else
-  //  perform_singular (input, output, npart);
 
   if (type_fwd == CUFFT_C2C)
     perform_complex (input, output, npart);
@@ -609,6 +604,7 @@ void CUDA::ConvolutionEngine::perform_complex (const dsp::TimeSeries* input,
 
 	if (dsp::Operation::verbose)
   	cerr << "CUDA::ConvolutionEngine::perform_complex npart=" << npart 
+         << " nbatch=" << nbatch 
 				 << " npb=" << nbp << " nsamp_step=" << nsamp_step << endl;
 
 #if !HAVE_CUFFT_CALLBACKS
@@ -624,12 +620,16 @@ void CUDA::ConvolutionEngine::perform_complex (const dsp::TimeSeries* input,
     // determine convolution kernel offset
     h_conv_params[0] = ichan * npt_bwd;
 
+    setup_callbacks_conv_params (h_conv_params, sizeof(unsigned), stream);
+
+/*
 		// update the channel offset in constant memory
 		cudaError_t error = cudaMemcpyToSymbolAsync (conv_params, (void *) &h_conv_params, 
                           sizeof(unsigned), 0, cudaMemcpyHostToDevice, stream);
     if (error != cudaSuccess)
       throw Error (InvalidState, "CUDA::ConvolutionEngine::setup_kernel",
                    "could not update conv_params in device memory");
+*/
 #else
     const unsigned k_offset = ichan * npt_bwd;
 #endif

@@ -6,8 +6,8 @@
  *
  ***************************************************************************/
 
-#ifndef __baseband_cuda_Convolution_h
-#define __baseband_cuda_Convolution_h
+#ifndef __baseband_cuda_ConvolutionSpectral_h
+#define __baseband_cuda_ConvolutionSpectral_h
 
 #include <cufft.h>
 #include <config.h>
@@ -17,13 +17,13 @@
 
 namespace CUDA
 {
-  class ConvolutionEngine : public dsp::Convolution::Engine
+  class ConvolutionEngineSpectral : public dsp::Convolution::Engine
   {
   public:
 
     //! Default Constructor
-    ConvolutionEngine (cudaStream_t stream);
-    ~ConvolutionEngine();
+    ConvolutionEngineSpectral (cudaStream_t stream);
+    ~ConvolutionEngineSpectral();
 
     void set_scratch (void * scratch);
 
@@ -33,15 +33,12 @@ namespace CUDA
     //! setup the dedispersion kernel from the response
     void setup_kernel (const dsp::Response * response);
 
-    //! configure the singular FFTs
-    void setup_singular ();
-
-    //! configure the batched FFTs
-    void setup_batched (unsigned nbatch);
+    //! configure batched FFT
+    void setup_batched (const dsp::TimeSeries* input, dsp::TimeSeries * output);
 
 #if HAVE_CUFFT_CALLBACKS
     //! setup FFT callbacks
-    //void setup_callbacks ();
+    void setup_callbacks ();
 #endif
 
     void perform (const dsp::TimeSeries* input, dsp::TimeSeries* output,
@@ -65,10 +62,6 @@ namespace CUDA
 
     cufftHandle plan_bwd;
 
-    cufftHandle plan_fwd_batched;
-
-    cufftHandle plan_bwd_batched;
-
 		size_t kernel_size;
 
 		// dedispersion kernel for all input channels in device memory
@@ -85,6 +78,16 @@ namespace CUDA
 
     int auto_allocate;
 
+    int nchan;
+
+    int npol;
+
+    bool fft_configured;
+
+    unsigned input_stride;
+
+    unsigned output_stride;
+
     int npt_fwd;
 
     int npt_bwd;
@@ -100,7 +103,7 @@ namespace CUDA
     unsigned nfilt_neg;
 
 #if HAVE_CUFFT_CALLBACKS
-		unsigned h_conv_params[5];
+		unsigned h_conv_params[2];
 #endif
 
   };

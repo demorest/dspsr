@@ -49,24 +49,22 @@ nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
 	dsp/TransferCUDA.h \
 	dsp/TransferBitSeriesCUDA.h dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h \
-	dsp/ConvolutionCUDA.h
+	dsp/ConvolutionCUDA.h dsp/ConvolutionCUDASpectral.h dsp/ConvolutionCUDACallbacks.h
 
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu TransferCUDA.C \
-	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu ConvolutionCUDA.cu
+	TransferBitSeriesCUDA.C DetectionCUDA.cu SKMaskerCUDA.cu ConvolutionCUDA.cu \
+  ConvolutionCUDASpectral.cu ConvolutionCUDACallbacks.cu
 
 if HAVE_CUFFT_CALLBACKS
 bin_PROGRAMS += cufft_callback_bench
 
-# device relocated object file linked to device code
-ConvolutionCUDA_DC.o: ConvolutionCUDA.o
-	$(CUDA_NVCC) -o ConvolutionCUDA_DC.o -dlink ConvolutionCUDA.o -lcufft_static
 
 cufft_callback_bench_DC.o: cufft_callback_bench.o
 	$(CUDA_NVCC) -o cufft_callback_bench_DC.o -dlink cufft_callback_bench.o -lcufft_static
 
-ConvolutionCUDA.lo: ConvolutionCUDA.cu
+ConvolutionCUDACallbacks.lo: ConvolutionCUDACallbacks.cu
 	$(top_srcdir)/config/cudalt.py $(top_builddir)/libtool $@ $(CUDA_NVCC) -dc -c $<
-	$(CUDA_NVCC) -o ConvolutionCUDA_DC.o -dlink ConvolutionCUDA.o -lcufft_static
+	$(CUDA_NVCC) -o ConvolutionCUDACallbacks_DC.o -dlink ConvolutionCUDACallbacks.o -lcufft_static
 
 cufft_callback_bench.lo: cufft_callback_bench.cu
 	$(top_srcdir)/config/cudalt.py $(top_builddir)/libtool $@ $(CUDA_NVCC) -dc -c $<
@@ -107,8 +105,8 @@ if HAVE_PGPLOT
   passband_LDADD = @PSRPLOT_LIBS@ $(LDADD)
 
 if HAVE_CUFFT_CALLBACKS
-  digistat_LDADD += ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
-  passband_LDADD += ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+	digistat_LDADD += ConvolutionCUDACallbacks_DC.o -lcudart -lcufft_static -lculibos
+	passband_LDADD += ConvolutionCUDACallbacks_DC.o -lcudart -lcufft_static -lculibos
 endif
   #
   # end PGPLOT-specific code
@@ -139,7 +137,7 @@ if HAVE_dada
   the_decimator_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) @PSRXML_CFLAGS@ @PSRDADA_CFLAGS@
 
 if HAVE_CUFFT_CALLBACKS
-  the_decimator_LDADD += ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
+  the_decimator_LDADD += ConvolutionCUDACallbacks_DC.o -lcudart -lcufft_static -lculibos
 endif
 
 endif
@@ -150,12 +148,6 @@ endif
   ###########################################################################
 
 endif
-
-#if HAVE_CUFFT_CALLBACKS
-#  digimon_LDADD = $(LDADD) ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
-#  digifil_LDADD = $(LDADD) ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
-#  digihist_LDADD = $(LDADD) ConvolutionCUDA_DC.o -lcudart -lcufft_static -lculibos
-#endif
 
 #############################################################################
 #
