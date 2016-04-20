@@ -33,7 +33,7 @@
 #include "dsp/OptimalFFT.h"
 #include "dsp/Resize.h"
 
-#if HAVE_CFITSIO
+#if HAVE_fits
 #include "dsp/FITSFile.h"
 #include "dsp/FITSUnpacker.h"
 #endif
@@ -130,7 +130,7 @@ void dsp::LoadToFold::construct () try
       unpacker->set_output_order (TimeSeries::OrderTFP);
     }
 
-#if HAVE_CFITSIO
+#if HAVE_fits
     // Use callback to handle scales/offsets for read-in
     if (manager->get_info()->get_machine() == "FITS")
     {
@@ -881,7 +881,7 @@ void dsp::LoadToFold::prepare ()
 
   uint64_t ram = manager->set_block_size( block_size );
 
-#if HAVE_CFITSIO
+#if HAVE_fits
   // if PSRFITS input, set block to exact size of FITS row
   // this is needed to keep in sync with the callback
   if (manager->get_info()->get_machine() == "FITS")
