@@ -35,6 +35,7 @@
 
 #if HAVE_fits
 #include "dsp/FITSFile.h"
+#include "dsp/MultiFile.h"
 #include "dsp/FITSUnpacker.h"
 #endif
 
@@ -135,12 +136,35 @@ void dsp::LoadToFold::construct () try
     if (manager->get_info()->get_machine() == "FITS")
     {
       if (Operation::verbose)
-        std::cout << "Using callback to read PSRFITS file." << std::endl;
+        cerr << "Using callback to read PSRFITS file." << endl;
       // connect a callback
-      FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
-      tmp->update.connect (
-          dynamic_cast<FITSUnpacker*> ( manager->get_unpacker() ),
-          &FITSUnpacker::set_parameters);
+      bool success = false;
+      FITSUnpacker* funp = dynamic_cast<FITSUnpacker*> (
+          manager->get_unpacker());
+      FITSFile* ffile = dynamic_cast<FITSFile*> (manager->get_input());
+      if (funp && ffile)
+      {
+        ffile->update.connect ( funp, &FITSUnpacker::set_parameters );
+        success = true;
+      }
+      else 
+      {
+        MultiFile* mfile = dynamic_cast<MultiFile*> (manager->get_input());
+        if (mfile)
+        {
+          for (unsigned i=0; i < mfile->nfiles(); ++i)
+          {
+            ffile = dynamic_cast<FITSFile*> (mfile->get_files()[i].get());
+            if (funp && ffile) {
+              ffile->update.connect (
+                  funp, &FITSUnpacker::set_parameters );
+              success = true;
+            }
+          }
+        }
+      }
+      if (not success)
+        cerr << "dspsr: WARNING: FITS input input but unable to apply scales and offsets." << endl;
     }
 #endif
 
@@ -887,13 +911,32 @@ void dsp::LoadToFold::prepare ()
   if (manager->get_info()->get_machine() == "FITS")
   {
     FITSFile* tmp = dynamic_cast<FITSFile*> (manager->get_input());
-    unsigned samples_per_row = tmp->get_samples_in_row();
-    uint64_t current_bytes = manager->set_block_size (samples_per_row);
-    uint64_t new_max_ram = current_bytes / tmp->get_block_size() * samples_per_row;
-    if (new_max_ram > config->get_maximum_RAM ())
-      throw Error (InvalidState, "prepare", "Maximum RAM smaller than PSRFITS row.");
-    manager->set_maximum_RAM (new_max_ram);
-    manager->set_block_size (samples_per_row);
+    uint64_t block_size;
+
+    if (!tmp)
+    {
+      MultiFile* mfile = dynamic_cast<MultiFile*> (manager->get_input());
+      if (mfile)
+      {
+        block_size = mfile->get_block_size();
+        tmp = dynamic_cast<FITSFile*> ( mfile->get_loader() );
+      }
+    }
+    else
+      block_size = tmp->get_block_size();
+    if (tmp)
+    {
+      unsigned samples_per_row = tmp->get_samples_in_row();
+      uint64_t current_bytes = manager->set_block_size (samples_per_row);
+      uint64_t new_max_ram = current_bytes / block_size * samples_per_row;
+      if (new_max_ram > config->get_maximum_RAM ())
+        throw Error (InvalidState, "LoadToFold::prepare", 
+            "Maximum RAM smaller than PSRFITS row.");
+      manager->set_maximum_RAM (new_max_ram);
+      manager->set_block_size (samples_per_row);
+    }
+    else
+      cerr << "dspsr: WARNING have FITS input but cannot set block size properly." << endl;
   }
 #endif
 

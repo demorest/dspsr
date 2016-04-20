@@ -36,6 +36,7 @@ dsp::FITSFile::FITSFile (const char* filename)
   : File("FITSFile")
 {
   current_byte = 0;
+  zero_off = 0;
 }
 
 bool dsp::FITSFile::is_valid (const char* filename) const
