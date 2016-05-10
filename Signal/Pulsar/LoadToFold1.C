@@ -34,8 +34,10 @@
 #include "dsp/Resize.h"
 
 #if HAVE_CFITSIO
+#if HAVE_fits
 #include "dsp/FITSFile.h"
 #include "dsp/FITSUnpacker.h"
+#endif
 #endif
 
 #if HAVE_CUDA
@@ -133,6 +135,7 @@ void dsp::LoadToFold::construct () try
     }
 
 #if HAVE_CFITSIO
+#if HAVE_fits
     // Use callback to handle scales/offsets for read-in
     if (manager->get_info()->get_machine() == "FITS")
     {
@@ -144,6 +147,7 @@ void dsp::LoadToFold::construct () try
           dynamic_cast<FITSUnpacker*> ( manager->get_unpacker() ),
           &FITSUnpacker::set_parameters);
     }
+#endif
 #endif
 
     config->coherent_dedispersion = false;
@@ -907,7 +911,6 @@ void dsp::LoadToFold::prepare ()
       convolution_block_overlap   *= upstream_channelisation;
       cerr << "convolution overlap increased by " << upstream_channelisation << endl;
     }
-#endif
 
     if (report_vitals)
       cerr << "dspsr: convolution requires at least " 
@@ -934,6 +937,7 @@ void dsp::LoadToFold::prepare ()
   uint64_t ram = manager->set_block_size( block_size );
 
 #if HAVE_CFITSIO
+#if HAVE_fits
   // if PSRFITS input, set block to exact size of FITS row
   // this is needed to keep in sync with the callback
   if (manager->get_info()->get_machine() == "FITS")
@@ -947,6 +951,7 @@ void dsp::LoadToFold::prepare ()
     manager->set_maximum_RAM (new_max_ram);
     manager->set_block_size (samples_per_row);
   }
+#endif
 #endif
 
   // add the increased block size if the SKFB is being used
