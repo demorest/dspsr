@@ -40,8 +40,7 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
 	PolnSelect.C PolnReshape.C
 
-bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed \
-	fftbatch_speed
+bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
 
 if HAVE_CUFFT
 
@@ -53,11 +52,12 @@ nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
 	dsp/ConvolutionCUDA.h dsp/ConvolutionCUDASpectral.h 
 	dsp/ConvolutionCUDACallbacks.h
 
-
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
 	TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu             \
   SKMaskerCUDA.cu FZoomCUDA.cu FScrunchCUDA.cu TScrunchCUDA.cu        \
   ConvolutionCUDA.cu ConvolutionCUDASpectral.cu ConvolutionCUDACallbacks.cu
+
+bin_PROGRAMS += fftbatch_speed
 
 if HAVE_CUFFT_CALLBACKS
 bin_PROGRAMS += cufft_callback_bench
@@ -185,10 +185,6 @@ LDADD = libdspdsp.la \
 	$(top_builddir)/Signal/Statistics/libdspstats.la \
 	@PGPLOT_LIBS@ @CUDA_LIBS@ @CUFFT_LIBS@
 
-<<<<<<< HEAD
 AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@ @CFITSIO_CFLAGS@
-=======
-AM_CPPFLAGS += @PGPLOT_CFLAGS@ @CUFFT_CFLAGS@ 
->>>>>>> cuda_updates
 AM_CXXFLAGS = @OPENMP_CFLAGS@
 

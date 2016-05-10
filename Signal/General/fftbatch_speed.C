@@ -9,12 +9,10 @@
 #include <config.h>
 #endif
 
-#if HAVE_CUDA
 #include <cuda_runtime.h>
 #include <cufft.h>
-#endif
-
 #include "CUFFTError.h"
+
 #include "CommandLine.h"
 #include "RealTimer.h"
 
@@ -78,25 +76,19 @@ void Speed::parseOptions (int argc, char** argv)
   arg = menu.add (npt, 'n', "npt");
   arg->set_help ("number of points in each FFT");
 
-#if HAVE_CUFFT
   arg = menu.add (gpu_id, 'd');
   arg->set_help ("GPU device ID");
-#endif
 
   arg = menu.add (niter, 't', "ninter");
   arg->set_help ("number of iterations (batch/loops)");
 
-#if HAVE_CUFFT
   arg = menu.add (cuda, "cuda");
   arg->set_help ("benchmark CUDA");
-#endif
 
   menu.parse (argc, argv);
 }
 
-#if HAVE_CUFFT
 void check_error_stream (const char*, cudaStream_t);
-#endif
 
 void Speed::runTest ()
 {
@@ -108,7 +100,6 @@ void Speed::runTest ()
   // assume complex FFTs
   const unsigned ndim = 2;
  
-#if HAVE_CUFFT
   cudaStream_t stream = 0;
   if (cuda)
   {
@@ -124,7 +115,6 @@ void Speed::runTest ()
                    "cudaStreamCreate failed: %s", cudaGetErrorString(err));
 
   }
-#endif
 
   unsigned ndat = npt * niter;
   unsigned nbytes = ndat * sizeof (cufftComplex);
