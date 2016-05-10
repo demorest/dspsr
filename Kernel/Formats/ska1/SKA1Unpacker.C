@@ -175,7 +175,7 @@ void dsp::SKA1Unpacker::unpack ()
 //}
 
 #ifndef SKA1_ENGINE_IMPLEMENTATION
-
+#if HAVE_CUDA
 void dsp::SKA1Unpacker::unpack_on_gpu ()
 {
   const uint64_t ndat = input->get_ndat();
@@ -199,5 +199,5 @@ void dsp::SKA1Unpacker::unpack_on_gpu ()
   ska1_unpack_fpt (stream, nval, table->get_scale(), into, from, resolution, nchan, npol, ndim, pol_span);
 
 }
-
+#endif
 #endif
