@@ -68,8 +68,10 @@ namespace dsp {
     //! Load data from device and return the number of bytes read.
     virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes) = 0;
 
+#ifdef HAVE_CUDA
     //! Load data from device to device memory and return the number of bytes read.
     virtual int64_t load_bytes_device (unsigned char* buffer, uint64_t bytes, void * dev_handle) = 0;
+#endif
     
     //! Seek to absolute position and return absolute position in bytes
     virtual int64_t seek_bytes (uint64_t bytes) = 0;
