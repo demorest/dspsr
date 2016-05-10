@@ -109,7 +109,9 @@ static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
 
 #if HAVE_kat
 #include "dsp/KAT7Unpacker.h"
+#include "dsp/MeerKATUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::KAT7Unpacker> kat7;
+static dsp::Unpacker::Register::Enter<dsp::MeerKATUnpacker> meerkat;
 #endif
 
 #if HAVE_lofar_dal

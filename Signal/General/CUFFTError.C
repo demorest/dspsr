@@ -50,6 +50,12 @@ const char* cufftResult_to_string (cufftResult result)
     case CUFFT_NO_WORKSPACE :
       return "No workspace has been provided prior to plan execution";
 #endif
+#if CUDA_VERSION >= 6050
+    case CUFFT_NOT_IMPLEMENTED:
+      return "Not Implemented";
+    case CUFFT_LICENSE_ERROR:
+      return "License error";
+#endif
     }
   return "unrecognized cufftResult";
 }

@@ -12,6 +12,11 @@
 #include "ascii_header.h"
 #include "FilePtr.h"
 
+#if HAVE_CUDA
+#include "dada_cuda.h"
+#include "ipcio_cuda.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,6 +64,12 @@ void dsp::DADABuffer::close ()
       hdu->header = 0;
     }
   }
+
+#if HAVE_CUDA
+  if (!passive && dada_cuda_dbunregister (hdu) < 0)
+    throw Error (InvalidState, "dsp::DADABuffer::close",
+      "cannot unregister ring buffer blocks as Pinned memory");
+#endif
 
   if (!passive && dada_hdu_unlock_read (hdu) < 0)
     cerr << "dsp::DADABuffer::close error during dada_hdu_unlock_read" << endl;
@@ -203,6 +214,14 @@ void dsp::DADABuffer::open_file (const char* filename)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
 		 "cannot lock DADA ring buffer read client status");
 
+#if HAVE_CUDA
+	if (verbose)
+		cerr << "dsp::DADABuffer::open_file registering dada buffers with CUDA for pinned transfers" << endl;
+  if (!passive && dada_cuda_dbregister (hdu) < 0)
+    throw Error (InvalidState, "dsp::DADABuffer::open_file",
+      "cannot register DADA ring buffer blocks as Pinned memory");
+#endif
+
   if (passive && dada_hdu_open_view (hdu) < 0)
     throw Error (InvalidState, "dsp::DADABuffer::open_file",
 		 "cannot open DADA ring buffer for viewing");
@@ -219,6 +238,7 @@ void dsp::DADABuffer::open_file (const char* filename)
 
   if (ascii_header_get (hdu->header, "RESOLUTION", "%u", &byte_resolution) < 0)
     byte_resolution = 1;
+
 
   // the resolution is the _byte_ resolution; convert to _sample_ resolution
   resolution = get_info()->get_nsamples (byte_resolution);
@@ -237,32 +257,55 @@ void dsp::DADABuffer::open_file (const char* filename)
 int64_t dsp::DADABuffer::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
   if (verbose)
-    cerr << "DADABuffer::load_bytes ipcio_read "
+    cerr << "dsp::DADABuffer::load_bytes ipcio_read "
          << bytes << " bytes" << endl;
 
   int64_t bytes_read = ipcio_read (hdu->data_block, (char*)buffer, bytes);
   if (bytes_read < 0)
-    cerr << "DADABuffer::load_bytes error ipcio_read" << endl;
+    cerr << "dsp::DADABuffer::load_bytes error ipcio_read" << endl;
 
   if (verbose)
-    cerr << "DADABuffer::load_bytes read " << bytes_read << " bytes" << endl;
+    cerr << "dsp::DADABuffer::load_bytes read " << bytes_read << " bytes" << endl;
 
   return bytes_read;
 }
+
+#if HAVE_CUDA
+//! Load bytes from shared memory directory to GPU memory
+int64_t dsp::DADABuffer::load_bytes_device (unsigned char* device_memory, uint64_t bytes, void * device_handle)
+{
+  cudaStream_t stream = (cudaStream_t) device_handle;
+
+  if (verbose)
+    cerr << "dsp::DADABuffer::load_bytes_device ipcio_read_cuda "
+         << bytes << " bytes" << endl;
+
+  int64_t bytes_read = ipcio_read_cuda (hdu->data_block, (char*) device_memory, bytes, stream);
+  //int64_t bytes_read = (int64_t) bytes;
+	cudaStreamSynchronize(stream);
+  if (bytes_read < 0)
+    cerr << "dsp::DADABuffer::load_bytes_device error ipcio_read_cuda" << endl;
+
+  if (verbose)
+    cerr << "dsp::DADABuffer::load_bytes_device read " << bytes_read << " bytes" << endl;
+
+  return bytes_read;
+}
+#endif
 
 //! Adjust the shared memory pointer
 int64_t dsp::DADABuffer::seek_bytes (uint64_t bytes)
 {
   if (verbose)
-    cerr << "DADABuffer::seek_bytes ipcio_seek "
+    cerr << "dsp::DADABuffer::seek_bytes ipcio_seek "
          << bytes << " bytes" << endl;
 
   int64_t absolute_bytes = ipcio_seek (hdu->data_block, bytes, SEEK_SET);
   if (absolute_bytes < 0)
-    cerr << "DADABuffer::seek_bytes error ipcio_seek" << endl;
+    cerr << "dsp::DADABuffer::seek_bytes error ipcio_seek" << endl;
 
   if (verbose)
-    cerr << "DADABuffer::seek_bytes absolute_bytes=" << absolute_bytes << endl;
+    cerr << "dsp::DADABuffer::seek_bytes absolute_bytes=" << absolute_bytes << endl;
 
   return absolute_bytes;
 }

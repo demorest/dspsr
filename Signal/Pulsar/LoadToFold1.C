@@ -39,6 +39,8 @@
 #endif
 
 #if HAVE_CUDA
+#include "dsp/ConvolutionCUDA.h"
+#include "dsp/ConvolutionCUDASpectral.h"
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
@@ -392,6 +394,9 @@ void dsp::LoadToFold::construct () try
     if (!convolution)
       convolution = new Convolution;
     
+    if (!config->input_buffering)
+      convolution->set_buffering_policy (NULL);
+
     convolution->set_response (response);
     if (!config->integration_turns)
       convolution->set_passband (passband);
@@ -407,9 +412,18 @@ void dsp::LoadToFold::construct () try
       convolution->set_output (convolved);  // inplace
     }
 
-    if (!config->input_buffering)
-      convolution->set_buffering_policy (NULL);
-
+#if HAVE_CUDA
+    if (run_on_gpu)
+    {
+      convolution->set_device (device_memory.ptr());
+      unsigned nchan = manager->get_info()->get_nchan() * config->filterbank.get_nchan();
+      if (nchan >= 16)
+        convolution->set_engine (new CUDA::ConvolutionEngineSpectral (stream));
+      else
+        convolution->set_engine (new CUDA::ConvolutionEngine (stream));
+    }
+#endif
+    
     operations.push_back (convolution.get());
   }
 
@@ -848,6 +862,7 @@ void dsp::LoadToFold::prepare ()
 
   unsigned filterbank_resolution = minimum_samples - block_overlap;
 
+#ifdef OLD_VERSION
   if (convolution)
   {
     const Observation* info = manager->get_info();
@@ -856,7 +871,7 @@ void dsp::LoadToFold::prepare ()
 
     minimum_samples = convolution->get_minimum_samples () * fb_factor;
     if (report_vitals)
-      cerr << "dspsr: convolution requires at least " 
+      cerr << "dspsr: convolution requires at least "
            << minimum_samples << " samples" << endl;
 
     if (!config->input_buffering)
@@ -868,6 +883,43 @@ void dsp::LoadToFold::prepare ()
       manager->set_filterbank_resolution (filterbank_resolution);
     }
   }
+#else
+  if (convolution)
+  {
+    unsigned convolution_block_overlap = convolution->get_minimum_samples_lost();
+    unsigned convolution_minimum_samples = convolution->get_minimum_samples ();
+
+    if (filterbank) 
+    {
+      // check if filterbank input is nyquist (real sampled)
+      if (filterbank->get_input()->get_state() == Signal::Nyquist)
+      {
+        cerr << "convolution block overlap was " << convolution_block_overlap << endl;
+        convolution_block_overlap *= 2;
+        convolution_minimum_samples *= 2;
+        cerr << "convolution block overlap is now " << convolution_block_overlap << endl;
+      }
+
+      unsigned upstream_channelisation = convolution->get_input()->get_nchan() /
+                                         filterbank->get_input()->get_nchan();
+
+      convolution_minimum_samples *= upstream_channelisation;
+      convolution_block_overlap   *= upstream_channelisation;
+      cerr << "convolution overlap increased by " << upstream_channelisation << endl;
+    }
+#endif
+
+    if (report_vitals)
+      cerr << "dspsr: convolution requires at least " 
+           << convolution_minimum_samples << " samples" << endl;
+
+    if (!config->input_buffering)
+    {
+      cerr << "convolution requires " << convolution_block_overlap << " overlapping samples" << endl;
+      block_overlap = convolution_block_overlap;
+    }
+  }
+#endif
 
   uint64_t block_size = ( minimum_samples - block_overlap )
     * config->get_times_minimum_ndat() + block_overlap;

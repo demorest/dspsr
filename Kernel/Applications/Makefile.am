@@ -17,9 +17,9 @@ endif
 
 INCLUDES = -I$(top_builddir)/local_include 
 
-LDADD = $(top_builddir)/Kernel/libdspbase.la
+LDADD = $(top_builddir)/Kernel/libdspbase.la @CUDA_LIBS@ @CUFFT_LIBS@
 
 include $(top_srcdir)/config/Makefile.include
 
-AM_CPPFLAGS += @CUDA_CFLAGS@
+AM_CPPFLAGS += @CUDA_CFLAGS@ @CUFFT_CFLAGS@
 

@@ -56,7 +56,12 @@ namespace dsp {
 
     //! Load bytes from shared memory
     virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes);
-    
+ 
+#if HAVE_CUDA
+    //! Load bytes from shared memory directory to GPU memory
+    int64_t load_bytes_device (unsigned char* device_memory, uint64_t bytes, void * device_handle);
+#endif
+
     //! Set the offset in shared memory
     virtual int64_t seek_bytes (uint64_t bytes);
 
