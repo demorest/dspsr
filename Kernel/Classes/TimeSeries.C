@@ -6,8 +6,14 @@
  *
  ***************************************************************************/
 
+#include "config.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Memory.h"
+
+#ifdef HAVE_CUDA
+#include "dsp/MemoryCUDA.h"
+#include "dsp/TimeSeriesCUDA.h"
+#endif
 
 #include "fsleep.h"
 #include "Error.h"
@@ -45,6 +51,7 @@ void dsp::TimeSeries::init ()
   reserve_nfloat = 0;
   input_sample = -1;
   zeroed_data = false;
+  engine = 0;
 }
 
 dsp::TimeSeries* dsp::TimeSeries::clone () const
@@ -65,7 +72,16 @@ dsp::TimeSeries* dsp::TimeSeries::null_clone () const
 void dsp::TimeSeries::null_work (const TimeSeries* from)
 {
   order = from->order;
+
+#ifdef HAVE_CUDA
   memory = from->memory;
+  if (from->engine) 
+  {
+    set_engine (new CUDA::TimeSeriesEngine(memory));
+  }
+#else
+  memory = from->memory;
+#endif
 }
 
 dsp::TimeSeries::~TimeSeries()
@@ -459,13 +475,20 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
     switch (order)
     {
     case OrderFPT:
-      for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+      if (engine)
       {
-        for (unsigned ipol=0; ipol<get_npol(); ipol++)
+        engine->copy_data_fpt (copy, idat_start, copy_ndat);
+      }
+      else
+      {
+        for (unsigned ichan=0; ichan<get_nchan(); ichan++)
         {
-          float* to = get_datptr (ichan, ipol);
-          const float* from = copy->get_datptr(ichan,ipol) + offset;
-          memory->do_copy (to, from, size_t(byte_count));
+          for (unsigned ipol=0; ipol<get_npol(); ipol++)
+          {
+            float* to = get_datptr (ichan, ipol);
+            const float* from = copy->get_datptr(ichan,ipol) + offset;
+            memory->do_copy (to, from, size_t(byte_count));
+          }
         }
       }
       break;
@@ -709,4 +732,11 @@ void dsp::TimeSeries::finite_check () const
 		 "%u/%u non-finite values",
 		 non_finite, nfloat * nchan * npol);
 }
+
+void dsp::TimeSeries::set_engine( Engine* _engine )
+{
+  engine = _engine;
+  engine->prepare (this);
+}
+
 

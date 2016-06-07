@@ -18,6 +18,31 @@ using namespace std;
 
 void check_error (const char*);
 
+__global__ void copy_data_fpt_kernel_ndim2(float2 * out, float2* in,
+                                     uint64_t ichanpol_stride,
+                                     uint64_t ochanpol_stride,
+                                     uint64_t ndat)
+{
+  uint64_t dx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (dx >= ndat)
+    return;
+  out[blockIdx.y * ochanpol_stride + dx] = in[blockIdx.y * ichanpol_stride + dx];
+}
+
+__global__ void copy_data_fpt_kernel_ndim1(float * out, float* in,
+                                     uint64_t ichanpol_stride,
+                                     uint64_t ochanpol_stride,
+                                     uint64_t ndat)
+{
+  uint64_t dx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (dx >= ndat)
+    return;
+  //if ((in[blockIdx.y * ichanpol_stride + dx] < -1) || (in[blockIdx.y * ichanpol_stride + dx] > 1))
+  //  printf("[%d][%lu] %f\n", blockIdx.y, dx,  in[blockIdx.y * ichanpol_stride + dx]);
+  out[blockIdx.y * ochanpol_stride + dx] = in[blockIdx.y * ichanpol_stride + dx];
+}
+
+
 template<typename T>
 __global__ void copy_data_fpt_kernel(T * out, T* in,
                                      uint64_t ichanpol_stride,
@@ -57,6 +82,7 @@ void CUDA::TimeSeriesEngine::prepare_buffer (unsigned nbytes)
       memory->do_free (buffer);
     buffer_size = nbytes;
     buffer = memory->do_allocate (buffer_size);
+    memory->do_zero(buffer, buffer_size);
   }
 }
 
@@ -67,7 +93,7 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
   // cuda device that is executing this function
   int device;
   cudaGetDevice(&device);
-  
+
 #ifdef _DEBUG
   cerr << "CUDA::TimeSeriesEngine::copy_data_fpt from=" << (void *) from 
        << " idat_start=" << idat_start << " ndat=" << ndat << " device=" << device << endl;
@@ -85,9 +111,9 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
   if (!from_mem)
     throw Error (FailedSys, "CUDA::TimeSeriesEngine::copy_data_fpt", "From TimeSeries did not use DeviceMemory");
 
-  unsigned nchan = to->get_nchan();
-  unsigned npol  = to->get_npol();
-  unsigned ndim  = to->get_ndim();
+  unsigned nchan = from->get_nchan();
+  unsigned npol  = from->get_npol();
+  unsigned ndim  = from->get_ndim();
   
   uint64_t ichanpol_stride = 0;
   uint64_t ochanpol_stride = 0;
@@ -116,6 +142,8 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
        << (void*) to_stream << " from=" << (void*) from_stream << endl;
   cerr << "CUDA::TimeSeriesEngine::copy_data_fpt device to=" << device 
        << " from=" << from_device << endl;
+  cerr  << "CUDA::TimeSeriesEngine::copy_data_fpt nchan=" << nchan << " ndim=" << ndim << " npol=" << npol << " ndat=" << ndat << endl;
+  cerr  << "CUDA::TimeSeriesEngine::copy_data_fpt istride=" << ichanpol_stride << " ostride=" << ochanpol_stride << " bstride=" << bchanpol_stride << endl;
 #endif
 
   unsigned nthread = 1024;
@@ -124,6 +152,10 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
   dim3 blocks = dim3 (ndat / nthread, nchan*npol);
   if (ndat % nthread)
     blocks.x++;
+
+#ifdef _DEBUG
+  cerr << "blocks=(" << blocks.x << "," << blocks.y << ") threads=" << nthread << endl;
+#endif
 
   size_t nbytes = nchan * ndim * npol * ndat * sizeof(float);
 
@@ -140,8 +172,9 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
       cudaSetDevice (from_device);
 
     CUDA::TimeSeriesEngine * from_engine = dynamic_cast<CUDA::TimeSeriesEngine*>(from->get_engine());
-
     from_engine->prepare_buffer (nbytes);
+
+    cudaStreamSynchronize (from_stream);
 
     // copy from -> buffer
     if (ndim == 2)
@@ -157,6 +190,7 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
       float * from_ptr = (float *) from->get_datptr (0,0);
       copy_data_fpt_kernel<float><<<blocks,nthread,0,from_stream>>> (
         to_ptr, from_ptr + idat_start, ichanpol_stride, bchanpol_stride, ndat);
+      //cudaDeviceSynchronize();
     }
 
     if (to_device != from_device)
@@ -165,28 +199,36 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
     }
     else
     {
-      cudaMemcpy(buffer, from_engine->buffer, nbytes, cudaMemcpyDeviceToDevice);
+      // wait for the from stream to complete all pending work
+      cudaMemcpyAsync(buffer, from_engine->buffer, nbytes, cudaMemcpyDeviceToDevice, from_stream);
+      cudaStreamSynchronize(from_stream);
     }
 
     // switch to the from_device to ensure buffer is allocated
     if (to_device != from_device)
       cudaSetDevice (to_device);
 
+    cudaStreamSynchronize(to_stream);
+
     // copy buffer -> to
     if (ndim == 2)
     {
       float2 * to_ptr   = (float2 *) to->get_datptr (0,0);
       float2 * from_ptr = (float2 *) buffer;
-      copy_data_fpt_kernel<float2><<<blocks,nthread,0,to_stream>>> (
+      copy_data_fpt_kernel_ndim2<<<blocks,nthread,0,to_stream>>> (
           to_ptr, from_ptr, bchanpol_stride, ochanpol_stride, ndat);
     }
     else
     {
       float * to_ptr   = (float *) to->get_datptr (0,0);
       float * from_ptr = (float *) buffer;
-      copy_data_fpt_kernel<float><<<blocks,nthread,0,to_stream>>> (
+      copy_data_fpt_kernel_ndim1<<<blocks,nthread,0,to_stream>>> (
         to_ptr, from_ptr, bchanpol_stride, ochanpol_stride, ndat);
+      //cudaDeviceSynchronize();
     }
+    if (device != to_device || device != from_device)
+      cudaSetDevice(device);
+    cudaStreamSynchronize(to_stream);
   }
   // in the same stream & device
   else
@@ -195,18 +237,17 @@ void CUDA::TimeSeriesEngine::copy_data_fpt (const dsp::TimeSeries* from,
     {
       float2 * to_ptr   = (float2 *) to->get_datptr (0,0);
       float2 * from_ptr = (float2 *) from->get_datptr (0,0);
-      copy_data_fpt_kernel<float2><<<blocks,nthread,0,to_stream>>> (
+      copy_data_fpt_kernel_ndim2<<<blocks,nthread,0,to_stream>>> (
         to_ptr, from_ptr + idat_start, ichanpol_stride, ochanpol_stride, ndat);
     }
     else
     {
       float * to_ptr   = (float *) to->get_datptr (0,0);
       float * from_ptr = (float *) from->get_datptr (0,0);
-      copy_data_fpt_kernel<float><<<blocks,nthread,0,to_stream>>> (
+      copy_data_fpt_kernel_ndim1<<<blocks,nthread,0,to_stream>>> (
         to_ptr, from_ptr + idat_start, ichanpol_stride, ochanpol_stride, ndat);
+      //cudaDeviceSynchronize();
     }
   }
-
-  cudaSetDevice(device);
 }
 

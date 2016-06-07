@@ -56,8 +56,10 @@ libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
 if HAVE_CUDA
-nobase_include_HEADERS += dsp/MemoryCUDA.h dsp/GenericEightBitUnpackerCUDA.h
-libClasses_la_SOURCES += MemoryCUDA.C check_error.C GenericEightBitUnpackerCUDA.cu
+nobase_include_HEADERS += dsp/MemoryCUDA.h dsp/GenericEightBitUnpackerCUDA.h \
+                          dsp/TimeSeriesCUDA.h
+libClasses_la_SOURCES += MemoryCUDA.C check_error.C GenericEightBitUnpackerCUDA.cu \
+                         TimeSeriesCUDA.cu
 libClasses_la_LIBADD = @CUDA_LIBS@
 endif
 
