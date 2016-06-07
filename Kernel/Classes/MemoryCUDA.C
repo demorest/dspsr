@@ -46,6 +46,12 @@ void CUDA::PinnedMemory::do_free (void* ptr)
  *
  ***************************************************************************/
 
+CUDA::DeviceMemory::DeviceMemory (cudaStream_t _stream, int _device)
+{
+  stream = _stream; 
+  device = _device;
+} 
+
 void* CUDA::DeviceMemory::do_allocate (size_t nbytes)
 {
   DEBUG("CUDA::DeviceMemory::allocate cudaMalloc (" << nbytes << ")");
