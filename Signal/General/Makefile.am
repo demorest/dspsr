@@ -45,16 +45,18 @@ bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
 if HAVE_CUFFT
 
 nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
-	dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
-	dsp/TransferCUDA.h dsp/TransferBitSeriesCUDA.h \
-	dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h dsp/FZoomCUDA.h \
+  dsp/FilterbankCUDA.h dsp/filterbank_cuda.h \
+  dsp/TransferCUDA.h dsp/TransferBitSeriesCUDA.h \
+  dsp/SKMaskerCUDA.h dsp/DetectionCUDA.h dsp/FZoomCUDA.h \
   dsp/FScrunchCUDA.h dsp/TScrunchCUDA.h \
-	dsp/ConvolutionCUDA.h dsp/ConvolutionCUDASpectral.h 
-	dsp/ConvolutionCUDACallbacks.h
+  dsp/PScrunchCUDA.h dsp/PolnSelectCUDA.h \
+  dsp/ConvolutionCUDA.h dsp/ConvolutionCUDASpectral.h \
+  dsp/ConvolutionCUDACallbacks.h
 
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
-	TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu             \
+  TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu             \
   SKMaskerCUDA.cu FZoomCUDA.cu FScrunchCUDA.cu TScrunchCUDA.cu        \
+  PScrunchCUDA.cu PolnSelectCUDA.cu \
   ConvolutionCUDA.cu ConvolutionCUDASpectral.cu ConvolutionCUDACallbacks.cu
 
 bin_PROGRAMS += fftbatch_speed
