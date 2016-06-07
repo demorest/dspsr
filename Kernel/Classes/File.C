@@ -219,14 +219,12 @@ int64_t dsp::File::load_bytes_device (unsigned char* buffer, uint64_t bytes, voi
          << bytes << ", " << (void *) stream << ")" << endl;
 
   cudaError_t result;
+
   // ensure the host CPU buffer is large enough
   if (bytes > host_buffer_size)
   {
-    cerr << "dsp::File::load_bytes_device bytes[" << bytes <<"] > host_buffer_size[" << host_buffer_size << "]" << endl;
-
     if (host_buffer)
     {
-      result = cudaStreamSynchronize(stream);
       if (result != cudaSuccess)
         throw Error (InvalidState, "dsp::File::load_bytes_device",
                      "failed to synchronize cuda stream prior to buffer enlargement: %s",
@@ -269,6 +267,7 @@ int64_t dsp::File::load_bytes_device (unsigned char* buffer, uint64_t bytes, voi
       throw Error (InvalidState, "dsp::File::load_bytes_device",
                    "cudaMemcpyAsync (%p, %p, %"PRIu64") failed: %s",
                    (void *) buffer, host_buffer, bytes, cudaGetErrorString (result));
+    cudaStreamSynchronize(stream);
   }
   return bytes_read;
 }
