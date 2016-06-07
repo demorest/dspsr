@@ -159,6 +159,7 @@ void dsp::Seekable::load_data (BitSeries* data)
         " call load_bytes_device ("<< toread_bytes << ")" <<endl;
 
     bytes_read = load_bytes_device (into, toread_bytes, (void *) stream);
+    cudaStreamSynchronize (stream);
   }
   else
   {
