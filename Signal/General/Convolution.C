@@ -282,12 +282,12 @@ void dsp::Convolution::reserve ()
   uint64_t output_ndat = npart * nsamp_step;
   if ( state == Signal::Nyquist )
     output_ndat /= 2;
-    
+
   if( input != output )
     output->resize (output_ndat);
   else
     output->set_ndat (output_ndat);
-    
+
   // nfilt_pos complex points are dropped from the start of the first FFT
   output->change_start_time (nfilt_pos);
 
@@ -338,7 +338,6 @@ void dsp::Convolution::transformation ()
     prepare ();
 
   reserve ();
-
 
   if (verbose)
     cerr << "dsp::Convolution::transformation scratch"
