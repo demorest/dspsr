@@ -6,7 +6,6 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-#define _DEBUG 1
 
 #include "dsp/ConvolutionCUDASpectral.h"
 #include "CUFFTError.h"
@@ -34,8 +33,8 @@ __global__ void k_multiply_conv_spectral (float2* d_fft, const __restrict__ floa
 
 // ichan == blockIdx.y
 // ipt_bwd == blockIdx.x * blockDim.x + threadIdx.x
-__global__ void k_ncopy_conv_spectral (float2* output_data, unsigned ostride,
-           const float2* input_data, unsigned istride,
+__global__ void k_ncopy_conv_spectral (float2* output_data, uint64_t ostride,
+           const float2* input_data, uint64_t istride,
            unsigned nfilt_pos, unsigned nsamp_step)
 {
 
@@ -44,26 +43,14 @@ __global__ void k_ncopy_conv_spectral (float2* output_data, unsigned ostride,
   if (idx < nfilt_pos)
     return;
 
-  unsigned in_offset  = (blockIdx.y * istride);
-  unsigned out_offset = (blockIdx.y * ostride);
+  uint64_t in_offset  = istride * blockIdx.y;
+  uint64_t out_offset = ostride * blockIdx.y;
 
   unsigned isamp = idx;
   unsigned osamp = idx - nfilt_pos;
 
-  //if (blockIdx.y == 0 && blockIdx.x < 1)
-  //  printf ("[%d][%d] ichan=%d osamp=%u isamp=%u in_offset=%u out_offset=%u\n",
-  //          blockIdx.x, threadIdx.x, blockIdx.y, osamp, isamp, in_offset, out_offset);
-
   if (osamp < nsamp_step)
     output_data[out_offset + osamp] = input_data[in_offset + isamp];
-  
-  //output_data[isamp-nfilt_pos] = input_data[isamp];
-  
-  //output_data[isamp-nfilt_pos] = input_data[isamp];
-
-  //output_data[(blockIdx.y * ostride) + idx] = input_data[(blockIdx.y * istride) + idx];
-  //output_data[(blockIdx.y * ostride) + idx].x = (float) idx;
-  //output_data[(blockIdx.y * ostride) + idx].y = (float) idx + 1;
 }
 
 CUDA::ConvolutionEngineSpectral::ConvolutionEngineSpectral (cudaStream_t _stream)
@@ -128,6 +115,16 @@ CUDA::ConvolutionEngineSpectral::~ConvolutionEngineSpectral()
   }
 }
 
+void CUDA::ConvolutionEngineSpectral::regenerate_plans()
+{
+  cufftResult result;
+  result = cufftDestroy (plan_fwd);
+  result = cufftCreate (&plan_fwd);
+
+  result = cufftDestroy (plan_bwd);
+  result = cufftCreate (&plan_bwd);
+}
+
 void CUDA::ConvolutionEngineSpectral::set_scratch (void * scratch)
 {
   d_scratch = (cufftComplex *) scratch;
@@ -171,6 +168,10 @@ void CUDA::ConvolutionEngineSpectral::setup_kernel (const dsp::Response * respon
   assert (ndim == 2);
   assert (d_kernels == 0);
 
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::ConvolutionEngineSpectral::setup_kernel response: "
+         << "nchan=" << nchan << " ndat=" << ndat << " ndim=" << ndim << endl;
+
 	// allocate memory for dedispersion kernel of all channels
 	unsigned kernels_size = ndat * sizeof(cufftComplex) * nchan;
   cudaError_t error = cudaMalloc ((void**)&d_kernels, kernels_size);
@@ -183,7 +184,9 @@ void CUDA::ConvolutionEngineSpectral::setup_kernel (const dsp::Response * respon
   // copy all kernels from host to device
   const float* kernel = response->get_datptr (0,0);
 
-  cerr << "CUDA::ConvolutionEngineSpectral::setup_kernel cudaMemcpy stream=" << stream << " size=" << kernels_size << endl;
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::ConvolutionEngineSpectral::setup_kernel cudaMemcpy stream=" 
+         << stream << " size=" << kernels_size << endl;
   if (stream)
     error = cudaMemcpyAsync (d_kernels, kernel, kernels_size, cudaMemcpyHostToDevice, stream);
   else
@@ -218,7 +221,10 @@ void CUDA::ConvolutionEngineSpectral::setup_batched (const dsp::TimeSeries* inpu
   npol  = input->get_npol();
   unsigned ndim = input->get_ndim();
 
-  cerr << "CUDA::ConvolutionEngineSpectral::setup_batched nchan=" << nchan << " npol=" << npol << " ndat=" << input->get_ndat() << endl;
+#ifdef _DEBUG
+  cerr << "CUDA::ConvolutionEngineSpectral::setup_batched nchan=" << nchan 
+       << " npol=" << npol << " ndat=" << input->get_ndat() << endl;
+#endif
 
   input_stride = (input->get_datptr (1, 0) - input->get_datptr (0, 0)) / ndim;
   output_stride = (output->get_datptr (1, 0) - output->get_datptr (0, 0) ) / ndim;
@@ -239,11 +245,15 @@ void CUDA::ConvolutionEngineSpectral::setup_batched (const dsp::TimeSeries* inpu
   istride = 1;
   ostride = 1;
 
-  idist = input_stride;
+  idist = (int) input_stride;
   odist = npt_bwd;
 
-  cerr << "CUDA::ConvolutionEngineSpectral::setup_batched npt_fwd=" << npt_fwd << " nbatch=" << nchan << endl;
-  cerr << "CUDA::ConvolutionEngineSpectral::setup_batched input_stride=" << input_stride << " output_stride=" << output_stride << endl;
+#ifdef _DEBUG
+  cerr << "CUDA::ConvolutionEngineSpectral::setup_batched npt_fwd=" << npt_fwd 
+       << " nbatch=" << nchan << endl;
+  cerr << "CUDA::ConvolutionEngineSpectral::setup_batched input_stride=" 
+       << input_stride << " output_stride=" << output_stride << endl;
+#endif
 
   // setup forward fft
   result = cufftMakePlanMany (plan_fwd, rank, &npt_fwd, 
@@ -274,7 +284,6 @@ void CUDA::ConvolutionEngineSpectral::setup_batched (const dsp::TimeSeries* inpu
     throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::setup_batched",
                       "cufftEstimateMany(plan_fwd)");
 
-
   istride = 1;
   ostride = 1;
 
@@ -283,7 +292,7 @@ void CUDA::ConvolutionEngineSpectral::setup_batched (const dsp::TimeSeries* inpu
   onembed[0] = nsamp_step;
 
   idist = npt_bwd;
-  odist = output_stride;
+  odist = (int) output_stride;
 #else
   inembed[0] = npt_bwd;
   onembed[0] = npt_bwd;
@@ -392,8 +401,22 @@ void CUDA::ConvolutionEngineSpectral::perform (const dsp::TimeSeries* input, dsp
   if (npart == 0)
     return;
 
+  uint64_t curr_istride = (input->get_datptr (1, 0) - input->get_datptr (0, 0)) / input->get_ndim();
+  uint64_t curr_ostride = (output->get_datptr (1, 0) - output->get_datptr (0, 0)) / output->get_ndim();
+
+  if (dsp::Operation::verbose)
+    cerr << "CUDA::ConvolutionEngineSpectral::perform istride prev=" << input_stride << " curr=" << curr_istride << endl;
+
+  if (curr_istride != input_stride || curr_ostride != output_stride)
+  {
+    if (dsp::Operation::verbose)
+      cerr << "CUDA::ConvolutionEngineSpectral::perform reconfiguring FFT batch sizes" << endl;
+    fft_configured = false;
+  }
+
   if (!fft_configured)
   {
+    regenerate_plans ();
     setup_batched (input, output);
 #if HAVE_CUFFT_CALLBACKS
     cerr << "CUDA::ConvolutionEngineSpectral::perform setup_callbacks_ConvolutionCUDASpectral()" << endl;
@@ -420,11 +443,7 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
   const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
   const unsigned ndim = input->get_ndim();
-  const unsigned pol_stride = input_stride / npol;
-
-  uint64_t input_stride_curr = (input->get_datptr (1, 0) - input->get_datptr (0, 0)) / ndim;
-  uint64_t output_stride_curr = (output->get_datptr (1, 0) - output->get_datptr (0, 0) ) / ndim;
-  //cerr << "CUDA::ConvolutionEngineSpectral::perform_complex input_stride=" << input_stride << " output_stride=" << output_stride << " pol_stride=" << pol_stride << endl;
+  const uint64_t pol_stride = input_stride / npol;
 
   cufftComplex * in;
   cufftComplex * out;
@@ -438,7 +457,7 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
   dim3 blocks = dim3 (npt_bwd / mp.get_nthread(), nchan);
   unsigned nthreads = mp.get_nthread();
 
-  if (npt_bwd <= mp.get_nthread())
+  if (npt_bwd <= nthreads) 
   {
     blocks.x = 1;
     nthreads = npt_bwd;
@@ -450,15 +469,11 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
   }
 #endif
 
-  //cerr << "blocks=" << blocks.x << ", " << blocks.y << " threads=" << nthreads << endl;
-
   cufftComplex * in_t  = (cufftComplex *) input->get_datptr (0, 0);
   cufftComplex * out_t = (cufftComplex *) output->get_datptr (0, 0);
 
   if (dsp::Operation::verbose)
     cerr << "CUDA::ConvolutionEngineSpectral::perform_complex in=" << in_t << " out=" << out_t << endl;
-
-  //cerr << "nfilt_pos=" << nfilt_pos << " nsamp_step=" << nsamp_step << " npart=" << npart << " ndat=" << input->get_ndat() << endl;
 
   for (unsigned ipart=0; ipart<npart; ipart++)
   {
@@ -482,7 +497,7 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
 
 #else
       // multiply by the dedispersion kernel
-      //k_multiply_conv_spectral<<<blocks, nthreads, 0, stream>>> (buf, d_kernels, npt_bwd);
+      k_multiply_conv_spectral<<<blocks, nthreads, 0, stream>>> (buf, d_kernels, npt_bwd);
 
       // perform the inverse batched FFT (in-place)
       result = cufftExecC2C (plan_bwd, buf, buf, CUFFT_INVERSE);
@@ -490,13 +505,10 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
         throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::perform_complex",
                           "cufftExecC2C(plan_bwd)");
 
-      //cerr << "[" << ipart << "," << ipol << "]=" << (out - (cufftComplex *) output->get_datptr (0, 0)) << endl;
-
       // copy batches of output from input
-      //cerr << "k_ncopy_conv_spectral: output_stride=" << output_stride << "npt_bwd=" << npt_bwd << " nfilt_pos=" << nfilt_pos << "nsamp_step=" << nsamp_step << endl;
       k_ncopy_conv_spectral<<<blocks, nthreads, 0, stream>>> (out, output_stride,
-                                                     buf, npt_bwd,
-                                                     nfilt_pos, nsamp_step);
+                                                              buf, npt_bwd,
+                                                              nfilt_pos, nsamp_step);
 #endif
       in  += pol_stride;
       out += pol_stride;
@@ -505,7 +517,6 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
     in_t  += nsamp_step;
     out_t += nsamp_step;
   }
-  
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error_stream( "CUDA::ConvolutionEngineSpectral::perform_complex", stream );

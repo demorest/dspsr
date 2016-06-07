@@ -25,6 +25,8 @@ namespace CUDA
     ConvolutionEngineSpectral (cudaStream_t stream);
     ~ConvolutionEngineSpectral();
 
+    void regenerate_plans();
+
     void set_scratch (void * scratch);
 
     //! prepare the required attributes for the engine
@@ -84,9 +86,9 @@ namespace CUDA
 
     bool fft_configured;
 
-    unsigned input_stride;
+    uint64_t input_stride;
 
-    unsigned output_stride;
+    uint64_t output_stride;
 
     int npt_fwd;
 
