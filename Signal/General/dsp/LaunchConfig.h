@@ -27,6 +27,10 @@ namespace CUDA
 
     //! gets the current device ID and calls cudaGetDeviceProperties
     void init ();
+
+    size_t get_max_threads_per_block ();
+
+    size_t get_max_shm ();
   };
 
 
