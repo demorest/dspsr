@@ -156,6 +156,9 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
          << " input.span=" << input_span 
          << " output.span=" << output_span << endl;
 
+  if (ndat == 0)
+    return;
+
   dim3 threads (128);
   dim3 blocks (ndat/threads.x, nchan);
 
