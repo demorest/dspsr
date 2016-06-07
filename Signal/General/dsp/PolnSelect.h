@@ -34,11 +34,32 @@ namespace dsp
     // Get the currently selected poln index
     int get_ipol () const { return ipol_keep; }
 
+    class Engine;
+
+    void set_engine (Engine*);
+
   protected:
 
     //! The polarization to keep
     int ipol_keep;
   };
+
+  class PolnSelect::Engine : public OwnStream
+  {
+  public:
+
+    virtual void setup () = 0;
+
+    virtual void fpt_polnselect (int ipol,
+                                 const dsp::TimeSeries * in,
+                                 dsp::TimeSeries * out) = 0;
+
+    virtual void tfp_polnselect (int ipol,
+                                 const dsp::TimeSeries* in,
+                                 dsp::TimeSeries* out) = 0;
+
+   };
+
 }
 
 #endif
