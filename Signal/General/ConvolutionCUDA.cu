@@ -268,7 +268,8 @@ void CUDA::ConvolutionEngine::setup_kernel (const dsp::Response * response)
   // copy all kernels from host to device
   const float* kernel = response->get_datptr (0,0);
 
-  cerr << "CUDA::ConvolutionEngine::setup_kernel cudaMemcpy stream=" << stream << " size=" << kernels_size << endl;
+  cerr << "CUDA::ConvolutionEngine::setup_kernel cudaMemcpy stream=" << stream 
+       << " size=" << kernels_size << endl;
   if (stream)
     error = cudaMemcpyAsync (d_kernels, kernel, kernels_size, cudaMemcpyHostToDevice, stream);
   else
