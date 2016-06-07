@@ -11,9 +11,6 @@
 
 #include "Error.h"
 
-// threads per block - C1060=256 [TODO CHECK below if changing]
-#define __CASPSR_UNPACK_TPB 256
-
 using namespace std;
 
 /* 
@@ -50,36 +47,37 @@ __global__ void unpack_real_ndim1 (uint64_t ndat, float scale,
   extern __shared__ int8_t sdata[];
 
   unsigned idx_shm = threadIdx.x;
-  unsigned idx     = threadIdx.x;
+  unsigned idx     = (8 * blockIdx.x * blockDim.x) + threadIdx.x;
   unsigned i;
-
-  from += (8 * blockIdx.x * blockDim.x);
 
   // each thread will load 8 values (coalesced) from GMEM to SHM
   for (i=0; i<8; i++)
   {
-    sdata[idx_shm] = from[idx];
+    if (idx < 2*ndat)
+    {
+      sdata[idx_shm] = from[idx];
 
-    idx     += blockDim.x;
-    idx_shm += blockDim.x;
+      idx     += blockDim.x;
+      idx_shm += blockDim.x;
+    }
   }
 
   __syncthreads();
 
-  float * to_A   = into_pola + (4 * blockIdx.x * blockDim.x);
-  float * to_B   = into_polb + (4 * blockIdx.x * blockDim.x); 
-
-  idx     = threadIdx.x;
+  idx     = (4 * blockIdx.x * blockDim.x) + threadIdx.x;
   idx_shm = threadIdx.x + ((threadIdx.x / 4) * 4);
 
   // each thread will write 4 values (coalesced) from SHM to GMEM
   for (i=0; i<4; i++)
   {
-    to_A[idx] = ((float) sdata[idx_shm]   + 0.5) * scale; 
-    to_B[idx] = ((float) sdata[idx_shm+4] + 0.5) * scale;
+    if (idx < ndat)
+    {
+      into_pola[idx] = ((float) sdata[idx_shm]   + 0.5) * scale; 
+      into_polb[idx] = ((float) sdata[idx_shm+4] + 0.5) * scale;
 
-    idx += blockDim.x;
-    idx_shm += blockDim.x * 2;
+      idx += blockDim.x;
+      idx_shm += blockDim.x * 2;
+    }
   }
 }
 
@@ -87,8 +85,12 @@ void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale,
                     unsigned char const* input, float* pol0, float* pol1,
                     int nthread)
 {
+
   // each thread will unpack 4 time samples from each polarization
-  int nblock = ndat / (4*nthread);
+  int nsamp_per_block = 4 * nthread;
+  int nblock = ndat / nsamp_per_block;
+  if (ndat % nsamp_per_block)
+    nblock++;
 
 #ifdef _DEBUG
   cerr << "caspsr_unpack ndat=" << ndat << " scale=" << scale 
@@ -98,19 +100,7 @@ void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale,
 
   int8_t * from = (int8_t *) input;
   size_t shm_bytes = 8 * nthread;
-
   unpack_real_ndim1<<<nblock,nthread,shm_bytes,stream>>> (ndat, scale, from, pol0, pol1);
-
-  // AJ's theory... 
-  // If there are no stream synchronises on the input then the CPU pinned 
-  // memory load from the input class might be able to get ahead of a whole 
-  // sequence of GPU operations, and even exceed one I/O loop. Therefore this 
-  // should be a reuqirement to have a stream synchronize some time after the 
-  // data are loaded from pinned memory to GPU ram and the next Input copy to 
-  // pinned memory
-
-  // put it here for now
-  // cudaStreamSynchronize(stream);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error ("caspsr_unpack");
