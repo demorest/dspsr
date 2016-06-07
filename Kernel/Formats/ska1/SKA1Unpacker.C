@@ -169,11 +169,6 @@ void dsp::SKA1Unpacker::unpack ()
   }
 }
 
-//unsigned dsp::SKA1Unpacker::get_resolution () const 
-//{ 
-//  return input->get_nchan() * npol * ndim;
-//}
-
 #ifndef SKA1_ENGINE_IMPLEMENTATION
 #if HAVE_CUDA
 void dsp::SKA1Unpacker::unpack_on_gpu ()
@@ -191,13 +186,10 @@ void dsp::SKA1Unpacker::unpack_on_gpu ()
 
   uint64_t nval = ndat * nchan * npol;
 
-  float * into    = (float *) output->internal_get_buffer();
+  float * into    = (float *) output->get_datptr(0,0);
   size_t pol_span = output->get_datptr(0, 1) - output->get_datptr(0,0);
-  unsigned resolution = input->get_loader()->get_resolution();
 
-  //cerr << "dsp::SKA1Unpacker::unpack_on_gpu ndat=" << ndat << " nval=" << nval << " pol_span=" << pol_span << " resolution=" << resolution << endl;
-  ska1_unpack_fpt (stream, nval, table->get_scale(), into, from, resolution, nchan, npol, ndim, pol_span);
-
+  ska1_unpack_fpt (stream, ndat, table->get_scale(), into, from, nchan, pol_span);
 }
 #endif
 #endif

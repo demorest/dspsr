@@ -15,39 +15,35 @@
 
 #include "Error.h"
 #define WARP_SIZE 32
+#define BLOCK_SIZE 1024
 //#define _GDEBUG
 
 using namespace std;
 
 void check_error (const char*);
 
-__global__ void k_unpack_fpt (uint64_t nval, float scale,
-                              float * to, const int8_t * from,
-                              const unsigned nchan,
-                              uint64_t pol_stride, unsigned nval_per_thread,
-                              unsigned nval_per_block, unsigned block_stride)
+__global__ void k_unpack_fpt (float2 * to, const char2 * from,
+                              uint64_t ndat, uint64_t ostride,
+                              float scale)
 {
-  const unsigned ichanpol = blockIdx.y;
-  const unsigned ichunk = blockIdx.x;
+  const uint64_t idat = (blockIdx.x * blockDim.x) + threadIdx.x;
+  if (idat >= ndat)
+    return;
 
-  // block_stride, chanpol_stride is in units of complex samples [16 bits]
-  unsigned idx_in = (ichunk * block_stride) + (ichanpol * nval_per_block) + threadIdx.x;
-  unsigned idx_ou = (ichanpol * pol_stride) + (ichunk * nval_per_block)   + threadIdx.x;
+  const unsigned ichanpol = blockIdx.y * gridDim.z + blockIdx.z;
+  const unsigned blk_stride = gridDim.y * gridDim.z * BLOCK_SIZE;
 
-  float val;
-  unsigned ival;
+  //                   iblk                      ichanpol              isamp
+  const uint64_t idx = (blockIdx.x*blk_stride) + ichanpol*BLOCK_SIZE + threadIdx.x;
+  const uint64_t odx = (ichanpol * ostride) + idat;
 
-  for (ival=0; ival<nval_per_thread; ival++)
-  {
-    if (idx_in < nval)
-    {
-      val = (float(from[idx_in]) + 0.5) * scale;
-      to[idx_ou] = val;
-    }
-    // incrememnt pointers by block size (thread count)
-    idx_in += blockDim.x;
-    idx_ou += blockDim.x;
-  }
+  char2 packed = from[idx];
+  float2 unpacked;
+  unpacked.x = ((float) packed.x + 0.5) * scale;
+  unpacked.y = ((float) packed.y + 0.5) * scale;
+  //unpacked.x = (float) scale;
+  //unpacked.y = (float) scale;
+  to[odx] = unpacked;
 }
 
 __global__ void k_unpack_tfp (uint64_t nval, float scale,
@@ -246,53 +242,38 @@ void ska1_unpack_tfp (cudaStream_t stream, uint64_t nval, float scale,
   return;
 }
 
-void ska1_unpack_fpt (cudaStream_t stream, uint64_t nval, float scale,
-                      float * into, void * from, unsigned resolution,
-                      unsigned nchan, unsigned npol, unsigned ndim,
+void ska1_unpack_fpt (cudaStream_t stream, uint64_t ndat, float scale,
+                      float * into, void * from, unsigned nchan,
                       size_t pol_span)
 {
   const unsigned nthreads = 1024;
+  const unsigned npol = 2;
+  const unsigned ndim = 2;
 
-  // number of data points that will be processed by the kernel
-  uint64_t ndat = nval / (npol * nchan);
+  dim3 blocks (ndat / nthreads,  nchan, npol);
+  if (ndat % nthreads)
+    blocks.x++;
 
-  dim3 blocks (ndat / resolution,  nchan * npol);
-  if (ndat % resolution)
-    ndat++;
-
-  // resolution is the number of time samples [not bytes!]
-  unsigned nval_per_thread = (resolution * ndim) / nthreads;
-  if (resolution % nthreads)
-    nval_per_thread++;
-
-  // block stride is width of an input resolution [dada buffer] block given the
-  // input is in FPT order, it will be block in resolution samples
-  const unsigned block_stride   = resolution * npol * nchan * ndim;
-
-  // this is the number of values each block will need to unpack
-  const unsigned nval_per_block = block_stride / (nchan * npol);
-
-  // this is the stride (in samples) between polarisations
-  const uint64_t pol_stride = (uint64_t) pol_span / (sizeof(float) * ndim);
+  // output pol stride in uints of float2
+  const uint64_t pol_stride = (uint64_t) pol_span / ndim;
 
 #ifdef _GDEBUG
-  cerr << "nval=" << nval << " nchan=" << nchan << " npol=" << npol << " pol_span=" << pol_span << endl;
-  cerr << "resolution=" << resolution << " block_stride=" << block_stride << " pol_stride=" << pol_stride << endl;
+  cerr << "ndat=" << ndat << " nchan=" << nchan << " pol_span=" << pol_span << endl;
+  cerr << "pol_stride=" << pol_stride << endl;
   cerr << "into=" << (void *) into << " from=" << from << endl;
   cerr << "nblocks=" << blocks.x << " nthreads=" << nthreads << endl;
-  cerr << "nval_per_thread=" << nval_per_thread << " nval_per_block=" << nval_per_block << endl;
 #endif
 
+  //uint64_t myscale = reinterpret_cast<uint64_t>(stream);
+  //scale = (float) myscale;
+  //cerr << "stream=" << (void *) stream << " scale=" << scale << endl;
+
   //const unsigned sdata_bytes = nthreads * ndim;
-  k_unpack_fpt<<<blocks,nthreads,0,stream>>> (nval, scale, (float *) into, (int8_t *) from, 
-                                              nchan, pol_stride, nval_per_thread, nval_per_block,
-                                              block_stride);
+  k_unpack_fpt<<<blocks,nthreads,0,stream>>> ((float2 *) into, (char2 *) from, ndat, pol_stride, scale);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error ("CUDA::SKA1UnpackerEngine::k_unpack_fpt");
 
   return;
 }
-
-
 #endif

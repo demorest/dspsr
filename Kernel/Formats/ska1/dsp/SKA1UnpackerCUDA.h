@@ -49,9 +49,8 @@ void ska1_unpack_tfp (cudaStream_t stream, uint64_t nval, float scale,
                       unsigned  nchan, unsigned npol, unsigned ndim,
                       size_t pol_span);
 
-void ska1_unpack_fpt (cudaStream_t stream, uint64_t nval, float scale,
-                      float * into, void * staged, unsigned resolution,
-                      unsigned  nchan, unsigned npol, unsigned ndim,
+void ska1_unpack_fpt (cudaStream_t stream, uint64_t ndat, float scale,
+                      float * into, void * staged, unsigned  nchan,
                       size_t pol_span);
 #endif
 
