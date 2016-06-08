@@ -151,6 +151,7 @@ namespace dsp {
 
     Reference::To<Memory> device_memory;
     void* gpu_stream;
+    int gpu_device;
 
   };
 
