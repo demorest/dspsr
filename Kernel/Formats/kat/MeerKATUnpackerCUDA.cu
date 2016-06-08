@@ -14,8 +14,6 @@
 
 #include <cuComplex.h>
 
-//#define _DEBUG 
-
 using namespace std;
 
 void check_error (const char*);
@@ -23,14 +21,17 @@ void check_error (const char*);
 // each thread unpacks 1 complex sample
 __global__ void meerkat_unpack_fpt_kernel (const uint64_t ndat, float scale, const char2 * input, cuFloatComplex * output, uint64_t ostride)
 {
+  // blockIdx.x is the heap number, threadIdx.x is the sample number in the heap
   const uint64_t idat = (blockIdx.x * blockDim.x) + threadIdx.x;
   if (idat >= ndat)
     return;
 
-  //                        ichan      * npol      + ipol
-  const unsigned ichanpol = blockIdx.y * gridDim.z + blockIdx.z;
+  const unsigned ichanpol    = blockIdx.y * gridDim.z + blockIdx.z; // ichan * npol + ipol
+  const unsigned pol_stride  = gridDim.y * blockDim.x;   // nchan * heap_size
+  const unsigned heap_stride = gridDim.z * pol_stride;  // npol * pol_stride
 
-  const uint64_t idx = (ichanpol * ndat)    + idat;
+  //                    iheap                        ipol                        ichan      * heap_size
+  const uint64_t idx = (blockIdx.x * heap_stride) + (blockIdx.z * pol_stride) + (blockIdx.y * blockDim.x) + threadIdx.x;
   const uint64_t odx = (ichanpol * ostride) + idat;
 
   char2 in16 = input[idx];
@@ -39,8 +40,6 @@ __global__ void meerkat_unpack_fpt_kernel (const uint64_t ndat, float scale, con
   out64.x  = ((float) in16.x + 0.5) * scale;
   out64.y  = ((float) in16.y + 0.5) * scale;
 
-  //if (blockIdx.y == 0 && blockIdx.z == 0)
-  //  printf ("in[%lu] (%d,%d) out[%lu] (%f,%f)\n", idx, in16.x, in16.y, odx, out64.x, out64.y);
   output[odx] = out64;
 }
 
@@ -92,7 +91,8 @@ void CUDA::MeerKATUnpackerEngine::unpack (float scale, const dsp::BitSeries * in
     cerr << "CUDA::MeerKATUnpackerEngine::unpack from=" << (void *) from
          << " to=" << (void *) into << " pol_span=" << pol_span << endl;
 
-  int nthread = gpu.maxThreadsPerBlock;
+  // since 256 samples per heap
+  int nthread = 256;
 
   // each thread will unpack 4 time samples
   dim3 blocks = dim3 (ndat / nthread, nchan, npol);
@@ -110,8 +110,5 @@ void CUDA::MeerKATUnpackerEngine::unpack (float scale, const dsp::BitSeries * in
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error ("CUDA::MeerKATUnpackerEngine::unpack");
-
-  // put it here for now
-  cudaStreamSynchronize(stream);
 }
 

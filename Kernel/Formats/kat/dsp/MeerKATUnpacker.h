@@ -17,6 +17,14 @@ namespace dsp {
     MeerKATUnpacker (const char* name = "MeerKATUnpacker");
     ~MeerKATUnpacker ();
 
+    bool get_order_supported (TimeSeries::Order order) const;
+    void set_output_order (TimeSeries::Order order);
+
+
+    unsigned get_output_offset (unsigned idig) const;
+    unsigned get_output_ipol (unsigned idig) const;
+    unsigned get_output_ichan (unsigned idig) const;
+
     //! Cloner (calls new)
     virtual MeerKATUnpacker * clone () const;
 
@@ -46,6 +54,10 @@ namespace dsp {
   private:
 
     bool device_prepared;
+
+    int8_t * tfp_buffer;
+
+    size_t tfp_buffer_size;
 
   };
 
