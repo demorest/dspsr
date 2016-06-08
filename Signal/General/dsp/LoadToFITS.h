@@ -70,6 +70,10 @@ namespace dsp {
     // Sets default values
     Config ();
 
+    // set block_size to result in at least this much RAM usage
+    void set_maximum_RAM (uint64_t);
+    uint64_t get_maximum_RAM () const { return maximum_RAM; }
+
     // input data block size in MB
     double block_size;
 
