@@ -10,6 +10,7 @@
 #include "dsp/FITSDigitizer.h"
 #include "dsp/InputBuffering.h"
 #include <assert.h>
+#include <omp.h>
 
 void dsp::FITSDigitizer::set_digi_scales()
 {
@@ -375,7 +376,6 @@ void dsp::FITSDigitizer::pack ()
   // with F in inner loop
   case TimeSeries::OrderTFP:
   {
-#pragma omp parallel for
     for (uint64_t idat=0; idat < ndat; idat++)
     {
       unsigned char* outptr = output->get_rawptr() + (idat*nchan*npol)/samp_per_byte;
@@ -607,6 +607,7 @@ void dsp::FITSDigitizer::rescale_pack ()
     int bit_counter=0;
     unsigned inner_stride = nchan * npol;
     unsigned idx = 0, bit_shift = 0; // make gcc happy
+#pragma omp parallel for
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
       unsigned mapped_chan = channel (ichan);
