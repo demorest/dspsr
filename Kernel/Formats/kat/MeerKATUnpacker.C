@@ -179,7 +179,7 @@ void dsp::MeerKATUnpacker::unpack ()
     cerr << "dsp::MeerKATUnpacker::unpack nheap=" << nheap << " ndat=" << ndat << " nchan=" << nchan 
          << " npol=" << npol << " nval=" << nval << endl;
 
-  unsigned long * digs[2];
+  //unsigned long * digs[2];
 
   switch ( output->get_order() )
   {
@@ -195,16 +195,16 @@ void dsp::MeerKATUnpacker::unpack ()
           for (unsigned ichan=0; ichan<nchan; ichan++)
           {
             unsigned idig = ichan*ndim*npol + ipol*ndim;
-            digs[0] = get_histogram (idig+0);
-            digs[1] = get_histogram (idig+1);
+            //digs[0] = get_histogram (idig+0);
+            //digs[1] = get_histogram (idig+1);
             into = output->get_datptr (ichan, ipol) + iheap*nsamp_per_heap * ndim; 
 
             for (unsigned isamp=0; isamp<nsamp_per_heap; isamp++)
             {
               from16 = from[isamp];
 
-              digs[0][(int) from8[0] + 127]++;
-              digs[1][(int) from8[1] + 127]++;
+              //digs[0][(int) from8[0] + 127]++;
+              //digs[1][(int) from8[1] + 127]++;
               into[2*isamp+0] = (float) from8[0] * scale;
               into[2*isamp+1] = (float) from8[1] * scale;
             }
@@ -232,16 +232,16 @@ void dsp::MeerKATUnpacker::unpack ()
           for (unsigned ichan=0; ichan<nchan; ichan++)
           {      
             unsigned idig = ichan*ndim*npol + ipol*ndim;
-            digs[0] = get_histogram (idig+0);
-            digs[1] = get_histogram (idig+1);
+            //digs[0] = get_histogram (idig+0);
+            //digs[1] = get_histogram (idig+1);
 
             float * into_ptr = into + (ichan*npol*ndim) + (ipol*ndim);
 
             for (unsigned isamp=0; isamp<nsamp_per_heap; isamp++)
             {
               from16 = from[isamp];
-              digs[0][(int) from8[0] + 127]++;
-              digs[1][(int) from8[1] + 127]++;
+              //digs[0][(int) from8[0] + 127]++;
+              //digs[1][(int) from8[1] + 127]++;
               into_ptr[0] = (float) from8[0] * scale;
               into_ptr[1] = (float) from8[1] * scale;
 
