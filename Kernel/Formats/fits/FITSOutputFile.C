@@ -105,6 +105,7 @@ dsp::FITSOutputFile::FITSOutputFile (const char* filename)
   nbit = 2;
 
   use_atnf = true;
+  max_length = 0;
 }
 
 dsp::FITSOutputFile::~FITSOutputFile ()
@@ -112,9 +113,23 @@ dsp::FITSOutputFile::~FITSOutputFile ()
   finalize_fits ();
 }
 
+unsigned char* dsp::FITSOutputFile::write_bytes (int colnum, int isub, int offset, unsigned bytes_to_write, unsigned char** buffer) {
+  int status = 0;
+  fits_write_col_byt (fptr, colnum, isub, offset, bytes_to_write, *buffer, &status);
+  if (status)
+    throw FITSError(status,"dsp::FITSOutputFile::write_bytes");
+  written += bytes_to_write;
+  *buffer += bytes_to_write;
+}
+
 void dsp::FITSOutputFile::set_atnf (bool _use_atnf)
 {
   use_atnf = _use_atnf;
+}
+
+void dsp::FITSOutputFile::set_max_length ( double _max_length )
+{
+  max_length = _max_length;
 }
 
 void dsp::FITSOutputFile::set_nsblk (unsigned nblk)
@@ -280,8 +295,8 @@ void dsp::FITSOutputFile::write_header ()
 
   // set_model must be called after the Integration::MJD has been set
 
-  //archive-> set_filename (get_filename (phase));
-  if (output_filename.empty())
+  // if using a maximum file size, re-generate file name
+  if (output_filename.empty() || max_bytes)
   {
     MJD epoch = get_input()->get_start_time();
     vector<char> buffer (FILENAME_MAX);
@@ -347,6 +362,9 @@ void dsp::FITSOutputFile::initialize ()
     }
   }
 
+  // reset bytes written
+  written = 0;
+
   int status = 0;
   fits_open_file (&fptr,output_filename.c_str(), READWRITE, &status);
   if (status)
@@ -392,6 +410,13 @@ void dsp::FITSOutputFile::initialize ()
 
   // TODO -- will need to fix this later on
   psrfits_update_key<int> (fptr, "NSUBOFFS", 0);
+
+  max_bytes = max_length*get_input()->get_rate() / (8/nbit) * nchan * npol;
+  if ( max_bytes && (max_bytes < nbblk) )
+    throw Error (InvalidState, "must set maximum file size > data block size (1 FITS row)" );
+  if ( max_bytes && (max_bytes % nbblk != 0))
+    cerr << "WARNING: maximum file size is not an integer number of data blocks; output files will not be contiguous under PSRFITS conventions." << endl;
+
 }
 
 void dsp::FITSOutputFile::operation ()
@@ -403,6 +428,27 @@ void dsp::FITSOutputFile::operation ()
   }
   if (verbose)
     cerr << "dsp::FITSOutputFile::operation" << endl;
+
+
+  // should handle both case where data block is larger than maximum file
+  // size and more typical case where file ends within a data block
+  if (max_bytes)
+  {
+    int64_t nbytes = get_input()->get_nbytes();
+    if (nbytes == 0) return;
+    nbytes -= unload_bytes (get_input()->get_rawptr(), 
+        std::min(max_bytes - written, nbytes));
+    while (nbytes)
+    {
+      finalize_fits ();
+      write_header ();
+      initialize ();
+      // NB written will == 0 here
+      nbytes -= unload_bytes (get_input()->get_rawptr(), 
+          std::min(max_bytes - written, nbytes));
+    }
+    return;
+  }
 
   unload_bytes (get_input()->get_rawptr(), get_input()->get_nbytes());
 
@@ -424,7 +470,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
          << " buffer=" << void_buffer << endl;
 
   unsigned to_write = bytes;
-  int status = 0;
+  //int status = 0;
   int colnum = dsp::get_colnum (fptr, "DATA");
   
   // write to incomplete block first
@@ -437,9 +483,10 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     // finish remainder of subint
     if (bytes >= remainder)
     {
-      fits_write_col_byt (fptr, colnum, isub, offset, remainder, 
-          buffer, &status);
-      buffer += remainder;
+      //fits_write_col_byt (fptr, colnum, isub, offset, remainder, 
+      //    buffer, &status);
+      write_bytes (colnum, isub, offset, remainder, &buffer);
+      //buffer += remainder;
       to_write -= remainder;
       offset = 0;
     }
@@ -447,9 +494,10 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     // write all available bytes without advancing subint
     else
     {
-      fits_write_col_byt (fptr, colnum, isub, offset, bytes, 
-          buffer, &status);
-      written += bytes;
+      //fits_write_col_byt (fptr, colnum, isub, offset, bytes, 
+      //    buffer, &status);
+      write_bytes (colnum, isub, offset, bytes, &buffer);
+      //written += bytes;
       offset += bytes;
       return bytes;
     }
@@ -467,9 +515,11 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     write_row ();
 
     // Now write that data into a subintegration in the PSRFITS file
-    fits_write_col_byt (fptr, colnum, isub, 1, nbblk, buffer, &status);
+    write_bytes (colnum, isub, 1, nbblk, &buffer);
+    //fits_write_col_byt (fptr, colnum, isub, 1, nbblk, buffer, &status);
+    //written += nbblk;
     to_write -= nbblk;
-    buffer += nbblk;
+    //buffer += nbblk;
   }
 
   // write out remaining bytes to partial subbint
@@ -477,7 +527,9 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
   {
     isub += 1;
     write_row();
-    fits_write_col_byt (fptr, colnum, isub, 1, to_write, buffer, &status);
+    //fits_write_col_byt (fptr, colnum, isub, 1, to_write, buffer, &status);
+    write_bytes (colnum, isub, 1, to_write, &buffer);
+    //written += to_write;
     offset += to_write;
   }
 
@@ -492,11 +544,13 @@ void dsp::FITSOutputFile::finalize_fits ()
   if (fptr) {
     psrfits_update_key<int> (fptr, "NAXIS2", isub);
     psrfits_update_key<int> (fptr, "NSTOT", written * (8/nbit) );
+    int nsuboffs =  get_input()->get_input_sample()/nsblk - written/nbblk;
+    psrfits_update_key<int> (fptr, "NSUBOFFS", nsuboffs);
     int status = 0;
     fits_close_file(fptr, &status);
-    if (status)
-      throw FITSError(status, "dsp::FITSOutputFile");
     fptr = NULL;
+    if (status)
+      throw FITSError(status, "dsp::FITSOutputFile::finalize_fits");
   }
 }
 

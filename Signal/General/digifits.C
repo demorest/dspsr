@@ -123,6 +123,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->nsblk, "nsblk", "N");
   arg->set_help ("output block size in samples (default=2048)");
 
+  arg = menu.add (config->integration_length, 'L', "seconds");
+  arg->set_help ("set maximum file length");
+
   arg = menu.add (config->dedisperse, 'K');
   arg->set_help ("remove inter-channel dispersion delays");
 
