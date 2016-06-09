@@ -52,6 +52,7 @@ Management/release.csh
 More/Applications/searchplot
 Signal/General/Makefile
 Signal/General/digifil
+Signal/General/digifits
 Signal/General/digihist
 Signal/General/digimon
 Signal/General/digistat
