@@ -362,8 +362,10 @@ void dsp::FITSOutputFile::initialize ()
     }
   }
 
-  // reset bytes written
+  // reset bytes written and current row, etc.
   written = 0;
+  isub = 0;
+  offset = 0;
 
   int status = 0;
   fits_open_file (&fptr,output_filename.c_str(), READWRITE, &status);
@@ -543,7 +545,8 @@ void dsp::FITSOutputFile::finalize_fits ()
     cerr << "dsp::FITSOutputFile::finalize_fits" << endl;
   if (fptr) {
     psrfits_update_key<int> (fptr, "NAXIS2", isub);
-    psrfits_update_key<int> (fptr, "NSTOT", written * (8/nbit) );
+    int nstot = (written*8)/(npol * nchan * nbit);
+    psrfits_update_key<int> (fptr, "NSTOT", nstot );
     int nsuboffs =  get_input()->get_input_sample()/nsblk - written/nbblk;
     psrfits_update_key<int> (fptr, "NSUBOFFS", nsuboffs);
     int status = 0;
