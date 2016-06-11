@@ -472,7 +472,6 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
          << " buffer=" << void_buffer << endl;
 
   unsigned to_write = bytes;
-  //int status = 0;
   int colnum = dsp::get_colnum (fptr, "DATA");
   
   // write to incomplete block first
@@ -485,10 +484,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     // finish remainder of subint
     if (bytes >= remainder)
     {
-      //fits_write_col_byt (fptr, colnum, isub, offset, remainder, 
-      //    buffer, &status);
       write_bytes (colnum, isub, offset, remainder, &buffer);
-      //buffer += remainder;
       to_write -= remainder;
       offset = 0;
     }
@@ -496,10 +492,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
     // write all available bytes without advancing subint
     else
     {
-      //fits_write_col_byt (fptr, colnum, isub, offset, bytes, 
-      //    buffer, &status);
       write_bytes (colnum, isub, offset, bytes, &buffer);
-      //written += bytes;
       offset += bytes;
       return bytes;
     }
@@ -518,10 +511,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
 
     // Now write that data into a subintegration in the PSRFITS file
     write_bytes (colnum, isub, 1, nbblk, &buffer);
-    //fits_write_col_byt (fptr, colnum, isub, 1, nbblk, buffer, &status);
-    //written += nbblk;
     to_write -= nbblk;
-    //buffer += nbblk;
   }
 
   // write out remaining bytes to partial subbint
@@ -529,9 +519,7 @@ int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t byt
   {
     isub += 1;
     write_row();
-    //fits_write_col_byt (fptr, colnum, isub, 1, to_write, buffer, &status);
     write_bytes (colnum, isub, 1, to_write, &buffer);
-    //written += to_write;
     offset += to_write;
   }
 
