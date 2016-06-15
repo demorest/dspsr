@@ -5,6 +5,10 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/Bandpass.h"
 #include "dsp/RFIFilter.h"
 
@@ -23,6 +27,11 @@
 #include "pgutil.h"
 #include "Error.h"
 
+#if HAVE_fits
+#include "dsp/FITSFile.h"
+#include "dsp/FITSUnpacker.h"
+#endif
+
 #include <cpgplot.h>
 #include <iostream>
 #include <unistd.h>
@@ -36,11 +45,13 @@ void usage ()
     "Options:\n"
     " -b         plot frequency bins (histogram style) \n"
     " -c cmap    set the colour map (0 to 7) \n"
+    " -D         set the PGPLOT device\n"
     " -d         produce dynamic spectrum (greyscale) \n"
     " -F min,max set the min,max x-value (e.g. frequency zoom) \n" 
     " -r min,max set the min,max y-value (e.g. saturate birdies) \n"
     " -n nchan   number of frequency channels in each spectrum \n"
     " -t seconds integration interval for each spectrum \n"
+    " -s         quit after a single integration \n"
     " -p         detect the full-polarization bandpass \n"
     " -R         test RFIFilter class \n"
        << endl;
@@ -65,6 +76,9 @@ int main (int argc, char** argv) try {
 
   // integration length
   double integrate = 1.0;
+
+  // quit after a single integration (for quicklook)
+  bool single_quit = false;
 
   // seek into file
   double seek_seconds = 0.0;
@@ -101,7 +115,7 @@ int main (int argc, char** argv) try {
   int width_pixels  = 0;
   int height_pixels = 0;
 
-  static const char* args = "ibB:c:dD:f:F:G:g:lr:n:pRS:T:t:hvV";
+  static const char* args = "ibB:c:dD:f:F:G:g:lr:n:pRS:T:t:shvV";
 
   while ((c = getopt(argc, argv, args)) != -1)
     switch (c) {
@@ -179,6 +193,10 @@ int main (int argc, char** argv) try {
 
     case 't':
       integrate = atof (optarg);
+      break;
+
+    case 's':
+      single_quit = true;
       break;
 
     case 'h':
@@ -304,6 +322,30 @@ int main (int argc, char** argv) try {
       cerr << "opening data file " << filenames[ifile] << endl;
       
     manager->open (filenames[ifile]);
+
+#if HAVE_fits
+    // Use callback to handle scales/offsets for read-in
+    if (manager->get_info()->get_machine() == "FITS")
+    {
+      if (dsp::Operation::verbose)
+        cerr << "Using callback to read PSRFITS file." << endl;
+      // connect a callback
+      bool success = false;
+      dsp::FITSUnpacker* funp = dynamic_cast<dsp::FITSUnpacker*> (
+          manager->get_unpacker());
+      dsp::FITSFile* ffile = dynamic_cast<dsp::FITSFile*> (
+          manager->get_input());
+      cerr << funp << endl;
+      cerr << ffile << endl;
+      if (funp && ffile)
+      {
+        ffile->update.connect ( funp, &dsp::FITSUnpacker::set_parameters );
+        success = true;
+      }
+      if (not success)
+        cerr << "dspsr: WARNING: FITS input input but unable to apply scales and offsets." << endl;
+    }
+#endif
     
     if (verbose)
       cerr << "data file " << filenames[ifile] << " opened" << endl;
@@ -409,6 +451,8 @@ int main (int argc, char** argv) try {
 
 	passband->reset_output();
       }
+      if (single_quit)
+        break;
     }
 
     if (dynamic)
