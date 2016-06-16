@@ -24,6 +24,7 @@
 #include "psrfitsio.h"
 
 #include <fcntl.h>
+#include <cstring>
 
 using namespace std;
 
@@ -104,7 +105,8 @@ dsp::FITSOutputFile::FITSOutputFile (const char* filename)
   nbblk = 0;
   nbit = 2;
 
-  use_atnf = true;
+  use_atnf = false;
+  mangle_output = false;
   max_length = 0;
 }
 
@@ -125,6 +127,11 @@ unsigned char* dsp::FITSOutputFile::write_bytes (int colnum, int isub, int offse
 void dsp::FITSOutputFile::set_atnf (bool _use_atnf)
 {
   use_atnf = _use_atnf;
+}
+
+void dsp::FITSOutputFile::set_mangle_output (bool _mangle_output)
+{
+  mangle_output = _mangle_output;
 }
 
 void dsp::FITSOutputFile::set_max_length ( double _max_length )
@@ -318,8 +325,17 @@ void dsp::FITSOutputFile::write_header ()
 		     "error MJD::datestr("+datestr_pattern+")");
     }
     output_filename = filename + get_extension();
+    if (mangle_output)
+    {
+      char buff [L_tmpnam];
+      tmpnam(buff);
+      mangled_output_filename = output_filename + (buff+strlen(buff)-6);
+    }
   }
-  archive -> unload (output_filename);
+  if (mangle_output)
+    archive -> unload (mangled_output_filename);
+  else
+    archive -> unload (output_filename);
 }
 
 void dsp::FITSOutputFile::write_row ()
@@ -368,7 +384,10 @@ void dsp::FITSOutputFile::initialize ()
   offset = 0;
 
   int status = 0;
-  fits_open_file (&fptr,output_filename.c_str(), READWRITE, &status);
+  if (mangle_output)
+    fits_open_file (&fptr,mangled_output_filename.c_str(), READWRITE, &status);
+  else
+    fits_open_file (&fptr,output_filename.c_str(), READWRITE, &status);
   if (status)
     throw FITSError (status, "dsp::FITSOutputFile::initialize",
         "unable to open FITS file for writing");
@@ -542,6 +561,11 @@ void dsp::FITSOutputFile::finalize_fits ()
     fptr = NULL;
     if (status)
       throw FITSError(status, "dsp::FITSOutputFile::finalize_fits");
+    if (mangle_output)
+    {
+      if (rename( mangled_output_filename.c_str(), output_filename.c_str()))
+        throw Error(FailedSys, "dsp::FITSOutputFile::finalize_fits");
+    }
   }
 }
 

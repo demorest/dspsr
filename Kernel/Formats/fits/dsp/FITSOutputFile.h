@@ -54,6 +54,9 @@ namespace dsp {
     //! Set the output filename convention
     void set_atnf ( bool );
 
+    //! Set output mangling
+    void set_mangle_output ( bool );
+
     //! Set length of output file (seconds)
     void set_max_length( double );
 
@@ -135,6 +138,10 @@ namespace dsp {
 
     //! Use ATNF datestr convention
     bool use_atnf;
+
+    //! Use a mangled file name for output; rename on file close
+    bool mangle_output;
+    std::string mangled_output_filename;
 
   };
 
