@@ -405,7 +405,11 @@ void CUDA::ConvolutionEngineSpectral::perform (const dsp::TimeSeries* input, dsp
   uint64_t curr_ostride = (output->get_datptr (1, 0) - output->get_datptr (0, 0)) / output->get_ndim();
 
   if (dsp::Operation::verbose)
-    cerr << "CUDA::ConvolutionEngineSpectral::perform istride prev=" << input_stride << " curr=" << curr_istride << endl;
+  {
+    cerr << "CUDA::ConvolutionEngineSpectral::perform istride prev=" << input_stride << " curr=" << curr_istride << " ndim=" << input->get_ndim() << endl;
+    cerr << "CUDA::ConvolutionEngineSpectral::perform ostride prev=" << output_stride << " curr=" << curr_ostride << " ndim=" <<
+output->get_ndim() << endl;
+  }
 
   if (curr_istride != input_stride || curr_ostride != output_stride)
   {
@@ -443,7 +447,8 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
   const unsigned npol = input->get_npol();
   const unsigned nchan = input->get_nchan();
   const unsigned ndim = input->get_ndim();
-  const uint64_t pol_stride = input_stride / npol;
+  const uint64_t ipol_stride = input_stride / npol;
+  const uint64_t opol_stride = output_stride / npol;
 
   cufftComplex * in;
   cufftComplex * out;
@@ -510,8 +515,8 @@ void CUDA::ConvolutionEngineSpectral::perform_complex (const dsp::TimeSeries* in
                                                               buf, npt_bwd,
                                                               nfilt_pos, nsamp_step);
 #endif
-      in  += pol_stride;
-      out += pol_stride;
+      in  += ipol_stride;
+      out += opol_stride;
     }
 
     in_t  += nsamp_step;
