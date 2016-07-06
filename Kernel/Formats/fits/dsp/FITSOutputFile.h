@@ -54,6 +54,12 @@ namespace dsp {
     //! Set the output filename convention
     void set_atnf ( bool );
 
+    //! Set output mangling
+    void set_mangle_output ( bool );
+
+    //! Set length of output file (seconds)
+    void set_max_length( double );
+
   protected:
 
     //! Need a custom implementation of operation to handle FITS I/O
@@ -70,6 +76,9 @@ namespace dsp {
 
     //! Write nbyte bytes with cfitsio
     virtual int64_t unload_bytes (const void* buffer, uint64_t bytes);
+
+    //! Interface to CFITSIO with error checking and bookkeeping
+    unsigned char* write_bytes (int colnum, int isub, int offset, unsigned bytes_to_write, unsigned char** buffer);
 
     //! samples per block (FITS row)
     unsigned nsblk;
@@ -88,6 +97,9 @@ namespace dsp {
 
     //! convenience store channel nuumber
     unsigned nchan;
+
+    //! maximum length of output file
+    double max_length;
 
     //! buffer for channels weights
     std::vector<float> dat_wts;
@@ -113,7 +125,10 @@ namespace dsp {
     unsigned offset;
 
     //! keep track of bytes written so far
-    uint64_t written;
+    int64_t written;
+
+    //! optional maximum bytes per file
+    int64_t max_bytes;
 
     //! set up buffers, etc.
     void initialize ();
@@ -123,6 +138,10 @@ namespace dsp {
 
     //! Use ATNF datestr convention
     bool use_atnf;
+
+    //! Use a mangled file name for output; rename on file close
+    bool mangle_output;
+    std::string mangled_output_filename;
 
   };
 

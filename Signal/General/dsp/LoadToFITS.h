@@ -109,6 +109,9 @@ namespace dsp {
 
     //! hold offset and scale constant after first update
     bool rescale_constant;
+
+    //! set maximum length for a file
+    double integration_length;
     
     //! number of bits used to re-digitize the floating point time series
     int nbits;

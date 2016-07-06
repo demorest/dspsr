@@ -82,6 +82,8 @@ dsp::LoadToFITS::Config::Config()
   rescale_seconds = -1;
   rescale_constant = false;
 
+  integration_length = 0;
+
   nbits = 2;
 
   npol = 4;
@@ -474,6 +476,7 @@ void dsp::LoadToFITS::construct () try
   FITSOutputFile* outputfile = new FITSOutputFile (output_filename);
   outputfile->set_nsblk (config->nsblk);
   outputfile->set_nbit (config->nbits);
+  outputfile->set_max_length (config->integration_length);
   outputFile = outputfile;
   outputFile->set_input (bitseries);
 

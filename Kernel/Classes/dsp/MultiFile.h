@@ -51,6 +51,9 @@ namespace dsp {
     File* get_loader ();
     const File* get_loader () const;
 
+    //! Access to current file objects
+    std::vector< Reference::To<File> >& get_files () {return files;}
+
     //! Return true if the loader File instance is set
     bool has_loader ();
 
