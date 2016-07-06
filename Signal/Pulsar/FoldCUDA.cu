@@ -7,6 +7,8 @@
  *
  ***************************************************************************/
 
+//#define _DEBUG 1
+
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
 
@@ -15,6 +17,14 @@
 
 #include <cuComplex.h>
 #include <memory>
+
+#ifdef __CUDA_ARCH__
+    #if (__CUDA_ARCH__ >= 300)
+        #define HAVE_SHFL
+    #else
+        #define NO_SHFL
+    #endif
+#endif
 
 using namespace std;
 
@@ -187,15 +197,13 @@ void CUDA::FoldEngine::send_binplan ()
                  stream?"Async":"", cudaGetErrorString (error));
 }
 
-
 /* 
- * CUDA Folding Kernels : fold1bin2dim
- *   ipol = threadIdx.y
- *   npol = blockDim.y
+ * CUDA Folding Kernels
+ *   ipol = blockIdx.z
+ *   npol = gridDim.z
  *   ichan = blockIdx.y
  *   nchan = gridDim.y
  */
-
 __global__ void fold1bin2dim (const cuFloatComplex * in_base,
            unsigned in_span,
            cuFloatComplex * out_base,
@@ -211,8 +219,8 @@ __global__ void fold1bin2dim (const cuFloatComplex * in_base,
 
   unsigned output_ibin = binplan[ibin].ibin;
 
-  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y);
-  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y);
+  in_base  += in_span  * (blockIdx.y * gridDim.z + blockIdx.z);
+  out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z);
 
   cuFloatComplex total = out_base[ output_ibin ];
 
@@ -226,77 +234,107 @@ __global__ void fold1bin2dim (const cuFloatComplex * in_base,
   out_base[ output_ibin ] = total;
 }
 
-__global__ void fold1bin2dimhits (const cuFloatComplex * in_base,
+// each warp will fold a single binplan bin
+__global__ void fold1bin2dim_warp (const float2* in_base,
            unsigned in_span,
-           cuFloatComplex * out_base,
+           float2* out_base,
            unsigned out_span,
-           unsigned* hits_base,
            unsigned nbin,
            unsigned binplan_size,
-           const CUDA::bin* binplan)
+           CUDA::bin* binplan)
 {
-  unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
+  extern __shared__ cuFloatComplex warp_fold[];
+
+  const int warps_per_block = blockDim.x / 32;
+  const int warp_idx = threadIdx.x & 0x1F;      // % 32
+  const int warp_num = threadIdx.x / 32;
+  
+  // the ibin that threads in this warp will add up together
+  const int ibin = blockIdx.x * warps_per_block + warp_num;
 
   if (ibin >= binplan_size)
     return;
 
-  unsigned output_ibin = binplan[ibin].ibin;
+  // start/end sample for this input bin
+  const int sbin = binplan[ibin].offset;
+  const int ebin = sbin + binplan[ibin].hits;
 
-  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y);
-  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y);
-  hits_base += nbin * blockIdx.y;
+  in_base  += in_span  * (blockIdx.y * gridDim.z + blockIdx.z);
+  out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z);
 
-  // get the current values for each output bin and hits
-  cuFloatComplex total = out_base[ output_ibin ];
+  cuFloatComplex total = make_cuComplex (0,0);
 
-  // only compute the hits array if ipol and idim == 0
-  unsigned total_hits = 0;
-  if (threadIdx.y == 0)
-    total_hits = hits_base[ output_ibin ];
-
-  for (; ibin < binplan_size; ibin += nbin)
+  // each thread of a warp will load samples for this ibin
+  for (int i=sbin+warp_idx; i<ebin; i+=32)
   {
-    const cuFloatComplex * input = in_base + binplan[ibin].offset;
-
-    if (threadIdx.y == 0)
-    {
-      for (unsigned i=0; i < binplan[ibin].hits; i++)
-      {
-        const cuFloatComplex in = input[i];
-        total = cuCaddf (total, in);
-        total_hits += (in.x != 0);
-      }
-    }
-    else
-    {
-      for (unsigned i=0; i < binplan[ibin].hits; i++)
-      {
-        total = cuCaddf (total, input[i]);
-      }
-    }
+    total = cuCaddf (total, in_base[i]);
   }
 
-  out_base[ output_ibin ] = total;
+  // now add totals together
+#ifdef HAVE_SHFL
+  total.x += __shfl_down (total.x, 16);
+  total.x += __shfl_down (total.x, 8);
+  total.x += __shfl_down (total.x, 4);
+  total.x += __shfl_down (total.x, 2);
+  total.x += __shfl_down (total.x, 1);
 
-  // if ipol and idim both equal 0
-  if (threadIdx.y == 0)
-    hits_base[ output_ibin ] = total_hits;
+  total.y += __shfl_down (total.y, 16);
+  total.y += __shfl_down (total.y, 8);
+  total.y += __shfl_down (total.y, 4);
+  total.y += __shfl_down (total.y, 2);
+  total.y += __shfl_down (total.y, 1);
+
+  // copy to shm for warp 0 to write out to gmem
+  if (warp_idx == 0)
+    warp_fold[warp_num] = total; 
+  __syncthreads();
+
+  if (warp_num == 0)
+  {
+    const int ibin = blockIdx.x * warps_per_block + warp_idx;
+    if (ibin >= binplan_size)
+      return;
+    int output_ibin = binplan[ibin].ibin;
+    out_base[ output_ibin ] = cuCaddf (out_base[ output_ibin ], warp_fold[warp_idx]);
+  }
+#endif
+#ifdef NO_SHFL
+  int last_offset = 16;
+  warp_fold[threadIdx.x] = total;
+  for (int offset = last_offset; offset > 0;  offset >>= 1)
+  {
+    if (warp_idx < offset)
+      warp_fold[threadIdx.x] = cuCaddf(warp_fold[threadIdx.x], warp_fold[threadIdx.x + offset]);
+    __syncthreads();
+  }
+  if (warp_idx == 0)
+  {
+    total = warp_fold[warp_idx];
+  }  
+
+  int output_ibin = binplan[ibin].ibin;
+  if (warp_idx == 0)
+  {
+    out_base[ output_ibin ] = cuCaddf (out_base[ output_ibin ], total);
+  }
+#endif
 }
 
 
 /* 
- * Note these are now for 1dim only
- * CUDA Folding Kernels: fold1bin, fold1binhits
+ * CUDA Folding Kernels
  *   ipol = threadIdx.y
  *   npol = blockDim.y
  *   ichan = blockIdx.y
  *   nchan = gridDim.y
+ *   idim = threadIdx.z
  */
 
-__global__ void fold1bin1dim (const float* in_base,
+__global__ void fold1bin (const float* in_base,
            unsigned in_span,
            float* out_base,
            unsigned out_span,
+           unsigned ndim,
            unsigned nbin,
            unsigned binplan_size,
            CUDA::bin* binplan)
@@ -308,32 +346,76 @@ __global__ void fold1bin1dim (const float* in_base,
 
   unsigned output_ibin = binplan[ibin].ibin;
 
-  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y);
-  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y);
+  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y) + threadIdx.z;
+  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y) + threadIdx.z;
 
   float total = 0;
 
   for (; ibin < binplan_size; ibin += nbin)
   {
-    const float* input = in_base + binplan[ibin].offset;
+    const float* input = in_base + binplan[ibin].offset * ndim;
 
     for (unsigned i=0; i < binplan[ibin].hits; i++)
-      total += input[i];
+      total += input[i*ndim];
 
   }
 
-  out_base[ output_ibin ] += total;
+  out_base[ output_ibin * ndim ] += total;
 }
 
 
-__global__ void fold1bin1dimhits (const float* in_base,
+__global__ void fold1bin2dimhits (const float2* in_base,
            unsigned in_span,
-           float* out_base,
+           float2* out_base,
            unsigned out_span,
            unsigned* hits_base,
            unsigned nbin,
            unsigned binplan_size,
            CUDA::bin* binplan)
+{
+  unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
+  if (ibin >= binplan_size)
+    return;
+
+  unsigned output_ibin = binplan[ibin].ibin;
+
+  //          stride   * (  ichan    *  npol      + ipol     )
+  in_base  += in_span  * (blockIdx.y * gridDim.z + blockIdx.z);
+  out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z);
+
+  hits_base += nbin * blockIdx.y;
+
+  float2 total = out_base[ output_ibin ];
+  unsigned hits = 0;
+
+  for (; ibin < binplan_size; ibin += nbin)
+  {
+    const float2* input = in_base + binplan[ibin].offset;
+    for (unsigned i=0; i < binplan[ibin].hits; i++)
+    {
+      total = cuCaddf (total, input[i]);
+      if (blockIdx.z == 0)
+        hits += (input[i].x != 0);
+    }
+  }
+
+  out_base[ output_ibin ] = total;
+
+  // for ipol == 0
+  if (blockIdx.z == 0)
+    hits_base[ output_ibin ] += hits;
+}
+
+
+__global__ void fold1binhits (const float* in_base,
+			     unsigned in_span,
+			     float* out_base,
+			     unsigned out_span,
+           unsigned* hits_base,
+			     unsigned ndim,
+			     unsigned nbin,
+			     unsigned binplan_size,
+			     CUDA::bin* binplan)
 {
   unsigned ibin = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -342,8 +424,10 @@ __global__ void fold1bin1dimhits (const float* in_base,
 
   unsigned output_ibin = binplan[ibin].ibin;
 
-  in_base  += in_span  * (blockIdx.y * blockDim.y + threadIdx.y);
-  out_base += out_span * (blockIdx.y * blockDim.y + threadIdx.y);
+  //          stride   * (  ichan    *  npol      + ipol     )
+  in_base  += in_span  * (blockIdx.y * gridDim.z + blockIdx.z) + threadIdx.z;
+  out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z) + threadIdx.z;
+
   hits_base += nbin * blockIdx.y;
 
   float total = 0;
@@ -351,19 +435,18 @@ __global__ void fold1bin1dimhits (const float* in_base,
 
   for (; ibin < binplan_size; ibin += nbin)
   {
-    const float* input = in_base + binplan[ibin].offset;
+    const float* input = in_base + binplan[ibin].offset * ndim;
 
     for (unsigned i=0; i < binplan[ibin].hits; i++)
     {
-      total += input[i];
-      hits += (input[i] != 0);
+      total += input[i*ndim];
+      hits += (input[i*ndim] != 0);
     }
   }
 
-  out_base[ output_ibin ] += total;
-
+  out_base[ output_ibin * ndim ] += total;
   // if ipol and idim both equal 0
-  if (threadIdx.y == 0)
+  if ((threadIdx.y + threadIdx.z) == 0)
     hits_base[ output_ibin ] += hits;
 }
 
@@ -384,16 +467,16 @@ void CUDA::FoldEngine::fold ()
   if (binplan_nbin < folding_nbin)
     bin_dim = binplan_nbin;
 
-  unsigned bin_threads = 256;
-    if (bin_threads > bin_dim)
+  unsigned bin_threads = 1024;
+  if (bin_threads > bin_dim)
     bin_threads = 32;
 
   unsigned bin_blocks = bin_dim / bin_threads;
   if (bin_dim % bin_threads)
     bin_blocks ++;
 
-  dim3 blockDim (bin_threads, npol, 1);
-  dim3 gridDim (bin_blocks, nchan, 1);
+  dim3 blockDim (bin_threads, 1, 1);
+  dim3 gridDim (bin_blocks, nchan, npol);
 
 #if 0
   cerr << "bin_dim=" << bin_dim << endl;
@@ -405,35 +488,48 @@ void CUDA::FoldEngine::fold ()
   DEBUG("input=" << (void *) input << " output=" << (void *) output);
   DEBUG("input span=" << input_span << " output span=" << output_span);
   DEBUG("ndim=" << ndim << " nbin=" << folding_nbin << " binplan_nbin=" << binplan_nbin);
+  DEBUG("hits_on_gpu=" << hits_on_gpu << " zeroed_samples=" << zeroed_samples << " hits_nchan=" << hits_nchan);
 
   if (hits_on_gpu && zeroed_samples && hits_nchan == nchan)
   {
     if (ndim == 2)
     {
-      fold1bin2dimhits<<<gridDim,blockDim,0,stream>>> ((cuFloatComplex *) input, input_span,
-                 (cuFloatComplex *) output, output_span/2, hits,
+      fold1bin2dimhits<<<gridDim,blockDim,0,stream>>> ((float2*)input, input_span/2,
+                 (float2*) output, output_span/2, hits,
                  folding_nbin, binplan_nbin, d_bin);
     }
     else
-    {
-      fold1bin1dimhits<<<gridDim,blockDim,0,stream>>> (input, input_span,
+      fold1binhits<<<gridDim,blockDim,0,stream>>> (input, input_span,
                  output, output_span, hits,
-                 folding_nbin, binplan_nbin, d_bin);
-    }
+                 ndim, folding_nbin,
+                 binplan_nbin, d_bin);
   }
   else
   {
     if (ndim == 2)
     {
+/*
       fold1bin2dim<<<gridDim,blockDim,0,stream>>> ((cuFloatComplex *) input, input_span/2,
+                 (cuFloatComplex *) output, output_span/2,
+                 folding_nbin, binplan_nbin, d_bin);
+*/
+      dim3 threads(1024, 1, 1);
+      unsigned nwarps = threads.x / 32;
+      dim3 blocks (binplan_nbin/nwarps, nchan, npol);
+      if (binplan_nbin % nwarps)
+        blocks.x++;
+      size_t sbytes = threads.x * sizeof(float2);
+
+      fold1bin2dim_warp<<<blocks,threads,sbytes,stream>>> ((cuFloatComplex *) input, input_span/2,
                  (cuFloatComplex *) output, output_span/2,
                  folding_nbin, binplan_nbin, d_bin);
     }
     else
     {
-      fold1bin1dim<<<gridDim,blockDim,0,stream>>> (input, input_span,
+      fold1bin<<<gridDim,blockDim,0,stream>>> (input, input_span,
                  output, output_span,
-                 folding_nbin, binplan_nbin, d_bin);
+                 ndim, folding_nbin,
+                 binplan_nbin, d_bin);
     }
   }
 
