@@ -20,7 +20,13 @@
 
 #include <cuComplex.h>
 
-#define _DEBUG 1
+#ifdef __CUDA_ARCH__
+    #if (__CUDA_ARCH__ >= 300)
+        #define HAVE_SHFL
+    #else
+        #define NO_SHFL
+    #endif
+#endif
 
 using namespace std;
 
@@ -82,9 +88,8 @@ __global__ void reduce_sqld_new (float2 * in, float2 * sums, float * skestimates
     s1 += power;
     s2 += (power * power);
   }
-#define HAVE_CUDA_SHUFFLE
-#ifdef HAVE_CUDA_SHUFFLE
 
+#ifdef HAVE_SHFL
   s1 += __shfl_down (s1, 16);
   s1 += __shfl_down (s1, 8);
   s1 += __shfl_down (s1, 4);
@@ -134,13 +139,34 @@ __global__ void reduce_sqld_new (float2 * in, float2 * sums, float * skestimates
       skestimates[odx] = ((M+1) / (M-1)) * (M * (s2 / (s1 * s1)) - 1);
     }
   }
-
-#else
+#endif
+#ifdef NO_SHFL
 
   s1s[threadIdx.x] = s1;
   s2s[threadIdx.x] = s2;
 
   __syncthreads();
+
+  int last_offset = blockDim.x/2;
+  for (int offset = last_offset; offset > 0;  offset >>= 1)
+  {
+    if (threadIdx.x < offset)
+    {
+      s1s[threadIdx.x] += s1s[threadIdx.x + offset];
+      s2s[threadIdx.x] += s2s[threadIdx.x + offset];
+    }
+    __syncthreads();
+  }
+
+  if (threadIdx.x == 0)
+  {
+    val.x = s1s[0];
+    val.y = s2s[0];
+    unsigned odx = blockIdx.x*nchanpol + ichanpol;
+    sums [odx] = val;
+    skestimates[odx] = ((M+1) / (M-1)) * (M * (val.y / (val.x * val.x)) - 1);
+  }
+
 
 #endif
 
