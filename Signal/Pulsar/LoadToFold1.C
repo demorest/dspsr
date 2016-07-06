@@ -27,9 +27,7 @@
 
 #include "dsp/Filterbank.h"
 #include "dsp/FilterbankEngine.h"
-#include "dsp/SKFilterbank.h"
-#include "dsp/SKDetector.h"
-#include "dsp/SKMasker.h"
+#include "dsp/SpectralKurtosis.h"
 #include "dsp/OptimalFFT.h"
 #include "dsp/Resize.h"
 
@@ -46,11 +44,12 @@
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/TimeSeriesCUDA.h"
 #include "dsp/TransferBitSeriesCUDA.h"
 #include "dsp/DetectionCUDA.h"
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
-#include "dsp/SKMaskerCUDA.h"
+#include "dsp/SpectralKurtosisCUDA.h"
 #include "dsp/CyclicFoldEngineCUDA.h"
 #endif
 
@@ -265,103 +264,18 @@ void dsp::LoadToFold::construct () try
     }
   }
 
-  // only the Filterbank must be out-of-place
-  TimeSeries* convolved = unpacked;
+  // convolved and filterbank are out of place
+  TimeSeries* filterbanked = unpacked;
 
-  TimeSeries* skoutput = 0;
-  BitSeries * skzapmask = 0;
-  Reference::To<OperationThread> skthread;
-
-  if (config->sk_zap)
-  {
-    // put the SK signal path into a separate thread
-    skthread = new OperationThread();
-
-    TimeSeries* skfilterbank_input = unpacked;
-
-#if HAVE_CUDA
-    if (run_on_gpu) 
-    {
-      Unpacker* unpack_on_cpu = 0;
-      unpack_on_cpu = manager->get_unpacker()->clone();
-      unpack_on_cpu->set_device (Memory::get_manager());
-
-      unpack_on_cpu->set_input( manager->get_unpacker()->get_input() );
-      unpack_on_cpu->set_output( skfilterbank_input = new_time_series() );
-
-      skthread->append_operation( unpack_on_cpu );
-      manager->set_post_load_operation( skthread.get() );
-    }
-#endif
-
-    skoutput = new_time_series ();
-
-    // Spectral Kurtosis filterbank constructor
-    if (!skfilterbank)
-      skfilterbank = new SKFilterbank (config->sk_nthreads);
-
-    if (!config->input_buffering)
-      skfilterbank->set_buffering_policy (NULL);
-
-    skfilterbank->set_input ( skfilterbank_input );
-
-    skfilterbank->set_output ( skoutput );
-    skfilterbank->set_nchan ( config->filterbank.get_nchan() );
-    skfilterbank->set_M ( config->sk_m );
-
-    // SKFB also maintains trscunched SK stats
-    TimeSeries* skoutput_tscr = new_time_series();
-
-    skfilterbank->set_output_tscr (skoutput_tscr);
-
-    skthread->append_operation (skfilterbank.get());
-
-    // SK Mask Generator
-    skzapmask = new BitSeries;
-    skzapmask->set_nbit (8);
-    skzapmask->set_npol (1);
-    skzapmask->set_nchan (config->filterbank.get_nchan());
-
-    SKDetector * skdetector = new SKDetector;
-    skdetector->set_input (skoutput);
-    skdetector->set_input_tscr (skoutput_tscr);
-    skdetector->set_output (skzapmask);
-
-    skdetector->set_thresholds (config->sk_m, config->sk_std_devs);
-    if (config->sk_chan_start > 0 && config->sk_chan_end < config->filterbank.get_nchan())
-      skdetector->set_channel_range (config->sk_chan_start, config->sk_chan_end);
-    skdetector->set_options (config->sk_no_fscr, config->sk_no_tscr, config->sk_no_ft); 
-
-    skthread->append_operation (skdetector);
-
-#if HAVE_CUDA
-    if (!run_on_gpu)
-#endif
-    {
-      operations.push_back (skthread.get());
-      OperationThread::Wait * skthread_wait = skthread->get_wait();
-      operations.push_back (skthread_wait);
-    }
-
-    // since the blocksize is artificially increased for the SKFB,
-    // we must return it to the required size for the SKFB
-    if (!skresize)
-      skresize = new Resize;
-    
-    skresize->set_input(unpacked);
-    skresize->set_output(unpacked);
-    operations.push_back (skresize.get());
-
-  }
-
+  // filterbank is performing channelisation
   if (config->filterbank.get_nchan() > 1)
   {
     // new storage for filterbank output (must be out-of-place)
-    convolved = new_time_series ();
+    filterbanked = new_time_series ();
 
 #if HAVE_CUDA
     if (run_on_gpu)
-      convolved->set_memory (device_memory);
+      filterbanked->set_memory (device_memory);
 #endif
 
     config->filterbank.set_device( device_memory.ptr() );
@@ -375,7 +289,7 @@ void dsp::LoadToFold::construct () try
       filterbank->set_buffering_policy (NULL);
 
     filterbank->set_input (unpacked);
-    filterbank->set_output (convolved);
+    filterbank->set_output (filterbanked);
     
     if (config->filterbank.get_convolve_when() == Filterbank::Config::During)
     {
@@ -388,6 +302,9 @@ void dsp::LoadToFold::construct () try
     if (!config->filterbank.get_convolve_when() == Filterbank::Config::Before)
       operations.push_back (filterbank.get());
   }
+
+  // output of convolved will be filterbanked|unpacked
+  TimeSeries* convolved = filterbanked;
 
   bool filterbank_after_dedisp
     = config->filterbank.get_convolve_when() == Filterbank::Config::Before;
@@ -405,20 +322,23 @@ void dsp::LoadToFold::construct () try
     if (!config->integration_turns)
       convolution->set_passband (passband);
     
+    convolved = new_time_series();
+
     if (filterbank_after_dedisp)
     {
-      convolution->set_input  (unpacked);  
-      convolution->set_output (unpacked);  // inplace
+      convolution->set_input  (filterbanked);  
+      convolution->set_output (convolved);    // out of place
     }
     else
     {
-      convolution->set_input  (convolved);  
-      convolution->set_output (convolved);  // inplace
+      convolution->set_input  (filterbanked);  
+      convolution->set_output (convolved);  // out of place
     }
 
 #if HAVE_CUDA
     if (run_on_gpu)
     {
+      convolved->set_memory (device_memory);
       convolution->set_device (device_memory.ptr());
       unsigned nchan = manager->get_info()->get_nchan() * config->filterbank.get_nchan();
       if (nchan >= 16)
@@ -432,7 +352,7 @@ void dsp::LoadToFold::construct () try
   }
 
   if (filterbank_after_dedisp)
-    prepare_interchan (unpacked);
+    prepare_interchan (convolved);
   else
     prepare_interchan (convolved);
 
@@ -509,15 +429,16 @@ void dsp::LoadToFold::construct () try
 
     return;
     // the phase-locked filterbank does its own detection and folding
-    
   }
 
   Reference::To<Fold> presk_fold;
   Reference::To<Archiver> presk_unload;
 
+  TimeSeries * cleaned = convolved;
+
   // peform zapping based on the results of the SKFilterbank
   if (config->sk_zap)
-  { 
+  {
     if (config->nosk_too)
     {
       Detection* presk_detect = new Detection;
@@ -556,64 +477,49 @@ void dsp::LoadToFold::construct () try
       operations.push_back (presk_fold.get());
     }
 
-#if HAVE_CUDA
-    if (run_on_gpu)
-    {
-      OperationThread::Wait * skthread_wait = skthread->get_wait();
-      operations.push_back (skthread_wait);
-    }
-#endif
+    cleaned = new_time_series();
 
-    SKMasker * skmasker = new SKMasker;
+    if (!skestimator)
+      skestimator = new SpectralKurtosis();
+
     if (!config->input_buffering)
-      skmasker->set_buffering_policy (NULL);
+      skestimator->set_buffering_policy (NULL);
+
+    skestimator->set_input (convolved);
+    skestimator->set_output (cleaned);
+    skestimator->set_M (config->sk_m);
 
 #if HAVE_CUDA
     if (run_on_gpu)
     {
-      // transfer the zap mask to the GPU
-      BitSeries * skzapmask_on_gpu = new BitSeries();
-      skzapmask_on_gpu->set_nbit (8);
-      skzapmask_on_gpu->set_npol (1);
-      skzapmask_on_gpu->set_nchan (config->filterbank.get_nchan());
-      skzapmask_on_gpu->set_memory (device_memory);
-
-      TransferBitSeriesCUDA* transfer = new TransferBitSeriesCUDA(stream);
-      transfer->set_kind( cudaMemcpyHostToDevice );
-      transfer->set_input( skzapmask );
-      transfer->set_output( skzapmask_on_gpu );
-      operations.push_back (transfer);
-
-      skmasker->set_mask_input (skzapmask_on_gpu);
-      skmasker->set_engine (new CUDA::SKMaskerEngine (stream));
+      // for input buffering
+      convolved->set_engine (new CUDA::TimeSeriesEngine (device_memory));
+      cleaned->set_memory (device_memory);
+      skestimator->set_engine (new CUDA::SpectralKurtosisEngine (device_memory));
     }
-    else
-      skmasker->set_mask_input (skzapmask);
-#else
-    skmasker->set_mask_input (skzapmask);
 #endif
 
-    skmasker->set_input (convolved);
-    skmasker->set_output (convolved);
-    skmasker->set_M (config->sk_m);
+    skestimator->set_thresholds (config->sk_m, config->sk_std_devs);
+    if (config->sk_chan_start > 0 && config->sk_chan_end < config->filterbank.get_nchan())
+      skestimator->set_channel_range (config->sk_chan_start, config->sk_chan_end);
+    skestimator->set_options (config->sk_no_fscr, config->sk_no_tscr, config->sk_no_ft);
 
-    operations.push_back (skmasker);
-
+    operations.push_back (skestimator.get());
   }
 
   // Cyclic spectrum also detects and folds
   if (config->cyclic_nchan) 
   {
-    build_fold(convolved);
+    build_fold(cleaned);
     return;
   }
 
   if (!detect)
     detect = new Detection;
 
-  TimeSeries* detected = convolved;
-  detect->set_input (convolved);
-  detect->set_output (convolved);
+  TimeSeries* detected = cleaned;
+  detect->set_input (cleaned);
+  detect->set_output (cleaned);
 
   configure_detection (detect, noperations);
 
@@ -654,7 +560,7 @@ void dsp::LoadToFold::construct () try
     Reference::To<Fold> skfold;
     build_fold (skfold, unload);
 
-    skfold->set_input( skoutput );
+    skfold->set_input( cleaned);
     skfold->prepare( manager->get_info() );
     skfold->reset();
 
@@ -916,27 +822,6 @@ void dsp::LoadToFold::prepare ()
   }
 #endif
 #endif
-
-  // add the increased block size if the SKFB is being used
-  if (skfilterbank)
-  {
-    block_size = manager->get_input()->get_block_size();
-    int64_t skfb_increment = (int64_t) skfilterbank->get_skfb_inc (block_size);
-
-    block_size += skfb_increment;
-    block_overlap += skfb_increment;
-
-    if (block_overlap)
-      manager->set_overlap( block_overlap );
-    ram = manager->set_block_size( block_size );
-
-    skfb_increment *= -1;
-    skresize->set_resize_samples (skfb_increment);
-
-    if (Operation::verbose)
-      cerr << "dsp::LoadToFold::prepare block_size will be adjusted by " 
-          << skfb_increment << " samples for SKFB" << endl;
-  }
 
   if (report_vitals)
   {

@@ -21,7 +21,8 @@ nobase_include_HEADERS = dsp/ACFilterbank.h dsp/Detection.h	       \
 	dsp/TFPFilterbank.h dsp/RFIZapper.h dsp/SKFilterbank.h	       \
 	dsp/Resize.h dsp/SKDetector.h dsp/SKMasker.h		       \
 	dsp/Pipeline.h dsp/SingleThread.h dsp/MultiThread.h            \
-	dsp/PolnSelect.h dsp/PolnReshape.h
+	dsp/PolnSelect.h dsp/PolnReshape.h dsp/SpectralKurtosis.h \
+  dsp/SKComputer.h
 
 libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	cross_detect.ic stokes_detect.c stokes_detect.h		     \
@@ -38,7 +39,7 @@ libdspdsp_la_SOURCES = optimize_fft.c cross_detect.c cross_detect.h  \
 	TFPFilterbank.C RFIZapper.C SKFilterbank.C \
 	Resize.C SKDetector.C SKMasker.C \
 	SingleThread.C MultiThread.C dsp_verbosity.C \
-	PolnSelect.C PolnReshape.C
+	PolnSelect.C PolnReshape.C SpectralKurtosis.C
 
 bin_PROGRAMS = dmsmear digitxt digimon digihist filterbank_speed
 
@@ -51,12 +52,14 @@ nobase_include_HEADERS += CUFFTError.h dsp/LaunchConfig.h \
   dsp/FScrunchCUDA.h dsp/TScrunchCUDA.h \
   dsp/PScrunchCUDA.h dsp/PolnSelectCUDA.h \
   dsp/ConvolutionCUDA.h dsp/ConvolutionCUDASpectral.h \
-  dsp/ConvolutionCUDACallbacks.h
+  dsp/ConvolutionCUDACallbacks.h dsp/SpectralKurtosisCUDA.h \
+  dsp/SKComputerCUDA.h dsp/SKDetectorCUDA.h dsp/SKFilterbankCUDA.h
 
 libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
   TransferCUDA.C TransferBitSeriesCUDA.C DetectionCUDA.cu             \
   SKMaskerCUDA.cu FZoomCUDA.cu FScrunchCUDA.cu TScrunchCUDA.cu        \
-  PScrunchCUDA.cu PolnSelectCUDA.cu \
+  PScrunchCUDA.cu PolnSelectCUDA.cu SpectralKurtosisCUDA.cu \
+  SKComputerCUDA.cu SKDetectorCUDA.cu SKFilterbankCUDA.cu \
   ConvolutionCUDA.cu ConvolutionCUDASpectral.cu ConvolutionCUDACallbacks.cu
 
 bin_PROGRAMS += fftbatch_speed

@@ -67,6 +67,11 @@ namespace dsp {
     //! The arrays will be reset when count_zapped is next called
     void reset_count () { unfiltered_hits = 0; }
 
+    //! Engine used to perform detection
+    class Engine;
+
+    void set_engine (Engine*);
+
   protected:
 
     //! Reserve the required amount of output space required
@@ -74,6 +79,9 @@ namespace dsp {
 
     //! Perform the transformation on the input time series
     void transformation ();
+
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
 
     void reset_mask ();
 
@@ -99,7 +107,7 @@ namespace dsp {
 
     //! Tsrunched SK statistic timeseries for the current block
     Reference::To<TimeSeries> input_tscr;
-  
+
     //! Number of time samples integrated into tscr SK estimates
     unsigned tscr_M;
 
@@ -149,6 +157,35 @@ namespace dsp {
 
   };
   
+  class SKDetector::Engine : public Reference::Able
+  {
+  public:
+
+    virtual void setup () = 0;
+
+    virtual void reset_mask (dsp::BitSeries* output) = 0;
+
+    virtual void detect_ft (const dsp::TimeSeries* input, dsp::BitSeries* output,
+                            float upper_thresh, float lower_thresh) = 0;
+
+    virtual void detect_fscr (const dsp::TimeSeries* input, dsp::BitSeries* output,
+                              const float lower, const float upper,
+                              unsigned s_chan, unsigned e_chan) = 0;
+
+    virtual void detect_tscr (const dsp::TimeSeries* input,
+                              const dsp::TimeSeries * input_tscr,
+                              dsp::BitSeries* output,
+                              float upper_thresh, float lower_thresh) = 0;
+
+    virtual int count_mask (const dsp::BitSeries* output) = 0;
+
+    virtual float * get_estimates (const TimeSeries* input) = 0;
+
+    virtual unsigned char * get_zapmask (const BitSeries* input) = 0;
+
+  };
+
+
 }
 
 #endif

@@ -16,7 +16,7 @@
 #include "dsp/Convolution.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/TScrunch.h"
-#include "dsp/SKDetector.h"
+#include "dsp/SpectralKurtosis.h"
 #include "dsp/OperationThread.h"
 
 #include "Pulsar/dspReduction.h"
@@ -195,10 +195,10 @@ void dsp::Archiver::pack (dspReduction* dspR, Operation* operation)
         set_coherent_dedispersion (input->get_state(), response);
 
         if (input->get_state() == Signal::Nyquist)
-	{
-	  nsamp_fft *= 2;
-	  nsamp_overlap_pos *= 2;
-	  nsamp_overlap_neg *= 2;
+        {
+          nsamp_fft *= 2;
+          nsamp_overlap_pos *= 2;
+          nsamp_overlap_neg *= 2;
         }
 
         dspR->set_nsamp_fft ( nsamp_fft );
@@ -208,7 +208,7 @@ void dsp::Archiver::pack (dspReduction* dspR, Operation* operation)
 
       // save it for the Passband Extension
       if ( convolution->has_passband() )
-	passband = convolution->get_passband();
+        passband = convolution->get_passband();
     }
 
     // ////////////////////////////////////////////////////////////////////
@@ -224,52 +224,52 @@ void dsp::Archiver::pack (dspReduction* dspR, Operation* operation)
     //
     // Spectral Kurtosis RFI mitigation extension
     //
-    SKDetector* skdetect = dynamic_cast<SKDetector*>( operation );
+    SpectralKurtosis* skestimator = dynamic_cast<SpectralKurtosis*>( operation );
 
-    if (skdetect)
+    if (skestimator)
     {
       if (verbose > 2)
-        cerr << "dsp::Archiver::set SKDetector in use" << endl;
+        cerr << "dsp::Archiver::set SpectralKurtosis in use" << endl;
 
       unsigned nsubint = archive->get_nsubint();
       Integration* subint = archive->get_Integration(nsubint - 1);
 
-      SpectralKurtosis* ext = subint -> getadd<SpectralKurtosis>();
+      Pulsar::SpectralKurtosis* ext = subint -> getadd<Pulsar::SpectralKurtosis>();
 
-      unsigned nchan = skdetect->get_input()->get_nchan();
+      unsigned nchan = skestimator->get_input()->get_nchan();
       ext->set_nchan( nchan );
 
-      unsigned npol = skdetect->get_input()->get_npol();
+      unsigned npol = skestimator->get_input()->get_npol();
       ext->set_npol( npol );
 
-      ext->set_M( skdetect->get_M() );
-      ext->set_excision_threshold( skdetect->get_excision_threshold() );
+      ext->set_M( skestimator->get_M() );
+      ext->set_excision_threshold( skestimator->get_excision_threshold() );
 
       vector<float> data;
-      skdetect->get_filtered_sum (data);
+      skestimator->get_filtered_sum (data);
       for (unsigned ichan = 0; ichan < nchan; ichan++)
-	for (unsigned ipol = 0; ipol < npol; ipol++)
-	  ext->set_filtered_sum (ichan, ipol, data[ichan*npol + ipol]);
+        for (unsigned ipol = 0; ipol < npol; ipol++)
+          ext->set_filtered_sum (ichan, ipol, data[ichan*npol + ipol]);
 
       vector<uint64_t> hits;
-      skdetect->get_filtered_hits (hits);
+      skestimator->get_filtered_hits (hits);
       for (unsigned ichan = 0; ichan < nchan; ichan++)
-	ext->set_filtered_hits (ichan, hits[ichan]);
+        ext->set_filtered_hits (ichan, hits[ichan]);
 
-      skdetect->get_unfiltered_sum (data);
+      skestimator->get_unfiltered_sum (data);
       for (unsigned ichan = 0; ichan < nchan; ichan++)
-	for (unsigned ipol = 0; ipol < npol; ipol++)
-	  ext->set_unfiltered_sum (ichan, ipol, data[ichan*npol + ipol]);
+        for (unsigned ipol = 0; ipol < npol; ipol++)
+          ext->set_unfiltered_sum (ichan, ipol, data[ichan*npol + ipol]);
 
-      ext->set_unfiltered_hits( skdetect->get_unfiltered_hits() );
+      ext->set_unfiltered_hits( skestimator->get_unfiltered_hits() );
 
-      skdetect->reset_count();
+      skestimator->reset_count();
     }
   }
 
 
 void dsp::Archiver::set_coherent_dedispersion (Signal::State state,
-					       const Response* response)
+                                               const Response* response)
 {
   if (verbose > 2)
     cerr << "dsp::Archiver::set_coherent_dedispersion" << endl;
@@ -320,7 +320,7 @@ void dsp::Archiver::set_coherent_dedispersion (Signal::State state,
     for (unsigned ichan_output=0; ichan_output<nchan_output; ichan_output++)
     {
       CoherentDedispersion::OutputChannel& output 
-	= input.get_output( ichan_output );
+        = input.get_output( ichan_output );
 
       output.set_centre_frequency( dedisp->frequency_output[ichan_total] );
       output.set_bandwidth( dedisp->bandwidth_output[ichan_total] );
@@ -343,7 +343,7 @@ void dsp::Archiver::set (TwoBitStats* tbc) try
   {
     if (verbose > 2)
       cerr << "dsp::Archiver::set Pulsar::TwoBitStats no ExcisionUnpacker"
-	   << endl;
+           << endl;
     return;
   }
 
@@ -460,7 +460,7 @@ void dsp::Archiver::set (Passband* pband) try
   
   if (passband->get_ndim() != 1)
     throw Error (InvalidState, "dsp::Archiver::set_passband",
-		 "Passband Response ndim != 1");
+                 "Passband Response ndim != 1");
   
   for (unsigned ipol=0; ipol<npol; ipol++)
     for (unsigned iband=0; iband<nband; iband++)
