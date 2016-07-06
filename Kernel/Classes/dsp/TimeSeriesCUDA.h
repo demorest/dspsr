@@ -39,6 +39,19 @@ namespace CUDA
                         uint64_t idat_start = 0,
                         uint64_t ndat = 0);
 
+    void copy_data_fpt_same_stream (const dsp::TimeSeries * from,
+            uint64_t idat_start, uint64_t ndat);
+
+    void copy_data_fpt_same_device (const dsp::TimeSeries * from,
+            uint64_t idat_start, uint64_t ndat);
+
+    void copy_data_fpt_diff_device (const dsp::TimeSeries * from,
+            uint64_t idat_start, uint64_t ndat);
+
+    void copy_data_fpt_kernel_multidim (float * to, const float * from,
+            uint64_t to_stride, uint64_t from_stride, 
+            uint64_t idat_start, uint64_t ndat, cudaStream_t stream);
+
     void * buffer;
 
   protected:
@@ -47,7 +60,39 @@ namespace CUDA
 
     CUDA::DeviceMemory * memory;
 
+    CUDA::PinnedMemory * pinned_memory;
+
+    void * host_buffer;
+
+    size_t host_buffer_size;
+
     size_t buffer_size;
+
+    unsigned nchan;
+
+    unsigned npol;
+
+    unsigned ndim;
+
+    uint64_t ichanpol_stride;
+
+    uint64_t ochanpol_stride;
+
+    uint64_t bchanpol_stride;
+
+    unsigned nthread;
+
+    dim3 blocks;
+
+    int device;
+
+    cudaStream_t to_stream;
+      
+    cudaStream_t from_stream;
+
+    int to_device;
+
+    int from_device;
 
   };
 }
