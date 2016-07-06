@@ -265,6 +265,14 @@ void dsp::Convolution::prepare_output ()
 
   if ( state == Signal::Nyquist )
     output->set_rate( 0.5*get_input()->get_rate() );
+
+  // set the input sample
+  uint64_t output_ndat = output->get_ndat();
+  int64_t input_sample = input->get_input_sample();
+  if (output_ndat == 0)
+    output->set_input_sample (0);
+  else if (input_sample >= 0)
+    output->set_input_sample ((input_sample / nsamp_step) * nsamp_step);
 }
 
 //! Reserve the maximum amount of output space required
