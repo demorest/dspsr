@@ -202,9 +202,8 @@ void dsp::MeerKATUnpacker::unpack ()
             for (unsigned isamp=0; isamp<nsamp_per_heap; isamp++)
             {
               from16 = from[isamp];
-
-              digs[0][(int) from8[0] + 127]++;
-              digs[1][(int) from8[1] + 127]++;
+              digs[0][(int) from8[0] + 128]++;
+              digs[1][(int) from8[1] + 128]++;
               into[2*isamp+0] = (float(from8[0]) + 0.5) * scale;
               into[2*isamp+1] = (float(from8[1]) + 0.5) * scale;
             }
