@@ -65,6 +65,10 @@ dsp::SpectralKurtosis::~SpectralKurtosis ()
        << " total=" << percent_all <<  "\%" << " skfb=" << percent_skfb << "\%"
        << " tscr=" << percent_tscr << "\%" << " fscr=" << percent_fscr << "\%"
        << endl;
+
+  delete estimates;
+  delete estimates_tscr;
+  delete zapmask;
 }
 
 bool dsp::SpectralKurtosis::get_order_supported (TimeSeries::Order order) const
@@ -143,10 +147,14 @@ void dsp::SpectralKurtosis::prepare_output ()
   else
     estimates->set_state (Signal::Intensity);
 
+  double tscrunch_mask_rate = mask_rate;
+  if (npart > 0)
+    tscrunch_mask_rate /= npart;
+
   // tscrunched estimates have same configuration, except number of samples
   estimates_tscr->copy_configuration (estimates);
   estimates_tscr->set_order (TimeSeries::OrderTFP);  // stored in TFP order
-  estimates_tscr->set_rate (mask_rate / npart);
+  estimates_tscr->set_rate (tscrunch_mask_rate);
 
   // zap mask has same configuration as estimates with following changes
   zapmask->copy_configuration (estimates);
@@ -155,7 +163,7 @@ void dsp::SpectralKurtosis::prepare_output ()
 
   // configure output timeseries (out-of-place) to match input
   output->copy_configuration (get_input()); 
-
+  output->set_input_sample (input->get_input_sample ());
 }
 
 /* ensure containers have correct dynamic size */ 
@@ -174,7 +182,7 @@ void dsp::SpectralKurtosis::reserve ()
 
   // use resize since out of place operation
   estimates->resize (npart);
-  estimates_tscr->resize (1);
+  estimates_tscr->resize (npart > 0); // 1 if npart != 0
   zapmask->resize (npart);
   output->resize (output_ndat);
 }
@@ -209,19 +217,11 @@ void dsp::SpectralKurtosis::transformation ()
 
   // ensure output containers are sized correctly
   reserve ();
-
-  int64_t input_sample = input->get_input_sample();
-  int64_t output_sample = (input_sample / M) * M;
-  output->set_input_sample (output_sample);
-
-  if (ndat == 0 || npart == 0)
+  
+  if ((ndat == 0) || (npart == 0))
     return;
 
-  if (verbose || debugd < 1)
-    cerr << "dsp::SpectralKurtosis::transformation input_sample=" << input_sample
-         << ", output_sample=" << output->get_input_sample() << ", ndat="
-         << output->get_ndat() << endl;
-
+  // perform SK functions
   compute ();
   detect ();
   mask ();
