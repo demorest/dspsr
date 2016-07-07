@@ -58,8 +58,7 @@ namespace dsp {
   public:
 
     //! Null constructor
-    Convolution (const char* name = "Convolution", 
-		 Behaviour type = anyplace);
+    Convolution (const char* name = "Convolution", Behaviour type = outofplace);
 
     //! Destructor
     virtual ~Convolution ();
