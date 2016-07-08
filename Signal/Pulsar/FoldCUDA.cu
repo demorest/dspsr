@@ -7,8 +7,6 @@
  *
  ***************************************************************************/
 
-//#define _DEBUG 1
-
 #include "dsp/FoldCUDA.h"
 #include "dsp/MemoryCUDA.h"
 
@@ -252,22 +250,22 @@ __global__ void fold1bin2dim_warp (const float2* in_base,
   // the ibin that threads in this warp will add up together
   const int ibin = blockIdx.x * warps_per_block + warp_num;
 
-  if (ibin >= binplan_size)
-    return;
-
-  // start/end sample for this input bin
-  const int sbin = binplan[ibin].offset;
-  const int ebin = sbin + binplan[ibin].hits;
-
-  in_base  += in_span  * (blockIdx.y * gridDim.z + blockIdx.z);
-  out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z);
-
   cuFloatComplex total = make_cuComplex (0,0);
 
-  // each thread of a warp will load samples for this ibin
-  for (int i=sbin+warp_idx; i<ebin; i+=32)
+  // only add up bins that we have
+  if (ibin < binplan_size)
   {
-    total = cuCaddf (total, in_base[i]);
+    in_base += in_span * (blockIdx.y * gridDim.z + blockIdx.z);
+
+    // start/end sample for this input bin
+    const int sbin = binplan[ibin].offset;
+    const int ebin = sbin + binplan[ibin].hits;
+
+    // each thread of a warp will load samples for this ibin
+    for (int i=sbin+warp_idx; i<ebin; i+=32)
+    {
+      total = cuCaddf (total, in_base[i]);
+    }
   }
 
   // now add totals together
@@ -291,6 +289,7 @@ __global__ void fold1bin2dim_warp (const float2* in_base,
 
   if (warp_num == 0)
   {
+    out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z);
     const int ibin = blockIdx.x * warps_per_block + warp_idx;
     if (ibin >= binplan_size)
       return;
@@ -301,21 +300,22 @@ __global__ void fold1bin2dim_warp (const float2* in_base,
 #ifdef NO_SHFL
   int last_offset = 16;
   warp_fold[threadIdx.x] = total;
+  __syncthreads();
   for (int offset = last_offset; offset > 0;  offset >>= 1)
   {
     if (warp_idx < offset)
       warp_fold[threadIdx.x] = cuCaddf(warp_fold[threadIdx.x], warp_fold[threadIdx.x + offset]);
     __syncthreads();
   }
-  if (warp_idx == 0)
-  {
-    total = warp_fold[warp_idx];
-  }  
 
-  int output_ibin = binplan[ibin].ibin;
   if (warp_idx == 0)
   {
-    out_base[ output_ibin ] = cuCaddf (out_base[ output_ibin ], total);
+    if (ibin < binplan_size)
+    {
+      out_base += out_span * (blockIdx.y * gridDim.z + blockIdx.z);
+      int output_ibin = binplan[ibin].ibin;
+      out_base[ output_ibin ] = cuCaddf (out_base[ output_ibin ], warp_fold[threadIdx.x]);
+    }
   }
 #endif
 }
@@ -508,21 +508,24 @@ void CUDA::FoldEngine::fold ()
   {
     if (ndim == 2)
     {
-/*
+
       fold1bin2dim<<<gridDim,blockDim,0,stream>>> ((cuFloatComplex *) input, input_span/2,
                  (cuFloatComplex *) output, output_span/2,
                  folding_nbin, binplan_nbin, d_bin);
-*/
+
+/*
       dim3 threads(1024, 1, 1);
       unsigned nwarps = threads.x / 32;
       dim3 blocks (binplan_nbin/nwarps, nchan, npol);
       if (binplan_nbin % nwarps)
         blocks.x++;
       size_t sbytes = threads.x * sizeof(float2);
+      cerr << "binplan_nbin=" << binplan_nbin << " nwarps=" << nwarps << " blocks.x=" << blocks.x << endl;
 
       fold1bin2dim_warp<<<blocks,threads,sbytes,stream>>> ((cuFloatComplex *) input, input_span/2,
                  (cuFloatComplex *) output, output_span/2,
                  folding_nbin, binplan_nbin, d_bin);
+*/
     }
     else
     {
