@@ -13,6 +13,8 @@
 
 using namespace std;
 
+void check_error_stream (const char*, cudaStream_t);
+
 /* 
    Unpack the two real-valued input polarizations into an interleaved
    array suited to the twofft algorithm described in Section 12.3
@@ -38,8 +40,6 @@ __global__ void unpack_real_ndim2 (uint64_t ndat, const float scale,
   output[6] = convert(scale,input[index].val[3]);
   output[7] = convert(scale,input[index].val[7]);
 }
-
-void check_error (const char*);
 
 __global__ void unpack_real_ndim1 (uint64_t ndat, float scale,
 				   int8_t * from, float* into_pola, float* into_polb) 
@@ -103,5 +103,5 @@ void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale,
   unpack_real_ndim1<<<nblock,nthread,shm_bytes,stream>>> (ndat, scale, from, pol0, pol1);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("caspsr_unpack");
+    check_error_stream ("caspsr_unpack", stream);
 }

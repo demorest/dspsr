@@ -16,7 +16,7 @@
 
 using namespace std;
 
-void check_error (const char*);
+void check_error_stream (const char*, cudaStream_t);
 
 // each thread unpacks 1 complex sample
 __global__ void meerkat_unpack_fpt_kernel (const uint64_t ndat, float scale, const char2 * input, cuFloatComplex * output, uint64_t ostride)
@@ -109,6 +109,6 @@ void CUDA::MeerKATUnpackerEngine::unpack (float scale, const dsp::BitSeries * in
   meerkat_unpack_fpt_kernel<<<blocks,nthread,0,stream>>> (ndat, scale, from, into, pol_span);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::MeerKATUnpackerEngine::unpack");
+    check_error_stream ("CUDA::MeerKATUnpackerEngine::unpack", stream);
 }
 

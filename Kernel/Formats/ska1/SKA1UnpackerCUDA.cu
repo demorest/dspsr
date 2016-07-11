@@ -20,7 +20,7 @@
 
 using namespace std;
 
-void check_error (const char*);
+void check_error_stream (const char*, cudaStream_t);
 
 __global__ void k_unpack_fpt (float2 * to, const char2 * from,
                               uint64_t ndat, uint64_t ostride,
@@ -198,7 +198,7 @@ void CUDA::SKA1UnpackerEngine::unpack (float scale, const dsp::BitSeries * input
   cudaStreamSynchronize(stream);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::SKA1UnpackerEngine::unpack");
+    check_error_stream ("CUDA::SKA1UnpackerEngine::unpack", stream);
 
 }
 #else
@@ -237,7 +237,7 @@ void ska1_unpack_tfp (cudaStream_t stream, uint64_t nval, float scale,
   k_unpack_tfp<<<nblocks,nthreads,sbytes,stream>>> (nval, scale, (float2 *) into, (int16_t *) staged, nchan, npol, pol_span, nval_per_thread, nval_per_block);
   
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::SKA1UnpackerEngine::unpack");
+    check_error_stream ("CUDA::SKA1UnpackerEngine::unpack", stream);
 
   return;
 }
@@ -272,7 +272,7 @@ void ska1_unpack_fpt (cudaStream_t stream, uint64_t ndat, float scale,
   k_unpack_fpt<<<blocks,nthreads,0,stream>>> ((float2 *) into, (char2 *) from, ndat, pol_stride, scale);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::SKA1UnpackerEngine::k_unpack_fpt");
+    check_error_stream ("CUDA::SKA1UnpackerEngine::k_unpack_fpt", stream);
 
   return;
 }

@@ -173,7 +173,7 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
                                            ndat); 
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::DetectionEngine::polarimetry");
+    check_error_stream ("CUDA::DetectionEngine::polarimetry", stream);
 }
 
 // dubiuous about the correctness here... TODO AJ

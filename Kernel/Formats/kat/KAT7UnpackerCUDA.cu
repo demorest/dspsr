@@ -13,11 +13,9 @@
 
 #include <cuComplex.h>
 
-//#define _DEBUG 
-
 using namespace std;
 
-void check_error (const char*);
+void check_error_stream (const char*, cudaStream_t);
 
 // each thread unpacks samples so that 1 warp does 128 contiguous samples
 __global__ void kat7_unpack_fpt_kernel (const uint64_t ndat, float scale, const int16_t * input, cuFloatComplex * output)
@@ -83,7 +81,7 @@ void kat7_unpack (cudaStream_t stream, const uint64_t ndat, unsigned nchan, unsi
   // after the data are loaded from pinned memory to GPU ram and the next Input copy to pinned memory
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("kat7_unpack_fpt_kernel");
+    check_error_stream ("kat7_unpack_fpt_kernel", stream);
 
   // put it here for now
   cudaStreamSynchronize(stream);

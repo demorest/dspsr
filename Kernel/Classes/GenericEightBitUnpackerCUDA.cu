@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void check_error (const char*);
+void check_error_stream (const char*, cudaStream_t);
 
 /*
  * Simple CUDA 8-bit unpack kernel
@@ -102,6 +102,6 @@ void generic_8bit_unpack (cudaStream_t stream,
 		 "unknown BitTable::Type");
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("generic_8bit_unpack");
+    check_error_stream ("generic_8bit_unpack", stream);
 }
 
