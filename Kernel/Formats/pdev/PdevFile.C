@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -118,7 +119,7 @@ void dsp::PdevFile::check_file_set ()
 int64_t dsp::PdevFile::fstat_file_ndat (uint64_t tailer_bytes)
 {
   // This should only be called after check_file_set has been run.
-  return info.get_nsamples (total_bytes - PDEV_HEADER_BYTES);
+  return get_info()->get_nsamples (total_bytes - PDEV_HEADER_BYTES);
 }
 
 void dsp::PdevFile::open_file (const char* filename)
@@ -177,10 +178,10 @@ void dsp::PdevFile::open_file (const char* filename)
     }
 
     // Parse standard ASCII header, minus obs start time
-    ASCIIObservation info_tmp;
-    info_tmp.set_required("UTC_START", false);
-    info_tmp.set_required("OBS_OFFSET", false);
-    info_tmp.load(header);
+    ASCIIObservation* info_tmp = new ASCIIObservation;
+    info_tmp->set_required("UTC_START", false);
+    info_tmp->set_required("OBS_OFFSET", false);
+    info_tmp->load(header);
     info = info_tmp;
   }
 
@@ -219,7 +220,7 @@ void dsp::PdevFile::open_file (const char* filename)
   }
 
   MJD epoch ((time_t) rawhdr[12]);
-  info.set_start_time(epoch);
+  get_info()->set_start_time(epoch);
   if (verbose)
     cerr << "dsp:PdevFile::open_file start time = " << epoch << endl;
 
@@ -247,33 +248,36 @@ void dsp::PdevFile::parse_aoHdr ()
         "Unrecognized hdrVer value (%s)", strtmp);
 
   // This stuff should always be true..
-  info.set_telescope("Arecibo");
-  info.set_machine("Mock");
-  info.set_npol(2);
-  info.set_nbit(8);
-  info.set_ndim(2);
-  info.set_nchan(1);
-  info.set_state(Signal::Analytic);
+  get_info()->set_telescope("Arecibo");
+  get_info()->set_machine("Mock");
+  get_info()->set_npol(2);
+  get_info()->set_nbit(8);
+  get_info()->set_ndim(2);
+  get_info()->set_nchan(1);
+  get_info()->set_state(Signal::Analytic);
 
   if (verbose)
     cerr << "dsp::PdevFile::parse_aoHdr bw=" << aohdr->bandWdHz
       << " dir=" << aohdr->bandIncrFreq << endl;
   double bw = aohdr->bandWdHz / 1e6;
   if (aohdr->bandIncrFreq == 0) bw *= -1.0;
-  info.set_bandwidth(bw);
-  info.set_rate(aohdr->bandWdHz);
+  cerr << "pdev: forcing bw inversion! bw was:" << bw;
+  bw = bw * -1.0;
+  cerr << "Now bw=" << bw << endl;
+  get_info()->set_bandwidth(bw);
+  get_info()->set_rate(aohdr->bandWdHz);
 
-  info.set_centre_frequency(aohdr->cfrHz / 1e6);
+  get_info()->set_centre_frequency(aohdr->cfrHz / 1e6);
 
   strncpy(strtmp, aohdr->object, 16); strtmp[16] = '\0';
-  info.set_source(strtmp);
+  get_info()->set_source(strtmp);
 
   strncpy(strtmp, aohdr->frontEnd, 8); strtmp[8] = '\0';
-  info.set_receiver(strtmp);
+  get_info()->set_receiver(strtmp);
 
   sky_coord coords;
   coords.setDegrees(aohdr->raJDeg, aohdr->decJDeg);
-  info.set_coordinates(coords);
+  get_info()->set_coordinates(coords);
 
 }
 

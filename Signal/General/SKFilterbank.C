@@ -63,6 +63,13 @@ void dsp::SKFilterbank::set_engine (Engine* _engine)
 void dsp::SKFilterbank::custom_prepare ()
 {
   output->set_order( TimeSeries::OrderTFP );
+  if (engine)
+  {
+    cerr << "dsp::SKFilterbank::custom_prepare engine->setup()" << endl;
+    engine->setup();
+    cerr << "dsp::SKFilterbank::custom_prepare engine->prepare (input, " << nsamp_fft << ")" << endl;
+    engine->prepare (input, nsamp_fft);
+  }
 }
 
 /* 
@@ -71,7 +78,6 @@ void dsp::SKFilterbank::custom_prepare ()
  */
 uint64_t dsp::SKFilterbank::get_skfb_inc (uint64_t blocksize)
 {
-
   if (verbose)
     cerr << "dsp::SKFilterbank::get_skfb_inc M=" << tscrunch 
          << " nsamp_fft=" << nsamp_fft << " blocksize=" << blocksize << endl;
@@ -139,101 +145,110 @@ void dsp::SKFilterbank::filterbank ()
     output_tscr->set_npol(npol);
     output_tscr->set_ndim(1);
     output_tscr->resize(1);
+  }
+
+  if (engine)
+  {
+    engine->perform (input, output, output_tscr);
+  }
+  else
+  {
+    if (output_tscr && nchan > output_tscr->get_nchan())
+    { 
+      if (verbose)
+        cerr << "dsp::SKFilterbank::filterbank S?_tscr.resize(" << nchan*npol << ")" << endl;
+      S1_tscr.resize(nchan * npol);
+      S2_tscr.resize(nchan * npol);
+    }
+
+    // initialise tscr
+    if (output_tscr)
+    {
+      for (unsigned i=0; i<nchan*npol; i++)
+      {
+        S1_tscr[i]=0;
+        S2_tscr[i]=0;
+      }
+    }
+    if (verbose)
+      cerr << "dsp::SKFilterbank::filterbank starting threads" << endl;
+
+    // start SK threads
+    start_threads();
+
+    // wait for completion
+    wait_threads();
 
     if (verbose)
-      cerr << "dsp::SKFilterbank::filterbank S?_tscr.resize(" << nchan*npol << ")" << endl;
-    S1_tscr.resize(nchan * npol);
-    S2_tscr.resize(nchan * npol);
-  }
+      cerr << "dsp::SKFilterbank::filterbank threads ended" << endl;
 
-  // initialise tscr
-  if (output_tscr)
-  {
-    for (unsigned i=0; i<nchan*npol; i++)
-    {
-      S1_tscr[i]=0;
-      S2_tscr[i]=0;
-    }
-  }
-  if (verbose)
-    cerr << "dsp::SKFilterbank::filterbank starting threads" << endl;
+    // now we need to combine the results from each SK Thread. Note
+    // first thread should already be "in place"
 
-  // start SK threads
-  start_threads();
-
-  // wait for completion
-  wait_threads();
-
-  if (verbose)
-    cerr << "dsp::SKFilterbank::filterbank threads ended" << endl;
-
-  // now we need to combine the results from each SK Thread. Note
-  // first thread should already be "in place"
-
-  uint64_t decimated_ndat = ndat / (nsamp_fft * tscrunch);
-  uint64_t thread_ndat = decimated_ndat / n_threads;
-  uint64_t ndat_span = decimated_ndat / n_threads;
-  uint64_t out_span = nchan * npol;
-  uint64_t in_span  = nchan * npol * 2 * tscrunch;
-
-  if (debugd < 1)
-    cerr << "dsp::SKFilterbank::filterbank out_span=" << out_span << " in_span=" << in_span << endl;
-
-  // the 0th thread will operate inplace, only need to memcpy the others
-  for (unsigned ithread=1; ithread<n_threads; ithread++)
-  {
-    // last thread can have additional ndat
-    if (ithread == n_threads - 1)
-    {
-      thread_ndat += decimated_ndat % n_threads;
-    }
-
-    uint64_t out_offset = ithread * ndat_span * out_span;
-    uint64_t in_offset  = ithread * ndat_span * in_span;
-
-    float *outdat = output->get_dattfp () + out_offset;
-    float *indat  = output->get_dattfp () + in_offset;
-    size_t size = thread_ndat * out_span * sizeof(float);
+    uint64_t decimated_ndat = ndat / (nsamp_fft * tscrunch);
+    uint64_t thread_ndat = decimated_ndat / n_threads;
+    uint64_t ndat_span = decimated_ndat / n_threads;
+    uint64_t out_span = nchan * npol;
+    uint64_t in_span  = nchan * npol * 2 * tscrunch;
 
     if (debugd < 1)
-      cerr << "dsp::SKFilterbank::filterbank [" << ithread << "] memcpy "
-           << " out_offset=" << out_offset << " in_offset=" << in_offset
-           << " ndat=" << thread_ndat * out_span << " size=" << size << endl;
+      cerr << "dsp::SKFilterbank::filterbank out_span=" << out_span << " in_span=" << in_span << endl;
 
-    memcpy (outdat, indat, size);
-  }
+    // the 0th thread will operate inplace, only need to memcpy the others
+    for (unsigned ithread=1; ithread<n_threads; ithread++)
+    {
+      // last thread can have additional ndat
+      if (ithread == n_threads - 1)
+      {
+        thread_ndat += decimated_ndat % n_threads;
+      }
 
-  // now compute the SK statisics for the tscr vector, from the S1 and S2 arrays
-  if (debugd < 1)
-    cerr << "dsp::SKFilterbank::filterbank calculating tscrunch SK estimates" << endl;
+      uint64_t out_offset = ithread * ndat_span * out_span;
+      uint64_t in_offset  = ithread * ndat_span * in_span;
 
-  if (output_tscr)
-  {
-    float S1 = 0;
-    float S2 = 0;
-    float M = (float) (tscrunch * decimated_ndat);
-    float M_fac = (M+1) / (M-1);
-    float * outdat = output_tscr->get_dattfp();
+      float *outdat = output->get_dattfp () + out_offset;
+      float *indat  = output->get_dattfp () + in_offset;
+      size_t size = thread_ndat * out_span * sizeof(float);
 
-    if (debugd < 1)
-      cerr << "dsp::SKFilterbank::filterbank tscr M=" << M <<" M_fac=" << M_fac << endl;
-    for (unsigned ichan=0; ichan<nchan; ichan++)
-    { 
-      // pol0 
-      S1 = S1_tscr[2*ichan];
-      S2 = S2_tscr[2*ichan];
-      outdat[2*ichan] = M_fac * (M * (S2 / (S1*S1)) - 1);
+      if (debugd < 1)
+        cerr << "dsp::SKFilterbank::filterbank [" << ithread << "] memcpy "
+             << " out_offset=" << out_offset << " in_offset=" << in_offset
+             << " ndat=" << thread_ndat * out_span << " size=" << size << endl;
 
-      // pol1
-      S1 = S1_tscr[2*ichan+1];
-      S2 = S2_tscr[2*ichan+1];
-      outdat[2*ichan+1] = M_fac * (M * (S2 / (S1*S1)) - 1);
+      memcpy (outdat, indat, size);
     }
-  }
- 
+
+    // now compute the SK statisics for the tscr vector, from the S1 and S2 arrays
+    if (debugd < 1)
+      cerr << "dsp::SKFilterbank::filterbank calculating tscrunch SK estimates" << endl;
+
+    if (output_tscr)
+    {
+      float S1 = 0;
+      float S2 = 0;
+      float M = (float) (tscrunch * decimated_ndat);
+      float M_fac = (M+1) / (M-1);
+      float * outdat = output_tscr->get_dattfp();
+
+      if (debugd < 1)
+        cerr << "dsp::SKFilterbank::filterbank tscr M=" << M <<" M_fac=" << M_fac << endl;
+      for (unsigned ichan=0; ichan<nchan; ichan++)
+      { 
+        // pol0 
+        S1 = S1_tscr[2*ichan];
+        S2 = S2_tscr[2*ichan];
+        outdat[2*ichan] = M_fac * (M * (S2 / (S1*S1)) - 1);
+
+        // pol1
+        S1 = S1_tscr[2*ichan+1];
+        S2 = S2_tscr[2*ichan+1];
+        outdat[2*ichan+1] = M_fac * (M * (S2 / (S1*S1)) - 1);
+      }
+    }
+  } 
   if (debugd < 1)
     cerr << "dsp::SKFilterbank::filterbank setting ndat=" << nscrunches << endl;
-  
+    
   output->set_ndat (nscrunches);
   output->set_npol (npol);
   output->set_state (Signal::PPQQ);

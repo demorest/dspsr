@@ -27,6 +27,9 @@ namespace dsp {
     //! Returns true if filename is a valid GUPPI file
     bool is_valid (const char* filename) const;
 
+    //! Close the file, free memory
+    void close ();
+
   protected:
 
     //! Open the file

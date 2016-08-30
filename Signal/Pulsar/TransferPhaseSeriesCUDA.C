@@ -13,19 +13,18 @@
 using namespace std;
 
 //! Default constructor- always inplace
-dsp::TransferPhaseSeriesCUDA::TransferPhaseSeriesCUDA()
+dsp::TransferPhaseSeriesCUDA::TransferPhaseSeriesCUDA(cudaStream_t _stream)
   : Transformation<PhaseSeries,PhaseSeries> ("CUDA::PhaseSeriesTransfer", outofplace)
 {
   kind = cudaMemcpyHostToDevice;
   transfer_hits = false;
+  stream = _stream;
 }
 
 //! Do stuff
 void dsp::TransferPhaseSeriesCUDA::transformation ()
 {
   prepare ();
-
-  cudaThreadSynchronize();
 
   if (verbose)
     cerr << "dsp::TransferPhaseSeriesCUDA::transformation input ndat="
@@ -35,9 +34,14 @@ void dsp::TransferPhaseSeriesCUDA::transformation ()
          << endl;
 
   cudaError error;
-  error = cudaMemcpy (output->internal_get_buffer(), 
-                      input->internal_get_buffer(), 
-	                    input->internal_get_size(), kind);
+  if (stream)
+    error = cudaMemcpyAsync (output->internal_get_buffer(), 
+                             input->internal_get_buffer(), 
+                             input->internal_get_size(), kind, stream);
+  else
+    error = cudaMemcpy (output->internal_get_buffer(),
+                        input->internal_get_buffer(),
+                        input->internal_get_size(), kind);
   if (error != cudaSuccess)
     throw Error (InvalidState, "dsp::TransferPhaseSeriesCUDA::transformation buffer",
                  cudaGetErrorString (error));
@@ -54,15 +58,24 @@ void dsp::TransferPhaseSeriesCUDA::transformation ()
     if (verbose)
       cerr << "dsp::TransferPhaseSeriesCUDA::transformation hits_size=" 
            << input->get_hits_size() << endl;
-         
-    error = cudaMemcpy (output->get_hits(),
-                        input->get_hits(),
-                        input->get_hits_size(), kind);
-
+    if (stream)
+      error = cudaMemcpyAsync (output->get_hits(),
+                               input->get_hits(),
+                               input->get_hits_size(), kind, stream);
+    else
+      error = cudaMemcpy (output->get_hits(),
+                          input->get_hits(),
+                          input->get_hits_size(), kind);
     if (error != cudaSuccess)
       throw Error (InvalidState, "dsp::TransferPhaseSeriesCUDA::transformation hits",
                    cudaGetErrorString (error));
   }
+
+  if (stream)
+    cudaStreamSynchronize(stream);
+  else
+    cudaThreadSynchronize();
+
 }
 
 void dsp::TransferPhaseSeriesCUDA::prepare ()

@@ -4,7 +4,9 @@ noinst_LTLIBRARIES = libClasses.la
 nobase_include_HEADERS = environ.h ascii_header.h \
 	dsp/ASCIIObservation.h dsp/Seekable.h dsp/BitSeries.h	     \
 	dsp/InputBuffering.h dsp/InputBufferingShare.h		     \
-	dsp/DADAFile.h dsp/DummyFile.h dsp/BitTable.h dsp/MPIRoot.h		     \
+	dsp/Reserve.h \
+	dsp/DADAFile.h dsp/DummyFile.h dsp/BitTable.h \
+	dsp/MPIRoot.h		     \
 	dsp/SubByteTwoBitCorrection.h dsp/BitUnpacker.h		     \
 	dsp/MPIServer.h dsp/BlockFile.h				     \
 	dsp/MPITrans.h dsp/TestInput.h dsp/BufferingPolicy.h	     \
@@ -28,11 +30,13 @@ nobase_include_HEADERS = environ.h ascii_header.h \
 	dsp/Memory.h debug.h dsp/OperationThread.h dsp/FloatUnpacker.h \
 	dsp/UniversalInputBuffering.h dsp/OutputFile.h \
 	dsp/ObservationInterface.h dsp/GenericEightBitUnpacker.h     \
-	dsp/CommandLineHeader.h
+	dsp/CommandLineHeader.h dsp/OutputFileShare.h
 
 libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
-	InputBufferingShare.C BitSeries.C SubByteTwoBitCorrection.C \
-	DADAFile.C DummyFile.C TestInput.C BitTable.C BitUnpacker.C BlockFile.C \
+	InputBufferingShare.C Reserve.C \
+	BitSeries.C SubByteTwoBitCorrection.C \
+	DADAFile.C DummyFile.C TestInput.C BitTable.C BitUnpacker.C \
+	BlockFile.C \
 	TimeSeries.C ChannelOrder.C DataSeries.C   \
 	TwoBitCorrection.C Digitizer.C MultiFile.C TwoBitTable.C    \
 	EightBitUnpacker.C Unpacker.C File.C Observation.C	    \
@@ -45,15 +49,18 @@ libClasses_la_SOURCES = ascii_header.c ASCIIObservation.C	    \
 	CloneArchive.C SignalPath.C Multiplex.C Memory.C \
 	OperationThread.C FloatUnpacker.C OutputFile.C \
 	ObservationInterface.C GenericEightBitUnpacker.C            \
-	CommandLineHeader.C
+	CommandLineHeader.C OutputFileShare.C
 
 if HAVE_MPI
 libClasses_la_SOURCES += MPIRoot.C MPITrans.C MPIServer.C mpi_Observation.C
 endif
 
-if HAVE_CUFFT
-nobase_include_HEADERS += dsp/MemoryCUDA.h
-libClasses_la_SOURCES += MemoryCUDA.C check_error.C
+if HAVE_CUDA
+nobase_include_HEADERS += dsp/MemoryCUDA.h dsp/GenericEightBitUnpackerCUDA.h \
+                          dsp/TimeSeriesCUDA.h
+libClasses_la_SOURCES += MemoryCUDA.C check_error.C GenericEightBitUnpackerCUDA.cu \
+                         TimeSeriesCUDA.cu
+libClasses_la_LIBADD = @CUDA_LIBS@
 endif
 
 check_PROGRAMS = test_BlockIterator test_environ
@@ -63,8 +70,9 @@ test_BlockIterator_SOURCES = test_BlockIterator.C
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libClasses.la
 
-AM_CPPFLAGS += @CUFFT_CFLAGS@
+AM_CPPFLAGS += @CUDA_CFLAGS@
 

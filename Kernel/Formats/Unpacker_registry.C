@@ -51,11 +51,18 @@ static dsp::Unpacker::Register::Enter<dsp::BCPMUnpacker> registry_bcpm;
 #if HAVE_bpsr
 #include "dsp/BPSRUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::BPSRUnpacker> bpsr;
+#include "dsp/BPSRCrossUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::BPSRCrossUnpacker> bpsrcross;
 #endif
 
 #if HAVE_caspsr
 #include "dsp/CASPSRUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::CASPSRUnpacker> caspsr;
+#endif
+
+#if HAVE_ska1
+#include "dsp/SKA1Unpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::SKA1Unpacker> ska1;
 #endif
 
 #if HAVE_cpsr
@@ -71,6 +78,8 @@ static dsp::Unpacker::Register::Enter<dsp::CPSR2TwoBitCorrection> cpsr2;
 #if HAVE_dummy
 #include "dsp/DummyUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::DummyUnpacker> dummy;
+#include "dsp/DummyFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::DummyFourBit> dummy4;
 #endif
 
 #if HAVE_fadc
@@ -92,6 +101,17 @@ static dsp::Unpacker::Register::Enter<dsp::GMRTFilterbank16> gmrt16;
 #if HAVE_guppi
 #include "dsp/GUPPIUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::GUPPIUnpacker> guppi;
+#include "dsp/GUPPIFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPIFourBit> guppi4;
+#include "dsp/GUPPITwoBitCorrection.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
+#endif
+
+#if HAVE_kat
+#include "dsp/KAT7Unpacker.h"
+#include "dsp/MeerKATUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::KAT7Unpacker> kat7;
+static dsp::Unpacker::Register::Enter<dsp::MeerKATUnpacker> meerkat;
 #endif
 
 #if HAVE_lofar_dal
@@ -112,6 +132,11 @@ static dsp::Unpacker::Register::Enter<dsp::LBADR64_TwoBitCorrection> lbadr64;
 #if HAVE_lump
 #include "dsp/LuMPUnpacker.h"
 static Registry::List<dsp::Unpacker>::Enter<dsp::LuMPUnpacker> lump;
+#endif
+
+#if HAVE_lwa
+#include "dsp/LWAUnpacker.h"
+static Registry::List<dsp::Unpacker>::Enter<dsp::LWAUnpacker> lwa;
 #endif
 
 #if HAVE_spda1k
@@ -176,6 +201,8 @@ static dsp::Unpacker::Register::Enter<dsp::ACFUnpack> spigot;
 #endif
 
 #if HAVE_fits
+#include "dsp/GUPPIFITSUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPIFITSUnpacker> guppifits;
 #include "dsp/FITSUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 #endif
@@ -185,6 +212,8 @@ static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrection> vdif;
 #include "dsp/VDIFTwoBitCorrectionMulti.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrectionMulti> vdif_multi;
+#include "dsp/VDIFEightBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::VDIFEightBitUnpacker> vdif8;
 #endif
 
 #if HAVE_wapp

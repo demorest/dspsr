@@ -176,12 +176,13 @@ int main(int argc, char ** argv) try
   // bw in MHz = number of complex samples per microsecond
   double max_realtime_us = (nfft-nfilt) / bw;
 
-  // forward and backward
-  double min_Mflops = 2 * 5.0 * nfft * log2(nfft) / max_realtime_us;
+  // 2 * (dual-polarisation)
+  double min_ops = 2*5.0* nfft * (log2(nchan) + 2*log2(nfft));
+  double min_Mflops = min_ops / max_realtime_us;
 
   cerr <<
     "\n"
-    "Minimum Mflops = " << min_Mflops << endl;
+    "Minimum Mflops = " << min_Mflops << " (two polarizations)" << endl;
 
   cerr << endl;
   return 0;

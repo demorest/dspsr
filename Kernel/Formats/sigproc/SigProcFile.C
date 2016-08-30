@@ -27,10 +27,10 @@ bool dsp::SigProcFile::is_valid (const char* filename) const
 
 void dsp::SigProcFile::open_file (const char* filename)
 {
-  SigProcObservation data (filename);
+  SigProcObservation* data = new SigProcObservation (filename);
 
   info = data;
-  header_bytes = data.header_bytes;
+  header_bytes = data->header_bytes;
    
   // open the file
   fd = ::open (filename, O_RDONLY);

@@ -5,6 +5,7 @@
  *
  ***************************************************************************/
 #include "dsp/GUPPIBlockFile.h"
+#include "dsp/BitSeries.h"
 
 #include "Error.h"
 
@@ -26,9 +27,14 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   hdr = NULL;
   dat = NULL;
   time_ordered = true;
+  signed_8bit = true;
   current_block_byte = 0;
+  current_nzero_byte = 0;
   overlap = 0;
   blocsize = 0;
+  packets_per_block = 0;
+  current_pktidx = -1;
+  set_overlap_buffer(new BitSeries);
 }
 
 dsp::GUPPIBlockFile::~GUPPIBlockFile ( )
@@ -53,35 +59,51 @@ void dsp::GUPPIBlockFile::parse_header()
   char ctmp[80], ctmp2[80];
 
   header_get_check("NBITS", &itmp);
-  info.set_nbit(itmp);
+  get_info()->set_nbit(itmp);
 
   header_get_check("OBSBW", &ftmp);
-  info.set_bandwidth(ftmp);
+  get_info()->set_bandwidth(ftmp);
 
   header_get_check("OBSFREQ", &ftmp);
-  info.set_centre_frequency(ftmp);
+  get_info()->set_centre_frequency(ftmp);
  
   header_get_check("OBSNCHAN", &itmp);
-  info.set_nchan(itmp);
+  get_info()->set_nchan(itmp);
 
   header_get_check("NPOL", &itmp);
   if (itmp==1)
-    info.set_npol(1);
+    get_info()->set_npol(1);
   else 
-    info.set_npol(2);
+    get_info()->set_npol(2);
 
   // Default to complex data
-  info.set_state(Signal::Analytic);
+  get_info()->set_state(Signal::Analytic);
+
+  if (get_info()->get_nchan() == 1) 
+    get_info()->set_state(Signal::Nyquist);
 
   // Any format-specific checks
+  int packet_factor = 1;
   header_get_check("PKTFMT", ctmp);
-  if (string(ctmp) == "VDIF")
-    info.set_state(Signal::Nyquist);
+  if (string(ctmp) == "VDIF") 
+  {
+    get_info()->set_state(Signal::Nyquist);
+    signed_8bit = false;
+    // Assume 2-pol VDIF used two streams, this will correct
+    // packets per block later.
+    if (get_info()->get_npol()==2) { packet_factor = 2; }
+  } 
   else if (string(ctmp) == "SIMPLE")
     time_ordered = false;
  
   header_get_check("TBIN", &ftmp);
-  info.set_rate(1.0/ftmp);
+  get_info()->set_rate(1.0/ftmp);
+
+  // Data block size params
+  header_get_check("OVERLAP", &itmp);
+  overlap = itmp;
+  header_get_check("BLOCSIZE", &itmp);
+  blocsize = itmp;
 
   int imjd, smjd;
   double t_offset;
@@ -90,35 +112,31 @@ void dsp::GUPPIBlockFile::parse_header()
   header_get_check("STT_OFFS", &t_offset);
   header_get_check("PKTIDX",   &ltmp);
   header_get_check("PKTSIZE",  &itmp);
-  t_offset += ltmp * itmp * 8.0 / info.get_rate() / 
-      (info.get_nbit() * info.get_nchan() * info.get_npol() * 2.0);
+  current_pktidx = ltmp;
+  packets_per_block = blocsize / itmp / packet_factor;
+  t_offset += ltmp * itmp * 8.0 / get_info()->get_rate() / 
+      (get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol() * get_info()->get_ndim());
   //cerr << "t_offset=" << t_offset << "s" << endl;
   MJD epoch (imjd, (double)smjd/86400.0 + t_offset/86400.0);
-  info.set_start_time(epoch);
+  get_info()->set_start_time(epoch);
 
   header_get_check("TELESCOP", ctmp);
-  info.set_telescope(ctmp);
+  get_info()->set_telescope(ctmp);
 
   header_get_check("SRC_NAME", ctmp);
-  info.set_source(ctmp);
-
-  // Data block size params
-  header_get_check("OVERLAP", &itmp);
-  overlap = itmp;
-  header_get_check("BLOCSIZE", &itmp);
-  blocsize = itmp;
+  get_info()->set_source(ctmp);
 
   header_get_check("BACKEND", ctmp);
-  info.set_machine(ctmp);
+  get_info()->set_machine(ctmp);
 
   // Maybe the following aren't strictly required ...
 
   // Poln type
   header_get_check("FD_POLN", ctmp);
   if (strncasecmp(ctmp, "CIR", 3)==0) 
-    info.set_basis(Signal::Circular);
+    get_info()->set_basis(Signal::Circular);
   else
-    info.set_basis(Signal::Linear);
+    get_info()->set_basis(Signal::Linear);
 
   // Coordinates
   sky_coord coords;
@@ -128,11 +146,11 @@ void dsp::GUPPIBlockFile::parse_header()
     cerr << "dsp::GUPPIBlockFile::parse_header ra_str=" 
       << ctmp << " dec_str=" << ctmp2 << endl;
   coords.setHMSDMS(ctmp, ctmp2);
-  info.set_coordinates(coords);
+  get_info()->set_coordinates(coords);
 
   // Receiver
   header_get_check("FRONTEND", ctmp);
-  info.set_receiver(ctmp);
+  get_info()->set_receiver(ctmp);
   // How to set feed hand, symm angle, etc?
   // Note: GBT recvrs have fd_hand=-1, PF has fd_sang=+45deg, 
   //       otherwise fd_sang=-45deg.
@@ -149,9 +167,9 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
   if (verbose) 
     cerr << "dsp::GUPPIBlockFile::load_bytes() nbytes=" << nbytes << endl;
 
-  const unsigned nchan = info.get_nchan();
-  const unsigned npol = info.get_npol();
-  const unsigned nbit = info.get_nbit();
+  const unsigned nchan = get_info()->get_nchan();
+  const unsigned npol = get_info()->get_npol();
+  const unsigned nbit = get_info()->get_nbit();
   const unsigned bytes_per_samp = (2 * npol * nbit) / 8;
   const uint64_t overlap_bytes = overlap * bytes_per_samp * nchan;
   const uint64_t blocsize_per_chan = blocsize / nchan;
@@ -160,6 +178,22 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
 
   while (to_load && !end_of_data) 
   {
+
+    // If there are zeros, send them
+    if (current_nzero_byte)
+    {
+      uint64_t to_zero = current_nzero_byte;;
+      if (to_zero > to_load)
+        to_zero = to_load;
+
+      memset(buffer + bytes_read, 0, to_zero);
+      bytes_read += to_zero;
+      to_load -= to_zero;
+      current_nzero_byte -= to_zero;
+
+      continue;
+    }
+
     // Only read non-overlapping part of data
     uint64_t to_read = (blocsize - overlap_bytes) - current_block_byte;
     if (to_read > to_load) 
@@ -200,14 +234,59 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
     // Get next block if necessary
     if (current_block_byte == blocsize - overlap_bytes)
     {
-      // load_next_block will return 0 if no more data.
-      int rv = load_next_block();
-      if (rv==0) 
+
+      // Read blocks, skipping any that are out of order
+      long long new_pktidx = 0;
+      long long pkt_diff = 0;
+      while (pkt_diff <= 0)
       {
-        end_of_data = true;
-        break;
+        // Print warning on out of order block
+        if (pkt_diff < 0)
+          cerr << "dsp::GUPPIBlockFile::load_bytes() unordered pktidx=" 
+            << new_pktidx << " last=" << current_pktidx
+            << " diff=" << pkt_diff
+            << " inc=" << packets_per_block
+            << endl;
+        
+        // load_next_block will return 0 if no more data.
+        int rv = load_next_block();
+        if (rv==0) 
+        {
+          end_of_data = true;
+          break;
+        }
+        current_block_byte = 0;
+
+        header_get_check("PKTIDX", &new_pktidx);
+        pkt_diff = new_pktidx - current_pktidx;
       }
-      current_block_byte = 0;
+
+      // Check for skipped blocks
+      if (pkt_diff != packets_per_block)
+      {
+        // Print a warning
+        cerr << "dsp::GUPPIBlockFile::load_bytes() skipped pktidx=" 
+          << new_pktidx << " last=" << current_pktidx
+          << " diff=" << pkt_diff
+          << " inc=" << packets_per_block
+          << endl;
+
+        // Only can handle an integer number of missed blocks
+        if (pkt_diff % packets_per_block) 
+        {
+          cerr << "dsp::GUPPIBlockFile::load_bytes() "
+            << "WARNING fraction skipped block" 
+            << endl;
+        }
+	else
+	{
+	  int nblock_miss = (pkt_diff / packets_per_block) - 1;
+	  current_nzero_byte = (blocsize - overlap_bytes) * nblock_miss;
+	}
+
+      }
+
+      current_pktidx = new_pktidx;
     }
 
   }

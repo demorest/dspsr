@@ -85,7 +85,7 @@ void dsp::Mark5File::open_file (const char* filename)
 		 "failed read NBIT");
 	
   cerr << "NBIT = " << nbit << endl;
-  info.set_nbit (nbit);
+  get_info()->set_nbit (nbit);
 
 
   // ///////////////////////////////////////////////////////////////
@@ -115,10 +115,10 @@ void dsp::Mark5File::open_file (const char* filename)
 
   // The factor of 2 should only apply for dual-pol data.
   cerr << "NCHAN = " << vlba_stream->nchan / 2 << endl;
-  info.set_nchan( vlba_stream->nchan / 2 ); 
+  get_info()->set_nchan( vlba_stream->nchan / 2 ); 
 
   cerr << "SAMPRATE = " << vlba_stream->samprate << endl;
-  info.set_rate ( vlba_stream->samprate );
+  get_info()->set_rate ( vlba_stream->samprate );
 
   int refmjd = 0;
   if (ascii_header_get (header,"REFMJD","%d",&refmjd) < 0)
@@ -131,7 +131,7 @@ void dsp::Mark5File::open_file (const char* filename)
   cerr << "MJD = " << vlba_stream->mjd << endl;
   cerr << "SEC = " << vlba_stream->sec << endl;
 
-  info.set_start_time( MJD(vlba_stream->mjd, vlba_stream->sec, 0) );
+  get_info()->set_start_time( MJD(vlba_stream->mjd, vlba_stream->sec, 0) );
 
   // ///////////////////////////////////////////////////////////////
   // TELESCOPE
@@ -145,7 +145,7 @@ void dsp::Mark5File::open_file (const char* filename)
   /* user must specify a telescope whose name is recognised or the telescope
      code */
 
-  info.set_telescope (hdrstr);
+  get_info()->set_telescope (hdrstr);
 	
   // ///////////////////////////////////////////////////////////////	
   // SOURCE
@@ -154,7 +154,7 @@ void dsp::Mark5File::open_file (const char* filename)
     throw Error (InvalidParam, "Mark5File::open_file",
 		 "failed read SOURCE");
 
-  info.set_source (hdrstr);
+  get_info()->set_source (hdrstr);
 
   // ///////////////////////////////////////////////////////////////	
   // COORDINATES
@@ -186,7 +186,7 @@ void dsp::Mark5File::open_file (const char* filename)
     cerr << "DEC = " << dec*180.0/M_PI << endl;
     sky_coord coords;
     coords.setRadians(ra,dec);
-    info.set_coordinates(coords);
+    get_info()->set_coordinates(coords);
   }
 
 
@@ -199,11 +199,11 @@ void dsp::Mark5File::open_file (const char* filename)
     throw Error (InvalidParam, "Mark5File::open_file",
 		 "failed read FREQ");
 
-  info.set_centre_frequency (freq);
+  get_info()->set_centre_frequency (freq);
 	
   //
   // WvS - flag means that even number of channels are result of FFT
-  // info.set_dc_centred(true);
+  // get_info()->set_dc_centred(true);
 
   // ///////////////////////////////////////////////////////////////
   // BW
@@ -213,21 +213,21 @@ void dsp::Mark5File::open_file (const char* filename)
     throw Error (InvalidParam, "Mark5File::open_file",
 		 "failed read BW");
 
-  info.set_bandwidth (bw);
+  get_info()->set_bandwidth (bw);
 	
   // ///////////////////////////////////////////////////////////////
   // NPOL
   //	
   //  -- generalise this later
 	
-  info.set_npol(2);    // read in both polns at once
+  get_info()->set_npol(2);    // read in both polns at once
 
   // ///////////////////////////////////////////////////////////////	
   // NDIM  --- whether the data are Nyquist or Quadrature sampled
   //
   // VLBA data are Nyquist sampled
 
-  info.set_state (Signal::Nyquist);
+  get_info()->set_state (Signal::Nyquist);
 	  
   // ///////////////////////////////////////////////////////////////
   // NDAT
@@ -247,8 +247,8 @@ void dsp::Mark5File::open_file (const char* filename)
 
   string prefix="tmp";    // what prefix should we assign??
 	  
-  info.set_mode(stringprintf ("%d-bit mode",info.get_nbit() ) );
-  info.set_machine("Mark5");	
+  get_info()->set_mode(stringprintf ("%d-bit mode",get_info()->get_nbit() ) );
+  get_info()->set_machine("Mark5");	
 }
 
 extern "C" int next_frame (struct VLBA_stream *vs);

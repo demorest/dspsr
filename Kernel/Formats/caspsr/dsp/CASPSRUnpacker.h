@@ -40,8 +40,8 @@ namespace dsp {
 		             float* into, const unsigned fskip,
 		             unsigned long* hist);
 
-    BitSeries staging;
     void * gpu_stream;
+
     void unpack_on_gpu ();
 
     unsigned get_resolution ()const ;
@@ -55,6 +55,10 @@ namespace dsp {
     unsigned thread_count;
 
     bool device_prepared;
+
+    bool single_thread;
+
+    void unpack_single_thread ();
 
     //! cpu_unpacker_thread ids
     std::vector <pthread_t> ids;
@@ -84,6 +88,9 @@ namespace dsp {
 
     //! sk_thread states
     std::vector <State> states;
+
+    //! maximum number of GPU threads per block
+    int threadsPerBlock;
 
   };
 }

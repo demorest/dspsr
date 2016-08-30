@@ -6,8 +6,14 @@
  *
  ***************************************************************************/
 
+#include "config.h"
 #include "dsp/TimeSeries.h"
 #include "dsp/Memory.h"
+
+#ifdef HAVE_CUDA
+#include "dsp/MemoryCUDA.h"
+#include "dsp/TimeSeriesCUDA.h"
+#endif
 
 #include "fsleep.h"
 #include "Error.h"
@@ -45,6 +51,7 @@ void dsp::TimeSeries::init ()
   reserve_nfloat = 0;
   input_sample = -1;
   zeroed_data = false;
+  engine = 0;
 }
 
 dsp::TimeSeries* dsp::TimeSeries::clone () const
@@ -65,7 +72,16 @@ dsp::TimeSeries* dsp::TimeSeries::null_clone () const
 void dsp::TimeSeries::null_work (const TimeSeries* from)
 {
   order = from->order;
+
+#ifdef HAVE_CUDA
   memory = from->memory;
+  if (from->engine) 
+  {
+    set_engine (new CUDA::TimeSeriesEngine(memory));
+  }
+#else
+  memory = from->memory;
+#endif
 }
 
 dsp::TimeSeries::~TimeSeries()
@@ -135,12 +151,8 @@ void dsp::TimeSeries::resize (uint64_t nsamples)
 	 << " buffer=" << (void*)buffer << " ndat=" << get_ndat() << endl;
 
     if (data && buffer) 
-    {
       cerr << "dsp::TimeSeries::resize (" << nsamples << ") offset="
-	   << int64_t((data-(float*)buffer)) << endl
-           << "dsp::TimeSeries::resize get_samps_offset=" 
-	   << get_samps_offset()  << endl;
-    }
+	   << int64_t((data-(float*)buffer)) << endl;
   }  
 
   uint64_t fake_ndat = reserve_nfloat / get_ndim();
@@ -325,7 +337,7 @@ void dsp::TimeSeries::internal_match (const TimeSeries* other)
   reserve_nfloat = other->reserve_nfloat;
   input_sample = other->input_sample;
 
-  unsigned offset = other->data - (float*)other->buffer;
+  uint64_t offset = other->data - (float*)other->buffer;
 
   data = (float*)buffer + offset;
 }
@@ -463,13 +475,20 @@ void dsp::TimeSeries::copy_data (const dsp::TimeSeries* copy,
     switch (order)
     {
     case OrderFPT:
-      for (unsigned ichan=0; ichan<get_nchan(); ichan++)
+      if (engine)
       {
-        for (unsigned ipol=0; ipol<get_npol(); ipol++)
+        engine->copy_data_fpt (copy, idat_start, copy_ndat);
+      }
+      else
+      {
+        for (unsigned ichan=0; ichan<get_nchan(); ichan++)
         {
-          float* to = get_datptr (ichan, ipol);
-          const float* from = copy->get_datptr(ichan,ipol) + offset;
-          memory->do_copy (to, from, size_t(byte_count));
+          for (unsigned ipol=0; ipol<get_npol(); ipol++)
+          {
+            float* to = get_datptr (ichan, ipol);
+            const float* from = copy->get_datptr(ichan,ipol) + offset;
+            memory->do_copy (to, from, size_t(byte_count));
+          }
         }
       }
       break;
@@ -495,6 +514,7 @@ catch (Error& error)
   throw error += "dsp::TimeSeries::copy_data";
 }
 
+#if 0
 /*! 
   \retval number of timesamples actually appended.  
   If zero, then none were and we assume 'this' is full.
@@ -559,6 +579,8 @@ void dsp::TimeSeries::append_checks(uint64_t& ncontain,uint64_t& ncopy,
 	      get_ndat(), ncopy, get_ndat()+ncopy/little->get_ndim());
   }
 }
+
+#endif
 
 dsp::TimeSeries& dsp::TimeSeries::swap_data(dsp::TimeSeries& ts)
 {
@@ -667,6 +689,16 @@ void dsp::TimeSeries::change_reserve (int64_t change) const
     thiz->reserve_nfloat += change * reserve_step;
   }
 
+  if (match)
+  {
+    match->reserve_ndat = reserve_ndat;
+    match->reserve_nfloat = reserve_nfloat;
+  }
+}
+
+void dsp::TimeSeries::set_match (TimeSeries* other)
+{
+  match = other;
 }
 
 void dsp::TimeSeries::finite_check () const
@@ -700,4 +732,11 @@ void dsp::TimeSeries::finite_check () const
 		 "%u/%u non-finite values",
 		 non_finite, nfloat * nchan * npol);
 }
+
+void dsp::TimeSeries::set_engine( Engine* _engine )
+{
+  engine = _engine;
+  engine->prepare (this);
+}
+
 

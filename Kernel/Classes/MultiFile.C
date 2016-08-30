@@ -17,7 +17,7 @@
 
 using namespace std;
 
-dsp::MultiFile::MultiFile () : File ("MultiFile")
+dsp::MultiFile::MultiFile (const char* name) : File (name)
 {
   test_contiguity = true;
   current_index = 0;
@@ -142,13 +142,13 @@ void dsp::MultiFile::open (const vector<string>& new_filenames)
 
 void dsp::MultiFile::setup ()
 {
-  info = *(files[0]->get_info());
+  info = files[0]->get_info();
 
   uint64_t total_ndat = 0;
   for( unsigned i=0; i<files.size(); i++)
     total_ndat += files[i]->get_info()->get_ndat();
 
-  info.set_ndat (total_ndat);
+  get_info()->set_ndat (total_ndat);
 
   // MultiFile must reflect the time sample resolution of the underlying device
   resolution = loader->resolution;
@@ -183,7 +183,7 @@ void dsp::MultiFile::erase_files()
 {
   files.erase( files.begin(), files.end());
   loader = 0;
-  info = Observation();
+  info = 0;
   rewind ();
 }
 
@@ -344,6 +344,9 @@ void dsp::MultiFile::set_loader (unsigned index) try
   if (index == current_index)
     return;
 
+  // Close previously open file
+  if (loader)
+    loader->close();
 
   loader = files[index];
 
@@ -358,6 +361,11 @@ catch (Error& err)
   throw err += "dsp::MultiFile::set_loader";
 }
 
+void dsp::MultiFile::add_extensions (Extensions *ext)
+{
+  if (loader)
+    loader->add_extensions(ext);
+}
 
 bool dsp::MultiFile::has_loader ()
 {

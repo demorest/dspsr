@@ -118,28 +118,28 @@ void dsp::LBADR64_File::open_file (const char* filename)
   
   tm2utc(&utc, date);
 
-  info.set_start_time(utc);
+  get_info()->set_start_time(utc);
 
-  info.set_nbit(2);
-  info.set_npol(2);
-  info.set_nchan(1);
+  get_info()->set_nbit(2);
+  get_info()->set_npol(2);
+  get_info()->set_nchan(1);
   
-  info.set_state(Signal::Nyquist);
-  info.set_machine("LBADR64");
+  get_info()->set_state(Signal::Nyquist);
+  get_info()->set_machine("LBADR64");
 
   // In 64 MHz bandwidth mode, the polarisations are packed in
   // alternate bytes, with 4 consecutive samples per byte
 
-  info.set_rate(128000000);
-  info.set_bandwidth(64.0);
+  get_info()->set_rate(128000000);
+  get_info()->set_bandwidth(64.0);
 
   // ////////////////////////////////////////////////////////////////
   // Change this as required. The defaults probably won't be correct!
   // ////////////////////////////////////////////////////////////////
 
-  info.set_centre_frequency(1420.0);
+  get_info()->set_centre_frequency(1420.0);
 
-  info.set_telescope( "Hobart" );   // 4 = Hobart, 7 = Parkes, 6 = Tid
+  get_info()->set_telescope( "Hobart" );   // 4 = Hobart, 7 = Parkes, 6 = Tid
 
   struct stat file_info;
   
@@ -151,8 +151,8 @@ void dsp::LBADR64_File::open_file (const char* filename)
   // samples, then divide by the number of channels used to get the total
   // number of unique time samples.
 
-  info.set_ndat( (int64_t((file_info.st_size - header_bytes)) * 8) / 
-		 (info.get_nbit()*info.get_npol()*info.get_nchan()) );
+  get_info()->set_ndat( (int64_t((file_info.st_size - header_bytes)) * 8) / 
+		 (get_info()->get_nbit()*get_info()->get_npol()*get_info()->get_nchan()) );
 
   // Set the minimum time unit to be the number of samples per byte
   // (because we work in numbers of whole bytes)

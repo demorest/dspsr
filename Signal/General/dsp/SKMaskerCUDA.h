@@ -10,6 +10,7 @@
 #define __baseband_cuda_SKMasker_h
 
 #include "dsp/SKMasker.h"
+#include "dsp/MemoryCUDA.h"
 
 namespace CUDA
 {
@@ -18,22 +19,18 @@ namespace CUDA
   public:
 
     //! Default Constructor
-    SKMaskerEngine (cudaStream_t stream);
+    SKMaskerEngine (dsp::Memory * memory);
 
-    void setup (unsigned nchan, unsigned npol, unsigned span);
+    void setup ();
 
-    void perform (dsp::BitSeries* mask, unsigned mask_offset, dsp::TimeSeries* out, 
-                  unsigned offset, unsigned end);
+    void perform (dsp::BitSeries* mask, const dsp::TimeSeries* input,
+                  dsp::TimeSeries* out, unsigned M);
 
   protected:
+
+    DeviceMemory * device_memory;
+
     cudaStream_t stream;
-
-    unsigned nchan;
-
-    unsigned npol;
-
-    //! DDFB span, i.e. n floats between channels from raw base ptr
-    unsigned span;
 
     int max_threads_per_block;
 

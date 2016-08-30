@@ -14,6 +14,7 @@
 #include "dsp/PhaseSeries.h"
 #include "dsp/Fold.h"
 #include "FTransformAgent.h"
+#include "dsp/Apodization.h"
 
 namespace dsp {
 
@@ -56,8 +57,13 @@ namespace dsp {
     //! Get the number of lags to fold
     unsigned get_nlag() const { return nlag; }
 
+    //! Set the amount of oversampling to improve channel isolation
+    void set_mover(unsigned _mover) { mover = _mover; }
+    //! Get the amount of oversampling
+    unsigned get_mover() const { return mover; }
+
     //! Set number of channels to make
-    void set_nchan(unsigned nchan) { set_nlag(nchan/2 + 1); }
+    void set_nchan(unsigned nchan) { set_nlag(mover*nchan/2 + 1); }
 
     //! Set the number of polarizations to compute
     void set_npol(unsigned _npol) { npol = _npol; }
@@ -74,6 +80,9 @@ namespace dsp {
 
     //! Number of lags to compute when folding
     unsigned nlag;
+
+    //! Oversampling factor
+    unsigned mover;
 
     //! Number of output polns to compute
     unsigned npol;
@@ -94,6 +103,9 @@ namespace dsp {
     //! Set the number of lags to fold
     virtual void set_nlag (unsigned _nlag);
 
+    //! Set the amount of oversampling
+    virtual void set_mover (unsigned _mover);
+
     //! Set the number of phase bins and initialize any other data structures
     virtual void set_nbin (unsigned _nbin) { nbin = _nbin; }
 
@@ -102,6 +114,10 @@ namespace dsp {
 
     //! Set the phase bin into which the idat'th sample will be integrated
     virtual void set_bin (uint64_t idat, double ibin, double bins_per_samp);
+
+    uint64_t set_bins (double phi, double phase_per_sample, uint64_t ndat, uint64_t idat_start);
+
+    uint64_t get_bin_hits (int ibin);
 
     //! Return the PhaseSeries into which data will be folded
     virtual PhaseSeries* get_profiles ();
@@ -129,6 +145,7 @@ namespace dsp {
     PhaseSeries* out;
 
     unsigned nlag;
+    unsigned mover;
     unsigned nbin;
     unsigned npol_out;
 
@@ -143,7 +160,6 @@ namespace dsp {
 
     // FFT plan for going from lags to channels
     FTransform::Plan* lag2chan;
-
   }; 
 
 }

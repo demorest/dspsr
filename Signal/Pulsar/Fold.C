@@ -123,7 +123,13 @@ void dsp::Fold::combine (const Operation* other)
 dsp::PhaseSeries* dsp::Fold::get_result () const
 {
   if (engine)
+  {
     engine->synch (output);
+
+    PhaseSeries* engine_out = engine->get_profiles();
+    if (engine_out->has_extensions())
+      output->set_extensions( engine_out->get_extensions() );
+  }
 
   return output;
 }
@@ -189,6 +195,7 @@ void dsp::Fold::prepare (const Observation* observation)
     pulsar_ephemeris = 0;
     folding_predictor = 0;
     built = true;
+    reset ();
     return;
   }
 
@@ -197,6 +204,7 @@ void dsp::Fold::prepare (const Observation* observation)
     if (verbose)
       cerr << "dsp::Fold::prepare using given predictor" << endl;
     built = true;
+    reset ();
     return;
   }
 
@@ -214,6 +222,7 @@ void dsp::Fold::prepare (const Observation* observation)
 
   folding_predictor = get_folding_predictor (pulsar_ephemeris, observation);
 
+  reset ();
   built = true;
 } 
 
@@ -399,32 +408,6 @@ void dsp::Fold::set_change (const ObservationChange* c)
   change = c;
   built = false;
 }
-
-#if 0
-//! Get the name of the source
-std::string dsp::Fold::get_source_name () const
-{
-  if (input)
-  {
-    const Observation* observation = input;
-
-    Reference::To<Observation> copy;
-    if (change)
-    {
-      copy = new Observation (&observation);
-      change->change(copy);
-      observation = copy;
-    }
-
-    return observation->get_source();
-  }
-
-  if (pulsar_ephemeris)
-    return pulsar_ephemeris->get_name();
-
-  return "";
-}
-#endif
 
 //! Get the average folding period
 double dsp::Fold::get_folding_period () const
@@ -737,65 +720,82 @@ void dsp::Fold::fold (uint64_t nweights,
   double phase_per_sample = sampling_interval / pfold;
   unsigned* hits = get_output()->get_hits();
    
+  bool use_set_bins = false;
   if (engine)
   {
     if (verbose)
       cerr << "dsp::Fold::fold using engine ptr=" << engine.ptr() << endl;
     engine->set_nbin (folding_nbin);
     engine->set_ndat (idat_end - idat_start, idat_start);
+    if (engine->use_set_bins) {
+    	ndat_folded = engine->set_bins (phi, phase_per_sample,idat_end - idat_start,idat_start);
+    	for (int ibin = 0; ibin < folding_nbin; ibin++)
+    	{
+    		hits[ibin] += engine->get_bin_hits(ibin);
+    	}
+    	if (verbose){
+			cerr << "dsp::Fold::fold use_set_bins=True, folding_nbin=" << folding_nbin << " ndat_folded=" << ndat_folded;
+		}
+    	use_set_bins = true;
+    }
   }
-
-  for (uint64_t idat=idat_start; idat < idat_end; idat++)
+  if (!use_set_bins)
   {
-    if (ndatperweight && idat >= idat_nextweight)
-    {
-      iweight ++;
-      tot_weights ++;
+	  for (uint64_t idat=idat_start; idat < idat_end; idat++)
+	  {
+		if (ndatperweight && idat >= idat_nextweight)
+		{
+		  iweight ++;
+		  tot_weights ++;
 
-      assert (iweight < nweights);
+		  assert (iweight < nweights);
 
-      if (!zeroed_samples && (weights[iweight] == 0))
-      {
-        bad_data = true;
-        discarded_weights ++;
-        bad_weights ++;
-      }
-      else
-        bad_data = false;
+		  if (!zeroed_samples && (weights[iweight] == 0))
+		  {
+			bad_data = true;
+			discarded_weights ++;
+			bad_weights ++;
+		  }
+		  else
+			bad_data = false;
 
-      idat_nextweight += ndatperweight;
-    }
+		  idat_nextweight += ndatperweight;
+		}
 
-    phi -= floor(phi);
-    double double_ibin = phi * double_nbin;
-    unsigned ibin = unsigned (double_ibin);
-    phi += phase_per_sample;
+		phi -= floor(phi);
+		double double_ibin = phi * double_nbin;
+		unsigned ibin = unsigned (double_ibin);
+		phi += phase_per_sample;
 
-    assert (ibin < folding_nbin);
+		assert (ibin < folding_nbin);
 
-    if (engine)
-      engine->set_bin( idat, double_ibin, phase_per_sample*double_nbin );
-    else
-      binplan[idat-idat_start] = ibin;
+		if (engine)
+		  engine->set_bin( idat, double_ibin, phase_per_sample*double_nbin );
+		else
+		  binplan[idat-idat_start] = ibin;
 
-    if (bad_data)
-      binplan[idat-idat_start] = folding_nbin;
-    else
-    {
-      if (!zeroed_samples)
-      {
-        hits[ibin]++;
-        ndat_folded ++;
-      }
-    }
+		if (bad_data)
+		  binplan[idat-idat_start] = folding_nbin;
+		else
+		{
+		  if (!zeroed_samples)
+		  {
+			hits[ibin]++;
+			ndat_folded ++;
+		  }
+		}
+	  }
   }
-
-  double time_folded = double(ndat_folded) / get_input()->get_rate();
+//  for (int ibin = 0; ibin < folding_nbin; ibin++) {
+//	  cerr << ibin << ": " << hits[ibin] << endl;
+//  }
+	  double time_folded = double(ndat_folded) / get_input()->get_rate();
 
   if (verbose)
-    cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded 
+    cerr << "dsp::Fold::fold " << id << " ndat_folded=" << ndat_folded << " ndat_fold=" << ndat_fold
          << " time=" << time_folded*1e3 << " ms"
-         << " (bad=" << bad_weights << "/" << tot_weights << ")" << endl;
+         << " (bad=" << bad_weights << "/" << tot_weights << ")"
+         << " ndatperweight=" << ndatperweight << endl;
 
   PhaseSeries* result = get_output();
 
@@ -817,14 +817,20 @@ void dsp::Fold::fold (uint64_t nweights,
   if (engine)
   {
     engine->fold ();
-    if (zeroed_samples)
+    if (zeroed_samples) // why is this only done if zeroed_samples was true (if rfi was flagged?) shouldn't it always happen?
+    {
+    	if (verbose) {
+    		cerr << "Fold::fold finishing fold w/ engine. zeroed_samples was true so correcting integration length from:" << result->integration_length
+    				<< " by:" << (engine->get_ndat_folded() / get_input()->get_rate()) << endl;
+    	}
       result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
+    }
     return;
   }
 
   if (verbose)
     cerr << "dsp::Fold::fold ndim=" << ndim << " folding_nbin=" << folding_nbin 
-         << " nbin=" << result->get_nbin() << endl;
+         << " nbin=" << result->get_nbin() << " npol=" << npol << endl;
 
   if (in->get_order() == TimeSeries::OrderFPT)
   {
@@ -861,7 +867,7 @@ void dsp::Fold::fold (uint64_t nweights,
         } // for each idat
       } // for each pol
 
-      if (zeroed_samples && ichan < nchan-1)
+      if (zeroed_samples && ichan < nchan-1 && output->get_hits_nchan() > 1)
         hits += folding_nbin;
     } // for each chan 
   }

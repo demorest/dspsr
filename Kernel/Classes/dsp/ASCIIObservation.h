@@ -49,6 +49,9 @@ namespace dsp {
     //! Check if a certain keyword is required
     bool is_required (std::string key);
 
+    template <typename T>
+    int custom_header_get (std::string key, const char *format, T result) const;
+
   protected:
 
     std::string hdr_version;
@@ -65,9 +68,21 @@ namespace dsp {
     //! Number of bytes offset from the beginning of acquisition
     uint64_t offset_bytes;
 
+    std::string loaded_header;
   };
   
 }
+
+template <typename T>
+int dsp::ASCIIObservation::custom_header_get ( std::string key, 
+    const char *format, T result) const
+{
+  int rv = ascii_header_get (loaded_header.c_str(), key.c_str(), format, result);
+  if ( rv > 0)
+    return rv;
+  throw Error (InvalidState, "ASCIIObservation::custom_header_get", "failed to find " + key);
+}
+
 
 template <typename T>
 int dsp::ASCIIObservation::ascii_header_check (const char *header,

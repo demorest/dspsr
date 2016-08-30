@@ -56,28 +56,28 @@ dsp::MWAFile::open_file (const char* filename)
 		"filename '%s' was not a valid LBA file",
 		filename);
 
-  info.set_start_time( MJD(52644.0) );
+  get_info()->set_start_time( MJD(52644.0) );
   string prefix = "mwa";
 
-  info.set_telescope( "Greenbank" );
-  info.set_source("J0534+2200");
-  info.set_npol(2);
-  info.set_ndim(1);
-  info.set_nbit(32);
-  info.set_type( Signal::Pulsar );
-  info.set_mode("32-bit");
-  info.set_state( Signal::Nyquist );
-  info.set_machine( "MWA" );
+  get_info()->set_telescope( "Greenbank" );
+  get_info()->set_source("J0534+2200");
+  get_info()->set_npol(2);
+  get_info()->set_ndim(1);
+  get_info()->set_nbit(32);
+  get_info()->set_type( Signal::Pulsar );
+  get_info()->set_mode("32-bit");
+  get_info()->set_state( Signal::Nyquist );
+  get_info()->set_machine( "MWA" );
   
-  info.set_nchan(1);
-  info.set_bandwidth(8.0);
-  info.set_rate( fabs(2.0e6*info.get_bandwidth())/double(info.get_nchan()) );
+  get_info()->set_nchan(1);
+  get_info()->set_bandwidth(8.0);
+  get_info()->set_rate( fabs(2.0e6*get_info()->get_bandwidth())/double(get_info()->get_nchan()) );
 
-  info.set_scale( 1.0 );
-  info.set_swap( false );
-  info.set_dc_centred( false );
-  info.set_calfreq( 0.0 );
-  info.set_dispersion_measure( 0.0 );
+  get_info()->set_scale( 1.0 );
+  get_info()->set_swap( false );
+  get_info()->set_dc_centred( false );
+  get_info()->set_calfreq( 0.0 );
+  get_info()->set_dispersion_measure( 0.0 );
 
   {
     // COORDINATES are stored as RAJ and DECJ
@@ -86,21 +86,21 @@ dsp::MWAFile::open_file (const char* filename)
 
     sky_coord s;
     s.setHMSDMS(raj.c_str(),decj.c_str());
-    info.set_coordinates( s );
+    get_info()->set_coordinates( s );
   }
 
-  info.set_centre_frequency( 200.0 );
+  get_info()->set_centre_frequency( 200.0 );
 
   {
-    uint64_t bits_per_sample = info.get_nbit() * info.get_nchan() * info.get_npol();
+    uint64_t bits_per_sample = get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol();
     
     uint64_t data_bits = 8*filesize(filename);
     
-    info.set_ndat( data_bits / bits_per_sample );
+    get_info()->set_ndat( data_bits / bits_per_sample );
   }
 
   //  fprintf(stderr,"Going to do dump:\n\n\n");
-  //info.print();
+  //get_info()->print();
 
   fd = ::open(filename,O_RDONLY);
 

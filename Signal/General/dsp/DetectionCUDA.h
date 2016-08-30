@@ -28,6 +28,8 @@ namespace CUDA
     void polarimetry (unsigned ndim,
                       const dsp::TimeSeries* in, dsp::TimeSeries* out);
 
+    void square_law (const dsp::TimeSeries* in, dsp::TimeSeries* out);
+
   protected:
     cudaStream_t stream;
 

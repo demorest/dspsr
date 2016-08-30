@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2011 by James M Anderson  (MPIfR)
+ *   Copyright (C) 2011, 2013 by James M Anderson  (MPIfR)
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -29,10 +29,10 @@ namespace dsp {
     bool is_valid (const char* filename) const;
 
     //! Get the information about the data source
-    virtual Observation* get_info () { return lump_info; }
+    virtual LuMPObservation* get_lump_info () { return dynamic_cast<LuMPObservation*>(get_info()); }
 
     //! Get the information about the data source
-    virtual const Observation* get_info () const { return lump_info; }
+    virtual const LuMPObservation* get_lump_info () const { return dynamic_cast<const LuMPObservation*>(get_info()); }
 
   protected:
 
@@ -41,11 +41,25 @@ namespace dsp {
     //! Open the file
     virtual void open_file (const char* filename);
 
+    //! Load bytes from file
+    virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes);
+    
+    //! Adjust the file pointer
+    virtual int64_t seek_bytes (uint64_t bytes);
+      
+    //! Return ndat given the file and header sizes, nchan, npol, and ndim
+    /*! Called by open_file for some file types, to determine that the
+    header ndat matches the file size.  Requires 'info' parameters
+    nchan, npol, and ndim as well as header_bytes to be correctly set */
+    virtual int64_t fstat_file_ndat(uint64_t tailer_bytes=0);
+    
     //! Read the LuMP ascii header from filename
     static std::string get_header (const char* filename);
 
-    //! Observation with extra attributes required by LuMP format
-    Reference::To<LuMPObservation> lump_info;
+    //! Current data location in file, in units of bytes
+    /*! Note that for a regular file, this is an offset from header_bytes
+    bytes into the file */
+    int64_t file_data_position;
   };
 
 }

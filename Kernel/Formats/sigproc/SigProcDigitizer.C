@@ -11,6 +11,8 @@
 dsp::SigProcDigitizer::SigProcDigitizer () : Digitizer ("SigProcDigitizer")
 {
   nbit = 8;
+  scale_fac = 1.0;
+  rescale = true;
 }
 
 //! Set the number of bits per sample
@@ -22,6 +24,7 @@ void dsp::SigProcDigitizer::set_nbit (int _nbit)
   case 2:
   case 4:
   case 8:
+  case 16:
   case -32:
     nbit=_nbit;
     break;
@@ -53,12 +56,15 @@ public:
   inline unsigned operator () (unsigned out_chan)
   {
     unsigned in_chan = out_chan;
-    if (flip_band)
-      in_chan = (nchan-in_chan-1);
+    //if (flip_band)
+    //  in_chan = (nchan-in_chan-1);
     if (input->get_nsub_swap() > 1) 
       in_chan = input->get_unswapped_ichan(out_chan);
     else if (swap_band)
       in_chan = (in_chan+half_chan)%nchan;
+    // moved from the start of the block 
+    if (flip_band)
+      in_chan = (nchan-in_chan-1);
     return in_chan;
   }
 };
@@ -73,9 +79,6 @@ public:
 */
 void dsp::SigProcDigitizer::pack ()
 {
-  if (input->get_npol() != 1)
-    throw Error (InvalidState, "dsp::SigProcDigitizer::pack",
-		 "cannot handle npol=%d", input->get_npol());
 
   // ChannelSort will re-organize the frequency channels in the output
   output->set_bandwidth( -fabs(input->get_bandwidth()) );
@@ -93,6 +96,9 @@ void dsp::SigProcDigitizer::pack ()
 
   // the number of time samples
   const uint64_t ndat = input->get_ndat();
+
+  // number of polns
+  const unsigned npol = input->get_npol();
 
   ChannelSort channel (input);
 
@@ -128,8 +134,28 @@ void dsp::SigProcDigitizer::pack ()
     digi_min = 0;
     digi_max = 255;
     break;
+  case 16:
+    digi_mean=32768.0;
+    digi_scale= digi_mean / digi_sigma;
+    digi_min = 0;
+    digi_max = 65535;
+    break;
   }
 
+  // If rescale is false we do not apply the nbit-dependent scaling above.
+  // Note that for 4-pol data we still need to offset the (signed) poln
+  // cross-terms so that they can be packed into an unsigned value.
+  float xpol_offset = 0.0;
+  if (rescale==false)
+  {
+    xpol_offset = digi_mean;
+    digi_mean = 0.0;
+    digi_scale = 1.0;
+  }
+
+  // Also apply any existing scale factors (note, Rescale will set the
+  // input scale to 1.0 if it has been applied to the data).
+  digi_scale /= input->get_scale() * scale_fac;
 
   /*
     TFP mode
@@ -143,59 +169,76 @@ void dsp::SigProcDigitizer::pack ()
 #pragma omp parallel for
     for (uint64_t idat=0; idat < ndat; idat++)
     {
-      unsigned char* outptr = output->get_rawptr() + idat*nchan/samp_per_byte;
-      const float* inptr = input->get_dattfp() + idat*nchan;
 
-      // The following line is important: this function increments
-      // the pointer at the start of each byte. MJK2008.
-      outptr--;
-
-      int bit_counter=0;
-      for (unsigned ichan=0; ichan < nchan; ichan++)
+      for (unsigned ipol=0; ipol < npol; ipol++)
       {
-	unsigned inChan = channel (ichan);
 
-	//printf("%f\t",(*inptr));
-	int result = (int)(((*(inptr+inChan)) * digi_scale) + digi_mean +0.5 );
-	//printf("%d\n",result);
+        float mean = digi_mean;
+        if (ipol>1) { mean += xpol_offset; }
 
-	// clip the result at the limits
-	//if (result < digi_min)
-	//	result = digi_min;
-	result = std::max(result,digi_min);
+        unsigned char* outptr;
+        if (nbit==16)
+          outptr = output->get_rawptr() + 2*(idat*nchan*npol + ipol*nchan);
+        else
+          outptr = output->get_rawptr() 
+            + (idat*nchan*npol + ipol*nchan)/samp_per_byte;
 
-	//if (result > digi_max)
-	//	result = digi_max;
-	result = std::min(result,digi_max);
+        const float* inptr = input->get_dattfp() + idat*nchan*npol + ipol;
 
-	switch (nbit){
-	case 1:
-	case 2:
-	case 4:
-	  bit_counter = ichan % (samp_per_byte);
-	  
-	  //	if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte)
-	  //		+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
-	  //	outptr[idat*(int)(nchan/samp_per_byte)
-	  //		+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
-	  
-	  if(bit_counter==0){
-	    outptr++;
-	    (*outptr) = (unsigned char)0;
-	  }
-	  //fprintf(stderr,"%d %d\n",outptr - output->get_rawptr(), idat*(int)(nchan/samp_per_byte) + (int)(ichan/samp_per_byte));
-	  (*outptr) |= ((unsigned char) (result)) << (bit_counter*nbit);
+        // The following line is important: this function increments
+        // the pointer at the start of each byte. MJK2008.
+        outptr--;
 
-	  break;
-	case 8:
-	  outptr++;
-	  (*outptr) = (unsigned char) result;
-	  break;
-	}
-	
-	
-      }
-    }
+        int bit_counter=0;
+        for (unsigned ichan=0; ichan < nchan; ichan++)
+        {
+          unsigned inChan = channel (ichan);
+
+          //printf("%f\t",(*inptr));
+          int result = (int)(((*(inptr+inChan*npol))*digi_scale)+mean+0.5);
+          //printf("%d\n",result);
+
+          // clip the result at the limits
+          //if (result < digi_min)
+          //	result = digi_min;
+          result = std::max(result,digi_min);
+
+          //if (result > digi_max)
+          //	result = digi_max;
+          result = std::min(result,digi_max);
+
+          switch (nbit){
+          case 1:
+          case 2:
+          case 4:
+            bit_counter = ichan % (samp_per_byte);
+            
+            //	if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte)
+            //		+ (int)(ichan/samp_per_byte)]=(unsigned char)0;
+            //	outptr[idat*(int)(nchan/samp_per_byte)
+            //		+ (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
+            
+            if(bit_counter==0){
+              outptr++;
+              (*outptr) = (unsigned char)0;
+            }
+            //fprintf(stderr,"%d %d\n",outptr - output->get_rawptr(), idat*(int)(nchan/samp_per_byte) + (int)(ichan/samp_per_byte));
+            (*outptr) |= ((unsigned char) (result)) << (bit_counter*nbit);
+
+            break;
+          case 8:
+            outptr++;
+            (*outptr) = (unsigned char) result;
+            break;
+          case 16:
+            outptr++;
+            *((uint16_t*)outptr) = (uint16_t) result;
+            outptr++;
+            break;
+          }
+        } // chan
+      } // poln
+    } // time
     
     return;
   }
@@ -206,38 +249,52 @@ void dsp::SigProcDigitizer::pack ()
     int bit_counter=0;
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
-      const float* inptr = input->get_datptr( channel (ichan) );
 
-      for (uint64_t idat=0; idat < ndat; idat++)
+      for (unsigned ipol=0; ipol < npol; ipol++) 
       {
-	int result = int( (inptr[idat] * digi_scale) + digi_mean +0.5 );
 
-	// clip the result at the limits
-	if (result < digi_min)
-	  result = digi_min;
-	
-	if (result > digi_max)
-	  result = digi_max;
+        float mean = digi_mean;
+        if (ipol>1) { mean += xpol_offset; }
 
-	switch (nbit){
-	case 1:
-	case 2:
-	case 4:
-	  bit_counter = ichan % (samp_per_byte);
-	  
-	  
-	  if(bit_counter==0)outptr[idat*(int)(nchan/samp_per_byte)
-				   + (int)(ichan/samp_per_byte)]=(unsigned char)0;
-	  outptr[idat*(int)(nchan/samp_per_byte)
-		 + (int)(ichan/samp_per_byte)] += ((unsigned char) (result)) << (bit_counter*nbit);
-	  
-	  break;
-	case 8:
-	  outptr[idat*nchan + ichan] = (unsigned char) result;
-	  break;
-	}
-      }
-    }
+        const float* inptr = input->get_datptr( channel (ichan), ipol );
+
+        for (uint64_t idat=0; idat < ndat; idat++)
+        {
+          int result = int( (inptr[idat] * digi_scale) + mean +0.5 );
+
+          // clip the result at the limits
+          if (result < digi_min)
+            result = digi_min;
+          
+          if (result > digi_max)
+            result = digi_max;
+
+          // output is TPF order:
+          uint64_t outidx = idat*nchan*npol + ipol*nchan + ichan;
+
+          switch (nbit){
+          case 1:
+          case 2:
+          case 4:
+            bit_counter = outidx % samp_per_byte;
+
+            if (bit_counter==0) 
+              outptr[(uint64_t)(outidx/samp_per_byte)] = (unsigned char)0;
+            outptr[(uint64_t)(outidx/samp_per_byte)] 
+              += ((unsigned char) (result)) << (bit_counter*nbit);
+            
+            break;
+          case 8:
+            outptr[outidx] = (unsigned char) result;
+            break;
+          case 16:
+            ((uint16_t*)outptr)[outidx] = (uint16_t) result;
+            break;
+          }
+
+        } // time
+      } // poln
+    } // chan
     return;
   }
   default:
@@ -257,6 +314,12 @@ void dsp::SigProcDigitizer::pack_float () try
   // the number of time samples
   const uint64_t ndat = input->get_ndat();
 
+  // number of polarizations
+  const unsigned npol = input->get_npol();
+
+  // scale factor
+  const float scale = input->get_scale();
+
   ChannelSort channel (input);
 
   float* outptr = reinterpret_cast<float*>( output->get_rawptr() );
@@ -270,9 +333,14 @@ void dsp::SigProcDigitizer::pack_float () try
     for (uint64_t idat=0; idat < ndat; idat++)
     {
       for (unsigned ichan=0; ichan < nchan; ichan++)
-	outptr[ichan] = inptr[ channel(ichan) ];
+      {
+        const unsigned inchan = channel(ichan);
+        for (unsigned ipol=0; ipol<npol; ipol++)
+          outptr[nchan*ipol+ichan] = inptr[inchan*npol+ipol]/scale;
+      }
 
-      inptr += nchan;
+      inptr += nchan*npol;
+      outptr += nchan*npol;
     }
     return;
   }
@@ -280,10 +348,13 @@ void dsp::SigProcDigitizer::pack_float () try
   {
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
-      const float* inptr = input->get_datptr( channel(ichan) );
+      for (unsigned ipol=0; ipol < npol; ipol++)
+      {
+        const float* inptr = input->get_datptr( channel(ichan), ipol );
 
-      for (uint64_t idat=0; idat < ndat; idat++)
-	outptr[idat*nchan + ichan] = inptr[idat];
+        for (uint64_t idat=0; idat < ndat; idat++)
+          outptr[idat*nchan*npol + ipol*nchan + ichan] = inptr[idat]/scale;
+      }
     }
     return;
   }

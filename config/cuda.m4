@@ -6,6 +6,9 @@ AC_DEFUN([SWIN_LIB_CUDA],
 
   SWIN_PACKAGE_OPTIONS([cuda])
 
+  AC_ARG_ENABLE([cufft_callbacks],
+     AC_HELP_STRING([--enable-cufft-callbacks],[Use CUFFT callbacks if CUDA enabled, EXPERIMENTAL]))
+
   CUDA_CFLAGS=""
   CUDA_LIBS=""
 
@@ -87,6 +90,35 @@ AC_DEFUN([SWIN_LIB_CUDA],
 
   fi
 
+  have_cufft_callbacks="no"
+
+  if test x"$enable_cufft_callbacks" = xyes; then
+
+    if test "$have_cufft" = "yes" ; then
+
+      AC_MSG_CHECKING([for CUDA FFT Callbacks])
+
+      SWIN_PACKAGE_FIND([cufft_callbacks],[cufftXt.h])
+      SWIN_PACKAGE_TRY_COMPILE([cufft_callbacks],[#include <cufft.h>
+                                                  #include <cufftXt.h> ],[],[$swin_cuda_include_dir])
+
+      SWIN_PACKAGE_FIND([cufft_callbacks],[libcufft_static.*])
+      SWIN_PACKAGE_TRY_LINK([cufft_callbacks],[#include <cufft.h>
+                                             #include <cufftXt.h> ],
+                          [cufftPlan1d (0, 1024, CUFFT_C2C, 1);],[-lcudart -lcufft])
+
+      AC_MSG_RESULT([$have_cufft_callbacks])
+
+      if test "$have_cufft_callbacks" = "yes"; then
+        AC_DEFINE([HAVE_CUFFT_CALLBACKS],[1],[Define if the CUFFT Callbacks library is present])
+        [$1]
+      else
+        AC_MSG_WARN([CUFFT Callbacks will not be compiled])
+        [$2]
+      fi
+    fi
+  fi
+
   AC_SUBST(CUDA_NVCC)
 
   CUDA_LIBS="$cuda_LIBS"
@@ -103,4 +135,10 @@ AC_DEFUN([SWIN_LIB_CUDA],
   AC_SUBST(CUFFT_CFLAGS)
   AM_CONDITIONAL(HAVE_CUFFT,[test "$have_cufft" = "yes"])
 
+  CUFFT_CALLBACKS_LIBS="${cufft_callbacks_LIBS}_static -lculibos"
+  CUFFT_CALLBACKS_CFLAGS="$cufft_callbacks_CFLAGS"
+
+  AC_SUBST(CUFFT_CALLBACKS_LIBS)
+  AC_SUBST(CUFFT_CALLBACKS_CFLAGS)
+  AM_CONDITIONAL(HAVE_CUFFT_CALLBACKS,[test "$have_cufft_callbacks" = "yes"])
 ])

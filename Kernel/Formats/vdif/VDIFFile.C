@@ -134,41 +134,76 @@ void dsp::VDIFFile::open_file (const char* filename)
   // so not required.  Also we'll assume VDIF's "nchan" really gives
   // the number of polns for now, and NCHAN is 1.  NBIT is in VDIF packets.
   // We'll compute TSAMP from the bandwidth.  NDIM (real vs complex sampling)
-  // is in VDIF packets but there is no easy fn to parse it yet.
-  ASCIIObservation info_tmp;
-  info_tmp.set_required("UTC_START", false);
-  info_tmp.set_required("OBS_OFFSET", false);
-  info_tmp.set_required("NPOL", false);
-  info_tmp.set_required("NBIT", false);
-  info_tmp.set_required("NCHAN", false);
-  info_tmp.set_required("TSAMP", false);
-  info_tmp.load(header);
+  // is in VDIF packets via the iscomplex param.
+  ASCIIObservation* info_tmp = new ASCIIObservation;
   info = info_tmp;
+
+  info_tmp->set_required("UTC_START", false);
+  info_tmp->set_required("OBS_OFFSET", false);
+  info_tmp->set_required("NPOL", false);
+  info_tmp->set_required("NBIT", false);
+  info_tmp->set_required("NDIM", false);
+  info_tmp->set_required("NCHAN", false);
+  info_tmp->set_required("TSAMP", false);
+  info_tmp->load(header);
 
   fd = ::open(datafile, O_RDONLY);
   if (fd<0) 
       throw Error (FailedSys, "dsp::VDIFFile::open_file",
               "open(%s) failed", datafile);
 	
-  // Read first header
-  char rawhdr[VDIF_HEADER_BYTES];
-  size_t rv = read(fd, rawhdr, VDIF_HEADER_BYTES);
-  if (rv != VDIF_HEADER_BYTES) 
-      throw Error (FailedSys, "VDIFFile::open_file",
-              "Error reading first header");
+  // Read until we get a valid frame
+  bool got_valid_frame = false;
+  char rawhdr_bytes[VDIF_HEADER_BYTES];
+  vdif_header *rawhdr = (vdif_header *)rawhdr_bytes;
+  int nbyte;
+  while (!got_valid_frame) 
+  {
+    size_t rv = read(fd, rawhdr_bytes, VDIF_HEADER_BYTES);
+    if (rv != VDIF_HEADER_BYTES) 
+        throw Error (FailedSys, "VDIFFile::open_file",
+                "Error reading first header");
+
+    // Get frame size
+    nbyte = getVDIFFrameBytes(rawhdr);
+    if (verbose) cerr << "VDIFFile::open_file FrameBytes = " << nbyte << endl;
+    header_bytes = 0;
+    block_bytes = nbyte;
+    block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
+
+    // If this first frame is invalid, go to the next one
+    if (getVDIFFrameInvalid(rawhdr)==0)
+      got_valid_frame = true;
+    else
+    {
+      rv = lseek(fd, nbyte-VDIF_HEADER_BYTES, SEEK_CUR);
+      if (rv<0) 
+        throw Error (FailedSys, "VDIFFile::lseek",
+            "Error seeking to next VDIF frame");
+    }
+  }
+
+  // Rewind file
   lseek(fd, 0, SEEK_SET);
 
   // Get basic params
 
   int nbit = getVDIFBitsPerSample(rawhdr);
   if (verbose) cerr << "VDIFFile::open_file NBIT = " << nbit << endl;
-  info.set_nbit (nbit);
+  get_info()->set_nbit (nbit);
 
-  int nbyte = getVDIFFrameBytes(rawhdr);
-  if (verbose) cerr << "VDIFFile::open_file FrameBytes = " << nbyte << endl;
-  header_bytes = 0;
-  block_bytes = nbyte;
-  block_header_bytes = VDIF_HEADER_BYTES; // XXX what about "legacy" mode
+  bool iscomplex = rawhdr->iscomplex;
+  if (iscomplex) 
+  {
+    get_info()->set_ndim(2);
+    get_info()->set_state(Signal::Analytic);
+  }
+  else
+  {
+    get_info()->set_ndim(1);
+    get_info()->set_state(Signal::Nyquist);
+  }
+  if (verbose) cerr << "VDIFFile::open_file iscomplex = " << iscomplex << endl;
 
   // Each poln shows up as a different channel but this 
   // could also be different freq channels...
@@ -177,35 +212,45 @@ void dsp::VDIFFile::open_file (const char* filename)
   if ((vdif_nchan<0) || (vdif_nchan>2))
     throw Error (InvalidParam, "dsp::VDIFFile::open_file",
         "Read vdif_nchan=%d, this is currently not supported", vdif_nchan);
-  info.set_npol( vdif_nchan );
-  info.set_nchan( 1 );
-  info.set_rate( (double) info.get_bandwidth() * 1e6 
-      / (double) info.get_nchan() 
-      * info.get_state() == Signal::Nyquist ? 2.0 : 1.0);
+  get_info()->set_npol( vdif_nchan );
+  get_info()->set_nchan( 1 );
+  get_info()->set_rate( (double) get_info()->get_bandwidth() * 1e6 
+      / (double) get_info()->get_nchan() 
+      * (get_info()->get_state() == Signal::Nyquist ? 2.0 : 1.0));
+  if (verbose) cerr << "VDIFFile::open_file rate = " << get_info()->get_rate() << endl;
 
   // Figure frames per sec from bw, pkt size, etc
   //double frames_per_sec = 64000.0;
   int frame_data_size = nbyte - VDIF_HEADER_BYTES;
-  double frames_per_sec = info.get_nbit() * info.get_nchan() * info.get_npol()
-    * info.get_rate() / 8.0 / (double) frame_data_size;
+  double frames_per_sec = get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol()
+    * get_info()->get_rate() / 8.0 / (double) frame_data_size;
+  if (verbose) cerr << "VDIFFile::open_file frame_data_size = " 
+    << frame_data_size << endl;
+  if (verbose) cerr << "VDIFFile::open_file frames_per_sec = " 
+    << frames_per_sec << endl;
+
+  // Set load resolution equal to one frame? XXX
+  // This broke file unloading somehow ... wtf..
+  //resolution = info.get_nsamples(frame_data_size);
 
   int mjd = getVDIFFrameMJD(rawhdr);
   int sec = getVDIFFrameSecond(rawhdr);
   int fn = getVDIFFrameNumber(rawhdr);
   if (verbose) cerr << "VDIFFile::open_file MJD = " << mjd << endl;
   if (verbose) cerr << "VDIFFile::open_file sec = " << sec << endl;
-  info.set_start_time( MJD(mjd,sec,(double)fn/frames_per_sec) );
+  if (verbose) cerr << "VDIFFile::open_file fn  = " << fn << endl;
+  get_info()->set_start_time( MJD(mjd,sec,(double)fn/frames_per_sec) );
 
   // XXX old code, should all be handled by ASCII header now
-  //float mbps = 512 * info.get_npol();
-  //info.set_state (Signal::Nyquist);
-  //info.set_rate ( 1e6 * mbps / info.get_npol() / info.get_nchan() / nbit );
-  //info.set_bandwidth ( 1.0 * mbps / info.get_npol() / nbit / 2 );
-  //info.set_telescope ("vla");
-  //info.set_source (hdrstr);
-  //info.set_coordinates(coords);
-  //info.set_centre_frequency (1658.0 + 8.0);
-  //info.set_centre_frequency (1458.0);
+  //float mbps = 512 * get_info()->get_npol();
+  //get_info()->set_state (Signal::Nyquist);
+  //get_info()->set_rate ( 1e6 * mbps / get_info()->get_npol() / get_info()->get_nchan() / nbit );
+  //get_info()->set_bandwidth ( 1.0 * mbps / get_info()->get_npol() / nbit / 2 );
+  //get_info()->set_telescope ("vla");
+  //get_info()->set_source (hdrstr);
+  //get_info()->set_coordinates(coords);
+  //get_info()->set_centre_frequency (1658.0 + 8.0);
+  //get_info()->set_centre_frequency (1458.0);
 	  
   // Figures out how much data is in file based on header sizes, etc.
   set_total_samples();

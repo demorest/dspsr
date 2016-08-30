@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 extern "C" double wappcorrect (double mjd);
 
@@ -165,23 +166,23 @@ void dsp::WAPPFile::open_file (const char* filename)
   // mode
   //
   /* what kind of observation is this */
-  info.set_mode(head->obs_type);
+  get_info()->set_mode(head->obs_type);
 
   // ////////////////////////////////////////////////////////////////////
   //
   // source
   //
   /* user-supplied source name (usually pulsar name) */
-  info.set_source (head->src_name);
+  get_info()->set_source (head->src_name);
 
-  cerr << "Source = " << info.get_source() << endl;
+  cerr << "Source = " << get_info()->get_source() << endl;
 
   // ////////////////////////////////////////////////////////////////////
   //
   // centre_frequency
   //
   /* user-supplied band center frequency (MHz) */
-  info.set_centre_frequency (head->cent_freq);
+  get_info()->set_centre_frequency (head->cent_freq);
 
   // ////////////////////////////////////////////////////////////////////
   //
@@ -192,32 +193,32 @@ void dsp::WAPPFile::open_file (const char* filename)
   /* 1 band is inverted, else band is not inverted    */
   if (head->freqinversion)
     bandwidth = -bandwidth;
-  info.set_bandwidth (bandwidth);
+  get_info()->set_bandwidth (bandwidth);
 
   // ////////////////////////////////////////////////////////////////////
   //
   // npol
   //
   /* user-requested: number of IFs to be recorded     */
-  info.set_npol (head->nifs);
+  get_info()->set_npol (head->nifs);
 
   // ////////////////////////////////////////////////////////////////////
   //
   // state
   //
   if (head->nifs == 4)
-    info.set_state (Signal::Coherence);
+    get_info()->set_state (Signal::Coherence);
   else if (head->nifs == 2)
-    info.set_state (Signal::PPQQ);
+    get_info()->set_state (Signal::PPQQ);
   else
-    info.set_state (Signal::Intensity);
+    get_info()->set_state (Signal::Intensity);
 
   // ////////////////////////////////////////////////////////////////////
   //
   // nchan
   //
   /* user-requested number of lags per dump per spect */
-  info.set_nchan (head->num_lags);
+  get_info()->set_nchan (head->num_lags);
 
   // ////////////////////////////////////////////////////////////////////
   //
@@ -227,15 +228,15 @@ void dsp::WAPPFile::open_file (const char* filename)
   /* 2=32 bit float lags, 3=32 bit float spectra      */
   switch (head->lagformat) {
   case 0:
-    info.set_nbit (16);
+    get_info()->set_nbit (16);
     break;
   case 1:
-    info.set_nbit (32);
+    get_info()->set_nbit (32);
     break;
   case 3: /* timing mode data - not relevant, but needs to work! */
     break;
   case 4:
-    info.set_nbit (8);
+    get_info()->set_nbit (8);
     break;
   default:
     throw Error (InvalidState, "dsp::WAPPFile::open_file",
@@ -243,7 +244,7 @@ void dsp::WAPPFile::open_file (const char* filename)
     break;
   }
 
-  cerr << "WAPP nbit=" << info.get_nbit() << endl;
+  cerr << "WAPP nbit=" << get_info()->get_nbit() << endl;
 
   // ////////////////////////////////////////////////////////////////////
   //
@@ -310,7 +311,7 @@ void dsp::WAPPFile::open_file (const char* filename)
     mjd -= half_day;
   }
 
-  info.set_start_time (mjd);
+  get_info()->set_start_time (mjd);
 
   // ////////////////////////////////////////////////////////////////////
   //
@@ -322,16 +323,16 @@ void dsp::WAPPFile::open_file (const char* filename)
   // from sigproc-2.4
   tsamp_us += wappcorrect( mjd.in_days() );
 
-  info.set_rate ( 1e6 / tsamp_us );
+  get_info()->set_rate ( 1e6 / tsamp_us );
 
   // ////////////////////////////////////////////////////////////////////
   //
   // telscope code
   //
-  info.set_telescope ("Arecibo");  // assume Arecibo
+  get_info()->set_telescope ("Arecibo");  // assume Arecibo
 
   string prefix="wapp";
-  info.set_machine("WAPP");	
+  get_info()->set_machine("WAPP");	
 
   header_bytes = lseek(fd,0,SEEK_CUR);
 

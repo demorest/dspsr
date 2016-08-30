@@ -106,9 +106,6 @@ void dsp::Detection::transformation () try
     return;
   }
 
-  if (input->get_ndat() == 0)
-    return;
-
   if (!inplace)
     resize_output ();    
 
@@ -189,6 +186,7 @@ void dsp::Detection::resize_output ()
     get_output()->set_npol( output_npol );
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
+    get_output()->set_zeroed_data (input->get_zeroed_data());
   }
   else if (reshape)
   {
@@ -205,29 +203,62 @@ void dsp::Detection::resize_output ()
   get_output()->set_state( state );
 }
 
+
+bool dsp::Detection::get_order_supported (TimeSeries::Order order) const
+{
+  if (order == TimeSeries::OrderFPT)
+    return true;
+
+  return state == Signal::PP_State
+    || state == Signal::PPQQ 
+    || state == Signal::Intensity;
+}
+
 void dsp::Detection::square_law ()
 {
   if (verbose)
     cerr << "dsp::Detection::square_law" << endl;
- 
+
+  if (engine)
+  {
+    if (verbose)
+      cerr << "dsp::Detection::square_law using Engine engine=" << (void *) engine << endl;
+    engine->square_law (input, output);
+    return;
+  }
   const unsigned nchan = input->get_nchan();
   const unsigned npol = input->get_npol();
-  const unsigned nfloat = input->get_ndim() * input->get_ndat();
   
-  // if nyq is 2, then we are going to do signal analytic, and will need only 
-  // half as many threads
+  bool order_fpt = input->get_order() == TimeSeries::OrderFPT;
 
-  for (unsigned ichan=0; ichan<nchan; ichan++)
+  const unsigned loop_nchan = (order_fpt) ? nchan : 1;
+  const unsigned loop_npol = (order_fpt) ? npol : 1;
+  const unsigned factor = (order_fpt) ? 1 : (nchan * npol);
+  const uint64_t nfloat = input->get_ndim() * input->get_ndat() * factor;
+
+  for (unsigned ichan=0; ichan<loop_nchan; ichan++)
   {
-    for (unsigned ipol=0; ipol<npol; ipol++)
+    for (unsigned ipol=0; ipol<loop_npol; ipol++)
     {
-      register const float* in_ptr = input->get_datptr (ichan,ipol);
-      register const float* dend = in_ptr + nfloat;
-	      
-      register float* out_ptr = output->get_datptr (ichan,ipol);
+      register float* out_ptr = NULL;
+      register const float* in_ptr = NULL;
+      register const float* dend = NULL;
       
+      if (order_fpt)
+	{
+	  out_ptr = output->get_datptr (ichan,ipol);
+	  in_ptr = input->get_datptr (ichan,ipol);
+	}
+      else
+	{
+	  out_ptr = output->get_dattfp ();
+	  in_ptr = input->get_dattfp ();
+	}
+
+      dend = in_ptr + nfloat;
+
       if (input->get_state()==Signal::Nyquist)
-	while( in_ptr != dend)
+	while( in_ptr != dend )
 	  {
 	    *out_ptr = *in_ptr * *in_ptr;
 	    out_ptr++;
@@ -235,7 +266,7 @@ void dsp::Detection::square_law ()
 	  } 
       
       else if (input->get_state()==Signal::Analytic)
-	while( in_ptr!=dend)
+	while( in_ptr != dend )
 	  {
 	    *out_ptr = *in_ptr * *in_ptr;  // Re*Re
 	    in_ptr++;
@@ -251,18 +282,38 @@ void dsp::Detection::square_law ()
   if (state == Signal::Intensity && npol == 2)
   {
     // pscrunching
-    for (unsigned ichan=0; ichan<nchan; ichan++)
+
+    if (order_fpt)
     {
-      register float* p0 = output->get_datptr (ichan, 0);
-      register float* p1 = output->get_datptr (ichan, 1);
-      const register float* pend = p0 + output->get_ndat();
-      
-      while (p0!=pend)
+      for (unsigned ichan=0; ichan<loop_nchan; ichan++)
       {
-	*p0 += *p1;
-	p0 ++;
-	p1 ++;
+	register float* p0 = output->get_datptr (ichan, 0);
+	register float* p1 = output->get_datptr (ichan, 1);
+	const register float* pend = p0 + output->get_ndat();
+	
+	while (p0!=pend)
+	  {
+	    *p0 += *p1;
+	    p0 ++;
+	    p1 ++;
+	  }
       }
+    }
+    else
+    {
+      register const float* p0 = output->get_dattfp ();
+      register const float* p1 = p0 + 1;
+
+      register float* pout = output->get_dattfp (); 
+      const register float* pend = pout + output->get_ndat() * nchan;
+	
+      while (pout!=pend)
+	{
+	  *pout = *p0 + *p1;
+	  *pout ++;
+	  p0 += 2;
+	  p1 += 2;
+	}
     }
   } 
 }
@@ -290,7 +341,7 @@ void dsp::Detection::polarimetry () try
 
   bool inplace = input.get() == output.get();
 
-  if (verbose)
+ if (verbose)
     cerr << "dsp::Detection::polarimetry "
 	 << ((inplace) ? "in" : "outof") << "place" << endl;
 
@@ -338,16 +389,16 @@ void dsp::Detection::polarimetry () try
     if (inplace && ndim != 2)
     {
       if (verbose && ichan == 0)
-	cerr << "dsp::Detection::polarimetry copy_bytes="
-	     << copy_bytes << endl;
+	      cerr << "dsp::Detection::polarimetry copy_bytes=" 
+             << copy_bytes << endl;
 	      
       memcpy (copyp, p, size_t(copy_bytes));
       p = copyp;
       
       if (ndim == 1)
       {
-	memcpy (copyq, q, size_t(copy_bytes));
-	q = copyq;
+        memcpy (copyq, q, size_t(copy_bytes));
+        q = copyq;
       }
     }
     
@@ -372,7 +423,7 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
 					  float* r[4])
 {
   if (verbose && ichan == 0)
-    cerr << "dsp::Detection::get_result_pointers ndim=4" << endl;
+    cerr << "dsp::Detection::get_result_pointers ndim=" << ndim << endl;
 
   switch (ndim)
   {
@@ -382,7 +433,7 @@ void dsp::Detection::get_result_pointers (unsigned ichan, bool inplace,
     if( inplace )
     {
       r[0] = get_output()->get_datptr (ichan,0);
-      r[2] = get_output()->get_datptr (ichan,0);
+      r[2] = get_output()->get_datptr (ichan,1);
       uint64_t diff = uint64_t(r[2] - r[0])/2;
       r[1] = r[0] + diff;
       r[3] = r[2] + diff;

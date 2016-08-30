@@ -39,7 +39,7 @@ typedef struct
   cufftHandle plan_bwd;
 
   //! the backward fft length
-  unsigned bwd_nfft;
+//  unsigned bwd_nfft;
 
   //! Complex-valued data
   bool real_to_complex;
@@ -59,6 +59,8 @@ typedef struct
   cudaStream_t stream;
 
   bool verbose;
+
+//  unsigned nchan_subband;
 }
   filterbank_cuda;
 

@@ -23,9 +23,9 @@ bin_PROGRAMS = wapphead
 
 wapphead_SOURCES = wapphead.C
 
-head_parse.lo: mkheaderlex.c y.tab.h
+head_parse.lo: mkheaderlex.c ./y.tab.h
 
-mkheaderlex.c: mkheader.l y.tab.c
+mkheaderlex.c: mkheader.l ./y.tab.c
 	lex -t $(srcdir)/mkheader.l > mkheaderlex.c
 
 y.tab.c: mkheader.y

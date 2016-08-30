@@ -12,6 +12,8 @@
 #include "dsp/SingleThread.h"
 #include "dsp/IOManager.h"
 #include "dsp/Input.h"
+#include "dsp/InputBufferingShare.h"
+
 #include "dsp/Scratch.h"
 #include "dsp/MultiFile.h"
 #include "dsp/CommandLineHeader.h"
@@ -22,6 +24,7 @@
 #if HAVE_CUDA
 #include "dsp/MemoryCUDA.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/TimeSeriesCUDA.h"
 #endif
 
 #include "dsp/ObservationChange.h"
@@ -56,6 +59,7 @@ dsp::SingleThread::SingleThread ()
 
   input_context = 0;
   gpu_stream = undefined_stream;
+  gpu_device = 0;
 }
 
 dsp::SingleThread::~SingleThread ()
@@ -115,6 +119,42 @@ void dsp::SingleThread::set_affinity (int core)
 void dsp::SingleThread::share (SingleThread* other)
 {
   colleague = other;
+
+  typedef Transformation<TimeSeries,TimeSeries> Xform;
+
+  for (unsigned iop=0; iop < operations.size(); iop++)
+  {
+    Xform* trans0 = dynamic_kast<Xform>( other->operations[iop] );
+
+    if (!trans0)
+      continue;
+
+    if (!trans0->has_buffering_policy())
+      continue;
+
+    InputBuffering::Share* ibuf0;
+    ibuf0 = dynamic_cast<InputBuffering::Share*>
+      ( trans0->get_buffering_policy() );
+
+    if (!ibuf0)
+      continue;
+
+    Xform* trans = dynamic_kast<Xform>( operations[iop] );
+    
+    if (!trans)
+      throw Error (InvalidState, "dsp::SingleThread::share",
+		   "mismatched operation type");
+
+    if (!trans->has_buffering_policy())
+      throw Error (InvalidState, "dsp::SingleThread::share",
+		   "mismatched buffering policy");
+    
+    if (Operation::verbose)
+      cerr << "dsp::SingleThread::share sharing buffering policy of " 
+        << trans->get_name() << endl;
+
+    trans->set_buffering_policy( ibuf0->clone(trans) );
+  }
 }
 
 dsp::TimeSeries* dsp::SingleThread::new_time_series ()
@@ -131,7 +171,7 @@ dsp::TimeSeries* dsp::SingleThread::new_time_series ()
   {
     if (Operation::verbose)
       cerr << "Creating TimeSeries instance" << endl;
-    return  new TimeSeries;
+    return new TimeSeries;
   }
 }
 
@@ -145,14 +185,7 @@ unsigned count (const std::vector<T>& data, T element)
   return c;
 }
 
-void dsp::SingleThread::prepare ()
-{
-  initialize ();
-  construct ();
-  finalize ();
-}
-
-void dsp::SingleThread::initialize () try
+void dsp::SingleThread::construct () try
 {
   TimeSeries::auto_delete = false;
 
@@ -185,37 +218,47 @@ void dsp::SingleThread::initialize () try
 
   if (run_on_gpu)
   {
-    // disable input buffering when data must be copied between devices
-    if (config->get_total_nthread() > 1)
-      config->input_buffering = false;
-
-    int device = config->cuda_device[thread_id];
+    gpu_device = config->cuda_device[thread_id];
     cerr << "dspsr: thread " << thread_id 
-         << " using CUDA device " << device << endl;
+         << " using CUDA device " << gpu_device << endl;
 
     int ndevice = 0;
     cudaError err = cudaGetDeviceCount(&ndevice);
 
-    if (err != cudaSuccess || device >= ndevice)
+    if (err != cudaSuccess || gpu_device >= ndevice)
       throw Error (InvalidParam, "dsp::SingleThread::initialize",
-                   "device=%d >= ndevice=%d cudaError=%s", device, ndevice, cudaGetErrorString(err));
+                   "device=%d >= ndevice=%d cudaError=%s", gpu_device, ndevice, cudaGetErrorString(err));
 
-    err = cudaSetDevice (device);
+    err = cudaSetDevice (gpu_device);
     if (err != cudaSuccess)
       throw Error (InvalidState, "dsp::SingleThread::initialize",
                    "cudaMalloc failed: %s", cudaGetErrorString(err));
 
-    unsigned nstream = count (config->cuda_device, (unsigned)device);
+    unsigned nstream = count (config->cuda_device, (unsigned) gpu_device);
 
-    if (nstream > 1)
-    {
-      cudaStreamCreate( &stream );
-      cerr << "dspsr: thread " << thread_id << " on stream " << stream << endl;
-    }
+    // always create a stream, even for 1 thread
+    cudaStreamCreate( &stream );
+    cerr << "dspsr: thread " << thread_id << " on stream " << stream << endl;
 
     gpu_stream = stream;
+    device_memory = new CUDA::DeviceMemory (stream, gpu_device);
+    if (config->input_buffering)
+      cerr << "dspsr: input_buffering enabled" << endl;
+    else
+      cerr << "dspsr: input_buffering disabled" << endl;
+    if (unpacker->get_device_supported( device_memory ))
+      cerr << "dspsr: unpacker supports device memory" << endl;
 
-    device_memory = new CUDA::DeviceMemory (stream);
+    if ((thread_id == 0) && (!config->input_buffering) && unpacker->get_device_supported( device_memory ))
+    {
+      dsp::Seekable * seekable = dynamic_cast<dsp::Seekable*>( manager->get_input() );
+      if (seekable)
+      {
+        cerr << "dspsr: disabling input buffering, using overlap memory instead" << endl;
+        // overlap memory on stream/device of thread_id 0
+        seekable->set_overlap_buffer_memory (device_memory);
+      }
+    }
 
     if (unpacker->get_device_supported( device_memory ))
     {
@@ -224,9 +267,10 @@ void dsp::SingleThread::initialize () try
 
       unpacker->set_device( device_memory );
       unpacked->set_memory( device_memory );
-        
+      unpacked->set_engine (new CUDA::TimeSeriesEngine (device_memory));
+
       BitSeries* bits = new BitSeries;
-      bits->set_memory (new CUDA::PinnedMemory);
+      bits->set_memory (device_memory);
       manager->set_output (bits);
     }
     else
@@ -234,7 +278,7 @@ void dsp::SingleThread::initialize () try
       if (Operation::verbose)
         cerr << "SingleThread: unpack on CPU" << endl;
 
-      TransferCUDA* transfer = new TransferCUDA;
+      TransferCUDA* transfer = new TransferCUDA (stream);
       transfer->set_kind( cudaMemcpyHostToDevice );
       transfer->set_input( unpacked );
         
@@ -256,10 +300,10 @@ void dsp::SingleThread::initialize () try
 }
 catch (Error& error)
 {
-  throw error += "dsp::SingleThread::initialize";
+  throw error += "dsp::SingleThread::construct";
 }
 
-void dsp::SingleThread::finalize ()
+void dsp::SingleThread::prepare ()
 {
   for (unsigned idump=0; idump < config->dump_before.size(); idump++)
     insert_dump_point (config->dump_before[idump]);
@@ -322,9 +366,11 @@ void dsp::SingleThread::run () try
   {
     if (log)
     {
-      cerr << "dsp::SingleThread::run " << operations[iop]->get_name() << endl;
+      cerr << "dsp::SingleThread::run setup "
+	   << operations[iop]->get_name() << endl;
       operations[iop] -> set_cerr (*log);
     }
+
     if (!operations[iop] -> scratch_was_set ())
       operations[iop] -> set_scratch (scratch);
 
@@ -645,10 +691,22 @@ void dsp::SingleThread::Config::prepare (Input* input)
     input_prepare( input );
 
   if (seek_seconds)
+  {
+    if (Operation::verbose)
+      std::cerr << "dsp::SingleThread::Config::prepare seek_seconds="
+                << seek_seconds << endl;
+
     input->set_start_seconds (seek_seconds);
-  
+  }
+
   if (total_seconds)
+  {
+    if (Operation::verbose)
+      std::cerr << "dsp::SingleThread::Config::prepare total_seconds="
+                << total_seconds << endl;
+
     input->set_total_seconds (seek_seconds + total_seconds);
+  }
 }
 
 //! set the number of CPU threads to be used
@@ -741,7 +799,7 @@ void dsp::SingleThread::Config::add_options (CommandLine::Menu& menu)
   if (can_thread)
   {
     arg = menu.add (this, &Config::set_nthread, 't', "threads");
-    arg->set_help ("number of processor threads");
+    arg->set_help ("number of CPU processor threads");
   }
 
 #if HAVE_SCHED_SETAFFINITY

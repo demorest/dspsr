@@ -1,9 +1,5 @@
-/***************************************************************************
- *
- *   Copyright (C) 2002 by Willem van Straten
- *   Licensed under the Academic Free License version 2.1
- *
- ***************************************************************************/
+
+#include <stddef.h>
 
 #ifndef __ASCII_HEADER_h
 #define __ASCII_HEADER_h
@@ -14,19 +10,19 @@
   \param keyword  the header keyword, such as NPOL
   \param code     printf/scanf code, such as "%d"
 
-  \retval 0 on success, -1 on failure
+  \retval 0 or 1 on success, -1 on failure
 
-  \pre The user must ensure that the code matches the type of the argument.
+  \pre The code(s) must match the type(s) of the argument(s).
 
   For example:
 
   char ascii_header[ASCII_HEADER_SIZE] = ASCII_HEADER_INIT;
 
   char* telescope_name = "parkes";
-  ascii_header_set (ascii_header, "TELESCOPE", "%s", telescope_name);
+  ascii_header_set (ascii_header, "TELESCOPE", telescope_name);
 
   float bandwidth = 64.0;
-  ascii_header_set (ascii_header, "BW", "%f", float);
+  ascii_header_set (ascii_header, "BW", "%f", bandwidth);
 
   [...]
 
@@ -35,7 +31,7 @@
 
   int chan;
   float gain;
-  ascii_header_get (ascii_header, "GAIN", "%d %lf", &chan, &centre_frequency);
+  ascii_header_get (ascii_header, "GAIN", "%d %f", &chan, &gain);
 
 */
 
@@ -43,11 +39,20 @@
 extern "C" {
 #endif
 
+/* returns zero if no error occurs, -1 on error */
 int ascii_header_set (char* header, const char* keyword,
 		      const char* code, ...);
 
+/* returns number of elements parsed if no error occurs, -1 on error */
 int ascii_header_get (const char* header, const char* keyword,
 		      const char* code, ...);
+
+/* delete the key from the header */
+int ascii_header_del (char * header, const char * keyword);
+
+/* read the HDR_SIZE from a .dada file */
+size_t ascii_header_get_size (char * filename);
+size_t ascii_header_get_size_fd (int fd);
 
 #ifdef __cplusplus
 }

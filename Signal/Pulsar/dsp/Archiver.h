@@ -64,6 +64,7 @@ namespace dsp
 
     //! Set the name of the Pulsar::Archive class used to create new instances
     void set_archive_class (const std::string& archive_class_name);
+    void set_force_archive_class (bool);
 
     //! Set the post-processing script
     void set_script (const std::vector<std::string>& jobs);
@@ -126,6 +127,9 @@ namespace dsp
     //! Name of the Pulsar::Archive class used to create new instances
     std::string archive_class_name;
 
+    //! do not allow the Input class to dicate the output archive file format
+    bool force_archive_class;
+
     //! Store all output in a single archive
     bool use_single_archive;
 
@@ -161,7 +165,7 @@ namespace dsp
 	      unsigned isub=0, unsigned nsub=1);
 
     //! Set the Pulsar::Profile with the specified subset of PhaseSeries data
-    void set (Pulsar::Profile* profile, const PhaseSeries* phase,
+    void set (Pulsar::Profile* profile, const PhaseSeries* phase, double scale,
 	      unsigned ichan, unsigned ipol, unsigned idim);
 
     //! Set the Pulsar::Backend Extension
@@ -169,6 +173,9 @@ namespace dsp
 
     //! Set the Pulsar::dspReduction Extension
     void set (Pulsar::dspReduction*);
+
+    //! Set the Pulsar::dspReduction Extension
+    void pack (Pulsar::dspReduction*, Operation*);
 
     void set_coherent_dedispersion (Signal::State state,
 				    const Response* response);

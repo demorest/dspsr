@@ -87,18 +87,18 @@ void dsp::CPSR2File::open_file (const char* filename)
     throw Error (FailedCall, "dsp::CPSR2File::open_file",
 		 "get_header(%s) failed", filename);
   
-  CPSR2_Observation data (cpsr2_header);
-  prefix = data.prefix;
+  CPSR2_Observation* data = new CPSR2_Observation (cpsr2_header);
+  prefix = data->prefix;
 
   info = data;
-  if (info.get_state() == Signal::Intensity)
+  if (get_info()->get_state() == Signal::Intensity)
     throw Error (InvalidState, "dsp::CPSR2File::open_file",
                  "SimpleFB no longer supported");
 
   header_bytes = CPSR2_HEADER_SIZE;
 
   if( want_to_yamasaki_verify && filesize(filename) > 50 * 1024 * 1024 )
-    if (yamasaki_verify (filename, data.get_offset_bytes(),
+    if (yamasaki_verify (filename, data->get_offset_bytes(),
 			 CPSR2_HEADER_SIZE) < 0)
       throw Error (FailedCall, "dsp::CPSR2File::open_file",
 		   "yamasaki_verify(%s) failed", filename);
@@ -111,7 +111,7 @@ void dsp::CPSR2File::open_file (const char* filename)
   
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
 

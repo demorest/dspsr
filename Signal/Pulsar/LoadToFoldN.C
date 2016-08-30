@@ -68,13 +68,15 @@ void dsp::LoadToFoldN::share ()
   if (at(0)->kernel && !at(0)->kernel->context)
     at(0)->kernel->context = new ThreadContext;
 
+  at(0)->prepare_fold ();
+
   if (at(0)->output_subints()) 
   {
     bool subints_ok = prepare_subint_archival <Fold> ();
     if (!subints_ok)
       subints_ok = prepare_subint_archival <CyclicFold> ();
     if (!subints_ok)
-      throw Error (InvalidState, "dsp::LoadToFoldN::prepare",
+      throw Error (InvalidState, "dsp::LoadToFoldN::share",
           "folder is not a recognized Subint<> type.");
   }
 }
@@ -107,10 +109,9 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
   {
     Subint<T>* subfold = 
       dynamic_cast< Subint<T>* >( at(0)->fold[ifold].get() );
+
     if (!subfold)
       return false;
-      //throw Error( InvalidState, "dsp::LoadToFoldN::prepare_subint_archival",
-//		   "folder is not a Subint<Fold>" );
 
     unloader[ifold] = new UnloaderShare( threads.size() );
     unloader[ifold]->copy( subfold->get_divider() );
@@ -118,7 +119,7 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
 
     PhaseSeriesUnloader* primary_unloader = at(0)->unloader[ifold];
 
-    if (configuration->single_pulse_archives())
+    if (configuration->concurrent_archives())
       unloader[ifold]->set_wait_all (false);
     else
       unloader[ifold]->set_unloader( primary_unloader );
@@ -127,13 +128,22 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
     {
       UnloaderShare::Submit* submit = unloader[ifold]->new_Submit (i);
 
-      if (configuration->single_pulse_archives())
+      if (configuration->concurrent_archives())
         submit->set_unloader( primary_unloader->clone() );
 
-      at(i)->unloader[ifold] = submit;
-    }
+      if (Operation::verbose)
+	cerr << "dsp::LoadToFoldN::prepare_subint_archival submit ptr="
+	     << submit << endl;
 
-    subfold->set_unloader( at(0)->unloader[ifold] );
+      at(i)->unloader[ifold] = submit;
+
+      subfold = dynamic_cast< Subint<T>* >( at(i)->fold[ifold].get() );
+
+      if (!subfold)
+	return false;
+
+      subfold->set_unloader( submit );
+    }
   }
 
   if (Operation::verbose)

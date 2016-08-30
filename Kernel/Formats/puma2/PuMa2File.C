@@ -75,7 +75,7 @@ void dsp::PuMa2File::open_file (const char* filename)
     throw Error (FailedCall, "dsp::PuMa2File::open_file",
 		 "get_header(%s) failed", filename);
   
-  PuMa2_Observation data (header.c_str());
+  PuMa2_Observation* data = new PuMa2_Observation (header.c_str());
   info = data;
 
   unsigned hdr_size;
@@ -86,7 +86,7 @@ void dsp::PuMa2File::open_file (const char* filename)
   header_bytes = hdr_size;
 
   if( want_to_check_bocf &&
-      puma2_check_bocf (filename, data.get_offset_bytes(), hdr_size) < 0 )
+      puma2_check_bocf (filename, data->get_offset_bytes(), hdr_size) < 0 )
     throw Error (FailedCall, "dsp::PuMa2File::open_file",
 		 "check_bocf(%s) failed", filename);
    
@@ -98,7 +98,7 @@ void dsp::PuMa2File::open_file (const char* filename)
   
   // cannot load less than a byte. set the time sample resolution accordingly
   unsigned bits_per_byte = 8;
-  resolution = bits_per_byte / info.get_nbit();
+  resolution = bits_per_byte / get_info()->get_nbit();
   if (resolution == 0)
     resolution = 1;
 

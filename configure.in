@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([DSPSR],[2.0],[dspsr-developers@lists.sourceforge.net])
+AC_INIT([DSPSR],[2016-06+],[dspsr-developers@lists.sourceforge.net])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([Kernel/Makefile.am])
@@ -138,7 +138,7 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 #
 # Initialize variables used by Makefile.include 
 #
-INCLUDE_CPPFLAGS="$PSRCHIVE_CFLAGS"
+INCLUDE_CPPFLAGS="$PSRCHIVE_CPPFLAGS"
 AC_SUBST(INCLUDE_CPPFLAGS)
 
 INCLUDE_LDFLAGS="$PSRCHIVE_LIBS"
@@ -164,10 +164,12 @@ AC_CONFIG_FILES([Makefile
         	Kernel/Formats/fits/Makefile
 		Kernel/Formats/gmrt/Makefile
 		Kernel/Formats/guppi/Makefile
+		Kernel/Formats/kat/Makefile
 		Kernel/Formats/lbadr/Makefile
 		Kernel/Formats/lbadr64/Makefile
 		Kernel/Formats/lofar_dal/Makefile
 		Kernel/Formats/lump/Makefile
+		Kernel/Formats/lwa/Makefile
 		Kernel/Formats/spda1k/Makefile
 		Kernel/Formats/mark4/Makefile
 		Kernel/Formats/mark5/Makefile
@@ -179,6 +181,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/puma2/Makefile
 		Kernel/Formats/s2/Makefile
 		Kernel/Formats/sigproc/Makefile
+		Kernel/Formats/ska1/Makefile
 		Kernel/Formats/spigot/Makefile
 		Kernel/Formats/vdif/Makefile
 		Kernel/Formats/wapp/Makefile

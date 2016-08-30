@@ -42,7 +42,16 @@ dsp::CASPSRUnpacker::CASPSRUnpacker (const char* _name) : HistUnpacker (_name)
   state = Idle;
   thread_count = 0;
 
+#if HAVE_CUDA
+  int device;
+  struct cudaDeviceProp gpu;
+  cudaGetDevice(&device);
+  cudaGetDeviceProperties (&gpu, device);
+  threadsPerBlock = gpu.maxThreadsPerBlock;
+#endif
+
   device_prepared = false;
+  single_thread = true;
 }
 
 dsp::CASPSRUnpacker::~CASPSRUnpacker ()
@@ -81,23 +90,13 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
   if (gpu_mem)
   {
     gpu_stream = (void *) gpu_mem->get_stream();
-#ifdef USE_TEXTURE_MEMORY
     if (verbose)
-      cerr << "dsp::CASPSRUnpacker::set_device: using texture memory" << endl;
-    CUDA::TextureMemory * texture_mem = new CUDA::TextureMemory (gpu_mem->get_stream());
-    texture_mem->set_format_signed(8, 0, 0, 0);
-    texture_mem->set_symbol("caspsr_unpack_tex");
-    staging.set_memory( texture_mem );
-#else
-    if (verbose)
-      cerr << "dsp::CASPSRUnpacker::set_device: using gpu memory" << endl;
-    staging.set_memory( memory );
-#endif
+      cerr << "dsp::CASPSRUnpacker::set_device using gpu memory" << endl;
   }
   else
   {
     if (verbose)
-      cerr << "dsp::CASPSRUnpacker::set_device: using cpu memory" << endl;
+      cerr << "dsp::CASPSRUnpacker::set_device using cpu memory" << endl;
     gpu_stream = undefined_stream;
     n_threads = 2;
     context = new ThreadContext;
@@ -117,6 +116,7 @@ void dsp::CASPSRUnpacker::set_device (Memory* memory)
     }
   }
 #else
+  n_threads = 0;
   Unpacker::set_device (memory);
 #endif
   device_prepared = true;
@@ -135,20 +135,54 @@ void dsp::CASPSRUnpacker::unpack (uint64_t ndat,
                                   const unsigned fskip,
                                   unsigned long* hist)
 {
-  cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
+  if (verbose)
+    cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
   const float* lookup = table->get_values ();
   const unsigned into_stride = fskip * 4;
   const unsigned from_stride = 8;
 
+  //std::cout << ndat << std::endl;
   for (uint64_t idat=0; idat < ndat; idat+=4)
   {
-    into[0] = lookup[ from[0] ];
-    into[1] = lookup[ from[1] ];
-    into[2] = lookup[ from[2] ];
-    into[3] = lookup[ from[3] ];
+    into[0] = lookup[ from[0] ]; //hist[from[0]]++;
+    into[1] = lookup[ from[1] ]; //hist[from[1]]++;
+    into[2] = lookup[ from[2] ]; //hist[from[2]]++;
+    into[3] = lookup[ from[3] ]; //hist[from[3]]++;
 
     from += from_stride;
     into += into_stride;
+  }
+}
+
+void dsp::CASPSRUnpacker::unpack_single_thread() {
+  if (verbose)
+    cerr << "dsp::CASPSRUnpacker::unpack(...)" << endl;
+  const uint64_t ndat  = input->get_ndat();
+  
+  const unsigned nchan = input->get_nchan();
+  const unsigned npol  = input->get_npol();
+  const unsigned ndim  = input->get_ndim();
+  
+  const unsigned fskip = ndim;
+  
+  unsigned offset = 0;
+
+  for (unsigned ichan=0; ichan<nchan; ichan++)
+  {
+    for (unsigned ipol=0; ipol<npol; ipol++)
+    {
+      if (ipol==1)
+       offset = 4;
+      for (unsigned idim=0; idim<ndim; idim++)
+      {
+       const unsigned char* from = input->get_rawptr() + offset;
+       float* into = output->get_datptr (ichan, ipol) + idim;
+       unsigned long* hist = get_histogram (ipol);
+                          
+       unpack (ndat, from, into, fskip, hist);
+       offset ++;
+      }
+    }
   }
 }
 
@@ -166,8 +200,13 @@ void dsp::CASPSRUnpacker::unpack ()
   if ( ! device_prepared )
     set_device ( Memory::get_manager ());
 
-  start_threads();
-  wait_threads();
+  if (n_threads) {
+    start_threads();
+    wait_threads();
+  }
+  else {
+    unpack_single_thread();
+  }
 }
 
 void* dsp::CASPSRUnpacker::cpu_unpacker_thread (void* ptr)
@@ -305,43 +344,28 @@ unsigned dsp::CASPSRUnpacker::get_resolution () const { return 1024; }
 void dsp::CASPSRUnpacker::unpack_on_gpu ()
 {
   const uint64_t ndat = input->get_ndat();
+  const unsigned nchan = input->get_nchan();
+  const unsigned ndim = input->get_ndim();
+  const unsigned npol = input->get_npol();
 
-  staging.Observation::operator=( *input );
-  staging.resize(ndat);
-
-  // staging buffer on the GPU for packed data
-  unsigned char* d_staging = staging.get_rawptr();
-#ifdef USE_TEXTURE_MEMORY
-  if (verbose)
-    cerr << "dsp::CASPSRUnpacker::unpack_on_gpu: creating TextureMemory" << endl;
-
-  CUDA::TextureMemory * gpu_mem = dynamic_cast< CUDA::TextureMemory*>( staging.get_memory() );
-  if (ndat > 0)
-    gpu_mem->activate ( d_staging );
-#endif
- 
-  const unsigned char* from= input->get_rawptr();
-
-  float* into_pola = output->get_datptr(0,0);
-  float* into_polb = output->get_datptr(0,1);
+  const unsigned char* from = input->get_rawptr();
+  float * into_pola, * into_polb;
+  unsigned ichan;
 
   cudaStream_t stream = (cudaStream_t) gpu_stream;
-
   cudaError error;
 
-  if (stream)
-    error = cudaMemcpyAsync (d_staging, from, ndat*2,
-                             cudaMemcpyHostToDevice, stream);
-  else
-    error = cudaMemcpy (d_staging, from, ndat*2, cudaMemcpyHostToDevice);
+  for (ichan=0; ichan<nchan; ichan++)
+  {
+    into_pola = output->get_datptr(ichan, 0);
+    into_polb = output->get_datptr(ichan, 1);
 
-  if (error != cudaSuccess)
-    throw Error (FailedCall, "CASPSRUnpacker::unpack_on_gpu",
-                 "cudaMemcpy%s %s", stream?"Async":"", 
-                 cudaGetErrorString (error));
+    caspsr_unpack (stream, ndat*ndim, table->get_scale(), 
+                   from, into_pola, into_polb,
+                   threadsPerBlock);
 
-  caspsr_unpack (stream, ndat, table->get_scale(), 
-                 d_staging, into_pola, into_polb);
+    from += ndat*ndim*npol;
+  }
 }
 
 #endif

@@ -21,6 +21,7 @@ using namespace std;
 dsp::ASCIIObservation::ASCIIObservation (const char* header)
 {
   hdr_version = "HDR_VERSION";
+  loaded_header = "";
 
   // The default-required keywords
   required_keys.clear();
@@ -229,7 +230,7 @@ void dsp::ASCIIObservation::load (const char* header)
   else
     set_ndim (scan_ndim);
 
-  switch (scan_ndim)
+  switch (get_ndim())
   {
   case 1:
     set_state (Signal::Nyquist); break;
@@ -239,7 +240,7 @@ void dsp::ASCIIObservation::load (const char* header)
     set_state (Signal::Coherence); break;
   default:
     throw Error (InvalidState, "ASCIIObservation",
-		 "invalid NDIM=%d\n", scan_ndim);
+		 "invalid NDIM=%d\n", get_ndim());
   }
 
   // //////////////////////////////////////////////////////////////////////
@@ -271,6 +272,17 @@ void dsp::ASCIIObservation::load (const char* header)
     if (verbose)
       cerr << "dsp::ASCIIObservation::load STATE=" << buffer << endl;
     set_state( Signal::string2State(buffer) );
+  }
+
+  // //////////////////////////////////////////////////////////////////////
+  //
+  // BASIS
+  //
+  if (ascii_header_check (header, "BASIS", "%s", buffer) >= 0)
+  {
+    if (verbose)
+      cerr << "dsp::ASCIIObservation::load BASIS=" << buffer << endl;
+    set_basis( Signal::string2Basis(buffer) );
   }
 
   // //////////////////////////////////////////////////////////////////////
@@ -382,6 +394,12 @@ void dsp::ASCIIObservation::load (const char* header)
     ra = dec = 0.0;
 
   coordinates.setRadians (ra, dec);
+
+  // /////////////////////////////////////////////////////////////////////
+  //
+  // save the header to the local buffer
+  //
+  loaded_header = string (header);
 }
 
 /* ***********************************************************************

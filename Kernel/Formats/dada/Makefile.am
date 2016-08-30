@@ -12,5 +12,5 @@ libdada_la_LIBADD = @PSRDADA_LIBS@
 
 include $(top_srcdir)/config/Makefile.include
 
-AM_CPPFLAGS += @PSRDADA_CFLAGS@
+AM_CPPFLAGS += @PSRDADA_CFLAGS@ @CUDA_CFLAGS@
 

@@ -17,6 +17,7 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "machine_endian.h"
 
@@ -132,39 +133,47 @@ void dsp::GMRTFile::open_file (const char* filename)
   
   fd = open_read_header (filename, &header, &block);
  
-  cerr << "n_ds = " << header.n_ds << endl;
-  cerr << "n_chan = " << header.n_chan << endl;
-  cerr << "i_chan = " << block.FreqChanNo << endl;
+  if (verbose) {
+   cerr << "n_ds = " << header.n_ds << endl;
+   cerr << "n_chan = " << header.n_chan << endl;
+   cerr << "i_chan = " << block.FreqChanNo << endl;
+  }
 
-  info.set_nbit (8);
+  get_info()->set_nbit (8);
 
   double bw = header.ch_bw * header.band_dir;
-  info.set_bandwidth (bw);
-  info.set_centre_frequency (header.rf + (block.FreqChanNo + 0.5) * bw);
+  get_info()->set_bandwidth (bw);
+  get_info()->set_centre_frequency (header.rf + (block.FreqChanNo + 0.5) * bw);
  
-  cerr << "cf = " << info.get_centre_frequency() << endl;
-  cerr << "bw = " << bw << endl;
+  if (verbose) {
+   cerr << "cf = " << get_info()->get_centre_frequency() << endl;
+   cerr << "bw = " << bw << endl;
+  }
 
-  info.set_npol(2);
-  info.set_state (Signal::Analytic);
-  info.set_rate ( header.ch_bw * 1e6 );
+  get_info()->set_npol(2);
+  get_info()->set_state (Signal::Analytic);
+  get_info()->set_rate ( header.ch_bw * 1e6 );
 
   MJD epoch ((int)block.iMJD, block.fMJD);
-  epoch += block.ipts1 / info.get_rate();
+  epoch += block.ipts1 / get_info()->get_rate();
 
-  info.set_start_time( epoch );
-  cerr << "MJD = " << info.get_start_time() << endl;
-  cerr << "telescope = " << header.telescope << endl;
-  info.set_telescope (header.telescope);
+  get_info()->set_start_time( epoch );
+  if (verbose) {
+   cerr << "MJD = " << get_info()->get_start_time() << endl;
+   cerr << "telescope = " << header.telescope << endl;
+  }
+  get_info()->set_telescope (header.telescope);
 
-  info.set_source (header.psr_name);
+  get_info()->set_source (header.psr_name);
 
   header_bytes = sizeof(struct gmrt_params);
 
-  cerr << "totalsize=" << block.totalsize << endl;
-  cerr << "NPtsSend=" << block.NPtsSend << endl;
-  cerr << "overlap=" << header.overlap << endl;
-  cerr << "n_samp_dump=" << header.n_samp_dump << endl;
+  if (verbose) {
+   cerr << "totalsize=" << block.totalsize << endl;
+   cerr << "NPtsSend=" << block.NPtsSend << endl;
+   cerr << "overlap=" << header.overlap << endl;
+   cerr << "n_samp_dump=" << header.n_samp_dump << endl;
+  }
 
   block_header_bytes = sizeof(struct data2rcv);
   //block_tailer_bytes = header.overlap * 4;
@@ -172,8 +181,8 @@ void dsp::GMRTFile::open_file (const char* filename)
 
   set_total_samples();
 
-  info.set_mode(header.pol_mode);
-  info.set_machine("GMRT");	
+  get_info()->set_mode(header.pol_mode);
+  get_info()->set_machine("GMRT");	
 }
 
 void dsp::GMRTFile::skip_extra ()

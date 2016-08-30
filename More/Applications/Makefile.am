@@ -9,7 +9,8 @@ LDADD = $(top_builddir)/More/Plotting/libPlotting.la \
 				$(top_builddir)/Kernel/libdspbase.la \
 				$(top_builddir)/Signal/General/libdspdsp.la \
 				$(top_builddir)/Signal/Statistics/libdspstats.la \
-				$(top_builddir)/Kernel/Classes/libClasses.la
+				$(top_builddir)/Kernel/Classes/libClasses.la \
+				@CUFFT_LIBS@
 
 include $(top_srcdir)/config/Makefile.include
 

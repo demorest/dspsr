@@ -15,6 +15,7 @@
 #endif
 
 #include "dsp/LoadToFil.h"
+#include "dsp/LoadToFilN.h"
 #include "dsp/FilterbankConfig.h"
 
 #include "CommandLine.h"
@@ -38,9 +39,14 @@ int main (int argc, char** argv) try
 
   parse_options (argc, argv);
 
-  Reference::To<dsp::Pipeline> engine = new dsp::LoadToFil (config);
+  Reference::To<dsp::Pipeline> engine;
+  if (config->get_total_nthread() > 1)
+    engine = new dsp::LoadToFilN (config);
+  else
+    engine = new dsp::LoadToFil (config);
 
   engine->set_input( config->open (argc, argv) );
+  engine->construct ();   
   engine->prepare ();   
   engine->run();
   engine->finish();
@@ -61,6 +67,13 @@ void parse_options (int argc, char** argv) try
 		    " <" + FTransform::get_library() + ">");
 
   config->add_options (menu);
+
+  // Need to rename default threading option due to conflict
+  // with original digifil -t (time average) setting.
+  arg = menu.find("t");
+  arg->set_short_name('\0'); 
+  arg->set_long_name("threads");
+  arg->set_type("nthread");
 
   arg = menu.add (config->nbits, 'b', "bits");
   arg->set_help ("number of bits per sample output to file");
@@ -87,7 +100,7 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("remove inter-channel dispersion delays");
 
   arg = menu.add (config->dispersion_measure, 'D', "dm");
-  arg->set_help (" set the dispersion measure");
+  arg->set_help ("set the dispersion measure");
 
   arg = menu.add (config->tscrunch_factor, 't', "nsamp");
   arg->set_help ("decimate in time");
@@ -95,11 +108,17 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->fscrunch_factor, 'f', "nchan");
   arg->set_help ("decimate in frequency");
 
+  arg = menu.add (config->npol, 'd', "npol");
+  arg->set_help ("1=PP+QQ, 2=PP,QQ, 3=(PP+QQ)^2 4=PP,QQ,PQ,QP");
+
   arg = menu.add (config->poln_select, 'P', "ipol");
   arg->set_help ("process only a single polarization of input");
 
   arg = menu.add (config->rescale_seconds, 'I', "secs");
   arg->set_help ("rescale interval in seconds");
+
+  arg = menu.add (config->scale_fac, 's', "fac");
+  arg->set_help ("data scale factor to apply");
 
   arg = menu.add (config->output_filename, 'o', "file");
   arg->set_help ("output filename");

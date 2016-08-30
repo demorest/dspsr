@@ -43,6 +43,35 @@ namespace dsp {
     //! Set the tsrunched SKFilterbank input
     void set_input_tscr (TimeSeries * _input_tscr);
 
+    //! The number of time samples used to calculate the SK statistic
+    unsigned get_M () const { return M; }
+
+    //! The excision threshold in number of standard deviations
+    unsigned get_excision_threshold () const { return n_std_devs; }
+
+    //! Total SK statistic for each poln/channel, post filtering
+    void get_filtered_sum (std::vector<float>& sum) const
+    {  sum = filtered_sum; }
+
+    //! Hits on filtered average for each channel
+    void get_filtered_hits (std::vector<uint64_t>& hits) const
+    { hits = filtered_hits; }
+
+    //! Total SK statistic for each poln/channel, before filtering
+    void get_unfiltered_sum (std::vector<float>& sum) const
+    { sum = unfiltered_sum; }
+
+    //! Hits on unfiltered SK statistic, same for each channel
+    uint64_t get_unfiltered_hits () const { return unfiltered_hits; }
+
+    //! The arrays will be reset when count_zapped is next called
+    void reset_count () { unfiltered_hits = 0; }
+
+    //! Engine used to perform detection
+    class Engine;
+
+    void set_engine (Engine*);
+
   protected:
 
     //! Reserve the required amount of output space required
@@ -50,6 +79,9 @@ namespace dsp {
 
     //! Perform the transformation on the input time series
     void transformation ();
+
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
 
     void reset_mask ();
 
@@ -61,9 +93,21 @@ namespace dsp {
 
     void count_zapped ();
 
+    //! Total SK statistic for each poln/channel, post filtering
+    std::vector<float> filtered_sum;
+
+    //! Hits on filtered average for each channel
+    std::vector<uint64_t> filtered_hits;
+
+    //! Total SK statistic for each poln/channel, before filtering
+    std::vector<float> unfiltered_sum;
+
+    //! Hits on unfiltered SK statistic, same for each channel
+    uint64_t unfiltered_hits;
+
     //! Tsrunched SK statistic timeseries for the current block
     Reference::To<TimeSeries> input_tscr;
-  
+
     //! Number of time samples integrated into tscr SK estimates
     unsigned tscr_M;
 
@@ -113,6 +157,35 @@ namespace dsp {
 
   };
   
+  class SKDetector::Engine : public Reference::Able
+  {
+  public:
+
+    virtual void setup () = 0;
+
+    virtual void reset_mask (dsp::BitSeries* output) = 0;
+
+    virtual void detect_ft (const dsp::TimeSeries* input, dsp::BitSeries* output,
+                            float upper_thresh, float lower_thresh) = 0;
+
+    virtual void detect_fscr (const dsp::TimeSeries* input, dsp::BitSeries* output,
+                              const float lower, const float upper,
+                              unsigned s_chan, unsigned e_chan) = 0;
+
+    virtual void detect_tscr (const dsp::TimeSeries* input,
+                              const dsp::TimeSeries * input_tscr,
+                              dsp::BitSeries* output,
+                              float upper_thresh, float lower_thresh) = 0;
+
+    virtual int count_mask (const dsp::BitSeries* output) = 0;
+
+    virtual float * get_estimates (const TimeSeries* input) = 0;
+
+    virtual unsigned char * get_zapmask (const BitSeries* input) = 0;
+
+  };
+
+
 }
 
 #endif

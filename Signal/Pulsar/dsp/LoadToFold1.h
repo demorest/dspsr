@@ -33,6 +33,7 @@ namespace dsp {
 
   class OperationThread;
   class SKFilterbank;
+  class SpectralKurtosis;
   class Resize;
   class SampleDelay;
   class PhaseLockedFilterbank;
@@ -60,8 +61,11 @@ namespace dsp {
     //! Destructor
     ~LoadToFold ();
 
-    //! Share any necessary resources with the specified thread
-    void share (SingleThread*);
+    //! Create the pipeline
+    void construct ();
+
+    //! Finish preparing
+    void prepare ();
 
     //! Run through the data
     void run ();
@@ -73,11 +77,8 @@ namespace dsp {
 
     friend class LoadToFoldN;
 
-    //! Create the pipeline
-    void construct ();
-
-    //! Finish preparing
-    void finalize ();
+    //! Share any necessary resources with the specified thread
+    void share (SingleThread*);
 
     //! Wrap up tasks at end of data
     void end_of_data ();
@@ -115,7 +116,10 @@ namespace dsp {
     Reference::To<Response> passband;
 
     //! Optional SK filterbank
-    Reference::To<SKFilterbank> skfilterbank;
+    // Reference::To<SKFilterbank> skfilterbank;
+
+    //! Optional Spectral Kurtosis (for convolution)
+    Reference::To<SpectralKurtosis> skestimator;
 
     //! Optional SK Resizer 
     Reference::To<Resize> skresize;
@@ -146,12 +150,24 @@ namespace dsp {
     //! Prepare to remove interchannel dispersion delays
     void prepare_interchan (TimeSeries*);
 
-    //! Prepare to fold the given TimeSeries
-    void prepare_fold (TimeSeries*);
+    //! Build to fold the given TimeSeries
+    void build_fold (TimeSeries*);
+    void build_fold (Reference::To<Fold>&, PhaseSeriesUnloader*);
+    void configure_fold (unsigned ifold, TimeSeries* to_fold);
+    void configure_detection (Detection*, unsigned);
+
+    PhaseSeriesUnloader* get_unloader (unsigned ifold);
+    size_t get_nfold ();
+
+    //! Prepare all fold instances
+    void prepare_fold ();
+    bool fold_prepared;
 
     //! Prepare the given Archiver
     void prepare_archiver (Archiver*);
 
+    //! Parse the epoch string into a reference epoch
+    MJD parse_epoch (const std::string&);
   };
 
 }

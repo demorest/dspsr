@@ -62,6 +62,11 @@ double dsp::TScrunch::get_time_resolution() const
   return time_resolution;
 }
 
+void dsp::TScrunch::set_engine( Engine* _engine )
+{
+  engine = _engine;
+}
+
 void dsp::TScrunch::prepare ()
 {
   if (!has_buffering_policy())
@@ -109,6 +114,10 @@ void dsp::TScrunch::transformation ()
   {
     get_output()->copy_configuration( get_input() );
     get_output()->resize( output_ndat );
+    // this is necessary if we buffer further down the line
+    // otherwise, samples are misaligned
+    get_output()->set_input_sample (
+        get_input()->get_input_sample() / sfactor );
   }
 
   output->rescale( sfactor );
@@ -117,7 +126,10 @@ void dsp::TScrunch::transformation ()
   switch (input->get_order())
   {
     case TimeSeries::OrderFPT:
-      fpt_tscrunch ();
+      if (engine)
+        engine->fpt_tscrunch (get_input(), get_output(), sfactor);
+      else
+        fpt_tscrunch ();
       break;
 
     case TimeSeries::OrderTFP:
@@ -133,35 +145,45 @@ void dsp::TScrunch::fpt_tscrunch ()
 {
   const unsigned input_nchan = input->get_nchan();
   const unsigned input_npol = input->get_npol();
+  const unsigned ndim = input->get_ndim();
 
-  for (unsigned ichan=0; ichan<input_nchan; ichan++)
+  for (unsigned idim=0; idim < ndim; ++idim)
   {
-    for (unsigned ipol=0; ipol<input_npol; ipol++)
+    for (unsigned ichan=0; ichan<input_nchan; ichan++)
     {
-      const float* in = input->get_datptr(ichan, ipol);
-      float* out = output->get_datptr(ichan, ipol);
-      
-      unsigned input_idat=0;
-
-      for( unsigned output_idat=0; output_idat<output_ndat; ++output_idat)
+      for (unsigned ipol=0; ipol<input_npol; ipol++)
       {
-	unsigned stop = input_idat + sfactor;
-	
-	out[output_idat] = in[input_idat]; 	++input_idat;
-	
-	for( ; input_idat<stop; ++input_idat)
-	  out[output_idat] += in[input_idat];
-      }
-    } // for each ipol
-  } // for each ichan
+        const float* in = input->get_datptr(ichan, ipol) + idim;
+        float* out = output->get_datptr(ichan, ipol) + idim;
+        
+        unsigned input_idat=0;
+
+        for (unsigned output_idat=0; 
+            output_idat<output_ndat*ndim; output_idat+=ndim)
+        {
+          unsigned stop = (input_idat + sfactor*ndim);
+    
+          out[output_idat] = in[input_idat];
+          input_idat += ndim;
+        
+          for( ; input_idat<stop; input_idat += ndim)
+            out[output_idat] += in[input_idat];
+
+        }
+      } // for each ipol
+    } // for each ichan
+  if (idim > 0)
+    cerr <<"this is a problem right now"<<std::endl;
+  } // for each idim
 }
 
 void dsp::TScrunch::tfp_tscrunch ()
 {
   const unsigned input_nchan = input->get_nchan();
   const unsigned input_npol = input->get_npol();
+  const unsigned input_ndim = input->get_ndim();
 
-  const unsigned nfloat = input_nchan * input_npol;
+  const unsigned nfloat = input_nchan * input_npol * input_ndim;
 
   const float* indat = input->get_dattfp ();
   float* outdat = output->get_dattfp ();

@@ -1,8 +1,12 @@
 
-SUBDIRS	= config Kernel Signal Management More
+SUBDIRS	= config Kernel Signal Management
 
 if HAVE_PYTHON
 SUBDIRS += python
+endif
+
+if HAVE_PGPLOT
+SUBDIRS += More
 endif
 
 include $(top_srcdir)/config/Makefile.root

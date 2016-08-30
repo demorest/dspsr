@@ -1,9 +1,9 @@
 
 noinst_LTLIBRARIES = libbpsr.la
 
-nobase_include_HEADERS = dsp/BPSRUnpacker.h
+nobase_include_HEADERS = dsp/BPSRUnpacker.h dsp/BPSRCrossUnpacker.h
 
-libbpsr_la_SOURCES = BPSRUnpacker.C
+libbpsr_la_SOURCES = BPSRUnpacker.C BPSRCrossUnpacker.C
 
 #############################################################################
 #

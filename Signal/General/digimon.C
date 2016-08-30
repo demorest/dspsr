@@ -113,7 +113,7 @@ int main (int argc, char** argv) try
   dsp::IOManager* manager = new dsp::IOManager;
   
   if (verbose)
-    cerr << "digistat: opening file " << argv[optind] << endl;
+    cerr << "digimon: opening file " << argv[optind] << endl;
   manager->open (argv[optind]);
 
   //

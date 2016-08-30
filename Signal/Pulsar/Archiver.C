@@ -56,6 +56,7 @@ dsp::Archiver::Archiver ()
   fourth_moments = 0;
   subints_per_file = 0;
   use_single_archive = false;
+  force_archive_class = false;
 
   /* PLEASE DON'T FORGET TO ALSO UPDATE THE COPY CONSTRUCTOR */
 }
@@ -73,6 +74,7 @@ dsp::Archiver::Archiver (const Archiver& copy)
     extensions[iext] = copy.extensions[iext]->clone();
 
   archive_class_name = copy.archive_class_name;
+  force_archive_class = copy.force_archive_class;
   store_dynamic_extensions = copy.store_dynamic_extensions;
   archive_software = copy.archive_software;
   archive_dedispersed = copy.archive_dedispersed;
@@ -104,6 +106,11 @@ void dsp::Archiver::set_archive_class (const string& class_name)
   archive_class_name = class_name;
 }
 
+void dsp::Archiver::set_force_archive_class (bool force)
+{
+  force_archive_class = force;
+}
+
 void dsp::Archiver::set_archive (Pulsar::Archive* archive)
 {
   single_archive = archive;
@@ -130,7 +137,7 @@ void dsp::Archiver::add_extension (Pulsar::Archive::Extension* extension)
 //! Return a new Archive instance
 Pulsar::Archive* dsp::Archiver::new_Archive() const
 {
-  try
+  if (!force_archive_class) try
   {
     const OutputArchive* out = profiles->get_extensions()->get<OutputArchive>();
     if (out)
@@ -438,7 +445,7 @@ try
 
     if (phase->has_folding_predictor())
     {
-      Phase inphs = phase->get_folding_predictor()->phase(initial);
+      Pulsar::Phase inphs = phase->get_folding_predictor()->phase(initial);
       double dtime = inphs.fracturns() * phase->get_folding_period();
       initial -= dtime;
     }
@@ -669,8 +676,13 @@ try
 
         Pulsar::Profile* profile = 0;
 
+        double scale = phase->get_scale ();
+
         if (more && poln >= effective_npol)
+        {
           profile = more->get_Profile (poln - effective_npol);
+          scale *= scale; // FourthMoments start with Stokes squared
+        }
         else
           profile = integration->get_Profile (poln, chan);
 
@@ -678,7 +690,7 @@ try
           cerr << "dsp::Archiver::set Pulsar::Integration ipol=" << poln
                << " ichan=" << chan << " nbin=" << profile->get_nbin() << endl;
 
-        set (profile, phase, ichan, ipol, idim);
+        set (profile, phase, scale, ichan, ipol, idim);
 
       }
     }
@@ -759,7 +771,7 @@ void dsp::Archiver::raw_to_central (unsigned ichan,
 }
 
 void dsp::Archiver::set (Pulsar::Profile* profile,
-        		 const PhaseSeries* phase,
+        		 const PhaseSeries* phase, double scale,
         		 unsigned ichan, unsigned ipol, unsigned idim)
 try
 {
@@ -801,8 +813,6 @@ try
   }
   
   unsigned zeroes = 0;
-
-  double scale = phase->get_scale ();
 
   if (verbose > 2)
     cerr << "dsp::Archiver::set Pulsar::Profile scale=" << scale << endl;

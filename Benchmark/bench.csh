@@ -1,5 +1,8 @@
 #!/bin/csh -f
 
+set dir=`dirname $0`
+set hdr="$dir/header.dada"
+set hdrset=0
 set nthread=2
 set cache=1
 set gpu=""
@@ -61,6 +64,11 @@ foreach option ( $* )
     set nchan="$optarg"
     breaksw
 
+  case hdr:
+    set hdr="$optarg"
+    set hdrset=1
+    breaksw
+
   case *:
     cat <<EOF
 
@@ -86,14 +94,18 @@ EOF
 
 end
 
-if ( "$freq" == "" ) then
-  echo "please set the centre frequency with --freq"
-  exit
-endif
+if ( ! $hdrset ) then
 
-if ( "$bw" == "" ) then
-  echo "please set the bandwidth with --bw"
-  exit
+  if ( "$freq" == "" ) then
+    echo "please set the centre frequency with --freq"
+    exit
+  endif
+  
+  if ( "$bw" == "" ) then
+    echo "please set the bandwidth with --bw"
+    exit
+  endif
+
 endif
 
 if ( "$gpu" != "" ) then
@@ -117,22 +129,23 @@ while ( $bwtrial < $nbwtrial )
     @ nc = $nchan
   endif
 
-  @ time = 1024 / $bw
-  if ($time == 0) set time=1
+  @ time = 1
 
   @ bwtrial = $bwtrial + 1
 
   set outfile=f${freq}_b${bw}.dat
   rm -f $outfile
 
-  foreach DM ( 1 3 10 30 100 300 1000 )
+  foreach DM ( 1 3 10 30 100 300 1000 3000 )
 
     echo Frequency: $freq Bandwidth: $bw Time: $time DM: $DM
     set file=f${freq}_b${bw}_DM${DM}.time
     rm -f $file
 
-    set psr="-E pulsar.par -P polyco.dat -D $DM -B $bw -f $freq"
-    set args="--fft-bench -r -F ${nc}:D -T $time $psr header.dada"
+    set rcvr=""
+    if ( ! $hdrset ) set rcvr="-B $bw -f $freq"
+    set psr="-E $dir/pulsar.par -P $dir/polyco.dat -D $DM $rcvr"
+    set args="--fft-bench -r -F ${nc}:D -T $time $psr $hdr"
 
     foreach trial ( a b c d e f )
 

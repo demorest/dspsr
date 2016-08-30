@@ -21,7 +21,8 @@ class ThreadContext;
 namespace dsp {
 
   //! Multiple pipeline threads
-  class MultiThread : public Pipeline {
+  class MultiThread : public Pipeline
+  {
 
   public:
 
@@ -42,6 +43,9 @@ namespace dsp {
 
     //! Get the Input from which data are read
     Input* get_input ();
+
+    //! Build the signal processing pipeline
+    void construct ();
 
     //! Prepare to fold the input TimeSeries
     void prepare ();
@@ -86,8 +90,6 @@ namespace dsp {
 
     void launch_threads ();
 
-    static void share (SingleThread* fold, SingleThread* share);
-    static void prepare (SingleThread* fold);
     static void wait (SingleThread* fold, SingleThread::State st);
     static void signal (SingleThread* fold, SingleThread::State st);
 

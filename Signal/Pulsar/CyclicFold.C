@@ -7,16 +7,18 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "dsp/Apodization.h"
 #include "dsp/CyclicFold.h"
 #include "FTransform.h"
 
 #include <assert.h>
-
+#include <fstream>
 using namespace std;
 
 dsp::CyclicFold::CyclicFold()
 {
   nlag = 0;
+  mover = 1;
   npol = 0;
   set_name("CyclicFold");
 }
@@ -43,6 +45,7 @@ void dsp::CyclicFold::prepare ()
 
   // Set params in fold engine
   cfe->set_nlag (nlag);
+  cfe->set_mover (mover);
   cfe->set_npol (npol);
   cfe->set_profiles (output);
 
@@ -91,7 +94,7 @@ void dsp::CyclicFold::prepare_output() try
     out->Observation::operator = (*in);
 
     // Assumes complex lags in 'c2r' format
-    unsigned nchan_out = 2*get_nlag() - 2;
+    unsigned nchan_out = (2*get_nlag() - 2)/get_mover();
     const unsigned nchan_in = in->get_nchan();
     out->set_nchan(nchan_out*nchan_in);
 
@@ -127,11 +130,25 @@ void dsp::CyclicFold::prepare_output() try
 
     out->ndat_total = backup_ndat_total;
 
-    if (in->get_nchan() == 1) 
-      out->set_swap(true);
+    if (verbose)
+      cerr << "dsp::CyclicFold::prepare_output in->get_nchan()=" << in->get_nchan() << endl;
 
-    if (in->get_nchan() > 1 && in->get_swap() == false)
-      out->set_nsub_swap (in->get_nchan());
+    if (in->get_nchan() == 1) {
+      if (verbose)
+	cerr << "dsp::CyclicFold::prepare_output setting swap because only one input channel" << endl;
+      out->set_swap(true);
+    }
+
+    if (in->get_nchan() > 1 && in->get_swap() == false) {
+      if (verbose)
+	cerr << "dsp::CyclicFold::prepare_output setting nsub swap to " << out->get_nchan() << endl;
+      out->set_nsub_swap (out->get_nchan());
+    }
+
+    if (in->get_dual_sideband()) {
+      if (verbose)
+	cerr << "dsp::CyclicFold::prepare_output input appears to be dual sideband" << endl;    
+    }
 
     return;
   }
@@ -158,6 +175,7 @@ dsp::CyclicFoldEngine::CyclicFoldEngine()
   nbin=npol=ndim=0;
   npol_out = 0;
   nlag = 0;
+  mover = 1;
   binplan_size = 0;
   binplan[0] = NULL;
   binplan[1] = NULL;
@@ -165,23 +183,51 @@ dsp::CyclicFoldEngine::CyclicFoldEngine()
   lagdata = NULL;
   idat_start = 0;
   lag2chan = NULL;
+  use_set_bins = false;
 }
 
 dsp::CyclicFoldEngine::~CyclicFoldEngine()
 {
+	if (parent->verbose) {
+		cerr << "dsp::CyclicFoldEngine::~CyclicFoldEngine freeing binplan" <<endl;
+	}
   if (binplan[0]) delete [] binplan[0];
   if (binplan[1]) delete [] binplan[1];
+  if (parent->verbose) {
+	  cerr << "dsp::CyclicFoldEngine::~CyclicFoldEngine freeing lagdata" <<endl;
+  }
   if (lagdata) delete [] lagdata;
+  if (parent->verbose) {
+	  cerr << "dsp::CyclicFoldEngine::~CyclicFoldEngine done" <<endl;
+  }
 }
 
 void dsp::CyclicFoldEngine::set_nlag(unsigned _nlag) 
 {
   if (nlag != _nlag)
   {
+    if (parent->verbose)
+      cerr << "dsp::CyclicFoldEngine::set_nlag nlag=" << _nlag << endl;
+    // FIXME: it's inefficient to FFT the whole thing and downsample
+    // better to FFT 1/mover at a time and add them, or just add them
+    // and then FFT a small hunk
+    // this will work, though, and be easier to implement
     unsigned nchan_spec = 2*_nlag - 2;
     lag2chan = FTransform::Agent::current->get_plan (nchan_spec,
         FTransform::bcr);
     nlag = _nlag;
+  }
+}
+
+void dsp::CyclicFoldEngine::set_mover(unsigned _mover) 
+{
+  if (mover != _mover)
+  {
+    if (parent->verbose)
+      cerr << "dsp::CyclicFoldEngine::set_mover mover=" << _mover << endl;
+    // FIXME: should recompute nlag from nchan
+    mover = _mover;
+
   }
 }
 
@@ -212,8 +258,10 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::set_ndat "
       << "nlag=" << nlag << " "
+      << "mover=" << mover << " "
       << "nbin=" << nbin << " "
       << "npol=" << npol_out << " "
+      << "ndim=" << ndim << " "
       << "nchan=" << nchan << endl;
 
   uint64_t _lagdata_size = nlag * nbin * npol_out * ndim * nchan;
@@ -234,6 +282,9 @@ void dsp::CyclicFoldEngine::set_ndat (uint64_t _ndat, uint64_t _idat_start)
 
 void dsp::CyclicFoldEngine::zero ()
 {
+	if (parent->verbose) {
+		cerr << "dsp::CyclicFoldEngine::zero: zeroing profiles " << endl;
+	}
   get_profiles()->zero();
   if (lagdata && lagdata_size>0) 
     memset(lagdata, 0, sizeof(float)*lagdata_size);
@@ -247,6 +298,14 @@ void dsp::CyclicFoldEngine::set_bin (uint64_t idat, double ibin,
   binplan[0][idat-idat_start] = unsigned(ibin);
   unsigned ibin1 = unsigned (ibin + 0.5*bins_per_sample);
   binplan[1][idat-idat_start] = ibin1 % nbin;
+}
+uint64_t dsp::CyclicFoldEngine::get_bin_hits (int ibin)
+{
+	return 0; // Fix this
+}
+uint64_t dsp::CyclicFoldEngine::set_bins (double phi, double phase_per_sample,uint64_t _ndat, uint64_t idat_start)
+{
+	return 0;
 }
 
 dsp::PhaseSeries* dsp::CyclicFoldEngine::get_profiles ()
@@ -291,8 +350,10 @@ void dsp::CyclicFoldEngine::fold ()
 
   setup();
 
-  if (parent->verbose)
-    cerr << "dsp::CyclicFoldEngine::fold entering fold loop" << endl;
+  if (parent->verbose) {
+	  cerr << "dsp::CyclicFoldEngine::fold entering fold loop" << endl;
+	  cerr << "idat_start=" << idat_start << " ndat_fold=" << ndat_fold << endl;
+  }
 
   // Ignore blocks which don't contain enough data (avoids
   // triggering the ibin<nbin assertion below).
@@ -312,6 +373,20 @@ void dsp::CyclicFoldEngine::fold ()
     {
       const float *pol0_in = in->get_datptr(ichan,0) + ndim*idat_start;
       const float *pol1_in = in->get_datptr(ichan,1) + ndim*idat_start;
+
+#if 0
+      ofstream fbin;
+      fbin.open("cpuprefold.dat", ios::binary | ios::app);
+      for (int nn=0; nn < ndat_fold*ndim; nn++){
+    	  fbin.write((char *)(&(pol0_in[nn])),sizeof(float));
+      }
+      for (int nn=0; nn < ndat_fold*ndim; nn++){
+    	  fbin.write((char *)(&(pol1_in[nn])),sizeof(float));
+      }
+      cerr << "done, dumping precyclic cpu, closing files" << endl;
+      fbin.close();
+#endif
+
       for (uint64_t idat=0; idat<ndat_fold-nlag; idat++) 
       {
         for (unsigned ilag=0; ilag<nlag; ilag++) 
@@ -386,8 +461,11 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
   if (parent->verbose)
     cerr << "dsp::CyclicFoldEngine::synch calling bcr FFT" << endl;
 
+  // NOTE: this spectrum is oversampled by a factor mover
   unsigned nchan_spec = 2*nlag - 2;
   float *spec = new float[nchan_spec];
+
+  unsigned nchan_spec_real = nchan_spec/mover;
 
 #if 0 
   // In the 4-pol case, we need to sum/diff the lag functions to get
@@ -401,7 +479,7 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       {
         float *lags2 = get_lagdata_ptr(ichan, 2, ibin);
         float *lags3 = get_lagdata_ptr(ichan, 3, ibin);
-        for (unsigned ilag=0; ilag<2*nlag; ilag+=2) 
+        for (unsigned ilag=0; ilag<nlag; ilag+=2) 
         {
           float pos_r = lags2[ilag];
           float pos_i = lags2[ilag+1];
@@ -409,14 +487,27 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
           float neg_i = lags3[ilag+1];
           lags2[ilag]   = 0.5*(pos_r + neg_r);
           lags2[ilag+1] = 0.5*(pos_i - neg_i);
-          lags3[ilag]   = 0.5*(pos_i + neg_i);
-          lags3[ilag+1] = -0.5*(pos_r - neg_r);
+          lags3[ilag]   = 0.5*(pos_r - neg_r);
+          lags3[ilag+1] = 0.5*(pos_i + neg_i);
         }
       }
     }
   }
 #endif
 
+#if 0
+  ofstream fbin;
+  fbin.open("cyclic.dat", ios::binary | ios::app);
+  for (int nn=0; nn < lagdata_size; nn++){
+	  fbin.write((char *)(&(lagdata[nn])),sizeof(float));
+
+  }
+  cerr << "done, dumping cyclic, closing files" << endl;
+  fbin.close();
+#endif
+
+  if (parent->verbose)
+    cerr << "dsp::CyclicFoldEngine::synch folding and saving spectra" << endl;
   for (unsigned ibin=0; ibin<nbin; ibin++) 
   {
     for (unsigned ipol=0; ipol<npol_out; ipol++) 
@@ -424,15 +515,39 @@ void dsp::CyclicFoldEngine::synch (PhaseSeries* out)
       for (unsigned ichan=0; ichan<nchan; ichan++) 
       {
         float *lags = get_lagdata_ptr(ichan, ipol, ibin);
+
+	if (mover>1) {
+	  assert(ndim==2);
+	  lags[0] *= 1;
+	  lags[1] *= 1;
+	  for (unsigned ilag=1; ilag<nlag; ilag++) {
+	    float x = (M_PI/3)*mover*ilag/((float)(2*nlag-2));
+	    // FIXME: this is horrible.
+	    // This is a manual implementation of a Hanning window.
+	    // Using the built-in window functions led to mysterious
+	    // failures to write the second file.
+	    // In any case dsp::Apodization::Parzen is not actually 
+	    // a Parzen window.
+	    float y = 0.5*(1+cos(2*M_PI*float(ilag)/float(2*nlag)));
+	    float f = y*sin(x)/x;
+	    lags[2*ilag] *= f;
+	    lags[2*ilag+1] *= f;
+	  }
+	  
+	}
+
         lag2chan->bcr1d(nchan_spec, spec, lags);
-        for (unsigned schan=0; schan<nchan_spec; schan++) 
+        for (unsigned schan=0; schan<nchan_spec_real; schan++) 
         {
-          float* phasep = out->get_datptr(ichan*nchan_spec+schan,ipol);
-          phasep[ibin] = spec[schan];
+          float* phasep = out->get_datptr(ichan*nchan_spec_real+schan,ipol);
+	  // downsample by mover
+          phasep[ibin] = spec[schan*mover];
         }
       }
     }
   }
+  if (parent->verbose)
+    cerr << "dsp::CyclicFoldEngine::synch finished computing spectra" << endl;
 
   delete [] spec;
 

@@ -41,7 +41,7 @@ namespace dsp {
     virtual bool eod();
 
     //! Get the information about the data source
-    virtual void set_info (const Observation& obs) { info = obs; }
+    virtual void set_info (Observation* obs) { info = obs; }
 
     //! Reset DADAbuffer
     void rewind ();
@@ -56,7 +56,12 @@ namespace dsp {
 
     //! Load bytes from shared memory
     virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes);
-    
+ 
+#if HAVE_CUDA
+    //! Load bytes from shared memory directory to GPU memory
+    int64_t load_bytes_device (unsigned char* device_memory, uint64_t bytes, void * device_handle);
+#endif
+
     //! Set the offset in shared memory
     virtual int64_t seek_bytes (uint64_t bytes);
 

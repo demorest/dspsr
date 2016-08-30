@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2009
+ *   Copyright (C) 2009 by Jonathon Kocz
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -18,7 +18,7 @@
 
 using namespace std;
 
-dsp::Multiplex::Multiplex () : MultiFile ()
+dsp::Multiplex::Multiplex () : MultiFile ( "Multiplex" )
 {
   //current_index = 0;
 }
@@ -139,7 +139,7 @@ void dsp::Multiplex::open (const vector<string>& new_filenames)
 
   //  ensure_contiguity();
   setup();
-  cerr << "Multiplex::open total_ndat=" << info.get_ndat() << endl;
+  cerr << "Multiplex::open total_ndat=" << get_info()->get_ndat() << endl;
 }
 
 int64_t dsp::Multiplex::load_bytes (unsigned char* buffer, uint64_t bytes)

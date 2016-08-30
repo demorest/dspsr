@@ -77,12 +77,11 @@ void dsp::GMRTBinaryFile::open_file (const char* filename)
     throw Error (FailedCall, "dsp::GMRTBinaryFile::open_file",
 		 "get_header(%s) failed", filename);
   
-  ASCIIObservation data (header.c_str());
-  info = data;
+  info = new ASCIIObservation (header.c_str());
 
   header_bytes = 0;
 
-  resolution = info.get_nsamples (1);
+  resolution = get_info()->get_nsamples (1);
   if (resolution == 0)
     resolution = 1;
 

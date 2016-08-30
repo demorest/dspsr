@@ -39,15 +39,16 @@ bool dsp::SigProcUnpacker::matches (const Observation* observation)
 
   unsigned nbit = observation->get_nbit();
 
-  return observation->get_machine() == "SigProc" 
+  return observation->get_format() == "SigProc"
     && observation->get_ndim() == 1
-    && observation->get_npol() == 1
+    //    && observation->get_npol() == 1
     && ( nbit==1 || nbit==2 || nbit==4 || nbit==8 || nbit==16 || nbit==32);
 }
 
 unsigned dsp::SigProcUnpacker::get_output_ipol (unsigned idig) const
 {
-  return 0;
+  //AK  return 0;
+  return idig;
 }
 
 unsigned dsp::SigProcUnpacker::get_output_ichan (unsigned idig) const
@@ -60,7 +61,7 @@ void dsp::SigProcUnpacker::unpack ()
   const uint64_t ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
   const unsigned nbit = input->get_nbit();
-
+  const unsigned npol = input->get_npol();
   // these tricks do quick division and modulus
   unsigned div_shift = 0;
   unsigned mod_mask = 0;
@@ -94,43 +95,51 @@ void dsp::SigProcUnpacker::unpack ()
   {
   case TimeSeries::OrderFPT:
   {
+    for (unsigned ipol=0; ipol<npol; ipol++){
+    // These are relevant for dspsr-produced files, but I'm not sure how best
+    // to handle this generally:
+    float offset=0.0;
+    if (nbit==16 && ipol>1) { offset = 32768.0; }
+    if (nbit==8 && ipol>1) { offset = 127.5; }
     for (unsigned ichan=0; ichan<nchan; ichan++) 
     {
       // from = from_base + ichan * nbit / 8
-      const unsigned char* from = from_base + (ichan >> div_shift);
+      const unsigned char* from = from_base + ((ipol*nchan+ichan) >> div_shift);
 
       // shift = ichan % (8/nbit)
       const unsigned shift = (ichan & mod_mask) * nbit; // MKeith: Need to move by nbits each channel!
  
-      float* into = output->get_datptr (ichan, 0);
+      float* into = output->get_datptr (ichan, ipol);
 
       // Note, 32-bit is assumed to be floating point (eg not 32-bit ints).
       if (nbit == 32)
       {
-        const float* from32 = reinterpret_cast<const float *>(from_base)+ichan;
+        const float* from32 = reinterpret_cast<const float *>(from_base)+
+	  nchan*ipol+ichan;
 
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
           into[bt] =  *from32;
-	  from32 += nchan;
+	  from32 += nchan*npol;
 	}
       }
       
       else if (nbit == 16)
       {
-	const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base)+ichan;
+	const uint16_t* from16 = reinterpret_cast<const uint16_t*>(from_base)
+          + (ipol*nchan + ichan);
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
-          into[bt] = float( *from16 );
-	  from16 += nchan;
+          into[bt] = float( *from16 ) - offset;
+	  from16 += nchan*npol;
 	}
       }
 
       else if (nbit == 8)
 	for (unsigned bt = 0; bt < ndat; bt++)
         {
-          into[bt] = float( *from );
-	  from += nchan;
+          into[bt] = float( *from ) - offset;
+	  from += nchan*npol;
 	}
 
       else
@@ -139,9 +148,9 @@ void dsp::SigProcUnpacker::unpack ()
 	  // shift and mask one channel
 	  into[bt] = float( ((*from) >> shift) & keep_mask );
 	  // skip to next byte in which this channel occurs
-	  from += nchan_bytes;
+	  from += nchan_bytes*npol;
 	}
-    }
+    }}
 
     break;
   }

@@ -27,7 +27,7 @@ namespace dsp {
   public:
   
     //! Constructor
-    MultiFile ();
+    MultiFile (const char* name = "MultiFile");
     
     //! Destructor
     virtual ~MultiFile ();
@@ -51,6 +51,9 @@ namespace dsp {
     File* get_loader ();
     const File* get_loader () const;
 
+    //! Access to current file objects
+    std::vector< Reference::To<File> >& get_files () {return files;}
+
     //! Return true if the loader File instance is set
     bool has_loader ();
 
@@ -73,6 +76,9 @@ namespace dsp {
 
     //! Inquire the next sample to load for the current file
     uint64_t get_next_sample();
+
+    //! Add any relevant extensions (calls loader's add_extensions())
+    void add_extensions (Extensions *ext);
 
   protected:
     

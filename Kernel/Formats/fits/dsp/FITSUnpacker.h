@@ -17,12 +17,18 @@
 
 namespace dsp
 {
+  class FITSFile;
+
   class FITSUnpacker : public Unpacker
   {
     public:
       FITSUnpacker(const char* name = "FITSUnpacker");
 
+      //! Used in callback to set zero offsets, reference spectra, etc.
+      void set_parameters (FITSFile* ff);
+
     protected:
+
       virtual void unpack();
 
       virtual bool matches(const Observation* observation);
@@ -34,6 +40,11 @@ namespace dsp
       float fourBitNumber(const int num);
 
       float eightBitNumber(const int num);
+
+      float zero_off;
+
+      std::vector<float> dat_scl;
+      std::vector<float> dat_offs;
   };
 }
 

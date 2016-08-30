@@ -14,6 +14,7 @@
 #include "dirutil.h"
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
@@ -122,7 +123,7 @@ void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data)
   if( verbose )
     fprintf(stderr,"In dsp::PMDAQFile::modify_info() with %d and %d cf=%f bw=%d\n",
 	    data->has_two_filters(), using_second_band,
-	    info.get_centre_frequency(), info.get_bandwidth());
+	    get_info()->get_centre_frequency(), get_info()->get_bandwidth());
 
   if( !data->has_two_filters() )
     return;
@@ -136,12 +137,12 @@ void dsp::PMDAQFile::modify_info(PMDAQ_Observation* data)
   set_chan_begin( data->get_freq1_channels() );
   set_chan_end( data->get_freq1_channels() + data->get_freq2_channels() );
 
-  info.set_centre_frequency( data->get_second_centre_frequency() );
-  info.set_bandwidth( data->get_second_bandwidth() );
+  get_info()->set_centre_frequency( data->get_second_centre_frequency() );
+  get_info()->set_bandwidth( data->get_second_bandwidth() );
 
   if( verbose )
     fprintf(stderr,"In dsp::PMDAQFile::modify_info() have set chan_begin to %d chan_end to %d cf=%f bw=%f\n",
-	    chan_begin, chan_end, info.get_centre_frequency(), info.get_bandwidth());
+	    chan_begin, chan_end, get_info()->get_centre_frequency(), get_info()->get_bandwidth());
 }
 
 void dsp::PMDAQFile::open_file (const char* filename)
@@ -151,11 +152,9 @@ void dsp::PMDAQFile::open_file (const char* filename)
 		"failed get_header(%s): %s",
 		filename, strerror(errno));
   
-  PMDAQ_Observation data(pmdaq_header);
-  
+  PMDAQ_Observation* data = new PMDAQ_Observation (pmdaq_header);
+  modify_info(data);
   info = data;
-   
-  modify_info(&data);
 
   // Open the data file, which is now just filename.
   fd = ::open (filename, O_RDONLY);
@@ -166,7 +165,7 @@ void dsp::PMDAQFile::open_file (const char* filename)
   
   if (verbose)
     cerr << "Returning from PMDAQFile::open_file with ndat=" 
-         << info.get_ndat() << endl;
+         << get_info()->get_ndat() << endl;
 }
 
 //! Pads gaps in data

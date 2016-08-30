@@ -6,6 +6,8 @@
  ***************************************************************************/
 
 #include "dsp/InputBufferingShare.h"
+#include "dsp/Reserve.h"
+
 #include "ThreadContext.h"
 
 using namespace std;
@@ -15,18 +17,22 @@ dsp::InputBuffering::Share::Share ()
   name = "InputBuffering::Share";
   context = 0;
   context_owner = false;
+
+  reserve = new Reserve;
 }
 
 dsp::InputBuffering::Share::Share (InputBuffering* _buffer,
 				   HasInput<TimeSeries>* _target)
 {
+  name = "InputBuffering::Share";
+
   buffer = _buffer;
   target = _target;
 
   context = new ThreadContext;
   context_owner = true;
 
-  name = "InputBuffering::Share";
+  reserve = new Reserve;
 }
 
 dsp::InputBuffering::Share*
@@ -49,13 +55,7 @@ dsp::InputBuffering::Share::~Share ()
 //! Set the minimum number of samples that can be processed
 void dsp::InputBuffering::Share::set_minimum_samples (uint64_t samples) try
 {
-  ThreadContext::Lock lock (context);
-
-  if (Operation::verbose)
-    buffer->set_cerr (cerr);
-
-  buffer->set_target(target);
-  buffer->set_minimum_samples (samples);
+  reserve->reserve ( target->get_input(), samples );
 }
 catch (Error& error)
 {
@@ -81,6 +81,7 @@ void dsp::InputBuffering::Share::set_next_start (uint64_t next) try
     buffer->set_cerr (cerr);
   }
 
+  buffer->reserve = reserve;
   buffer->set_target (target);
   buffer->set_next_start (next);
 
@@ -110,6 +111,9 @@ void dsp::InputBuffering::Share::pre_transformation () try
   // don't wait for data preceding the first loaded block
   if (want <= 0)
     return;
+
+  if (Operation::verbose)
+    cerr << "dsp::InputBuffering::Share::pre_transformation want=" << want << endl;
 
   while ( buffer->get_next_contiguous() != want )
   {

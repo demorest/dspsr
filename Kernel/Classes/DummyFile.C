@@ -55,7 +55,20 @@ void dsp::DummyFile::open_file (const char* filename)
   fclose(ptr);
   
   // Read obs info from ASCII file
-  info = ASCIIObservation(header);
+  info = new ASCIIObservation(header);
+
+  if (ascii_header_get (header, "RESOLUTION", "%u", &resolution) < 0)
+    resolution = 1;
+
+  // the resolution is the _byte_ resolution; convert to _sample_ resolution
+  if (verbose)
+    cerr << "dsp::DummyFile::open_file byte_resolution=" << resolution << endl;
+  resolution = info->get_nsamples (resolution);
+  if (verbose)
+    cerr << "dsp::DummyFile::open_file sample_resolution=" << resolution << endl;
+  if (resolution == 0)
+    resolution = 1;
+
 }
 
 void dsp::DummyFile::close ()
@@ -80,5 +93,5 @@ int64_t dsp::DummyFile::seek_bytes (uint64_t bytes)
 void dsp::DummyFile::set_total_samples()
 {
   if (verbose)
-    cerr << "dsp::DummyFile::set_total_samples ndat=" << info.get_ndat() << endl;
+    cerr << "dsp::DummyFile::set_total_samples ndat=" << get_info()->get_ndat() << endl;
 }

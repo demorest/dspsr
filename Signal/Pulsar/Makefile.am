@@ -27,16 +27,6 @@ nobase_include_HEADERS += dsp/FoldCUDA.h dsp/TransferPhaseSeriesCUDA.h \
 libdspsr_la_SOURCES += FoldCUDA.cu TransferPhaseSeriesCUDA.C \
 		       CyclicFoldEngineCUDA.cu
 
-libdspsr_la_LIBADD = FoldCUDA.lo CyclicFoldEngineCUDA.lo
-
-FoldCUDA.lo : FoldCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/FoldCUDA.cu
-	sed -e 's/Fold/FoldCUDA/' Fold.lo > FoldCUDA.lo
-
-CyclicFoldEngineCUDA.lo : CyclicFoldEngineCUDA.cu
-	@CUDA_NVCC@ -c $(srcdir)/CyclicFoldEngineCUDA.cu
-	sed -e 's/Fold/CyclicFoldEngineCUDA/' Fold.lo > CyclicFoldEngineCUDA.lo
-
 endif
 
 bin_PROGRAMS = dspsr
@@ -47,13 +37,23 @@ dspsr_SOURCES = dspsr.C
 #
 
 include $(top_srcdir)/config/Makefile.include
+include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libdspsr.la \
 	$(top_builddir)/Signal/General/libdspdsp.la \
 	$(top_builddir)/Kernel/libdspbase.la \
 	$(top_builddir)/Signal/Statistics/libdspstats.la \
-	@CUFFT_LIBS@ @CUDA_LIBS@
+	@CUDA_LIBS@ 
+
+if HAVE_CUFFT_CALLBACKS
+LDADD += $(top_builddir)/Signal/General/ConvolutionCUDACallbacks_DC.o -lcufft_static -lculibos
+else
+LDADD += @CUFFT_LIBS@
+endif
 
 AM_CPPFLAGS += @CUFFT_CFLAGS@
+if HAVE_CFITSIO
+AM_CPPFLAGS += @CFITSIO_CFLAGS@
+endif
 AM_CXXFLAGS = @OPENMP_CFLAGS@
 

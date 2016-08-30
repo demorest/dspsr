@@ -22,7 +22,7 @@ void dsp::PScrunch::transformation ()
   if (verbose)
     cerr << "dsp::PScrunch::transformation" << endl;
 
-  const uint64_t   input_ndat  = input->get_ndat();
+  const uint64_t input_ndat  = input->get_ndat();
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
   const unsigned input_nchan = input->get_nchan();
@@ -81,7 +81,7 @@ void dsp::PScrunch::transformation ()
 	for (unsigned ichan=0; ichan < input_nchan; ichan++)
         {
 	  out_data[out] = (in_data[in] + in_data[in+1])*scale;
-	  in+=2;
+	  in+=input_npol;
 	  out++;
 	}
       }

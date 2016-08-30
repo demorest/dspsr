@@ -51,6 +51,9 @@ namespace dsp {
     //! databuf struct
     struct guppi_databuf *databuf;
 
+    //! Has a valid start time been received
+    bool got_stt_valid;
+
   };
 
 }

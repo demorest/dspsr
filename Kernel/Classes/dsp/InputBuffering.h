@@ -15,8 +15,11 @@
 
 namespace dsp {
 
+  class Reserve;
+
   //! Buffers the Transformation input
-  class InputBuffering : public BufferingPolicy {
+  class InputBuffering : public BufferingPolicy
+  {
 
   public:
     
@@ -52,18 +55,15 @@ namespace dsp {
     //! The next start sample
     uint64_t next_start_sample;
 
-    //! The requested number of samples to be reserved in the input
-    uint64_t requested_reserve;
-
-    //! The minimum number of samples that can be processed
-    uint64_t minimum_samples;
-
-    //! The target with input TimeSeries to be buffered
+     //! The target with input TimeSeries to be buffered
     HasInput<TimeSeries>* target;
     
     //! The buffer
     Reference::To<TimeSeries> buffer;
-    
+ 
+    //! The reserve manager
+    Reference::To<Reserve> reserve;
+
   };
 
 }

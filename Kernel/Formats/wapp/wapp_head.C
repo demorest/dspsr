@@ -2,6 +2,7 @@
 #include "machine_endian.h"
 #include <iostream>
 #include <fcntl.h>
+#include <unistd.h>
 #include "Error.h"
 
 using namespace std;

@@ -10,6 +10,7 @@
 
 #include "Error.h"
 
+#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -150,32 +151,32 @@ void dsp::ASPFile::open_file (const char* filename)
     cerr << "i_chan = " << block.FreqChanNo << endl;
   }
 
-  info.set_nbit (8);
+  get_info()->set_nbit (8);
 
   double bw = header.ch_bw * header.band_dir;
-  info.set_bandwidth (bw);
-  info.set_centre_frequency (header.rf + (block.FreqChanNo + 0.5) * bw);
+  get_info()->set_bandwidth (bw);
+  get_info()->set_centre_frequency (header.rf + (block.FreqChanNo + 0.5) * bw);
  
   if (verbose) {
-    cerr << "cf = " << info.get_centre_frequency() << endl;
+    cerr << "cf = " << get_info()->get_centre_frequency() << endl;
     cerr << "bw = " << bw << endl;
   }
 
-  info.set_npol(2);
-  info.set_state (Signal::Analytic);
-  info.set_rate ( header.ch_bw * 1e6 );
+  get_info()->set_npol(2);
+  get_info()->set_state (Signal::Analytic);
+  get_info()->set_rate ( header.ch_bw * 1e6 );
 
   MJD epoch ((int)block.iMJD, block.fMJD);
-  epoch += block.ipts1 / info.get_rate();
+  epoch += block.ipts1 / get_info()->get_rate();
 
-  info.set_start_time( epoch );
+  get_info()->set_start_time( epoch );
   if (verbose) {
-    cerr << "MJD = " << info.get_start_time() << endl;
+    cerr << "MJD = " << get_info()->get_start_time() << endl;
     cerr << "telescope = " << header.telescope << endl;
   }
-  info.set_telescope (header.telescope);
+  get_info()->set_telescope (header.telescope);
 
-  info.set_source (header.psr_name);
+  get_info()->set_source (header.psr_name);
 
   header_bytes = sizeof(struct asp_params);
 
@@ -194,8 +195,8 @@ void dsp::ASPFile::open_file (const char* filename)
 
   string prefix="asp";
 
-  info.set_mode(header.pol_mode);
-  info.set_machine("ASP");	
+  get_info()->set_mode(header.pol_mode);
+  get_info()->set_machine("ASP");	
 }
 
 void dsp::ASPFile::skip_extra ()

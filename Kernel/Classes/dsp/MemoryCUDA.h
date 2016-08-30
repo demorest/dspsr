@@ -27,7 +27,8 @@ namespace CUDA
   class DeviceMemory : public dsp::Memory
   {
   public:
-    DeviceMemory (cudaStream_t _stream = 0) { stream = _stream; }
+
+    DeviceMemory (cudaStream_t _stream = 0, int _device = 0);
 
     void* do_allocate (size_t nbytes);
     void do_free (void*);
@@ -35,10 +36,17 @@ namespace CUDA
     void do_zero (void*, size_t);
     bool on_host () const { return false; }
 
+    void set_stream (cudaStream_t _stream) { stream = _stream; }
     cudaStream_t get_stream () { return stream; }
+    cudaStream_t get_stream () const { return stream; }
+
+    int get_device () { return device; };
+    int get_device () const { return device; };
+
 
   protected:
     cudaStream_t stream;
+    int device;
   };
 
   class SharedPinnedMemory : public dsp::Memory

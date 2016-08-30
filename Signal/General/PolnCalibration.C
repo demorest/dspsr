@@ -117,9 +117,9 @@ void dsp::PolnCalibration::match (const Observation* input, unsigned channels)
     // Pulsar::Database::verbose = true;
 
     // default searching criterion
-    Pulsar::Database::Criterion criterion;
-    criterion.check_coordinates = false;
-    Pulsar::Database::set_default_criterion (criterion);
+    Pulsar::Database::Criteria criteria;
+    criteria.check_coordinates = false;
+    Pulsar::Database::set_default_criteria (criteria);
 
     type = new Pulsar::CalibratorTypes::SingleAxis;
 

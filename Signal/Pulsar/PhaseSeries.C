@@ -120,20 +120,20 @@ void dsp::PhaseSeries::set_folding_period (double _folding_period)
 //! Get the average folding period
 double dsp::PhaseSeries::get_folding_period () const
 {
-  if (folding_predictor)  {
-    MJD mid_time = get_mid_time();
-    if (verbose)
-      cerr << "dsp::PhaseSeries::get_folding_period mid_time=" 
-           << mid_time.printdays(30) << endl;
-    double freq = folding_predictor->frequency( get_mid_time() );
-    if (verbose) {
-      cerr.precision(30);
-      cerr << "dsp::PhaseSeries::get_folding_period frequency=" << freq << endl;
-    }
-    return 1.0 / freq;
-  }
-  else
+  if (!folding_predictor)
     return folding_period;
+
+  MJD mid_time = get_mid_time();
+  if (verbose)
+    cerr << "dsp::PhaseSeries::get_folding_period mid_time=" 
+	 << mid_time.printdays(30) << endl;
+  double freq = folding_predictor->frequency( get_mid_time() );
+  if (verbose)
+  {
+    cerr.precision(30);
+    cerr << "dsp::PhaseSeries::get_folding_period frequency=" << freq << endl;
+  }
+  return 1.0 / freq;
 }
 
 void dsp::PhaseSeries::set_pulsar_ephemeris (const Pulsar::Parameters* eph)
@@ -221,7 +221,7 @@ MJD dsp::PhaseSeries::get_mid_time (bool phased) const
   if (folding_predictor)
   {
     // truncate midtime to the nearest pulse phase = reference_phase
-    Phase phase = folding_predictor->phase(midtime).Floor() + reference_phase;
+    Pulsar::Phase phase = folding_predictor->phase(midtime).Floor() + reference_phase;
     midtime = folding_predictor->iphase (phase, &midtime);
   }
 

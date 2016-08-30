@@ -24,6 +24,7 @@ dsp::IOManager::IOManager () : Operation ("IOManager")
   maximum_RAM = 0;
   minimum_RAM = 0;
   copies = 1;
+  filterbank_resolution = 0;
 }
 
 dsp::IOManager::~IOManager()
@@ -313,6 +314,11 @@ void dsp::IOManager::set_post_load_operation (Operation * op)
   post_load_operation = op;
 }
 
+void dsp::IOManager::set_filterbank_resolution (unsigned resolution)
+{
+  filterbank_resolution = resolution;
+}
+
 uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
 {
   if (verbose)
@@ -369,13 +375,15 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
   if (verbose)
     cerr << "dsp::IOManager::set_block_size required block_size="
          << block_size << endl;
+  if (verbose)
+    cerr << "dsp::IOManager::set_block_size minimum_RAM=" << minimum_RAM << " nbyte_dat=" << nbyte_dat << endl;
 
   if (minimum_RAM)
   {
     uint64_t size = (uint64_t(minimum_RAM/nbyte_dat)/resolution) * resolution;
     if (verbose)
       cerr << "dsp::IOManager::set_block_size"
-	" minimum block_size=" << size << endl;
+       " minimum block_size=" << size << endl;
 
     block_size = std::max (block_size, size);
   }
@@ -399,23 +407,49 @@ uint64_t dsp::IOManager::set_block_size (uint64_t minimum_samples)
       cerr << "dsp::IOManager::set_block_size insufficient RAM" << endl;
 
     throw Error (InvalidState, "dsp::IOManager::set_block_size",
-		 "insufficient RAM: limit=%g MB -> block="UI64" samples\n\t"
-		 "require="UI64" samples -> \"-U %g\" on command line",
-		 float(maximum_RAM)/megabyte, block_size,
-		 minimum_samples, min_ram/megabyte);
+                 "insufficient RAM: limit=%g MB -> block="UI64" samples\n\t"
+                 "require="UI64" samples -> \"-U %g\" on command line",
+                 float(maximum_RAM)/megabyte, block_size,
+                 minimum_samples, min_ram/megabyte);
   }
 
+  // input overlap incorporates overlapping blocks of input data
   if (input->get_overlap())
   {
     unsigned overlap = input->get_overlap();
+    double stride = minimum_samples - overlap;
 
-    double parts = (block_size - overlap) / (minimum_samples - overlap);
+    double parts = (block_size - overlap) / stride;
 
     if (verbose)
-      cerr << "dsp::IOManager::set_block_size input"
-              " overlap=" << overlap << " parts=" << parts << endl;
+      cerr << "dsp::IOManager::set_block_size block_size=" <<  block_size
+           << " overlap=" << overlap << " parts=" << parts << endl;
 
-    uint64_t block_resize = unsigned(parts)*(minimum_samples-overlap) + overlap;
+    uint64_t block_resize = unsigned(parts)*(minimum_samples - overlap)+ overlap;
+      cerr << "dsp::IOManager::set_block_size block_resize=" << block_resize << endl;
+
+    if (filterbank_resolution)
+    {
+      // search for a block size that suits both Filterbank and Convolution
+      unsigned trial_block_size = filterbank_resolution;
+      unsigned best_npart = 0;
+      while (trial_block_size < block_size)
+      {
+        double trial_parts = (trial_block_size-overlap) / stride;
+        if (trial_parts == unsigned(trial_parts))
+          best_npart = trial_block_size / filterbank_resolution;
+
+        trial_block_size += filterbank_resolution;
+      }
+
+      if (best_npart == 0)
+        throw Error (InvalidState, "dsp::IOManager::set_block_size",
+                     "could not find an overlapping block size "
+                     "for both Filterbank and Convolution");
+
+      // WvS to-do: if filterbank also loses samples, then add nlost here
+      block_resize = best_npart * filterbank_resolution;
+    }
 
     if (verbose)
       cerr << "dsp::IOManager::set_block_size old=" << block_size
