@@ -212,6 +212,8 @@ static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrection> vdif;
 #include "dsp/VDIFTwoBitCorrectionMulti.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrectionMulti> vdif_multi;
+#include "dsp/VDIFFourBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::VDIFFourBitUnpacker> vdif4;
 #include "dsp/VDIFEightBitUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFEightBitUnpacker> vdif8;
 #endif
