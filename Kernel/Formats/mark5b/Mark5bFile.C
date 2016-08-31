@@ -14,16 +14,8 @@
 
 #include <mark5access.h>
 
-#include <iomanip>
-
-#include <time.h>
-#include <errno.h>
+#include <memory>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
 
 using namespace std;
 
