@@ -79,18 +79,6 @@ void dsp::Mark5bFile::open_file (const char* filename)
   fclose (ftext);
 
   // ///////////////////////////////////////////////////////////////
-  //  NBIT
-  //
-  int nbit = 0;
-  if (ascii_header_get (header,"NBIT","%d",&nbit) < 0)
-   throw Error (InvalidParam, "Mark5bFile::open_file", 
-		 "failed read NBIT");
-	
-  cerr << "NBIT = " << nbit << endl;
-  
-
-
-  // ///////////////////////////////////////////////////////////////
   //  FORMAT
   //
   char format[64];
@@ -134,37 +122,15 @@ void dsp::Mark5bFile::open_file (const char* filename)
 
   stream = m5stream;
   
-  /* From the mark5access library documentation:
-
-     3.4 Format determination
-
-     Certain aspects of data format can be determined by examing the
-     baseband data.  Not all mode parameters for a given format can be
-     determined without outside information.  The following structure
-     contains the information that can be determined:
-
-     struct mark5_format
-     {
-        enum Mark5Format format;  /* format type
-        int frameoffset;          /* bytes from stream start to 1st frame
-        int framebytes;           /* bytes in a frame
-        int framens;              /* duration of a frame in nanosec
-        int mjd, sec, ns;         /* date and time of first frame
-        int ntrack;               /* for Mark4 and VLBA formats only
-     };
-  */
-
-  // struct mark5_format* m5aux = new_mark5_format_from_stream (m5stream);
-
-  // instruct the loader to only take gulps in 32/16 lots of nbits
-  // necessary since Mk5 files are written in 64-/32-bit words
+  // instruct the loader to only take gulps of samplegranularity samples
   Input::resolution = m5stream->samplegranularity;
 
   // The factor of 2 should only apply for dual-pol data.
   cerr << "NCHAN = " << m5stream->nchan / 2 << endl;
   get_info()->set_nchan( m5stream->nchan / 2 ); 
 
-  get_info()->set_nbit (m5stream->nbit);
+  cerr << "NBIT = " << m5stream->nbit << endl;
+  get_info()->set_nbit ( m5stream->nbit );
   
   cerr << "SAMPRATE = " << m5stream->samprate << endl;
   get_info()->set_rate ( m5stream->samprate );
