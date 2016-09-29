@@ -89,6 +89,7 @@ SWIN_LIB_CFITSIO
 SWIN_LIB_MPI
 SWIN_LIB_CUDA
 SWIN_LIB_GUPPI_DAQ
+SWIN_LIB_MARK5ACCESS
 
 AX_OPENMP
 AC_SUBST(OPENMP_CFLAGS)
@@ -173,6 +174,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/spda1k/Makefile
 		Kernel/Formats/mark4/Makefile
 		Kernel/Formats/mark5/Makefile
+		Kernel/Formats/mark5b/Makefile
 		Kernel/Formats/maxim/Makefile
 		Kernel/Formats/mwa/Makefile
 		Kernel/Formats/pmdaq/Makefile

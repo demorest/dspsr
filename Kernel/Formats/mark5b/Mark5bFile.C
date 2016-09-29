@@ -1,30 +1,23 @@
 /***************************************************************************
  *
- *   Copyright (C) 2015 by Stuart Weston and Willem van Straten
+ *   Copyright (C) 2016 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
-using namespace std;
-
 #include "dsp/Mark5bFile.h"
-#include "vlba_stream.h"
 #include "Error.h"
 
 #include "coord.h"
 #include "strutil.h"	
 #include "ascii_header.h"
 
-#include <iomanip>
+#include <mark5access.h>
 
-#include <time.h>
-#include <errno.h>
+#include <memory>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
+
+using namespace std;
 
 dsp::Mark5bFile::Mark5bFile (const char* filename,const char* headername)
   : BlockFile ("Mark5b")
@@ -43,8 +36,10 @@ bool dsp::Mark5bFile::is_valid (const char* filename) const
   headername += ".hdr";
 
   FILE* fptr = fopen (headername.c_str(), "r");
-  if( !fptr ) {
-      if (verbose) cerr << "Mark5bFile: no hdr file (" << headername << ")" << endl;
+  if( !fptr )
+  {
+    if (verbose)
+      cerr << "Mark5bFile: no hdr file (" << headername << ")" << endl;
     return false;
   }
 
@@ -52,8 +47,8 @@ bool dsp::Mark5bFile::is_valid (const char* filename) const
   fread (header.get(), sizeof(char),1024, fptr);
   fclose (fptr);
 
-  int dummy_fanout = 0;
-  if (ascii_header_get (header.get(), "FANOUT", "%d", &dummy_fanout) < 0)
+  char dummy_format[64];
+  if (ascii_header_get (header.get(), "FORMAT", "%d", &dummy_format) < 0)
     return false;
 	
   return true;
@@ -76,48 +71,61 @@ void dsp::Mark5bFile::open_file (const char* filename)
   fclose (ftext);
 
   // ///////////////////////////////////////////////////////////////
-  //  NBIT
+  //  FORMAT
   //
-  int nbit = 0;
-  if (ascii_header_get (header,"NBIT","%d",&nbit) < 0)
+  char format[64];
+  if (ascii_header_get (header,"FORMAT","%s",&format) < 0)
    throw Error (InvalidParam, "Mark5bFile::open_file", 
-		 "failed read NBIT");
+		 "failed read FORMAT");
 	
-  cerr << "NBIT = " << nbit << endl;
-  get_info()->set_nbit (nbit);
+  cerr << "FORMAT = " << format << endl;
 
+  /* From the mark5access library documentation:
 
-  // ///////////////////////////////////////////////////////////////
-  //  FANOUT
-  //
-  int fanout = 0;
-  if (ascii_header_get (header,"FANOUT","%d",&fanout) < 0)
-   throw Error (InvalidParam, "Mark5bFile::open_file", 
-		 "failed read FANOUT");
-	
-  cerr << "FANOUT = " << fanout << endl;
+     3.3.1 struct mark5_format_generic* 
+                  new_mark5_format_from_string(const char *formatname)
 
-  struct VLBA_stream* vlba_stream = 0;
+     A function to create a (struct mark5_format_generic) representing
+     one of the built-in formats.  The string pointed to by
+     "formatname" should be of the form: FORMAT-Mbps-nChannels-nBits.
+     Examples for the three formats currently built into mark5acces
+     include: "VLBA1_4-256-4-2", "MKIV1_2-128-8-2",
+     "Mark5B-1024-16-2".  Note that the string is case insensitive.
+     Also note here that in the case of VLBA and Mark4 (MKIV) the
+     fanout is built into the FORMAT portion of "formatname".
+  */
 
-  stream = vlba_stream = VLBA_stream_open (filename, nbit, fanout, 0);
-
-  if (!stream)
-    throw Error (InvalidParam, "Mark5bFile::open_file",
-		 "failed VLBA_stream_open");
+  struct mark5_format_generic* m5format = 0;
+  m5format = new_mark5_format_generic_from_string (format);
+  if (!m5format)
+    throw Error (FailedCall, "Mark5bFile::open_file",
+		 "failed new_mark5_format_generic_from_string (%s)", format);
 
   fd = 0;
 
-  // instruct the loader to only take gulps in 32/16 lots of nbits
-  // necessary since Mk5 files are written in 64-/32-bit words
-  cerr << "TRACKS = " << vlba_stream->tracks << endl;
-  Input::resolution = vlba_stream->tracks / nbit;  
+  struct mark5_stream_generic* m5file = 0;
+  m5file = new_mark5_stream_file (filename, 0);
+  if (!m5file)
+    throw Error (FailedCall, "Mark5bFile::open_file",
+		 "failed new_mark5_stream_file (%s)", filename);
+
+
+  struct mark5_stream* m5stream = new_mark5_stream (m5file,m5format);
+
+  stream = m5stream;
+  
+  // instruct the loader to only take gulps of samplegranularity samples
+  Input::resolution = m5stream->samplegranularity;
 
   // The factor of 2 should only apply for dual-pol data.
-  cerr << "NCHAN = " << vlba_stream->nchan / 2 << endl;
-  get_info()->set_nchan( vlba_stream->nchan / 2 ); 
+  cerr << "NCHAN = " << m5stream->nchan / 2 << endl;
+  get_info()->set_nchan( m5stream->nchan / 2 ); 
 
-  cerr << "SAMPRATE = " << vlba_stream->samprate << endl;
-  get_info()->set_rate ( vlba_stream->samprate );
+  cerr << "NBIT = " << m5stream->nbit << endl;
+  get_info()->set_nbit ( m5stream->nbit );
+  
+  cerr << "SAMPRATE = " << m5stream->samprate << endl;
+  get_info()->set_rate ( m5stream->samprate );
 
   int refmjd = 0;
   if (ascii_header_get (header,"REFMJD","%d",&refmjd) < 0)
@@ -125,12 +133,12 @@ void dsp::Mark5bFile::open_file (const char* filename)
 		 "failed read REFMJD");
 
   cerr << "REFMJD " << refmjd << endl;
-  vlba_stream->mjd += refmjd;
+  m5stream->mjd += refmjd;
 
-  cerr << "MJD = " << vlba_stream->mjd << endl;
-  cerr << "SEC = " << vlba_stream->sec << endl;
+  cerr << "MJD = " << m5stream->mjd << endl;
+  cerr << "SEC = " << m5stream->sec << endl;
 
-  get_info()->set_start_time( MJD(vlba_stream->mjd, vlba_stream->sec, 0) );
+  get_info()->set_start_time( MJD(m5stream->mjd, m5stream->sec, 0) );
 
   // ///////////////////////////////////////////////////////////////
   // TELESCOPE
@@ -224,7 +232,7 @@ void dsp::Mark5bFile::open_file (const char* filename)
   // ///////////////////////////////////////////////////////////////	
   // NDIM  --- whether the data are Nyquist or Quadrature sampled
   //
-  // VLBA data are Nyquist sampled
+  // MARK5 data are Nyquist sampled
 
   get_info()->set_state (Signal::Nyquist);
 	  
@@ -250,17 +258,12 @@ void dsp::Mark5bFile::open_file (const char* filename)
   get_info()->set_machine("Mark5b");	
 }
 
-extern "C" int next_frame (struct VLBA_stream *vs);
-
-/*! Uses Walter's next_frame to take care of the modbits business, then
- copies the result from the VLBA_stream::frame buffer into the buffer
- argument. */
 int64_t dsp::Mark5bFile::load_bytes (unsigned char* buffer, uint64_t bytes)
 {
   if (verbose) cerr << "Mark5bFile::load_bytes nbytes =" << bytes << endl;
 
   if (verbose) 
-    cerr << "Mark5bFile::load_bytes leave it to VLBA_stream_get_data" << endl;
+    cerr << "Mark5bFile::load_bytes leave it to MARK5_stream_get_data" << endl;
   return bytes;
 }
 
