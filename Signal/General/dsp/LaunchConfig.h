@@ -7,6 +7,9 @@
  *
  ***************************************************************************/
 
+#ifndef __LaunchConfig_h
+#define __LaunchConfig_h
+
 #include <cuda_runtime.h>
 
 namespace CUDA
@@ -24,6 +27,10 @@ namespace CUDA
 
     //! gets the current device ID and calls cudaGetDeviceProperties
     void init ();
+
+    size_t get_max_threads_per_block ();
+
+    size_t get_max_shm ();
   };
 
 
@@ -54,3 +61,5 @@ namespace CUDA
     unsigned get_nthread() { return nthread; }
   };
 }
+
+#endif

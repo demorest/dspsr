@@ -19,7 +19,7 @@ while test $nchan -le $nchan_max; do
 
     echo -n "Testing nchan=$nchan nfft=$nfft "
   
-    time filterbank_speed -c$nchan -n$nfft -cuda >> filterbank_bench.out
+    time ../Signal/General/filterbank_speed -c$nchan -n$nfft -cuda >> filterbank_bench.out
 
     nfft=`expr $nfft '*' 2`
 

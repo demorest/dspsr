@@ -63,6 +63,7 @@ void dsp::SKMasker::transformation ()
   const unsigned ddfb_nchan = input->get_nchan();
   const uint64_t ddfb_ndat  = input->get_ndat();
   const uint64_t ddfb_npol  = input->get_npol();
+  const unsigned ddfb_ndim  = input->get_ndim();
 
   const unsigned mask_nchan = mask_input->get_nchan();
   const unsigned mask_npol  = mask_input->get_npol();
@@ -70,8 +71,6 @@ void dsp::SKMasker::transformation ()
 
   const uint64_t ddfb_input_sample = input->get_input_sample();
   const uint64_t mask_input_sample = mask_input->get_input_sample();
-
-  const unsigned output_ndim = output->get_ndim();
 
   if (mask_npol != 1)
     throw Error (InvalidParam, "dsp::SKMasker::transformation",
@@ -92,8 +91,13 @@ void dsp::SKMasker::transformation ()
   // indicate the output timeseries contains zeroed data
   output->set_zeroed_data (true);
 
-  // and resize the output to ensure the hits array is reallocated
-  output->resize (output->get_ndat());
+  // resize the output to ensure the hits array is reallocated
+  if (engine)
+  {
+    if (verbose)
+      cerr << "dsp::SKMasker::transformation output->resize(" << output->get_ndat() << ")" << endl;
+    output->resize (output->get_ndat());
+  }
 
   // get base pointer to mask bitseries
   unsigned char * mask = mask_input->get_datptr ();
@@ -162,7 +166,11 @@ void dsp::SKMasker::transformation ()
   uint64_t ddfb_end_idat;
 
   if (engine)
-    engine->setup (ddfb_nchan, ddfb_npol, output->get_nfloat_span());
+  {
+    if (verbose)
+      cerr << "dsp::SKMasker::transformation engine->setup()" << endl;
+    engine->setup ();
+  }
 
   for (uint64_t idat=0; idat < mask_ndat; idat++)
   {
@@ -208,10 +216,10 @@ void dsp::SKMasker::transformation ()
     if (engine) 
     {
       unsigned mask_offset = mask_nchan * mask_npol * idat;
-      unsigned offset      = ddfb_start_idat*output_ndim;
-      unsigned end         = ddfb_nsamples*output_ndim;
+      unsigned offset      = ddfb_start_idat*ddfb_ndim;
+      unsigned end         = ddfb_nsamples*ddfb_ndim;
 
-      engine->perform (mask_input, mask_offset, output, offset, end);
+      //engine->perform (mask_input, mask_offset, output, offset, end);
     }
     else
     {
@@ -220,13 +228,11 @@ void dsp::SKMasker::transformation ()
       {
         if (mask[ichan])
         {
-          float * zerop0 = output->get_datptr(ichan, 0) + (ddfb_start_idat*output_ndim);
-          float * zerop1 = output->get_datptr(ichan, 1) + (ddfb_start_idat*output_ndim);
-
-          for (unsigned j=0; j<ddfb_nsamples*output_ndim; j++)
+          for (unsigned ipol=0; ipol < ddfb_npol; ipol++)
           {
-            zerop0[j] = 0;
-            zerop1[j] = 0;
+            float * zero = output->get_datptr(ichan, ipol) + (ddfb_start_idat*ddfb_ndim);
+            for (unsigned j=0; j<ddfb_nsamples*ddfb_ndim; j++)
+              zero[j] = 0;
           }
         }
       }

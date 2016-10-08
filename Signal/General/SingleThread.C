@@ -24,6 +24,7 @@
 #if HAVE_CUDA
 #include "dsp/MemoryCUDA.h"
 #include "dsp/TransferCUDA.h"
+#include "dsp/TimeSeriesCUDA.h"
 #endif
 
 #include "dsp/ObservationChange.h"
@@ -58,6 +59,7 @@ dsp::SingleThread::SingleThread ()
 
   input_context = 0;
   gpu_stream = undefined_stream;
+  gpu_device = 0;
 }
 
 dsp::SingleThread::~SingleThread ()
@@ -216,35 +218,47 @@ void dsp::SingleThread::construct () try
 
   if (run_on_gpu)
   {
-    // disable input buffering when data must be copied between devices
-    if (config->get_total_nthread() > 1)
-      config->input_buffering = false;
-
-    int device = config->cuda_device[thread_id];
+    gpu_device = config->cuda_device[thread_id];
     cerr << "dspsr: thread " << thread_id 
-         << " using CUDA device " << device << endl;
+         << " using CUDA device " << gpu_device << endl;
 
     int ndevice = 0;
     cudaError err = cudaGetDeviceCount(&ndevice);
 
-    if (err != cudaSuccess || device >= ndevice)
+    if (err != cudaSuccess || gpu_device >= ndevice)
       throw Error (InvalidParam, "dsp::SingleThread::initialize",
-                   "device=%d >= ndevice=%d cudaError=%s", device, ndevice, cudaGetErrorString(err));
+                   "device=%d >= ndevice=%d cudaError=%s", gpu_device, ndevice, cudaGetErrorString(err));
 
-    err = cudaSetDevice (device);
+    err = cudaSetDevice (gpu_device);
     if (err != cudaSuccess)
       throw Error (InvalidState, "dsp::SingleThread::initialize",
                    "cudaMalloc failed: %s", cudaGetErrorString(err));
 
-    unsigned nstream = count (config->cuda_device, (unsigned)device);
+    unsigned nstream = count (config->cuda_device, (unsigned) gpu_device);
 
     // always create a stream, even for 1 thread
     cudaStreamCreate( &stream );
     cerr << "dspsr: thread " << thread_id << " on stream " << stream << endl;
 
     gpu_stream = stream;
+    device_memory = new CUDA::DeviceMemory (stream, gpu_device);
+    if (config->input_buffering)
+      cerr << "dspsr: input_buffering enabled" << endl;
+    else
+      cerr << "dspsr: input_buffering disabled" << endl;
+    if (unpacker->get_device_supported( device_memory ))
+      cerr << "dspsr: unpacker supports device memory" << endl;
 
-    device_memory = new CUDA::DeviceMemory (stream);
+    if ((thread_id == 0) && (!config->input_buffering) && unpacker->get_device_supported( device_memory ))
+    {
+      dsp::Seekable * seekable = dynamic_cast<dsp::Seekable*>( manager->get_input() );
+      if (seekable)
+      {
+        cerr << "dspsr: disabling input buffering, using overlap memory instead" << endl;
+        // overlap memory on stream/device of thread_id 0
+        seekable->set_overlap_buffer_memory (device_memory);
+      }
+    }
 
     if (unpacker->get_device_supported( device_memory ))
     {
@@ -253,9 +267,10 @@ void dsp::SingleThread::construct () try
 
       unpacker->set_device( device_memory );
       unpacked->set_memory( device_memory );
-        
+      unpacked->set_engine (new CUDA::TimeSeriesEngine (device_memory));
+
       BitSeries* bits = new BitSeries;
-      bits->set_memory (new CUDA::PinnedMemory);
+      bits->set_memory (device_memory);
       manager->set_output (bits);
     }
     else

@@ -74,9 +74,9 @@ namespace dsp {
   class SKMasker::Engine : public Reference::Able
   { 
   public:
-    virtual void setup (unsigned nchan, unsigned npol, unsigned span) = 0;
+    virtual void setup () = 0;
 
-    virtual void perform (BitSeries* mask, unsigned mask_offset, TimeSeries* out, unsigned offset, unsigned end) = 0; 
+    virtual void perform (BitSeries* mask, const TimeSeries* in, TimeSeries* out, unsigned M) = 0; 
 
   }; 
 

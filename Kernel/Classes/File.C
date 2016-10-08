@@ -23,6 +23,10 @@
 #include <unistd.h>
 #include <errno.h>
 
+#if HAVE_CUDA
+#include <cuda_runtime.h>
+#endif
+
 using namespace std;
 using std::cerr;
 
@@ -50,6 +54,11 @@ void dsp::File::init()
   header_bytes = 0;
 
   current_filename = "";
+
+#if HAVE_CUDA
+  host_buffer = 0;
+  host_buffer_size = 0;
+#endif
 
   get_info()->init();
 }
@@ -199,6 +208,70 @@ int64_t dsp::File::load_bytes (unsigned char* buffer, uint64_t bytes)
 
   return bytes_read;
 }
+
+#if HAVE_CUDA
+int64_t dsp::File::load_bytes_device (unsigned char* buffer, uint64_t bytes, void * device_handle)
+{
+  cudaStream_t stream = (cudaStream_t) device_handle;
+
+  if (verbose)
+    cerr << "dsp::File::load_bytes_device (" << (void *) buffer << ", " 
+         << bytes << ", " << (void *) stream << ")" << endl;
+
+  cudaError_t result;
+
+  // ensure the host CPU buffer is large enough
+  if (bytes > host_buffer_size)
+  {
+    if (host_buffer)
+    {
+      if (result != cudaSuccess)
+        throw Error (InvalidState, "dsp::File::load_bytes_device",
+                     "failed to synchronize cuda stream prior to buffer enlargement: %s",
+                     cudaGetErrorString (result));
+
+      result = cudaFreeHost (host_buffer);
+      if (result != cudaSuccess)
+        throw Error (InvalidState, "dsp::File::load_bytes_device",
+                     "cudaFreeHost (host_buffer) failed: %s",
+                    cudaGetErrorString (result));
+    }
+
+    if (verbose)
+      cerr << "dsp::File::load_bytes_device cudaMallocHost() " <<  bytes 
+           << "bytes  for host_buffer" << endl;
+    result = cudaMallocHost (&host_buffer, bytes);
+    if (result != cudaSuccess)
+      throw Error (InvalidState, "dsp::File::load_bytes_device",
+                   "cudaMallocHost (host_buffer, %"PRIu64") failed: %s",
+                  bytes, cudaGetErrorString (result));
+    host_buffer_size = bytes;
+  }
+
+  if (verbose)
+    cerr << "dsp::File::load_bytes_device load_bytes(" << (void *) host_buffer
+         << ", " << bytes << ")" << endl;
+
+  // load the data from device to the host buffer
+  int64_t bytes_read = load_bytes ((unsigned char *) host_buffer, bytes);
+
+  if (bytes_read > 0)
+  {
+    if (verbose)
+      cerr << "dsp::File::load_bytes_device cudaMemcpyAsync (" 
+           << (void *) buffer << ", " << (void *) host_buffer
+           << ", " << bytes << ", cudaMemcpyHostToDevice, " 
+           << (void *) stream << ")" << endl;
+    result = cudaMemcpyAsync (buffer, host_buffer, bytes, cudaMemcpyHostToDevice, stream);
+    if (result != cudaSuccess)
+      throw Error (InvalidState, "dsp::File::load_bytes_device",
+                   "cudaMemcpyAsync (%p, %p, %"PRIu64") failed: %s",
+                   (void *) buffer, host_buffer, bytes, cudaGetErrorString (result));
+    cudaStreamSynchronize(stream);
+  }
+  return bytes_read;
+}
+#endif
 
 //! Adjust the file pointer
 int64_t dsp::File::seek_bytes (uint64_t bytes)

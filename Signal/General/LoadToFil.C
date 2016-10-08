@@ -176,12 +176,12 @@ void dsp::LoadToFil::construct () try
     if ( config->filterbank.get_nchan() )
     {
       if (verbose)
-	cerr << "digifil: creating " << config->filterbank.get_nchan()
-	     << " channel filterbank" << endl;
+        cerr << "digifil: creating " << config->filterbank.get_nchan()
+             << " channel filterbank" << endl;
 
       if ( config->coherent_dedisp )
       {
-	cerr << "digifil: using coherent dedispersion" << endl;
+        cerr << "digifil: using coherent dedispersion" << endl;
 
         kernel = new Dedispersion;
 
@@ -198,35 +198,37 @@ void dsp::LoadToFil::construct () try
           || config->coherent_dedisp 
           || (config->npol>2) )
       {
-	cerr << "digifil: using convolving filterbank" << endl;
+        cerr << "digifil: using convolving filterbank" << endl;
 
-	filterbank = new Filterbank;
+        filterbank = new Filterbank;
 
-	filterbank->set_nchan( config->filterbank.get_nchan() );
-	filterbank->set_input( timeseries );
+        filterbank->set_nchan( config->filterbank.get_nchan() );
+        filterbank->set_input( timeseries );
         filterbank->set_output( timeseries = new_TimeSeries() );
 
         if (kernel)
           filterbank->set_response( kernel );
 
-	if ( config->filterbank.get_freq_res() ) 
+        if ( config->filterbank.get_freq_res() ) 
           filterbank->set_frequency_resolution ( 
               config->filterbank.get_freq_res() );
 
-	operations.push_back( filterbank.get() );
-	do_detection = true;
+        operations.push_back( filterbank.get() );
+        do_detection = true;
       }
       else
       {
-	filterbank = new TFPFilterbank;
+        filterbank = new TFPFilterbank;
 
-	filterbank->set_nchan( config->filterbank.get_nchan() );
-	filterbank->set_input( timeseries );
-	filterbank->set_output( timeseries = new_TimeSeries() );
+        filterbank->set_nchan( config->filterbank.get_nchan() );
+        filterbank->set_input( timeseries );
+        filterbank->set_output( timeseries = new_TimeSeries() );
 
-	operations.push_back( filterbank.get() );
+        operations.push_back( filterbank.get() );
       }
     }
+    else
+      do_detection = true;
 
     if ( config->dedisperse )
     {
@@ -245,9 +247,9 @@ void dsp::LoadToFil::construct () try
     if (do_detection)
     {
       if (verbose)
-	cerr << "digifil: creating detection operation (npol=" <<
+        cerr << "digifil: creating detection operation (npol=" <<
           config->npol << ")" << endl;
-      
+  
       Detection* detection = new Detection;
 
       detection->set_input( timeseries );

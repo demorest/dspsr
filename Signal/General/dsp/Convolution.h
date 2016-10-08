@@ -58,8 +58,7 @@ namespace dsp {
   public:
 
     //! Null constructor
-    Convolution (const char* name = "Convolution", 
-		 Behaviour type = anyplace);
+    Convolution (const char* name = "Convolution", Behaviour type = outofplace);
 
     //! Destructor
     virtual ~Convolution ();
@@ -103,6 +102,14 @@ namespace dsp {
     //! Return a pointer to the integrated passband
     virtual const Response* get_passband() const;
 
+    //! Set the memory allocator to be used
+    void set_device (Memory *);
+
+    //! Engine used to perform discrete convolution step
+    class Engine;
+
+    void set_engine (Engine*);
+
   protected:
 
     //! Perform the convolution transformation on the input TimeSeries
@@ -126,6 +133,8 @@ namespace dsp {
     friend class TFPFilterbank;
     friend class SKFilterbank;
 
+    Reference::To<Memory> memory;
+
     unsigned nfilt_tot;
     unsigned nfilt_pos;
     unsigned nfilt_neg;
@@ -144,7 +153,22 @@ namespace dsp {
     unsigned scratch_needed;
     uint64_t npart;
     unsigned n_fft;
+
+    //! Interface to alternate processing engine (e.g. GPU)
+    Reference::To<Engine> engine;
   };
+
+  class Convolution::Engine : public Reference::Able
+  {
+    public:
+
+      virtual void set_scratch (void *) = 0;
+
+      virtual void prepare (dsp::Convolution * convolution) = 0;
+
+      virtual void perform (const TimeSeries* in, TimeSeries* out, unsigned npart) = 0;
+  };
+
   
 }
 

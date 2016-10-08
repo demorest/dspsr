@@ -87,6 +87,11 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->block_size, 'B', "MB");
   arg->set_help ("block size in megabytes");
 
+  string ram_limit;
+  arg = menu.add (ram_limit, 'U', "MB");
+  arg->set_help ("upper limit on RAM usage");
+  arg->set_long_help ("specify the floating point number of megabytes; e.g. -U 256 \n");
+
   //arg = menu.add (&config->filterbank, 
   //    &dsp::Filterbank::Config::set_freq_res, 
   //    'x', "nfft");
@@ -123,6 +128,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->nsblk, "nsblk", "N");
   arg->set_help ("output block size in samples (default=2048)");
 
+  arg = menu.add (config->integration_length, 'L', "seconds");
+  arg->set_help ("set maximum file length");
+
   arg = menu.add (config->dedisperse, 'K');
   arg->set_help ("remove inter-channel dispersion delays");
 
@@ -137,6 +145,12 @@ void parse_options (int argc, char** argv) try
   //arg->set_help ("revert to FPT order");
 
   menu.parse (argc, argv);
+
+  if (!ram_limit.empty())
+  {
+    double MB = fromstring<double> (ram_limit);
+    config->set_maximum_RAM (uint64_t( MB * 1024.0 * 1024.0 ));
+  }
 
   //if (revert)
   //  config->order = dsp::TimeSeries::OrderFPT;

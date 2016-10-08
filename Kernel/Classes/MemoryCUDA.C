@@ -5,8 +5,6 @@
  *
  ***************************************************************************/
 
-// #define _DEBUG 1
-
 #include "dsp/MemoryCUDA.h"
 #include "debug.h"
 
@@ -45,6 +43,12 @@ void CUDA::PinnedMemory::do_free (void* ptr)
  *   Memory on device
  *
  ***************************************************************************/
+
+CUDA::DeviceMemory::DeviceMemory (cudaStream_t _stream, int _device)
+{
+  stream = _stream; 
+  device = _device;
+} 
 
 void* CUDA::DeviceMemory::do_allocate (size_t nbytes)
 {

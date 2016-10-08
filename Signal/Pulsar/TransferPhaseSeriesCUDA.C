@@ -26,11 +26,6 @@ void dsp::TransferPhaseSeriesCUDA::transformation ()
 {
   prepare ();
 
-  if (stream)
-    cudaStreamSynchronize(stream);
-  else
-    cudaThreadSynchronize();
-
   if (verbose)
     cerr << "dsp::TransferPhaseSeriesCUDA::transformation input ndat="
          << input->get_ndat() << " ndim=" << input->get_ndim()
@@ -75,6 +70,12 @@ void dsp::TransferPhaseSeriesCUDA::transformation ()
       throw Error (InvalidState, "dsp::TransferPhaseSeriesCUDA::transformation hits",
                    cudaGetErrorString (error));
   }
+
+  if (stream)
+    cudaStreamSynchronize(stream);
+  else
+    cudaThreadSynchronize();
+
 }
 
 void dsp::TransferPhaseSeriesCUDA::prepare ()

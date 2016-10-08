@@ -11,10 +11,14 @@
    $Date: 2010/06/04 03:36:31 $
    $Author: straten $ */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #ifndef __Seekable_h
 #define __Seekable_h
 
+#include "dsp/Memory.h"
 #include "dsp/Input.h"
 
 namespace dsp {
@@ -44,8 +48,14 @@ namespace dsp {
     //! Inquire current time sample
     virtual uint64_t get_current_sample() { return current_sample; }
 
+    //! Set the bits series into which data will be loaded
+    void set_output (BitSeries* data);
+
     //! Buffer used to store overlap (useful in multi-threaded applications)
     void set_overlap_buffer (BitSeries*);
+
+    //! Set the memory type used in the overlap buffer 
+    void set_overlap_buffer_memory (Memory * memory);
 
   protected:
     
@@ -57,6 +67,11 @@ namespace dsp {
  
     //! Load data from device and return the number of bytes read.
     virtual int64_t load_bytes (unsigned char* buffer, uint64_t bytes) = 0;
+
+#ifdef HAVE_CUDA
+    //! Load data from device to device memory and return the number of bytes read.
+    virtual int64_t load_bytes_device (unsigned char* buffer, uint64_t bytes, void * dev_handle) = 0;
+#endif
     
     //! Seek to absolute position and return absolute position in bytes
     virtual int64_t seek_bytes (uint64_t bytes) = 0;

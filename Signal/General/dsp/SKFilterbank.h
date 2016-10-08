@@ -27,7 +27,7 @@ namespace dsp {
   public:
 
     //! Null constructor
-    SKFilterbank ( unsigned _n_threads );
+    SKFilterbank ( unsigned _n_threads=1 );
     ~SKFilterbank ();
 
     //! Engine used to perform discrete convolution step
@@ -107,7 +107,14 @@ namespace dsp {
   class SKFilterbank::Engine : public Reference::Able
   {
   public:
-      Engine () {}
+
+      virtual void setup () = 0;
+
+      virtual void prepare (const dsp::TimeSeries* input, unsigned _nfft) = 0;
+
+      virtual void perform (const dsp::TimeSeries* input, dsp::TimeSeries* output,
+                            dsp::TimeSeries *output_tscr) = 0;
+
   }; 
 }
 

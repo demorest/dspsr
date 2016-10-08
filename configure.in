@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([DSPSR],[2.0],[dspsr-developers@lists.sourceforge.net])
+AC_INIT([DSPSR],[2016-06+],[dspsr-developers@lists.sourceforge.net])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([Kernel/Makefile.am])
@@ -89,6 +89,7 @@ SWIN_LIB_CFITSIO
 SWIN_LIB_MPI
 SWIN_LIB_CUDA
 SWIN_LIB_GUPPI_DAQ
+SWIN_LIB_MARK5ACCESS
 
 AX_OPENMP
 AC_SUBST(OPENMP_CFLAGS)
@@ -173,6 +174,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/spda1k/Makefile
 		Kernel/Formats/mark4/Makefile
 		Kernel/Formats/mark5/Makefile
+		Kernel/Formats/mark5b/Makefile
 		Kernel/Formats/maxim/Makefile
 		Kernel/Formats/mwa/Makefile
 		Kernel/Formats/pmdaq/Makefile
@@ -181,6 +183,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/puma2/Makefile
 		Kernel/Formats/s2/Makefile
 		Kernel/Formats/sigproc/Makefile
+		Kernel/Formats/ska1/Makefile
 		Kernel/Formats/spigot/Makefile
 		Kernel/Formats/vdif/Makefile
 		Kernel/Formats/wapp/Makefile

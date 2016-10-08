@@ -117,11 +117,23 @@ namespace dsp {
     //! The name of the currently opened file, set by open()
     std::string current_filename;
 
+#if HAVE_CUDA
+    //! staging buffer for Host to Device transfers
+    void * host_buffer;
+
+    //! The size of the host_buffer in bytes
+    uint64_t host_buffer_size;
+#endif
+
     //! Load nbyte bytes of sampled data from the device into buffer
     /*! If the data stored on the device contains information other
       than the sampled data, this method should be overloaded and the
       additional information should be filtered out. */
     virtual int64_t load_bytes (unsigned char* buffer, uint64_t nbytes);
+
+#if HAVE_CUDA
+    virtual int64_t load_bytes_device (unsigned char* buffer, uint64_t bytes, void * device_handle);
+#endif
     
     //! Set the file pointer to the absolute number of sampled data bytes
     /*! If the header_bytes attribute is set, this number of bytes

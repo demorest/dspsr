@@ -82,6 +82,8 @@ dsp::LoadToFITS::Config::Config()
   rescale_seconds = -1;
   rescale_constant = false;
 
+  integration_length = 0;
+
   nbits = 2;
 
   npol = 4;
@@ -91,6 +93,12 @@ dsp::LoadToFITS::Config::Config()
 
   // by default, time series weights are not used
   weighted_time_series = false;
+}
+
+// set block_size to result in approximately this much RAM usage
+void dsp::LoadToFITS::Config::set_maximum_RAM (uint64_t ram)
+{
+  maximum_RAM = ram;
 }
 
 void dsp::LoadToFITS::Config::set_quiet ()
@@ -135,7 +143,6 @@ void dsp::LoadToFITS::construct () try
   if (!config->dedisperse && unpacker->get_order_supported (config->order))
     unpacker->set_output_order (config->order);
 
-
   // get basic information about the observation
 
   Observation* obs = manager->get_info();
@@ -149,30 +156,45 @@ void dsp::LoadToFITS::construct () try
     cerr << "Source = " << obs->get_source() << endl;
     cerr << "Frequency = " << obs->get_centre_frequency() << endl;
     cerr << "Bandwidth = " << obs->get_bandwidth() << endl;
+    cerr << "Channels = " << nchan << endl;
     cerr << "Sampling rate = " << rate << endl;
     cerr << "State = " << tostring(obs->get_state()) <<endl;
   }
 
   obs->set_dispersion_measure( config->dispersion_measure );
 
-  // Strategy will be to tscrunch from Nyquist resolution to desired reso.
-
-  // voltage samples per filterbank sample
-  double samp_per_fb = config->tsamp * rate;
-  if (verbose)
-    cerr << "voltage samples per filterbank sample="<<samp_per_fb << endl;
-  // correction for number of samples per filterbank channel
-  double factor = obs->get_state() == Signal::Nyquist? 0.5 : 1.0;
   unsigned fb_nchan = config->filterbank.get_nchan();
-  unsigned tres_factor = round(factor*samp_per_fb/fb_nchan);
-  double tsamp = tres_factor/factor*fb_nchan/rate;
+  unsigned nsample;
+  double tsamp, samp_per_fb;
+  unsigned tres_factor;
+  double factor = obs->get_state() == Signal::Nyquist? 0.5 : 1.0;
 
-  cerr << "digifits: requested tsamp=" << config->tsamp << " rate=" << rate << endl << "             actual tsamp=" << tsamp << " (tscrunch=" << tres_factor << ")" << endl;
+  if (fb_nchan > 0)
+  {
+    // Strategy will be to tscrunch from Nyquist resolution to desired reso.
+    // voltage samples per filterbank sample
+    samp_per_fb = config->tsamp * rate;
+    if (verbose)
+      cerr << "voltage samples per filterbank sample="<<samp_per_fb << endl;
+    // correction for number of samples per filterbank channel
+    tres_factor = round(factor*samp_per_fb/fb_nchan);
+    tsamp = tres_factor/factor*fb_nchan/rate;
+
+    // voltage samples per output block
+    nsample = round(samp_per_fb * config->nsblk);
+  }
+  else
+  {
+    samp_per_fb = 1.0;
+    tres_factor = round(rate * config->tsamp);
+    tsamp = tres_factor/factor * 1/rate;
+    nsample = config->nsblk * tres_factor;
+  }
+
+  cerr << "digifits: requested tsamp=" << config->tsamp << " rate=" << rate << endl 
+       << "             actual tsamp=" << tsamp << " (tscrunch=" << tres_factor << ")" << endl;
   if (verbose)
     cerr << "digifits: nsblk=" << config->nsblk << endl;
-
-  // voltage samples per output block
-  uint64_t nsample = round(samp_per_fb * config->nsblk);
 
   // the unpacked input will occupy nbytes_per_sample
   double nbytes_per_sample = sizeof(float) * nchan * npol * ndim;
@@ -181,6 +203,10 @@ void dsp::LoadToFITS::construct () try
   // ideally, block size would be a full output block, but this is too large
   // pick a nice fraction that will divide evently into maximum RAM
   // NB this doesn't account for copies (yet)
+
+  if (verbose)
+    cerr << "digifits: nsample * nbytes_per_sample=" << nsample * nbytes_per_sample 
+         << " config->maximum_RAM=" << config->maximum_RAM << endl;
   while (nsample * nbytes_per_sample > config->maximum_RAM) nsample /= 2;
 
   if (verbose)
@@ -202,65 +228,74 @@ void dsp::LoadToFITS::construct () try
 
   if (!obs->get_detected())
   {
-
-    if ( !config->filterbank.get_nchan() )
-      throw Error(InvalidParam,"dsp::LoadToFITS::construct",
-          "must specify filterbank scheme if data are not detected");
-
-    // If user specifies -FN:D, enable coherent dedispersion
-    if ( config->filterbank.get_convolve_when() == 
-        Filterbank::Config::During )
-      config->coherent_dedisp = true;
-
-    if ( (config->coherent_dedisp) && (config->dispersion_measure != 0.0) )
+    // if no filterbank specified
+    if (fb_nchan == 0)
     {
-      cerr << "digifits: using coherent dedispersion" << endl;
-
-      // "During" is the only option, my friends
-      config->filterbank.set_convolve_when( Filterbank::Config::During );
-
-      kernel = new Dedispersion;
-      kernel->set_dispersion_measure( config->dispersion_measure );
-
-      if (config->filterbank.get_freq_res())
-        kernel -> set_times_minimum_nfft (config->filterbank.get_freq_res () );
-        //kernel->set_frequency_resolution (
-        //    config->filterbank.get_freq_res());
-
+      if (nchan == 1)
+        throw Error(InvalidParam,"dsp::LoadToFITS::construct",
+            "must specify filterbank scheme if single channel data");
+      else
+        if (verbose)
+          cerr << "digifits: no filterbank specified" << endl;
     }
-    else config->coherent_dedisp = false;
+    else
+    {
+      // If user specifies -FN:D, enable coherent dedispersion
+      if ( config->filterbank.get_convolve_when() == 
+          Filterbank::Config::During )
+        config->coherent_dedisp = true;
+
+      if ( (config->coherent_dedisp) && (config->dispersion_measure != 0.0) )
+      {
+        cerr << "digifits: using coherent dedispersion" << endl;
+
+        // "During" is the only option, my friends
+        config->filterbank.set_convolve_when( Filterbank::Config::During );
+
+        kernel = new Dedispersion;
+        kernel->set_dispersion_measure( config->dispersion_measure );
+
+        if (config->filterbank.get_freq_res())
+          kernel -> set_times_minimum_nfft (config->filterbank.get_freq_res () );
+          //kernel->set_frequency_resolution (
+          //    config->filterbank.get_freq_res());
+
+      }
+      else 
+        config->coherent_dedisp = false;
 
 # if HAVE_CUDA
-    if (run_on_gpu)
-    {
-      timeseries->set_memory (device_memory);
-      config->filterbank.set_device ( device_memory.ptr() );
-      config->filterbank.set_stream ( gpu_stream );
-    }
+      if (run_on_gpu)
+      {
+        timeseries->set_memory (device_memory);
+        config->filterbank.set_device ( device_memory.ptr() );
+        config->filterbank.set_stream ( gpu_stream );
+      }
 #endif
 
-    filterbank = config->filterbank.create ();
+      filterbank = config->filterbank.create ();
 
-    filterbank->set_nchan( config->filterbank.get_nchan() );
-    filterbank->set_input( timeseries );
-    filterbank->set_output( timeseries = new_TimeSeries() );
+      filterbank->set_nchan( config->filterbank.get_nchan() );
+      filterbank->set_input( timeseries );
+      filterbank->set_output( timeseries = new_TimeSeries() );
+
 # if HAVE_CUDA
-    if (run_on_gpu)
-      timeseries->set_memory (device_memory);
+      if (run_on_gpu)
+        timeseries->set_memory (device_memory);
 #endif
 
-    if (kernel)
-      filterbank->set_response( kernel );
+      if (kernel)
+        filterbank->set_response( kernel );
 
-    if ( !config->coherent_dedisp )
-    {
-      unsigned freq_res = config->filterbank.get_freq_res();
-      if (freq_res > 1)
-        filterbank->set_frequency_resolution ( freq_res );
+      if ( !config->coherent_dedisp )
+      {
+        unsigned freq_res = config->filterbank.get_freq_res();
+        if (freq_res > 1)
+          filterbank->set_frequency_resolution ( freq_res );
+      }
+
+      operations.push_back( filterbank.get() );
     }
-
-    operations.push_back( filterbank.get() );
-
       if (verbose)
 	      cerr << "digifits: creating detection operation" << endl;
       
@@ -441,6 +476,7 @@ void dsp::LoadToFITS::construct () try
   FITSOutputFile* outputfile = new FITSOutputFile (output_filename);
   outputfile->set_nsblk (config->nsblk);
   outputfile->set_nbit (config->nbits);
+  outputfile->set_max_length (config->integration_length);
   outputFile = outputfile;
   outputFile->set_input (bitseries);
 
@@ -462,8 +498,11 @@ void dsp::LoadToFITS::prepare () try
 
   unsigned freq_res = config->coherent_dedisp? kernel->get_frequency_resolution() : config->filterbank.get_freq_res();
   if (freq_res == 0) freq_res = 1;
-  cerr << "digifits: creating " << config->filterbank.get_nchan()
-       << " by " << freq_res << " back channel filterbank" << endl;
+  if (config->filterbank.get_nchan())
+    cerr << "digifits: creating " << config->filterbank.get_nchan()
+         << " by " << freq_res << " back channel filterbank" << endl;
+  else
+    cerr << "digifits: processing " << manager->get_info()->get_nchan() << " channels" << endl;
   
   // TODO -- set an optimal block size for search mode
 

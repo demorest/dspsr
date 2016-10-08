@@ -17,6 +17,31 @@ void CUDA::LaunchConfig::init ()
   cudaGetDeviceProperties (&device_properties, device);
 }
 
+size_t CUDA::LaunchConfig::get_max_threads_per_block ()
+{
+  if (device < 0)
+  {
+    throw Error (InvalidState, "CUDA::LaunchConfig::get_max_threads_per_block",
+                 "not initialized");
+    return -1;
+  }
+  else
+    return device_properties.maxThreadsPerBlock;
+}
+
+size_t CUDA::LaunchConfig::get_max_shm ()
+{
+  if (device < 0)
+  {
+    throw Error (InvalidState, "CUDA::LaunchConfig::get_max_shm",
+                 "not initialized");
+    return -1;
+  }
+  else
+    return device_properties.sharedMemPerBlock;
+}
+
+
 void CUDA::LaunchConfig1D::set_nelement (unsigned N)
 {
   unsigned max_nthread = device_properties.maxThreadsPerBlock;

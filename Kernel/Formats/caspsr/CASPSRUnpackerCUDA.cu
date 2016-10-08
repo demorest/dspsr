@@ -11,13 +11,9 @@
 
 #include "Error.h"
 
-// threads per block - C1060=256 [TODO CHECK below if changing]
-#define __CASPSR_UNPACK_TPB 256
-
-// global static texture declaration for CASPSR gpu unpacker
-texture<int8_t, 1, cudaReadModeElementType> caspsr_unpack_tex;
-
 using namespace std;
+
+void check_error_stream (const char*, cudaStream_t);
 
 /* 
    Unpack the two real-valued input polarizations into an interleaved
@@ -45,100 +41,56 @@ __global__ void unpack_real_ndim2 (uint64_t ndat, const float scale,
   output[7] = convert(scale,input[index].val[7]);
 }
 
-void check_error (const char*);
-
-#ifdef USE_TEXTURE_MEMORY
-// ndim 1 unpacker uses texture memory for reads
-__global__ void unpack_real_ndim1 (float* into_pola, float* into_polb, float scale)
+__global__ void unpack_real_ndim1 (uint64_t ndat, float scale,
+				   int8_t * from, float* into_pola, float* into_polb) 
 {
-  const int idx                 = blockIdx.x*blockDim.x + threadIdx.x;
-  const int sample_idx          = idx * 8;
-  unsigned int shared_idx       = threadIdx.x * 4;
-  const uint64_t output_idx     = blockIdx.x * blockDim.x * 4;
-  const unsigned int half_block = blockDim.x / 2;
+  extern __shared__ int8_t sdata[];
 
-  // n.b. this is blockDim.x * 4 [hardcoded by default]
-  __shared__ float pola[4 * __CASPSR_UNPACK_TPB];
-  __shared__ float polb[4 * __CASPSR_UNPACK_TPB];
+  unsigned idx_shm = threadIdx.x;
+  unsigned idx     = (8 * blockIdx.x * blockDim.x) + threadIdx.x;
+  unsigned i;
 
-  // loads 8 samples per thread (4 per poln)
-  unsigned i = 0;
-
-  // write 4 samples from each poln into shared memory
-  for (i=0; i<4; i++)
+  // each thread will load 8 values (coalesced) from GMEM to SHM
+  for (i=0; i<8; i++)
   {
+    if (idx < 2*ndat)
+    {
+      sdata[idx_shm] = from[idx];
 
-    pola[shared_idx + i] = (((float) tex1Dfetch(caspsr_unpack_tex, sample_idx + i)) + 0.5) * scale;
-    polb[shared_idx + i] = (((float) tex1Dfetch(caspsr_unpack_tex, sample_idx + i + 4)) + 0.5) * scale;
+      idx     += blockDim.x;
+      idx_shm += blockDim.x;
+    }
   }
 
   __syncthreads();
 
-  // first half threads write poln A
-  if (threadIdx.x < half_block)
-  {
-    unsigned int tid = 2 * threadIdx.x + (48 * ((int) (threadIdx.x/8)));
-    float * to = into_pola + output_idx;
+  idx     = (4 * blockIdx.x * blockDim.x) + threadIdx.x;
+  idx_shm = threadIdx.x + ((threadIdx.x / 4) * 4);
 
-    to[tid + 0]  = pola[tid + 0];
-    to[tid + 1]  = pola[tid + 1];
-    to[tid + 16] = pola[tid + 16];
-    to[tid + 17] = pola[tid + 17];
-    to[tid + 32] = pola[tid + 32];
-    to[tid + 33] = pola[tid + 33];
-    to[tid + 48] = pola[tid + 48];
-    to[tid + 49] = pola[tid + 49];
-  }
-  // second half threads write poln B
-  else
+  // each thread will write 4 values (coalesced) from SHM to GMEM
+  for (i=0; i<4; i++)
   {
-    unsigned int tid = 2 * (threadIdx.x - half_block) + (48 * ((int) ((threadIdx.x-half_block)/8)));
-    float * to = into_polb + output_idx;
+    if (idx < ndat)
+    {
+      into_pola[idx] = ((float) sdata[idx_shm]   + 0.5) * scale; 
+      into_polb[idx] = ((float) sdata[idx_shm+4] + 0.5) * scale;
 
-    to[tid + 0]  = polb[tid + 0];
-    to[tid + 1]  = polb[tid + 1];
-    to[tid + 16] = polb[tid + 16];
-    to[tid + 17] = polb[tid + 17];
-    to[tid + 32] = polb[tid + 32];
-    to[tid + 33] = polb[tid + 33];
-    to[tid + 48] = polb[tid + 48];
-    to[tid + 49] = polb[tid + 49];
+      idx += blockDim.x;
+      idx_shm += blockDim.x * 2;
+    }
   }
 }
-#else
-__global__ void unpack_real_ndim1 (uint64_t ndat, float scale,
-				   const unsigned char* stagingBufGPU,
-				   float* into_pola, float* into_polb) 
-{
-  uint64_t sampleTmp = blockIdx.x*blockDim.x + threadIdx.x; 
-
-  uint64_t outputIndex = sampleTmp * 4;
-  sampleTmp = sampleTmp * 8;
- 
-  float* to_A = into_pola + outputIndex;
-  float* to_B = into_polb + outputIndex;
-
-  const int8_t* from = reinterpret_cast<const int8_t*>( stagingBufGPU ) + sampleTmp;
-
-  to_A[0] = ((float) from[0] + 0.5) * scale;
-  to_A[1] = ((float) from[1] + 0.5) * scale;
-  to_A[2] = ((float) from[2] + 0.5) * scale;
-  to_A[3] = ((float) from[3] + 0.5) * scale;
-
-  to_B[0] = ((float) from[4] + 0.5) * scale;
-  to_B[1] = ((float) from[5] + 0.5) * scale;
-  to_B[2] = ((float) from[6] + 0.5) * scale;
-  to_B[3] = ((float) from[7] + 0.5) * scale;
-}
-#endif
 
 void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale, 
-                    unsigned char const* input, float* pol0, float* pol1)
+                    unsigned char const* input, float* pol0, float* pol1,
+                    int nthread)
 {
-  int nthread = __CASPSR_UNPACK_TPB;
 
   // each thread will unpack 4 time samples from each polarization
-  int nblock = ndat / (4*nthread);
+  int nsamp_per_block = 4 * nthread;
+  int nblock = ndat / nsamp_per_block;
+  if (ndat % nsamp_per_block)
+    nblock++;
 
 #ifdef _DEBUG
   cerr << "caspsr_unpack ndat=" << ndat << " scale=" << scale 
@@ -146,22 +98,10 @@ void caspsr_unpack (cudaStream_t stream, const uint64_t ndat, float scale,
        << " nthread=" << nthread << endl;
 #endif
 
-#ifdef USE_TEXTURE_MEMORY
-  unpack_real_ndim1<<<nblock,nthread,0,stream>>> (pol0, pol1, scale);
-#else
-  unpack_real_ndim1<<<nblock,nthread,0,stream>>> (ndat, scale, input, pol0, pol1);
-#endif
-
-  // AJ's theory... 
-  // If there are no stream synchronises on the input then the CPU pinned memory load from the
-  // input class might be able to get ahead of a whole sequence of GPU operations, and even exceed
-  // one I/O loop. Therefore this should be a reuqirement to have a stream synchronize some time
-  // after the data are loaded from pinned memory to GPU ram and the next Input copy to pinned memory
-
-  // put it here for now
-  cudaStreamSynchronize(stream);
-
+  int8_t * from = (int8_t *) input;
+  size_t shm_bytes = 8 * nthread;
+  unpack_real_ndim1<<<nblock,nthread,shm_bytes,stream>>> (ndat, scale, from, pol0, pol1);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("caspsr_unpack");
+    check_error_stream ("caspsr_unpack", stream);
 }

@@ -5,6 +5,10 @@
  *
  ***************************************************************************/
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "dsp/Convolution.h"
 #include "dsp/WeightedTimeSeries.h"
 #include "dsp/Apodization.h"
@@ -13,6 +17,10 @@
 #include "dsp/DedispersionHistory.h"
 #include "dsp/Dedispersion.h"
 #include "dsp/Scratch.h"
+
+#if HAVE_CUDA
+#include "dsp/MemoryCUDA.h"
+#endif
 
 #include "FTransform.h"
 
@@ -31,6 +39,28 @@ dsp::Convolution::Convolution (const char* _name, Behaviour _type)
 
 dsp::Convolution::~Convolution ()
 {
+}
+
+//! Set the device memory to use
+void dsp::Convolution::set_device (Memory* mem)
+{
+  memory = mem;
+
+#if HAVE_CUDA
+  CUDA::DeviceMemory* device_memory = dynamic_cast< CUDA::DeviceMemory*> ( mem);
+
+  if ( device_memory )
+  {
+    Scratch* gpu_scratch = new Scratch;
+    gpu_scratch->set_memory (device_memory);
+    set_scratch (gpu_scratch);
+  }
+#endif
+}
+
+void dsp::Convolution::set_engine (Engine * _engine)
+{
+  engine = _engine;
 }
 
 //! Set the frequency response function
@@ -76,11 +106,11 @@ void dsp::Convolution::prepare ()
 {
   if (!response)
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "no frequency response");
+                 "no frequency response");
 
   if (input->get_detected())
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "input data are detected");
+                 "input data are detected");
 
   response->match (input);
 
@@ -90,7 +120,7 @@ void dsp::Convolution::prepare ()
   // response must have at least two points in it
   if (response->get_ndat() < 2)
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "invalid response size");
+                 "invalid response size");
 
   // if the response has 8 dimensions, then perform matrix convolution
   matrix_convolution = response->get_ndim() == 8;
@@ -102,13 +132,13 @@ void dsp::Convolution::prepare ()
   // if matrix convolution, then there must be two polns
   if (matrix_convolution && npol != 2)
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "matrix response and input.npol != 2");
+                 "matrix response and input.npol != 2");
 
   // response must contain a unique kernel for each channel
   if (response->get_nchan() != nchan)
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "invalid response nsub=%d != nchan=%d",
-		 response->get_nchan(), nchan);
+                 "invalid response nsub=%d != nchan=%d",
+                 response->get_nchan(), nchan);
 
   // number of points after first fft
   n_fft = response->get_ndat();
@@ -123,7 +153,7 @@ void dsp::Convolution::prepare ()
 
   if (verbose)
     cerr << "Convolution::prepare filt=" << n_fft 
-	 << " smear=" << nfilt_tot << endl;
+         << " smear=" << nfilt_tot << endl;
 
   // 2 arrays needed: one for each of the forward and backward FFT results
   // 2 floats per complex number
@@ -150,24 +180,33 @@ void dsp::Convolution::prepare ()
   }
   else
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "Cannot transform Signal::State="
-		 + tostring(input->get_state()));
+                 "Cannot transform Signal::State="
+                 + tostring(input->get_state()));
 
   // the FFT size must be greater than the number of discarded points
   if (nsamp_fft < nsamp_overlap)
     throw Error (InvalidState, "dsp::Convolution::prepare",
-		 "error nfft=%d < nfilt=%d", nsamp_fft, nsamp_overlap);
+                 "error nfft=%d < nfilt=%d", nsamp_fft, nsamp_overlap);
 
   if (has_buffering_policy())
   {
     if (verbose)
       cerr << "dsp::Convolution::prepare"
-	" reserve=" << nsamp_fft << endl;
+        " reserve=" << nsamp_fft << endl;
 
     get_buffering_policy()->set_minimum_samples (nsamp_fft);
   }
 
   prepare_output ();
+
+  if (engine)
+  {
+    if (verbose)
+      cerr << "dsp::Convolution::make_preparations setup engine" << endl;
+    engine->prepare (this);
+    prepared = true;
+    return;
+  }
 
   using namespace FTransform;
 
@@ -191,12 +230,18 @@ void dsp::Convolution::prepare_output ()
 
   if (verbose)
     cerr << "dsp::Convolution::prepare_output nsamp fft=" << nsamp_fft
-	 << " overlap=" << nsamp_overlap << " step=" << nsamp_step << endl;
+         << " overlap=" << nsamp_overlap << " step=" << nsamp_step << endl;
 
   // number of FFTs for this data block
   npart = 0;
   if (ndat >= nsamp_fft)
     npart = (ndat-nsamp_overlap)/nsamp_step;
+
+  if (engine)
+  {
+    //scratch_needed = npart * n_fft * 2;
+    scratch_needed = n_fft * 2 * 2;
+  }
 
   /*
     The input must be buffered before the output is modified
@@ -220,6 +265,14 @@ void dsp::Convolution::prepare_output ()
 
   if ( state == Signal::Nyquist )
     output->set_rate( 0.5*get_input()->get_rate() );
+
+  // set the input sample
+  uint64_t output_ndat = output->get_ndat();
+  int64_t input_sample = input->get_input_sample();
+  if (output_ndat == 0)
+    output->set_input_sample (0);
+  else if (input_sample >= 0)
+    output->set_input_sample ((input_sample / nsamp_step) * nsamp_step);
 }
 
 //! Reserve the maximum amount of output space required
@@ -232,17 +285,17 @@ void dsp::Convolution::reserve ()
 
   if (verbose)
     cerr << "Convolution::reserve ndat=" << ndat << " nfft=" << nsamp_fft
-	 << " npart=" << npart << endl;
+         << " npart=" << npart << endl;
 
   uint64_t output_ndat = npart * nsamp_step;
   if ( state == Signal::Nyquist )
     output_ndat /= 2;
-    
+
   if( input != output )
     output->resize (output_ndat);
   else
     output->set_ndat (output_ndat);
-    
+
   // nfilt_pos complex points are dropped from the start of the first FFT
   output->change_start_time (nfilt_pos);
 
@@ -304,6 +357,12 @@ void dsp::Convolution::transformation ()
   if (matrix_convolution)
     spectrum[1] += n_fft * 2;
 
+  if (engine)
+  {
+    engine->set_scratch (spectrum[0]);
+    engine->perform (input, output, npart);
+    return;
+  }
   float* complex_time  = spectrum[1] + n_fft * 2;
 
   // although only two extra points are required, adding 4 ensures that
@@ -315,7 +374,7 @@ void dsp::Convolution::transformation ()
 
   if (verbose)
     cerr << "dsp::Convolution::transformation step nsamp=" << nsamp_step
-	 << " bytes=" << nbytes_step << " ndim=" << ndim << endl;
+         << " bytes=" << nbytes_step << " ndim=" << ndim << endl;
  
   const unsigned cross_pol = matrix_convolution ? 2 : 1;
  
@@ -331,71 +390,71 @@ void dsp::Convolution::transformation ()
     for (unsigned ipol=0; ipol < npol; ipol++)
       for (uint64_t ipart=0; ipart < npart; ipart++)
       {
-	offset = ipart * step;
-		
-	for (jpol=0; jpol<cross_pol; jpol++)
-	{
-	  if (matrix_convolution)
-	    ipol = jpol;
-	  
-	  ptr = const_cast<float*>(input->get_datptr (ichan, ipol)) + offset;
-	  
-	  if (apodization)
-	  {
-	    apodization -> operate (ptr, complex_time);
-	    ptr = complex_time;
-	  }
+        offset = ipart * step;
+                
+        for (jpol=0; jpol<cross_pol; jpol++)
+        {
+          if (matrix_convolution)
+            ipol = jpol;
+          
+          ptr = const_cast<float*>(input->get_datptr (ichan, ipol)) + offset;
+          
+          if (apodization)
+          {
+            apodization -> operate (ptr, complex_time);
+            ptr = complex_time;
+          }
 
-	  DEBUG("FORWARD: nfft=" << nsamp_fft << " in=" << ptr \
-		<< " out=" << spectrum[ipol]);
+          DEBUG("FORWARD: nfft=" << nsamp_fft << " in=" << ptr \
+                << " out=" << spectrum[ipol]);
 
-	  if (state == Signal::Nyquist)
-	    forward->frc1d (nsamp_fft, spectrum[ipol], ptr);
+          if (state == Signal::Nyquist)
+            forward->frc1d (nsamp_fft, spectrum[ipol], ptr);
 
-	  else if (state == Signal::Analytic)
-	    forward->fcc1d (nsamp_fft, spectrum[ipol], ptr);
-	  
-	}
-	
-	if (matrix_convolution) {
+          else if (state == Signal::Analytic)
+            forward->fcc1d (nsamp_fft, spectrum[ipol], ptr);
+          
+        }
+        
+        if (matrix_convolution) {
 
-	  response->operate (spectrum[0], spectrum[1], ichan);
+          response->operate (spectrum[0], spectrum[1], ichan);
 
-	  if (passband)
-	    passband->integrate (spectrum[0], spectrum[1], ichan);
+          if (passband)
+            passband->integrate (spectrum[0], spectrum[1], ichan);
 
-	}
-	
-	else {
+        }
+        
+        else {
 
-	  response->operate (spectrum[ipol], ipol, ichan);
+          response->operate (spectrum[ipol], ipol, ichan);
 
-	  if (passband)
-	    passband->integrate (spectrum[ipol], ipol, ichan);
+          if (passband)
+            passband->integrate (spectrum[ipol], ipol, ichan);
 
-	}
-	
-	for (jpol=0; jpol<cross_pol; jpol++)
-	{
-	  if (matrix_convolution)
-	    ipol = jpol;
-	  
-	  DEBUG("BACKWARD: nfft=" << n_fft << " in=" << spectrum[ipol] \
-		<< " out=" << complex_time);
+        }
+        
+        for (jpol=0; jpol<cross_pol; jpol++)
+        {
+          if (matrix_convolution)
+            ipol = jpol;
+          
+          DEBUG("BACKWARD: nfft=" << n_fft << " in=" << spectrum[ipol] \
+                << " out=" << complex_time);
 
-	  // fft back to the complex time domain
-	  backward->bcc1d (n_fft, complex_time, spectrum[ipol]);
-	  
-	  // copy the good (complex) data back into the time stream
-	  ptr = output -> get_datptr (ichan, ipol) + offset;
+          // fft back to the complex time domain
+          backward->bcc1d (n_fft, complex_time, spectrum[ipol]);
+          
+          // copy the good (complex) data back into the time stream
+          ptr = output -> get_datptr (ichan, ipol) + offset;
 
-	  DEBUG("memcpy: nbytes=" << nbytes_step \
-		<< " in=" << complex_time + nfilt_pos*2 \
-		<< " out=" << ptr << " offset=" << offset);
+          DEBUG("memcpy: nbytes=" << nbytes_step \
+                << " in=" << complex_time + nfilt_pos*2 \
+                << " out=" << ptr << " offset=" << offset);
 
-	  memcpy (ptr, complex_time + nfilt_pos*2, nbytes_step);
+          memcpy (ptr, complex_time + nfilt_pos*2, nbytes_step);
 
-	}  // for each poln, if matrix convolution
+        }  // for each poln, if matrix convolution
       }  // for each part of the time series
   // for each poln
   // for each channel

@@ -23,8 +23,8 @@ namespace CUDA
     TScrunchEngine (cudaStream_t stream);
 
     void fpt_tscrunch (const dsp::TimeSeries * input, 
-                         dsp::TimeSeries * output,
-                         unsigned sfactor);
+                       dsp::TimeSeries * output,
+                       unsigned sfactor);
 
   protected:
 

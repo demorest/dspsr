@@ -106,9 +106,6 @@ void dsp::Detection::transformation () try
     return;
   }
 
-  if (input->get_ndat() == 0)
-    return;
-
   if (!inplace)
     resize_output ();    
 

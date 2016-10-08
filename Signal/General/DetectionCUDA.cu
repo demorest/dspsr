@@ -156,6 +156,9 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
          << " input.span=" << input_span 
          << " output.span=" << output_span << endl;
 
+  if (ndat == 0)
+    return;
+
   dim3 threads (128);
   dim3 blocks (ndat/threads.x, nchan);
 
@@ -170,7 +173,7 @@ void CUDA::DetectionEngine::polarimetry (unsigned ndim,
                                            ndat); 
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
-    check_error ("CUDA::DetectionEngine::polarimetry");
+    check_error_stream ("CUDA::DetectionEngine::polarimetry", stream);
 }
 
 // dubiuous about the correctness here... TODO AJ

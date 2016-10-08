@@ -34,9 +34,14 @@ void dsp::TransferCUDA::transformation ()
   {
     cerr << "dsp::TransferCUDA::transformation input ndat="
          << input->get_ndat() << " ndim=" << input->get_ndim();
-    if (input->get_npol() > 1)
-      cerr << " span=" << input->get_datptr (0,1) - input->get_datptr(0,0);
-    cerr << " offset=" << input->get_datptr(0,0) - (float*)input->internal_get_buffer() << endl;
+    if (input->get_order() == TimeSeries::OrderFPT)
+    {
+      if (input->get_npol() > 1)
+        cerr << " span=" << input->get_datptr (0,1) - input->get_datptr(0,0);
+      cerr << " offset=" << input->get_datptr(0,0) - (float*)input->internal_get_buffer() << endl;
+    }
+    else
+      cerr << endl;
   }
 
   cudaError error;
@@ -58,10 +63,14 @@ void dsp::TransferCUDA::transformation ()
   {
     cerr << "dsp::TransferCUDA::transformation output ndat=" 
        << output->get_ndat() << " ndim=" << output->get_ndim();
-    if (output->get_npol() > 1)
-      cerr << " span=" << output->get_datptr (0, 1) - output->get_datptr(0,0);
-
-    cerr << " offset=" << output->get_datptr(0,0) - (float*)output->internal_get_buffer() << endl;
+    if (output->get_order() == TimeSeries::OrderFPT)
+    {
+      if (output->get_npol() > 1)
+        cerr << " span=" << output->get_datptr (0, 1) - output->get_datptr(0,0);
+      cerr << " offset=" << output->get_datptr(0,0) - (float*)output->internal_get_buffer() << endl;
+    }
+    else
+      cerr << endl;
   }
 }
 

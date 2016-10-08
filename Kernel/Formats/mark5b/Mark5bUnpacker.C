@@ -1,13 +1,14 @@
 /***************************************************************************
  *
- *   Copyright (C) 2015 by Stuart Weston and Willem van Straten
+ *   Copyright (C) 2016 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/Mark5bUnpacker.h"
 #include "dsp/Mark5bFile.h"
-#include "vlba_stream.h"
+
+#include <mark5access.h>
 
 using namespace std;
 
@@ -43,17 +44,18 @@ void dsp::Mark5bUnpacker::unpack()
     throw Error (InvalidState, "dsp::Mark5bUnpacker::unpack",
 		 "Input is not a Mark5bFile");
 
-  struct VLBA_stream* vlba_stream = (struct VLBA_stream*) file->stream;
+  struct mark5_stream* m5stream = (struct mark5_stream*) file->stream;
 
   float* data [npol * nchan];
 
+  /* Stuart: this is the place in the code where we rearrange channels */
   for (unsigned ipol = 0 ; ipol < npol ; ipol++)
     for (unsigned ichan=0; ichan < nchan; ichan++)
       data[ipol + 2*ichan] = output->get_datptr(ichan,ipol);
 
-  if (VLBA_stream_get_data (vlba_stream, ndat, data) < 0)
+  if (mark5_stream_decode(m5stream, ndat, data) < 0)
     throw Error (InvalidState, "dsp::Mark5bUnpacker::unpack",
-                 "error VLBA_stream_get_data (most likely EOD)");
+                 "error mark5_stream_decode (most likely EOD)");
 
 }
 

@@ -33,6 +33,7 @@ namespace dsp {
 
   class OperationThread;
   class SKFilterbank;
+  class SpectralKurtosis;
   class Resize;
   class SampleDelay;
   class PhaseLockedFilterbank;
@@ -115,7 +116,10 @@ namespace dsp {
     Reference::To<Response> passband;
 
     //! Optional SK filterbank
-    Reference::To<SKFilterbank> skfilterbank;
+    // Reference::To<SKFilterbank> skfilterbank;
+
+    //! Optional Spectral Kurtosis (for convolution)
+    Reference::To<SpectralKurtosis> skestimator;
 
     //! Optional SK Resizer 
     Reference::To<Resize> skresize;

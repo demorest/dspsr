@@ -15,21 +15,14 @@ using namespace std;
 
 void check_error (const char*);
 
-CUDA::SKMaskerEngine::SKMaskerEngine (cudaStream_t _stream)
+CUDA::SKMaskerEngine::SKMaskerEngine (dsp::Memory * memory)
 {
-  stream = _stream;
+  device_memory = dynamic_cast<CUDA::DeviceMemory *>(memory);
+  stream = device_memory->get_stream();
 }
 
-void CUDA::SKMaskerEngine::setup (unsigned _nchan, unsigned _npol, unsigned _span)
+void CUDA::SKMaskerEngine::setup ()
 {
-  if (dsp::Operation::verbose)
-    cerr << "CUDA::SKMaskerEngine::setup nchan=" << _nchan << " npol=" << _npol
-         << " span=" << _span << endl;
-
-  nchan = _nchan;
-  npol = _npol;
-  span = _span;
-
   // determine GPU capabilities 
   int device = 0;
   cudaGetDevice(&device);
@@ -38,87 +31,101 @@ void CUDA::SKMaskerEngine::setup (unsigned _nchan, unsigned _npol, unsigned _spa
   max_threads_per_block = device_properties.maxThreadsPerBlock;
 }
 
-
-/* cuda kernel to mask 1 channel for both polarisations */
-__global__ void mask1chan (unsigned char * mask_base,
-           float * out_base,
-           unsigned npol,
-           unsigned end,
-           unsigned span)
-{
-  // ichan = blockIdx.x * blockDim.x + threadIdx.x
-
-  float * p0 = out_base + span * npol * (blockIdx.x * blockDim.x + threadIdx.x);
-  float * p1 = out_base + span * npol * (blockIdx.x * blockDim.x + threadIdx.x) + span;
-
-  mask_base += (blockIdx.x * blockDim.x + threadIdx.x);
-
-  if (mask_base[0])
-  {
-    for (unsigned j=0; j<end; j++)
-    {
-      p0[j] = 0;
-      p1[j] = 0;
-    }
-  }
-
-}
-
 /*
  *  masks just 1 sample in the DDFB for the given SKFB channel and sample, uses __sync_threads
  *  with a __shared__ mask to improve read performance on access to the common mask value for all
  *  threads in a block
  */
 __global__ void mask1sample (unsigned char * mask_base,
-           float * out_base,
+           const float2 * in_base,
+           float2 * out_base,
+           uint64_t in_stride,
+           uint64_t out_stride,
+           uint64_t ndat,
            unsigned npol,
-           unsigned end,
-           unsigned span)
+           unsigned M)
 {
-  int ichan = blockIdx.x;
+  const unsigned idat = blockIdx.x * blockDim.x + threadIdx.x; 
+  if (idat >= ndat)
+    return;
 
-  __shared__ char mask;
+  const unsigned ichan = blockIdx.y;
+  const unsigned imask = idat / M;
 
-  if (threadIdx.x == 0)
-    mask = mask_base[ichan];
+  // load the mask
+  const unsigned char mask = mask_base[imask * gridDim.y + ichan];
 
-  __syncthreads();
+  // forward pointer to pol0 for this chan
+  out_base += ichan * npol * out_stride;
+  in_base  += ichan * npol * in_stride;
 
-  // zap if mask 
-  if (mask)
+
+  for (unsigned ipol=0; ipol<npol; ipol++)
   {
-    int idat = threadIdx.x;
-    int out_offset = (span * npol * ichan) + idat;
-
-    out_base[out_offset] = 0;         // p0
-    out_base[out_offset +span ] = 0;  // p1
+    if (mask)
+    {
+      out_base[idat].x = 0;
+      out_base[idat].y = 0;
+    }
+    else
+    {
+      out_base[idat] = in_base[idat];
+    }
+    in_base  += in_stride;
+    out_base += out_stride;
   }
 }
 
 
-void CUDA::SKMaskerEngine::perform (dsp::BitSeries* mask, unsigned mask_offset, 
-           dsp::TimeSeries * output, unsigned offset, unsigned end)
+void CUDA::SKMaskerEngine::perform (dsp::BitSeries* mask, const dsp::TimeSeries * input,
+           dsp::TimeSeries * output, unsigned M)
 {
 
   if (dsp::Operation::verbose)
-    cerr << "CUDA::SKMaskerEngine::perform mask_offset=" << mask_offset << " offset=" << offset << " end=" << end << endl;
+    cerr << "CUDA::SKMaskerEngine::perform M=" << M << endl;
+  
+  // use output, since input may be InputBuffered
+  uint64_t ndat  = output->get_ndat();
+  unsigned nchan = output->get_nchan();
+  unsigned npol  = output->get_npol();
+  unsigned ndim  = output->get_ndim();
+  // TODO assert that ndim == 2
 
   // order is FPT
-  float * out_base = output->get_datptr(0, 0) + offset;
-  unsigned char * mask_base = mask->get_datptr() + mask_offset;
+  const float2 * in_base = (const float2 *) input->get_datptr (0, 0);
+  float2 * out_base = (float2 *) output->get_datptr (0, 0);
 
-  if (end > max_threads_per_block)
+  // order is TFP
+  unsigned char * mask_base = mask->get_datptr();
+
+  uint64_t in_stride, out_stride;
+  if (npol == 1)
   {
-    dim3 threads (128);
-    dim3 blocks (nchan/threads.x);
-    mask1chan<<<blocks,threads,0,stream>>> (mask_base, out_base, npol, end, span);
+    in_stride = input->get_datptr (1, 0) - input->get_datptr (0, 0);
+    out_stride = output->get_datptr (1, 0) - output->get_datptr (0, 0);
   }
   else
   {
-    dim3 threads (end);
-    dim3 blocks (nchan);
-    mask1sample<<<blocks,threads,0,stream>>> (mask_base, out_base, npol, end, span);
+    in_stride = input->get_datptr (0, 1) - input->get_datptr (0, 0);
+    out_stride = output->get_datptr (0, 1) - output->get_datptr (0, 0);
   }
+
+  // strides are numbers of floats between
+  in_stride /= ndim;
+  out_stride /= ndim;
+
+  unsigned threads = max_threads_per_block;
+  dim3 blocks (ndat / threads, nchan);
+  if (ndat % threads)
+    blocks.x++;
+
+#ifdef _DEBUG
+  cerr << "CUDA::SKMaskerEngine::perform ndat=" << ndat << " nchan=" << nchan << " npol=" << npol << " ndim=" << ndim << endl;
+  cerr << "CUDA::SKMaskerEngine::perform in_stride=" << in_stride << " out_stride=" << out_stride << endl;
+  cerr << "CUDA::SKMaskerEngine::perform blocks=(" << blocks.x << ", " << blocks.y << ") threads=" << threads << endl;
+#endif
+
+  mask1sample<<<blocks,threads,0,stream>>> (mask_base, in_base, out_base, in_stride, out_stride, ndat, npol, M);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error( "CUDA::SKMaskerEngine::perform" );

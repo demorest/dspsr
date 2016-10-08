@@ -70,6 +70,10 @@ namespace dsp {
     // Sets default values
     Config ();
 
+    // set block_size to result in at least this much RAM usage
+    void set_maximum_RAM (uint64_t);
+    uint64_t get_maximum_RAM () const { return maximum_RAM; }
+
     // input data block size in MB
     double block_size;
 
@@ -105,6 +109,9 @@ namespace dsp {
 
     //! hold offset and scale constant after first update
     bool rescale_constant;
+
+    //! set maximum length for a file
+    double integration_length;
     
     //! number of bits used to re-digitize the floating point time series
     int nbits;

@@ -821,7 +821,7 @@ void dsp::Fold::fold (uint64_t nweights,
     {
     	if (verbose) {
     		cerr << "Fold::fold finishing fold w/ engine. zeroed_samples was true so correcting integration length from:" << result->integration_length
-    				<< " by:" << (engine->get_ndat_folded() / get_input()->get_rate()) <<endl;
+    				<< " by:" << (engine->get_ndat_folded() / get_input()->get_rate()) << endl;
     	}
       result->integration_length += engine->get_ndat_folded() / get_input()->get_rate();
     }
@@ -867,7 +867,7 @@ void dsp::Fold::fold (uint64_t nweights,
         } // for each idat
       } // for each pol
 
-      if (zeroed_samples && ichan < nchan-1)
+      if (zeroed_samples && ichan < nchan-1 && output->get_hits_nchan() > 1)
         hits += folding_nbin;
     } // for each chan 
   }

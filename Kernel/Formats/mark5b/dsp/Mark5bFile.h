@@ -1,7 +1,7 @@
 //-*-C++-*-
 /***************************************************************************
  *
- *   Copyright (C) 2015 by Stuart Weston and Willem van Straten
+ *   Copyright (C) 2016 by Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
@@ -13,7 +13,7 @@
 
 namespace dsp {
 
-  //! Loads BitSeries data from a MkV file
+  //! Loads BitSeries data from a MkV file using the mark5access library
   class Mark5bFile : public BlockFile
   {
   public:

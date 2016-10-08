@@ -53,13 +53,13 @@ void dsp::FITSUnpacker::set_parameters (FITSFile* ff)
 
 void dsp::FITSUnpacker::unpack()
 {
-  if (verbose) {
-    cerr << "dsp::FITSUnpacker::unpack" << endl;
-  }
 
   // Allocate mapping method to use depending on how many bits per value.
   BitNumberFn p;
   const unsigned nbit = input->get_nbit();
+
+  if (verbose)
+    cerr << "dsp::FITSUnpacker::unpack with nbit=" << nbit << endl;
 
   switch (nbit) {
     case 1:
@@ -82,6 +82,13 @@ void dsp::FITSUnpacker::unpack()
   const unsigned npol  = input->get_npol();
   const unsigned nchan = input->get_nchan();
   const unsigned ndat  = input->get_ndat();
+
+  // Make sure scales and offsets exist
+  if (dat_scl.size() == 0)
+  {
+    dat_scl.assign(nchan,1);
+    dat_offs.assign(nchan,0);
+  }
 
   // Number of samples in one byte.
   const int samples_per_byte = BYTE_SIZE / nbit;
