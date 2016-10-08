@@ -520,7 +520,7 @@ int main (int argc, char** argv) try
           psrxml_header->receiver.hasCircularFeeds = timeseries->get_basis() == Signal::Circular;
           psrxml_header->receiver.feedRightHanded = 0; // @todo
           psrxml_header->receiver.numberOfPolarisations = 2;
-          psrxml_header->receiver.feedSymmetry = 0; // @todo
+          psrxml_header->receiver.feedSymetry = 0; // @todo
           psrxml_header->receiver.calXYPhase = 0; //@todo
  
           psrxml_header->receiverBeamNumber = 0;//@todo
@@ -538,7 +538,7 @@ int main (int argc, char** argv) try
 
           strcpy(psrxml_header->telescope.name,timeseries->get_telescope().c_str());
           psrxml_header->telescope.longitude = 0;//@todo
-          psrxml_header->telescope.latitude=0;//@todo
+          psrxml_header->telescope.lattitude=0;//@todo
           psrxml_header->telescope.zenithLimit=0;//@todo
           psrxml_header->telescope.x=0;//@todo
           psrxml_header->telescope.y=0;//@todo
