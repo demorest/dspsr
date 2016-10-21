@@ -97,34 +97,23 @@ void dsp::BPSRCrossUnpacker::unpack ()
       throw Error (InvalidState, "dsp::BPSRCrossUnpacker::unpack",
                    "ASCIIObservation required and not available");
 
+
+    // attempt to get the FACTOR_POLX from the header.
+    // This describes the factor necessary to correct the AB* values
+    // relative to AA and BB.
+
+    info->custom_header_get ("GAIN_POL1", "%f", &gain_pol1);
+    info->custom_header_get ("GAIN_POL2", "%f", &gain_pol2);
+
     // attempt to get the FACTOR_POLX from the header. This completely describes
     // the factor necessary to correct the AB* values
     try
     {
-
-      // attempt to get the FACTOR_POLX from the header.
-      // This describes the factor necessary to correct the AB* values
-      // relative to AA and BB.
-
       if (info->custom_header_get ("FACTOR_POLX", "%f", &gain_polx) == 1)
       {
         if (verbose)
           cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX="
                << gain_polx << endl;
-      }
-
-      if (info->custom_header_get ("GAIN_POL1", "%f", &gain_pol1) == 1)
-      {
-        if (verbose)
-          cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POL1="
-               << gain_pol1 << endl;
-      }
-
-      if (info->custom_header_get ("GAIN_POL2", "%f", &gain_pol2) == 1)
-      {
-        if (verbose)
-          cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POL2="
-               << gain_pol2 << endl;
       }
 
       if (info->custom_header_get ("PPQQ_BW", "%u", &ppqq_bw) == 1)
@@ -133,11 +122,6 @@ void dsp::BPSRCrossUnpacker::unpack ()
           cerr << "dsp::BPSRCrossUnpacker::unpack PPQQ_BW="
                << ppqq_bw << endl;
       }
-
-      // each bit window suppresses by 256 (2^8)
-      float ppqq_bw_scale = powf (2, 8*ppqq_bw);
-      gain_pol1 /= ppqq_bw_scale;
-      gain_pol2 /= ppqq_bw_scale;
     }
     catch (Error& error)
     {
@@ -160,6 +144,36 @@ void dsp::BPSRCrossUnpacker::unpack ()
         cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX="
              << polx << " FACTOR_POLX=" << gain_polx << endl;
     }
+
+    try
+    {
+      if (info->custom_header_get ("PPQQ_BW", "%u", &ppqq_bw) == 1)
+      {
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack PPQQ_BW="
+               << ppqq_bw << endl;
+      }
+    }
+    catch (Error& error)
+    {
+      ppqq_bw = 1;
+      if (verbose)
+        cerr << "dsp::BPSRCrossUnpacker::unpack assuming PPQQ_BW="
+             << ppqq_bw << endl;
+
+    }
+
+    // each bit window suppresses by 256 (2^8)
+    float ppqq_bw_scale = powf (2, 8*ppqq_bw);
+    if (verbose)
+    {
+      cerr << "dsp::BPSRCrossUnpacker::unpack raw GAIN_POL1=" << gain_pol1 
+           << " GAIN_POL1=" << gain_pol1/ppqq_bw_scale << endl;
+      cerr << "dsp::BPSRCrossUnpacker::unpack raw GAIN_POL2=" << gain_pol2 
+           << " GAIN_POL2=" << gain_pol2/ppqq_bw_scale << endl;
+    }
+    gain_pol1 /= ppqq_bw_scale;
+    gain_pol2 /= ppqq_bw_scale;
   }
 
   /*
