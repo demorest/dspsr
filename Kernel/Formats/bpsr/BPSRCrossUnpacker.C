@@ -168,7 +168,7 @@ void dsp::BPSRCrossUnpacker::unpack ()
     rescale factors close to unity
   */
 
-  const float reference_gain = 312.5;
+  const float reference_gain = 100000.0 / 256.0;
   float p_scale = reference_gain/gain_pol1;
   float q_scale = reference_gain/gain_pol2;
 
