@@ -95,7 +95,7 @@ void dsp::BPSRCrossUnpacker::unpack ()
     const ASCIIObservation * info = dynamic_cast<const ASCIIObservation *>(obs);
     if (!info)
       throw Error (InvalidState, "dsp::BPSRCrossUnpacker::unpack",
-		   "ASCIIObservation required and not available");
+                   "ASCIIObservation required and not available");
 
     // attempt to get the FACTOR_POLX from the header. This completely describes
     // the factor necessary to correct the AB* values
@@ -108,38 +108,36 @@ void dsp::BPSRCrossUnpacker::unpack ()
 
       if (info->custom_header_get ("FACTOR_POLX", "%f", &gain_polx) == 1)
       {
-	if (verbose)
-	  cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX="
-	       << gain_polx << endl;
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX="
+               << gain_polx << endl;
       }
 
       if (info->custom_header_get ("GAIN_POL1", "%f", &gain_pol1) == 1)
       {
-	if (verbose)
-	  cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POL1="
-	       << gain_pol1 << endl;
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POL1="
+               << gain_pol1 << endl;
       }
 
       if (info->custom_header_get ("GAIN_POL2", "%f", &gain_pol2) == 1)
       {
-	if (verbose)
-	  cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POL2="
-	       << gain_pol2 << endl;
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POL2="
+               << gain_pol2 << endl;
       }
 
       if (info->custom_header_get ("PPQQ_BW", "%u", &ppqq_bw) == 1)
       {
-	if (verbose)
-	  cerr << "dsp::BPSRCrossUnpacker::unpack PPQQ_BW="
-	       << ppqq_bw << endl;
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack PPQQ_BW="
+               << ppqq_bw << endl;
       }
 
-      /*
-	WvS @AJ: here is where gain_pol1 and gain_pol2 should be
-	corrected according to bit window in the same way that
-	GAIN_POLX was converted to FACTOR_POLX ... I need to have
-	my memory refreshed on how to do this.
-      */
+      // each bit window suppresses by 256 (2^8)
+      float ppqq_bw_scale = powf (2, 8*ppqq_bw);
+      gain_pol1 /= ppqq_bw_scale;
+      gain_pol2 /= ppqq_bw_scale;
     }
     catch (Error& error)
     {
@@ -149,31 +147,31 @@ void dsp::BPSRCrossUnpacker::unpack ()
       unsigned polx;
       if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
       {
-	if (polx == 0)
-	{
-	  gain_polx = 1;
-	}
-	else
-	{
-	  gain_polx = ((float) polx) / 32;
-	}
+        if (polx == 0)
+        {
+          gain_polx = 1;
+        }
+        else
+        {
+          gain_polx = ((float) polx) / 32;
+        }
       }
       if (verbose)
-	cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX="
-	     << polx << " FACTOR_POLX=" << gain_polx << endl;
+        cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX="
+             << polx << " FACTOR_POLX=" << gain_polx << endl;
     }
   }
 
   /*
     This constant is an observed approximate mean value of
     GAIN_POL1 and GAIN_POL2 and it is applied simply to keep
-    rescale factors close to unity.
+    rescale factors close to unity
   */
-  const float reference_gain = 80000;
 
+  const float reference_gain = 312.5;
   float p_scale = reference_gain/gain_pol1;
   float q_scale = reference_gain/gain_pol2;
-  
+
   float ppqq_scale[2] = { p_scale*p_scale, q_scale*q_scale };
   float pq_scale = p_scale * q_scale / gain_polx;
   
@@ -247,11 +245,11 @@ break;
           into[2] = float( from[1] ) + 0.5;
           into[3] = float( from[3] ) + 0.5;
 
-	  into[0] *= ppqq_scale[0];
-	  into[1] *= ppqq_scale[1];
-	  into[2] *= ppqq_scale[0];
-	  into[3] *= ppqq_scale[1];
-	  
+          into[0] *= ppqq_scale[0];
+          into[1] *= ppqq_scale[1];
+          into[2] *= ppqq_scale[0];
+          into[3] *= ppqq_scale[1];
+          
           into += 4;
           from += 8;
         }
@@ -269,12 +267,12 @@ break;
           into[6] = float( ((char) from[6]) ) + 0.5;
           into[7] = float( ((char) from[7]) ) + 0.5;
 
-	  into[0] *= ppqq_scale[0];
-	  into[1] *= ppqq_scale[1];
+          into[0] *= ppqq_scale[0];
+          into[1] *= ppqq_scale[1];
           into[2] *= pq_scale;
           into[3] *= pq_scale;
-	  into[4] *= ppqq_scale[0];
-	  into[5] *= ppqq_scale[1];	  
+          into[4] *= ppqq_scale[0];
+          into[5] *= ppqq_scale[1];          
           into[6] *= pq_scale;
           into[7] *= pq_scale;
           
