@@ -183,6 +183,10 @@ namespace dsp {
     //! Flag that the response and bandpass attributes reflect the state
     bool built;
 
+    //! Supported frequency channels
+    /*! Set to false when the dispersive smearing is too large */
+    std::vector<bool> supported_channels;
+    
     //! Return the effective smearing time in seconds (worker function)
     double smearing_time (int half) const;
 
