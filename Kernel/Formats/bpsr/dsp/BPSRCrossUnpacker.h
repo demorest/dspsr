@@ -47,6 +47,14 @@ namespace dsp
     float gain_pol1;
     float gain_pol2;
     unsigned ppqq_bw;
+
+  private:
+
+    float reference_gain;
+
+    float ppqq_scale[2];
+
+    float pq_scale;
     
   private:
 

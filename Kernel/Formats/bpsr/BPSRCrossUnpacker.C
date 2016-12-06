@@ -6,7 +6,6 @@
  ***************************************************************************/
 
 #include "dsp/BPSRCrossUnpacker.h"
-//#include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
 #include "Error.h"
 
@@ -19,6 +18,16 @@ dsp::BPSRCrossUnpacker::BPSRCrossUnpacker (const char* name) : HistUnpacker (nam
 {
   gain_polx = -1;
   unpack_ppqq_only = false;
+
+  /*
+    This constant is an observed approximate mean value of
+    GAIN_POL1 and GAIN_POL2 and it is applied simply to keep
+    rescale factors close to unity
+  */
+  reference_gain = 100000.0 / 256.0;
+  ppqq_scale[0] = 1.0;
+  ppqq_scale[1] = 1.0;
+  pq_scale = 1.0;
 }
 
 //! Return true if the unpacker support the specified output order
@@ -115,13 +124,6 @@ void dsp::BPSRCrossUnpacker::unpack ()
           cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX="
                << gain_polx << endl;
       }
-
-      if (info->custom_header_get ("PPQQ_BW", "%u", &ppqq_bw) == 1)
-      {
-        if (verbose)
-          cerr << "dsp::BPSRCrossUnpacker::unpack PPQQ_BW="
-               << ppqq_bw << endl;
-      }
     }
     catch (Error& error)
     {
@@ -145,6 +147,7 @@ void dsp::BPSRCrossUnpacker::unpack ()
              << polx << " FACTOR_POLX=" << gain_polx << endl;
     }
 
+    // try to read the Bit Window of the PPQQ data
     try
     {
       if (info->custom_header_get ("PPQQ_BW", "%u", &ppqq_bw) == 1)
@@ -174,20 +177,14 @@ void dsp::BPSRCrossUnpacker::unpack ()
     }
     gain_pol1 /= ppqq_bw_scale;
     gain_pol2 /= ppqq_bw_scale;
+
+    float p_scale = reference_gain/gain_pol1;
+    float q_scale = reference_gain/gain_pol2;
+
+    ppqq_scale[0] = p_scale * p_scale;
+    ppqq_scale[1] = q_scale * q_scale;
+    pq_scale = p_scale * q_scale / gain_polx;
   }
-
-  /*
-    This constant is an observed approximate mean value of
-    GAIN_POL1 and GAIN_POL2 and it is applied simply to keep
-    rescale factors close to unity
-  */
-
-  const float reference_gain = 100000.0 / 256.0;
-  float p_scale = reference_gain/gain_pol1;
-  float q_scale = reference_gain/gain_pol2;
-
-  float ppqq_scale[2] = { p_scale*p_scale, q_scale*q_scale };
-  float pq_scale = p_scale * q_scale / gain_polx;
   
   switch ( output->get_order() )
   {
@@ -243,7 +240,7 @@ break;
   case TimeSeries::OrderTFP:
     {
       if (verbose)
-        cerr << "dsp::BPSRCrossUnpacker::unpack Output order OrderTFP\n" << endl;
+        cerr << "dsp::BPSRCrossUnpacker::unpack Output order OrderTFP" << endl;
 
       const unsigned char* from = input->get_rawptr();
       float* into = output->get_dattfp();
@@ -263,7 +260,7 @@ break;
           into[1] *= ppqq_scale[1];
           into[2] *= ppqq_scale[0];
           into[3] *= ppqq_scale[1];
-          
+
           into += 4;
           from += 8;
         }
