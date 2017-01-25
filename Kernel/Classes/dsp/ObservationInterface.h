@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ObservationInterface.h,v $
-   $Revision: 1.1 $
-   $Date: 2012/01/19 21:46:11 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/ObservationInterface.h
 
 #ifndef __dsp_ObservationTI_h
 #define __dsp_ObservationTI_h

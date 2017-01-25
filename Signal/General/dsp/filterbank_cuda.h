@@ -6,11 +6,8 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/filterbank_cuda.h,v $
-   $Revision: 1.1 $
+// dspsr/Signal/General/dsp/filterbank_cuda.h
 
-   $Date: 2011/10/07 11:10:14 $
-   $Author: straten $ */
 
 #ifndef __filterbank_cuda_h
 #define __filterbank_cuda_h

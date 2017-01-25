@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFold1.h,v $
-   $Revision: 1.32 $
-   $Date: 2011/09/20 20:49:14 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/LoadToFold1.h
 
 #ifndef __dspsr_LoadToFold_h
 #define __dspsr_LoadToFold_h

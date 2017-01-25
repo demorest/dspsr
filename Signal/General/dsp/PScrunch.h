@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/PScrunch.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/01 12:23:21 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/PScrunch.h
 
 #ifndef __baseband_dsp_PScrunch_h
 #define __baseband_dsp_PScrunch_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h,v $
-   $Revision: 1.15 $
-   $Date: 2011/08/04 21:05:36 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/WeightedTimeSeries.h
 
 #ifndef __WeightedTimeSeries_h
 #define __WeightedTimeSeries_h

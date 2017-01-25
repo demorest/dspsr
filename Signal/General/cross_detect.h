@@ -4,10 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/cross_detect.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/10/15 18:56:39 $
-   $Author: straten $ */
+// dspsr/Signal/General/cross_detect.h
 
 #ifndef __cross_detect_h
 #define __cross_detect_h

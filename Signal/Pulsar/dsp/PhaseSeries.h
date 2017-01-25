@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeries.h,v $
-   $Revision: 1.41 $
-   $Date: 2011/08/04 21:07:02 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/PhaseSeries.h
 
 #ifndef __PhaseSeries_h
 #define __PhaseSeries_h

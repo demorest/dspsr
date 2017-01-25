@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRUnpacker.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/apsr/dsp/APSRUnpacker.h
 
 #ifndef __APSRUnpacker_h
 #define __APSRUnpacker_h

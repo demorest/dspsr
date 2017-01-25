@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h,v $
-   $Revision: 1.15 $
-   $Date: 2006/07/09 13:27:03 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/cpsr/dsp/CPSRTwoBitCorrection.h
 
 #ifndef __CPSRTwoBitCorrection_h
 #define __CPSRTwoBitCorrection_h

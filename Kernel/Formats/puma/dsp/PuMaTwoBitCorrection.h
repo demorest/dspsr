@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaTwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/puma/dsp/PuMaTwoBitCorrection.h
 
 #ifndef __PuMaTwoBitCorrection_h
 #define __PuMaTwoBitCorrection_h

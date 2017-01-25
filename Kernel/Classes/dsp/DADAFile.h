@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/DADAFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/05/28 21:12:42 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/DADAFile.h
 
 #ifndef __DADAFile_h
 #define __DADAFile_h

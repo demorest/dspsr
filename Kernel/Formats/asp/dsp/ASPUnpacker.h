@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/asp/dsp/ASPUnpacker.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:03 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/asp/dsp/ASPUnpacker.h
 
 #ifndef __ASPUnpacker_h
 #define __ASPUnpacker_h

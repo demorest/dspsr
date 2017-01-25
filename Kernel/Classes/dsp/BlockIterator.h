@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockIterator.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/09/09 06:34:14 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/BlockIterator.h
 
 #ifndef __BlockIterator_h
 #define __BlockIterator_h

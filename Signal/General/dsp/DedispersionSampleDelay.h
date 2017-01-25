@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/DedispersionSampleDelay.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/06/17 10:16:54 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/DedispersionSampleDelay.h
 
 #ifndef __Dedispersion_SampleDelay_h
 #define __Dedispersion_SampleDelay_h

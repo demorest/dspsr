@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FourBitTwo.h,v $
-   $Revision: 1.3 $
-   $Date: 2009/10/30 00:15:03 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/FourBitTwo.h
 
 #ifndef __FourBitTwo_h
 #define __FourBitTwo_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseLockedFilterbank.h,v $
-   $Revision: 1.5 $
-   $Date: 2011/04/28 23:30:12 $
-   $Author: demorest $ */
+// dspsr/Signal/Pulsar/dsp/PhaseLockedFilterbank.h
 
 #ifndef __baseband_dsp_PhaseLockedFilterbank_h
 #define __baseband_dsp_PhaseLockedFilterbank_h

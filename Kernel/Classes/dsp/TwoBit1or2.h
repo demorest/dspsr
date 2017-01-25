@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBit1or2.h,v $
-   $Revision: 1.6 $
-   $Date: 2010/05/28 14:13:32 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TwoBit1or2.h
 
 #ifndef __TwoBit1or2_h
 #define __TwoBit1or2_h

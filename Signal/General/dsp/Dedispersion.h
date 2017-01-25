@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.29 $
-   $Date: 2010/04/11 05:21:43 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Dedispersion.h
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h

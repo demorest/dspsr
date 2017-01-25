@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/OutputFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/09/19 01:56:42 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/OutputFile.h
 
 #ifndef __OutputFile_h
 #define __OutputFile_h

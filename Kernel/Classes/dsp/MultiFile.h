@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/MultiFile.h,v $
-   $Revision: 1.29 $
-   $Date: 2011/09/20 20:20:31 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/MultiFile.h
 
 
 #ifndef __MultiFile_h

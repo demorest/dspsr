@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/bpsr/dsp/BPSRUnpacker.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/10/08 23:19:06 $
-   $Author: sixbynine $ */
+// dspsr/Kernel/Formats/bpsr/dsp/BPSRUnpacker.h
 
 #ifndef __BPSRUnpacker_h
 #define __BPSRUnpacker_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/TFPFilterbank.h,v $
-   $Revision: 1.3 $
-   $Date: 2011/08/23 21:00:38 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/TFPFilterbank.h
 
 #ifndef __TFPFilterbank_h
 #define __TFPFilterbank_h

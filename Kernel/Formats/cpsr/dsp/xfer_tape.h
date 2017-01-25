@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/xfer_tape.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:06 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/cpsr/dsp/xfer_tape.h
 
 #ifndef __XFER_TAPE_H
 #define __XFER_TAPE_H

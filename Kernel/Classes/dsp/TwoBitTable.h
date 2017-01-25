@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitTable.h,v $
-   $Revision: 1.15 $
-   $Date: 2009/07/31 12:23:13 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TwoBitTable.h
 
 
 #ifndef __TwoBitTable_h

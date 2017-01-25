@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/maxim/dsp/MaximUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/maxim/dsp/MaximUnpacker.h
 
 
 #ifndef __MaximUnpacker_h

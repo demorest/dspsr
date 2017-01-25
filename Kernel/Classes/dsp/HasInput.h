@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HasInput.h,v $
-   $Revision: 1.3 $
-   $Date: 2011/07/26 12:40:30 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/HasInput.h
 
 #ifndef __dsp_HasInput_h
 #define __dsp_HasInput_h

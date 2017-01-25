@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Shape.h,v $
-   $Revision: 1.12 $
-   $Date: 2009/06/07 01:22:34 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Shape.h
 
 #ifndef __Shape_h
 #define __Shape_h

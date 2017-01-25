@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/TimeDivide.h,v $
-   $Revision: 1.17 $
-   $Date: 2009/06/17 10:32:32 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/TimeDivide.h
 
 #ifndef __baseband_dsp_TimeDivide_h
 #define __baseband_dsp_TimeDivide_h
