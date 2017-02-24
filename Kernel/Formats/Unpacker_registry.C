@@ -262,9 +262,17 @@ static dsp::Unpacker::Register::Enter<dsp::K5TwoBitCorrection>  k5;
 static dsp::Unpacker::Register::Enter<dsp::GenericEightBitUnpacker> gen8bit;
 
 /*
+  Generic four-bit unpacker is used if no other four-bit unpacker steps up
+*/
+
+#include "dsp/GenericFourBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::GenericFourBitUnpacker> gen4bit;
+
+/*
   get_registry is defined here to ensure that this file is linked
 */
 dsp::Unpacker::Register& dsp::Unpacker::get_register()
 {
   return Register::get_registry();
 }
+
