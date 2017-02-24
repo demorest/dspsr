@@ -103,11 +103,6 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
 			"cufftPlan1d(plan_fwd, CUFFT_C2C)");
   }
 
-  result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
-		      "cufftSetCompatibilityMode(plan_fwd)");
-
   DEBUG("CUDA::FilterbankEngine::setup setting stream=" << stream);
   result = cufftSetStream (plan_fwd, stream);
   if (result != CUFFT_SUCCESS)
@@ -122,12 +117,6 @@ void CUDA::FilterbankEngine::setup (dsp::Filterbank* filterbank)
     if (result != CUFFT_SUCCESS)
       throw CUFFTError (result, "CUDA::FilterbankEngine::setup", 
 			"cufftPlan1d(plan_bwd)");
-
-    // optimal performance for CUFFT regarding data layout
-    result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
-    if (result != CUFFT_SUCCESS)
-      throw CUFFTError (result, "CUDA::FilterbankEngine::setup",
-			"cufftSetCompatibilityMode(plan_bwd)");
 
     result = cufftSetStream (plan_bwd, stream);
     if (result != CUFFT_SUCCESS)

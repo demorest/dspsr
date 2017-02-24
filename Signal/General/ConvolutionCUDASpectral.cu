@@ -264,11 +264,6 @@ void CUDA::ConvolutionEngineSpectral::setup_batched (const dsp::TimeSeries* inpu
     throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::setup_batched", 
                       "cufftMakePlanMany (plan_fwd)");
 
-  result = cufftSetCompatibilityMode (plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::setup_batched",
-          "cufftSetCompatibilityMode(plan_fwd)");
-
   result = cufftSetStream (plan_fwd, stream);
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::setup_batched",
@@ -310,11 +305,6 @@ void CUDA::ConvolutionEngineSpectral::setup_batched (const dsp::TimeSeries* inpu
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::setup_batched", 
                       "cufftMakePlanMany (plan_bwd)");
-
-  result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::ConvolutionEngineSpectral::setup_batched",
-                      "cufftSetCompatibilityMode(plan_bwd)");
 
   result = cufftSetStream (plan_bwd, stream);
   if (result != CUFFT_SUCCESS)
