@@ -167,7 +167,8 @@ static dsp::Unpacker::Register::Enter<dsp::MiniUnpack> miniunpack;
 #endif
 
 #if HAVE_mwa
-// There is no MWA unpacker checked into the repository
+#include "dsp/EDAFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::EDAFourBit> eda4bit;
 #endif
 
 #if HAVE_pmdaq
