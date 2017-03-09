@@ -63,6 +63,7 @@ libdspdsp_la_SOURCES += CUFFTError.C LaunchConfig.C FilterbankCUDA.cu \
   ConvolutionCUDA.cu ConvolutionCUDASpectral.cu ConvolutionCUDACallbacks.cu
 
 bin_PROGRAMS += fftbatch_speed
+fftbatch_speed_SOURCES = fftbatch_speed.C
 
 if HAVE_CUFFT_CALLBACKS
 bin_PROGRAMS += cufft_callback_bench
