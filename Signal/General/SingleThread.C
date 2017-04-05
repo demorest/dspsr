@@ -354,9 +354,18 @@ uint64_t dsp::SingleThread::get_minimum_samples () const
 //! Run through the data
 void dsp::SingleThread::run () try
 {
-  if (Operation::verbose)
-    cerr << "dsp::SingleThread::run this=" << this 
+
+  if (Operation::verbose) {
+
+    cerr << "dsp::SingleThread::run this=" << this
          << " nops=" << operations.size() << endl;
+
+    for (unsigned iop=0; iop < operations.size(); iop++){
+      cerr << "dsp::SingleThread::run operation (" << iop << "): "
+           << operations[iop]->get_name() << endl;
+    }
+
+  }
 
   if (log)
     scratch->set_cerr (*log);
