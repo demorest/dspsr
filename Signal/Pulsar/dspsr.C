@@ -20,17 +20,22 @@
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
 #include "Pulsar/Predictor.h"
+#include "Pulsar/SimplePredictor.h"
 
 #include "FTransform.h"
 
 #include "load_factory.h"
 #include "dirutil.h"
+#include "strutil.h"
 
 #include <iostream>
+#include <sstream>     
+
 
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -412,6 +417,10 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (predictor, 'P', "file");
   arg->set_help ("phase predictor used for folding");
 
+  string predictors_file;
+  arg = menu.add (predictors_file, 'w', "file");
+  arg->set_help ("phase predictors used for folding.");
+
   arg = menu.add (config->additional_pulsars, 'X', "name");
   arg->set_help ("additional pulsar to be folded");
 
@@ -576,6 +585,112 @@ void parse_options (int argc, char** argv) try
     config->predictors.push_back 
       ( factory<Pulsar::Predictor> (predictor[i]) );
   }
+
+  if(!predictors_file.empty()) {
+
+    cerr << "dspsr: Loading phase models from " << config->predictors_file << endl;
+
+    vector<char> buffer (10240);
+    char* buf = &buffer[0];
+
+    FILE* fptr = fopen (predictors_file.c_str(), "r");
+    if (!fptr)
+      throw Error (FailedSys, "parse_options",
+		   "fopen (%s)", predictors_file.c_str());
+
+    string key_string;
+    // choose first non commented and non empty line and attempt to parse header.
+    while( fgets (buf, buffer.size(), fptr) ==buf ){
+
+      string temp  = buf;
+      temp = stringtok ( temp, "#\n", false);  // get rid of comments and empty lines
+
+      if(temp.empty())
+        continue;
+
+      key_string = temp;
+      break;
+      
+    }
+    if(key_string.empty())
+      throw Error(InvalidState,"parse_options","Bad input file to -w flag.");
+    string delim = " \t\n";
+
+    vector<string> keys;
+    string key_next;
+    string key_rest;
+
+    cerr << " read header string: " << key_string << endl;
+
+    do {
+
+      string_split_on_any( key_string, key_next, key_rest, delim );
+
+      if(key_next.empty() && !key_rest.empty())
+	throw Error (InvalidState,"dspsr", "Key in candiate file was empty.");
+
+      if(key_next.empty() && key_rest.empty())
+	key_next = key_string;
+
+      cerr<< "Considering Key = '" << key_next << "'"<<endl;      
+      keys.push_back(key_next);
+
+      key_string = key_rest;
+
+
+    }while(!key_rest.empty());
+
+    int nkeys = keys.size();
+    int nline = 1;
+
+
+    cerr << "loaded " << nkeys << " keys." << endl;
+    
+
+    while ( fgets (buf, buffer.size(), fptr) == buf ) {
+
+      nline++;
+
+      string value_string = buf;
+      value_string = stringtok (value_string, "#\n", false);  // get rid of comments and empty lines
+
+      if(value_string.empty())
+	continue;
+
+      vector<string> values(nkeys);
+      ostringstream lines;
+      string value_next;
+      string value_rest;
+
+      for(int i=0; i< nkeys; i++ ) {
+	
+        string_split_on_any( value_string, value_next, value_rest, delim );	
+	
+
+        cerr<< "Considering Key = '" << keys.at(i) << "' value='" << value_next << "'" <<endl;
+	
+	if(value_next.empty() && !value_rest.empty()){
+	  stringstream err;
+	  err <<  "Value in candiate file was empty on line " << nline << endl; 
+	  throw Error (InvalidState,"dspsr", err.str().c_str());
+	}
+
+	if(value_next.empty() && value_rest.empty())
+	  value_next = value_string;
+
+	lines << keys.at(i) << ": " << value_next << endl;
+	value_string = value_rest;
+      }
+
+      cerr << lines.str();
+
+      char* line_buffer = (char*)lines.str().c_str();
+      
+      FILE* virtual_ptr = fmemopen( line_buffer, strlen(line_buffer) ,"r" );
+      config->predictors.push_back ( factory<Pulsar::Predictor> ( virtual_ptr ));
+    }
+  }
+
 
   for (unsigned i=0; i<jobs.size(); i++)
     separate (jobs[i], config->jobs, ",");
