@@ -20,7 +20,6 @@
 #include "Pulsar/Archive.h"
 #include "Pulsar/Parameters.h"
 #include "Pulsar/Predictor.h"
-#include "Pulsar/SimplePredictor.h"
 
 #include "FTransform.h"
 
@@ -30,8 +29,6 @@
 
 #include <iostream>
 #include <sstream>     
-
-
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -588,7 +585,7 @@ void parse_options (int argc, char** argv) try
 
   if(!predictors_file.empty()) {
 
-    cerr << "dspsr: Loading phase models from " << config->predictors_file << endl;
+    cerr << "dspsr: Loading phase models from " << predictors_file << endl;
 
     vector<char> buffer (10240);
     char* buf = &buffer[0];
