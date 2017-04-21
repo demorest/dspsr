@@ -75,10 +75,20 @@ int main (int argc, char** argv) try
 
   Reference::To<dsp::Pipeline> engine;
 
-  if (config->get_total_nthread() > 1)
+  if (config->get_total_nthread() > 1){
+
+    if(dsp::Observation::verbose)
+      cerr << "using dsp::LoadToFoldN" << endl;
+
     engine = new dsp::LoadToFoldN (config);
-  else
+  }
+  else{
+
+    if(dsp::Observation::verbose)
+      cerr << "using dsp::LoadToFold" << endl;
+
     engine = new dsp::LoadToFold (config);
+  }
 
   bool time_prep = dsp::Operation::record_time || config->get_cuda_ndevice();
 
@@ -611,6 +621,7 @@ void parse_options (int argc, char** argv) try
     }
     if(key_string.empty())
       throw Error(InvalidState,"parse_options","Bad input file to -w flag.");
+
     string delim = " \t\n";
 
     vector<string> keys;
@@ -655,7 +666,7 @@ void parse_options (int argc, char** argv) try
 	continue;
 
       vector<string> values(nkeys);
-      ostringstream lines;
+      stringstream lines;
       string value_next;
       string value_rest;
 
@@ -664,16 +675,19 @@ void parse_options (int argc, char** argv) try
         string_split_on_any( value_string, value_next, value_rest, delim );	
 	
 
-        cerr<< "Considering Key = '" << keys.at(i) << "' value='" << value_next << "'" <<endl;
+
 	
 	if(value_next.empty() && !value_rest.empty()){
 	  stringstream err;
-	  err <<  "Value in candiate file was empty on line " << nline << endl; 
+	  cerr <<  "Value in candiate file was empty on line " << nline << endl; 
 	  throw Error (InvalidState,"dspsr", err.str().c_str());
 	}
 
 	if(value_next.empty() && value_rest.empty())
 	  value_next = value_string;
+
+	if(dsp::Observation::verbose)
+	  cerr<< "Considering Key = '" << keys.at(i) << "' value='" << value_next << "'" <<endl;
 
 	lines << keys.at(i) << ": " << value_next << endl;
 	value_string = value_rest;
@@ -682,7 +696,7 @@ void parse_options (int argc, char** argv) try
       cerr << lines.str();
 
       char* line_buffer = (char*)lines.str().c_str();
-      
+
       FILE* virtual_ptr = fmemopen( line_buffer, strlen(line_buffer) ,"r" );
       config->predictors.push_back ( factory<Pulsar::Predictor> ( virtual_ptr ));
     }
