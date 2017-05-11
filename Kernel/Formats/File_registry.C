@@ -180,6 +180,12 @@ static dsp::File::Register::Enter<dsp::SigProcFile> register_sigproc;
 static dsp::File::Register::Enter<dsp::SpigotFile> register_spigot;
 #endif
 
+
+#if HAVE_emerlin
+#include "dsp/EmerlinFile.h"
+static dsp::File::Register::Enter<dsp::EmerlinFile> register_emerlin;
+#endif
+
 #if HAVE_vdif
 #include "dsp/VDIFFile.h"
 static dsp::File::Register::Enter<dsp::VDIFFile> register_vdif;
