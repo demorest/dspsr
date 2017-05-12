@@ -3,7 +3,7 @@
 #define __EmerlinFile_h
 
 
-#include <cstdint>
+#include <inttypes.h>
 #include "dsp/File.h"
 #include "dsp/BlockFile.h"
 
