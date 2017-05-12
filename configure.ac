@@ -166,6 +166,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/cpsr2/Makefile
 		Kernel/Formats/dada/Makefile
 		Kernel/Formats/dummy/Makefile
+		Kernel/Formats/emerlin/Makefile
 		Kernel/Formats/fadc/Makefile
         	Kernel/Formats/fits/Makefile
 		Kernel/Formats/gmrt/Makefile

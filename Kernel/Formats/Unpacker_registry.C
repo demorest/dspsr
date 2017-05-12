@@ -208,6 +208,12 @@ static dsp::Unpacker::Register::Enter<dsp::GUPPIFITSUnpacker> guppifits;
 static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 #endif
 
+
+#if HAVE_emerlin
+#include "dsp/EmerlinUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::EmerlinUnpacker> emerlin;
+#endif
+
 #if HAVE_vdif
 #include "dsp/VDIFTwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrection> vdif;
