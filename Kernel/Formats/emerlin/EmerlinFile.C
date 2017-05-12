@@ -195,10 +195,13 @@ void dsp::EmerlinFile::open_file(const char* filename) {
 
 
 int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
+
     if (nbytes % 16000){
+        // trim to an integer number of frames
         std::cerr << "dsp::EmerlinFile::load_bytes ERROR: Need to read integer number of frames" << std::endl;
-        return -1;
+        nbytes = 16000*(nbytes/16000);
     }
+
 
     unsigned nframe = nbytes / 16000;
     unsigned npacket = nframe/2;
@@ -264,6 +267,7 @@ int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
     }
     cur_frame += nframe;
 
+    return nbytes;
 }
 
 
