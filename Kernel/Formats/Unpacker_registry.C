@@ -156,6 +156,11 @@ static dsp::Unpacker::Register::Enter<dsp::Mark5Unpacker> mark5_general;
 static dsp::Unpacker::Register::Enter<dsp::Mark5TwoBitCorrection> mark5;
 #endif
 
+#if HAVE_mark5b
+#include "dsp/Mark5bUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::Mark5bUnpacker> mark5b;
+#endif
+
 #if HAVE_maxim
 #include "dsp/MaximUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::MaximUnpacker> maxim;
