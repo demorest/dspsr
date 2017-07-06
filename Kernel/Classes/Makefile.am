@@ -78,5 +78,5 @@ include $(top_srcdir)/config/Makefile.cuda
 
 LDADD = libClasses.la
 
-AM_CPPFLAGS += @CUDA_CFLAGS@
+AM_CPPFLAGS += @CUDA_CFLAGS@ @PSRDADA_CFLAGS@
 
