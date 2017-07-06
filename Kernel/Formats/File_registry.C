@@ -125,6 +125,11 @@ static dsp::File::Register::Enter<dsp::Mark4File> register_mark4;
 static dsp::File::Register::Enter<dsp::Mark5File> register_mark5;
 #endif
 
+#if HAVE_mark5b
+#include "dsp/Mark5bFile.h"
+static dsp::File::Register::Enter<dsp::Mark5bFile> register_mark5b;
+#endif
+
 #if HAVE_maxim
 #include "dsp/MaximFile.h"
 static dsp::File::Register::Enter<dsp::MaximFile> register_maxim;
