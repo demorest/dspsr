@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma/dsp/PuMaFile.h,v $
-   $Revision: 1.7 $
-   $Date: 2008/05/28 21:12:43 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/puma/dsp/PuMaFile.h
 
 
 #ifndef __dsp_PuMaFile_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/GenericEightBitUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2012/03/21 09:19:09 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/GenericEightBitUnpacker.h
 
 #ifndef __GenericEightBitUnpacker_h
 #define __GenericEightBitUnpacker_h

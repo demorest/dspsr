@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Sink.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/06/07 01:22:34 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/Sink.h
 
 #ifndef __dsp_Sink_h
 #define __dsp_Sink_h

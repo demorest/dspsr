@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/OptimalFFT.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/05/18 15:39:58 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/OptimalFFT.h
 
 #ifndef __OptimalFFT_h
 #define __OptimalFFT_h

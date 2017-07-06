@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Detection.h,v $
-   $Revision: 1.20 $
-   $Date: 2010/06/01 09:12:18 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Detection.h
 
 
 #ifndef __Detection_h

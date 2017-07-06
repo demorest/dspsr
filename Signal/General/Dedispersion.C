@@ -11,6 +11,7 @@
 
 #include "ThreadContext.h"
 #include "Error.h"
+
 #include <complex>
 
 using namespace std;
@@ -209,12 +210,33 @@ void dsp::Dedispersion::prepare (const Observation* input, unsigned channels)
   note that each time sample depends upon the preceding impulse_pos
   points.
 */
+
+unsigned smearing_samples_threshold = 16 * 1024 * 1024;
+
 void dsp::Dedispersion::prepare ()
 {
   if (!smearing_samples_set)
   {
+    unsigned threshold = smearing_samples_threshold / nchan;
+    supported_channels = vector<bool> (nchan, true);
+    unsigned ichan = 0;
+  
+    while( (impulse_neg = smearing_samples (-1)) > threshold )
+    {
+      supported_channels[ichan] = false;
+      ichan ++;
+      if (ichan == nchan)
+	throw Error (InvalidState,
+		     "dsp::Dedispersion::prepare",
+		     "smearing samples=%u exceeds threshold=%u",
+		     impulse_neg, threshold);
+    }
+
+    if (verbose)
+      cerr << "dsp::Dedispersion::prepare "
+	   << ichan << " unsupported channels" << endl;
+    
     impulse_pos = smearing_samples (1);
-    impulse_neg = smearing_samples (-1);
   }
 
   if (psrdisp_compatible)
@@ -223,13 +245,6 @@ void dsp::Dedispersion::prepare ()
       "   using symmetric impulse response function" << endl;
     impulse_pos = impulse_neg;
   }
-
-#if 0
-  // test the effect of a possibly common error in the interpretation of HR75
-  impulse_pos += impulse_neg;
-  impulse_neg = 0;
-#endif
-
 }
 
 
@@ -354,6 +369,9 @@ double dsp::Dedispersion::get_effective_smearing_time () const
 //! Return the effective number of smearing samples
 unsigned dsp::Dedispersion::get_effective_smearing_samples () const
 {
+  if (verbose)
+    cerr << "dsp::Dedispersion::get_effective_smearing_samples" << endl;
+
   return smearing_samples (0);
 }
 
@@ -372,6 +390,13 @@ double dsp::Dedispersion::smearing_time (int half) const
   double ch_abs_bw = abs_bw / double(nchan);
   double lower_ch_cfreq = centre_frequency - (abs_bw - ch_abs_bw) / 2.0;
 
+  unsigned ichan=0;
+  while (ichan < supported_channels.size() && !supported_channels[ichan])
+  {
+    lower_ch_cfreq += ch_abs_bw;
+    ichan++;
+  }
+      
   // calculate the smearing (in the specified half of the band)
   if (half)
   {
@@ -414,7 +439,7 @@ unsigned dsp::Dedispersion::smearing_samples (int half) const
 
   if (verbose)
     cerr << "dsp::Dedispersion::smearing_samples = "
-	 << int(tsmear * sampling_rate) << endl;
+	 << int64_t(tsmear * sampling_rate) << endl;
 
   // add another ten percent, just to be sure that the pollution due
   // to the cyclical convolution effect is minimized

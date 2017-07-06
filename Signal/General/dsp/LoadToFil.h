@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LoadToFil.h,v $
-   $Revision: 1.4 $
-   $Date: 2011/12/21 06:02:20 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/LoadToFil.h
 
 #ifndef __dspsr_LoadToFil_h
 #define __dspsr_LoadToFil_h

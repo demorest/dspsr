@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark5/dsp/Mark5TwoBitCorrection.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/06/17 10:16:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/mark5/dsp/Mark5TwoBitCorrection.h
 
 #ifndef __Mark5TwoBitCorrection_h
 #define __Mark5TwoBitCorrection_h

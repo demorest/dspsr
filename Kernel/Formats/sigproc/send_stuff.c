@@ -2,8 +2,8 @@
 #include <string.h>
 
 #include "sigproc.h"
-FILE *input, *output;
-int swapout;
+extern FILE *input, *output;
+extern int swapout;
 void send_string(char *string) /* includefile */
 {
   int len;

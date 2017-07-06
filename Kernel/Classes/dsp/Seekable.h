@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Seekable.h,v $
-   $Revision: 1.15 $
-   $Date: 2010/06/04 03:36:31 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/Seekable.h
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HasOutput.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/09/16 17:45:34 $
-   $Author: demorest $ */
+// dspsr/Kernel/Classes/dsp/HasOutput.h
 
 #ifndef __dsp_HasOutput_h
 #define __dsp_HasOutput_h

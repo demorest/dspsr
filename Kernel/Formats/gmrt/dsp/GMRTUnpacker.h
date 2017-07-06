@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/gmrt/dsp/GMRTUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/07/15 04:55:14 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/gmrt/dsp/GMRTUnpacker.h
 
 #ifndef __GMRTUnpacker_h
 #define __GMRTUnpacker_h

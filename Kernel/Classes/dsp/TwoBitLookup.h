@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitLookup.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/17 01:17:33 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TwoBitLookup.h
 
 #ifndef __TwoBitLookup_h
 #define __TwoBitLookup_h

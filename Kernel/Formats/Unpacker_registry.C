@@ -172,7 +172,8 @@ static dsp::Unpacker::Register::Enter<dsp::MiniUnpack> miniunpack;
 #endif
 
 #if HAVE_mwa
-// There is no MWA unpacker checked into the repository
+#include "dsp/EDAFourBit.h"
+static dsp::Unpacker::Register::Enter<dsp::EDAFourBit> eda4bit;
 #endif
 
 #if HAVE_pmdaq
@@ -212,11 +213,19 @@ static dsp::Unpacker::Register::Enter<dsp::GUPPIFITSUnpacker> guppifits;
 static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
 #endif
 
+
+#if HAVE_emerlin
+#include "dsp/EmerlinUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::EmerlinUnpacker> emerlin;
+#endif
+
 #if HAVE_vdif
 #include "dsp/VDIFTwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrection> vdif;
 #include "dsp/VDIFTwoBitCorrectionMulti.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrectionMulti> vdif_multi;
+#include "dsp/VDIFFourBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::VDIFFourBitUnpacker> vdif4;
 #include "dsp/VDIFEightBitUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFEightBitUnpacker> vdif8;
 #endif
@@ -265,9 +274,17 @@ static dsp::Unpacker::Register::Enter<dsp::K5TwoBitCorrection>  k5;
 static dsp::Unpacker::Register::Enter<dsp::GenericEightBitUnpacker> gen8bit;
 
 /*
+  Generic four-bit unpacker is used if no other four-bit unpacker steps up
+*/
+
+#include "dsp/GenericFourBitUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::GenericFourBitUnpacker> gen4bit;
+
+/*
   get_registry is defined here to ensure that this file is linked
 */
 dsp::Unpacker::Register& dsp::Unpacker::get_register()
 {
   return Register::get_registry();
 }
+

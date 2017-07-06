@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitMask.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/07/13 00:38:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TwoBitMask.h
 
 #ifndef __TwoBitMask_h
 #define __TwoBitMask_h

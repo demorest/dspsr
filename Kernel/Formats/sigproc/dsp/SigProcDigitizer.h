@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcDigitizer.h,v $
-   $Revision: 1.3 $
-   $Date: 2011/07/19 14:59:41 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/sigproc/dsp/SigProcDigitizer.h
 
 #ifndef __SigProcDigitizer_h
 #define __SigProcDigitizer_h

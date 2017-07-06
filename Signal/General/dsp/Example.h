@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Example.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:12 $
-   $Author: wvanstra $ */
+// dspsr/Signal/General/dsp/Example.h
 
 #ifndef __Example_h
 #define __Example_h

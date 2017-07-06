@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/spda1k/dsp/spda1k_File.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/12/01 07:55:12 $
-   $Author: ahotan $ */
+// dspsr/Kernel/Formats/spda1k/dsp/spda1k_File.h
 
 #ifndef __SPDA1K_File_h
 #define __SPDA1K_File_h

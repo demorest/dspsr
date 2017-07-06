@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ExcisionStatsPlotter.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/07/16 07:00:16 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/ExcisionStatsPlotter.h
 
 #ifndef __ExcisionStatsPlotter_h
 #define __ExcisionStatsPlotter_h

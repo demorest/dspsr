@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/IOManager.h,v $
-   $Revision: 1.33 $
-   $Date: 2011/08/04 21:04:38 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/IOManager.h
 
 
 #ifndef __IOManager_h

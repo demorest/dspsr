@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2010/05/04 15:30:40 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/sigproc/dsp/SigProcUnpacker.h
 
 #ifndef __SigProcUnpacker_h
 #define __SigProcUnpacker_h

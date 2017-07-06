@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2TwoBitCorrection.h,v $
-   $Revision: 1.9 $
-   $Date: 2006/07/09 13:27:07 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/cpsr2/dsp/CPSR2TwoBitCorrection.h
 
 #ifndef __CPSR2TwoBitCorrection_h
 #define __CPSR2TwoBitCorrection_h

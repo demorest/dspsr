@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/debug.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/11/15 00:47:21 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/debug.h
 
 #ifndef __debug_h
 #define __debug_h

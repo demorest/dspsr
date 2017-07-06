@@ -117,16 +117,6 @@ void dsp::Mark5bFile::open_file (const char* filename)
   // instruct the loader to only take gulps of samplegranularity samples
   Input::resolution = m5stream->samplegranularity;
 
-  // The factor of 2 should only apply for dual-pol data.
-  cerr << "NCHAN = " << m5stream->nchan / 2 << endl;
-  get_info()->set_nchan( m5stream->nchan / 2 ); 
-
-  cerr << "NBIT = " << m5stream->nbit << endl;
-  get_info()->set_nbit ( m5stream->nbit );
-  
-  cerr << "SAMPRATE = " << m5stream->samprate << endl;
-  get_info()->set_rate ( m5stream->samprate );
-
   int refmjd = 0;
   if (ascii_header_get (header,"REFMJD","%d",&refmjd) < 0)
    throw Error (InvalidParam, "Mark5bFile::open_file", 
@@ -221,13 +211,22 @@ void dsp::Mark5bFile::open_file (const char* filename)
 		 "failed read BW");
 
   get_info()->set_bandwidth (bw);
-	
-  // ///////////////////////////////////////////////////////////////
-  // NPOL
-  //	
-  //  -- generalise this later
-	
-  get_info()->set_npol(2);    // read in both polns at once
+
+  double Mega_samples_per_second = m5stream->Mbps / m5stream->nbit;
+
+  double npol = round( (bw * 2) / Mega_samples_per_second );
+  cerr << "NPOL=" << npol << endl;
+  
+  cerr << "NCHAN = " << m5stream->nchan / npol << endl;
+  get_info()->set_nchan( m5stream->nchan / npol ); 
+
+  cerr << "NBIT = " << m5stream->nbit << endl;
+  get_info()->set_nbit ( m5stream->nbit );
+  
+  cerr << "SAMPRATE = " << m5stream->samprate << endl;
+  get_info()->set_rate ( m5stream->samprate );
+
+  get_info()->set_npol(npol);
 
   // ///////////////////////////////////////////////////////////////	
   // NDIM  --- whether the data are Nyquist or Quadrature sampled

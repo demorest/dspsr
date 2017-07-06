@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/gmrt/dsp/GMRTFilterbankFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/03/02 17:27:35 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/gmrt/dsp/GMRTFilterbankFile.h
 
 
 #ifndef __GMRTFilterbankFile_h

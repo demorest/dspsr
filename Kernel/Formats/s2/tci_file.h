@@ -7,7 +7,7 @@
 
 /*
 $Id: tci_file.h,v 1.3 2009/05/04 23:17:13 straten Exp $
-$Log: tci_file.h,v $
+$Log: tci_file.h
 Revision 1.3  2009/05/04 23:17:13  straten
 verbosity mods
 

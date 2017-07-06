@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Response.h,v $
-   $Revision: 1.33 $
-   $Date: 2011/01/06 05:16:55 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Response.h
 
 #ifndef __Response_h
 #define __Response_h

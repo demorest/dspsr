@@ -309,11 +309,6 @@ void CUDA::ConvolutionEngine::setup_singular ()
     throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_singular",
                       "cufftPlan1d(plan_fwd)");
 
-  result = cufftSetCompatibilityMode(plan_fwd, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_singular",
-          "cufftSetCompatibilityMode(plan_fwd)");
-
   result = cufftSetStream (plan_fwd, stream);
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_singular",
@@ -324,11 +319,6 @@ void CUDA::ConvolutionEngine::setup_singular ()
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_singular",
                       "cufftPlan1d(plan_bwd)");
-
-  result = cufftSetCompatibilityMode(plan_bwd, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_singular",
-                      "cufftSetCompatibilityMode(plan_bwd)");
 
   result = cufftSetStream (plan_bwd, stream);
   if (result != CUFFT_SUCCESS)
@@ -382,11 +372,6 @@ void CUDA::ConvolutionEngine::setup_batched (unsigned _nbatch)
     throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_batched", 
                       "cufftMakePlanMany (plan_fwd_batched)");
 
-  result = cufftSetCompatibilityMode (plan_fwd_batched, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_batched",
-          "cufftSetCompatibilityMode(plan_fwd_batched)");
-
   result = cufftSetStream (plan_fwd_batched, stream);
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_batched",
@@ -422,11 +407,6 @@ void CUDA::ConvolutionEngine::setup_batched (unsigned _nbatch)
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_batched", 
                       "cufftMakePlanMany (plan_bwd_batched)");
-
-  result = cufftSetCompatibilityMode(plan_bwd_batched, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-    throw CUFFTError (result, "CUDA::ConvolutionEngine::setup_batched",
-                      "cufftSetCompatibilityMode(plan_bwd_batched)");
 
   result = cufftSetStream (plan_bwd_batched, stream);
   if (result != CUFFT_SUCCESS)

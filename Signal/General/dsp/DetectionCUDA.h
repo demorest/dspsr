@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/DetectionCUDA.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/06/01 10:46:29 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/DetectionCUDA.h
 
 #ifndef __baseband_cuda_Detection_h
 #define __baseband_cuda_Detection_h

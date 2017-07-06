@@ -4,10 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspm++.h,v $
-   $Revision: 1.9 $
-   $Date: 2006/10/15 23:26:47 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/cpsr/pspm++.h
 
 #ifndef __PSPM_H
 #define __PSPM_H

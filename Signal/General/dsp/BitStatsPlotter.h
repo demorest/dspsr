@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BitStatsPlotter.h,v $
-   $Revision: 1.5 $
-   $Date: 2008/07/13 00:38:54 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/BitStatsPlotter.h
 
 #ifndef __BitStatsPlotter_h
 #define __BitStatsPlotter_h
