@@ -697,8 +697,10 @@ void parse_options (int argc, char** argv) try
 
       char* line_buffer = (char*)lines.str().c_str();
 
+#if HAVE_FMEMOPEN
       FILE* virtual_ptr = fmemopen( line_buffer, strlen(line_buffer) ,"r" );
       config->predictors.push_back ( factory<Pulsar::Predictor> ( virtual_ptr ));
+#endif
     }
   }
 
