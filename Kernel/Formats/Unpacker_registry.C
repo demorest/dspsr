@@ -166,6 +166,11 @@ static dsp::Unpacker::Register::Enter<dsp::MaximUnpacker> maxim;
 static dsp::Unpacker::Register::Enter<dsp::MiniUnpack> miniunpack;
 #endif
 
+#if HAVE_mopsr
+#include "dsp/MOPSRUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::MOPSRUnpacker> mopsr;
+#endif
+
 #if HAVE_mwa
 // There is no MWA unpacker checked into the repository
 #endif
