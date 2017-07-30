@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/UnpackerIterator.h,v $
-   $Revision: 1.1 $
-   $Date: 2008/09/09 06:34:07 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/UnpackerIterator.h
 
 #ifndef __UnpackerIterator_h
 #define __UnpackerIterator_h

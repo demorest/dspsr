@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/AutoCorrelation.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+// dspsr/Signal/General/dsp/AutoCorrelation.h
 
 #ifndef __AutoCorrelation_h
 #define __AutoCorrelation_h

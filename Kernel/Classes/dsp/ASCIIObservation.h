@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ASCIIObservation.h,v $
-   $Revision: 1.8 $
-   $Date: 2011/08/01 10:05:37 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/ASCIIObservation.h
 
 #ifndef __ASCIIObservation_h
 #define __ASCIIObservation_h

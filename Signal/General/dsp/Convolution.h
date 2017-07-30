@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Convolution.h,v $
-   $Revision: 1.26 $
-   $Date: 2011/08/04 21:06:30 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Convolution.h
 
 #ifndef __Convolution_h
 #define __Convolution_h

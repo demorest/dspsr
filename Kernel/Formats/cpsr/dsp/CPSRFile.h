@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h,v $
-   $Revision: 1.15 $
-   $Date: 2008/05/28 21:12:42 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/cpsr/dsp/CPSRFile.h
 
 
 #ifndef __CPSRFile_h

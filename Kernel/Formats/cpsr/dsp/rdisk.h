@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/dsp/rdisk.h,v $
-   $Revision: 1.6 $
-   $Date: 2006/10/15 23:26:47 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/cpsr/dsp/rdisk.h
 
 #ifndef __RDISK_H
 #define __RDISK_H

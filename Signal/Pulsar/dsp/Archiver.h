@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Archiver.h,v $
-   $Revision: 1.39 $
-   $Date: 2012/02/24 20:05:54 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/Archiver.h
 
 
 #ifndef __Archiver_h

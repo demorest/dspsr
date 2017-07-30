@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/RFIFilter.h,v $
-   $Revision: 1.4 $
-   $Date: 2009/06/17 10:16:54 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/RFIFilter.h
 
 #ifndef __RFIFilter_h
 #define __RFIFilter_h

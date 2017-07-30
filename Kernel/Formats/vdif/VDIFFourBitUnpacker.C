@@ -14,7 +14,9 @@ using namespace std;
 dsp::VDIFFourBitUnpacker::VDIFFourBitUnpacker (const char* name)
   : FourBitUnpacker ("VDIFFourBit")
 {
-  set_table( new BitTable (4, BitTable::OffsetBinary) );
+  BitTable* table = new BitTable (4, BitTable::OffsetBinary);
+  table->set_order( BitTable::LeastToMost );
+  set_table( table );
 }
 
 bool dsp::VDIFFourBitUnpacker::matches (const Observation* observation)

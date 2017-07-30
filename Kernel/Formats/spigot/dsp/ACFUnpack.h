@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/spigot/dsp/ACFUnpack.h,v $
-   $Revision: 1.3 $
-   $Date: 2006/07/09 13:27:09 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/spigot/dsp/ACFUnpack.h
 
 #ifndef __ACFUnpack_h
 #define __ACFUnpack_h

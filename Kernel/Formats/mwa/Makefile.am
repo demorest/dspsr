@@ -1,9 +1,9 @@
 
 noinst_LTLIBRARIES = libmwa.la
 
-nobase_include_HEADERS =  dsp/MWAFile.h
+nobase_include_HEADERS = dsp/MWAFile.h dsp/EDAFourBit.h
 
-libmwa_la_SOURCES =  MWAFile.C
+libmwa_la_SOURCES = MWAFile.C EDAFourBit.C
 
 #############################################################################
 #

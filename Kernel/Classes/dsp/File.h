@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/File.h,v $
-   $Revision: 1.34 $
-   $Date: 2012/02/24 20:47:06 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/File.h
 
 
 #ifndef __File_h

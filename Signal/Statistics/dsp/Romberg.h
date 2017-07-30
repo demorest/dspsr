@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Statistics/dsp/Romberg.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/08/04 21:03:22 $
-   $Author: straten $ */
+// dspsr/Signal/Statistics/dsp/Romberg.h
 
 #ifndef __RombergMethod
 #define __RombergMethod

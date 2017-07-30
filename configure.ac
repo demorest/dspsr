@@ -56,6 +56,8 @@ AC_PROG_CC
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
+AC_PROG_F77
+
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
@@ -116,6 +118,9 @@ MJK_LIB_CRYPTO
 # Check for psrxml io library
 MJK_LIB_PSRXML
 
+# find HDF5 (needed for LOFAR)
+AX_HDF5
+
 #
 # Checks for library functions.
 #
@@ -161,6 +166,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/cpsr2/Makefile
 		Kernel/Formats/dada/Makefile
 		Kernel/Formats/dummy/Makefile
+		Kernel/Formats/emerlin/Makefile
 		Kernel/Formats/fadc/Makefile
         	Kernel/Formats/fits/Makefile
 		Kernel/Formats/gmrt/Makefile

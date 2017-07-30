@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/MultiThread.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/08/24 22:16:04 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/MultiThread.h
 
 #ifndef __dspsr_MultiThread_h
 #define __dspsr_MultiThread_h

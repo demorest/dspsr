@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/NLowLookup.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:53 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/NLowLookup.h
 
 #ifndef __NLowLookup_h
 #define __NLowLookup_h

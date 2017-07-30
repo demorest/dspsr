@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h,v $
-   $Revision: 1.6 $
-   $Date: 2009/08/27 06:53:58 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/ExcisionUnpacker.h
 
 #ifndef __ExcisionUnpacker_h
 #define __ExcisionUnpacker_h

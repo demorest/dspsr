@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/maxim/dsp/MaximFile.h,v $
-   $Revision: 1.3 $
-   $Date: 2008/05/28 21:12:43 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/maxim/dsp/MaximFile.h
 
 #ifndef __MaximFile_h
 #define __MaximFile_h

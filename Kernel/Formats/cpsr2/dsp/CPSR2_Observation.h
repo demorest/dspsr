@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h,v $
-   $Revision: 1.9 $
-   $Date: 2008/11/11 06:14:09 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/cpsr2/dsp/CPSR2_Observation.h
 
 #ifndef __CPSR2_Observation_h
 #define __CPSR2_Observation_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr64/dsp/LBADR64_File.h,v $
-   $Revision: 1.3 $
-   $Date: 2009/06/17 10:16:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/lbadr64/dsp/LBADR64_File.h
 
 #ifndef __LBADR64_File_h
 #define __LBADR64_File_h

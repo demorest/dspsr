@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcOutputFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/09/19 01:56:42 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/sigproc/dsp/SigProcOutputFile.h
 
 
 #ifndef __SigProcOutputFile_h

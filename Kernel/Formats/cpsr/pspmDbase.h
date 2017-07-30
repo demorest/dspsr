@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/cpsr/pspmDbase.h,v $
-   $Revision: 1.8 $
-   $Date: 2009/06/17 10:32:32 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/cpsr/pspmDbase.h
 
 #ifndef __pspmDbase_h
 #define __pspmDbase_h

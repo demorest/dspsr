@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Dedispersion.h,v $
-   $Revision: 1.29 $
-   $Date: 2010/04/11 05:21:43 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Dedispersion.h
 
 #ifndef __Dedispersion_h
 #define __Dedispersion_h
@@ -183,6 +180,10 @@ namespace dsp {
     //! Flag that the response and bandpass attributes reflect the state
     bool built;
 
+    //! Supported frequency channels
+    /*! Set to false when the dispersive smearing is too large */
+    std::vector<bool> supported_channels;
+    
     //! Return the effective smearing time in seconds (worker function)
     double smearing_time (int half) const;
 

@@ -24,7 +24,7 @@
  *      some error message;
  *
  *
- * $Log: pspm_search_header.h,v $
+ * $Log: pspm_search_header.h
  * Revision 1.5  2009/06/17 10:16:54  straten
  * use ISO C99 integer types directly
  *

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h,v $
-   $Revision: 1.9 $
-   $Date: 2010/05/11 06:21:12 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/SubByteTwoBitCorrection.h
 
 #ifndef __SubByteTwoBitCorrection_h
 #define __SubByteTwoBitCorrection_h

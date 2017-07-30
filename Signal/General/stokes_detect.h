@@ -4,10 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/stokes_detect.h,v $
-   $Revision: 1.1 $
-   $Date: 2006/10/15 19:09:24 $
-   $Author: straten $ */
+// dspsr/Signal/General/stokes_detect.h
 
 #ifndef __stokes_detect_h
 #define __stokes_detect_h

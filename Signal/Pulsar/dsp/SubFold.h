@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/SubFold.h,v $
-   $Revision: 1.20 $
-   $Date: 2010/11/13 01:42:50 $
-   $Author: demorest $ */
+// dspsr/Signal/Pulsar/dsp/SubFold.h
 
 #ifndef __SubFold_h
 #define __SubFold_h

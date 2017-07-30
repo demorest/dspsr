@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Pipeline.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/08/23 20:55:19 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Pipeline.h
 
 #ifndef __dspsr_Pipeline_h
 #define __dspsr_Pipeline_h
