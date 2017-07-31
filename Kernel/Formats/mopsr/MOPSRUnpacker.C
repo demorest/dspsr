@@ -242,7 +242,14 @@ void dsp::MOPSRUnpacker::validate_transformation ()
 
 void dsp::MOPSRUnpacker::unpack ()
 {
-  if (get_ndig() != input->get_nchan() * input->get_ndim());
+  const unsigned int nbit = input->get_nbit();
+
+  // 32-bit data does not have a digitizer
+  if ((nbit == 32) && (get_ndig() != 0))
+    set_ndig (0);
+
+  // 8-bit data has a digitizer for each channel
+  if ((nbit == 8) && (get_ndig() != input->get_nchan() * input->get_ndim()))
     set_ndig(input->get_nchan() * input->get_ndim());
 
 #if HAVE_CUDA
@@ -259,7 +266,6 @@ void dsp::MOPSRUnpacker::unpack ()
   const unsigned int nchan = input->get_nchan();
   const unsigned int ndim = input->get_ndim();
   const unsigned int npol = input->get_npol();
-  const unsigned int nbit = input->get_nbit();
   const unsigned int ipol = 0;
   const uint64_t ndat = input->get_ndat();
 
@@ -274,10 +280,12 @@ void dsp::MOPSRUnpacker::unpack ()
   if (debugd)
     cerr << "ndat=" << ndat << " nchan=" << nchan << " ndim=" << ndim << " nbit=" << nbit << endl;
 
+  // TF order is produced by the beam-former, TFS produced by the AQ engines
   if (input_order == TF)
   {
     if (output->get_order() == TimeSeries::OrderFPT)
     {
+      // 32-bit floats are produced by the beam former
       if (nbit == 32)
       {
         for (unsigned ichan=0; ichan<nchan; ichan++)
@@ -294,20 +302,10 @@ void dsp::MOPSRUnpacker::unpack ()
           }
         } 
       }
-      else
+      // 8-bit signed integers products by the PFBs
+      else if (nbit == 8)
       {
         unsigned long * hists[2];
-
-#ifdef NOT_SURE_WHY_THIS_WAS_HERE 
-        uint64_t myndat = 16384;
-
-        // for just 1 channel
-        float * res = (float *) malloc (myndat * sizeof(float));
-        float * ims = (float *) malloc (myndat * sizeof(float));
-        float * difs = (float *) malloc (myndat * sizeof(float));
-        float sum_re = 0;
-        float sum_im = 0;
-#endif
 
         // transpose from TF order to FT order
         for (unsigned ichan=0; ichan<nchan; ichan++)
@@ -325,71 +323,21 @@ void dsp::MOPSRUnpacker::unpack ()
             for (unsigned idim=0; idim < ndim; idim++)
             {
               into[idim] = float ( from[idim] );
-/*
-              if (ichan == 0 && idim == 0 && idat < myndat)
-              {
-                res[idat] = into[idim];
-                //sum_re += into[idim];
-              }
-
-              if (ichan == 0 && idim == 1 && idat < myndat)
-              {
-                ims[idat] = into[idim];
-                //sum_im += into[idim];
-              }
-*/
               hists[idim][from[idim]+128]++;
             }
             from += in_chan_stride;
             into += out_chan_stride;
           }
         }
-
-#ifdef NOT_SURE_WHY_THIS_WAS_HERE
-        float mean_re = sum_re / myndat;
-        float mean_im = sum_im / myndat;
-        //cerr << "1: means = " << mean_re << " " << mean_im << endl;
-
-        sum_re = 0;
-        for (uint64_t idat=0; idat < myndat; idat++)
-        {
-          difs[idat] = powf((res[idat] - mean_re),2);
-          sum_re += difs[idat];
-        }
-        mean_re = sum_re / myndat;
-
-        sum_im = 0;
-        for (uint64_t idat=0; idat < myndat; idat++)
-        {
-          difs[idat] = powf((ims[idat] - mean_im),2);
-          sum_im += difs[idat];
-        }
-        mean_im = sum_im / myndat;
-
-        cerr << "2: sums=" << sum_re << " " << sum_im << " stddevs=" << sqrtf ( mean_re ) << " " << sqrtf ( mean_im ) << endl;
-
-        float * pows = (float *) malloc(sizeof(float) * myndat);
-        float sum_pow = 0;
-        for (uint64_t idat=0; idat < myndat; idat++)
-        {
-          pows[idat] = (res[idat] * res[idat]) + (ims[idat] * ims[idat]);
-          cerr << idat << "\t" << pows[idat] << endl;
-          sum_pow += pows[idat];
-        }
-  
-        float mean_pow = sum_pow / myndat;
-        float stddev = sqrtf(mean_pow / 2);
-        cerr << "3: sum=" << sum_pow << " myndat=" << myndat << " mean_pow=" << mean_pow << " stddev=" << stddev << endl;
-    
-        free (res);
-        free (ims);
-        free (difs);
-        free (pows);
-#endif
+      }
+      else
+      {
+        throw Error (InvalidState, "dsp::MOPSRUnpacker::unpack", "unsupported unpacking bit width input=TF, output=FPT");
       }
     }
     else if (output->get_order() == TimeSeries::OrderTFP)
     {
+      // 32-bit floats are produced by the beam former
       if (nbit == 32)
       {
         // direct unpack from TF to TF
@@ -401,6 +349,7 @@ void dsp::MOPSRUnpacker::unpack ()
           into[ifloat] = from[ifloat];
         }
       }
+      // 8-bit input are produced by the PFBs, Ndim == 2
       else if (nbit == 8 && ndim == 2)
       {
         // direct unpack from TF to TF
@@ -410,8 +359,6 @@ void dsp::MOPSRUnpacker::unpack ()
         unsigned long* hist_re;
         unsigned long* hist_im;
 
-        //cerr << "dsp::MOPSRUnpacker::unpack input_order=TF output=TFP" << endl;
-        
         for (uint64_t ifloat=0; ifloat < nfloat; ifloat++)
         {
           into[0] = lookup[ from[0] ];
@@ -424,19 +371,6 @@ void dsp::MOPSRUnpacker::unpack ()
 
           int bin_re = int8_t(from[0]) + 128;
           int bin_im = int8_t(from[1]) + 128;
-
-/*
-          if ((bin_re < 0) || (bin_re > 255))
-          {
-            cerr << "dsp::MOPSRUnpacker::unpack from[0]=" << (int8_t) from[0] << " into[0]" << into[0] << " bin_re=" << bin_re << endl;
-            bin_re = 128;
-          }
-          if ((bin_im < 0) || (bin_im > 255))
-          {
-            cerr << "dsp::MOPSRUnpacker::unpack from[1]=" << (int8_t) from[1] << " bin_im=" << bin_im << endl;
-            bin_im = 128;
-          }
-*/
 
           hist_re[bin_re]++;
           hist_im[bin_im]++;
@@ -458,7 +392,10 @@ void dsp::MOPSRUnpacker::unpack ()
           into[ifloat] = lookup[ from[ifloat] ];
         }
       }
-    
+      else
+      {
+        throw Error (InvalidState, "dsp::MOPSRUnpacker::unpack", "unsupported unpacking bit width input=TF, output=TFP");
+      }
     }
     else 
     {
