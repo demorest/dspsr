@@ -155,8 +155,12 @@ void dsp::TimeSeries::resize (uint64_t nsamples)
 	   << int64_t((data-(float*)buffer)) << endl;
   }  
 
-  uint64_t fake_ndat = reserve_nfloat / get_ndim();
-  if (reserve_nfloat % get_ndim())
+  uint64_t reserve_step = get_ndim();
+  if (order == OrderTFP)
+    reserve_step *= get_nchan() * get_npol();
+
+  uint64_t fake_ndat = reserve_nfloat / reserve_step;
+  if (reserve_nfloat % reserve_step)
     fake_ndat ++;
 
   if (verbose)
