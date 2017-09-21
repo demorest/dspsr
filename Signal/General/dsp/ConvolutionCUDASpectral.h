@@ -36,12 +36,7 @@ namespace CUDA
     void setup_kernel (const dsp::Response * response);
 
     //! configure batched FFT
-    void setup_batched (const dsp::TimeSeries* input, dsp::TimeSeries * output);
-
-#if HAVE_CUFFT_CALLBACKS
-    //! setup FFT callbacks
-    void setup_callbacks ();
-#endif
+    void setup_batched (const dsp::TimeSeries* input, dsp::TimeSeries * output, unsigned npart);
 
     void perform (const dsp::TimeSeries* input, dsp::TimeSeries* output,
                   unsigned npart);
@@ -74,6 +69,8 @@ namespace CUDA
 
     cufftComplex * buf;
 
+    size_t buf_size;
+
     void * work_area;
 
     size_t work_area_size;
@@ -89,6 +86,8 @@ namespace CUDA
     uint64_t input_stride;
 
     uint64_t output_stride;
+
+    uint64_t buf_stride;
 
     int npt_fwd;
 
