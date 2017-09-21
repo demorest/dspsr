@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/FoldCUDA.h,v $
-   $Revision: 1.11 $
-   $Date: 2011/08/04 21:06:43 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/FoldCUDA.h
 
 #ifndef __baseband_cuda_Fold_h
 #define __baseband_cuda_Fold_h

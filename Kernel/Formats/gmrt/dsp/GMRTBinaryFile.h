@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/gmrt/dsp/GMRTBinaryFile.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/05/08 07:02:00 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/gmrt/dsp/GMRTBinaryFile.h
 
 
 #ifndef __GMRTBinaryFile_h

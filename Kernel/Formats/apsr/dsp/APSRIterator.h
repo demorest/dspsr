@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRIterator.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/07/13 00:38:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/apsr/dsp/APSRIterator.h
 
 #ifndef __APSRIterator_h
 #define __APSRIterator_h

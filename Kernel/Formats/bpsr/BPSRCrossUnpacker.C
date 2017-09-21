@@ -1,12 +1,11 @@
 /***************************************************************************
  *
- *   Copyright (C) 2008-2014 by Andrew Jameson & Willem van Straten
+ *   Copyright (C) 2008 - 2016 by Andrew Jameson & Willem van Straten
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
 
 #include "dsp/BPSRCrossUnpacker.h"
-//#include "dsp/DADABuffer.h"
 #include "dsp/ASCIIObservation.h"
 #include "Error.h"
 
@@ -19,6 +18,16 @@ dsp::BPSRCrossUnpacker::BPSRCrossUnpacker (const char* name) : HistUnpacker (nam
 {
   gain_polx = -1;
   unpack_ppqq_only = false;
+
+  /*
+    This constant is an observed approximate mean value of
+    GAIN_POL1 and GAIN_POL2 and it is applied simply to keep
+    rescale factors close to unity
+  */
+  reference_gain = 100000.0 / 256.0;
+  ppqq_scale[0] = 1.0;
+  ppqq_scale[1] = 1.0;
+  pq_scale = 1.0;
 }
 
 //! Return true if the unpacker support the specified output order
@@ -93,44 +102,90 @@ void dsp::BPSRCrossUnpacker::unpack ()
     const Input * in = input->get_loader();
     const Observation * obs = in->get_info();
     const ASCIIObservation * info = dynamic_cast<const ASCIIObservation *>(obs);
-    if (info)
+    if (!info)
+      throw Error (InvalidState, "dsp::BPSRCrossUnpacker::unpack",
+                   "ASCIIObservation required and not available");
+
+
+    // attempt to get the FACTOR_POLX from the header.
+    // This describes the factor necessary to correct the AB* values
+    // relative to AA and BB.
+
+    info->custom_header_get ("GAIN_POL1", "%f", &gain_pol1);
+    info->custom_header_get ("GAIN_POL2", "%f", &gain_pol2);
+
+    // attempt to get the FACTOR_POLX from the header. This completely describes
+    // the factor necessary to correct the AB* values
+    try
     {
-      if (info)
+      if (info->custom_header_get ("FACTOR_POLX", "%f", &gain_polx) == 1)
       {
-        // attempt to get the FACTOR_POLX from the header. This completely describes
-        // the factor necessary to correct the AB* values
-        try
-        {
-          if (info->custom_header_get ("FACTOR_POLX", "%f", &gain_polx) == 1)
-          {
-            if (verbose)
-              cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX=" << gain_polx << endl;
-          }
-        }
-        catch (Error& error)
-        {
-          // older method that makes the assumption that the AA and BB are in
-          // bit window 1. AB* is in bit window 3. The correct calculation is
-          //    gain_polx = polx * 2^11 / (2^8 * (bwx - bw))
-          unsigned polx;
-          if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
-          {
-            if (polx == 0)
-            {
-              gain_polx = 1;
-            }
-            else
-            {
-              gain_polx = ((float) polx) / 32;
-            }
-          }
-          if (verbose)
-            cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX=" << polx << " FACTOR_POLX=" << gain_polx << endl;
-        }
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack FACTOR_POLX="
+               << gain_polx << endl;
       }
     }
-  }
+    catch (Error& error)
+    {
+      // older method that makes the assumption that the AA and BB are in
+      // bit window 1. AB* is in bit window 3. The correct calculation is
+      //    gain_polx = polx * 2^11 / (2^8 * (bwx - bw))
+      unsigned polx;
+      if (info->custom_header_get ("GAIN_POLX", "%u", &polx) == 1)
+      {
+        if (polx == 0)
+        {
+          gain_polx = 1;
+        }
+        else
+        {
+          gain_polx = ((float) polx) / 32;
+        }
+      }
+      if (verbose)
+        cerr << "dsp::BPSRCrossUnpacker::unpack GAIN_POLX="
+             << polx << " FACTOR_POLX=" << gain_polx << endl;
+    }
 
+    // try to read the Bit Window of the PPQQ data
+    try
+    {
+      if (info->custom_header_get ("PPQQ_BW", "%u", &ppqq_bw) == 1)
+      {
+        if (verbose)
+          cerr << "dsp::BPSRCrossUnpacker::unpack PPQQ_BW="
+               << ppqq_bw << endl;
+      }
+    }
+    catch (Error& error)
+    {
+      ppqq_bw = 1;
+      if (verbose)
+        cerr << "dsp::BPSRCrossUnpacker::unpack assuming PPQQ_BW="
+             << ppqq_bw << endl;
+
+    }
+
+    // each bit window suppresses by 256 (2^8)
+    float ppqq_bw_scale = powf (2, 8*ppqq_bw);
+    if (verbose)
+    {
+      cerr << "dsp::BPSRCrossUnpacker::unpack raw GAIN_POL1=" << gain_pol1 
+           << " GAIN_POL1=" << gain_pol1/ppqq_bw_scale << endl;
+      cerr << "dsp::BPSRCrossUnpacker::unpack raw GAIN_POL2=" << gain_pol2 
+           << " GAIN_POL2=" << gain_pol2/ppqq_bw_scale << endl;
+    }
+    gain_pol1 /= ppqq_bw_scale;
+    gain_pol2 /= ppqq_bw_scale;
+
+    float p_scale = reference_gain/gain_pol1;
+    float q_scale = reference_gain/gain_pol2;
+
+    ppqq_scale[0] = p_scale * p_scale;
+    ppqq_scale[1] = q_scale * q_scale;
+    pq_scale = p_scale * q_scale / gain_polx;
+  }
+  
   switch ( output->get_order() )
   {
   case TimeSeries::OrderFPT:
@@ -165,7 +220,7 @@ void dsp::BPSRCrossUnpacker::unpack ()
             for (unsigned bt = 0; bt < ndat; bt++)
             {
               // hist[ *from ] ++;
-              into[bt] = float( *from );
+              into[bt] = float( *from ) * ppqq_scale[ipol];
               from += step;
             }
           }
@@ -174,7 +229,7 @@ void dsp::BPSRCrossUnpacker::unpack ()
             for (unsigned bt = 0; bt < ndat; bt++)
             {
               if (!unpack_ppqq_only)
-                into[bt] = float( ((char) *from) ) / gain_polx;
+                into[bt] = float( ((char) *from) ) * pq_scale;
               from += step;
             }
           }
@@ -185,7 +240,7 @@ break;
   case TimeSeries::OrderTFP:
     {
       if (verbose)
-        cerr << "dsp::BPSRCrossUnpacker::unpack Output order OrderTFP\n" << endl;
+        cerr << "dsp::BPSRCrossUnpacker::unpack Output order OrderTFP" << endl;
 
       const unsigned char* from = input->get_rawptr();
       float* into = output->get_dattfp();
@@ -200,6 +255,11 @@ break;
           into[1] = float( from[2] ) + 0.5;
           into[2] = float( from[1] ) + 0.5;
           into[3] = float( from[3] ) + 0.5;
+
+          into[0] *= ppqq_scale[0];
+          into[1] *= ppqq_scale[1];
+          into[2] *= ppqq_scale[0];
+          into[3] *= ppqq_scale[1];
 
           into += 4;
           from += 8;
@@ -218,10 +278,14 @@ break;
           into[6] = float( ((char) from[6]) ) + 0.5;
           into[7] = float( ((char) from[7]) ) + 0.5;
 
-          into[2] /= gain_polx;
-          into[3] /= gain_polx;
-          into[6] /= gain_polx;
-          into[7] /= gain_polx;
+          into[0] *= ppqq_scale[0];
+          into[1] *= ppqq_scale[1];
+          into[2] *= pq_scale;
+          into[3] *= pq_scale;
+          into[4] *= ppqq_scale[0];
+          into[5] *= ppqq_scale[1];          
+          into[6] *= pq_scale;
+          into[7] *= pq_scale;
           
           into += 8;
           from += 8;

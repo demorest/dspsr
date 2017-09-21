@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma2/dsp/PuMa2Unpacker.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/03/12 14:07:48 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/puma2/dsp/PuMa2Unpacker.h
 
 #ifndef __PuMa2Unpacker_h
 #define __PuMa2Unpacker_h

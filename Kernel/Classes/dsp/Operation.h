@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Operation.h,v $
-   $Revision: 1.49 $
-   $Date: 2010/02/04 09:15:10 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/Operation.h
 
 #ifndef __Operation_h
 #define __Operation_h

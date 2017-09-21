@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark4/dsp/Mark4TwoBitCorrection.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/07/09 13:27:08 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/mark4/dsp/Mark4TwoBitCorrection.h
 
 #ifndef __Mark4TwoBitCorrection_h
 #define __Mark4TwoBitCorrection_h

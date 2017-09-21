@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Transformation.h,v $
-   $Revision: 1.54 $
-   $Date: 2011/08/26 22:02:53 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/Transformation.h
 
 #ifndef __dsp_Transformation_h
 #define __dsp_Transformation_h

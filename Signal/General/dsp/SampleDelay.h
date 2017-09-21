@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SampleDelay.h,v $
-   $Revision: 1.5 $
-   $Date: 2010/05/21 07:29:37 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/SampleDelay.h
 
 #ifndef __baseband_dsp_SampleDelay_h
 #define __baseband_dsp_SampleDelay_h

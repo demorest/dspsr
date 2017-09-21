@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/apsr/dsp/APSRTwoBitCorrection.h,v $
-   $Revision: 1.4 $
-   $Date: 2008/07/13 00:38:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/apsr/dsp/APSRTwoBitCorrection.h
 
 #ifndef __APSRTwoBitCorrection_h
 #define __APSRTwoBitCorrection_h

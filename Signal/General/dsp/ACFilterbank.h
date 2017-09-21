@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/ACFilterbank.h,v $
-   $Revision: 1.5 $
-   $Date: 2006/07/09 13:27:11 $
-   $Author: wvanstra $ */
+// dspsr/Signal/General/dsp/ACFilterbank.h
 
 #ifndef __ACFilterbank_h
 #define __ACFilterbank_h

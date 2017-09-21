@@ -141,10 +141,6 @@ void Speed::runTest ()
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "Speed::runTest", "cufftMakePlan1D (plan_loop)");
 
-  result = cufftSetCompatibilityMode (plan_loop, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-     CUFFTError (result, "Speed::runTest", "cufftSetCompatibilityMode (plan_loop)");
-
   result = cufftSetStream (plan_loop, stream);
   if (result != CUFFT_SUCCESS)
     CUFFTError (result, "Speed::runTest", "cufftSetStream (plan_loop)");
@@ -161,10 +157,6 @@ void Speed::runTest ()
                               CUFFT_C2C, niter, &work_size);
   if (result != CUFFT_SUCCESS)
     throw CUFFTError (result, "Speed::runTest", "cufftMakePlanMany (plan_batch)");
-
-  result = cufftSetCompatibilityMode (plan_batch, CUFFT_COMPATIBILITY_NATIVE);
-  if (result != CUFFT_SUCCESS)
-     CUFFTError (result, "Speed::runTest", "cufftSetCompatibilityMode (plan_batch)");
 
   result = cufftSetStream (plan_batch, stream);
   if (result != CUFFT_SUCCESS)

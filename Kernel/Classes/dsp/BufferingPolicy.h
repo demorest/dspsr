@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BufferingPolicy.h,v $
-   $Revision: 1.7 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/BufferingPolicy.h
 
 #ifndef __baseband_dsp_BufferingPolicy_h
 #define __baseband_dsp_BufferingPolicy_h

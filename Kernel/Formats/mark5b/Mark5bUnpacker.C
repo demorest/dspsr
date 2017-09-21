@@ -51,7 +51,7 @@ void dsp::Mark5bUnpacker::unpack()
   /* Stuart: this is the place in the code where we rearrange channels */
   for (unsigned ipol = 0 ; ipol < npol ; ipol++)
     for (unsigned ichan=0; ichan < nchan; ichan++)
-      data[ipol + 2*ichan] = output->get_datptr(ichan,ipol);
+      data[ipol + npol*ichan] = output->get_datptr(ichan,ipol);
 
   if (mark5_stream_decode(m5stream, ndat, data) < 0)
     throw Error (InvalidState, "dsp::Mark5bUnpacker::unpack",

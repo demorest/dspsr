@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2File.h,v $
-   $Revision: 1.16 $
-   $Date: 2008/05/28 21:12:43 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/s2/dsp/S2File.h
 
 
 #ifndef __S2File_h

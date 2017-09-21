@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BitUnpacker.h,v $
-   $Revision: 1.6 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/BitUnpacker.h
 
 #ifndef __BitUnpacker_h
 #define __BitUnpacker_h

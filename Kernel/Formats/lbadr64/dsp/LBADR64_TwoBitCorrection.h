@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr64/dsp/LBADR64_TwoBitCorrection.h,v $
-   $Revision: 1.1 $
-   $Date: 2007/02/23 04:29:36 $
-   $Author: ahotan $ */
+// dspsr/Kernel/Formats/lbadr64/dsp/LBADR64_TwoBitCorrection.h
 
 #ifndef __LBADR64_TwoBitCorrection_h
 #define __LBADR64_TwoBitCorrection_h

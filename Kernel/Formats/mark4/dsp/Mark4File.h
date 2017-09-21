@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/mark4/dsp/Mark4File.h,v $
-   $Revision: 1.5 $
-   $Date: 2009/06/17 10:16:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/mark4/dsp/Mark4File.h
 
 #ifndef __Mark4File_h
 #define __Mark4File_h

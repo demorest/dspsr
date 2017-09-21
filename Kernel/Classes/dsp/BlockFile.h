@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/BlockFile.h,v $
-   $Revision: 1.8 $
-   $Date: 2010/10/22 19:17:56 $
-   $Author: demorest $ */
+// dspsr/Kernel/Classes/dsp/BlockFile.h
 
 
 #ifndef __dsp_BlockFile_h

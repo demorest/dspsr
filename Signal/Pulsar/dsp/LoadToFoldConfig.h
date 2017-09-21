@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h,v $
-   $Revision: 1.43 $
-   $Date: 2011/09/20 21:25:28 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/LoadToFoldConfig.h
 
 #ifndef __baseband_dsp_LoadToFoldConfig_h
 #define __baseband_dsp_LoadToFoldConfig_h

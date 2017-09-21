@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TimeSeries.h,v $
-   $Revision: 1.55 $
-   $Date: 2011/08/04 21:05:19 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TimeSeries.h
 
 #ifndef __TimeSeries_h
 #define __TimeSeries_h

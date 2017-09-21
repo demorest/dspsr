@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SKFilterbank.h,v $
-   $Revision: 1.2 $
-   $Date: 2011/08/04 21:06:12 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/SKFilterbank.h
 
 #ifndef __SKFilterbank_h
 #define __SKFilterbank_h

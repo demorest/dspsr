@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/filterbank_engine.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/10/07 11:01:50 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/filterbank_engine.h
 
 #ifndef __filterbank_engine_h
 #define __filterbank_engine_h

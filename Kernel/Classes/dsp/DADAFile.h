@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/DADAFile.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/05/28 21:12:42 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/DADAFile.h
 
 #ifndef __DADAFile_h
 #define __DADAFile_h
@@ -36,8 +33,10 @@ namespace dsp {
     virtual void open_file (const char* filename);
 
     //! Read the DADA ascii header from filename
-    static std::string get_header (const char* filename);
+    std::string get_header (const char* filename) const;
 
+    //! Flag set true when the header information is in a separate text file
+    mutable bool separate_header_file;
   };
 
 }

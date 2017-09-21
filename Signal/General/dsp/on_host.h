@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/on_host.h,v $
-   $Revision: 1.4 $
-   $Date: 2010/04/24 14:13:38 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/on_host.h
 
 #ifndef __on_host_h
 #define __on_host_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/FourthMoment.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/06/08 19:45:01 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/FourthMoment.h
 
 
 #ifndef __FourthMoment_h

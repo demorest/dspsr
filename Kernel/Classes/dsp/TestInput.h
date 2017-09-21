@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TestInput.h,v $
-   $Revision: 1.3 $
-   $Date: 2009/06/17 10:16:53 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TestInput.h
 
 #ifndef __TestInput_h
 #define __TestInput_h

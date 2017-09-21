@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/HistUnpacker.h,v $
-   $Revision: 1.17 $
-   $Date: 2010/05/28 14:13:15 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/HistUnpacker.h
 
 #ifndef __HistUnpacker_h
 #define __HistUnpacker_h

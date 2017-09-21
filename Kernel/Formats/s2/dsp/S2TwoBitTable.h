@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/s2/dsp/S2TwoBitTable.h,v $
-   $Revision: 1.4 $
-   $Date: 2006/07/09 13:27:09 $
-   $Author: wvanstra $ */
+// dspsr/Kernel/Formats/s2/dsp/S2TwoBitTable.h
 
 
 #ifndef __S2TwoBitTable_h
