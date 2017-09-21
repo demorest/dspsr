@@ -156,6 +156,11 @@ static dsp::Unpacker::Register::Enter<dsp::Mark5Unpacker> mark5_general;
 static dsp::Unpacker::Register::Enter<dsp::Mark5TwoBitCorrection> mark5;
 #endif
 
+#if HAVE_mark5b
+#include "dsp/Mark5bUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::Mark5bUnpacker> mark5b;
+#endif
+
 #if HAVE_maxim
 #include "dsp/MaximUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::MaximUnpacker> maxim;
@@ -164,6 +169,11 @@ static dsp::Unpacker::Register::Enter<dsp::MaximUnpacker> maxim;
 #if HAVE_mini
 #include "dsp/MiniUnpack.h"
 static dsp::Unpacker::Register::Enter<dsp::MiniUnpack> miniunpack;
+#endif
+
+#if HAVE_mopsr
+#include "dsp/MOPSRUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::MOPSRUnpacker> mopsr;
 #endif
 
 #if HAVE_mwa
@@ -206,6 +216,12 @@ static dsp::Unpacker::Register::Enter<dsp::ACFUnpack> spigot;
 static dsp::Unpacker::Register::Enter<dsp::GUPPIFITSUnpacker> guppifits;
 #include "dsp/FITSUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::FITSUnpacker> fits;
+#endif
+
+
+#if HAVE_emerlin
+#include "dsp/EmerlinUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::EmerlinUnpacker> emerlin;
 #endif
 
 #if HAVE_vdif

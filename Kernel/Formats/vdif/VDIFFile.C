@@ -214,7 +214,7 @@ void dsp::VDIFFile::open_file (const char* filename)
         "Read vdif_nchan=%d, this is currently not supported", vdif_nchan);
   get_info()->set_npol( vdif_nchan );
   get_info()->set_nchan( 1 );
-  get_info()->set_rate( (double) get_info()->get_bandwidth() * 1e6 
+  get_info()->set_rate( fabs((double) get_info()->get_bandwidth()) * 1e6 
       / (double) get_info()->get_nchan() 
       * (get_info()->get_state() == Signal::Nyquist ? 2.0 : 1.0));
   if (verbose) cerr << "VDIFFile::open_file rate = " << get_info()->get_rate() << endl;
