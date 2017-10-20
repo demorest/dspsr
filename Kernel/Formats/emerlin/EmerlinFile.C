@@ -151,7 +151,7 @@ void dsp::EmerlinFile::open_file(const char* filename) {
   }
   if (verbose) cerr << "EmerlinFile::open_file iscomplex = " << iscomplex << endl;
 
-  get_info()->set_npol( 2 );
+  //get_info()->set_npol( 2 );
   get_info()->set_nchan( 1 );
   get_info()->set_rate( (double) get_info()->get_bandwidth() * 1e6
       / (double) get_info()->get_nchan()
@@ -196,15 +196,19 @@ void dsp::EmerlinFile::open_file(const char* filename) {
 
 int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
 
-    if (nbytes % 16000){
+    int npol=get_info()->get_npol();
+    int frame_length = 8000 * npol;
+
+    if (nbytes % frame_length){
         // trim to an integer number of frames
         std::cerr << "dsp::EmerlinFile::load_bytes ERROR: Need to read integer number of frames" << std::endl;
-        nbytes = 16000*(nbytes/16000);
+        nbytes = frame_length*(nbytes/frame_length);
     }
 
 
-    unsigned nframe = nbytes / 16000;
-    unsigned npacket = nframe/2;
+
+    unsigned nframe = nbytes / frame_length;
+    unsigned npacket = nframe/npol;
 
     std::memset(buffer, 0, nbytes); // zero the memory
 
@@ -230,7 +234,7 @@ int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
 
         fn += 4000*(sec-first_second);
 
-        int byte_offset = ((fn-cur_frame)*2 + sn)*8000;
+        int byte_offset = ((fn-cur_frame)*npol + sn)*8000;
         //fprintf(stderr,"read %d/%d, pkt=%d to_load=%d %ld\n",fn,sn,byte_offset/8000,to_load,sec-first_second);
         if ((byte_offset+8000) > nbytes) {
             // we are past the requested data.

@@ -10,7 +10,7 @@ bool dsp::EmerlinUnpacker::matches (const Observation* observation) {
 
     return observation->get_machine() == "EMERLIN"
         && observation->get_nbit() == 2
-        && observation->get_nbit() == 2;
+        && (observation->get_npol() == 2 || observation->get_npol() == 1);
 
 }
 
@@ -56,9 +56,9 @@ void dsp::EmerlinUnpacker::unpack() {
 
     const unsigned samples_per_byte=4;
 
-    const unsigned total_bytes = 2*input->get_ndat()/samples_per_byte;
+    const unsigned total_bytes = input->get_npol()*input->get_ndat()/samples_per_byte;
 
-    const unsigned nframe = total_bytes/16000;
+    const unsigned nframe = total_bytes/(input->get_npol()*8000);
     const unsigned nword = 2000;
     const unsigned byte_per_word=4;
     unsigned offset=0;
@@ -79,8 +79,11 @@ void dsp::EmerlinUnpacker::unpack() {
 
     unsigned* weights = NULL;
     for (unsigned iframe=0; iframe < nframe; ++iframe) {
-        for (unsigned ipol=0; ipol < 2; ++ipol) {
+        for (unsigned ipol=0; ipol < input->get_npol(); ++ipol) {
             if(weighted_output){
+                if(verbose) {
+                    std::cerr << "dsp::EmerlinUnpacker get weights ipol="<< ipol<<std::endl;
+                }
                 weights = weighted_output->get_weights(0,ipol)+weights_per_frame*iframe;
             }
             count[0]=0;
