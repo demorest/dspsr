@@ -216,7 +216,6 @@ int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
 
     uint64_t to_load=nbytes;
 
-    int ipol=0; // should always start at pol zero please.
     
     while (to_load > 0){
 
@@ -228,13 +227,23 @@ int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
             throw Error (FailedSys, "EmerlinFile::load_bytes",
                     "Error reading header");
 
+        // this is the full second this frame is relative to
         int64_t sec = getVDIFFullSecond(rawhdr);
+        // this is the frame number in the second
         int64_t fn = getVDIFFrameNumber(rawhdr);
+        // this is the stream number. For emerlin that means which polarisation.
         int64_t sn = getVDIFThreadID(rawhdr);
 
         fn += 4000*(sec-first_second);
+        if (npol==1) {
+            // in single polarisation mode we have files that could be either pol 0 or pol 1
+            // In that case we want to ignore the stream number because all data comes from the same stream.
+            // Otherwise we would have an offset of 1 frame in Pol 1 data in the byte_offset below
+            sn = 0;
+        }
 
         int byte_offset = ((fn-cur_frame)*npol + sn)*8000;
+
         //fprintf(stderr,"read %d/%d, pkt=%d to_load=%d %ld\n",fn,sn,byte_offset/8000,to_load,sec-first_second);
         if ((byte_offset+8000) > nbytes) {
             // we are past the requested data.
