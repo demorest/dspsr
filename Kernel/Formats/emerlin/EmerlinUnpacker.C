@@ -15,7 +15,7 @@ bool dsp::EmerlinUnpacker::matches (const Observation* observation) {
 }
 
 int dsp::EmerlinUnpacker::get_ndat_per_weight() {
-    return 1000; 
+    return 32000; 
 }
 
 

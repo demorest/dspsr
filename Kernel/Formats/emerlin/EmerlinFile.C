@@ -151,7 +151,6 @@ void dsp::EmerlinFile::open_file(const char* filename) {
   }
   if (verbose) cerr << "EmerlinFile::open_file iscomplex = " << iscomplex << endl;
 
-  //get_info()->set_npol( 2 );
   get_info()->set_nchan( 1 );
   get_info()->set_rate( (double) get_info()->get_bandwidth() * 1e6
       / (double) get_info()->get_nchan()
