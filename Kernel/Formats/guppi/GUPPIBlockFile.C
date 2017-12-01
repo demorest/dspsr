@@ -32,7 +32,6 @@ dsp::GUPPIBlockFile::GUPPIBlockFile (const char* name)
   current_nzero_byte = 0;
   overlap = 0;
   blocsize = 0;
-  packets_per_block = 0;
   current_pktidx = -1;
   set_overlap_buffer(new BitSeries);
 }
@@ -85,6 +84,7 @@ void dsp::GUPPIBlockFile::parse_header()
   // Any format-specific checks
   int packet_factor = 1;
   header_get_check("PKTFMT", ctmp);
+  header_get_check("PKTSIZE",  &packet_size);
   if (string(ctmp) == "VDIF") 
   {
     get_info()->set_state(Signal::Nyquist);
@@ -93,6 +93,10 @@ void dsp::GUPPIBlockFile::parse_header()
     // packets per block later.
     if (get_info()->get_npol()==2) { packet_factor = 2; }
   } 
+  else if (string(ctmp) == "1SFA") 
+  {
+    if (get_info()->get_nbit()==2) { packet_size /= 4; }
+  }
   else if (string(ctmp) == "SIMPLE")
     time_ordered = false;
  
@@ -111,10 +115,8 @@ void dsp::GUPPIBlockFile::parse_header()
   header_get_check("STT_SMJD", &smjd);
   header_get_check("STT_OFFS", &t_offset);
   header_get_check("PKTIDX",   &ltmp);
-  header_get_check("PKTSIZE",  &itmp);
   current_pktidx = ltmp;
-  packets_per_block = blocsize / itmp / packet_factor;
-  t_offset += ltmp * itmp * 8.0 / get_info()->get_rate() / 
+  t_offset += ltmp * packet_size * 8.0 / get_info()->get_rate() / 
       (get_info()->get_nbit() * get_info()->get_nchan() * get_info()->get_npol() * get_info()->get_ndim());
   //cerr << "t_offset=" << t_offset << "s" << endl;
   MJD epoch (imjd, (double)smjd/86400.0 + t_offset/86400.0);
@@ -175,6 +177,8 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
   const uint64_t blocsize_per_chan = blocsize / nchan;
   uint64_t to_load = nbytes;
   uint64_t bytes_read = 0;
+
+  uint64_t packets_per_block = (blocsize - overlap_bytes) / packet_size;
 
   while (to_load && !end_of_data) 
   {
@@ -262,7 +266,7 @@ int64_t dsp::GUPPIBlockFile::load_bytes (unsigned char *buffer, uint64_t nbytes)
       }
 
       // Check for skipped blocks
-      if (pkt_diff != packets_per_block)
+      if ((pkt_diff != packets_per_block) && !end_of_data)
       {
         // Print a warning
         cerr << "dsp::GUPPIBlockFile::load_bytes() skipped pktidx=" 
