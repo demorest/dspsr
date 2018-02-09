@@ -233,6 +233,8 @@ static dsp::Unpacker::Register::Enter<dsp::VDIFTwoBitCorrectionMulti> vdif_multi
 static dsp::Unpacker::Register::Enter<dsp::VDIFFourBitUnpacker> vdif4;
 #include "dsp/VDIFEightBitUnpacker.h"
 static dsp::Unpacker::Register::Enter<dsp::VDIFEightBitUnpacker> vdif8;
+#include "dsp/VDIFnByteUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::VDIFEightBitUnpacker> vdifN;
 #endif
 
 #if HAVE_wapp
