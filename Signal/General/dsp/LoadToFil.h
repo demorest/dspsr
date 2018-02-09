@@ -88,6 +88,9 @@ namespace dsp {
     //! coherently dedisperse along with filterbank
     bool coherent_dedisp;
 
+    //! enable or disable 2-bit excision
+    bool excision_enable;
+
     //! integrate in time before digitization
     unsigned tscrunch_factor;
 

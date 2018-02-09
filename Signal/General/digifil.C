@@ -84,6 +84,9 @@ void parse_options (int argc, char** argv) try
   arg = menu.add (config->rescale_constant, 'c');
   arg->set_help ("keep offset and scale constant");
 
+  arg = menu.add (config->excision_enable, '2');
+  arg->set_help ("disable 2-bit excision");
+
   arg = menu.add (config->filterbank, 'F', "nchan[:D]");
   arg->set_help ("create a filterbank (voltages only)");
   arg->set_long_help

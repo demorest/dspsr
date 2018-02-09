@@ -105,6 +105,8 @@ static dsp::Unpacker::Register::Enter<dsp::GUPPIUnpacker> guppi;
 static dsp::Unpacker::Register::Enter<dsp::GUPPIFourBit> guppi4;
 #include "dsp/GUPPITwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrection> guppi2;
+#include "dsp/GUPPITwoBitCorrectionComplex.h"
+static dsp::Unpacker::Register::Enter<dsp::GUPPITwoBitCorrectionComplex> guppi2c;
 #endif
 
 #if HAVE_kat

@@ -5,13 +5,15 @@ nobase_include_HEADERS =  dsp/GUPPIFile.h \
 			  dsp/GUPPIBlockFile.h \
 			  dsp/GUPPIUnpacker.h \
 			  dsp/GUPPIFourBit.h \
-			  dsp/GUPPITwoBitCorrection.h
+			  dsp/GUPPITwoBitCorrection.h \
+			  dsp/GUPPITwoBitCorrectionComplex.h
 
 libguppi_la_SOURCES = GUPPIFile.C \
 		      GUPPIBlockFile.C \
 		      GUPPIUnpacker.C \
 		      GUPPIFourBit.C \
 		      GUPPITwoBitCorrection.C \
+		      GUPPITwoBitCorrectionComplex.C \
 		      fitshead_utils.C hget.c 
 
 if HAVE_GUPPI_DAQ
