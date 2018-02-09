@@ -10,7 +10,6 @@
 #include "dsp/FITSDigitizer.h"
 #include "dsp/InputBuffering.h"
 #include <assert.h>
-#include <omp.h>
 
 void dsp::FITSDigitizer::set_digi_scales()
 {
