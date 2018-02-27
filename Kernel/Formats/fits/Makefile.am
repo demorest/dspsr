@@ -11,7 +11,7 @@ libfits_la_SOURCES = FITSUnpacker.C GUPPIFITSUnpacker.C \
 #############################################################################
 #
 
-libfits_la_LIBADD = @CFITSIO_LIBS@
+libfits_la_LIBADD = @CFITSIO_LIBS@ @OPENMP_CFLAGS@
 
 include $(top_srcdir)/config/Makefile.include
 
