@@ -97,6 +97,8 @@ check_PROGRAMS = test_PolnCalibration test_OptimalFFT
 test_PolnCalibration_SOURCES = test_PolnCalibration.C
 test_OptimalFFT_SOURCES = test_OptimalFFT.C
 
+libdspdsp_la_LIBADD = 
+
 if HAVE_PGPLOT
 
   ###########################################################################
@@ -105,7 +107,7 @@ if HAVE_PGPLOT
   #
 
   libdspdsp_la_SOURCES += ExcisionStatsPlotter.C BitStatsPlotter.C
-  libdspdsp_la_LIBADD = @PGPLOT_LIBS@
+  libdspdsp_la_LIBADD += @PGPLOT_LIBS@
   bin_PROGRAMS += digistat passband
 
   digistat_SOURCES = digistat.C
@@ -133,7 +135,7 @@ if HAVE_fits
   #
 
   nobase_include_HEADERS += dsp/LoadToFITS.h dsp/LoadToFITSN.h
-  libdspdsp_la_LIBADD = @CFITSIO_LIBS@
+  libdspdsp_la_LIBADD += @CFITSIO_LIBS@
   libdspdsp_la_SOURCES += LoadToFITS.C LoadToFITSN.C
 
   bin_PROGRAMS += digifits
