@@ -56,7 +56,12 @@ const char* cufftResult_to_string (cufftResult result)
     case CUFFT_LICENSE_ERROR:
       return "License error";
 #endif
+#if CUDA_VERSION >= 8000
+    case CUFFT_NOT_SUPPORTED:
+      return "NOT_SUPPORTED";
+#endif
     }
+
   return "unrecognized cufftResult";
 }
 

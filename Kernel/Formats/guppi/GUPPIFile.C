@@ -23,6 +23,7 @@ using namespace std;
 dsp::GUPPIFile::GUPPIFile (const char* filename)
   : GUPPIBlockFile ("GUPPI")
 {
+  pos0 = 0;
 }
 
 dsp::GUPPIFile::~GUPPIFile ( )
@@ -135,27 +136,46 @@ void dsp::GUPPIFile::open_file (const char* filename)
   int hdr_keys = get_header(fd, &hdr);
   if (hdr_keys<=0) 
     throw Error (InvalidState, "dsp::GUPPIFile::open_file",
-        "Error parsing header.");
+        "Error parsing block0 header.");
 
   // Parse header into info struct
+  parse_header();
+
+  // Save the first block size, then look ahead to the next block.
+  // If the block size is different, we will ignore the first one.
+  uint64_t blocsize0 = blocsize;
+  int hdr_keys0 = hdr_keys;
+  int rv = lseek(fd, blocsize, SEEK_CUR);
+  if (rv<0) 
+    throw Error (FailedSys, "dsp::GUPPIFile::open_file",
+        "lseek(block1) failed");
+  hdr_keys = get_header(fd, &hdr);
+  if (hdr_keys<=0) 
+    throw Error (InvalidState, "dsp::GUPPIFile::open_file",
+        "Error parsing block1 header.");
+  parse_header();
+  if (blocsize != blocsize0) {
+    // Set pos0 to point to start of 2nd data block
+    pos0 = blocsize0 + 80*hdr_keys0;
+  }
+
+  // Now rewind to the right spot, load 1st block and re-parse header
+  seek_bytes(0);
   parse_header();
 
   // Figure out total size
   // dfac thing accounts for some weirdness in definition of 
   // OVERLAP for real-sampled TDOM data..
   struct stat buf;
-  int rv = fstat(fd, &buf);
+  rv = fstat(fd, &buf);
   if (rv < 0)
     throw Error (FailedSys, "dsp::GUPPIFile::open_file",
         "fstat(%s) failed", filename);
   uint64_t full_block_size = blocsize + 80*hdr_keys;
-  uint64_t nblocks = buf.st_size / full_block_size;
+  uint64_t nblocks = (buf.st_size-pos0) / full_block_size;
   unsigned int dfac = get_info()->get_ndim()==1 ? 2 : 1;
   get_info()->set_ndat( get_info()->get_nsamples(nblocks*blocsize) - dfac*overlap*nblocks );
 
-  // Rewind and load full first block with header
-  seek_bytes(0);
-  
 }
 
 int dsp::GUPPIFile::load_next_block ()
@@ -189,7 +209,7 @@ int64_t dsp::GUPPIFile::seek_bytes (uint64_t bytes)
 {
   if (bytes==0)
   {
-    int rv = lseek(fd, 0, SEEK_SET);
+    int rv = lseek(fd, pos0, SEEK_SET);
     if (rv<0) 
       throw Error (FailedSys, "dsp::GUPPIFile::seek_bytes",
           "lseek(0) failed");

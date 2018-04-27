@@ -119,10 +119,16 @@ bool dsp::LoadToFoldN::prepare_subint_archival ()
 
     PhaseSeriesUnloader* primary_unloader = at(0)->unloader[ifold];
 
-    if (configuration->concurrent_archives())
+    if (configuration->concurrent_archives()){
       unloader[ifold]->set_wait_all (false);
-    else
-      unloader[ifold]->set_unloader( primary_unloader );
+      // MJK 2017. When using single pulses the below line
+      // prevents segfault when running submit->set_unloader
+      // in the below loop. I am not sure why this fixed it!
+      primary_unloader = primary_unloader->clone();
+    }
+    else {
+        unloader[ifold]->set_unloader( primary_unloader );
+    }
 
     for (unsigned i=0; i<threads.size(); i++) 
     {

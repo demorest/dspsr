@@ -13,6 +13,7 @@
 
 #include "dsp/IOManager.h"
 #include "dsp/Unpacker.h"
+#include "dsp/ExcisionUnpacker.h"
 
 #include "dsp/TFPFilterbank.h"
 #include "dsp/Filterbank.h"
@@ -66,6 +67,8 @@ dsp::LoadToFil::Config::Config()
   dispersion_measure = 0;
   dedisperse = false;
   coherent_dedisp = false;
+
+  excision_enable = true;
 
   tscrunch_factor = 0;
   fscrunch_factor = 0;
@@ -396,6 +399,14 @@ void dsp::LoadToFil::prepare () try
         << " samples" << endl;
       manager->set_block_size( filterbank->get_minimum_samples() );
     }
+  }
+
+  if (config->excision_enable==false)
+  {
+    dsp::ExcisionUnpacker* excision;
+    excision = dynamic_cast<dsp::ExcisionUnpacker*> (manager->get_unpacker());
+    if (excision)
+      excision->set_cutoff_sigma(0.0);
   }
 
 }

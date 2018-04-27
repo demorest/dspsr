@@ -151,7 +151,6 @@ void dsp::EmerlinFile::open_file(const char* filename) {
   }
   if (verbose) cerr << "EmerlinFile::open_file iscomplex = " << iscomplex << endl;
 
-  get_info()->set_npol( 2 );
   get_info()->set_nchan( 1 );
   get_info()->set_rate( (double) get_info()->get_bandwidth() * 1e6
       / (double) get_info()->get_nchan()
@@ -196,15 +195,19 @@ void dsp::EmerlinFile::open_file(const char* filename) {
 
 int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
 
-    if (nbytes % 16000){
+    int npol=get_info()->get_npol();
+    int frame_length = 8000 * npol;
+
+    if (nbytes % frame_length){
         // trim to an integer number of frames
         std::cerr << "dsp::EmerlinFile::load_bytes ERROR: Need to read integer number of frames" << std::endl;
-        nbytes = 16000*(nbytes/16000);
+        nbytes = frame_length*(nbytes/frame_length);
     }
 
 
-    unsigned nframe = nbytes / 16000;
-    unsigned npacket = nframe/2;
+
+    unsigned nframe = nbytes / frame_length;
+    unsigned npacket = nframe/npol;
 
     std::memset(buffer, 0, nbytes); // zero the memory
 
@@ -212,7 +215,6 @@ int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
 
     uint64_t to_load=nbytes;
 
-    int ipol=0; // should always start at pol zero please.
     
     while (to_load > 0){
 
@@ -224,13 +226,23 @@ int64_t dsp::EmerlinFile::load_bytes(unsigned char* buffer, uint64_t nbytes) {
             throw Error (FailedSys, "EmerlinFile::load_bytes",
                     "Error reading header");
 
+        // this is the full second this frame is relative to
         int64_t sec = getVDIFFullSecond(rawhdr);
+        // this is the frame number in the second
         int64_t fn = getVDIFFrameNumber(rawhdr);
+        // this is the stream number. For emerlin that means which polarisation.
         int64_t sn = getVDIFThreadID(rawhdr);
 
         fn += 4000*(sec-first_second);
+        if (npol==1) {
+            // in single polarisation mode we have files that could be either pol 0 or pol 1
+            // In that case we want to ignore the stream number because all data comes from the same stream.
+            // Otherwise we would have an offset of 1 frame in Pol 1 data in the byte_offset below
+            sn = 0;
+        }
 
-        int byte_offset = ((fn-cur_frame)*2 + sn)*8000;
+        int byte_offset = ((fn-cur_frame)*npol + sn)*8000;
+
         //fprintf(stderr,"read %d/%d, pkt=%d to_load=%d %ld\n",fn,sn,byte_offset/8000,to_load,sec-first_second);
         if ((byte_offset+8000) > nbytes) {
             // we are past the requested data.
