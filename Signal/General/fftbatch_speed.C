@@ -9,10 +9,14 @@
 #include <config.h>
 #endif
 
-#define FP16
 
 #include <cuda_runtime.h>
 #include <cufft.h>
+
+#if CUDA_VERSION >= 8000
+#define FP16
+#endif
+
 #ifdef FP16
 #include <cufftXt.h>
 #endif
