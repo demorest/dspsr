@@ -37,13 +37,20 @@ int dsp::SKLimits::calc_limits()
     return -1;
   }
 
-  dsp::PearsonIV pIV(M);
-
   double percent_std_devs = erf((float) std_devs / sqrt(2));
   double target = (1 - percent_std_devs) / 2.0;
   double one_std_dev = sqrt(4.0 / (double) M);
   double factor = one_std_dev * std_devs;
   double x_guess = 0;
+
+  if (M >= 32768)
+  {
+    lower_threshold = 1.0f - factor;
+    upper_threshold = 1.0f + factor;
+    return 0;
+  } 
+
+  dsp::PearsonIV pIV(M);
 
   if (verbose)
   {
