@@ -31,12 +31,15 @@
 #include "dsp/FITSOutputFile.h"
 
 #if HAVE_CUDA
+#include "dsp/ConvolutionCUDA.h"
+#include "dsp/ConvolutionCUDASpectral.h"
 #include "dsp/FilterbankCUDA.h"
 #include "dsp/OptimalFilterbank.h"
 #include "dsp/TransferCUDA.h"
 #include "dsp/DetectionCUDA.h"
 #include "dsp/TScrunchCUDA.h"
 #include "dsp/MemoryCUDA.h"
+#include "dsp/TimeSeriesCUDA.h"
 #endif
 
 
@@ -74,6 +77,7 @@ dsp::LoadToFITS::Config::Config()
   filterbank.set_convolve_when(Filterbank::Config::Never);
  
   maximum_RAM = 256 * 1024 * 1024;
+  times_minimum_ndat = 1;
 
   dispersion_measure = 0;
   dedisperse = false;
@@ -95,9 +99,17 @@ dsp::LoadToFITS::Config::Config()
   weighted_time_series = false;
 }
 
+// set block size to this factor times the minimum possible
+void dsp::LoadToFITS::Config::set_times_minimum_ndat (unsigned ndat)
+{
+  times_minimum_ndat = ndat;
+  maximum_RAM = 0;
+}
+
 // set block_size to result in approximately this much RAM usage
 void dsp::LoadToFITS::Config::set_maximum_RAM (uint64_t ram)
 {
+  times_minimum_ndat = 1;
   maximum_RAM = ram;
 }
 
@@ -226,48 +238,64 @@ void dsp::LoadToFITS::construct () try
 
   TimeSeries* timeseries = unpacked;
 
+#if HAVE_CUDA
+  if (run_on_gpu)
+  {
+    timeseries->set_memory (device_memory);
+    timeseries->set_engine (new CUDA::TimeSeriesEngine (device_memory));
+  }
+#endif
+
   if (!obs->get_detected())
   {
+    cerr << "digifits: input data not detected" << endl;
+
     // if no filterbank specified
-    if (fb_nchan == 0)
+    if ((fb_nchan == 0) && (nchan == 1))
     {
-      if (nchan == 1)
-        throw Error(InvalidParam,"dsp::LoadToFITS::construct",
-            "must specify filterbank scheme if single channel data");
-      else
-        if (verbose)
-          cerr << "digifits: no filterbank specified" << endl;
+      throw Error(InvalidParam,"dsp::LoadToFITS::construct",
+          "must specify filterbank scheme if single channel data");
+    }
+
+    if ((config->coherent_dedisp) && (config->dispersion_measure != 0.0))
+    {
+      cerr << "digifits: performing coherent dedispersion" << endl;
+      kernel = new Dedispersion;
+      kernel->set_dispersion_measure( config->dispersion_measure );
+
+      unsigned frequency_resolution = config->filterbank.get_freq_res ();
+      cerr << "digifits: config->filterbank.get_freq_res= " << frequency_resolution << endl;
+      if (frequency_resolution)
+      {
+        cerr << "digifits: setting filter length to " << frequency_resolution << endl;
+        //kernel->set_frequency_resolution (frequency_resolution);
+        kernel -> set_times_minimum_nfft (frequency_resolution);
+      }
     }
     else
     {
+      if (config->dispersion_measure != 0.0)
+        cerr << "digifits: performing incoherent dedispersion" << endl;
+      config->coherent_dedisp = false;
+    }
+
+    // filterbank is performing channelisation
+    if (config->filterbank.get_nchan() > 1)
+    {
       // If user specifies -FN:D, enable coherent dedispersion
-      if ( config->filterbank.get_convolve_when() == 
-          Filterbank::Config::During )
-        config->coherent_dedisp = true;
-
-      if ( (config->coherent_dedisp) && (config->dispersion_measure != 0.0) )
+      if (config->filterbank.get_convolve_when() == Filterbank::Config::During)
       {
-        cerr << "digifits: using coherent dedispersion" << endl;
-
-        // "During" is the only option, my friends
+        // during is the only option for filterbank
         config->filterbank.set_convolve_when( Filterbank::Config::During );
-
-        kernel = new Dedispersion;
-        kernel->set_dispersion_measure( config->dispersion_measure );
-
-        if (config->filterbank.get_freq_res())
-          kernel -> set_times_minimum_nfft (config->filterbank.get_freq_res () );
-          //kernel->set_frequency_resolution (
-          //    config->filterbank.get_freq_res());
-
       }
-      else 
+      else
+      {
         config->coherent_dedisp = false;
+      }
 
-# if HAVE_CUDA
+#if HAVE_CUDA
       if (run_on_gpu)
       {
-        timeseries->set_memory (device_memory);
         config->filterbank.set_device ( device_memory.ptr() );
         config->filterbank.set_stream ( gpu_stream );
       }
@@ -279,12 +307,12 @@ void dsp::LoadToFITS::construct () try
       filterbank->set_input( timeseries );
       filterbank->set_output( timeseries = new_TimeSeries() );
 
-# if HAVE_CUDA
+#if HAVE_CUDA
       if (run_on_gpu)
         timeseries->set_memory (device_memory);
 #endif
 
-      if (kernel)
+      if (config->coherent_dedisp && kernel)
         filterbank->set_response( kernel );
 
       if ( !config->coherent_dedisp )
@@ -296,8 +324,45 @@ void dsp::LoadToFITS::construct () try
 
       operations.push_back( filterbank.get() );
     }
-      if (verbose)
-	      cerr << "digifits: creating detection operation" << endl;
+
+    // if convolution does not happen during filterbanking
+    if (config->coherent_dedisp && config->filterbank.get_convolve_when() != Filterbank::Config::During)
+    {
+      cerr << "digifits: creating convolution operation" << endl;
+
+      if (!convolution)
+        convolution = new Convolution;
+      
+      if (!config->input_buffering)
+        convolution->set_buffering_policy (NULL);
+      
+      convolution->set_response (kernel);
+      //if (!config->integration_turns)
+      //  convolution->set_passband (passband);
+      
+      convolution->set_input  (timeseries);  
+      convolution->set_output (timeseries = new_TimeSeries() );    // out of place
+
+#if HAVE_CUDA
+      if (run_on_gpu)
+      { 
+        timeseries->set_memory (device_memory);
+        convolution->set_device (device_memory.ptr());
+        unsigned nchan = manager->get_info()->get_nchan();
+        if (fb_nchan)
+          nchan *= fb_nchan;
+        if (nchan >= 16)
+          convolution->set_engine (new CUDA::ConvolutionEngineSpectral (stream));
+        else
+          convolution->set_engine (new CUDA::ConvolutionEngine (stream));
+      }
+#endif
+    
+      operations.push_back (convolution.get());
+    }
+
+    if (verbose)
+	    cerr << "digifits: creating detection operation" << endl;
       
     Detection* detection = new Detection;
 
@@ -336,23 +401,29 @@ void dsp::LoadToFITS::construct () try
     operations.push_back ( detection );
   }
 
+#if HAVE_CUDA
+  if (run_on_gpu)
+  {
+    // to support input buffering
+    timeseries->set_engine (new CUDA::TimeSeriesEngine (device_memory));
+  }
+#endif
+
   TScrunch* tscrunch = new TScrunch;
-  
   tscrunch->set_factor ( tres_factor );
   tscrunch->set_input ( timeseries );
   tscrunch->set_output ( timeseries = new_TimeSeries() );
 
-# if HAVE_CUDA
+#if HAVE_CUDA
   if ( run_on_gpu )
   {
     tscrunch->set_engine ( new CUDA::TScrunchEngine(stream) );
     timeseries->set_memory (device_memory);
-
   }
 #endif
   operations.push_back( tscrunch );
 
-# if HAVE_CUDA
+#if HAVE_CUDA
   if (run_on_gpu)
   {
     TransferCUDA* transfer = new TransferCUDA (stream);
@@ -505,15 +576,48 @@ void dsp::LoadToFITS::prepare () try
     cerr << "digifits: processing " << manager->get_info()->get_nchan() << " channels" << endl;
   
   // TODO -- set an optimal block size for search mode
+  minimum_samples = 0;
+  unsigned block_overlap = 0;
+  bool report_vitals = thread_id==0 && config->report_vitals;
+
+  if (config->coherent_dedisp && kernel && report_vitals)
+    cerr << "digifits: dedispersion filter length=" << kernel->get_ndat ()
+         << " (minimum=" << kernel->get_minimum_ndat () << ")"
+         << " complex samples" << endl;
 
   // Check that block size is sufficient for the filterbanks,
   // increase it if not.
-  if (filterbank && verbose)
-    cerr << "digifits: filterbank minimum samples = " 
-      << filterbank->get_minimum_samples() 
-      << endl;
+  if (filterbank)
+  {
+    minimum_samples = filterbank->get_minimum_samples();
+    if (report_vitals)
+    {
+      cerr << "digifits: " << config->filterbank.get_nchan() << " channel ";
+      if (config->coherent_dedisp &&
+          config->filterbank.get_convolve_when() == Filterbank::Config::During)
+        cerr << "dedispersing ";
+      else if (filterbank->get_freq_res() > 1)
+        cerr << "by " << filterbank->get_freq_res() << " back ";
 
-  if (filterbank) {
+      cerr << "filterbank requires " << minimum_samples << " samples" << endl;
+
+      if (!config->input_buffering)
+      {
+        block_overlap = filterbank->get_minimum_samples_lost ();
+        if (Operation::verbose)
+          cerr << "filterbank loses " << block_overlap << " samples" << endl;
+      }
+    }
+
+    // need filterbank->get_minimum_samples samples
+    manager->set_block_size (minimum_samples);
+          
+#if 0
+    if (verbose)
+      cerr << "digifits: filterbank minimum samples = " 
+        << filterbank->get_minimum_samples() 
+        << endl;
+
     if (filterbank->get_minimum_samples() > 
         manager->get_input()->get_block_size())
     {
@@ -523,6 +627,48 @@ void dsp::LoadToFITS::prepare () try
         << " samples" << endl;
       manager->set_block_size( filterbank->get_minimum_samples() );
     }
+#endif
+  }
+
+  unsigned filterbank_resolution = minimum_samples - block_overlap;
+  cerr << "filterbank_resolution=" << filterbank_resolution << endl;
+
+  if (convolution)
+  {
+    const Observation* info = manager->get_info();
+    unsigned fb_factor = convolution->get_input()->get_nchan() * 2;
+    fb_factor /= info->get_nchan() * info->get_ndim();
+
+    minimum_samples = convolution->get_minimum_samples () * fb_factor;
+    cerr << "digifits: convolution requires at least "
+         << minimum_samples << " samples" << endl;
+
+    if (!config->input_buffering)
+    {
+      block_overlap = convolution->get_minimum_samples_lost () * fb_factor;
+      if (Operation::verbose)
+        cerr << "convolution loses " << block_overlap << " samples" << endl;
+
+      manager->set_filterbank_resolution (filterbank_resolution);
+    }
+  }
+
+  uint64_t block_size = ( minimum_samples - block_overlap )
+    * config->get_times_minimum_ndat() + block_overlap;
+
+  // set the block size to at least minimum_samples
+  manager->set_maximum_RAM( config->get_maximum_RAM() );
+  manager->set_copies( config->get_nbuffers() );
+
+  manager->set_overlap( block_overlap );
+
+  uint64_t ram = manager->set_block_size( block_size );
+
+  if (report_vitals)
+  {
+    double megabyte = 1024*1024;
+    cerr << "digifits: blocksize=" << manager->get_input()->get_block_size()
+         << " samples or " << double(ram)/megabyte << " MB" << endl;
   }
 
 }
