@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/puma2/dsp/PuMa2_Observation.h,v $
-   $Revision: 1.3 $
-   $Date: 2007/11/14 03:11:02 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/puma2/dsp/PuMa2_Observation.h
 
 #ifndef __PuMa2_Observation_h
 #define __PuMa2_Observation_h

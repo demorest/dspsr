@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/FloatUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/08/01 10:07:00 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/FloatUnpacker.h
 
 #ifndef __FloatUnpacker_h
 #define __FloatUnpacker_h

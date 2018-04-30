@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/GeometricDelay.h,v $
-   $Revision: 1.2 $
-   $Date: 2010/06/27 10:56:21 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/GeometricDelay.h
 
 #ifndef __Geometric_SampleDelay_h
 #define __Geometric_SampleDelay_h

@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/dsp.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/04/14 21:23:59 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/dsp.h
 
 #ifndef __baseband_dsp_h
 #define __baseband_dsp_h

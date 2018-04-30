@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/PrestoObservation.h,v $
-   $Revision: 1.2 $
-   $Date: 2009/03/03 05:29:30 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/PrestoObservation.h
 
 #ifndef __PrestoObservation_h
 #define __PrestoObservation_h

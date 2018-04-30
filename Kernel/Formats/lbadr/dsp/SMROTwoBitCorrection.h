@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/lbadr/dsp/SMROTwoBitCorrection.h,v $
-   $Revision: 1.6 $
-   $Date: 2009/06/17 10:16:54 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/lbadr/dsp/SMROTwoBitCorrection.h
 
 #ifndef __SMROTwoBitCorrection_h
 #define __SMROTwoBitCorrection_h

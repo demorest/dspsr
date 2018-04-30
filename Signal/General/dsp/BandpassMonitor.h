@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/BandpassMonitor.h,v $
-   $Revision: 1.6 $
-   $Date: 2008/10/03 05:42:40 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/BandpassMonitor.h
 
 #ifndef __baseband_dsp_BandpassMonitor_h
 #define __baseband_dsp_BandpassMonitor_h

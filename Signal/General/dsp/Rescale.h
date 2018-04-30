@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/Rescale.h,v $
-   $Revision: 1.9 $
-   $Date: 2010/02/02 11:18:41 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/Rescale.h
 
 #ifndef __baseband_dsp_Rescale_h
 #define __baseband_dsp_Rescale_h

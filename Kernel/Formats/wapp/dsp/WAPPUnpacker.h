@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/wapp/dsp/WAPPUnpacker.h,v $
-   $Revision: 1.2 $
-   $Date: 2006/11/20 16:06:20 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/wapp/dsp/WAPPUnpacker.h
 
 #ifndef __WAPPUnpacker_h
 #define __WAPPUnpacker_h

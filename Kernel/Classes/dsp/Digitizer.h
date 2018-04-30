@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Digitizer.h,v $
-   $Revision: 1.3 $
-   $Date: 2010/04/02 21:27:32 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/Digitizer.h
 
 
 #ifndef __Digitizer_h

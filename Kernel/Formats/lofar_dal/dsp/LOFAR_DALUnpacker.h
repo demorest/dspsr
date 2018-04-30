@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/LOFAR_DALUnpacker.h,v $
-   $Revision: 1.1 $
-   $Date: 2011/08/01 10:07:00 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/LOFAR_DALUnpacker.h
 
 #ifndef __LOFAR_DALUnpacker_h
 #define __LOFAR_DALUnpacker_h

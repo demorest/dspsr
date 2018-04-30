@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/TwoBitFour.h,v $
-   $Revision: 1.7 $
-   $Date: 2010/05/11 06:22:25 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/TwoBitFour.h
 
 #ifndef __TwoBitFour_h
 #define __TwoBitFour_h

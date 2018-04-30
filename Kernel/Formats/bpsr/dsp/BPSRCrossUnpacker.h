@@ -44,7 +44,18 @@ namespace dsp
     unsigned get_output_ipol (unsigned idig) const;
 
     float gain_polx;
+    float gain_pol1;
+    float gain_pol2;
+    unsigned ppqq_bw;
 
+  private:
+
+    float reference_gain;
+
+    float ppqq_scale[2];
+
+    float pq_scale;
+    
   private:
 
     bool unpack_ppqq_only;

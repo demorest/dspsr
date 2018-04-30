@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LoadToFil.h,v $
-   $Revision: 1.4 $
-   $Date: 2011/12/21 06:02:20 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/LoadToFil.h
 
 #ifndef __dspsr_LoadToFil_h
 #define __dspsr_LoadToFil_h
@@ -90,6 +87,9 @@ namespace dsp {
 
     //! coherently dedisperse along with filterbank
     bool coherent_dedisp;
+
+    //! enable or disable 2-bit excision
+    bool excision_enable;
 
     //! integrate in time before digitization
     unsigned tscrunch_factor;

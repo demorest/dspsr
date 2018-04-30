@@ -7,10 +7,7 @@
  ***************************************************************************/
 //-*-C++-*-
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h,v $
-   $Revision: 1.24 $
-   $Date: 2011/08/31 20:46:04 $
-   $Author: demorest $ */
+// dspsr/Signal/Pulsar/dsp/PhaseSeriesUnloader.h
 
 #ifndef __PhaseSeriesUnloader_h
 #define __PhaseSeriesUnloader_h

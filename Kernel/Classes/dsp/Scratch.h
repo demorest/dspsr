@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/dsp/Scratch.h,v $
-   $Revision: 1.5 $
-   $Date: 2010/01/21 23:36:23 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/dsp/Scratch.h
 
 #ifndef __dsp_Scratch_h
 #define __dsp_Scratch_h

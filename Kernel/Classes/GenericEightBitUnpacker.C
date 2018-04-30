@@ -26,7 +26,12 @@ static void* const undefined_stream = (void *) -1;
 dsp::GenericEightBitUnpacker::GenericEightBitUnpacker ()
   : EightBitUnpacker ("GenericEightBitUnpacker")
 {
+#define ASSUME_TWOS_COMPLEMENT 1
+#if ASSUME_TWOS_COMPLEMENT
   table = new BitTable (8, BitTable::TwosComplement);
+#else
+  table = new BitTable (8, BitTable::OffsetBinary);
+#endif
   gpu_stream = undefined_stream;
 }
 

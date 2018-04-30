@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/LevelMonitor.h,v $
-   $Revision: 1.9 $
-   $Date: 2010/03/22 06:06:58 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/LevelMonitor.h
 
 #ifndef __LevelMonitor_h
 #define __LevelMonitor_h

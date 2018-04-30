@@ -4,10 +4,7 @@
  *   Licensed under the Academic Free License version 2.1
  *
  ***************************************************************************/
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Classes/environ.h,v $
-   $Revision: 1.1 $
-   $Date: 2009/06/18 00:05:05 $
-   $Author: straten $ */
+// dspsr/Kernel/Classes/environ.h
 
 /*
  * Use the standard C integer types

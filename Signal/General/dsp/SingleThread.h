@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/SingleThread.h,v $
-   $Revision: 1.7 $
-   $Date: 2012/01/19 21:46:17 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/SingleThread.h
 
 #ifndef __dspsr_SingleThread_h
 #define __dspsr_SingleThread_h

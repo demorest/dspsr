@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Kernel/Formats/sigproc/dsp/SigProcObservation.h,v $
-   $Revision: 1.2 $
-   $Date: 2008/10/31 06:00:50 $
-   $Author: straten $ */
+// dspsr/Kernel/Formats/sigproc/dsp/SigProcObservation.h
 
 #ifndef __SigProcObservation_h
 #define __SigProcObservation_h

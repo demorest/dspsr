@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/Pulsar/dsp/Fold.h,v $
-   $Revision: 1.70 $
-   $Date: 2011/11/14 19:43:34 $
-   $Author: straten $ */
+// dspsr/Signal/Pulsar/dsp/Fold.h
 
 #ifndef __baseband_dsp_Fold_h
 #define __baseband_dsp_Fold_h

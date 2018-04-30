@@ -6,10 +6,7 @@
  *
  ***************************************************************************/
 
-/* $Source: /cvsroot/dspsr/dspsr/Signal/General/dsp/OptimalFilterbank.h,v $
-   $Revision: 1.1 $
-   $Date: 2010/05/18 15:23:17 $
-   $Author: straten $ */
+// dspsr/Signal/General/dsp/OptimalFilterbank.h
 
 #ifndef __OptimalFilterbank_h
 #define __OptimalFilterbank_h
