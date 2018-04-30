@@ -606,7 +606,7 @@ void dsp::FITSDigitizer::rescale_pack ()
     int bit_counter=0;
     unsigned inner_stride = nchan * npol;
     unsigned idx = 0, bit_shift = 0; // make gcc happy
-#pragma omp parallel for
+//#pragma omp parallel for
     for (unsigned ichan=0; ichan < nchan; ichan++)
     {
       unsigned mapped_chan = channel (ichan);
