@@ -136,7 +136,8 @@ void dsp::MeerKATUnpacker::set_device (Memory* memory)
 
 bool dsp::MeerKATUnpacker::matches (const Observation* observation)
 {
-  return observation->get_machine() == "MeerKAT"
+  return (observation->get_machine() == "MKBF" || 
+          observation->get_machine() == "MKBFRo")
     && observation->get_ndim() == 2
     && (observation->get_npol() == 2 || observation->get_npol() == 1)
     && observation->get_nbit() == 8;
@@ -148,11 +149,20 @@ void dsp::MeerKATUnpacker::unpack ()
   if (ndat == 0)
     return;
 
+  unsigned sample_swap;
+  if (input->get_machine() == "MKBFRo")
+    sample_swap = 2;
+  else
+    sample_swap = 1;
+
+  if (verbose)
+    cerr << "dsp::MeerKATUnpacker::unpack sample_swap=" << sample_swap << endl;
+
   if (engine)
   {
     if (verbose)
       cerr << "dsp::MeerKATUnpacker::unpack using Engine" << endl;
-    engine->unpack(table->get_scale(), input, output);
+    engine->unpack(table->get_scale(), input, output, sample_swap);
     return;
   }
 
@@ -199,13 +209,18 @@ void dsp::MeerKATUnpacker::unpack ()
             digs[1] = get_histogram (idig+1);
             into = output->get_datptr (ichan, ipol) + iheap*nsamp_per_heap * ndim; 
 
-            for (unsigned isamp=0; isamp<nsamp_per_heap; isamp++)
+            for (unsigned isamp=0; isamp<nsamp_per_heap; isamp+=sample_swap)
             {
-              from16 = from[isamp];
-              digs[0][(int) from8[0] + 128]++;
-              digs[1][(int) from8[1] + 128]++;
-              into[2*isamp+0] = (float(from8[0]) + 0.5) * scale;
-              into[2*isamp+1] = (float(from8[1]) + 0.5) * scale;
+              for (unsigned iswap=0; iswap<sample_swap; iswap++)
+              {
+                from16 = from[isamp + (sample_swap - 1 - iswap)];
+
+                digs[0][(int) from8[0] + 128]++;
+                digs[1][(int) from8[1] + 128]++;
+
+                into[2*(isamp+iswap)+0] = (float(from8[0]) + 0.5) * scale;
+                into[2*(isamp+iswap)+1] = (float(from8[1]) + 0.5) * scale;
+              }
             }
             from += nsamp_per_heap;
           }
@@ -236,15 +251,15 @@ void dsp::MeerKATUnpacker::unpack ()
 
             float * into_ptr = into + (ichan*npol*ndim) + (ipol*ndim);
 
-            for (unsigned isamp=0; isamp<nsamp_per_heap; isamp++)
+            for (unsigned isamp=0; isamp<nsamp_per_heap; isamp+=sample_swap)
             {
-              from16 = from[isamp];
-              //digs[0][(int) from8[0] + 127]++;
-              //digs[1][(int) from8[1] + 127]++;
-              into_ptr[0] = (float(from8[0]) + 0.5) * scale;
-              into_ptr[1] = (float(from8[1]) + 0.5) * scale;
-
-              into_ptr += into_stride;
+              for (unsigned iswap=0; iswap<sample_swap; iswap++)
+              {
+                from16 = from[isamp + (sample_swap - 1 - iswap)];
+                into_ptr[0] = (float(from8[0]) + 0.5) * scale;
+                into_ptr[1] = (float(from8[1]) + 0.5) * scale;
+                into_ptr += into_stride;
+              }
             }
             from += nsamp_per_heap;;
           }
