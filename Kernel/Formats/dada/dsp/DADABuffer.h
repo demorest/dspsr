@@ -77,6 +77,9 @@ namespace dsp {
     //! The byte resolution
     unsigned byte_resolution;
 
+    //! Zero the input data_block after reading values
+    char zero_input;
+
   };
 
 }
