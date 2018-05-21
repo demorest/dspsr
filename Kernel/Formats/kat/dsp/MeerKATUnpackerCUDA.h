@@ -28,7 +28,7 @@ namespace CUDA
 
     void set_device (dsp::Memory* memory);
 
-    void unpack (float scale, const dsp::BitSeries * input, dsp::TimeSeries * output);
+    void unpack (float scale, const dsp::BitSeries * input, dsp::TimeSeries * output, unsigned sample_swap);
 
   protected:
 

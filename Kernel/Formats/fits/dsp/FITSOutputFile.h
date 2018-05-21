@@ -143,6 +143,9 @@ namespace dsp {
     bool mangle_output;
     std::string mangled_output_filename;
 
+    //! keep track of samples written so far
+    int64_t samples_written;
+
   };
 
 }

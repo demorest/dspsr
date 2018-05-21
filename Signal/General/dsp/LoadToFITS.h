@@ -54,6 +54,9 @@ namespace dsp {
     //! The dedispersion kernel
     Reference::To<Dedispersion> kernel;
 
+    //! The convolution operation
+    Reference::To<Convolution> convolution;
+
     //! The output file
     Reference::To<OutputFile> outputFile;
 
@@ -70,6 +73,10 @@ namespace dsp {
     // Sets default values
     Config ();
 
+    // set block size to this factor times the minimum possible
+    void set_times_minimum_ndat (unsigned);
+    unsigned get_times_minimum_ndat () const { return times_minimum_ndat; }
+
     // set block_size to result in at least this much RAM usage
     void set_maximum_RAM (uint64_t);
     uint64_t get_maximum_RAM () const { return maximum_RAM; }
@@ -82,6 +89,9 @@ namespace dsp {
 
     //! Filterbank config options
     Filterbank::Config filterbank;
+
+    //! set block size to this factor times the minimum possible
+    unsigned times_minimum_ndat;
 
     //! Maximum RAM to use (per thread)
     double maximum_RAM;

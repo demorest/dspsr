@@ -95,6 +95,7 @@ dsp::FITSOutputFile::FITSOutputFile (const char* filename)
 
   offset = 0;
   written = 0;
+  samples_written = 0;
   isub = 0;
   fptr = NULL;
 
@@ -245,7 +246,7 @@ void dsp::FITSOutputFile::write_header ()
 
   archive-> set_source ( get_input()->get_source() );
   archive-> set_coordinates ( get_input()->get_coordinates() );
-  archive-> set_bandwidth ( get_input()->get_bandwidth() );
+  archive-> set_bandwidth ( -fabs(get_input()->get_bandwidth()) );
   archive-> set_centre_frequency ( get_input()->get_centre_frequency() );
   archive-> set_dispersion_measure ( get_input()->get_dispersion_measure() );
 
@@ -380,6 +381,7 @@ void dsp::FITSOutputFile::initialize ()
 
   // reset bytes written and current row, etc.
   written = 0;
+  samples_written = 0;
   isub = 0;
   offset = 0;
 
@@ -467,12 +469,14 @@ void dsp::FITSOutputFile::operation ()
       // NB written will == 0 here
       nbytes -= unload_bytes (get_input()->get_rawptr(), 
           std::min(max_bytes - written, nbytes));
+      samples_written += get_input()->get_ndat();
     }
     return;
   }
 
   unload_bytes (get_input()->get_rawptr(), get_input()->get_nbytes());
 
+  samples_written += get_input()->get_ndat();
 }
 
 int64_t dsp::FITSOutputFile::unload_bytes (const void* void_buffer, uint64_t bytes)
@@ -554,7 +558,7 @@ void dsp::FITSOutputFile::finalize_fits ()
     psrfits_update_key<int> (fptr, "NAXIS2", isub);
     int nstot = (written*8)/(npol * nchan * nbit);
     psrfits_update_key<int> (fptr, "NSTOT", nstot );
-    int nsuboffs =  get_input()->get_input_sample()/nsblk - written/nbblk;
+    int nsuboffs = samples_written/nsblk - written/nbblk;
     if (nsuboffs == -1)
       nsuboffs = 0;
     psrfits_update_key<int> (fptr, "NSUBOFFS", nsuboffs);

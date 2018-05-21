@@ -92,10 +92,10 @@ void parse_options (int argc, char** argv) try
   arg->set_help ("upper limit on RAM usage");
   arg->set_long_help ("specify the floating point number of megabytes; e.g. -U 256 \n");
 
-  //arg = menu.add (&config->filterbank, 
-  //    &dsp::Filterbank::Config::set_freq_res, 
-  //    'x', "nfft");
-  //arg->set_help ("set backward FFT length in voltage filterbank");
+  arg = menu.add (&config->filterbank, 
+      &dsp::Filterbank::Config::set_freq_res, 
+      'x', "nfft");
+  arg->set_help ("set backward FFT length in voltage filterbank");
 
   arg = menu.add (config->coherent_dedisp, "do_dedisp", "bool");
   arg->set_help ("enable coherent dedispersion (default: false)");

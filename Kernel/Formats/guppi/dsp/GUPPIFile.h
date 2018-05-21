@@ -41,6 +41,9 @@ namespace dsp {
     //! Seek to a spot in the file
     int64_t seek_bytes (uint64_t bytes);
 
+    //! The correct starting position in the file
+    uint64_t pos0;
+
   };
 
 }

@@ -67,7 +67,7 @@ namespace dsp {
 
     virtual void setup() = 0;
 
-    virtual void unpack(float scale, const BitSeries * input, TimeSeries * output) = 0;
+    virtual void unpack(float scale, const BitSeries * input, TimeSeries * output, unsigned sample_swap) = 0;
 
     virtual bool get_device_supported (Memory* memory) const = 0;
 

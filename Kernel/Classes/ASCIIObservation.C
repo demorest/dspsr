@@ -342,8 +342,8 @@ void dsp::ASCIIObservation::load (const char* header)
   //
   // PICOSECONDS offset from UTC_START second 
   //
-  uint64_t offset_picoseconds = 0;
-  if (ascii_header_check (header, "PICOSECONDS", UI64, &offset_picoseconds) >= 0)
+  int64_t offset_picoseconds = 0;
+  if (ascii_header_check (header, "PICOSECONDS", I64, &offset_picoseconds) >= 0)
   {
     double offset_seconds = double(offset_picoseconds) / 1e12;
     recording_start_time += offset_seconds;

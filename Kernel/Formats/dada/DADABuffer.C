@@ -29,6 +29,7 @@ dsp::DADABuffer::DADABuffer ()
 {
   hdu = 0;
   passive = false;
+  zero_input = 0;
 
   /*
     when a block overlap policy is necessary (e.g. when using two GPUs)
@@ -236,9 +237,12 @@ void dsp::DADABuffer::open_file (const char* filename)
 
   info = new ASCIIObservation (hdu->header);
 
+  // check if the input data should be zeroed after reading
+  if (ascii_header_get (hdu->header, "ZERO_INPUT", "%u", &zero_input) < 0)
+    zero_input = 0;
+
   if (ascii_header_get (hdu->header, "RESOLUTION", "%u", &byte_resolution) < 0)
     byte_resolution = 1;
-
 
   // the resolution is the _byte_ resolution; convert to _sample_ resolution
   resolution = get_info()->get_nsamples (byte_resolution);
@@ -280,8 +284,14 @@ int64_t dsp::DADABuffer::load_bytes_device (unsigned char* device_memory, uint64
     cerr << "dsp::DADABuffer::load_bytes_device ipcio_read_cuda "
          << bytes << " bytes" << endl;
 
-  int64_t bytes_read = ipcio_read_cuda (hdu->data_block, (char*) device_memory, bytes, stream);
-  //int64_t bytes_read = (int64_t) bytes;
+  int64_t bytes_read = -1;
+#ifdef DADA_IPCIO_READ_ZERO_CUDA
+  if (zero_input)
+    bytes_read = ipcio_read_zero_cuda (hdu->data_block, (char*) device_memory, bytes, stream);
+  else
+#else
+    bytes_read = ipcio_read_cuda (hdu->data_block, (char*) device_memory, bytes, stream);
+#endif
 	cudaStreamSynchronize(stream);
   if (bytes_read < 0)
     cerr << "dsp::DADABuffer::load_bytes_device error ipcio_read_cuda" << endl;

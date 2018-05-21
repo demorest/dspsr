@@ -19,7 +19,8 @@ using namespace std;
 void check_error_stream (const char*, cudaStream_t);
 
 // each thread unpacks 1 complex sample
-__global__ void meerkat_unpack_fpt_kernel (const uint64_t ndat, float scale, const char2 * input, cuFloatComplex * output, uint64_t ostride)
+__global__ void meerkat_unpack_fpt_kernel (const uint64_t ndat, float scale, const char2 * input,
+cuFloatComplex * output, uint64_t ostride)
 {
   // blockIdx.x is the heap number, threadIdx.x is the sample number in the heap
   const uint64_t idat = (blockIdx.x * blockDim.x) + threadIdx.x;
@@ -33,6 +34,36 @@ __global__ void meerkat_unpack_fpt_kernel (const uint64_t ndat, float scale, con
   //                    iheap                        ipol                        ichan      * heap_size
   const uint64_t idx = (blockIdx.x * heap_stride) + (blockIdx.z * pol_stride) + (blockIdx.y * blockDim.x) + threadIdx.x;
   const uint64_t odx = (ichanpol * ostride) + idat;
+
+  char2 in16 = input[idx];
+
+  cuFloatComplex out64;
+  out64.x  = ((float) in16.x + 0.5) * scale;
+  out64.y  = ((float) in16.y + 0.5) * scale;
+
+  output[odx] = out64;
+}
+
+
+// each thread unpacks 1 complex sample
+__global__ void meerkat_unpack_fpt_swap2_kernel (const uint64_t ndat, float scale, const char2 * input, cuFloatComplex * output, uint64_t ostride)
+{
+  // blockIdx.x is the heap number, threadIdx.x is the sample number in the heap
+  const uint64_t idat = (blockIdx.x * blockDim.x) + threadIdx.x;
+  if (idat >= ndat)
+    return;
+
+  const unsigned ichanpol    = blockIdx.y * gridDim.z + blockIdx.z; // ichan * npol + ipol
+  const unsigned pol_stride  = gridDim.y * blockDim.x;   // nchan * heap_size
+  const unsigned heap_stride = gridDim.z * pol_stride;  // npol * pol_stride
+
+  //                    iheap                        ipol                        ichan      * heap_size
+  const uint64_t idx = (blockIdx.x * heap_stride) + (blockIdx.z * pol_stride) + (blockIdx.y * blockDim.x) + threadIdx.x;
+
+  // switch odd and even samples
+  const int64_t roach2_fix = 1 - (2 * (idat & 0x1));
+
+  const uint64_t odx = (ichanpol * ostride) + idat + roach2_fix;
 
   char2 in16 = input[idx];
 
@@ -68,7 +99,7 @@ void CUDA::MeerKATUnpackerEngine::set_device (dsp::Memory* memory)
 }
 
 
-void CUDA::MeerKATUnpackerEngine::unpack (float scale, const dsp::BitSeries * input, dsp::TimeSeries * output)
+void CUDA::MeerKATUnpackerEngine::unpack (float scale, const dsp::BitSeries * input, dsp::TimeSeries * output, unsigned sample_swap)
 {
   const uint64_t ndat = input->get_ndat();
   const unsigned nchan = input->get_nchan();
@@ -106,7 +137,10 @@ void CUDA::MeerKATUnpackerEngine::unpack (float scale, const dsp::BitSeries * in
        << blocks.x << "," << blocks.y << "," << blocks.z << ")" << " nthread=" << nthread << endl;
 #endif
 
-  meerkat_unpack_fpt_kernel<<<blocks,nthread,0,stream>>> (ndat, scale, from, into, pol_span);
+  if (sample_swap == 2)
+    meerkat_unpack_fpt_swap2_kernel<<<blocks,nthread,0,stream>>> (ndat, scale, from, into, pol_span);
+  else if (sample_swap) 
+    meerkat_unpack_fpt_kernel<<<blocks,nthread,0,stream>>> (ndat, scale, from, into, pol_span);
 
   if (dsp::Operation::record_time || dsp::Operation::verbose)
     check_error_stream ("CUDA::MeerKATUnpackerEngine::unpack", stream);
