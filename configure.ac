@@ -192,6 +192,7 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/sigproc/Makefile
 		Kernel/Formats/ska1/Makefile
 		Kernel/Formats/spigot/Makefile
+		Kernel/Formats/uwb/Makefile
 		Kernel/Formats/vdif/Makefile
 		Kernel/Formats/wapp/Makefile
 		Signal/Makefile
