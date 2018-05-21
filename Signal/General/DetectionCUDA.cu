@@ -185,20 +185,31 @@ __global__ void sqld_tfp (float2 *base_in, unsigned stride_in,
   float * out = base_out + (blockIdx.y * stride_out);
 
   unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
-
-  out[i] = in[i].x * in[i].x + in[i].y * in[i].y;
+  if (i < ndat)
+    out[i] = in[i].x * in[i].x + in[i].y * in[i].y;
 }
 
-__global__ void sqld_fpt (float2 *base_in, float *base_out, uint64_t ndat)
+__global__ void sqld_fpt (float2 *base_in, float *base_out, uint64_t ndat, 
+                          unsigned npol, uint64_t in_stride, uint64_t out_stride)
 {
-  // set base pointer for ichan [blockIdx.y], input complex, output detected, npol 1
-  float2 * in = base_in + (blockIdx.y * ndat);
-  float * out = base_out + (blockIdx.y * ndat);
+  // set base pointer for ichan [blockIdx.y], ipol ==  0, input complex, output detected
+  float2 * in = base_in + (blockIdx.y * npol * in_stride);
+  float * out = base_out + (blockIdx.y * out_stride);
 
-  // the sample for the channel
-  unsigned i = blockIdx.x * blockDim.x + threadIdx.x;
-
-  out[i] = in[i].x * in[i].x + in[i].y * in[i].y;
+  // the idat
+  const uint64_t idat = (blockIdx.x * blockDim.x) + threadIdx.x;
+  if (idat < ndat)
+  {
+    float sum = 0.0f;
+    uint64_t idx = idat;
+    for (unsigned ipol=0; ipol<npol; ipol++)
+    {
+      const float2 v = in[idx];
+      sum += v.x * v.x + v.y * v.y;
+      idx += in_stride;
+    }
+    out[idat] = sum;
+  }
 }
 
 void CUDA::DetectionEngine::square_law (const dsp::TimeSeries* input,
@@ -260,22 +271,43 @@ void CUDA::DetectionEngine::square_law (const dsp::TimeSeries* input,
     {
       dim3 threads (512);
       dim3 blocks (ndat/threads.x, nchan);
-
       if (ndat % threads.x)
         blocks.x ++;
 
-      unsigned ichan = 0;
-      unsigned ipol = 0;
-      float2* base_in = (float2*) input->get_datptr(ichan, ipol);
-      float* base_out = output->get_datptr(ichan, ipol);
+      float2* base_in = (float2*) input->get_datptr (0, 0);
+      float* base_out = output->get_datptr(0, 0);
+
+      uint64_t in_stride = ndat;
+      uint64_t out_stride = ndat;
+
+      // determine the stride between blocks on ndat
+      if ((npol == 1) && (nchan > 1))
+      {
+        float2 * next = (float2*) input->get_datptr (1, 0);
+        in_stride = next - base_in;
+      }
+
+      if (npol == 2)
+      {
+        float2 * next = (float2*) input->get_datptr (0, 1);
+        in_stride = next - base_in;
+      }
+
+      if (nchan > 1)
+      {
+        float * next = (float*) output->get_datptr (1, 0);
+        out_stride = next - base_out;
+      }
 
       if (dsp::Operation::verbose)
         cerr << "CUDA::DetectionEngine::square_law <<<sqld_fpt>>> "
              << " base_in=" << (void *) base_in
              << " base_out=" << (void *) base_out
-             << " ndat=" << ndat << endl;
+             << " ndat=" << ndat << " nchan=" << nchan 
+             << " npol=" << npol<< " in_stride=" << in_stride 
+             << " out_stride=" << out_stride << endl;
 
-      sqld_fpt<<<blocks,threads,0,stream>>> (base_in, base_out, ndat);
+      sqld_fpt<<<blocks,threads,0,stream>>> (base_in, base_out, ndat, npol, in_stride, out_stride);
 
       if (dsp::Operation::record_time || dsp::Operation::verbose)
         check_error_stream ("CUDA::DetectionEngine::square_law sqld_fpt", stream);

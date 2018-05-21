@@ -549,7 +549,7 @@ void dsp::LoadToFold::construct () try
 
   operations.push_back (detect.get());
 
-  if (config->npol == 3)
+  if (config->npol == 3 || config->npol == 1)
   {
     detected = new_time_series ();
     detect->set_output (detected);
@@ -566,6 +566,11 @@ void dsp::LoadToFold::construct () try
     detected = new_time_series ();
     fourth->set_output (detected);
   }
+
+#if HAVE_CUDA
+  if (run_on_gpu)
+    detected->set_memory (device_memory);
+#endif
 
   build_fold (detected);
 

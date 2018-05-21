@@ -9,7 +9,7 @@
 #include <config.h>
 #endif
 
-#define FP16
+//#define FP16
 
 #include <cuda_runtime.h>
 #include <cufft.h>

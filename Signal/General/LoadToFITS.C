@@ -300,38 +300,53 @@ void dsp::LoadToFITS::construct () try
 	      cerr << "digifits: creating detection operation" << endl;
       
     Detection* detection = new Detection;
+    detection->set_input ( timeseries );
 
     // always use coherence for GPU, pscrunch later if needed
     if (run_on_gpu)
     {
 #ifdef HAVE_CUDA
-      detection->set_output_state (Signal::Coherence);
-      detection->set_engine (new CUDA::DetectionEngine(stream) );
-      detection->set_output_ndim (2);
+      if (npol == 2)
+      {
+        detection->set_output_state (Signal::Coherence);
+        detection->set_engine (new CUDA::DetectionEngine(stream) );
+        detection->set_output_ndim (2);
+        detection->set_output (timeseries);
+      }
+      else
+      {
+        detection->set_output_state (Signal::Intensity);
+        detection->set_engine (new CUDA::DetectionEngine(stream) );
+        detection->set_output (timeseries = new_TimeSeries());
+        cerr << "detection->set_output(timeseries = newTimeSeries())" << endl;
+        detection->set_output_ndim (1);
+        timeseries->set_memory (device_memory);
+      }
 #endif
     }
     else
     {
-      switch (config->npol) {
-      case 1:
-        detection->set_output_state (Signal::Intensity);
-        break;
-      case 2:
-        detection->set_output_state (Signal::PPQQ);
-        break;
-      case 4:
-        detection->set_output_state (Signal::Coherence);
-        // use this to avoid copies -- seem to segfault in multi-threaded
-        //detection->set_output_ndim (2);
-        break;
-      default:
-        throw Error(InvalidParam,"dsp::LoadToFITS::construct",
-            "invalid polarization specified");
+      switch (config->npol) 
+      {
+        case 1:
+          detection->set_output_state (Signal::Intensity);
+          //detected = new_TimeSeries();
+          break;
+        case 2:
+          detection->set_output_state (Signal::PPQQ);
+          //detected = new_TimeSeries();
+          break;
+        case 4:
+          detection->set_output_state (Signal::Coherence);
+          // use this to avoid copies -- seem to segfault in multi-threaded
+          //detection->set_output_ndim (2);
+          break;
+        default:
+          throw Error(InvalidParam,"dsp::LoadToFITS::construct",
+              "invalid polarization specified");
       }
+      detection->set_output (timeseries);
     }
-
-    detection->set_input ( timeseries );
-    detection->set_output ( timeseries );
 
     operations.push_back ( detection );
   }

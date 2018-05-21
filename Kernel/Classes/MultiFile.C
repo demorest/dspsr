@@ -233,7 +233,7 @@ void dsp::MultiFile::ensure_contiguity()
     Observation* obs2 = files[ifile]->get_info();;
 
     if (verbose)
-      cerr << "dsp::MultiFile::ensure_contiguity"
+      cerr << "dsp::MultiFile::ensure_contiguity" << 
 	" obs.start  =" << obs1->get_start_time() << 
 	" obs1.end   =" << obs1->get_end_time() << 
 	" obs2.start =" << obs2->get_start_time() << 
