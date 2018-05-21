@@ -187,6 +187,7 @@ void dsp::Detection::resize_output ()
     get_output()->set_ndim( output_ndim );
     get_output()->resize( get_input()->get_ndat() );
     get_output()->set_zeroed_data (input->get_zeroed_data());
+    get_output()->set_input_sample(input->get_input_sample());
   }
   else if (reshape)
   {

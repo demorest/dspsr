@@ -65,6 +65,11 @@ static dsp::Unpacker::Register::Enter<dsp::CASPSRUnpacker> caspsr;
 static dsp::Unpacker::Register::Enter<dsp::SKA1Unpacker> ska1;
 #endif
 
+#if HAVE_uwb
+#include "dsp/UWBUnpacker.h"
+static dsp::Unpacker::Register::Enter<dsp::UWBUnpacker> uwb;
+#endif
+
 #if HAVE_cpsr
 #include "dsp/CPSRTwoBitCorrection.h"
 static dsp::Unpacker::Register::Enter<dsp::CPSRTwoBitCorrection> cpsr;

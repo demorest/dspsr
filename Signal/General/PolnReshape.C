@@ -16,10 +16,11 @@ dsp::PolnReshape::PolnReshape ()
   state = Signal::Other;
 }
 
-void dsp::PolnReshape::npol4_ndim1()
+// reshape from 2pol, 2dim to 4pol, 1dim
+void dsp::PolnReshape::p2d2_p4d1()
 {
   if (verbose)
-    cerr << "dsp::PolnReshape::npol4_ndim1" << endl;
+    cerr << "dsp::PolnReshape::p2d2_p4d1" << endl;
   const uint64_t ndat  = input->get_ndat();
   const unsigned nchan = input->get_nchan();
 
@@ -50,21 +51,21 @@ void dsp::PolnReshape::npol4_ndim1()
     break;
   }
   default :
-    throw Error (InvalidState, "dsp::PolnReshape::npol4_ndim1",
+    throw Error (InvalidState, "dsp::PolnReshape::p2d2_p4d1",
      "Only FPT order implemented.");
   }
 }
 
-void dsp::PolnReshape::npol2_ndim1()
+void dsp::PolnReshape::p2d2_p2d1()
 {
-    throw Error (InvalidParam, "dsp::PolnReshape::npol2_ndim1",
+    throw Error (InvalidParam, "dsp::PolnReshape::p2d2_p2d1",
 		 "not implemented");
 }
 
-void dsp::PolnReshape::npol1_ndim1()
+void dsp::PolnReshape::p2d2_p1d1()
 {
   if (verbose)
-    cerr << "dsp::PolnReshape::npol1_ndim1" << endl;
+    cerr << "dsp::PolnReshape::p2d2_p1d1" << endl;
   const uint64_t ndat  = input->get_ndat();
   const unsigned nchan = input->get_nchan();
 
@@ -90,7 +91,40 @@ void dsp::PolnReshape::npol1_ndim1()
     break;
   }
   default :
-    throw Error (InvalidState, "dsp::PolnReshape::npol1_ndim1",
+    throw Error (InvalidState, "dsp::PolnReshape::p2d2_p1d1",
+     "Only FPT order implemented.");
+  }
+}
+
+void dsp::PolnReshape::p1d1_p1d1()
+{
+  if (verbose)
+    cerr << "dsp::PolnReshape::p1d1_p1d1" << endl;
+  const uint64_t ndat  = input->get_ndat();
+  const unsigned nchan = input->get_nchan();
+  
+  output->set_npol(1);
+  output->set_ndim(1);
+  output->resize(ndat);
+  
+  switch (input->get_order())
+  { 
+  case TimeSeries::OrderFPT:
+  {   
+    for (unsigned ichan=0; ichan < nchan; ichan++)
+    { 
+      float* out_data = output->get_datptr (ichan, 0);
+      const float* in_data = input->get_datptr (ichan, 0);
+      for (uint64_t idat=0; idat < ndat; idat++)
+      {
+        out_data[idat] = in_data[idat];
+      }
+    }
+           
+    break;
+  }  
+  default :
+    throw Error (InvalidState, "dsp::PolnReshape::p1d1_p1d1",
      "Only FPT order implemented.");
   }
 }
@@ -109,9 +143,21 @@ void dsp::PolnReshape::transformation ()
   const unsigned input_ndim  = input->get_ndim();
   const unsigned input_npol  = input->get_npol();
 
-  if (!(input_npol==2 && input_ndim==2))
+  if ((input_npol==1) && (input_ndim==1) && (state == Signal::Intensity))
+  {
+    if (verbose)
+      cerr << "dsp::PolnReshape::transformation supported p1d1" << endl;
+  }
+  else if ((input_npol==2 && input_ndim==2) && 
+           ((state == Signal::Stokes) || (state == Signal::Coherence) || 
+            (state == Signal::PPQQ) || Signal::Intensity))
+  {
+    if (verbose)
+      cerr << "dsp::PolnReshape::transformation supported p2d2 transformation" << endl;
+  }
+  else
     throw Error (InvalidParam, "dsp::PolnReshape::transformation",
-		 "npol=%d != 2 or ndim=%d != 2", input_npol, input_ndim);
+		 "npol=%d, ndim=%d which is unsupported", input_npol, input_ndim);
 
   // prepare the output TimeSeries
   output->copy_configuration (input);
@@ -120,12 +166,14 @@ void dsp::PolnReshape::transformation ()
     throw Error (InvalidParam, "dsp::PolnReshape::transformation",
 		 "does not currently support in-place transformation");
 
-  if (state == Signal::Stokes || state == Signal::Coherence)
-    npol4_ndim1();
+  if (input_npol==1 && input_ndim==1 && state == Signal::Intensity)
+    p1d1_p1d1();
+  else if (state == Signal::Stokes || state == Signal::Coherence)
+    p2d2_p4d1();
   else if (state == Signal::PPQQ)
-    npol2_ndim1();
+    p2d2_p2d1();
   else if (state == Signal::Intensity)
-    npol1_ndim1();
+    p2d2_p1d1();
   else
     throw Error (InvalidParam, "dsp::PolnReshape::transformation",
 		 "did not recognize input state");

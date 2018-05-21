@@ -51,13 +51,16 @@ namespace dsp
     Signal::State state;
 
     //! Handle 2x2 --> 4x1 (Coherence or Stokes)
-    void npol4_ndim1();
+    void p2d2_p4d1();
 
     //! Handle 2x2 --> 2x1 (PPQQ)
-    void npol2_ndim1();
+    void p2d2_p2d1();
 
     //! Handle 2x2 --> 1x1 (Intensity)
-    void npol1_ndim1();
+    void p2d2_p1d1();
+
+    //! Handle 1x1 --> 1x1 (Intensity)
+    void p1d1_p1d1();
 
   };
 }
