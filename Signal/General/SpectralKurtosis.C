@@ -29,7 +29,9 @@ dsp::SpectralKurtosis::SpectralKurtosis() : Transformation<TimeSeries,TimeSeries
   channels.resize(2);
   npart_total = 0;
   thresholds.resize(2);
-  thresholds_tscr.resize(2);
+  thresholds_tscr_m.resize(1);
+  thresholds_tscr_upper.resize(1);
+  thresholds_tscr_lower.resize(1);
   zap_counts.resize(4);
   detection_flags.resize(3);
   std::fill (detection_flags.begin(), detection_flags.end(), false);
@@ -75,6 +77,7 @@ bool dsp::SpectralKurtosis::get_order_supported (TimeSeries::Order order) const
 {
   if (order == TimeSeries::OrderFPT || order == TimeSeries::OrderTFP)
     return true;
+  return false;
 }
 
 
@@ -462,29 +465,49 @@ void dsp::SpectralKurtosis::detect_tscr ()
   unsigned char * outdat = 0;
   unsigned zap_chan;
   float V;
+  uint64_t m = M * npart;
+  float lower = 0;
+  float upper = 0;
 
-  if (npart && (M_tscr != M * npart))
+  M_tscr = float(m);
+
+  if (npart)
   {
-    M_tscr = (float) (M * npart);
+    bool must_compute = true;
+    for (unsigned i=0; i<thresholds_tscr_m.size(); i++)
+    {
+      if (thresholds_tscr_m[i] == m)
+      {
+        must_compute = false;
+        lower = thresholds_tscr_lower[i];
+        upper = thresholds_tscr_upper[i];
+        M_tscr = float(m);
+      }
+    }
 
-    if (verbose)
-      cerr << "dsp::SpectralKurtosis::detect_tscr SKlimits(" << M_tscr << ", " << std_devs << ")" << endl;
+    if (must_compute)
+    {
+      if (verbose)
+        cerr << "dsp::SpectralKurtosis::detect_tscr SKlimits(" << M_tscr << ", " << std_devs << ")" << endl;
 
-    dsp::SKLimits limits(M_tscr, std_devs);
-    limits.calc_limits();
+      dsp::SKLimits limits(M_tscr, std_devs);
+      limits.calc_limits();
+      lower = float(limits.get_lower_threshold());
+      upper = float(limits.get_upper_threshold());
 
-    thresholds_tscr[0] = (float) limits.get_lower_threshold();
-    thresholds_tscr[1] = (float) limits.get_upper_threshold();
-
+      thresholds_tscr_m.push_back(m);
+      thresholds_tscr_lower.push_back(lower);
+      thresholds_tscr_upper.push_back(upper);
+    }
+  
     if (verbose)
       cerr << "dsp::SpectralKurtosis::detect_tscr M=" << M_tscr << " std_devs="
-           << std_devs  << " [" << thresholds_tscr[0] << " - " << thresholds_tscr[1]
-           << "]" << endl;
+           << std_devs  << " [" << lower << " - " << upper << "]" << endl;
   }
 
   if (engine)
   {
-    engine->detect_tscr (estimates, estimates_tscr, zapmask, thresholds_tscr[1], thresholds_tscr[0]);
+    engine->detect_tscr (estimates, estimates_tscr, zapmask, upper, lower);
     return;
   }
 
@@ -494,7 +517,7 @@ void dsp::SpectralKurtosis::detect_tscr ()
     for (unsigned ipol=0; ipol < npol; ipol++)
     {
       V = indat[ichan*npol + ipol];
-      if (V > thresholds_tscr[1] || V < thresholds_tscr[0])
+      if (V > upper || V < lower)
         zap_chan = 1;
     }
 
@@ -584,8 +607,6 @@ void dsp::SpectralKurtosis::count_zapped ()
   if (verbose)
     cerr << "dsp::SpectralKurtosis::count_zapped hits=" << unfiltered_hits << endl;
 
-  int zapped = 0;
-
   const float * indat;
   unsigned char * outdat;
 
@@ -659,8 +680,6 @@ void dsp::SpectralKurtosis::detect_fscr ()
     engine->detect_fscr (estimates, zapmask, lower, upper, channels[0], channels[1]);
     return;
   }
-
-  const uint64_t ndat  = estimates->get_ndat();
 
   const float * indat  = estimates->get_dattfp();
   unsigned char * outdat = zapmask->get_datptr();

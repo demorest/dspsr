@@ -158,7 +158,9 @@ namespace dsp {
     unsigned M_tscr;
 
     //! exicision thresholds for tscr
-    std::vector<float> thresholds_tscr;
+    std::vector<uint64_t> thresholds_tscr_m;
+    std::vector<float> thresholds_tscr_lower;
+    std::vector<float> thresholds_tscr_upper;
 
     //! channel range to compute and apply SK excisions
     std::vector<unsigned> channels;
