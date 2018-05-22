@@ -172,7 +172,7 @@ void dsp::FITSFile::open_file(const char* filename)
   get_info()->set_start_time(header.start_time
       + (uint64_t)header.nsuboffs*(uint64_t)samples_in_row*header.tsamp);
   std::string backend_name = archive->get<Pulsar::Backend>()->get_name();
-  if (backend_name == "GUPPI" || backend_name == "PUPPI")
+  if (backend_name == "GUPPI" || backend_name == "PUPPI" || backend_name == "VEGAS")
     get_info()->set_machine("GUPPIFITS");
   else if (backend_name == "COBALT")
     get_info()->set_machine("COBALT");
